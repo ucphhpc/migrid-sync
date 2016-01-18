@@ -143,3 +143,6 @@ dav_domain = "/"
 # Yet the VNC server ignores all but the first 8 chars so it is no use with
 # longer password unfortunately.
 vnc_pw_len = 8
+
+# Seperator used in file expansion - must be easily parsable by user scripts
+file_dest_sep = "    ::    "

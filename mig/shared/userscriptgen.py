@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,6 @@
 # -- END_HEADER ---
 #
 
-# TODO: finish generator for automatic testing of scripts
 # TODO: filter exit code from cgi output and use in own exit code?
 
 # TODO: mig-ls.* -r fib.out incorrectly lists entire home recursively
@@ -47,7 +46,10 @@ __version__ = '$Revision$'
 # Save original __version__ before truncate with wild card import
 
 _userscript_version = __version__
-from publicscriptgen import *
+
+from shared.conf import get_configuration_object
+from shared.defaults import file_dest_sep
+from shared.publicscriptgen import *
 _publicscript_version = __version__
 __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
 
@@ -58,6 +60,8 @@ __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
 
 
 def usage():
+    """ Usage helper"""
+    
     print 'Usage: userscriptgen.py OPTIONS [LANGUAGE ... ]'
     print 'Where OPTIONS include:'
     print ' -c CURL_CMD\t: Use curl from CURL_CMD'
@@ -72,10 +76,14 @@ def usage():
 
 
 def version():
+    """Version info"""
+    
     print 'MiG User Script Generator: %s' % __version__
 
 
 def version_function(lang):
+    """Version helper"""
+    
     s = ''
     s += begin_function(lang, 'version', [], 'Show version details')
     if lang == 'sh':
@@ -100,7 +108,8 @@ def shared_usage_function(op, lang, extension):
 
 
 def cancel_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -116,7 +125,8 @@ def cancel_usage_function(lang, extension):
 
 
 def cat_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -132,7 +142,8 @@ def cat_usage_function(lang, extension):
 
 
 def cp_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -148,7 +159,8 @@ def cp_usage_function(lang, extension):
 
 
 def doc_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -164,7 +176,8 @@ def doc_usage_function(lang, extension):
 
 
 def filemetaio_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -201,7 +214,8 @@ def filemetaio_usage_function(lang, extension):
 
 
 def get_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -223,7 +237,8 @@ def get_usage_function(lang, extension):
 
 
 def grep_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -239,7 +254,8 @@ def grep_usage_function(lang, extension):
 
 
 def head_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -260,7 +276,8 @@ def head_usage_function(lang, extension):
 
 
 def jobaction_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -276,7 +293,8 @@ def jobaction_usage_function(lang, extension):
 
 
 def liveio_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -292,7 +310,8 @@ def liveio_usage_function(lang, extension):
 
 
 def ls_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -320,7 +339,8 @@ def ls_usage_function(lang, extension):
 
 
 def md5sum_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -336,7 +356,8 @@ def md5sum_usage_function(lang, extension):
 
 
 def mkdir_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -357,7 +378,8 @@ def mkdir_usage_function(lang, extension):
 
 
 def mqueue_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -373,7 +395,8 @@ def mqueue_usage_function(lang, extension):
 
 
 def mv_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -389,7 +412,8 @@ def mv_usage_function(lang, extension):
 
 
 def put_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -420,7 +444,8 @@ def put_usage_function(lang, extension):
 
 
 def read_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -436,7 +461,8 @@ def read_usage_function(lang, extension):
 
 
 def resubmit_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -452,7 +478,8 @@ def resubmit_usage_function(lang, extension):
 
 
 def rm_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -473,7 +500,8 @@ def rm_usage_function(lang, extension):
 
 
 def rmdir_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -495,7 +523,8 @@ def rmdir_usage_function(lang, extension):
 
 
 def sha1sum_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -511,7 +540,8 @@ def sha1sum_usage_function(lang, extension):
 
 
 def stat_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -527,7 +557,8 @@ def stat_usage_function(lang, extension):
 
 
 def status_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -552,7 +583,8 @@ def status_usage_function(lang, extension):
 
 
 def submit_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -562,13 +594,19 @@ def submit_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
+    local_usage_string = '-l\t\tUse local job file(s) - includes upload'
+    if lang == 'sh':
+        s += '\n    echo "%s"' % local_usage_string
+    elif lang == 'python':
+        s += '\n    print "%s"' % local_usage_string
     s += end_function(lang, 'usage')
 
     return s
 
 
 def tail_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -589,7 +627,8 @@ def tail_usage_function(lang, extension):
 
 
 def test_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -610,7 +649,8 @@ def test_usage_function(lang, extension):
 
 
 def touch_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -626,7 +666,8 @@ def touch_usage_function(lang, extension):
 
 
 def truncate_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -647,7 +688,8 @@ def truncate_usage_function(lang, extension):
 
 
 def unzip_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -663,7 +705,8 @@ def unzip_usage_function(lang, extension):
 
 
 def wc_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -690,7 +733,8 @@ def wc_usage_function(lang, extension):
 
 
 def write_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -706,7 +750,8 @@ def write_usage_function(lang, extension):
 
 
 def zip_usage_function(lang, extension):
-
+    """Generate usage help for the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -731,23 +776,24 @@ def zip_usage_function(lang, extension):
 # ##########################
 
 
-def shared_op_function(op, lang, curl_cmd):
+def shared_op_function(configuration, op, lang, curl_cmd):
     """General wrapper for the specific op functions.
     Simply rewrites first arg to function name."""
 
-    return eval('%s_function' % op)(lang, curl_cmd)
+    return eval('%s_function' % op)(configuration, lang, curl_cmd)
 
 
-def cancel_function(lang, curl_cmd, curl_flags=''):
-    relative_url = '"cgi-bin/jobaction.py"'
+def cancel_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with job_list as argument"""
+
+    relative_url = '"%s/jobaction.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;action=cancel;$job_list"'
+        post_data = '"output_format=txt;flags=$server_flags;action=cancel"'
+        urlenc_data = '${job_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;action=cancel;%s' % (server_flags, job_list)"
+        post_data = "'output_format=txt;flags=%s;action=cancel' % server_flags"
+        urlenc_data = "job_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -755,7 +801,6 @@ def cancel_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'cancel_job', ['job_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -772,15 +817,17 @@ def cancel_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def cat_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/cat.py"'
+def cat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with path_list as argument"""
+
+    relative_url = '"%s/cat.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -788,7 +835,6 @@ def cat_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'cat_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -805,23 +851,17 @@ def cat_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def cp_function(lang, curl_cmd, curl_flags='--compressed'):
-    """Call the corresponding cgi script with the string 'src_list' as argument. Thus
-    the variable 'src_list' should be on the form
-    \"src=pattern1[;src=pattern2[ ... ]]\"
-    This may seem a bit awkward but it's difficult to do in a better way when
-    begin_function() doesn't support variable length or array args.
-    """
+def cp_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with src_list and dst as arguments"""
 
-    relative_url = '"cgi-bin/cp.py"'
+    relative_url = '"%s/cp.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;dst=$dst;$src_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;dst=%s;%s' % (server_flags, dst, src_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags" 
+        urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -829,7 +869,6 @@ def cp_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'cp_file', ['src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -846,16 +885,19 @@ def cp_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def doc_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/docs.py"'
+def doc_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the search and show as
+    arguments.
+    """
+
+    relative_url = '"%s/docs.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;search=$search;show=$show"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '("search=$search" "show=$show")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;search=%s;show=%s' % (server_flags, search, show)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = '["search=" + search, "show=" + show]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -879,23 +921,19 @@ def doc_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def expand_function(lang, curl_cmd, curl_flags='--compressed'):
-    """Call the expand cgi script with the string 'path_list' as argument. Thus
-    the variable 'path_list' should be on the form
-    \"path=pattern1[;path=pattern2[ ... ]]\"
-    This may seem a bit awkward but it's difficult to do in a better way when
-    begin_function() doesn't support variable length or array args.
+def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with path_list and destinations
+    as arguments.
     """
 
-    relative_url = '"cgi-bin/expand.py"'
+    relative_url = '"%s/expand.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;$path_list;with_dest=$destinations"'
+        post_data = '"output_format=txt;flags=$server_flags;with_dest=$destinations"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s;with_dest=%s' % (server_flags, path_list, destinations)"
+        post_data = "'output_format=txt;flags=%s;with_dest=%s' % (server_flags, destinations)"
+        urlenc_data = 'path_list'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -904,7 +942,6 @@ def expand_function(lang, curl_cmd, curl_flags='--compressed'):
     s += begin_function(lang, 'expand_name', ['path_list',
                         'server_flags', 'destinations'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -921,17 +958,21 @@ def expand_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def filemetaio_function(lang, curl_cmd, curl_flags='--compressed'):
+def filemetaio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with path, action and key=val pairs
+    as arguments.
+    """
    
-    relative_url = '"cgi-bin/filemetaio.py"'
+    relative_url = '"%s/filemetaio.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
+    # TODO: is arg_list realy a list here?
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;action=$action;path=$path;$arg_list"'
+        post_data = '"output_format=txt;flags=$server_flags;action=$action"'
+        urlenc_data = '("path=$path" "${arg_list[@]}")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;action=%s;path=%s;%s' % (server_flags, action, path, arg_list)"
+        post_data = "'output_format=txt;flags=%s;action=%s' % (server_flags, action)"
+        urlenc_data = '["path=" + path] + arg_list'
+        
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -955,8 +996,11 @@ def filemetaio_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def get_function(lang, curl_cmd, curl_flags='--compressed --create-dirs'
-                 ):
+def get_function(configuration, lang, curl_cmd, curl_flags='--compressed --create-dirs'):
+    """Call the corresponding cgi script with src_path and dst_path as
+    arguments.
+    """
+
     post_data = '""'
     query = '""'
     urlenc_data = '""'
@@ -965,14 +1009,14 @@ def get_function(lang, curl_cmd, curl_flags='--compressed --create-dirs'
         # TODO: should we handle below double slash problem here, too?
 
         relative_url = '"cert_redirect/$src_path"'
-        curl_target = '"--output $dst_path"'
+        curl_target = '("--output \'$dst_path\'")'
     elif lang == 'python':
 
         # Apache chokes on possible double slash in url and that causes
         # fatal errors in migfs-fuse - remove it from src_path.
 
         relative_url = '"cert_redirect/%s" % src_path.lstrip("/")'
-        curl_target = "'--output %s' % dst_path"
+        curl_target = "['--output', dst_path]"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -997,16 +1041,19 @@ def get_function(lang, curl_cmd, curl_flags='--compressed --create-dirs'
     return s
 
 
-def grep_function(lang, curl_cmd, curl_flags=''):
-    relative_url = '"cgi-bin/grep.py"'
+def grep_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with pattern and 'path_list' as
+    arguments.
+    """
+
+    relative_url = '"%s/grep.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;pattern=$pattern;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '("${path_list[@]}" "pattern=$pattern")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;pattern=%s;%s' % (server_flags, pattern, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = 'path_list + ["pattern=" + pattern]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1014,7 +1061,6 @@ def grep_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'grep_file', ['pattern', 'path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1031,16 +1077,17 @@ def grep_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def head_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/head.py"'
+def head_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with path_list as argument"""
+
+    relative_url = '"%s/head.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;$path_list;lines=$lines"'
+        post_data = '"output_format=txt;flags=$server_flags;lines=$lines"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s;lines=%s' % (server_flags, path_list, lines)"
+        post_data = "'output_format=txt;flags=%s;lines=%s' % (server_flags, lines)"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1048,7 +1095,6 @@ def head_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'head_file', ['lines', 'path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1065,16 +1111,19 @@ def head_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def jobaction_function(lang, curl_cmd, curl_flags=''):
-    relative_url = '"cgi-bin/jobaction.py"'
+def jobaction_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with the 'job_list' and action as
+    arguments.
+    """
+
+    relative_url = '"%s/jobaction.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;action=$action;$job_list"'
+        post_data = '"output_format=txt;flags=$server_flags;action=$action"'
+        urlenc_data = '${job_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;action=%s;%s' % (server_flags, action, job_list)"
+        post_data = "'output_format=txt;flags=%s;action=%s' % (server_flags, action)"
+        urlenc_data = "job_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1082,7 +1131,6 @@ def jobaction_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'job_action', ['action', 'job_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1099,15 +1147,19 @@ def jobaction_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/liveio.py"'
+def liveio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with src_list, dst, job_id and action
+    as arguments.
+    """
+
+    relative_url = '"%s/liveio.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;action=$action;job_id=$job_id;$src_list;dst=$dst"'
+        post_data = '"output_format=txt;flags=$server_flags;action=$action"'
+        urlenc_data = '("${src_list[@]}" "job_id=$job_id" "dst=$dst")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;action=%s;job_id=%s;%s;dst=%s' % (server_flags, action, job_id, src_list, dst)"
+        post_data = "'output_format=txt;flags=%s;action=%s' % (server_flags, action)"
+        urlenc_data = 'src_list + ["job_id=" + job_id, "dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1115,7 +1167,6 @@ def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'job_liveio', ['action', 'job_id', 'src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1132,22 +1183,17 @@ def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def ls_function(lang, curl_cmd, curl_flags='--compressed'):
-    """Call the ls cgi script with the string 'path_list' as argument. Thus
-    the variable 'path_list' should be on the form
-    \"path=pattern1[;path=pattern2[ ... ]]\"
-    This may seem a bit awkward but it's difficult to do in a better way when
-    begin_function() doesn't support variable length or array args.
-    """
+def ls_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with path_list as argument"""
 
-    relative_url = '"cgi-bin/ls.py"'
+    relative_url = '"%s/ls.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1155,7 +1201,6 @@ def ls_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'ls_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1172,17 +1217,19 @@ def ls_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def md5sum_function(lang, curl_cmd, curl_flags=''):
-    """Call the chksum cgi script with implicit md5 and 'path' as argument."""
+def md5sum_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the chksum cgi script with implicit md5 and 'path_list' as
+    argument.
+    """
 
-    relative_url = '"cgi-bin/chksum.py"'
+    relative_url = '"%s/chksum.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;hash_algo=md5;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags;hash_algo=md5"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;hash_algo=md5;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s;hash_algo=md5' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1190,7 +1237,6 @@ def md5sum_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'md5_sum', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1207,17 +1253,17 @@ def md5sum_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def mkdir_function(lang, curl_cmd, curl_flags=''):
-    """Call the mkdir cgi script with 'path' as argument."""
+def mkdir_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with path_list as argument"""
 
-    relative_url = '"cgi-bin/mkdir.py"'
+    relative_url = '"%s/mkdir.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1225,7 +1271,6 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'mk_dir', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1242,15 +1287,18 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def mqueue_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/mqueue.py"'
+def mqueue_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with action, queue and msg as
+    arguments."""
+
+    relative_url = '"%s/mqueue.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;action=$action;queue=$queue;msg=$msg"'
+        post_data = '"output_format=txt;flags=$server_flags;action=$action"'
+        urlenc_data = '("queue=$queue" "msg=$msg")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;action=%s;queue=%s;msg=%s' % (server_flags, action, queue, msg)"
+        post_data = "'output_format=txt;flags=%s;action=%s' % (server_flags, action)"
+        urlenc_data = '["queue=" + queue, "msg=" + msg]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1274,23 +1322,17 @@ def mqueue_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def mv_function(lang, curl_cmd, curl_flags='--compressed'):
-    """Call the corresponding cgi script with the string 'src_list' as argument. Thus
-    the variable 'src_list' should be on the form
-    \"src=pattern1[;src=pattern2[ ... ]]\"
-    This may seem a bit awkward but it's difficult to do in a better way when
-    begin_function() doesn't support variable length or array args.
-    """
+def mv_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with src_list and dst as arguments"""
 
-    relative_url = '"cgi-bin/mv.py"'
+    relative_url = '"%s/mv.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;dst=$dst;$src_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;dst=%s;%s' % (server_flags, dst, src_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1298,7 +1340,6 @@ def mv_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'mv_file', ['src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1315,7 +1356,11 @@ def mv_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def put_function(lang, curl_cmd, curl_flags='--compressed'):
+def put_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with src_path, dst_path, submit_mrsl
+    and extract_package as arguments.
+    """
+
     post_data = '""'
     query = '""'
     urlenc_data = '""'
@@ -1325,7 +1370,7 @@ def put_function(lang, curl_cmd, curl_flags='--compressed'):
 
         relative_url = '"$dst_path"'
         curl_target = \
-            '"--upload-file $src_path --header $content_type -X CERTPUT"'
+            '("--upload-file \'$src_path\'" "--header $content_type" "-X CERTPUT")'
     elif lang == 'python':
 
         # Apache chokes on possible double slash in url and that causes
@@ -1333,7 +1378,7 @@ def put_function(lang, curl_cmd, curl_flags='--compressed'):
 
         relative_url = '"%s" % dst_path.lstrip("/")'
         curl_target = \
-            "'--upload-file %s --header %s -X CERTPUT' % (src_path, content_type)"
+            "['--upload-file', src_path, '--header', '%s' % content_type, '-X', 'CERTPUT']"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1346,8 +1391,7 @@ def put_function(lang, curl_cmd, curl_flags='--compressed'):
     s += password_check_init(lang)
     s += timeout_check_init(lang)
     if lang == 'sh':
-        s += \
-            """
+        s += """
     content_type="''"
     if [ $submit_mrsl -eq 1 ] && [ $extract_package -eq 1 ]; then
         content_type='Content-Type:submitandextract'
@@ -1358,8 +1402,7 @@ def put_function(lang, curl_cmd, curl_flags='--compressed'):
     fi
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
     content_type = "''"
     if submit_mrsl and extract_package:
         content_type = 'Content-Type:submitandextract'
@@ -1385,18 +1428,31 @@ def put_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def read_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/rangefileaccess.py"'
+def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the src_path, dst_path, first
+    and last as arguments.
+    """
+    
+    # TODO: switch to default get_xgi_bin when rangefileaccess is ported 
+    relative_url = '"%s/rangefileaccess.py"' % get_xgi_bin(configuration, force_legacy=True)
+    # TODO: switch to post_data and urlenc_data when rangefileaccess is ported 
+    # query = '""'
     post_data = '""'
     urlenc_data = '""'
     if lang == 'sh':
         query = \
             '"?output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$src_path"'
-        curl_target = '"--output $dst_path"'
+        #post_data = \
+        #    '"output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
+        #urlenc_data = '("src_path=$src_path")'
+        curl_target = '("--output \'$dst_path\'")'
     elif lang == 'python':
         query = \
             "'?output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (server_flags, first, last, src_path)"
-        curl_target = "'--output %s' % dst_path"
+        #post_data = \
+        #    "'output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s' % (server_flags, first, last)"
+        #urlenc_data = '["src_path=%s" % src_path]'
+        curl_target = "['--output', dst_path]"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1422,16 +1478,17 @@ def read_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def resubmit_function(lang, curl_cmd, curl_flags=''):
-    relative_url = '"cgi-bin/resubmit.py"'
+def resubmit_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with the 'job_list' as argument"""
+
+    relative_url = '"%s/resubmit.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;$job_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${job_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, job_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "job_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1439,7 +1496,6 @@ def resubmit_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'resubmit_job', ['job_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1456,22 +1512,17 @@ def resubmit_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def rm_function(lang, curl_cmd, curl_flags=''):
-    """Call the rm cgi script with the string 'path_list' as argument. Thus
-    the variable 'path_list' should be on the form
-    \"path=pattern1[;path=pattern2[ ... ]]\"
-    This may seem a bit awkward but it's difficult to do in a better way when
-    begin_function() doesn't support variable length or array args.
-    """
+def rm_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with path_list as argument"""
 
-    relative_url = '"cgi-bin/rm.py"'
+    relative_url = '"%s/rm.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1479,7 +1530,6 @@ def rm_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'rm_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1496,17 +1546,17 @@ def rm_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def rmdir_function(lang, curl_cmd, curl_flags=''):
-    """Call the rmdir cgi script with 'path' as argument."""
+def rmdir_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with path_list as argument"""
 
-    relative_url = '"cgi-bin/rmdir.py"'
+    relative_url = '"%s/rmdir.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1514,7 +1564,6 @@ def rmdir_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'rm_dir', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1531,25 +1580,26 @@ def rmdir_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def sha1sum_function(lang, curl_cmd, curl_flags=''):
-    """Call the chksum cgi script with implicit sha1 and 'path' as argument."""
+def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the chksum cgi script with implicit sha1 and 'path_list' as
+    argument.
+    """
 
-    relative_url = '"cgi-bin/chksum.py"'
+    relative_url = '"%s/chksum.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;hash_algo=md5;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags;hash_algo=sha1"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;hash_algo=md5;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s;hash_algo=sha1' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
 
     s = ''
-    s += begin_function(lang, 'md5_sum', ['path_list'],
+    s += begin_function(lang, 'sha1_sum', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1562,26 +1612,21 @@ def sha1sum_function(lang, curl_cmd, curl_flags=''):
         curl_cmd,
         curl_flags,
         )
-    s += end_function(lang, 'md5_sum')
+    s += end_function(lang, 'sha1_sum')
     return s
 
 
-def stat_function(lang, curl_cmd, curl_flags='--compressed'):
-    """Call the corresponding cgi script with the string 'path_list' as argument. Thus
-    the variable 'path_list' should be on the form
-    \"path=pattern1[;path=pattern2[ ... ]]\"
-    This may seem a bit awkward but it's difficult to do in a better way when
-    begin_function() doesn't support variable length or array args.
-    """
+def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with path_list as argument"""
 
-    relative_url = '"cgi-bin/statpath.py"'
+    relative_url = '"%s/statpath.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1589,7 +1634,6 @@ def stat_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'stat_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1606,16 +1650,17 @@ def stat_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def status_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/jobstatus.py"'
+def status_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the 'job_list' as argument"""
+
+    relative_url = '"%s/jobstatus.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;max_jobs=$max_job_count;$job_list"'
+        post_data = '"output_format=txt;flags=$server_flags;max_jobs=$max_job_count"'
+        urlenc_data = '${job_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;max_jobs=%s;%s' % (server_flags, max_job_count, job_list)"
+        post_data = "'output_format=txt;flags=%s;max_jobs=%s' % (server_flags, max_job_count)"
+        urlenc_data = "job_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1623,7 +1668,6 @@ def status_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'
                         ], 'Execute the corresponding server operation')
-    s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1640,24 +1684,60 @@ def status_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def submit_function(lang, curl_cmd, curl_flags=''):
+def submit_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with path_list as argument"""
 
-    # Simply use Put function
-
-    s = put_function(lang, curl_cmd, curl_flags)
-    return s.replace('put_file', 'submit_file')
-
-
-def tail_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/tail.py"'
+    relative_url = '"%s/submit.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;lines=$lines;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;lines=%s;%s' % (server_flags, lines, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    put_helper = put_function(configuration, lang, curl_cmd, curl_flags)
+
+    s = ''
+    
+    # Simply use a private copy of put_file function if local flag was given
+
+    s += put_helper.replace('put_file', '__put_file')
+
+    # Else proceed with server-side only submit
+    
+    s += begin_function(lang, 'submit_file', ['path_list'],
+                        'Execute the corresponding server operation')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'submit_file')
+    return s
+
+
+def tail_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with path_list as argument"""
+
+    relative_url = '"%s/tail.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"output_format=txt;flags=$server_flags;lines=$lines"'
+        urlenc_data = '${path_list[@]}'
+    elif lang == 'python':
+        post_data = "'output_format=txt;flags=%s;lines=%s' % (server_flags, lines)"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1665,7 +1745,6 @@ def tail_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'tail_file', ['lines', 'path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1682,7 +1761,8 @@ def tail_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def test_function(lang, curl_cmd, curl_flags=''):
+def test_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Test one or more of the user scripts"""
 
     # TODO: pass original -c and -s options on to tested scripts
 
@@ -1695,8 +1775,7 @@ def test_function(lang, curl_cmd, curl_flags=''):
     mig_prefix='%(mig_prefix)s'
     script_ext='sh'
 """ % {'valid_ops': ' '.join(script_ops), 'mig_prefix': mig_prefix}
-        s += \
-            """
+        s += """
     valid=0
     for valid_op in ${valid_ops[*]}; do
         if [ $op = $valid_op ]; then
@@ -1711,11 +1790,15 @@ def test_function(lang, curl_cmd, curl_flags=''):
     fi
        
     path_prefix=`dirname $0`
+    if [ -z \"$path_prefix\" ]; then
+        path_prefix='.'
+    fi
     dir_test=\"${test_prefix}-dir\"
     mrsl_test=\"${test_prefix}.mRSL\"
     txt_test=\"${test_prefix}.txt\"
     zip_test=\"${test_prefix}.zip\"
     txt_helper=\"${test_prefix}-helper.txt\"
+    mrsl_helper=\"${test_prefix}-helper.mRSL\"
     txt_tmp=\"${test_prefix}-tmp.txt\"
     echo \"=== running $op test(s) ===\"
     cmd=\"${path_prefix}/${mig_prefix}${op}.${script_ext}\"
@@ -1727,131 +1810,137 @@ def test_function(lang, curl_cmd, curl_flags=''):
     zip_cmd=\"${path_prefix}/${mig_prefix}zip.${script_ext}\"
     declare -a cmd_args
     declare -a verify_cmds
+    # Default to no action
+    pre_cmds[1]=''
+    cmd_args[1]=''
+    verify_cmds[1]=''
+    post_cmds[1]=''
     case $op in
         'cat' | 'head' | 'ls' | 'md5sum' | 'sha1sum' | 'stat' | 'tail' | 'wc')
-            cmd_args[1]=\"${txt_helper}\"
+            cmd_args[1]=\"'${txt_helper}'\"
             ;;
         'cancel')
             # TODO: submit and cancel real job?
-            #pre_cmds[1]=\"${submit_cmd} ${mrsl_test}\"
+            #pre_cmds[1]=\"${submit_cmd} '${mrsl_test}'\"
             cmd_args[1]='DUMMY_JOB_ID'
             ;;
         'cp')
-            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
-            cmd_args[1]=\"${txt_helper} ${txt_test}\"
-            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
-            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
+            pre_cmds[1]=\"${rm_cmd} '${txt_test}'\"
+            cmd_args[1]=\"'${txt_helper}' '${txt_test}'\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
             ;;
         'doc')
             cmd_args[1]=''
             ;;
         'get')
-            cmd_args[1]=\"${txt_helper} .\"
+            cmd_args[1]=\"'${txt_helper}' .\"
             ;;
         'grep')
-            cmd_args[1]=\"test ${txt_helper}\"
+            cmd_args[1]=\"test '${txt_helper}'\"
             ;;
         'jobaction')
             # TODO: submit and cancel real job?
-            #pre_cmds[1]=\"${submit_cmd} ${mrsl_test}\"
+            #pre_cmds[1]=\"${submit_cmd} '${mrsl_test}'\"
             cmd_args[1]=\"cancel DUMMY_JOB_ID\"
             ;;
         'mkdir')
-            pre_cmds[1]=\"${rm_cmd} -r ${dir_test}\"
-            cmd_args[1]=\"${dir_test}\"
-            verify_cmds[1]=\"${ls_cmd} -la ${dir_test}\"
-            post_cmds[1]=\"${rm_cmd} -r ${dir_test}\"
+            pre_cmds[1]=\"${rm_cmd} -r '${dir_test}'\"
+            cmd_args[1]=\"'${dir_test}'\"
+            verify_cmds[1]=\"${ls_cmd} -la '${dir_test}'\"
+            post_cmds[1]=\"${rm_cmd} -r '${dir_test}'\"
             ;;
         'mv')
-            pre_cmds[1]=\"${put_cmd} ${txt_test} .\"
-            cmd_args[1]=\"${txt_test} ${txt_tmp}\"
-            verify_cmds[1]=\"${ls_cmd} -l ${txt_tmp}\"
-            post_cmds[1]=\"${rm_cmd} ${txt_tmp}\"
+            pre_cmds[1]=\"${put_cmd} '${txt_test}' .\"
+            cmd_args[1]=\"'${txt_test}' '${txt_tmp}'\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_tmp}'\"
+            post_cmds[1]=\"${rm_cmd} '${txt_tmp}'\"
             ;;
         'mqueue')
             cmd_args[1]=\"show default\"
             ;;
         'put')
-            pre_cmds[1]=\"${rm_cmd} ${txt_test}\"
-            cmd_args[1]=\"${txt_test} .\"
-            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
-            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
+            pre_cmds[1]=\"${rm_cmd} '${txt_test}'\"
+            cmd_args[1]=\"'${txt_test}' .\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
             pre_cmds[2]=\"\"
-            cmd_args[2]=\"${txt_test} ${txt_test}\"
-            verify_cmds[2]=\"${ls_cmd} -l ${txt_test}\"
-            post_cmds[2]=\"${rm_cmd} ${txt_test}\"
+            cmd_args[2]=\"'${txt_test}' '${txt_test}'\"
+            verify_cmds[2]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[2]=\"${rm_cmd} '${txt_test}'\"
             pre_cmds[3]=\"\"
-            cmd_args[3]=\"${txt_test} ${txt_tmp}\"
-            verify_cmds[3]=\"${ls_cmd} -l ${txt_tmp}\"
-            post_cmds[3]=\"${rm_cmd} ${txt_tmp}\"
-            pre_cmds[4]=\"${mkdir_cmd} ${dir_test}\"
-            cmd_args[4]=\"${txt_test} ${dir_test}/\"
-            verify_cmds[4]=\"${ls_cmd} -l ${dir_test}/${txt_test}\"
-            post_cmds[4]=\"${rm_cmd} -r ${dir_test}\"
-            pre_cmds[5]=\"${mkdir_cmd} ${dir_test}\"
-            cmd_args[5]=\"${txt_test} ${dir_test}/${txt_tmp}\"
-            verify_cmds[5]=\"${ls_cmd} -l ${dir_test}/${txt_tmp}\"
-            post_cmds[5]=\"${rm_cmd} -r ${dir_test}\"
-            pre_cmds[6]=\"${mkdir_cmd} ${dir_test}\"
-            cmd_args[6]=\"${test_prefix}.* ${dir_test}/\"
-            verify_cmds[6]=\"${ls_cmd} -l ${dir_test}/${test_prefix}.*\"
-            post_cmds[6]=\"${rm_cmd} -r ${dir_test}\"
+            cmd_args[3]=\"'${txt_test}' '${txt_tmp}'\"
+            verify_cmds[3]=\"${ls_cmd} -l '${txt_tmp}'\"
+            post_cmds[3]=\"${rm_cmd} '${txt_tmp}'\"
+            pre_cmds[4]=\"${mkdir_cmd} '${dir_test}'\"
+            cmd_args[4]=\"'${txt_test}' '${dir_test}/'\"
+            verify_cmds[4]=\"${ls_cmd} -l '${dir_test}/${txt_test}'\"
+            post_cmds[4]=\"${rm_cmd} -r '${dir_test}'\"
+            pre_cmds[5]=\"${mkdir_cmd} '${dir_test}'\"
+            cmd_args[5]=\"'${txt_test}' '${dir_test}/${txt_tmp}'\"
+            verify_cmds[5]=\"${ls_cmd} -l '${dir_test}/${txt_tmp}'\"
+            post_cmds[5]=\"${rm_cmd} -r '${dir_test}'\"
+            pre_cmds[6]=\"${mkdir_cmd} '${dir_test}'\"
+            cmd_args[6]=\"'${test_prefix}.*' '${dir_test}/'\"
+            verify_cmds[6]=\"${ls_cmd} -l '${dir_test}/${test_prefix}.*'\"
+            post_cmds[6]=\"${rm_cmd} -r '${dir_test}'\"
             ;;
         'read')
-            cmd_args[1]=\"0 16 ${txt_helper} -\"
+            cmd_args[1]=\"0 16 '${txt_helper}' -\"
             ;;
         'rm')
-            pre_cmds[1]=\"${put_cmd} ${txt_test} .\"
-            cmd_args[1]=\"${txt_test}\"
-            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
-            post_cmds[1]=\"${rm_cmd} -r ${txt_test}\"
+            pre_cmds[1]=\"${put_cmd} '${txt_test}' .\"
+            cmd_args[1]=\"'${txt_test}'\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[1]=\"${rm_cmd} -r '${txt_test}'\"
             ;;
         'rmdir')
-            pre_cmds=[1]\"${mkdir_cmd} ${dir_test}\"
-            cmd_args[1]=\"${dir_test}\"
-            verify_cmds[1]=\"${ls_cmd} -la ${dir_test}\"
-            post_cmds[1]=\"${rm_cmd} -r ${dir_test}\"
+            pre_cmds=[1]\"${mkdir_cmd} '${dir_test}'\"
+            cmd_args[1]=\"'${dir_test}'\"
+            verify_cmds[1]=\"${ls_cmd} -la '${dir_test}'\"
+            post_cmds[1]=\"${rm_cmd} -r '${dir_test}'\"
             ;;
         'status')
             cmd_args[1]=''
             ;;
         'submit')
-            cmd_args[1]=\"${mrsl_test}\"
-            # TODO: cancel test job
+            cmd_args[1]=\"'${mrsl_test}'\"
+            cmd_args[2]=\"-l '${mrsl_helper}'\"
+            # TODO: cancel test jobs
             ;;
         'touch')
-            pre_cmds[1]=\"${rm_cmd} ${txt_test}\"
-            cmd_args[1]=\"${txt_test}\"
-            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
-            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
-            pre_cmds[2]=\"${put_cmd} ${txt_test} .\"
-            cmd_args[2]=\"${txt_test}\"
-            verify_cmds[2]=\"${ls_cmd} -l ${txt_test}\"
-            post_cmds[2]=\"${rm_cmd} ${txt_test}\"
+            pre_cmds[1]=\"${rm_cmd} '${txt_test}'\"
+            cmd_args[1]=\"'${txt_test}'\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
+            pre_cmds[2]=\"${put_cmd} '${txt_test}' .\"
+            cmd_args[2]=\"'${txt_test}'\"
+            verify_cmds[2]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[2]=\"${rm_cmd} '${txt_test}'\"
             ;;
         'truncate')
-            pre_cmds[1]=\"${put_cmd} ${txt_test} .\"
-            cmd_args[1]=\"${txt_test}\"
-            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
-            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
+            pre_cmds[1]=\"${put_cmd} '${txt_test}' .\"
+            cmd_args[1]=\"'${txt_test}'\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
             ;;
         'unzip')
-            pre_cmds[1]=\"${zip_cmd} ${txt_helper} ${zip_test}\"
-            cmd_args[1]=\"${zip_test} ./\"
-            verify_cmds[1]=\"${ls_cmd} -l ${txt_helper}\"
-            post_cmds[1]=\"${rm_cmd} ${zip_test}\"
+            pre_cmds[1]=\"${zip_cmd} '${txt_helper}' '${zip_test}'\"
+            cmd_args[1]=\"'${zip_test}' ./\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_helper}'\"
+            post_cmds[1]=\"${rm_cmd} '${zip_test}'\"
             ;;
         'write')
-            pre_cmds[1]=\"${put_cmd} ${txt_test} .\"
-            cmd_args[1]=\"4 8 ${txt_test} ${txt_test}\"
-            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
-            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
+            pre_cmds[1]=\"${put_cmd} '${txt_test}' .\"
+            cmd_args[1]=\"4 8 '${txt_test}' '${txt_test}'\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
             ;;
         'zip')
-            pre_cmds[1]=\"${rm_cmd} ${zip_test} .\"
-            cmd_args[1]=\"${txt_helper} ${zip_test}\"
-            verify_cmds[1]=\"${ls_cmd} -l ${zip_test}\"
-            post_cmds[1]=\"${rm_cmd} ${zip_test}\"
+            pre_cmds[1]=\"${rm_cmd} '${zip_test}' .\"
+            cmd_args[1]=\"'${txt_helper}' '${zip_test}'\"
+            verify_cmds[1]=\"${ls_cmd} -l '${zip_test}'\"
+            post_cmds[1]=\"${rm_cmd} '${zip_test}'\"
             ;;
         *)
             echo \"No test available for $op!\"
@@ -1866,9 +1955,9 @@ def test_function(lang, curl_cmd, curl_flags=''):
         pre=\"${pre_cmds[index]}\"
         if [ -n \"$pre\" ]; then
             echo \"setting up with: $pre\"
-            $pre >& /dev/null
+            eval $pre >& /dev/null
         fi
-        ./$cmd $args >& /dev/null
+        eval $cmd $args >& /dev/null
         ret=$?
         if [ $ret -eq 0 ]; then
             echo \"   $op test $index SUCCEEDED\"
@@ -1878,12 +1967,12 @@ def test_function(lang, curl_cmd, curl_flags=''):
         verify=\"${verify_cmds[index]}\"
         if [ -n \"$verify\" ]; then
             echo \"verifying with: $verify\"
-            $verify
+            eval $verify
         fi
         post=\"${post_cmds[index]}\"
         if [ -n \"$post\" ]; then
             echo \"cleaning up with: $post\"
-            $post >& /dev/null
+            eval $post >& /dev/null
         fi
         index=$((index+1))
     done
@@ -1901,6 +1990,8 @@ def test_function(lang, curl_cmd, curl_flags=''):
         return 1
        
     path_prefix = os.path.dirname(sys.argv[0])
+    if path_prefix == '':
+        path_prefix = '.'
     print '=== running %s test ===' % op
     cmd = os.path.join(path_prefix, mig_prefix + op + '.' + script_ext)
     pre_cmds = []
@@ -1912,6 +2003,7 @@ def test_function(lang, curl_cmd, curl_flags=''):
     txt_test = test_prefix + '.txt'
     zip_test = test_prefix + '.zip'
     txt_helper = test_prefix + '-helper.txt'
+    mrsl_helper = test_prefix + '-helper.mRSL'
     txt_tmp = test_prefix + '-tmp.txt'
     ls_cmd = os.path.join(path_prefix, mig_prefix + 'ls.' + script_ext) 
     mkdir_cmd = os.path.join(path_prefix, mig_prefix + 'mkdir.' + script_ext) 
@@ -1920,105 +2012,106 @@ def test_function(lang, curl_cmd, curl_flags=''):
     #submit_cmd = os.path.join(path_prefix, mig_prefix + 'submit.' + script_ext) 
     zip_cmd = os.path.join(path_prefix, mig_prefix + 'zip.' + script_ext) 
     if op in ('cat', 'head', 'ls', 'md5sum', 'sha1sum', 'stat', 'tail', 'wc'):
-            cmd_args.append(txt_helper)
+            cmd_args.append([txt_helper])
     elif op == 'cancel':
             # TODO: submit and cancel real job?
-            #pre_cmds.append('%s %s' % (submit_cmd, mrsl_test))
-            cmd_args.append('DUMMY_JOB_ID')
+            #pre_cmds.append([submit_cmd, mrsl_helper])
+            cmd_args.append(['DUMMY_JOB_ID'])
     elif op == 'cp':
-            pre_cmds.append('%s %s .' % (rm_cmd, txt_test))
-            cmd_args.append('%s %s' % (txt_helper, txt_test))
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
-            post_cmds.append('%s %s' % (rm_cmd, txt_test))
+            pre_cmds.append([rm_cmd, txt_test, '.'])
+            cmd_args.append([txt_helper, txt_test])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
     elif op in ('doc', 'status'):
-            cmd_args.append('')
+            cmd_args.append([''])
     elif op == 'get':
-            cmd_args.append('%s .' % txt_helper)
+            cmd_args.append([txt_helper, '.'])
     elif op == 'grep':
-            cmd_args.append('test %s' % txt_helper)
+            cmd_args.append(['test', txt_helper])
     elif op == 'jobaction':
             # TODO: submit and cancel real job?
-            #pre_cmds.append('%s %s' % (submit_cmd, mrsl_test))
-            cmd_args.append('cancel DUMMY_JOB_ID')
+            #pre_cmds.append([submit_cmd, mrsl_helper])
+            cmd_args.append(['cancel', 'DUMMY_JOB_ID'])
     elif op == 'mkdir':
-            pre_cmds.append('%s -r %s' % (rm_cmd, dir_test))
-            cmd_args.append(dir_test)
-            verify_cmds.append('%s -la %s' % (ls_cmd, dir_test))
-            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
+            pre_cmds.append([rm_cmd, '-r', dir_test])
+            cmd_args.append([dir_test])
+            verify_cmds.append([ls_cmd, '-la', dir_test])
+            post_cmds.append([rm_cmd, '-r', dir_test])
     elif op == 'mv':
-            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
-            cmd_args.append('%s %s' % (txt_test, txt_tmp))
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_tmp))
-            post_cmds.append('%s %s' % (rm_cmd, txt_tmp))
+            pre_cmds.append([put_cmd, txt_test, '.'])
+            cmd_args.append([txt_test, txt_tmp])
+            verify_cmds.append([ls_cmd, '-l', txt_tmp])
+            post_cmds.append([rm_cmd, txt_tmp])
     elif op == 'mqueue':
-            cmd_args.append('show default')
+            cmd_args.append(['show', 'default'])
     elif op == 'put':
-            pre_cmds.append('%s %s' % (rm_cmd, txt_test))
-            cmd_args.append('%s .' % txt_test)
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
-            post_cmds.append('%s %s' % (rm_cmd, txt_test))
-            pre_cmds.append('')
-            cmd_args.append('%s %s' % (txt_test, txt_test))
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
-            post_cmds.append('%s %s' % (rm_cmd, txt_test))
-            pre_cmds.append('')
-            cmd_args.append('%s %s' % (txt_test, txt_tmp))
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_tmp))
-            post_cmds.append('%s %s' % (rm_cmd, txt_tmp))
-            pre_cmds.append('%s %s' % (mkdir_cmd, dir_test))
-            cmd_args.append('%s %s/' % (txt_test, dir_test))
-            verify_cmds.append('%s -l %s/%s' % (ls_cmd, dir_test, txt_test))
-            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
-            pre_cmds.append('%s %s' % (mkdir_cmd, dir_test))
-            cmd_args.append('%s %s/%s' % (txt_test, dir_test, txt_tmp))
-            verify_cmds.append('%s -l %s/%s' % (ls_cmd, dir_test, txt_tmp))
-            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
-            pre_cmds.append('%s %s' % (mkdir_cmd, dir_test))
-            cmd_args.append('%s.* %s/' % (test_prefix, dir_test))
-            verify_cmds.append('%s -l %s/%s.*' % (ls_cmd, dir_test, test_prefix))
-            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
+            pre_cmds.append([rm_cmd, txt_test])
+            cmd_args.append([txt_test, '.'])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
+            pre_cmds.append([])
+            cmd_args.append([txt_test, txt_test])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
+            pre_cmds.append([])
+            cmd_args.append([txt_test, txt_tmp])
+            verify_cmds.append([ls_cmd, '-l', txt_tmp])
+            post_cmds.append([rm_cmd, txt_tmp])
+            pre_cmds.append([mkdir_cmd, dir_test])
+            cmd_args.append([txt_test, '%s/' % dir_test])
+            verify_cmds.append([ls_cmd, '-l', '%s/%s' % (dir_test, txt_test)])
+            post_cmds.append([rm_cmd, '-r', dir_test])
+            pre_cmds.append([mkdir_cmd, dir_test])
+            cmd_args.append([txt_test, '%s/%s' % (dir_test, txt_tmp)])
+            verify_cmds.append([ls_cmd, '-l', '%s/%s' % (dir_test, txt_tmp)])
+            post_cmds.append([rm_cmd, '-r', dir_test])
+            pre_cmds.append([mkdir_cmd, dir_test])
+            cmd_args.append(['%s.*' % test_prefix, '%s/' % dir_test])
+            verify_cmds.append([ls_cmd, '-l', '%s/%s.*' % (dir_test, test_prefix)])
+            post_cmds.append([rm_cmd, '-r', dir_test])
     elif op == 'read':
-            cmd_args.append('0 16 %s -' % txt_helper)
+            cmd_args.append(['0', '16', txt_helper, '-'])
     elif op == 'rm':
-            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
-            cmd_args.append(txt_test)
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
+            pre_cmds.append([put_cmd, txt_test, '.'])
+            cmd_args.append([txt_test])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
     elif op == 'rmdir':
-            pre_cmds.append('%s %s' % (mkdir_cmd, dir_test))
-            cmd_args.append(dir_test)
-            verify_cmds.append('%s -la %s' % (ls_cmd, dir_test))
-            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
+            pre_cmds.append([mkdir_cmd, dir_test])
+            cmd_args.append([dir_test])
+            verify_cmds.append([ls_cmd, '-la', dir_test])
+            post_cmds.append([rm_cmd, '-r', dir_test])
     elif op == 'submit':
-            cmd_args.append(mrsl_test)
-            # TODO: cancel test job
+            cmd_args.append([mrsl_test])
+            cmd_args.append(['-l', mrsl_helper])
+            # TODO: cancel test jobs
     elif op == 'touch':
-            pre_cmds.append('%s %s' % (rm_cmd, txt_test))
-            cmd_args.append(txt_test)
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
-            post_cmds.append('%s %s' % (rm_cmd, txt_test))
-            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
-            cmd_args.append(txt_test)
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
-            post_cmds.append('%s %s' % (rm_cmd, txt_test))
+            pre_cmds.append([rm_cmd, txt_test])
+            cmd_args.append([txt_test])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
+            pre_cmds.append([put_cmd, txt_test, '.'])
+            cmd_args.append([txt_test])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
     elif op == 'truncate':
-            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
-            cmd_args.append(txt_test)
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
-            post_cmds.append('%s %s' % (rm_cmd, txt_test))
+            pre_cmds.append([put_cmd, txt_test, '.'])
+            cmd_args.append([txt_test])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
     elif op == 'unzip':
-            pre_cmds.append('%s %s %s' % (zip_cmd, txt_helper, zip_test))
-            cmd_args.append('%s ./' % zip_test)
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_helper))
-            post_cmds.append('%s %s' % (rm_cmd, zip_test))
+            pre_cmds.append([zip_cmd, txt_helper, zip_test])
+            cmd_args.append([zip_test,'./'])
+            verify_cmds.append([ls_cmd, '-l', txt_helper])
+            post_cmds.append([rm_cmd, zip_test])
     elif op == 'write':
-            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
-            cmd_args.append('4 8 %s %s' % (txt_test, txt_test))
-            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
-            post_cmds.append('%s %s' % (rm_cmd, txt_test))
+            pre_cmds.append([put_cmd, txt_test, '.'])
+            cmd_args.append(['4', '8', txt_test, txt_test])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
     elif op == 'zip':
-            cmd_args.append('%s %s' % (txt_helper, zip_test))
-            verify_cmds.append('%s -l %s' % (ls_cmd, zip_test))
-            post_cmds.append('%s %s' % (rm_cmd, zip_test))
+            cmd_args.append([txt_helper, zip_test])
+            verify_cmds.append([ls_cmd, '-l', zip_test])
+            post_cmds.append([rm_cmd, zip_test])
     else:
             print 'No test available for %s!' % op
             return False
@@ -2029,9 +2122,8 @@ def test_function(lang, curl_cmd, curl_flags=''):
         if pre_cmds[index:] and pre_cmds[index]:
             pre = pre_cmds[index]
             print 'setting up with: %s' % pre
-            subprocess.call(pre.split(' '), stdout=subprocess.PIPE)
-        ret = subprocess.call(('%s %s' % (cmd, args)).split(),
-                              stdout=subprocess.PIPE)
+            subprocess.call(pre, stdout=subprocess.PIPE)
+        ret = subprocess.call([cmd] + args, stdout=subprocess.PIPE)
         if ret == 0:
             print '   %s test %d SUCCEEDED' % (op, index)
         else:
@@ -2039,11 +2131,11 @@ def test_function(lang, curl_cmd, curl_flags=''):
         if verify_cmds[index:]:
             verify = verify_cmds[index]
             print 'verifying with: %s' % verify
-            subprocess.call(verify.split(' '))
+            subprocess.call(verify)
         if post_cmds[index:]:
             post = post_cmds[index]
             print 'cleaning up with: %s' % post
-            subprocess.call(post.split(' '), stdout=subprocess.PIPE)
+            subprocess.call(post, stdout=subprocess.PIPE)
         index += 1
     return ret
 """
@@ -2055,17 +2147,17 @@ def test_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def touch_function(lang, curl_cmd, curl_flags=''):
-    """Call the touch cgi script with 'path' as argument."""
+def touch_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with path_list as argument"""
 
-    relative_url = '"cgi-bin/touch.py"'
+    relative_url = '"%s/touch.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2073,7 +2165,6 @@ def touch_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'touch_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -2090,16 +2181,17 @@ def touch_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def truncate_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/truncate.py"'
+def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with path_list as argument"""
+
+    relative_url = '"%s/truncate.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;size=$size;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags;size=$size"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;size=%s;%s' % (server_flags, size, path_list)"
+        post_data = "'output_format=txt;flags=%s;size=%s' % (server_flags, size)"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2107,7 +2199,6 @@ def truncate_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'truncate_file', ['size', 'path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -2123,24 +2214,19 @@ def truncate_function(lang, curl_cmd, curl_flags='--compressed'):
     s += end_function(lang, 'truncate_file')
     return s
 
-
-def unzip_function(lang, curl_cmd, curl_flags='--compressed'):
-    """Call the corresponding cgi script with the string 'src_list' as argument. Thus
-    the variable 'src_list' should be on the form
-    \"src=pattern1[;src=pattern2[ ... ]]\"
-    This may seem a bit awkward but it's difficult to do in a better way when
-    begin_function() doesn't support variable length or array args.
+def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+    """Call the corresponding cgi script with the 'src_list' and dst as
+    argument.
     """
 
-    relative_url = '"cgi-bin/unzip.py"'
+    relative_url = '"%s/unzip.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;dst=$dst;$src_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;dst=%s;%s' % (server_flags, dst, src_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2148,7 +2234,6 @@ def unzip_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'unzip_file', ['src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -2165,15 +2250,17 @@ def unzip_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def wc_function(lang, curl_cmd, curl_flags=''):
-    relative_url = '"cgi-bin/wc.py"'
+def wc_function(configuration, lang, curl_cmd, curl_flags=''):
+    """Call the corresponding cgi script with path_list as argument"""
+
+    relative_url = '"%s/wc.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$path_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, path_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2181,7 +2268,6 @@ def wc_function(lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'wc_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -2198,18 +2284,31 @@ def wc_function(lang, curl_cmd, curl_flags=''):
     return s
 
 
-def write_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/rangefileaccess.py"'
+def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the src_path, dst_path, first
+    and last arguments.
+    """
+
+    # TODO: switch to default get_xgi_bin when rangefileaccess is ported 
+    relative_url = '"%s/rangefileaccess.py"' % get_xgi_bin(configuration, force_legacy=True)
+    # TODO: switch to post_data and urlenc_data when rangefileaccess is ported 
+    # query = '""'
     post_data = '""'
     urlenc_data = '""'
     if lang == 'sh':
         query = \
-            '"?output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$dst_path"'
-        curl_target = '"--upload-file $src_path"'
+              '"?output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$dst_path"'
+        #post_data = \
+        #    '"output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
+        #urlenc_data = '("path=$dst_path")'
+        curl_target = '("--upload-file \'$src_path\'")'
     elif lang == 'python':
         query = \
-            "'?output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (server_flags, first, last, dst_path)"
-        curl_target = "'--upload-file %s' % src_path"
+              "'?output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (server_flags, first, last, dst_path)"
+        #post_data = \
+        #    "'output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s' % (server_flags, first, last)"
+        #urlenc_data = '["path=%s" % dst_path]'
+        curl_target = "['--upload-file', src_path]"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2235,23 +2334,19 @@ def write_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def zip_function(lang, curl_cmd, curl_flags='--compressed'):
-    """Call the corresponding cgi script with the string 'src_list' as argument. Thus
-    the variable 'src_list' should be on the form
-    \"src=pattern1[;src=pattern2[ ... ]]\"
-    This may seem a bit awkward but it's difficult to do in a better way when
-    begin_function() doesn't support variable length or array args.
+def zip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the 'src_list', dst and
+    current_dir as arguments.
     """
 
-    relative_url = '"cgi-bin/zip.py"'
+    relative_url = '"%s/zip.py"' % get_xgi_bin(configuration)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;flags=$server_flags;current_dir=$current_dir;dst=$dst;$src_list"'
+        post_data = '"output_format=txt;flags=$server_flags"'
+        urlenc_data = '("${src_list[@]}" "current_dir=$current_dir" "dst=$dst")'
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;flags=%s;current_dir=%s;dst=%s;%s' % (server_flags, current_dir, dst, src_list)"
+        post_data = "'output_format=txt;flags=%s' % server_flags"
+        urlenc_data = 'src_list + ["current_dir=" + current_dir, "dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2259,7 +2354,6 @@ def zip_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'zip_file', ['current_dir', 'src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -2297,48 +2391,59 @@ def expand_list(
 
     ___MIG FILES___
 
-    test.txt test.txt
-    """
+    test.txt%stest.txt
+    """ % file_dest_sep
 
     s = ''
     if lang == 'sh':
-        s += \
-            """
+        s += """
 declare -a %s
 # Save original args
 orig_args=(\"${%s[@]}\")
 
 index=1
-for pattern in \"${orig_args[@]}\"; do
+# For loop automatically expands wild cards
+# we set IFS empty to prevent spaces in filenames breaking things
+IFS=''
+for pattern in ${src_list[@]}; do
     expanded_path=$(expand_name \"path=$pattern\" \"$server_flags\" \"%s\" 2> /dev/null)
-    set -- $expanded_path
-    shift; shift
-    exit_code=\"$1\"
-    shift; shift; shift; shift; shift; shift; shift; shift; shift; shift; shift
+    # Expected output format is something like
+    # Exit code: 0 Description OK (done in 0.047s)
+    # Title: BLABLA Files
+    #
+    # ___BLABLA FILES___
+    #
+    # SRC%sDST
+    exit_code=\"${expanded_path/Exit code: /}\"
+    exit_code=\"${exit_code/ Description */}\"
     if [ \"$exit_code\" -ne \"0\" ]; then
-"""\
-             % (expanded_list, input_list, str(destinations).lower())
+""" % (expanded_list, input_list, str(destinations).lower(), file_dest_sep)
         if warnings:
             s += \
                 """
         # output warning/error message(s) from expand
         echo \"$0: $@\"
 """
-        s += \
-            """
+        s += """
         continue
     fi
-    while [ \"$#\" -gt \"0\" ]; do
-        %s[$index]=$1
-        index=$((index+1))
-        shift
+    # Strip everything before the actual line with expansion
+    expand_paths=\"${expanded_path/Exit code: *___$'\\n\\n'/}\"
+    while [ ! -z \"$expand_paths\" ]; do
+        #echo \"DEBUG: expand_paths: ${expand_paths}\"
+        line=\"${expand_paths/$'\\n'*/}\"            
+        src=\"${line/%s*/}\"
+        dst=\"${line/*%s/}\"
+        #echo \"DEBUG: expand_paths: src $src ; dst $dst\"
+        %s+=(\"$src\" \"$dst\")
+        # Move to next line
+        expand_paths=\"${expand_paths/$line/}\"
+        expand_paths=\"${expand_paths/$'\\n'/}\"
     done
 done
-"""\
-             % expanded_list
+"""% (file_dest_sep, file_dest_sep, expanded_list)
     elif lang == 'python':
-        s += \
-            """
+        s += """
 %s = []
 for pattern in %s:
     (status, out) = expand_name('path=' + pattern, server_flags, '%s')
@@ -2372,10 +2477,6 @@ def shared_main(op, lang):
     return eval('%s_main' % op)(lang)
 
 
-# TODO: switch to new array/list argument format in all multi target function calls
-# (No need to manually build var=a;var=b;.. in main when functions handle lists)
-
-
 def cancel_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -2391,27 +2492,15 @@ def cancel_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'job_id_list', 'job_id')
     if lang == 'sh':
-        s += \
-            """
-# Build the job_id string used directly:
-# 'job_id=$1;...;job_id=$N'
-orig_args=(\"$@\")
-job_id_list=\"job_id=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    job_id_list=\"$job_id_list;job_id=$1\"
-    shift
-done
-cancel_job $job_id_list
+        s += """
+cancel_job ${job_id_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the job_id string used directly:
-# 'job_id=$1;...;job_id=$N'
-job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
+        s += """
 (status, out) = cancel_job(job_id_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2434,27 +2523,15 @@ def cat_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ $# -gt "0" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-cat_file $path_list
+        s += """
+cat_file ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = cat_file(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2480,29 +2557,20 @@ def cp_main(lang):
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'src_list', 'src')
     if lang == 'sh':
-        s += \
-            """
-# Build the src string used directly:
-# 'src=$1;...;src=$(N-1)' dst=$N
-orig_args=(\"$@\")
-src_list=\"src=$1\"
-shift
-while [ $# -gt 1 ]; do
-    src_list=\"$src_list;src=$1\"
-    shift
-done
-dst=$1
-cp_file $src_list $dst
+        s += """
+last_index=$((${#src_list[@]}-1))
+dst=\"${orig_args[$last_index]}\"
+unset src_list[$last_index]
+cp_file ${src_list[@]} \"$dst\"
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the src string used directly:
-# 'src=$1;...;src=$(N-1)' dst=$N
-src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
+        s += """
+del src_list[-1]
 dst = sys.argv[-1]
 (status, out) = cp_file(src_list, dst)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2526,8 +2594,7 @@ def doc_main(lang):
     s += check_conf_readable(lang)
     s += configure(lang)
     if lang == 'sh':
-        s += \
-            """
+        s += """
 if [ $# -gt 0 ]; then
     # SearchList=()
     TopicList=(\"$@\")
@@ -2544,8 +2611,7 @@ for Topic in \"${TopicList[@]}\"; do
 done
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
 if len(sys.argv) - 1 > 0:
     SearchList = ""
     TopicList = sys.argv[1:]
@@ -2560,6 +2626,7 @@ for Search in SearchList:
 for Topic in TopicList:
     (status, topic_out) = show_doc("", Topic)
     out += topic_out
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2574,8 +2641,6 @@ def filemetaio_main(lang):
     Generate main part of corresponding scripts.
     
     lang specifies which script language to generate in.
-    Currently 'sh' and 'python' are supported.
-    
     """
 
     s = ''
@@ -2592,32 +2657,28 @@ def filemetaio_main(lang):
     s += check_conf_readable(lang)
     s += configure(lang)
     if lang == 'sh':
-        s += \
-            """
+        s += """
 # Build the arg string used directly:
-# action=$1 path=$2 'arg=$3;...;arg=$N
+# action=$1 path=$2 ("arg=$3" ... "arg=$N")
+declare -a arg_list
 orig_args=(\"$@\")
 action=\"$1\"
 shift
 path=\"$1\"
 shift
-arg_list=\"$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    arg_list=\"$arg_list;$1\"
-    shift
-done
-filemetaio $action $path $arg_list
+arg_list=(\"$@\")
+shift $#
+filemetaio \"$action\" \"$path\" \"${arg_list[@]}\"
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
 # Build the arg string used directly:
-# action=$1 path=$2 'arg=$3;...;arg=$N'
+# action=$1 path=$2 ['abc=$3', ..., 'xyz=$N']
 action = \"%s\" % sys.argv[1]
 path = \"%s\" % sys.argv[2]
-arg_list = \"%s\" % \";\".join(sys.argv[3:])
+arg_list = %s % sys.argv[3:]
 (status, out) = filemetaio(action, path, arg_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2652,42 +2713,43 @@ def get_main(lang):
         # Advice about parsing taken from:
         # http://www.shelldorado.com/goodcoding/cmdargs.html
 
-        s += \
-            """
+        s += """
 orig_args=(\"$@\")
 src_list=(\"$@\")
 raw_dst=\"${src_list[$(($#-1))]}\"
 unset src_list[$(($#-1))]
 """
         s += expand_list(lang, 'src_list', 'expanded_list', True)
-        s += \
-            """
+        s += """
 # Use '--' to handle case where no expansions succeeded
 set -- \"${expanded_list[@]}\"
+# Expand doesn't automatically split the output lines, so they are still on the
+#src%sdst
+# form here.
 while [ $# -gt 0 ]; do
-    src=$1
-    dest=$2
+    src=\"$1\"
+    dest=\"$2\"
     shift; shift
     dst=\"$raw_dst/$dest\"
     get_file \"$src\" \"$dst\"
 done
-"""
+""" % file_dest_sep
     elif lang == 'python':
         s += """
 raw_dst = sys.argv[-1]
 src_list = sys.argv[1:-1]
 """
         s += expand_list(lang, 'src_list', 'expanded_list', True)
-        s += \
-            """
-# Expand does not automatically split the outputlines, so they are still on
-# the src\tdest form
+        s += """
+# Expand doesn't automatically split the output lines, so they are still on the
+#src%sdest
+# form here.
 for line in expanded_list:
-    src, dest = line.split()
+    src, dest = line.split('%s', 1)
     dst = raw_dst + os.sep + dest
     (status, out) = get_file(src, dst)
 sys.exit(status)
-"""
+""" % (file_dest_sep, file_dest_sep)
     else:
         print 'Error: %s not supported!' % lang
 
@@ -2709,30 +2771,21 @@ def grep_main(lang):
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# pattern=$1 'path=$2;...;path=$N'
-orig_args=(\"$@\")
-pattern=\"$1\"
-shift
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-grep_file $pattern $path_list
+        s += """
+# We included pattern in packing above - remove again
+pattern=\"${orig_args[1]}\"
+unset path_list[0]
+grep_file \"$pattern\" ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# pattern=$1 'path=$2;...;path=$N'
+        s += """
+# We included pattern in packing above - remove again
 pattern = \"%s\" % sys.argv[1]
-path_list = \"path=%s\" % \";path=\".join(sys.argv[2:])
+del path_list[0]
 (status, out) = grep_file(pattern, path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2763,27 +2816,15 @@ def head_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ $# -gt "0" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-head_file $lines $path_list
+        s += """
+head_file $lines ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = head_file(lines, path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2798,8 +2839,6 @@ def jobaction_main(lang):
     Generate main part of corresponding scripts.
     
     lang specifies which script language to generate in.
-    Currently 'sh' and 'python' are supported.
-    
     """
 
     s = ''
@@ -2808,30 +2847,21 @@ def jobaction_main(lang):
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'job_id_list', 'job_id')
     if lang == 'sh':
-        s += \
-            """
-# Build the job_id string used directly:
-# action=$1 'job_id=$2;...;job_id=$N'
-orig_args=(\"$@\")
-action=\"$1\"
-shift
-job_id_list=\"job_id=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    job_id_list=\"$job_id_list;job_id=$1\"
-    shift
-done
-job_action $action $job_id_list
+        s += """
+# We included action in packing above - remove again
+action=\"${orig_args[1]}\"
+unset job_id_list[0]
+job_action $action ${job_id_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the job_id string used directly:
-# action=$1 'job_id=$2;...;job_id=$N'
+        s += """
+# We included action in packing above - remove again
 action = \"%s\" % sys.argv[1]
-job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[2:])
+del job_id_list[0]
 (status, out) = job_action(action, job_id_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2854,35 +2884,30 @@ def liveio_main(lang):
     s += arg_count_check(lang, 4, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'src_list', 'src')
     if lang == 'sh':
-        s += \
-            """
-# Build the src string used directly:
-# action=$1 job_id=$2 'src=$3;...;src=$((N-1)' dst=$N
-orig_args=(\"$@\")
-action=\"$1\"
-shift
-job_id=\"$1\"
-shift
-src_list=\"src=$1\"
-shift
-while [ \"$#\" -gt \"1\" ]; do
-    src_list=\"$src_list;src=$1\"
-    shift
-done
-dst=\"$1\"
-job_liveio $action $job_id $src_list $dst
+        s += """
+# We included all args in packing above - remove again
+action=\"${orig_args[1]\"
+job_id=\"${orig_args[2]\"
+last_index=$((${#src_list[@]}-1))
+dst=\"${orig_args[$last_index]\"
+unset src_list[$last_index]
+unset src_list[1]
+unset src_list[0]
+job_liveio $action $job_id ${src_list[@]} \"$dst\"
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the src string used directly:
-# action=$1 job_id=$2 'src=$3;...;src=$((N-1)' dst=$N
+        s += """
+# We included all args in packing above - remove again
 action = \"%s\" % sys.argv[1]
 job_id = \"%s\" % sys.argv[2]
-src_list = \"src=%s\" % \";src=\".join(sys.argv[3:-1])
 dst = \"%s\" % sys.argv[-1]
+del src_list[-1]
+del src_list[1]
+del src_list[0]
 (status, out) = job_liveio(action, job_id, src_list, dst)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2923,33 +2948,20 @@ def ls_main(lang):
     s += arg_count_check(lang, None, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-if [ $# -gt 0 ]; then
-    path_list=\"path=$1\"
-    shift
-else
-    path_list=\"path=.\"
+        s += """
+if [ ${#orig_args[@]} -eq 0 ]; then
+    path_list+=('path=.')
 fi
-while [ $# -gt "0" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-ls_file $path_list
+ls_file ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-if len(sys.argv) == 1:
-    sys.argv.append(\".\")
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
+if not sys.argv[1:]:
+    path_list += ['path=.']
 (status, out) = ls_file(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -2974,27 +2986,15 @@ def md5sum_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-md5_sum $path_list
+        s += """
+md5_sum ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = md5_sum(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3026,27 +3026,15 @@ def mkdir_main(lang):
     s += arg_count_check(lang, 1, 2)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-mk_dir $path_list
+        s += """
+mk_dir ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = mk_dir(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3072,14 +3060,14 @@ def mqueue_main(lang):
     if lang == 'sh':
         s += """
 # optional third argument depending on action - add dummy
-job_mqueue $@ ''
+job_mqueue \"$@\" ''
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
 # optional third argument depending on action - add dummy
 sys.argv.append('')
 (status, out) = job_mqueue(*(sys.argv[1:4]))
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3105,29 +3093,22 @@ def mv_main(lang):
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'src_list', 'src')
     if lang == 'sh':
-        s += \
-            """
-# Build the src string used directly:
-# 'src=$1;...;src=$(N-1)' dst=$N
-orig_args=(\"$@\")
-src_list=\"src=$1\"
-shift
-while [ $# -gt 1 ]; do
-    src_list=\"$src_list;src=$1\"
-    shift
-done
-dst=$1
-mv_file $src_list $dst
+        s += """
+# We included dst in packing above - remove again
+last_index=$((${#src_list[@]}-1))
+dst=\"${orig_args[$last_index]}\"
+unset src_list[$last_index]
+mv_file ${src_list[@]} \"$dst\"
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the src string used directly:
-# 'src=$1;...;src=$(N-1)' dst=$N
-src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
-dst = sys.argv[-1]
+        s += """
+# We included dst in packing above - remove again
+dst = \"%s\" % sys.argv[-1]
+del src_list[-1]
 (status, out) = mv_file(src_list, dst)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3178,9 +3159,9 @@ def put_main(lang):
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    # NOTE: using pack_list is cumbersome here so we don't
     if lang == 'sh':
-        s += \
-            """
+        s += """
 src_list=(\"$@\")
 raw_dst=\"${src_list[$(($#-1))]}\"
 unset src_list[$(($#-1))]
@@ -3192,7 +3173,9 @@ else
     dst=\"$raw_dst\"
 fi
 
-# The for loop automatically expands any wild cards in src_list
+# For loop automatically expands wild cards
+# we set IFS empty to prevent spaces in filenames breaking things
+IFS=''
 for src in ${src_list[@]}; do
     if [ ! -e \"$src\" ]; then
         echo \"No such file or directory: $src !\"
@@ -3226,12 +3209,10 @@ for src in ${src_list[@]}; do
 done
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
 from glob import glob
 
 raw_list = sys.argv[1:-1]
-
 raw_dst = sys.argv[-1]
 if \".\" == raw_dst:
     dst = \"\"
@@ -3239,6 +3220,7 @@ else:
     dst = raw_dst
 
 # Expand sources
+status = 2
 src_list = []
 for src in raw_list:
     expanded = glob(src)
@@ -3272,9 +3254,11 @@ for src in src_list:
                 src_path = os.path.join(root, name)
                 dst_path = os.path.join(dst, rel_root, name)
                 (status, out) = put_file(src_path, dst_path, submit_mrsl, extract_package)
+                # Trailing comma to prevent double newlines
                 print ''.join(out),
     else:
         (status, out) = put_file(src, dst, submit_mrsl, extract_package)
+        # Trailing comma to prevent double newlines
         print ''.join(out),
 sys.exit(status)
 """
@@ -3299,12 +3283,12 @@ def read_main(lang):
     s += configure(lang)
     if lang == 'sh':
         s += """
-read_file $@
+read_file \"$@\"
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
 (status, out) = read_file(*(sys.argv[1:]))
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3327,27 +3311,15 @@ def resubmit_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'job_id_list', 'job_id')
     if lang == 'sh':
-        s += \
-            """
-# Build the job_id string used directly:
-# 'job_id=$1;...;job_id=$N'
-orig_args=(\"$@\")
-job_id_list=\"job_id=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    job_id_list=\"$job_id_list;job_id=$1\"
-    shift
-done
-resubmit_job $job_id_list
+        s += """
+resubmit_job ${job_id_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the job_id_list string used directly:
-# 'job_id=$1;...;job_id=$N'
-job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
+        s += """
 (status, out) = resubmit_job(job_id_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3380,27 +3352,15 @@ def rm_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-rm_file $path_list
+        s += """
+rm_file ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = rm_file(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3432,27 +3392,15 @@ def rmdir_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-rm_dir $path_list
+        s += """
+rm_dir ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = rm_dir(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3477,27 +3425,15 @@ def sha1sum_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-md5_sum $path_list
+        s += """
+sha1_sum ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
-(status, out) = md5_sum(path_list)
+        s += """
+(status, out) = sha1_sum(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3520,27 +3456,15 @@ def stat_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-stat_file $path_list
+        s += """
+stat_file ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = stat_file(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3575,27 +3499,15 @@ def status_main(lang):
     s += arg_count_check(lang, None, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'job_id_list', 'job_id')
     if lang == 'sh':
-        s += \
-            """
-# Build the job_id string used directly:
-# 'job_id=$1;...;job_id=$N'
-orig_args=(\"$@\")
-job_id_list=\"job_id=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    job_id_list=\"$job_id_list;job_id=$1\"
-    shift
-done
-job_status $job_id_list $max_job_count
+        s += """
+job_status ${job_id_list[@]} $max_job_count
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the job_id string used directly:
-# 'job_id=$1;...;job_id=$N'
-job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
+        s += """
 (status, out) = job_status(job_id_list, max_job_count)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3614,36 +3526,54 @@ def submit_main(lang):
 
     s = ''
     s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
+    if lang == 'sh':
+        s += "local_file=0\n"
+        s += parse_options(lang, 'l',
+                           '        l)  local_file=1;;'
+                           )
+    elif lang == 'python':
+        s += "local_file = False\n"
+        s += parse_options(lang, 'l',
+                           '    elif opt == "-l":\n        local_file = True'
+                           )
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-extract_package=1
-submit_mrsl=1
+        s += """
+if [ \"$local_file\" -eq 1 ]; then
+    extract_package=1
+    submit_mrsl=1
 
-src_list=(\"$@\")
+    src_list=(\"$@\")
 
-for src in \"${src_list[@]}\"; do
-    dst=`basename \"$src\"`
-    submit_file \"$src\" $dst $submit_mrsl $extract_package
-done
+    for src in \"${src_list[@]}\"; do
+        dst=`basename \"$src\"`
+        __put_file \"$src\" $dst $submit_mrsl $extract_package
+    done
+else
+    submit_file ${path_list[@]}
+fi
 """
     elif lang == 'python':
-        s += \
-            """
-extract_package = True
-submit_mrsl = True
+        s += """
+if local_file:
+    extract_package = True
+    submit_mrsl = True
 
-src_list = sys.argv[1:]
+    src_list = sys.argv[1:]
 
-for src in src_list:
-    dst = os.path.basename(src)
-    (status, out) = submit_file(src, dst, submit_mrsl, extract_package)
+    for src in src_list:
+        dst = os.path.basename(src)
+        (status, out) = __put_file(src, dst, submit_mrsl, extract_package)
+        # Trailing comma to prevent double newlines
+        print ''.join(out),
+else:
+    (status, out) = submit_file(path_list)
+    # Trailing comma to prevent double newlines
     print ''.join(out),
-sys.exit(status)
+    sys.exit(status)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -3672,27 +3602,15 @@ def tail_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-tail_file $lines $path_list
+        s += """
+tail_file $lines ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = tail_file(lines, path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3724,21 +3642,22 @@ def test_main(lang):
     s += check_conf_readable(lang)
     s += configure(lang)
     if lang == 'sh':
-        s += \
-            """
+        s += """
 # Prepare for file operations
-echo 'this is a test file used by the MiG self test' > ${test_prefix}.txt
-echo '::EXECUTE::' > ${test_prefix}.mRSL
-echo 'pwd' >> ${test_prefix}.mRSL
+echo 'this is a test file used by the MiG self test' > \"${test_prefix}.txt\"
+echo '::EXECUTE::' > \"${test_prefix}.mRSL\"
+echo 'pwd' >> \"${test_prefix}.mRSL\"
 
-echo 'Upload test file used in other tests'
-put_file ${test_prefix}.txt ${test_prefix}-helper.txt 0 0 >& /dev/null
-if [ $? -ne 0 ]; then
-    echo 'Upload failed!'
-    exit 1
-else
-    echo 'Upload succeeded'
-fi
+echo 'Upload test files used in other tests'
+for ext in txt mRSL; do
+    put_file \"${test_prefix}.${ext}\" \"${test_prefix}-helper.${ext}\" 0 0 >& /dev/null
+    if [ $? -ne 0 ]; then
+        echo \"Upload ${test_prefix}.${ext} failed!\"
+        exit 1
+    else
+        echo \"Upload ${test_prefix}.${ext} succeeded\"
+    fi
+done
 
 if [ $# -eq 0 ]; then
     op_list=(%s)
@@ -3752,12 +3671,12 @@ done
 
 # Clean up (one file at a time required here)
 echo 'Remove test files used in other tests'
-rm_file \"${test_prefix}-helper.txt\"
-rm_file \"${test_prefix}.mRSL\"
+for ext in txt mRSL; do
+    rm_file \"path=${test_prefix}-helper.${ext}\" >& /dev/null
+done
 """ % ' '.join(script_ops)
     elif lang == 'python':
-        s += \
-            """
+        s += """
 # Prepare for file operations
 txt_fd = open(test_prefix + '.txt', 'w')
 txt_fd.write('''this is a test file used by the MiG self test
@@ -3769,14 +3688,16 @@ pwd
 ''')
 job_fd.close()
 
-print 'Upload test file used in other tests'
-(ret, out) = put_file(test_prefix + '.txt', test_prefix + '-helper.txt',
-                      False, False)
-if ret != 0:
-    print 'Upload failed!'
-    sys.exit(1)
-else:
-    print 'Upload succeeded'
+print 'Upload test files used in other tests'
+for ext in ('txt', 'mRSL'):
+    (ret, out) = put_file(test_prefix + '.' + ext, \
+                          test_prefix + '-helper.' + ext, \
+                          False, False)
+    if ret != 0:
+        print 'Upload ' + test_prefix + '.' + ext + ' failed!'
+        sys.exit(1)
+    else:
+        print 'Upload ' + test_prefix + '.' + ext + ' succeeded'
 
 if sys.argv[1:]:
     op_list = sys.argv[1:]
@@ -3788,7 +3709,8 @@ for op in op_list:
     
 # Clean up
 print 'Remove test files used in other tests'
-rm_file([test_prefix + '-helper.txt', test_prefix + '.mRSL'])
+for ext in ('txt', 'mRSL'):
+    rm_file(['path=' + test_prefix + '-helper.' + ext])
 """ % script_ops
     else:
         print 'Error: %s not supported!' % lang
@@ -3813,27 +3735,15 @@ def touch_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-touch_file $path_list
+        s += """
+touch_file ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = touch_file(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3864,27 +3774,16 @@ def truncate_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-truncate_file $size $path_list
+        s += """
+truncate_file $size ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
+        s += """
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = truncate_file(size, path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3910,29 +3809,22 @@ def unzip_main(lang):
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'src_list', 'src')
     if lang == 'sh':
-        s += \
-            """
-# Build the src string used directly:
-# 'src=$1;...;src=$(N-1)' dst=$N
-orig_args=(\"$@\")
-src_list=\"src=$1\"
-shift
-while [ $# -gt 1 ]; do
-    src_list=\"$src_list;src=$1\"
-    shift
-done
-dst=$1
-unzip_file $src_list $dst
+        s += """
+# We included dst in packing above - remove again
+last_index=$((${#src_list[@]}-1))
+dst=\"${orig_args[$last_index]}\"
+unset src_list[$last_index]
+
+unzip_file ${src_list[@]} \"$dst\"
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the src string used directly:
-# 'src=$1;...;src=$(N-1)' dst=$N
-src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
+        s += """
 dst = sys.argv[-1]
+del src_list[-1]
 (status, out) = unzip_file(src_list, dst)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -3970,27 +3862,15 @@ def wc_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-orig_args=(\"$@\")
-path_list=\"path=$1\"
-shift
-while [ \"$#\" -gt \"0\" ]; do
-    path_list=\"$path_list;path=$1\"
-    shift
-done
-wc_file $path_list
+        s += """
+wc_file ${path_list[@]}
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the path string used directly:
-# 'path=$1;...;path=$N'
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+        s += """
 (status, out) = wc_file(path_list)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -4015,12 +3895,12 @@ def write_main(lang):
     s += configure(lang)
     if lang == 'sh':
         s += """
-write_file $@
+write_file \"$@\"
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
 (status, out) = write_file(*(sys.argv[1:]))
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -4054,30 +3934,24 @@ def zip_main(lang):
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
+    s += pack_list(lang, 'src_list', 'src')
     if lang == 'sh':
-        s += \
-            """
-# Build the src string used directly:
-# 'src=$1;...;src=$(N-1)' dst=$N
-orig_args=(\"$@\")
-src_list=\"src=$1\"
-shift
-while [ $# -gt 1 ]; do
-    src_list=\"$src_list;src=$1\"
-    shift
-done
-dst=$1
+        s += """
+# We included dst in packing above - remove again
+last_index=$((${#src_list[@]}-1))
+dst=\"${orig_args[$last_index]}\"
+unset src_list[$last_index]
+
 # current_dir may be empty
-zip_file \"$current_dir\" $src_list $dst
+zip_file \"$current_dir\" ${src_list[@]} \"$dst\"
 """
     elif lang == 'python':
-        s += \
-            """
-# Build the src string used directly:
-# 'src=$1;...;src=$(N-1)' dst=$N
-src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
+        s += """
+# We included dst in packing above - remove again
 dst = sys.argv[-1]
+del src_list[-1]
 (status, out) = zip_file(current_dir, src_list, dst)
+# Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
 """
@@ -4092,8 +3966,9 @@ sys.exit(status)
 # ######################
 
 
-def generate_cancel(scripts_languages, dest_dir='.'):
-
+def generate_cancel(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4111,7 +3986,7 @@ def generate_cancel(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4119,8 +3994,9 @@ def generate_cancel(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_cat(scripts_languages, dest_dir='.'):
-
+def generate_cat(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4138,7 +4014,7 @@ def generate_cat(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4146,8 +4022,9 @@ def generate_cat(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_cp(scripts_languages, dest_dir='.'):
-
+def generate_cp(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4165,7 +4042,7 @@ def generate_cp(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4173,8 +4050,9 @@ def generate_cp(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_doc(scripts_languages, dest_dir='.'):
-
+def generate_doc(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4192,7 +4070,7 @@ def generate_doc(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4200,8 +4078,9 @@ def generate_doc(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_filemetaio(scripts_languages, dest_dir='.'):
-
+def generate_filemetaio(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4219,14 +4098,15 @@ def generate_filemetaio(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
 
-def generate_get(scripts_languages, dest_dir='.'):
-
+def generate_get(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4244,35 +4124,8 @@ def generate_get(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += expand_function(lang, curl_cmd)
-        script += shared_op_function(op, lang, curl_cmd)
-        script += shared_main(op, lang)
-
-        write_script(script, dest_dir + os.sep + script_name)
-
-    return True
-
-
-def generate_grep(scripts_languages, dest_dir='.'):
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('generate_', '')
-
-    # Generate op script for each of the languages in scripts_languages
-
-    for (lang, interpreter, extension) in scripts_languages:
-        verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
-        script_name = '%s%s.%s' % (mig_prefix, op, extension)
-
-        script = ''
-        script += init_script(op, lang, interpreter)
-        script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
-        script += check_var_function(lang)
-        script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += expand_function(configuration, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4280,8 +4133,9 @@ def generate_grep(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_head(scripts_languages, dest_dir='.'):
-
+def generate_grep(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4299,7 +4153,7 @@ def generate_head(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4307,8 +4161,9 @@ def generate_head(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_jobaction(scripts_languages, dest_dir='.'):
-
+def generate_head(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4326,7 +4181,7 @@ def generate_jobaction(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4334,8 +4189,37 @@ def generate_jobaction(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_lib(script_ops, scripts_languages, dest_dir='.'):
+def generate_jobaction(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
 
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
+def generate_lib(configuration, script_ops, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4351,9 +4235,10 @@ def generate_lib(script_ops, scripts_languages, dest_dir='.'):
         script += version_function(lang)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += expand_function(lang, curl_cmd)
+        script += expand_function(configuration, lang, curl_cmd)
         for function in script_ops:
-            script += shared_op_function(function, lang, curl_cmd)
+            script += shared_op_function(configuration, function, lang,
+                                         curl_cmd)
         script += basic_main_init(lang)
         script += check_conf_readable(lang)
         script += configure(lang)
@@ -4363,8 +4248,9 @@ def generate_lib(script_ops, scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_liveio(scripts_languages, dest_dir='.'):
-
+def generate_liveio(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4382,7 +4268,7 @@ def generate_liveio(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4390,8 +4276,9 @@ def generate_liveio(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_ls(scripts_languages, dest_dir='.'):
-
+def generate_ls(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4409,7 +4296,7 @@ def generate_ls(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4417,8 +4304,9 @@ def generate_ls(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_md5sum(scripts_languages, dest_dir='.'):
-
+def generate_md5sum(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4436,7 +4324,7 @@ def generate_md5sum(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4444,8 +4332,9 @@ def generate_md5sum(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_mkdir(scripts_languages, dest_dir='.'):
-
+def generate_mkdir(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4463,7 +4352,7 @@ def generate_mkdir(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4471,8 +4360,9 @@ def generate_mkdir(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_mqueue(scripts_languages, dest_dir='.'):
-
+def generate_mqueue(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4490,7 +4380,7 @@ def generate_mqueue(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4498,8 +4388,9 @@ def generate_mqueue(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_mv(scripts_languages, dest_dir='.'):
-
+def generate_mv(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4517,7 +4408,7 @@ def generate_mv(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4525,8 +4416,9 @@ def generate_mv(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_put(scripts_languages, dest_dir='.'):
-
+def generate_put(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4547,8 +4439,8 @@ def generate_put(scripts_languages, dest_dir='.'):
 
         # Recursive put requires mkdir
 
-        script += mkdir_function(lang, curl_cmd)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += mkdir_function(configuration, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4556,8 +4448,9 @@ def generate_put(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_read(scripts_languages, dest_dir='.'):
-
+def generate_read(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4575,7 +4468,7 @@ def generate_read(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4583,8 +4476,9 @@ def generate_read(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_resubmit(scripts_languages, dest_dir='.'):
-
+def generate_resubmit(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4602,7 +4496,7 @@ def generate_resubmit(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4610,8 +4504,9 @@ def generate_resubmit(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_rm(scripts_languages, dest_dir='.'):
-
+def generate_rm(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4629,7 +4524,7 @@ def generate_rm(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4637,8 +4532,9 @@ def generate_rm(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_rmdir(scripts_languages, dest_dir='.'):
-
+def generate_rmdir(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4656,7 +4552,7 @@ def generate_rmdir(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4664,8 +4560,9 @@ def generate_rmdir(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_sha1sum(scripts_languages, dest_dir='.'):
-
+def generate_sha1sum(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4683,7 +4580,7 @@ def generate_sha1sum(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4691,8 +4588,9 @@ def generate_sha1sum(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_stat(scripts_languages, dest_dir='.'):
-
+def generate_stat(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4710,7 +4608,7 @@ def generate_stat(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4718,8 +4616,9 @@ def generate_stat(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_status(scripts_languages, dest_dir='.'):
-
+def generate_status(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4737,7 +4636,7 @@ def generate_status(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4745,8 +4644,9 @@ def generate_status(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_submit(scripts_languages, dest_dir='.'):
-
+def generate_submit(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4764,7 +4664,7 @@ def generate_submit(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4772,8 +4672,9 @@ def generate_submit(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_tail(scripts_languages, dest_dir='.'):
-
+def generate_tail(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4791,7 +4692,7 @@ def generate_tail(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4799,8 +4700,9 @@ def generate_tail(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_test(scripts_languages, dest_dir='.'):
-
+def generate_test(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4821,9 +4723,9 @@ def generate_test(scripts_languages, dest_dir='.'):
 
         # use put function for preparation and rm function for clean up
 
-        script += shared_op_function('put', lang, curl_cmd)
-        script += shared_op_function('rm', lang, curl_cmd)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, 'put', lang, curl_cmd)
+        script += shared_op_function(configuration, 'rm', lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4831,8 +4733,9 @@ def generate_test(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_touch(scripts_languages, dest_dir='.'):
-
+def generate_touch(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4850,7 +4753,7 @@ def generate_touch(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4858,8 +4761,9 @@ def generate_touch(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_truncate(scripts_languages, dest_dir='.'):
-
+def generate_truncate(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4877,7 +4781,7 @@ def generate_truncate(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4885,8 +4789,9 @@ def generate_truncate(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_unzip(scripts_languages, dest_dir='.'):
-
+def generate_unzip(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4904,7 +4809,7 @@ def generate_unzip(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4912,8 +4817,9 @@ def generate_unzip(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_wc(scripts_languages, dest_dir='.'):
-
+def generate_wc(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4931,7 +4837,7 @@ def generate_wc(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4939,8 +4845,9 @@ def generate_wc(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_write(scripts_languages, dest_dir='.'):
-
+def generate_write(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4958,7 +4865,7 @@ def generate_write(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -4966,8 +4873,9 @@ def generate_write(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_zip(scripts_languages, dest_dir='.'):
-
+def generate_zip(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -4985,7 +4893,7 @@ def generate_zip(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
         script += shared_main(op, lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -5102,6 +5010,8 @@ if __name__ == '__main__':
             usage()
             sys.exit(1)
 
+    configuration = get_configuration_object()
+
     verbose(verbose_mode, 'using curl from: %s' % curl_cmd)
     verbose(verbose_mode, 'using sh from: %s' % sh_cmd)
     verbose(verbose_mode, 'using python from: %s' % python_cmd)
@@ -5144,15 +5054,15 @@ if __name__ == '__main__':
 
     for op in script_ops:
         generator = 'generate_%s' % op
-        eval(generator)(languages, dest_dir)
+        eval(generator)(configuration, languages, dest_dir)
 
     if shared_lib:
-        generate_lib(script_ops, languages, dest_dir)
+        generate_lib(configuration, script_ops, languages, dest_dir)
 
     if test_script:
-        generate_test(languages, dest_dir)
+        generate_test(configuration, languages, dest_dir)
 
     if include_license:
-        write_license(dest_dir)
+        write_license(configuration, dest_dir)
         
     sys.exit(0)

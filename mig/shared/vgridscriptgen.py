@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridscriptgen - vgrid and resource script generator backend
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,7 +39,8 @@ import os
 import sys
 import getopt
 
-from publicscriptgen import *
+from shared.conf import get_configuration_object
+from shared.publicscriptgen import *
 
 # ######################################
 # Script generator specific functions #
@@ -162,6 +163,7 @@ def vgrid_ten_arguments_usage_function(
 
 
 def vgrid_single_argument_function(
+    configuration,
     lang,
     curl_cmd,
     command,
@@ -169,15 +171,14 @@ def vgrid_single_argument_function(
     curl_flags='',
     ):
     """Core function for single argument scripts"""
-    relative_url = '"cgi-bin/%s.py"' % command
+    relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;%s=$%s"' % (first_arg, first_arg)
+        post_data = '"output_format=txt"'
+        urlenc_data = '("%s=$%s")' % (first_arg, first_arg)
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;%s=' + %s" % (first_arg, first_arg)
+        post_data = "'output_format=txt'"
+        urlenc_data = "['%s=' + %s]" % (first_arg, first_arg)
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -202,6 +203,7 @@ def vgrid_single_argument_function(
 
 
 def vgrid_single_argument_upload_function(
+    configuration,
     lang,
     curl_cmd,
     command,
@@ -245,6 +247,7 @@ def vgrid_single_argument_upload_function(
 
 
 def vgrid_two_arguments_function(
+    configuration,
     lang,
     curl_cmd,
     command,
@@ -253,19 +256,16 @@ def vgrid_two_arguments_function(
     curl_flags='',
     ):
     """Core function for two argument scripts"""
-    relative_url = '"cgi-bin/%s.py"' % command
+    relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;%s=$%s;%s=$%s"' % (first_arg, first_arg,
-                                                   second_arg, second_arg)
+        post_data = '"output_format=txt"'
+        urlenc_data = '("%s=$%s" "%s=$%s")' % (first_arg, first_arg,
+                                               second_arg, second_arg)
     elif lang == 'python':
-        post_data = \
-            "'output_format=txt;%s=' + %s + ';%s=' + %s" % (first_arg,
-                                                            first_arg,
-                                                            second_arg,
-                                                            second_arg)
+        post_data = "'output_format=txt'"
+        urlenc_data = "['%s=' + %s, '%s=' + %s]" % (first_arg, first_arg,
+                                                   second_arg, second_arg)
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -291,6 +291,7 @@ def vgrid_two_arguments_function(
 
 
 def vgrid_ten_arguments_function(
+    configuration,
     lang,
     curl_cmd,
     command,
@@ -307,27 +308,27 @@ def vgrid_ten_arguments_function(
     curl_flags='',
     ):
     """Core function for ten argument scripts"""
-    relative_url = '"cgi-bin/%s.py"' % command
+    relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
-    urlenc_data = '""'
     if lang == 'sh':
-        post_data = \
-            '"output_format=txt;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s"' % \
-            (first_arg, first_arg, second_arg, second_arg, third_arg,
-             third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg,
-             sixth_arg, sixth_arg, seventh_arg, seventh_arg,
-             eighth_arg, eighth_arg, ninth_arg, ninth_arg, 
-             tenth_arg, tenth_arg)
+        post_data = '"output_format=txt"'
+        urlenc_data = '("%s=$%s" "%s=$%s" "%s=$%s" "%s=$%s" "%s=$%s" ' % \
+                      (first_arg, first_arg, second_arg, second_arg, third_arg,
+                       third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg)
+        urlenc_data += '"%s=$%s" "%s=$%s" "%s=$%s" "%s=$%s" "%s=$%s")' % \
+                       (sixth_arg, sixth_arg, seventh_arg, seventh_arg,
+                        eighth_arg, eighth_arg, ninth_arg, ninth_arg, 
+                        tenth_arg, tenth_arg)
     elif lang == 'python':
-        post_data = \
-            ("'output_format=txt;%s=' + %s + ';%s=' + %s + ';%s=' + %s + " + \
-            "';%s=' + %s + ';%s=' + %s + ';%s=' + %s + ';%s=' + %s + " + \
-            "';%s=' + %s + ';%s=' + %s + ';%s=' + %s") % \
-            (first_arg, first_arg, second_arg, second_arg, third_arg,
-             third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg,
-             sixth_arg, sixth_arg, seventh_arg, seventh_arg,
-             eighth_arg, eighth_arg, ninth_arg, ninth_arg, 
-             tenth_arg, tenth_arg)
+        post_data = "'output_format=txt'"
+        urlenc_data = "['%s=' + %s, '%s=' + %s, '%s=' + %s, '%s=' + %s, " % \
+                      (first_arg, first_arg, second_arg, second_arg, third_arg,
+                       third_arg, fourth_arg, fourth_arg)
+        urlenc_data += "'%s=' + %s, '%s=' + %s, '%s=' + %s, '%s=' + %s, " % \
+                       (fifth_arg, fifth_arg, sixth_arg, sixth_arg,
+                        seventh_arg, seventh_arg, eighth_arg, eighth_arg)
+        urlenc_data += "'%s=' + %s, '%s=' + %s]" % (ninth_arg, ninth_arg, 
+                                                    tenth_arg, tenth_arg)
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -377,9 +378,9 @@ def vgrid_single_argument_main(lang):
     if lang == 'sh':
         s += """
 
-first_arg="$1"
+first_arg=\"$1\"
 
-submit_command $first_arg
+submit_command \"$first_arg\"
 """
     elif lang == 'python':
         s += """
@@ -409,17 +410,15 @@ def vgrid_two_arguments_main(lang):
     s += check_conf_readable(lang)
     s += configure(lang)
     if lang == 'sh':
-        s += \
-            """
+        s += """
 
-first_arg="$1"
-second_arg="$2"
+first_arg=\"$1\"
+second_arg=\"$2\"
 
-submit_command $first_arg $second_arg
+submit_command \"$first_arg\" \"$second_arg\"
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
 first_arg = sys.argv[1]
 second_arg = sys.argv[2]
 
@@ -447,25 +446,23 @@ def vgrid_ten_arguments_main(lang):
     s += check_conf_readable(lang)
     s += configure(lang)
     if lang == 'sh':
-        s += \
-            """
+        s += """
 
-first_arg="${1}"
-second_arg="${2}"
-third_arg="${3}"
-fourth_arg="${4}"
-fifth_arg="${5}"
-sixth_arg="${6}"
-seventh_arg="${7}"
-eighth_arg="${8}"
-ninth_arg="${9}"
-tenth_arg="${10}"
+first_arg=\"${1}\"
+second_arg=\"${2}\"
+third_arg=\"${3}\"
+fourth_arg=\"${4}\"
+fifth_arg=\"${5}\"
+sixth_arg=\"${6}\"
+seventh_arg=\"${7}\"
+eighth_arg=\"${8}\"
+ninth_arg=\"${9}\"
+tenth_arg=\"${10}\"
 
-submit_command $first_arg $second_arg $third_arg $fourth_arg $fifth_arg $sixth_arg $seventh_arg $eighth_arg $ninth_arg $tenth_arg
+submit_command \"$first_arg\" \"$second_arg\" \"$third_arg\" \"$fourth_arg\" \"$fifth_arg\" \"$sixth_arg\" \"$seventh_arg\" \"$eighth_arg\" \"$ninth_arg\" \"$tenth_arg\"
 """
     elif lang == 'python':
-        s += \
-            """
+        s += """
 first_arg = sys.argv[1]
 second_arg = sys.argv[2]
 third_arg = sys.argv[3]
@@ -495,6 +492,7 @@ sys.exit(status)
 
 
 def generate_single_argument(
+    configuration,
     op,
     first_arg,
     scripts_languages,
@@ -522,8 +520,8 @@ def generate_single_argument(
                 op, first_arg)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += vgrid_single_argument_function(lang, curl_cmd, op,
-                first_arg, curl_flags='')
+        script += vgrid_single_argument_function(configuration, lang, curl_cmd,
+                                                 op, first_arg, curl_flags='')
         script += vgrid_single_argument_main(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -532,6 +530,7 @@ def generate_single_argument(
 
 
 def generate_single_argument_upload(
+    configuration,
     op,
     content_type,
     first_arg,
@@ -561,6 +560,7 @@ def generate_single_argument_upload(
         script += check_var_function(lang)
         script += read_conf_function(lang)
         script += vgrid_single_argument_upload_function(
+            configuration, 
             lang,
             curl_cmd,
             op,
@@ -576,6 +576,7 @@ def generate_single_argument_upload(
 
 
 def generate_two_arguments(
+    configuration,
     op,
     first_arg,
     second_arg,
@@ -605,6 +606,7 @@ def generate_two_arguments(
         script += check_var_function(lang)
         script += read_conf_function(lang)
         script += vgrid_two_arguments_function(
+            configuration, 
             lang,
             curl_cmd,
             op,
@@ -620,6 +622,7 @@ def generate_two_arguments(
 
 
 def generate_ten_arguments(
+    configuration,
     op,
     first_arg,
     second_arg,
@@ -658,6 +661,7 @@ def generate_ten_arguments(
         script += check_var_function(lang)
         script += read_conf_function(lang)
         script += vgrid_ten_arguments_function(
+            configuration, 
             lang,
             curl_cmd,
             op,
@@ -855,6 +859,8 @@ if __name__ == '__main__':
             usage()
             sys.exit(1)
 
+    configuration = get_configuration_object()
+
     verbose(verbose_mode, 'using curl from: %s' % curl_cmd)
     verbose(verbose_mode, 'using sh from: %s' % sh_cmd)
     verbose(verbose_mode, 'using python from: %s' % python_cmd)
@@ -896,23 +902,26 @@ if __name__ == '__main__':
     # Generate all scripts
 
     for op in script_ops_single_arg:
-        generate_single_argument(op[0], op[1], languages, dest_dir)
+        generate_single_argument(configuration, op[0], op[1], languages,
+                                 dest_dir)
 
     for op in script_ops_single_upload_arg:
-        generate_single_argument_upload(op[0], op[1], op[2], languages,
-                dest_dir)
+        generate_single_argument_upload(configuration, op[0], op[1], op[2],
+                                        languages, dest_dir)
 
     for op in script_ops_two_args:
-        generate_two_arguments(op[0], op[1], op[2], languages, dest_dir)
+        generate_two_arguments(configuration, op[0], op[1], op[2], languages,
+                               dest_dir)
 
     for op in script_ops_ten_args:
-        generate_ten_arguments(op[0], op[1], op[2], op[3], op[4], op[5],
-                               op[6], op[7], op[8], op[9], op[10], languages, dest_dir)
+        generate_ten_arguments(configuration, op[0], op[1], op[2], op[3],
+                               op[4], op[5], op[6], op[7], op[8], op[9],
+                               op[10], languages, dest_dir)
 
     # if test_script:
     #    generate_test(languages)
 
     if include_license:
-        write_license(dest_dir)
+        write_license(configuration, dest_dir)
 
     sys.exit(0)

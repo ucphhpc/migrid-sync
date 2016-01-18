@@ -32,6 +32,7 @@ import os
 import traceback
 
 import shared.returnvalues as returnvalues
+from shared.defaults import file_dest_sep
 from shared.html import get_cgi_html_header, get_cgi_html_footer, vgrid_items
 from shared.objecttypes import validate
 from shared.prettyprinttable import pprint_table
@@ -347,7 +348,7 @@ ctime\t%(ctime)s
                             line += '%s ' % this_file['long_format']
                         line += '%s' % this_file['name']
                         if this_file.has_key('file_dest'):
-                            line += ' %s' % this_file['file_dest']
+                            line += '%s%s' % (file_dest_sep, this_file['file_dest'])
                         line += '\n'
                         lines.append(line)
         elif i['object_type'] == 'jobobj':
