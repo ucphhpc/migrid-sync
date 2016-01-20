@@ -30,7 +30,7 @@
 from urllib import quote as urlquote
 import os
 
-from shared.defaults import job_output_dir
+from shared.defaults import job_output_dir, src_dst_sep
 
 
 class GenJobScriptSh:
@@ -350,9 +350,9 @@ class GenJobScriptSh:
         cmd = '%s=0\n' % result
         for infile in self.job_dict['INPUTFILES']:
 
-            # "filename" or "mig_server_filename resource_filename"
+            # "filename" or "mig_server_filename%src_dst_sep)sresource_filename"
 
-            parts = infile.split()
+            parts = infile.split(src_dst_sep)
             mig_server_filename = str(parts[0])
             try:
                 resource_filename = str(parts[1])
@@ -414,9 +414,9 @@ class GenJobScriptSh:
         cmd = '%s=0\n' % result
         for executables in self.job_dict['EXECUTABLES']:
 
-            # "filename" or "mig_server_filename resource_filename"
+            # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
-            parts = executables.split()
+            parts = executables.split(src_dst_sep)
             mig_server_filename = str(parts[0])
             try:
                 resource_filename = str(parts[1])
@@ -497,9 +497,9 @@ class GenJobScriptSh:
 
         for infile in self.job_dict['INPUTFILES']:
 
-            # "filename" or "mig_server_filename resource_filename"
+            # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
-            parts = infile.split()
+            parts = infile.split(src_dst_sep)
             mig_server_filename = str(parts[0])
             try:
                 resource_filename = str(parts[1])
@@ -527,9 +527,9 @@ class GenJobScriptSh:
 
         for executables in self.job_dict['EXECUTABLES']:
 
-            # "filename" or "mig_server_filename resource_filename"
+            # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
-            parts = executables.split()
+            parts = executables.split(src_dst_sep)
             mig_server_filename = str(parts[0])
             try:
                 resource_filename = str(parts[1])
@@ -591,9 +591,9 @@ class GenJobScriptSh:
 
         for outputfile in self.job_dict['OUTPUTFILES']:
 
-            # "filename" or "resource_filename mig_server_filename"
+            # "filename" or "resource_filename%(src_dst_sep)smig_server_filename"
 
-            parts = outputfile.split()
+            parts = outputfile.split(src_dst_sep)
             resource_filename = str(parts[0])
 
             # We don't need mig_server_filename here so just skip mangling
@@ -673,9 +673,9 @@ class GenJobScriptSh:
         executables = []
         for line in self.job_dict['EXECUTABLES']:
 
-            # "filename" or "mig_server_filename resource_filename"
+            # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
-            parts = line.split()
+            parts = line.split(src_dst_sep)
             mig_server_filename = str(parts[0])
             try:
                 resource_filename = str(parts[1])
@@ -817,9 +817,9 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         
         for mount in self.job_dict.get('MOUNT', []):
  
-            # "mount_point" or "mig_server_path resource_mount_point"
+            # "mount_point" or "mig_server_path%(src_dst_sep)sresource_mount_point"
 
-            parts = mount.split()
+            parts = mount.split(src_dst_sep)
         
             if len(parts) == 1:
                 mig_home_path = ''
@@ -929,10 +929,9 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
  
         for mount in self.job_dict.get('MOUNT', []):
  
-            # "resource_mount_point" or 
-            # "mig_home_path resource_mount_point"
+            # "resource_mount_point" or "mig_home_path%(src_dst_sep)sresource_mount_point"
 
-            parts = mount.split()
+            parts = mount.split(src_dst_sep)
         
             if len(parts) == 1:
                 resource_mount_point = str(parts[0])
@@ -962,9 +961,9 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         cmd = '%s=0\n' % result
         for outputfile in self.job_dict['OUTPUTFILES']:
 
-            # "filename" or "mig_server_filename resource_filename"
+            # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
-            parts = outputfile.split()
+            parts = outputfile.split(src_dst_sep)
             resource_filename = str(parts[0])
             try:
                 mig_server_filename = str(parts[1])
@@ -993,9 +992,9 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         cmd = '%s=0\n' % result
         for outputfile in self.job_dict['OUTPUTFILES']:
 
-            # "filename" or "resource_filename mig_server_filename"
+            # "filename" or "resource_filename%(src_dst_sep)smig_server_filename"
 
-            parts = outputfile.split()
+            parts = outputfile.split(src_dst_sep)
             resource_filename = str(parts[0])
             try:
                 mig_server_filename = str(parts[1])

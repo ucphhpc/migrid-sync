@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mrslparser - Parse mRSL job descriptions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ import shared.mrslkeywords as mrslkeywords
 import shared.parser as parser
 from shared.base import client_id_dir
 from shared.conf import get_configuration_object
-from shared.defaults import default_vgrid, any_vgrid
+from shared.defaults import default_vgrid, any_vgrid, src_dst_sep
 from shared.fileio import unpickle, pickle, send_message_to_grid_script
 from shared.refunctions import is_runtime_environment
 from shared.safeinput import html_escape, valid_path
@@ -250,7 +250,7 @@ environment '%s', therefore the job can not be run on any resources.""" % \
         normalized_field = []
         for line in global_dict[field]:
             normalized_parts = []
-            line_parts = line.split()
+            line_parts = line.split(src_dst_sep)
             if len(line_parts) < 1 or len(line_parts) > 2:
                 return (False,
                         '%s entries must contain 1 or 2 space-separated items'\

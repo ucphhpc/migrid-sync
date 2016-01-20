@@ -144,5 +144,9 @@ dav_domain = "/"
 # longer password unfortunately.
 vnc_pw_len = 8
 
+# TODO: change to something that doesn't interfere if filename contains spaces
+# Seperator used in job src/dst file lines
+src_dst_sep = " "
+
 # Seperator used in file expansion - must be easily parsable by user scripts
 file_dest_sep = "    ::    "
