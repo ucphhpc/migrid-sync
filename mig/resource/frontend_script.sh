@@ -91,7 +91,7 @@ execute_transfer_files_script(){
         return
     fi
     
-    echo "files:" * 1>> $frontendlog 2>> $frontendlog
+    echo "Transfer files for ${localjobname} ${filesuffix}:" * 1>> $frontendlog 2>> $frontendlog
     chmod +x ${localjobname}.${filesuffix} 1>> $frontendlog 2>> $frontendlog
     
     # Retries kept low due to automatic retry later

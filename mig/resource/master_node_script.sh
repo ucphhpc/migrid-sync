@@ -319,6 +319,7 @@ start_master() {
 
     ### Execute script that sets environments and executes the commands from the mRSL file
     chmod +x ${localjobname}.job >> $exehostlog 2>> $exehostlog
+    echo "Files available for job: " *  >> $exehostlog 2>> $exehostlog
     sync_complete ${localjobname}.job
 
     force_refresh .
