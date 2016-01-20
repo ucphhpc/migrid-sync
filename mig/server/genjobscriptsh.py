@@ -27,6 +27,7 @@
 
 """Bourne shell job script generator and functions"""
 
+from urllib import quote as urlquote
 import os
 
 from shared.defaults import job_output_dir
@@ -87,18 +88,24 @@ class GenJobScriptSh:
 
             # Relative paths are uploaded to the corresponding session on the server
 
-            dst_url = self.https_sid_url_arg + '/sid_redirect/'\
-                 + self.job_dict['SESSIONID'] + '/' + mig_server_filename
+            dst_url = self.https_sid_url_arg + '/sid_redirect/' + \
+                      self.job_dict['SESSIONID'] + '/'
+            # Don't encode variables to be expanded
+            if expand:
+                dst_url += mig_server_filename
+            else:
+                dst_url += urlquote(mig_server_filename)
 
             # MiG server needs to know that this PUT uses a session ID
 
             sid_put_marker = '-X SIDPUT'
 
-        # Single or double quotes depending on shell expand option
-
         cmd = 'curl --location --connect-timeout 30 --max-time 3600 ' + \
               upload_bw_limit + ' --fail --silent --insecure ' + \
               sid_put_marker + ' --upload-file '
+
+        # Single or double quotes depending on shell expand option
+
         if expand:
             cmd += '"' + resource_filename + '" "' + dst_url + '"'
         else:
@@ -145,13 +152,19 @@ class GenJobScriptSh:
 
             # Relative paths are downloaded from the corresponding session on the server
 
-            src_url = self.https_sid_url_arg + '/sid_redirect/'\
-                 + self.job_dict['SESSIONID'] + '/' + mig_server_filename
-
-        # Single or double quotes depending on shell expand option
+            src_url = self.https_sid_url_arg + '/sid_redirect/' + \
+                      self.job_dict['SESSIONID'] + '/'
+            # Don't encode variables to be expanded
+            if expand:
+                src_url += mig_server_filename
+            else:
+                src_url += urlquote(mig_server_filename)
 
         cmd = 'curl --location --connect-timeout 30 --max-time 3600 ' + \
               download_bw_limit + ' --fail --silent --insecure --create-dirs '
+
+        # Single or double quotes depending on shell expand option
+
         if expand:
             cmd += '-o "' + resource_filename + '" "' + src_url + '"'
         else:
