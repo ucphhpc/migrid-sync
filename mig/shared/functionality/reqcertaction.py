@@ -229,7 +229,7 @@ resources anyway.
 on CA host (apu01.esci.nbi.dk):
 sudo su - mig-ca
 rsync %s@%s:mig/server/MiG-users.db ~/
-./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'"""\
+./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s -z 'rename-to-zip'"""\
          % (mig_user, configuration.server_fqdn,
             configuration.admin_email, configuration.server_fqdn,
             user_id)
