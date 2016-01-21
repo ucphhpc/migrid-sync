@@ -1052,6 +1052,7 @@ def resource_fe_action(
 
     pgid_path = os.path.join(resource_home, unique_resource_name,
                              'FE.PGID')
+    user = resource_config['MIGUSER']
 
     if action == 'clean':
         fe_running = True
@@ -1098,8 +1099,7 @@ def resource_fe_action(
             raise Exception('FE already stopped')
 
         if action == 'status':
-            command = 'if [ \\`ps -o pid= -g ' + pgid\
-                 + ' | wc -l \\` -eq 0 ];then exit 1; else exit 0;fi'
+            command = 'ps -o pid= -o user= -g ' + pgid + ' | grep ' + user
             (exit_code, executed_command) = \
                 execute_on_resource(command, False, resource_config,
                                     logger)
