@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mrslkeywords - Mapping of available mRSL keywords and specs
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,7 @@
 Works as a combined specification of and source of information about keywords.
 """
 
-from shared.defaults import default_vgrid, any_vgrid
+from shared.defaults import default_vgrid, any_vgrid, src_dst_sep
 
 # This is the main location for defining job keywords. All other job handling
 # functions should only operate on keywords defined here.
@@ -40,6 +40,7 @@ def get_job_specs(configuration):
     used for configuration order consistency.
     """
 
+    sep_helper = {'sep': src_dst_sep, 'short': configuration.short_title}
     specs = []
     specs.append(('EXECUTE', {
         'Title': 'Execute Commands',
@@ -73,23 +74,23 @@ script instead of putting them directly in the EXECUTE field.
     specs.append(('INPUTFILES', {
         'Title': 'Input Files',
         'Description': '''Files to be copied to the resource before job execution.
-Relative paths like plain file names are automatically taken from the user home on the %s server.
+Relative paths like plain file names are automatically taken from the user home on the %(short)s server.
 External sources are also allowed as long as they can be downloaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data sources obviously require the executing resource to have outbound network access to the data source. Thus HTTP and HTTPS are the most likely to generally work even on network restricted resources.
-Inputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.
+Inputfiles may be specified as a single name per line or as lines of source and destination path separated by a "%(sep)s". In the single name format the file will be called the same on the destination as on the source.
 Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
-''' % configuration.short_title ,
+''' % sep_helper,
         'Example': '''
 ::INPUTFILES::
 somefile
-another_file another_file_renamed
+another_file%(sep)sanother_file_renamed
 
-Copies somefile and another_file from your server home to the resource, but another_file is renamed to another_file_renamed on the resource.
+Copies somefile and another_file from your %(short)s server home to the resource, but another_file is renamed to another_file_renamed on the resource.
 
 ::INPUTFILES::
-some_url some_file
+some_url%(sep)ssome_file
 
 Downloads the contents from some_url (e.g. https://myhost.org/inputfile.txt) to a file called some_file on the resource.
-''',
+''' % sep_helper,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'input',
@@ -98,22 +99,22 @@ Downloads the contents from some_url (e.g. https://myhost.org/inputfile.txt) to 
     specs.append(('OUTPUTFILES', {
         'Title': 'Output Files',
         'Description': '''Files to be copied from the resource after job execution.
-Relative paths like plain file names are automatically sent to the user home on the %s server. External destinations are also allowed as long as they can be uploaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data destinations obviously require the executing resource to have outbound network access to the data destination. Thus HTTP or HTTPS are the most likely to be allowed even on network restricted resources. Please note however, that HTTP upload requires the destination HTTP server to support the PUT operation, which is not generally enabled on all servers.
-Outputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.
+Relative paths like plain file names are automatically sent to the user home on the %(short)s server. External destinations are also allowed as long as they can be uploaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data destinations obviously require the executing resource to have outbound network access to the data destination. Thus HTTP or HTTPS are the most likely to be allowed even on network restricted resources. Please note however, that HTTP upload requires the destination HTTP server to support the PUT operation, which is not generally enabled on all servers.
+Outputfiles may be specified as a single name per line or as lines of source and destination path separated by a "%(sep)s". In the single name format the file will be called the same on the destination as on the source.
 Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
-''' % configuration.short_title ,
+''' % sep_helper,
         'Example': '''
 ::OUTPUTFILES::
 file
-another_file_renamed another_file
+another_file_renamed%(sep)sanother_file
 
-Copies file and another_file_renamed to the %s server, but another_file_renamed is renamed to another_file on the server.
+Copies file and another_file_renamed from the resource to your %(short)s home, but another_file_renamed is renamed to another_file on the server.
 
 ::OUTPUFILES::
-some_file some_url
+some_file%(sep)ssome_url
 
 Uploads some_file on the resource to some_url (e.g. ftp://myuser:mypw@myhost.org/outputfile.txt).
-''' % configuration.short_title ,
+''' % sep_helper,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'input',
@@ -128,10 +129,10 @@ Supports the same variable expansion as described in the EXECUTE field documenta
         'Example': '''
 ::EXECUTABLES::
 myscript
-myfile_or_url some_name
+myfile_or_url%(sep)ssome_name
 
-Copies myscript and myfile_or_url from your %s home to the resource, but myfile_or_url is renamed to the executable some_name on the resource.
-''' % configuration.short_title ,
+Copies myscript and myfile_or_url from your %(short)s home to the resource, but myfile_or_url is renamed to the executable some_name on the resource.
+''' % sep_helper,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'input',
@@ -142,10 +143,10 @@ Copies myscript and myfile_or_url from your %s home to the resource, but myfile_
         'Description': '''Mounts your %s home on resource before job execution.''' % configuration.short_title,
         'Example': '''
 :::MOUNT:::
-home_path resource_mount_point
+home_path%(sep)sresource_mount_point
 
-Mounts your %s home_path on resource_mount_point, the mount is disabled when the job finishes.
-''' % configuration.short_title ,
+Mounts your %(short)s home_path on resource_mount_point, the mount is disabled when the job finishes.
+''' % sep_helper,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'input',
