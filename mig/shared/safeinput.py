@@ -105,7 +105,7 @@ name_extras = ' -@.'
 
 dn_extras = name_extras + '/=:'
 
-integer_extras = '+-'
+integer_extras = '+-eE'
 float_extras = integer_extras + '.'
 password_extras = ' -_#.,:;!@%/()[]{}+=?<>'
 password_min_len = 4
