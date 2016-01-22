@@ -440,6 +440,13 @@ Preview.prototype.draw_histogram = function(image_pixel_data) {
 
     this.clear_canvas(hist_canvas);
 
+    // The min/max pixel bins are not displayed
+    // because pixels masked out (cutoff min/max) at preview generation
+    // are placed in those bins and therefore overrepresented
+
+    pixel_bins[0] = 0;
+    pixel_bins[pixel_bins.length-1] = 0;
+
     // Find maximum
 
     max_count = Math.max.apply(Math, pixel_bins);
