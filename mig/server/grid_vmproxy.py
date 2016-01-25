@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_vmproxy - VM proxy wrapper daemon
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,12 +28,16 @@
 """Wraps the vm-proxy daemon in a way suitable for use in the init script"""
 
 import os
+import signal
 import sys
 import time
 
 from shared.conf import get_configuration_object
-from shared.safeeval import subprocess_call
+from shared.safeeval import subprocess_popen
 
+def handle_signal(signum, stack):
+    print "Got signal %s - fake ctrl-c" % signum
+    raise KeyboardInterrupt
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
@@ -64,20 +68,31 @@ unless it is available in mig/server/MiGserver.conf
     keep_running = True
 
     print 'Starting VM proxy helper daemon - Ctrl-C to quit'
+    logger.info("Starting VM proxy daemon")
 
+    signal.signal(signal.SIGTERM, handle_signal)        
     daemon_proc = None
     while keep_running:
         try:
             # Run vm-proxy helper in the foreground from corresponding dir
-            daemon_proc = subprocess_call([daemon_path, '-n'], 
-                                          cwd=vm_proxy_base)
-
+            daemon_proc = subprocess_popen([daemon_path, '-n'], 
+                                           cwd=vm_proxy_base)
+            retval = daemon_proc.wait()
+            logger.info("daemon returned %s" % retval)
+            daemon_proc = None
         except KeyboardInterrupt:
             keep_running = False
+            break
         except Exception, exc:
-            print 'Caught unexpected exception: %s' % exc
-            # Throttle down
-            time.sleep(1)
+            msg = 'Caught unexpected exception: %s' % exc
+            logger.error(msg)
+            print msg
+        # Throttle down
+        time.sleep(30)
+
+    if daemon_proc is not None:
+        logger.info('Killing spawned proxy daemon')
+        daemon_proc.terminate() or daemon_proc.kill()
 
     print 'VM proxy daemon shutting down'
     sys.exit(0)
