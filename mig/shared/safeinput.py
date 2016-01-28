@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,6 +41,7 @@ from string import letters, digits, printable
 from unicodedata import category, name as unicode_name
 
 from shared.base import force_unicode, force_utf8
+from shared.defaults import src_dst_sep
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -68,20 +69,20 @@ _ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', ))
 VALID_ACCENTED = \
     'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ'
 
-# IMPORTANT: do not add '$' - it is dangerous in paths
+# NOTE: we carefully avoid shell interpretation of dollar everywhere
 
-SAFE_CURRENCY = '¤€£¢¥₣₤'
+CURRENCY = '¤$€£¢¥₣₤'
 
 # We must be careful about characters that have special regex meaning
 
 VALID_SAFE_PATH_CHARACTERS = letters + digits + "/.,_-+="
-VALID_PATH_CHARACTERS = letters + digits + SAFE_CURRENCY + "/.,_-+±×÷=½¾" + \
+VALID_PATH_CHARACTERS = letters + digits + CURRENCY + "/.,_-+±×÷=½¾" + \
                         " " + "'" + ":;@§%‰()~!&¶"
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
-VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?#$*[]{}' + '"' \
-    + "`|^" + '\\' + '\n\r\t'
+VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + CURRENCY + '?#*[]{}' + '"' + \
+                        "`|^" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
 VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
@@ -105,6 +106,7 @@ name_extras = ' -@.'
 
 dn_extras = name_extras + '/=:'
 
+# Allow explicit sign and exponential notation in integers and floats
 integer_extras = '+-eE'
 float_extras = integer_extras + '.'
 password_extras = ' -_#.,:;!@%/()[]{}+=?<>'
@@ -176,7 +178,7 @@ def __valid_contents(
            include_accented == COMMON_ACCENTED and char in accented_chars or \
            include_accented == ANY_ACCENTED and category(char) in _ACCENT_CATS:
             continue
-        raise InputException('found invalid character: "%s" (allowed: %s)' % \
+        raise InputException("found invalid character: '%s' (allowed: %s)" % \
                              (char, valid_chars))
 
 
@@ -326,6 +328,20 @@ def valid_safe_path(
 
     valid_chars = VALID_SAFE_PATH_CHARACTERS + extra_chars
     __valid_contents(path, valid_chars, min_length, max_length, NO_ACCENTED)
+
+
+def valid_path_src_dst_lines(
+    path,
+    min_length=0,
+    max_length=4096,
+    extra_chars='',
+    ):
+    """Verify that supplied path only contains characters that we consider
+    valid for the src or src dst format used in job descriptions.
+    """
+    # Always allow separator char(s) and newlines
+    extra_chars += src_dst_sep + '\r\n'
+    return valid_path(path, min_length, max_length, extra_chars)
 
 
 def valid_fqdn(
@@ -972,6 +988,13 @@ def guess_type(name):
             'public_image',
             ):
             __type_map[key] = valid_path
+        for key in (
+            'executables',
+            'inputfiles',
+            'outputfiles',
+            'verifyfiles',
+            ):
+            __type_map[key] = valid_path_src_dst_lines
         # NOTE: verifies that resource conf values are safe for ssh calls
         for key in (
             'resourcehome',
@@ -1104,10 +1127,6 @@ def guess_type(name):
             'msg_body',
             'comment',
             'msg',
-            'executables',
-            'inputfiles',
-            'outputfiles',
-            'verifyfiles',
             'notify',
             'runtimeenvironment',
             'mount',
@@ -1326,7 +1345,8 @@ class InputException(Exception):
 
 if __name__ == '__main__':
     for test_cn in ('Firstname Lastname', 'Test Æøå', 'Test Überh4x0r',
-                    u'Unicode æøå', 'Test Maybe Invalid Źacãŕ', 'Test Invalid $'):
+                    u'Unicode æøå', 'Test Maybe Invalid Źacãŕ',
+                    'Test Invalid ?', 'Test HTML Invalid <code/>'):
         try:
             print 'Testing valid_commonname: %s' % test_cn
             print 'Filtered commonname: %s' % filter_commonname(test_cn)
@@ -1339,8 +1359,8 @@ if __name__ == '__main__':
 
     for test_path in ('test.txt', 'Test Æøå', 'Test Überh4x0r',
                       'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ', 
-                      'Test valid special%&()!¶â€', 'Test exotic لرحيم',
-                      'Test Invalid $', 'Test Invalid ?',
+                      'Test valid special%&()!$¶â€', 'Test exotic لرحيم',
+                      'Test Invalid ?', 'Test Invalid `',
                       'Test invalid <', 'Test Invalid >',
                       'Test Invalid *', 'Test Invalid "'):
         try:
