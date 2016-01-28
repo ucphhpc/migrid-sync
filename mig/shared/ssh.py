@@ -76,16 +76,23 @@ def parse_pub_key(public_key):
     return parse_key(msg)
     
 
-def default_ssh_options():
+def default_ssh_options(close_stdin=False, x_forward=False):
     """Default list of options for ssh connections"""
 
     options = []
-    options.append('-o BatchMode=yes')
+    if close_stdin:
+        # No stdin, to let ssh exit cleanly
+        options.append('-n')
+    if x_forward:
+        options.append('-X')
+
+    # No interaction
+    options += ['-o', 'BatchMode=yes']
 
     # We need fault tolerance but can't block e.g. grid_script for long
 
-    options.append('-o ConnectionAttempts=2')
-    options.append('-o ConnectTimeout=10')
+    options += ['-o', 'ConnectionAttempts=2']
+    options += ['-o', 'ConnectTimeout=10']
     return options
 
 
@@ -121,6 +128,9 @@ def copy_file_to_resource(
 
     try:
 
+        # TODO: no need to write this known host file again every time!
+        #       keep it in res_dir and only write if config is newer 
+
         # Securely open a temporary file in resource dir
         # Please note that mkstemp uses os.open() style rather
         # than open()
@@ -138,12 +148,11 @@ def copy_file_to_resource(
 
     options = default_ssh_options()
     if '0' != multiplex:
-        options.append('-o ControlPath=%s/ssh-multiplexing' % res_dir)
-    options.append('-o Port=%s' % port)
-    options.append('-o StrictHostKeyChecking=yes')
-    options.append('-o CheckHostIP=yes')
+        options += ['-o', 'ControlPath=%s/ssh-multiplexing' % res_dir]
+    options += ['-o', 'Port=%s' % port, '-o', 'CheckHostIP=yes',
+                '-o', 'StrictHostKeyChecking=yes']
     if hostkey:
-        options.append('-o UserKnownHostsFile=' + key_path)
+        options += ['-o', 'UserKnownHostsFile=' + key_path]
 
     abs_dest_path = os.path.join(resource_config['RESOURCEHOME'], dest_path)
     scp_command_list = ['scp'] + options + [filename] + \
@@ -237,21 +246,21 @@ def copy_file_to_exe(
         logger.error('scp of file was NOT successful!')
         return (False, msg)
 
-    # copy file to exe
+    # copy file to exe - trailing slash is important
 
     if exe.has_key('shared_fs') and exe['shared_fs']:
-        ssh_command = 'cp '\
-             + os.path.join(resource_config['RESOURCEHOME'], dest_path)\
-             + ' ' + exe['execution_dir']
+        ssh_command = 'cp %s %s/' % \
+                      (os.path.join(resource_config['RESOURCEHOME'],
+                                    dest_path), exe['execution_dir'])
     else:
 
         # We do not have exe host keys and don't really care about auth there
 
-        ssh_command = 'scp %s %s %s@%s:%s'\
-             % (' '.join(default_ssh_options()),
-                os.path.join(resource_config['RESOURCEHOME'],
-                dest_path), exe['execution_user'], exe['execution_node'
-                ], exe['execution_dir'])
+        ssh_command = 'scp %s %s %s@%s:%s/' % \
+                      (' '.join(default_ssh_options()),
+                       os.path.join(resource_config['RESOURCEHOME'],
+                                    dest_path), exe['execution_user'],
+                       exe['execution_node'], exe['execution_dir'])
 
     copy_attempts = 3
     for attempt in range(copy_attempts):
@@ -319,6 +328,9 @@ def execute_on_resource(
 
     try:
 
+        # TODO: no need to write this known host file again every time!
+        #       keep it in res_dir and only write if config is newer 
+
         # Securely open a temporary file in resource dir
         # Please note that mkstemp uses os.open() style rather
         # than open()
@@ -332,50 +344,55 @@ def execute_on_resource(
         logger.error('could not write tmp host key file (%s)' % err)
         return (-1, '')
 
-    options = default_ssh_options()
-
     # Only enable X forwarding for interactive resources (i.e. job_type
     # 'interactive' or 'all')
 
+    x_fwd = False
     if 'batch' != job_type.lower():
-        options.append('-X')
-    options.append('-o Port=%s' % port)
-    options.append('-o CheckHostIP=yes')
-    options.append('-o StrictHostKeyChecking=yes')
+        x_fwd = True
+
+    options = default_ssh_options(close_stdin=True, x_forward=x_fwd)
+    options += ['-o', 'Port=%s' % port, '-o', 'CheckHostIP=yes',
+                '-o', 'StrictHostKeyChecking=yes']
 
     if hostkey:
-        options.append('-o UserKnownHostsFile=%s' % key_path)
+        options += ['-o', 'UserKnownHostsFile=%s' % key_path]
 
     if '0' != multiplex:
-        options.append('-o ControlPath=%s/ssh-multiplexing' % res_dir)
+        options += ['-o', 'ControlPath=%s/ssh-multiplexing' % res_dir]
 
         # Only open a new control socket if explicitly told so:
         # All other invocations will reuse it if possible.
 
         if multiplex_master:
-            options.append('-o ControlMaster=yes')
+            options += ['-o', 'ControlMaster=yes']
 
-    batch = []
-    batch.append('1> /dev/null')
-    #batch.append('2> /dev/null')
+    redirect, batch = [], []
+    redirect.append('1> /dev/null')
+    redirect.append('2> /dev/null')
     if background:
         batch.append('&')
 
     # IMPORTANT: careful with the ssh_command line!
-    # removing explicit bash or changing quotes breaks resource management
-    
+    # removing explicit bash or changing escapes breaks resource management
+
+    remote_command = ["bash", "-c", "'%s %s'" % (command, ' '.join(batch))]
+
     ssh_command_list = ['ssh'] + options + ['%s@%s' % (user, host)] + \
-                       ["bash -c \'%s %s\'" % (command, ' '.join(batch))]
+                       remote_command + ['%s' % ' '.join(redirect)]
     ssh_command = ' '.join(ssh_command_list)
-    logger.debug('running command: %s' % ssh_command)
+    logger.debug('running command: %s' % ssh_command_list)
     # NOTE: we use ssh command list here to avoid shell requirement
     ssh_proc = subprocess_popen(ssh_command_list,
                                 stdin=open("/dev/null", "r"),
-                                stdout=open("/dev/null", "w"),
-                                stderr=subprocess_pipe,
+                                stdout=subprocess_pipe,
+                                stderr=subprocess_pipe
                                 )
     status = ssh_proc.wait()
-    _ , err_msg = ssh_proc.communicate()
+    out_msg , err_msg = ssh_proc.communicate()
+
+    logger.debug('command out: %s' % out_msg)
+    logger.debug('command err: %s' % err_msg)
 
     logger.debug('cleaning up after command')
 
@@ -391,7 +408,7 @@ def execute_on_resource(
 
         # Command was not executed with return code 0!! Take action
 
-        logger.error('%s returned %s: %s' % (ssh_command, status, err_msg))
+        logger.error('%s returned %s:\n%s' % (ssh_command, status, err_msg))
         return (status, ssh_command)
 
     logger.debug('Remote execution ok: %s' % ssh_command)
@@ -411,14 +428,24 @@ def execute_on_exe(
 
     node = exe_config['execution_node']
     user = exe_config['execution_user']
-    options = default_ssh_options()
-    options.append('-X')
+    options = default_ssh_options(close_stdin=True, x_forward=True)
 
     # This command should already be properly escaped by the apostrophes
     # in the execute_on_resource call
-    
-    ssh_command = "ssh %s %s@%s %s" % (' '.join(options), user,
-            node, command)
+
+    # TODO: it would make sense to move bash call into nested command
+    # when called through execute_on_resource, but the following fails.
+    #redirect, batch = [], []
+    ##redirect.append('< /dev/null')
+    #redirect.append('1> /dev/null')
+    #redirect.append('2> /dev/null')
+    #if background:
+    #    batch.append('&')
+    #ssh_command = "ssh %s %s@%s bash -c '%s %s' %s" % (' '.join(options), user,
+    #        node, command, ' '.join(batch), ' '.join(redirect))
+
+    ssh_command = 'ssh %s %s@%s "%s"' % (' '.join(options), user,
+                                         node, command)
     logger.debug(ssh_command)
     return execute_on_resource(ssh_command, background,
                                resource_config, logger)
@@ -437,14 +464,13 @@ def execute_on_store(
 
     node = store_config['storage_node']
     user = store_config['storage_user']
-    options = default_ssh_options()
-    options.append('-X')
+    options = default_ssh_options(close_stdin=True, x_forward=True)
 
     # This command should already be properly escaped by the apostrophes
     # in the execute_on_resource call
-    
-    ssh_command = "ssh %s %s@%s %s" % (' '.join(options), user,
-            node, command)
+
+    ssh_command = 'ssh %s %s@%s "%s"' % (' '.join(options), user,
+                                         node, command)
     logger.debug(ssh_command)
     return execute_on_resource(ssh_command, background,
                                resource_config, logger)
@@ -500,21 +526,44 @@ if __name__ == "__main__":
     print "copy %s to %s on %s success: %s" % (filename, res_path,
                                                unique_resource_name, copy_res)
     command = "ls"
+    print "Execute %s on %s" % (command, unique_resource_name)
     (exec_res, exec_msg) = execute_on_resource(command, False, resource_config,
                                                logger)
-    print "exec %s on %s success: %s\n%s" % \
-          (command, unique_resource_name, exec_res, exec_msg)
-    command = "uname -a && sleep 2"
+    print " success: %s\n%s" % (exec_res, exec_msg)
+    command = "uname -a && sleep 13"
+    print "bg exec %s on %s" % (command, unique_resource_name)
     (exec_res, exec_msg) = execute_on_resource(command, True, resource_config,
                                                logger)
-    print "bg exec %s on %s success: %s\n%s" % \
-          (command, unique_resource_name, exec_res, exec_msg)
+    print " success: %s\n%s" % (exec_res, exec_msg)
+
+    command = "mkdir -p %s" % exe_config['execution_dir']
+    print "Execute %s on %s_%s" % (command, unique_resource_name,
+                                   exe_config['name'])
+    (exec_res, exec_msg) = execute_on_exe(command, False, resource_config,
+                                          exe_config, logger)
+    print " success: %s\n%s" % (exec_res, exec_msg)
     copy_res = copy_file_to_exe(filename, exe_path, resource_config, exe_name,
                                 logger)
     print "copy %s to %s on %s success: %s" % (filename, exe_path,
                                                unique_resource_name, copy_res)
     command = "ls"
+    print "Execute %s on %s" % (command, unique_resource_name)
     (exec_res, exec_msg) = execute_on_exe(command, False, resource_config,
                                           exe_config, logger)
-    print "bg exec %s on %s_%s success: %s\n%s" % \
-          (command, unique_resource_name, exe_name, exec_res, exec_msg)
+    print " success: %s\n%s" % (exec_res, exec_msg)
+    command = "uname -a && sleep 13"
+    print "bg exec %s on %s_%s" % (command, unique_resource_name, exe_name)
+    (exec_res, exec_msg) = execute_on_exe(command, True, resource_config,
+                                          exe_config, logger)
+    print " success: %s\n%s" % (exec_res, exec_msg)
+
+    # NOTE: emulate res adm status with conf calls on resource *FE*
+    command = "%(status_command)s" % exe_config
+    command = command.replace('$mig_exe_pgid', "$(cat %s/%s)" % \
+                              (exe_config['execution_dir'], '%s.pgid' % \
+                               exe_config['name']))
+    print "Execute %s on %s" % (command, unique_resource_name)
+    (exec_res, exec_msg) = execute_on_resource(command, False, resource_config,
+                                          logger)
+    print " success: %s\n%s" % (exec_res, exec_msg)
+

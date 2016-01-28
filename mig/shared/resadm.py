@@ -396,7 +396,7 @@ def fill_exe_node_script(
             execution_precondition = exe['execution_precondition']
         os.write(filehandle, "execution_precondition='"
                   + execution_precondition + "'\n")
-        os.write(filehandle, 'prepend_execute=' + exe['prepend_execute']
+        os.write(filehandle, 'prepend_execute="' + exe['prepend_execute'] + '"'
                   + '\n')
         os.write(filehandle, 'exehostlog=' + exe['exehostlog'] + '\n')
         os.write(filehandle, 'joblog=' + exe['joblog'] + '\n')
@@ -1208,6 +1208,10 @@ def resource_exe_action(
         if lock_pgid_file:
             fcntl.flock(pgid_file, fcntl.LOCK_EX)
 
+        if exe.has_key('continuous'):
+            continuous = exe['continuous']
+        else:
+            continuous = exe['continious']
         if 'status' == action:
             pgid_file.seek(0, 0)
             pgid = pgid_file.readline().strip()
@@ -1215,22 +1219,22 @@ def resource_exe_action(
                 return (True,
                         "Exe is not running (pgid on server is '%s')" % pgid
                         )
-            elif 'finished' == pgid and exe['continious']:
+            elif 'finished' == pgid and continuous:
                 return (True,
-                        "Exe is running (pgid on server is '%s' and exe continious is '%s')"
-                         % (pgid, exe['continious']))
-            elif 'finished' == pgid and not exe['continious']:
+                        "Exe is running (pgid on server is '%s' and exe continuous is '%s')"
+                         % (pgid, continuous))
+            elif 'finished' == pgid and not continuous:
                 return (True,
-                        "Exe is not running (pgid on server is '%s' and exe continious is '%s')"
-                         % (pgid, exe['continious']))
+                        "Exe is not running (pgid on server is '%s' and exe continuous is '%s')"
+                         % (pgid, continuous))
             elif 'starting' == pgid:
 
                 # use pgid file on exe and run status command based on that value
 
                 command = exe['status_command']
                 command = command.replace('$mig_exe_pgid',
-                        "\\\\\`cat %s/%s \\\\\`" % (exe['execution_dir'
-                        ], '%s.pgid' % exe['name']))
+                        "$(cat %s/%s)" % (exe['execution_dir'], '%s.pgid' % \
+                                          exe['name']))
             elif pgid.isdigit():
 
                 # use exe_pgid and run status command based on that value
@@ -1292,8 +1296,8 @@ def resource_exe_action(
 
                 command = exe['stop_command']
                 command = command.replace('$mig_exe_pgid',
-                        "\\\\\`cat %s/%s \\\\\`" % (exe['execution_dir'
-                        ], '%s.pgid' % exe['name']))
+                        "$(cat %s/%s)" % (exe['execution_dir'], '%s.pgid' % \
+                                          exe['name']))
             else:
 
                 return (False,
