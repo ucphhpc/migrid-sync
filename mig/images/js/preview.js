@@ -72,7 +72,8 @@ Preview = function (selfname, debug) {
                      height: 0,
                      zoom: 0,
                      min_zoom: 0,
-                     max_zoom: 2
+                     max_zoom: 2, 
+                     last_zoom: 0
                     };
 
 }

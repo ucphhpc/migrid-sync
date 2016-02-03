@@ -425,6 +425,7 @@ if (jQuery) (function($){
 
         function zoom_out_preview(callback) {
             if (preview.settings.zoom > preview.settings.min_zoom) {
+                preview.settings.last_zoom = preview.settings.zoom;
                 preview.settings.zoom -= 1;
                 refresh_preview(callback);
             }
@@ -432,6 +433,7 @@ if (jQuery) (function($){
 
         function zoom_in_preview(callback) {
             if (preview.settings.zoom < preview.settings.max_zoom) {
+                preview.settings.last_zoom = preview.settings.zoom;
                 preview.settings.zoom += 1;
                 refresh_preview(callback);
             }
@@ -463,26 +465,31 @@ if (jQuery) (function($){
         function show_preview(callback) {
             var layout = get_fileman_layout();
             var visibility = (preview.settings.zoom == 0) ? 
-                    visibility = 'hidden' :
-                    visibility = 'visible';
-            $("#fm_filemanager .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px")
-            $("#fm_filemanager .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px")
-            $("#fm_filemanager .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px")
+                'hidden' :
+                'visible';
+            var animate_speed = (preview.settings.zoom < preview.settings.last_zoom) ?
+                options.collapseSpeed :
+                options.expandSpeed;
+            var animate_easing = (preview.settings.zoom < preview.settings.last_zoom) ?
+                options.collapseEasing :
+                options.expandEasing;
+            $("#fm_filemanager .fm_folders").animate(
+                {height: layout.fileFolderInnerHeight + 'px'},
+                {duration: animate_speed,
+                easing: animate_easing});
+            $("#fm_filemanager .fm_files").animate(
+                {height: layout.fileFolderInnerHeight + 'px'},
+                {duration: animate_speed,
+                easing: animate_easing});
+            $("#fm_filemanager .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
+            $("#fm_filemanager .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
+            $("#fm_filemanager .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");            
             $("#fm_filemanager .fm_previews").animate(
                 {height: layout.previewInnerHeight + 'px'},
-                {duration: options.collapseSpeed,
-                easing: options.collapseEasing,
+                {duration: animate_speed,
+                easing: animate_easing,
                 complete: function() {  
                     set_visibility_preview(visibility);
-                    $("#fm_filemanager .fm_folders").animate(
-                        {height: layout.fileFolderInnerHeight + 'px'},
-                        {duration: options.collapseSpeed,
-                        easing: options.collapseEasing});
-
-                    $("#fm_filemanager .fm_files").animate(
-                        {height: layout.fileFolderInnerHeight + 'px'},
-                        {duration: options.collapseSpeed,
-                        easing: options.collapseEasing});
                     if (typeof callback === "function") {
                         callback();
                     }
