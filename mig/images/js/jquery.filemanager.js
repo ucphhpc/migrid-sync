@@ -501,7 +501,6 @@ if (jQuery) (function($){
         console.debug("past layout/view functions");
 
         function clickEvent(el) {
-            alert(options['imagesettings']);
             if (!options['imagesettings']) {
                 console.debug('clickEvent: imagesettings is false');
             } else {
