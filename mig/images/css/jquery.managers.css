@@ -137,6 +137,8 @@
     width: 0px;
     height: 100%;
     background-color: #FFF; 
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 .fm_preview_center_tile {
     float: left;
@@ -145,6 +147,8 @@
     width: 0px;
     height: 100%;
     background-color: #FFF; 
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 .fm_preview_right_tile {
     float: left;
@@ -152,6 +156,8 @@
     width: 0px;
     height: 100%;
     background-color: #FFF; 
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 #fm_preview_left_tile_histogram {
     display: block;

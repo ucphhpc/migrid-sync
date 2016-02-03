@@ -389,6 +389,8 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
+<!-- Smart resize debounce resize events -->
+<script type="text/javascript" src="/images/lib/smartresize/jquery.debouncedresize.js"></script>
 <!-- The preview image plugin -->
 <script type="text/javascript" src="/images/js/preview.js"></script>
 <!-- The image manipulation CamanJS plugin used by the preview image plugin -->
@@ -502,28 +504,6 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
         $.ui.dialog.defaults.bgiframe = true;
     }
 
-    function resizeFileman() {
-        /* Try hard to fit fileman in the window without global scroll bar */
-        /* Make sure fileman fills at least as much vertically as the menu */
-        var minHeight = $("div.menublock").height() - $("div.menublock").offset().top;
-        var headerHeight = $("#fm_filemanager").offset().top;
-        var windowHeight = $(window).height();
-        var footerHeight = $("#bottomspace").offset().top + $("#bottomspace").height() -
-                           $("#fm_options").offset().top;
-
-        /* This slack height was experimentally decided */
-        var slackHeight = 16;
-        var height = windowHeight - (headerHeight + footerHeight + slackHeight);
-        if (height < minHeight) {
-            height = minHeight;
-        }
-        var innerHeight = height - ($("#fm_options").height() + $(".fm_folders").offset().top - headerHeight);
-        $("#fm_filemanager").css("height", height+"px");
-        $("#fm_filemanager .fm_files").css("height", innerHeight+"px");
-        $("#fm_filemanager .fm_folders").css("height", innerHeight+"px");
-        /* TODO: update uploadspace size and location */
-    }
-
     $(document).ready(function() {
 
         /* wrap in try/catch for debugging - disabled in prodution */
@@ -554,7 +534,6 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
         $("#upload_tabs").tabs();
 
         /* Always resize filemanager box to fit window height if possible */
-        $(window).resize(resizeFileman);
         $(window).trigger("resize");
     });
 </script>

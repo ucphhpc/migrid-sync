@@ -459,7 +459,9 @@ Preview.prototype.draw_histogram = function(image_pixel_data) {
     hist_context['fillStyle'] = '#000000';
 
     // Draw border
-    
+
+    hist_context.beginPath();
+    hist_context.moveTo(0, hist_canvas.height);
     hist_context.rect(0, 0, hist_canvas.width, hist_canvas.height);
     hist_context.stroke();
 

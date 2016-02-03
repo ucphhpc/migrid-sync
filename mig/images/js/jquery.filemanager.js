@@ -130,6 +130,7 @@ if (jQuery) (function($){
         /* seems like a waste but needed to get zebra coloring right */
         updateSorting();
     }
+    
 
     $.fn.dump = function(element) {
         /* some browsers support toSource as easy dump */
@@ -270,6 +271,8 @@ if (jQuery) (function($){
         $.fn.reload(path);
     }
 
+
+   
     $.fn.filemanager = function(user_options, clickaction) {
 
         console.debug("init file manager");
@@ -295,6 +298,7 @@ if (jQuery) (function($){
         var statusinfo = $("#fm_statusinfo", obj);
 
         console.debug("define progress functions");
+
         function showDirinfo(msg) {
             if (msg == undefined) {
                 msg = "";
@@ -334,126 +338,170 @@ if (jQuery) (function($){
         }
         console.debug("past progress functions");
 
+        console.debug("define layout/view functions");
+
+        function get_fileman_layout() {
+
+            /* Preview layout */
+
+            var previewInnerHeight;
+            var centerTileWidthFrac = 0.40;
+            var previewWidth = $("#fm_filemanager .fm_previews").outerWidth() 
+            var previewTilesInnerWidth = $("#fm_filemanager .fm_previews").width() 
+                - $("#fm_filemanager .fm_preview_menubar").outerWidth();
+            var previewCenterTileWidth = Math.floor(previewTilesInnerWidth * centerTileWidthFrac);
+            var previewLeftTileWidth = Math.floor((previewTilesInnerWidth - previewCenterTileWidth)/2);
+            var previewRightTileWidth = previewLeftTileWidth;
+
+            /* Try hard to fit fileman in the window without global scroll bar */
+            /* Make sure fileman fills at least as much vertically as the menu */
+            
+            var headerHeight = $("#fm_filemanager").offset().top;
+            var innerWindowHeight = $(window).height();
+            var statusbarHeight = $("#fm_statusbar").outerHeight();
+            var optionsHeight = $("#fm_options").outerHeight();
+            var exitCodeHeight = $("#exitcode").outerHeight();
+            var bottomLogoHeight = $("#bottomlogo").outerHeight();
+            var bottomspaceHeight = $("#bottomspace").outerHeight();
+            var footerHeight = exitCodeHeight + bottomLogoHeight + bottomspaceHeight;
+            var minHeight = $("div.menublock").height() - $("div.menublock").offset().top;
+            var fileManagerHeight = innerWindowHeight - (headerHeight + statusbarHeight + optionsHeight + footerHeight);
+            if (fileManagerHeight < minHeight) {
+                fileManagerHeight = minHeight;
+            }
+            var fileManagerInnerHeight = fileManagerHeight -
+                                            (statusbarHeight + $("#fm_filemanager .fm_previews").offset().top - 
+                                            headerHeight);
+            if (preview.settings.zoom == 0) {
+                previewInnerHeight = 0;
+                fileFolderInnerHeight = fileManagerInnerHeight;
+            }
+            else if (preview.settings.zoom == 1) {
+                previewInnerHeight = minHeight -
+                                            (statusbarHeight + $("#fm_filemanager .fm_previews").offset().top - 
+                                            headerHeight);
+
+                fileFolderInnerHeight = fileManagerInnerHeight - previewInnerHeight;
+            }
+            else if (preview.settings.zoom > 1) {
+                previewInnerHeight = fileManagerInnerHeight;
+                fileFolderInnerHeight = 0;
+            }
+            return {
+                previewInnerHeight: previewInnerHeight,
+                previewWidth: previewWidth,
+                previewLeftTileWidth: previewLeftTileWidth,
+                previewCenterTileWidth: previewCenterTileWidth,
+                previewRightTileWidth: previewRightTileWidth,
+                fileManagerHeight: fileManagerHeight,
+                fileManagerInnerHeight: fileManagerInnerHeight,
+                fileFolderInnerHeight: fileFolderInnerHeight
+            };
+        }
+
+        function refresh_fileman_layout(callback) {
+            var layout = get_fileman_layout();
+
+            $("#fm_filemanager").css("height", layout.fileManagerHeight + "px");
+            $("#fm_filemanager .fm_previews").css("height", layout.previewInnerHeight + "px");
+            $("#fm_filemanager .fm_files").css("height", layout.fileFolderInnerHeight + "px");
+            $("#fm_filemanager .fm_folders").css("height", layout.fileFolderInnerHeight + "px");
+            $("#fm_filemanager .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
+            $("#fm_filemanager .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
+            $("#fm_filemanager .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");
+
+            if (typeof callback === "function") {
+                callback();
+            }
+        }
+
         var preview = new Preview(enable_debug);
+
         function refresh_preview(callback) {
             show_preview(function() {
                 preview.refresh(callback);
             });
         }
+
         function zoom_out_preview(callback) {
             if (preview.settings.zoom > preview.settings.min_zoom) {
                 preview.settings.zoom -= 1;
                 refresh_preview(callback);
             }
         }
+
         function zoom_in_preview(callback) {
             if (preview.settings.zoom < preview.settings.max_zoom) {
                 preview.settings.zoom += 1;
                 refresh_preview(callback);
             }
         }
+
         function set_visibility_preview_left_tile(visibility) {
-            $("#fm_preview_left_tile").css("visibility", visibility);
+            $("#fm_preview_left_tile").css("visibility", visibility)
             $("#fm_preview_left_tile_histogram").css("visibility", visibility);
             $("#fm_preview_left_tile_histogram_actions").css("visibility", visibility);
             $("#fm_preview_left_output").css("visibility", visibility);
-
         }
+
         function set_visibility_preview_center_tile(visibility) {
             $("#fm_preview_center_tile").css("visibility", visibility);
         }
+
         function set_visibility_preview_right_tile(visibility) {
             $("#fm_preview_right_tile").css("visibility", visibility);
             $("#fm_preview_right_output").css("visibility", visibility);
         }
+
+        function set_visibility_preview(visibility) {
+            $("#fm_preview_menubar").css('visibility', visibility);
+            set_visibility_preview_left_tile(visibility);
+            set_visibility_preview_center_tile(visibility);
+            set_visibility_preview_right_tile(visibility);
+        }   
+
         function show_preview(callback) {
-            var center_tile_width_frac = 0.40;
-            var files_folders_min_height = 100;
-            var previews_height_frac = 0.45;
-            var fm_view_padding = 80;
-            var left_tile_width;
-            var center_tile_width;
-            var right_tile_width;
-            var folders_height;
-            var previews_height;
-            var new_content_height;
-            var footers_height;
-            var new_view_height;
-            var fm_previews_width;
-            var tiles_width;
+            var layout = get_fileman_layout();
+            var visibility = (preview.settings.zoom == 0) ? 
+                    visibility = 'hidden' :
+                    visibility = 'visible';
+            $("#fm_filemanager .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px")
+            $("#fm_filemanager .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px")
+            $("#fm_filemanager .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px")
+            $("#fm_filemanager .fm_previews").animate(
+                {height: layout.previewInnerHeight + 'px'},
+                {duration: options.collapseSpeed,
+                easing: options.collapseEasing,
+                complete: function() {  
+                    set_visibility_preview(visibility);
+                    $("#fm_filemanager .fm_folders").animate(
+                        {height: layout.fileFolderInnerHeight + 'px'},
+                        {duration: options.collapseSpeed,
+                        easing: options.collapseEasing});
 
-            // Calculate and set width settings
-
-            fm_previews_width = $(".fm_previews").width();
-            tiles_width = fm_previews_width - $(".fm_preview_menubar").width();
-
-            center_tile_width = Math.round(tiles_width * center_tile_width_frac);
-            left_tile_width = (Math.floor((tiles_width - center_tile_width)/2));
-            right_tile_width = left_tile_width;
-
-            $(".fm_preview_left_tile").css("width", left_tile_width + "px");
-            $(".fm_preview_center_tile").css("width", center_tile_width + "px");
-            $(".fm_preview_right_tile").css("width", right_tile_width + "px");
-
-            // Calculate and set height settings
-
-            footers_height = $("body").height() - $(".contentblock").height();
-            new_content_height = $(window).height() - footers_height;
-            new_view_height = new_content_height - $(".fm_statusbar").height() - $(".fm_path_breadcrumbs").height() - fm_view_padding;
-
-            if (preview.settings.zoom == 0) {
-                previews_height = 0;
-                files_folders_height = new_view_height;
-            }
-            else if (preview.settings.zoom == 1) {
-                previews_height = Math.round(previews_height_frac * new_view_height);
-                files_folders_height = new_view_height - previews_height;
-                files_folders_height = files_folders_height < files_folders_min_height ?
-                    files_folders_min_height : files_folders_height
-            }
-            else if (preview.settings.zoom > 1) {
-                previews_height = new_view_height;
-                files_folders_height = 0;
-            }
-
-            preview.settings.height = previews_height;
-
-            $(".contentblock").animate({height: new_content_height + 'px'},
-                                       {duration: options.collapseSpeed,
-                                        easing: options.collapseEasing});
-
-            $(".fm_previews").animate({height: preview.settings.height + 'px'},
-                                      {duration: options.collapseSpeed,
-                                       easing: options.collapseEasing,
-                                       complete:
-                                       function() {
-                                           $(".fm_folders").animate({height: files_folders_height + 'px'},
-                                                                    {duration: options.collapseSpeed,
-                                                                     easing: options.collapseEasing});
-                                           $(".fm_files").animate({height: files_folders_height + 'px'},
-                                                                  {duration: options.collapseSpeed,
-                                                                   easing: options.collapseEasing});
-                                           if (preview.settings.zoom == 0) {
-                                               $("#fm_preview_menubar").css('visibility', 'hidden');
-                                               set_visibility_preview_left_tile('hidden');
-                                               set_visibility_preview_center_tile('hidden');
-                                               set_visibility_preview_right_tile('hidden');
-
-                                           }
-                                           else {
-                                               $("#fm_preview_menubar").css('visibility', 'visible');
-                                               set_visibility_preview_left_tile('visible');
-                                               set_visibility_preview_center_tile('visible');
-                                               set_visibility_preview_right_tile('visible');
-                                           }
-                                           if (typeof callback === "function") {
-                                               callback();
-                                           }
-                                       }});
+                    $("#fm_filemanager .fm_files").animate(
+                        {height: layout.fileFolderInnerHeight + 'px'},
+                        {duration: options.collapseSpeed,
+                        easing: options.collapseEasing});
+                    if (typeof callback === "function") {
+                        callback();
+                    }
+                }});
         }
 
-        function clickEvent(el) {
+        $(window).on("resize", function() {
+            set_visibility_preview('hidden');
+            refresh_fileman_layout();
+        });
 
+        $(window).on("debouncedresize", function() {
+            refresh_preview();
+        });
+
+        console.debug("past layout/view functions");
+
+        function clickEvent(el) {
+            alert(options['imagesettings']);
             if (!options['imagesettings']) {
                 console.debug('clickEvent: imagesettings is false');
             } else {
@@ -487,10 +535,10 @@ if (jQuery) (function($){
                                     preview_histogram = new Uint32Array(jsonRes[i].preview_histogram);
 
                                     if (jsonRes[i].path === '') {
-                                        image_filepath = jsonRes[i].base_path + '/' + jsonRes[i].name;
+                                        image_filepath = jsonRes[i].base_path + jsonRes[i].name;
                                     }
                                     else {
-                                        image_filepath = jsonRes[i].base_path + '/' + jsonRes[i].path +  "/" + jsonRes[i].name;
+                                        image_filepath = jsonRes[i].base_path + jsonRes[i].path +  "/" + jsonRes[i].name;
                                     }
                                     right_html_out  += '<p>Image: ' + image_filepath + '</p>'
                                         + '<p>Image Type: ' + jsonRes[i].image_type + '</p>'
@@ -1793,16 +1841,19 @@ if (jQuery) (function($){
 
             $("#fm_preview_menubar_zoom_out").on('click',
                                                  function(event) {
+                                                     console.debug('fm_preview_menubar_zoom_out');
                                                      zoom_out_preview();
                                                  });
 
             $("#fm_preview_menubar_zoom_in").on('click',
                                                 function(event) {
+                                                    console.debug('fm_preview_menubar_zoom_in');
                                                     zoom_in_preview();
                                                 });
 
             $("#fm_preview_menubar_refresh").on('click',
                                                 function(event) {
+                                                    console.debug('fm_preview_menubar_refresh');
                                                     refresh_preview();
                                                 });
 
