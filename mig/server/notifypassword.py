@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notifypassword - Send forgotten password from user database to user
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -56,8 +56,7 @@ Where NOTIFY_OPTIONS may be one or more of:
 
 One or more destinations may be set by combining multiple -e, -s and -a
 options.
-"""\
-         % {'name': name}
+""" % {'name': name}
 
 
 # ## Main ###
@@ -102,6 +101,11 @@ if '__main__' == __name__:
             print 'Error: %s not supported!' % opt
             usage()
             sys.exit(0)
+
+    if args:
+        print 'Error: Non-option arguments are not supported - missing quotes?'
+        usage()
+        sys.exit(1)
 
     if not user_id:
         print "No user_id provided!"
