@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,10 +51,17 @@ def signature():
     defaults = {'cert_id': REJECT_UNSET}
     return ['user_info', defaults]
 
-def inline_image(path):
+def inline_image(configuration, path):
     """Create inline image base64 string from file in path"""
     data = 'data:image/%s;base64,' % os.path.splitext(path)[1].strip('.')
-    data += base64.b64encode(open(path).read())
+    try:
+        img_fd = open(path)
+        img_data = img_fd.read()
+        img_fd.close()
+    except Exception, exc:
+        configuration.logger.error("viewuser: no such image: %s" % path)
+        img_data = ''        
+    data += base64.b64encode(img_data)
     return data
 
 def build_useritem_object_from_user_dict(configuration, visible_user_id,
@@ -71,15 +78,18 @@ def build_useritem_object_from_user_dict(configuration, visible_user_id,
     user_item['fields'].append(('Public user ID', visible_user_id))
     user_image = True
     public_image = user_dict[CONF].get('PUBLIC_IMAGE', [])
+    public_image = [rel_path for rel_path in public_image if \
+                    os.path.exists(os.path.join(user_home, rel_path))]
     if not public_image:
         user_image = False
         public_image = ['/images/anonymous.png']
     img_html = '<div class="public_image">'
-    for img_path in public_image:
+    for rel_path in public_image:
         if user_image:
-            img_data = inline_image(os.path.join(user_home, img_path))
+            img_path = os.path.join(user_home, rel_path)
+            img_data = inline_image(configuration, img_path)
         else:
-            img_data = img_path
+            img_data = rel_path
         img_html += '<img alt="portrait" src="%s">' % img_data
     img_html += '</div>'
     public_profile = user_dict[CONF].get('PUBLIC_PROFILE', [])
