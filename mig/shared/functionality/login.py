@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - general login method selection backend
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,6 +39,7 @@ def get_valid_topics(configuration):
     valid_topics = {
         'kitoid': {'url': configuration.migserver_https_oid_url},
         'migoid': {'url': configuration.migserver_https_oid_url},
+        'migcert': {'url': configuration.migserver_https_cert_url},
         'extcert': {'url': configuration.migserver_https_cert_url},
         }
     return valid_topics
@@ -177,7 +178,7 @@ is used for login with this site.
 </p>
 """
 
-    if 'extcert' in show:
+    if 'migcert' in show or 'extcert' in show:
         html += """
 <h2>Client Certificate</h2>
 <p>
