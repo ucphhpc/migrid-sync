@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # griddaemons - grid daemon helper functions
-# Copyright (C) 2010-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -567,7 +567,7 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
         _cached = _rate_limits.get(client_address, {})
         if _cached:
             _failed = _cached.get(proto, [])
-            for (time_stamp, client_id) in _failed:
+            for (time_stamp, client_id, _) in _failed:
                 if time_stamp + fail_cache < now:
                     continue
                 hits += 1
@@ -578,14 +578,18 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
 
     _rate_limits_lock.release()
 
-    logger.info("hit rate limit found %d hit(s) for %s on %s from %s" % \
-                (hits, client_id, proto, client_address))
+    if hits > 0:
+        logger.info("hit rate limit found %d hit(s) for %s on %s from %s" % \
+                    (hits, client_id, proto, client_address))
     return refuse
 
 def update_rate_limit(configuration, proto, client_address, client_id,
-                      success):
+                      success, secret=None):
     """Update rate limit database after proto login from client_address with
     client_id and login success status.
+    The optional secret can be used to save the hash or similar so that
+    repeated failures with the same credentials only count as one error.
+    Otherwise some clients will retry on failure and hit the limit easily.
     The rate limit database is a dictionary with client_address as key and
     dictionaries mapping proto to list of failed attempts.
     We simply append failed attempts and success results in the list getting
@@ -602,21 +606,23 @@ def update_rate_limit(configuration, proto, client_address, client_id,
         #logger.debug("update rate limit db: %s" % _rate_limits)
         _cached = _rate_limits.get(client_address, {})
         cur.update(_cached)
-        if not _cached or success:
-            cur[proto] = []
-        else:
+        if not success:
             _failed = _cached.get(proto, [])
-            _failed.append((time.time(), client_id))
+            if not secret or (client_id, secret) not in [(i[1], i[2]) for i in _failed]:
+                _failed.append((time.time(), client_id, secret))
             failed_count = len(_failed)
-            cur[proto] = _failed
+            
+        cur[proto] = _failed
         _rate_limits[client_address] = cur
     except Exception, exc:
         logger.error("update rate limit failed: %s" % exc)
 
     _rate_limits_lock.release()
 
-    logger.info("update rate limit %s for %s from %s on %s to %s" % \
-                (status[success], client_id, client_address, proto, _failed))
+    if failed_count > 0:
+        logger.info("update rate limit %s for %s from %s on %s to %s" % \
+                    (status[success], client_id, client_address, proto,
+                     _failed))
     return failed_count
 
 def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
@@ -628,7 +634,7 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     now = time.time()
     expired = []
     
-    logger.debug("expire entries older than %ds at %s" % (fail_cache, now))
+    #logger.debug("expire entries older than %ds at %s" % (fail_cache, now))
 
     _rate_limits_lock.acquire()
 
@@ -640,12 +646,12 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
                     continue
                 _failed = _rate_limits[_client_address][_proto]
                 _keep = []
-                for (time_stamp, client_id) in _failed:
+                for (time_stamp, client_id, secret) in _failed:
                     if time_stamp + fail_cache < now:
                         expired.append((_client_address, _proto, time_stamp,
                                         client_id))
                     else:
-                        _keep.append((time_stamp, client_id))
+                        _keep.append((time_stamp, client_id, secret))
                 cur[proto] = _keep
             _rate_limits[_client_address] = cur
     except Exception, exc:
@@ -653,7 +659,9 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
         
     _rate_limits_lock.release()
 
-    logger.info("expire rate limit on proto %s expired %s" % (proto, expired))
+    if expired:
+        logger.info("expire rate limit on proto %s expired %s" % \
+                    (proto, expired))
 
     return expired
 
@@ -679,24 +687,40 @@ if __name__ == "__main__":
                         format="%(asctime)s %(levelname)s %(message)s")
     conf.logger = logging
     test_proto, test_address, test_id = 'DUMMY', '127.0.0.42', 'mylocaluser'
+    test_pw = "T3stp4ss"
     print "Running unit test on rate limit functions"
     print "Force expire all"
     expired = expire_rate_limit(conf, test_proto, fail_cache=0)
     print "Expired: %s" % expired
+    this_pw = test_pw
     print "Emulate rate limit"
-    for i in range(default_max_hits + 1):
+    for i in range(default_max_hits-1):
         hit = hit_rate_limit(conf, test_proto, test_address, test_id)
         print "Blocked: %s" % hit
-        update_rate_limit(conf, test_proto, test_address, test_id, False)
-        print "Updated fail for %s from %s" % (test_id, test_address)
+        update_rate_limit(conf, test_proto, test_address, test_id, False,
+                          this_pw)
+        print "Updated fail for %s:%s from %s" % \
+              (test_id, this_pw, test_address)
+        this_pw += 'x'
         time.sleep(1)
+    hit = hit_rate_limit(conf, test_proto, test_address, test_id)
+    print "Blocked: %s" % hit
+    print "Check with original user and password again"
+    update_rate_limit(conf, test_proto, test_address, test_id, False, test_pw)
+    hit = hit_rate_limit(conf, test_proto, test_address, test_id)
+    print "Blocked: %s" % hit
+    print "Check with original user and new password again to hit limit"
+    update_rate_limit(conf, test_proto, test_address, test_id, False, this_pw)
+    hit = hit_rate_limit(conf, test_proto, test_address, test_id)
+    print "Blocked: %s" % hit
     other_proto, other_address, other_id = "BOGUS", '127.10.20.30', 'otheruser'
+    other_pw = "0th3rP4ss"
     print "Update with other proto"
-    update_rate_limit(conf, other_proto, test_address, test_id, False)
+    update_rate_limit(conf, other_proto, test_address, test_id, False, test_pw)
     print "Update with other address"
-    update_rate_limit(conf, test_proto, other_address, test_id, False)
+    update_rate_limit(conf, test_proto, other_address, test_id, False, test_pw)
     print "Update with other user"
-    update_rate_limit(conf, test_proto, test_address, other_id, False)
+    update_rate_limit(conf, test_proto, test_address, other_id, False, test_pw)
     print "Check with same user from other address"
     hit = hit_rate_limit(conf, test_proto, other_address, test_id)
     print "Blocked: %s" % hit
@@ -715,7 +739,7 @@ if __name__ == "__main__":
     print "Test reset on success"
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
     print "Blocked: %s" % hit
-    update_rate_limit(conf, test_proto, test_address, test_id, True)
+    update_rate_limit(conf, test_proto, test_address, test_id, True, test_pw)
     print "Updated success for %s from %s" % (test_id, test_address)
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
     print "Blocked: %s" % hit
