@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -224,7 +224,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
         try:
             get_fs_path(path, daemon_conf['root_dir'],
                         daemon_conf['chroot_exceptions'])
-            logger.debug("accepted access to %s" % path)
+            #logger.debug("accepted access to %s" % path)
             return True
         except ValueError:
             logger.error("rejected access to %s" % path)
@@ -310,7 +310,7 @@ if __name__ == '__main__':
     nossl = False
 
     # Use separate logger
-    logger = daemon_logger("ftps", configuration.user_ftps_log, "debug")
+    logger = daemon_logger("ftps", configuration.user_ftps_log, "info")
     configuration.logger = logger
 
     # Allow configuration overrides on command line
