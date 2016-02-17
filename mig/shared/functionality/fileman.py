@@ -390,7 +390,7 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
 <!-- Smart resize debounce resize events -->
-<script type="text/javascript" src="/images/lib/smartresize/jquery.debouncedresize.js"></script>
+<script type="text/javascript" src="/images/js/jquery.debouncedresize.js"></script>
 <!-- The preview image plugin -->
 <script type="text/javascript" src="/images/js/preview.js"></script>
 <!-- The image manipulation CamanJS plugin used by the preview image plugin -->

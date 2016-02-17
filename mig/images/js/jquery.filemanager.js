@@ -440,7 +440,7 @@ if (jQuery) (function($){
         }
 
         function set_visibility_preview_left_tile(visibility) {
-            $("#fm_preview_left_tile").css("visibility", visibility)
+            $("#fm_preview_left_tile").css("visibility", visibility);
             $("#fm_preview_left_tile_histogram").css("visibility", visibility);
             $("#fm_preview_left_tile_histogram_actions").css("visibility", visibility);
             $("#fm_preview_left_output").css("visibility", visibility);
