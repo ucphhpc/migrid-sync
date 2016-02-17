@@ -278,6 +278,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         reject users without digest password set.
         """
         #logger.info("refresh user %s" % username)
+        addr = _get_addr(environ)
         update_users(configuration, self.userMap, username)
         #logger.info("in isRealmUser from %s" % addr)
         orig = super(MiGWsgiDAVDomainController, self).isRealmUser(realmname,
@@ -285,10 +286,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                                                    environ)
         if orig and self.userMap[realmname][username].get('password',
                                                           None) is not None:
-            logger.debug("valid digest user %s" % username)
+            logger.debug("valid digest user %s from %s" % (username, addr))
             return True
         else:
-            logger.warning("invalid digest user %s" % username)
+            logger.warning("invalid digest user %s from %s" % (username, addr))
             return False
                     
 
@@ -321,7 +322,14 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             except Exception, exc:
                 logger.error("failed to extract digest password: %s" % exc)
                 password = None
-        success = (password is not None)
+        if password is not None:
+            success = True
+            # TODO: we don't have a hook to log accepted digest logins
+            # this one only means that user validation makes it to digest check
+            logger.info("extracted digest for valid user %s from %s" % \
+                        (username, addr))
+        else:
+            success = False
         failed_count = update_rate_limit(configuration, "davs", addr, username,
                                          success, password)
         penalize_rate_limit(configuration, "davs", addr, username,
