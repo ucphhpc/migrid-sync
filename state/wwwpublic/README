@@ -1,4 +1,0 @@
-This directory is for public files on the MiG server and all files are visible on the plain HTTP virtual 
-host.
-
-The monitor and public vgrid files should automatically be included here.
