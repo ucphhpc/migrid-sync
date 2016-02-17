@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -266,7 +266,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         else:
             logger.warning("Invalid login for %s from %s" % (username, addr))
         failed_count = update_rate_limit(configuration, "davs", addr, username,
-                                         success)
+                                         success, password)
         penalize_rate_limit(configuration, "davs", addr, username,
                             failed_count)
         logger.info("valid digest user %s" % username)
@@ -324,7 +324,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 password = None
         success = (password is not None)
         failed_count = update_rate_limit(configuration, "davs", addr, username,
-                                         success)
+                                         success, password)
         penalize_rate_limit(configuration, "davs", addr, username,
                             failed_count)
         return password

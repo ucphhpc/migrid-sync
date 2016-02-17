@@ -421,14 +421,16 @@ class ServerHandler(BaseHTTPRequestHandler):
                 print "handleAllow approving login %s" % identity
                 response = self.approved(request, identity)
                 update_rate_limit(configuration, "openid",
-                                  self.client_address[0], self.user, True)
+                                  self.client_address[0], self.user, True,
+                                  self.password)
             else:
                 print "handleAllow rejected login %s" % identity
                 self.clearUser()
                 response = self.rejected(request, identity)    
                 failed_count = update_rate_limit(configuration, "openid",
                                                  self.client_address[0],
-                                                 self.user, False)
+                                                 self.user, False,
+                                                 self.password)
                 penalize_rate_limit(configuration, "openid",
                                     self.client_address[0], self.user,
                                     failed_count)
@@ -604,7 +606,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                 print "doLogin succeded: redirect to %s" % self.query['success_to']
                 self.redirect(self.query['success_to'])
                 update_rate_limit(configuration, "openid",
-                                  self.client_address[0], self.user, True)
+                                  self.client_address[0], self.user, True,
+                                  self.password)
             else:
                 # TODO: Login failed - is this correct behaviour?
                 print "doLogin failed for %s!" % self.user
@@ -613,7 +616,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.redirect(self.query['success_to'])
                 failed_count = update_rate_limit(configuration, "openid",
                                                  self.client_address[0],
-                                                 self.user, False)
+                                                 self.user, False,
+                                                 self.password)
                 penalize_rate_limit(configuration, "openid",
                                     self.client_address[0], self.user,
                                     failed_count)

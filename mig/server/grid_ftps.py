@@ -180,7 +180,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
                         logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "ftps",
-                                          handler.remote_ip, username, True)
+                                          handler.remote_ip, username, True,
+                                          offered)
                         return True
         err_msg = "Password authentication failed for %s" % username
         logger.error(err_msg)
@@ -188,7 +189,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         self.authenticated_user = None
         failed_count = update_rate_limit(configuration, "ftps",
                                          handler.remote_ip, username,
-                                         False)
+                                         False, offered)
         penalize_rate_limit(configuration, "ftps", handler.remote_ip, username,
                             failed_count)
         # Must raise AuthenticationFailed exception since version 1.0.0 instead

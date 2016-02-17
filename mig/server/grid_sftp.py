@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -611,13 +611,15 @@ class SimpleSSHServer(paramiko.ServerInterface):
                         self.logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "sftp-pw",
-                                          self.client_addr[0], username, True)
+                                          self.client_addr[0], username, True,
+                                          offered)
                         return paramiko.AUTH_SUCCESSFUL
         err_msg = "Password authentication failed for %s" % username
         self.logger.error(err_msg)
         print err_msg
         failed_count = update_rate_limit(configuration, "sftp-pw",
-                                         self.client_addr[0], username, False)
+                                         self.client_addr[0], username, False,
+                                         offered)
         penalize_rate_limit(configuration, "sftp-pw", self.client_addr[0],
                             username, failed_count)
         return paramiko.AUTH_FAILED
@@ -647,14 +649,16 @@ class SimpleSSHServer(paramiko.ServerInterface):
                         self.logger.info("Public key match for %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "sftp-key",
-                                          self.client_addr[0], username, True)
+                                          self.client_addr[0], username, True,
+                                          offered)
                         return paramiko.AUTH_SUCCESSFUL
         err_msg = 'Public key authentication failed for %s:\n%s' % \
                   (username, offered)
         self.logger.error(err_msg)
         print err_msg
         failed_count = update_rate_limit(configuration, "sftp-key",
-                                         self.client_addr[0], username, False)
+                                         self.client_addr[0], username, False,
+                                         offered)
         penalize_rate_limit(configuration, "sftp-key", self.client_addr[0],
                             username, failed_count)
         return paramiko.AUTH_FAILED
