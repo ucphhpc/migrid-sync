@@ -269,7 +269,6 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                          success, password)
         penalize_rate_limit(configuration, "davs", addr, username,
                             failed_count)
-        logger.info("valid digest user %s" % username)
         return success
 
     def isRealmUser(self, realmname, username, environ):
@@ -286,7 +285,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                                                    environ)
         if orig and self.userMap[realmname][username].get('password',
                                                           None) is not None:
-            logger.info("valid digest user %s" % username)
+            logger.debug("valid digest user %s" % username)
             return True
         else:
             logger.warning("invalid digest user %s" % username)
