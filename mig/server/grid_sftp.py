@@ -709,8 +709,6 @@ def accept_client(client, addr, root_dir, users, jobs, host_rsa_key, conf={}):
     transport.logger = logger
     transport.load_server_moduli()
     transport.add_server_key(host_key)
-    logger.info("using transport window_size %d and max_packet_size %d" % \
-                 (window_size, max_packet_size))
 
     if conf.has_key("sftp_implementation"):
         mod_name, class_name = conf['sftp_implementation'].split(':')
@@ -757,6 +755,8 @@ def start_service(configuration):
     """Service daemon"""
     daemon_conf = configuration.daemon_conf
     logger = daemon_conf.get("logger", logging.getLogger())
+    window_size = daemon_conf.get('window_size', DEFAULT_WINDOW_SIZE)
+    max_packet_size = daemon_conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
     server_socket = None
     try:
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -772,15 +772,16 @@ def start_service(configuration):
             server_socket.close()
         sys.exit(1)
 
-    logger.debug("Accepting connections")
+    logger.info("accept connections: window_size %d / max_packet_size %d" % \
+                (window_size, max_packet_size))
     
     min_expire_delay = 300
     last_expire = time.time()
     while True:
         client_tuple = None
         try:
-            logger.info('accept with %d active sessions' % \
-                        threading.active_count())
+            logger.debug('accept with %d active sessions' % \
+                         threading.active_count())
             client_tuple = server_socket.accept()
             # accept may return None or tuple with None part in corner cases
             if client_tuple == None or None in client_tuple:
@@ -799,7 +800,8 @@ def start_service(configuration):
         if daemon_conf['time_stamp'] + refresh_delay < time.time():
             daemon_conf = refresh_users(configuration, 'sftp')
         daemon_conf = refresh_jobs(configuration, 'sftp')
-        logger.info("Handling session from %s %s" % (client, addr))
+        logger.info("Handling new session from %s %s (%d active sessions)" % \
+                    (client, addr, threading.active_count()))
         worker = threading.Thread(target=accept_client,
                                   args=[client, addr, daemon_conf['root_dir'],
                                         daemon_conf['users'],

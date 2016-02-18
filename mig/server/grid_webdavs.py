@@ -623,7 +623,7 @@ unless it is available in mig/server/MiGserver.conf
         # USAGE:
         # export TESTROOT=$PWD; export HTDOCS=$PWD/htdocs
         # ./litmus -k $HTTPS_URL litmus test
-        'enable_litmus': True,
+        'enable_litmus': False,
         'time_stamp': 0,
         'logger': logger,
         }

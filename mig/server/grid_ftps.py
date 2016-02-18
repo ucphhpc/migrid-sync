@@ -131,7 +131,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
                 usermap[user_obj.username] = []
             usermap[user_obj.username].append(user_obj)
         self.users = usermap
-        logger.info("updated usermap: %s" % self.users)
+        logger.debug("updated usermap: %s" % self.users)
         logger.debug("update user_table")
         # Fill users in dictionary for fast lookup. We create a list of
         # matching User objects since each user may have multiple logins (e.g.
