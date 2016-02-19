@@ -75,10 +75,11 @@
 #jm_jobmanager tbody tr.odd.ui-selected { background-color: #ffdd4d; }
 #jm_jobmanager tbody tr.even.ui-selected { background-color: #ffdd7f; }
 
-#jm_jobmanager tbody tr td div.sortkey { display: none; }
-
 #fm_filelisting td, th { padding: 6px; background-position: 2px 50%; }
 #jm_jobmanager td, th { padding: 4px; background-position: 2px 50%; }
+
+/* hide sortkey helpers everywhere */
+tbody tr td div.sortkey { display: none; }
 
 #fm_debug {
     display: none;

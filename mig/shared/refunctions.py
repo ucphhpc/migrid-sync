@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # refunctions - runtime environment functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,9 +27,11 @@
 
 """Runtime Environment functions"""
 
-import os
+import base64
 import datetime
 import fcntl
+import os
+import time
 
 import shared.rekeywords as rekeywords
 import shared.parser as parser
@@ -194,3 +196,74 @@ def update_runtimeenv_owner(re_name, old_owner, new_owner, configuration):
     lock_handle.close()
     return (status, msg)
     
+def build_reitem_object(configuration, re_dict):
+    """Build a runtimeenvironment object based on input re_dict"""
+
+    software_list = []
+    soft = re_dict['SOFTWARE']
+    if len(soft) > 0:
+        for software_item in soft:
+            if software_item['url'].find('://') < 0:
+                software_item['url'] = 'http://%(url)s' % software_item
+            software_list.append({
+                'object_type': 'software',
+                'name': software_item['name'],
+                'icon': software_item['icon'],
+                'url': software_item['url'],
+                'description': software_item['description'],
+                'version': software_item['version'],
+                })
+
+    # anything specified?
+
+    testprocedure = ''
+    if len(re_dict['TESTPROCEDURE']) > 0:
+        base64string = ''
+        for stringpart in re_dict['TESTPROCEDURE']:
+            base64string += stringpart
+        testprocedure = base64.decodestring(base64string)
+
+    verifystdout = ''
+    if len(re_dict['VERIFYSTDOUT']) > 0:
+        for string in re_dict['VERIFYSTDOUT']:
+            verifystdout += string
+
+    verifystderr = ''
+    if len(re_dict['VERIFYSTDERR']) > 0:
+        for string in re_dict['VERIFYSTDERR']:
+            verifystderr += string
+
+    verifystatus = ''
+    if len(re_dict['VERIFYSTATUS']) > 0:
+        for string in re_dict['VERIFYSTATUS']:
+            verifystatus += string
+
+    environments = []
+    env = re_dict['ENVIRONMENTVARIABLE']
+    if len(env) > 0:
+        for environment_item in env:
+            environments.append({
+                'object_type': 'environment',
+                'name': environment_item['name'],
+                'example': environment_item['example'],
+                'description': environment_item['description'],
+                })
+    created_timetuple = re_dict['CREATED_TIMESTAMP'].timetuple()
+    created_asctime = time.asctime(created_timetuple)
+    created_epoch = time.mktime(created_timetuple)
+    return {
+        'object_type': 'runtimeenvironment',
+        'name': re_dict['RENAME'],
+        'description': re_dict['DESCRIPTION'],
+        'creator': re_dict['CREATOR'],
+        'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
+                                                        created_asctime),
+        'job_count': '(not implemented yet)',
+        'testprocedure': testprocedure,
+        'verifystdout': verifystdout,
+        'verifystderr': verifystderr,
+        'verifystatus': verifystatus,
+        'environments': environments,
+        'software': software_list,
+        }
+

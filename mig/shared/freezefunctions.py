@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezefunctions - freeze archive helper functions
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -80,14 +80,17 @@ def build_freezeitem_object(configuration, freeze_dict):
                 'size': file_item['size'],
                 'md5sum': file_item['md5sum'],
                 })
+    created_timetuple = freeze_dict['CREATED_TIMESTAMP'].timetuple()
+    created_asctime = time.asctime(created_timetuple)
+    created_epoch = time.mktime(created_timetuple)
     freeze_obj = {
         'object_type': 'frozenarchive',
         'id': freeze_dict['ID'],
         'name': freeze_dict['NAME'],
         'description': freeze_dict['DESCRIPTION'],
         'creator': freeze_dict['CREATOR'],
-        'created': time.asctime(freeze_dict['CREATED_TIMESTAMP'
-                                ].timetuple()),
+        'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
+                                                        created_asctime),
         'frozenfiles': freeze_files,
         }
     for field in ('author', 'department', 'organization', 'publish',

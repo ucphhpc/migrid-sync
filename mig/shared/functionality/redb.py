@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # redb - manage runtime environments
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,11 +32,11 @@ from binascii import hexlify
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
-from shared.functionality.showre import build_reitem_object
+from shared.refunctions import build_reitem_object
 from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments, get_re_dict
-
+from shared.vgridaccess import resources_using_re
 
 def signature():
     """Signature of the main function"""
@@ -151,8 +151,11 @@ $(document).ready(function() {
             output_objects.append({'object_type': 'error_text', 'text'
                                   : msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
+        # Set providers explicitly after build_reitem_object to avoid import loop
         re_item = build_reitem_object(configuration, re_dict)
         re_name = re_item['name']
+        re_item['providers'] = resources_using_re(configuration, re_name)
+        re_item['resource_count'] = len(re_item['providers'])
         
         re_item['viewruntimeenvlink'] = {'object_type': 'link',
                                          'destination': "showre.py?re_name=%s" % re_name,

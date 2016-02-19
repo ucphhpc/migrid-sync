@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -343,6 +343,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 minutes = str((difference.seconds % 3600) / 60)
                 seconds = str((difference.seconds % 60) % 60)
 
+                last_timetuple = last_request_dict['CREATED_TIME'].timetuple()
+
                 if last_request_dict.has_key('CPUTIME'):
                     cputime = last_request_dict['CPUTIME']
                 elif last_request_dict.has_key('cputime'):
@@ -429,9 +431,12 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     resource_name += "<br />%s" % resource_parts[1]
                     exes += '<td>%s</td>' % resource_name
 
-                    exes += '<td>%s<br />(%sd %sh %sm %ss ago)</td>' % \
-                            (time.asctime(last_request_dict['CREATED_TIME'].timetuple()),
-                             days, hours, minutes, seconds)
+                    last_asctime = time.asctime(last_timetuple)
+                    last_epoch = time.mktime(last_timetuple)
+                    exes += '<td><div class="sortkey">%s</div>%s<br />' %  \
+                            (last_epoch, last_asctime)
+                    exes += '(%sd %sh %sm %ss ago)</td>' % (days, hours, minutes,
+                                                          seconds)
                     exes += '<td>' + vgrid_name + '</td>'
                     runtime_envs = last_request_dict['RESOURCE_CONFIG'
                                ]['RUNTIMEENVIRONMENT']
@@ -539,10 +544,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 
                 # Fall back status - show last action unless statvfs succeeds
                 
-                store_status = '<td>%s %s<br />(%sd %sh %sm %ss ago)</td>' % \
-                               (last_status_dict['STATUS'],
-                                time.asctime(last_status_dict['CREATED_TIME'].timetuple()),
-                                days, hours, minutes, seconds)
+                last_status = last_status_dict['STATUS']
+                last_timetuple = last_status_dict['CREATED_TIME'].timetuple()
                 
                 # These disk stats are slightly confusing but match 'df'
                 # 'available' is the space that can actually be used so it
@@ -558,8 +561,9 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                                 gig_bytes
                     used_disk = total_disk - free_disk
                     used_percent = 100.0 * used_disk / (avail_disk + used_disk)
-                    store_status = '<td>%s %s<br />(%sd %sh %sm %ss ago)</td>' % \
-                               ('checked', time.asctime(), 0, 0, 0, 0)
+                    last_status = 'checked'
+                    last_timetuple = datetime.datetime.now().timetuple()
+                    days, hours, minutes, seconds = 0, 0, 0, 0
                 except OSError, ose:
                     print 'could not stat mount point %s: %s' % \
                                  (mount_point, ose)
@@ -592,7 +596,12 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 resource_name += "<br />%s" % resource_parts[1]
                 stores += '<td>%s</td>' % resource_name
 
-                stores += store_status
+                last_asctime = time.asctime(last_timetuple)
+                last_epoch = time.mktime(last_timetuple)
+                stores += '<td><div class="sortkey">%s</div>%s %s<br />' %  \
+                          (last_epoch, last_status, last_asctime)
+                stores += '(%sd %sh %sm %ss ago)</td>' % (days, hours, minutes,
+                                                          seconds)
                 stores += '<td>' + vgrid_name + '</td>'
                 stores += '<td>%d</td>' % total_disk
                 stores += '<td>%d</td>' % used_disk

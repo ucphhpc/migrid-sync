@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # certreq - helpers for certificate requests
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -189,6 +189,8 @@ def cert_js_helpers(fields):
 def build_certreqitem_object(configuration, certreq_dict):
     """Build a certreq object based on input certreq_dict"""
 
+    created_epoch = certreq_dict['created']
+    created_asctime = time.ctime(created_epoch)
     certreq_obj = {
         'object_type': 'certreq',
         'id': certreq_dict['id'],
@@ -198,7 +200,8 @@ def build_certreqitem_object(configuration, certreq_dict):
         'country': certreq_dict['country'],
         'state': certreq_dict['state'],
         'comment': certreq_dict['comment'],
-        'created': time.ctime(certreq_dict['created']),
+        'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
+                                                        created_asctime),
         }
     return certreq_obj
 
