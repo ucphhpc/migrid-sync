@@ -334,14 +334,14 @@ def add_user_objects(conf, auth_file, path, user_vars, auth_protos):
     
 def refresh_user_creds(configuration, protocol, username):
     '''Reload user credentials for username if they changed on disk. That is,
-    add user entries for all active keys and passwords enabled in conf.
-    Optionally add short ID username alias entries for user if that is enabled
-    in the conf.
+    add user entries in configuration.daemon_conf["users"] for all active keys
+    and passwords enabled in configuration. Optionally add short ID username
+    alias entries for user if that is enabled in the configuration.
     Removes all aliased user entries if the user is no longer active, too.
     The protocol argument specifies which auth files to use.
 
     NOTE: username must be the direct username used in home dir or an OpenID
-    alias with associated symlink there. Encoded uasername aliases must be
+    alias with associated symlink there. Encoded username aliases must be
     decoded before use here.
     '''
     conf = configuration.daemon_conf
@@ -418,9 +418,10 @@ def refresh_user_creds(configuration, protocol, username):
 
 
 def refresh_users(configuration, protocol):
-    '''Reload users from conf if it changed on disk. Add user entries for all
-    active keys and passwords enabled in conf. Optionally add short ID
-    username alias entries for all users if that is enabled in the conf.
+    '''Reload users from auth confs if they changed on disk. Add user entries
+    to configuration.daemon_conf["users"] for all active keys and passwords
+    enabled in configuration. Optionally add short ID username alias entries
+    for all users if that is enabled in the configuration.
     Removes all the user entries no longer active, too.
     The protocol argument specifies which auth files to use.
     '''
@@ -672,7 +673,9 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     _rate_limits_lock.release()
 
     if expired:
-        logger.info("expire rate limit on proto %s expired %s" % \
+        logger.info("expire rate limit on proto %s expired %d items" % \
+                    (proto, len(expired)))
+        logger.debug("expire rate limit on proto %s expired %s" % \
                     (proto, expired))
 
     return expired
