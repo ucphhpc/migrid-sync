@@ -158,6 +158,7 @@ sudo cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
 and on Redhat based systems possibly mimic Debian with
 sudo cp %(destination)s/mimic-deb.conf %(apache_etc)s/conf/httpd.conf
 sudo cp %(destination)s/envvars /etc/sysconfig/httpd
+sudo cp %(destination)s/apache2.service /lib/systemd/system/httpd.service
 
 You may also want to consider copying the generated apache2.conf,
 httpd.conf, ports.conf and envvars to %(apache_etc)s/:

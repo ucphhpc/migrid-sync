@@ -343,6 +343,7 @@ cert, oid and sid based https!
         ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
         ("apache-init.d-deb-template", "apache-%s" % user),
         ("apache-MiG-template.conf", "MiG.conf"),
+        ("apache-service-template.conf", "apache2.service"),
         ("trac-MiG-template.ini", "trac.ini"),
         ("logrotate-MiG-template", "logrotate-migrid"),
         ("MiGserver-template.conf", "MiGserver.conf"),
