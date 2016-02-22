@@ -6,7 +6,7 @@ __MIG_STATE__/log/*.log __MIG_STATE__/log/*.out __MIG_STATE__/log/*.err {
 	delaycompress
 	notifempty
 	create 640 __USER__ __GROUP__
-        sus __USER__ __GROUP__
+	su __USER__ __GROUP__
 	sharedscripts
 	postrotate
            if [ -x /etc/init.d/migrid ]; then \
