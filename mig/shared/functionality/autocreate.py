@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - auto create user from signed certificate or openid login
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -244,10 +244,12 @@ def main(client_id, user_arguments_dict, environ=None):
     email = email.lower()
 
     if login_type == 'oid':
-        # Remap some oid attributes if on kit format with faculty in
+        # Remap some oid attributes if on KIT format with faculty in
         # organization and institute in organizational_unit. We can add them
         # as different fields as long as we make sure the x509 fields are
         # preserved.
+        # Additionally in the special case with unknown institute (ou=ukendt)
+        # we force organization to KU to align with cert policies.
         # We do that to allow autocreate updating existing cert users.
         
         if org_unit not in ('', 'NA'):
@@ -256,6 +258,9 @@ def main(client_id, user_arguments_dict, environ=None):
             oid_extras['institute'] = org_unit
             org = org_unit.upper()
             org_unit = 'NA'
+            if org == 'UKENDT':
+                org = 'KU'
+                logger.info("unknown affilition, set organization to %s" % org)
 
         # Stay on virtual host - extra useful while we test dual OpenID
         base_url = environ.get('REQUEST_URI',
