@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # restartstore - Back end to restart one or more resource store units
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,6 @@ def signature():
 
     defaults = {
         'unique_resource_name': REJECT_UNSET,
-        'cputime': ['-1'],
         'store_name': [],
         'all': [''],
         'parallel': [''],
@@ -78,7 +77,6 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     unique_resource_name = accepted['unique_resource_name'][-1]
-    cputime = accepted['cputime'][-1]
     store_name_list = accepted['store_name']
     all = accepted['all'][-1].lower() == 'true'
     parallel = accepted['parallel'][-1].lower() == 'true'
@@ -123,7 +121,7 @@ def main(client_id, user_arguments_dict):
         task_list[0].join()
         task = Worker(target=start_resource_store,
                       args=(unique_resource_name, store_name,
-                      configuration.resource_home, int(cputime),
+                      configuration.resource_home,
                       logger))
         task_list.append(task)
         task.start()

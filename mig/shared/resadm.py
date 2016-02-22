@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadm - Resource administration functions mostly for remote command execution
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -754,7 +754,6 @@ def start_resource_store(
     unique_resource_name,
     store_name,
     resource_home,
-    cputime,
     logger,
     lock_pgid_file=True,
     ):
@@ -859,6 +858,7 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
         command_list = ['sshfs', src, dst] + sshfs_options
         command = ' '.join(command_list)
         logger.info('running mount command on server: %s' % command)
+        logger.debug('mount command list: %s' % command_list)
         msg += 'mounting with %s. ' % command
         # NOTE: we use command on list form to avoid the need for shell
         proc = subprocess_popen(command_list, stdout=subprocess_pipe,
@@ -1451,6 +1451,8 @@ def resource_store_action(
                 command_list = ['fusermount'] + flags + ['%(mount_point)s' % \
                                                          setup]
                 command = ' '.join(command_list)
+                logger.info('running unmount command on server: %s' % command)
+                logger.debug('unmount command list: %s' % command_list)
                 msg += 'unmounting with %s. ' % command
                 # NOTE: we use command on list form to avoid the need for shell
                 proc = subprocess_popen(command_list, stdout=subprocess_pipe,
@@ -1564,7 +1566,6 @@ def restart_resource_store(
     unique_resource_name,
     store_name,
     resource_home,
-    cputime,
     logger,
     ):
     """Restart store node"""
@@ -1573,7 +1574,7 @@ def restart_resource_store(
             store_name, resource_home, logger)
     (start_status, start_msg) = \
         start_resource_store(unique_resource_name, store_name,
-                           resource_home, cputime, logger)
+                           resource_home, logger)
     return (stop_status and start_status, '%s; %s' % (stop_msg,
             start_msg))
 
