@@ -68,9 +68,9 @@ Extended to fit MiG user auth and access restrictions.
 Requires PyOpenSSL module (http://pypi.python.org/pypi/pyOpenSSL).
 """
 
-import logging
+#import logging
 import os
-import socket
+#import socket
 import sys
 import time
 
@@ -86,7 +86,8 @@ except ImportError:
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
-     hit_rate_limit, update_rate_limit, expire_rate_limit, penalize_rate_limit
+     refresh_user_creds, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+     penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
@@ -97,41 +98,18 @@ configuration, logger = None, None
 class MiGUserAuthorizer(DummyAuthorizer):
     """Authenticate/authorize against MiG users DB and user password files"""
 
-    users = None
+    users = {}
     authenticated_user = None
 
-    min_expire_delay = 300
+    min_expire_delay = 120
     last_expire = time.time()
 
-    def update_logins(self, username):
-        """Update login DB"""
+    def _update_logins(self, configuration, username):
+        """Update user DB for username and internal user_table for logins"""
 
-        # We don't have a handle_request for server so expire here instead
-        
-        if self.last_expire + self.min_expire_delay < time.time():
-            self.last_expire = time.time()
-            expired = expire_rate_limit(configuration, "ftps")
-            logger.debug("expired rate limit entries: %s" % expired)
-
-        # TODO: only refresh for username?
-
+        if not update_users(configuration, self.users, username):
+            return None
         daemon_conf = configuration.daemon_conf
-
-        logger.debug("update user list")
-
-        # automatic reload of users if more than refresh_delay seconds old
-        refresh_delay = 5
-        if daemon_conf['time_stamp'] + refresh_delay < time.time():
-            daemon_conf = refresh_users(configuration, 'ftps')
-
-        logger.debug("update usermap")
-        usermap = {}
-        for user_obj in daemon_conf['users']:
-            if not usermap.has_key(user_obj.username):
-                usermap[user_obj.username] = []
-            usermap[user_obj.username].append(user_obj)
-        self.users = usermap
-        logger.debug("updated usermap: %s" % self.users)
         logger.debug("update user_table")
         # Fill users in dictionary for fast lookup. We create a list of
         # matching User objects since each user may have multiple logins (e.g.
@@ -162,7 +140,15 @@ class MiGUserAuthorizer(DummyAuthorizer):
         first place!
         """
         logger.debug("Authenticating %s" % username)
-        self.update_logins(username)
+
+        # We don't have a handle_request for server so expire here instead
+        
+        if self.last_expire + self.min_expire_delay < time.time():
+            self.last_expire = time.time()
+            expire_rate_limit(configuration, "ftps")
+
+        logger.info("refresh user %s" % username)
+        self._update_logins(configuration, username)
         
         offered = None
         if hit_rate_limit(configuration, "ftps", handler.remote_ip, username):
@@ -201,6 +187,8 @@ class MiGRestrictedFilesystem(AbstractedFS):
     """Restrict access to user home and symlinks into the dirs configured in
     chroot_exceptions. Prevent access to a few hidden files.
     """
+
+    chmod_exceptions = None
     
     # Use shared daemon fs helper functions
     
@@ -278,6 +266,24 @@ class MiGRestrictedFilesystem(AbstractedFS):
         except:
             return False
 
+def update_users(configuration, user_map, username=None):
+    """Update dict with username password pairs. The optional username
+    argument limits the update to that particular user with aliases.
+    """
+    if username is not None:
+        _, changed = refresh_user_creds(configuration, 'ftps', username)
+    else:
+        _, changed = refresh_users(configuration, 'ftps')
+
+    if changed:
+        daemon_conf = configuration.daemon_conf
+        logger.debug("update user_map")
+        for user_obj in daemon_conf['users']:
+            if not user_map.has_key(user_obj.username):
+                user_map[user_obj.username] = []
+            user_map[user_obj.username].append(user_obj)
+        logger.debug("updated user_map: %s" % user_map)
+    return changed
 
 def start_service(conf):
     """Main server"""

@@ -33,7 +33,7 @@ but bad performance and limited platform support.
 Requires wsgidav module (https://github.com/mar10/wsgidav).
 """
 
-import logging
+#import logging
 import os
 import sys
 import time
@@ -140,8 +140,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
     def __init__(self, certificate, private_key, certificate_chain=None,
                  ssl_version=None, ciphers=None, options=None):
         """Save ssl_version and ciphers for use in wrap method"""
-        super(HardenedSSLAdapter, self).__init__(certificate, private_key,
-                                                 certificate_chain)
+        BuiltinSSLAdapter.__init__(self, certificate, private_key,
+                                   certificate_chain)
 
         if ssl_version is not None:
             self.ssl_version = ssl_version
@@ -206,9 +206,13 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     basic auth and digest otherwise.
     """
 
+    min_expire_delay = 120
+    last_expire = time.time()
+
     def __init__(self, userMap):
-        super(MiGWsgiDAVDomainController, self).__init__(userMap)
-        self.userMap = userMap
+        WsgiDAVDomainController.__init__(self, userMap)
+        # Alias to CamelCase version userMap required internally
+        self.user_map = self.userMap = userMap
         self.last_expire = time.time()
         self.min_expire_delay = 300        
         self.hash_cache = {}
@@ -216,8 +220,9 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 
     def _expire_rate_limit(self):
         """Expire old entries in the rate limit dictionary"""
-        expired = expire_rate_limit(configuration, "davs")
-        logger.debug("Expired rate limit entries: %s" % expired)
+        if self.last_expire + self.min_expire_delay < time.time():
+            self.last_expire = time.time()
+            expire_rate_limit(configuration, "davs")
         
     def _expire_caches(self):
         """Expire old entries in the hash and digest caches"""
@@ -234,7 +239,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 
     def _check_auth_password(self, address, realm, username, password):
         """Verify supplied username and password against user DB"""
-        user = self.userMap[realm].get(username, None)
+        user = self.user_map[realm].get(username, None)
         if user is not None:
             # list of User login objects for username
             offered = password
@@ -255,7 +260,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         addr = _get_addr(environ)
         self._expire_rate_limit()
         #logger.info("refresh user %s" % username)
-        update_users(configuration, self.userMap, username)
+        update_users(configuration, self.user_map, username)
         #logger.info("in authDomainUser from %s" % addr)
         success = False
         if hit_rate_limit(configuration, "davs", addr, username):
@@ -279,12 +284,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         #logger.info("refresh user %s" % username)
         addr = _get_addr(environ)
-        update_users(configuration, self.userMap, username)
+        update_users(configuration, self.user_map, username)
         #logger.info("in isRealmUser from %s" % addr)
         orig = super(MiGWsgiDAVDomainController, self).isRealmUser(realmname,
                                                                    username,
                                                                    environ)
-        if orig and self.userMap[realmname][username].get('password',
+        if orig and self.user_map[realmname][username].get('password',
                                                           None) is not None:
             logger.debug("valid digest user %s from %s" % (username, addr))
             return True
@@ -302,7 +307,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         addr = _get_addr(environ)
         self._expire_rate_limit()
         #logger.info("refresh user %s" % username)
-        update_users(configuration, self.userMap, username)
+        update_users(configuration, self.user_map, username)
         #logger.info("in getRealmUserPassword from %s" % addr)
         if hit_rate_limit(configuration, "davs", addr, username):
             logger.warning("Rate limiting login from %s" % addr)
@@ -340,7 +345,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 class MiGFileResource(FileResource):
     """Hide invisible files from all access"""
     def __init__(self, path, environ, filePath):
-        super(MiGFileResource, self).__init__(path, environ, filePath)
+        FileResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
         self._user_chroot = _user_chroot_path(environ)
@@ -358,7 +363,7 @@ class MiGFileResource(FileResource):
 class MiGFolderResource(FolderResource):
     """Hide invisible files from all access"""
     def __init__(self, path, environ, filePath):
-        super(MiGFolderResource, self).__init__(path, environ, filePath)
+        FolderResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
         self._user_chroot = _user_chroot_path(environ)
@@ -389,7 +394,7 @@ class MiGFilesystemProvider(FilesystemProvider):
 
     def __init__(self, directory, server_conf, dav_conf):
         """Simply call parent constructor"""
-        super(MiGFilesystemProvider, self).__init__(directory)
+        FilesystemProvider.__init__(self, directory)
         self.daemon_conf = server_conf.daemon_conf
         self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
         self.chmod_exceptions = self.daemon_conf['chmod_exceptions']
@@ -456,9 +461,12 @@ def update_users(configuration, user_map, username=None):
     argument limits the update to that particular user with aliases.
     """
     if username is not None:
-        refresh_user_creds(configuration, 'davs', username)
+        _, changed = refresh_user_creds(configuration, 'davs', username)
     else:
-        refresh_users(configuration, 'davs')
+        _, changed = refresh_users(configuration, 'davs')
+    if not changed:
+        return
+    
     domain_map = user_map.get(dav_domain, {})
     for user_obj in configuration.daemon_conf['users']:
         # print "DEBUG: user %s : %s" % (user_obj.username, user_obj.digest)

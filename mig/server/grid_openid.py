@@ -1146,8 +1146,7 @@ def start_service(configuration):
         httpserver.handle_request()
         if last_expire + min_expire_delay < time.time():
             last_expire = time.time()
-            expired = expire_rate_limit(configuration, "openid")
-            logger.debug("expired: %s" % expired)
+            expire_rate_limit(configuration, "openid")
             
 
 if __name__ == '__main__':

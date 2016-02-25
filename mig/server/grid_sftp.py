@@ -82,8 +82,9 @@ except ImportError:
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
-     acceptable_chmod, refresh_users, refresh_jobs, hit_rate_limit, \
-     update_rate_limit, expire_rate_limit, penalize_rate_limit
+     acceptable_chmod, refresh_users, refresh_user_creds, refresh_jobs, \
+     refresh_job_creds, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+     penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
@@ -131,6 +132,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     """
     def __init__(self, server, transport, fs_root, users, *largs,
                  **kwargs):
+        paramiko.SFTPServerInterface.__init__(self, server)
         conf = kwargs.get('conf', {})
         self.conf = conf
         self.logger = conf.get("logger", logging.getLogger())
@@ -566,6 +568,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
     """Custom SSH server with multi pub key support"""
     def __init__(self, users, *largs, **kwargs):
         conf = kwargs.get('conf', {})
+        paramiko.ServerInterface.__init__(self)
         self.logger = conf.get("logger", logging.getLogger())
         self.event = threading.Event()
         self.users = users
@@ -590,6 +593,10 @@ class SimpleSSHServer(paramiko.ServerInterface):
         first place!
         """
         offered = None
+
+        daemon_conf, _ = refresh_user_creds(configuration, 'sftp', username)
+        daemon_conf, _ = refresh_job_creds(configuration, 'sftp', username)
+
         if hit_rate_limit(configuration, "sftp-pw", self.client_addr[0],
                           username):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
@@ -627,6 +634,9 @@ class SimpleSSHServer(paramiko.ServerInterface):
     def check_auth_publickey(self, username, key):
         """Public key auth against usermap"""
         offered = None
+
+        daemon_conf, _ = refresh_user_creds(configuration, 'sftp', username)
+        daemon_conf, _ = refresh_job_creds(configuration, 'sftp', username)
 
         if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
                           username, max_fails=10):
@@ -777,6 +787,10 @@ def start_service(configuration):
     
     min_expire_delay = 300
     last_expire = time.time()
+    # Initial load of users and jobs for auth
+    # TODO: eliminate full load - problems for ls in root without, though
+    daemon_conf, _ = refresh_users(configuration, 'sftp')
+    daemon_conf, _ = refresh_jobs(configuration, 'sftp')
     while True:
         client_tuple = None
         try:
@@ -795,11 +809,6 @@ def start_service(configuration):
             logger.warning('ignoring failed client connection for %s: %s' % \
                            (client_tuple, err))
             continue
-        # automatic reload of users if more than refresh_delay seconds old
-        refresh_delay = 5
-        if daemon_conf['time_stamp'] + refresh_delay < time.time():
-            daemon_conf = refresh_users(configuration, 'sftp')
-        daemon_conf = refresh_jobs(configuration, 'sftp')
         logger.info("Handling new session from %s %s (%d active sessions)" % \
                     (client, addr, threading.active_count()))
         worker = threading.Thread(target=accept_client,
@@ -811,9 +820,7 @@ def start_service(configuration):
         worker.start()
         if last_expire + min_expire_delay < time.time():
             last_expire = time.time()
-            expired = expire_rate_limit(configuration, "sftp-*")
-            logger.debug("Expired rate limit entries: %s" % expired)
-        
+            expire_rate_limit(configuration, "sftp-*")        
 
 
 if __name__ == "__main__":
@@ -821,7 +828,7 @@ if __name__ == "__main__":
 
     # Use separate logger
 
-    logger = daemon_logger("sftp", configuration.user_sftp_log, "info")
+    logger = daemon_logger("sftp", configuration.user_sftp_log, "debug")
     configuration.logger = logger
     
     # Allow configuration overrides on command line

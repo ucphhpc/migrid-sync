@@ -31,14 +31,13 @@ import fnmatch
 import glob
 import logging
 import os
-import shelve
 import socket
 import time
 import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path
-from shared.fileio import unpickle, acquire_file_lock, release_file_lock
+from shared.fileio import unpickle
 from shared.safeinput import valid_path
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
@@ -75,10 +74,20 @@ class User(object):
 
     def __str__(self):
         """String formater"""
-        return 'username: %s\nhome: %s\npassword: %s\ndigest: %s\npubkey: %s\nlast_update: %s' \
-               % (self.username, self.home, self.password, self.digest,
-                  self.public_key, self.last_update)
-
+        out = '''username: %s
+home: %s''' % (self.username, self.home)
+        if self.password:
+            out += '''
+password: %s''' % self.password
+        if self.digest:
+            out += '''
+digest: %s''' % self.digest
+        if self.public_key:
+            out += '''
+pubkey: %s''' % self.public_key.get_base64()
+        out += '''
+last_update: %s''' % self.last_update
+        return out
 
 def get_fs_path(user_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
@@ -216,13 +225,36 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
 
     return changed_paths
 
-def add_user_objects(conf, auth_file, path, user_vars, auth_protos):
-    """Add user objects for auth_file with path to conf users dict"""
+def get_job_changes(conf, username, mrsl_path):
+    """Check if job mount changed for username using the provided mrsl_path
+    file and the saved time stamp from jobs embedded in conf.
+    Returns a list of changed mrsl files with the empty list if none changed.
+    """
+    logger = conf.get("logger", logging.getLogger())
+    old_users = [i for i in conf['jobs'] if i.username == username]
+    changed_paths = []
+    if old_users:
+        first = old_users[0]
+        if not os.path.exists(mrsl_path):
+            changed_paths.append(mrsl_path)
+        elif os.path.getmtime(mrsl_path) > first.last_update:
+            first.last_update = os.path.getmtime(mrsl_path)
+            changed_paths.append(mrsl_path)
+    elif os.path.exists(mrsl_path) and \
+             os.path.getsize(mrsl_path) > 0:
+        changed_paths.append(mrsl_path)
+    return changed_paths
+
+def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
+    """Update user objects for auth_file with path to conf users dict. Remove
+    any old entries for user and add the current ones.
+    """
 
     logger = conf.get("logger", logging.getLogger())
 
     proto_authkeys, proto_authpasswords, proto_authdigests = auth_protos
     user_id, user_alias, user_dir, short_id, short_alias = user_vars
+    user_logins = (user_alias, short_id, short_alias)
 
     # Create user entry for each valid key and password 
     if auth_file == proto_authkeys:
@@ -231,7 +263,7 @@ def add_user_objects(conf, auth_file, path, user_vars, auth_protos):
         all_digests = []
         # Clean up all old key entries for this user
         conf['users'] = [i for i in conf['users'] \
-                         if i.username != user_alias or \
+                         if i.username not in user_logins or \
                          i.public_key is None]
     elif auth_file == proto_authpasswords:
         all_keys = []
@@ -239,7 +271,7 @@ def add_user_objects(conf, auth_file, path, user_vars, auth_protos):
         all_digests = []
         # Clean up all old password entries for this user
         conf['users'] = [i for i in conf['users'] \
-                         if i.username != user_alias or \
+                         if i.username not in user_logins or \
                          i.password is None]
     else:
         all_keys = []
@@ -247,8 +279,10 @@ def add_user_objects(conf, auth_file, path, user_vars, auth_protos):
         all_digests = get_authpasswords(path)
         # Clean up all old digest entries for this user
         conf['users'] = [i for i in conf['users'] \
-                         if i.username != user_alias or \
+                         if i.username not in user_logins or \
                          i.digest is None]
+    logger.debug("after clean up old users list is:\n%s" % \
+                 '\n'.join(["%s" % i for i in conf['users']]))
     for user_key in all_keys:
         # Remove comments and blank lines
         user_key = user_key.split('#', 1)[0].strip()
@@ -294,14 +328,14 @@ def add_user_objects(conf, auth_file, path, user_vars, auth_protos):
         # Add short alias copy if user aliasing is enabled
         if short_id:
             logger.debug(
-                "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+                "Adding alias:\nname: %s\nalias: %s\nhome: %s\npw: %s" % \
                 (user_id, short_id, user_dir, user_password))
             conf['users'].append(
                 User(username=short_id, home=user_dir,
                      password=user_password, public_key=None, chroot=True),
                 )
             logger.debug(
-                "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+                "Adding alias:\nname: %s\nalias: %s\nhome: %s\npw: %s" % \
                 (user_id, short_alias, user_dir, user_password))
             conf['users'].append(
                 User(username=short_alias, home=user_dir,
@@ -330,6 +364,8 @@ def add_user_objects(conf, auth_file, path, user_vars, auth_protos):
                 User(username=short_alias, home=user_dir, password=None,
                      digest=user_digest, public_key=None, chroot=True),
                 )
+    logger.debug("after update users list is:\n%s" % \
+                 '\n'.join(["%s" % i for i in conf['users']]))
     
     
 def refresh_user_creds(configuration, protocol, username):
@@ -339,11 +375,14 @@ def refresh_user_creds(configuration, protocol, username):
     alias entries for user if that is enabled in the configuration.
     Removes all aliased user entries if the user is no longer active, too.
     The protocol argument specifies which auth files to use.
+    Returns a tuple with the updated daemon_conf and the list of changed user
+    IDs.
 
     NOTE: username must be the direct username used in home dir or an OpenID
     alias with associated symlink there. Encoded username aliases must be
     decoded before use here.
     '''
+    changed_users = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
@@ -360,7 +399,7 @@ def refresh_user_creds(configuration, protocol, username):
         proto_authdigests = ftps_authdigests
     else:
         logger.error("Invalid protocol: %s" % protocol)
-        return conf
+        return (conf, changed_users)
 
     auth_protos = (proto_authkeys, proto_authpasswords, proto_authdigests)
 
@@ -375,13 +414,13 @@ def refresh_user_creds(configuration, protocol, username):
                                                      username,
                                                      proto_authdigests))
 
-    logger.debug("Updating creds for %s" % username)
+    logger.debug("Updating user creds for %s" % username)
 
     changed_paths = get_creds_changes(conf, username, authkeys_path,
                                       authpasswords_path, authdigests_path)
     if not changed_paths:
-        logger.debug("No creds changes for %s" % username)
-        return conf
+        logger.debug("No user creds changes for %s" % username)
+        return (conf, changed_users)
 
     short_id, short_alias = None, None
     matches = []
@@ -410,11 +449,12 @@ def refresh_user_creds(configuration, protocol, username):
             logger.debug("find short_alias for %s" % short_alias)
             short_alias = client_alias(short_id)
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
-        add_user_objects(conf, auth_file, path, user_vars, auth_protos)
+        update_user_objects(conf, auth_file, path, user_vars, auth_protos)
     if changed_paths:
         logger.info("Refreshed user %s from configuration: %s" % \
-                        (username, changed_paths))
-    return conf
+                    (username, changed_paths))
+        changed_users.append(username)
+    return (conf, changed_users)
 
 
 def refresh_users(configuration, protocol):
@@ -424,7 +464,10 @@ def refresh_users(configuration, protocol):
     for all users if that is enabled in the configuration.
     Removes all the user entries no longer active, too.
     The protocol argument specifies which auth files to use.
+    Returns a tuple with the updated daemon_conf and the list of changed user
+    IDs.
     '''
+    changed_users = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     last_update = conf['time_stamp']
@@ -444,7 +487,7 @@ def refresh_users(configuration, protocol):
         proto_authdigests = ftps_authdigests
     else:
         logger.error("invalid protocol: %s" % protocol)
-        return conf
+        return (conf, changed_users)
 
     auth_protos = (proto_authkeys, proto_authpasswords, proto_authdigests)
 
@@ -485,38 +528,122 @@ def refresh_users(configuration, protocol):
         if last_update >= os.path.getmtime(path):
             continue
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
-        add_user_objects(conf, auth_file, path, user_vars, auth_protos)
+        update_user_objects(conf, auth_file, path, user_vars, auth_protos)
+        changed_users += [user_id, user_alias]
+        if short_id is not None:
+            changed_users += [short_id, short_alias]
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d deleted users" % len(removed))
         conf['users'] = [i for i in conf['users'] if not i.username in removed]
+        changed_users += removed
     logger.info("Refreshed users from configuration (%d users)" % \
                 len(conf['users']))
     conf['time_stamp'] = time.time()
-    return conf
+    return (conf, changed_users)
 
+
+def refresh_job_creds(configuration, protocol, username):
+    '''Reload job credentials for username (SID) if they changed on disk.
+    That is, add user entries in configuration.daemon_conf["jobs"] for any
+    corresponding active job keys.
+    Removes all job login entries if the job is no longer active, too.
+    The protocol argument specifies which auth files to use.
+    Returns a tuple with the updated daemon_conf and the list of changed job
+    IDs.
+    '''
+    changed_jobs = []
+    conf = configuration.daemon_conf
+    last_update = conf['time_stamp']
+    logger = conf.get("logger", logging.getLogger())
+    old_usernames = [i.username for i in conf['jobs']]
+    cur_usernames = []
+    if not protocol in ('sftp',):
+        logger.error("invalid protocol: %s" % protocol)
+        return (conf, changed_jobs)
+
+    link_path = os.path.join(configuration.sessid_to_mrsl_link_home,
+                            "%s.mRSL" % username)
+
+    logger.debug("Updating job creds for %s" % username)
+
+    changed_paths = get_job_changes(conf, username, link_path)
+    if not changed_paths:
+        logger.debug("No job creds changes for %s" % username)
+        return (conf, changed_jobs)
+
+    job_dict = None
+    if os.path.islink(link_path) and os.path.exists(link_path) and \
+           last_update < os.path.getmtime(link_path):
+        sessionid = username
+        job_dict = unpickle(link_path, logger)
+            
+    # We only allow connections from executing jobs that
+    # has a public key
+    if not job_dict is None and type(job_dict) == dict and \
+           job_dict.has_key('STATUS') and \
+           job_dict['STATUS'] == 'EXECUTING' and \
+           job_dict.has_key('SESSIONID') and \
+           job_dict['SESSIONID'] == sessionid and \
+           job_dict.has_key('USER_CERT') and \
+           job_dict.has_key('MOUNT') and \
+           job_dict.has_key('MOUNTSSHPUBLICKEY'):
+        user_alias = sessionid
+        user_dir = client_id_dir(job_dict['USER_CERT'])
+        user_key = job_dict['MOUNTSSHPUBLICKEY']
+        user_url = job_dict['RESOURCE_CONFIG']['HOSTURL']
+        user_ip = socket.gethostbyname_ex(user_url)[2][0]
+
+        # Make sure pub key is valid
+        valid_pubkey = True
+        try:    
+            _ = parse_pub_key(user_key)
+        except Exception, exc:
+            valid_pubkey = False
+            logger.warning("Skipping broken key '%s' for user %s (%s)" % \
+                           (user_key, user_alias, exc))
+
+        if valid_pubkey:
+            conf['jobs'].append(User(username=user_alias, 
+                                     home=user_dir, password=None,
+                                     public_key=user_key, chroot=True, 
+                                     ip_addr=user_ip))
+            cur_usernames.append(user_alias)
+            changed_jobs.append(user_alias)
+                
+    removed = [i for i in old_usernames if not i in cur_usernames]
+    if removed:
+        logger.info("Removing login for %d finished jobs" % len(removed))
+        conf['jobs'] = [i for i in conf['jobs'] if not i.username in removed]
+        changed_jobs += [i.username for i in removed]
+    logger.info("Refreshed jobs from configuration (%d jobs)" % \
+                len(conf['jobs']))
+    return (conf, changed_jobs)
 
 def refresh_jobs(configuration, protocol):
     '''Refresh job keys based on the job state.
     Add user entries for all active job keys. 
     Removes all the user entries for jobs no longer active.
+    Returns a tuple with the daemon_conf and the list of changed job IDs.
     '''
+    changed_jobs = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     old_usernames = [i.username for i in conf['jobs']]
     cur_usernames = []
     if not protocol in ('sftp',):
         logger.error("invalid protocol: %s" % protocol)
-        return conf
+        return (conf, changed_jobs)
 
-    for filename in os.listdir(configuration.sessid_to_mrsl_link_home):
-        filepath = os.path.join(configuration.sessid_to_mrsl_link_home, filename)
+    for link_name in os.listdir(configuration.sessid_to_mrsl_link_home):
+        link_path = os.path.join(configuration.sessid_to_mrsl_link_home,
+                                 link_name)
         
         job_dict = None
-        if os.path.islink(filepath) and filepath.endswith('.mRSL') and \
-               os.path.exists(filepath):
-            sessionid = filename[:-5]
-            job_dict = unpickle(filepath, logger)
+        if os.path.islink(link_path) and link_path.endswith('.mRSL') and \
+               os.path.exists(link_path):
+            sessionid = link_name[:-5]
+            job_dict = unpickle(link_path, logger)
                 
         # We only allow connections from executing jobs that
         # has a public key
@@ -547,15 +674,16 @@ def refresh_jobs(configuration, protocol):
                                      public_key=user_key, chroot=True, 
                                      ip_addr=user_ip))
             cur_usernames.append(user_alias)
+            changed_jobs.append(user_alias)
                 
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d finished jobs" % len(removed))
         conf['jobs'] = [i for i in conf['jobs'] if not i.username in removed]
+        changed_jobs += [i.username for i in removed]
     logger.info("Refreshed jobs from configuration (%d jobs)" % \
                 len(conf['jobs']))
-
-    return conf
+    return (conf, changed_jobs)
 
 def hit_rate_limit(configuration, proto, client_address, client_id,
                    max_fails=default_max_hits,
