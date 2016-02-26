@@ -82,28 +82,13 @@ except ImportError:
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
-     acceptable_chmod, refresh_user_creds, refresh_job_creds, hit_rate_limit, \
-     update_rate_limit, expire_rate_limit, penalize_rate_limit
+     acceptable_chmod, refresh_user_creds, refresh_job_creds, \
+     update_login_map, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+     penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
 configuration, logger = None, None
-
-def _sync_usermap(daemon_conf, changed_users, changed_jobs):
-    """Update internal login_map from contents of daemon_conf['users'] and
-    daemon_conf['jobs'] considering User objects matching changed_users or
-    changed_jobs.
-    The login_map is a dictionary for fast lookup and we create a list of
-    matching User objects since each user/job may have multiple logins
-    (e.g. public keys).
-    """
-    login_map = daemon_conf['login_map']
-    for username in changed_users:
-        login_map[username] = [i for i in daemon_conf['users'] if username == \
-                               i.username]
-    for username in changed_jobs:
-        login_map[username] = [i for i in daemon_conf['jobs'] if username == \
-                               i.username]
 
 
 class SFTPHandle(paramiko.SFTPHandle):
@@ -614,7 +599,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         changed_jobs = []
         daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
                                                         username)
-        _sync_usermap(daemon_conf, changed_users, changed_jobs)
+        update_login_map(daemon_conf, changed_users, changed_jobs)
 
         if hit_rate_limit(configuration, "sftp-pw", self.client_addr[0],
                           username):
@@ -659,7 +644,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                                                         username)
         daemon_conf, changed_jobs = refresh_job_creds(configuration, 'sftp',
                                                       username)
-        _sync_usermap(daemon_conf, changed_users, changed_jobs)
+        update_login_map(daemon_conf, changed_users, changed_jobs)
 
         if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
                           username, max_fails=10):

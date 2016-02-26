@@ -685,6 +685,22 @@ def refresh_jobs(configuration, protocol):
                 len(conf['jobs']))
     return (conf, changed_jobs)
 
+def update_login_map(daemon_conf, changed_users, changed_jobs=[]):
+    """Update internal login_map from contents of daemon_conf['users'] and
+    daemon_conf['jobs'] considering User objects matching changed_users or
+    changed_jobs.
+    The login_map is a dictionary for fast lookup and we create a list of
+    matching User objects since each user/job may have multiple logins
+    (e.g. public keys).
+    """
+    login_map = daemon_conf['login_map']
+    for username in changed_users:
+        login_map[username] = [i for i in daemon_conf['users'] if username == \
+                               i.username]
+    for username in changed_jobs:
+        login_map[username] = [i for i in daemon_conf['jobs'] if username == \
+                               i.username]
+
 def hit_rate_limit(configuration, proto, client_address, client_id,
                    max_fails=default_max_hits,
                    fail_cache=default_fail_cache):
