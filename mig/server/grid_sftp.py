@@ -90,6 +90,26 @@ from shared.useradm import check_password_hash
 
 configuration, logger = None, None
 
+def _sync_usermap(daemon_conf, changed_users, changed_jobs):
+    """Update internal login_map from contents of daemon_conf['users'] and
+    daemon_conf['jobs'] considering User objects matching changed_users or
+    changed_jobs.
+    The login_map is a dictionary for fast lookup and we create a list of
+    matching User objects since each user/job may have multiple logins
+    (e.g. public keys).
+    """
+    login_map = daemon_conf['login_map']
+    for username in changed_users:
+        login_map[username] = login_map.get(username, [])
+        match = [i for i in daemon_conf['users'] if username == i.username]
+        for user_obj in match:
+            login_map[username].append(user_obj)
+    for username in changed_jobs:
+        login_map[username] = login_map.get(username, [])
+        match = [i for i in daemon_conf['jobs'] if username == i.username]
+        for user_obj in match:
+            login_map[username].append(user_obj)
+
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
@@ -130,22 +150,20 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     very important to conservatively catch and log all potential exceptions
     when debugging to avoid excessive loss of hair :-) 
     """
-    def __init__(self, server, transport, fs_root, users, *largs,
-                 **kwargs):
+    def __init__(self, server, transport, fs_root, *largs, **kwargs):
         paramiko.SFTPServerInterface.__init__(self, server)
         conf = kwargs.get('conf', {})
         self.conf = conf
         self.logger = conf.get("logger", logging.getLogger())
         self.transport = transport
         self.root = fs_root
+        self.login_map = conf.get('login_map', {})
         self.chmod_exceptions = conf.get('chmod_exceptions', [])
         self.chroot_exceptions = conf.get('chroot_exceptions', [])
         self.user_name = self.transport.get_username()
-        self.users = users
-
         # list of User login objects for user_name
-        
-        entries = self.users[self.user_name]
+
+        entries = self.login_map[self.user_name]
         for entry in entries:
             if entry.chroot:
                 self.root = "%s/%s" % (self.root, entry.home)
@@ -566,12 +584,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
 class SimpleSSHServer(paramiko.ServerInterface):
     """Custom SSH server with multi pub key support"""
-    def __init__(self, users, *largs, **kwargs):
+    def __init__(self, *largs, **kwargs):
         conf = kwargs.get('conf', {})
         paramiko.ServerInterface.__init__(self)
         self.logger = conf.get("logger", logging.getLogger())
         self.event = threading.Event()
-        self.users = users
+        self.login_map = conf.get('login_map', {})
         self.client_addr = kwargs.get('client_addr')
         self.authenticated_user = None
         self.allow_password = conf.get('allow_password', True)
@@ -594,15 +612,18 @@ class SimpleSSHServer(paramiko.ServerInterface):
         """
         offered = None
 
-        daemon_conf, _ = refresh_user_creds(configuration, 'sftp', username)
-        daemon_conf, _ = refresh_job_creds(configuration, 'sftp', username)
+        # Only need to update users here, since jobs only use keys
+        changed_jobs = []
+        daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
+                                                        username)
+        _sync_usermap(daemon_conf, changed_users, changed_jobs)
 
         if hit_rate_limit(configuration, "sftp-pw", self.client_addr[0],
                           username):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
-        elif self.allow_password and self.users.has_key(username):
+        elif self.allow_password and self.login_map.has_key(username):
             # list of User login objects for username
-            entries = self.users[username]
+            entries = self.login_map[username]
             offered = password
             for entry in entries:
                 if entry.password is not None:
@@ -635,15 +656,20 @@ class SimpleSSHServer(paramiko.ServerInterface):
         """Public key auth against usermap"""
         offered = None
 
-        daemon_conf, _ = refresh_user_creds(configuration, 'sftp', username)
-        daemon_conf, _ = refresh_job_creds(configuration, 'sftp', username)
+        # Both user and job keys may have changed here
+        # TMP!
+        #daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
+        #                                                username)
+        #daemon_conf, changed_jobs = refresh_job_creds(configuration, 'sftp',
+        #                                              username)
+        #_sync_usermap(daemon_conf, changed_users, changed_jobs)
 
         if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
                           username, max_fails=10):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
-        elif self.allow_publickey and self.users.has_key(username):
+        elif self.allow_publickey and self.login_map.has_key(username):
             # list of User login objects for username
-            entries = self.users[username]
+            entries = self.login_map[username]
             offered = key.get_base64()
             for entry in entries:
                 if entry.public_key is not None:
@@ -692,23 +718,10 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return True
 
 
-def accept_client(client, addr, root_dir, users, jobs, host_rsa_key, conf={}):
+def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     """Handle a single client session"""
     logger = conf.get("logger", logging.getLogger())
     logger.debug("In session handler thread from %s %s" % (client, addr))
-    # Fill users in dictionary for fast lookup. We create a list of matching
-    # User objects since each user may have multiple logins (e.g. public keys)
-     
-    usermap = {}
-    for user_obj in users:
-        if not usermap.has_key(user_obj.username):
-            usermap[user_obj.username] = []
-        usermap[user_obj.username].append(user_obj)
-        
-    for user_obj in jobs:
-        if not usermap.has_key(user_obj.username):
-            usermap[user_obj.username] = []
-        usermap[user_obj.username].append(user_obj)
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
@@ -735,9 +748,9 @@ def accept_client(client, addr, root_dir, users, jobs, host_rsa_key, conf={}):
         impl = SimpleSftpServer
     transport.set_subsystem_handler("sftp", paramiko.SFTPServer, sftp_si=impl,
                                     transport=transport, fs_root=root_dir,
-                                    users=usermap, conf=conf)
+                                    conf=conf)
 
-    server = SimpleSSHServer(users=usermap, conf=conf, client_addr=addr)
+    server = SimpleSSHServer(conf=conf, client_addr=addr)
     transport.start_server(server=server)
     
     channel = transport.accept(conf['auth_timeout'])
@@ -789,8 +802,10 @@ def start_service(configuration):
     last_expire = time.time()
     # Initial load of users and jobs for auth
     # TODO: eliminate full load - problems for ls in root without, though
-    daemon_conf, _ = refresh_users(configuration, 'sftp')
-    daemon_conf, _ = refresh_jobs(configuration, 'sftp')
+    daemon_conf, changed_users = refresh_users(configuration, 'sftp')
+    daemon_conf, changed_jobs = refresh_jobs(configuration, 'sftp')
+    _sync_usermap(daemon_conf, changed_users, changed_jobs)
+
     while True:
         client_tuple = None
         try:
@@ -813,8 +828,6 @@ def start_service(configuration):
                     (client, addr, threading.active_count()))
         worker = threading.Thread(target=accept_client,
                                   args=[client, addr, daemon_conf['root_dir'],
-                                        daemon_conf['users'],
-                                        daemon_conf['jobs'],
                                         daemon_conf['host_rsa_key'],
                                         daemon_conf,])
         worker.start()
@@ -909,6 +922,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'host_rsa_key': host_rsa_key,
         'users': [],
         'jobs': [],
+        'login_map': {},
         'time_stamp': 0,
         'logger': logger,
         'auth_timeout': 60,
