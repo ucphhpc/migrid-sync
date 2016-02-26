@@ -85,9 +85,9 @@ except ImportError:
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
-from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
-     refresh_user_creds, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-     penalize_rate_limit
+from shared.griddaemons import get_fs_path, acceptable_chmod, \
+     refresh_user_creds, update_login_map, hit_rate_limit, update_rate_limit, \
+     expire_rate_limit, penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
@@ -98,7 +98,6 @@ configuration, logger = None, None
 class MiGUserAuthorizer(DummyAuthorizer):
     """Authenticate/authorize against MiG users DB and user password files"""
 
-    users = {}
     authenticated_user = None
 
     min_expire_delay = 120
@@ -106,15 +105,17 @@ class MiGUserAuthorizer(DummyAuthorizer):
 
     def _update_logins(self, configuration, username):
         """Update user DB for username and internal user_table for logins"""
-
-        if not update_users(configuration, self.users, username):
-            return None
         daemon_conf = configuration.daemon_conf
+        login_map = daemon_conf['login_map']
+        changed_users = update_users(configuration, login_map, username)
+        if not changed_users:
+            return None
         logger.debug("update user_table")
         # Fill users in dictionary for fast lookup. We create a list of
         # matching User objects since each user may have multiple logins (e.g.
         # public keys)
-        for (username, user_obj_list) in self.users.items():
+        for username in changed_users:
+            user_obj_list = login_map.get(username, [])
             if self.has_user(username):
                 self.remove_user(username)
             # We prefer last entry with password but fall back to any entry
@@ -130,7 +131,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         logger.debug("updated user_table: %s" % self.user_table)
 
     def validate_authentication(self, username, password, handler):
-        """Password auth against usermap.
+        """Password auth against internal DB built from login_map.
 
         Please note that we take serious steps to secure against password
         cracking, but that it _may_ still be possible to achieve with a big
@@ -266,24 +267,14 @@ class MiGRestrictedFilesystem(AbstractedFS):
         except:
             return False
 
-def update_users(configuration, user_map, username=None):
-    """Update dict with username password pairs. The optional username
-    argument limits the update to that particular user with aliases.
+def update_users(configuration, login_map, user_id):
+    """Update login_map with username/password pairs for user_id and any with
+    aliases.
     """
-    if username is not None:
-        _, changed = refresh_user_creds(configuration, 'ftps', username)
-    else:
-        _, changed = refresh_users(configuration, 'ftps')
-
-    if changed:
-        daemon_conf = configuration.daemon_conf
-        logger.debug("update user_map")
-        for user_obj in daemon_conf['users']:
-            if not user_map.has_key(user_obj.username):
-                user_map[user_obj.username] = []
-            user_map[user_obj.username].append(user_obj)
-        logger.debug("updated user_map: %s" % user_map)
-    return changed
+    daemon_conf, changed_users = refresh_user_creds(configuration, 'ftps',
+                                                    user_id)
+    update_login_map(daemon_conf, changed_users)
+    return changed_users
 
 def start_service(conf):
     """Main server"""
@@ -364,6 +355,7 @@ unless it is available in mig/server/MiGserver.conf
         'allow_publickey': 'publickey' in configuration.user_ftps_auth,
         'user_alias': configuration.user_ftps_alias,
         'users': [],
+        'login_map': {},
         'time_stamp': 0,
         'logger': logger,
         'nossl': nossl,
