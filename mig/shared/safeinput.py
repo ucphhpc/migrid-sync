@@ -1018,6 +1018,7 @@ def guess_type(name):
         for key in (
             'action',
             're_name',
+            'rename',
             're_template',
             'lang',
             'machine_name',
@@ -1117,6 +1118,8 @@ def guess_type(name):
             'public_profile',
             'resconfig',
             'redescription',
+            'description',
+            'example',
             'testprocedure',
             'environment',
             'software',
@@ -1184,7 +1187,7 @@ def guess_type(name):
             __type_map[key] = valid_alphanumeric
         for key in ('proxy_upload', ):
             __type_map[key] = valid_printable
-        for key in ('openid.ns', 'openid.ns.sreg', 'url'):
+        for key in ('openid.ns', 'openid.ns.sreg', 'url', 'icon', ):
             __type_map[key] = valid_base_url
         for key in ('modauthopenid.referrer', ):
             __type_map[key] = valid_url
