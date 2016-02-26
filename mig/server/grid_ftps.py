@@ -99,7 +99,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
     """Authenticate/authorize against MiG users DB and user password files"""
 
     authenticated_user = None
-
+    
     min_expire_delay = 120
     last_expire = time.time()
 
@@ -151,6 +151,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
         logger.info("refresh user %s" % username)
         self._update_logins(configuration, username)
         
+        daemon_conf = configuration.daemon_conf
+        hash_cache = daemon_conf['hash_cache']
         offered = None
         if hit_rate_limit(configuration, "ftps", handler.remote_ip, username):
             logger.warning("Rate limiting login from %s" % handler.remote_ip)
@@ -163,7 +165,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
                 if entry['pwd'] is not None:
                     allowed = entry['pwd']
                     logger.debug("Password check for %s" % username)
-                    if check_password_hash(offered, allowed):
+                    if check_password_hash(offered, allowed, hash_cache):
                         logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "ftps",
@@ -356,6 +358,7 @@ unless it is available in mig/server/MiGserver.conf
         'user_alias': configuration.user_ftps_alias,
         'users': [],
         'login_map': {},
+        'hash_cache': {},
         'time_stamp': 0,
         'logger': logger,
         'nossl': nossl,

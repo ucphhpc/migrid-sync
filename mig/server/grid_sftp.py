@@ -591,7 +591,6 @@ class SimpleSSHServer(paramiko.ServerInterface):
         Paranoid users / grid owners should not enable password access in the
         first place!
         """
-        offered = None
 
         # Only need to update users here, since jobs only use keys
         # TODO: this is a race with threaded handlers - add mutex/semaphore
@@ -601,6 +600,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
                                                         username)
         update_login_map(daemon_conf, changed_users, changed_jobs)
 
+        hash_cache = daemon_conf['hash_cache']
+        offered = None
         if hit_rate_limit(configuration, "sftp-pw", self.client_addr[0],
                           username):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
@@ -618,7 +619,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
                     allowed = entry.password
                     self.logger.debug("Password check for %s" % username)
-                    if check_password_hash(offered, allowed):
+                    if check_password_hash(offered, allowed, hash_cache):
                         self.logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "sftp-pw",
@@ -899,6 +900,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'users': [],
         'jobs': [],
         'login_map': {},
+        'hash_cache': {},
         'time_stamp': 0,
         'logger': logger,
         'auth_timeout': 60,

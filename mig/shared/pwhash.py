@@ -59,7 +59,7 @@ def check_hash(password, hash_, hash_cache=None):
     pw_hash = hashlib.md5(password).hexdigest()
     if isinstance(hash_cache, dict) and \
            hash_cache.get(pw_hash, None) == hash_:
-        # print "found cached hash: %s" % hash_cache.get(pw_hash, None)
+        #print "found cached hash: %s" % hash_cache.get(pw_hash, None)
         return True
     algorithm, hash_function, cost_factor, salt, hash_a = hash_.split('$')
     assert algorithm == 'PBKDF2'
@@ -75,7 +75,7 @@ def check_hash(password, hash_, hash_cache=None):
     match = (diff == 0)
     if isinstance(hash_cache, dict) and match:
         hash_cache[pw_hash] = hash_
-        # print "cached hash: %s" % hash_cache.get(pw_hash, None)
+        #print "cached hash: %s" % hash_cache.get(pw_hash, None)
     return match
 
 def scramble_digest(salt, digest):
