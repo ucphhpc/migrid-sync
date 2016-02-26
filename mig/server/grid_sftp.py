@@ -82,9 +82,8 @@ except ImportError:
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
-     acceptable_chmod, refresh_users, refresh_user_creds, refresh_jobs, \
-     refresh_job_creds, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-     penalize_rate_limit
+     acceptable_chmod, refresh_user_creds, refresh_job_creds, hit_rate_limit, \
+     update_rate_limit, expire_rate_limit, penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
@@ -100,15 +99,11 @@ def _sync_usermap(daemon_conf, changed_users, changed_jobs):
     """
     login_map = daemon_conf['login_map']
     for username in changed_users:
-        login_map[username] = login_map.get(username, [])
-        match = [i for i in daemon_conf['users'] if username == i.username]
-        for user_obj in match:
-            login_map[username].append(user_obj)
+        login_map[username] = [i for i in daemon_conf['users'] if username == \
+                               i.username]
     for username in changed_jobs:
-        login_map[username] = login_map.get(username, [])
-        match = [i for i in daemon_conf['jobs'] if username == i.username]
-        for user_obj in match:
-            login_map[username].append(user_obj)
+        login_map[username] = [i for i in daemon_conf['jobs'] if username == \
+                               i.username]
 
 
 class SFTPHandle(paramiko.SFTPHandle):
@@ -148,7 +143,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     IMPORTANT: Instances of this class generally live in background threads.
     This means that any unhandled exceptions will silently pass. Thus it is
     very important to conservatively catch and log all potential exceptions
-    when debugging to avoid excessive loss of hair :-) 
+    when debugging to avoid excessive loss of hair :-)
     """
     def __init__(self, server, transport, fs_root, *largs, **kwargs):
         paramiko.SFTPServerInterface.__init__(self, server)
@@ -166,7 +161,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         entries = self.login_map[self.user_name]
         for entry in entries:
             if entry.chroot:
-                self.root = "%s/%s" % (self.root, entry.home)
+                # IMPORTANT: Must be utf8 for 'ls' to work on user home!
+                self.root = force_utf8("%s/%s" % (self.root, entry.home))
                 break
 
     # Use shared daemon fs helper functions
@@ -613,6 +609,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
         offered = None
 
         # Only need to update users here, since jobs only use keys
+        # TODO: this is a race with threaded handlers - add mutex/semaphore
+        #       probably best to integrate it in griddaemons functions
         changed_jobs = []
         daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
                                                         username)
@@ -657,12 +655,11 @@ class SimpleSSHServer(paramiko.ServerInterface):
         offered = None
 
         # Both user and job keys may have changed here
-        # TMP!
-        #daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
-        #                                                username)
-        #daemon_conf, changed_jobs = refresh_job_creds(configuration, 'sftp',
-        #                                              username)
-        #_sync_usermap(daemon_conf, changed_users, changed_jobs)
+        daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
+                                                        username)
+        daemon_conf, changed_jobs = refresh_job_creds(configuration, 'sftp',
+                                                      username)
+        _sync_usermap(daemon_conf, changed_users, changed_jobs)
 
         if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
                           username, max_fails=10):
@@ -800,12 +797,6 @@ def start_service(configuration):
     
     min_expire_delay = 300
     last_expire = time.time()
-    # Initial load of users and jobs for auth
-    # TODO: eliminate full load - problems for ls in root without, though
-    daemon_conf, changed_users = refresh_users(configuration, 'sftp')
-    daemon_conf, changed_jobs = refresh_jobs(configuration, 'sftp')
-    _sync_usermap(daemon_conf, changed_users, changed_jobs)
-
     while True:
         client_tuple = None
         try:
@@ -829,7 +820,7 @@ def start_service(configuration):
         worker = threading.Thread(target=accept_client,
                                   args=[client, addr, daemon_conf['root_dir'],
                                         daemon_conf['host_rsa_key'],
-                                        daemon_conf,])
+                                        daemon_conf])
         worker.start()
         if last_expire + min_expire_delay < time.time():
             last_expire = time.time()
@@ -841,7 +832,7 @@ if __name__ == "__main__":
 
     # Use separate logger
 
-    logger = daemon_logger("sftp", configuration.user_sftp_log, "debug")
+    logger = daemon_logger("sftp", configuration.user_sftp_log, "info")
     configuration.logger = logger
     
     # Allow configuration overrides on command line
