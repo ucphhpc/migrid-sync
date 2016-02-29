@@ -77,7 +77,7 @@ import time
 try:
     from pyftpdlib.authorizers import DummyAuthorizer, AuthenticationFailed
     from pyftpdlib.handlers import FTPHandler, TLS_FTPHandler
-    from pyftpdlib.servers import FTPServer
+    from pyftpdlib.servers import ThreadedFTPServer
     from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 except ImportError:
     print "ERROR: the python pyftpdlib module is required for this daemon"
@@ -96,7 +96,10 @@ configuration, logger = None, None
 
 
 class MiGUserAuthorizer(DummyAuthorizer):
-    """Authenticate/authorize against MiG users DB and user password files"""
+    """Authenticate/authorize against MiG users DB and user password files.
+    Only instantiated once from central server thread so we don't need locking
+    in creds refresh.
+    """
 
     authenticated_user = None
     
@@ -104,9 +107,12 @@ class MiGUserAuthorizer(DummyAuthorizer):
     last_expire = time.time()
 
     def _update_logins(self, configuration, username):
-        """Update user DB for username and internal user_table for logins"""
+        """Update user DB for username and internal user_table for logins.
+        Only called from central auth thread - no locking required.
+        """
         daemon_conf = configuration.daemon_conf
         login_map = daemon_conf['login_map']
+        # No need for locking here - please see docstring note
         changed_users = update_users(configuration, login_map, username)
         if not changed_users:
             return None
@@ -292,6 +298,9 @@ def start_service(conf):
         handler.tls_control_required = True
         handler.tls_data_required = True
     handler.certfile = conf.user_ftps_key
+    # NOTE: We use the threaded FTP server to prevent slow requests from
+    # blocking the flow of all other clients. Auth still takes place in main
+    # process thread so we don't need locking on user creds refresh.
     handler.authorizer = authorizer
     handler.abstracted_fs = MiGRestrictedFilesystem
     # TODO: masqueraded ftps fails from fireftp - maybe this would help?
@@ -299,9 +308,9 @@ def start_service(conf):
     #    handler.masquerade_address = socket.gethostbyname(
     #        configuration.user_ftps_show_address)
     handler.passive_ports = conf.user_ftps_pasv_ports
-    
-    server = FTPServer((conf.user_ftps_address, conf.user_ftps_ctrl_port),
-                       handler)
+    server = ThreadedFTPServer((conf.user_ftps_address,
+                                conf.user_ftps_ctrl_port),
+                               handler)
     server.serve_forever()
         
 

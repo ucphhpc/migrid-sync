@@ -51,26 +51,29 @@ _rate_limits = {}
 _rate_limits_lock = threading.Lock()
 
 
-class User(object):
-    """User login class to hold a single valid login for a user"""
-    def __init__(self, username, password, digest=None,
-                 chroot=True, home=None, public_key=None, ip_addr=None):
+class Login(object):
+    """Login class to hold a single valid login for a user or job.
+
+    The login method can be one of password, password digest or public key.
+    The optional chroot marks the ulogin for chrooting to the user home.
+    The optional ip_addr argument can be used to limit login source to a single
+    IP address. This is particularly useful in relation to job sshfs mounts.
+    """
+    def __init__(self, username, home, password=None, digest=None,
+                 public_key=None, chroot=True, ip_addr=None):
         self.username = username
         self.password = password
         self.digest = digest
-        self.chroot = chroot
         self.public_key = public_key
-        self.last_update = time.time()
-        
+        self.chroot = chroot
+        self.ip_addr = ip_addr
+        self.last_update = time.time()        
         if type(public_key) in (str, unicode):
             # We already checked that key is valid if we got here
             self.public_key = parse_pub_key(public_key)
-
         self.home = home
         if self.home is None:
             self.home = self.username
-
-        self.ip_addr = ip_addr
 
     def __str__(self):
         """String formater"""
@@ -245,13 +248,30 @@ def get_job_changes(conf, username, mrsl_path):
         changed_paths.append(mrsl_path)
     return changed_paths
 
+def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
+                   chroot=True, ip_addr=None):
+    """Add a single Login object to active jobs list"""
+    logger = conf.get("logger", logging.getLogger())
+    job = Login(username=login, home=home, password=password, digest=digest,
+                public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
+    logger.debug("Adding job login:\n%s" % job)
+    conf['jobs'].append(job)
+
+
+def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
+                    chroot=True):
+    """Add a single Login object to active user list"""
+    logger = conf.get("logger", logging.getLogger())
+    user = Login(username=login, home=home, password=password,
+                 digest=digest, public_key=pubkey, chroot=chroot)
+    logger.debug("Adding user login:\n%s" % user)
+    conf['users'].append(user)
+
 def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
-    """Update user objects for auth_file with path to conf users dict. Remove
+    """Update login objects for auth_file with path to conf users dict. Remove
     any old entries for user and add the current ones.
     """
-
     logger = conf.get("logger", logging.getLogger())
-
     proto_authkeys, proto_authpasswords, proto_authdigests = auth_protos
     user_id, user_alias, user_dir, short_id, short_alias = user_vars
     user_logins = (user_alias, short_id, short_alias)
@@ -295,75 +315,26 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
             logger.warning("Skipping broken key %s for user %s (%s)" % \
                            (user_key, user_id, exc))
             continue
-        logger.debug(
-            "Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-            (user_id, user_alias, user_dir, user_key))
-        conf['users'].append(
-            User(username=user_alias, home=user_dir, password=None,
-                 public_key=user_key, chroot=True),
-            )
+        add_user_object(conf, user_alias, user_dir, pubkey=user_key)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            logger.debug(
-                "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                (user_id, short_id, user_dir, user_key))
-            conf['users'].append(
-                User(username=short_id, home=user_dir, password=None,
-                     public_key=user_key, chroot=True),
-                )
-            logger.debug(
-                "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                (user_id, short_alias, user_dir, user_key))
-            conf['users'].append(
-                User(username=short_alias, home=user_dir, password=None,
-                     public_key=user_key, chroot=True),
-                )
+            add_user_object(conf, short_id, user_dir, pubkey=user_key)
+            add_user_object(conf, short_alias, user_dir, pubkey=user_key)
     for user_password in all_passwords:
         user_password = user_password.strip()
-        logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\npw: %s"\
-                    % (user_id, user_alias, user_dir, user_password))
-        conf['users'].append(
-            User(username=user_alias, home=user_dir,
-                 password=user_password, public_key=None, chroot=True))
+        add_user_object(conf, user_alias, user_dir, password=user_password)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            logger.debug(
-                "Adding alias:\nname: %s\nalias: %s\nhome: %s\npw: %s" % \
-                (user_id, short_id, user_dir, user_password))
-            conf['users'].append(
-                User(username=short_id, home=user_dir,
-                     password=user_password, public_key=None, chroot=True),
-                )
-            logger.debug(
-                "Adding alias:\nname: %s\nalias: %s\nhome: %s\npw: %s" % \
-                (user_id, short_alias, user_dir, user_password))
-            conf['users'].append(
-                User(username=short_alias, home=user_dir,
-                     password=user_password, public_key=None, chroot=True),
-                )
+            add_user_object(conf, short_id, user_dir, password=user_password)
+            add_user_object(conf, short_alias, user_dir,
+                            password=user_password)
     for user_digest in all_digests:
         user_digest = user_digest.strip()
-        logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\ndigest: %s"\
-                    % (user_id, user_alias, user_dir, user_digest))
-        conf['users'].append(
-            User(username=user_alias, home=user_dir, password=None,
-                 digest=user_digest, public_key=None, chroot=True))
+        add_user_object(conf, user_alias, user_dir, digest=user_digest)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            logger.debug(
-                "Adding alias:\nname: %s\nalias: %s\nhome: %s\ndigest: %s" % \
-                (user_id, short_id, user_dir, user_digest))
-            conf['users'].append(
-                User(username=short_id, home=user_dir, password=None,
-                     digest=user_digest, public_key=None, chroot=True),
-                )
-            logger.debug(
-                "Adding alias:\nname: %s\nalias: %s\nhome: %s\ndigest: %s" % \
-                (user_id, short_alias, user_dir, user_digest))
-            conf['users'].append(
-                User(username=short_alias, home=user_dir, password=None,
-                     digest=user_digest, public_key=None, chroot=True),
-                )
+            add_user_object(conf, short_id, user_dir, digest=user_digest)
+            add_user_object(conf, short_alias, user_dir, digest=user_digest)
     logger.debug("after update users list is:\n%s" % \
                  '\n'.join(["%s" % i for i in conf['users']]))
     
@@ -515,8 +486,7 @@ def refresh_users(configuration, protocol):
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
-        # we always accept both dir formatted and asciified distinguished name
-        cur_usernames.append(user_dir)
+        # we always accept asciified distinguished name
         cur_usernames.append(user_alias)
         if conf['user_alias']:
             short_id = extract_field(user_id, conf['user_alias'])
@@ -604,10 +574,8 @@ def refresh_job_creds(configuration, protocol, username):
                            (user_key, user_alias, exc))
 
         if valid_pubkey:
-            conf['jobs'].append(User(username=user_alias, 
-                                     home=user_dir, password=None,
-                                     public_key=user_key, chroot=True, 
-                                     ip_addr=user_ip))
+            add_job_object(conf, user_alias, user_dir, pubkey=user_key,
+                           ip_addr=user_ip)
             cur_usernames.append(user_alias)
             changed_jobs.append(user_alias)
                 
@@ -669,10 +637,8 @@ def refresh_jobs(configuration, protocol):
                                (user_key, user_alias, exc))
                 continue 
                     
-            conf['jobs'].append(User(username=user_alias, 
-                                     home=user_dir, password=None,
-                                     public_key=user_key, chroot=True, 
-                                     ip_addr=user_ip))
+            add_job_object(conf, user_alias, user_dir, pubkey=user_key,
+                           ip_addr=user_ip)
             cur_usernames.append(user_alias)
             changed_jobs.append(user_alias)
                 
@@ -687,10 +653,10 @@ def refresh_jobs(configuration, protocol):
 
 def update_login_map(daemon_conf, changed_users, changed_jobs=[]):
     """Update internal login_map from contents of daemon_conf['users'] and
-    daemon_conf['jobs'] considering User objects matching changed_users or
+    daemon_conf['jobs'] considering Login objects matching changed_users or
     changed_jobs.
     The login_map is a dictionary for fast lookup and we create a list of
-    matching User objects since each user/job may have multiple logins
+    matching Login objects since each user/job may have multiple logins
     (e.g. public keys).
     """
     login_map = daemon_conf['login_map']

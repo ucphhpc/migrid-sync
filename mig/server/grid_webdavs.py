@@ -58,9 +58,9 @@ except ImportError, ierr:
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain
-from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
-     refresh_user_creds, hit_rate_limit, update_rate_limit, \
-     expire_rate_limit, penalize_rate_limit
+from shared.griddaemons import get_fs_path, acceptable_chmod, \
+     refresh_user_creds, update_login_map, hit_rate_limit, update_rate_limit, \
+     expire_rate_limit, penalize_rate_limit, add_user_object
 from shared.logger import daemon_logger
 from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
@@ -198,7 +198,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         if ssl_ctx:
             ssl_ctx.options |= self.options
             
-        return s, self.get_environ(s)
+        return s, BuiltinSSLAdapter.get_environ(self, s)
 
     
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
@@ -237,13 +237,20 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             self._expire_rate_limit()
             self._expire_caches()
 
+    def _get_user_digests(self, address, realm, username):
+        """Find the allowed digest values for supplied username - this is for
+        use in the actual digest authorization.
+        """
+        user_list = self.user_map[realm].get(username, [])
+        return [i for i in user_list if i.digest is not None]
+
     def _check_auth_password(self, address, realm, username, password):
         """Verify supplied username and password against user DB"""
-        user = self.user_map[realm].get(username, None)
-        if user is not None:
+        user_list = self.user_map[realm].get(username, [])
+        for user_obj in user_list:
             # list of User login objects for username
             offered = password
-            allowed = user.get('password_hash', None)
+            allowed = user_obj.password
             if allowed is not None:
                 #logger.debug("Password check for %s" % username)
                 if check_password_hash(offered, allowed, self.hash_cache):
@@ -277,47 +284,42 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         return success
 
     def isRealmUser(self, realmname, username, environ):
-        """Returns True if this username is valid for the realm, False otherwise.
+        """Returns True if this username is valid for the realm, False
+        otherwise.
 
-        Please not that this is only called for digest auth so we use it to
-        reject users without digest password set.
+        Please note that this is always called for digest auth so we use it to
+        update creds and reject users without digest password set.
         """
         #logger.info("refresh user %s" % username)
         addr = _get_addr(environ)
         update_users(configuration, self.user_map, username)
         #logger.info("in isRealmUser from %s" % addr)
-        orig = super(MiGWsgiDAVDomainController, self).isRealmUser(realmname,
-                                                                   username,
-                                                                   environ)
-        if orig and self.user_map[realmname][username].get('password',
-                                                          None) is not None:
+        if self._get_user_digests(addr, realmname, username):
             logger.debug("valid digest user %s from %s" % (username, addr))
             return True
         else:
             logger.warning("invalid digest user %s from %s" % (username, addr))
             return False
-                    
-
+    
     def getRealmUserPassword(self, realmname, username, environ):
         """Return the password for the given username for the realm.
         
-        Used for digest authentication.
+        Used for digest authentication and always called after isRealmUser
+        so update creds is already applied. We just rate limit and check here.
         """
         #print "DEBUG: env in getRealmUserPassword: %s" % environ
         addr = _get_addr(environ)
         self._expire_rate_limit()
-        #logger.info("refresh user %s" % username)
-        update_users(configuration, self.user_map, username)
         #logger.info("in getRealmUserPassword from %s" % addr)
         if hit_rate_limit(configuration, "davs", addr, username):
             logger.warning("Rate limiting login from %s" % addr)
             password = None
         else:
-            digest = super(MiGWsgiDAVDomainController,
-                            self).getRealmUserPassword(realmname, username,
-                                                       environ)
-            #logger.info("found digest %s" % digest)
+            digest_users = self._get_user_digests(addr, realmname, username)
+            #logger.info("found digest_users %s" % digest_users)
             try:
+                # We expect only one - pick last
+                digest = digest_users[-1].digest
                 _, _, _, payload = digest.split("$")
                 #logger.info("found payload %s" % payload)
                 unscrambled = unscramble_digest(configuration.site_digest_salt,
@@ -456,32 +458,16 @@ class MiGFilesystemProvider(FilesystemProvider):
         return MiGFileResource(path, environ, real_path)
                                                             
 
-def update_users(configuration, user_map, username=None):
-    """Update dict with username password pairs. The optional username
-    argument limits the update to that particular user with aliases.
-    """
-    if username is not None:
-        _, changed = refresh_user_creds(configuration, 'davs', username)
-    else:
-        _, changed = refresh_users(configuration, 'davs')
-    if not changed:
-        return
-    
-    domain_map = user_map.get(dav_domain, {})
-    for user_obj in configuration.daemon_conf['users']:
-        # print "DEBUG: user %s : %s" % (user_obj.username, user_obj.digest)
-        user_dict = domain_map.get(user_obj.username, {})
-        if user_obj.password:
-            user_dict['password_hash'] = user_obj.password
-        if user_obj.digest:
-            user_dict['password'] = user_obj.digest
-        domain_map[user_obj.username] = user_dict
-
-    daemon_conf = configuration.daemon_conf
-    if username is None and daemon_conf.get('enable_litmus', False):
-        litmus_name = 'litmus'
-        litmus_user = {}
-        litmus_home = os.path.join(configuration.user_home, litmus_name)
+def update_users(configuration, user_map, username):
+    """Update creds dict for username and aliases"""
+    daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
+                                                    username)
+    # Add dummy user for litmus test if enabled in conf
+    litmus_id, litmus_pw = 'litmus', 'test'
+    if username == litmus_id and \
+           daemon_conf.get('enable_litmus', False) and \
+           not daemon_conf['login_map'].get(litmus_id, []):
+        litmus_home = os.path.join(configuration.user_home, litmus_id)
         try:
             os.makedirs(litmus_home)
         except: 
@@ -490,26 +476,31 @@ def update_users(configuration, user_map, username=None):
             if not daemon_conf.get('accept%s' % auth, False):
                 continue
             logger.info("enabling litmus %s test accounts" % auth)
+            changed_users.append(litmus_id)
             if auth == 'basic':
-                litmus_user['password_hash'] = generate_password_hash('test')
+                pw_hash = generate_password_hash(litmus_pw)
+                add_user_object(daemon_conf, litmus_id, litmus_home,
+                                password=pw_hash)
             else:
-                litmus_user['password'] = generate_password_digest(
-                    dav_domain, litmus_name, 'test',
+                digest = generate_password_digest(
+                    dav_domain, litmus_id, litmus_pw,
                     configuration.site_digest_salt)
-        domain_map[litmus_name] = litmus_user
+                add_user_object(daemon_conf, litmus_id, litmus_home,
+                                digest=digest)
+    update_login_map(daemon_conf, changed_users)
 
-    user_map[dav_domain] = domain_map
 
 def run(configuration):
     """SSL wrapped HTTP server for secure WebDAV access"""
 
     dav_conf = configuration.dav_cfg
     daemon_conf = configuration.daemon_conf
+    login_map = daemon_conf['login_map']
+    # We just wrap login_map in domain user map as needed here
+    user_map = {dav_domain: login_map}
     config = DEFAULT_CONFIG.copy()
     config.update(dav_conf)
     config.update(daemon_conf)
-    user_map = {}
-    update_users(configuration, user_map)
     config.update({
         "provider_mapping": {
             dav_domain: MiGFilesystemProvider(daemon_conf['root_dir'],
@@ -626,11 +617,16 @@ unless it is available in mig/server/MiGserver.conf
         'allow_publickey': 'publickey' in configuration.user_davs_auth,
         'user_alias': configuration.user_davs_alias,
         'users': [],
+        'login_map': {},
         # NOTE: enable for litmus test (http://www.webdav.org/neon/litmus/)
         #
         # USAGE:
+        # export HTTPS_URL="https://SOMEADDRESS:DAVSPORT"
         # export TESTROOT=$PWD; export HTDOCS=$PWD/htdocs
         # ./litmus -k $HTTPS_URL litmus test
+        # or
+        # ./configure --with-ssl
+        # make URL=$HTTPS_URL CREDS="litmus test" check
         'enable_litmus': False,
         'time_stamp': 0,
         'logger': logger,
