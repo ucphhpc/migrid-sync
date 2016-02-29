@@ -179,7 +179,12 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
     Returns a list of changed auth files with the empty list if none changed.
     """
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
+    if creds_lock:
+        creds_lock.acquire()
     old_users = [i for i in conf['users'] if i.username == username]
+    if creds_lock:
+        creds_lock.release()
     old_key_users = [i for i in old_users if i.public_key]
     old_pw_users = [i for i in old_users if i.password]
     old_digest_users = [i for i in old_users if i.digest]
@@ -252,31 +257,44 @@ def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
                    chroot=True, ip_addr=None):
     """Add a single Login object to active jobs list"""
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
     job = Login(username=login, home=home, password=password, digest=digest,
                 public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
     logger.debug("Adding job login:\n%s" % job)
+    if creds_lock:
+        creds_lock.acquire()
     conf['jobs'].append(job)
+    if creds_lock:
+        creds_lock.release()
 
 
 def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
                     chroot=True):
     """Add a single Login object to active user list"""
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
     user = Login(username=login, home=home, password=password,
                  digest=digest, public_key=pubkey, chroot=chroot)
     logger.debug("Adding user login:\n%s" % user)
+    if creds_lock:
+        creds_lock.acquire()
     conf['users'].append(user)
+    if creds_lock:
+        creds_lock.release()
 
 def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
     """Update login objects for auth_file with path to conf users dict. Remove
     any old entries for user and add the current ones.
     """
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
     proto_authkeys, proto_authpasswords, proto_authdigests = auth_protos
     user_id, user_alias, user_dir, short_id, short_alias = user_vars
     user_logins = (user_alias, short_id, short_alias)
 
     # Create user entry for each valid key and password 
+    if creds_lock:
+        creds_lock.acquire()
     if auth_file == proto_authkeys:
         all_keys = get_authkeys(path)
         all_passwords = []
@@ -301,8 +319,10 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
         conf['users'] = [i for i in conf['users'] \
                          if i.username not in user_logins or \
                          i.digest is None]
-    logger.debug("after clean up old users list is:\n%s" % \
-                 '\n'.join(["%s" % i for i in conf['users']]))
+    #logger.debug("after clean up old users list is:\n%s" % \
+    #             '\n'.join(["%s" % i for i in conf['users']]))
+    if creds_lock:
+        creds_lock.release()
     for user_key in all_keys:
         # Remove comments and blank lines
         user_key = user_key.split('#', 1)[0].strip()
@@ -335,13 +355,13 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
         if short_id:
             add_user_object(conf, short_id, user_dir, digest=user_digest)
             add_user_object(conf, short_alias, user_dir, digest=user_digest)
-    logger.debug("after update users list is:\n%s" % \
-                 '\n'.join(["%s" % i for i in conf['users']]))
+    #logger.debug("after update users list is:\n%s" % \
+    #             '\n'.join(["%s" % i for i in conf['users']]))
     
     
 def refresh_user_creds(configuration, protocol, username):
-    '''Reload user credentials for username if they changed on disk. That is,
-    add user entries in configuration.daemon_conf["users"] for all active keys
+    """Reload user credentials for username if they changed on disk. That is,
+    add user entries in configuration.daemon_conf['users'] for all active keys
     and passwords enabled in configuration. Optionally add short ID username
     alias entries for user if that is enabled in the configuration.
     Removes all aliased user entries if the user is no longer active, too.
@@ -352,7 +372,7 @@ def refresh_user_creds(configuration, protocol, username):
     NOTE: username must be the direct username used in home dir or an OpenID
     alias with associated symlink there. Encoded username aliases must be
     decoded before use here.
-    '''
+    """
     changed_users = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
@@ -429,20 +449,25 @@ def refresh_user_creds(configuration, protocol, username):
 
 
 def refresh_users(configuration, protocol):
-    '''Reload users from auth confs if they changed on disk. Add user entries
-    to configuration.daemon_conf["users"] for all active keys and passwords
+    """Reload users from auth confs if they changed on disk. Add user entries
+    to configuration.daemon_conf['users'] for all active keys and passwords
     enabled in configuration. Optionally add short ID username alias entries
     for all users if that is enabled in the configuration.
     Removes all the user entries no longer active, too.
     The protocol argument specifies which auth files to use.
     Returns a tuple with the updated daemon_conf and the list of changed user
     IDs.
-    '''
+    """
     changed_users = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
     last_update = conf['time_stamp']
+    if creds_lock:
+        creds_lock.acquire()
     old_usernames = [i.username for i in conf['users']]
+    if creds_lock:
+        creds_lock.release()
     cur_usernames = []
     if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
         proto_authkeys = ssh_authkeys
@@ -505,7 +530,11 @@ def refresh_users(configuration, protocol):
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d deleted users" % len(removed))
+        if creds_lock:
+            creds_lock.acquire()
         conf['users'] = [i for i in conf['users'] if not i.username in removed]
+        if creds_lock:
+            creds_lock.release()
         changed_users += removed
     logger.info("Refreshed users from configuration (%d users)" % \
                 len(conf['users']))
@@ -514,14 +543,14 @@ def refresh_users(configuration, protocol):
 
 
 def refresh_job_creds(configuration, protocol, username):
-    '''Reload job credentials for username (SID) if they changed on disk.
-    That is, add user entries in configuration.daemon_conf["jobs"] for any
+    """Reload job credentials for username (SID) if they changed on disk.
+    That is, add user entries in configuration.daemon_conf['jobs'] for any
     corresponding active job keys.
     Removes all job login entries if the job is no longer active, too.
     The protocol argument specifies which auth files to use.
     Returns a tuple with the updated daemon_conf and the list of changed job
     IDs.
-    '''
+    """
     changed_jobs = []
     conf = configuration.daemon_conf
     last_update = conf['time_stamp']
@@ -589,11 +618,11 @@ def refresh_job_creds(configuration, protocol, username):
     return (conf, changed_jobs)
 
 def refresh_jobs(configuration, protocol):
-    '''Refresh job keys based on the job state.
+    """Refresh job keys based on the job state.
     Add user entries for all active job keys. 
     Removes all the user entries for jobs no longer active.
     Returns a tuple with the daemon_conf and the list of changed job IDs.
-    '''
+    """
     changed_jobs = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
@@ -660,12 +689,17 @@ def update_login_map(daemon_conf, changed_users, changed_jobs=[]):
     (e.g. public keys).
     """
     login_map = daemon_conf['login_map']
+    creds_lock = daemon_conf.get('creds_lock', None)
+    if creds_lock:
+        creds_lock.acquire()
     for username in changed_users:
         login_map[username] = [i for i in daemon_conf['users'] if username == \
                                i.username]
     for username in changed_jobs:
         login_map[username] = [i for i in daemon_conf['jobs'] if username == \
                                i.username]
+    if creds_lock:
+        creds_lock.release()
 
 def hit_rate_limit(configuration, proto, client_address, client_id,
                    max_fails=default_max_hits,

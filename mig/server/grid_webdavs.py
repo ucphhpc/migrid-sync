@@ -36,6 +36,7 @@ Requires wsgidav module (https://github.com/mar10/wsgidav).
 #import logging
 import os
 import sys
+import threading
 import time
 
 try:
@@ -616,6 +617,8 @@ unless it is available in mig/server/MiGserver.conf
         'allow_digest': 'digest' in configuration.user_davs_auth,
         'allow_publickey': 'publickey' in configuration.user_davs_auth,
         'user_alias': configuration.user_davs_alias,
+        # Lock needed here due to threaded creds updates
+        'creds_lock': threading.Lock(),
         'users': [],
         'login_map': {},
         # NOTE: enable for litmus test (http://www.webdav.org/neon/litmus/)

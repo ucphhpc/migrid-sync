@@ -365,6 +365,8 @@ unless it is available in mig/server/MiGserver.conf
         'allow_digest': False,
         'allow_publickey': 'publickey' in configuration.user_ftps_auth,
         'user_alias': configuration.user_ftps_alias,
+        # No creds locking needed here due to central auth
+        'creds_lock': None,
         'users': [],
         'login_map': {},
         'hash_cache': {},

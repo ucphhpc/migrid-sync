@@ -593,8 +593,6 @@ class SimpleSSHServer(paramiko.ServerInterface):
         """
 
         # Only need to update users here, since jobs only use keys
-        # TODO: this is a race with threaded handlers - add mutex/semaphore
-        #       probably best to integrate it in griddaemons functions
         changed_jobs = []
         daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
                                                         username)
@@ -897,6 +895,8 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'allow_publickey': 'publickey' in configuration.user_sftp_auth,
         'user_alias': configuration.user_sftp_alias,
         'host_rsa_key': host_rsa_key,
+        # Lock needed here due to threaded creds updates
+        'creds_lock': threading.Lock(),
         'users': [],
         'jobs': [],
         'login_map': {},
