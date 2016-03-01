@@ -1107,6 +1107,7 @@ def guess_type(name):
             'openid.sreg.o',
             'openid.sreg.ou',
             'openid.sreg.role',
+            'openid.sreg.association',
             'changes',
             'miguser',
             ):
@@ -1392,6 +1393,7 @@ if __name__ == '__main__':
             'openid.sreg.state': [''],
             'openid.sreg.locality': [''],
             'openid.sreg.role': [''],
+            'openid.sreg.association': [''],
             # Please note that we only get sreg.required here if user is
             # already logged in at OpenID provider when signing up so
             # that we do not get the required attributes
@@ -1402,7 +1404,7 @@ if __name__ == '__main__':
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
         }
-    user_arguments_dict = {'openid.ns.sreg': ['http://openid.net/extensions/sreg/1.1'], 'openid.sreg.ou': ['nbi'], 'openid.sreg.nickname': ['brs278@ku.dk'], 'openid.sreg.fullname': ['Jonas Bardino'], 'openid.sreg.role': ['tap'], 'openid.sreg.o': ['science'], 'openid.sreg.email': ['bardino@nbi.ku.dk']}
+    user_arguments_dict = {'openid.ns.sreg': ['http://openid.net/extensions/sreg/1.1'], 'openid.sreg.ou': ['nbi'], 'openid.sreg.nickname': ['brs278@ku.dk'], 'openid.sreg.fullname': ['Jonas Bardino'], 'openid.sreg.role': ['tap'], 'openid.sreg.association': ['sci-nbi-tap'], 'openid.sreg.o': ['science'], 'openid.sreg.email': ['bardino@nbi.ku.dk']}
     (accepted, rejected) = validated_input(user_arguments_dict, autocreate_defaults)
     print "Accepted:"
     for (key, val) in accepted.items():

@@ -75,13 +75,14 @@ def signature(login_type):
             'openid.sreg.state': [''],
             'openid.sreg.locality': [''],
             'openid.sreg.role': [''],
+            'openid.sreg.association': [''],
             # Please note that we only get sreg.required here if user is
             # already logged in at OpenID provider when signing up so
             # that we do not get the required attributes
             'openid.sreg.required': [''],
             'openid.ns': [''],
             'password': [''],
-            'comment': ['(Created through autocreate)'],
+            'comment': ['(Signed up with OpenID and autocreate)'],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
             }
@@ -94,7 +95,8 @@ def signature(login_type):
             'country': [''],
             'state': [''],
             'role': [''],
-            'comment': ['(Created through autocreate)'],
+            'association': [''],
+            'comment': ['(Signed up with certificate and autocreate)'],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
             }
@@ -165,7 +167,7 @@ def main(client_id, user_arguments_dict, environ=None):
     
     output_objects.append({'object_type': 'header', 'text'
                           : 'Automatic %s sign up' % \
-                            configuration.short_title })
+                            configuration.short_title})
     identity = extract_client_openid(configuration, environ, lookup_dn=False)
     if client_id and client_id == identity:
         login_type = 'cert'
@@ -209,6 +211,7 @@ def main(client_id, user_arguments_dict, environ=None):
         org = accepted['org'][-1].strip()
         org_unit = ''
         role = ','.join([i for i in accepted['role'] if i])
+        association = ','.join([i for i in accepted['association'] if i])
         locality = ''
         timezone = ''
         email = accepted['email'][-1].strip()
@@ -224,8 +227,10 @@ def main(client_id, user_arguments_dict, environ=None):
               accepted['openid.sreg.organization'][-1].strip()
         org_unit = accepted['openid.sreg.ou'][-1].strip() or \
                    accepted['openid.sreg.organizational_unit'][-1].strip()
-        # We may receive multiple roles
+        # We may receive multiple roles and associations
         role = ','.join([i for i in accepted['openid.sreg.role'] if i])
+        association = ','.join([i for i in accepted['openid.sreg.association'] \
+                                if i])
         locality = accepted['openid.sreg.locality'][-1].strip()
         timezone = accepted['openid.sreg.timezone'][-1].strip()
         email = accepted['openid.sreg.email'][-1].strip()
@@ -297,6 +302,7 @@ def main(client_id, user_arguments_dict, environ=None):
         'country': country,
         'email': email,
         'role': role,
+        'association': association,
         'timezone': timezone,
         'password': '',
         'comment': '%s: %s' % ('Existing certificate', comment),
