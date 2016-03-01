@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -100,6 +100,7 @@ def generate_confs(
     enable_davs='True',
     enable_ftps='True',
     enable_wsgi='True',
+    wsgi_procs='10',
     enable_sandboxes='True',
     enable_vmachines='True',
     enable_freeze='True',
@@ -164,6 +165,7 @@ def generate_confs(
     user_dict['__ENABLE_DAVS__'] = enable_davs
     user_dict['__ENABLE_FTPS__'] = enable_ftps
     user_dict['__ENABLE_WSGI__'] = enable_wsgi
+    user_dict['__WSGI_PROCS__'] = wsgi_procs
     user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
     user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
     user_dict['__ENABLE_FREEZE__'] = enable_freeze
@@ -474,12 +476,13 @@ def create_user(
     apache_lock = '%s/lock' % apache_dir
     apache_log = '%s/log' % apache_dir
     cert_dir = '%s/MiG-certificates' % apache_dir
-    # We don't have frees port for daemons
+    # We don't necessarily have free ports for daemons
     enable_sftp = 'False'
     enable_davs = 'False'
     enable_ftps = 'False'
     enable_openid = 'False'
     enable_wsgi = 'True'
+    wsgi_procs = '5'
     enable_sandboxes = 'True'
     enable_vmachines = 'True'
     enable_freeze = 'True'
@@ -557,6 +560,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_davs,
         enable_ftps,
         enable_wsgi,
+        wsgi_procs,
         enable_sandboxes,
         enable_vmachines,
         enable_freeze,

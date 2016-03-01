@@ -296,7 +296,8 @@ or similarly with Debian apache 2.4 without OpenID:
                    --login_methods="migcert extcert" \
                    --skin=migrid-basic \
                    --apache_version=2.4
-or the same with OpenID, HSTS, WSGI, Seafile and vhost-specific certificates:
+or the same with OpenID, HSTS, WSGI (default web), Seafile and
+vhost-specific certificates:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
@@ -331,10 +332,11 @@ or the same with OpenID, HSTS, WSGI, Seafile and vhost-specific certificates:
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
                    --landing_page='/wsgi-bin/dashboard.py' \
-                   --skin=migrid-basic \
+                   --skin=migrid-basic --wsgi_procs=25 \
                    --apache_version=2.4
 
-and a storage-only setup with CentOS 7.x, apache 2.4, Seafile integration and OpenID login:
+and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (defaultweb), 
+Seafile integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
@@ -365,7 +367,7 @@ and a storage-only setup with CentOS 7.x, apache 2.4, Seafile integration and Op
                    --login_methods="kitoid extcert" \
                    --daemon_pubkey=~/certs/combined.pub \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=erda-ucph-science \
+                   --skin=erda-ucph-science --wsgi_procs=25 \
                    --apache_version=2.4
 
 
