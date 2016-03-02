@@ -328,7 +328,7 @@ def main(client_id, user_arguments_dict):
         if not status:
             output_objects.append({
                 'object_type': 'error_text', 'text'
-                : 'Could not load list of current owners for %s %s!'
+                : 'Failed to lookup owners for %s %s - are you sure it exists?'
                 % (vgrid_name, configuration.site_vgrid_label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
