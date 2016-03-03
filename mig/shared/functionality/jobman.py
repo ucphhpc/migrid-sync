@@ -81,8 +81,11 @@ def html_post():
             </tbody>
         </table>
     </div>
-    <div id="jm_touchscreen"><input type="checkbox">Enable touch screen
-    interface (all clicks trigger menu)</div>
+    <div id="jm_options">
+        <input id="jm_touchscreen" type="checkbox">Enable touch screen
+        interface (all clicks trigger menu)
+        <input id="jm_autorefresh" type="checkbox">Enable automatic refresh
+    </div>
   </div>
   
   <div id="cmd_helper" title="Command output" style="display: none;"></div>

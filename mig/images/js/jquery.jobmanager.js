@@ -63,11 +63,18 @@ if (!enable_debug) {
 
 if (jQuery) (function($){
   
-        // Use touchscreen interface without need for right clicking
+        // Check if touchscreen interface (left click only) is enabled
         function touchscreenChecker() {
-            var touchscreen = $("#jm_touchscreen input[type='checkbox']").is(":checked");
+            var touchscreen = $("#jm_touchscreen[type='checkbox']").is(":checked");
             //alert("use touchscreen interface: " + touchscreen);
             return touchscreen;
+        }
+
+        // Check if auto refresh is enabled
+        function autorefreshChecker() {
+            var autorefresh = $("#jm_autorefresh[type='checkbox']").is(":checked");
+            //alert("use autorefresh: " + autorefresh);
+            return autorefresh;
         }
 
         function dump(element) {
@@ -562,12 +569,24 @@ if (jQuery) (function($){
 
             // bind reload to touchscreen checkbox
             console.debug("bind reload to touchscreen checkbox");
-            $("#jm_touchscreen input[type='checkbox']").on('click',
-                                                           function() {
-                                                               /* Remove old context menu and reload */
-                                                               $.contextMenu('destroy');
-                                                               bindContextMenus();
-                                                           });
+            $("#jm_touchscreen[type='checkbox']").on('click',
+                                                     function() {
+                                                         /* Remove old context menu and reload */
+                                                         $.contextMenu('destroy');
+                                                         bindContextMenus();
+                                                     });
+
+            // Auto refresh every 60 seconds
+            var refresh_delay = 60000;
+            function refreshHandler() {
+                if (autorefreshChecker()) {
+                    //console.debug("do refresh");
+                    $("#append").click();
+                }
+                setTimeout(refreshHandler, refresh_delay);
+            }
+            console.debug("start autorefresh handler");
+            setTimeout(refreshHandler, refresh_delay);
 
         };
 
