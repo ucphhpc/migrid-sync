@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1454,6 +1454,16 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                           (key, val)
             user_html += '</table>'
             lines.append(user_html)
+        elif i['object_type'] == 'vgrid_info':
+            vgrid_html = ''
+            vgrid_html += '<h3>%s</h3>' % i['vgrid_name']
+            vgrid_html += '<table class="vgrid">'
+            for (key, val) in i['fields']:
+                vgrid_html += \
+                          '<tr><td>%s</td><td>%s</td></tr>' % \
+                          (key, val)
+            vgrid_html += '</table>'
+            lines.append(vgrid_html)
         elif i['object_type'] == 'forum_threads':
             thread_fields = ['last', 'subject', 'author', 'date',
                              'replies']

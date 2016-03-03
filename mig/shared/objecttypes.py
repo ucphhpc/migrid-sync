@@ -219,6 +219,8 @@ user_list = {'object_type': 'user_list', 'required_list': [('users',
              'user')]}
 user_info = {'object_type': 'user_info', 'required': ['user_id',
              'fields']}
+vgrid_info = {'object_type': 'vgrid_info', 'required': ['vgrid_name',
+             'fields']}
 forum_threads = {'object_type': 'forum_threads', 'required': ['threads'
                  , 'status', 'vgrid_name']}
 forum_thread_messages = {'object_type': 'forum_thread_messages',
@@ -339,6 +341,7 @@ valid_types_list = [
     resource_info,
     user_list,
     user_info,
+    vgrid_info,
     forum_threads,
     forum_thread_messages,
     vgrid_list,

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -79,7 +79,7 @@ def vgrid_is_entity_in_list(
     dict_field=False,
     ):
     """Return True if specified entity_id is in group
-    ('owners', 'members', 'resources', 'triggers') of vgrid.
+    ('owners', 'members', 'resources', 'triggers', 'settings') of vgrid.
     If recursive is True the entities from parent vgrids will be included. The
     optional dict_field is used to check against the trigger case where entries
     are dicts rather than raw strings.
@@ -165,6 +165,13 @@ def vgrid_is_trigger_owner(vgrid_name, rule_id, client_id, configuration,
 
     return False
                 
+
+def vgrid_is_setting(vgrid_name, option_id, configuration, recursive=True):
+    """Check if option_id is a setting in vgrid_name"""
+
+    return vgrid_is_entity_in_list(vgrid_name, option_id, 'settings',
+                                   configuration, recursive, 'option_id')
+
 
 def vgrid_list_subvgrids(vgrid_name, configuration):
     """Return list of subvgrids of vgrid_name"""
@@ -306,7 +313,7 @@ def init_vgrid_script_list(vgrid_name, client_id, configuration):
                                     configuration):
         msg += 'Failure: You must be an owner or member of '\
              + vgrid_name\
-             + ' vgrid to get a list of members/owners/resources/triggers'
+             + ' vgrid to get a list of members/owners/resources/triggers/settings'
         return (False, msg, None)
 
     return (True, msg, [])
@@ -328,6 +335,8 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
         name = configuration.vgrid_resources
     elif group == 'triggers':
         name = configuration.vgrid_triggers
+    elif group == 'settings':
+        name = configuration.vgrid_settings
     else:
         return (False, "vgrid_list: unknown group: '%s'" % group)
     if recursive:
@@ -374,6 +383,10 @@ def vgrid_resources(vgrid_name, configuration, recursive=True):
 def vgrid_triggers(vgrid_name, configuration, recursive=True):
     """Extract triggers list for a vgrid"""
     return vgrid_list(vgrid_name, 'triggers', configuration, recursive)
+
+def vgrid_settings(vgrid_name, configuration, recursive=True):
+    """Extract settings list for a vgrid"""
+    return vgrid_list(vgrid_name, 'settings', configuration, recursive)
 
 def vgrid_match_resources(vgrid_name, resources, configuration):
     """Return a list of resources filtered to only those allowed in
@@ -505,6 +518,8 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list, update_id=None)
         entity_filename = configuration.vgrid_resources
     elif kind == 'triggers':
         entity_filename = configuration.vgrid_triggers
+    elif kind == 'settings':
+        entity_filename = configuration.vgrid_settings
     else:
         return (False, "vgrid_add_entities: unknown kind: '%s'" % kind)
 
@@ -554,6 +569,11 @@ def vgrid_add_triggers(configuration, vgrid_name, id_list, update_id=None):
     return vgrid_add_entities(configuration, vgrid_name, 'triggers',
                               id_list, update_id)
 
+def vgrid_add_settings(configuration, vgrid_name, id_list, update_id=None):
+    """Append id_list to pickled list of settings for vgrid_name"""
+    return vgrid_add_entities(configuration, vgrid_name, 'settings',
+                              id_list, update_id)
+
 def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
                           allow_empty, dict_field=False):
     """Remove list of IDs from pickled list of kind for vgrid_name.
@@ -571,6 +591,8 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         entity_filename = configuration.vgrid_resources
     elif kind == 'triggers':
         entity_filename = configuration.vgrid_triggers
+    elif kind == 'settings':
+        entity_filename = configuration.vgrid_settings
     else:
         return (False, "vgrid_remove_entities: unknown kind: '%s'" % kind)
     
@@ -620,6 +642,12 @@ def vgrid_remove_triggers(configuration, vgrid_name, id_list,
     return vgrid_remove_entities(configuration, vgrid_name, 'triggers',
                                  id_list, allow_empty, dict_field='rule_id')
 
+def vgrid_remove_settings(configuration, vgrid_name, id_list,
+                          allow_empty=True):
+    """Remove id_list from pickled list of settings for vgrid_name"""
+    return vgrid_remove_entities(configuration, vgrid_name, 'settings',
+                                 id_list, allow_empty, dict_field='option_id')
+
 def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     """Set kind list to provided id_list for given vgrid. The allow_empty
     argument cam be used to e.g. prevent empty owners lists.
@@ -633,6 +661,8 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         entity_filename = configuration.vgrid_resources
     elif kind == 'triggers':
         entity_filename = configuration.vgrid_triggers
+    elif kind == 'settings':
+        entity_filename = configuration.vgrid_settings
     else:
         return (False, "vgrid_set_entities: unknown kind: '%s'" % kind)
 
@@ -666,6 +696,11 @@ def vgrid_set_resources(configuration, vgrid_name, id_list, allow_empty=True):
 def vgrid_set_triggers(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of triggers for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'triggers',
+                              id_list, allow_empty)
+
+def vgrid_set_settings(configuration, vgrid_name, id_list, allow_empty=False):
+    """Set list of settings for given vgrid"""
+    return vgrid_set_entities(configuration, vgrid_name, 'settings',
                               id_list, allow_empty)
 
 def validated_vgrid_list(configuration, job_dict):

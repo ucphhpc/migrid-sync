@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -239,6 +239,7 @@ class Configuration:
     vgrid_members = 'members'
     vgrid_resources = 'resources'
     vgrid_triggers = 'triggers'
+    vgrid_settings = 'settings'
     vgrid_monitor = 'monitor'
     resource_pending = ''
     user_pending = ''
@@ -832,6 +833,8 @@ class Configuration:
             self.vgrid_resources = config.get('GLOBAL', 'vgrid_resources')
         if config.has_option('GLOBAL', 'vgrid_triggers'):
             self.vgrid_triggers = config.get('GLOBAL', 'vgrid_triggers')
+        if config.has_option('GLOBAL', 'vgrid_settings'):
+            self.vgrid_settings = config.get('GLOBAL', 'vgrid_settings')
         if config.has_option('GLOBAL', 'vgrid_monitor'):
             self.vgrid_monitor = config.get('GLOBAL', 'vgrid_monitor')
 
