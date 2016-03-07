@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # searchusers - Search in MiG user database
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -49,6 +49,7 @@ Where SEARCH_OPTIONS may be one or more of:
    -I CERT_DN          Search for user ID (distinguished name)
    -n                  Show only name
    -O ORGANIZATION     Search for organization
+   -r ROLE             Match on role pattern
    -S STATE            Search for state
    -v                  Verbose output
 
@@ -61,7 +62,7 @@ if '__main__' == __name__:
     conf_path = None
     verbose = False
     user_dict = {}
-    opt_args = 'c:C:d:E:F:hI:nO:S:v'
+    opt_args = 'c:C:d:E:F:hI:nO:r:S:v'
     search_filter = default_search()
     name_only = False
     try:
@@ -91,6 +92,8 @@ if '__main__' == __name__:
             search_filter['full_name'] = val
         elif opt == '-O':
             search_filter['organization'] = val
+        elif opt == '-r':
+            search_filter['role'] = val
         elif opt == '-S':
             search_filter['state'] = val
         elif opt == '-v':
