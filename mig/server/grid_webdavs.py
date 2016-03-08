@@ -346,7 +346,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 
     
 class MiGFileResource(FileResource):
-    """Hide invisible files from all access"""
+    """Hide invisible files from all access.
+    All file access starts with object init so it is enough to make sure we
+    refuse any hidden files in the constructor and remap for the chrooting.
+    """
     def __init__(self, path, environ, filePath):
         FileResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
@@ -360,11 +363,14 @@ class MiGFileResource(FileResource):
             return self.provider._chroot_locToFilePath(self._user_chroot, path)
         self.provider._locToFilePath = wrapLocToFilePath
 
-    # TODO: override access on more methods?
-
     
 class MiGFolderResource(FolderResource):
-    """Hide invisible files from all access"""
+    """Hide invisible files from all access.
+    We must override getMemberNames to filter out hidden names and getMember
+    to avoid inherited methods like getDescendants from receiving the parent
+    unrestricted FileResource and FolderResource objects when doing e.g.
+    directory listings.
+    """
     def __init__(self, path, environ, filePath):
         FolderResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
@@ -378,16 +384,67 @@ class MiGFolderResource(FolderResource):
             return self.provider._chroot_locToFilePath(self._user_chroot, path)
         self.provider._locToFilePath = wrapLocToFilePath
 
-    # TODO: override access on more methods?
-    
     def getMemberNames(self):
         """Return list of direct collection member names (utf-8 encoded).
         
         See DAVCollection.getMemberNames()
+
+        Use parent version and filter out any invisible file names.
         """
         return [i for i in super(MiGFolderResource, self).getMemberNames() if \
                 not invisible_path(i)]
 
+    def getMember(self, name):
+        """Return direct collection member (DAVResource or derived).
+        
+        See DAVCollection.getMember()
+
+        The inherited getMemberList and getDescendants methods implicitly call
+        self.getMember on all folder names, so we need to override here to
+        avoid the FolderResource and FileResource objects being returned.
+
+        Call parent version, filter invisible and mangle to our own
+        MiGFileResource and MiGFolderResource objects.
+        """
+
+        #logger.debug("in getMember")
+        res = FolderResource.getMember(self, name)
+        if invisible_path(res.name):
+            res = None
+        #logger.debug("getMember found %s" % res)
+        if res and not res.isCollection and not isinstance(res, MiGFileResource):
+            res = MiGFileResource(res.path, self.environ, res._filePath)
+        elif res and res.isCollection and not isinstance(res, MiGFolderResource):
+            res = MiGFolderResource(res.path, self.environ, res._filePath)
+        #logger.debug("getMember returning %s" % res)
+        return res
+
+    def getDescendants(self, collections=True, resources=True,
+                       depthFirst=False, depth="infinity", addSelf=False):
+        """Return a list _DAVResource objects of a collection (children,
+        grand-children, ...).
+        
+        This default implementation calls self.getMemberList() recursively.
+        
+        This function may also be called for non-collections (with addSelf=True).
+        
+        :Parameters:
+        depthFirst : bool
+        use <False>, to list containers before content.
+        (e.g. when moving / copying branches.)
+        Use <True>, to list content before containers.
+        (e.g. when deleting branches.)
+        depth : string
+        '0' | '1' | 'infinity'
+
+        Call parent version just with debug logging added.
+        """                
+        logger.debug("in getDescendantsWrap for %s" % self)
+        res = FolderResource.getDescendants(self, collections, resources,
+                                            depthFirst, depth, addSelf)
+        logger.debug("getDescendantsWrap returning %s" % res)
+        return res
+    
 
 class MiGFilesystemProvider(FilesystemProvider):
     """
