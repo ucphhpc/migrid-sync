@@ -1,0 +1,58 @@
+= Using the sandbox generator =
+The sandbox generator requires a hard disk image for each of the supported disk sizes.
+At the momemt the 100MB, 1G and 2G sizes map to hda_{100,1000,2000}.img files.
+The images must be modified on-the-fly when a sandbox is created so you
+need to provide user level mounting for a particular file, hda.img which
+will be used for these modify mounts. In other words you need to add the
+following line to your /etc/fstab in order to allow sandbox generation:
+/home/mig/state/sss_home/MiG-SSS/hda.img /home/mig/state/sss_home/mnt  auto    user,loop      0       0
+
+..if using the default user and path settings.
+
+This will allow the mig user to mount the hda.img on the mnt dir without
+additional privileges.
+After adding that line you can proceed to make the images that aren't
+included due to size restrictions. They should preferably be created as
+sparse qemu images with:
+for size in 100 1000 2000; do
+    qemu-img create hda.img ${size}M && \
+    mkfs.ext2 -F hda.img && \
+    tune2fs -c 100 -i 365 hda.img && \
+    mount ../mnt && \
+    tar xvzf mig-hda.tgz -C ../mnt && \
+    umount ../mnt && \
+    mv hda.img hda_${size}.img
+done
+
+
+As qemu-img output then shows they only take up a small fraction of the denominal size:
+.../state/sss_home/MiG-SSS > ls -l hda_2000.img
+jonesdevel@amigos18
+-rw-r--r-- 1 jonesdevel jonesdevel 2097152000 Mar 13 17:28 hda_2000.img
+.../state/sss_home/MiG-SSS > qemu-img info hda_2000.img
+jonesdevel@amigos18
+image: hda_2000.img
+file format: raw
+virtual size: 2.0G (2097152000 bytes)
+disk size: 32M
+
+In the sandbox generator they are converted to qcow images on the fly.
+We would prefer to only have them on qcow format but we need raw format to be able
+to mount and modify the image on the fly, so we do that with the raw images and
+convert them just before zip and download.
+
+The generator needs a MiG.iso base file system iso which can be downloaded from:
+http://dk.migrid.org/public/sandbox/MiG-SSS/MiG.iso
+
+The iso is a basic Gentoo image with minor MiG additions as shown in the 
+iso-helpers directory.
+Remastering of the iso can be done with the commands:
+mount -o loop MiG.iso iso
+cp -a iso remaster
+[edit files in remaster directory]
+mkisofs -RlDJLV "MiG SSS X86" -b isolinux/isolinux.bin -c isolinux/boot.cat \
+	-no-emul-boot -boot-load-size 4 -boot-info-table -o MiG.iso remaster
+
+Windows sandboxes additionally need a couple of installers available from:
+http://dk.migrid.org/public/sandbox/MiG-SSS/MiG-SSS_Setup.exe
+http://dk.migrid.org/public/sandbox/MiG-SSS/MiG-SSS-Service_Setup.exe

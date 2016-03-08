@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<title>
+IDMC
+</title>
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+<!-- site basic skin style -->
+<!-- <link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/> -->
+<link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/core.css" media="screen"/>
+
+<!-- country-dropdown -->
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+<!-- override with any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+      media="screen"/>
+
+<!-- site skin style -->
+<link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/ui-theme.custom.css" media="screen"/>
+
+<link rel="icon" type="image/vnd.microsoft.icon"
+      href="/images/skin/idmc-basic/favicon.ico"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+<script type="text/javascript" >
+    $(document).ready(function() {
+        /* Init FAQ as foldable but closed and with indivdual heights */
+        $(".faq-accordion").accordion({
+                                       collapsible: true,
+                                       active: false,
+                                       heightStyle: "content"
+                                      });
+        /* fix and reduce accordion spacing */
+        $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+        $("#langselect").on('change', function() { 
+                                          var lang = $(this).val();
+                                          //alert("switch_language: "+lang);
+                                          switch_language(lang);
+                                      }
+                            );
+        var default_lang = 'en';
+        $("#langselect").val(default_lang);
+        switch_language(default_lang);
+	$("#langselect").msDropdown();
+    });
+</script>
+
+</head>
+<body class="staticpage">
+<div id="topspace">
+</div>
+<div id="toplogo" class="staticpage">
+<div id="toplogoleft" class="staticpage">
+<img src="/images/skin/idmc-basic/logo-left.png" id="logoimageleft" 
+     class="staticpage" alt="site logo left"/>
+</div>
+<div id="toplogocenter" class="staticpage">
+<span id="logotitle" class="staticpage">
+Imaging Data Management Center
+</span>
+</div>
+<div id="toplogoright" class="staticpage">
+</div>
+</div>
+
+<div class="contentblock staticpage" id="nomenu">
+<div class="precontentwidgets">
+<!-- begin user supplied pre content widgets -->
+<!-- empty -->
+<!-- end user supplied pre content widgets -->
+</div>
+<div id="migheader">
+</div>
+<div class="staticpage" id="content">
+<div class="righttext langselect">
+<!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+<select name="languages" id="langselect">
+<!--
+  <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+-->
+  <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
+</select>
+</div>
+<div class="english i18n" lang="en">
+<h1 class="staticpage">Welcome to IDMC!</h1>
+
+<h2 class="staticpage">Sign up and use IDMC</h1>
+<p>
+If you're new here you need to <a href="https://sid.idmc.dk/cgi-sid/signup.py">sign up for an account</a>
+before you can continue.
+</p>
+<p>In case you already did that you probably want
+to go to your <a href="https://idmc.dk">personal IDMC pages</a>.
+</p>
+</div>
+<div class="danish i18n" lang="da">
+<h1 class="staticpage">Velkommen til IDMC!</h1>
+
+<h2 class="staticpage">Indsæt dansk udgave her</h2>
+<p>
+..og slå den danske oversættelse til i language selectoren øverst.
+</p>
+</div>
+</div>
+</div>
+
+<div id="bottomlogo">
+<div id="bottomlogoleft">
+<div id="support">
+<img src="/images/icons/help.png" id="supportimage" alt=""/>
+<div class="supporttext staticpage i18n" lang="en">
+<a href="mailto:support@idmc.dk">Contact & Help</a>
+</div>
+<div class="supporttext staticpage i18n" lang="da">
+<a href="mailto:support@idmc.dk">Kontakt & Hjælp</a>
+</div>
+</div>
+</div>
+<div id="bottomlogoright">
+<p><img src="/images/copyright.png" id="creditsimage" alt=""/>
+<span id="credits">
+2003-2015, <a href="http://www.migrid.org">The MiG Project</a>
+</span>
+</p>
+</div>
+</div>
+<div id="bottomspace">
+</div>
+
+</body>
+</html>

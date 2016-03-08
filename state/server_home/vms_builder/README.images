@@ -1,0 +1,61 @@
+= VM Helper Images =
+This directory contains the optional virtual machine helper scripts and images
+used in the integrated virtual machine support.
+
+To enable virtual machine support you should download and unpack the helper
+images matching the base OS images for the available
+VBOX3.1-IMAGES-X-1 runtime environments from:
+http://dk.migrid.org/public/vm-packs/vbox3.1-data-images-X-1.tar.gz
+where X should be replaced by the actual value like e.g. 2010.
+
+Additionally you should set the enable_vmachines option in the SITE section of
+your MiGserver.conf and add the word 'vmachines' to the default_menu or
+user_menu configuration entry so that the corresponding page is added in the
+MiG navigation menus. 
+
+= New or Custom VM Images =
+If you want to add new images you should prepare matching OS and data images
+and introduce a matching new runtime environment.
+
+== Original 2008 Images ==
+Apparently the original image was built with the python-vm-builder package:
+https://launchpad.net/ubuntu/+source/vm-builder
+and a command like:
+sudo vmbuilder vbox ubuntu -c intrepid.cfg
+
+== Building recent images ==
+For more recent versions the builder can be called with an updated conf:
+sudo vmbuilder vbox ubuntu -c SUITE.cfg
+It should be noted that vmbuilder no longer allows relative paths so an
+updated conf must use absolute paths.
+However, we provide a simple build wrapper for all that in
+mig/shared/vmbuilder.py so that building can be done without mucking around
+with conf files. The build command for the Ubuntu Precise image is thus:
+cd mig/shared
+python vmbuilder.py --suite=precise
+
+Please note that there are a couple of bugs in the python-vm-builder package
+included in Ubuntu Lucid that breaks direct vbox image builds there:
+https://bugs.launchpad.net/ubuntu/+source/vm-builder/+bug/580237
+https://bugs.launchpad.net/vmbuilder/+bug/677378
+It may be possible to get around the bugs as mentioned there or use a more
+recent Ubuntu version, but building for kvm instead and manually convert the
+disk images afterwards is known to work. The build is then:
+python vmbuilder.py --suite=lucid --hypervisor=kvm --vmbuilder-opts=''
+The resulting big sys and small data qcow2 images will have random names:
+ls -l ~/state/server_home/vms_builder/kvm-ubuntu-lucid
+total 968472
+-rwxrwxr-x 1 bardino bardino        96 2012-04-19 13:21 run.sh
+-rw-r--r-- 1 bardino bardino 990445568 2012-04-19 13:21 tmpFuZRXJ.qcow2
+-rw-r--r-- 1 bardino bardino   1507328 2012-04-19 13:21 tmpRyRt5s.qcow2
+but just look at the sizes and convert them like:
+qemu-img convert -f qcow2 -O vmdk kvm-ubuntu-lucid/tmpFuZRXJ.qcow2 \
+	vbox-ubuntu-lucid/ubuntu-10.04-basic.vmdk 
+qemu-img convert -f qcow2 -O vmdk kvm-ubuntu-lucid/tmpRyRt5s.qcow2 \
+	vbox-ubuntu-lucid/ubuntu-10.04-data.vmdk 
+
+Included in this dir you will find the buildall.sh wrapper shell script
+which takes care of the entire build process and disk image conversion for you.
+
+Builds rely on a local apt-proxy by default, but you can disable it in the conf
+by commenting out the mirror line.

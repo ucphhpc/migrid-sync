@@ -1,0 +1,92 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:        migjobmonitor
+# Required-Start:  $network $remote_fs $syslog
+# Required-Stop:   $network $remote_fs $syslog
+# Default-Start:   2 3 4 5
+# Default-Stop:    1
+# Short-Description: jobmonitor to warn user when MiG job is about to time out
+### END INIT INFO
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+. /lib/lsb/init-functions
+
+PIDFILE=/var/run/jobmonitor.pid
+LOG="/tmp/migjobmonitor.log"
+
+if [ -r /etc/default/migjobmonitor ]; then
+        . /etc/default/migjobmonitor
+fi
+
+touch $LOG
+
+VBOXCONTROL=`which VBoxControl` 2>> $LOG
+ZENITY=`which zenity` 2>> $LOG
+
+[ -x "$VBOXCONTROL" ] || exit 1
+[ -x "$ZENITY" ] || exit 1
+
+$VBOXCONTROL -nologo guestproperty enumerate | grep -q time_left || exit 1
+TIME_LEFT=`$VBOXCONTROL -nologo guestproperty get time_left | cut -b 8-` 2>> $LOG
+
+start_jobmonitor() {
+    while [ "$TIME_LEFT" -ge 2 ]; do
+	if [ "$TIME_LEFT" -eq 10 ]; then
+		MSG='MiG VM session will be automatically shut down shortly, potentially causing data loss!!'
+		$ZENITY --notification --text="$MSG" &
+	elif [ "$TIME_LEFT" -eq 60 ]; then
+		MSG="MiG VM session expires in $TIME_LEFT s - please save any open files and shutdown before then to avoid data loss"
+		$ZENITY --notification --text="$MSG" &
+	elif [ "$TIME_LEFT" -eq 300 ]; then
+		MSG="MiG VM session expires in $TIME_LEFT s"
+		$ZENITY --notification --text="$MSG" &
+	fi
+	# Decrease time left
+	TIME_LEFT=$((TIME_LEFT-1))
+	sleep 1
+    done &
+    echo "$!" > $PIDFILE
+}
+
+stop_jobmonitor() {
+	kill -9 `cat $PIDFILE`
+}
+
+case $1 in
+        start)
+                log_daemon_msg "Starting MiG Job Monitor" "migjobmonitor"
+                #start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --startas $DAEMON -- -p $PIDFILE
+                start_jobmonitor
+                status=$?
+                log_end_msg $status
+                ;;
+        stop)
+                log_daemon_msg "Stopping MiG Job Monitor" "migjobmonitor"
+                #start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+                stop_jobmonitor
+                log_end_msg $?
+                rm -f $PIDFILE
+                ;;
+        restart|force-reload)
+                $0 stop && sleep 2 && $0 start
+                ;;
+        try-restart)
+                if $0 status >/dev/null; then
+                        $0 restart
+                else
+                        exit 0
+                fi
+                ;;
+        reload)
+                exit 3
+                ;;
+        status)
+                status_of_proc $DAEMON "MiG Job Monitor"
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart|try-restart|force-reload|status}"
+                exit 2
+                ;;
+esac
