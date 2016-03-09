@@ -439,10 +439,10 @@ class MiGFolderResource(FolderResource):
 
         Call parent version just with debug logging added.
         """                
-        logger.debug("in getDescendantsWrap for %s" % self)
+        #logger.debug("in getDescendantsWrap for %s" % self)
         res = FolderResource.getDescendants(self, collections, resources,
                                             depthFirst, depth, addSelf)
-        logger.debug("getDescendantsWrap returning %s" % res)
+        #logger.debug("getDescendantsWrap returning %s" % res)
         return res
     
 
