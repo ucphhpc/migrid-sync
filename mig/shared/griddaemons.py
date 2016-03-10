@@ -612,7 +612,7 @@ def refresh_job_creds(configuration, protocol, username):
     if removed:
         logger.info("Removing login for %d finished jobs" % len(removed))
         conf['jobs'] = [i for i in conf['jobs'] if not i.username in removed]
-        changed_jobs += [i.username for i in removed]
+        changed_jobs += removed
     logger.info("Refreshed jobs from configuration (%d jobs)" % \
                 len(conf['jobs']))
     return (conf, changed_jobs)
@@ -675,7 +675,7 @@ def refresh_jobs(configuration, protocol):
     if removed:
         logger.info("Removing login for %d finished jobs" % len(removed))
         conf['jobs'] = [i for i in conf['jobs'] if not i.username in removed]
-        changed_jobs += [i.username for i in removed]
+        changed_jobs += removed
     logger.info("Refreshed jobs from configuration (%d jobs)" % \
                 len(conf['jobs']))
     return (conf, changed_jobs)
