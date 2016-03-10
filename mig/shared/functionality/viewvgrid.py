@@ -170,7 +170,7 @@ def main(client_id, user_arguments_dict):
                                    'text': 'Administrate'})
             output_objects.append({'object_type': 'link',
                                      'destination':
-                                     'vgridadmin.py?vgrid_name=%s'\
+                                     'adminvgrid.py?vgrid_name=%s'\
                                      % vgrid_name,
                                      'class': 'adminlink',
                                      'title': 'Administrate %s' % vgrid_name, 
