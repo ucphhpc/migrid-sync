@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcertaction - handle certificate requests and send email to admins
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -281,13 +281,13 @@ Command to create certificate:
 Finally add the user
 %(distinguished_name)s
 to any relevant VGrids on:
-%(https_default_url)s/cgi-bin/vgridadmin.py
+%(https_default_url)s/cgi-bin/vgridman.py
 
 
 --- If user must be denied access or deleted at some point ---
 
 Remove the user from any relevant VGrids on:
-%(https_default_url)s/cgi-bin/vgridadmin.py
+%(https_default_url)s/cgi-bin/vgridman.py
 
 Command to revoke user certificate:
 %(command_cert_revoke)s

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcertaction - handle external certificate sign up and send email to admins
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -254,7 +254,7 @@ Command to create user on %(site)s server:
 %(command_user_create)s
 
 Finally add the user to any relevant VGrids from:
-%(https_default_url)s/cgi-bin/vgridadmin.py
+%(https_default_url)s/cgi-bin/vgridman.py
 
 ---
 Command to delete user again on %(site)s server:

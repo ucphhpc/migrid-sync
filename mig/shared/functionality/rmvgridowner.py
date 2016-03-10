@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridowner - remove a vgrid owner
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -546,7 +546,7 @@ To leave (and delete) %s, first remove all members.'''
                                       % vgrid_name})
 
         output_objects.append({'object_type': 'link', 
-                               'destination': 'vgridadmin.py', 
+                               'destination': 'vgridman.py', 
                                'text': 'Back to the overview.'})
 
         if not share_lnk or not web_lnk or not abandoned or not removed:

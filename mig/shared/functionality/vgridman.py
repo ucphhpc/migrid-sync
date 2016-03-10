@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# vgridadmin - manage vgrids
+# vgridman - backend to manage vgrids
 # Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""VGrid administration back end functionality"""
+"""VGrid management back end functionality"""
 
 from binascii import hexlify
 
@@ -379,7 +379,7 @@ def main(client_id, user_arguments_dict):
     # Append VGrid alias note if custom
     if configuration.site_vgrid_label != 'VGrid':
         label += ' (i.e. VGrids)'
-    title_entry['text'] = '%s administration' % label
+    title_entry['text'] = '%s management' % label
 
     # jquery support for tablesorter and confirmation on "leave":
 
