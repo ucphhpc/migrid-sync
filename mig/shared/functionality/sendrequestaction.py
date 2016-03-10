@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequestaction - send request for e.g. member or ownership action handler
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,8 +36,8 @@ from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.resource import anon_to_real_res_map
 from shared.user import anon_to_real_user_map
-from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_is_member, \
-     vgrid_is_resource, user_allowed_vgrids
+from shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
+     vgrid_is_member, vgrid_is_resource, user_allowed_vgrids
 from shared.vgridaccess import get_user_map, get_resource_map, CONF, OWNERS, \
      USERID
 
@@ -321,16 +321,25 @@ def main(client_id, user_arguments_dict):
                     (vgrid_name, configuration.site_vgrid_label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
-        # Find all VGrid owners
+        # Find all VGrid owners configured to receive notifications
 
         target_name = vgrid_name
-        (status, target_list) = vgrid_list(vgrid_name, 'owners', configuration)
+        (status, settings_list) = vgrid_settings(vgrid_name, configuration,
+                                                 recursive=False)
+        if not status:
+            settings_list = []
+        settings_dict = dict(settings_list)
+        request_recipients = settings_dict.get('request_recipients', 42)
+        (status, owners_list) = vgrid_owners(vgrid_name, configuration,
+                                             recursive=False)
         if not status:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'Failed to lookup owners for %s %s - are you sure it exists?'
                 % (vgrid_name, configuration.site_vgrid_label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
+        target_list = owners_list[:request_recipients]
+
 
     else:
         output_objects.append({

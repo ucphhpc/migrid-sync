@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,6 +37,8 @@ keyword_any = 'ANY'
 keyword_all = 'ALL'
 keyword_auto = 'AUTO'
 keyword_unchanged = 'UNCHANGED'
+keyword_owners = 'OWNERS'
+keyword_members = 'MEMBERS'
 
 default_vgrid = 'Generic'
 any_vgrid = keyword_any

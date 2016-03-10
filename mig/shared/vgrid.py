@@ -265,7 +265,7 @@ def init_vgrid_script_add_rem(
                     (subject, configuration.short_title)
             msg += \
                 ' (OK, if removing or e.g. the resource creation is pending)'
-    elif subject_type == 'trigger':
+    elif subject_type in ('trigger', 'settings'):
         # Rules are checked later
         pass
     else:
@@ -290,8 +290,8 @@ def init_vgrid_script_add_rem(
     # otherwise: only owners may add or remove:
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
-        msg += 'You must be an owner of the %s vgrid to add/remove %s'\
-             % (vgrid_name, subject_type)
+        msg += 'You must be an owner of the %s vgrid to modify %s' % \
+               (vgrid_name, subject_type)
         return (False, msg, None)
 
     return (True, msg, [])

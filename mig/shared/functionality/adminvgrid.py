@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminvgrid - administrate a vgrid
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,12 +33,15 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.defaults import keyword_all, keyword_auto, valid_trigger_changes, \
-     valid_trigger_actions
+     valid_trigger_actions, keyword_owners, keyword_members
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import vgrid_list, vgrid_is_owner
+from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_settings
 
+_valid_visible = [("owners", keyword_owners), ("members", keyword_members),
+                  ("everyone", keyword_all)]
+_valid_bool = [("yes", True), ("no", False)]
 
 def signature():
     """Signature of the main function"""
@@ -359,6 +362,78 @@ $(document).ready(function() {
             output_objects.append({'object_type': 'html_form', 
                                    'text': '</div>' })
 
+    # VGrid settings
+    
+    output_objects.append({'object_type': 'sectionheader',
+                           'text': "Settings"})
+
+    (settings_status, settings) = vgrid_settings(vgrid_name, configuration)
+    if settings_status:
+        settings_dict = dict(settings)
+    else:
+        settings_dict = {'vgrid_name': vgrid_name}
+    settings_dict.update({
+        'vgrid_label': configuration.site_vgrid_label,
+        'owners': keyword_owners,
+        'members': keyword_members,
+        'all': keyword_all,
+        })
+
+    settings_form = '''
+    <form method="post" action="vgridsettings.py">
+        <fieldset>
+            <legend>%(vgrid_label)s configuration</legend>
+                <input type="hidden" name="vgrid_name" value="%(vgrid_name)s" />
+'''
+    description = settings_dict.get('description', '')
+    settings_form += '''
+            <h4>Public description</h4>
+            <textarea name="description" cols=72 rows=10>%s</textarea>
+''' % description
+    settings_form += '<br/>'
+
+    for (title, field) in [("Owners are visible to", "visible_owners"),
+                           ("Members are visible to", "visible_members"),
+                           ("Resources are visible to", "visible_resources")]:
+        settings_form += '<h4>%s</h4>' % title
+        for (key, val) in _valid_visible: 
+            checked = ''
+            if settings_dict.get(field, keyword_owners) == val:
+                checked = "checked"
+            settings_form += '''
+            <input type="radio" name="%s" value="%s" %s/> %s
+''' % (field, val, checked, key)
+        settings_form += '<br/>'
+
+    request_recipients = settings_dict.get('request_recipients', 42)
+    settings_form += '''
+            <h4>Request Recipients</h4> 
+            Notify only first
+            <input type="number" name="request_recipients" min=1 max=100 value=%d />
+            owners about access requests.
+''' % request_recipients
+    settings_form += '<br/>'
+    
+    for (title, field) in [("Read Only", "read_only"), ("Hidden", "hidden")]:
+        settings_form += '<h4>%s</h4>' % title
+        for (key, val) in _valid_bool: 
+            checked = ''
+            if settings_dict.get(field, False) == val:
+                checked = "checked"
+            settings_form += '''
+            <input type="radio" name="%s" value="%s" %s/> %s
+''' % (field, val, checked, key)
+        settings_form += '<br/>'
+    settings_form += '<br/>'
+
+    settings_form += '''
+            <input type="submit" value="Save settings" />
+        </fieldset>
+    </form>
+'''
+    output_objects.append({'object_type': 'html_form',
+                           'text': settings_form % settings_dict})
+
     # Checking/fixing of missing components
 
     output_objects.append({'object_type': 'sectionheader',
@@ -366,10 +441,10 @@ $(document).ready(function() {
     output_objects.append({'object_type': 'html_form',
                            'text': '''
       <form method="post" action="updatevgrid.py">
-          <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
+          <input type="hidden" name="vgrid_name" value="%(vgrid_name)s" />
           <input type="submit" value="Repair components" />
       </form>
-''' % {'vgrid': vgrid_name}})
+''' % settings_dict})
 
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Delete %s " % vgrid_name})

@@ -1459,8 +1459,10 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             vgrid_html += '<h3>%s</h3>' % i['vgrid_name']
             vgrid_html += '<table class="vgrid">'
             for (key, val) in i['fields']:
+                if isinstance(val, basestring):
+                    val = val.replace('\n', '<br/>')
                 vgrid_html += \
-                          '<tr><td>%s</td><td>%s</td></tr>' % \
+                          '<tr><td><h4>%s</h4></td><td>%s</td></tr>' % \
                           (key, val)
             vgrid_html += '</table>'
             lines.append(vgrid_html)
@@ -1682,6 +1684,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
 <thead class="title">
 <tr>
   <th title="%s name with slashes indicating nesting">Name</th>
+  <th title="View details" class="icon"><!-- View --></th>
   <th title="Ownership actions" class="icon"><!-- Owner --></th>
   <th title="Membership actions" class="icon"><!-- Member --></th>
   %s
@@ -1692,6 +1695,11 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                 for obj in vgrids:
                     lines.append('<tr>')
                     lines.append('<td>%s</td>' % obj['name'])
+                    lines.append('<td>')
+                    if obj.has_key('viewvgridlink'):
+                        lines.append('%s'
+                                 % html_link(obj['viewvgridlink']))
+                    lines.append('</td>')
                     lines.append('<td>')
                     if obj.has_key('administratelink'):
                         lines.append('%s'

@@ -28,10 +28,11 @@
 """Get info about a VGrid"""
 
 import shared.returnvalues as returnvalues
+from shared.defaults import keyword_owners, keyword_members, keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_owners, vgrid_members, vgrid_resources, \
-     vgrid_settings
+     vgrid_settings, vgrid_is_owner, vgrid_is_owner_or_member
 from shared.vgridaccess import user_allowed_vgrids
 
 
@@ -43,7 +44,7 @@ def signature():
 
 
 def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
-                                       vgrid_dict, allow_vgrids):
+                                           vgrid_dict, allow_vgrids):
     """Build a vgrid object based on input vgrid_dict"""
 
     vgrid_item = {
@@ -51,18 +52,48 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
         'vgrid_name': vgrid_name,
         'fields': [],
         }
+    keyword_map = {keyword_owners: 'Owners',
+                   keyword_members: 'Owners and members',
+                   keyword_all: 'Public'}
     description = vgrid_dict.get('description', 'No description available')
-    owners = vgrid_dict.get('owners', ['Owners hidden'])
-    members = vgrid_dict.get('members', ['Members hidden'])
-    resources = vgrid_dict.get('resources', ['Resources hidden'])
+    owners = vgrid_dict.get('owners', ['*** Owners hidden ***'])
+    members = vgrid_dict.get('members', ['*** Members hidden ***'])
+    resources = vgrid_dict.get('resources', ['*** Resources hidden ***'])
+    visible_owners = vgrid_dict.get('visible_owners', keyword_owners)
+    owner_visibility = keyword_map[visible_owners]
+    visible_members = vgrid_dict.get('visible_members', keyword_owners)
+    member_visibility = keyword_map[visible_members]
+    visible_resources = vgrid_dict.get('visible_resources', keyword_owners)
+    resource_visibility = keyword_map[visible_resources]
     read_only = vgrid_dict.get('read_only', False)
+    hidden = vgrid_dict.get('hidden', False)
     vgrid_item['fields'].append(('Description', description))
-    vgrid_item['fields'].append(('Owners', ', '.join(owners)))
-    vgrid_item['fields'].append(('Members', ', '.join(members)))
+    vgrid_item['fields'].append(('Owners', '\n'.join(owners)))
+    vgrid_item['fields'].append(('Members', '\n'.join(members)))
     vgrid_item['fields'].append(('Resources', ', '.join(resources)))
-    vgrid_item['fields'].append(('Read-only', read_only)),
+    vgrid_item['fields'].append(('Owner visibility', owner_visibility))
+    vgrid_item['fields'].append(('Member visibility', member_visibility))
+    vgrid_item['fields'].append(('Resource visibility', resource_visibility))
+    vgrid_item['fields'].append(('Read-only', read_only))
+    vgrid_item['fields'].append(('Hidden', hidden))
     return vgrid_item
 
+def user_view_access(configuration, vgrid_name, client_id, settings_dict,
+                     field):
+    """Check if client_id has access to view field participation for
+    vgrid_name based on saved settings_dict.
+    """
+    required = settings_dict.get(field, keyword_owners)
+
+    if required == keyword_owners:
+        access = vgrid_is_owner(vgrid_name, client_id, configuration)
+    elif required == keyword_members:
+        access = vgrid_is_owner_or_member(vgrid_name, client_id, configuration)
+    elif required == keyword_all:
+        access = True
+    else:
+        access = False
+    return access
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -71,7 +102,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Resource details'
+    title_entry['text'] = '%s details' % configuration.site_vgrid_label
     output_objects.append({'object_type': 'header', 'text'
                           : 'Show %s details' % configuration.site_vgrid_label})
 
@@ -97,18 +128,37 @@ def main(client_id, user_arguments_dict):
             settings_dict = dict(settings)
         else:
             settings_dict = {}
-        if settings_dict.get('visible_owners'):
+        logger.info("loaded vgrid %s settings: %s" % (vgrid_name, settings_dict))
+        vgrid_dict.update(settings_dict)
+        if user_view_access(configuration, vgrid_name, client_id, settings_dict,
+                            'visible_owners'):
             (owners_status, owners) = vgrid_owners(vgrid_name, configuration)
             if owners_status:
                 vgrid_dict['owners'] = owners
-        if settings_dict.get('visible_members'):
+        if user_view_access(configuration, vgrid_name, client_id, settings_dict,
+                            'visible_members'):
             (members_status, members) = vgrid_members(vgrid_name, configuration)
             if members_status:
                 vgrid_dict['members'] = members
-        if settings_dict.get('visible_resources'):
+        if user_view_access(configuration, vgrid_name, client_id, settings_dict,
+                            'visible_resources'):
             (res_status, resources) = vgrid_resources(vgrid_name, configuration)
             if res_status:
                 vgrid_dict['resources'] = resources            
+
+        # Report no such vgrid if hidden
+        
+        if settings_dict.get('hidden', False) and \
+               not client_id in vgrid_dict.get('owners', []):
+            output_objects.append({'object_type': 'error_text',
+                                   'text': 'No such %s: %s' % \
+                                   (configuration.site_vgrid_label,
+                                    vgrid_name)})
+            status = returnvalues.CLIENT_ERROR
+            continue
+
+        # Show vgrid details based on participation and visibility settings
+        
         vgrid_item = build_vgriditem_object_from_vgrid_dict(configuration,
                                                             vgrid_name,
                                                             vgrid_dict,

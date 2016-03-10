@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridadmin - manage vgrids
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,8 +36,8 @@ from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_settings
 from shared.useradm import get_full_user_map
-from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
-    vgrid_is_member, vgrid_is_owner_or_member, vgrid_create_allowed
+from shared.vgrid import vgrid_create_allowed
+from shared.vgridaccess import get_vgrid_map, VGRIDS, OWNERS, MEMBERS, SETTINGS
 
 
 def signature():
@@ -65,11 +65,8 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    (stat, vgrid_list) = vgrid_list_vgrids(configuration)
-    if not stat:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting list of %s.' % \
-                               configuration.site_vgrid_label})
+    vgrid_map = get_vgrid_map(configuration)
+    vgrid_list = vgrid_map[VGRIDS].keys()
 
     # Check if user wants advanced VGrid component links
 
@@ -89,7 +86,13 @@ def main(client_id, user_arguments_dict):
         vgrid_list = [all_vgrids] + vgrid_list
     else:
         vgrid_list.remove(default_vgrid)
+    # User vgrid_list here to include default and all mangling above
     for vgrid_name in vgrid_list:
+        vgrid_dict = vgrid_map[VGRIDS].get(vgrid_name, {})
+        settings_dict = dict(vgrid_dict.get(SETTINGS, []))
+        if settings_dict.get('hidden', False):
+            logger.info("skip hidden vgrid %s" % vgrid_name)
+            continue
         vgrid_obj = {'object_type': 'vgrid', 'name': vgrid_name}
 
         if vgrid_name == default_vgrid:
@@ -101,7 +104,8 @@ def main(client_id, user_arguments_dict):
                                                'destination': 'showvgridmonitor.py?vgrid_name=%s'\
                                                % vgrid_name,
                                                'class': 'monitorlink',
-                                               'title': 'View %s monitor' % vgrid_name, 
+                                               'title': 'View %s monitor' % \
+                                               vgrid_name, 
                                                'text': 'View'}
             vgrid_obj['memberlink'] = {'object_type': 'link',
                                        'destination':'',
@@ -111,12 +115,20 @@ def main(client_id, user_arguments_dict):
                                           configuration.site_vgrid_label),
                                        'text': ''}
             vgrid_obj['administratelink'] = {'object_type': 'link',
-                                       'destination':'',
-                                       'class': 'infolink',
-                                       'title': 'Nobody owns the %s %s' \
-                                       % (default_vgrid,
-                                          configuration.site_vgrid_label),
-                                       'text': ''}
+                                             'destination':'',
+                                             'class': 'infolink',
+                                             'title': 'Nobody owns the %s %s' \
+                                             % (default_vgrid,
+                                                configuration.site_vgrid_label),
+                                             'text': ''}
+            vgrid_obj['viewvgridlink'] = {'object_type': 'link',
+                                          'destination':'viewvgrid.py?vgrid_name=%s' % \
+                                          vgrid_name,
+                                          'class': 'infolink',
+                                          'title': 'View details for the %s %s' \
+                                          % (default_vgrid,
+                                             configuration.site_vgrid_label),
+                                          'text': ''}
             member_list['vgrids'].append(vgrid_obj)
             continue
         elif vgrid_name == all_vgrids:
@@ -137,11 +149,16 @@ def main(client_id, user_arguments_dict):
                                        configuration.site_vgrid_label,
                                        'text': ''}
             vgrid_obj['administratelink'] = {'object_type': 'link',
-                                       'destination':'',
-                                       'class': 'infolink',
-                                       'title': 'Not a real %s - only for global monitor' % \
-                                             configuration.site_vgrid_label,
-                                       'text': ''}
+                                             'destination':'',
+                                             'class': '',
+                                             'title': '',
+                                             'text': ''}
+            vgrid_obj['viewvgridlink'] = {'object_type': 'link',
+                                          'destination':'',
+                                          'class': 'infolink',
+                                          'title': 'Not a real %s - only for global monitor' % \
+                                          configuration.site_vgrid_label,
+                                          'text': ''}
             member_list['vgrids'].append(vgrid_obj)
             continue
 
@@ -172,6 +189,18 @@ def main(client_id, user_arguments_dict):
                                         'title': 'View public %s web page' % \
                                         vgrid_name,
                                         'text': 'View'}
+
+        # Link to show vgrid details
+        
+        vgrid_obj['viewvgridlink'] = \
+                                   {'object_type': 'link',
+                                    'destination': 'viewvgrid.py?vgrid_name=%s' % \
+                                    vgrid_name,
+                                    'class': 'infolink',
+                                    'title': 'View details for the %s %s' \
+                                    % (vgrid_name,
+                                       configuration.site_vgrid_label),
+                                    'text': ''}
 
         # link to become member: overwritten later for members
 
@@ -217,7 +246,7 @@ def main(client_id, user_arguments_dict):
 
         # members/owners are allowed to view private pages and monitor
 
-        if vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
+        if client_id in vgrid_dict[OWNERS] + vgrid_dict[MEMBERS]:
             vgrid_obj['enterprivatelink'] = {'object_type': 'link',
                                              'destination':
                                              '../vgrid/%s/path/index.html' % \
@@ -292,7 +321,7 @@ def main(client_id, user_arguments_dict):
             
         # owners are allowed to edit pages and administrate
 
-        if vgrid_is_owner(vgrid_name, client_id, configuration):
+        if client_id in vgrid_dict[OWNERS]:
             vgrid_obj['ownerscmlink'] = {'object_type': 'link',
                                          'destination': '/vgridownerscm/%s' % \
                                          vgrid_name,
