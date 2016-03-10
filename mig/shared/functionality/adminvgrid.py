@@ -392,9 +392,10 @@ $(document).ready(function() {
 ''' % description
     settings_form += '<br/>'
 
-    for (title, field) in [("Owners are visible to", "visible_owners"),
-                           ("Members are visible to", "visible_members"),
-                           ("Resources are visible to", "visible_resources")]:
+    visibility_options = [("Owners are visible to", "visible_owners"),
+                          ("Members are visible to", "visible_members"),
+                          ("Resources are visible to", "visible_resources")]
+    for (title, field) in visibility_options:
         settings_form += '<h4>%s</h4>' % title
         for (key, val) in _valid_visible: 
             checked = ''
@@ -413,8 +414,14 @@ $(document).ready(function() {
             owners about access requests.
 ''' % request_recipients
     settings_form += '<br/>'
-    
-    for (title, field) in [("Read Only", "read_only"), ("Hidden", "hidden")]:
+
+    # TODO: implement and enable read-only support.
+    #       Maybe just recursively remove write bit on share?
+    #       Careful with .vgridX dirs when reverting to writable if so.
+    bool_options = [("Hidden", "hidden"),
+                    #("Read Only", "read_only"),
+                    ]
+    for (title, field) in bool_options:
         settings_form += '<h4>%s</h4>' % title
         for (key, val) in _valid_bool: 
             checked = ''
