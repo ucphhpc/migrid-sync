@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oiddiscover - discover valid openid relying party endpoints for this realm
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,7 @@ import tempfile
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 
 def signature():
     """Signature of the main function"""
@@ -65,10 +65,9 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # Force to raw file output unless something else is explicitly requested
-    raw_output = False
-    if os.environ['QUERY_STRING'].find('output_format') == -1:
-        raw_output = True
+    # Force to raw file output unless something else is explicitly requested.
+    # Relies on delay_format option in run_cgi_script_possibly_with_cert
+    if not user_arguments_dict.get('output_format', []):
         user_arguments_dict['output_format'] = ['file']
 
     discovery_doc = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -128,15 +127,17 @@ def main(client_id, user_arguments_dict):
                            'Advertising valid OpenID endpoints:'})
 
     discovery_doc = discovery_doc % discovery_uris
-    if raw_output:
+    # make sure we always have at least one output_format entry 
+    output_format = user_arguments_dict.get('output_format', []) + ['file']
+    if  output_format[0] == 'file':
         headers = [('Content-Type', 'application/xrds+xml'),
                    ('Content-Disposition', 'attachment; filename=oid.xrds'),
                    ('Content-Length', '%s' % len(discovery_doc))]
-        output_objects = [{'object_type': 'start', 'headers': headers}]
-        output_objects.append({'object_type': 'binary', 'data': discovery_doc})
-        return (output_objects, returnvalues.OK)
-    else:
+        start_entry = find_entry(output_objects, 'start')
+        start_entry['headers'] = headers
         # output discovery_doc as raw xrds doc in any case
         output_objects.append({'object_type': 'file_output', 'lines':
                                [discovery_doc]})
+    else:
+        output_objects.append({'object_type': 'binary', 'data': discovery_doc})
     return (output_objects, returnvalues.OK)

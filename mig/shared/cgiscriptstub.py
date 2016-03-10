@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgiscriptstub - cgi wrapper functions for functionality backends
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -97,7 +97,8 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg,
     print output,
 
 
-def run_cgi_script_possibly_with_cert(main, delayed_input=None):
+def run_cgi_script_possibly_with_cert(main, delayed_input=None,
+                                      delay_format=False):
     """Get needed information and run the function received as argument.
     If delayed_input is not set to a function, the default cgi input will be
     extracted and parsed before being passed on to the main function. Some
@@ -105,6 +106,10 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None):
     is passed around (huge memory consumption) so they can pass the form
     extracting function here and leave it to the back end to extract the
     form.
+    Use the optional delay_format argument to delay output format evaluation
+    until after running main so that it can override the format if needed.
+    This is useful if some backends need to output e.g. a raw xrds document
+    when called without explicit format like we do in oiddiscover.
     """
 
     before_time = time.time()
@@ -123,12 +128,14 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None):
     after_time = time.time()
     out_obj.append({'object_type': 'timing_info', 'text':
                     "done in %.3fs" % (after_time - before_time)})
+    if delay_format:
+        output_format = user_arguments_dict.get('output_format', ['html'])[-1]
 
     finish_cgi_script(configuration, output_format, ret_code, ret_msg, out_obj)
 
-def run_cgi_script(main, delayed_input=None):
+def run_cgi_script(main, delayed_input=None, delay_format=False):
     """Just a wrapper for run_cgi_script_possibly_with_cert now since we always
     verify client_id in backend anyway and have easier access to outputting a
     sane help page there.
     """
-    return run_cgi_script_possibly_with_cert(main, delayed_input)
+    return run_cgi_script_possibly_with_cert(main, delayed_input, delay_format)
