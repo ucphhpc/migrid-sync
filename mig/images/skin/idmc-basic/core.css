@@ -137,6 +137,9 @@ table {
   opacity: 0.7;
 }
 
+#bottomspace {
+  display: none;
+}
 #bottomlogo {
   background: url("/images/skin/idmc-basic/background.png") repeat scroll left center #eee;
   color: white;
