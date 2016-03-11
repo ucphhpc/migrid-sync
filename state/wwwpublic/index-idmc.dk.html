@@ -60,15 +60,17 @@ IDMC
 </div>
 <div id="toplogo" class="staticpage">
 <div id="toplogoleft" class="staticpage">
-<img src="/images/skin/idmc-basic/logo-left.png" id="logoimageleft" 
-     class="staticpage" alt="site logo left"/>
+  IDMC
 </div>
 <div id="toplogocenter" class="staticpage">
 <span id="logotitle" class="staticpage">
+<center>
 Imaging Data Management Center
+</center>
 </span>
 </div>
 <div id="toplogoright" class="staticpage">
+  QWE
 </div>
 </div>
 
@@ -84,31 +86,264 @@ Imaging Data Management Center
 <div class="righttext langselect">
 <!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
 <select name="languages" id="langselect">
-<!--
   <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
--->
   <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
 </select>
 </div>
 <div class="english i18n" lang="en">
-<h1 class="staticpage">Welcome to IDMC!</h1>
+<h1 class="staticpage">Welcome to IDMC</h1>
 
-<h2 class="staticpage">Sign up and use IDMC</h1>
+<h2 class="staticpage">About IDMC</h2>
 <p>
-If you're new here you need to <a href="https://sid.idmc.dk/cgi-sid/signup.py">sign up for an account</a>
-before you can continue.
+Imaging Data Management Center (IDMC) is an image 
+storage, sharing, previewing and processing facility provided by 
+University of Copenhagen to employees, students and partners. 
+IDMC delivers centralized storage space for personal and shared image files in
+addition to previewing and processing image data.
 </p>
-<p>In case you already did that you probably want
-to go to your <a href="https://idmc.dk">personal IDMC pages</a>.
+<h2 class="staticpage">Sign up and use IDMC</h2>
+<p>
+If you haven't used IDMC before you first need to
+<input class="signupbutton" type="button" value="sign up"
+       onClick="window.open('https://sid.idmc.dk/cgi-sid/signup.py', '_blank')"
+/> to get a user account. You may also want to refer to the 
+<a href="https://idmc.dk/public/ucph-erda-user-guide.pdf">
+IDMC User Guide</a> for an introduction and help on how to get started and
+get the most out of your account.
+</p>
+<p>In case you already signed up for your account above, you can proceed with 
+<input class="loginbutton" type="button" value="log in"
+       onClick="window.open('https://sid.idmc.dk/cgi-sid/login.py', '_blank')"
+/> to your account.
+</p>
+<h2 class="staticpage">Frequently Asked Questions (FAQ)</h2>
+<div class="faq-accordion">
+<h4 class="staticpage">How much storage space do I have on IDMC?</h4>
+<p>
+There's no space quota as such on the general IDMC storage, but the huge
+data sets known from high energy physics and bioinformatic databases are
+examples of data contents <em>not</em> considered suitable for IDMC. Anything
+within a few tens of terabytes should be fine, and we suggest that you
+just have a word with us if you want to store more than that.<br/>
+</p>
+<h4 class="staticpage">Is My IDMC Data Replicated and Backed Up?</h4>
+<p>
+All data on IDMC is automatically replicated over multiple disks with
+RAID technology. We do <em>not</em> currently guarantee automatic and
+complete backup of ordinary data in your IDMC home folder or in the
+Workgroup shares.
+</p>
+<h4 class="staticpage">Can I Publish and Share Data in e.g. a Read-only Fashion on IDMC?</h4>
+<p>
+Yes, depending on the audience and dynamics of the data to share you can
+use one of three methods.<br/> 
+For permanent read-only publishing use the Archives and mark it for
+public availability. For more dynamic data you can either share in a
+read-write manner using the Workgroup shares or do read-only sharing
+with the associated web pages. The latter come in a public and in a
+group-wide flavor and the publishing is done by Workgroup owners storing
+data in the public_base and private_base workgroup subdirectories
+respectively on IDMC. Your Workgroups page includes links to those and
+to the resulting web pages.<br/>
+Any data stored in the optional Seafile file synchronization service
+additionally support a <em>share by email</em> feature. That method
+allows both download and upload shares with optional password and time
+limit.
+</p>
+<h4 class="staticpage">How Are Workgroups Managed?</h4>
+<p>
+Workgroups can be created by VIP and TAP employees and the creator of a
+workgroup automatically becomes owner. All user management is left to
+the owner(s) without interaction from the IDMC system
+administrators. Co-owners and members can be added either directly using
+the <em>Swedish numberplate</em> alias of the user, or indirectly if the
+user requests owner-/membership on the Workgroups page, and the owner(s)
+follow the instructions then sent on email about adding the user with
+the full user ID format.
+</p>
+<h4 class="staticpage">Why can't I use certain characters in file names?</h4>
+<p>
+IDMC prevents certain characters like 
+"&lt; &gt; &#123; &#124; &#125; &#42; &#63; &#91; &#93;"
+in file names. You may already have run into similar limitations when
+naming files on your own PC or devices. In order to provide a secure and
+consistent experience across different platforms, web and advanced
+interfaces IDMC prohibits those and some more that are known to cause
+problems. Either because they are so-called control characters with a
+special potentially dangerous meaning on the storage systems or because
+they are known to interfere with the web interfacing and
+presentation. We are continuously evaluating the need for allowing more
+exotic characters but always with focus on not breaking existing
+interfaces and backends. Feel free to contact us about the possibility
+of allowing any additional characters that you may miss.
+</p>
+<h4 class="staticpage">Can I get an IDMC account without a UCPH account?</h4>
+<p>
+It is possible but more complex to set up access even if you do not have
+a general UCPH account (i.e. the <em>Swedish numberplate</em>). Our
+general username+password access described in the user guide relies on
+the OpenID login from KU Koncern-IT and they strictly use the UCPH user
+database.
+<br />
+We do provide an alternative access method with user certificates, so if
+you
+<a  class="urllink" 
+ href="https://sites.google.com/site/minimumintrusiongrid/getting-started/how-to-get-started" 
+ target="_blank">request a grid certificate</a> then you can reuse
+that for IDMC signup and access.<br />
+<span class="warningtext">
+IMPORTANT: please note that management requires such users not employed
+at UCPH to explicitly register with their affiliation to a local
+user. So please include a reference to your associate/advisor at UCPH
+Science in the comment field when you fill in the certificate request.
+</span><br />
+As you can see in the user-cert-import guide there, the certificate
+install process takes quite a few steps but then at least login is
+simpler afterwards.
+</p>
+</div>
+<h2 class="staticpage">Questions and Support</h2>
+<p>
+<a href="https://idmc.dk/public/ucph-erda-user-guide.pdf">The user guide</a> 
+ provides basic information about using IDMC, but feel
+free to contact us using the email link at the bottom of the page in
+case you have any questions or comments (in English or Danish).
+<p class="warningtext">
+Be aware that the user guide is made for IDMCs sister system ERDA, 
+all examples are valid with the replacement of erda.dk with idmc.dk.
 </p>
 </div>
 <div class="danish i18n" lang="da">
-<h1 class="staticpage">Velkommen til IDMC!</h1>
+<h1 class="staticpage">Velkommen til UCPH IDMC!</h1>
 
-<h2 class="staticpage">Indsæt dansk udgave her</h2>
+<h2 class="staticpage">Om IDMC</h2>
 <p>
-..og slå den danske oversættelse til i language selectoren øverst.
+Imaging Data Management Center (IDMC) er et billed lager-, delings-, preview-
+og processeringssystem leveret af Københavns Universitet til ansatte, studerende og partnere. 
+IDMC leverer centraliseret lagerplads for personlige - og delte billedfiler samt
+preview og processering af billed data.
 </p>
+<h2 class="staticpage">Tilmelding og brug af IDMC</h2>
+<p>
+Hvis ikke du har brugt IDMC før, er det nødvendigt først at 
+<input class="signupbutton" type="button" value="tilmelde"
+       onClick="window.open('https://sid.idmc.dk/cgi-sid/signup.py', '_blank')"
+/> dig for at få en brugerkonto. Det kan i den sammenhæng også anbefales
+at se nærmere på
+<a href="https://idmc.dk/public/ucph-erda-brugervejledning.pdf">
+IDMC Brugervejledningen</a> med introduktion og hjælp til at komme igang
+ og drage mest muligt nytte af kontoen.
+</p>
+<p>Hvis du allerede har tilmeldt dig IDMC ovenfor, kan du gå videre med at
+<input class="loginbutton" type="button" value="logge ind"
+       onClick="window.open('https://sid.idmc.dk/cgi-sid/login.py', '_blank')"
+/> på din brugerkonto.
+</p>
+<h2 class="staticpage">Ofte stillede spørgsmål (OSS)</h2>
+<div class="faq-accordion">
+<h4 class="staticpage">Hvor meget plads har jeg på IDMC?</h4>
+<p>
+Vi håndhæver ikke som sådan pladskvoter på selve IDMC datalageret, men
+kæmpe datasæt, som dem man kender fra højenergi-fysik eller
+bioinformatik-databaser, er eksempler på indhold, som <em>ikke</em> regnes for
+egnede til lagring på IDMC. Så længe vi taler datamængder op til omkring
+30 terabytes, skulle der ikke være nogen problemer. Hvis du gerne vil
+gemme mere end det, kan det sikkert også lade sig gøre - bare tag en
+snak med os om det.<br/>
+</p>
+<h4 class="staticpage">Er mine IDMC data replikerede og med backup?</h4>
+<p>
+Al data på IDMC er automatisk replikeret over flere diske v.h.a.
+RAID-teknologi. Vi garanterer <em>ikke</em> i øjeblikket automatisk og
+fuldstændig backup af almindelige data i din IDMC brugerfolder eller i
+Workgroup shares.
+</p>
+<h4 class="staticpage">Kan jeg publicere og dele IDMC data f.eks. så der kun er læse-adgang?</h4>
+<p>
+Ja, der er lidt forskellige måder at gøre det på afhængigt af hvor dynamiske data
+er og hvem du vil dele med.<br/> 
+Permanent skrive-beskyttet publicering gøres bedst med Archives og
+markering af at der skal arkiveres offentligt.
+Når det drejer sig om dynamiske data er det muligt at dele med læse- og
+skrive-adgang via de almindelige Workgroup shares eller at lave
+skrivebeskyttet deling via de tilknyttede Workgroup web sider. Sidstnævnte
+findes i en udgave med offentlig adgang og en kun for gruppens
+deltagere. Publicering den vej foregår ved at Workgroup ejere gemmer
+data i de tilhørende public_base hhv private_base workgroup undermapper
+på IDMC. På din Workgroups side finder du links til disse og til de
+resulterende web-sider.<br/>
+Data gemt i den ekstra Seafile filsynkroniserings-service tilbyder
+yderligere en <em>del via e-post</em> funktion. Den metode tillader både
+upload- og download-delinger med mulighed for kodeord og tidsbegrænsning.
+</p>
+<h4 class="staticpage">Hvordan styres Workgroups?</h4>
+<p>
+VIP- og TAP-ansatte kan oprette workgroups og de bliver derved
+automatisk ejere af den nye workgroup. Al brugerstyring er ejernes
+ansvar og foregår uden indblanding fra systemadministratorerne på
+IDMC. Medejere og medlemmer kan enten tilføjes direkte ved at indtaste
+brugerens <em>svenske nummerplade</em> på Workgroup Management siden
+eller ved at brugere anmoder om owner-/membership på Workgroups-siden,
+og ejerne følger de derved emailede instruktioner om at tilføje brugeren
+vha det komplette bruger-ID.
+</p>
+<h4 class="staticpage">Hvorfor er der tegn jeg ikke kan bruge i filnavne?</h4>
+<p>
+IDMC afviser enkelte tegn så som 
+"&lt; &gt; &#123; &#124; &#125; &#42; &#63; &#91; &#93;"
+i filnavne. Måske du allerede har oplevet lignende begrænsninger i
+navngivningen af filer på din PC eller andre enheder.
+For at kunne levere en sikker og ensartet brugeroplevelse på tværs af
+platforme, web og avancerede brugergrænseflader afviser IDMC disse og
+visse andre som er kendt for at skabe problemer.
+Hvadenten det er fordi de er såkaldte kontroltegn med en speciel og
+potentielt skadelig betydning på lagersystemerne eller fordi de vides at
+forstyrre web-brug og -visning. Vi evaluerer løbende på behovet for at
+tillade yderligere eksotiske tegn, hele tiden under krav om hverken at
+skade brugergrænseflader eller bagvedliggende systemer. Du er
+naturligvis velkommen til at kontakte os angående at få yderligere tegn
+du måtte savne tilladt.
+</p>
+<h4 class="staticpage">Kan jeg oprette en IDMC-konto uden en KU-konto?</h4>
+<p>
+Det er muligt men mere besværligt at opsætte adgang selv hvis ikke du
+har en generel KU-konto (d.v.s. den <em>svenske nummerplade</em>).
+Vores generelle adgangskontrol med brugernavn+kode, som beskrevet i
+brugervejledningen, benytter OpenID-login fra KU Koncern-IT og er dermed
+strengt knyttet til KUs brugerdatabase.<br />
+Vi tilbyder adgang med brugercertifikater som alternativ, så hvis du
+<a class="urllink" 
+ href="https://sites.google.com/site/minimumintrusiongrid/mig-in-danish/saadan-kommer-du-igang" 
+ target="_blank">anmoder om et grid-certifikat</a> kan du genbruge det
+til IDMC-tilmelding og -adgang.<br/> 
+<span class="warningtext">
+VIGTIGT: bemærk at ledelsen har bedt om at sådanne brugere ikke ansat på
+KU registrerer sig med eksplicit tilknytning til en lokal bruger. Så
+henvis venligst til din samarbejdspartner/vejleder på KU Science i
+kommentarfeltet når du anmoder om certifikatet.
+</span><br />  
+Som det fremgår af user-cert-import guiden der kræver
+certifikat-installationen en del trin, men i det mindste er login så
+efterfølgende simplere. 
+</p>
+</div>
+<h2 class="staticpage">Spørgsmål og hjælp</h2>
+<p>
+<a href="https://idmc.dk/public/ucph-erda-user-guide.pdf">Brugervejledningen</a> 
+indeholder basal information om brugen af IDMC, men
+kontakt os gerne (på dansk eller engelsk) med spørgsmål og kommentarer
+v.h.a. email-linket nederst på siden.
+</p>
+<p class="warningtext">
+Bemærk at IDMC siderne p.t. kun findes på engelsk. Den danske
+brugervejledning kan forhåbentlig afhjælpe eventuelle
+forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
+<br>
+<br>
+Bemærk desuden at brugervejledningen beskriver IDMCs søster system ERDA, 
+alle eksempler kan benyttes ved at erstatte erda.dk med idmc.dk.
+</p>
+</div>
 </div>
 </div>
 </div>
@@ -128,12 +363,10 @@ to go to your <a href="https://idmc.dk">personal IDMC pages</a>.
 <div id="bottomlogoright">
 <p><img src="/images/copyright.png" id="creditsimage" alt=""/>
 <span id="credits">
-2003-2015, <a href="http://www.migrid.org">The MiG Project</a>
+2003-2016, <a href="http://www.migrid.org">The MiG Project</a>
 </span>
 </p>
 </div>
-</div>
-<div id="bottomspace">
 </div>
 
 </body>
