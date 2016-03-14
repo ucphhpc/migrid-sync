@@ -564,7 +564,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
 
 class SimpleSSHServer(paramiko.ServerInterface):
-    """Custom SSH server with multi pub key support"""
+    """Custom SSH server with multi pub key support.
+
+    NOTE: The username arguments are unicode so we need to force utf8.
+    """
     def __init__(self, *largs, **kwargs):
         conf = kwargs.get('conf', {})
         paramiko.ServerInterface.__init__(self)
@@ -591,7 +594,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         Paranoid users / grid owners should not enable password access in the
         first place!
         """
-
+        username = force_utf8(username)
         # Only need to update users here, since jobs only use keys
         changed_jobs = []
         daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
@@ -636,6 +639,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
     def check_auth_publickey(self, username, key):
         """Public key auth against usermap"""
+        username = force_utf8(username)
+        key = key
         offered = None
 
         # Both user and job keys may have changed here
@@ -737,9 +742,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     channel = transport.accept(conf['auth_timeout'])
     username = server.get_authenticated_user()
     if username is not None:
-        #user = usermap[username]
         logger.info("Login for %s from %s" % (username, addr))
-                #print "type: %s"  % type(entry.public_key)
         print "Login for %s from %s" % (username, addr)
     else:
         logger.warning("Login from %s failed" % (addr, ))

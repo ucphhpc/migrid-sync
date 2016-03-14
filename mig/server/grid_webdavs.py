@@ -205,6 +205,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     """Override auth database lookups to use username and password hash for
     basic auth and digest otherwise.
+    
+    NOTE: The username arguments are already on utf8 here so no need to force.
     """
 
     min_expire_delay = 120

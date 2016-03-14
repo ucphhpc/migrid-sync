@@ -83,7 +83,7 @@ except ImportError:
     print "ERROR: the python pyftpdlib module is required for this daemon"
     raise
 
-from shared.base import invisible_path
+from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, update_login_map, hit_rate_limit, update_rate_limit, \
@@ -99,6 +99,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
     """Authenticate/authorize against MiG users DB and user password files.
     Only instantiated once from central server thread so we don't need locking
     in creds refresh.
+
+    NOTE: The username arguments are unicode so we need to force utf8.
     """
 
     authenticated_user = None
@@ -146,6 +148,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         Paranoid users / grid owners should not enable password access in the
         first place!
         """
+        username = force_utf8(username)
         logger.debug("Authenticating %s" % username)
 
         # We don't have a handle_request for server so expire here instead

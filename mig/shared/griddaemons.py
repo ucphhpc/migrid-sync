@@ -36,7 +36,7 @@ import time
 import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
-    invisible_path
+    invisible_path, force_utf8
 from shared.fileio import unpickle
 from shared.safeinput import valid_path
 from shared.ssh import parse_pub_key
@@ -76,18 +76,20 @@ class Login(object):
             self.home = self.username
 
     def __str__(self):
-        """String formater"""
+        """Byte string formater - username is already forced to utf8 so other
+        strings are converted here as well.
+        """
         out = '''username: %s
 home: %s''' % (self.username, self.home)
         if self.password:
             out += '''
-password: %s''' % self.password
+password: %s''' % force_utf8(self.password)
         if self.digest:
             out += '''
-digest: %s''' % self.digest
+digest: %s''' % force_utf8(self.digest)
         if self.public_key:
             out += '''
-pubkey: %s''' % self.public_key.get_base64()
+pubkey: %s''' % force_utf8(self.public_key.get_base64())
         out += '''
 last_update: %s''' % self.last_update
         return out
