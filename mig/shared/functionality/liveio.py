@@ -266,7 +266,7 @@ jobs before and during execution.
 
     for filepath in filelist:
 
-        # Extract jo_id from filepath (replace doesn't modify filepath)
+        # Extract job_id from filepath (replace doesn't modify filepath)
 
         mrsl_file = filepath.replace(base_dir, '')
         job_id = mrsl_file.replace('.mRSL', '')

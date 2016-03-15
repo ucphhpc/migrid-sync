@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addheader - add license header to all code modules.
-# Copyright (C) 2009-2015  Jonas Bardino
+# Copyright (C) 2009-2016  Jonas Bardino
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,7 @@ from codegrep import code_files
 proj_vars = {}
 proj_vars['project_name'] = "MiG"
 proj_vars['authors'] = 'The MiG Project lead by Brian Vinter'
-proj_vars['copyright_year'] = '2003-2015'
+proj_vars['copyright_year'] = '2003-2016'
 
 # Set interpreter path and file encoding if not already set in source files
 # Use empty string to leave them alone.
