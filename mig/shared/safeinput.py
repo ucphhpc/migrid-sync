@@ -261,7 +261,7 @@ def valid_alphanumeric_and_spaces(contents, min_length=0,
     """Verify that supplied contents only contain alphanumeric characters and
     spaces"""
 
-    __valid_contents(contents, letters + digits + ' ' + '_',
+    __valid_contents(contents, letters + digits + ' ',
                      min_length, max_length)
 
 
@@ -369,7 +369,7 @@ def valid_commonname(
     characters that we consider valid. 
     """
 
-    valid_chars = VALID_NAME_CHARACTERS + '_' + extra_chars
+    valid_chars = VALID_NAME_CHARACTERS + extra_chars
     __valid_contents(commonname, valid_chars, min_length, max_length,
                      COMMON_ACCENTED)
 
@@ -1066,6 +1066,7 @@ def guess_type(name):
         for key in ('offset', ):
             __type_map[key] = valid_integer
         for key in (
+            'fqdn',
             'unique_resource_name',
             'hosturl',
             'exe_name',

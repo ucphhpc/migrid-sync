@@ -30,6 +30,7 @@
 import glob
 import os
 import datetime
+import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
@@ -44,15 +45,16 @@ from shared.validstring import valid_user_path
 
 
 get_actions = ['show']
-post_actions = ['put', 'get', 'move']
+# TODO: add these internal targets
+post_actions = ['import', 'export'] # + ['move', 'copy', 'unpack', 'pack']
 valid_actions = get_actions + post_actions
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'protocol': [], 'action': ['show'], 'src':[],
-                'dst': [''], 'username': [''], 'password': [''],
-                'key': ['']}
+    defaults = {'action': ['show'], 'protocol': [''], 'fqdn':[''],
+                'port': [''], 'src':[''], 'dst': [''], 'username': [''],
+                'password': [''], 'key': [''], 'flags': ['']}
     return ['text', defaults]
 
 
@@ -75,11 +77,15 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     action = accepted['action'][-1]
-    src = accepted['src']
+    protocol = accepted['protocol'][-1]
+    fqdn = accepted['fqdn'][-1]
+    port = accepted['port'][-1]
+    src_list = accepted['src']
     dst = accepted['dst'][-1]
     username = accepted['username'][-1]
     password = accepted['password'][-1]
     key = accepted['key'][-1]
+    flags = accepted['flags']
     
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s data import/export' % configuration.short_title
@@ -92,11 +98,18 @@ def main(client_id, user_arguments_dict):
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if action in post_actions and not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+    if action in post_actions:
+        if not correct_handler('POST'):
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Only accepting POST requests to prevent unintended updates'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        if not fqdn:
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'No host address provided!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
                           : '''
@@ -119,19 +132,31 @@ Destination is a always handled as a directory path to put source files into.
 <tr><td class=centertext>
 </td></tr>
 <tr><td>
-Action:<br />
+<span>
+Action:
 <input type=radio name=action checked value="import" />import data
 <input type=radio name=action value="export" />export data
 <input type=radio name=action value="move" />move data
-</td></tr>
-<tr><td>
-Protocol:<br />
+</span>
+<span>
+Protocol:
 <select name=protocol>
-<option value="https" />
-<option value="http" />
-<option value="sftp" />
-<option value="ftps" />
+<option selected value="https">HTTPS</option>
+<option value="http" />HTTP</option>
+<option value="sftp" />SFTP</option>
+<option value="scp" />SCP</option>
+<option value="ssh+rsync" />SSH+RSYNC</option>
+<option value="rsync" />RSYNC</option>
+<option value="ftps" />FTPS</option>
+<option value="ftp" />FTP</option>
 </select>
+</span>
+<br/>
+<br/>
+Host:
+<input type=text size=45 name=fqdn value="" />
+Port:
+<input type=text size=5 name=port value="" />
 </td></tr>
 <tr><td>
 Username:<br />
@@ -154,6 +179,10 @@ Source path(s):<br />
 <tr><td>
 Destination path:<br />
 <input type=text size=60 name=dst value="" />
+</td></tr>
+<tr><td>
+Extra flags:<br />
+<input type=text size=60 name=flags value="" />
 </td></tr>
 <tr><td>
 <input type="submit" value="Request transfer" />
@@ -192,11 +221,7 @@ function addInput() {
                               : 'Invalid data transfer action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Requesting data transfer in the background'
-                           })
-
-    if not src or not dst:
+    if not [src for src in src_list if src] or not dst:
         output_objects.append(
             {'object_type': 'error_text',
              'text': 'src and dst parameters required for all data transfer'})
@@ -205,22 +230,37 @@ function addInput() {
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.user_transfers,
+    base_dir = os.path.abspath(os.path.join(configuration.user_settings,
                                             client_dir)) + os.sep
 
     # TODO: improve to make ID unique
-    transfer_id = '%d.req' % time.time
-    transfer_request = os.path.join(base_dir, transfer_id)
-    transfer_dict = {}
-    if os.path.isfile(transfer_request):
+    transfer_requests = os.path.join(base_dir, "transfers")
+    transfer_map = unpickle(transfer_requests, logger)
+    if transfer_map == False:
+        transfer_map = {}
+    transfer_id = 'transfer-%d' % time.time()
+    transfer_dict = transfer_map.get(transfer_id, {})
+    if transfer_dict:
         output_objects.append({'object_type': 'error_text',
                                'text': 'Request already exists!!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    pickle_ret = pickle(transfer_dict, transfer_request, logger)
+    transfer_dict = {'transfer_id': transfer_id, 'action': action,
+                     'protocol': protocol, 'fqdn': fqdn, 'port': port, 
+                     'flags': flags, 'username': username, 'password': password,
+                     'key':key, 'src': src_list, 'dst': dst}
+    transfer_map[transfer_id] = transfer_dict
+    pickle_ret = pickle(transfer_map, transfer_requests, logger)
     if not pickle_ret:
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : 'Error saving data transfer request!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    output_objects.append({'object_type': 'text', 'text'
+                          : '''Accepted request %s to transfer data in the
+background. You can monitor the progress on this page.''' % transfer_id
+                           })
+
+    # TODO: insert table with transfer status
 
     return (output_objects, returnvalues.OK)
