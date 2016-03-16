@@ -81,6 +81,22 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s live I/O' % configuration.short_title
+    title_entry['javascript'] += '''
+<script type="text/javascript">
+fields = 1;
+max_fields = 20;
+function addInput() {
+    if (fields < max_fields) {
+        document.getElementById("srcfields").innerHTML += "<input type=text size=60 name=src value='' /><br />";
+        fields += 1;
+    } else {
+        alert("Maximum " + max_fields + " source fields allowed!");
+        /* We skip disable as it is no use and remains disabled after reload */
+        //document.getElementById("addsrcbutton").disabled=true;
+    }
+}
+</script>
+'''
     output_objects.append({'object_type': 'header', 'text'
                            : 'Request live communication with jobs'})
 
@@ -132,6 +148,8 @@ Job ID:<br />
 </td></tr>
 <tr><td>
 Source path(s):<br />
+<input id="addsrcbutton" type="button" onclick="addInput(); return false;"
+    value="Add another source field" />
 <div id="srcfields">
 <input type=text size=60 name=src value="" /><br />
 </div>
@@ -144,24 +162,6 @@ Destination path:<br />
 <input type="submit" value="Send request" />
 </td></tr>
 </table>
-</form>
-</td>
-<td>
-<script type="text/javascript">
-fields = 1;
-max_fields = 64;
-function addInput() {
-    if (fields < max_fields) {
-        document.getElementById("srcfields").innerHTML += "<input type=text size=60 name=src value='' /><br />";
-        fields += 1;
-    } else {
-        alert("Maximum " + max_fields + " source fields allowed!");
-        document.form.add.disabled=true;
-    }
-}
-</script>
-<form name="addsrcform">
-<input type="button" onclick="addInput(); return false;" name="add" value="Add another source field" />
 </form>
 </td>
 </tr>
