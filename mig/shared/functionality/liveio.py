@@ -82,19 +82,23 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s live I/O' % configuration.short_title
     title_entry['javascript'] += '''
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript">
-fields = 1;
-max_fields = 20;
-function addInput() {
-    if (fields < max_fields) {
-        document.getElementById("srcfields").innerHTML += "<input type=text size=60 name=src value='' /><br />";
-        fields += 1;
-    } else {
-        alert("Maximum " + max_fields + " source fields allowed!");
-        /* We skip disable as it is no use and remains disabled after reload */
-        //document.getElementById("addsrcbutton").disabled=true;
+    var fields = 1;
+    var max_fields = 20;
+    var src_input = "<input type=text size=60 name=src value='' /><br />";
+    function addSource() {
+        if (fields < max_fields) {
+            $("#srcfields").append(src_input);
+            fields += 1;
+        } else {
+            alert("Maximum " + max_fields + " source fields allowed!");
+        }
     }
-}
+    $(document).ready(function() {
+        /* init dialogs */
+    });
 </script>
 '''
     output_objects.append({'object_type': 'header', 'text'
@@ -148,11 +152,11 @@ Job ID:<br />
 </td></tr>
 <tr><td>
 Source path(s):<br />
-<input id="addsrcbutton" type="button" onclick="addInput(); return false;"
-    value="Add another source field" />
 <div id="srcfields">
 <input type=text size=60 name=src value="" /><br />
 </div>
+<input id="addsrcbutton" type="button" onclick="addSource(); return false;"
+    value="Add another source field" />
 </td></tr>
 <tr><td>
 Destination path:<br />

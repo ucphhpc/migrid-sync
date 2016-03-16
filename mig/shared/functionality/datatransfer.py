@@ -35,26 +35,27 @@ import time
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
-from shared.defaults import all_jobs, job_output_dir
+from shared.defaults import all_jobs, job_output_dir, default_pager_entries
 from shared.fileio import unpickle, pickle
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.ssh import copy_file_to_resource
 from shared.validstring import valid_user_path
 
 
 get_actions = ['show']
-# TODO: add these internal targets
+# TODO: add these internal targets on a separate tab without address and creds
 post_actions = ['import', 'export'] # + ['move', 'copy', 'unpack', 'pack']
 valid_actions = get_actions + post_actions
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'action': ['show'], 'protocol': [''], 'fqdn':[''],
-                'port': [''], 'src':[''], 'dst': [''], 'username': [''],
-                'password': [''], 'key': [''], 'flags': ['']}
+    defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
+                'fqdn':[''], 'port': [''], 'src':[''], 'dst': [''],
+                'username': [''], 'password': [''], 'key': [''], 'flags': ['']}
     return ['text', defaults]
 
 
@@ -77,6 +78,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     action = accepted['action'][-1]
+    transfer_id = accepted['transfer_id'][-1]
     protocol = accepted['protocol'][-1]
     fqdn = accepted['fqdn'][-1]
     port = accepted['port'][-1]
@@ -88,7 +90,74 @@ def main(client_id, user_arguments_dict):
     flags = accepted['flags']
     
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s data import/export' % configuration.short_title
+    title_entry['text'] = '%s data transfer' % configuration.short_title
+
+    # jquery support for tablesorter and confirmation on "delete":
+
+    title_entry['style'] = themed_styles(configuration)
+    title_entry['javascript'] += '''
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
+<script type="text/javascript">
+    var fields = 1;
+    var max_fields = 20;
+    var src_input = "<input type=text size=60 name=src value='' /><br />";
+    function addSource() {
+        if (fields < max_fields) {
+            $("#srcfields").append(src_input);
+            fields += 1;
+            alert("addSource: "+$("#srcfields").html());
+        } else {
+            alert("Maximum " + max_fields + " source fields allowed!");
+        }
+    }
+    function enableLogin(method) {
+        $("#anonymous_choice").removeAttr("checked");
+        $("#userpassword_choice").removeAttr("checked");
+        $("#userkey_choice").removeAttr("checked");
+        $("#username").prop("disabled", false);
+        $("#password").prop("disabled", true);
+        $("#key").prop("disabled", true);
+        $("#login_fields").show();
+        $("#password_entry").hide();
+        $("#key_entry").hide();
+        
+        if (method == "password") {
+            $("#userpassword_choice").prop("checked", "checked");
+            $("#password").prop("disabled", false);
+            $("#password_entry").show();
+        } else if (method == "key") {
+            $("#userkey_choice").prop("checked", "checked");
+            $("#key").prop("disabled", false);
+            $("#key_entry").show();
+        } else {
+            $("#anonymous_choice").prop("checked", "checked");
+            $("#username").prop("disabled", true);
+            $("#login_fields").hide();
+        }
+    }
+
+    $(document).ready(function() {
+        /* init dialogs */
+        //$("#mode_tabs").tabs();
+        enableLogin("anonymous");
+
+        // table initially sorted by 0 (id)
+        var sortOrder = [[0,0]];
+
+        $("#datatransfertable").tablesorter({widgets: ["zebra", "saveSort"],
+                                        sortList:sortOrder
+                                        })
+                               .tablesorterPager({ container: $("#pager"),
+                                        size: %s
+                                        });
+    });
+</script>
+''' % default_pager_entries
     output_objects.append({'object_type': 'header', 'text'
                            : 'Manage background data transfers'})
 
@@ -111,70 +180,123 @@ def main(client_id, user_arguments_dict):
                  : 'No host address provided!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : '''
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_settings,
+                                            client_dir)) + os.sep
+
+    transfer_requests = os.path.join(base_dir, "transfers")
+    transfer_map = unpickle(transfer_requests, logger)
+    if transfer_map == False:
+        transfer_map = {}
+
+    if action in get_actions:
+        show_fields = [('transfer_id', 'Transfer ID'), ('fqdn', 'Host'),
+                       ('port', 'Port'), ('src', 'Source(s)'),
+                       ('dst', 'Destination'), ('status', 'Status')]
+
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Existing Transfers'})
+        output_objects.append({'object_type': 'table_pager',
+                               'entry_name': 'transfers',
+                               'default_entries': default_pager_entries})
+        html = '''
+<table class="datatransfer">
+<tr>
+<td>
+<table class="transfers columnsort" id="datatransfertable">
+<thead class="title">
+<tr>
+'''
+        for (_, title) in show_fields:
+            html += '<th title="%s">%s</th>' % (title, title)
+        html += '''
+</tr>
+</thead>
+<tbody>
+'''
+        for (req_id, transfer_dict) in transfer_map.items():
+            transfer_dict['transfer_id'] = req_id
+            transfer_dict['src'] = ', '.join(transfer_dict['src'])
+            entry = ''
+            for (name, _) in show_fields:
+                entry += '<td>%s</td>' % transfer_dict.get(name, '')
+            html += '<tr>%s</tr>' % entry
+        html += '''
+</tbody>
+</table>
+'''
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : html})        
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Create Transfer'})
+        html = '''
+<table class="adddatatransfer">
+<tr><td>
 Fill in the data transfer details below to request a new background data
 transfer task.
 Source can be a path or a wild card pattern using "*" and "?" to match one
 or more characters.
 Destination is a single location to transfer the data to. It is considered in
-relation to your user home for get and move requests. Source is similarly
-considered in relation to your user home in move and put requests.
-Destination is a always handled as a directory path to put source files into.
-'''})
-    if action in get_actions:
-        html = '''
-<table class="datatransfer">
-<tr>
-<td>
+relation to your user home for <em>import</em> requests. Source is similarly
+considered in relation to your user home in <em>export</em> requests.
+Destination is a always handled as a directory path to transfer source files
+into.<br/>
 <form method="post" action="datatransfer.py">
-<table class="datatransfer">
-<tr><td class=centertext>
-</td></tr>
+<table class="adddatatransfer">
 <tr><td>
-<span>
-Action:
 <input type=radio name=action checked value="import" />import data
 <input type=radio name=action value="export" />export data
-<input type=radio name=action value="move" />move data
-</span>
-<span>
-Protocol:
+</td></tr>
+<tr><td>
+Transfer ID:<br />
+<input type=text size=60 name=transfer_id value="" />
+</td></tr>
+<tr><td>
 <select name=protocol>
 <option selected value="https">HTTPS</option>
 <option value="http" />HTTP</option>
 <option value="sftp" />SFTP</option>
 <option value="scp" />SCP</option>
-<option value="ssh+rsync" />SSH+RSYNC</option>
+<option value="ssh+rsync" />SSH + RSYNC</option>
 <option value="rsync" />RSYNC</option>
 <option value="ftps" />FTPS</option>
 <option value="ftp" />FTP</option>
 </select>
-</span>
-<br/>
-<br/>
 Host:
-<input type=text size=45 name=fqdn value="" />
+<input type=text size=30 name=fqdn value="" />
 Port:
-<input type=text size=5 name=port value="" />
+<input type=text size=6 name=port value="" />
 </td></tr>
 <tr><td>
+<input id="anonymous_choice" type=radio onclick="enableLogin(\'anonymous\');" />
+anonymous access
+<input id="userpassword_choice" type=radio onclick="enableLogin(\'password\');" />
+login with password
+<input id="userkey_choice" type=radio onclick="enableLogin(\'key\');" />
+login with key
+</td></tr>
+<tr id="login_fields" style="display: none;"><td>
 Username:<br />
-<input type=text size=60 name=username value="" />
-</td></tr>
-<tr><td>
+<input id="username" type=text size=60 name=username value="" />
+<br/>
+<span id="password_entry">
 Password:<br />
-<input type=password size=60 name=password value="" />
-</td></tr>
-<tr><td>
+<input id="password" type=password size=60 name=password value="" />
+</span>
+<span id="key_entry">
 Key:<br />
-<input type=key size=60 name=key value="" />
+<input id="key" type=text size=60 name=key value="" />
+</span>
 </td></tr>
 <tr><td>
 Source path(s):<br />
 <div id="srcfields">
 <input type=text size=60 name=src value="" /><br />
 </div>
+<input id="addsrcbutton" type="button" onclick="addSource(); return false;"
+    value="Add another source field" />
 </td></tr>
 <tr><td>
 Destination path:<br />
@@ -185,28 +307,12 @@ Extra flags:<br />
 <input type=text size=60 name=flags value="" />
 </td></tr>
 <tr><td>
-<input type="submit" value="Request transfer" />
+<input type=submit value="Request transfer" />
 </td></tr>
 </table>
 </form>
 </td>
 <td>
-<script type="text/javascript">
-fields = 1;
-max_fields = 64;
-function addInput() {
-    if (fields < max_fields) {
-        document.getElementById("srcfields").innerHTML += "<input type=text size=60 name=src value='' /><br />";
-        fields += 1;
-    } else {
-        alert("Maximum " + max_fields + " source fields allowed!");
-        document.form.add.disabled=true;
-    }
-}
-</script>
-<form name="addsrcform">
-<input type="button" onclick="addInput(); return false;" name="add" value="Add another source field" />
-</form>
 </td>
 </tr>
 </table>
@@ -227,18 +333,8 @@ function addInput() {
              'text': 'src and dst parameters required for all data transfer'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
-
-    base_dir = os.path.abspath(os.path.join(configuration.user_settings,
-                                            client_dir)) + os.sep
-
-    # TODO: improve to make ID unique
-    transfer_requests = os.path.join(base_dir, "transfers")
-    transfer_map = unpickle(transfer_requests, logger)
-    if transfer_map == False:
-        transfer_map = {}
-    transfer_id = 'transfer-%d' % time.time()
+    if not transfer_id:
+        transfer_id = "transfer-%d" % time.time()
     transfer_dict = transfer_map.get(transfer_id, {})
     if transfer_dict:
         output_objects.append({'object_type': 'error_text',
@@ -247,7 +343,7 @@ function addInput() {
     transfer_dict = {'transfer_id': transfer_id, 'action': action,
                      'protocol': protocol, 'fqdn': fqdn, 'port': port, 
                      'flags': flags, 'username': username, 'password': password,
-                     'key':key, 'src': src_list, 'dst': dst}
+                     'key':key, 'src': src_list, 'dst': dst, 'status': 'PARSE'}
     transfer_map[transfer_id] = transfer_dict
     pickle_ret = pickle(transfer_map, transfer_requests, logger)
     if not pickle_ret:
@@ -260,7 +356,7 @@ function addInput() {
                           : '''Accepted request %s to transfer data in the
 background. You can monitor the progress on this page.''' % transfer_id
                            })
-
-    # TODO: insert table with transfer status
-
+    output_objects.append({'object_type': 'link',
+                           'destination': 'datatransfer.py',
+                           'text': 'Return to administration'})
     return (output_objects, returnvalues.OK)

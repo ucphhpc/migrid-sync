@@ -139,6 +139,10 @@ table.people {
 table.user td {
   padding: 5px;
 }
+table.transfers {
+  padding: 2px;
+}
+
 table.forum {
   padding: 2px;
   text-align: left;

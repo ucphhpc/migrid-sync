@@ -1024,6 +1024,7 @@ def guess_type(name):
             'machine_name',
             'freeze_id',
             'rule_id',
+            'transfer_id',
             ):
             __type_map[key] = valid_job_id
         for key in (
@@ -1160,6 +1161,7 @@ def guess_type(name):
             'openid.sreg.email',
             'openid.sreg.mail',
             'adminemail',
+            'username',
             ):
             __type_map[key] = valid_email_address
         for key in (
