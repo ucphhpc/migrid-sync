@@ -27,6 +27,7 @@
 
 """Manage data imports and exports"""
 
+from binascii import hexlify
 import glob
 import os
 import datetime
@@ -35,23 +36,26 @@ import time
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
+from shared.transferfunctions import build_transferitem_object, \
+     load_data_transfers, create_data_transfer, delete_data_transfer
 from shared.defaults import all_jobs, job_output_dir, default_pager_entries
 from shared.fileio import unpickle, pickle
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
-from shared.html import themed_styles
+from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.ssh import copy_file_to_resource
 from shared.validstring import valid_user_path
 
 
 get_actions = ['show']
-post_actions = ['import', 'export', 'delrequest']
+post_actions = ['import', 'export', 'deltransfer']
 # TODO: add these internal targets on a separate tab without address and creds
 #post_actions += ['move', 'copy', 'unpack', 'pack', 'remove']
 valid_actions = get_actions + post_actions
 valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
                ("ftps", "FTPS"), ("sftp", "SFTP"), ("scp", "SCP"),
+               ("webdav", "WebDAV"), ("webdavs", "WebDAVS"),
                ("ssh+rsync", "SSH + RSYNC"), ("rsync", "RSYNC")]
 
 
@@ -62,7 +66,6 @@ def signature():
                 'fqdn':[''], 'port': [''], 'src':[''], 'dst': [''],
                 'username': [''], 'password': [''], 'key': [''], 'flags': ['']}
     return ['text', defaults]
-
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -107,6 +110,7 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
+
 <script type="text/javascript">
     var fields = 1;
     var max_fields = 20;
@@ -115,7 +119,6 @@ def main(client_id, user_arguments_dict):
         if (fields < max_fields) {
             $("#srcfields").append(src_input);
             fields += 1;
-            alert("addSource: "+$("#srcfields").html());
         } else {
             alert("Maximum " + max_fields + " source fields allowed!");
         }
@@ -147,13 +150,23 @@ def main(client_id, user_arguments_dict):
     }
 
     $(document).ready(function() {
-        /* init dialogs */
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 500,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+                }
+              });
+
+        /* init create dialog */
         //$("#mode_tabs").tabs();
         enableLogin("anonymous");
 
-        // table initially sorted by 0 (id)
+        /* setup table with tablesorter initially sorted by 0 (id) */
         var sortOrder = [[0,0]];
-
         $("#datatransfertable").tablesorter({widgets: ["zebra", "saveSort"],
                                         sortList:sortOrder
                                         })
@@ -165,6 +178,14 @@ def main(client_id, user_arguments_dict):
 ''' % default_pager_entries
     output_objects.append({'object_type': 'header', 'text'
                            : 'Manage background data transfers'})
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="40" rows="4" id="confirm_input"
+       style="display:none;"></textarea>
+ </div>
+'''                       })
 
     if not action in valid_actions:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -179,61 +200,44 @@ def main(client_id, user_arguments_dict):
                  : 'Only accepting POST requests to prevent unintended updates'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        if not fqdn:
-            output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'No host address provided!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
-
-    base_dir = os.path.abspath(os.path.join(configuration.user_settings,
-                                            client_dir)) + os.sep
-
-    transfer_requests = os.path.join(base_dir, "transfers")
-    transfer_map = unpickle(transfer_requests, logger)
-    if transfer_map == False:
+    (load_status, transfer_map) = load_data_transfers(configuration, client_id)
+    if not load_status:
         transfer_map = {}
 
     if action in get_actions:
-        show_fields = [('transfer_id', 'Transfer ID'), ('fqdn', 'Host'),
-                       ('port', 'Port'), ('src', 'Source(s)'),
-                       ('dst', 'Destination'), ('status', 'Status')]
-
+        datatransfers = []
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Existing Transfers'})
         output_objects.append({'object_type': 'table_pager',
                                'entry_name': 'transfers',
                                'default_entries': default_pager_entries})
-        html = '''
-<table class="datatransfer">
-<tr>
-<td>
-<table class="transfers columnsort" id="datatransfertable">
-<thead class="title">
-<tr>
-'''
-        for (_, title) in show_fields:
-            html += '<th title="%s">%s</th>' % (title, title)
-        html += '''
-</tr>
-</thead>
-<tbody>
-'''
-        for (req_id, transfer_dict) in transfer_map.items():
-            transfer_dict['transfer_id'] = req_id
-            transfer_dict['src'] = ', '.join(transfer_dict['src'])
-            entry = ''
-            for (name, _) in show_fields:
-                entry += '<td>%s</td>' % transfer_dict.get(name, '')
-            html += '<tr>%s</tr>' % entry
-        html += '''
-</tbody>
-</table>
-'''
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : html})        
+        for (saved_id, transfer_dict) in transfer_map.items():
+            transfer_item = build_transferitem_object(configuration,
+                                                      transfer_dict)
+            saved_id = transfer_item['transfer_id']
+            transfer_item['status'] = transfer_item.get('status', 'PARSE')            
+            transfer_item['viewtransferlink'] = {
+                'object_type': 'link',
+                #'destination': "showtransfer.py?transfer_id=%s" % saved_id,
+                'destination': '',
+                'class': 'infolink', 
+                'title': 'View data transfer %s' % saved_id,
+                'text': ''}
+            js_name = 'delete%s' % hexlify(saved_id)
+            helper = html_post_helper(js_name, 'datatransfer.py',
+                                      {'transfer_id': saved_id,
+                                       'action': 'deltransfer'})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            transfer_item['deltransferlink'] = {
+                'object_type': 'link', 'destination':
+                "javascript: confirmDialog(%s, '%s');" % \
+                (js_name, 'Really remove %s?' % saved_id),
+                'class': 'removelink', 'title': 'Remove %s' % \
+                saved_id, 'text': ''}
+            datatransfers.append(transfer_item)
+        output_objects.append({'object_type': 'datatransfers', 'datatransfers'
+                              : datatransfers})
+
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Create Transfer'})
         html = '''
@@ -316,8 +320,6 @@ Extra flags:<br />
 </table>
 </form>
 </td>
-<td>
-</td>
 </tr>
 </table>
 '''
@@ -326,17 +328,24 @@ Extra flags:<br />
         return (output_objects, returnvalues.OK)
     elif action in post_actions:
         transfer_dict = transfer_map.get(transfer_id, {})
-        if action == 'delrequest':
+        if action == 'deltransfer':
             action_type = 'edit'
             if transfer_dict is None:
                 output_objects.append(
                     {'object_type': 'error_text',
                      'text': 'existing transfer_id is required for delete'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
-            del transfer_map[transfer_id]
+            (save_status, _) = delete_data_transfer(transfer_id, client_id,
+                                                    configuration,
+                                                    transfer_map)
             desc = "delete"
         else:
             action_type = 'transfer'
+            if not fqdn:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'No host address provided!'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
             if not [src for src in src_list if src] or not dst:
                 output_objects.append(
                     {'object_type': 'error_text',
@@ -347,23 +356,24 @@ Extra flags:<br />
             if not transfer_id:
                 transfer_id = "transfer-%d" % (time.time() * 1000)
             if transfer_dict:
-                output_objects.append({'object_type': 'text', 'text':
-                                       'Updating existing transfer %s' \
-                                       % transfer_id})
+                desc = "update"
+            else:
+                desc = "create"
+
             transfer_dict.update(
                 {'transfer_id': transfer_id, 'action': action,
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
                  'flags': flags, 'username': username, 'password': password,
                  'key':key, 'src': src_list, 'dst': dst, 'status': 'PARSE'})
-            transfer_map[transfer_id] = transfer_dict
-            desc = "create"
+            (save_status, _) = create_data_transfer(transfer_dict, client_id,
+                                                    configuration,
+                                                    transfer_map)
     else:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Invalid data transfer action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    pickle_ret = pickle(transfer_map, transfer_requests, logger)
-    if not pickle_ret:
+    if not save_status:
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : 'Error in %s data transfer %s: '% (desc, transfer_id) + \
@@ -372,10 +382,9 @@ Extra flags:<br />
 
     output_objects.append({'object_type': 'text', 'text'
                           : '%sd transfer request %s.'  % (desc.title(),
-                                                           transfer_id) + \
-                           ' You can monitor the transfer progress here.'
+                                                           transfer_id)
                            })
     output_objects.append({'object_type': 'link',
                            'destination': 'datatransfer.py',
-                           'text': 'Return to administration'})
+                           'text': 'View data transfers'})
     return (output_objects, returnvalues.OK)

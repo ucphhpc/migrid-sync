@@ -1209,6 +1209,51 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 lines.append('<tr><td class="title">On %s</td><td>%s</td></tr>'
                           % (location, store_date))
             lines.append('</table>')
+        elif i['object_type'] == 'datatransfers':
+            datatransfers = i['datatransfers']
+            lines.append('''
+<table class="datatransfers columnsort" id="datatransfertable">
+<thead class="title">
+    <tr>
+        <th>ID</th>
+        <th class="icon"><!-- Info --></th>
+        <th class="icon"><!-- Delete --></th>
+        <th>Action</th>
+        <th>Protocol</th>
+        <th>Host</th>
+        <th>Port</th>
+        <th>Login</th>
+        <th>Source(s)</th>
+        <th>Destination</th>
+        <th>Status</th>
+    </tr>
+</thead>
+<tbody>
+''')
+            for single_transfer in datatransfers:
+                viewlink = html_link(single_transfer.get('viewtransferlink', ''))
+                dellink = single_transfer.get('deltransferlink', '')
+                dellink_html = ''
+                if dellink:
+                    dellink_html = html_link(dellink)
+                if single_transfer.get('password', ''):
+                    login = '%(username)s (password)' % single_transfer
+                elif single_transfer.get('key', ''):
+                    login = '%(username)s (key)' % single_transfer
+                else:
+                    login = 'anonymous'
+                lines.append('''
+<tr>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+</tr>''' % (single_transfer['transfer_id'], viewlink, dellink_html,
+            single_transfer['action'], single_transfer['protocol'],
+            single_transfer['fqdn'], single_transfer['port'], login,
+            ', '.join(single_transfer['src']), single_transfer['dst'],
+            single_transfer['status']))
+            lines.append('''
+</tbody>
+</table>''')
         elif i['object_type'] == 'certreqs':
             certreqs = i['certreqs']
             lines.append('''

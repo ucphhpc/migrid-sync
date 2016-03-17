@@ -87,6 +87,7 @@ settings_filename = 'settings'
 widgets_filename = 'widgets'
 profile_filename = 'userprofile'
 freeze_meta_filename = 'meta.pck'
+datatransfers_filename = 'transfers'
 seafile_ro_dirname = 'seafile_readonly'
 
 

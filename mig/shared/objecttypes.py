@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # objecttypes - output object types and validation
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -127,6 +127,13 @@ uploadfiles = {  # list entry must be called 'files' for jquery fileupload plugi
     'required_list': [('files', 'uploadfile')],
     'optional': [],
     }
+datatransfer = {
+    'object_type': 'datatransfer',
+    'required': ['transfer_id', 'action', 'protocol', 'fqdn', 'port',
+                 'username', 'src', 'dst', 'password', 'key', 'flags',
+                 'status'],
+    'optional': ['deltransferlink', 'viewtransferlink'],
+    }
 certreq = {'object_type': 'certreq', 'required': [
     'id',
     'full_name',
@@ -186,6 +193,9 @@ runtimeenvironments = {'object_type': 'runtimeenvironments',
                        'runtimeenvironment')]}
 frozenarchives = {'object_type': 'frozenarchives',
                   'required_list': [('frozenarchives', 'frozenarchive'
+                  )]}
+datatransfers = {'object_type': 'datatransfers',
+                  'required_list': [('datatransfers', 'datatransfer'
                   )]}
 certreqs = {'object_type': 'certreqs', 'required_list': [('certreqs',
             'certreq')]}
@@ -308,6 +318,8 @@ valid_types_list = [
     frozenarchives,
     uploadfile,
     uploadfiles,
+    datatransfer,
+    datatransfers,
     certreq,
     certreqs,
     file_not_found,
