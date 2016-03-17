@@ -46,9 +46,14 @@ from shared.validstring import valid_user_path
 
 
 get_actions = ['show']
+post_actions = ['import', 'export', 'delrequest']
 # TODO: add these internal targets on a separate tab without address and creds
-post_actions = ['import', 'export'] # + ['move', 'copy', 'unpack', 'pack']
+#post_actions += ['move', 'copy', 'unpack', 'pack', 'remove']
 valid_actions = get_actions + post_actions
+valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
+               ("ftps", "FTPS"), ("sftp", "SFTP"), ("scp", "SCP"),
+               ("ssh+rsync", "SSH + RSYNC"), ("rsync", "RSYNC")]
+
 
 def signature():
     """Signature of the main function"""
@@ -255,14 +260,13 @@ Transfer ID:<br />
 </td></tr>
 <tr><td>
 <select name=protocol>
-<option selected value="https">HTTPS</option>
-<option value="http" />HTTP</option>
-<option value="sftp" />SFTP</option>
-<option value="scp" />SCP</option>
-<option value="ssh+rsync" />SSH + RSYNC</option>
-<option value="rsync" />RSYNC</option>
-<option value="ftps" />FTPS</option>
-<option value="ftp" />FTP</option>
+'''
+        # select first in list
+        selected = 'selected'
+        for (key, val) in valid_proto:
+            html += '<option %s value="%s">%s</option>' % (selected, key, val)
+            selected = ''
+        html += '''
 </select>
 Host:
 <input type=text size=30 name=fqdn value="" />
@@ -321,40 +325,55 @@ Extra flags:<br />
                               : html})
         return (output_objects, returnvalues.OK)
     elif action in post_actions:
-        action = 'transfer'
+        transfer_dict = transfer_map.get(transfer_id, {})
+        if action == 'delrequest':
+            action_type = 'edit'
+            if transfer_dict is None:
+                output_objects.append(
+                    {'object_type': 'error_text',
+                     'text': 'existing transfer_id is required for delete'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+            del transfer_map[transfer_id]
+            desc = "delete"
+        else:
+            action_type = 'transfer'
+            if not [src for src in src_list if src] or not dst:
+                output_objects.append(
+                    {'object_type': 'error_text',
+                     'text': 'src and dst parameters required for all data'
+                     'transfer'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+            # Make pseudo-unique ID based on msec time since epoch if not given
+            if not transfer_id:
+                transfer_id = "transfer-%d" % (time.time() * 1000)
+            if transfer_dict:
+                output_objects.append({'object_type': 'text', 'text':
+                                       'Updating existing transfer %s' \
+                                       % transfer_id})
+            transfer_dict.update(
+                {'transfer_id': transfer_id, 'action': action,
+                 'protocol': protocol, 'fqdn': fqdn, 'port': port, 
+                 'flags': flags, 'username': username, 'password': password,
+                 'key':key, 'src': src_list, 'dst': dst, 'status': 'PARSE'})
+            transfer_map[transfer_id] = transfer_dict
+            desc = "create"
     else:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Invalid data transfer action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not [src for src in src_list if src] or not dst:
-        output_objects.append(
-            {'object_type': 'error_text',
-             'text': 'src and dst parameters required for all data transfer'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
-    if not transfer_id:
-        transfer_id = "transfer-%d" % time.time()
-    transfer_dict = transfer_map.get(transfer_id, {})
-    if transfer_dict:
-        output_objects.append({'object_type': 'error_text',
-                               'text': 'Request already exists!!'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-    transfer_dict = {'transfer_id': transfer_id, 'action': action,
-                     'protocol': protocol, 'fqdn': fqdn, 'port': port, 
-                     'flags': flags, 'username': username, 'password': password,
-                     'key':key, 'src': src_list, 'dst': dst, 'status': 'PARSE'}
-    transfer_map[transfer_id] = transfer_dict
     pickle_ret = pickle(transfer_map, transfer_requests, logger)
     if not pickle_ret:
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : 'Error saving data transfer request!'})
+             : 'Error in %s data transfer %s: '% (desc, transfer_id) + \
+             'save updated transfers failed!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : '''Accepted request %s to transfer data in the
-background. You can monitor the progress on this page.''' % transfer_id
+                          : '%sd transfer request %s.'  % (desc.title(),
+                                                           transfer_id) + \
+                           ' You can monitor the transfer progress here.'
                            })
     output_objects.append({'object_type': 'link',
                            'destination': 'datatransfer.py',
