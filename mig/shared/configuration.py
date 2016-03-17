@@ -149,6 +149,7 @@ def fix_missing(config_file, verbose=True):
         'user_openid_log': 'openid.log',
         'user_openid_providers': [],
         'user_events_log': 'events.log',
+        'user_transfers_log': 'transfers.log',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -313,6 +314,7 @@ class Configuration:
     user_openid_log = 'openid.log'
     user_openid_providers = []
     user_events_log = 'events.log'
+    user_transfers_log = 'transfers.log'
     user_imnotify_address = ''
     user_imnotify_port = 6667
     user_imnotify_channel = ''
@@ -787,6 +789,8 @@ class Configuration:
                                                    'user_openid_providers').split()
         if config.has_option('GLOBAL', 'user_events_log'):
             self.user_events_log = config.get('GLOBAL', 'user_events_log')
+        if config.has_option('GLOBAL', 'user_transfers_log'):
+            self.user_transfers_log = config.get('GLOBAL', 'user_transfers_log')
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
@@ -1269,7 +1273,7 @@ class Configuration:
 
         for log_var in ('user_sftp_log', 'user_davs_log', 'user_ftps_log',
                         'user_openid_log', 'user_events_log',
-                        'user_imnotify_log', ):
+                        'user_transfers_log', 'user_imnotify_log', ):
             log_path = getattr(self, log_var)
             if not os.path.isabs(log_path):
                 setattr(self, log_var, os.path.join(self.log_dir, log_path))

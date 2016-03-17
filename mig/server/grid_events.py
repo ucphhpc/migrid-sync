@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_events - event handler to monitor files and trigger actions
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,6 @@ import sys
 import tempfile
 import time
 import threading
-from shared.fileio import makedirs_rec, pickle
 
 try:
     from watchdog.observers import Observer
@@ -57,6 +56,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
     workflows_log_size, workflows_log_cnt
 from shared.events import get_expand_map, map_args_to_vars, get_command_map
+from shared.fileio import makedirs_rec, pickle
 from shared.job import fill_mrsl_template, new_job
 from shared.logger import daemon_logger
 from shared.serial import load

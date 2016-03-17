@@ -58,6 +58,7 @@ valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
                ("webdav", "WebDAV"), ("webdavs", "WebDAVS"),
                ("ssh+rsync", "SSH + RSYNC"), ("rsync", "RSYNC")]
 
+# TODO: consider adding a start time or cron-like field to transfers
 
 def signature():
     """Signature of the main function"""
