@@ -46,7 +46,7 @@ from shared.defaults import datatransfers_filename, transfers_log_name, \
      transfers_log_size, transfers_log_cnt
 from shared.logger import daemon_logger
 from shared.safeeval import subprocess_popen, subprocess_pipe
-from shared.useradm import client_dir_id
+from shared.useradm import client_dir_id, client_id_dir
 from shared.transferfunctions import load_data_transfers, modify_data_transfers
 
 # Global transfers dictionary with requests for all users
@@ -54,28 +54,53 @@ from shared.transferfunctions import load_data_transfers, modify_data_transfers
 all_transfers = {}
 (configuration, logger, last_update) = (None, None, 0)
 
-command_map = {'import':
+command_map = {'importstr':
                {'sftp': 'sftp -B 258048 -oUser=%(username)s -oPort=%(port)s %(fqdn)s:%(src)s %(dst)s/',
-                'ftp': 'lftp -e "set ftp:ssl-protect-data off" -p %(port)s %(fqdn)s -c get %(src)s %(dst)s/',
-                'ftps': 'lftp -e "set ftp:ssl-protect-data on" -p %(port)s %(fqdn)s -c get %(src)s %(dst)s/',
-                'http': 'lftp -p %(port)s %(fqdn)s -c get %(src)s %(dst)s/',
-                'https': 'lftp -p %(port)s %(fqdn)s -c get %(src)s %(dst)s/',
+                'ftp': "lftp -e 'set ftp:ssl-protect-data off' -c 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'",
+                'ftps': "lftp -e 'set ftp:ssl-protect-data on' -c 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'",
+                'http': "lftp -c 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'",
+                'https': "lftp -c 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'",
+                'webdav': "lftp -c 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'",
+                'webdavs': "lftp -c 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'",
                 'rsync+ssh': 'rsync -p %(port)s %(username)s@%(fqdn)s:%(src)s %(dst)s/',
                 },
-               'export':
+               'exportstr':
                {'sftp': 'sftp -B 258048 -oUser=%(username)s -oPort=%(port)s %(src)s %(fqdn)s:%(dst)s/',
-                'ftp': 'lftp -e "set ftp:ssl-protect-data off" -p %(port)s %(fqdn)s -c "put %(src)s %(dst)s/"',
-                'ftps': 'lftp -e "set ftp:ssl-protect-data on" -p %(port)s %(fqdn)s -c "put %(src)s %(dst)s/"',
-                'http': 'lftp -p %(port)s %(fqdn)s -c "put %(src)s %(dst)s/"',
-                'https': 'lftp -p %(port)s %(fqdn)s -c "put %(src)s %(dst)s/"',
+                'ftp': "lftp -e 'set ftp:ssl-protect-data off' -c 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'",
+                'ftps': "lftp -e 'set ftp:ssl-protect-data on' -c 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'",
+                'http': "lftp -c 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'",
+                'https': "lftp -c 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'",
+                'webdav': "lftp -c 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'",
+                'webdavs': "lftp -c 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'",
                 'rsync+ssh': 'rsync -p %(port)s %(username)s@%(fqdn)s:%(src)s %(dst)s/',
+                },
+               'import':
+               {'sftp': ['sftp', '-B', '258048', '-oUser=%(username)s', '-oPort=%(port)s', '%(fqdn)s:%(src)s', '%(dst)s/'],
+                'ftp': ['lftp', '-e', 'set ftp:ssl-protect-data off', '-c', 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'],
+                'ftps': ['lftp', '-e', 'set ftp:ssl-protect-data on', '-c', 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'],
+                'http': ['lftp', '-c', 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'],
+                'https': ['lftp', '-c', 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'],
+                'webdav': ['lftp', '-c', 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'],
+                'webdavs': ['lftp', '-c', 'get -O %(dst)s/ %(protocol)s://%(fqdn)s:%(port)s/%(src)s'],
+                'rsync+ssh': ['rsync', '-p', '%(port)s', '%(username)s@%(fqdn)s:%(src)s', '%(dst)s/'],
+                },
+               'export':
+                {'sftp': ['sftp', '-B', '258048', '-oUser=%(username)s', '-oPort=%(port)s', '%(src)s', '%(fqdn)s:%(dst)s/'],
+                'ftp': ['lftp', '-e', 'set ftp:ssl-protect-data off', '-c', 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'],
+                'ftps': ['lftp', '-e', 'set ftp:ssl-protect-data on', '-c', 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'],
+                'http': ['lftp', '-c', 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'],
+                'https': ['lftp', '-c', 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'],
+                'webdav': ['lftp', '-c', 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'],
+                'webdavs': ['lftp', '-c', 'put %(src)s %(protocol)s://%(fqdn)s:%(port)s/%(dst)s/'],
+                'rsync+ssh': ['rsync', '-p', '%(port)s', '%(username)s@%(fqdn)s:%(src)s', '%(dst)s/'],
                 }
                }
 
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""
-    log_path = os.path.join(configuration.user_home, client_id,
+    log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
                             "transfer_output", transfers_log_name)
+    makedirs_rec(os.path.dirname(log_path), configuration)
     transfers_logger = logging.getLogger('transfers')
     transfers_logger.setLevel(logging.INFO)
     handler = logging.handlers.RotatingFileHandler(log_path,
@@ -112,26 +137,68 @@ def run_transfer(transfer_dict, client_id, configuration):
     """Run data transfer built from transfer_dict on behalf of client_id"""
 
     logger.info('run command for %s: %s' % (client_id, transfer_dict))
-    protocol = transfer_dict['protocol']
     action = transfer_dict['action']
+    protocol = transfer_dict['protocol']
     if not protocol in command_map[action]:
         raise ValueError('unsupported protocol: %s' % protocol)
     command_pattern = command_map[action][protocol]
-    command_str = command_pattern % transfer_dict
-    logger.debug('run %s on behalf of %s' % (command_str, client_id))
-    # TODO: switch to list form and avoid split to support space in names
-    transfer_proc = subprocess_popen(command_str.split(' '),
-                                  stdout=subprocess_pipe,
-                                  stderr=subprocess_pipe)
-    exit_code = transfer_proc.wait()
-    out, err = transfer_proc.communicate()
-    logger.info('done running transfer %s: %s' % (transfer_dict['transfer_id'],
+    status_path = os.path.join(configuration.user_home,
+                               client_id_dir(client_id),
+                               "transfer_output")
+    makedirs_rec(status_path, configuration)
+    if transfer_dict['action'] in ('import', ):
+        logger.info('setting abs dst for action %(action)s' % transfer_dict)
+        src_path_list = transfer_dict['src']
+        dst_path = os.path.join(configuration.user_home,
+                                client_id_dir(client_id),
+                                (transfer_dict['dst']).lstrip(os.sep))
+        makedirs_rec(dst_path, configuration)
+    elif transfer_dict['action'] in ('export', ):
+        logger.info('setting abs src for action %(action)s' % transfer_dict)
+        src_path_list = []
+        for src in transfer_dict['src']:
+            src_path_list.append(os.path.join(configuration.user_home,
+                                              client_id_dir(client_id),
+                                              src.lstrip(os.sep)))
+        dst_path = transfer_dict['dst']
+    else:
+        raise ValueError('unsupported action: %(action)s' % transfer_dict)
+    run_dict = transfer_dict.copy()
+    run_dict['dst'] = dst_path
+    for src in src_path_list:
+        run_dict['src'] = src
+        command_list = [i % run_dict for i in command_pattern]
+        command_str = ' '.join(command_list)
+        logger.debug('run %s on behalf of %s' % (command_str, client_id))
+        # TODO: switch to list form and avoid split to support space in names
+        transfer_proc = subprocess_popen(command_list,
+                                         stdout=subprocess_pipe,
+                                         stderr=subprocess_pipe)
+        exit_code = transfer_proc.wait()
+        out, err = transfer_proc.communicate()
+        logger.info('done running transfer %s: %s' % (run_dict['transfer_id'],
                                                   command_str))
-    logger.debug('raw output is: %s' % out)
-    logger.debug('raw error is: %s' % err)
-    logger.debug('result was %s' % exit_code)
-    # TODO: notify main somehow that transfer is done
+        logger.info('raw output is: %s' % out)
+        logger.info('raw error is: %s' % err)
+        logger.info('result was %s' % exit_code)
+        # TODO: notify main somehow that transfer is done
+    logger.debug('done handling transfers in %(transfer_id)s' % transfer_dict)
 
+
+def foreground_transfer(transfer_dict, client_id, configuration):
+    """Run a transfer in the foreground so that it can block without
+    stopping further transfer handling.
+    We add a time stamp to have a sort of precise time for when the transfer
+    was started.
+    """
+
+    worker = threading.Thread(target=run_transfer, args=(transfer_dict,
+                                                        client_id,
+                                                        configuration))
+    worker.start()
+    transfer_dict['__workers__'] = transfer_dict.get('__workers__', [])
+    transfer_dict['__workers__'].append(worker)
+    worker.join()
 
 def background_transfer(transfer_dict, client_id, configuration):
     """Run a transfer in the background so that it can block without
@@ -160,7 +227,9 @@ def handle_transfer(configuration, client_id, transfer_dict):
                                     transfer_dict['action']))
 
     try:
-        background_transfer(transfer_dict, client_id, configuration)
+        # TMP! 
+        foreground_transfer(transfer_dict, client_id, configuration)
+        #background_transfer(transfer_dict, client_id, configuration)
         transfer_info(configuration, client_id,
                       'ran %s %s from %s' % (transfer_dict['protocol'],
                                              transfer_dict['action'],
@@ -196,8 +265,9 @@ def manage_transfers(configuration):
             logger.debug('skip transfer update for unchanged path: %s' % \
                           transfers_path)
         logger.debug('handling update of transfers file: %s' % transfers_path)
-        abs_client_dir = os.path.dirname(os.path.dirname(transfers_path))
+        abs_client_dir = os.path.dirname(transfers_path)
         client_dir = os.path.basename(abs_client_dir)
+        logger.debug('extracted client dir: %s' % client_dir)
         client_id = client_dir_id(client_dir)
         logger.debug('loading transfers for: %s' % client_id)
         (load_status, transfers) = load_data_transfers(configuration,
@@ -236,7 +306,7 @@ unless it is available in mig/server/MiGserver.conf
     # Use separate logger
 
     logger = daemon_logger('transfers', configuration.user_transfers_log,
-                           configuration.loglevel)
+                           "debug")
     configuration.logger = logger
 
     keep_running = True
