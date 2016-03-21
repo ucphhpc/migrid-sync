@@ -71,6 +71,7 @@ if '__main__' == __name__:
         'wsgi_procs',
         'enable_sandboxes',
         'enable_vmachines',
+        'enable_transfers',        
         'enable_freeze',
         'enable_hsts',
         'enable_vhost_certs',

@@ -24,6 +24,7 @@
 # processname: grid_monitor.py
 # processname: grid_sshmux.py
 # processname: grid_events.py
+# processname: grid_transfers.py
 # processname: grid_openid.py
 # processname: grid_sftp.py
 # processname: grid_webdavs.py
@@ -64,6 +65,7 @@ MIG_SCRIPT=${MIG_CODE}/server/grid_script.py
 MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
 MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
 MIG_EVENTS=${MIG_CODE}/server/grid_events.py
+MIG_TRANSFERS=${MIG_CODE}/server/grid_transfers.py
 MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
 MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
@@ -75,7 +77,7 @@ MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart} [daemon]"
     echo "where daemon is left empty for all or given as one of the following"
-    echo "(script|monitor|sshmux|events|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|transfers|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)"
 }
 
 start_script() {
@@ -133,6 +135,19 @@ start_events() {
     [ $RET2 ] && success
     echo
     [ $RET2 ] || echo "Warning: events not started."
+    echo
+}
+start_transfers() {
+    DAEMON_PATH=${MIG_TRANSFERS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG transfers daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/transfers.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: transfers not started."
     echo
 }
 start_openid() {
@@ -232,6 +247,7 @@ start_all() {
     start_monitor
     start_sshmux
     start_events
+    start_transfers
     start_openid
     start_sftp
     # Use wsgidav implementation instead of outdated PyWebDav one
@@ -271,6 +287,14 @@ stop_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Shutting down MiG events: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_transfers() {
+    DAEMON_PATH=${MIG_TRANSFERS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG transfers: $SHORT_NAME "
     killproc ${DAEMON_PATH}
     echo
 }
@@ -337,6 +361,7 @@ stop_all() {
     stop_monitor
     stop_sshmux
     stop_events
+    stop_transfers
     stop_openid
     stop_sftp
     # Use wsgidav implementation instead of outdated PyWebDav one
@@ -367,6 +392,12 @@ status_sshmux() {
 }
 status_events() {
     DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_transfers() {
+    DAEMON_PATH=${MIG_TRANSFERS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH}
@@ -419,6 +450,7 @@ status_all() {
     status_monitor
     status_sshmux
     status_events
+    status_transfers
     status_openid
     status_sftp
     # Use wsgidav implementation instead of outdated PyWebDav one
@@ -437,7 +469,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|transfers|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')

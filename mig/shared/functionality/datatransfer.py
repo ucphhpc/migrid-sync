@@ -38,8 +38,9 @@ from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.transferfunctions import build_transferitem_object, \
      load_data_transfers, create_data_transfer, delete_data_transfer
-from shared.defaults import all_jobs, job_output_dir, default_pager_entries
-from shared.fileio import unpickle, pickle
+from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
+     transfers_log_name
+from shared.fileio import unpickle, pickle, read_tail
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.html import html_post_helper, themed_styles
@@ -56,7 +57,7 @@ valid_actions = get_actions + post_actions
 valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
                ("ftps", "FTPS"), ("sftp", "SFTP"), ("scp", "SCP"),
                ("webdav", "WebDAV"), ("webdavs", "WebDAVS"),
-               ("ssh+rsync", "SSH + RSYNC"), ("rsync", "RSYNC")]
+               ("rsyncssh", "RSYNC over SSH"), ("rsyncd", "RSYNC daemon")]
 
 # TODO: consider adding a start time or cron-like field to transfers
 
@@ -179,6 +180,16 @@ def main(client_id, user_arguments_dict):
 ''' % default_pager_entries
     output_objects.append({'object_type': 'header', 'text'
                            : 'Manage background data transfers'})
+
+    if not configuration.site_enable_transfers:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Backgroung data transfers are disabled on
+this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
+
+
     output_objects.append({'object_type': 'html_form',
                            'text':'''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
@@ -216,13 +227,13 @@ def main(client_id, user_arguments_dict):
             transfer_item = build_transferitem_object(configuration,
                                                       transfer_dict)
             saved_id = transfer_item['transfer_id']
-            transfer_item['status'] = transfer_item.get('status', 'PARSE')            
+            transfer_item['status'] = transfer_item.get('status', 'NEW')            
             transfer_item['viewtransferlink'] = {
                 'object_type': 'link',
-                #'destination': "showtransfer.py?transfer_id=%s" % saved_id,
-                'destination': '',
+                'destination': "fileman.py?path=transfer_output/%s/" % \
+                saved_id,
                 'class': 'infolink', 
-                'title': 'View data transfer %s' % saved_id,
+                'title': 'View data transfer %s status files' % saved_id,
                 'text': ''}
             js_name = 'delete%s' % hexlify(saved_id)
             helper = html_post_helper(js_name, 'datatransfer.py',
@@ -238,6 +249,17 @@ def main(client_id, user_arguments_dict):
             datatransfers.append(transfer_item)
         output_objects.append({'object_type': 'datatransfers', 'datatransfers'
                               : datatransfers})
+
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Latest Transfer Results'})
+        log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
+                                "transfer_output", transfers_log_name)
+        show_lines = 10
+        log_lines = read_tail(log_path, show_lines, logger)
+        # Make room for last newline to avoid scroll bar
+        output_objects.append({'object_type': 'html_form', 'text': '''
+<textarea rows=%s cols=200  readonly="readonly">%s</textarea>''' % \
+                               (show_lines + 1, ''.join(log_lines))})
 
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Create Transfer'})
@@ -276,7 +298,7 @@ Transfer ID:<br />
 Host:
 <input type=text size=30 name=fqdn value="" />
 Port:
-<input type=text size=6 name=port value="" />
+<input type=text size=4 name=port value="" />
 </td></tr>
 <tr><td>
 <input id="anonymous_choice" type=radio onclick="enableLogin(\'anonymous\');" />
@@ -353,6 +375,11 @@ Extra flags:<br />
                      'text': 'src and dst parameters required for all data'
                      'transfer'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
+            if protocol == "rsyncssh" and not key:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'RSYNC over SSH is only supported with key!'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
             # Make pseudo-unique ID based on msec time since epoch if not given
             if not transfer_id:
                 transfer_id = "transfer-%d" % (time.time() * 1000)
@@ -365,7 +392,7 @@ Extra flags:<br />
                 {'transfer_id': transfer_id, 'action': action,
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
                  'flags': flags, 'username': username, 'password': password,
-                 'key':key, 'src': src_list, 'dst': dst, 'status': 'PARSE'})
+                 'key':key, 'src': src_list, 'dst': dst, 'status': 'NEW'})
             (save_status, _) = create_data_transfer(transfer_dict, client_id,
                                                     configuration,
                                                     transfer_map)

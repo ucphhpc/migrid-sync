@@ -1132,6 +1132,11 @@ class Configuration:
             self.site_enable_preview = config.getboolean('SITE', 'enable_preview')
         else:
             self.site_enable_preview = False
+        if config.has_option('SITE', 'enable_transfers'):
+            self.site_enable_transfers = config.getboolean('SITE',
+                                                           'enable_transfers')
+        else:
+            self.site_enable_transfers = False
         # Fall back to a static 'random' salt string since we need it to
         # remain constant
         static_rand = 'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'

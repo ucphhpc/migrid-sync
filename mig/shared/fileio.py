@@ -105,6 +105,29 @@ def write_file(content, path, logger, mode='w'):
         logger.error('could not write %s %s' % (path, err))
         return False
 
+def read_tail(path, lines, logger):
+    """Read last lines from path"""
+    out_lines = []
+    try:
+        logger.debug("loading %d lines from %s" % (lines, path))
+        tail_fd = open(path, 'r')
+        tail_fd.seek(0, os.SEEK_END)
+        size = tail_fd.tell()
+        pos = tail_fd.tell()
+        step_size = 100
+        # locate last X lines 
+        while pos > 0 and len(out_lines) < lines:
+            offset = min(lines * step_size, size)
+            logger.debug("seek to offset %d from end of %s" % (offset, path))
+            tail_fd.seek(-offset, os.SEEK_END)
+            pos = tail_fd.tell()
+            out_lines = tail_fd.readlines()
+            step_size *= 2
+            logger.debug("reading %d lines from %s" % (lines, path))
+        tail_fd.close()
+    except Exception, exc:
+        logger.error("reading %d lines from %s: %s" % (lines, path, exc))
+    return out_lines[-lines:]
 
 def get_file_size(path, logger):
     """Wrapper to handle getsize of path"""

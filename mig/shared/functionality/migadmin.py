@@ -33,7 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.certreq import build_certreqitem_object, list_cert_reqs, \
      get_cert_req, delete_cert_req, accept_cert_req
 from shared.defaults import default_pager_entries
-from shared.fileio import send_message_to_grid_script
+from shared.fileio import send_message_to_grid_script, read_tail
 from shared.findtype import is_admin
 from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper, themed_styles
@@ -243,7 +243,8 @@ provide access to e.g. managing the grid job queues.
     daemons = """
 <div id='daemonstatus'>
 """
-    daemon_names = ['grid_script.py', 'grid_monitor.py', 'grid_sshmux.py']
+    daemon_names = ['grid_script.py', 'grid_monitor.py', 'grid_sshmux.py',
+                    'grid_events.py']
     # No need to run im_notify unless any im notify protocols are enabled
     if [i for i in configuration.notify_protocols if i != 'email']:
         daemon_names.append('grid_imnotify.py')
@@ -255,6 +256,8 @@ provide access to e.g. managing the grid job queues.
         daemon_names.append('grid_ftps.py')
     if configuration.site_enable_openid:
         daemon_names.append('grid_openid.py')
+    if configuration.site_enable_transfers:
+        daemon_names.append('grid_transfers.py')
     for proc in daemon_names:
         # NOTE: we use command list here to avoid shell requirement
         pgrep_proc = subprocess_popen(['pgrep', '-f', proc],
@@ -333,32 +336,8 @@ provide access to e.g. managing the grid job queues.
 <h1>%s</h1>
 <textarea rows=%s cols=200 readonly="readonly">
 ''' % (log_path, lines)
-        try:
-            logger.debug("loading %d lines from %s" % (lines, log_path))
-            log_fd = open(log_path, 'r')
-            log_fd.seek(0, os.SEEK_END)
-            size = log_fd.tell()
-            pos = log_fd.tell()
-            log_lines = []
-            step_size = 100
-            # locate last X lines 
-            while pos > 0 and len(log_lines) < lines:
-                offset = min(lines * step_size, size)
-                logger.debug("seek to offset %d from end of %s" % (offset,
-                                                                  log_path))
-                log_fd.seek(-offset, os.SEEK_END)
-                pos = log_fd.tell()
-                log_lines = log_fd.readlines()
-                step_size *= 2
-            logger.debug("reading %d lines from %s" % (lines, log_path))
-            html += ''.join(log_lines[-lines:])
-            log_fd.close()
-        except Exception, exc:
-            logger.error("reading %d lines from %s: %s" % (lines, log_path,
-                                                           exc))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Error reading log (%s)' % exc})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
+        log_lines = read_tail(log_path, lines, logger)
+        html += ''.join(log_lines[-lines:])
         html += '''</textarea>
 '''
 

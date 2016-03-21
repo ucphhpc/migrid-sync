@@ -55,16 +55,18 @@ def build_transferitem_object(configuration, transfer_dict):
 def load_data_transfers(configuration, client_id):
     """Find all data transfers owned by user"""
     logger = configuration.logger
+    logger.info("load transfers for %s" % client_id)
     try:
         transfers_path = os.path.join(configuration.user_settings,
                                       client_id_dir(client_id),
                                       datatransfers_filename)
+        logger.info("load transfers from %s" % transfers_path)
         if os.path.isfile(transfers_path):
             transfers = load(transfers_path)
         else:
             transfers = {}
-    except Exception:
-        return (False, "could not load saved data transfers")
+    except Exception, exc:
+        return (False, "could not load saved data transfers: %s" % exc)
     return (True, transfers)
 
 def get_data_transfer(transfer_id, client_id, configuration, transfers=None):
@@ -97,6 +99,8 @@ def modify_data_transfers(action, transfer_dict, client_id, configuration,
         (load_status, transfers) = load_data_transfers(configuration,
                                                        client_id)
         if not load_status:
+            logger.error("modify_data_transfers failed in load: %s" % \
+                         transfers)
             return (load_status, transfers)
 
     if action == "create":
@@ -105,6 +109,8 @@ def modify_data_transfers(action, transfer_dict, client_id, configuration,
             'owner': client_id,
             })
         transfers[transfer_id] = transfer_dict
+    elif action == "modify":
+        transfers[transfer_id].update(transfer_dict)
     elif action == "delete":
         del transfers[transfer_id]
     else:
