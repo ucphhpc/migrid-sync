@@ -44,7 +44,7 @@ import threading
 from shared.fileio import makedirs_rec, pickle
 from shared.conf import get_configuration_object
 from shared.defaults import datatransfers_filename, transfers_log_name, \
-     transfers_log_size, transfers_log_cnt
+     transfers_log_size, transfers_log_cnt, _user_invisible_paths
 from shared.logger import daemon_logger
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.useradm import client_dir_id, client_id_dir
@@ -145,10 +145,11 @@ def run_transfer(transfer_dict, client_id, configuration):
     _ssh_key_option = "-i %(key)s"
     _sftp_key_str = "set sftp:connect-program ssh -a -x %(keyopt)s"
     # IMPORTANT: follow symlinks and don't preserve device files
-    _rsync_flags = '-rLptgo'
+    _rsync_flags = '-rLptgov'
     # All the port and login settings must be passed to ssh command
     _rsyncssh_transport_str = "ssh -p %(port)s -l %(username)s %(keyopt)s"
     _login_port_str = "open -u %(username)s,%(password)s -p %(port)s "
+    _exclude_list = ["--exclude=%s" % i for i in _user_invisible_paths]
     _base_dst_str = '-O %(dst)s/ %(src)s'
     _get_dst_str = 'get '+_base_dst_str
     _put_dst_str = 'mkdir -p %(dst)s;put '+_base_dst_str
@@ -185,7 +186,8 @@ def run_transfer(transfer_dict, client_id, configuration):
                            ';'.join([_base_buf_str, _login_port_str + \
                                      'https://%(fqdn)s', _get_dst_str])],
                 'rsyncssh': ['rsync', '-e', _rsyncssh_transport_str,
-                             _rsync_flags, '%(fqdn)s:%(src)s', '%(dst)s/'],
+                             _rsync_flags] + _exclude_list + \
+                ['%(fqdn)s:%(src)s', '%(dst)s/'],
                 },
                'export':
                {'sftp': ['lftp', '-c',
@@ -214,7 +216,8 @@ def run_transfer(transfer_dict, client_id, configuration):
                            ';'.join([_base_buf_str, _login_port_str + \
                                      'https://%(fqdn)s', _put_dst_str])],
                 'rsyncssh': ['rsync', '-e', _rsyncssh_transport_str,
-                             _rsync_flags, '%(fqdn)s:%(src)s', '%(dst)s/'],
+                             _rsync_flags] + _exclude_list + \
+                ['%(fqdn)s:%(src)s', '%(dst)s/'],
                 }
                }
 
