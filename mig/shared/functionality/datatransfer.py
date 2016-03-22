@@ -55,7 +55,9 @@ post_actions = ['import', 'export', 'deltransfer']
 #post_actions += ['move', 'copy', 'unpack', 'pack', 'remove']
 valid_actions = get_actions + post_actions
 valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
-               ("ftps", "FTPS"), ("sftp", "SFTP"), ("scp", "SCP"),
+               ("ftps", "FTPS"), ("sftp", "SFTP"),
+               # TODO: implement scp in backend and enable here?
+               #  ("scp", "SCP"),
                ("webdav", "WebDAV"), ("webdavs", "WebDAVS"),
                ("rsyncssh", "RSYNC over SSH"), ("rsyncd", "RSYNC daemon")]
 
@@ -124,6 +126,19 @@ def main(client_id, user_arguments_dict):
         } else {
             alert("Maximum " + max_fields + " source fields allowed!");
         }
+    }
+    function setDefaultPort() {
+        port_map = {"http": 80, "https": 443, "sftp": 22, "scp": 22, "ftp": 21,
+                    "ftps": 21, "webdav": 80, "webdavs": 443, "rsyncssh": 22,
+                    "rsyncd": 873};
+        var protocol = $("#protocol_select").val();
+        var port = port_map[protocol]; 
+        if (port != undefined) {
+            $("#port_input").val(port);
+        } else {
+            alert("no default port provided for "+protocol);
+        }
+        return false;
     }
     function enableLogin(method) {
         $("#anonymous_choice").removeAttr("checked");
@@ -286,7 +301,7 @@ Transfer ID:<br />
 <input type=text size=60 name=transfer_id value="" />
 </td></tr>
 <tr><td>
-<select name=protocol>
+<select id="protocol_select" name="protocol" onblur="setDefaultPort();">
 '''
         # select first in list
         selected = 'selected'
@@ -298,7 +313,7 @@ Transfer ID:<br />
 Host:
 <input type=text size=30 name=fqdn value="" />
 Port:
-<input type=text size=4 name=port value="" />
+<input id="port_input" type=text size=4 name=port value="" />
 </td></tr>
 <tr><td>
 <input id="anonymous_choice" type=radio onclick="enableLogin(\'anonymous\');" />
@@ -334,11 +349,10 @@ Destination path:<br />
 <input type=text size=60 name=dst value="" />
 </td></tr>
 <tr><td>
-Extra flags:<br />
-<input type=text size=60 name=flags value="" />
-</td></tr>
-<tr><td>
+<span>
 <input type=submit value="Request transfer" />
+<input type=reset value="Clear" />
+</span>
 </td></tr>
 </table>
 </form>
@@ -391,8 +405,8 @@ Extra flags:<br />
             transfer_dict.update(
                 {'transfer_id': transfer_id, 'action': action,
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
-                 'flags': flags, 'username': username, 'password': password,
-                 'key':key, 'src': src_list, 'dst': dst, 'status': 'NEW'})
+                 'username': username, 'password': password, 'key':key,
+                 'src': src_list, 'dst': dst, 'status': 'NEW'})
             (save_status, _) = create_data_transfer(transfer_dict, client_id,
                                                     configuration,
                                                     transfer_map)

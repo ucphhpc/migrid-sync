@@ -988,6 +988,10 @@ if (jQuery) (function($){
                 jsonWrapper(el, '#cmd_dialog', 'unpack.py', {dst: dst, src: $(el).attr(pathAttribute), path: ''});
                 console.debug("done in unpack");
             },
+            transfers:   function (action, el, pos) {
+                //var path_enc = encodeURI($(el).attr(pathAttribute));
+                window.open('datatransfer.py');
+            },
             submit: function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'submit.py');
             },
@@ -1597,6 +1601,7 @@ if (jQuery) (function($){
                     "create": {name: "Create File", icon: "create"},
                     "upload": {name: "Upload File", icon: "upload"},
                     "pack": {name: "Pack", icon: "pack"},
+                    "transfers": {name: "Import/Export", icon: "transfers"},
                     "sep1": "---------",
                     //"cut": {name: "Cut", icon: "cut"},
                     "copy": {name: "Copy", icon: "copy"},

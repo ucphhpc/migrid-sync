@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jquery.contextmenu- style overrides for file manager contextmenu plugin
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -216,6 +216,7 @@ Original license header follows...
 .context-menu-list LI.icon-rm { background-image: url(/images/icons/page_white_delete.png); }
 .context-menu-list LI.icon-pack { background-image: url(/images/icons/compress.png); }
 .context-menu-list LI.icon-unpack { background-image: url(/images/icons/zip.png); }
+.context-menu-list LI.icon-transfers { background-image: url(/images/icons/table_refresh.png); }
 .context-menu-list LI.icon-rename { background-image: url(/images/icons/drive_rename.png); }
 .context-menu-list LI.icon-quit { background-image: url(/images/icons/door.png); }
 .context-menu-list LI.icon-mrsl { background-image: url(/images/icons/page_white_text.png); }

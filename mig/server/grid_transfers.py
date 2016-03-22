@@ -283,6 +283,12 @@ def run_transfer(transfer_dict, client_id, configuration):
     run_dict['dst'] = dst_path
     run_dict['dst'] = dst_path
     run_dict['lftpbufsize'] = run_dict.get('lftpbufsize', _lftp_buffer_bytes)
+    transfer_dict['status'] = "ACTIVE"
+    (save_status, save_msg) = modify_data_transfers('modify', transfer_dict,
+                                                    client_id, configuration)
+    if not save_status:
+        logger.error("failed to save updated status for %s: %s" % \
+                     (transfer_id, save_msg))
     status = 0
     for (src, rel_src) in zip(src_path_list, orig_src_list):
         run_dict['rel_src'] = rel_src
@@ -415,16 +421,18 @@ def manage_transfers(configuration):
     logger.debug('all transfers:\n%s' % all_transfers)
     for (client_id, transfers) in all_transfers.items():
         for (transfer_id, transfer_dict) in transfers.items():
-            if transfer_dict['status'] in ("DONE", "FAILED"):
+            if transfer_dict['status'] in ("DONE", "FAILED", "PAUSED"):
+                logger.debug('skip %(status)s transfer %(transfer_id)s' % \
+                             transfer_dict)
                 continue
-            if not transfer_id in old_transfers.get(client_id, {}).keys():
-                handle_transfer(configuration, client_id, transfer_dict)
+            logger.debug('handle %(status)s transfer %(transfer_id)s' % \
+                         transfer_dict)
+            handle_transfer(configuration, client_id, transfer_dict)
 
     for (client_id, transfers) in old_transfers.items():
         for (transfer_id, transfer_dict) in transfers.items():
-            if transfer_dict['status'] in ("DONE", "FAILED"):
-                continue
-            if not transfer_id in all_transfers.get(client_id, {}).keys():
+            if transfer_dict['status'] in ("ACTIVE", "PAUSE", ) and \
+                   not transfer_id in all_transfers.get(client_id, {}).keys():
                 clean_transfer(configuration, client_id, transfer_dict)
 
     
@@ -455,12 +463,11 @@ unless it is available in mig/server/MiGserver.conf
 
     while keep_running:
         try:
-
             manage_transfers(configuration)
 
             # Throttle down
 
-            time.sleep(10)
+            time.sleep(30)
         except KeyboardInterrupt:
             keep_running = False
         except Exception, exc:
