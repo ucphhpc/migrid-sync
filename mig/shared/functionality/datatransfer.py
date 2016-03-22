@@ -37,7 +37,8 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.transferfunctions import build_transferitem_object, \
-     load_data_transfers, create_data_transfer, delete_data_transfer
+     load_data_transfers, create_data_transfer, delete_data_transfer, \
+     load_user_keys, generate_user_key
 from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
      transfers_log_name
 from shared.fileio import unpickle, pickle, read_tail
@@ -50,9 +51,12 @@ from shared.validstring import valid_user_path
 
 
 get_actions = ['show']
-post_actions = ['import', 'export', 'deltransfer']
+transfer_actions = ['import', 'export', 'deltransfer']
+key_actions = ['generatekey']
 # TODO: add these internal targets on a separate tab without address and creds
-#post_actions += ['move', 'copy', 'unpack', 'pack', 'remove']
+#internal_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
+internal_actions = []
+post_actions = transfer_actions + key_actions + internal_actions
 valid_actions = get_actions + post_actions
 valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
                ("ftps", "FTPS"), ("sftp", "SFTP"),
@@ -68,7 +72,7 @@ def signature():
 
     defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
                 'fqdn':[''], 'port': [''], 'transfer_src':[''], 'transfer_dst': [''],
-                'username': [''], 'password': [''], 'key': [''], 'flags': ['']}
+                'username': [''], 'password': [''], 'key_id': [''], 'flags': ['']}
     return ['text', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -98,7 +102,7 @@ def main(client_id, user_arguments_dict):
     dst = accepted['transfer_dst'][-1]
     username = accepted['username'][-1]
     password = accepted['password'][-1]
-    key = accepted['key'][-1]
+    key = accepted['key_id'][-1]
     flags = accepted['flags']
     
     title_entry = find_entry(output_objects, 'title')
@@ -276,6 +280,12 @@ Please contact the Grid admins %s if you think they should be enabled.
 <textarea rows=%s cols=200  readonly="readonly">%s</textarea>''' % \
                                (show_lines + 1, ''.join(log_lines))})
 
+        available_keys = load_user_keys(configuration, client_id)
+        if available_keys:
+            key_note = ''
+        else:
+            key_note = 'No keys available - you need to generate/import below'
+        
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Create Transfer'})
         html = '''
@@ -333,7 +343,17 @@ Password:<br />
 </span>
 <span id="key_entry">
 Key:<br />
-<input id="key" type=text size=60 name=key value="" />
+<select id="key" name=key_id />
+'''
+        # select first in list
+        selected = 'selected'
+        for (name, pubkey) in available_keys:
+            html += '<option %s value="%s">%s</option>' % (selected, name, name)
+            selected = ''
+        html += '''
+</select> %s
+''' % key_note
+        html += '''
 </span>
 </td></tr>
 <tr><td>
@@ -362,8 +382,41 @@ Destination path:<br />
 '''
         output_objects.append({'object_type': 'html_form', 'text'
                               : html})
+
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Manage Data Transfer Keys'})
+        html = '''
+<table class="managetransferkeys">
+<tr><td>
+You can manage your data transfer keys here.
+</td></tr>
+<tr><td>
+'''
+        for (name, pubkey) in available_keys:
+            html += '''
+Public key for %s:<br/>
+<textarea rows=2 cols=200 readonly="readonly">%s</textarea>
+<br/>''' % (name, pubkey)     
+
+        html += '''
+Please copy the public key to your ~/.ssh/authorized_keys file on systems where
+you want to login with the corresponding key.
+</td></tr>
+<tr><td>
+Select a name below to create a new key for use in future transfers.
+<form method="post" action="datatransfer.py">
+<input type=hidden name=action value="generatekey" />
+Key name:<br/>
+<input type=text size=60 name=key_id value="" />
+<br/>
+<input type=submit value="Generate key" />
+</td></tr>
+</table>
+'''
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : html})
         return (output_objects, returnvalues.OK)
-    elif action in post_actions:
+    elif action in transfer_actions:
         transfer_dict = transfer_map.get(transfer_id, {})
         if action == 'deltransfer':
             action_type = 'edit'
@@ -410,23 +463,40 @@ Destination path:<br />
             (save_status, _) = create_data_transfer(transfer_dict, client_id,
                                                     configuration,
                                                     transfer_map)
+        if not save_status:
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Error in %s data transfer %s: '% (desc, transfer_id) + \
+                 'save updated transfers failed!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        output_objects.append({'object_type': 'text', 'text'
+                               : '%sd transfer request %s.' % (desc.title(),
+                                                           transfer_id)
+                               })
+    elif action in key_actions:
+        (gen_status, pub) = generate_user_key(configuration, client_id, key)
+        if gen_status:
+            output_objects.append({'object_type': 'html_form', 'text': '''
+Generated new key with name %s and associated public key:<br/>
+<textarea rows=2 cols=200 readonly="readonly">%s</textarea>
+<p>
+Please copy it to your ~/.ssh/authorized_keys file on systems where you want to
+login with this key.
+</p>
+''' % (key, pub)})
+        else:
+            output_objects.append({'object_type': 'error_text', 'text': '''
+Key generation for name %s failed with error: %s''' % (key, pub)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
     else:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Invalid data transfer action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not save_status:
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Error in %s data transfer %s: '% (desc, transfer_id) + \
-             'save updated transfers failed!'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
-    output_objects.append({'object_type': 'text', 'text'
-                          : '%sd transfer request %s.'  % (desc.title(),
-                                                           transfer_id)
-                           })
+                
     output_objects.append({'object_type': 'link',
                            'destination': 'datatransfer.py',
                            'text': 'View data transfers'})
     return (output_objects, returnvalues.OK)
+

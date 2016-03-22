@@ -31,7 +31,8 @@ import datetime
 import os
 import time
 
-from shared.defaults import datatransfers_filename
+from shared.defaults import datatransfers_filename, user_keys_dir
+from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.serial import load, dump
 from shared.useradm import client_id_dir
 
@@ -145,3 +146,63 @@ def delete_data_transfer(transfer_id, client_id, configuration,
     transfer_dict = {'transfer_id': transfer_id}
     return modify_data_transfers("delete", transfer_dict, client_id,
                                  configuration, transfers)
+
+def load_user_keys(configuration, client_id):
+    """Load a list of generated/imported keys from settings dir"""
+    logger = configuration.logger
+    user_keys = []
+    keys_dir = os.path.join(configuration.user_settings,
+                            client_id_dir(client_id), user_keys_dir)
+    try:
+        hits = os.listdir(keys_dir)
+    except Exception, exc:
+        logger.error("could not find user keys in %s: %s" % (keys_dir, exc))
+        return user_keys
+    for key_filename in hits:
+        if not key_filename.startswith('id_') or \
+               key_filename.endswith('.pub'):
+            continue
+        pubkey_path = os.path.join(keys_dir, key_filename + '.pub')
+        pubkey = ''
+        try:
+            pub_fd = open(pubkey_path)
+            pubkey = pub_fd.read()
+            pub_fd.close()
+        except Exception, exc:
+            logger.warranty("load user key did not find a pub key for %s: %s" \
+                            % (key_filename, exc))
+            continue
+        user_keys.append((key_filename, pubkey))
+    return user_keys
+
+def generate_user_key(configuration, client_id, key_filename, truncate=False):
+    """Generate a new key and save it as key_filename in settings dir"""
+    logger = configuration.logger
+    key_path = os.path.join(configuration.user_settings,
+                            client_id_dir(client_id),
+                            user_keys_dir, key_filename)
+    if os.path.exists(key_path) and not truncate:
+        logger.error("user key %s already exists!" % key_path)
+        return (False, 'user key %s already exists!' % key_filename)
+    logger.info("generating user key %s" % key_path)
+    gen_proc = subprocess_popen(['ssh-keygen', '-t' 'rsa', '-f', key_path,
+                                 '-C', key_filename, '-N', ''],
+                                stdout=subprocess_pipe, stderr=subprocess_pipe)
+    exit_code = gen_proc.wait()
+    out, err = gen_proc.communicate()
+    if exit_code != 0:
+        logger.error("user key generation in %s failed: %s %s (%s)" % \
+                     (key_path, out, err, exit_code))
+        return (False, "user key generation in %s failed!" % key_filename) 
+    logger.info('done generating user key %s: %s : %s (%s)' % \
+                (key_path, out, err, exit_code))
+    pub_key = ''
+    try:
+        pub_fd = open(key_path + '.pub')
+        pub_key = pub_fd.read()
+        pub_fd.close()
+    except Exception, exc:
+        logger.error("user key generation %s did not create a pub key: %s" % \
+                     (key_path, exc))
+        return (False, "user key generation in %s failed!" % key_filename) 
+    return (True, pub_key)

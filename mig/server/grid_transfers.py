@@ -44,7 +44,8 @@ import threading
 from shared.fileio import makedirs_rec, pickle
 from shared.conf import get_configuration_object
 from shared.defaults import datatransfers_filename, transfers_log_name, \
-     transfers_log_size, transfers_log_cnt, _user_invisible_paths
+     transfers_log_size, transfers_log_cnt, _user_invisible_paths, \
+     user_keys_dir
 from shared.logger import daemon_logger
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.useradm import client_dir_id, client_id_dir
@@ -293,7 +294,7 @@ def run_transfer(transfer_dict, client_id, configuration):
         # Use key with given name from settings dir
         settings_base_dir = os.path.abspath(os.path.join(
             configuration.user_settings, client_dir)) + os.sep
-        key_path = os.path.join(settings_base_dir, "id_rsa-" + \
+        key_path = os.path.join(settings_base_dir, user_keys_dir,
                                 key_path.lstrip(os.sep))
         key_path = os.path.abspath(key_path)
         if not valid_user_path(key_path, settings_base_dir):

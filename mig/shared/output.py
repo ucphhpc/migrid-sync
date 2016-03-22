@@ -1237,9 +1237,10 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 if dellink:
                     dellink_html = html_link(dellink)
                 if single_transfer.get('password', ''):
-                    login = '%(username)s (password)' % single_transfer
+                    login = '%(username)s : ' % single_transfer
+                    login += '*' * len(single_transfer['password'])
                 elif single_transfer.get('key', ''):
-                    login = '%(username)s (key)' % single_transfer
+                    login = '%(username)s : %(key)s' % single_transfer
                 else:
                     login = 'anonymous'
                 lines.append('''

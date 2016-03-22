@@ -1028,6 +1028,7 @@ def guess_type(name):
             'freeze_id',
             'rule_id',
             'transfer_id',
+            'key_id',
             ):
             __type_map[key] = valid_job_id
         for key in (
