@@ -995,7 +995,8 @@ def guess_type(name):
             'verifyfiles',
             ):
             __type_map[key] = valid_path_src_dst_lines
-        # NOTE: verifies that resource conf values are safe for ssh calls
+        # NOTE: verifies that resource conf values and datatransfer paths are
+        #       safe for ssh/lftp/rsync calls
         for key in (
             'resourcehome',
             'frontendlog',
@@ -1006,6 +1007,8 @@ def guess_type(name):
             'storage_dir',
             'cmd',
             'site_script_deps',
+            'transfer_src',
+            'transfer_dst',
             ):
             __type_map[key] = valid_safe_path
         # We include vgrid_name and a few more here to enforce sane name policy

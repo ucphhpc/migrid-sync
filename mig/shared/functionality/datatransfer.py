@@ -67,7 +67,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
-                'fqdn':[''], 'port': [''], 'src':[''], 'dst': [''],
+                'fqdn':[''], 'port': [''], 'transfer_src':[''], 'transfer_dst': [''],
                 'username': [''], 'password': [''], 'key': [''], 'flags': ['']}
     return ['text', defaults]
 
@@ -94,8 +94,8 @@ def main(client_id, user_arguments_dict):
     protocol = accepted['protocol'][-1]
     fqdn = accepted['fqdn'][-1]
     port = accepted['port'][-1]
-    src_list = accepted['src']
-    dst = accepted['dst'][-1]
+    src_list = accepted['transfer_src']
+    dst = accepted['transfer_dst'][-1]
     username = accepted['username'][-1]
     password = accepted['password'][-1]
     key = accepted['key'][-1]
@@ -118,7 +118,7 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript">
     var fields = 1;
     var max_fields = 20;
-    var src_input = "<input type=text size=60 name=src value='' /><br />";
+    var src_input = "<input type=text size=60 name=transfer_src value='' /><br />";
     function addSource() {
         if (fields < max_fields) {
             $("#srcfields").append(src_input);
@@ -339,14 +339,14 @@ Key:<br />
 <tr><td>
 Source path(s):<br />
 <div id="srcfields">
-<input type=text size=60 name=src value="" /><br />
+<input type=text size=60 name=transfer_src value="" /><br />
 </div>
 <input id="addsrcbutton" type="button" onclick="addSource(); return false;"
     value="Add another source field" />
 </td></tr>
 <tr><td>
 Destination path:<br />
-<input type=text size=60 name=dst value="" />
+<input type=text size=60 name=transfer_dst value="" />
 </td></tr>
 <tr><td>
 <span>
@@ -386,8 +386,8 @@ Destination path:<br />
             if not [src for src in src_list if src] or not dst:
                 output_objects.append(
                     {'object_type': 'error_text',
-                     'text': 'src and dst parameters required for all data'
-                     'transfer'})
+                     'text': 'transfer_src and transfer_dst parameters required for all'
+                     'data transfers!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if protocol == "rsyncssh" and not key:
                 output_objects.append(
