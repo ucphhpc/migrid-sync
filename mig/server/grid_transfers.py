@@ -94,43 +94,41 @@ def transfer_info(configuration, client_id, msg):
     """Wrapper to send a single info msg to transfer log of client_id"""
     __transfer_log(configuration, client_id, msg, 'info')
 
-def transfer_status(configuration, client_id, transfer_dict, exit_code,
+def transfer_result(configuration, client_id, transfer_dict, exit_code,
                     out_msg, err_msg):
     """Update status file from transfer_dict with the result from transfer
     that reurned exit_code, out_msg and err_msg.
     """
     logger = configuration.logger
+    time_stamp = datetime.datetime.now().ctime()
     transfer_id = transfer_dict['transfer_id']
-    out_path = os.path.join(configuration.user_home, client_id_dir(client_id),
-                            "transfer_output", transfer_id,
-                            "%s.status" % transfer_id)
-    makedirs_rec(os.path.dirname(out_path), configuration)
-    if not os.path.exists(out_path):
-        try:
-            open(out_path, "w").close()
-        except Exception, exc :
-            logger.error("creating status file for %s failed: %s" % \
-                         (transfer_dict, exc))
-            return False
+    rel_src = transfer_dict.get("rel_src", False)
+    if not rel_src:
+        rel_src = ', '.join(transfer_dict['src'])
+    res_dir = os.path.join(configuration.user_home, client_id_dir(client_id),
+                           "transfer_output", transfer_id)
+    makedirs_rec(res_dir, configuration)
     status_msg = '''%s: %s %s of %s in %s finished with status %s
-''' % (datetime.datetime.now().ctime(), transfer_dict['protocol'],
-       transfer_dict['action'], transfer_dict['rel_src'],
+''' % (time_stamp, transfer_dict['protocol'], transfer_dict['action'], rel_src,
        transfer_dict['transfer_id'], exit_code)
-    if out_msg:
-        status_msg += '''stdout: %s
-''' % out_msg
-    if err_msg:
-        status_msg += '''stderr: %s
-''' % err_msg
-    try:
-        out_fd = open(out_path, "a")
-        out_fd.write(status_msg)
-        out_fd.close()
-    except Exception, exc :
-        logger.error("writing status file for %s failed: %s" % \
-                     (transfer_dict, exc))
-        return False
-    return True
+    out_msg = '%s:\n%s\n' % (time_stamp, out_msg)
+    err_msg = '%s:\n%s\n' % (time_stamp, err_msg)
+    status = True
+    for (ext, msg) in [("status", status_msg), ("stdout", out_msg),
+                          ("stderr", err_msg)]:
+        path = os.path.join(res_dir, "%s.%s" % (transfer_id, ext))
+        try:
+            if os.path.exists(path):
+                status_fd = open(path, "a")
+            else:
+                status_fd = open(path, "w")
+            status_fd.write(msg)
+            status_fd.close()
+        except Exception, exc :
+            logger.error("writing status file %s for %s failed: %s" % \
+                         (path, transfer_dict, exc))
+            status = False
+    return status
 
 def run_transfer(transfer_dict, client_id, configuration):
     """Actual data transfer built from transfer_dict on behalf of client_id"""
@@ -346,7 +344,7 @@ def run_transfer(transfer_dict, client_id, configuration):
         logger.info('raw output is: %s' % out)
         logger.info('raw error is: %s' % err)
         logger.info('result was %s' % exit_code)
-        if not transfer_status(configuration, client_id, run_dict, exit_code,
+        if not transfer_result(configuration, client_id, run_dict, exit_code,
                                out.replace(base_dir, ''),
                                err.replace(base_dir, '')):
             logger.error('writing transfer status for %s failed' % transfer_id)            
@@ -390,6 +388,10 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
     except Exception, exc:
         configuration.logger.error("run transfer failed: %s" % exc)
         transfer_dict['status'] = "FAILED"
+        if not transfer_result(configuration, client_id, transfer_dict,
+                               transfer_dict['exit_code'], '',
+                               'Fatal error during transfer: %s' % exc):
+            logger.error('writing transfer status for %s failed' % transfer_id)
 
     all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
     (save_status, save_msg) = modify_data_transfers('modify', transfer_dict,

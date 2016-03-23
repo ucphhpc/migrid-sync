@@ -126,8 +126,6 @@ access the workflows.'''
 <script type="text/javascript">
 $(document).ready(function() {
 
-          $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
-
           // table initially sorted by 0 (last update / date) 
           var sortOrder = [[0,1]];
 
@@ -148,16 +146,18 @@ $(document).ready(function() {
                                         size: %s
                                         });
 
-        /* Init variables helper as foldable but closed and with individual heights */
-        $(".variables-accordion").accordion({
+          /* Init variables helper as foldable but closed and with individual heights */
+          $(".variables-accordion").accordion({
                                        collapsible: true,
                                        active: false,
                                        heightStyle: "content"
                                       });
-        /* fix and reduce accordion spacing */
-        $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+          /* fix and reduce accordion spacing */
+          $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
 
-        $("#pagerrefresh").click(function() { location.reload(); });
+          $(".workflow-tabs").tabs();
+          $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
+          $("#pagerrefresh").click(function() { location.reload(); });
      }
 );
 </script>
@@ -179,13 +179,7 @@ $(document).ready(function() {
 
     logger.info('vgridworkflows %s' % vgrid_name)
 
-    # Display active trigger jobs for this vgrid
-
-    output_objects.append({'object_type': 'sectionheader',
-                          'text': 'Active Trigger Jobs'})
-    output_objects.append({'object_type': 'table_pager', 'entry_name': 'job',
-                           'default_entries': default_pager_entries})
-    html = '''<table id="workflowstable" class="jobs columnsort">
+    jobs_html = '''<table id="workflowstable" class="jobs columnsort">
     <thead>
         <tr>
             <th>Job ID</th>
@@ -232,7 +226,7 @@ $(document).ready(function() {
                             ].replace(abs_vgrid_dir, ''),
                             trigger_event['dest_path'
                             ].replace(abs_vgrid_dir, ''))
-                    html += '''<tr>
+                    jobs_html += '''<tr>
     <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td><td>%s</td>
 </tr>''' % (trigger_job['jobid'], trigger_rule['rule_id'], trigger_path,
        trigger_action, trigger_time, serverjob['STATUS'])
@@ -246,27 +240,12 @@ $(document).ready(function() {
                     logger.error('Trigger job: %s, unknown state: %s'
                                  % (trigger_job['jobid'],
                                  serverjob['STATUS']))
-    html += '''
+    jobs_html += '''
     </tbody>
 </table>
 '''
-    output_objects.append({'object_type': 'html_form', 'text': html})
 
-    # Display active trigger jobs for this vgrid
-
-    output_objects.append({'object_type': 'sectionheader',
-                          'text': 'Trigger Log'})
     log_content = read_trigger_log(configuration, vgrid_name)
-    output_objects.append({'object_type': 'html_form',
-                          'text': '''
- <div class="form_container">
- <textarea id="logarea" rows=10 readonly="readonly">%s</textarea>
- </div>
- '''
-                          % log_content})
-
-    output_objects.append({'object_type': 'sectionheader',
-                          'text': 'Manage Triggers'})
 
     # Always run as rule creator to avoid users being able to act on behalf
     # of ANY other user using triggers (=exploit)
@@ -294,9 +273,10 @@ $(document).ready(function() {
         extra_fields,
         optional_fields,
         )
-    output_objects.extend(oobjs)
 
     if not status:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'failed to load triggers: %s' % oobjs})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Generate variable helper values for a few concrete samples for help text 
@@ -336,8 +316,58 @@ your disposal:<br/>
 </p>
 </div>
 """ % (configuration.site_vgrid_label, vars_html, commands_html)
+
+
+    # Make page with manage triggers tab and active jobs and log tab
+
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+    <div id="wrap-tabs" class="workflow-tabs">
+<ul>
+<li><a href="#manage-tab">Manage Triggers</a></li>
+<li><a href="#jobs-tab">Active Trigger Jobs</a></li>
+</ul>
+'''})
+
+    # Display existing triggers and form to add new ones
+    
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+<div id="manage-tab">
+'''})
+    
+    output_objects.append({'object_type': 'sectionheader',
+                          'text': 'Manage Triggers'})
+    output_objects.extend(oobjs)
     output_objects.append({'object_type': 'html_form', 'text': helper_html})
 
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+</div>
+'''})
+
+    # Display active trigger jobs and recent logs for this vgrid
+
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+<div id="jobs-tab">
+'''})
+    output_objects.append({'object_type': 'sectionheader',
+                          'text': 'Active Trigger Jobs'})
+    output_objects.append({'object_type': 'table_pager', 'entry_name': 'job',
+                           'default_entries': default_pager_entries})
+    output_objects.append({'object_type': 'html_form', 'text': jobs_html})
+    output_objects.append({'object_type': 'sectionheader',
+                          'text': 'Trigger Log'})
+    output_objects.append({'object_type': 'html_form',
+                          'text': '''
+ <div class="form_container">
+ <textarea id="logarea" rows=20 readonly="readonly">%s</textarea>
+ </div>
+''' % log_content})
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+</div>
+'''})
+    
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+</div>
+'''})
     return (output_objects, returnvalues.OK)
 
 

@@ -52,11 +52,12 @@ from shared.validstring import valid_user_path
 
 get_actions = ['show']
 transfer_actions = ['import', 'export', 'deltransfer', 'redotransfer']
+# TODO: add these internal data shuffling targets on a separate tab without
+#address and creds
+#shuffling_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
+shuffling_actions = []
 key_actions = ['generatekey']
-# TODO: add these internal targets on a separate tab without address and creds
-#internal_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
-internal_actions = []
-post_actions = transfer_actions + key_actions + internal_actions
+post_actions = transfer_actions + shuffling_actions + key_actions
 valid_actions = get_actions + post_actions
 valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
                ("ftps", "FTPS"), ("sftp", "SFTP"),
@@ -106,7 +107,7 @@ def main(client_id, user_arguments_dict):
     flags = accepted['flags']
     
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Data Transfers'
+    title_entry['text'] = 'Background Data Transfers'
 
     # jquery support for tablesorter and confirmation on delete/redo:
 
@@ -183,7 +184,6 @@ def main(client_id, user_arguments_dict):
               });
 
         /* init create dialog */
-        //$("#mode_tabs").tabs();
         enableLogin("anonymous");
 
         /* setup table with tablesorter initially sorted by 0 (id) */
@@ -195,6 +195,7 @@ def main(client_id, user_arguments_dict):
                                         size: %s
                                         });
 
+          $(".datatransfer-tabs").tabs();
           $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
           $("#pagerrefresh").click(function() { location.reload(); });
     });
@@ -240,11 +241,6 @@ Please contact the Grid admins %s if you think they should be enabled.
 
     if action in get_actions:
         datatransfers = []
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Existing Transfers'})
-        output_objects.append({'object_type': 'table_pager',
-                               'entry_name': 'transfers',
-                               'default_entries': default_pager_entries})
         for (saved_id, transfer_dict) in transfer_map.items():
             transfer_item = build_transferitem_object(configuration,
                                                       transfer_dict)
@@ -280,41 +276,63 @@ Please contact the Grid admins %s if you think they should be enabled.
                 'class': 'refreshlink', 'title': 'Reschedule %s' % \
                 saved_id, 'text': ''}
             datatransfers.append(transfer_item)
-        output_objects.append({'object_type': 'datatransfers', 'datatransfers'
-                              : datatransfers})
-
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Latest Transfer Results'})
         log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
                                 "transfer_output", transfers_log_name)
         show_lines = 40
         log_lines = read_tail(log_path, show_lines, logger)
-        output_objects.append({'object_type': 'html_form', 'text': '''
-<textarea id="logarea" rows=10 cols=200  readonly="readonly">%s</textarea>''' \
-                               % (''.join(log_lines))})
-        
         available_keys = load_user_keys(configuration, client_id)
         if available_keys:
             key_note = ''
         else:
             key_note = 'No keys available - you need to generate/import below'
-        
+
+
+        # Make page with manage transfers tab and manage keys tab
+
+        output_objects.append({'object_type': 'html_form', 'text':  '''
+    <div id="wrap-tabs" class="datatransfer-tabs">
+<ul>
+<li><a href="#transfer-tab">Manage Data Transfers</a></li>
+<li><a href="#keys-tab">Manage Keys</a></li>
+</ul>
+'''})
+
+        # Display external transfers, log and form to add new ones
+    
+        output_objects.append({'object_type': 'html_form', 'text':  '''
+<div id="transfer-tab">
+'''})
+
         output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Create Transfer'})
-        html = '''
-<table class="adddatatransfer">
+                          : 'External Data Transfers'})
+        output_objects.append({'object_type': 'table_pager',
+                               'entry_name': 'transfers',
+                               'default_entries': default_pager_entries})
+        output_objects.append({'object_type': 'datatransfers', 'datatransfers'
+                              : datatransfers})
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Latest Transfer Results'})
+        output_objects.append({'object_type': 'html_form', 'text': '''
+<textarea id="logarea" rows=5 cols=200  readonly="readonly">%s</textarea>''' \
+                               % (''.join(log_lines))})
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Create External Data Transfer'})
+        transfer_html = '''
+<table class="addexttransfer">
 <tr><td>
-Fill in the data transfer details below to request a new background data
-transfer task.
-Source can be a path or a wild card pattern using "*" and "?" to match one
-or more characters.
+Fill in the import/export data transfer details below to request a new
+background data transfer task.<br/>  
+Source must be a path without wildcard characters and please note that for most
+protocols it is mandatory to end the src with a slash if it is a directory.
+In that case recursive transfer will be used and whereas otherwise the src is
+considered a single file so it will fail if not.<br/>  
 Destination is a single location to transfer the data to. It is considered in
 relation to your user home for <em>import</em> requests. Source is similarly
 considered in relation to your user home in <em>export</em> requests.
 Destination is a always handled as a directory path to transfer source files
 into.<br/>
 <form method="post" action="datatransfer.py">
-<table class="adddatatransfer">
+<table class="addexttransfer">
 <tr><td>
 <input type=radio name=action checked value="import" />import data
 <input type=radio name=action value="export" />export data
@@ -329,9 +347,10 @@ Transfer ID:<br />
         # select first in list
         selected = 'selected'
         for (key, val) in valid_proto:
-            html += '<option %s value="%s">%s</option>' % (selected, key, val)
+            transfer_html += '<option %s value="%s">%s</option>' % \
+                             (selected, key, val)
             selected = ''
-        html += '''
+        transfer_html += '''
 </select>
 Host:
 <input type=text size=30 name=fqdn value="" />
@@ -361,12 +380,13 @@ Key:<br />
         # select first in list
         selected = 'selected'
         for (name, pubkey) in available_keys:
-            html += '<option %s value="%s">%s</option>' % (selected, name, name)
+            transfer_html += '<option %s value="%s">%s</option>' % \
+                             (selected, name, name)
             selected = ''
-        html += '''
+        transfer_html += '''
 </select> %s
 ''' % key_note
-        html += '''
+        transfer_html += '''
 </span>
 </td></tr>
 <tr><td>
@@ -394,11 +414,20 @@ Destination path:<br />
 </table>
 '''
         output_objects.append({'object_type': 'html_form', 'text'
-                              : html})
+                              : transfer_html})
+        output_objects.append({'object_type': 'html_form', 'text':  '''
+</div>
+'''})
 
+        # Display key management
+
+        output_objects.append({'object_type': 'html_form', 'text':  '''
+<div id="keys-tab">
+'''})
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Manage Data Transfer Keys'})
-        html = '''
+        key_html = '''
+<form method="post" action="datatransfer.py">
 <table class="managetransferkeys">
 <tr><td>
 You can manage your data transfer keys here.
@@ -406,18 +435,17 @@ You can manage your data transfer keys here.
 <tr><td>
 '''
         for (name, pubkey) in available_keys:
-            html += '''
+            key_html += '''
 Public key for %s:<br/>
 <textarea rows=2 cols=200 readonly="readonly">%s</textarea>
 <br/>''' % (name, pubkey)     
 
-        html += '''
+        key_html += '''
 Please copy the public key to your ~/.ssh/authorized_keys file on systems where
 you want to login with the corresponding key.
 </td></tr>
 <tr><td>
 Select a name below to create a new key for use in future transfers.
-<form method="post" action="datatransfer.py">
 <input type=hidden name=action value="generatekey" />
 Key name:<br/>
 <input type=text size=60 name=key_id value="" />
@@ -425,9 +453,17 @@ Key name:<br/>
 <input type=submit value="Generate key" />
 </td></tr>
 </table>
+</form>
 '''
         output_objects.append({'object_type': 'html_form', 'text'
-                              : html})
+                              : key_html})
+        output_objects.append({'object_type': 'html_form', 'text':  '''
+</div>
+'''})
+    
+        output_objects.append({'object_type': 'html_form', 'text':  '''
+</div>
+'''})
         return (output_objects, returnvalues.OK)
     elif action in transfer_actions:
         transfer_dict = transfer_map.get(transfer_id, {})
