@@ -132,34 +132,6 @@ def transfer_status(configuration, client_id, transfer_dict, exit_code,
         return False
     return True
 
-def wrap_run_transfer(transfer_dict, client_id, configuration):
-    """Wrap the execution of data transfer so that exceptions and errors are
-    caught and logged. Updates state, calls the run_transfer function on input
-    and finally updates state again afterwards.
-    """
-    transfer_id = transfer_dict['transfer_id']
-    transfer_dict['status'] = "ACTIVE"
-    all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
-    (save_status, save_msg) = modify_data_transfers('modify', transfer_dict,
-                                                    client_id, configuration)
-    if not save_status:
-        logger.error("failed to save %s status for %s: %s" % \
-                     (transfer_dict['status'], transfer_id, save_msg))
-        return save_status
-    try:
-        run_transfer(transfer_dict, client_id, configuration)
-    except Exception, exc:
-        configuration.logger.error("run transfer failed: %s" % exc)
-        transfer_dict['status'] = "FAILED"
-
-    all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
-    (save_status, save_msg) = modify_data_transfers('modify', transfer_dict,
-                                                    client_id, configuration)
-    if not save_status:
-        logger.error("failed to save %s status for %s: %s" % \
-                     (transfer_dict['status'], transfer_id, save_msg))
-    return save_status
-
 def run_transfer(transfer_dict, client_id, configuration):
     """Actual data transfer built from transfer_dict on behalf of client_id"""
 
@@ -378,15 +350,62 @@ def run_transfer(transfer_dict, client_id, configuration):
                                out.replace(base_dir, ''),
                                err.replace(base_dir, '')):
             logger.error('writing transfer status for %s failed' % transfer_id)            
+
     logger.debug('done handling transfers in %(transfer_id)s' % transfer_dict)
+    transfer_dict['exit_code'] = status
     if status == 0:
         transfer_dict['status'] = 'DONE'
     else:
         transfer_dict['status'] = 'FAILED'
-    transfer_info(configuration, client_id,
-                  '%s %s from %s in %s finished with status code %s' % \
-                  (transfer_dict['protocol'], transfer_dict['action'],
-                   transfer_dict['fqdn'], transfer_id, status))
+
+
+def clean_transfer(configuration, client_id, transfer_dict):
+    """Actually clean valid transfer request in transfer_dict"""
+    transfer_id = transfer_dict['transfer_id']
+    logger.info('in cleaning of %s %s for %s' % (transfer_id,
+                                                 transfer_dict['action'],
+                                                 client_id))
+    if all_workers.has_key(transfer_id):
+        del all_workers[transfer_id]
+    # TODO: clean up any removed transfers/processes here?
+
+
+def wrap_run_transfer(transfer_dict, client_id, configuration):
+    """Wrap the execution of data transfer so that exceptions and errors are
+    caught and logged. Updates state, calls the run_transfer function on input
+    and finally updates state again afterwards.
+    """
+    transfer_id = transfer_dict['transfer_id']
+    transfer_dict['status'] = "ACTIVE"
+    transfer_dict['exit_code'] = -1
+    all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
+    (save_status, save_msg) = modify_data_transfers('modify', transfer_dict,
+                                                    client_id, configuration)
+    if not save_status:
+        logger.error("failed to save %s status for %s: %s" % \
+                     (transfer_dict['status'], transfer_id, save_msg))
+        return save_status
+    try:
+        run_transfer(transfer_dict, client_id, configuration)
+    except Exception, exc:
+        configuration.logger.error("run transfer failed: %s" % exc)
+        transfer_dict['status'] = "FAILED"
+
+    all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
+    (save_status, save_msg) = modify_data_transfers('modify', transfer_dict,
+                                                    client_id, configuration)
+    if not save_status:
+        logger.error("failed to save %s status for %s: %s" % \
+                     (transfer_dict['status'], transfer_id, save_msg))
+
+    status_msg = '%s %s from %s in %s %s with status code %s' % \
+                 (transfer_dict['protocol'], transfer_dict['action'],
+                  transfer_dict['fqdn'], transfer_id, transfer_dict['status'],
+                  transfer_dict['exit_code'])
+    if transfer_dict['status'] == 'FAILED':
+        transfer_error(configuration, client_id, status_msg)
+    else:
+        transfer_info(configuration, client_id, status_msg)
     clean_transfer(configuration, client_id, transfer_dict)
 
 
@@ -432,17 +451,6 @@ def handle_transfer(configuration, client_id, transfer_dict):
                        'failed to run %s %s from %s: %s' % \
                        (transfer_dict['protocol'], transfer_dict['action'],
                         transfer_dict['fqdn'], exc))
-
-
-def clean_transfer(configuration, client_id, transfer_dict):
-    """Actually clean valid transfer request in transfer_dict"""
-    transfer_id = transfer_dict['transfer_id']
-    logger.info('in cleaning of %s %s for %s' % (transfer_id,
-                                                 transfer_dict['action'],
-                                                 client_id))
-    if all_workers.has_key(transfer_id):
-        del all_workers[transfer_id]
-    # TODO: clean up any removed transfers/processes here?
 
 
 def manage_transfers(configuration):

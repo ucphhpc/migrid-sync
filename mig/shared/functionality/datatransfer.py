@@ -194,6 +194,8 @@ def main(client_id, user_arguments_dict):
                                .tablesorterPager({ container: $("#pager"),
                                         size: %s
                                         });
+
+          $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
     });
 </script>
 ''' % default_pager_entries
@@ -273,13 +275,12 @@ Please contact the Grid admins %s if you think they should be enabled.
                           : 'Latest Transfer Results'})
         log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
                                 "transfer_output", transfers_log_name)
-        show_lines = 10
+        show_lines = 40
         log_lines = read_tail(log_path, show_lines, logger)
-        # Make room for last newline to avoid scroll bar
         output_objects.append({'object_type': 'html_form', 'text': '''
-<textarea rows=%s cols=200  readonly="readonly">%s</textarea>''' % \
-                               (show_lines + 1, ''.join(log_lines))})
-
+<textarea id="logarea" rows=10 cols=200  readonly="readonly">%s</textarea>''' \
+                               % (''.join(log_lines))})
+        
         available_keys = load_user_keys(configuration, client_id)
         if available_keys:
             key_note = ''
