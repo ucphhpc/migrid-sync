@@ -51,7 +51,7 @@ from shared.validstring import valid_user_path
 
 
 get_actions = ['show']
-transfer_actions = ['import', 'export', 'deltransfer']
+transfer_actions = ['import', 'export', 'deltransfer', 'redotransfer']
 key_actions = ['generatekey']
 # TODO: add these internal targets on a separate tab without address and creds
 #internal_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
@@ -108,7 +108,7 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s data transfer' % configuration.short_title
 
-    # jquery support for tablesorter and confirmation on "delete":
+    # jquery support for tablesorter and confirmation on delete/redo:
 
     title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] += '''
@@ -266,6 +266,17 @@ Please contact the Grid admins %s if you think they should be enabled.
                 "javascript: confirmDialog(%s, '%s');" % \
                 (js_name, 'Really remove %s?' % saved_id),
                 'class': 'removelink', 'title': 'Remove %s' % \
+                saved_id, 'text': ''}
+            js_name = 'redo%s' % hexlify(saved_id)
+            helper = html_post_helper(js_name, 'datatransfer.py',
+                                      {'transfer_id': saved_id,
+                                       'action': 'redotransfer'})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            transfer_item['redotransferlink'] = {
+                'object_type': 'link', 'destination':
+                "javascript: confirmDialog(%s, '%s');" % \
+                (js_name, 'Really reschedule %s?' % saved_id),
+                'class': 'refreshlink', 'title': 'Reschedule %s' % \
                 saved_id, 'text': ''}
             datatransfers.append(transfer_item)
         output_objects.append({'object_type': 'datatransfers', 'datatransfers'
@@ -430,6 +441,19 @@ Key name:<br/>
                                                     configuration,
                                                     transfer_map)
             desc = "delete"
+        elif action == 'redotransfer':
+            action_type = 'edit'
+            if transfer_dict is None:
+                output_objects.append(
+                    {'object_type': 'error_text',
+                     'text': 'existing transfer_id is required for reschedule'
+                     })
+                return (output_objects, returnvalues.CLIENT_ERROR)
+            transfer_dict['status'] = 'NEW'
+            (save_status, _) = create_data_transfer(transfer_dict, client_id,
+                                                    configuration,
+                                                    transfer_map)
+            desc = "reschedule"
         else:
             action_type = 'transfer'
             if not fqdn:

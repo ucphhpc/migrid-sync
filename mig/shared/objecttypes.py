@@ -130,9 +130,9 @@ uploadfiles = {  # list entry must be called 'files' for jquery fileupload plugi
 datatransfer = {
     'object_type': 'datatransfer',
     'required': ['transfer_id', 'action', 'protocol', 'fqdn', 'port',
-                 'username', 'src', 'dst', 'password', 'key', 'flags',
-                 'status'],
-    'optional': ['deltransferlink', 'viewtransferlink'],
+                 'username', 'src', 'dst', 'password', 'key', 'status'],
+    'optional': ['deltransferlink', 'viewtransferlink', 'redotransferlink',
+                 'exit_code', 'flags'],
     }
 certreq = {'object_type': 'certreq', 'required': [
     'id',

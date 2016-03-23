@@ -1216,7 +1216,6 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 <thead class="title">
     <tr>
         <th>ID</th>
-        <th class="icon"><!-- Info --></th>
         <th class="icon"><!-- Delete --></th>
         <th>Action</th>
         <th>Protocol</th>
@@ -1231,11 +1230,15 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 <tbody>
 ''')
             for single_transfer in datatransfers:
-                viewlink = html_link(single_transfer.get('viewtransferlink', ''))
                 dellink = single_transfer.get('deltransferlink', '')
+                viewlink = html_link(single_transfer.get('viewtransferlink', ''))
+                redolink = single_transfer.get('redotransferlink', '')
                 dellink_html = ''
                 if dellink:
                     dellink_html = html_link(dellink)
+                redolink_html = ''
+                if redolink:
+                    redolink_html = html_link(redolink)
                 if single_transfer.get('password', ''):
                     login = '%(username)s : ' % single_transfer
                     login += '*' * len(single_transfer['password'])
@@ -1246,12 +1249,14 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 lines.append('''
 <tr>
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td>
-</tr>''' % (single_transfer['transfer_id'], viewlink, dellink_html,
+<td>%s</td><td>%s</td><td>
+<!-- use nested table to distribute status and icons consistenly -->
+<table style="width: 100%%;"><tr><td style="min-width: 60%%;">%s</td><td>%s</td><td>%s</td></tr></table>
+</tr>''' % (single_transfer['transfer_id'], dellink_html,
             single_transfer['action'], single_transfer['protocol'],
             single_transfer['fqdn'], single_transfer['port'], login,
             ', '.join(single_transfer['src']), single_transfer['dst'],
-            single_transfer['status']))
+            single_transfer['status'], viewlink, redolink_html))
             lines.append('''
 </tbody>
 </table>''')
