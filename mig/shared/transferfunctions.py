@@ -37,6 +37,15 @@ from shared.serial import load, dump
 from shared.useradm import client_id_dir
 
 
+def blind_pw(transfer_dict):
+    """Returns a copy of transfer_dict with password blinded out"""
+    blinded = transfer_dict.copy()
+    if blinded.get('password', ''):
+        blinded['password'] = '*' * len(transfer_dict['password'])
+    elif blinded.get('password_digest', ''):
+        blinded['password'] = '*' * 8
+    return blinded
+
 def build_transferitem_object(configuration, transfer_dict):
     """Build a data transfer object based on input transfer_dict"""
 
@@ -49,9 +58,8 @@ def build_transferitem_object(configuration, transfer_dict):
         #'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
         #                                                created_asctime),
         }
-    transfer_obj.update(transfer_dict)
+    transfer_obj.update(blind_pw(transfer_dict))
     return transfer_obj
-
 
 def load_data_transfers(configuration, client_id):
     """Find all data transfers owned by user"""

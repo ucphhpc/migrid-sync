@@ -46,6 +46,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
+from shared.pwhash import make_digest
 from shared.ssh import copy_file_to_resource
 from shared.validstring import valid_user_path
 
@@ -517,11 +518,14 @@ Key name:<br/>
             else:
                 desc = "create"
 
+            # We don't want to store password in plain text on disk
+            password_digest = make_digest('datatransfer', client_id, password,
+                                          configuration.site_digest_salt)
             transfer_dict.update(
                 {'transfer_id': transfer_id, 'action': action,
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
-                 'username': username, 'password': password, 'key':key,
-                 'src': src_list, 'dst': dst, 'status': 'NEW'})
+                 'username': username, 'password_digest': password_digest,
+                 'key':key, 'src': src_list, 'dst': dst, 'status': 'NEW'})
             (save_status, _) = create_data_transfer(transfer_dict, client_id,
                                                     configuration,
                                                     transfer_map)

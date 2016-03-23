@@ -47,9 +47,11 @@ from shared.defaults import datatransfers_filename, transfers_log_name, \
      transfers_log_size, transfers_log_cnt, _user_invisible_paths, \
      user_keys_dir
 from shared.logger import daemon_logger
+from shared.pwhash import unscramble_digest
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.useradm import client_dir_id, client_id_dir
-from shared.transferfunctions import load_data_transfers, modify_data_transfers
+from shared.transferfunctions import blind_pw, load_data_transfers, \
+     modify_data_transfers
 from shared.validstring import valid_user_path
 
 # Global transfers dictionary with requests for all users
@@ -130,7 +132,7 @@ def transfer_result(configuration, client_id, transfer_dict, exit_code,
             status_fd.close()
         except Exception, exc :
             logger.error("writing status file %s for %s failed: %s" % \
-                         (path, transfer_dict, exc))
+                         (path, blind_pw(transfer_dict), exc))
             status = False
     return status
 
@@ -284,7 +286,8 @@ def get_cmd_map():
 def run_transfer(transfer_dict, client_id, configuration):
     """Actual data transfer built from transfer_dict on behalf of client_id"""
 
-    logger.info('run command for %s: %s' % (client_id, transfer_dict))
+    logger.info('run command for %s: %s' % (client_id,
+                                            blind_pw(transfer_dict)))
     transfer_id = transfer_dict['transfer_id']
     action = transfer_dict['action']
     protocol = transfer_dict['protocol']
@@ -311,7 +314,7 @@ def run_transfer(transfer_dict, client_id, configuration):
         key_path = os.path.abspath(key_path)
         if not valid_user_path(key_path, settings_base_dir):
             logger.error('rejecting illegal directory traversal for %s (%s)' \
-                         % (key_path, transfer_dict))
+                         % (key_path, blind_pw(transfer_dict)))
             raise ValueError("user provided a key outside own settings!")
     rel_src_list = transfer_dict['src']
     rel_dst = transfer_dict['dst']
@@ -326,7 +329,7 @@ def run_transfer(transfer_dict, client_id, configuration):
             # Reject illegal directory traversal and hidden files
             if not valid_user_path(real_dst, base_dir, True):
                 logger.error('rejecting illegal directory traversal for %s (%s)' \
-                             % (real_dst, transfer_dict))
+                             % (real_dst, blind_pw(transfer_dict)))
                 raise ValueError("user provided a destination outside home!")
             if src.endswith(os.sep):
                 lftp_target_list.append(get_lftp_target(True, False))
@@ -343,7 +346,7 @@ def run_transfer(transfer_dict, client_id, configuration):
             # Reject illegal directory traversal and hidden files
             if not valid_user_path(src_path, base_dir, True):
                 logger.error('rejecting illegal directory traversal for %s (%s)' \
-                             % (src, transfer_dict))
+                             % (src, blind_pw(transfer_dict)))
                 raise ValueError("user provided a source outside home!")
             src_path_list.append(src_path)
             if src.endswith(os.sep) or os.path.isdir(src):
@@ -360,6 +363,14 @@ def run_transfer(transfer_dict, client_id, configuration):
         run_dict['key'] = key_path
         run_dict['auth_opt'] = get_ssh_opt(True, run_dict)
     else:
+        # Extract encrypted password
+        password_digest = run_dict.get('password_digest', '')
+        if password_digest:
+            _, _, _, payload = password_digest.split("$")
+            unscrambled = unscramble_digest(configuration.site_digest_salt,
+                                            payload)
+            _, _, password = unscrambled.split(":")
+            run_dict['password'] = password
         run_dict['auth_opt'] = get_ssh_opt(False, run_dict)
     run_dict['rel_dst'] = rel_dst
     run_dict['dst'] = dst_path
@@ -373,9 +384,11 @@ def run_transfer(transfer_dict, client_id, configuration):
         run_dict['lftp_target'] = lftp_target % run_dict
         logger.info('setting up %(action)s for %(src)s' % run_dict)
         command_list = [i % run_dict for i in command_pattern]
-        logger.info('expanded vars to %s' % run_dict)
+        logger.debug('expanded vars to %s' % blind_pw(run_dict))
         command_str = ' '.join(command_list)
-        logger.debug('run %s on behalf of %s' % (command_str, client_id))
+        blinded_str = command_str.replace(run_dict['password'],
+                                          blind_pw(run_dict)['password'])
+        logger.debug('run %s on behalf of %s' % (blinded_str, client_id))
         transfer_proc = subprocess_popen(command_list,
                                          stdout=subprocess_pipe,
                                          stderr=subprocess_pipe)
@@ -383,7 +396,7 @@ def run_transfer(transfer_dict, client_id, configuration):
         status |= exit_code
         out, err = transfer_proc.communicate()
         logger.info('done running transfer %s: %s' % (run_dict['transfer_id'],
-                                                  command_str))
+                                                      blinded_str))
         logger.info('raw output is: %s' % out)
         logger.info('raw error is: %s' % err)
         logger.info('result was %s' % exit_code)
@@ -491,7 +504,7 @@ def handle_transfer(configuration, client_id, transfer_dict):
     except Exception, exc:
         logger.error('failed to run %s %s from %s: %s (%s)'
                      % (transfer_dict['protocol'], transfer_dict['action'],
-                        transfer_dict['fqdn'], exc, transfer_dict))
+                        transfer_dict['fqdn'], exc, blind_pw(transfer_dict)))
         transfer_error(configuration, client_id,
                        'failed to run %s %s from %s: %s' % \
                        (transfer_dict['protocol'], transfer_dict['action'],
@@ -523,15 +536,12 @@ def manage_transfers(configuration):
                           transfers_path)
             continue
             
-        logger.debug("loaded current transfers from '%s':\n%s" % \
-                     (transfers_path, transfers))
-
         old_transfers[client_id] = all_transfers.get(client_id, {})
         all_transfers[client_id] = transfers
 
-    logger.debug('all transfers:\n%s' % all_transfers)
     for (client_id, transfers) in all_transfers.items():
         for (transfer_id, transfer_dict) in transfers.items():
+            logger.debug('inspecting transfer:\n%s' % blind_pw(transfer_dict))
             transfer_status = transfer_dict['status']
             if transfer_status in ("DONE", "FAILED", "PAUSED"):
                 logger.debug('skip %(status)s transfer %(transfer_id)s' % \
