@@ -111,6 +111,7 @@ $(document).ready(function() {
                                .tablesorterPager({ container: $("#pager"),
                                         size: %s
                                         });
+          $("#pagerrefresh").click(function() { location.reload(); });
      }
 );
 </script>

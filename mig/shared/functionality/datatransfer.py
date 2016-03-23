@@ -106,7 +106,7 @@ def main(client_id, user_arguments_dict):
     flags = accepted['flags']
     
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s data transfer' % configuration.short_title
+    title_entry['text'] = 'Data Transfers'
 
     # jquery support for tablesorter and confirmation on delete/redo:
 
@@ -196,6 +196,7 @@ def main(client_id, user_arguments_dict):
                                         });
 
           $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
+          $("#pagerrefresh").click(function() { location.reload(); });
     });
 </script>
 ''' % default_pager_entries

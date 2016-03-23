@@ -1336,6 +1336,13 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 '''
             if i.get('form_append', False):
                 toolbar += '%(form_append)s' % i
+            if i.get('refresh_button', True):
+                toolbar += '''
+        <div id="pagerrefresh" style="display: inline;">
+            <img alt="refresh" src="/images/icons/arrow_refresh.png"
+                title="Refresh" />
+        </div>
+'''
             toolbar += '''
       </form>
       </div>

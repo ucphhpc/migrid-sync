@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.jobmanager - jquery based job manager
-  # Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -359,7 +359,7 @@ if (jQuery) (function($){
                         });
                 }
                 
-                $("#append").click();
+                $("#pagerrefresh").click();
                       
             }
 
@@ -454,7 +454,7 @@ if (jQuery) (function($){
             // Check CheckAll when read all
             $("#jm_jobmanager").bind("sortEnd", function() { $("#checkAll").prop("checked", false); });
 
-            $("#append").click(function() {
+            $("#pagerrefresh").click(function() {
 
                     // Busy marker while loading jobs from server
                     $("#jm_jobmanager tbody").html("<tr class='odd'><td class='wait'></td><td>Loading jobs...</td><td></td><td></td></tr>");
@@ -534,12 +534,12 @@ if (jQuery) (function($){
                         });
                 });
 
-            $("#append").click();
+            $("#pagerrefresh").click();
 
             /* refresh when pressing enter in the filter input box */
             $("input.filterid").keypress(function (e) {
                     if (e.which == 13) {
-                        $("#append").click();
+                        $("#pagerrefresh").click();
                         return false;
                     }
                 });
@@ -581,7 +581,7 @@ if (jQuery) (function($){
             function refreshHandler() {
                 if (autorefreshChecker()) {
                     //console.debug("do refresh");
-                    $("#append").click();
+                    $("#pagerrefresh").click();
                 }
                 setTimeout(refreshHandler, refresh_delay);
             }

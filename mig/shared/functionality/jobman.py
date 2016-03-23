@@ -5,7 +5,7 @@
 #
 # jobman - Job manager UI for browsing and manipulating jobs
 #
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -50,9 +50,6 @@ def pager_append():
           <option value="-1">all</option>
         </select> last jobs
         matching <input class="filterid" name="filterid" size=16 value="*_%s_*"/>
-        <div id="append" style="display: inline;">
-            <img alt="refresh" src="/images/icons/arrow_refresh.png" />
-        </div>
 ''' % datetime.date.today().year
 
 def html_pre():

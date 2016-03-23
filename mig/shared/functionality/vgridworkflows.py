@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -156,6 +156,8 @@ $(document).ready(function() {
                                       });
         /* fix and reduce accordion spacing */
         $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+
+        $("#pagerrefresh").click(function() { location.reload(); });
      }
 );
 </script>
@@ -181,15 +183,21 @@ $(document).ready(function() {
 
     output_objects.append({'object_type': 'sectionheader',
                           'text': 'Active Trigger Jobs'})
-    html = '<table><thead><tr>'
-    html += '<th>Job ID</th>'
-    html += '<th>Rule</th>'
-    html += '<th>Path</th>'
-    html += '<th>Change</th>'
-    html += '<th>Time</th>'
-    html += '<th>Status</th>'
-    html += '</tr></thead>'
-    html += '<tbody>'
+    output_objects.append({'object_type': 'table_pager', 'entry_name': 'job',
+                           'default_entries': default_pager_entries})
+    html = '''<table id="workflowstable" class="jobs columnsort">
+    <thead>
+        <tr>
+            <th>Job ID</th>
+            <th>Rule</th>
+            <th>Path</th>
+            <th>Change</th>
+            <th>Time</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+'''
 
     trigger_job_dir = os.path.join(configuration.vgrid_home,
                                    os.path.join(vgrid_name, '.%s.jobs'
@@ -224,11 +232,10 @@ $(document).ready(function() {
                             ].replace(abs_vgrid_dir, ''),
                             trigger_event['dest_path'
                             ].replace(abs_vgrid_dir, ''))
-                    html += \
-                        '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td><td>%s</td>' \
-                        % (trigger_job['jobid'], trigger_rule['rule_id'
-                           ], trigger_path, trigger_action, trigger_time,
-                           serverjob['STATUS'])
+                    html += '''<tr>
+    <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td><td>%s</td>
+</tr>''' % (trigger_job['jobid'], trigger_rule['rule_id'], trigger_path,
+       trigger_action, trigger_time, serverjob['STATUS'])
                 elif serverjob['STATUS'] in final_states:
                     src_path = os.path.join(trigger_job_pending_dir,
                             filename)
@@ -239,8 +246,10 @@ $(document).ready(function() {
                     logger.error('Trigger job: %s, unknown state: %s'
                                  % (trigger_job['jobid'],
                                  serverjob['STATUS']))
-    html += '</tbody>'
-    html += '</table>'
+    html += '''
+    </tbody>
+</table>
+'''
     output_objects.append({'object_type': 'html_form', 'text': html})
 
     # Display active trigger jobs for this vgrid
@@ -325,6 +334,7 @@ a job, creating/moving/deleting a file or directory and so on. When you select
 your disposal:<br/>
 %s
 </p>
+</div>
 """ % (configuration.site_vgrid_label, vars_html, commands_html)
     output_objects.append({'object_type': 'html_form', 'text': helper_html})
 

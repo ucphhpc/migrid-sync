@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -154,7 +154,7 @@ $(document).ready(function() {
 
     output_objects.append({'object_type': 'table_pager', 'entry_name':
                            'frozen files', 'default_entries':
-                           default_pager_entries})
+                           default_pager_entries, 'refresh_button': False})
     output_objects.append(build_freezeitem_object(configuration, freeze_dict))
 
     return (output_objects, returnvalues.OK) 
