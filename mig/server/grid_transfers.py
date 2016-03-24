@@ -359,6 +359,8 @@ def run_transfer(transfer_dict, client_id, configuration):
     run_dict = transfer_dict.copy()
     # Use private known hosts file for ssh transfers as explained above
     run_dict['known_hosts'] = os.path.join(base_dir, '.ssh', 'known_hosts')
+    # Make sure password is set to empty string as default
+    run_dict['password'] = run_dict.get('password', '')
     if key_path:
         run_dict['key'] = key_path
         run_dict['auth_opt'] = get_ssh_opt(True, run_dict)
@@ -383,12 +385,13 @@ def run_transfer(transfer_dict, client_id, configuration):
         run_dict['rel_src'] = rel_src
         run_dict['lftp_target'] = lftp_target % run_dict
         logger.info('setting up %(action)s for %(src)s' % run_dict)
+        blind_dict = blind_pw(run_dict)
+        logger.debug('expanded vars to %s' % blind_dict)
         command_list = [i % run_dict for i in command_pattern]
-        logger.debug('expanded vars to %s' % blind_pw(run_dict))
         command_str = ' '.join(command_list)
-        blinded_str = command_str.replace(run_dict['password'],
-                                          blind_pw(run_dict)['password'])
-        logger.debug('run %s on behalf of %s' % (blinded_str, client_id))
+        blind_list = [i % blind_dict for i in command_pattern]
+        blind_str = ' '.join(blind_list)
+        logger.debug('run %s on behalf of %s' % (blind_str, client_id))
         transfer_proc = subprocess_popen(command_list,
                                          stdout=subprocess_pipe,
                                          stderr=subprocess_pipe)
@@ -396,7 +399,7 @@ def run_transfer(transfer_dict, client_id, configuration):
         status |= exit_code
         out, err = transfer_proc.communicate()
         logger.info('done running transfer %s: %s' % (run_dict['transfer_id'],
-                                                      blinded_str))
+                                                      blind_str))
         logger.info('raw output is: %s' % out)
         logger.info('raw error is: %s' % err)
         logger.info('result was %s' % exit_code)

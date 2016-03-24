@@ -60,12 +60,15 @@ shuffling_actions = []
 key_actions = ['generatekey']
 post_actions = transfer_actions + shuffling_actions + key_actions
 valid_actions = get_actions + post_actions
+# TODO: implement scp in backend and enable here?
 valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
-               ("ftps", "FTPS"), ("sftp", "SFTP"),
-               # TODO: implement scp in backend and enable here?
-               #  ("scp", "SCP"),
-               ("webdav", "WebDAV"), ("webdavs", "WebDAVS"),
-               ("rsyncssh", "RSYNC over SSH"), ("rsyncd", "RSYNC daemon")]
+               ("ftps", "FTPS"), ("webdav", "WebDAV"), ("webdavs", "WebDAVS"),
+               ("sftp", "SFTP"), ("rsyncssh", "RSYNC over SSH"),
+               ("rsyncd", "RSYNC daemon")]
+valid_proto_map = dict(valid_proto)
+warn_anon = [i for (i, _) in valid_proto if not i in ('http', 'https', 'ftp',
+                                                      'rsyncd')]
+warn_key = [i for (i, _) in valid_proto if not i in ('sftp', 'rsyncssh')]
 
 # TODO: consider adding a start time or cron-like field to transfers
 
@@ -446,7 +449,11 @@ Please copy the public key to your ~/.ssh/authorized_keys file on systems where
 you want to login with the corresponding key.
 </td></tr>
 <tr><td>
-Select a name below to create a new key for use in future transfers.
+Select a name below to create a new key for use in future transfers. The key is
+generated and stored in a private storage area on %s, so that only the transfer
+service can access and use it for your transfers.
+</td></tr>
+<tr><td>
 <input type=hidden name=action value="generatekey" />
 Key name:<br/>
 <input type=text size=60 name=key_id value="" />
@@ -455,7 +462,7 @@ Key name:<br/>
 </td></tr>
 </table>
 </form>
-'''
+''' % configuration.short_title
         output_objects.append({'object_type': 'html_form', 'text'
                               : key_html})
         output_objects.append({'object_type': 'html_form', 'text':  '''
@@ -510,6 +517,19 @@ Key name:<br/>
                     {'object_type': 'error_text', 'text'
                      : 'RSYNC over SSH is only supported with key!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
+            if not password and not key and protocol in warn_anon:
+                output_objects.append(
+                    {'object_type': 'warning', 'text': '''
+%s transfers usually require explicit authentication with your credentials.
+Proceeding as requested with anonymous login, but the transfer is likely to
+fail.''' % valid_proto_map[protocol]})
+            if key and protocol in warn_key:
+                output_objects.append(
+                    {'object_type': 'warning', 'text': '''
+%s transfers usually only support authentication with username and password
+rather than key. Proceeding as requested, but the transfer is likely to
+fail if it really requires login.''' % valid_proto_map[protocol]})
+
             # Make pseudo-unique ID based on msec time since epoch if not given
             if not transfer_id:
                 transfer_id = "transfer-%d" % (time.time() * 1000)
@@ -518,9 +538,13 @@ Key name:<br/>
             else:
                 desc = "create"
 
-            # We don't want to store password in plain text on disk
-            password_digest = make_digest('datatransfer', client_id, password,
-                                          configuration.site_digest_salt)
+            if password:
+                # We don't want to store password in plain text on disk
+                password_digest = make_digest('datatransfer', client_id,
+                                              password,
+                                              configuration.site_digest_salt)
+            else:
+                password_digest = ''
             transfer_dict.update(
                 {'transfer_id': transfer_id, 'action': action,
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
