@@ -76,8 +76,9 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
-                'fqdn':[''], 'port': [''], 'transfer_src':[''], 'transfer_dst': [''],
-                'username': [''], 'password': [''], 'key_id': [''], 'flags': ['']}
+                'fqdn':[''], 'port': [''], 'transfer_src':[''],
+                'transfer_dst': [''], 'username': [''], 'password': [''],
+                'key_id': [''], 'flags': ['']}
     return ['text', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -125,16 +126,57 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
 
 <script type="text/javascript">
-    var fields = 1;
+    var fields = 0;
     var max_fields = 20;
-    var src_input = "<input type=text size=60 name=transfer_src value='' /><br />";
+    var src_input = "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'\' />";
+    src_input += "<input id=\'src_file_FIELD\' type=radio onclick=\'setSrcDir(FIELD, false);\' checked />Source file";
+    src_input += "<input id=\'src_dir_FIELD\' type=radio onclick=\'setSrcDir(FIELD, true);\' />Source directory (recursive)";
+    src_input += "<br />";
     function addSource() {
         if (fields < max_fields) {
-            $("#srcfields").append(src_input);
+            $("#srcfields").append(src_input.replace(/FIELD/g, fields));
             fields += 1;
         } else {
             alert("Maximum " + max_fields + " source fields allowed!");
         }
+    }
+    function setDir(target, field_no, is_dir) {
+        var id_prefix = "#"+target+"_";
+        var input_id = id_prefix+field_no;
+        var file_id = id_prefix+"file_"+field_no;
+        var dir_id = id_prefix+"dir_"+field_no;
+        var value = $(input_id).val();
+        $(file_id).removeAttr("checked");
+        $(dir_id).removeAttr("checked");
+        if (is_dir) {
+            $(dir_id).prop("checked", "checked");
+            if(value.substr(-1) != "/") {
+                value += "/";
+            }
+        } else {
+            $(file_id).prop("checked", "checked");
+            if(value.substr(-1) == "/") {
+                value = value.substr(0, value.length - 1);
+            }
+        }
+        $(input_id).val(value);
+        return false;
+    }
+    function setSrcDir(field_no, is_dir) {
+        return setDir("src", field_no, is_dir);
+    }
+    function setDstDir(field_no, is_dir) {
+        return setDir("dst", field_no, is_dir);
+    }
+    function refreshSrcDir(field_no) {
+        var dir_id = "#src_dir_"+field_no;
+        var is_dir = $(dir_id).prop("checked");
+        return setSrcDir(field_no, is_dir);
+    }
+    function refreshDstDir(field_no) {
+        var dir_id = "#dst_dir_"+field_no;
+        var is_dir = $(dir_id).prop("checked");
+        return setDstDir(field_no, is_dir);
     }
     function setDefaultPort() {
         port_map = {"http": 80, "https": 443, "sftp": 22, "scp": 22, "ftp": 21,
@@ -147,7 +189,14 @@ def main(client_id, user_arguments_dict):
         } else {
             alert("no default port provided for "+protocol);
         }
-        return false;
+    }
+    function beforeSubmit() {
+        for(var i=0; i < fields; i++) {
+            refreshSrcDir(i);
+        }
+        refreshDstDir(0);
+        // Proceed with submit
+        return true;
     }
     function enableLogin(method) {
         $("#anonymous_choice").removeAttr("checked");
@@ -189,6 +238,8 @@ def main(client_id, user_arguments_dict):
 
         /* init create dialog */
         enableLogin("anonymous");
+
+        addSource();
 
         /* setup table with tablesorter initially sorted by 0 (id) */
         var sortOrder = [[0,0]];
@@ -326,16 +377,17 @@ Please contact the Grid admins %s if you think they should be enabled.
 <tr><td>
 Fill in the import/export data transfer details below to request a new
 background data transfer task.<br/>  
-Source must be a path without wildcard characters and please note that for most
-protocols it is mandatory to end the src with a slash if it is a directory.
-In that case recursive transfer will be used and whereas otherwise the src is
-considered a single file so it will fail if not.<br/>  
-Destination is a single location to transfer the data to. It is considered in
-relation to your user home for <em>import</em> requests. Source is similarly
-considered in relation to your user home in <em>export</em> requests.
+Source must be a path without wildcard characters and it must be specifically
+pointed out if the src is a directory. In that case recursive transfer will
+automatically be used and otherwise the src is considered a single file, so it
+will fail if that is not the case.<br/>  
+Destination is a single location directory to transfer the data to. It is
+considered in relation to your user home for <em>import</em> requests. Source
+is similarly considered in relation to your user home in <em>export</em>
+requests.<br/>
 Destination is a always handled as a directory path to transfer source files
 into.<br/>
-<form method="post" action="datatransfer.py">
+<form method="post" action="datatransfer.py" onSubmit="return beforeSubmit();">
 <table class="addexttransfer">
 <tr><td>
 <input type=radio name=action checked value="import" />import data
@@ -396,14 +448,16 @@ Key:<br />
 <tr><td>
 Source path(s):<br />
 <div id="srcfields">
-<input type=text size=60 name=transfer_src value="" /><br />
+<!-- NOTE: automatically filled by addSource function -->
 </div>
 <input id="addsrcbutton" type="button" onclick="addSource(); return false;"
     value="Add another source field" />
 </td></tr>
 <tr><td>
 Destination path:<br />
-<input type=text size=60 name=transfer_dst value="" />
+<input id=\'dst_0\' type=text size=60 name=transfer_dst value="" />
+<input id=\'dst_dir_0\' type=radio checked />Destination directory
+<input id=\'dst_file_0\' type=radio disabled />Destination file<br />
 </td></tr>
 <tr><td>
 <span>

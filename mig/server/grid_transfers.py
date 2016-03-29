@@ -176,9 +176,10 @@ def get_exclude_list(keyword, sep_char, to_string):
         return [exc_pattern % i for i in _user_invisible_paths]
 
 def get_lftp_target(is_import, is_file):
-    """Get a target helper for lftp-based transfers. The is_put argument is
+    """Get a target helper for lftp-based transfers. The is_import argument is
     used to distinguish the direction and the is_file argument decides whether
     to use a plain get/put or a mirror command.
+    Returns the target helper as a string. 
     """
     exclude_str = get_exclude_list('--exclude', ' ', True)
     if is_file:
@@ -194,6 +195,26 @@ def get_lftp_target(is_import, is_file):
         else:
             return "mirror -Lvs -R %s %s" % (exclude_str, mirror_dst_str)
 
+def get_rsync_target(is_import, is_file):
+    """Get target helpers for rsync-based transfers. The is_import argument is
+    used to distinguish the direction and the is_file argument decides whether
+    to use a plain or recursive transfer command. Basically we could always
+    use recursive for rsync, but we explicitly set it for symmetry with the
+    lftp commands.
+    Returns a 3-tuple of lists containing flags, excludes and source+dst
+    suitable for eventually plugging into the command list from command map.
+    """
+    # IMPORTANT: follow symlinks and don't preserve device files
+    rsync_flags = '-Lptgov'
+    if not is_file:
+        rsync_flags += 'r'
+    exclude_list = get_exclude_list('--exclude', '=', False)
+    if is_import:
+        transfer_target = ['%(fqdn)s:%(src)s', '%(dst)s/']
+    else:
+        transfer_target = ['%(src)s', '%(fqdn)s:%(dst)s/']
+    return ([rsync_flags], exclude_list, transfer_target)
+    
 def get_cmd_map():
     """Get a lookup map of commands for the transfers"""
     # Helpers for lftp and rsync
@@ -203,8 +224,6 @@ def get_cmd_map():
         sftp_buf_str += ";set sftp:size-%s %%(lftp_buf_size)d" % target
     ftps_ssl_str = "set ftp:ssl-force ; set ftp:ssl-protect-data on"
     sftp_key_str = "set sftp:connect-program ssh -a -x %(auth_opt)s"
-    # IMPORTANT: follow symlinks and don't preserve device files
-    rsync_flags = '-rLptgov'
     # All the port and login settings must be passed to ssh command
     rsyncssh_transport_str = "ssh -p %(port)s -l %(username)s %(auth_opt)s"
     login_port_str = "open -u %(username)s,%(password)s -p %(port)s "
@@ -245,8 +264,8 @@ def get_cmd_map():
                            ';'.join([base_buf_str, login_port_str + \
                                      'https://%(fqdn)s', '%(lftp_target)s'])],
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str,
-                             rsync_flags] + exclude_list + \
-                ['%(fqdn)s:%(src)s', '%(dst)s/'],
+                             '%(rsync_flags)s'] + exclude_list + \
+                            ['%(rsync_src)s', '%(rsync_dst)s'],
                 },
                'export':
                {'sftp': ['lftp', '-c',
@@ -277,8 +296,8 @@ def get_cmd_map():
                            ';'.join([base_buf_str, login_port_str + \
                                      'https://%(fqdn)s', '%(lftp_target)s'])],
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str,
-                             rsync_flags] + exclude_list + \
-                ['%(fqdn)s:%(src)s', '%(dst)s/'],
+                             '%(rsync_flags)s'] + exclude_list + \
+                            ['%(rsync_src)s', '%(rsync_dst)s'],
                 }
                }
     return cmd_map
@@ -302,8 +321,9 @@ def run_transfer(transfer_dict, client_id, configuration):
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
+    # TODO: we should refactor to move command extraction into one function
     command_pattern = cmd_map[action][protocol]
-    lftp_target_list = []
+    target_helper_list = []
     key_path = transfer_dict.get("key", "")
     if key_path:
         # Use key with given name from settings dir
@@ -332,9 +352,11 @@ def run_transfer(transfer_dict, client_id, configuration):
                              % (real_dst, blind_pw(transfer_dict)))
                 raise ValueError("user provided a destination outside home!")
             if src.endswith(os.sep):
-                lftp_target_list.append(get_lftp_target(True, False))
+                target_helper_list.append((get_lftp_target(True, False),
+                                           get_rsync_target(True, False)))
             else:
-                lftp_target_list.append(get_lftp_target(True, True))
+                target_helper_list.append((get_lftp_target(True, True),
+                                           get_rsync_target(True, True)))
         makedirs_rec(dst_path, configuration)
     elif transfer_dict['action'] in ('export', ):
         logger.info('setting abs src for action %(action)s' % transfer_dict)
@@ -350,9 +372,11 @@ def run_transfer(transfer_dict, client_id, configuration):
                 raise ValueError("user provided a source outside home!")
             src_path_list.append(src_path)
             if src.endswith(os.sep) or os.path.isdir(src):
-                lftp_target_list.append(get_lftp_target(False, False))
+                target_helper_list.append((get_lftp_target(False, False),
+                                           get_rsync_target(False, False)))
             else:
-                lftp_target_list.append(get_lftp_target(False, True))
+                target_helper_list.append((get_lftp_target(False, True),
+                                          get_rsync_target(False, True)))
     else:
         raise ValueError('unsupported action for %(transfer_id)s: %(action)s' \
                          % transfer_dict)
@@ -379,12 +403,17 @@ def run_transfer(transfer_dict, client_id, configuration):
     run_dict['lftp_buf_size'] = run_dict.get('lftp_buf_size',
                                              lftp_buffer_bytes)
     status = 0
-    for (src, rel_src, lftp_target) in zip(src_path_list, rel_src_list,
-                                          lftp_target_list):
+    for (src, rel_src, target_helper) in zip(src_path_list, rel_src_list,
+                                             target_helper_list):
+        (lftp_target, rsync_target) = target_helper
+        logger.info('setting up %(action)s for %(src)s' % run_dict)
         run_dict['src'] = src
         run_dict['rel_src'] = rel_src
         run_dict['lftp_target'] = lftp_target % run_dict
-        logger.info('setting up %(action)s for %(src)s' % run_dict)
+        run_dict['rsync_flags'] = rsync_target[0][0] % run_dict
+        #run_dict['rsync_excludes'] = rsync_target[1]
+        run_dict['rsync_src'] = rsync_target[2][0] % run_dict
+        run_dict['rsync_dst'] = rsync_target[2][1] % run_dict
         blind_dict = blind_pw(run_dict)
         logger.debug('expanded vars to %s' % blind_dict)
         command_list = [i % run_dict for i in command_pattern]
