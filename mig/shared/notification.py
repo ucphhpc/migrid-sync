@@ -417,10 +417,11 @@ def notify_user(
         else:
             notify_line_first_part = notify_line_colon_split[0].strip()
             all_dest = []
-            if notify_line_first_part in email_keyword_list:
+            if notify_line_first_part in email_keyword_list or \
+                   notify_line_first_part == 'SETTINGS':
                 logger.info("'%s' notify_line_first_part found in email_keyword_list"
                              % notify_line_first_part)
-                recipients = notify_line.replace('%s: '
+                recipients = notify_line.replace('%s:'
                          % notify_line_first_part, '').strip()
                 if recipients.strip().upper() in ['SETTINGS', '']:
 

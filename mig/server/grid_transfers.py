@@ -462,7 +462,6 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
     caught and logged. Updates state, calls the run_transfer function on input
     and finally updates state again afterwards.
     """
-    logger = configuration.logger
     transfer_id = transfer_dict['transfer_id']
     transfer_dict['status'] = "ACTIVE"
     transfer_dict['exit_code'] = -1
@@ -509,7 +508,7 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
             job_dict, [transfer_id, job_dict['status'], status_msg],
             'TRANSFERCOMPLETE', logger, '', configuration)
         # Try finishing delivery but do not block forever on one message
-        notifier.join(300)
+        notifier.join(30)
     logger.info("finished wrap run transfer %(transfer_id)s" % transfer_dict)
 
 
