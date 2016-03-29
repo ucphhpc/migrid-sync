@@ -64,12 +64,12 @@ def build_transferitem_object(configuration, transfer_dict):
 def load_data_transfers(configuration, client_id):
     """Find all data transfers owned by user"""
     logger = configuration.logger
-    logger.info("load transfers for %s" % client_id)
+    logger.debug("load transfers for %s" % client_id)
     try:
         transfers_path = os.path.join(configuration.user_settings,
                                       client_id_dir(client_id),
                                       datatransfers_filename)
-        logger.info("load transfers from %s" % transfers_path)
+        logger.debug("load transfers from %s" % transfers_path)
         if os.path.isfile(transfers_path):
             transfers = load(transfers_path)
         else:
@@ -177,8 +177,8 @@ def load_user_keys(configuration, client_id):
             pubkey = pub_fd.read()
             pub_fd.close()
         except Exception, exc:
-            logger.warranty("load user key did not find a pub key for %s: %s" \
-                            % (key_filename, exc))
+            logger.warning("load user key did not find a pub key for %s: %s" \
+                           % (key_filename, exc))
             continue
         user_keys.append((key_filename, pubkey))
     return user_keys
@@ -192,7 +192,7 @@ def generate_user_key(configuration, client_id, key_filename, truncate=False):
     if os.path.exists(key_path) and not truncate:
         logger.error("user key %s already exists!" % key_path)
         return (False, 'user key %s already exists!' % key_filename)
-    logger.info("generating user key %s" % key_path)
+    logger.debug("generating user key %s" % key_path)
     gen_proc = subprocess_popen(['ssh-keygen', '-t' 'rsa', '-f', key_path,
                                  '-C', key_filename, '-N', ''],
                                 stdout=subprocess_pipe, stderr=subprocess_pipe)

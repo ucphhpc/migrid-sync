@@ -34,7 +34,8 @@ from email.mime.text import MIMEText
 from urllib import quote
 
 from shared.base import force_utf8, generate_https_urls
-from shared.defaults import email_keyword_list, job_output_dir
+from shared.defaults import email_keyword_list, job_output_dir, \
+     transfer_output_dir
 from shared.settings import load_settings
 from shared.validstring import is_valid_email_address
 
@@ -195,6 +196,24 @@ reply using one of the message links on the profile page for the sender:
             '%(auto_base)s/%(auto_bin)s/viewuser.py?cert_id=' + \
             quote(reply_to),
             var_dict)
+    elif status == 'TRANSFERCOMPLETE':
+        header = '%s background transfer complete' % configuration.short_title
+        var_dict.update({'status_code': args_list[1], 'status_msg': args_list[2],
+                         'out_dir': transfer_output_dir})
+        var_dict.update(jobdict)
+        var_dict['status_link'] = generate_https_urls(
+            configuration,
+            '%(auto_base)s/%(auto_bin)s/fileman.py?path=%(out_dir)s/%(transfer_id)s/',
+            var_dict)
+        txt += \
+            '''
+Your %(site)s background transfer with ID %(transfer_id)s has finished with
+status %(status_code)s and status message:
+%(status_msg)s
+
+The full status and output files are available at:
+%(status_link)s
+''' % var_dict
     elif status == 'PASSWORDREMINDER':
         from_id = args_list[0]
         password = args_list[1]

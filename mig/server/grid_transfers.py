@@ -44,9 +44,10 @@ import threading
 from shared.fileio import makedirs_rec, pickle
 from shared.conf import get_configuration_object
 from shared.defaults import datatransfers_filename, transfers_log_name, \
-     transfers_log_size, transfers_log_cnt, _user_invisible_paths, \
-     user_keys_dir
+     transfers_log_size, transfers_log_cnt, transfer_output_dir, \
+     user_keys_dir, _user_invisible_paths
 from shared.logger import daemon_logger
+from shared.notification import notify_user_thread
 from shared.pwhash import unscramble_digest
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.useradm import client_dir_id, client_id_dir
@@ -67,7 +68,7 @@ lftp_buffer_bytes = 1048576
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""
     log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
-                            "transfer_output", transfers_log_name)
+                            transfer_output_dir, transfers_log_name)
     makedirs_rec(os.path.dirname(log_path), configuration)
     transfers_logger = logging.getLogger('transfers')
     transfers_logger.setLevel(logging.INFO)
@@ -112,7 +113,7 @@ def transfer_result(configuration, client_id, transfer_dict, exit_code,
     if not rel_src:
         rel_src = ', '.join(transfer_dict['src'])
     res_dir = os.path.join(configuration.user_home, client_id_dir(client_id),
-                           "transfer_output", transfer_id)
+                           transfer_output_dir, transfer_id)
     makedirs_rec(res_dir, configuration)
     status_msg = '''%s: %s %s of %s in %s finished with status %s
 ''' % (time_stamp, transfer_dict['protocol'], transfer_dict['action'], rel_src,
@@ -305,8 +306,8 @@ def get_cmd_map():
 def run_transfer(transfer_dict, client_id, configuration):
     """Actual data transfer built from transfer_dict on behalf of client_id"""
 
-    logger.info('run command for %s: %s' % (client_id,
-                                            blind_pw(transfer_dict)))
+    logger.debug('run transfer for %s: %s' % (client_id,
+                                              blind_pw(transfer_dict)))
     transfer_id = transfer_dict['transfer_id']
     action = transfer_dict['action']
     protocol = transfer_dict['protocol']
@@ -339,7 +340,7 @@ def run_transfer(transfer_dict, client_id, configuration):
     rel_src_list = transfer_dict['src']
     rel_dst = transfer_dict['dst']
     if transfer_dict['action'] in ('import', ):
-        logger.info('setting abs dst for action %(action)s' % transfer_dict)
+        logger.debug('setting abs dst for action %(action)s' % transfer_dict)
         src_path_list = transfer_dict['src']
         dst_path = os.path.join(base_dir, rel_dst.lstrip(os.sep))
         dst_path = os.path.abspath(dst_path)
@@ -359,7 +360,7 @@ def run_transfer(transfer_dict, client_id, configuration):
                                            get_rsync_target(True, True)))
         makedirs_rec(dst_path, configuration)
     elif transfer_dict['action'] in ('export', ):
-        logger.info('setting abs src for action %(action)s' % transfer_dict)
+        logger.debug('setting abs src for action %(action)s' % transfer_dict)
         dst_path = transfer_dict['dst']
         src_path_list = []
         for src in rel_src_list:
@@ -406,7 +407,7 @@ def run_transfer(transfer_dict, client_id, configuration):
     for (src, rel_src, target_helper) in zip(src_path_list, rel_src_list,
                                              target_helper_list):
         (lftp_target, rsync_target) = target_helper
-        logger.info('setting up %(action)s for %(src)s' % run_dict)
+        logger.debug('setting up %(action)s for %(src)s' % run_dict)
         run_dict['src'] = src
         run_dict['rel_src'] = rel_src
         run_dict['lftp_target'] = lftp_target % run_dict
@@ -429,9 +430,9 @@ def run_transfer(transfer_dict, client_id, configuration):
         out, err = transfer_proc.communicate()
         logger.info('done running transfer %s: %s' % (run_dict['transfer_id'],
                                                       blind_str))
-        logger.info('raw output is: %s' % out)
-        logger.info('raw error is: %s' % err)
-        logger.info('result was %s' % exit_code)
+        logger.debug('raw output is: %s' % out)
+        logger.debug('raw error is: %s' % err)
+        logger.debug('result was %s' % exit_code)
         if not transfer_result(configuration, client_id, run_dict, exit_code,
                                out.replace(base_dir, ''),
                                err.replace(base_dir, '')):
@@ -448,7 +449,7 @@ def run_transfer(transfer_dict, client_id, configuration):
 def clean_transfer(configuration, client_id, transfer_dict):
     """Actually clean valid transfer request in transfer_dict"""
     transfer_id = transfer_dict['transfer_id']
-    logger.info('in cleaning of %s %s for %s' % (transfer_id,
+    logger.debug('in cleaning of %s %s for %s' % (transfer_id,
                                                  transfer_dict['action'],
                                                  client_id))
     if all_workers.has_key(transfer_id):
@@ -461,6 +462,7 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
     caught and logged. Updates state, calls the run_transfer function on input
     and finally updates state again afterwards.
     """
+    logger = configuration.logger
     transfer_id = transfer_dict['transfer_id']
     transfer_dict['status'] = "ACTIVE"
     transfer_dict['exit_code'] = -1
@@ -474,7 +476,7 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
     try:
         run_transfer(transfer_dict, client_id, configuration)
     except Exception, exc:
-        configuration.logger.error("run transfer failed: %s" % exc)
+        logger.error("run transfer failed: %s" % exc)
         transfer_dict['status'] = "FAILED"
         if not transfer_result(configuration, client_id, transfer_dict,
                                transfer_dict['exit_code'], '',
@@ -497,6 +499,18 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
     else:
         transfer_info(configuration, client_id, status_msg)
     clean_transfer(configuration, client_id, transfer_dict)
+    notify = transfer_dict.get('notify', False)
+    if notify:
+        job_dict = {'NOTIFY': [notify], 'JOB_ID': 'NOJOBID',
+                    'USER_CERT': client_id}
+        job_dict.update(transfer_dict)
+        logger.info("notify for %(transfer_id)s: %(notify)s" % transfer_dict)
+        notifier = notify_user_thread(
+            job_dict, [transfer_id, job_dict['status'], status_msg],
+            'TRANSFERCOMPLETE', logger, '', configuration)
+        # Try finishing delivery but do not block forever on one message
+        notifier.join(300)
+    logger.info("finished wrap run transfer %(transfer_id)s" % transfer_dict)
 
 
 def background_transfer(transfer_dict, client_id, configuration):
@@ -522,7 +536,7 @@ def foreground_transfer(transfer_dict, client_id, configuration):
 def handle_transfer(configuration, client_id, transfer_dict):
     """Actually handle valid transfer request in transfer_dict"""
 
-    logger.info('in handling of %s %s for %s' % (transfer_dict['transfer_id'],
+    logger.debug('in handling of %s %s for %s' % (transfer_dict['transfer_id'],
                                                  transfer_dict['action'],
                                                  client_id))
     transfer_info(configuration, client_id,
@@ -611,7 +625,7 @@ unless it is available in mig/server/MiGserver.conf
     # Use separate logger
 
     logger = daemon_logger('transfers', configuration.user_transfers_log,
-                           "debug")
+                           "info")
     configuration.logger = logger
 
     keep_running = True

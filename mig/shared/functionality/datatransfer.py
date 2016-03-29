@@ -78,7 +78,7 @@ def signature():
     defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
                 'fqdn':[''], 'port': [''], 'transfer_src':[''],
                 'transfer_dst': [''], 'username': [''], 'password': [''],
-                'key_id': [''], 'flags': ['']}
+                'key_id': [''], 'notify': [''], 'flags': ['']}
     return ['text', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -109,6 +109,7 @@ def main(client_id, user_arguments_dict):
     username = accepted['username'][-1]
     password = accepted['password'][-1]
     key = accepted['key_id'][-1]
+    notify = accepted['notify'][-1]
     flags = accepted['flags']
     
     title_entry = find_entry(output_objects, 'title')
@@ -460,6 +461,10 @@ Destination path:<br />
 <input id=\'dst_file_0\' type=radio disabled />Destination file<br />
 </td></tr>
 <tr><td>
+Notify on completion (e.g. email address):<br />
+<input type=text size=60 name=notify value=''>
+</td></tr>
+<tr><td>
 <span>
 <input type=submit value="Request transfer" />
 <input type=reset value="Clear" />
@@ -603,7 +608,8 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                 {'transfer_id': transfer_id, 'action': action,
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
                  'username': username, 'password_digest': password_digest,
-                 'key':key, 'src': src_list, 'dst': dst, 'status': 'NEW'})
+                 'key':key, 'src': src_list, 'dst': dst, 'notify': notify,
+                 'status': 'NEW'})
             (save_status, _) = create_data_transfer(transfer_dict, client_id,
                                                     configuration,
                                                     transfer_map)
