@@ -624,6 +624,15 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                                : '%sd transfer request %s.' % (desc.title(),
                                                            transfer_id)
                                })
+        output_objects.append({
+            'object_type': 'link',
+            'destination': "fileman.py?path=transfer_output/%s/" % transfer_id,
+            'title': 'Transfer status and output',
+            'text': 'Transfer status and output folder'})
+        output_objects.append({'object_type': 'text', 'text': '''
+Please note that the status folder gets created when the transfer starts, so it
+may not be available yet.
+'''})
     elif action in key_actions:
         (gen_status, pub) = generate_user_key(configuration, client_id, key)
         if gen_status:
@@ -647,6 +656,6 @@ Key generation for name %s failed with error: %s''' % (key, pub)})
                 
     output_objects.append({'object_type': 'link',
                            'destination': 'datatransfer.py',
-                           'text': 'View data transfers'})
+                           'text': 'Return to data transfers overview'})
     return (output_objects, returnvalues.OK)
 

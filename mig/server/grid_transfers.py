@@ -61,22 +61,30 @@ all_transfers = {}
 all_workers = {}
 (configuration, logger, last_update) = (None, None, 0)
 
-# Default lftp buffer size - experimentally determined for good throughput
+# Default 1M lftp buffer size - experimentally determined for good throughput
 lftp_buffer_bytes = 1048576
 
 
+def get_status_dir(configuration, client_id, transfer_id=''):
+    """Lookup the status directory for transfers on behalf of client_id.
+    The optional transfer_id is used to get the explicit status dir for that
+    particular transfer rather than the parent status directory.
+    This is used for writing the global transfer log as well as individual
+    status, stdout, stderr and possibly transfer.log files for the transfers.
+    """
+    return os.path.join(configuration.user_home, client_id_dir(client_id),
+                        transfer_output_dir, transfer_id).rstrip(os.sep)
+
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""
-    log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
-                            transfer_output_dir, transfers_log_name)
+    status_dir = get_status_dir(configuration, client_id)
+    log_path = os.path.join(status_dir, transfers_log_name)
     makedirs_rec(os.path.dirname(log_path), configuration)
     transfers_logger = logging.getLogger('transfers')
     transfers_logger.setLevel(logging.INFO)
-    handler = logging.handlers.RotatingFileHandler(log_path,
-                                                   maxBytes=transfers_log_size,
-                                                   backupCount=transfers_log_cnt - 1)
-    formatter = \
-              logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler = logging.handlers.RotatingFileHandler(
+        log_path, maxBytes=transfers_log_size, backupCount=transfers_log_cnt-1)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler.setFormatter(formatter)
     transfers_logger.addHandler(handler)
     if level == 'error':
@@ -112,8 +120,7 @@ def transfer_result(configuration, client_id, transfer_dict, exit_code,
     rel_src = transfer_dict.get("rel_src", False)
     if not rel_src:
         rel_src = ', '.join(transfer_dict['src'])
-    res_dir = os.path.join(configuration.user_home, client_id_dir(client_id),
-                           transfer_output_dir, transfer_id)
+    res_dir = get_status_dir(configuration, client_id, transfer_id)
     makedirs_rec(res_dir, configuration)
     status_msg = '''%s: %s %s of %s in %s finished with status %s
 ''' % (time_stamp, transfer_dict['protocol'], transfer_dict['action'], rel_src,
@@ -137,7 +144,7 @@ def transfer_result(configuration, client_id, transfer_dict, exit_code,
             status = False
     return status
 
-def get_ssh_opt(pubkey_auth, transfer_dict=None):
+def get_ssh_auth(pubkey_auth, transfer_dict=None):
     """Generate robust command line options for ssh-based transfers.
 
     The pubkey_auth argument is a boolean indicating if the login relies on
@@ -151,18 +158,34 @@ def get_ssh_opt(pubkey_auth, transfer_dict=None):
     to avoid polluting the known hosts file of the UNIX account user, while
     allowing looser host key checking to avoid common host key errors.
     """
-    ssh_opt = "-oForwardAgent=no -oForwardX11=no"
-    ssh_opt += " -oStrictHostKeyChecking=no "
-    ssh_opt += " -oUserKnownHostsFile=%(known_hosts)s"
+    ssh_auth = "-oForwardAgent=no -oForwardX11=no"
+    ssh_auth += " -oStrictHostKeyChecking=no "
+    ssh_auth += " -oUserKnownHostsFile=%(known_hosts)s"
     if pubkey_auth:
-        ssh_opt += " -oPasswordAuthentication=no"
-        ssh_opt += " -oPubkeyAuthentication=yes -i %(key)s"
+        ssh_auth += " -oPasswordAuthentication=no"
+        ssh_auth += " -oPubkeyAuthentication=yes -i %(key)s"
     else:
-        ssh_opt += " -oPubkeyAuthentication=no"
-        ssh_opt += " -oPasswordAuthentication=yes"
+        ssh_auth += " -oPubkeyAuthentication=no"
+        ssh_auth += " -oPasswordAuthentication=yes"
     if transfer_dict is not None:
-        ssh_opt = ssh_opt % transfer_dict
-    return ssh_opt
+        ssh_auth = ssh_auth % transfer_dict
+    return ssh_auth
+
+def get_ssl_auth(pki_auth, transfer_dict=None):
+    """Generate robust command line options for ssl-based transfers.
+
+    The keycert_auth argument is a boolean indicating if the login relies on
+    PKI authentication with a user key and certificate. Otherwise the options
+    for password authentication are returned.
+    If transfer_dict is set it will be used to expand the variables in the
+    resulting string.
+    """
+    ssl_auth = ""
+    if pki_auth:
+        ssl_auth += "set ssl:key-file %(key)s;set ssl:cert-file %(cert)s"
+    if transfer_dict is not None:
+        ssl_auth = ssl_auth % transfer_dict
+    return ssl_auth
 
 def get_exclude_list(keyword, sep_char, to_string):
     """Get an excludes helper for filtered transfers. The keyword argument is
@@ -206,7 +229,7 @@ def get_rsync_target(is_import, is_file):
     suitable for eventually plugging into the command list from command map.
     """
     # IMPORTANT: follow symlinks and don't preserve device files
-    rsync_flags = '-Lptgov'
+    rsync_flags = '-Lptgo'
     if not is_file:
         rsync_flags += 'r'
     exclude_list = get_exclude_list('--exclude', '=', False)
@@ -219,14 +242,28 @@ def get_rsync_target(is_import, is_file):
 def get_cmd_map():
     """Get a lookup map of commands for the transfers"""
     # Helpers for lftp and rsync
-    base_buf_str = "set xfer:buffer-size %(lftp_buf_size)d"
-    sftp_buf_str = base_buf_str
+    lftp_core_opts = "set xfer:buffer-size %(lftp_buf_size)d"
+    lftp_core_opts += ";set dns:fatal-timeout 60;set dns:max-retries 3"
+    lftp_core_opts += ";set cmd:fail-exit on;set bmk:save-passwords off"
+    lftp_core_opts += ";set net:max-retries 3;set net:persist-retries 3"
+    # TODO: can lftp be configured to not leak fs layout in log?
+    lftp_core_opts += ";set net:timeout 60;set xfer:log-file %(log_path)s"
+    rsync_core_opts = ["--log-file=%(log_path)s", "--verbose"]
+    # Bump sftp buffer from default 32k to 1M to improve throughput, and bump
+    # max number of packets in transit from 16 to 32 for high-latency gains.
+    sftp_buf_str = "set sftp:max-packets-in-flight 32"
     for target in ("read", "write"):
         sftp_buf_str += ";set sftp:size-%s %%(lftp_buf_size)d" % target
-    ftps_ssl_str = "set ftp:ssl-force ; set ftp:ssl-protect-data on"
-    sftp_key_str = "set sftp:connect-program ssh -a -x %(auth_opt)s"
+    # TODO: switch to GET/PUT rather than PROPFIND/MKCOL for basic HTTP(S)?
+    #http_tweak_str = "set http:use-propfind off;set http:use-mkcol off"
+    http_tweak_str = ""
+    webdav_tweak_str = "set http:use-propfind on;set http:use-mkcol on"
+    base_ssl_str = "%(ssl_auth)s"
+    ftps_ssl_str = "set ftp:ssl-force;set ftp:ssl-protect-data on"
+    sftp_key_str = "set sftp:connect-program ssh -a -x %(ssh_auth)s"
     # All the port and login settings must be passed to ssh command
-    rsyncssh_transport_str = "ssh -p %(port)s -l %(username)s %(auth_opt)s"
+    rsyncssh_transport_str = "ssh -p %(port)s -l %(username)s %(ssh_auth)s"
+    # Empty password is fine here and won't interfere with key auth
     login_port_str = "open -u %(username)s,%(password)s -p %(port)s "
     exclude_list = get_exclude_list('--exclude', '=', False)
 
@@ -237,68 +274,72 @@ def get_cmd_map():
 
     cmd_map = {'import':
                {'sftp': ['lftp', '-c',
-                         ';'.join([sftp_buf_str, sftp_key_str,
+                         ';'.join([lftp_core_opts, sftp_buf_str, sftp_key_str,
                                    login_port_str + '%(protocol)s://%(fqdn)s',
                                    '%(lftp_target)s'])],
                 'ftp': ['lftp', '-c',
-                        ';'.join([base_buf_str, login_port_str + \
+                        ';'.join([lftp_core_opts, login_port_str + \
                                   '%(protocol)s://%(fqdn)s',
                                   '%(lftp_target)s'])],
                 # IMPORTANT: must be implicit proto or 'ftp://' (not ftps://)
                 'ftps': ['lftp', '-c',
-                         ';'.join([base_buf_str, ftps_ssl_str,
+                         ';'.join([lftp_core_opts, base_ssl_str, ftps_ssl_str,
                                    login_port_str + 'ftp://%(fqdn)s',
                                    '%(lftp_target)s'])],
                 'http': ['lftp', '-c',
-                         ';'.join([base_buf_str, login_port_str + \
-                                  '%(protocol)s://%(fqdn)s',
+                         ';'.join([lftp_core_opts, http_tweak_str,
+                                   login_port_str + '%(protocol)s://%(fqdn)s',
                                    '%(lftp_target)s'])],
                 'https': ['lftp', '-c',
-                          ';'.join([base_buf_str, login_port_str + \
-                                    '%(protocol)s://%(fqdn)s',
+                          ';'.join([lftp_core_opts, http_tweak_str, base_ssl_str,
+                                    login_port_str + '%(protocol)s://%(fqdn)s',
                                     '%(lftp_target)s'])],
                 # IMPORTANT: must use explicit http(s) instead of webdav(s)
                 'webdav': ['lftp', '-c',
-                           ';'.join([base_buf_str, login_port_str + \
-                                     'http://%(fqdn)s', '%(lftp_target)s'])],
+                           ';'.join([lftp_core_opts, webdav_tweak_str,
+                                     login_port_str + 'http://%(fqdn)s',
+                                     '%(lftp_target)s'])],
                 'webdavs': ['lftp', '-c',
-                           ';'.join([base_buf_str, login_port_str + \
+                           ';'.join([lftp_core_opts, webdav_tweak_str,
+                                     base_ssl_str, login_port_str + \
                                      'https://%(fqdn)s', '%(lftp_target)s'])],
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str,
-                             '%(rsync_flags)s'] + exclude_list + \
-                            ['%(rsync_src)s', '%(rsync_dst)s'],
+                             '%(rsync_flags)s'] + rsync_core_opts + \
+                            exclude_list + ['%(rsync_src)s', '%(rsync_dst)s'],
                 },
                'export':
                {'sftp': ['lftp', '-c',
-                         ';'.join([sftp_buf_str, sftp_key_str,
+                         ';'.join([lftp_core_opts, sftp_buf_str, sftp_key_str,
                                    login_port_str + 'sftp://%(fqdn)s',
                                    '%(lftp_target)s'])],
                 'ftp': ['lftp', '-c',
-                        ';'.join([base_buf_str, login_port_str + \
+                        ';'.join([lftp_core_opts, login_port_str + \
                                   'ftp://%(fqdn)s', '%(lftp_target)s'])],
                 # IMPORTANT: must be implicit proto or 'ftp://' (not ftps://)
                 'ftps': ['lftp', '-c',
-                         ';'.join([base_buf_str, ftps_ssl_str,
+                         ';'.join([lftp_core_opts, base_ssl_str, ftps_ssl_str,
                                    login_port_str + 'ftp://%(fqdn)s',
                                    '%(lftp_target)s'])],
                 'http': ['lftp', '-c',
-                         ';'.join([base_buf_str, login_port_str + \
-                                  '%(protocol)s://%(fqdn)s',
+                         ';'.join([lftp_core_opts, http_tweak_str,
+                                   login_port_str + '%(protocol)s://%(fqdn)s',
                                    '%(lftp_target)s'])],
                 'https': ['lftp', '-c',
-                          ';'.join([base_buf_str, login_port_str + \
-                                    '%(protocol)s://%(fqdn)s',
+                          ';'.join([lftp_core_opts, http_tweak_str, base_ssl_str,
+                                    login_port_str + '%(protocol)s://%(fqdn)s',
                                     '%(lftp_target)s'])],
                 # IMPORTANT: must use explicit http(s) instead of webdav(s)
                 'webdav': ['lftp', '-c',
-                           ';'.join([base_buf_str, login_port_str + \
-                                     'http://%(fqdn)s', '%(lftp_target)s'])],
+                           ';'.join([lftp_core_opts, webdav_tweak_str,
+                                     login_port_str + 'http://%(fqdn)s',
+                                     '%(lftp_target)s'])],
                 'webdavs': ['lftp', '-c',
-                           ';'.join([base_buf_str, login_port_str + \
+                           ';'.join([lftp_core_opts, webdav_tweak_str,
+                                     base_ssl_str, login_port_str + \
                                      'https://%(fqdn)s', '%(lftp_target)s'])],
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str,
-                             '%(rsync_flags)s'] + exclude_list + \
-                            ['%(rsync_src)s', '%(rsync_dst)s'],
+                             '%(rsync_flags)s'] + rsync_core_opts + \
+                            exclude_list + ['%(rsync_src)s', '%(rsync_dst)s'],
                 }
                }
     return cmd_map
@@ -311,6 +352,7 @@ def run_transfer(transfer_dict, client_id, configuration):
     transfer_id = transfer_dict['transfer_id']
     action = transfer_dict['action']
     protocol = transfer_dict['protocol']
+    status_dir = get_status_dir(configuration, client_id, transfer_id)
     cmd_map = get_cmd_map()
     if not protocol in cmd_map[action]:
         raise ValueError('unsupported protocol: %s' % protocol)
@@ -382,13 +424,20 @@ def run_transfer(transfer_dict, client_id, configuration):
         raise ValueError('unsupported action for %(transfer_id)s: %(action)s' \
                          % transfer_dict)
     run_dict = transfer_dict.copy()
+    run_dict['log_path'] = os.path.join(status_dir, 'transfer.log')
     # Use private known hosts file for ssh transfers as explained above
     run_dict['known_hosts'] = os.path.join(base_dir, '.ssh', 'known_hosts')
     # Make sure password is set to empty string as default
     run_dict['password'] = run_dict.get('password', '')
+    # TODO: this is a bogus cert path for now - we don't support ssl certs
+    run_dict['cert'] = run_dict.get('cert', '')
     if key_path:
+        rel_key = run_dict['key']
+        rel_cert = run_dict['cert']
         run_dict['key'] = key_path
-        run_dict['auth_opt'] = get_ssh_opt(True, run_dict)
+        run_dict['cert'] = key_path.replace(rel_key, rel_cert)
+        run_dict['ssh_auth'] = get_ssh_auth(True, run_dict)
+        run_dict['ssl_auth'] = get_ssl_auth(True, run_dict)
     else:
         # Extract encrypted password
         password_digest = run_dict.get('password_digest', '')
@@ -398,7 +447,8 @@ def run_transfer(transfer_dict, client_id, configuration):
                                             payload)
             _, _, password = unscrambled.split(":")
             run_dict['password'] = password
-        run_dict['auth_opt'] = get_ssh_opt(False, run_dict)
+        run_dict['ssh_auth'] = get_ssh_auth(False, run_dict)
+        run_dict['ssl_auth'] = get_ssl_auth(False, run_dict)
     run_dict['rel_dst'] = rel_dst
     run_dict['dst'] = dst_path
     run_dict['lftp_buf_size'] = run_dict.get('lftp_buf_size',
