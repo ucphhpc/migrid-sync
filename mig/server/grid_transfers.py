@@ -63,6 +63,11 @@ all_workers = {}
 
 # Default 1M lftp buffer size - experimentally determined for good throughput
 lftp_buffer_bytes = 1048576
+# Default 64k sftp buffer size - experimentally determined for good throughput
+# Please note that lftp runs into a bug if requesting more than 64k for sftp
+# e.g. something like "mirror: basic: file size decreased during transfer"
+# and the resulting file turning up corrupted.
+sftp_buffer_bytes = 65536
 
 
 def get_status_dir(configuration, client_id, transfer_id=''):
@@ -253,7 +258,7 @@ def get_cmd_map():
     # max number of packets in transit from 16 to 32 for high-latency gains.
     sftp_buf_str = "set sftp:max-packets-in-flight 32"
     for target in ("read", "write"):
-        sftp_buf_str += ";set sftp:size-%s %%(lftp_buf_size)d" % target
+        sftp_buf_str += ";set sftp:size-%s %%(sftp_buf_size)d" % target
     # TODO: switch to GET/PUT rather than PROPFIND/MKCOL for basic HTTP(S)?
     #http_tweak_str = "set http:use-propfind off;set http:use-mkcol off"
     http_tweak_str = ""
@@ -453,6 +458,8 @@ def run_transfer(transfer_dict, client_id, configuration):
     run_dict['dst'] = dst_path
     run_dict['lftp_buf_size'] = run_dict.get('lftp_buf_size',
                                              lftp_buffer_bytes)
+    run_dict['sftp_buf_size'] = run_dict.get('sftp_buf_size',
+                                             sftp_buffer_bytes)
     status = 0
     for (src, rel_src, target_helper) in zip(src_path_list, rel_src_list,
                                              target_helper_list):
