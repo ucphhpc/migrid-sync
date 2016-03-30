@@ -33,8 +33,9 @@ tools and a Python interpreter with a few external modules.
 -Python 2.6 or later but not 3.x (https://www.python.org/)
 
 Optional WSGI interface, OpenID login, instant messaging service,
-efficient file access services, event handler service, spell checking,
-Wiki, SCM and tracker VGrid features require: 
+efficient file access services, event handler service, background data
+transfer service, spell checking, Wiki, SCM and tracker VGrid features
+require:
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
 -Apache proxy FCGI module (https://github.com/ceph/mod-proxy-fcgi)
 -Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
@@ -45,6 +46,8 @@ Wiki, SCM and tracker VGrid features require:
 -Python OpenSSL module (https://pypi.python.org/pypi/pyOpenSSL)
 -Python WSGI WebDAV module (http://wsgidav.readthedocs.org)
 -Python watchdog module (https://pypi.python.org/pypi/watchdog)
+-LFTP (http://lftp.yar.ru/)
+-RSync (https://rsync.samba.org/)
 -Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
@@ -57,7 +60,8 @@ sudo aptitude install apache2 openssh-client python python-pip \
 
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
-     python-irclib python-paramiko python-enchant mercurial trac trac-mercurial
+     python-irclib python-paramiko python-enchant mercurial trac \
+     trac-mercurial lftp rsync
 
 Apache comes with a number of modules included, so it is usually not
 necessary to explicitly install e.g. mod-ssl, mod-proxy, mod-rewrite and
@@ -128,6 +132,17 @@ The optional grid_events daemon requires the watchdog module which may
 be installed with:
 sudo pip install watchdog
 
+The optional grid_transfers daemon requires lftp and rsync clients to
+handle the background data transfers. Most Linux distributions come with
+versions that can be used right out of the box. However, the lftp 4.4.8
+in CentOS/RHEL 7 appears to have an annoying bug, so that it loops
+forever instead of just failing if the username/password is
+incorrect. The 4.4.13 version available in Ubuntu LTS (14.04) and 4.6 on
+Debian Stable don't have this issue. Luckily the upstream project
+provides RPM's directly installable with yum as in:
+sudo yum install http://lftp.yar.ru/ftp/binaries/lftp-4.6.5-1.x86_64.rpm
+The only downside is that it then requires manual updates until the
+distro catches up.
 
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop

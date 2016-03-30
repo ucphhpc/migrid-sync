@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# vgridforum - vgrid forum front end
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# vgridworkflows - vgrid workflows front end
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
