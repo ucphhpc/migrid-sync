@@ -137,9 +137,10 @@ handle the background data transfers. Most Linux distributions come with
 versions that can be used right out of the box. However, the lftp 4.4.8
 in CentOS/RHEL 7 appears to have an annoying bug, so that it loops
 forever instead of just failing if the username/password is
-incorrect. The 4.4.13 version available in Ubuntu LTS (14.04) and 4.6 on
-Debian Stable don't have this issue. Luckily the upstream project
-provides RPM's directly installable with yum as in:
+incorrect. From the changelog it sounds like it was fixed in version
+4.4.12, and neither the 4.4.13 version available in Ubuntu LTS (14.04)
+nor the 4.6 version on Debian stable exhibit this issue. Luckily the
+upstream project provides RPM's directly installable with yum as in:
 sudo yum install http://lftp.yar.ru/ftp/binaries/lftp-4.6.5-1.x86_64.rpm
 The only downside is that it then requires manual updates until the
 distro catches up.

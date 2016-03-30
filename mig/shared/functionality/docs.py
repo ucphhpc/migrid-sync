@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # docs - online documentation generator
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -332,6 +332,20 @@ Web interfaces are served with the Apache web server:"""})
                                'class': 'urllink',
                                'title': 'pyftpdlib Home Page',
                                'text': 'pyftpdlib FTP(S) Server Module (MIT)'})
+    if configuration.site_enable_transfers:
+        output_objects.append({'object_type': 'text', 'text' :
+                               "Background data transfers use LFTP / RSync:"})
+        output_objects.append({'object_type': 'link', 
+                               'destination': 'http://lftp.yar.ru/',
+                               'class': 'urllink',
+                               'title': 'LFTP Home Page',
+                               'text': 'LFTP file transfer program (GPL)'})
+        output_objects.append({'object_type': 'link', 
+                               'destination': 'https://rsync.samba.org/',
+                               'class': 'urllink',
+                               'title': 'RSync Home Page',
+                               'text':
+                               'RSync incremental file transfer client (GPL)'})
     if password_dep:
         output_objects.append({'object_type': 'text', 'text' : """
 The optional password authentication support in SFTP/DAVS/FTPS servers relies
