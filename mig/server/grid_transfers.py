@@ -254,6 +254,7 @@ def get_rsync_target(is_import, is_file):
 def get_cmd_map():
     """Get a lookup map of commands for the transfers"""
     # Helpers for lftp and rsync
+    # NOTE: net:socket-buffer tuning seems to have no significant effect
     lftp_core_opts = "set xfer:buffer-size %(lftp_buf_size)d"
     lftp_core_opts += ";set dns:fatal-timeout 60;set dns:max-retries 3"
     lftp_core_opts += ";set cmd:fail-exit on;set bmk:save-passwords off"
@@ -370,6 +371,7 @@ def run_transfer(transfer_dict, client_id, configuration):
         raise ValueError('unsupported protocol: %s' % protocol)
 
     client_dir = client_id_dir(client_id)
+    makedirs_rec(status_dir, configuration)
     
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
