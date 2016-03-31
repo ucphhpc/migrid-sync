@@ -168,8 +168,7 @@ def load_user_keys(configuration, client_id):
         logger.error("could not find user keys in %s: %s" % (keys_dir, exc))
         return user_keys
     for key_filename in hits:
-        if not key_filename.startswith('id_') or \
-               key_filename.endswith('.pub'):
+        if key_filename.endswith('.pub'):
             continue
         pubkey_path = os.path.join(keys_dir, key_filename + '.pub')
         pubkey = ''

@@ -110,6 +110,8 @@ def read_tail(path, lines, logger):
     out_lines = []
     try:
         logger.debug("loading %d lines from %s" % (lines, path))
+        if not os.path.exists(path):
+            return out_lines
         tail_fd = open(path, 'r')
         tail_fd.seek(0, os.SEEK_END)
         size = tail_fd.tell()
