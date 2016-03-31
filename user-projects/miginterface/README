@@ -1,5 +1,5 @@
 The Python MiG Interface Module
-Last updated 02-03-2011 11:35
+Last updated 31-03-2016 11:34
 
   1. Introduction
   2. Motivation
@@ -101,7 +101,7 @@ descriptions available in the code.
 	Example : pydoc miginterface.py
 
 Or go to 
-http://code.google.com/p/migrid/wiki/MigInterfaceModule
+https://sourceforge.net/p/migrid/wiki/MigInterfaceModule/
 
 Benjamin Sedoc	benja@diku.dk,
 MiG developer

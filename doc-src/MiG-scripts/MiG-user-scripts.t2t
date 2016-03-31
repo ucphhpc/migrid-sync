@@ -39,7 +39,7 @@ basic usage.
 = Prerequisites =
 In order to access MiG you generally need a MiG key/certificate
 pair. Please refer to our 
-[Getting Started http://code.google.com/p/migrid/wiki/GettingStarted]
+[Getting Started https://sourceforge.net/p/migrid/wiki/GettingStarted/]
 page if you haven't already got one.
 
 The user scripts rely heavily on [curl http://curl.haxx.se] for communication
@@ -83,7 +83,7 @@ Unpack the archive and you're ready to start using the scripts.
 For Debian and Ubuntu users the scripts are also available as native
 packages. 
 It is recommended to download and import the
-[software signing key https://migrid.googlecode.com/files/mig-pubring.gpg] first
+[software signing key http://downloads.sourceforge.net/project/migrid/mig-pubring.gpg] first
 to avoid 'untrusted source' warnings:
 ```
 cat mig-pubring.gpg  | sudo apt-key add -
@@ -129,7 +129,7 @@ cacertfile /home/LOGIN/.mig/cacert.pem
 ```
 You should have received a copy of the CA certificate, cacert.pem, along
 with your user certificate. You can download the 
-[CA certificate http://migrid.googlecode.com/files/cacert.pem] from the
+[CA certificate http://downloads.sourceforge.net/project/migrid/cacert.pem] from the
 project page downloads otherwise. 
 
 
@@ -557,7 +557,7 @@ technical specifications.
 
 You can find more user friendly tutorials and examples on the
 official site support pages:
-http://code.google.com/p/migrid/wiki/FrontPage
+https://sourceforge.net/p/migrid/wiki/Home/
 
 ___DOCUMENTATION TOPICS:___
 
