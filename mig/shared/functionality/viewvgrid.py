@@ -35,6 +35,8 @@ from shared.vgrid import vgrid_owners, vgrid_members, vgrid_resources, \
      vgrid_settings, vgrid_is_owner, vgrid_is_owner_or_member
 from shared.vgridaccess import user_allowed_vgrids
 
+_valid_bool = [("yes", True), ("no", False)]
+
 
 def signature():
     """Signature of the main function"""
@@ -52,6 +54,7 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
         'vgrid_name': vgrid_name,
         'fields': [],
         }
+    bool_map = {True: "Yes", False: "No"}
     keyword_map = {keyword_owners: 'Owners',
                    keyword_members: 'Owners and members',
                    keyword_all: 'Public'}
@@ -65,8 +68,8 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     member_visibility = keyword_map[visible_members]
     visible_resources = vgrid_dict.get('visible_resources', keyword_owners)
     resource_visibility = keyword_map[visible_resources]
-    read_only = vgrid_dict.get('read_only', False)
-    hidden = vgrid_dict.get('hidden', False)
+    read_only = bool_map[vgrid_dict.get('read_only', False)]
+    hidden = bool_map[vgrid_dict.get('hidden', False)]
     vgrid_item['fields'].append(('Description', description))
     vgrid_item['fields'].append(('Owners', '\n'.join(owners)))
     vgrid_item['fields'].append(('Members', '\n'.join(members)))
@@ -74,7 +77,8 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     vgrid_item['fields'].append(('Owner visibility', owner_visibility))
     vgrid_item['fields'].append(('Member visibility', member_visibility))
     vgrid_item['fields'].append(('Resource visibility', resource_visibility))
-    vgrid_item['fields'].append(('Read-only', read_only))
+    # TODO: implement and enable read-only support.
+    #vgrid_item['fields'].append(('Read-only', read_only))
     vgrid_item['fields'].append(('Hidden', hidden))
     return vgrid_item
 

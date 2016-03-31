@@ -392,6 +392,12 @@ $(document).ready(function() {
 ''' % description
     settings_form += '<br/>'
 
+    settings_form += '''<p>All visibility options below can be set to owners,
+members or everyone and by default only owners can see participation. In effect
+setting visibility to <em>members</em> means that owners and members can see
+the corresponding participants. Similarly setting a visibility flag to
+<em>everyone</em> means that all %s users can see the participants.</p>
+''' % configuration.short_title
     visibility_options = [("Owners are visible to", "visible_owners"),
                           ("Members are visible to", "visible_members"),
                           ("Resources are visible to", "visible_resources")]
