@@ -32,6 +32,7 @@ import os
 import time
 
 from shared.defaults import datatransfers_filename, user_keys_dir
+from shared.fileio import makedirs_rec
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.serial import load, dump
 from shared.useradm import client_id_dir
@@ -186,9 +187,11 @@ def load_user_keys(configuration, client_id):
 def generate_user_key(configuration, client_id, key_filename, truncate=False):
     """Generate a new key and save it as key_filename in settings dir"""
     logger = configuration.logger
-    key_path = os.path.join(configuration.user_settings,
+    key_dir = os.path.join(configuration.user_settings,
                             client_id_dir(client_id),
-                            user_keys_dir, key_filename)
+                            user_keys_dir)
+    key_path = os.path.join(key_dir, key_filename)
+    makedirs_rec(key_dir, configuration)
     if os.path.exists(key_path) and not truncate:
         logger.error("user key %s already exists!" % key_path)
         return (False, 'user key %s already exists!' % key_filename)
