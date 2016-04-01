@@ -82,7 +82,7 @@ def __transfer_log(configuration, client_id, msg, level='info'):
     status_dir = get_status_dir(configuration, client_id)
     log_path = os.path.join(status_dir, transfers_log_name)
     makedirs_rec(os.path.dirname(log_path), configuration)
-    transfers_logger = logging.getLogger('transfers')
+    transfers_logger = logging.getLogger('background-transfer')
     transfers_logger.setLevel(logging.INFO)
     handler = logging.handlers.RotatingFileHandler(
         log_path, maxBytes=transfers_log_size, backupCount=transfers_log_cnt-1)
@@ -116,7 +116,6 @@ def transfer_result(configuration, client_id, transfer_dict, exit_code,
     """Update status file from transfer_dict with the result from transfer
     that reurned exit_code, out_msg and err_msg.
     """
-    logger = configuration.logger
     time_stamp = datetime.datetime.now().ctime()
     transfer_id = transfer_dict['transfer_id']
     rel_src = transfer_dict.get("rel_src", False)
@@ -231,7 +230,7 @@ def get_rsync_target(is_import, is_file):
     suitable for eventually plugging into the command list from command map.
     """
     # IMPORTANT: follow symlinks and don't preserve device files
-    rsync_flags = '-Lptgo'
+    rsync_flags = '-LptgoS'
     if not is_file:
         rsync_flags += 'r'
     exclude_list = get_exclude_list('--exclude', '=', False)
