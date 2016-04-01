@@ -134,6 +134,11 @@ datatransfer = {
     'optional': ['deltransferlink', 'viewtransferlink', 'redotransferlink',
                  'exit_code', 'flags'],
     }
+transferkey = {
+    'object_type': 'transferkey',
+    'required': ['key_id', 'created', 'type', 'bits', 'public_key'],
+    'optional': ['delkeylink'],
+    }
 certreq = {'object_type': 'certreq', 'required': [
     'id',
     'full_name',
@@ -197,6 +202,9 @@ frozenarchives = {'object_type': 'frozenarchives',
 datatransfers = {'object_type': 'datatransfers',
                   'required_list': [('datatransfers', 'datatransfer'
                   )]}
+transferkeys = {'object_type': 'transferkeys',
+                'required_list': [('transferkeys', 'transferkey'
+                  )]}
 certreqs = {'object_type': 'certreqs', 'required_list': [('certreqs',
             'certreq')]}
 changedstatusjobs = {'object_type': 'changedstatusjobs',
@@ -242,7 +250,8 @@ user_stats = {'object_type': 'user_stats', 'required': ['disk', 'jobs',
               'resources', 'certificate'], 'optional': []}
 openid_status = {'object_type': 'openid_status', 'required': ['server',
                  'status', 'error'], 'optional': []}
-table_pager = {'object_type': 'table_pager', 'required': ['entry_name']}
+table_pager = {'object_type': 'table_pager', 'required': ['entry_name'],
+               'optional': ['id_prefix', 'default_entries']}
 object_types = {'object_type': 'object_types',
                 'required_list': [('object_types', 'objects')]}
 image_meta = {'object_type': 'image_meta', 'required': [
@@ -320,6 +329,8 @@ valid_types_list = [
     uploadfiles,
     datatransfer,
     datatransfers,
+    transferkey,
+    transferkeys,
     certreq,
     certreqs,
     file_not_found,

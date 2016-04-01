@@ -139,9 +139,13 @@ table.people {
 table.user td {
   padding: 5px;
 }
-table.transfers {
+table.datatransfers {
   padding: 2px;
 }
+table.transferkeys {
+  padding: 2px;
+}
+
 
 table.forum {
   padding: 2px;
@@ -622,6 +626,14 @@ table th.icon {
 .centerall {
   margin: 0;
   text-align: center;
+}
+
+.publickey {
+  width: 99%;
+}
+.transferkeys .publickey {
+  margin: 0;
+  float: right;
 }
 
 .title {

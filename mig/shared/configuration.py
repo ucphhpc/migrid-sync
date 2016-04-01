@@ -1137,6 +1137,18 @@ class Configuration:
                                                            'enable_transfers')
         else:
             self.site_enable_transfers = False
+        if config.has_option('SITE', 'transfers_from'):
+            transfers_from_str = config.get('SITE', 'transfers_from')
+            unique_transfers_from = []
+            for i in transfers_from_str.split(' '):
+                if i and not i in unique_transfers_from:
+                    unique_transfers_from.append(i)
+            self.site_transfers_from = unique_transfers_from
+        else:
+            self.site_transfers_from = []
+        # Fall back to server_fqdn if not set or no valid entries
+        if not self.site_transfers_from:
+            self.site_transfers_from = [self.server_fqdn]
         # Fall back to a static 'random' salt string since we need it to
         # remain constant
         static_rand = 'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'

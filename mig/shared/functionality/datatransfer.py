@@ -31,14 +31,15 @@ from binascii import hexlify
 import glob
 import os
 import datetime
+import socket
 import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.transferfunctions import build_transferitem_object, \
-     load_data_transfers, create_data_transfer, delete_data_transfer, \
-     load_user_keys, generate_user_key
+     build_keyitem_object, load_data_transfers, create_data_transfer, \
+     delete_data_transfer, load_user_keys, generate_user_key, delete_user_key
 from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
      transfers_log_name
 from shared.fileio import unpickle, pickle, read_tail
@@ -57,7 +58,7 @@ transfer_actions = ['import', 'export', 'deltransfer', 'redotransfer']
 #address and creds
 #shuffling_actions = ['move', 'copy', 'unpack', 'pack', 'remove']
 shuffling_actions = []
-key_actions = ['generatekey']
+key_actions = ['generatekey', 'delkey']
 post_actions = transfer_actions + shuffling_actions + key_actions
 valid_actions = get_actions + post_actions
 # TODO: implement scp in backend and enable here?
@@ -244,19 +245,29 @@ def main(client_id, user_arguments_dict):
 
         /* setup table with tablesorter initially sorted by 0 (id) */
         var sortOrder = [[0,0]];
-        $("#datatransfertable").tablesorter({widgets: ["zebra", "saveSort"],
+        $("#datatransferstable").tablesorter({widgets: ["zebra", "saveSort"],
                                         sortList:sortOrder
                                         })
-                               .tablesorterPager({ container: $("#pager"),
+                               .tablesorterPager({ container: $("#datatransfers_pager"),
+                                        size: %s
+                                        });
+
+        /* setup table with tablesorter initially sorted by 0 (id) */
+        var sortOrder = [[0,0]];
+        $("#transferkeystable").tablesorter({widgets: ["zebra", "saveSort"],
+                                        sortList:sortOrder
+                                        })
+                               .tablesorterPager({ container: $("#transferkeys_pager"),
                                         size: %s
                                         });
 
           $(".datatransfer-tabs").tabs();
           $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
-          $("#pagerrefresh").click(function() { location.reload(); });
+          $("#datatransfers_pagerrefresh").click(function() { location.reload(); });
+          $("#transferkeys_pagerrefresh").click(function() { location.reload(); });
     });
 </script>
-''' % default_pager_entries
+''' % (default_pager_entries, default_pager_entries)
     output_objects.append({'object_type': 'header', 'text'
                            : 'Manage background data transfers'})
 
@@ -294,6 +305,21 @@ Please contact the Grid admins %s if you think they should be enabled.
     (load_status, transfer_map) = load_data_transfers(configuration, client_id)
     if not load_status:
         transfer_map = {}
+
+    restrict_list = []
+    for fqdn in configuration.site_transfers_from:
+        restrict_list += [fqdn, socket.gethostbyname(fqdn)]
+    restrict_str = 'from="%s",no-pty,' % ','.join(restrict_list)
+    restrict_str += 'no-port-forwarding,no-agent-forwarding,no-X11-forwarding'
+    restrict_template = '''
+As usual it is a good security measure to prepend a <em>from</em> restriction
+when you know the key will only be used from a single location.<br/>
+In this case the keys will only ever be used from %s and will not need much
+else, so the public key can inserted in authorized_keys as:<br/>
+<p>
+<textarea class="publickey" rows="5" readonly="readonly">%s %%s</textarea>
+</p>
+''' % (configuration.short_title, restrict_str)
 
     if action in get_actions:
         datatransfers = []
@@ -340,8 +366,8 @@ Please contact the Grid admins %s if you think they should be enabled.
         if available_keys:
             key_note = ''
         else:
-            key_note = 'No keys available - you need to generate/import below'
-
+            key_note = '''No keys available - you can add a key for use in
+transfers below.'''
 
         # Make page with manage transfers tab and manage keys tab
 
@@ -349,7 +375,7 @@ Please contact the Grid admins %s if you think they should be enabled.
     <div id="wrap-tabs" class="datatransfer-tabs">
 <ul>
 <li><a href="#transfer-tab">Manage Data Transfers</a></li>
-<li><a href="#keys-tab">Manage Keys</a></li>
+<li><a href="#keys-tab">Manage Transfer Keys</a></li>
 </ul>
 '''})
 
@@ -362,6 +388,7 @@ Please contact the Grid admins %s if you think they should be enabled.
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'External Data Transfers'})
         output_objects.append({'object_type': 'table_pager',
+                               'id_prefix': 'datatransfers_',
                                'entry_name': 'transfers',
                                'default_entries': default_pager_entries})
         output_objects.append({'object_type': 'datatransfers', 'datatransfers'
@@ -436,9 +463,9 @@ Key:<br />
 '''
         # select first in list
         selected = 'selected'
-        for (name, pubkey) in available_keys:
+        for key_dict in available_keys:
             transfer_html += '<option %s value="%s">%s</option>' % \
-                             (selected, name, name)
+                             (selected, key_dict['key_id'], key_dict['key_id'])
             selected = ''
         transfer_html += '''
 </select> %s
@@ -493,19 +520,35 @@ Notify on completion (e.g. email address):<br />
 <form method="post" action="datatransfer.py">
 <table class="managetransferkeys">
 <tr><td>
-You can manage your data transfer keys here.
-</td></tr>
-<tr><td>
 '''
-        for (name, pubkey) in available_keys:
-            key_html += '''
-Public key for %s:<br/>
-<textarea rows=2 cols=200 readonly="readonly">%s</textarea>
-<br/>''' % (name, pubkey)     
+        transferkeys = []
+        for key_dict in available_keys:
+            key_item = build_keyitem_object(configuration, key_dict)
+            key_id = key_item['key_id']
+            js_name = 'delete%s' % hexlify(key_id)
+            helper = html_post_helper(js_name, 'datatransfer.py',
+                                      {'key_id': key_id,
+                                    'action': 'delkey'})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            key_item['delkeylink'] = {
+                'object_type': 'link', 'destination':
+                "javascript: confirmDialog(%s, '%s');" % \
+                (js_name, 'Really remove %s?' % key_id),
+                'class': 'removelink', 'title': 'Remove %s' % \
+                key_id, 'text': ''}
+            transferkeys.append(key_item)
 
+        output_objects.append({'object_type': 'table_pager',
+                               'id_prefix': 'transferkeys_',
+                               'entry_name': 'keys', 
+                               'default_entries': default_pager_entries})
+        output_objects.append({'object_type': 'transferkeys', 'transferkeys'
+                               : transferkeys})
+        
         key_html += '''
 Please copy the public key to your ~/.ssh/authorized_keys file on systems where
-you want to login with the corresponding key.
+you want to login with the corresponding key.<br/>
+%s
 </td></tr>
 <tr><td>
 Select a name below to create a new key for use in future transfers. The key is
@@ -521,7 +564,7 @@ Key name:<br/>
 </td></tr>
 </table>
 </form>
-''' % configuration.short_title
+''' % (restrict_template % 'ssh-rsa AAAAB3NzaC...', configuration.short_title)
         output_objects.append({'object_type': 'html_form', 'text'
                               : key_html})
         output_objects.append({'object_type': 'html_form', 'text':  '''
@@ -535,7 +578,6 @@ Key name:<br/>
     elif action in transfer_actions:
         transfer_dict = transfer_map.get(transfer_id, {})
         if action == 'deltransfer':
-            action_type = 'edit'
             if transfer_dict is None:
                 output_objects.append(
                     {'object_type': 'error_text',
@@ -546,7 +588,6 @@ Key name:<br/>
                                                     transfer_map)
             desc = "delete"
         elif action == 'redotransfer':
-            action_type = 'edit'
             if transfer_dict is None:
                 output_objects.append(
                     {'object_type': 'error_text',
@@ -559,7 +600,6 @@ Key name:<br/>
                                                     transfer_map)
             desc = "reschedule"
         else:
-            action_type = 'transfer'
             if not fqdn:
                 output_objects.append(
                     {'object_type': 'error_text', 'text'
@@ -624,35 +664,60 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                                : '%sd transfer request %s.' % (desc.title(),
                                                            transfer_id)
                                })
-        output_objects.append({
-            'object_type': 'link',
-            'destination': "fileman.py?path=transfer_output/%s/" % transfer_id,
-            'title': 'Transfer status and output',
-            'text': 'Transfer status and output folder'})
-        output_objects.append({'object_type': 'text', 'text': '''
-Please note that the status folder gets created when the transfer starts, so it
-may not be available yet.
+        if action != 'deltransfer':
+            output_objects.append({
+                'object_type': 'link',
+                'destination': "fileman.py?path=transfer_output/%s/" % transfer_id,
+                'title': 'Transfer status and output',
+                'text': 'Transfer status and output folder'})
+            output_objects.append({'object_type': 'text', 'text': '''
+Please note that the status files only appear after the transfer starts, so it
+may be empty now.
 '''})
     elif action in key_actions:
-        (gen_status, pub) = generate_user_key(configuration, client_id, key)
-        if gen_status:
-            output_objects.append({'object_type': 'html_form', 'text': '''
+        if action == 'generatekey':
+            (gen_status, pub) = generate_user_key(configuration, client_id, key)
+            if gen_status:
+                output_objects.append({'object_type': 'html_form', 'text': '''
 Generated new key with name %s and associated public key:<br/>
-<textarea rows=2 cols=200 readonly="readonly">%s</textarea>
+<textarea class="publickey" rows="5" readonly="readonly">%s</textarea>
 <p>
-Please copy it to your ~/.ssh/authorized_keys file on systems where you want to
-login with this key.
+Please copy it to your ~/.ssh/authorized_keys file on the host(s) where you
+want to use this key for background transfer login.<br/>
+%s
 </p>
-''' % (key, pub)})
-        else:
-            output_objects.append({'object_type': 'error_text', 'text': '''
+''' % (key, pub, restrict_template % pub)})
+            else:
+                output_objects.append({'object_type': 'error_text', 'text': '''
 Key generation for name %s failed with error: %s''' % (key, pub)})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+                return (output_objects, returnvalues.CLIENT_ERROR)
+        elif action == 'delkey':
+            pubkey = '[unknown]'
+            available_keys = load_user_keys(configuration, client_id)
+            for key_dict in available_keys:
+                if key_dict['key_id'] == key:
+                    pubkey = key_dict.get('public_key', pubkey)
+            (del_status, msg) = delete_user_key(configuration, client_id, key)
+            if del_status:
+                output_objects.append({'object_type': 'html_form', 'text': '''
+<p>
+Deleted the key "%s" and the associated public key:<br/>
+</p>
+<textarea class="publickey" rows="5" readonly="readonly">%s</textarea>
+<p>
+You will no longer be able to use it in your data transfers and can safely
+remove the public key from your ~/.ssh/authorized_keys file on any hosts where
+you may have previously added it.
+</p>
+''' % (key, pubkey)})
+            else:
+                output_objects.append({'object_type': 'error_text', 'text': '''
+Key removal for name %s failed with error: %s''' % (key, msg)})
+                return (output_objects, returnvalues.CLIENT_ERROR)
     else:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Invalid data transfer action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
                 
     output_objects.append({'object_type': 'link',
                            'destination': 'datatransfer.py',

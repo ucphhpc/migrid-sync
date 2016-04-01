@@ -44,15 +44,15 @@ import threading
 from shared.fileio import makedirs_rec, pickle
 from shared.conf import get_configuration_object
 from shared.defaults import datatransfers_filename, transfers_log_name, \
-     transfers_log_size, transfers_log_cnt, transfer_output_dir, \
-     user_keys_dir, _user_invisible_paths
+     transfers_log_size, transfers_log_cnt, user_keys_dir, \
+     _user_invisible_paths
 from shared.logger import daemon_logger
 from shared.notification import notify_user_thread
 from shared.pwhash import unscramble_digest
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.useradm import client_dir_id, client_id_dir
 from shared.transferfunctions import blind_pw, load_data_transfers, \
-     modify_data_transfers
+     modify_data_transfers, get_status_dir
 from shared.validstring import valid_user_path
 
 # Global transfers dictionary with requests for all users
@@ -76,16 +76,6 @@ lftp_buffer_bytes = 131072
 # and the resulting file turning up corrupted.
 lftp_sftp_block_bytes = 65536
 
-
-def get_status_dir(configuration, client_id, transfer_id=''):
-    """Lookup the status directory for transfers on behalf of client_id.
-    The optional transfer_id is used to get the explicit status dir for that
-    particular transfer rather than the parent status directory.
-    This is used for writing the global transfer log as well as individual
-    status, stdout, stderr and possibly transfer.log files for the transfers.
-    """
-    return os.path.join(configuration.user_home, client_id_dir(client_id),
-                        transfer_output_dir, transfer_id).rstrip(os.sep)
 
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""

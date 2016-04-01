@@ -1212,7 +1212,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         elif i['object_type'] == 'datatransfers':
             datatransfers = i['datatransfers']
             lines.append('''
-<table class="datatransfers columnsort" id="datatransfertable">
+<table class="datatransfers columnsort" id="datatransferstable">
 <thead class="title">
     <tr>
         <th>ID</th>
@@ -1224,6 +1224,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         <th>Login</th>
         <th>Source(s)</th>
         <th>Destination</th>
+        <th>Created</th>
         <th>Status</th>
     </tr>
 </thead>
@@ -1249,14 +1250,46 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 lines.append('''
 <tr>
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
-<td>%s</td><td>%s</td><td>
+<td>%s</td><td>%s</td><td>%s</td><td>
 <!-- use nested table to distribute status and icons consistenly -->
 <table style="width: 100%%;"><tr><td style="min-width: 60%%;">%s</td><td>%s</td><td>%s</td></tr></table>
 </tr>''' % (single_transfer['transfer_id'], dellink_html,
             single_transfer['action'], single_transfer['protocol'],
             single_transfer['fqdn'], single_transfer['port'], login,
             ', '.join(single_transfer['src']), single_transfer['dst'],
-            single_transfer['status'], viewlink, redolink_html))
+            single_transfer['created'], single_transfer['status'], viewlink,
+            redolink_html))
+            lines.append('''
+</tbody>
+</table>''')
+        elif i['object_type'] == 'transferkeys':
+            transferkeys = i['transferkeys']
+            lines.append('''
+<table class="transferkeys columnsort" id="transferkeystable">
+<thead class="title">
+    <tr>
+        <th>ID</th>
+        <th class="icon"><!-- Delete --></th>
+        <th>Created</th>
+        <th>Type</th>
+        <th>Bits</th>
+        <th>Public Key</th>
+    </tr>
+</thead>
+<tbody>
+''')
+            for single_key in transferkeys:
+                dellink = single_key.get('delkeylink', '')
+                dellink_html = ''
+                if dellink:
+                    dellink_html = html_link(dellink)
+                lines.append('''
+<tr>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td style="width: 70%%;">
+<textarea class="publickey" rows="5" readonly="readonly">%s</textarea>
+</tr>''' % (single_key['key_id'], dellink_html,
+            single_key['created'], single_key['type'],
+            single_key['bits'], single_key['public_key']))
             lines.append('''
 </tbody>
 </table>''')
@@ -1304,6 +1337,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 </table>
 <br/>''')
         elif i['object_type'] == 'table_pager':
+            id_prefix = i.get('id_prefix', '')
             page_entries = i.get('page_entries', [5, 10, 20, 25, 40, 50, 80,
                                                   100, 250, 500, 1000])
             default_entries = i.get('default_entries', 20)
@@ -1312,9 +1346,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             toolbar = '''
   <div>
     <div class="toolbar">        
-      <div class="pager" id="pager">
+      <div class="pager" id="%spager">
       <form style="display: inline;" action="">
-'''
+''' % id_prefix
             if i.get('form_prepend', False):
                 toolbar += '%(form_prepend)s' % i
             toolbar += '''            
@@ -1338,11 +1372,11 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 toolbar += '%(form_append)s' % i
             if i.get('refresh_button', True):
                 toolbar += '''
-        <div id="pagerrefresh" style="display: inline;">
+        <div id="%spagerrefresh" style="display: inline;">
             <img alt="refresh" src="/images/icons/arrow_refresh.png"
                 title="Refresh" />
         </div>
-'''
+''' % id_prefix
             toolbar += '''
       </form>
       </div>
