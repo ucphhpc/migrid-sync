@@ -517,9 +517,14 @@ table th.icon {
   font-family: Small Fonts, VT100, Arial, Helvetica;
   font-size: 8px;
   color: #333;
-  padding: 0 8px;
-  float: right;
+  margin-bottom: 2px;
+  text-align: right;
+  width: 100%;
 }
+#exitcode .spacer {
+  padding: 4px;
+}
+
 #bottomspace {
   padding: 10px;
 }

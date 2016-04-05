@@ -479,11 +479,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     status_line = \
         """
     <div id='exitcode'>
-Exit code: %s Description: %s (TIMING_INFO)<br />
+    <span class='spacer'></span>
+    Exit code: %s Description: %s (TIMING_INFO)
+    <span class='spacer'></span>
     </div>
-<br />    
-"""\
-         % (ret_val, ret_msg)
+""" % (ret_val, ret_msg)
     for i in out_obj:
         if i['object_type'] == 'start':
             pass
