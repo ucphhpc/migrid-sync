@@ -330,15 +330,17 @@ def main(client_id, user_arguments_dict):
             settings_list = []
         settings_dict = dict(settings_list)
         request_recipients = settings_dict.get('request_recipients', 42)
+        # We load inherited owners and reverse it to take direct owners first
         (status, owners_list) = vgrid_owners(vgrid_name, configuration,
-                                             recursive=False)
+                                             recursive=True)
         if not status:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'Failed to lookup owners for %s %s - are you sure it exists?'
                 % (vgrid_name, configuration.site_vgrid_label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        target_list = owners_list[:request_recipients]
+        prioritized_list = owners_list[::-1]
+        target_list = prioritized_list[:request_recipients]
 
 
     else:
