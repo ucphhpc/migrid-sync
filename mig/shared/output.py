@@ -1352,11 +1352,11 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             if i.get('form_prepend', False):
                 toolbar += '%(form_prepend)s' % i
             toolbar += '''            
-        <img class="first" alt="first" src="/images/icons/arrow_left.png"/>
-        <img class="prev" alt="prev" src="/images/icons/arrow_left.png"/>
-        <input type="text" class="pagedisplay" size=15 />
-        <img class="next" alt="next" src="/images/icons/arrow_right.png"/>
-        <img class="last" alt="last" src="/images/icons/arrow_right.png"/>
+        <img class="first icon" alt="first" src="/images/icons/arrow_left.png"/>
+        <img class="prev icon" alt="prev" src="/images/icons/arrow_left.png"/>
+        <input class="pagedisplay" type="text" size=15 readonly="readonly" />
+        <img class="next icon" alt="next" src="/images/icons/arrow_right.png"/>
+        <img class="last icon" alt="last" src="/images/icons/arrow_right.png"/>
         <select class="pagesize">
 '''
             for value in page_entries:
@@ -1372,8 +1372,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 toolbar += '%(form_append)s' % i
             if i.get('refresh_button', True):
                 toolbar += '''
-        <div id="%spagerrefresh" style="display: inline;">
-            <img alt="refresh" src="/images/icons/arrow_refresh.png"
+        <div id="%spagerrefresh" class="inline">
+            <img class="refresh icon" alt="refresh" src="/images/icons/arrow_refresh.png"
                 title="Refresh" />
         </div>
 ''' % id_prefix

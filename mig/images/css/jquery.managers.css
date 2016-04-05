@@ -601,7 +601,11 @@ background: url(/images/icons/code.png) left center no-repeat;
     margin: 0;
 }
 
-.cmd { display: inline-block; width: 18px; cursor: pointer; }
+.cmd { 
+    display: inline-block; 
+    width: 18px; 
+    cursor: pointer;
+}
 
 .tablesorter-header { 
     background-image: url('/images/icons/desc.gif'); 
@@ -621,6 +625,33 @@ background: url(/images/icons/code.png) left center no-repeat;
 .tablesorter-headerDesc { 
     background-image: url('/images/icons/desc.gif'); 
     background-color: #999; 
+}
+
+.pager {
+    /*
+    border: 1px solid #000; 
+    border-radius: 4px;
+    */
+    padding: 2px;
+}
+.pager .icon {
+    border: 1px solid #999;
+    border-radius: 4px;
+    height: 16px;
+    padding: 3px;
+    vertical-align: middle;
+}
+.pager .icon:hover {
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+.pager .pagedisplay, .pager .pagesize, .pager .maxjobs, .pager .filterid {
+    vertical-align: middle;
+    font-size: 16px;
+    padding: 0px;
+}
+.pager .inline {
+    display: inline;
 }
 
 /* use similar colors in tabs as in navmenu */
