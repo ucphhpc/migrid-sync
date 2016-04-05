@@ -147,6 +147,12 @@ Please contact the %(site)s team for details about expire policies.
         request_type = args_list[2]
         request_text = args_list[3]
         reply_to = args_list[4]
+        # IMPORTANT: We have to be careful to URLencode exotic chars without
+        # interfering with generate_https_urls. It must go through a var_dict
+        # entry, since putting it directly in URL will result in format string
+        # expansion errors (stray '%' chars).
+        var_dict['enc_target_name'] = quote(target_name)
+        var_dict['enc_reply_to'] = quote(reply_to)
         txt += """This is a message sent on behalf of %s:
 """ % from_id
         if request_type == "plain":
@@ -174,14 +180,14 @@ URL in a browser:
             if request_type.startswith('vgrid'):
                 txt += generate_https_urls(
                     configuration,
-                    '%(auto_base)s/%(auto_bin)s/adminvgrid.py?vgrid_name=' + \
-                    quote(target_name),
+                    '%(auto_base)s/%(auto_bin)s/adminvgrid.py?' + \
+                    'vgrid_name=%(enc_target_name)s',
                     var_dict)
             elif request_type.startswith('resource'):
                 txt += generate_https_urls(
                     configuration,
-                    '%(auto_base)s/%(auto_bin)s/resadmin.py?unique_resource_name=' + \
-                    quote(target_name),
+                    '%(auto_base)s/%(auto_bin)s/resadmin.py?' + \
+                    'unique_resource_name=%(enc_target_name)s',
                     var_dict)
             txt += ' and add %s as %s.\n\n' % (from_id, entity)
         else:
@@ -193,8 +199,7 @@ reply using one of the message links on the profile page for the sender:
 """
         txt += generate_https_urls(
             configuration,
-            '%(auto_base)s/%(auto_bin)s/viewuser.py?cert_id=' + \
-            quote(reply_to),
+            '%(auto_base)s/%(auto_bin)s/viewuser.py?cert_id=%(enc_reply_to)s',
             var_dict)
     elif status == 'TRANSFERCOMPLETE':
         header = '%s background transfer complete' % configuration.short_title
@@ -441,8 +446,12 @@ def notify_user(
                 else:
                     all_dest.append(recipients)
             elif is_valid_email_address(notify_line, logger):
+                logger.info("fall back to valid plain email %s" % notify_line)
                 all_dest.append(notify_line)
-
+            else:
+                logger.warning("No valid mail recipient for %s" % notify_line)
+                continue
+            
             # send mails
 
             for single_dest in all_dest:
@@ -468,6 +477,18 @@ def notify_user(
     # logger.info("notify_user end")
 
 
+def notify_user_wrap(jobdict, args_list, status, logger, statusfile,
+                       configuration):
+    """Wrap the sending of notification messages to user in try/except to
+    catch and log any errors outside the fragile thread context. 
+    """
+    try:
+        notify_user(jobdict, args_list, status, logger, statusfile,
+                    configuration)
+    except Exception, exc:
+        logger.error("notify_user failed: %s" % exc)
+        
+
 def notify_user_thread(
     jobdict,
     args_list,
@@ -481,7 +502,7 @@ def notify_user_thread(
     We still must join thread if we want to assure delivery.
     """
 
-    notify_thread = threading.Thread(target=notify_user, args=(
+    notify_thread = threading.Thread(target=notify_user_wrap, args=(
         jobdict,
         args_list,
         status,
