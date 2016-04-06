@@ -103,6 +103,7 @@ def generate_confs(
     wsgi_procs='10',
     enable_sandboxes='True',
     enable_vmachines='True',
+    enable_sharelinks='True',
     enable_transfers='True',
     enable_freeze='True',
     enable_hsts='',
@@ -169,6 +170,7 @@ def generate_confs(
     user_dict['__WSGI_PROCS__'] = wsgi_procs
     user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
     user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
+    user_dict['__ENABLE_SHARELINKS__'] = enable_sharelinks
     user_dict['__ENABLE_TRANSFERS__'] = enable_transfers
     user_dict['__ENABLE_FREEZE__'] = enable_freeze
     user_dict['__ENABLE_HSTS__'] = enable_hsts
@@ -487,6 +489,7 @@ def create_user(
     wsgi_procs = '5'
     enable_sandboxes = 'True'
     enable_vmachines = 'True'
+    enable_sharelinks = 'True'
     enable_transfers = 'True'
     enable_freeze = 'True'
     enable_hsts = 'False'
@@ -566,6 +569,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         wsgi_procs,
         enable_sandboxes,
         enable_vmachines,
+        enable_sharelinks,
         enable_transfers,
         enable_freeze,
         enable_hsts,
