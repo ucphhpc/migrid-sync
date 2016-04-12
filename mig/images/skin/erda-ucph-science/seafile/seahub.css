@@ -259,3 +259,14 @@ div.op-container img.repo-delete-btn, div.displayed-op a.delete img {
 .hidden-op a:hover {
     background:#679c5b;
 }
+
+/* Hide signup link on login page to reduce unwanted direct signup attempts */
+/* There's no signup link id or class to target, so we rely on the link being
+   last in login form. */
+form.con a:last-child {
+    display: none;
+    /* These are additional disabling suggestions in case users get creative.
+       They do not completely disable link use, but make it harder. */
+    pointer-events: none;
+    cursor: default;
+}
