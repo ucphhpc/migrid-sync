@@ -30,7 +30,9 @@
 Replaces the old pywebdav-based grid_davs daemon with similar functionality,
 but bad performance and limited platform support.
 
-Requires wsgidav module (https://github.com/mar10/wsgidav).
+Requires wsgidav module (https://github.com/mar10/wsgidav) in a recent version
+or with a minor patch (see https://github.com/mar10/wsgidav/issues/29) to allow
+per-user subdir chrooting inside root_dir.
 """
 
 #import logging
@@ -350,41 +352,27 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 class MiGFileResource(FileResource):
     """Hide invisible files from all access.
     All file access starts with object init so it is enough to make sure we
-    refuse any hidden files in the constructor and remap for the chrooting.
+    refuse any hidden files in the constructor.
+    Parent constructor saves environ as self.environ for later use in chroot.
     """
     def __init__(self, path, environ, filePath):
         FileResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
-        self._user_chroot = _user_chroot_path(environ)
 
-        # Replace native _locToFilePath method with our chrooted version
-        
-        def wrapLocToFilePath(path):
-            """Wrap native _locToFilePath method in chrooted version"""
-            return self.provider._chroot_locToFilePath(self._user_chroot, path)
-        self.provider._locToFilePath = wrapLocToFilePath
 
-    
 class MiGFolderResource(FolderResource):
     """Hide invisible files from all access.
     We must override getMemberNames to filter out hidden names and getMember
     to avoid inherited methods like getDescendants from receiving the parent
     unrestricted FileResource and FolderResource objects when doing e.g.
     directory listings.
+    Parent constructor saves environ as self.environ for later use in chroot.
     """
     def __init__(self, path, environ, filePath):
         FolderResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
-        self._user_chroot = _user_chroot_path(environ)
-
-        # Replace native _locToFilePath method with our chrooted version
-        
-        def wrapLocToFilePath(path):
-            """Wrap native _locToFilePathmethod in chrooted version"""
-            return self.provider._chroot_locToFilePath(self._user_chroot, path)
-        self.provider._locToFilePath = wrapLocToFilePath
 
     def getMemberNames(self):
         """Return list of direct collection member names (utf-8 encoded).
@@ -444,7 +432,7 @@ class MiGFolderResource(FolderResource):
         #logger.debug("in getDescendantsWrap for %s" % self)
         res = FolderResource.getDescendants(self, collections, resources,
                                             depthFirst, depth, addSelf)
-        #logger.debug("getDescendantsWrap returning %s" % res)
+        #logger.debug("getDescendants wrap returning %s" % res)
         return res
     
 
@@ -460,6 +448,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         self.daemon_conf = server_conf.daemon_conf
         self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
         self.chmod_exceptions = self.daemon_conf['chmod_exceptions']
+        self.readonly = self.daemon_conf['read_only']
 
     # Use shared daemon fs helper functions
     
@@ -474,16 +463,17 @@ class MiGFilesystemProvider(FilesystemProvider):
         #                                                     reply))
         return reply
 
-    def _locToFilePath(self, path):
-        """Make sure any references to the original helper are caught"""
-        raise RuntimeError("Not allowed!")
-
-    def _chroot_locToFilePath(self, user_chroot, path):
+    # IMPORTANT: we need a recent/patched version of wsgidav for environ arg.
+    # It is required to allow per-user chrooting inside root share folder.
+    def _locToFilePath(self, path, environ=None):
         """Convert resource path to a unicode absolute file path:
-        We already enforced chrooted absolute unicode path on user_chroot so
+        We enforce chrooted absolute unicode path in user_chroot extraction so
         just make sure user_chroot+path is not outside user_chroot when used
         for e.g. creating new files and directories.
         """
+        if environ is None:
+            raise RuntimeError("A recent/patched wsgidav is needed, see code")
+        user_chroot = _user_chroot_path(environ)
         pathInfoParts = path.strip(os.sep).split(os.sep)
         real_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
         try:
@@ -503,9 +493,8 @@ class MiGFilesystemProvider(FilesystemProvider):
         """
 
         self._count_getResourceInst += 1
-        user_chroot = _user_chroot_path(environ)
         try:
-            real_path = self._chroot_locToFilePath(user_chroot, path)
+            real_path = self._locToFilePath(path, environ)
         except RuntimeError, rte:
             logger.warning("getResourceInst: %s : %s" % (path, rte))
             raise DAVError(HTTP_FORBIDDEN)
@@ -619,21 +608,30 @@ def run(configuration):
 
 if __name__ == "__main__":
     configuration = get_configuration_object()
+    loglevel = configuration.loglevel
+    litmus = False
+    readonly = False
     nossl = False
-
-    # Use separate logger - cherrypy hijacks root logger
-
-    logger = daemon_logger("webdavs", configuration.user_davs_log, "info")
-    configuration.logger = logger
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:
-        nossl = bool(sys.argv[1])
+        configuration.user_davs_address = sys.argv[1]
     if sys.argv[2:]:
-        configuration.user_davs_address = sys.argv[2]
-    if sys.argv[3:]:
-        configuration.user_davs_port = int(sys.argv[3])
+        configuration.user_davs_port = int(sys.argv[2])
+    if sys.argv[3:] and sys.argv[3] in ("debug", "info", "warn", "error"):
+        loglevel = sys.argv[3]
+    if sys.argv[4:]:
+        litmus = bool(sys.argv[4])
+    if sys.argv[5:]:
+        readonly = bool(sys.argv[5])
+    if sys.argv[6:]:
+        nossl = bool(sys.argv[6])
         
+    # Use separate logger - cherrypy hijacks root logger
+
+    logger = daemon_logger("webdavs", configuration.user_davs_log, loglevel)
+    configuration.logger = logger
+
     # Web server doesn't allow empty string alias for all interfaces
     if configuration.user_davs_address == '':
         configuration.user_davs_address = '0.0.0.0'
@@ -672,6 +670,7 @@ unless it is available in mig/server/MiGserver.conf
         'root_dir': os.path.abspath(configuration.user_home),
         'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,
+        'read_only': readonly,
         'allow_password': 'password' in configuration.user_davs_auth,
         'allow_digest': 'digest' in configuration.user_davs_auth,
         'allow_publickey': 'publickey' in configuration.user_davs_auth,
@@ -689,7 +688,7 @@ unless it is available in mig/server/MiGserver.conf
         # or
         # ./configure --with-ssl
         # make URL=$HTTPS_URL CREDS="litmus test" check
-        'enable_litmus': False,
+        'enable_litmus': litmus,
         'time_stamp': 0,
         'logger': logger,
         }
