@@ -72,6 +72,8 @@ def build_transferitem_object(configuration, transfer_dict):
                                                         created_asctime),
         }
     transfer_obj.update(blind_pw(transfer_dict))
+    # NOTE: datetime is not json serializable so we remove
+    del transfer_obj['created_timestamp']
     return transfer_obj
 
 def build_keyitem_object(configuration, key_dict):
@@ -106,7 +108,7 @@ def load_data_transfers(configuration, client_id):
     return (True, transfers)
 
 def get_data_transfer(transfer_id, client_id, configuration, transfers=None):
-    """Helper to extract all details for a date transfer. The optional
+    """Helper to extract all details for a data transfer. The optional
     transfers argument can be used to pass an already loaded dictionary of
     saved transfers to avoid reloading.
     """
@@ -177,10 +179,9 @@ def create_data_transfer(transfer_dict, client_id, configuration,
 
 def delete_data_transfer(transfer_id, client_id, configuration,
                          transfers=None):
-    """Delete an existing frozen archive without checking ownership or
-    persistance of frozen archives. The optional transfers argument can be
-    used to pass an already loaded dictionary of
-    saved transfers to avoid reloading.    """
+    """Delete an existing data transfer without checking ownership. The
+    optional transfers argument can be used to pass an already loaded
+    dictionary of saved transfers to avoid reloading.    """
     transfer_dict = {'transfer_id': transfer_id}
     return modify_data_transfers("delete", transfer_dict, client_id,
                                  configuration, transfers)

@@ -174,7 +174,12 @@ def generate_https_urls(configuration, url_template, helper_dict):
     for https_base in locations:
         local_helper['auto_base'] = https_base
         filled_list.append(url_template % local_helper)
-    return '\nor\n'.join(filled_list)
+    url_str = '\nor\n'.join(filled_list)
+    if locations[1:]:
+        url_str += '''
+(The URL depends on whether you authenticate with OpenID or a user certificate:
+use the one that looks most familiar or try them in turn)'''
+    return url_str
 
 
 if __name__ == '__main__':

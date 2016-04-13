@@ -728,3 +728,13 @@ def vgrid_create_allowed(configuration, user_dict):
                                          (user_dict, key, val))
             return False
     return True
+
+def in_vgrid_share(configuration, path):
+    """Checks if path is inside a vgrid share"""
+    abs_path = os.path.abspath(path)
+    for base in (configuration.vgrid_files_home,
+                 configuration.vgrid_private_base,
+                 configuration.vgrid_public_base):
+        if abs_path.startswith(base):
+            return True
+    return False
