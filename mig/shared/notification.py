@@ -153,29 +153,31 @@ Please contact the %(site)s team for details about expire policies.
         # expansion errors (stray '%' chars).
         var_dict['enc_target_name'] = quote(target_name)
         var_dict['enc_reply_to'] = quote(reply_to)
-        txt += """This is a message sent on behalf of %s:
-""" % from_id
         if request_type == "plain":
             header = '%s user message' % configuration.short_title
+            txt += """This is a message sent on behalf of %s:
+""" % from_id
             txt += frame_template % request_text
         elif request_type in accept_mapper.keys():
             kind = accept_mapper[request_type]
-            header = '%s %s accept message' % (configuration.short_title, kind)
+            header = '%s %s admission note' % (configuration.short_title, kind)
+            txt += """This is a %s admission note sent on behalf of %s:
+""" % (kind, from_id)
             txt += frame_template % request_text
         elif request_type in entity_mapper.keys():
             entity = entity_mapper[request_type]
             header = '%s %s request' % (configuration.short_title, request_type)
-            txt += \
-                """This is a %s request from %s who would like to be added to
-'%s'
-""" % (request_type, from_id, target_name)
-            if request_text:
-                txt += '''The following reason was submitted by %s:
+            if not request_text:
+                request_text = '(no reason provided)'
+
+            txt += """This is a %s request sent on behalf of
 %s
-''' % (from_id, request_text)
-            txt += \
-                '''If you want to authorize this request visit the following
-URL in a browser:
+who would like to be added as a %s in %s and included the reason:
+%s
+""" % (request_type, from_id, entity, target_name, request_text)
+                        
+            txt += '''
+If you want to accept the request please visit:
 '''
             if request_type.startswith('vgrid'):
                 txt += generate_https_urls(
@@ -189,7 +191,13 @@ URL in a browser:
                     '%(auto_base)s/%(auto_bin)s/resadmin.py?' + \
                     'unique_resource_name=%(enc_target_name)s',
                     var_dict)
-            txt += ' and add %s as %s.\n\n' % (from_id, entity)
+            txt += ''' and add the %(entity)s.
+I.e. copy the ID "%(from_id)s"
+from here, paste it into the Add %(vgrid_label)s %(entity)s form there and
+click Add %(entity)s.
+
+''' % {'from_id': from_id, 'entity': entity,
+       'vgrid_label': configuration.site_vgrid_label}
         else:
             txt += 'INVALID REQUEST TYPE: %s\n\n' % request_type
 
