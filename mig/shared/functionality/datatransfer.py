@@ -42,13 +42,12 @@ from shared.transferfunctions import build_transferitem_object, \
      delete_data_transfer, load_user_keys, generate_user_key, delete_user_key
 from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
      transfers_log_name
-from shared.fileio import unpickle, pickle, read_tail
+from shared.fileio import read_tail
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.pwhash import make_digest
-from shared.ssh import copy_file_to_resource
 from shared.validstring import valid_user_path
 
 
@@ -279,7 +278,6 @@ Please contact the Grid admins %s if you think they should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
-
     output_objects.append({'object_type': 'html_form',
                            'text':'''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
@@ -288,6 +286,8 @@ Please contact the Grid admins %s if you think they should be enabled.
        style="display:none;"></textarea>
  </div>
 '''                       })
+
+    logger.info('datatransfer %s from %s' % (action, client_id))
 
     if not action in valid_actions:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -307,8 +307,8 @@ Please contact the Grid admins %s if you think they should be enabled.
         transfer_map = {}
 
     restrict_list = []
-    for fqdn in configuration.site_transfers_from:
-        restrict_list += [fqdn, socket.gethostbyname(fqdn)]
+    for from_fqdn in configuration.site_transfers_from:
+        restrict_list += [from_fqdn, socket.gethostbyname(from_fqdn)]
     restrict_str = 'from="%s",no-pty,' % ','.join(restrict_list)
     restrict_str += 'no-port-forwarding,no-agent-forwarding,no-X11-forwarding'
     restrict_template = '''
@@ -326,7 +326,6 @@ else, so the public key can inserted in authorized_keys as:<br/>
         for (saved_id, transfer_dict) in transfer_map.items():
             transfer_item = build_transferitem_object(configuration,
                                                       transfer_dict)
-            saved_id = transfer_item['transfer_id']
             transfer_item['status'] = transfer_item.get('status', 'NEW')            
             transfer_item['viewtransferlink'] = {
                 'object_type': 'link',
@@ -358,6 +357,7 @@ else, so the public key can inserted in authorized_keys as:<br/>
                 'class': 'refreshlink', 'title': 'Reschedule %s' % \
                 saved_id, 'text': ''}
             datatransfers.append(transfer_item)
+        #logger.debug("found datatransfers: %s" % datatransfers)
         log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
                                 "transfer_output", transfers_log_name)
         show_lines = 40
