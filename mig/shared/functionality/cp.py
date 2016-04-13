@@ -154,6 +154,16 @@ def main(client_id, user_arguments_dict):
                 output_objects.append({'object_type': 'file', 'name'
                         : relative_path})
 
+            # Prevent vgrid share copy which would create read-only dot dirs
+
+            if os.path.islink(real_path):
+                output_objects.append({'object_type': 'warning', 'text'
+                        : "You're not allowed to copy entire %s shared dirs!"
+                                       % configuration.site_vgrid_label
+                        })
+                status = returnvalues.CLIENT_ERROR
+                continue
+
             # src must be a file unless recursive is specified
 
             if not recursive(flags) and os.path.isdir(real_path):

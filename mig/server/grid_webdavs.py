@@ -75,6 +75,20 @@ configuration, logger = None, None
 # TODO: can we enforce connection reuse?
 #       dav clients currently hammer the login functions for every operation
 
+def _handle_allowed(request, real_path):
+    """Helper to make sure ordinary handle of a COPY, MOVE or DELETE
+    request is allowed on real_path.
+        
+    As noted in dav_handler.py doc strings raising a DAVError here prevents all
+    further handling of the request with an error to the client.
+
+    NOTE: We prevent any direct operation on symlinks used in vgrid shares.
+    This is in line with other grid_X daemons and the web interface.
+    """
+    if os.path.islink(real_path):
+        logger.warning("refused %s on symlink: %s" % (request, real_path))
+        raise DAVError(HTTP_FORBIDDEN)
+
 def _user_chroot_path(environ):
     """Extract user credentials from environ dicionary to build chroot
     directory path for user.
@@ -360,6 +374,21 @@ class MiGFileResource(FileResource):
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
 
+    def handleCopy(self, destPath, depthInfinity):
+        """Handle a COPY request natively, but with our restrictions"""
+        _handle_allowed("copy", self._filePath)
+        return super(MiGFileResource, self).handleCopy(destPath, depthInfinity)
+        
+    def handleMove(self, destPath):
+        """Handle a MOVE request natively, but with our restrictions"""
+        _handle_allowed("move", self._filePath)
+        return super(MiGFileResource, self).handleMove(destPath)
+        
+    def handleDelete(self):
+        """Handle a DELETE request natively, but with our restrictions"""
+        _handle_allowed("delete", self._filePath)
+        return super(MiGFileResource, self).handleDelete()
+                    
 
 class MiGFolderResource(FolderResource):
     """Hide invisible files from all access.
@@ -374,6 +403,21 @@ class MiGFolderResource(FolderResource):
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
 
+    def handleCopy(self, destPath, depthInfinity):
+        """Handle a COPY request natively, but with our restrictions"""
+        _handle_allowed("copy", self._filePath)
+        return super(MiGFolderResource, self).handleCopy(destPath, depthInfinity)
+        
+    def handleMove(self, destPath):
+        """Handle a MOVE request natively, but with our restrictions"""
+        _handle_allowed("move", self._filePath)
+        return super(MiGFolderResource, self).handleMove(destPath)
+        
+    def handleDelete(self):
+        """Handle a DELETE request natively, but with our restrictions"""
+        _handle_allowed("delete", self._filePath)
+        return super(MiGFolderResource, self).handleDelete()
+                    
     def getMemberNames(self):
         """Return list of direct collection member names (utf-8 encoded).
         
@@ -438,8 +482,8 @@ class MiGFolderResource(FolderResource):
 
 class MiGFilesystemProvider(FilesystemProvider):
     """
-    Overrides the default FilesystemProvider to include chroot support and
-    hidden files like in other MiG file interfaces.
+    Overrides the default FilesystemProvider to include chroot support, symlink
+    restrictions and hidden files like in other MiG file interfaces.
     """
 
     def __init__(self, directory, server_conf, dav_conf):
@@ -470,6 +514,12 @@ class MiGFilesystemProvider(FilesystemProvider):
         We enforce chrooted absolute unicode path in user_chroot extraction so
         just make sure user_chroot+path is not outside user_chroot when used
         for e.g. creating new files and directories.
+        This function is called for all inherited file operations, so it
+        enforces chrooting in general.
+        Please note that we additionally generally refuse hidden file access
+        and specifically employ direct symlink access prevention for a copy,
+        move and delete operations on all MiGFileResource and MiGFolderResource
+        objects.
         """
         if environ is None:
             raise RuntimeError("A recent/patched wsgidav is needed, see code")
