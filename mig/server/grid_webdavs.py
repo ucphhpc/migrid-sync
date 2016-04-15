@@ -625,8 +625,13 @@ def run(configuration):
         "domaincontroller": MiGWsgiDAVDomainController(user_map),
         })
     
-    #print('User list: %s' % config['user_mapping'])
+    # NOTE: Briefly insert dummy user to avoid bogus warning about anon access
+    #       We dynamically add users as they connect so it isn't empty.
+    fake_user = 'nosuchuser-%s' % time.time()
+    config['user_mapping'][dav_domain][fake_user] = None
     app = WsgiDAVApp(config)
+    del config['user_mapping'][dav_domain][fake_user]
+    #print('User list: %s' % config['user_mapping'])
 
     # Find and mangle HTTPAuthenticator in application stack
     
