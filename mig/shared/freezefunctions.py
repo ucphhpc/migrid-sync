@@ -35,8 +35,9 @@ from urllib import quote
 
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
      public_archive_dir, public_archive_index
-from shared.fileio import md5sum_file, write_file, copy_file, copy_rec, move_file, \
-     move_rec, remove_rec, makedirs_rec, make_symlink, make_temp_dir
+from shared.fileio import md5sum_file, sha1sum_file, write_file, copy_file, \
+     copy_rec, move_file, move_rec, remove_rec, makedirs_rec, make_symlink, \
+     make_temp_dir
 from shared.html import get_cgi_html_preamble, get_cgi_html_footer
 from shared.serial import load, dump
 
@@ -79,6 +80,7 @@ def build_freezeitem_object(configuration, freeze_dict):
                 'name': file_item['name'],
                 'size': file_item['size'],
                 'md5sum': file_item['md5sum'],
+                'sha1sum': file_item['sha1sum'],
                 })
     created_timetuple = freeze_dict['CREATED_TIMESTAMP'].timetuple()
     created_asctime = time.asctime(created_timetuple)
@@ -176,10 +178,10 @@ def get_frozen_meta(freeze_id, configuration):
     else:
         return (True, freeze_dict)
 
-def get_frozen_files(freeze_id, configuration, with_checksum=True):
+def get_frozen_files(freeze_id, configuration, checksum='md5'):
     """Helper to list names and stats for files in a frozen archive.
-    The optional with_checksum can be used to disable potentially heavy
-    checksum calculation e.g. when used in freezedb.
+    The optional checksum argument can be used to switch between potentially
+    heavy checksum calculation e.g. when used in freezedb.
     """
     frozen_dir = os.path.join(configuration.freeze_home, freeze_id)
     if not os.path.isdir(frozen_dir):
@@ -191,21 +193,24 @@ def get_frozen_files(freeze_id, configuration, with_checksum=True):
                 continue
             frozen_path = os.path.join(root, name)
             rel_path = os.path.join(root.replace(frozen_dir, '', 1), name)
-            if with_checksum:
+            md5_checksum = sha1_checksum = 'please request explicitly'
+            if checksum == 'md5':
                 # Checksum first 32 MB of files
-                check_sum = md5sum_file(frozen_path)
-            else:
-                check_sum = 'disabled - please view individual archive'
+                md5_checksum = md5sum_file(frozen_path)
+            elif checksum == 'sha1':
+                # Checksum first 32 MB of files
+                sha1_checksum = sha1sum_file(frozen_path)
             files.append({'name': rel_path,
                           'timestamp': os.path.getctime(frozen_path),
                           'size': os.path.getsize(frozen_path),
-                          'md5sum': check_sum})
+                          'md5sum': md5_checksum,
+                          'sha1sum': sha1_checksum})
     return (True, files)
 
-def get_frozen_archive(freeze_id, configuration, with_checksum=True):
+def get_frozen_archive(freeze_id, configuration, checksum='md5'):
     """Helper to extract all details for a frozen archive.
-    The optional with_checksum can be used to disable potentially heavy
-    checksum calculation e.g. when used in freezedb.
+    The optional checksum argument can be used to switch between potentially
+    heavy checksum calculation e.g. when used in freezedb.
     """
     if not is_frozen_archive(freeze_id, configuration):
         return (False, 'no such frozen archive id: %s' % freeze_id)
@@ -213,7 +218,7 @@ def get_frozen_archive(freeze_id, configuration, with_checksum=True):
     if not meta_status:
         return (False, 'failed to extract meta data for %s' % freeze_id)
     (files_status, files_out) = get_frozen_files(freeze_id, configuration,
-                                                 with_checksum)
+                                                 checksum)
     if not files_status:
         return (False, 'failed to extract files for %s' % freeze_id)
     freeze_dict = {'ID': freeze_id, 'FILES': files_out}

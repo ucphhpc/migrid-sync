@@ -43,7 +43,8 @@ def signature():
 
     defaults = {
         'freeze_id': REJECT_UNSET,
-        'flavor': ['freeze']}
+        'flavor': ['freeze'],
+        'checksum': ['']}
     return ['html_form', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -63,7 +64,9 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    freeze_id = accepted['freeze_id'][-1]
     flavor = accepted['flavor'][-1]
+    checksum = accepted['checksum'][-1]
 
     if not flavor in freeze_flavors.keys():
         output_objects.append({'object_type': 'error_text', 'text':
@@ -123,8 +126,6 @@ $(document).ready(function() {
 </script>
 ''' % default_pager_entries
 
-    freeze_id = accepted['freeze_id'][-1]
-
     # NB: the restrictions on freeze_id prevents illegal directory traversal
     
     if not is_frozen_archive(freeze_id, configuration):
@@ -135,7 +136,8 @@ $(document).ready(function() {
                                % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (load_status, freeze_dict) = get_frozen_archive(freeze_id, configuration)
+    (load_status, freeze_dict) = get_frozen_archive(freeze_id, configuration,
+                                                    checksum)
     if not load_status:
         logger.error("%s: load failed for '%s': %s" % \
                      (op_name, freeze_id, freeze_dict))
@@ -156,5 +158,24 @@ $(document).ready(function() {
                            'frozen files', 'default_entries':
                            default_pager_entries, 'refresh_button': False})
     output_objects.append(build_freezeitem_object(configuration, freeze_dict))
+
+    output_objects.append({'object_type': 'html_form', 'text': '<p>'})
+    output_objects.append({
+            'object_type': 'link',
+            'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s" \
+        % (freeze_id, flavor, 'md5'),
+            'class': 'infolink', 
+            'title': 'View archive with MD5 sums', 
+            'text': 'Show with MD5 checksums - may take long'})
+    # TODO: we hide sha1 column and link for now
+    output_objects.append({'object_type': 'html_form', 'text': '</p><p class="hidden">'})
+    output_objects.append({
+            'object_type': 'link',
+            'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s" \
+        % (freeze_id, flavor, 'sha1'),
+            'class': 'infolink', 
+            'title': 'View archive with SHA1 sums', 
+            'text': 'Show with SHA1 checksums - may take long'})
+    output_objects.append({'object_type': 'html_form', 'text': '</p>'})
 
     return (output_objects, returnvalues.OK) 
