@@ -176,8 +176,11 @@ def get_frozen_meta(freeze_id, configuration):
     else:
         return (True, freeze_dict)
 
-def get_frozen_files(freeze_id, configuration):
-    """Helper to list names and stats for files in a frozen archive"""
+def get_frozen_files(freeze_id, configuration, with_checksum=True):
+    """Helper to list names and stats for files in a frozen archive.
+    The optional with_checksum can be used to disable potentially heavy
+    checksum calculation e.g. when used in freezedb.
+    """
     frozen_dir = os.path.join(configuration.freeze_home, freeze_id)
     if not os.path.isdir(frozen_dir):
         return (False, 'Could not open frozen archive %s' % freeze_id)
@@ -188,21 +191,29 @@ def get_frozen_files(freeze_id, configuration):
                 continue
             frozen_path = os.path.join(root, name)
             rel_path = os.path.join(root.replace(frozen_dir, '', 1), name)
+            if with_checksum:
+                # Checksum first 32 MB of files
+                check_sum = md5sum_file(frozen_path)
+            else:
+                check_sum = 'disabled - please view individual archive'
             files.append({'name': rel_path,
                           'timestamp': os.path.getctime(frozen_path),
                           'size': os.path.getsize(frozen_path),
-                          # Checksum first 32 MB of files
-                          'md5sum': md5sum_file(frozen_path)})
+                          'md5sum': check_sum})
     return (True, files)
 
-def get_frozen_archive(freeze_id, configuration):
-    """Helper to extract all details for a frozen archive"""
+def get_frozen_archive(freeze_id, configuration, with_checksum=True):
+    """Helper to extract all details for a frozen archive.
+    The optional with_checksum can be used to disable potentially heavy
+    checksum calculation e.g. when used in freezedb.
+    """
     if not is_frozen_archive(freeze_id, configuration):
         return (False, 'no such frozen archive id: %s' % freeze_id)
     (meta_status, meta_out) = get_frozen_meta(freeze_id, configuration)
     if not meta_status:
         return (False, 'failed to extract meta data for %s' % freeze_id)
-    (files_status, files_out) = get_frozen_files(freeze_id, configuration)
+    (files_status, files_out) = get_frozen_files(freeze_id, configuration,
+                                                 with_checksum)
     if not files_status:
         return (False, 'failed to extract files for %s' % freeze_id)
     freeze_dict = {'ID': freeze_id, 'FILES': files_out}

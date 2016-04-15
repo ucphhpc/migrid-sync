@@ -157,7 +157,8 @@ Please contact the Grid admins %s if you think it should be enabled.
     frozenarchives = []
     for freeze_id in ret:
         (load_status, freeze_dict) = get_frozen_archive(freeze_id,
-                                                        configuration)
+                                                        configuration,
+                                                        with_checksum=False)
         if not load_status:
             logger.error("%s: load failed for '%s': %s" % \
                          (op_name, freeze_id, freeze_dict))
