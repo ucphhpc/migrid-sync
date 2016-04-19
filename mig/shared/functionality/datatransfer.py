@@ -431,8 +431,8 @@ transfers below.'''
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Latest Transfer Results'})
         output_objects.append({'object_type': 'html_form', 'text': '''
-<textarea id="logarea" rows=5 cols=200  readonly="readonly">%s</textarea>''' \
-                               % (''.join(log_lines))})
+<textarea id="logarea" class="fillwidth" rows=5 readonly="readonly">%s</textarea>
+''' % (''.join(log_lines))})
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Create External Data Transfer'})
         transfer_html = '''

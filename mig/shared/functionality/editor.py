@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editor - Online editor back end
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -363,10 +363,11 @@ def edit_file(path, real_path, output_format='html', includes=edit_includes):
         '''Select file:<br />
 <form id="editor_form" method="post" action="editfile.py">
 <input type="hidden" name="output_format" value="%(output_format)s" />
-<input id="editorpath" type="text" size="80" name="path" value="%(path)s" />
+<input id="editorpath" class="fillwidth padspace" type="text" name="path"
+    value="%(path)s" />
 <br /><br />
 Edit contents:<br />
-<textarea id="editorarea" cols="80" rows="25"
+<textarea id="editorarea" class="fillwidth padspace" rows="25"
           name="editarea">%(text)s</textarea>
 '''
     if 'switcher' in includes:

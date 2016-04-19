@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadmin - Administrate a MiG Resource
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -116,7 +116,7 @@ Resource configuration docs
 <table class=resources>
 <tr>
 <td class=centertext>
-<textarea cols="100" rows="25" name="resconfig">'''
+<textarea class="fillwidth padspace" rows="25" name="resconfig">'''
     for line in raw_conf:
         html += '%s\n' % line.strip()
     html += \

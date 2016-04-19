@@ -5,7 +5,7 @@
 #
 # fileman - File manager UI for browsing and manipulating files and folders
 #
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

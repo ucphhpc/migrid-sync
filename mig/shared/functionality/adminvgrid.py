@@ -388,7 +388,8 @@ $(document).ready(function() {
     description = settings_dict.get('description', '')
     settings_form += '''
             <h4>Public description</h4>
-            <textarea name="description" cols=72 rows=10>%s</textarea>
+                <textarea class="fillwidth padspace" name="description" rows=10
+                    >%s</textarea>
 ''' % description
     settings_form += '<br/>'
 

@@ -335,7 +335,7 @@ provide access to e.g. managing the grid job queues.
     for log_path in log_path_list:
         html += '''
 <h1>%s</h1>
-<textarea rows=%s cols=200 readonly="readonly">
+<textarea class="fillwidth padspace" rows=%s readonly="readonly">
 ''' % (log_path, lines)
         log_lines = read_tail(log_path, lines, logger)
         html += ''.join(log_lines[-lines:])
