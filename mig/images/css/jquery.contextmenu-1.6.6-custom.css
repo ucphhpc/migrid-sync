@@ -216,7 +216,10 @@ Original license header follows...
 .context-menu-list LI.icon-rm { background-image: url(/images/icons/page_white_delete.png); }
 .context-menu-list LI.icon-pack { background-image: url(/images/icons/compress.png); }
 .context-menu-list LI.icon-unpack { background-image: url(/images/icons/zip.png); }
+.context-menu-list LI.icon-sharelink { background-image: url(/images/icons/table_link.png); }
 .context-menu-list LI.icon-transfers { background-image: url(/images/icons/table_refresh.png); }
+.context-menu-list LI.icon-dataimport { background-image: url(/images/icons/page_white_get.png); }
+.context-menu-list LI.icon-dataexport { background-image: url(/images/icons/page_white_put.png); }
 .context-menu-list LI.icon-rename { background-image: url(/images/icons/drive_rename.png); }
 .context-menu-list LI.icon-quit { background-image: url(/images/icons/door.png); }
 .context-menu-list LI.icon-mrsl { background-image: url(/images/icons/page_white_text.png); }

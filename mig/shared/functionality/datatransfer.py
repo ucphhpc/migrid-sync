@@ -51,7 +51,7 @@ from shared.pwhash import make_digest
 from shared.validstring import valid_user_path
 
 
-get_actions = ['show']
+get_actions = ['show', 'fillimport', 'fillexport']
 transfer_actions = ['import', 'export', 'deltransfer', 'redotransfer']
 # TODO: add these internal data shuffling targets on a separate tab without
 #address and creds
@@ -369,6 +369,16 @@ else, so the public key can inserted in authorized_keys as:<br/>
             key_note = '''No keys available - you can add a key for use in
 transfers below.'''
 
+        import_checked, export_checked = '', ''
+        if action == 'fillimport':
+            import_checked = 'checked'
+        elif action == 'fillexport':
+            export_checked = 'checked'
+        fill_helper= {'import_checked': import_checked, 'export_checked':
+                      export_checked, 'transfer_id': transfer_id, 'protocol':
+                      protocol, 'fqdn': fqdn, 'port': port, 'username':
+                      username, 'transfer_src': src_list, 'transfer_dst': dst,
+                      'notify': notify}
         # Make page with manage transfers tab and manage keys tab
 
         output_objects.append({'object_type': 'html_form', 'text':  '''
@@ -418,12 +428,12 @@ into.<br/>
 <form method="post" action="datatransfer.py" onSubmit="return beforeSubmit();">
 <table class="addexttransfer">
 <tr><td>
-<input type=radio name=action checked value="import" />import data
-<input type=radio name=action value="export" />export data
+<input type=radio name=action %(import_checked)s value="import" />import data
+<input type=radio name=action %(export_checked)s value="export" />export data
 </td></tr>
 <tr><td>
 Transfer ID:<br />
-<input type=text size=60 name=transfer_id value="" />
+<input type=text size=60 name=transfer_id value="%(transfer_id)s" />
 </td></tr>
 <tr><td>
 <select id="protocol_select" name="protocol" onblur="setDefaultPort();">
@@ -437,9 +447,9 @@ Transfer ID:<br />
         transfer_html += '''
 </select>
 Host:
-<input type=text size=30 name=fqdn value="" />
+<input type=text size=30 name=fqdn value="%(fqdn)s" />
 Port:
-<input id="port_input" type=text size=4 name=port value="" />
+<input id="port_input" type=text size=4 name=port value="%(port)s" />
 </td></tr>
 <tr><td>
 <input id="anonymous_choice" type=radio onclick="enableLogin(\'anonymous\');" />
@@ -451,7 +461,7 @@ login with key
 </td></tr>
 <tr id="login_fields" style="display: none;"><td>
 Username:<br />
-<input id="username" type=text size=60 name=username value="" />
+<input id="username" type=text size=60 name=username value="%(username)s" />
 <br/>
 <span id="password_entry">
 Password:<br />
@@ -483,13 +493,13 @@ Source path(s):<br />
 </td></tr>
 <tr><td>
 Destination path:<br />
-<input id=\'dst_0\' type=text size=60 name=transfer_dst value="" />
+<input id=\'dst_0\' type=text size=60 name=transfer_dst value="%(transfer_dst)s" />
 <input id=\'dst_dir_0\' type=radio checked />Destination directory
 <input id=\'dst_file_0\' type=radio disabled />Destination file<br />
 </td></tr>
 <tr><td>
 Notify on completion (e.g. email address):<br />
-<input type=text size=60 name=notify value=''>
+<input type=text size=60 name=notify value=\'%(notify)s\'>
 </td></tr>
 <tr><td>
 <span>
@@ -504,7 +514,7 @@ Notify on completion (e.g. email address):<br />
 </table>
 '''
         output_objects.append({'object_type': 'html_form', 'text'
-                              : transfer_html})
+                              : transfer_html % fill_helper})
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})
