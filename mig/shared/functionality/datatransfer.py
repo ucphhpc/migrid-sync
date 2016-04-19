@@ -108,10 +108,22 @@ def main(client_id, user_arguments_dict):
     dst = accepted['transfer_dst'][-1]
     username = accepted['username'][-1]
     password = accepted['password'][-1]
-    key = accepted['key_id'][-1]
+    key_id = accepted['key_id'][-1]
     notify = accepted['notify'][-1]
     flags = accepted['flags']
-    
+
+    anon_checked, pw_checked, key_checked = '', '', ''
+    if username:
+        if key_id:
+            key_checked = 'checked'
+            init_login = "key"
+        else:
+            pw_checked = 'checked'
+            init_login = "password"
+    else:
+        anon_checked = 'checked'
+        init_login = "anonymous"
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Background Data Transfers'
 
@@ -238,7 +250,7 @@ def main(client_id, user_arguments_dict):
               });
 
         /* init create dialog */
-        enableLogin("anonymous");
+        enableLogin("%s");
 
         addSource();
 
@@ -266,7 +278,7 @@ def main(client_id, user_arguments_dict):
           $("#transferkeys_pagerrefresh").click(function() { location.reload(); });
     });
 </script>
-''' % (default_pager_entries, default_pager_entries)
+''' % (init_login, default_pager_entries, default_pager_entries)
     output_objects.append({'object_type': 'header', 'text'
                            : 'Manage background data transfers'})
 
@@ -369,16 +381,29 @@ else, so the public key can inserted in authorized_keys as:<br/>
             key_note = '''No keys available - you can add a key for use in
 transfers below.'''
 
-        import_checked, export_checked = '', ''
-        if action == 'fillimport':
-            import_checked = 'checked'
-        elif action == 'fillexport':
-            export_checked = 'checked'
+        import_checked, export_checked, scroll_to_create = '', '', ''
+        if action in ['fillimport', 'fillexport']:
+            scroll_to_create = '''
+<script>
+ $("html, body").animate({
+  scrollTop: $("#createtransfer").offset().top
+   }, 2000);
+</script>
+            '''
+            if action == 'fillimport':
+                import_checked = 'checked'
+            elif action == 'fillexport':
+                export_checked = 'checked'
+                
         fill_helper= {'import_checked': import_checked, 'export_checked':
-                      export_checked, 'transfer_id': transfer_id, 'protocol':
-                      protocol, 'fqdn': fqdn, 'port': port, 'username':
-                      username, 'transfer_src': src_list, 'transfer_dst': dst,
-                      'notify': notify}
+                      export_checked, 'anon_checked': anon_checked,
+                      'pw_checked': pw_checked, 'key_checked': key_checked,
+                      'transfer_id': transfer_id, 'protocol': protocol,
+                      'fqdn': fqdn, 'port': port, 'username': username,
+                      'password': password, 'key_id': key_id, 
+                      'transfer_src': src_list, 'transfer_dst': dst,
+                      'notify': notify, 'scroll_to_create': scroll_to_create}
+        
         # Make page with manage transfers tab and manage keys tab
 
         output_objects.append({'object_type': 'html_form', 'text':  '''
@@ -426,7 +451,7 @@ requests.<br/>
 Destination is a always handled as a directory path to transfer source files
 into.<br/>
 <form method="post" action="datatransfer.py" onSubmit="return beforeSubmit();">
-<table class="addexttransfer">
+<table id="createtransfer" class="addexttransfer">
 <tr><td>
 <input type=radio name=action %(import_checked)s value="import" />import data
 <input type=radio name=action %(export_checked)s value="export" />export data
@@ -438,12 +463,14 @@ Transfer ID:<br />
 <tr><td>
 <select id="protocol_select" name="protocol" onblur="setDefaultPort();">
 '''
-        # select first in list
-        selected = 'selected'
+        # select requested protocol
         for (key, val) in valid_proto:
+            if protocol == key:
+                selected = 'selected'
+            else:
+                selected = ''
             transfer_html += '<option %s value="%s">%s</option>' % \
                              (selected, key, val)
-            selected = ''
         transfer_html += '''
 </select>
 Host:
@@ -452,11 +479,14 @@ Port:
 <input id="port_input" type=text size=4 name=port value="%(port)s" />
 </td></tr>
 <tr><td>
-<input id="anonymous_choice" type=radio onclick="enableLogin(\'anonymous\');" />
+<input id="anonymous_choice" type=radio %(anon_checked)s
+    onclick="enableLogin(\'anonymous\');" />
 anonymous access
-<input id="userpassword_choice" type=radio onclick="enableLogin(\'password\');" />
+<input id="userpassword_choice" type=radio %(pw_checked)s
+    onclick="enableLogin(\'password\');" />
 login with password
-<input id="userkey_choice" type=radio onclick="enableLogin(\'key\');" />
+<input id="userkey_choice" type=radio %(key_checked)s
+    onclick="enableLogin(\'key\');" />
 login with key
 </td></tr>
 <tr id="login_fields" style="display: none;"><td>
@@ -471,9 +501,12 @@ Password:<br />
 Key:<br />
 <select id="key" name=key_id />
 '''
-        # select first in list
-        selected = 'selected'
+        # select requested key
         for key_dict in available_keys:
+            if key_dict['key_id'] == key_id:
+                selected = 'selected'
+            else:
+                selected = ''
             transfer_html += '<option %s value="%s">%s</option>' % \
                              (selected, key_dict['key_id'], key_dict['key_id'])
             selected = ''
@@ -512,6 +545,7 @@ Notify on completion (e.g. email address):<br />
 </td>
 </tr>
 </table>
+%(scroll_to_create)s
 '''
         output_objects.append({'object_type': 'html_form', 'text'
                               : transfer_html % fill_helper})
@@ -534,18 +568,18 @@ Notify on completion (e.g. email address):<br />
         transferkeys = []
         for key_dict in available_keys:
             key_item = build_keyitem_object(configuration, key_dict)
-            key_id = key_item['key_id']
-            js_name = 'delete%s' % hexlify(key_id)
+            saved_id = key_item['key_id']
+            js_name = 'delete%s' % hexlify(saved_id)
             helper = html_post_helper(js_name, 'datatransfer.py',
-                                      {'key_id': key_id,
+                                      {'key_id': saved_id,
                                     'action': 'delkey'})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             key_item['delkeylink'] = {
                 'object_type': 'link', 'destination':
                 "javascript: confirmDialog(%s, '%s');" % \
-                (js_name, 'Really remove %s?' % key_id),
+                (js_name, 'Really remove %s?' % saved_id),
                 'class': 'removelink', 'title': 'Remove %s' % \
-                key_id, 'text': ''}
+                saved_id, 'text': ''}
             transferkeys.append(key_item)
 
         output_objects.append({'object_type': 'table_pager',
@@ -621,18 +655,18 @@ Key name:<br/>
                      'text': 'transfer_src and transfer_dst parameters required for all'
                      'data transfers!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
-            if protocol == "rsyncssh" and not key:
+            if protocol == "rsyncssh" and not key_id:
                 output_objects.append(
                     {'object_type': 'error_text', 'text'
                      : 'RSYNC over SSH is only supported with key!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
-            if not password and not key and protocol in warn_anon:
+            if not password and not key_id and protocol in warn_anon:
                 output_objects.append(
                     {'object_type': 'warning', 'text': '''
 %s transfers usually require explicit authentication with your credentials.
 Proceeding as requested with anonymous login, but the transfer is likely to
 fail.''' % valid_proto_map[protocol]})
-            if key and protocol in warn_key:
+            if key_id and protocol in warn_key:
                 output_objects.append(
                     {'object_type': 'warning', 'text': '''
 %s transfers usually only support authentication with username and password
@@ -658,7 +692,7 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                 {'transfer_id': transfer_id, 'action': action,
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
                  'username': username, 'password_digest': password_digest,
-                 'key':key, 'src': src_list, 'dst': dst, 'notify': notify,
+                 'key': key_id, 'src': src_list, 'dst': dst, 'notify': notify,
                  'status': 'NEW'})
             (save_status, _) = create_data_transfer(transfer_dict, client_id,
                                                     configuration,
@@ -686,7 +720,7 @@ may be empty now.
 '''})
     elif action in key_actions:
         if action == 'generatekey':
-            (gen_status, pub) = generate_user_key(configuration, client_id, key)
+            (gen_status, pub) = generate_user_key(configuration, client_id, key_id)
             if gen_status:
                 output_objects.append({'object_type': 'html_form', 'text': '''
 Generated new key with name %s and associated public key:<br/>
@@ -696,18 +730,18 @@ Please copy it to your ~/.ssh/authorized_keys file on the host(s) where you
 want to use this key for background transfer login.<br/>
 %s
 </p>
-''' % (key, pub, restrict_template % pub)})
+''' % (key_id, pub, restrict_template % pub)})
             else:
                 output_objects.append({'object_type': 'error_text', 'text': '''
-Key generation for name %s failed with error: %s''' % (key, pub)})
+Key generation for name %s failed with error: %s''' % (key_id, pub)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
         elif action == 'delkey':
             pubkey = '[unknown]'
             available_keys = load_user_keys(configuration, client_id)
             for key_dict in available_keys:
-                if key_dict['key_id'] == key:
+                if key_dict['key_id'] == key_id:
                     pubkey = key_dict.get('public_key', pubkey)
-            (del_status, msg) = delete_user_key(configuration, client_id, key)
+            (del_status, msg) = delete_user_key(configuration, client_id, key_id)
             if del_status:
                 output_objects.append({'object_type': 'html_form', 'text': '''
 <p>
@@ -719,10 +753,10 @@ You will no longer be able to use it in your data transfers and can safely
 remove the public key from your ~/.ssh/authorized_keys file on any hosts where
 you may have previously added it.
 </p>
-''' % (key, pubkey)})
+''' % (key_id, pubkey)})
             else:
                 output_objects.append({'object_type': 'error_text', 'text': '''
-Key removal for name %s failed with error: %s''' % (key, msg)})
+Key removal for name %s failed with error: %s''' % (key_id, msg)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
     else:
         output_objects.append({'object_type': 'error_text', 'text'
