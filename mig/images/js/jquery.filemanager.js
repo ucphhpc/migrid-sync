@@ -992,6 +992,14 @@ if (jQuery) (function($){
                 //var path_enc = encodeURI($(el).attr(pathAttribute));
                 window.open('datatransfer.py');
             },
+            dataimport:   function (action, el, pos) {
+                var path_enc = encodeURI($(el).attr(pathAttribute));
+                window.open('datatransfer.py?action=fillimport;transfer_dst='+path_enc);
+            },
+            dataexport:   function (action, el, pos) {
+                var path_enc = encodeURI($(el).attr(pathAttribute));
+                window.open('datatransfer.py?action=fillexport;transfer_src='+path_enc);
+            },
             submit: function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'submit.py');
             },
@@ -1601,7 +1609,11 @@ if (jQuery) (function($){
                     "create": {name: "Create File", icon: "create"},
                     "upload": {name: "Upload File", icon: "upload"},
                     "pack": {name: "Pack", icon: "pack"},
-                    "transfers": {name: "Import/Export", icon: "transfers"},
+                    "transfers": {name: "Data Transfers", icon: "transfers",
+                                  "items": {"dataimport": {name: "Import", icon: "dataimport"},
+                                            "dataexport": {name: "Export", icon: "dataexport"}
+                                           }
+                                 },
                     "sep1": "---------",
                     //"cut": {name: "Cut", icon: "cut"},
                     "copy": {name: "Copy", icon: "copy"},

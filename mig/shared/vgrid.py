@@ -724,8 +724,6 @@ def vgrid_create_allowed(configuration, user_dict):
     """
     for (key, val) in configuration.site_vgrid_creators:
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
-            configuration.logger.warning("creator mismatch: %s[%s] vs %s" % \
-                                         (user_dict, key, val))
             return False
     return True
 
