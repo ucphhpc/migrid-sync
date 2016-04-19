@@ -338,13 +338,26 @@ else, so the public key can inserted in authorized_keys as:<br/>
         for (saved_id, transfer_dict) in transfer_map.items():
             transfer_item = build_transferitem_object(configuration,
                                                       transfer_dict)
-            transfer_item['status'] = transfer_item.get('status', 'NEW')            
-            transfer_item['viewtransferlink'] = {
+            transfer_item['status'] = transfer_item.get('status', 'NEW')
+            data_url = ''
+            if transfer_item['action'] == 'import':
+                data_url = "fileman.py?path=%(dst)s" % transfer_item
+            elif transfer_item['action'] == 'export':
+                data_url = "fileman.py?path=%s" % \
+                              ';path='.join(transfer_item['src'])
+            if data_url:
+                transfer_item['viewdatalink'] = {
+                    'object_type': 'link',
+                    'destination': data_url,
+                    'class': 'viewlink', 
+                    'title': 'View local component of %s' % saved_id,
+                    'text': ''}
+            transfer_item['viewoutputlink'] = {
                 'object_type': 'link',
                 'destination': "fileman.py?path=transfer_output/%s/" % \
                 saved_id,
                 'class': 'infolink', 
-                'title': 'View data transfer %s status files' % saved_id,
+                'title': 'View status files for %s' % saved_id,
                 'text': ''}
             js_name = 'delete%s' % hexlify(saved_id)
             helper = html_post_helper(js_name, 'datatransfer.py',
