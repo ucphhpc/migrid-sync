@@ -132,6 +132,17 @@ if (jQuery) (function($){
     }
     
 
+    /* Use this helper whenever explicitly selecting a sub element of the
+       current fileman container, which may be #fm_filemanager, 
+       #fm_filechooser or whatever depending on context. 
+       It works as long as the container has the common .fm_folders element.
+    */
+    $.fn.fmSelect = function(sub) {
+        var parentId = $(".fm_folders").parent().attr('id');
+        var selector ="#"+parentId+sub;
+        return $(selector);
+    }
+
     $.fn.dump = function(element) {
         /* some browsers support toSource as easy dump */
         if (element.toSource != undefined) {
@@ -346,9 +357,9 @@ if (jQuery) (function($){
 
             var previewInnerHeight;
             var centerTileWidthFrac = 0.40;
-            var previewWidth = $("#fm_filemanager .fm_previews").outerWidth() 
-            var previewTilesInnerWidth = $("#fm_filemanager .fm_previews").width() 
-                - $("#fm_filemanager .fm_preview_menubar").outerWidth();
+            var previewWidth = $.fn.fmSelect(" .fm_previews").outerWidth() 
+            var previewTilesInnerWidth = $.fn.fmSelect(" .fm_previews").width() 
+                - $.fn.fmSelect(" .fm_preview_menubar").outerWidth();
             var previewCenterTileWidth = Math.floor(previewTilesInnerWidth * centerTileWidthFrac);
             var previewLeftTileWidth = Math.floor((previewTilesInnerWidth - previewCenterTileWidth)/2);
             var previewRightTileWidth = previewLeftTileWidth;
@@ -356,7 +367,7 @@ if (jQuery) (function($){
             /* Try hard to fit fileman in the window without global scroll bar */
             /* Make sure fileman fills at least as much vertically as the menu */
             
-            var headerHeight = $("#fm_filemanager").offset().top;
+            var headerHeight = $.fn.fmSelect("").offset().top;
             var innerWindowHeight = $(window).height();
             var statusbarHeight = $("#fm_statusbar").outerHeight();
             var optionsHeight = $("#fm_options").outerHeight();
@@ -370,7 +381,7 @@ if (jQuery) (function($){
                 fileManagerHeight = minHeight;
             }
             var fileManagerInnerHeight = fileManagerHeight -
-                                            (statusbarHeight + $("#fm_filemanager .fm_previews").offset().top - 
+                                            (statusbarHeight + $.fn.fmSelect(" .fm_previews").offset().top - 
                                             headerHeight);
             if (preview.settings.zoom == 0) {
                 previewInnerHeight = 0;
@@ -378,7 +389,7 @@ if (jQuery) (function($){
             }
             else if (preview.settings.zoom == 1) {
                 previewInnerHeight = minHeight -
-                                            (statusbarHeight + $("#fm_filemanager .fm_previews").offset().top - 
+                                            (statusbarHeight + $.fn.fmSelect(" .fm_previews").offset().top - 
                                             headerHeight);
 
                 fileFolderInnerHeight = fileManagerInnerHeight - previewInnerHeight;
@@ -402,13 +413,13 @@ if (jQuery) (function($){
         function refresh_fileman_layout(callback) {
             var layout = get_fileman_layout();
 
-            $("#fm_filemanager").css("height", layout.fileManagerHeight + "px");
-            $("#fm_filemanager .fm_previews").css("height", layout.previewInnerHeight + "px");
-            $("#fm_filemanager .fm_files").css("height", layout.fileFolderInnerHeight + "px");
-            $("#fm_filemanager .fm_folders").css("height", layout.fileFolderInnerHeight + "px");
-            $("#fm_filemanager .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
-            $("#fm_filemanager .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
-            $("#fm_filemanager .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");
+            $.fn.fmSelect("").css("height", layout.fileManagerHeight + "px");
+            $.fn.fmSelect(" .fm_previews").css("height", layout.previewInnerHeight + "px");
+            $.fn.fmSelect(" .fm_files").css("height", layout.fileFolderInnerHeight + "px");
+            $.fn.fmSelect(" .fm_folders").css("height", layout.fileFolderInnerHeight + "px");
+            $.fn.fmSelect(" .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
+            $.fn.fmSelect(" .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
+            $.fn.fmSelect(" .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");
 
             if (typeof callback === "function") {
                 callback();
@@ -473,18 +484,18 @@ if (jQuery) (function($){
             var animate_easing = (preview.settings.zoom < preview.settings.last_zoom) ?
                 options.collapseEasing :
                 options.expandEasing;
-            $("#fm_filemanager .fm_folders").animate(
+            $.fn.fmSelect(" .fm_folders").animate(
                 {height: layout.fileFolderInnerHeight + 'px'},
                 {duration: animate_speed,
                 easing: animate_easing});
-            $("#fm_filemanager .fm_files").animate(
+            $.fn.fmSelect(" .fm_files").animate(
                 {height: layout.fileFolderInnerHeight + 'px'},
                 {duration: animate_speed,
                 easing: animate_easing});
-            $("#fm_filemanager .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
-            $("#fm_filemanager .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
-            $("#fm_filemanager .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");            
-            $("#fm_filemanager .fm_previews").animate(
+            $.fn.fmSelect(" .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
+            $.fn.fmSelect(" .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
+            $.fn.fmSelect(" .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");            
+            $.fn.fmSelect(" .fm_previews").animate(
                 {height: layout.previewInnerHeight + 'px'},
                 {duration: animate_speed,
                 easing: animate_easing,
@@ -1514,7 +1525,7 @@ if (jQuery) (function($){
                                http://stackoverflow.com/questions/1805210/jquery-drag-and-drop-using-live-events
                             */
 
-                            $("#fm_filemanager").on('mouseover',
+                            $.fn.fmSelect("").on('mouseover',
                                                     "tr.file:not(.ui-draggable), tr.directory:not(.ui-draggable), li.directory:not(.ui-draggable)",
                                                     function() {
                                                         //console.debug("adding draggable to elem");
@@ -1534,7 +1545,7 @@ if (jQuery) (function($){
                                                         //console.debug("added draggable to elem");
                                                     });
 
-                            $("#fm_filemanager").on('mouseover',
+                            $.fn.fmSelect("").on('mouseover',
                                                     "tr.directory:not(.ui-droppable), li.directory:not(.ui-droppable)",
                                                     function() {
                                                         $(this).droppable(
@@ -1742,15 +1753,15 @@ if (jQuery) (function($){
                 bindContextMenus();
 
                 console.debug("add click handler");
-                $("#fm_filemanager").on("click",
+                $.fn.fmSelect("").on("click",
                                         "tr.file",
                                         function(event) {
                                             clickEvent(this);
                                         });
 
                 console.debug("add dblclick handler");
-                //$("#fm_filemanager").off("dblclick", "tr.file, tr.directory");
-                $("#fm_filemanager").on("dblclick",
+                //$.fn.fmSelect("").off("dblclick", "tr.file, tr.directory");
+                $.fn.fmSelect("").on("dblclick",
                                         "tr.file, tr.directory",
                                         function(event) {
                                             doubleClickEvent(this);
