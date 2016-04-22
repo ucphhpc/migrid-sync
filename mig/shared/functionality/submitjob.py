@@ -33,7 +33,8 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename
 from shared.functional import validate_input_and_cert
-from shared.html import themed_styles
+from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
+     themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
 from shared.parser import parse_lines
@@ -123,41 +124,9 @@ def main(client_id, user_arguments_dict):
     # (means: by "eval" from configuration). We stick to hard-coding.
     submit_options = ['fields_form', 'textarea_form', 'files_form']
 
-    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
-                   'skin_base': configuration.site_skin_base}
-    title_entry['style'] = themed_styles(configuration,
-                                         base=['jquery.fileupload.css',
-                                               'jquery.fileupload-ui.css'],
-                                         skin=['fileupload-ui.custom.css'])
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<!--  Filemanager is only needed for fancy upload init wrapper -->
-<script type="text/javascript" src="/images/js/jquery.form.js"></script>
-<script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
-
-<!-- Fancy file uploader and dependencies -->
-<!-- The Templates plugin is included to render the upload/download listings -->
-<script type="text/javascript" src="/images/js/tmpl.min.js"></script>
-<!-- The Load Image plugin is included for the preview images and image resizing functionality -->
-<script type="text/javascript" src="/images/js/load-image.min.js"></script>
-<!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
-<script type="text/javascript" src="/images/js/jquery.iframe-transport.js"></script>
-<!-- The basic File Upload plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
-<!-- The File Upload processing plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-process.js"></script>
-<!-- The File Upload image preview & resize plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-image.js"></script>
-<!-- The File Upload validation plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-validate.js"></script>
-<!-- The File Upload user interface plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
-<!-- The File Upload jQuery UI plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
-
-<script type="text/javascript" >
-
+    open_button_id = 'open_fancy_upload'
+    (add_import, add_init, add_ready) = fancy_upload_js(configuration)
+    add_init += '''
     options = %s;
 
     function setDisplay(this_id, new_d) {
@@ -180,22 +149,20 @@ def main(client_id, user_arguments_dict):
             }
         }
     }
-
-    function openFancyUpload() {
-        var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
-        var remote_path = ".";
-        open_dialog("Upload Files", function() { return false; },
-                    remote_path, false);
-    }
-
-    $(document).ready( function() {
-         //console.log("document ready handler");
-         switchTo("%s");
-         $("#fancydialog").click(openFancyUpload);
-    });
-
-</script>
-''' % (submit_options, submit_style + "_form")
+    ''' % submit_options
+    add_ready += '''
+    switchTo("%s");
+    $("#%s").click(openFancyUpload);
+    ''' % (submit_style + "_form", open_button_id)
+    fancy_dialog = fancy_upload_html(configuration)
+    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
+                   'skin_base': configuration.site_skin_base}
+    title_entry['style'] = themed_styles(configuration,
+                                         base=['jquery.fileupload.css',
+                                               'jquery.fileupload-ui.css'],
+                                         skin=['fileupload-ui.custom.css'])
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
 
     output_objects.append({'object_type': 'text', 'text':
                            'This page is used to submit jobs to the grid.'})
@@ -462,123 +429,13 @@ Optional remote filename (extra useful in windows)
 Upload other files efficiently (using chunking).
 </td></tr>
 <tr><td class='centertext'>
-<button id='fancydialog'>Open Upload dialog</button>
+<button id='%(fancy_open)s'>Open Upload dialog</button>
 </td></tr>
 </table>
 </div><!-- files_form-->
 
-<div id='fancyuploadchunked_dialog' title='Upload File' style='display: none;'>
-
-    <!-- The file upload form used as target for the file upload widget -->
-    <form id='fancyfileupload' action='uploadchunked.py?output_format=json;action=put'
-        method='POST' enctype='multipart/form-data'>
-        <fieldset id='fancyfileuploaddestbox'>
-            <label id='fancyfileuploaddestlabel' for='fancyfileuploaddest'>
-                Optional final destination dir:
-            </label>
-            <input id='fancyfileuploaddest' type='text' size=60 value=''>
-        </fieldset>
-
-        <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
-        <div class='fileupload-buttonbar'>
-            <div class='fileupload-buttons'>
-                <!-- The fileinput-button span is used to style the file input field as button -->
-                <span class='fileinput-button'>
-                    <span>Add files...</span>
-                    <input type='file' name='files[]' multiple>
-                </span>
-                <button type='submit' class='start'>Start upload</button>
-                <button type='reset' class='cancel'>Cancel upload</button>
-                <button type='button' class='delete'>Delete</button>
-                <input type='checkbox' class='toggle'>
-                <!-- The global file processing state -->
-                <span class='fileupload-process'></span>
-            </div>
-            <!-- The global progress state -->
-            <div class='fileupload-progress fade' style='display:none'>
-                <!-- The global progress bar -->
-                <div class='progress' role='progressbar' aria-valuemin='0' aria-valuemax='100'></div>
-                <!-- The extended global progress state -->
-                <div class='progress-extended'>&nbsp;</div>
-            </div>
-        </div>
-        <!-- The table listing the files available for upload/download -->
-        <table role='presentation' class='table table-striped'><tbody class='uploadfileslist'></tbody></table>
-    </form>
-    <!-- For status and error output messages -->
-    <div id='fancyuploadchunked_output'></div>
-</div>
-    """ % {'dest_dir': '.' + os.sep}})
+%(fancy_dialog)s
+""" % {'dest_dir': '.' + os.sep, 'fancy_dialog': fancy_dialog,
+       'fancy_open': open_button_id}})
     
-    output_objects.append({'object_type': 'html_form', 
-                           'text': '''
-<!-- The template to display files available for upload -->
-<script id="template-upload" type="text/x-tmpl">
-{% console.log("using upload template"); %}
-{% console.log("... with upload files: "+$.fn.dump(o)); %}
-{% var dest_dir = "./" + $("#fancyfileuploaddest").val(); %}
-{% console.log("using upload dest: "+dest_dir); %}
-{% for (var i=0, file; file=o.files[i]; i++) { %}
-    {% var rel_path = $.fn.normalizePath(dest_dir+"/"+file.name); %}
-    {% console.log("using upload rel_path: "+rel_path); %}
-    <tr class="template-upload fade">
-        <td>
-            <span class="preview"></span>
-        </td>
-        <td>
-            <p class="name">{%=rel_path%}</p>
-            <strong class="error"></strong>
-        </td>
-        <td>
-            <div class="size pending">Processing...</div>
-            <div class="progress"></div>
-        </td>
-        <td>
-            {% if (!i && !o.options.autoUpload) { %}
-                <button class="start" disabled>Start</button>
-            {% } %}
-            {% if (!i) { %}
-                <button class="cancel">Cancel</button>
-            {% } %}
-        </td>
-    </tr>
-{% } %}
-</script>
-<!-- The template to display files available for download -->
-<script id="template-download" type="text/x-tmpl">
-{% console.log("using download template"); %}
-{% console.log("... with download files: "+$.fn.dump(o)); %}
-{% for (var i=0, file; file=o.files[i]; i++) { %}
-    {% var rel_path = $.fn.normalizePath("./"+file.name); %}
-    {% console.log("using download rel_path: "+rel_path); %}
-    {% console.log("original delete URL: "+file.deleteUrl); %}
-    {% function encodeName(str, match) { return "filename="+encodeURIComponent(match)+";files"; }  %}
-    {% if (file.deleteUrl != undefined) { file.deleteUrl = file.deleteUrl.replace(/filename\=(.+)\;files/, encodeName); console.debug("updated delete URL: "+file.deleteUrl); } %}    
-    <tr class="template-download fade">
-        <td>
-            <span class="preview">
-                {% if (file.thumbnailUrl) { %}
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" data-gallery><img src="{%=file.thumbnailUrl%}"></a>
-                {% } %}
-            </span>
-        </td>
-        <td>
-            <p class="name">
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=rel_path%}</a>
-            </p>
-            {% if (file.error) { %}
-                <div><span class="error">Error</span> {%=file.error%}</div>
-            {% } %}
-        </td>
-        <td>
-            <div class="size">{%=o.formatFileSize(file.size)%}</div>
-        </td>
-        <td>
-            <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>{% if (file.deleteUrl) { %}Delete{% } else { %}Dismiss{% } %}</button>
-            <input type="checkbox" name="delete" value="1" class="toggle">
-        </td>
-    </tr>
-{% } %}
-</script>
-    '''})
     return (output_objects, status)

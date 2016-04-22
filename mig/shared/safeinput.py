@@ -233,15 +233,15 @@ def html_escape(contents):
 
 def valid_printable(contents, min_length=0, max_length=-1):
     """Verify that supplied contents only contain ascii characters
-    (where "ascii characters" means printable ASCII, not just letters)"""
+    (where 'ascii characters' means printable ASCII, not just letters)"""
 
     __valid_contents(contents, printable, min_length, max_length)
 
 
-def valid_ascii(contents, min_length=0, max_length=-1):
+def valid_ascii(contents, min_length=0, max_length=-1, extra_chars=''):
     """Verify that supplied contents only contain ascii characters"""
 
-    __valid_contents(contents, letters, min_length, max_length)
+    __valid_contents(contents, letters + extra_chars, min_length, max_length)
 
 
 def valid_numeric(contents, min_length=0, max_length=-1):
@@ -250,19 +250,19 @@ def valid_numeric(contents, min_length=0, max_length=-1):
     __valid_contents(contents, digits, min_length, max_length)
 
 
-def valid_alphanumeric(contents, min_length=0, max_length=-1):
+def valid_alphanumeric(contents, min_length=0, max_length=-1, extra_chars=''):
     """Verify that supplied contents only contain alphanumeric characters"""
 
-    __valid_contents(contents, letters + digits, min_length, max_length)
+    __valid_contents(contents, letters + digits + extra_chars, min_length,
+                     max_length)
 
 
-def valid_alphanumeric_and_spaces(contents, min_length=0,
-                                  max_length=-1):
+def valid_alphanumeric_and_spaces(contents, min_length=0, max_length=-1,
+                                  extra_chars=''):
     """Verify that supplied contents only contain alphanumeric characters and
     spaces"""
 
-    __valid_contents(contents, letters + digits + ' ',
-                     min_length, max_length)
+    valid_alphanumeric(contents, min_length, max_length, ' ' + extra_chars)
 
 
 def valid_plain_text(
@@ -275,7 +275,8 @@ def valid_plain_text(
     valid"""
 
     valid_chars = VALID_TEXT_CHARACTERS + extra_chars
-    __valid_contents(text, valid_chars, min_length, max_length)
+    __valid_contents(text, valid_chars, min_length, max_length,
+                     COMMON_ACCENTED)
 
 
 def valid_label_text(
@@ -1029,6 +1030,7 @@ def guess_type(name):
             'rule_id',
             'transfer_id',
             'key_id',
+            'share_id',
             ):
             __type_map[key] = valid_job_id
         for key in (
@@ -1138,6 +1140,7 @@ def guess_type(name):
             'comment',
             'msg',
             'notify',
+            'invite',
             'runtimeenvironment',
             'mount',
             'publicname',
@@ -1199,6 +1202,9 @@ def guess_type(name):
             __type_map[key] = valid_base_url
         for key in ('modauthopenid.referrer', ):
             __type_map[key] = valid_url
+        for key in ('sharelink_mode', ):
+            __type_map[key] = lambda x: x in ['read-write', 'read-only',
+                                              'write-only']
 
         # Image meta data (filemetaio.py)
 
@@ -1370,7 +1376,8 @@ if __name__ == '__main__':
 
     for test_path in ('test.txt', 'Test Æøå', 'Test Überh4x0r',
                       'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ', 
-                      'Test valid special%&()!$¶â€', 'Test exotic لرحيم',
+                      'Test valid special%&()!$¶â€', 'Test look-alike-å å',
+                      'Test exotic لرحيم',
                       'Test Invalid ?', 'Test Invalid `',
                       'Test invalid <', 'Test Invalid >',
                       'Test Invalid *', 'Test Invalid "'):

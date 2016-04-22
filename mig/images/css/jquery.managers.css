@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jquery.managers - style overrides for multiple pages
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,6 @@
 }
 #jm_jobmanager {
     border-spacing: 0;
-    background: #ccc;
     border: 1px solid grey;
     padding: 4px;
     border-radius: 4px;
@@ -84,15 +83,51 @@ tbody tr td div.sortkey { display: none; }
 #fm_debug {
     display: none;
     width: 100%;
-    float:left;
+    float: left;
     padding: 0;
     margin: 0;
     }
 .fm_path_breadcrumbs {
-    width: 100%;
-    float:left;
     padding-bottom: 4px;
+    display: inline-block;
     }
+.fm_buttonbar {
+    background: #F0F0F0;
+    display: inline-block;
+    vertical-align: top;
+}
+.fm_buttonbar ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    vertical-align: middle;
+    display: inline-flex;
+}
+.fm_buttonbar li {
+    border: 1px solid grey;
+    cursor: pointer;
+    padding: 2px;
+    margin: 2px;
+    vertical-align: middle;
+    border-radius: 4px;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.fm_buttonbar li:hover {
+    border: 1px solid lightgrey;
+}
+.fm_buttonbar li.parentdirbutton {
+    background-image: url('/images/icons/arrow_up.png');
+}
+.fm_buttonbar li.refreshbutton {
+    background-image: url('/images/icons/arrow_refresh.png');
+}
+.fm_buttonbar li.datatransfersbutton {
+    background-image: url('/images/icons/table_refresh.png');
+}
+.fm_buttonbar li.sharelinksbutton {
+    background-image: url('/images/icons/table_link.png');
+}
 .fm_addressbar {
     padding-bottom: 2px;
     border: 0;
@@ -101,8 +136,8 @@ tbody tr td div.sortkey { display: none; }
     width: 98%;
 }
 .fm_folders {
-    float:left;
-    width:25%;
+    float: left;
+    width: 25%;
     padding: 0;
 
     border: 1px solid grey;
@@ -295,8 +330,8 @@ tbody tr td div.sortkey { display: none; }
     margin: 0;
 }
 .fm_toolbar {
-    float:right;
-    width:74%;
+    float: right;
+    width: 74%;
     padding-bottom: 5px;
     padding-top: 5px;
     border: 0;
@@ -304,12 +339,12 @@ tbody tr td div.sortkey { display: none; }
 .fm_toolbar ul {
     margin: 0;
     padding: 0;
-    list-style:none;
+    list-style: none;
 }
 .fm_toolbar li {
-    display:inline;
-    margin:0;
-    padding:0;
+    display: inline;
+    margin: 0;
+    padding: 0;
 }
 .fm_toolbar ul li {
     list-style-type: none;
@@ -324,7 +359,7 @@ tbody tr td div.sortkey { display: none; }
     color: white;
 }
 .fm_toolbar ul li a {
-    border-radius:4px;
+    border-radius: 4px;
   
     background-repeat: no-repeat;
     background-image: url('/images/icons/bullet_black.png');
@@ -358,11 +393,11 @@ tbody tr td div.sortkey { display: none; }
 }
 /* statusbar with info left and progress right */
 #fm_statusbar {
-    width: 100%;
     padding: 2px;
     border: 0;
     border-top: 1px solid #ccc;  
     background-color: #eee;
+    clear: both;
     overflow: hidden;
 }
 #fm_statusprogress {
@@ -392,7 +427,7 @@ tbody tr td div.sortkey { display: none; }
 }
 /*
 * html #fm_statusbar {
-  height:1px;
+  height: 1px;
 }
 */
 UL.jqueryFileTree {
@@ -422,7 +457,9 @@ UL.jqueryFileTree div:hover {
 #jm_jobmanager .wait { 
     background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; 
 }
-.jqueryFileTree LI.wait { background: url(/images/icons/spinner.gif) left center no-repeat; }
+.jqueryFileTree LI.wait {
+    background: url(/images/icons/spinner.gif) left center no-repeat;
+}
 
 UL.jqueryFileList {
     /*
@@ -456,10 +493,26 @@ UL.jqueryFileList A:hover {
 .jqueryFileList div {
     display: inline;
 }
-.jqueryFileList .cdate, .jqueryFileList .size { float:right; margin-top: -20px; }
+.jqueryFileList .cdate, .jqueryFileList .size { 
+    float: right; 
+    margin-top: -20px;
+}
 
 
 /* File Extensions */
+.icon {
+  padding-left: 16px;
+}
+.directory.icon { background: url(/images/icons/folder.png) left top no-repeat; }
+.file.icon { background: url(/images/icons/file.png) left center no-repeat; }
+.mkdir.icon { background: url(/images/icons/folder_add.png) left center no-repeat; }
+.rmdir.icon { background: url(/images/icons/folder_delete.png) left center no-repeat; }
+.upload.icon { background: url(/images/icons/page_white_get.png) left center no-repeat; }
+.rm.icon { background: url(/images/icons/page_white_delete.png) left center no-repeat; }
+.edit.icon { background: url(/images/icons/page_white_edit.png) left center no-repeat; }
+
+.refresh.icon { background: url(/images/icons/arrow_refresh.png) left center no-repeat; }
+
 .directoryicon { background: url(/images/icons/folder.png) left top no-repeat; }
 .fileicon { background: url(/images/icons/file.png) left center no-repeat; }
 
@@ -601,6 +654,13 @@ background: url(/images/icons/code.png) left center no-repeat;
     margin: 0;
 }
 
+#fm_filemanager div.uploadspace .uploadbutton {
+    /* border-width is dynamically set along with total width in js */
+    border-style: dotted; 
+    border-color: lightgrey;
+    cursor: pointer;
+}
+
 .cmd { 
     display: inline-block; 
     width: 18px; 
@@ -688,7 +748,7 @@ background: url(/images/icons/code.png) left center no-repeat;
     display: none;
 }
 #contextual_help .help_gfx_bubble {
-    border-radius:20px;
+    border-radius: 20px;
     background-color: #FFFE9D;
     border: 1px solid #A9A809;
     padding: 1em;
@@ -726,12 +786,20 @@ background: url(/images/icons/code.png) left center no-repeat;
     width: auto;
 }
 
-fieldset > label {
+fieldset label {
     float: left;
-    width: 15%;
+    width: 25%;
     margin-right: 0.5em;
     padding-top: 0.2em;
     font-weight: bold;
+}
+fieldset label.widefield {
+    width: 70%;
+    text-align: center;
+}
+fieldset .singlefield {
+    width: 70%;
+    overflow: auto;
 }
 
 .leftpad { 

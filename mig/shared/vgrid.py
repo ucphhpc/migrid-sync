@@ -384,9 +384,12 @@ def vgrid_triggers(vgrid_name, configuration, recursive=True):
     """Extract triggers list for a vgrid"""
     return vgrid_list(vgrid_name, 'triggers', configuration, recursive)
 
-def vgrid_settings(vgrid_name, configuration, recursive=True):
+def vgrid_settings(vgrid_name, configuration, recursive=True, as_dict=False):
     """Extract settings list for a vgrid"""
-    return vgrid_list(vgrid_name, 'settings', configuration, recursive)
+    (status, output)= vgrid_list(vgrid_name, 'settings', configuration, recursive)
+    if not isinstance(output, basestring):
+        output = dict(output)
+    return (status, output)
 
 def vgrid_match_resources(vgrid_name, resources, configuration):
     """Return a list of resources filtered to only those allowed in
@@ -728,11 +731,15 @@ def vgrid_create_allowed(configuration, user_dict):
     return True
 
 def in_vgrid_share(configuration, path):
-    """Checks if path is inside a vgrid share"""
-    abs_path = os.path.abspath(path)
-    for base in (configuration.vgrid_files_home,
-                 configuration.vgrid_private_base,
-                 configuration.vgrid_public_base):
-        if abs_path.startswith(base):
-            return True
-    return False
+    """Checks if path is inside a vgrid share and return the deepest such
+    sub-vgrid it is inside if so.
+    """
+    vgrid_path = None
+    base = configuration.vgrid_files_home
+    real_path = os.path.realpath(path)
+    configuration.logger.debug("in_vgrid_share %s vs %s" % (real_path, base))
+    if real_path.startswith(base):
+        vgrid_path = real_path.replace(base, '').lstrip(os.sep)
+        while vgrid_path and not os.path.isdir(os.path.join(base, vgrid_path)):
+            vgrid_path = os.path.dirname(vgrid_path)
+    return vgrid_path

@@ -141,10 +141,12 @@ def get_file_size(path, logger):
         result = -1
 
 
-def delete_file(path, logger):
-    """Wrapper to handle deletion of path"""
+def delete_file(path, logger, allow_broken_symlink=False):
+    """Wrapper to handle deletion of path. The optional allow_broken_symlink is
+    used to accept delete even if path is a broken symlink.
+    """
     logger.debug('deleting file: %s' % path)
-    if os.path.exists(path):
+    if os.path.exists(path) or allow_broken_symlink and os.path.islink(path):
         try:
             os.remove(path)
             result = True
@@ -156,7 +158,6 @@ def delete_file(path, logger):
         result = False
 
     return result
-
 
 def make_symlink(dest, src, logger, force=False):
     """Wrapper to make src a symlink to dest path"""
@@ -172,6 +173,11 @@ def make_symlink(dest, src, logger, force=False):
         return False
     return True
 
+
+def delete_symlink(path, logger):
+    """Wrapper to handle deletion of symlinks"""
+    logger.debug('deleting symlinks: %s' % path)
+    return delete_file(path, logger, True)
 
 def filter_pickled_list(path, changes):
     """Filter pickled list on disk with provided changes where changes is a
@@ -459,8 +465,6 @@ def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
     files a partial checksum of the first chunk_size * max_chunks bytes will
     be returned.
     """
-    
-    
     checksum = __valid_hash_algos.get(hash_algo, __valid_hash_algos['md5'])()
     chunks_read = 0
     msg = ''

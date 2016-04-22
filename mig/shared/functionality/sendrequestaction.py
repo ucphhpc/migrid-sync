@@ -324,11 +324,10 @@ def main(client_id, user_arguments_dict):
         # Find all VGrid owners configured to receive notifications
 
         target_name = vgrid_name
-        (status, settings_list) = vgrid_settings(vgrid_name, configuration,
-                                                 recursive=False)
+        (status, settings_dict) = vgrid_settings(vgrid_name, configuration,
+                                                 recursive=False, as_dict=True)
         if not status:
-            settings_list = []
-        settings_dict = dict(settings_list)
+            settings_dict = {}
         request_recipients = settings_dict.get('request_recipients', 42)
         # We load inherited owners and reverse it to take direct owners first
         (status, owners_list) = vgrid_owners(vgrid_name, configuration,

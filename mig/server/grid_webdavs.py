@@ -529,8 +529,8 @@ class MiGFilesystemProvider(FilesystemProvider):
         try:
             real_path = get_fs_path(path, user_chroot, self.chroot_exceptions)
         except ValueError, vae:
-            raise RuntimeError("Security exception: access out of bounds: %s/%s"
-                               % (user_chroot, path))
+            raise RuntimeError("Access out of bounds: %s in %s : %s"
+                               % (path, user_chroot, vae))
         real_path = force_unicode(real_path)           
         return real_path
 

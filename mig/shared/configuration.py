@@ -87,6 +87,7 @@ def fix_missing(config_file, verbose=True):
         'sss_home': '~/state/sss_home/',
         'sandbox_home': '~/state/sandbox_home',
         'freeze_home': '~/state/freeze_home',
+        'sharelink_home': '~/state/sharelink_home',
         'seafile_mount': '~/state/seafile_mount',
         'openid_store': '~/state/openid_store/',
         'public_key_file': '',
@@ -251,6 +252,7 @@ class Configuration:
     sss_home = ''
     sandbox_home = ''
     freeze_home = ''
+    sharelink_home = ''
     javabin_home = ''
     seafile_mount = ''
     openid_store = ''
@@ -602,6 +604,10 @@ class Configuration:
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
         else:
             self.freeze_home = ''
+        if config.has_option('GLOBAL', 'sharelink_home'):
+            self.sharelink_home = config.get('GLOBAL', 'sharelink_home')
+        else:
+            self.sharelink_home = ''
         if config.has_option('GLOBAL', 'seafile_mount'):
             self.seafile_mount = config.get('GLOBAL', 'seafile_mount')
         if config.has_option('GLOBAL', 'openid_store'):
@@ -987,7 +993,7 @@ class Configuration:
         if config.has_option('SITE', 'user_redirect'):
             self.site_user_redirect = config.get('SITE', 'user_redirect')
         else:
-            self.site_user_redirect = '/cert_redirect'
+            self.site_user_redirect = 'cert_redirect'
         if config.has_option('SITE', 'title'):
             self.site_title = config.get('SITE', 'title')
         else:
@@ -1132,6 +1138,11 @@ class Configuration:
             self.site_enable_preview = config.getboolean('SITE', 'enable_preview')
         else:
             self.site_enable_preview = False
+        if config.has_option('SITE', 'enable_sharelinks'):
+            self.site_enable_sharelinks = config.getboolean('SITE',
+                                                           'enable_sharelinks')
+        else:
+            self.site_enable_sharelinks = False
         if config.has_option('SITE', 'enable_transfers'):
             self.site_enable_transfers = config.getboolean('SITE',
                                                            'enable_transfers')

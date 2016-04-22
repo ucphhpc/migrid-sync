@@ -30,10 +30,12 @@ specified by the client."""
 
 import os
 import traceback
+from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.defaults import file_dest_sep
-from shared.html import get_cgi_html_header, get_cgi_html_footer, vgrid_items
+from shared.html import get_cgi_html_header, get_cgi_html_footer, \
+     vgrid_items, html_post_helper
 from shared.objecttypes import validate
 from shared.prettyprinttable import pprint_table
 from shared.safeinput import html_escape
@@ -768,18 +770,27 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'html_form':
             lines.append(i['text'])
         elif i['object_type'] == 'dir_listings':
+            redirect_name = i.get('redirect_name',
+                                  configuration.site_user_redirect)
+            redirect_path = i.get('redirect_path', redirect_name)
+            ls_url_template = i['ls_url_template']
+            rmdir_url_template = i['rmdir_url_template']
+            rm_url_template = i['rm_url_template']
+            editor_url_template = i['editor_url_template']
+            redirect_url_template = i['redirect_url_template']
             if len(i['dir_listings']) == 0:
                 continue
             columns = 7
             if i.get('show_dest', False):
                 columns += 1
-            lines.append("<table class='files'>")
-            lines.append('<tr>')
+            lines.append("<table class='files enable_read'>")
+            lines.append('<tr class="if_full">')
             cols = 0
             lines.append('<td>Info</td>')
             cols += 1
-            lines.append("<td><input type='checkbox' name='allbox' value="
-                         "'allbox' onclick='un_check()' /></td>")
+            lines.append("""<td>
+<input type='checkbox' id='checkall_box' name='allbox' value='allbox' />
+</td>""")
             cols += 1
 
             # lines.append("<td><br /></td>"
@@ -802,86 +813,114 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     if 'directory' == entry['type']:
                         directory = entry
                         if directory == dir_listing['entries'][0]:
-                            lines.append('<tr>')
+                            lines.append('<tr class="if_full">')
                             lines.append('<td width=20%%>%s:<br />total %s</td>'
                                      % (dir_listing['relative_path'],
                                     len(dir_listing['entries'])))
                             cols += 1
-                            lines.append('<td><br /></td>' * (columns
-                                     - cols) + '</tr>')
+                            lines.append(
+                                '''<td class="empty_cell" colspan="%d"></td>
+                                ''' % (columns - cols))
+                            lines.append('</tr>')
                             cols = columns
 
                         lines.append('<tr class="%s">' % row_class)
                         cols = 0
-                        lines.append('<td><br /></td>')
+                        lines.append('<td class="empty_cell"></td>')
                         cols += 1
-                        lines.append("<td><input type='checkbox' name='path' "
-                                     "value='%s' /></td>" % \
-                                     directory['dirname_with_dir'])
+                        lines.append("""<td class='if_full'>
+<input type='checkbox' name='path' value='%s' />
+</td>""" % directory['dirname_with_dir'])
                         cols += 1
+                        
                         if directory.has_key('actual_dir'):
-                            lines.append('<td>%s</td>'
-                                     % directory['actual_dir'])
+                            actual_dir = directory['actual_dir']
                         else:
-                            lines.append('<td><br /></td>')
+                            actual_dir = ''
+                        lines.append('<td class="if_full">%s</td>' % \
+                                     actual_dir)
                         cols += 1
-                        ls_url = 'ls.py?path=%s;flags=%s;output_format=html' \
-                                 % (directory['dirname_with_dir'],
-                                    dir_listing['flags'])
-                        lines.append(
-                            "<td><a href='%s'>show</a></td>"
-                            % ls_url)
+                        # TODO: enable edit in sharelink and remove if_full here?
+                        lines.append("<td class='enable_write if_full'></td>")
                         cols += 1
-                        lines.append("<td>DIR</td>")
+                        rmdir_url = rmdir_url_template % directory
+                        js_name = 'delete%s' % hexlify(directory['rel_path'])
+                        helper = html_post_helper(js_name, rmdir_url, {})
+                        lines.append(helper)
+                        rmdir_link = html_link({
+                            'object_type': 'link', 'destination':
+                            "javascript: confirmDialog(%s, '%s');" % \
+                            (js_name, 'Really completely remove %(rel_path)s?' \
+                             % directory),
+                            'class': 'rmdir icon', 'title': 'Remove %(rel_path)s'\
+                            % directory, 'text': ''})
+                        lines.append("<td class='enable_write'>%s</td>" % \
+                                     rmdir_link)
                         cols += 1
-                        rm_url = 'rmdir.py?path=%s;output_format=html' \
-                                 % directory['dirname_with_dir']
-                        lines.append("<td><a href='%s'>remove</a></td>"
-                                     % rm_url)
+                        ls_url = ls_url_template % directory
+                        open_link = '''
+                        <a class="leftpad directoryicon" title="open" href="%s">
+                        %s</a>''' % (ls_url, directory['name'])
+                        lines.append('<td>%s</td>' % open_link)
                         cols += 1
-                        lines.append('<td>%s</td>' % directory['name'])
-                        cols += 1
-                        lines.append('<td><br /></td>' * (columns - cols) 
-                                 + '</tr>')
+                        lines.append('''<td class="empty_cell" colspan="%d">
+</td>''' % (columns - cols))
                         cols = columns
                     elif 'file' == entry['type']:
                         this_file = entry
                         lines.append('<tr class="%s">' % row_class)
                         cols = 0
-                        lines.append('<td><br /></td>')
+                        lines.append('<td class="empty_cell"></td>')
                         cols += 1
-                        lines.append("<td><input type='checkbox' name='path' "
-                                     "value='%s' /></td>"
-                                     % this_file['file_with_dir'])
+                        lines.append("""<td class='if_full'>
+<input type='checkbox' name='path' value='%s' />
+</td>""" % this_file['file_with_dir'])
                         cols += 1
                         if this_file.has_key('long_format'):
-                            lines.append('<td>%s</td>'
-                                     % this_file['long_format'])
+                            long_format = this_file['long_format']
                         else:
-                            lines.append('<td><br /></td>')
+                            long_format = ''
+                        lines.append('<td class="if_full">%s</td>'\
+                                     % long_format)
                         cols += 1
-                        lines.append("<td><a href='/%s/%s'>show</a></td>"
-                                 % ('cert_redirect',
-                                this_file['file_with_dir']))
+                        edit_url = editor_url_template % this_file
+                        edit_link = """
+                        <a class='edit icon' title='edit' href='%s'></a>
+                        """ % edit_url
+                        # TODO: enable edit in sharelink?
+                        lines.append("<td class='enable_write if_full'>%s</td>"\
+                                     % edit_link)
                         cols += 1
-                        edit_url = 'editor.py?path=%s;output_format=html' % \
-                                   this_file['file_with_dir']
-                        lines.append("<td><a href='%s'>edit</a></td>"
-                                     % edit_url)
+                        rm_url = rm_url_template % this_file
+                        js_name = 'delete%s' % hexlify(this_file['rel_path'])
+                        helper = html_post_helper(js_name, rm_url, {})
+                        lines.append(helper)
+                        rm_link = html_link({
+                            'object_type': 'link', 'destination':
+                            "javascript: confirmDialog(%s, '%s');" % \
+                            (js_name, 'Really remove %(rel_path)s?' % \
+                             this_file),
+                            'class': 'rm icon', 'title': 'Remove %(rel_path)s'\
+                            % this_file, 'text': ''})
+                        lines.append("<td class='enable_write'>%s</td>" % \
+                                     rm_link)
                         cols += 1
-                        rm_url = 'rm.py?path=%s;output_format=html' % \
-                                 this_file['file_with_dir']
-                        lines.append("<td><a href='%s'>delete</a></td>"
-                                     % rm_url)
+                        filename = this_file['name']
+                        file_stem, file_ext = os.path.splitext(filename)
+                        open_url = redirect_url_template % this_file
                         cols += 1
-                        lines.append('<td>%s</td>' % this_file['name'])
+                        open_link = '''
+                        <a class="leftpad fileicon ext_%s" title="open" href="%s">
+                        %s</a>''' % (file_ext.lstrip('.').lower(), open_url,
+                        filename)
+                        lines.append("<td>%s</td>" % open_link)
                         cols += 1
                         if this_file.get('file_dest', False):
-                            lines.append('<td>%s</td>'
-                                     % this_file['file_dest'])
+                            lines.append('<td class="if_full">%s</td>'
+                                         % this_file['file_dest'])
                             cols += 1
-                        lines.append('<td><br /></td>' * (columns - cols)
-                                 + '</tr>')
+                        lines.append('''<td class="empty_cell" colspan="%d">
+</td>''' % (columns - cols))
                         cols = columns
                     row_number += 1
             lines.append('</table>')
@@ -1158,6 +1197,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>Name</th>
         <th>Size in bytes</th>
         <th>MD5 checksum</th>
+        <th class="hidden">SHA1 checksum</th>
     </tr>
 </thead>
 <tbody>
@@ -1165,7 +1205,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             for frozenfile in i['frozenfiles']:
                 frozenfile_html += '''
     <tr>
-        <td>%(name)s</td><td>%(size)s</td><td>%(md5sum)s</td>
+    <td>%(name)s</td><td>%(size)s</td><td>%(md5sum)s</td><td class="hidden">%(sha1sum)s</td>
     </tr>
 ''' % frozenfile
             frozenfile_html += '</tbody></table>'
@@ -1231,9 +1271,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <tbody>
 ''')
             for single_transfer in datatransfers:
+                outputlink = html_link(single_transfer.get('viewoutputlink',
+                                                           ''))
+                # optional links
+                datalink = single_transfer.get('viewdatalink', '')
                 dellink = single_transfer.get('deltransferlink', '')
-                viewlink = html_link(single_transfer.get('viewtransferlink', ''))
                 redolink = single_transfer.get('redotransferlink', '')
+                datalink_html = ''
+                if datalink:
+                    datalink_html = html_link(datalink)
                 dellink_html = ''
                 if dellink:
                     dellink_html = html_link(dellink)
@@ -1252,13 +1298,14 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
 <td>%s</td><td>%s</td><td>%s</td><td>
 <!-- use nested table to distribute status and icons consistenly -->
-<table style="width: 100%%;"><tr><td style="min-width: 60%%;">%s</td><td>%s</td><td>%s</td></tr></table>
+<table style="width: 100%%;"><tr><td style="min-width: 60%%;">%s</td>
+<td>%s</td><td>%s</td><td>%s</td></tr></table>
 </tr>''' % (single_transfer['transfer_id'], dellink_html,
             single_transfer['action'], single_transfer['protocol'],
             single_transfer['fqdn'], single_transfer['port'], login,
             ', '.join(single_transfer['src']), single_transfer['dst'],
-            single_transfer['created'], single_transfer['status'], viewlink,
-            redolink_html))
+            single_transfer['created'], single_transfer['status'], outputlink,
+            datalink_html, redolink_html))
             lines.append('''
 </tbody>
 </table>''')
@@ -1293,6 +1340,61 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('''
 </tbody>
 </table>''')
+        elif i['object_type'] == 'sharelinks':
+            sharelinks = i['sharelinks']
+            # IMPORTANT: AdBlock Plus hides elements with class sharelink(s)
+            #            so we stray from naming pattern and call it linkshares
+            #            here to avoid trouble.
+            lines.append('''
+<table class="linkshares columnsort" id="sharelinkstable">
+<thead class="title">
+    <tr>
+        <th>ID</th>
+        <th class="icon">Action<!-- Open, Edit, Delete --></th>
+        <th>Path</th>
+        <th>Access</th>
+        <th class="hidden">Expire</th>
+        <th class="hidden">Password</th>
+        <th>Created</th>
+        <th>Invites</th>
+    </tr>
+</thead>
+<tbody>
+''')
+            for single_share in sharelinks:
+                openlink = single_share.get('opensharelink', '')
+                openlink_html = ''
+                if openlink:
+                    openlink_html = html_link(openlink)
+                editlink = single_share.get('editsharelink', '')
+                editlink_html = ''
+                if editlink:
+                    editlink_html = html_link(editlink)
+                else:
+                    # Leave the icon space empty if not set (used in edit)
+                    editlink_html = '<span class="iconspace"></span>'
+                dellink = single_share.get('delsharelink', '')
+                dellink_html = ''
+                if dellink:
+                    dellink_html = html_link(dellink)
+                if single_share.get('password_hash', ''):
+                    password = '*' * 8
+                else:
+                    password = ''
+                access = ' & '.join(single_share['access'])
+                lines.append('''
+<tr>
+<td>%s</td><td>%s %s %s</td><td>%s</td><td>%s</td><td class="hidden">%s
+</td><td class="hidden">%s</td><td>%s</td><td>%s</td>
+</tr>''' % (single_share['share_id'], openlink_html, editlink_html,
+            dellink_html, single_share['path'], access, single_share['expire'],
+            password, single_share['created'],
+            ', '.join(single_share['invites'])))
+
+            lines.append('''
+</tbody>
+</table>
+''')
         elif i['object_type'] == 'certreqs':
             certreqs = i['certreqs']
             lines.append('''
@@ -1373,7 +1475,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             if i.get('refresh_button', True):
                 toolbar += '''
         <div id="%spagerrefresh" class="inline">
-            <img class="refresh icon" alt="refresh" src="/images/icons/arrow_refresh.png"
+            <img class="pagerrefresh icon" alt="refresh" src="/images/icons/arrow_refresh.png"
                 title="Refresh" />
         </div>
 ''' % id_prefix
@@ -1506,7 +1608,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                       proto
                 users = i['users']
                 lines.append('''
-<table class="users columnsort" id="usertable"><thead class="title">
+<table class="people columnsort" id="usertable"><thead class="title">
 <tr>
   <th>User ID</th>
   <th class="icon"><!-- View --></th>

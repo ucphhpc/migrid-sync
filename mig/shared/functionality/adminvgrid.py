@@ -39,8 +39,8 @@ from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_settings
 
-_valid_visible = [("owners", keyword_owners), ("members", keyword_members),
-                  ("everyone", keyword_all)]
+_valid_sharelink = [("owners", keyword_owners), ("members", keyword_members)]
+_valid_visible = _valid_sharelink + [("everyone", keyword_all)]
 _valid_bool = [("yes", True), ("no", False)]
 
 def signature():
@@ -367,10 +367,9 @@ $(document).ready(function() {
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Settings"})
 
-    (settings_status, settings) = vgrid_settings(vgrid_name, configuration)
-    if settings_status:
-        settings_dict = dict(settings)
-    else:
+    (settings_status, settings_dict) = vgrid_settings(vgrid_name, configuration,
+                                                 as_dict=True)
+    if not settings_status:
         settings_dict = {'vgrid_name': vgrid_name}
     settings_dict.update({
         'vgrid_label': configuration.site_vgrid_label,
@@ -405,6 +404,17 @@ the corresponding participants. Similarly setting a visibility flag to
     for (title, field) in visibility_options:
         settings_form += '<h4>%s</h4>' % title
         for (key, val) in _valid_visible: 
+            checked = ''
+            if settings_dict.get(field, keyword_owners) == val:
+                checked = "checked"
+            settings_form += '''
+            <input type="radio" name="%s" value="%s" %s/> %s
+''' % (field, val, checked, key)
+        settings_form += '<br/>'
+    sharelink_options = [("Limit sharelink creation to", "create_sharelink")]
+    for (title, field) in sharelink_options:
+        settings_form += '<h4>%s</h4>' % title
+        for (key, val) in _valid_sharelink: 
             checked = ''
             if settings_dict.get(field, keyword_owners) == val:
                 checked = "checked"

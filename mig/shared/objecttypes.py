@@ -139,6 +139,12 @@ transferkey = {
     'required': ['key_id', 'created', 'type', 'bits', 'public_key'],
     'optional': ['delkeylink'],
     }
+sharelink = {
+    'object_type': 'sharelink',
+    'required': ['share_id', 'path', 'access', 'expire', 'password_hash',
+                 'invites', 'created', 'owner'],
+    'optional': ['viewsharelink', 'delsharelink'],
+    }
 certreq = {'object_type': 'certreq', 'required': [
     'id',
     'full_name',
@@ -204,6 +210,9 @@ datatransfers = {'object_type': 'datatransfers',
                   )]}
 transferkeys = {'object_type': 'transferkeys',
                 'required_list': [('transferkeys', 'transferkey'
+                  )]}
+sharelinks = {'object_type': 'sharelinks',
+                  'required_list': [('sharelinks', 'sharelink'
                   )]}
 certreqs = {'object_type': 'certreqs', 'required_list': [('certreqs',
             'certreq')]}
@@ -331,6 +340,8 @@ valid_types_list = [
     datatransfers,
     transferkey,
     transferkeys,
+    sharelink,
+    sharelinks,
     certreq,
     certreqs,
     file_not_found,

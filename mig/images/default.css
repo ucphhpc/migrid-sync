@@ -101,51 +101,78 @@ table {
   width: 100%;
 }
 
+table td a {
+    /* make room for action icons */
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+div.icon, span.icon, a.removeitemlink {
+    /* make room for action icons */
+    padding-top: 2px;
+    padding-bottom: 2px;
+    height: 22px;
+}
+
+
 table.columnsort {
   /* rounded border on sortable tables */
   border: 1px solid #999;
   border-radius: 5px;
+  padding: 2px;
+}
+
+table.columnsort td {
+    /* make room for action icons and borders */
+    height: 22px;
 }
 
 table.submitstatus {}
 
-table.files {}
+table.files { 
+/* TODO: can we remove cell borders? */
+/* 
+    border: 0;
+    padding: 0;
+    margin: 0;
+*/
+}
 table.fileupload {}
 table.stats {}
 table.wc {}
 
 table.jobs {
-  padding: 2px;
 }
 table.resubmit {}
 table.changedstatusjobs {}
 table.saveschedulejobs {}
 
 table.vgrids {
-  padding: 2px;
 }
 
 table.resources {
-  padding: 2px;
   text-align: left;
 }
 table.resource td {
   padding: 5px;
 }
 table.people {
-  padding: 2px;
   text-align: left;
 }
 table.user td {
   padding: 5px;
 }
 table.datatransfers {
-  padding: 2px;
+}
+table.frozenarchives {
 }
 table.transferkeys {
-  padding: 2px;
 }
-
+/* 
+   IMPORTANT: AdBlock Plus hides elements with class sharelink(s) so we stray
+              from naming pattern and call it linkshares here to avoid trouble.
+*/
+table.linkshares {
+}
 
 table.forum {
   padding: 2px;
@@ -168,7 +195,6 @@ table.downloads {
 }
 
 table.runtimeenvs {
-  padding: 2px;
 }
 table.runtimeenvdetails {
   padding: 2px;
@@ -1041,7 +1067,23 @@ a:hover.genericbutton {
   width: 99%;
 }
 
-/* IMPORTANT: these overrides must come after .*link settings to work */
+/* hide complexity for sharelink ls page */
+#sharelink_ls #content {
+  padding: 10px 100px;
+  min-height: 600px;
+}
+#sharelink_ls .if_full, #sharelink_ls .empty_cell {
+    display: none;
+}
+
+
+/* 
+*************************************************************************
+
+   IMPORTANT: these overrides must come after .*link settings to work
+
+*************************************************************************
+*/
 .owner {
   border: 1px solid gold;
   border-radius: 4px;

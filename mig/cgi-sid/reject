@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# mkdir - [insert a few words of module description on this line]
+# reject - HTTP handler to reject operations like PUT in read-only locations
 # Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,11 +25,15 @@
 # -- END_HEADER ---
 #
 
-import cgi
-import cgitb
-cgitb.enable()
+"""HTTP handler to reject clients in certain locations"""
 
-from shared.functionality.mkdir import main
-from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
+print "Content-type: text/html"
+print
 
-run_cgi_script_possibly_with_cert(main)
+print """<html>
+<head><title>Operation rejected</title></head>
+<body>
+<h3>The requested operation is not allowed here</h3>
+</body>
+</html>
+"""

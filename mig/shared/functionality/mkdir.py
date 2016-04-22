@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mkdir - create directory in user hom
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,9 +31,9 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import parents, verbose
 from shared.validstring import valid_user_path
 
@@ -46,6 +46,8 @@ def signature():
         'current_dir': [''],
         'flags': [''],
         'mkdirbutton': [''],
+        'sharelink_id': [''],
+        'sharelink_mode': [''],
         }
     return ['', defaults]
 
@@ -54,16 +56,15 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id)
+        initialize_main_variables(client_id, op_header=False,
+                                  op_menu=client_id)
     client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input_and_cert(
+    (validate_status, accepted) = validate_input(
         user_arguments_dict,
         defaults,
         output_objects,
-        client_id,
-        configuration,
         allow_rejects=False,
         )
     if not validate_status:
@@ -78,12 +79,51 @@ def main(client_id, user_arguments_dict):
     flags = ''.join(accepted['flags'])
     patterns = accepted['path']
     current_dir = accepted['current_dir'][-1]
+    sharelink_id = accepted['sharelink_id'][-1]
+    sharelink_mode = accepted['sharelink_mode'][-1]
+
+    # Either authenticated user client_id set or sharelink ID
+    if client_id:
+        user_id = client_id
+        target_dir = client_id_dir(client_id)
+        base_dir = configuration.user_home
+        id_args = ''
+        page_title = 'Create User Directory'
+    elif sharelink_id and sharelink_mode:
+        # TODO: load and check sharelink pickle (currently requires client_id)
+        if sharelink_mode == 'read-only':
+            logger.error('%s called without write acces: %s' % \
+                         (op_name, accepted))
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : 'No write access!'})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+        user_id = sharelink_id
+        target_dir = os.path.join(sharelink_mode, sharelink_id)
+        base_dir = configuration.sharelink_home
+        id_args = 'sharelink_mode=%s;sharelink_id=%s;' % (sharelink_mode,
+                                                            sharelink_id)
+        page_title = 'Create Shared Directory'
+    else:
+        logger.error('%s called without proper auth: %s' % (op_name, accepted))
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Authentication is missing!'
+                              })
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+    base_dir = os.path.abspath(os.path.join(base_dir, target_dir)) + os.sep
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = page_title
+    output_objects.append({'object_type': 'header', 'text': page_title})
+
+    # Input validation assures target_dir can't escape base_dir
+    if not os.path.isdir(base_dir):
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'Invalid client/sharelink id!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if verbose(flags):
         for flag in flags:
@@ -143,14 +183,19 @@ def main(client_id, user_arguments_dict):
                     os.mkdir(real_path)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, exc)})
+                        'text': "%s: '%s' failed!" % (op_name,
+                        relative_path)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
                              relative_path, exc))
 
                 status = returnvalues.SYSTEM_ERROR
                 continue
+            output_objects.append({'object_type': 'text',
+                        'text': "created directory %s" % (relative_path)})
 
+    output_objects.append({'object_type': 'link',
+                           'destination': 'ls.py?%s' % id_args,
+                           'text': 'Return to files overview'})
     return (output_objects, status)
 
 

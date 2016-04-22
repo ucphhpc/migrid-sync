@@ -131,6 +131,16 @@ if (jQuery) (function($){
         updateSorting();
     }
     
+    /* Use this helper whenever explicitly selecting a sub element of the
+       current fileman container, which may be #fm_filemanager, 
+       #fm_filechooser or whatever depending on context.
+       It works as long as the container has the common .fm_folders element.
+    */
+    $.fn.fmSelect = function(sub) {
+        var parentId = $(".fm_folders").parent().attr('id');
+        var selector ="#"+parentId+sub;
+        return $(selector);
+    }
 
     /* Use this helper whenever explicitly selecting a sub element of the
        current fileman container, which may be #fm_filemanager, 
@@ -282,6 +292,21 @@ if (jQuery) (function($){
         $.fn.reload(path);
     }
 
+    $.fn.openParent = function() {
+        console.debug('openParent');
+        var current_li = $("#fm_xbreadcrumbs li.current");
+        var current_path = current_li.find('a').text();
+        console.debug('openParent current_path: '+current_path);
+        if (current_path == '/') {
+            console.debug("already at root");
+            return;
+        }
+        var prev_li = current_li.prev();
+        var prev_path = prev_li.find('a').text();
+        console.debug('openParent prev_path: '+ prev_path);
+        prev_li.find('a').click();
+        console.debug('done openParent to '+prev_path);
+    }
 
    
     $.fn.filemanager = function(user_options, clickaction) {
@@ -364,6 +389,31 @@ if (jQuery) (function($){
             var previewLeftTileWidth = Math.floor((previewTilesInnerWidth - previewCenterTileWidth)/2);
             var previewRightTileWidth = previewLeftTileWidth;
 
+            /* Dynamically fit buttonbar and buttons inline with breadcrumbs */
+            var breadcrumbsHeight = $("#fm_xbreadcrumbs").height();
+            var buttonbarHeight = breadcrumbsHeight;
+            // Spacing for border, padding and margin
+            var buttonSpacing = 5;
+            // compensate for margin and padding
+            var buttonHeight = buttonbarHeight - 2 * buttonSpacing;
+            var buttonLineHeight = buttonbarHeight - 2 * buttonSpacing;
+            // Update to reflect the enabled buttons
+            var buttonCount = 2;
+            if (options.sharelinksbutton) {
+                buttonCount += 1;
+            }
+            if (options.datatransfersbutton) {
+                buttonCount += 1;
+            }
+            var buttonWidth = 16;
+            var statusbarWidth = $("#fm_statusbar").width();
+            console.debug("statusbar is "+statusbarWidth+ "px wide");
+            // leave a couple of pixels for rounding
+            var buttonbarWidth = buttonCount * (buttonWidth + 2 * buttonSpacing);
+            var breadcrumbsWidth = statusbarWidth - buttonbarWidth;
+            console.debug("set breadcrumbsWidth to "+breadcrumbsWidth+ "px");
+            console.debug("set buttonbarWidth to "+buttonbarWidth+ "px");
+
             /* Try hard to fit fileman in the window without global scroll bar */
             /* Make sure fileman fills at least as much vertically as the menu */
             
@@ -398,12 +448,20 @@ if (jQuery) (function($){
                 previewInnerHeight = fileManagerInnerHeight;
                 fileFolderInnerHeight = 0;
             }
+
             return {
                 previewInnerHeight: previewInnerHeight,
                 previewWidth: previewWidth,
                 previewLeftTileWidth: previewLeftTileWidth,
                 previewCenterTileWidth: previewCenterTileWidth,
                 previewRightTileWidth: previewRightTileWidth,
+                breadcrumbsHeight: breadcrumbsHeight,
+                breadcrumbsWidth: breadcrumbsWidth,
+                buttonbarHeight: buttonbarHeight,
+                buttonbarWidth: buttonbarWidth,
+                buttonHeight: buttonHeight,
+                buttonLineHeight: buttonLineHeight,
+                buttonWidth: buttonWidth,
                 fileManagerHeight: fileManagerHeight,
                 fileManagerInnerHeight: fileManagerInnerHeight,
                 fileFolderInnerHeight: fileFolderInnerHeight
@@ -411,6 +469,7 @@ if (jQuery) (function($){
         }
 
         function refresh_fileman_layout(callback) {
+            console.debug('refresh_fileman_layout');
             var layout = get_fileman_layout();
 
             $.fn.fmSelect("").css("height", layout.fileManagerHeight + "px");
@@ -420,6 +479,13 @@ if (jQuery) (function($){
             $.fn.fmSelect(" .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
             $.fn.fmSelect(" .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
             $.fn.fmSelect(" .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");
+            $.fn.fmSelect(" .fm_path_breadcrumbs").css("height", layout.breadcrumbsHeight+"px")
+                .css("width", layout.breadcrumbsWidth+"px");
+            $.fn.fmSelect(" .fm_buttonbar").css("height", layout.buttonbarHeight+"px")
+                .css("width", layout.buttonbarWidth+"px");
+            $.fn.fmSelect(" #fm_buttons li").css("height", layout.buttonHeight+"px")
+                .css("line-height", layout.buttonLineHeight+"px")
+                .css("width", layout.buttonWidth+"px");
 
             if (typeof callback === "function") {
                 callback();
@@ -506,10 +572,12 @@ if (jQuery) (function($){
                     }
                 }});
         }
+        
+        $.fn.refresh_fileman_layout = refresh_fileman_layout;
 
         $(window).on("resize", function() {
             set_visibility_preview('hidden');
-            refresh_fileman_layout();
+            $.fn.refresh_fileman_layout();
         });
 
         $(window).on("debouncedresize", function() {
@@ -738,6 +806,24 @@ if (jQuery) (function($){
                             + '</p><p>bytes: ' + jsonRes[i][field][j]['bytes']
                             + '</p>';
                     }
+                } else if (jsonRes[i]['object_type'] == 'sharelinks') {
+                    field = 'sharelinks';
+                    var elem;
+                    for (j = 0; j < jsonRes[i][field].length; j++) {
+                        elem = jsonRes[i][field][0];
+                        console.debug('found share link elem '+$.fn.dump(elem))
+                        misc_output += '<h4>Created Share Link</h4>'
+                            + '<p>ID: <tt>' + elem['share_id'] + '</tt></p>'
+                            + '<p>Path: <tt>' + elem['path'] + '</tt></p>'
+                            + '<p>Access: <tt>' + elem['access'] + '</tt></p>'
+                            + '<p><a class="urllink" target="_blank" href="' 
+                            + elem['opensharelink']['destination'] 
+                            + '">Open share link</a></p>'
+                            + '<p><a class="editlink" target="_blank" href="' 
+                            + elem['editsharelink']['destination'] 
+                            + '">Edit and send share link</a></p>'
+                        ;
+                    }
                 }
             }
             return misc_output;
@@ -834,8 +920,8 @@ if (jQuery) (function($){
                                 +'&output_format=file';
                         }
                     },
-                    autoOpen: false, closeOnEscape: true,
-                    modal: true, width: '800px'
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '800px'
                 });
                 $("#editor_dialog div.spinner").html("Loading file...").show();
                 $("#editor_dialog input[name='submitjob']").attr('checked', false);
@@ -889,8 +975,8 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                         }
                     },
-                    autoOpen: false, closeOnEscape: true,
-                    modal: true, width: '800px'
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '800px'
                 });
 
                 // determine file-name of new file with fallback to default in
@@ -947,8 +1033,8 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                         }
                     },
-                    width: '800px', autoOpen: false,
-                    closeOnEscape: true, modal: true
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '800px'
                 });
                 $("#cmd_dialog").dialog('open');
             },
@@ -987,8 +1073,8 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                         }
                     },
-                    autoOpen: false, closeOnEscape: true,
-                    modal: true, width: '500px'
+                    autoOpen: false, closeOnEscape: true, modal: true, 
+                    width: '700px'
                 });
                 $("#pack_dialog").dialog('open');
             },
@@ -999,7 +1085,7 @@ if (jQuery) (function($){
                 jsonWrapper(el, '#cmd_dialog', 'unpack.py', {dst: dst, src: $(el).attr(pathAttribute), path: ''});
                 console.debug("done in unpack");
             },
-            transfers:   function (action, el, pos) {
+            datatransfers:   function (action, el, pos) {
                 //var path_enc = encodeURI($(el).attr(pathAttribute));
                 window.open('datatransfer.py');
             },
@@ -1050,8 +1136,8 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                         }
                     },
-                    width: '800px', autoOpen: false,
-                    closeOnEscape: true, modal: true
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '800px'
                 });
                 $("#cmd_dialog").dialog('open');
             },
@@ -1082,8 +1168,8 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                         }
                     },
-                    autoOpen: false, closeOnEscape: true,
-                    modal: true
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '800px'
                 });
                 $("#mkdir_dialog").dialog('open');
             },
@@ -1114,8 +1200,8 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                         }
                     },
-                    autoOpen: false, closeOnEscape: true,
-                    modal: true
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '700px'
                 });
                 $("#rename_dialog").dialog('open');
             },
@@ -1137,11 +1223,49 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                         }
                     },
-                    autoOpen: false, closeOnEscape: true,
-                    modal: true
+                    autoOpen: false, closeOnEscape: true, modal: true, 
+                    width: '700px'
                 });
                 $("#grep_dialog").dialog('open');
                 $("#grep_form input[name='pattern']").focus();
+            },
+            sharelinks:   function (action, el, pos) {
+                //var path_enc = encodeURI($(el).attr(pathAttribute));
+                window.open('sharelink.py');
+            },
+            sharelink: function(action, el, pos) {
+                $("#sharelink_form input[name='path']").val($(el).attr(pathAttribute));
+                $("#sharelink_form input[name='read_access']").prop('checked', true);
+                $("#sharelink_form input[name='write_access']").prop('checked', false);
+                $("#sharelink_form input[name='expire']").val('');
+                $("#sharelink_form input[name='password']").val('');
+                $("#sharelink_dialog").dialog({
+                    buttons: {
+                        Ok: function() {
+                            startProgress("Generating share link ...");
+                            var path = $("#sharelink_form input[name='path']").val();
+                            var read_access = $("#sharelink_form input[name='read_access']").prop('checked');
+                            var write_access = $("#sharelink_form input[name='write_access']").prop('checked');
+                            var expire = $("#sharelink_form input[name='expire']").val();
+                            var password = $("#sharelink_form input[name='password']").val();
+                            $(this).dialog('close');
+                            jsonWrapper(el, '#cmd_dialog', 'sharelink.py', {action: 'create',
+                                                                            path: path,
+                                                                            read_access: read_access,
+                                                                            write_access: write_access,
+                                                                            expire: expire,
+                                                                            password: password
+                                                                          });
+                        },
+                        Cancel: function() {
+                            $(this).dialog('close');
+                        }
+                    },
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '700px'
+                });
+                $("#sharelink_dialog").dialog('open');
+                $("#sharelink_form input[name='path']").focus();
             },
             imagesettings: function(action, el, pos) {
                 var rel_path = $(el).attr(pathAttribute);
@@ -1166,6 +1290,10 @@ if (jQuery) (function($){
             subPath: '/',
             dragndrop: true,
             filespacer: true,
+            uploadspace: true,
+            sharelinksbutton: true,
+            datatransfersbutton: true,
+            refreshLayoutOnInit: false,
             enableSubmit: true,
             selectOnly: false,
             imagesettings: false
@@ -1484,7 +1612,7 @@ if (jQuery) (function($){
                             /* add or update existing uploadspace */
                             if ($(".fm_files div.uploadspace").length == 0) {
                                 //console.debug("add uploadspace");
-                                $(".fm_files").append('<div class="uploadspace centertext" style="border: 2px; border-style: dotted; border-color: lightgrey; height: '+spacerHeight+'px ;" rel_path="" title=""+><span class="uploadbutton">Click this area to open upload helper...</span></div>');
+                                $(".fm_files").append('<div class="uploadspace centertext" style="height: '+spacerHeight+'px;" rel_path="" title=""><div class="uploadbutton"><span class="upload icon">Click to open upload helper</span></div></div>');
                                 function openFancyUploadHere() {
                                     //alert("upload here!");
                                     var open_dialog = mig_fancyuploadchunked_init("upload_dialog");
@@ -1498,7 +1626,7 @@ if (jQuery) (function($){
                                                 }, remote_path, false);
                                     //alert("done upload!");
                                 }
-                                $("div.uploadspace").click(openFancyUploadHere);
+                                $("div.uploadspace .uploadbutton").click(openFancyUploadHere);
                             }
 
                             if (t != '/') { // Do not prepend the fake-root.
@@ -1510,6 +1638,9 @@ if (jQuery) (function($){
                                 .css("color", "grey")
                                 .attr("rel_path", rel_path)
                                 .attr("title", rel_path);
+                            $(".fm_files div.managespace")
+                                .css("height", uploaderHeight+"px")
+                                .css("line-height", uploaderHeight/2+"px");
                         }
 
                         // Bind actions to entries in a non-blocking way to avoid
@@ -1620,11 +1751,6 @@ if (jQuery) (function($){
                     "create": {name: "Create File", icon: "create"},
                     "upload": {name: "Upload File", icon: "upload"},
                     "pack": {name: "Pack", icon: "pack"},
-                    "transfers": {name: "Data Transfers", icon: "transfers",
-                                  "items": {"dataimport": {name: "Import", icon: "dataimport"},
-                                            "dataexport": {name: "Export", icon: "dataexport"}
-                                           }
-                                 },
                     "sep1": "---------",
                     //"cut": {name: "Cut", icon: "cut"},
                     "copy": {name: "Copy", icon: "copy"},
@@ -1639,6 +1765,14 @@ if (jQuery) (function($){
                     "sep3": "---------",
                     "imagesettings": {name: "Image Settings", icon: "edit"},
                     "sep4": "---------",
+                    "sharelink": {name: "Share Link", icon: "sharelink"},
+                    "sharelinks-sep": "---------",
+                    "datatransfers": {name: "Data Transfers", icon: "datatransfers",
+                                      "items": {"dataimport": {name: "Import", icon: "dataimport"},
+                                                "dataexport": {name: "Export", icon: "dataexport"}
+                                               }
+                                     },
+                    "datatransfers-sep": "---------",
                     "advanced-sub": {
                         "name": "Advanced",
                         icon: "advanced",
@@ -1671,6 +1805,9 @@ if (jQuery) (function($){
                     /* TODO: add list archive contents */
                     //"listpack": {name: "Show Packed Contents", icon: "listpack"},
                     "sep3": "---------",
+                    //TODO: support share link for single files and enable?
+                    //"sharelink": {name: "Share Link", icon: "sharelink"},
+                    //"sharelink-sep": "---------",
                     "submit": {name: "Submit", icon: "submit"},
                     "submit-sep": "---------",
                     "advanced-sub": {
@@ -1783,6 +1920,32 @@ if (jQuery) (function($){
                                                              $.contextMenu('destroy');
                                                              bindContextMenus();
                                                          });
+
+                if (options.sharelinksbutton) {
+                    $.fn.fmSelect(" #fm_buttons li.sharelinksbutton").show();
+                    console.debug("bind manage sharelinks to corresponding button");
+                    $("#fm_buttons li.sharelinksbutton").click(function() {
+                        window.open('sharelink.py');
+                    });
+                }
+                if (options.datatransfersbutton) {
+                    $.fn.fmSelect(" #fm_buttons li.datatransfersbutton").show();
+                    console.debug("bind manage datatransfers to corresponding button");
+                    $("#fm_buttons li.datatransfersbutton").click(function() {
+                        window.open('datatransfer.py');
+                    });
+                }
+
+                // bind reload to buttonbar refresh button
+                console.debug("bind reload to corresponding button");
+                $("#fm_buttons li.refreshbutton").click(function() {
+                    $.fn.reload('');
+                });
+
+                console.debug("bind reload to corresponding button");
+                $("#fm_buttons li.parentdirbutton").click(function() {
+                    $.fn.openParent();
+                });
 
                 // Binds: Expands and a call to showbranch
                 // or
@@ -2043,6 +2206,23 @@ if (jQuery) (function($){
                  }
                 });
 
+            $("#sharelink_form").ajaxForm(
+                {target: '#sharelink_output', dataType: 'json',
+                 success: function(responseObject, statusText) {
+                     var errors = $(this).renderError(responseObject);
+                     var warnings = $(this).renderWarning(responseObject);
+                     if (errors.length > 0) {
+                         $("#sharelink_output").html(errors);
+                     } else if (warnings.length > 0) {
+                         $("#sharelink_output").html(warnings);
+                     } else {
+                         $("#sharelink_output").html("created!");
+                         $("#sharelink_dialog").dialog('close');
+                         $(".fm_files").parent().reload('');
+                     }
+                 }
+                });
+
             $("#rename_form").ajaxForm(
                 {target: '#rename_output', dataType: 'json',
                  success: function(responseObject, statusText) {
@@ -2146,7 +2326,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
         // see http://jqueryui.com/docs/dialog/ for options
         {autoOpen: false,
          modal: true,
-         width: '800px',
+         width: '1000px',
          buttons: {"Cancel": function() { $("#" + name).dialog("close"); }
                   }
         });
@@ -2172,8 +2352,11 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
                                };
 
         $("#" + name).dialog("open");
+        /* We call refresh twice here to get fitting right after loading */
+        $.fn.refresh_fileman_layout();
         /* force reload to get zebra-coloring right (ignored unless visible) */
         $.fn.reload(start_path);
+        $.fn.refresh_fileman_layout();
     };
     // code entangled with specific filemanager naming
     var pathAttribute = "rel_path";
@@ -2202,6 +2385,9 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
          dragndrop: false,
          filespacer: false,
          uploadspace: false,
+         sharelinksbutton: false,
+         datatransfersbutton: false,
+         refreshLayoutOnInit: true,
          imagesettings: false,
          selectOnly: true
         },
@@ -2261,14 +2447,15 @@ var status_url = base_url+"status";
 var delete_url = base_url+"delete";
 var move_url = base_url+"move";
 
-$.fn.delete_upload = function(name, dest_dir) {
-    console.debug("delete upload: "+name+" "+dest_dir);
+$.fn.delete_upload = function(name, dest_dir, sharelink_id, sharelink_mode) {
+    console.debug("delete upload: "+name+" "+dest_dir+" "+sharelink_id);
     var deleted = false;
     $.ajax({
         url: delete_url,
         dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
-               "current_dir": dest_dir},
+               "current_dir": dest_dir, "sharelink_id": sharelink_id, 
+               "sharelink_mode": sharelink_mode},
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
@@ -2303,14 +2490,15 @@ $.fn.delete_upload = function(name, dest_dir) {
     return deleted;
 };
 
-$.fn.move_upload = function(name, dest_dir) {
-    console.debug("move upload: "+name+" "+dest_dir);
+$.fn.move_upload = function(name, dest_dir, sharelink_id, sharelink_mode) {
+    console.debug("move upload: "+name+" "+dest_dir+" "+sharelink_id);
     var moved = false;
     $.ajax({
         url: move_url,
         dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
-               "current_dir": dest_dir},
+               "current_dir": dest_dir, "sharelink_id": sharelink_id, 
+               "sharelink_mode": sharelink_mode},
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
@@ -2353,14 +2541,14 @@ function mig_fancyuploadchunked_init(name, callback) {
        drag n drop to fileman drop zone with upload popup?
     */
 
-    console.debug("mig_fancyuploadchunked_init: "+name, callback);
+    console.debug("mig_fancyuploadchunked_init: "+name);
     $.fn.fancyfileupload = $.fn.fileupload;
 
     $("#" + name).dialog(
         // see http://jqueryui.com/docs/dialog/ for options
         {autoOpen: false,
          modal: true,
-         width: '800px',
+         width: '1000px',
          position: { my: "top", at: "top+100px", of: window},
          buttons: {
              "Close": function() {
@@ -2369,7 +2557,9 @@ function mig_fancyuploadchunked_init(name, callback) {
                      showWaitInfo("aborting active uploads", 0, 3000);
                      $(".fileupload-buttons button.cancel").click();
                  }
+                 console.info("before callback");
                  callback();
+                 console.info("after callback");
                  $("#" + name).dialog("close");
              }
          }
@@ -2447,9 +2637,9 @@ function mig_fancyuploadchunked_init(name, callback) {
         return data;
     }
 
-    var do_d = function(text, action, dest_dir, automatic_dest) {
+    var do_d = function(text, action, dest_dir, automatic_dest, sharelink_id, sharelink_mode) {
 
-        console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir);
+        console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir+", "+sharelink_id);
 
         // save and restore original callback
         var c = callback;
@@ -2461,9 +2651,10 @@ function mig_fancyuploadchunked_init(name, callback) {
             action = c;
         }
 
-        callback = function(i) { action(i);
-                                 callback = c;
-                               };
+        callback = function(i) { 
+            action(i);
+            callback = c;
+        };
 
         //console.debug("mig_fancyupload_init do_d open");
         $("#" + name).dialog("open");
@@ -2485,7 +2676,9 @@ function mig_fancyuploadchunked_init(name, callback) {
         $("#fancyfileupload").fancyfileupload({
             // Uncomment the following to send cross-domain cookies:
             //xhrFields: {withCredentials: true},
-            url: upload_url,
+            url: upload_url+";sharelink_id="+sharelink_id+";sharelink_mode="+sharelink_mode,
+            // TODO: can we somehow move to data like this?
+            //data: {"sharelink_id": sharelink_id, "sharelink_mode": sharelink_mode},
             dataType: "json",
             maxChunkSize: 32000000, // 32 MB
             filesContainer: ".uploadfileslist",
@@ -2534,7 +2727,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         // Continue to next if move was not requested
                         return true;
                     }
-                    if ($.fn.move_upload(file.name, file.moveDest)) {
+                    if ($.fn.move_upload(file.name, file.moveDest, sharelink_id, sharelink_mode)) {
                         console.debug("fix path and strip move info: " + file.name);
                         var purename = file.name.substring(file.name.lastIndexOf("/") + 1);
                         var baseurl = file.url.substring(0, file.url.length - file.name.length);
@@ -2583,7 +2776,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         console.debug("cancelled file: "+file.name);
                     }
                     console.debug("call clean up file: "+file.name);
-                    $.fn.delete_upload(file.name);
+                    $.fn.delete_upload(file.name, sharelink_id, sharelink_mode);
                 });
                 var that = this;
                 try {
@@ -2597,9 +2790,11 @@ function mig_fancyuploadchunked_init(name, callback) {
 
         // Upload server status check for browsers with CORS support:
         showWaitInfo("checking server availability");
+        console.debug("check with "+sharelink_id);
         if ($.support.cors) {
             $.ajax({
                 url: status_url,
+                data: {"sharelink_id": sharelink_id, "sharelink_mode": sharelink_mode},
                 dataType: "json",
                 type: "POST"
             }).fail(function () {
@@ -2623,6 +2818,7 @@ function mig_fancyuploadchunked_init(name, callback) {
             // Uncomment the following to send cross-domain cookies:
             //xhrFields: {withCredentials: true},
             url: status_url,
+            data: {"sharelink_id": sharelink_id, "sharelink_mode": sharelink_mode},
             dataType: "json",
             type: "POST",
             context: $("#fancyfileupload")[0]

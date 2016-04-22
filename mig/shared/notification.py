@@ -74,7 +74,8 @@ def create_notify_message(
 
 ---
 """
-    txt += """*** IMPORTANT: replies to this message will NOT be read! ***
+    txt += """
+*** IMPORTANT: direct replies to this automated message will NOT be read! ***
 
 """
     if status == 'SUCCESS':
@@ -85,7 +86,8 @@ def create_notify_message(
             var_dict)
         txt += \
             '''
-Your %(site)s job with JOB ID %(jobid)s has finished and full status is available at:
+Your %(site)s job with JOB ID %(jobid)s has finished and
+full status is available at:
 %(generated_links)s
 
 The job commands and their exit codes:
@@ -227,6 +229,23 @@ status %(status_code)s and status message:
 The full status and output files are available at:
 %(status_link)s
 ''' % var_dict
+    elif status == 'INVITESHARE':
+        header = '%s share link invitation' % configuration.short_title
+        var_dict.update({'auto_msg': args_list[0], 'msg': args_list[1],
+                         'admins': configuration.admin_email})
+        var_dict.update(jobdict)
+        txt += '''
+%(auto_msg)s
+%(msg)s
+
+****************************************************************************
+ Please send any replies explicitly to the person who invited you using the
+ email address included above.
+ Feel free to report any abuse of this service to the %(site)s admins
+ (%(admins)s)
+ e.g. in case you think this is a spam message.
+****************************************************************************
+        ''' % var_dict
     elif status == 'PASSWORDREMINDER':
         from_id = args_list[0]
         password = args_list[1]

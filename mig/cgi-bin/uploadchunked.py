@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadchunked - chunked file upload front end
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,6 +32,6 @@ import cgitb
 cgitb.enable()
 
 from shared.functionality.uploadchunked import main
-from shared.cgiscriptstub import run_cgi_script
+from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
-run_cgi_script(main)
+run_cgi_script_possibly_with_cert(main)

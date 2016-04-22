@@ -38,6 +38,7 @@ from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
 import shared.returnvalues as returnvalues
 
 _valid_visible = (keyword_owners, keyword_members, keyword_all)
+_valid_sharelink = (keyword_owners, keyword_members)
 
 def signature():
     """Signature of the main function"""
@@ -47,6 +48,7 @@ def signature():
                 'visible_owners': [keyword_owners],
                 'visible_members': [keyword_owners],
                 'visible_resources': [keyword_owners],
+                'create_sharelink': [keyword_owners],
                 'request_recipients': ['42'],
                 'read_only': ['False'],
                 'hidden': ['False'],
@@ -85,6 +87,7 @@ def main(client_id, user_arguments_dict):
     visible_owners = accepted['visible_owners'][-1]
     visible_members = accepted['visible_members'][-1]
     visible_resources = accepted['visible_resources'][-1]
+    create_sharelink = accepted['create_sharelink'][-1]
     request_recipients = accepted['request_recipients'][-1]
     read_only = accepted['read_only'][-1]
     hidden = accepted['hidden'][-1]
@@ -97,6 +100,8 @@ def main(client_id, user_arguments_dict):
         visible_members = keyword_owners
     if not visible_resources in _valid_visible:
         visible_resources = keyword_owners
+    if not create_sharelink in _valid_sharelink:
+        create_sharelink = keyword_owners
     try:
         request_recipients_val = int(request_recipients)
     except ValueError:
@@ -119,6 +124,7 @@ def main(client_id, user_arguments_dict):
                       'visible_owners': visible_owners,
                       'visible_members': visible_members,
                       'visible_resources': visible_resources,
+                      'create_sharelink': create_sharelink,
                       'request_recipients': request_recipients_val,
                       'read_only': is_read_only,
                       'hidden': is_hidden,

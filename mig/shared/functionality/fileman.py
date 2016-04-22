@@ -37,12 +37,16 @@ from shared.functionality.editor import advanced_editor_css_deps, \
      advanced_editor_js_deps, lock_info, edit_file
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry, extract_menu
+from shared.sharelinks import create_share_link_form
 
-def html_tmpl(configuration, title_entry):
+def html_tmpl(configuration, client_id, title_entry):
     """HTML page base: some upload and menu entries depend on configuration"""
 
     edit_includes = ['switcher']
-    fill_entries = {}
+    fill_entries = {'vgrid_label': configuration.site_vgrid_label}
+    fill_entries['sharelink_form'] = create_share_link_form(configuration,
+                                                               client_id,
+                                                               'json')
     if 'submitjob' in extract_menu(configuration, title_entry):
         fill_entries["upload_submit_entry"] = '''
             <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
@@ -53,6 +57,7 @@ def html_tmpl(configuration, title_entry):
         fill_entries["upload_submit_entry"] = '''
             <input id="submitmrsl_0" type="hidden" value="0" name="submitmrsl_0"/>
         '''
+        
     html = '''
     <div id="fm_debug"></div>
     <div id="fm_filemanager">
@@ -60,10 +65,19 @@ def html_tmpl(configuration, title_entry):
             <ul id="fm_xbreadcrumbs" class="xbreadcrumbs">
             </ul>
         </div>
+        <div class="fm_buttonbar">
+            <ul id="fm_buttons" class="buttonbar">
+            <!-- dynamically modified by js to show optional buttons -->
+            <li class="datatransfersbutton hidden" title="Manage Data Transfers">&nbsp;</li>
+            <li class="sharelinksbutton hidden" title="Manage Share Links">&nbsp;</li>
+            <li class="parentdirbutton" title="Open Parent Directory">&nbsp;</li>
+            <li class="refreshbutton" title="Refresh">&nbsp;</li>
+            </ul>
+        </div>
         <div class="fm_addressbar">
             <input type="hidden" value="/" name="fm_current_path" />
         </div>
-        <div class="fm_previews">       
+        <div class="fm_previews">
             <input type="hidden" value="" name="fm_preview_base_path" />
             <input type="hidden" value="" name="fm_preview_path" />
             <input type="hidden" value="" name="fm_preview_filename" />
@@ -223,8 +237,8 @@ def html_tmpl(configuration, title_entry):
         <fieldset>
             <input type="hidden" name="output_format" value="json" />
             <input type="hidden" name="current_dir" value="./" />
-            <label for="path">Enter the new name:</label>
-            <input id="path" type="text" name="path"/>            
+            <label for="path">Directory name:</label>
+            <input id="path" class="singlefield" type="text" name="path" size=50 />            
         </fieldset>
         </form>
         <div id="mkdir_output"></div>
@@ -238,8 +252,8 @@ def html_tmpl(configuration, title_entry):
         <input type="hidden" name="src" value="" />
         <input type="hidden" name="dst" value="" />
         
-        <label for="name">Enter the new name:</label>
-        <input id="name" type="text" name="name" value="" />
+        <label for="name">New name:</label>
+        <input id="name" class="singlefield" type="text" name="name" size=50 value="" />
     </fieldset>
     </form>
     <div id="rename_output"></div>
@@ -253,12 +267,13 @@ def html_tmpl(configuration, title_entry):
         <input type="hidden" name="src" value="" />
         <input type="hidden" name="current_dir" value="" />
         
-        <label for="dst">Enter the archive file name:</label>
-        <input id="dst" type="text" name="dst" size=50  value="" />
-        <p>The provided file extension decides the archive type.
-        Use .e.g. .zip for a zip archive or .tgz for compressed tarball.
-        </p>
+        <label for="dst">Archive file name:</label>
+        <input id="dst" class="singlefield" type="text" name="dst" size=50  value="" />
     </fieldset>
+    <p>
+    The provided file extension decides the archive type.<br />
+    Use .e.g. <em>.zip</em> for a zip archive or <em>.tgz</em> for compressed tarball.
+    </p>
     </form>
     <div id="pack_output"></div>
     </div>
@@ -268,19 +283,22 @@ def html_tmpl(configuration, title_entry):
         <form id="grep_form" method="post" action="grep.py">
         <fieldset>
             <input type="hidden" name="output_format" value="json" />
-            <p>
             <label for="path">Path to search:</label>
-            <input id="path" type="text" name="path"/>
-            </p>
-            <p>
-            <label for="pattern">Search word or pattern:</label>
-            <input id="pattern" type="text" name="pattern"/>
-            </p>
+            <input id="path" class="singlefield" type="text" name="path" size=50 />
+            <br />
+            <label for="pattern">Search word/pattern:</label>
+            <input id="pattern" class="singlefield" type="text" name="pattern" size=50 />
         </fieldset>
         </form>
         <div id="grep_output"></div>
     </div>
     
+    <div id="sharelink_dialog" title="Create Share Link"
+        style="display: none;">
+    %(sharelink_form)s
+    <div id="sharelink_output"></div>
+    </div>
+
     <div id="imagesettings_dialog" title="Image Settings" style="display: none;">
     <form id="imagesettings_form" method="post" action="filemetaio.py">
     <fieldset>
@@ -581,7 +599,7 @@ def main(client_id, user_arguments_dict):
     
     output_objects.append({'object_type': 'header', 'text': 'File Manager' })
     output_objects.append({'object_type': 'html_form', 'text':
-                           html_tmpl(configuration, title_entry)})
+                           html_tmpl(configuration, client_id, title_entry)})
 
     if len(all_paths) > 1:
         output_objects.append({'object_type': 'sectionheader', 'text':

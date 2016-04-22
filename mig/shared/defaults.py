@@ -90,6 +90,7 @@ profile_filename = 'userprofile'
 freeze_meta_filename = 'meta.pck'
 datatransfers_filename = 'transfers'
 user_keys_dir = 'keys'
+sharelinks_filename = 'sharelinks'
 seafile_ro_dirname = 'seafile_readonly'
 
 

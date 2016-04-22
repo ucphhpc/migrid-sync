@@ -68,6 +68,8 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     member_visibility = keyword_map[visible_members]
     visible_resources = vgrid_dict.get('visible_resources', keyword_owners)
     resource_visibility = keyword_map[visible_resources]
+    create_sharelink = vgrid_dict.get('create_sharelink', keyword_owners)
+    sharelink_access = keyword_map[create_sharelink]
     read_only = bool_map[vgrid_dict.get('read_only', False)]
     hidden = bool_map[vgrid_dict.get('hidden', False)]
     vgrid_item['fields'].append(('Description', description))
@@ -77,6 +79,7 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     vgrid_item['fields'].append(('Owner visibility', owner_visibility))
     vgrid_item['fields'].append(('Member visibility', member_visibility))
     vgrid_item['fields'].append(('Resource visibility', resource_visibility))
+    vgrid_item['fields'].append(('Sharelink creation', sharelink_access))
     # TODO: implement and enable read-only support.
     #vgrid_item['fields'].append(('Read-only', read_only))
     vgrid_item['fields'].append(('Hidden', hidden))
@@ -127,10 +130,10 @@ def main(client_id, user_arguments_dict):
 
     for vgrid_name in vgrid_list:
         vgrid_dict = {'vgrid_name': vgrid_name}
-        (settings_status, settings) = vgrid_settings(vgrid_name, configuration)
-        if settings_status:
-            settings_dict = dict(settings)
-        else:
+        (settings_status, settings_dict) = vgrid_settings(vgrid_name,
+                                                          configuration,
+                                                          as_dict=True)
+        if not settings_status:
             settings_dict = {}
         logger.info("loaded vgrid %s settings: %s" % (vgrid_name, settings_dict))
         vgrid_dict.update(settings_dict)
@@ -149,6 +152,11 @@ def main(client_id, user_arguments_dict):
             (res_status, resources) = vgrid_resources(vgrid_name, configuration)
             if res_status:
                 vgrid_dict['resources'] = resources            
+
+        if user_view_access(configuration, vgrid_name, client_id, settings_dict,
+                            'create_sharelink'):
+                vgrid_dict['sharelink'] = settings_dict.get('create_sharelink',
+                                                            keyword_owners)
 
         # Report no such vgrid if hidden
         

@@ -37,7 +37,9 @@ import stat
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_path
 from shared.defaults import seafile_ro_dirname
-from shared.functional import validate_input_and_cert
+from shared.functional import validate_input
+from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
+     confirm_js, confirm_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
 from shared.settings import load_settings
@@ -46,34 +48,22 @@ from shared.validstring import valid_user_path
 
 def signature():
     """Signature of the main function"""
-
-    defaults = {'flags': [''], 'path': ['.']}
+    defaults = {'flags': [''], 'path': ['.'], 'sharelink_id': [''],
+                'sharelink_mode': ['']}
     return ['dir_listings', defaults]
 
-
 def select_all_javascript():
-    """ return javascript to select all html checkboxes """
-
+    """javascript to select all html checkboxes"""
     return """
-<script type='text/javascript'>
-document.fileform.allbox.onclick = un_check;
-function un_check() {
-   for(var i = 0; i < document.fileform.elements.length; i++) {
-      var e = document.fileform.elements[i];
-      if ((e.name != 'allbox') && (e.type == 'checkbox')) {
-         e.checked = document.fileform.allbox.checked;
-      }
-   }
+function toggleChecked() {
+   var doCheck = $('#checkall_box').prop('checked');
+   $('td input[type=checkbox]').prop('checked', doCheck);
 }
-</script>
-"""
-
+    """
 
 def selected_file_actions_javascript():
-    """ return javascript """
-
+    """javascript  to dynamically select action for marked items"""
     return """
-<script type='text/javascript'>
 function selectedFilesAction() {
     if (document.pressed == 'cat') {
        document.fileform.action = 'cat.py';
@@ -108,8 +98,7 @@ function selectedFilesAction() {
     }
     return true;
 }
-</script>
-"""
+    """
 
 def fileinfo_stat(path):
     """Additional stat information for file manager"""
@@ -128,10 +117,8 @@ def fileinfo_stat(path):
         
     return file_information
     
-
 def long_format(path):
-    """ output extra info like filesize about the file located at path """
-
+    """output extra info like filesize about the file located at path"""
     format_line = ''
     perms = ''
 
@@ -190,11 +177,12 @@ def handle_file(
         'object_type': 'direntry',
         'type': 'file',
         'name': filename,
+        'rel_path': file_with_dir,
+        # NOTE: file_with_dir is kept for backwards compliance
         'file_with_dir': file_with_dir,
         'flags': flags,
         'special': special,
         }
-
     if long_list(flags):
         file_obj['long_format'] = long_format(actual_file)
         
@@ -240,6 +228,8 @@ def handle_dir(
         'object_type': 'direntry',
         'type': 'directory',
         'name': dirname,
+        'rel_path': dirname_with_dir,
+        # NOTE: dirname_with_dir is kept for backwards compliance
         'dirname_with_dir': dirname_with_dir,
         'flags': flags,
         'special': special,
@@ -358,15 +348,13 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
-    client_dir = client_id_dir(client_id)
+        initialize_main_variables(client_id, op_header=False,
+                                  op_menu=client_id)
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input_and_cert(
+    (validate_status, accepted) = validate_input(
         user_arguments_dict,
         defaults,
         output_objects,
-        client_id,
-        configuration,
         allow_rejects=False,
         )
     if not validate_status:
@@ -374,24 +362,125 @@ def main(client_id, user_arguments_dict):
 
     flags = ''.join(accepted['flags'])
     pattern_list = accepted['path']
-
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
-
-    base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+    sharelink_id = accepted['sharelink_id'][-1]
+    sharelink_mode = accepted['sharelink_mode'][-1]
 
     status = returnvalues.OK
 
-    settings_dict = load_settings(client_id, configuration)
-    javascript = '%s\n%s' % (select_all_javascript(),
-                             selected_file_actions_javascript())
+    read_mode, write_mode = True, True
+    # Either authenticated user client_id set or sharelink ID
+    if client_id:
+        user_id = client_id
+        target_dir = client_id_dir(client_id)
+        base_dir = configuration.user_home
+        redirect_name = configuration.site_user_redirect
+        redirect_path = redirect_name
+        settings_dict = load_settings(client_id, configuration)
+        id_args = ''
+        root_link_name = 'USER HOME'
+        main_id="user_ls"
+        page_title = 'User Files'
+        visibility_toggle = ''
+    elif sharelink_id and sharelink_mode:
+        # TODO: load and check sharelink pickle (currently requires client_id)
+        user_id = sharelink_id
+        target_dir = os.path.join(sharelink_mode, sharelink_id)
+        base_dir = configuration.sharelink_home
+        redirect_name = 'sharelink'
+        redirect_path = os.path.join(redirect_name, sharelink_mode,
+                                     sharelink_id)
+        settings_dict = {}
+        id_args = 'sharelink_mode=%s;sharelink_id=%s;' % (sharelink_mode,
+                                                          sharelink_id)
+        root_link_name = '%s' % sharelink_id
+        main_id="sharelink_ls"
+        page_title = 'Shared Files'
+        visibility_toggle = '''
+        <style>
+        '''
+        if sharelink_mode == 'read-only':
+            write_mode = False
+            visibility_toggle += '''
+            #sharelink_ls .enable_write { display: none; }
+            #sharelink_ls .disable_read { display: none; }
+            '''
+        elif sharelink_mode == 'write-only':
+            read_mode = False
+            visibility_toggle += '''
+            #sharelink_ls .enable_read { display: none; }
+            #sharelink_ls .disable_write { display: none; }
+            '''
+        else:
+            visibility_toggle += '''
+            #sharelink_ls .disable_read { display: none; }
+            #sharelink_ls .disable_write { display: none; }
+            '''
+        visibility_toggle += '''
+        </style>
+        '''        
+    else:
+        logger.error('%s called without proper auth: %s' % (op_name, accepted))
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Authentication is missing!'
+                              })
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+        
+    
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(base_dir, target_dir)) + os.sep
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'File Management'
-    title_entry['javascript'] = javascript
-    output_objects.append({'object_type': 'header', 'text': 'File Management'
-                          })
+    title_entry['text'] = page_title
+
+    open_button_id = 'open_fancy_upload'
+    (cf_import, cf_init, cf_ready) = confirm_js(configuration)
+    (fu_import, fu_init, fu_ready) = fancy_upload_js(
+        configuration, 'function() { location.reload(); }', sharelink_id,
+        sharelink_mode)
+    add_import = '''
+%s
+%s
+    ''' % (cf_import, fu_import)
+    add_init = '''
+%s
+%s
+%s
+%s
+    ''' % (cf_init, fu_init, select_all_javascript(),
+           selected_file_actions_javascript())
+    add_ready = '''
+%s
+%s
+    $("#%s").click(openFancyUpload);
+    $("#checkall_box").click(toggleChecked);
+    ''' % (cf_ready, fu_ready, open_button_id)
+    fancy_dialog = fancy_upload_html(configuration, id_args)
+    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
+                   'skin_base': configuration.site_skin_base}
+    styles = themed_styles(configuration, base=['jquery.fileupload.css',
+                                                'jquery.fileupload-ui.css'],
+                           skin=['fileupload-ui.custom.css'])
+    styles['advanced'] += '''
+    %s
+    ''' % visibility_toggle
+    title_entry['style'] = styles
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
+    title_entry['bodyfunctions'] += ' id="%s"' % main_id
+    output_objects.append({'object_type': 'header', 'text': page_title})
+
+    # TODO: move to output html handler
+    output_objects.append({'object_type': 'html_form',
+                           'text': confirm_html(configuration)})
+
+    # Shared URL helpers 
+    ls_url_template = 'ls.py?%spath=%%(rel_path)s;flags=%s' % (id_args, flags)
+    rm_url_template = 'rm.py?%spath=%%(rel_path)s' % id_args
+    rmdir_url_template ='rm.py?%spath=%%(rel_path)s;flags=r' % id_args
+    editor_url_template = 'editor.py?%spath=%%(rel_path)s' % id_args
+    redirect_url_template = '/%s/%%(rel_path)s' % redirect_path
 
     location_pre_html = \
         """
@@ -406,16 +495,18 @@ Working directory:
                           : location_pre_html})
     for pattern in pattern_list:
         links = []
-        links.append({'object_type': 'link', 'text': 'USER HOME',
-                     'destination': 'ls.py?path=.'})
+        links.append({'object_type': 'link', 'text': root_link_name,
+                      'destination': ls_url_template % {'rel_path': '.'}})
         prefix = ''
         parts = pattern.split(os.sep)
         for i in parts:
+            if i == ".":
+                continue
             prefix = os.path.join(prefix, i)
             links.append({'object_type': 'link', 'text': i,
-                         'destination': 'ls.py?path=%s' % prefix})
+                         'destination': ls_url_template % {'rel_path': prefix}})
         output_objects.append({'object_type': 'multilinkline', 'links'
-                              : links})
+                              : links, 'sep': ' %s ' % os.sep})
 
     location_post_html = """
 </td></tr>
@@ -428,7 +519,7 @@ Working directory:
                           : location_post_html})
     more_html = \
               """
-<div class='files'>
+<div class='files if_full'>
 <form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=2>
@@ -464,6 +555,15 @@ Action on paths selected below
         'object_type': 'dir_listings',
         'dir_listings': dir_listings,
         'flags': flags,
+        'redirect_name': redirect_name,
+        'redirect_path': redirect_path,
+        'sharelink_id': sharelink_id,
+        'sharelink_mode': sharelink_mode,
+        'ls_url_template': ls_url_template,
+        'rm_url_template': rm_url_template,
+        'rmdir_url_template': rmdir_url_template,
+        'editor_url_template': editor_url_template,
+        'redirect_url_template': redirect_url_template,
         })
 
     first_match = None
@@ -479,7 +579,7 @@ Action on paths selected below
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (user_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
             if not first_match:
@@ -507,31 +607,38 @@ Action on paths selected below
                 }
 
             handle_ls(configuration, output_objects, entries, base_dir,
-                      real_path, flags)
+                      real_path, flags, 0)
             dir_listings.append(dir_listing)
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-    <div class='files'>
+    <div class='files disable_read'>
+    <p class='info icon'>
+    This is a write-only share so you do not have access to see the files, only
+    upload data and create directories.
+    </p>
+    </div>
+    <div class='files enable_read'>
     <form method='post' action='ls.py'>
     <table class='files'>
     <tr class=title><td class=centertext>
     Filter paths (wildcards like * and ? are allowed)
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%s' />
+    <input type='hidden' name='sharelink_id' value='%s' />
+    <input type='hidden' name='sharelink_mode' value='%s' />
     <input type='text' name='path' value='' />
     <input type='submit' value='Filter' />
     </td></tr>
     </table>    
     </form>
     </div>
-    """
-                           % flags})
+    """% (flags, sharelink_id, sharelink_mode)})
 
     # Short/long format buttons
 
     htmlform = \
-        """<table class='files'>
+        """<table class='files if_full'>
     <tr class=title><td class=centertext colspan=4>
     File view options
     </td></tr>
@@ -543,8 +650,10 @@ Action on paths selected below
          + """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-         % (flags + 'l')
+    <input type='hidden' name='flags' value='%s' />
+    <input type='hidden' name='sharelink_id' value='%s' />
+    <input type='hidden' name='sharelink_mode' value='%s' />
+    """ % (flags + 'l', sharelink_id, sharelink_mode)
 
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
@@ -556,8 +665,10 @@ Action on paths selected below
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-         % flags.replace('l', '')
+    <input type='hidden' name='flags' value='%s' />
+    <input type='hidden' name='sharelink_id' value='%s' />
+    <input type='hidden' name='sharelink_mode' value='%s' />
+    """ % (flags.replace('l', ''), sharelink_id, sharelink_mode)
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
              % entry
@@ -575,14 +686,15 @@ Action on paths selected below
              """
     <!-- Non-/recursive list buttons -->
     <tr><td>Recursion</td><td>
-    %s</td><td>"""\
-             % recursive(flags)
+    %s</td><td>""" % recursive(flags)
     htmlform += \
              """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-             % (flags + 'r')
+    <input type='hidden' name='flags' value='%s' />
+    <input type='hidden' name='sharelink_id' value='%s' />
+    <input type='hidden' name='sharelink_mode' value='%s' />
+    """ % ((flags + 'r'), sharelink_id, sharelink_mode)
     for entry in pattern_list:
         htmlform += " <input type='hidden' name='path' value='%s' />"\
                     % entry
@@ -593,8 +705,11 @@ Action on paths selected below
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-             % flags.replace('r', '')
+    <input type='hidden' name='flags' value='%s' />
+    <input type='hidden' name='sharelink_id' value='%s' />
+    <input type='hidden' name='sharelink_mode' value='%s' />
+    """ % (flags.replace('r', ''), sharelink_id, sharelink_mode)
+                                  
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
                     % entry
@@ -615,8 +730,11 @@ Action on paths selected below
         """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-         % (flags + 'a')
+    <input type='hidden' name='flags' value='%s' />
+    <input type='hidden' name='sharelink_id' value='%s' />
+    <input type='hidden' name='sharelink_mode' value='%s' />
+    """\
+         % (flags + 'a', sharelink_id, sharelink_mode)
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
              % entry
@@ -627,8 +745,10 @@ Action on paths selected below
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-         % flags.replace('a', '')
+    <input type='hidden' name='flags' value='%s' />
+    <input type='hidden' name='sharelink_id' value='%s' />
+    <input type='hidden' name='sharelink_mode' value='%s' />
+    """ % (flags.replace('a', ''), sharelink_id, sharelink_mode)
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
              % entry
@@ -645,7 +765,7 @@ Action on paths selected below
     output_objects.append({'object_type': 'html_form', 'text'
                           : htmlform})
 
-    # create upload file form
+    # create additional action forms
 
     if first_match:
 
@@ -665,7 +785,13 @@ Action on paths selected below
         output_objects.append({'object_type': 'html_form', 'text'
                               : """
 <br />
-<table class='files'>
+<div class='files disable_write'>
+<p class='info icon'>
+This is a read-only share so you do not have access to edit or add files, only
+view data.
+</p>
+</div>
+<table class='files enable_write if_full'>
 <tr class=title><td class=centertext colspan=3>
 Edit file
 </td></tr>
@@ -676,6 +802,8 @@ the listing of personal files.
 </td><td colspan=2 class=righttext>
 <form name='editor' method='post' action='editor.py'>
 <input type='hidden' name='output_format' value='html' />
+<input type='hidden' name='sharelink_id' value='%(sharelink_id)s' />
+<input type='hidden' name='sharelink_mode' value='%(sharelink_mode)s' />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
 <input type='text' name='path' size=50 value='' />
 <input type='submit' value='edit' />
@@ -683,7 +811,7 @@ the listing of personal files.
 </td></tr>
 </table>
 <br />
-<table class='files'>
+<table class='files enable_write'>
 <tr class=title><td class=centertext colspan=4>
 Create directory
 </td></tr>
@@ -691,6 +819,8 @@ Create directory
 Name of new directory to be created in current directory (%(dest_dir)s)
 </td><td class=righttext colspan=3>
 <form action='mkdir.py' method=post>
+<input type='hidden' name='sharelink_id' value='%(sharelink_id)s' />
+<input type='hidden' name='sharelink_mode' value='%(sharelink_mode)s' />
 <input name='path' size=50 />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
 <input type='submit' value='Create' name='mkdirbutton' />
@@ -699,22 +829,24 @@ Name of new directory to be created in current directory (%(dest_dir)s)
 </table>
 <br />
 <form enctype='multipart/form-data' action='textarea.py' method='post'>
-<table class='files'>
-<tr class=title><td class=centertext colspan=4>
+<input type='hidden' name='sharelink_id' value='%(sharelink_id)s' />
+<input type='hidden' name='sharelink_mode' value='%(sharelink_mode)s' />
+<table class='files enable_write if_full'>
+<tr class='title'><td class=centertext colspan=4>
 Upload file
 </td></tr>
 <tr><td colspan=4>
 Upload file to current directory (%(dest_dir)s)
 </td></tr>
-<tr><td colspan=2>
+<tr class='if_full'><td colspan=2>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
 <input type=checkbox name='extract_0' />
 </td></tr>
-<tr><td colspan=2>
+<tr class='if_full'><td colspan=2>
 Submit mRSL files (also .mRSL files included in packages)
 </td><td colspan=2>
-<input type=checkbox name='submitmrsl_0' checked />
+<input type=checkbox name='submitmrsl_0' />
 </td></tr>
 <tr><td>    
 File to upload
@@ -730,7 +862,17 @@ Optional remote filename (extra useful in windows)
 </td></tr>
 </table>
 </form>
-    """
-                               % {'dest_dir': relative_dir + os.sep}})
+%(fancy_dialog)s
+<table class='files enable_write'>
+<tr class='title'><td class='centertext'>
+Upload files efficiently (using chunking).
+</td></tr>
+<tr><td class='centertext'>
+<button id='%(fancy_open)s'>Open Upload dialog</button>
+</td></tr>
+</table>
+    """ % {'dest_dir': relative_dir + os.sep, 'sharelink_id': sharelink_id,
+           'sharelink_mode': sharelink_mode, 'fancy_dialog': fancy_dialog,
+           'fancy_open': open_button_id}})
 
     return (output_objects, status)
