@@ -93,7 +93,7 @@ def handle_update(configuration, client_id, resource_id, user_vars,
                                'destination':
                                'resadmin.py?unique_resource_name=%s' % \
                                unique_resource_name,
-                               'class': 'adminlink',
+                               'class': 'adminlink iconspace',
                                'title': 'Administrate resource',
                                'text': 'Manage resource',
                                })

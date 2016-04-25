@@ -132,7 +132,7 @@ $(document).ready(function() {
     output_objects.append(
         {'object_type': 'link',
          'destination': 'docs.py?show=Runtime+Environments',
-         'class': 'infolink',
+         'class': 'infolink iconspace',
          'title': 'Show information about runtime environment',
          'text': 'Documentation on runtime environments'})
 
@@ -160,7 +160,7 @@ $(document).ready(function() {
         
         re_item['viewruntimeenvlink'] = {'object_type': 'link',
                                          'destination': "showre.py?re_name=%s" % re_name,
-                                         'class': 'infolink',
+                                         'class': 'infolink iconspace',
                                          'title': 'View %s runtime environment' % re_name, 
                                          'text': ''}
         if client_id == re_item['creator']:
@@ -172,7 +172,7 @@ $(document).ready(function() {
                                     'destination':
                                     "javascript: confirmDialog(%s, '%s');"\
                                     % (js_name, 'Really delete %s?' % re_name),
-                                    'class': 'removelink',
+                                    'class': 'removelink iconspace',
                                     'title': 'Delete %s runtime environment' % re_name, 
                                     'text': ''}
         runtimeenvironments.append(re_item)
@@ -186,7 +186,7 @@ $(document).ready(function() {
         output_objects.append({'object_type': 'sectionheader', 'text': 'Software Packages'})
         output_objects.append({'object_type': 'link',
                                'destination': configuration.site_swrepo_url,
-                               'class': 'swrepolink',
+                               'class': 'swrepolink iconspace',
                                'title': 'Browse available software packages',
                                'text': 'Open software catalogue for %s' % \
                                configuration.short_title,
@@ -195,7 +195,7 @@ $(document).ready(function() {
     output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Runtime Environments'})
     output_objects.append({'object_type': 'link',
                            'destination': 'adminre.py',
-                           'class': 'addlink',
+                           'class': 'addlink iconspace',
                            'title': 'Specify a new runtime environment', 
                            'text': 'Create a new runtime environment'})
 

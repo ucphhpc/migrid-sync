@@ -5,7 +5,7 @@
 #
 
 # deletere - delete a runtime environment
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -117,7 +117,7 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'list', 'list'
                                : actives})
         output_objects.append({'object_type': 'link', 'destination': 'redb.py',
-                               'class': 'infolink', 'title':
+                               'class': 'infolink iconspace', 'title':
                                'Show runtime environments',
                                'text': 'Show runtime environments'})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -140,7 +140,7 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'text', 'text'
              : 'Successfully deleted runtime environment: "%s"' % re_name})
         output_objects.append({'object_type': 'link', 'destination': 'redb.py',
-                               'class': 'infolink',
+                               'class': 'infolink iconspace',
                                'title': 'Show runtime environments',
                                'text': 'Show runtime environments'})
         return (output_objects, returnvalues.OK) 

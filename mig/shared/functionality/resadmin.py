@@ -102,11 +102,11 @@ def display_resource(
     html += '<h1>%s</h1>\n' % resourcename
     html += '<h3>Configuration</h3>'
     html += '''
-Use the <a class="editlink" href="resedit.py?hosturl=%s;hostidentifier=%s">
+Use the <a class="editlink iconspace" href="resedit.py?hosturl=%s;hostidentifier=%s">
 editing interface
 </a>
 or make any changes manually in the text box below.<br />
-<a class="infolink" href="docs.py?show=Resource">
+<a class="infolink iconspace" href="docs.py?show=Resource">
 Resource configuration docs
 </a>
 ''' % (hosturl, identifier)  
@@ -463,7 +463,7 @@ $(document).ready(function() {
     quick_links.append({'object_type': 'link', 
                         'destination': 
                         "javascript:toggleHidden('.quicklinks');",
-                        'class': 'removeitemlink',
+                        'class': 'removeitemlink iconspace',
                         'title': 'Toggle view',
                         'text': 'Hide quick links'})
     quick_links.append({'object_type': 'text', 'text': ''}) 
@@ -495,14 +495,14 @@ $(document).ready(function() {
                 {'object_type': 'link',
                  'destination': '?unique_resource_name=%s' % \
                  unique_resource_name,
-                 'class': 'adminlink',
+                 'class': 'adminlink iconspace',
                  'title': 'Manage %s' % unique_resource_name,
                  'text': 'Manage %s' % unique_resource_name,
                  },
                 {'object_type': 'link',
                  'destination': 'viewres.py?unique_resource_name=%s' % \
                  visible_res_name,
-                 'class': 'infolink',
+                 'class': 'infolink iconspace',
                  'title': 'View %s' % unique_resource_name,
                  'text': 'View %s' % unique_resource_name,
                  }
@@ -550,7 +550,7 @@ stopping all units and the front end.
                      "javascript: confirmDialog(%s, '%s');" % \
                      (js_name, 'Really delete %s? (fails if it is busy)' % \
                       unique_resource_name),
-                     'class': 'removelink',
+                     'class': 'removelink iconspace',
                      'title': 'Delete %s' % unique_resource_name, 
                      'text': 'Delete %s' % unique_resource_name}
                     )
@@ -575,7 +575,7 @@ stopping all units and the front end.
         quick_links.append({'object_type': 'link', 
                             'destination': 
                             "javascript:toggleHidden('.quicklinks');",
-                            'class': 'additemlink',
+                            'class': 'additemlink iconspace',
                             'title': 'Toggle view',
                             'text': 'Show quick links'})
         quick_links.append({'object_type': 'html_form', 

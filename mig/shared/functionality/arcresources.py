@@ -144,7 +144,7 @@ def queue_resource(queue):
     # instead of a view link, we indicate "ARC"
     resource['viewreslink'] = {'object_type': 'link',
                                'destination': '#%s' % q_anchor(queue),
-                               'class': 'infolink arclink '
+                               'class': 'infolink arclink iconspace '
                                     + queue.cluster.alias, # HACK for sorting
                                'title': 'Show queue details', 
                                'text': '(details)'}

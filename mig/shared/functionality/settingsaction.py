@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingsaction - handle user settings updates
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -214,7 +214,7 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'link',
                            'destination': 'settings.py?topic=%s' % topic,
-                           'class': 'backlink',
+                           'class': 'backlink iconspace',
                            'title': 'Go back to %s settings' % topic,
                            'text': 'Back to %s settings' % topic})
 

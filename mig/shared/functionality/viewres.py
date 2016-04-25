@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewres - Display public details about a resource
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -158,7 +158,7 @@ def main(client_id, user_arguments_dict):
                                      'destination':
                                      'resadmin.py?unique_resource_name=%s'\
                                      % unique_resource_name,
-                                     'class': 'adminlink',
+                                     'class': 'adminlink iconspace',
                                      'title': 'Administrate %s' % unique_resource_name, 
                                      'text': 'Administrate %s' % unique_resource_name,
                                    })

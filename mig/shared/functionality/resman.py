@@ -103,7 +103,7 @@ def main(client_id, user_arguments_dict):
                                      "javascript: confirmDialog(%s, '%s');"\
                                      % (js_name, 'Really leave %s owners?' % \
                                         unique_resource_name),
-                                     'class': 'removelink',
+                                     'class': 'removelink iconspace',
                                      'title': 'Leave %s owners' % unique_resource_name, 
                                      'text': ''}
             res_obj['resdetailslink'] = \
@@ -111,7 +111,7 @@ def main(client_id, user_arguments_dict):
                                      'destination':
                                      'resadmin.py?unique_resource_name=%s'\
                                      % unique_resource_name,
-                                     'class': 'adminlink',
+                                     'class': 'adminlink iconspace',
                                      'title': 'Administrate %s' % unique_resource_name, 
                                      'text': ''}
         else:
@@ -133,7 +133,7 @@ def main(client_id, user_arguments_dict):
                                         visible_res_name + ":<br/>" + \
                                         "\nPlease write a message to the owners (field below).",
                                         'request_text'),
-                                     'class': 'addlink',
+                                     'class': 'addlink iconspace',
                                      'title': 'Request ownership of %s' % visible_res_name,
                                      'text': ''}
             
@@ -142,7 +142,7 @@ def main(client_id, user_arguments_dict):
                                      'destination':
                                      'viewres.py?unique_resource_name=%s'\
                                      % visible_res_name,
-                                     'class': 'infolink',
+                                     'class': 'infolink iconspace',
                                      'title': 'View detailed %s specs' % \
                                      visible_res_name, 
                                      'text': ''}
@@ -235,7 +235,7 @@ All available resources are listed below with overall hardware specifications. A
         if show_sandboxes:
             output_objects.append({'object_type': 'link',
                                    'destination': '?show_sandboxes=false',
-                                   'class': 'removeitemlink',
+                                   'class': 'removeitemlink iconspace',
                                    'title': 'Hide sandbox resources', 
                                    'text': 'Exclude sandbox resources',
                                    })
@@ -243,7 +243,7 @@ All available resources are listed below with overall hardware specifications. A
         else:
             output_objects.append({'object_type': 'link',
                                    'destination': '?show_sandboxes=true',
-                                   'class': 'additemlink',
+                                   'class': 'additemlink iconspace',
                                    'title': 'Show sandbox resources', 
                                    'text': 'Include sandbox resources',
                                    })
@@ -257,7 +257,7 @@ Live resource status is available in the resource monitor page with all
 ''' % configuration.site_vgrid_label})
     output_objects.append({'object_type': 'link',
                            'destination': 'showvgridmonitor.py?vgrid_name=ALL',
-                           'class': 'monitorlink',
+                           'class': 'monitorlink iconspace',
                            'title': 'Show monitor with all resources you can access', 
                            'text': 'Global resource monitor',
                            })
@@ -269,7 +269,7 @@ Live resource status is available in the resource monitor page with all
                            })
     output_objects.append({'object_type': 'link',
                            'destination' : 'resedit.py',
-                           'class': 'addlink',
+                           'class': 'addlink iconspace',
                            'title': 'Show sandbox resources',                            
                            'text': 'Create a new %s resource' % \
                            configuration.short_title, 
@@ -279,7 +279,7 @@ Live resource status is available in the resource monitor page with all
     if configuration.site_enable_sandboxes:
         output_objects.append({'object_type': 'link',
                                'destination': 'ssslogin.py',
-                               'class': 'adminlink',
+                               'class': 'adminlink iconspace',
                                'title': 'Administrate and monitor your sandbox resources',
                                'text': 'Administrate %s sandbox resources' % \
                                configuration.short_title,
@@ -287,7 +287,7 @@ Live resource status is available in the resource monitor page with all
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
         output_objects.append({'object_type': 'link',
                                'destination': 'oneclick.py',
-                               'class': 'sandboxlink',
+                               'class': 'sandboxlink iconspace',
                                'title': 'Run a One-click resource in your browser', 
                                'text': 'Use this computer as One-click %s resource' % \
                                configuration.short_title,

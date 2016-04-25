@@ -187,7 +187,7 @@ Please contact the Grid admins %s if you think they should be enabled.
                     'object_type': 'link', 'destination':
                     "javascript: confirmDialog(%s, '%s');" % \
                     (js_name, 'Really remove %s?' % saved_id),
-                    'class': 'removelink', 'title': 'Remove share link %s' % \
+                    'class': 'removelink iconspace', 'title': 'Remove share link %s' % \
                     saved_id, 'text': ''}
                 sharelinks.append(share_item)
 
@@ -242,7 +242,7 @@ comma-separated recipients.
                 'object_type': 'link', 'destination':
                 "javascript: confirmDialog(%s, '%s');" % \
                 (js_name, 'Really remove %s?' % saved_id),
-                'class': 'removelink', 'title': 'Remove share link %s' % \
+                'class': 'removelink iconspace', 'title': 'Remove share link %s' % \
                 saved_id, 'text': ''}
             sharelinks.append(share_item)
             output_objects.append({'object_type': 'sharelinks', 'sharelinks'
@@ -466,7 +466,7 @@ the %s admins (%s) if the problem persists.
                 'object_type': 'link', 'destination':
                 "javascript: confirmDialog(%s, '%s');" % \
                 (js_name, 'Really remove %s?' % saved_id),
-                'class': 'removelink', 'title': 'Remove share link %s' % \
+                'class': 'removelink iconspace', 'title': 'Remove share link %s' % \
                 saved_id, 'text': ''}
             sharelinks.append(share_item)
             output_objects.append({'object_type': 'sharelinks', 'sharelinks'

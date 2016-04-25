@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmresowner - remove resource owner
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -119,8 +119,9 @@ def main(client_id, user_arguments_dict):
                            % (cert_id, unique_resource_name)})
     output_objects.append({'object_type': 'link', 'destination':
                         'resadmin.py?unique_resource_name=%s' % \
-                           unique_resource_name, 'class': 'adminlink', 'title':
-                           'Administrate resource', 'text': 'Manage resource'})
+                           unique_resource_name, 'class': 'adminlink iconspace',
+                           'title': 'Administrate resource',
+                           'text': 'Manage resource'})
     return (output_objects, returnvalues.OK)
 
 

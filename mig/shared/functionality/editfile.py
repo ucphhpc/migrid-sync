@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# editfile - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# editfile - inline editor back end
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -176,7 +176,7 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'link',
                            'destination': 'javascript:history.back()',
-                           'class': 'backlink',
+                           'class': 'backlink iconspace',
                            'title': 'Go back to previous page',
                            'text': 'Back to previous page'})
 

@@ -184,7 +184,7 @@ def main(client_id, user_arguments_dict):
                                      'destination':
                                      'adminvgrid.py?vgrid_name=%s'\
                                      % vgrid_name,
-                                     'class': 'adminlink',
+                                     'class': 'adminlink iconspace',
                                      'title': 'Administrate %s' % vgrid_name, 
                                      'text': 'Administrate %s' % vgrid_name,
                                    })

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # dashboard - Dashboard entry page backend
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -80,13 +80,13 @@ $(document).ready(function() {
               return result;
           }
 
-          $("#jobs_stats").addClass("spinner iconspace");
+          $("#jobs_stats").addClass("spinner iconleftpad");
           $("#jobs_stats").html("Loading job stats...");
-          $("#res_stats").addClass("spinner iconspace");
+          $("#res_stats").addClass("spinner iconleftpad");
           $("#res_stats").html("Loading resource stats...");
-          $("#disk_stats").addClass("spinner iconspace");
+          $("#disk_stats").addClass("spinner iconleftpad");
           $("#disk_stats").html("Loading disk stats...");
-          $("#cert_stats").addClass("spinner iconspace");
+          $("#cert_stats").addClass("spinner iconleftpad");
           $("#cert_stats").html("Loading certificate information...");
           /* Run certificate request in the background and handle as soon as results come in */
           $.ajax({
@@ -103,7 +103,7 @@ $(document).ready(function() {
                   for(i=0; i<jsonRes.length; i++) {
                       if (jsonRes[i].object_type == "user_stats") {    
                           certificate = jsonRes[i].certificate;
-                          $("#cert_stats").removeClass("spinner iconspace");
+                          $("#cert_stats").removeClass("spinner iconleftpad");
                           $("#cert_stats").empty();
                           if (certificate.expire == -1) {
                               break;
@@ -115,7 +115,7 @@ $(document).ready(function() {
                           var show_renew = new Date(expire_date.getTime() - renew_days*day_msecs);
                           if(new Date().getTime() > show_renew.getTime()) {
                               $("#cert_stats").addClass("warningtext");
-                              $("#cert_stats").append("&nbsp;<a class=\'certrenewlink\' href=\'reqcert.py\'>Renew certificate</a>.");
+                              $("#cert_stats").append("&nbsp;<a class=\'certrenewlink  iconspace\' href=\'reqcert.py\'>Renew certificate</a>.");
                           }
                           break;
                       }
@@ -136,7 +136,7 @@ $(document).ready(function() {
                       if (jsonRes[i].object_type == "user_stats") {    
                           jobs = jsonRes[i].jobs;
                           //alert("inspect stats result: " + jobs);
-                          $("#jobs_stats").removeClass("spinner iconspace");
+                          $("#jobs_stats").removeClass("spinner iconleftpad");
                           $("#jobs_stats").empty();
                           $("#jobs_stats").append("You have submitted a total of " + jobs.total +
                               " jobs: " + jobs.parse + " parse, " + jobs.queued + " queued, " +
@@ -163,7 +163,7 @@ $(document).ready(function() {
                       if (jsonRes[i].object_type == "user_stats") {    
                           resources = jsonRes[i].resources;
                           //alert("inspect resources stats result: " + resources);
-                          $("#res_stats").removeClass("spinner iconspace");
+                          $("#res_stats").removeClass("spinner iconleftpad");
                           $("#res_stats").empty();
                           $("#res_stats").append(resources.resources + " resources providing " +
                           resources.exes + " execution units in total allow execution of your jobs.");
@@ -186,7 +186,7 @@ $(document).ready(function() {
                       if (jsonRes[i].object_type == "user_stats") {    
                           disk = jsonRes[i].disk;
                           //alert("inspect disk stats result: " + disk);
-                          $("#disk_stats").removeClass("spinner iconspace");
+                          $("#disk_stats").removeClass("spinner iconleftpad");
                           $("#disk_stats").empty();
                           $("#disk_stats").append("Your own " + disk.own_files +" files and " +
                               disk.own_directories + " directories take up " + roundNumber(disk.own_megabytes, 2) +
@@ -239,7 +239,7 @@ of the numbers are cached for a while to keep server load down.
 """ % configuration.site_title
     output_objects.append({'object_type': 'text', 'text': online_help})
     output_objects.append({'object_type': 'link', 'destination': 'docs.py',
-                           'class': 'infolink', 'title': 'built-in documentation',
+                           'class': 'infolink iconspace', 'title': 'built-in documentation',
                            'text': 'Docs page'})
     project_info = """
 but additional help, background information and tutorials are available in the
@@ -247,7 +247,8 @@ but additional help, background information and tutorials are available in the
     output_objects.append({'object_type': 'text', 'text': project_info})
     output_objects.append({'object_type': 'link', 'destination':
                            configuration.site_external_doc,
-                           'class': 'urllink', 'title': 'external documentation',
+                           'class': 'urllink iconspace', 'title':
+                           'external documentation',
                            'text': 'external %s documentation' % \
                            configuration.site_title})
     

@@ -164,7 +164,7 @@ $(document).ready(function() {
             'object_type': 'link',
             'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s" \
         % (freeze_id, flavor, 'md5'),
-            'class': 'infolink', 
+            'class': 'infolink iconspace', 
             'title': 'View archive with MD5 sums', 
             'text': 'Show with MD5 checksums - may take long'})
     # TODO: we hide sha1 column and link for now
@@ -173,7 +173,7 @@ $(document).ready(function() {
             'object_type': 'link',
             'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s" \
         % (freeze_id, flavor, 'sha1'),
-            'class': 'infolink', 
+            'class': 'infolink iconspace', 
             'title': 'View archive with SHA1 sums', 
             'text': 'Show with SHA1 checksums - may take long'})
     output_objects.append({'object_type': 'html_form', 'text': '</p>'})

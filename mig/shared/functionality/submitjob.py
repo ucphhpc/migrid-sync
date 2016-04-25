@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submitjob - Job submission interfaces
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -177,7 +177,7 @@ There are %s interface styles available that you can choose among:''' % \
         name = opt.split('_', 2)[0] 
         links.append({'object_type': 'link', 
                       'destination': "javascript:switchTo('%s')" % opt,
-                      'class': 'submit%slink' % name,
+                      'class': 'submit%slink iconspace' % name,
                       'title': 'Switch to %s submit interface' % name,
                       'text' : '%s style' % name,
                       })
@@ -263,7 +263,8 @@ is accompanied by a help link providing further details about the field."""})
             continue
         output_objects.append({'object_type': 'html_form', 'text'
                                    : """
-<b>%s:</b>&nbsp;<a class='infolink' href='docs.py?show=job#%s'>help</a><br />
+<b>%s:</b>&nbsp;<a class='infolink iconspace' href='docs.py?show=job#%s'>
+help</a><br />
 %s""" % (title, field, description)
                                })
         

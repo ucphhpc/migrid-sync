@@ -54,7 +54,7 @@ def display_topic(output_objects, subject, all_docs):
         topic = all_docs[subject]['title']
         output_objects.append({'object_type': 'link',
                                'destination': './docs.py?show=%s' % subject,
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': '%s Documentation' % topic,
                                'text': topic,
                                'plain_text': topic,
@@ -171,12 +171,16 @@ def license_information(configuration, output_objects):
                           : """
 %s is based on the Minimum intrusion Grid (MiG) middleware. You can read about
 MiG at the
-<a class='urllink' href='https://sourceforge.net/projects/migrid/'>project web site</a>
+<a class='urllink iconspace' href='https://sourceforge.net/projects/migrid/'>project web site</a>
 .<br />
 The MiG software license follows below:<br />
 """ % configuration.site_title})
     try:
-        module_fd = open(os.path.abspath(__file__))
+        # NOTE: occasionally __file__ points to .pyc file rather than .py
+        #       we just strip the trailing c to always have access to license
+        file_path = __file__
+        file_path = file_path.replace ('.pyc', '.py')
+        module_fd = open(os.path.abspath(file_path))
         in_license, lic_lines = False, []
         for line in module_fd:
             if line.find('BEGIN_HEADER') != -1:
@@ -211,13 +215,13 @@ The MiG software license follows below:<br />
 This software is mainly implemented in Python and extension modules:"""})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'https://www.python.org/',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'Python Home Page',
                            'text': 'Python (PSF license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'https://pypi.python.org/pypi/pyenchant',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'Python Enchant Module at Python Package Index',
                            'text': 'Python Enchant Module (LGPL license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
@@ -225,14 +229,14 @@ This software is mainly implemented in Python and extension modules:"""})
 Web interfaces are served with the Apache web server:"""})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://httpd.apache.org/',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'Apache HTTP Server Home Page',
                            'text': 'Apache HTTP Server with included modules '
                            '(Apache 2.0 license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'https://code.google.com/p/modwsgi/',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'Apache WSGI Module Home Page',
                            'text': 'Apache WSGI Module (Apache 2.0 license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
@@ -240,7 +244,7 @@ Web interfaces are served with the Apache web server:"""})
                            "relying on JavaScript from:"})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://jquery.com/',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'JQuery Home Page',
                            'text': 'JQuery and extension modules (GPL/MIT and '
                            'Creative Commons 3.0 licenses)'})
@@ -248,14 +252,14 @@ Web interfaces are served with the Apache web server:"""})
     output_objects.append({'object_type': 'link', 
                            'destination' :
                            'http://codemirror.net/',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'CodeMirror Home Page',
                            'text': 'CodeMirror web code editor (BSD '
                            'compatible license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://markitup.jaysalvat.com/',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'markItUp! Home Page',
                            'text': 'markItUp! web markup editor (GPL/MIT '
                            'license)'})
@@ -264,7 +268,7 @@ Web interfaces are served with the Apache web server:"""})
 
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://www.iconarchive.com/artist/pixelmixer.html',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'PixelMixer Home Page',
                            'text': 'pixel-mixer.com icons (free to use, '
                            'acknowledgement required)'})
@@ -272,7 +276,7 @@ Web interfaces are served with the Apache web server:"""})
     output_objects.append({'object_type': 'link', 
                            'destination' :
                            'http://www.famfamfam.com/lab/icons/silk/',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'FamFamFam Icons Home Page',
                            'text': 'famfamfam.com silk icons (Creative '
                            'Commons 2.5 license)'})
@@ -281,7 +285,7 @@ Web interfaces are served with the Apache web server:"""})
                            'destination' :
                            'http://www.kde-look.org/content/show.php/'
                            'Crystal+SVG?content=8341',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'KDE Crystal Icons HomePage',
                            'text': 'KDE Crystal Icons, LGPL'})
     output_objects.append({'object_type': 'text', 'text' : ''})
@@ -290,7 +294,7 @@ Web interfaces are served with the Apache web server:"""})
                            "OpenSSH client utilities:"})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://www.openssh.com/',
-                           'class': 'urllink',
+                           'class': 'urllink iconspace',
                            'title': 'OpenSSH HomePage',
                            'text': 'OpenSSH secure remote shell and file '
                            'transfer, BSD'})
@@ -303,7 +307,7 @@ Web interfaces are served with the Apache web server:"""})
                                "SFTP access is delivered using Paramiko:"})
         output_objects.append({'object_type': 'link', 
                                'destination' : 'https://pypi.python.org/pypi/paramiko',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'Paramiko at Python Package Index',
                                'text': 'Paramiko SSH2 Module (LGPL)'})
     if configuration.site_enable_davs:
@@ -313,13 +317,13 @@ Web interfaces are served with the Apache web server:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' :
                                'https://github.com/mar10/wsgidav',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'WsgiDAV Home Page',
                                'text': 'WsgiDAV Server Module (MIT)'})
         output_objects.append({'object_type': 'link', 
                                'destination' :
                                'https://code.google.com/p/pywebdav/',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'PyWebDAV Home Page',
                                'text': 'PyWebDAV DAV(S) Server Module (GPL)'})
     if configuration.site_enable_ftps:
@@ -329,7 +333,7 @@ Web interfaces are served with the Apache web server:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' :
                                'https://code.google.com/p/pyftpdlib/',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'pyftpdlib Home Page',
                                'text': 'pyftpdlib FTP(S) Server Module (MIT)'})
     if configuration.site_enable_transfers:
@@ -337,12 +341,12 @@ Web interfaces are served with the Apache web server:"""})
                                "Background data transfers use LFTP / RSync:"})
         output_objects.append({'object_type': 'link', 
                                'destination': 'http://lftp.yar.ru/',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'LFTP Home Page',
                                'text': 'LFTP file transfer program (GPL)'})
         output_objects.append({'object_type': 'link', 
                                'destination': 'https://rsync.samba.org/',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'RSync Home Page',
                                'text':
                                'RSync incremental file transfer client (GPL)'})
@@ -353,7 +357,7 @@ on the PBKDF2 module (embedded) from:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' :
                                'https://pypi.python.org/pypi/pbkdf2',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'pbkdf2 at Python Package Index',
                                'text': 'PBKDF2 Module (MIT)'})
     if [i for i in configuration.notify_protocols if not i == 'email']:
@@ -363,7 +367,7 @@ on the irclib module from:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' :
                                'https://pypi.python.org/pypi/python-irclib',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'Python irclib at Python Package Index',
                                'text': 'Python irclib Module (LGPL)'})
     if configuration.hg_path and configuration.hgweb_scripts:
@@ -372,7 +376,7 @@ on the irclib module from:"""})
                                })
         output_objects.append({'object_type': 'link', 
                                'destination' : 'http://mercurial.selenic.com/',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'Mercurial SCM Home Page',
                                'text': 'Mercurial SCM (GPLv2)'})
     if configuration.trac_admin_path:
@@ -380,7 +384,7 @@ on the irclib module from:"""})
                                """Trackers are delivered using Trac:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' : 'http://trac.edgewall.org/',
-                               'class': 'urllink',
+                               'class': 'urllink iconspace',
                                'title': 'Trac Project Tracker Home Page',
                                'text': 'Trac Project Tracker (BSD)'})
 
@@ -439,7 +443,7 @@ You can find more user friendly tutorials and examples on the
 official site support pages:'''})
         output_objects.append({'object_type': 'link', 'destination':
                                configuration.site_external_doc,
-                               'class': 'urllink', 'title':
+                               'class': 'urllink iconspace', 'title':
                                'external documentation',
                                'text': 'external %s documentation' % \
                                configuration.site_title,

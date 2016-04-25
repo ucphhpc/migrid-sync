@@ -311,7 +311,7 @@ $(document).ready(function() {
                 vgrid_name + ":<br/>" + \
                 "\nPlease write a message to the owners below.",
                 'request_text'),
-             'class': 'addadminlink',
+             'class': 'addadminlink iconspace',
              'title': 'Request ownership of %s' % vgrid_name,
              'text': 'Apply to become an owner'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -345,7 +345,7 @@ $(document).ready(function() {
                 {'object_type': 'link', 
                  'destination': 
                  "javascript:toggleHidden('.div-%s');" % item,
-                 'class': 'removeitemlink',
+                 'class': 'removeitemlink iconspace',
                  'title': 'Toggle view',
                  'text': 'Hide %ss' % item.title() })
             output_objects.extend(oobjs)
@@ -356,7 +356,7 @@ $(document).ready(function() {
                 {'object_type': 'link', 
                  'destination': 
                  "javascript:toggleHidden('.div-%s');" % item,
-                 'class': 'additemlink',
+                 'class': 'additemlink iconspace',
                  'title': 'Toggle view',
                  'text': 'Show %ss' % item.title() })
             output_objects.append({'object_type': 'html_form', 

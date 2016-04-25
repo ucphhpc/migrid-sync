@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oneclick - Oneclick resource backend
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -123,17 +123,19 @@ cputime: %(cputime)s
         OneClick applet failed to run (requires Java plug-in).
         </object>
         <p>
-        Your computer will act as a %(site)s One-click resource as long as this browser
-        window/tab remains open.
+        Your computer will act as a %(site)s One-click resource as long as
+        this browser window/tab remains open.
         </p>
         <h3>Java requirements and background</h3>
         Please note that if you get no applet picture above with status text,
-        it is a likely indicator that you do not have the required Java plugin installed in your
-        browser. You can download and install it from
-        <a class='urllink' href='http://www.java.com/en/download/manual.jsp'>Sun Java Downloads</a>. The browser
-        probably needs to be restarted after the installation before the plugin will be enabled.<br />
-        Other Java implementations may <i>appear</i> to work but not really deliver job results correctly, so if you want to be sure, please install the Sun Java plugin.
-        <br />
+        it is a likely indicator that you do not have the required Java plugin
+        installed in your browser. You can download and install it from
+        <a class='urllink iconspace' href='http://www.java.com/en/download/manual.jsp'>
+        Sun Java Downloads</a>. The browser probably needs to be restarted
+        after the installation before the plugin will be enabled.<br />
+        Other Java implementations may <i>appear</i> to work but not really
+        deliver job results correctly, so if you want to be sure, please
+        install the Sun Java plugin.<br />
         Your browser provides the following Java information:<br />
         <object type='application/x-java-applet' height='60' width='400'>
         <param name='codebase' value='%(codebase)s' />

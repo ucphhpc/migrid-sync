@@ -175,7 +175,7 @@ if (jQuery) (function($){
 
         for (var i=0; i<jsonRes.length; i++) {
             if (jsonRes[i]['object_type'] == 'error_text')
-                errors +='<span class="errortext error iconspace">'+jsonRes[i].text+'</span><br />';
+                errors +='<span class="errortext error iconleftpad">'+jsonRes[i].text+'</span><br />';
         }
         return errors;
     }
@@ -186,7 +186,7 @@ if (jQuery) (function($){
 
         for (var i=0; i<jsonRes.length; i++) {
             if (jsonRes[i]['object_type'] == 'warning')
-                warnings +='<span class="warningtext warning iconspace">'+jsonRes[i].text+'</span><br />';
+                warnings +='<span class="warningtext warning iconleftpad">'+jsonRes[i].text+'</span><br />';
         }
         return warnings;
     }
@@ -739,7 +739,7 @@ if (jQuery) (function($){
 
             $("#cmd_dialog").dialog(okDialog);
             $("#cmd_dialog").dialog('open');
-            $("#cmd_dialog").html('<p class="spinner iconspace">Copying... "'+src+'" <br />To: "'+dst+'"</p>');
+            $("#cmd_dialog").html('<p class="spinner iconleftpad">Copying... "'+src+'" <br />To: "'+dst+'"</p>');
 
             $.post('cp.py', { src: src,
                               dst: dst,
@@ -774,13 +774,13 @@ if (jQuery) (function($){
                     field = 'submitstatuslist';
                     for (j = 0; j < jsonRes[i][field].length; j++) {
                         if (jsonRes[i][field][j]['status']) {
-                            misc_output += '<p class="info iconspace">Submitted "'
+                            misc_output += '<p class="info iconleftpad">Submitted "'
                                 + jsonRes[i][field][j]['name']
                                 + '"</p><p>Job identfier: "'
                                 +jsonRes[i][field][j]['job_id']
                                 + '"</p>';
                         } else {
-                            misc_output +=  '<p class="errortext error iconspace">Failed submitting:</p><p>'
+                            misc_output +=  '<p class="errortext error iconleftpad">Failed submitting:</p><p>'
                                 + jsonRes[i][field][j]['name']
                                 + ' '+jsonRes[i][field][j]['message']
                                 + '</p>';
@@ -2160,7 +2160,7 @@ if (jQuery) (function($){
             $("#upload_form").ajaxForm(
                 {target: '#upload_output', dataType: 'json',
                  success: function(responseObject, statusText) {
-                     $("#upload_output").removeClass("info spinner iconspace");
+                     $("#upload_output").removeClass("info spinner iconleftpad");
                      var errors = $(this).renderError(responseObject);
                      var warnings = $(this).renderWarning(responseObject);
                      var misc_output = parseWrapped(responseObject, {});
@@ -2169,7 +2169,7 @@ if (jQuery) (function($){
                      } else if (warnings.length > 0) {
                          $("#upload_output").html(warnings);
                      } else {
-                         $("#upload_output").html("<p class='info iconspace'>Upload: "+statusText+"</p>" + misc_output);
+                         $("#upload_output").html("<p class='info iconleftpad'>Upload: "+statusText+"</p>" + misc_output);
                      }
                  }
                 });
@@ -2580,24 +2580,24 @@ function mig_fancyuploadchunked_init(name, callback) {
     }
     function showWaitInfo(msg, fadein_ms, fadeout_ms) {
         var html_msg = "<div class='spinner' style='margin: 20px;'>";
-        html_msg += "<span class='iconspace'>"+msg+"</span></div>";
+        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
         showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
     function showInfo(msg, fadein_ms, fadeout_ms) {
         var html_msg = "<div class='info' style='margin: 20px;'>";
-        html_msg += "<span class='iconspace'>"+msg+"</span></div>";
+        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
         showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
     function showWarning(msg, fadein_ms, fadeout_ms) {
         var html_msg = "<div class='warn' style='margin: 20px;'>";
-        html_msg += "<span class='iconspace'>"+msg+"</span></div>";
+        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
         showMessage("Warning: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
     function showError(msg, fadein_ms, fadeout_ms) {
         /* Do not auto fade out error messages by default */
         if (fadeout_ms == undefined) fadeout_ms = -1;
         var html_msg = "<div class='error' style='margin: 20px;'>";
-        html_msg += "<span class='iconspace'>"+msg+"</span></div>";
+        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
         showMessage("Error: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # downloads - on-demand generation of scripts
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -66,7 +66,7 @@ def main(client_id, user_arguments_dict):
 This page provides access to on-demand downloads of the %(site)s user scripts in all available formats.<br />
 Simply pick your flavor of choice to generate the latest user scripts in your %(site)s home directory and as a zip file for easy download.<p>
 In order to use the scripts your need the interpreter of choice (bash or python at the moment) and the
-<a href="http://curl.haxx.se" class="urllink">cURL</a> command line client.<br />
+<a href='http://curl.haxx.se' class='urllink iconspace'>cURL</a> command line client.<br />
 There's a tutorial with examples of all the commands available on the %(site)s page. The python version of the user scripts additionally includes a miglib python module, which may be used to incorporate %(site)s commands in your python applications.
 </div>
 """ % { 'site' : configuration.short_title} })
@@ -74,10 +74,10 @@ There's a tutorial with examples of all the commands available on the %(site)s p
                           : '%s User Scripts' % configuration.short_title})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<div class="migcontent">
+<div class='migcontent'>
 Generate %s user scripts to manage jobs and files:<br/>
-<div class="container">
-<table class="downloads">
+<div class='container'>
+<table class='downloads'>
 <tr>
 <td>
 <form method='post' action='scripts.py'>
@@ -109,10 +109,10 @@ Generate %s user scripts to manage jobs and files:<br/>
                         : '%s Resource Scripts' % configuration.short_title})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<div class="migcontent">
+<div class='migcontent'>
 Generate %s scripts to administrate resources and vgrids:<br/>
-<div class="container">
-<table class="downloads">
+<div class='container'>
+<table class='downloads'>
 <tr>
 <td>
 <form method='post' action='scripts.py'>

@@ -1087,7 +1087,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <tr><td>Name:</td><td>%(name)s</td>
 </tr>
 <tr>
-    <td>Url:</td><td><a class="urllink" href="%(url)s">%(url)s</a></td>
+  <td>Url:</td><td><a class="urllink iconspace" href="%(url)s">%(url)s</a></td>
 </tr>
 <tr>
     <td>Description:</td><td>%(description)s</td>
@@ -1372,7 +1372,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     editlink_html = html_link(editlink)
                 else:
                     # Leave the icon space empty if not set (used in edit)
-                    editlink_html = '<span class="iconspace"></span>'
+                    editlink_html = '<span class="iconleftpad"></span>'
                 dellink = single_share.get('delsharelink', '')
                 dellink_html = ''
                 if dellink:
@@ -1603,7 +1603,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 user_fields = []
                 notify_headers = ''
                 for proto in configuration.notify_protocols:
-                    user_fields.append('send%slink' % proto)
+                    user_fields.append('send%slink iconspace' % proto)
                     notify_headers += '  <th class="centertext">%s</th>' % \
                                       proto
                 users = i['users']
@@ -1710,7 +1710,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('''
 <p>
 <div id="search_threads">
-<a class="searchlink"
+<a class="searchlink iconspace"
 href="javascript:toggle_new('search_form', 'search_threads');">
 Search threads</a>
 </div>
@@ -1736,7 +1736,7 @@ return false;"/>
                 lines.append('''
 <p>
 <div id="new_link">
-<a class="newpostlink" href="javascript:toggle_new('new_form', 'new_link');">
+<a class="newpostlink iconspace" href="javascript:toggle_new('new_form', 'new_link');">
 Start a new thread</a>
 </div>
 <div class="hidden_form framed_form" id="new_form">
@@ -1758,7 +1758,7 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
 </p>
 ''' % (i['vgrid_name'], max_subject_len))
                 lines.append('''<p>
-<a class="refreshlink" href="?show_all&vgrid_name=%s">Reload threads</a>
+<a class="refreshlink iconspace" href="?show_all&vgrid_name=%s">Reload threads</a>
 </p>''' % i['vgrid_name'])
                 lines.append('''
 <div id="subscribe_form">
@@ -1806,7 +1806,7 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
                 lines.append('''
 <p>
 <div id="new_link">
-<a class="replylink" href="javascript:toggle_new('reply_form', 'new_link')">
+<a class="replylink iconspace" href="javascript:toggle_new('reply_form', 'new_link')">
 Reply to this thread</a></p>
 </div>
 <div class="hidden_form framed_form" id="reply_form">
@@ -1826,10 +1826,10 @@ onclick="javascript:toggle_new('reply_form', 'new_link'); return false;"/>
 </div>
 ''' % (i['vgrid_name'], i['thread']))
                 lines.append('''
-<p><a class="refreshlink" href="?show_thread&vgrid_name=%s&thread=%s">
+<p><a class="refreshlink iconspace" href="?show_thread&vgrid_name=%s&thread=%s">
 Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                 lines.append('''
-<p><a class="backlink" href="?vgrid_name=%s">Return to forum index</a></p>
+<p><a class="backlink iconspace" href="?vgrid_name=%s">Return to forum index</a></p>
 ''' % i['vgrid_name'])
                 lines.append('''
 <div id="subscribe_form">

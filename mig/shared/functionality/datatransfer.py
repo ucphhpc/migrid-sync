@@ -349,14 +349,14 @@ else, so the public key can inserted in authorized_keys as:<br/>
                 transfer_item['viewdatalink'] = {
                     'object_type': 'link',
                     'destination': data_url,
-                    'class': 'viewlink', 
+                    'class': 'viewlink iconspace', 
                     'title': 'View local component of %s' % saved_id,
                     'text': ''}
             transfer_item['viewoutputlink'] = {
                 'object_type': 'link',
                 'destination': "fileman.py?path=transfer_output/%s/" % \
                 saved_id,
-                'class': 'infolink', 
+                'class': 'infolink iconspace', 
                 'title': 'View status files for %s' % saved_id,
                 'text': ''}
             js_name = 'delete%s' % hexlify(saved_id)
@@ -368,7 +368,7 @@ else, so the public key can inserted in authorized_keys as:<br/>
                 'object_type': 'link', 'destination':
                 "javascript: confirmDialog(%s, '%s');" % \
                 (js_name, 'Really remove %s?' % saved_id),
-                'class': 'removelink', 'title': 'Remove %s' % \
+                'class': 'removelink iconspace', 'title': 'Remove %s' % \
                 saved_id, 'text': ''}
             js_name = 'redo%s' % hexlify(saved_id)
             helper = html_post_helper(js_name, 'datatransfer.py',
@@ -379,7 +379,7 @@ else, so the public key can inserted in authorized_keys as:<br/>
                 'object_type': 'link', 'destination':
                 "javascript: confirmDialog(%s, '%s');" % \
                 (js_name, 'Really reschedule %s?' % saved_id),
-                'class': 'refreshlink', 'title': 'Reschedule %s' % \
+                'class': 'refreshlink iconspace', 'title': 'Reschedule %s' % \
                 saved_id, 'text': ''}
             datatransfers.append(transfer_item)
         #logger.debug("found datatransfers: %s" % datatransfers)
@@ -591,7 +591,7 @@ Notify on completion (e.g. email address):<br />
                 'object_type': 'link', 'destination':
                 "javascript: confirmDialog(%s, '%s');" % \
                 (js_name, 'Really remove %s?' % saved_id),
-                'class': 'removelink', 'title': 'Remove %s' % \
+                'class': 'removelink iconspace', 'title': 'Remove %s' % \
                 saved_id, 'text': ''}
             transferkeys.append(key_item)
 

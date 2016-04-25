@@ -106,7 +106,7 @@ table td a {
     padding-top: 2px;
     padding-bottom: 2px;
 }
-div.icon, span.icon, a.removeitemlink {
+div.icon, span.icon, .iconspace {
     /* make room for action icons */
     padding-top: 2px;
     padding-bottom: 2px;
@@ -771,7 +771,7 @@ table th.icon {
     background-repeat: no-repeat;
     background-position: left center;
  }
-.iconspace {
+.iconleftpad {
   padding-left: 20px;
 }
 .error {

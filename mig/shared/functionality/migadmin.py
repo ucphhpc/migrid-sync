@@ -308,7 +308,7 @@ provide access to e.g. managing the grid job queues.
             'object_type': 'link', 'destination':
             "javascript: confirmDialog(%s, '%s');" % \
             (js_name, 'Really accept %s?' % req_id),
-            'class': 'addlink', 'title': 'Accept %s' % req_id, 'text': ''}
+            'class': 'addlink iconspace', 'title': 'Accept %s' % req_id, 'text': ''}
         js_name = 'delete%s' % req_id
         helper = html_post_helper(js_name, 'migadmin.py',
                                   {'action': 'delcertreq', 'req_id': req_id})
@@ -317,7 +317,7 @@ provide access to e.g. managing the grid job queues.
             'object_type': 'link', 'destination':
             "javascript: confirmDialog(%s, '%s');" % \
             (js_name, 'Really remove %s?' % req_id),
-            'class': 'removelink', 'title': 'Remove %s' % req_id, 'text': ''}
+            'class': 'removelink iconspace', 'title': 'Remove %s' % req_id, 'text': ''}
         certreqs.append(req_item)
 
     output_objects.append({'object_type': 'table_pager', 'entry_name':

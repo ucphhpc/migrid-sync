@@ -103,20 +103,20 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
                                                'destination': 'showvgridmonitor.py?vgrid_name=%s'\
                                                % vgrid_name,
-                                               'class': 'monitorlink',
+                                               'class': 'monitorlink iconspace',
                                                'title': 'View %s monitor' % \
                                                vgrid_name, 
                                                'text': 'View'}
             vgrid_obj['memberlink'] = {'object_type': 'link',
                                        'destination':'',
-                                       'class': 'infolink',
+                                       'class': 'infolink iconspace',
                                        'title': 'Every user is member of the %s %s' \
                                        % (default_vgrid,
                                           configuration.site_vgrid_label),
                                        'text': ''}
             vgrid_obj['administratelink'] = {'object_type': 'link',
                                              'destination':'',
-                                             'class': 'infolink',
+                                             'class': 'infolink iconspace',
                                              'title': 'Nobody owns the %s %s' \
                                              % (default_vgrid,
                                                 configuration.site_vgrid_label),
@@ -124,7 +124,7 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['viewvgridlink'] = {'object_type': 'link',
                                           'destination':'viewvgrid.py?vgrid_name=%s' % \
                                           vgrid_name,
-                                          'class': 'infolink',
+                                          'class': 'infolink iconspace',
                                           'title': 'View details for the %s %s' \
                                           % (default_vgrid,
                                              configuration.site_vgrid_label),
@@ -139,12 +139,12 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
                                                'destination': 'showvgridmonitor.py?vgrid_name=%s'\
                                                % vgrid_name,
-                                               'class': 'monitorlink',
+                                               'class': 'monitorlink iconspace',
                                                'title': 'View global monitor', 
                                                'text': 'View'}
             vgrid_obj['memberlink'] = {'object_type': 'link',
                                        'destination':'',
-                                       'class': 'infolink',
+                                       'class': 'infolink iconspace',
                                        'title': 'Not a real %s - only for global monitor' % \
                                        configuration.site_vgrid_label,
                                        'text': ''}
@@ -155,7 +155,7 @@ def main(client_id, user_arguments_dict):
                                              'text': ''}
             vgrid_obj['viewvgridlink'] = {'object_type': 'link',
                                           'destination':'',
-                                          'class': 'infolink',
+                                          'class': 'infolink iconspace',
                                           'title': 'Not a real %s - only for global monitor' % \
                                           configuration.site_vgrid_label,
                                           'text': ''}
@@ -168,7 +168,7 @@ def main(client_id, user_arguments_dict):
                 'destination': '%s/vgridpublicscm/%s'\
                                        % (configuration.migserver_http_url,
                                           vgrid_name),
-                                       'class': 'scmlink public',
+                                       'class': 'scmlink public iconspace',
                                        'title': 'Open %s public SCM' % \
                                        vgrid_name,
                                        'text': 'Open'}
@@ -176,7 +176,7 @@ def main(client_id, user_arguments_dict):
                 'destination': '%s/vgridpublictracker/%s'\
                                        % (configuration.migserver_http_url,
                                           vgrid_name),
-                                       'class': 'trackerlink public',
+                                       'class': 'trackerlink public iconspace',
                                        'title': 'Open %s public tracker' % \
                                        vgrid_name,
                                        'text': 'Open'}
@@ -185,7 +185,7 @@ def main(client_id, user_arguments_dict):
                                         '%s/vgrid/%s/path/index.html' % \
                                         (configuration.migserver_http_url,
                                          vgrid_name),
-                                        'class': 'urllink member',
+                                        'class': 'urllink member iconspace',
                                         'title': 'View public %s web page' % \
                                         vgrid_name,
                                         'text': 'View'}
@@ -196,7 +196,7 @@ def main(client_id, user_arguments_dict):
                                    {'object_type': 'link',
                                     'destination': 'viewvgrid.py?vgrid_name=%s' % \
                                     vgrid_name,
-                                    'class': 'infolink',
+                                    'class': 'infolink iconspace',
                                     'title': 'View details for the %s %s' \
                                     % (vgrid_name,
                                        configuration.site_vgrid_label),
@@ -218,7 +218,7 @@ def main(client_id, user_arguments_dict):
                                     vgrid_name + ":<br/>" + \
                                     "\nPlease write a message to the owners (field below).",
                                     'request_text'),
-                                 'class': 'addlink',
+                                 'class': 'addlink iconspace',
                                  'title': 'Request membership of %s' % \
                                  vgrid_name,
                                  'text': ''}
@@ -239,7 +239,7 @@ def main(client_id, user_arguments_dict):
                                           vgrid_name + ":<br/>" + \
                                           "\nPlease write a message to the owners (field below).",
                                           'request_text'),
-                                       'class': 'addadminlink',
+                                       'class': 'addadminlink iconspace',
                                        'title': 'Request ownership of %s' % \
                                        vgrid_name,
                                        'text': ''}
@@ -251,7 +251,7 @@ def main(client_id, user_arguments_dict):
                                              'destination':
                                              '../vgrid/%s/path/index.html' % \
                                              vgrid_name,
-                                             'class': 'urllink owner',
+                                             'class': 'urllink owner iconspace',
                                              'title':
                                              'View private %s web page' % \
                                              vgrid_name, 
@@ -259,21 +259,21 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['sharedfolderlink'] = {'object_type': 'link',
                                              'destination':
                                              'fileman.py?path=%s/' % vgrid_name,
-                                             'class': 'sharedfolderlink',
+                                             'class': 'sharedfolderlink iconspace',
                                              'title': 'Open shared %s folder' \
                                              % vgrid_name, 
                                              'text': 'Open'}
             vgrid_obj['memberscmlink'] = {'object_type': 'link',
                                           'destination': '/vgridscm/%s' % \
                                           vgrid_name,
-                                          'class': 'scmlink member',
+                                          'class': 'scmlink member iconspace',
                                           'title': 'View %s members scm' % \
                                           vgrid_name,
                                           'text': 'View'}
             vgrid_obj['membertrackerlink'] = {'object_type': 'link',
                                           'destination': '/vgridtracker/%s' % \
                                           vgrid_name,
-                                          'class': 'trackerlink member',
+                                          'class': 'trackerlink member iconspace',
                                           'title': 'View %s members tracker' % \
                                           vgrid_name,
                                           'text': 'View'}
@@ -281,7 +281,7 @@ def main(client_id, user_arguments_dict):
                                              'destination':
                                              'vgridforum.py?vgrid_name=%s' % \
                                              vgrid_name,
-                                             'class': 'forumlink',
+                                             'class': 'forumlink iconspace',
                                              'title': 'Open %s private forum' \
                                              % vgrid_name, 
                                                'text': 'Open'}
@@ -289,7 +289,7 @@ def main(client_id, user_arguments_dict):
                                              'destination':
                                              'vgridworkflows.py?vgrid_name=%s' % \
                                              vgrid_name,
-                                             'class': 'workflowslink',
+                                             'class': 'workflowslink iconspace',
                                              'title': 'Open %s private workflows' \
                                              % vgrid_name, 
                                                'text': 'Open'}
@@ -297,7 +297,7 @@ def main(client_id, user_arguments_dict):
                                                'destination':
                                                'showvgridmonitor.py?vgrid_name=%s'\
                                                % vgrid_name,
-                                               'class': 'monitorlink',
+                                               'class': 'monitorlink iconspace',
                                                'title': 'View %s monitor' % \
                                                vgrid_name, 
                                                'text': 'View'}
@@ -315,7 +315,7 @@ def main(client_id, user_arguments_dict):
                                      'destination':
                                      "javascript: confirmDialog(%s, '%s');"\
                                      % (js_name, "Really leave " + vgrid_name + "?"),
-                                     'class': 'removelink',
+                                     'class': 'removelink iconspace',
                                      'title': 'Leave %s members' % vgrid_name, 
                                      'text': ''}
             
@@ -325,14 +325,14 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['ownerscmlink'] = {'object_type': 'link',
                                          'destination': '/vgridownerscm/%s' % \
                                          vgrid_name,
-                                         'class': 'scmlink owner',
+                                         'class': 'scmlink owner iconspace',
                                          'title': 'View %s owners scm' % \
                                          vgrid_name,
                                          'text': 'View'}
             vgrid_obj['ownertrackerlink'] = {'object_type': 'link',
                                          'destination': '/vgridownertracker/%s' % \
                                          vgrid_name,
-                                         'class': 'trackerlink owner',
+                                         'class': 'trackerlink owner iconspace',
                                          'title': 'View %s owners tracker' % \
                                          vgrid_name,
                                          'text': 'View'}
@@ -347,7 +347,7 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['memberlink']['destination'] = \
                       "javascript: confirmDialog(%s,'%s');" % \
                       (js_name, "Really leave " + vgrid_name + "?")
-            vgrid_obj['memberlink']['class'] = 'removeadminlink'
+            vgrid_obj['memberlink']['class'] = 'removeadminlink iconspace'
             vgrid_obj['memberlink']['title'] = 'Leave %s owners' % vgrid_name
 
             # add more links: administrate and edit pages
@@ -355,19 +355,19 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['administratelink'] = {'object_type': 'link',
                                              'destination': 'adminvgrid.py?vgrid_name=%s'\
                                              % vgrid_name,
-                                             'class': 'adminlink',
+                                             'class': 'adminlink iconspace',
                                              'title': 'Administrate %s' % vgrid_name,
                                              'text': ''}
             vgrid_obj['editprivatelink'] = {'object_type': 'link',
                                             'destination': 'fileman.py?path=private_base/%s/'\
                                             % vgrid_name,
-                                            'class': 'editlink owner',
+                                            'class': 'editlink owner iconspace',
                                             'title': 'Edit private %s web page' % vgrid_name,
                                             'text': 'Edit'}
             vgrid_obj['editpubliclink'] = {'object_type': 'link',
                                            'destination': 'fileman.py?path=public_base/%s/'\
                                            % vgrid_name,
-                                           'class': 'editlink member',
+                                           'class': 'editlink member iconspace',
                                            'title': 'Edit public %s web page' % vgrid_name,
                                            'text': 'Edit'}
 

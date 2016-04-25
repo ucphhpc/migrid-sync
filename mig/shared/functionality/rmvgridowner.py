@@ -435,7 +435,7 @@ deleted. Please use either of the links below to confirm or cancel.
             output_objects.append({'object_type': 'html_form', 'text': helper})
             output_objects.append({'object_type': 'link', 'destination':
                                    "javascript: %s();" % js_name, 'class':
-                                   'removelink', 'text':
+                                   'removelink iconspace', 'text':
                                    'Really leave and delete %s' % vgrid_name})
             output_objects.append({'object_type': 'text', 'text' : ''})
             output_objects.append({'object_type': 'link', 'destination':

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -400,8 +400,8 @@ here.
 </div>
 </td></tr>
 <tr><td>
-<a class="urllink" href="/images/default.css">default</a> ,
-<a class="urllink" href="/images/bluesky.css">bluesky</a>
+<a class="urllink iconspace" href="/images/default.css">default</a> ,
+<a class="urllink iconspace" href="/images/bluesky.css">bluesky</a>
 </td></tr>
 <tr><td>
 </td></tr>
@@ -451,29 +451,29 @@ here.
 widget file links below if you want to reuse existing widgets.<br />
 </td></tr>
 <tr><td>
-<a class="urllink" href="/images/widgets/hello-grid.app">hello grid</a>,
-<a class="urllink" href="/images/widgets/simple-calendar.app">simple calendar</a>,
-<a class="urllink" href="/images/widgets/calendar.app">calendar</a>,
-<a class="urllink" href="/images/widgets/gcal.app">google calendar</a>,
-<a class="urllink" href="/images/widgets/calculator.app">calculator</a>,
-<a class="urllink" href="/images/widgets/localrss.app">local rss reader</a>,
-<a class="urllink" href="/images/widgets/rss.app">rss reader</a>,
-<a class="urllink" href="/images/widgets/clock.app">clock</a>,
-<a class="urllink" href="/images/widgets/weather.app">weather</a>,
-<a class="urllink" href="/images/widgets/progressbar.app">progress bar</a>,
-<a class="urllink" href="/images/widgets/simple-move.app">simple-move</a>,
-<a class="urllink" href="/images/widgets/portlets.app">portlets</a>,
-<a class="urllink" href="/images/widgets/countdown.app">countdown</a>,
-<a class="urllink" href="/images/widgets/sparkline.app">mini chart</a>,
-<a class="urllink" href="/images/widgets/piechart.app">pie chart</a>,
-<a class="urllink" href="/images/widgets/simple-jobmon.app">simple-jobmon</a>,
-<a class="urllink" href="/images/widgets/cert-countdown.app">certificate countdown</a>,
-<a class="urllink" href="/images/widgets/disk-use.app">disk use progress bar</a>,
-<a class="urllink" href="/images/widgets/jobs-stats.app">jobs stats table</a>,
-<a class="urllink" href="/images/widgets/jobs-stats-chart.app">jobs stats chart</a>,
-<a class="urllink" href="/images/widgets/daily-wm-comic.app">Daily WulffMorgenthaler comic</a>,
-<a class="urllink" href="/images/widgets/kunet-login.app">KUnet login</a>
-<a class="urllink" href="/images/widgets/tdchotspot-login.app">TDC Hotspot login</a>
+<a class="urllink iconspace" href="/images/widgets/hello-grid.app">hello grid</a>,
+<a class="urllink iconspace" href="/images/widgets/simple-calendar.app">simple calendar</a>,
+<a class="urllink iconspace" href="/images/widgets/calendar.app">calendar</a>,
+<a class="urllink iconspace" href="/images/widgets/gcal.app">google calendar</a>,
+<a class="urllink iconspace" href="/images/widgets/calculator.app">calculator</a>,
+<a class="urllink iconspace" href="/images/widgets/localrss.app">local rss reader</a>,
+<a class="urllink iconspace" href="/images/widgets/rss.app">rss reader</a>,
+<a class="urllink iconspace" href="/images/widgets/clock.app">clock</a>,
+<a class="urllink iconspace" href="/images/widgets/weather.app">weather</a>,
+<a class="urllink iconspace" href="/images/widgets/progressbar.app">progress bar</a>,
+<a class="urllink iconspace" href="/images/widgets/simple-move.app">simple-move</a>,
+<a class="urllink iconspace" href="/images/widgets/portlets.app">portlets</a>,
+<a class="urllink iconspace" href="/images/widgets/countdown.app">countdown</a>,
+<a class="urllink iconspace" href="/images/widgets/sparkline.app">mini chart</a>,
+<a class="urllink iconspace" href="/images/widgets/piechart.app">pie chart</a>,
+<a class="urllink iconspace" href="/images/widgets/simple-jobmon.app">simple-jobmon</a>,
+<a class="urllink iconspace" href="/images/widgets/cert-countdown.app">certificate countdown</a>,
+<a class="urllink iconspace" href="/images/widgets/disk-use.app">disk use progress bar</a>,
+<a class="urllink iconspace" href="/images/widgets/jobs-stats.app">jobs stats table</a>,
+<a class="urllink iconspace" href="/images/widgets/jobs-stats-chart.app">jobs stats chart</a>,
+<a class="urllink iconspace" href="/images/widgets/daily-wm-comic.app">Daily WulffMorgenthaler comic</a>,
+<a class="urllink iconspace" href="/images/widgets/kunet-login.app">KUnet login</a>
+<a class="urllink iconspace" href="/images/widgets/tdchotspot-login.app">TDC Hotspot login</a>
 </td></tr>
 <tr><td>
 <div class="warningtext">Please note that the widgets parser is rather grumpy
@@ -738,7 +738,7 @@ access. On Linux/UN*X it also allows transparent access through SSHFS.
 <input type="hidden" name="topic" value="sftp" />
 <div class="div-sftp-client-notes hidden">
 <a href="javascript:toggleHidden('.div-sftp-client-notes');"
-    class="removeitemlink" title="Toggle view">
+    class="removeitemlink iconspace" title="Toggle view">
     Show less SFTP client details...</a>
 <h3>Graphical SFTP access</h3>
 The FireFTP plugin for Firefox is known to generally work for graphical
@@ -778,7 +778,7 @@ to your /etc/fstab .
 </div>
 <div class="div-sftp-client-notes">
 <a href="javascript:toggleHidden('.div-sftp-client-notes');"
-    class="additemlink" title="Toggle view">Show more SFTP client details...
+    class="additemlink iconspace" title="Toggle view">Show more SFTP client details...
     </a>
 </div>
 '''
@@ -893,7 +893,7 @@ access from your PC or workstation.<br/>
 <input type="hidden" name="topic" value="webdavs" />
 <div class="div-webdavs-client-notes hidden">
 <a href="javascript:toggleHidden('.div-webdavs-client-notes');"
-    class="removeitemlink" title="Toggle view">
+    class="removeitemlink iconspace" title="Toggle view">
     Show less WebDAVS client details...</a>
 <h3>Graphical WebDAVS access</h3>
 Several native file browsers and web browsers are known to generally work for
@@ -924,7 +924,7 @@ fusedav https://%(davs_server)s:%(davs_port)s mig-home -o uid=$(id -u) -o gid=$(
 </div>
 <div class="div-webdavs-client-notes">
 <a href="javascript:toggleHidden('.div-webdavs-client-notes');"
-    class="additemlink" title="Toggle view">
+    class="additemlink iconspace" title="Toggle view">
     Show more WebDAVS client details...</a>
 </div>
 '''
@@ -1035,7 +1035,7 @@ access.<br/>
 <input type="hidden" name="topic" value="ftps" />
 <div class="div-ftps-client-notes hidden">
 <a href="javascript:toggleHidden('.div-ftps-client-notes');"
-    class="removeitemlink" title="Toggle view">
+    class="removeitemlink iconspace" title="Toggle view">
     Show less FTPS client details...</a>
 <h3>Graphical FTPS access</h3>
 The FireFTP plugin for Firefox is known to generally work for graphical
@@ -1079,7 +1079,7 @@ curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s mig-home \\
 </div>
 <div class="div-ftps-client-notes">
 <a href="javascript:toggleHidden('.div-ftps-client-notes');"
-    class="additemlink" title="Toggle view">Show more FTPS client details...
+    class="additemlink iconspace" title="Toggle view">Show more FTPS client details...
 </a>
 </div>
 '''

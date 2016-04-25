@@ -5,7 +5,7 @@
 #
 
 # deletefreeze - delete a frozen archive
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -158,7 +158,7 @@ Please contact the Grid admins %s if you think it should be enabled.
              : 'Successfully deleted frozen archive: "%s"' % freeze_id})
         output_objects.append({'object_type': 'link', 'destination':
                                'freezedb.py',
-                               'class': 'infolink',
+                               'class': 'infolink iconspace',
                                'title': 'Show frozen archives',
                                'text': 'Show frozen archives'})
         return (output_objects, returnvalues.OK) 

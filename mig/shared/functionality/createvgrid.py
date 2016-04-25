@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createvgrid - create a vgrid with all the collaboration components
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1082,7 +1082,7 @@ for job input and output.
     output_objects.append(
         {'object_type': 'link',
          'destination': 'adminvgrid.py?vgrid_name=%s' % vgrid_name,
-         'class': 'adminlink',
+         'class': 'adminlink iconspace',
          'title': 'Administrate your new %s' % configuration.site_vgrid_label,
          'text': 'Administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)

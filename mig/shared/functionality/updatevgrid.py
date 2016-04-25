@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # updatevgrid - update or repair vgrid components
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -94,7 +94,7 @@ def main(client_id, user_arguments_dict):
                                   vgrid_name + ":<br/>" + \
                                   "\nPlease write a message to the owners (field below).",
                                   'request_text'),
-                               'class': 'addadminlink',
+                               'class': 'addadminlink iconspace',
                                'title': 'Request ownership of %s' % vgrid_name,
                                'text': 'Apply to become an owner'})
 
@@ -216,7 +216,7 @@ def main(client_id, user_arguments_dict):
                            (configuration.site_vgrid_label, vgrid_name)})
     output_objects.append({'object_type': 'link',
                            'destination': 'adminvgrid.py?vgrid_name=%s' % vgrid_name,
-                           'class': 'adminlink',
+                           'class': 'adminlink iconspace',
                            'title': 'Administrate your %s' % \
                            configuration.site_vgrid_label,
                            'text': 'Administration for %s' % vgrid_name})

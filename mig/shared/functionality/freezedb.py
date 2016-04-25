@@ -174,7 +174,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             'object_type': 'link',
             'destination': "showfreeze.py?freeze_id=%s;flavor=%s" % \
             (freeze_id, flavor),
-            'class': 'infolink', 
+            'class': 'infolink iconspace', 
             'title': 'View frozen archive %s' % freeze_id, 
             'text': ''}
         if client_id == freeze_item['creator']:
@@ -187,7 +187,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                 'object_type': 'link', 'destination':
                 "javascript: confirmDialog(%s, '%s');" % \
                 (js_name, 'Really remove %s?' % freeze_id),
-                'class': 'removelink', 'title': 'Remove %s' % \
+                'class': 'removelink iconspace', 'title': 'Remove %s' % \
                 freeze_id, 'text': ''}
         frozenarchives.append(freeze_item)
 
@@ -201,7 +201,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                            'Additional Frozen Archives'})
     output_objects.append({'object_type': 'link',
                            'destination': 'adminfreeze.py',
-                           'class': 'addlink',
+                           'class': 'addlink iconspace',
                            'title': 'Specify a new frozen archive', 
                            'text': 'Create a new frozen archive'})
 

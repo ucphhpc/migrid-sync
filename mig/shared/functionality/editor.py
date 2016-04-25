@@ -388,7 +388,8 @@ Newline mode:
 <option value="mac">Mac OS (pre OS X)</option>
 <option value="windows">DOS / Windows</option>
 </select>
-(<a class="infolink" href="http://en.wikipedia.org/wiki/Newline">help</a>)
+<a class="infolink iconspace" href="http://en.wikipedia.org/wiki/Newline">help
+</a>
 '''
     if 'submit' in includes:
         html += '''

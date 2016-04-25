@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # delres - Deletes a resource
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -90,7 +90,7 @@ def main(client_id, user_arguments_dict):
                                : "You can't delete '%s' - you don't own it!"
                                % resource_id})
         output_objects.append({'object_type': 'link', 'destination':
-                               'resman.py', 'class': 'infolink', 'title':
+                               'resman.py', 'class': 'infolink iconspace', 'title':
                                'Show resources', 'text': 'Show resources'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -130,8 +130,9 @@ def main(client_id, user_arguments_dict):
                                : "Can't delete the running resource %s!"
                                % resource_id})
         output_objects.append({'object_type': 'link', 'destination':
-                               'resman.py', 'class': 'infolink', 'title':
-                               'Show resources', 'text': 'Show resources'})
+                               'resman.py', 'class': 'infolink iconspace',
+                               'title': 'Show resources', 'text':
+                               'Show resources'})
         lock_handle_vgrid.close()
         lock_handle_res.close()
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -148,8 +149,9 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Deletion exception: ' + str(err)})
         output_objects.append({'object_type': 'link', 'destination':
-                               'resman.py', 'class': 'infolink', 'title':
-                               'Show resources', 'text': 'Show resources'})
+                               'resman.py', 'class': 'infolink iconspace',
+                               'title': 'Show resources', 'text':
+                               'Show resources'})
         lock_handle_vgrid.close()
         lock_handle_res.close()
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -162,8 +164,8 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                            : 'Sucessfully deleted resource: ' + resource_id})
     output_objects.append({'object_type': 'link', 'destination': 'resman.py',
-                           'class': 'infolink', 'title': 'Show resources',
-                           'text': 'Show resources'})
+                           'class': 'infolink iconspace', 'title':
+                           'Show resources', 'text': 'Show resources'})
     
     # Releasing locks
     lock_handle_vgrid.close()

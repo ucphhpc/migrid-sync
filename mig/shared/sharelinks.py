@@ -57,14 +57,14 @@ def build_sharelinkitem_object(configuration, share_dict):
     share_item['opensharelink'] = {
         'object_type': 'link',
         'destination': share_url,
-        'class': 'urllink', 
+        'class': 'urllink iconspace', 
         'title': 'Open share link %s' % share_id,
         'text': ''}
     edit_url = 'sharelink.py?action=edit;share_id=%s' % share_id
     share_item['editsharelink'] = {
         'object_type': 'link',
         'destination': edit_url,
-        'class': 'editlink', 
+        'class': 'editlink iconspace', 
         'title': 'Edit or invite to share link %s' % share_id,
         'text': ''}
     # NOTE: datetime is not json serializable so we remove

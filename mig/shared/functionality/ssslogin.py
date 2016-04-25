@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssslogin - SSS welcome and login backend
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -52,7 +52,7 @@ html['english'] = \
 <form action='sssadmin.py' method='post'>
 
 <table class='sandboxlogintext'>
-<tr><td><a class='danishlink' href='ssslogin.py?language=danish'>P&aring; dansk</a></td></tr>
+<tr><td><a class='danishlink iconspace' href='ssslogin.py?language=danish'>P&aring; dansk</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
 <tr><td>Welcome to the %(site)s-SSS download site. By downloading and installing this software, your computer will be participating in solving scientific problems whenever the screen saver is on. All you have to do is log in below, download the sandbox, and follow the instructions during the install procedure.</td></tr>
 
@@ -64,10 +64,10 @@ html['english'] = \
 <tr><td>The applications that will be running on your PC when you leave it in screen saver mode are all executed in a so-called 'sandbox'. A sandbox provides a secure execution environment, in which untrusted programs can run. Programs running in the sandbox can neither compromise nor gain access to your PC.</td></tr>
 
 <tr><td><h3>Sandbox monitor</h3></td></tr>
-<tr><td>After logging in you will be presented with a list of statistics for your own sandboxes. In case you want to compare your donations to those from other sandbox resource owners, you can take a look at the <a class='monitorlink' href='sssmonitor.py'>overall sandbox monitor</a>.</td></tr>
+<tr><td>After logging in you will be presented with a list of statistics for your own sandboxes. In case you want to compare your donations to those from other sandbox resource owners, you can take a look at the <a class='monitorlink iconspace' href='sssmonitor.py'>overall sandbox monitor</a>.</td></tr>
 
 <tr><td><h3>More Questions?</h3></td></tr>
-<tr><td>Please check the <a class='infolink' href='sssfaq.py?language=english'>FAQ</a>, or send us an email.</td></tr>
+<tr><td>Please check the <a class='infolink iconspace' href='sssfaq.py?language=english'>FAQ</a>, or send us an email.</td></tr>
 </table>
 <br />
 <table class='sandboxlogin'>
@@ -96,7 +96,7 @@ html['danish'] = \
 <form action='sssadmin.py' method='post'>
 
 <table class='sandboxlogintext'>
-<tr><td><a class='englishlink' href='ssslogin.py?language=english'>In English</a></td></tr>
+<tr><td><a class='englishlink iconspace' href='ssslogin.py?language=english'>In English</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
 <tr><td>Velkommen til %(site)s-SSS. Ved at downloade og installere denne software vil din PC, n&aring;r den er i screen saver mode, donere den ubrugte CPU-tid til at bidrage med at l&oslash;se videnskabelige problemer. Det eneste, der kr&aelig;ves er, at man logger ind nedenfor, downloader softwaren og f&oslash;lger installationsproceduren.<td><tr>
 
@@ -107,13 +107,13 @@ html['danish'] = \
 <tr><td>De programmer der kommer til at k&oslash;re n&aring;r din PC er i screen saver mode, vil alle blive afviklet i en s&aring;kaldt 'sandkasse'. En sandkasse stiller et sikkert milj&oslash; tilr&aring;dighed, hvori det er sikkert at k&oslash;re ukendte programmer. Programmer k&oslash;rende i sandkassen kan hverken kompromittere eller f&aring; tilgang til din PC.</td></tr>
 
 <tr><td><h3>Installationsvejledning</h3></td></tr>
-<tr><td>Programmet findes b&aring;de i en version til Windows XP og Linux. Windowsbrugere downloader en installationsfil, som g&oslash;r installationen meget simpel. En trin-for-trin guide kan findes her: <a class='infolink' href='http://www.migrid.org/MiG/MiG/Mig_danish/MiG-SSS installationsprocedure'>Installationsguide til Windows</a><td></tr>
+<tr><td>Programmet findes b&aring;de i en version til Windows XP og Linux. Windowsbrugere downloader en installationsfil, som g&oslash;r installationen meget simpel. En trin-for-trin guide kan findes her: <a class='infolink iconspace' href='http://www.migrid.org/MiG/MiG/Mig_danish/MiG-SSS installationsprocedure'>Installationsguide til Windows</a><td></tr>
 
 <tr><td><h3>Job monitor</h3></td></tr>
-<tr><td>N&aring;r du logger ind f&aring;r du en oversigt over jobs k&oslash;rt p&aring; dine sandkasse resurser. Hvis du gerne vil sammenligne med andres sandkasse donationer, kan du se p&aring; den <a class='monitorlink' href='sssmonitor.py'>samlede sandkasse monitor</a>.</td></tr>
+<tr><td>N&aring;r du logger ind f&aring;r du en oversigt over jobs k&oslash;rt p&aring; dine sandkasse resurser. Hvis du gerne vil sammenligne med andres sandkasse donationer, kan du se p&aring; den <a class='monitorlink iconspace' href='sssmonitor.py'>samlede sandkasse monitor</a>.</td></tr>
 
 <tr><td><h3>Flere sp&oslash;rgsm&aring;l?</h3></td></tr>
-<tr><td>Check om det skulle findes i <a class='infolink' href='sssfaq.py?language=danish'>FAQ'en</a>, ellers send os en email.</td></tr>
+<tr><td>Check om det skulle findes i <a class='infolink iconspace' href='sssfaq.py?language=danish'>FAQ'en</a>, ellers send os en email.</td></tr>
 </table>
 
 <br />

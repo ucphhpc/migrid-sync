@@ -157,7 +157,7 @@ $(document).ready(function() {
                                      'destination':
                                      'viewuser.py?cert_id=%s'\
                                      % quote(visible_user_id),
-                                     'class': 'infolink',
+                                     'class': 'infolink iconspace',
                                      'title': 'View details for %s' % \
                                      visible_user_id, 
                                      'text': ''}
@@ -185,7 +185,7 @@ $(document).ready(function() {
                                            'request_text': ''})
                 output_objects.append({'object_type': 'html_form', 'text':
                                        helper})
-                link = 'send%slink' % proto
+                link = 'send%slink iconspace' % proto
                 user_obj[link] = {'object_type': 'link',
                                   'destination':
                                   "javascript: confirmDialog(%s, '%s', '%s');"\

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -244,7 +244,7 @@ Please contact the Grid admins %s if you think it should be enabled.
         'object_type': 'link',
         'destination': 'showfreeze.py?freeze_id=%s;flavor=%s' % (freeze_id,
                                                                  flavor),
-        'class': 'viewlink',
+        'class': 'viewlink iconspace',
         'title': 'View your frozen archive',
         'text': 'View new %s frozen archive'
         % freeze_id,
@@ -256,7 +256,7 @@ Please contact the Grid admins %s if you think it should be enabled.
         output_objects.append({
             'object_type': 'link',
             'destination': public_url,
-            'class': 'viewlink',
+            'class': 'viewlink iconspace',
             'title': 'View published archive',
             'text': public_url,
         })
