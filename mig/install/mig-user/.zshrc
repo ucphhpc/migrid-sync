@@ -24,6 +24,7 @@ alias la='ls -al'
 
 alias emacs='emacs -nw'
 alias vdo='vimdiff -o'
+alias pylintchanged='svn status | grep -v '\?' | egrep '.py$' | sed 's/.* //' | xargs -t pylint -E'
 
 # Shell functions
 setenv() { typeset -x "${1}${1:+=}${(@)argv[2,$#]}" }  # csh compatibility
