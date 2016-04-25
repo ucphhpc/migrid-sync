@@ -47,6 +47,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import in_place, verbose
 from shared.safeinput import valid_path
+from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 
 # The input argument for fileupload files
@@ -60,7 +61,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'action': ['status'], 'current_dir': [upload_tmp_dir],
-                'flags': [''], 'sharelink_id': [''], 'sharelink_mode': ['']}
+                'flags': [''], 'share_id': ['']}
     return ['html_form', defaults]
 
 def extract_chunk_region(configuration):
@@ -83,11 +84,14 @@ def extract_chunk_region(configuration):
         chunk_first, chunk_last = 0, -1
     return (chunk_first, chunk_last)
 
-def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir):
+def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
+                      reject_write=False):
     """Parse upload file and chunk entries from user_args. Chunk limits are
     extracted from content-range http header in environment.
     Existing files are automatically taken from upload_tmp_dir and uploads go
     into dst_dir inside base_dir.
+    The optional reject_write argument is used for delayed refusal if someone
+    tries to upload to a read-only sharelink.
     """
     files, rejected = [], []
     logger = configuration.logger
@@ -108,6 +112,9 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir):
             # No more files
             break
         if not filename.strip():
+            continue
+        if reject_write:
+            rejected.append((filename, 'read-only share: upload refused!'))
             continue
         try:
             filename = strip_dir(filename)
@@ -183,9 +190,13 @@ def main(client_id, user_arguments_dict):
     action = accepted['action'][-1]
     current_dir = os.path.normpath(accepted['current_dir'][-1])
     flags = ''.join(accepted['flags'])
-    sharelink_id = accepted['sharelink_id'][-1]
-    sharelink_mode = accepted['sharelink_mode'][-1]
+    share_id = accepted['share_id'][-1]
     output_format = accepted['output_format'][-1]
+
+    reject_write = False
+    uploaded = []
+    # Always include a files reply even if empty
+    output_objects.append({'object_type': 'uploadfiles', 'files': uploaded})
 
     # Either authenticated user client_id set or sharelink ID
     if client_id:
@@ -196,22 +207,20 @@ def main(client_id, user_arguments_dict):
         redirect_path = redirect_name
         id_args = ''
         page_title = 'Upload to User Directory'
-    elif sharelink_id and sharelink_mode:
+    elif share_id:
+        (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
-        if sharelink_mode == 'read-only':
-            logger.error('%s called without write acces: %s' % \
+        user_id = 'anonymous user through share ID %s' % share_id
+        # NOTE: we must return uploaded reply so we delay read-only failure
+        if share_mode == 'read-only':
+            logger.error('%s called without write access: %s' % \
                          (op_name, accepted))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'No write access!'})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
-        user_id = sharelink_id
-        target_dir = os.path.join(sharelink_mode, sharelink_id)
+            reject_write = True
+        target_dir = os.path.join(share_mode, share_id)
         base_dir = configuration.sharelink_home
-        redirect_name = 'sharelink'
-        redirect_path = os.path.join(redirect_name, sharelink_mode,
-                                     sharelink_id)
-        id_args = 'sharelink_mode=%s;sharelink_id=%s;' % (sharelink_mode,
-                                                            sharelink_id)
+        redirect_name = 'share_redirect'
+        redirect_path = os.path.join(redirect_name, share_id)
+        id_args = 'share_id=%s;' % share_id
         page_title = 'Upload to Shared Directory'
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
@@ -231,11 +240,6 @@ def main(client_id, user_arguments_dict):
         dst_dir = base_dir
     else:
         dst_dir = cache_dir
-        if not makedirs_rec(cache_dir, configuration):
-            output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "Problem creating temporary upload dir"})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = page_title
@@ -253,10 +257,6 @@ def main(client_id, user_arguments_dict):
                                   : '%s using flag: %s' % (op_name,
                                   flag)})
 
-    uploaded = []
-    # Always include a files reply even if empty
-    output_objects.append({'object_type': 'uploadfiles', 'files': uploaded})
-
     logger.info('parsing upload form in %s' % op_name)
 
     # Now parse and validate files to archive
@@ -268,7 +268,8 @@ def main(client_id, user_arguments_dict):
 
     try:
         (upload_files, upload_rejected) = parse_form_upload(
-            user_arguments_dict, user_id, configuration, base_dir, dst_dir)
+            user_arguments_dict, user_id, configuration, base_dir, dst_dir,
+            reject_write)
     except Exception, exc:
         logger.error('error extracting required fields: %s' % exc)
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -284,7 +285,14 @@ def main(client_id, user_arguments_dict):
                 {'object_type': 'uploadfile', 'name': rel_path, 'size': -1,
                  "error": "upload rejected: %s" % err})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    elif action == "status" and not upload_files:
+
+    if not makedirs_rec(cache_dir, configuration):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : "Problem creating temporary upload dir"})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    if action == "status" and not upload_files:
         # Default to entire cache dir
         upload_files = [(os.path.join(upload_tmp_dir, i), '') for i in \
                         os.listdir(cache_dir)]
@@ -388,7 +396,7 @@ def main(client_id, user_arguments_dict):
                                    (chunk_tuple[1:], offset)})
             logger.info('wrote %s chunk at %s' % (real_path, chunk_tuple[1:]))
             file_entry["size"] = os.path.getsize(real_path)
-            file_entry["url"] = os.path.join("/cert_redirect", rel_path)
+            file_entry["url"] = "/%s/%s" % (redirect_path, rel_path)
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % \

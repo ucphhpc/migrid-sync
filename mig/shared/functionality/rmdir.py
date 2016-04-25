@@ -35,6 +35,7 @@ from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import parents, verbose
+from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 
 
@@ -42,7 +43,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'path': REJECT_UNSET, 'current_dir': [''], 'flags': [''],
-                'sharelink_id': [''], 'sharelink_mode': [''],}
+                'share_id': ['']}
     return ['', defaults]
 
 
@@ -73,29 +74,29 @@ def main(client_id, user_arguments_dict):
     flags = ''.join(accepted['flags'])
     patterns = accepted['path']
     current_dir = accepted['current_dir']
-    sharelink_id = accepted['sharelink_id'][-1]
-    sharelink_mode = accepted['sharelink_mode'][-1]
+    share_id = accepted['share_id'][-1]
 
     # Either authenticated user client_id set or sharelink ID
     if client_id:
         user_id = client_id
         target_dir = client_id_dir(client_id)
         base_dir = configuration.user_home
-        id_args = ''
+        id_query = ''
         page_title = 'Remove User Directory'
-    elif sharelink_id and sharelink_mode:
+    elif share_id:
+        (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
-        if sharelink_mode == 'read-only':
-            logger.error('%s called without write acces: %s' % \
+        user_id = 'anonymous user through share ID %s' % share_id
+        # TODO: load and check sharelink pickle (currently requires client_id)
+        if share_mode == 'read-only':
+            logger.error('%s called without write access: %s' % \
                          (op_name, accepted))
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'No write access!'})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
-        user_id = sharelink_id
-        target_dir = os.path.join(sharelink_mode, sharelink_id)
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        target_dir = os.path.join(share_mode, share_id)
         base_dir = configuration.sharelink_home
-        id_args = 'sharelink_mode=%s;sharelink_id=%s;' % (sharelink_mode,
-                                                            sharelink_id)
+        id_query = '?share_id=%s' % share_id
         page_title = 'Remove Shared Directory'
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
@@ -188,7 +189,7 @@ def main(client_id, user_arguments_dict):
                         'text': "removed directory %s" % (relative_path)})
 
     output_objects.append({'object_type': 'link',
-                           'destination': 'ls.py?%s' % id_args,
+                           'destination': 'ls.py%s' % id_query,
                            'text': 'Return to files overview'})
     return (output_objects, status)
 

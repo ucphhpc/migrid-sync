@@ -30,11 +30,54 @@
 import datetime
 import os
 import time
+from random import SystemRandom
+from string import ascii_lowercase, ascii_uppercase, digits
 
 from shared.defaults import sharelinks_filename
 from shared.fileio import makedirs_rec, make_symlink, delete_symlink
 from shared.serial import load, dump
 from shared.useradm import client_id_dir, extract_field
+
+# Let mode chars be aAbBcC ... xX (to make splitting evenly into 3 easy)
+__mode_charset = ''.join(['%s%s' % pair for pair in zip(ascii_lowercase[:-2],
+                                                        ascii_uppercase[:-2])])
+# Let ID chars be aAbBcC ... zZ01..9 (to always yield URL friendly IDs
+__id_charset = ascii_lowercase + ascii_uppercase + digits
+
+# We split mode charset into ro, rw and rw substrings and pick one char at
+# random from the corresponding substring when generating a share ID. In that
+# way we keep the number of combinations high while preserving short IDs and
+# a simple mapping for the apache configuration.
+__mode_len = len(__mode_charset) / 3
+__ro_mode_chars = __mode_charset[:__mode_len]
+__rw_mode_chars = __mode_charset[__mode_len:2 * __mode_len]
+__wo_mode_chars = __mode_charset[2 * __mode_len:]
+mode_chars_map = {'read-only': __ro_mode_chars, 'read-write': __rw_mode_chars,
+                  'write-only': __wo_mode_chars}
+
+def generate_sharelink_id(configuration, share_mode):
+    """We use one random char from the substring matching share_mode and
+    configuration.sharelink_length-1 random chars for the actual ID part. With
+    the default sharelink_length of 10 that gives us ~ 1E18 possible ID
+    strings, which should be enough to avoid collisions and brute force
+    guessing.
+    """
+    share_id = SystemRandom().choice(mode_chars_map[share_mode])
+    share_id += ''.join([SystemRandom().choice(__id_charset) for _ in \
+                         range(configuration.site_sharelink_length-1)])
+    return share_id
+
+def extract_mode_id(configuration, share_id):
+    """Extract mode from first char and return along with ID-only part.
+    Please refer to generate_sharelink_id for details about the fixed format
+    used to encode mode and a unique ID into one compact and URL-friendly
+    string.
+    """
+    # We use [:1] and [1:] slicing to avoid IndexError on empty strings
+    for (mode, mode_chars) in mode_chars_map.items():
+        if share_id[:1] in mode_chars:
+            return (mode, share_id[1:])
+    raise ValueError("Invalid share_id '%s' !" % share_id)
 
 def build_sharelinkitem_object(configuration, share_dict):
     """Build a share link object based on input share_dict"""
@@ -50,9 +93,8 @@ def build_sharelinkitem_object(configuration, share_dict):
     share_id = share_dict['share_id']
     share_item.update(share_dict)
     access = '-'.join((share_item['access'] + ['only'])[:2])
-    id_args = 'sharelink_mode=%s;sharelink_id=%s' % (access, share_id)
-    share_url = "%s/cgi-sid/ls.py?%s" \
-                % (configuration.migserver_https_sid_url, id_args)
+    share_url = "%s/sharelink/%s" % (configuration.migserver_https_sid_url,
+                                     share_id)
     share_item['share_url'] = share_url
     share_item['opensharelink'] = {
         'object_type': 'link',
@@ -143,12 +185,9 @@ def invite_share_link_helper(configuration, client_id, share_dict,
     fill_helper = {'vgrid_label': configuration.site_vgrid_label, 'short_title':
                    configuration.short_title, 'output_format': output_format}
     fill_helper.update(share_dict)
-    fill_helper['mode'] = '-'.join((share_dict['access'] + ['only'])[:2])
-    id_args = 'sharelink_mode=%s;sharelink_id=%s' % (fill_helper['mode'],
-                                                     fill_helper['share_id'])
-    fill_helper['share_url'] = "%s/cgi-sid/ls.py?%s" \
+    fill_helper['share_url'] = "%s/sharelink/%s" \
                                % (configuration.migserver_https_sid_url,
-                                  id_args)
+                                  fill_helper['share_id'])
     fill_helper['name'] = extract_field(client_id, 'full_name')
     fill_helper['email'] = extract_field(client_id, 'email')
     fill_helper['form_append'] = form_append

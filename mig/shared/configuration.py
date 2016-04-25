@@ -1143,6 +1143,10 @@ class Configuration:
                                                            'enable_sharelinks')
         else:
             self.site_enable_sharelinks = False
+        if config.has_option('SITE', 'sharelink_length'):
+            self.site_sharelink_length = config.getint('SITE', 'sharelink_length')
+        else:
+            self.site_sharelink_length = 10
         if config.has_option('SITE', 'enable_transfers'):
             self.site_enable_transfers = config.getboolean('SITE',
                                                            'enable_transfers')

@@ -1202,9 +1202,6 @@ def guess_type(name):
             __type_map[key] = valid_base_url
         for key in ('modauthopenid.referrer', ):
             __type_map[key] = valid_url
-        for key in ('sharelink_mode', ):
-            __type_map[key] = lambda x: x in ['read-write', 'read-only',
-                                              'write-only']
 
         # Image meta data (filemetaio.py)
 

@@ -44,7 +44,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.pwhash import make_hash
 from shared.sharelinks import create_share_link_form, invite_share_link_form, \
-     invite_share_link_message
+     invite_share_link_message, generate_sharelink_id 
 from shared.validstring import valid_user_path
 from shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings
 
@@ -412,12 +412,10 @@ the %s admins (%s) if the problem persists.
             if write_access:
                 access_list.append('write')
 
+            share_mode = '-'.join((access_list + ['only'])[:2])
+
             # TODO: more validity checks here
 
-            # Generate random ID
-            if not share_id:
-                share_id = hexlify(open('/dev/urandom').read(32))
-                
             if share_dict:
                 desc = "update"
             else:
@@ -429,12 +427,24 @@ the %s admins (%s) if the problem persists.
             else:
                 password_hash = ''
             share_dict.update(
-                {'share_id': share_id, 'path': path, 'access':
-                 access_list, 'expire': expire, 'password_hash': password_hash,
-                 'invites': invite_list})
-            (save_status, _) = create_share_link(share_dict, client_id,
-                                                 configuration,
-                                                 share_map)
+                {'path': path, 'access': access_list, 'expire': expire,
+                 'password_hash': password_hash, 'invites': invite_list})
+            if not share_id:
+                # Make share with random ID and retry a few times on collision
+                for i in range(3):
+                    share_id = generate_sharelink_id(configuration, share_mode)
+                    share_dict['share_id']  = share_id
+                    (save_status, save_msg) = create_share_link(share_dict,
+                                                                client_id,
+                                                                configuration,
+                                                                share_map)
+                    if save_status:
+                        logger.info('created sharelink: %s' % share_dict)
+                        break
+                    else:
+                        # ID Collision?
+                        logger.warning('could not create sharelink: %s' % \
+                                       save_msg)
         else:
             output_objects.append(
                 {'object_type': 'error_text', 'text'
@@ -472,6 +482,8 @@ the %s admins (%s) if the problem persists.
             output_objects.append({'object_type': 'sharelinks', 'sharelinks'
                                   : sharelinks})
             if action == 'create':
+                # NOTE: Leave editsharelink here for use in fileman overlay
+                #del share_item['editsharelink']
                 output_objects.append({'object_type': 'html_form', 'text':
                                        '<br />'})
                 submit_button = '''<span>

@@ -298,8 +298,7 @@ def confirm_html(configuration, rows=4, cols=40):
     ''' % (cols, rows)
     return html
 
-def fancy_upload_js(configuration, callback=None,
-                    sharelink_id='', sharelink_mode=''):
+def fancy_upload_js(configuration, callback=None, share_id=''):
     """Build standard fancy upload dependency imports, init and ready
     snippets.
     """
@@ -401,14 +400,17 @@ def fancy_upload_js(configuration, callback=None,
 </script>
     '''
     add_init = '''
+    /* Default fancy upload dest - optionally override before open_dialog call */
+    var remote_path = ".";
+    function setUploadDest(path) {
+        remote_path = path;
+    }
     function openFancyUpload() {
         var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
-        var remote_path = ".";
-        open_dialog("Upload Files", %(callback)s, remote_path, false,
-                    "%(sharelink_id)s", "%(sharelink_mode)s");
+        open_dialog("Upload Files", %(callback)s, remote_path, false, 
+                    "%(share_id)s");
     }
-    ''' % {"callback": callback, "sharelink_id": sharelink_id,
-           "sharelink_mode": sharelink_mode}
+    ''' % {"callback": callback, "share_id": share_id}
     add_ready = ''
     return (add_import, add_init, add_ready)
 

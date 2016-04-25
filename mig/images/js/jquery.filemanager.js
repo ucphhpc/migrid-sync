@@ -2447,15 +2447,14 @@ var status_url = base_url+"status";
 var delete_url = base_url+"delete";
 var move_url = base_url+"move";
 
-$.fn.delete_upload = function(name, dest_dir, sharelink_id, sharelink_mode) {
-    console.debug("delete upload: "+name+" "+dest_dir+" "+sharelink_id);
+$.fn.delete_upload = function(name, dest_dir, share_id_mode) {
+    console.debug("delete upload: "+name+" "+dest_dir+" "+share_id);
     var deleted = false;
     $.ajax({
         url: delete_url,
         dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
-               "current_dir": dest_dir, "sharelink_id": sharelink_id, 
-               "sharelink_mode": sharelink_mode},
+               "current_dir": dest_dir, "share_id": share_id},
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
@@ -2490,15 +2489,14 @@ $.fn.delete_upload = function(name, dest_dir, sharelink_id, sharelink_mode) {
     return deleted;
 };
 
-$.fn.move_upload = function(name, dest_dir, sharelink_id, sharelink_mode) {
-    console.debug("move upload: "+name+" "+dest_dir+" "+sharelink_id);
+$.fn.move_upload = function(name, dest_dir, share_id) {
+    console.debug("move upload: "+name+" "+dest_dir+" "+share_id);
     var moved = false;
     $.ajax({
         url: move_url,
         dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
-               "current_dir": dest_dir, "sharelink_id": sharelink_id, 
-               "sharelink_mode": sharelink_mode},
+               "current_dir": dest_dir, "share_id": share_id},
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
@@ -2637,9 +2635,9 @@ function mig_fancyuploadchunked_init(name, callback) {
         return data;
     }
 
-    var do_d = function(text, action, dest_dir, automatic_dest, sharelink_id, sharelink_mode) {
+    var do_d = function(text, action, dest_dir, automatic_dest, share_id) {
 
-        console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir+", "+sharelink_id);
+        console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir+", "+share_id);
 
         // save and restore original callback
         var c = callback;
@@ -2676,9 +2674,9 @@ function mig_fancyuploadchunked_init(name, callback) {
         $("#fancyfileupload").fancyfileupload({
             // Uncomment the following to send cross-domain cookies:
             //xhrFields: {withCredentials: true},
-            url: upload_url+";sharelink_id="+sharelink_id+";sharelink_mode="+sharelink_mode,
+            url: upload_url+";share_id="+share_id,
             // TODO: can we somehow move to data like this?
-            //data: {"sharelink_id": sharelink_id, "sharelink_mode": sharelink_mode},
+            //data: {"share_id": share_id},
             dataType: "json",
             maxChunkSize: 32000000, // 32 MB
             filesContainer: ".uploadfileslist",
@@ -2727,7 +2725,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         // Continue to next if move was not requested
                         return true;
                     }
-                    if ($.fn.move_upload(file.name, file.moveDest, sharelink_id, sharelink_mode)) {
+                    if ($.fn.move_upload(file.name, file.moveDest, share_id)) {
                         console.debug("fix path and strip move info: " + file.name);
                         var purename = file.name.substring(file.name.lastIndexOf("/") + 1);
                         var baseurl = file.url.substring(0, file.url.length - file.name.length);
@@ -2776,7 +2774,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         console.debug("cancelled file: "+file.name);
                     }
                     console.debug("call clean up file: "+file.name);
-                    $.fn.delete_upload(file.name, sharelink_id, sharelink_mode);
+                    $.fn.delete_upload(file.name, share_id);
                 });
                 var that = this;
                 try {
@@ -2790,11 +2788,11 @@ function mig_fancyuploadchunked_init(name, callback) {
 
         // Upload server status check for browsers with CORS support:
         showWaitInfo("checking server availability");
-        console.debug("check with "+sharelink_id);
+        console.debug("check with "+share_id);
         if ($.support.cors) {
             $.ajax({
                 url: status_url,
-                data: {"sharelink_id": sharelink_id, "sharelink_mode": sharelink_mode},
+                data: {"share_id": share_id},
                 dataType: "json",
                 type: "POST"
             }).fail(function () {
@@ -2818,7 +2816,7 @@ function mig_fancyuploadchunked_init(name, callback) {
             // Uncomment the following to send cross-domain cookies:
             //xhrFields: {withCredentials: true},
             url: status_url,
-            data: {"sharelink_id": sharelink_id, "sharelink_mode": sharelink_mode},
+            data: {"share_id": share_id},
             dataType: "json",
             type: "POST",
             context: $("#fancyfileupload")[0]

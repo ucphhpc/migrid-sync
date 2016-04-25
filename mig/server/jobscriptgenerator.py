@@ -177,6 +177,9 @@ def create_job_script(
     """
 
     job_dict = {'': ''}
+    # TODO: hexlify is an awfully space wasting URL-safe encoding.
+    #       We should just use something like the proposed secure method from
+    #       http://stackoverflow.com/a/23728630/2213647
     sessionid = hexlify(open('/dev/urandom').read(32))
     iosessionid = hexlify(open('/dev/urandom').read(32))
     helper_dict_filename = os.path.join(configuration.resource_home,
