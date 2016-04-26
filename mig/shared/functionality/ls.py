@@ -50,7 +50,8 @@ from shared.validstring import valid_user_path
 
 def signature():
     """Signature of the main function"""
-    defaults = {'flags': [''], 'path': ['.'], 'share_id': ['']}
+    defaults = {'flags': [''], 'path': ['.'], 'share_id': [''],
+                'current_dir': ['.']}
     return ['dir_listings', defaults]
 
 def select_all_javascript():
@@ -180,6 +181,7 @@ def handle_file(
         'name': filename,
         'rel_path': file_with_dir,
         'rel_path_enc': quote(file_with_dir),
+        'rel_dir_enc': quote(os.path.dirname(file_with_dir)),
         # NOTE: file_with_dir is kept for backwards compliance
         'file_with_dir': file_with_dir,
         'flags': flags,
@@ -232,6 +234,7 @@ def handle_dir(
         'name': dirname,
         'rel_path': dirname_with_dir,
         'rel_path_enc': quote(dirname_with_dir),
+        'rel_dir_enc': quote(dirname_with_dir),
         # NOTE: dirname_with_dir is kept for backwards compliance
         'dirname_with_dir': dirname_with_dir,
         'flags': flags,
@@ -365,6 +368,7 @@ def main(client_id, user_arguments_dict):
 
     flags = ''.join(accepted['flags'])
     pattern_list = accepted['path']
+    current_dir = accepted['current_dir'][-1].lstrip('/')
     share_id = accepted['share_id'][-1]
 
     status = returnvalues.OK
@@ -380,9 +384,12 @@ def main(client_id, user_arguments_dict):
         settings_dict = load_settings(client_id, configuration)
         id_args = ''
         root_link_name = 'USER HOME'
-        main_id="user_ls"
+        main_id = "user_ls"
         page_title = 'User Files'
-        visibility_toggle = ''
+        visibility_mods = '''
+            #%(main_id)s .disable_read { display: none; }
+            #%(main_id)s .disable_write { display: none; }
+            '''
     elif share_id:
         (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
@@ -394,31 +401,25 @@ def main(client_id, user_arguments_dict):
         settings_dict = {}
         id_args = 'share_id=%s;' % share_id
         root_link_name = '%s' % share_id
-        main_id="sharelink_ls"
+        main_id = "sharelink_ls"
         page_title = 'Shared Files'
-        visibility_toggle = '''
-        <style>
-        '''
         if share_mode == 'read-only':
             write_mode = False
-            visibility_toggle += '''
-            #sharelink_ls .enable_write { display: none; }
-            #sharelink_ls .disable_read { display: none; }
+            visibility_mods = '''
+            #%(main_id)s .enable_write { display: none; }
+            #%(main_id)s .disable_read { display: none; }
             '''
         elif share_mode == 'write-only':
             read_mode = False
-            visibility_toggle += '''
-            #sharelink_ls .enable_read { display: none; }
-            #sharelink_ls .disable_write { display: none; }
+            visibility_mods = '''
+            #%(main_id)s .enable_read { display: none; }
+            #%(main_id)s .disable_write { display: none; }
             '''
         else:
-            visibility_toggle += '''
-            #sharelink_ls .disable_read { display: none; }
-            #sharelink_ls .disable_write { display: none; }
+            visibility_mods = '''
+            #%(main_id)s .disable_read { display: none; }
+            #%(main_id)s .disable_write { display: none; }
             '''
-        visibility_toggle += '''
-        </style>
-        '''        
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
         output_objects.append({'object_type': 'error_text', 'text'
@@ -426,6 +427,11 @@ def main(client_id, user_arguments_dict):
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
         
+    visibility_toggle = '''
+        <style>
+        %s
+        </style>
+        ''' % (visibility_mods % {'main_id': main_id})
     
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -475,7 +481,8 @@ def main(client_id, user_arguments_dict):
                            'text': confirm_html(configuration)})
 
     # Shared URL helpers 
-    ls_url_template = 'ls.py?%spath=%%(rel_path_enc)s;flags=%s' % (id_args, flags)
+    ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s;flags=%s' % \
+                      (id_args, flags)
     rm_url_template = 'rm.py?%spath=%%(rel_path_enc)s' % id_args
     rmdir_url_template ='rm.py?%spath=%%(rel_path_enc)s;flags=r' % id_args
     editor_url_template = 'editor.py?%spath=%%(rel_path_enc)s' % id_args
@@ -492,19 +499,20 @@ Working directory:
 """
     output_objects.append({'object_type': 'html_form', 'text'
                           : location_pre_html})
-    for pattern in pattern_list:
+    # Use current_dir nav location links
+    for pattern in pattern_list[:1]:
         links = []
         links.append({'object_type': 'link', 'text': root_link_name,
-                      'destination': ls_url_template % {'rel_path_enc': '.'}})
+                      'destination': ls_url_template % {'rel_dir_enc': '.'}})
         prefix = ''
-        parts = pattern.split(os.sep)
+        parts = os.path.normpath(current_dir).split(os.sep)
         for i in parts:
             if i == ".":
                 continue
             prefix = os.path.join(prefix, i)
             links.append({'object_type': 'link', 'text': i,
                          'destination': ls_url_template % \
-                          {'rel_path_enc': quote(prefix)}})
+                          {'rel_dir_enc': quote(prefix)}})
         output_objects.append({'object_type': 'multilinkline', 'links'
                               : links, 'sep': ' %s ' % os.sep})
     location_post_html = """
@@ -571,7 +579,8 @@ Action on paths selected below
         # leaking information about file system layout while allowing
         # consistent error messages
 
-        unfiltered_match = glob.glob(base_dir + pattern)
+        current_path = os.path.normpath(os.path.join(base_dir, current_dir))
+        unfiltered_match = glob.glob(current_path + os.sep + pattern)
         match = []
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
@@ -608,22 +617,13 @@ Action on paths selected below
                       real_path, flags, 0)
             dir_listings.append(dir_listing)
 
-    if first_match:
-        # use first match for current directory
-        # Note that base_dir contains an ending slash
-
-        if os.path.isdir(first_match):
-            dir_path = first_match
-        else:
-            dir_path = os.path.dirname(first_match)
-
-        if dir_path + os.sep == base_dir:
-            relative_dir = '.'
-        else:
-            relative_dir = dir_path.replace(base_dir, '')
-    else:
-        relative_dir = '.'
-
+    fill_helper = {'dest_dir': current_dir + os.sep, 'share_id': share_id,
+                   'flags': flags, 'tmp_flags': flags, 'long_set':
+                   long_list(flags), 'recursive_set': recursive(flags),
+                   'all_set': all(flags), 'fancy_open': open_button_id,
+                   'fancy_dialog': fancy_upload_html(configuration, id_args)
+                   }
+        
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
     <div class='files disable_read'>
@@ -638,54 +638,52 @@ Action on paths selected below
     <tr class=title><td class=centertext>
     Filter paths (wildcards like * and ? are allowed)
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />
-    <input type='hidden' name='share_id' value='%s' />
-    <input type='text' name='path' value='%s' />
+    <input type='hidden' name='flags' value='%(flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    <input type='text' name='path' value='' />
     <input type='submit' value='Filter' />
     </td></tr>
     </table>    
     </form>
     </div>
-    """ % (flags, share_id, relative_dir)})
+    """ % fill_helper})
 
     # Short/long format buttons
 
-    htmlform = \
-        """<table class='files if_full'>
+    fill_helper['tmp_flags'] = flags + 'l'
+    htmlform = """
+    <table class='files if_full'>
     <tr class=title><td class=centertext colspan=4>
     File view options
     </td></tr>
     <tr><td colspan=4><br /></td></tr>
     <tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
     <tr><td>Long format</td><td>
-    %s</td><td>"""\
-         % long_list(flags)\
-         + """
+    %(long_set)s</td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />
-    <input type='hidden' name='share_id' value='%s' />
-    """ % (flags + 'l', share_id)
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
 
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"\
-             % entry
-    htmlform += \
-        """
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
+    fill_helper['tmp_flags'] = flags.replace('l', '')
+    htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />
-    <input type='hidden' name='share_id' value='%s' />
-    """ % (flags.replace('l', ''), share_id)
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"\
-             % entry
-
-    htmlform += \
-        """
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
+    htmlform += """
     <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
@@ -693,80 +691,76 @@ Action on paths selected below
 
     # Recursive output
 
-    htmlform += \
-             """
+    fill_helper['tmp_flags'] = flags + 'r'
+    htmlform += """
     <!-- Non-/recursive list buttons -->
     <tr><td>Recursion</td><td>
-    %s</td><td>""" % recursive(flags)
-    htmlform += \
-             """
+    %(recursive_set)s</td><td>""" % fill_helper
+    htmlform += """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />
-    <input type='hidden' name='share_id' value='%s' />
-    """ % ((flags + 'r'), share_id)
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
     for entry in pattern_list:
-        htmlform += " <input type='hidden' name='path' value='%s' />"\
-                    % entry
-    htmlform += \
-             """
+        htmlform += "<input type='hidden' name='path' value='%s' />"% entry
+    fill_helper['tmp_flags'] = flags.replace('r', '')
+    htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />
-    <input type='hidden' name='share_id' value='%s' />
-    """ % (flags.replace('r', ''), share_id)
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
                                   
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
                     % entry
-        htmlform += \
-                 """
+        htmlform += """
     <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
     """
 
-    htmlform += \
-        """
+    htmlform += """
     <!-- Show dot files buttons -->
     <tr><td>Show hidden files</td><td>
-    %s</td><td>"""\
-         % all(flags)
-    htmlform += \
-        """
+    %(all_set)s</td><td>""" % fill_helper
+    fill_helper['tmp_flags'] = flags + 'a'
+    htmlform += """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />
-    <input type='hidden' name='share_id' value='%s' />
-    """ % (flags + 'a', share_id)
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"\
-             % entry
-    htmlform += \
-        """
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
+    fill_helper['tmp_flags'] = flags.replace('a', '')
+    htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />
-    <input type='hidden' name='share_id' value='%s' />
-    """ % (flags.replace('a', ''), share_id)
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"\
-             % entry
-    htmlform += \
-        """
+        htmlform += "<input type='hidden' name='path' value='%s' />"% entry
+    htmlform += """
     <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
     </table>
     """
 
-    # show flag buttons after contents to avoid
+    # show flag buttons after contents to limit clutter
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : htmlform})
@@ -811,8 +805,8 @@ Name of new directory to be created in current directory (%(dest_dir)s)
 </td><td class=righttext colspan=3>
 <form action='mkdir.py' method=post>
 <input type='hidden' name='share_id' value='%(share_id)s' />
-<input name='path' size=50 />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+<input name='path' size=50 />
 <input type='submit' value='Create' name='mkdirbutton' />
 </form>
 </td></tr>
@@ -863,9 +857,5 @@ Upload files efficiently (using chunking).
 <script type='text/javascript' >
     setUploadDest('%(dest_dir)s');
 </script>
-    """ % {'dest_dir': relative_dir + os.sep, 'share_id': share_id,
-           'fancy_dialog': fancy_upload_html(configuration, id_args),
-           'fancy_open': open_button_id
-           }})
-
+    """ % fill_helper})
     return (output_objects, status)
