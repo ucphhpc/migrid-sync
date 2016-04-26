@@ -735,11 +735,16 @@ def in_vgrid_share(configuration, path):
     sub-vgrid it is inside if so.
     """
     vgrid_path = None
-    base = configuration.vgrid_files_home
+    vgrid_files_home = configuration.vgrid_files_home
+    vgrid_home = configuration.vgrid_home
     real_path = os.path.realpath(path)
-    configuration.logger.debug("in_vgrid_share %s vs %s" % (real_path, base))
-    if real_path.startswith(base):
-        vgrid_path = real_path.replace(base, '').lstrip(os.sep)
-        while vgrid_path and not os.path.isdir(os.path.join(base, vgrid_path)):
+    configuration.logger.debug("in_vgrid_share %s vs %s" % (real_path,
+                                                            vgrid_files_home))
+    if real_path.startswith(vgrid_files_home):
+        vgrid_path = real_path.replace(vgrid_files_home, '').lstrip(os.sep)
+        while vgrid_path != os.sep:
+            if os.path.isdir(os.path.join(vgrid_home, vgrid_path)):
+                configuration.logger.debug("in_vgrid_share found %s" % vgrid_path)
+                break
             vgrid_path = os.path.dirname(vgrid_path)
     return vgrid_path

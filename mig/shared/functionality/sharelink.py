@@ -379,6 +379,11 @@ cannot be shared with write access - please share a directory with the file in
 it or only share with read access.
                      '''})
                 return (output_objects, returnvalues.CLIENT_ERROR)
+
+            #  We check if path is in vgrid share, but do not worry about
+            # private_base or public_base since they are only availabe to
+            # owners, who can always share anyway.
+
             vgrid_name = in_vgrid_share(configuration, abs_path)
             if vgrid_name is not None and \
                    not vgrid_is_owner(vgrid_name, client_id, configuration):
