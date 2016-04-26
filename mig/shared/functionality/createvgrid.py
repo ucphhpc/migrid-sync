@@ -34,7 +34,8 @@ from tempfile import NamedTemporaryFile
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, generate_https_urls
-from shared.defaults import default_vgrid, all_vgrids, any_vgrid
+from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
+     keyword_owners
 from shared.fileio import write_file, make_symlink, delete_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -44,7 +45,8 @@ from shared.safeeval import subprocess_call, subprocess_popen, \
 from shared.useradm import distinguished_name_to_user, get_full_user_map
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
-     vgrid_set_resources, vgrid_set_triggers, vgrid_create_allowed
+     vgrid_set_resources, vgrid_set_triggers, vgrid_set_settings, \
+     vgrid_create_allowed
 
 
 def signature():
@@ -995,6 +997,27 @@ for job input and output.
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not save trigger list: %s' % \
                                trigger_msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # create default pickled settings list
+
+    default_settings = {'vgrid_name': vgrid_name, 
+                        'description': '',
+                        'visible_owners': keyword_owners,
+                        'visible_members': keyword_owners,
+                        'visible_resources': keyword_owners,
+                        'create_sharelink': keyword_owners,
+                        'request_recipients': 42,
+                        'read_only': False,
+                        'hidden': False,
+                        }.items()
+    (settings_status, settings_msg) = vgrid_set_settings(configuration,
+                                                         vgrid_name,
+                                                         default_settings)
+    if not settings_status:
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Could not save settings list: %s' % \
+                               settings_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if new_base_vgrid:
