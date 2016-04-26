@@ -262,6 +262,14 @@ comma-separated recipients.
         return (output_objects, returnvalues.OK)
     elif action in post_actions:
         share_dict = share_map.get(share_id, {})
+        if not share_dict and action != 'create':
+            logger.warning('%s tried to %s missing or not owned link %s!' % \
+                               (client_id, action, share_id))
+            output_objects.append(
+                {'object_type': 'error_text',
+                 'text': '%s requires existing share link' % action})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
         share_path = share_dict.get('path', path)
 
         # Please note that base_dir must end in slash to avoid access to other
@@ -274,11 +282,6 @@ comma-separated recipients.
 
         if action == 'delete':
             header_entry['text'] = 'Delete Share Link'
-            if not share_dict:
-                output_objects.append(
-                    {'object_type': 'error_text',
-                     'text': 'existing share link is required for delete'})
-                return (output_objects, returnvalues.CLIENT_ERROR)
             (save_status, _) = delete_share_link(share_id, client_id,
                                                  configuration,
                                                  share_map)
@@ -363,7 +366,7 @@ comma-separated recipients.
                 return (output_objects, returnvalues.CLIENT_ERROR)
             elif not valid_user_path(abs_path, base_dir, True):
                 logger.warning('%s tried to %s restricted path %s ! (%s)' % \
-                               (client_id, op_name, abs_path, path))
+                               (client_id, action, abs_path, path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text'
                      : 'Illegal path "%s": you can only share your own data!'
