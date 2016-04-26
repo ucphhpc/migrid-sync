@@ -438,6 +438,13 @@ def main(client_id, user_arguments_dict):
 
     base_dir = os.path.abspath(os.path.join(base_dir, target_dir)) + os.sep
 
+    if not os.path.isdir(base_dir):
+        logger.error('%s called on missing base_dir: %s' % (op_name, base_dir))
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'No such %s!' % page_title.lower()
+                              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = page_title
 
@@ -488,8 +495,7 @@ def main(client_id, user_arguments_dict):
     editor_url_template = 'editor.py?%spath=%%(rel_path_enc)s' % id_args
     redirect_url_template = '/%s/%%(rel_path_enc)s' % redirect_path
 
-    location_pre_html = \
-        """
+    location_pre_html = """
 <div class='files'>
 <table class='files'>
 <tr class=title><td class=centertext>
@@ -524,8 +530,8 @@ Working directory:
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : location_post_html})
-    more_html = \
-              """
+
+    more_html = """
 <div class='files if_full'>
 <form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
 <table class='files'>
