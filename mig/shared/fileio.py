@@ -336,12 +336,15 @@ def listdirs_rec(dir_path, topdown=True, onerror=None, followlinks=False):
             yield dirpath
 
 
-def makedirs_rec(dir_path, configuration):
-    """Make sure dir_path is created if it doesn't already exist"""
+def makedirs_rec(dir_path, configuration, accept_existing=True):
+    """Make sure dir_path is created if it doesn't already exist. The optional
+    accept_existing argument can be used to turn off the default behaviour of
+    ignoring if dir_path alrady exists.
+    """
     try:
         os.makedirs(dir_path)
     except OSError, err:
-        if err.errno != errno.EEXIST:
+        if not accept_existing or err.errno != errno.EEXIST:
             configuration.logger.error("Could not makedirs_rec %s: %s" % \
                                        (dir_path, err))
             return False

@@ -1234,11 +1234,17 @@ if (jQuery) (function($){
                 window.open('sharelink.py');
             },
             sharelink: function(action, el, pos) {
-                $("#sharelink_form input[name='path']").val($(el).attr(pathAttribute));
+                var target = $(el).attr(pathAttribute);
+                $("#sharelink_form input[name='path']").val(target);
                 $("#sharelink_form input[name='read_access']").prop('checked', true);
                 $("#sharelink_form input[name='write_access']").prop('checked', false);
+                // Disable write here for files
+                if (target.lastIndexOf("/") == (target.length-1)) {
+                    $("#sharelink_form input[name='write_access']").prop('disabled', false);
+                } else {
+                    $("#sharelink_form input[name='write_access']").prop('disabled', true);
+                }
                 $("#sharelink_form input[name='expire']").val('');
-                $("#sharelink_form input[name='password']").val('');
                 $("#sharelink_dialog").dialog({
                     buttons: {
                         Ok: function() {
@@ -1247,14 +1253,12 @@ if (jQuery) (function($){
                             var read_access = $("#sharelink_form input[name='read_access']").prop('checked');
                             var write_access = $("#sharelink_form input[name='write_access']").prop('checked');
                             var expire = $("#sharelink_form input[name='expire']").val();
-                            var password = $("#sharelink_form input[name='password']").val();
                             $(this).dialog('close');
                             jsonWrapper(el, '#cmd_dialog', 'sharelink.py', {action: 'create',
                                                                             path: path,
                                                                             read_access: read_access,
                                                                             write_access: write_access,
                                                                             expire: expire,
-                                                                            password: password
                                                                           });
                         },
                         Cancel: function() {
@@ -1805,9 +1809,8 @@ if (jQuery) (function($){
                     /* TODO: add list archive contents */
                     //"listpack": {name: "Show Packed Contents", icon: "listpack"},
                     "sep3": "---------",
-                    //TODO: support share link for single files and enable?
-                    //"sharelink": {name: "Share Link", icon: "sharelink"},
-                    //"sharelink-sep": "---------",
+                    "sharelink": {name: "Share Link", icon: "sharelink"},
+                    "sharelink-sep": "---------",
                     "submit": {name: "Submit", icon: "submit"},
                     "submit-sep": "---------",
                     "advanced-sub": {

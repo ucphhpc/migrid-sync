@@ -393,6 +393,7 @@ def main(client_id, user_arguments_dict):
     elif share_id:
         (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
+        # then include shared by %(owner)s on page header
         user_id = 'anonymous user through share ID %s' % share_id
         target_dir = os.path.join(share_mode, share_id)
         base_dir = configuration.sharelink_home

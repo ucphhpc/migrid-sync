@@ -89,12 +89,19 @@ def build_sharelinkitem_object(configuration, share_dict):
         'object_type': 'sharelink',
         'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
                                                         created_asctime),
+        # Legacy: make sure single_file is always set
+        'single_file': False,
         }
     share_id = share_dict['share_id']
     share_item.update(share_dict)
     access = '-'.join((share_item['access'] + ['only'])[:2])
-    share_url = "%s/sharelink/%s" % (configuration.migserver_https_sid_url,
-                                     share_id)
+    if share_item['single_file']:
+        share_url = "%s/share_redirect/%s" \
+                    % (configuration.migserver_https_sid_url,
+                       share_id)
+    else:
+        share_url = "%s/sharelink/%s" % (configuration.migserver_https_sid_url,
+                                         share_id)
     share_item['share_url'] = share_url
     share_item['opensharelink'] = {
         'object_type': 'link',
@@ -120,12 +127,20 @@ def create_share_link_form(configuration, client_id, output_format, form_append=
     <fieldset>
         <input type="hidden" name="output_format" value="%(output_format)s" />
         <input type="hidden" name="action" value="create" />
-        <h4>Create Share Link</h4>
         <p>
         You can explicitly share files and directories with anyone using
         <em>share links</em>. That is especially useful when sharing data with
-        people who do not have an account here, i.e. when basic %(vgrid_label)s
-        sharing is impossible.</p>
+        people who do not have an account here, so that basic %(vgrid_label)s
+        sharing is impossible.<br/>
+        Individual files can only be shared read-only, but folders can
+        additionally be shared with read-write or write-only access to allow
+        recipients of the share link to write and upload in the share.
+        </p>
+        <p class="warningtext">
+        Please be careful about giving write access to anyone you do not fully
+        trust, and note that you can always delete share links again later to
+        limit the risks of abuse.
+        </p>
         <table>
         <tr><td colspan=2>
         <label for="path">File/folder to share:</label>
@@ -145,29 +160,11 @@ def create_share_link_form(configuration, client_id, output_format, form_append=
         <br/>
         </td></tr>
         <tr class="hidden"><td colspan=2>
-        Optionally set expire time and password or leave empty for none.
+        Optionally set expire time or leave empty for none.
         </td></tr>
         <tr class="hidden"><td colspan=2>
         <label for="expire">Expire:</label>
         <input id="extexpire" class="singlefield" type="text" name="expire" size=40  value="" />
-        </td></tr>
-        <tr class="hidden"><td colspan=2>
-        <label for="password">Password:</label>
-        <input id="extpassword" class="singlefield" type="password"
-            name="password" size=40  value="" />
-        </td></tr>
-        <tr class="hidden"><td colspan=2>
-        Optionally provide one or more recipients of the share link and a
-        message to also invite someone to use the share. Just leave empty if
-        you prefer to manually send out the share link by other means.
-        </td></tr>
-        <tr class="hidden"><td colspan=2>
-        <label for="invite">Recipient(s):</label>
-        <input id="extinvite" class="singlefield" type="text" name="invite" size=40  value="" />
-        </td></tr>
-        <tr class="hidden"><td colspan=2>
-        <label for="msg">Message:</label>
-        <textarea id="extmsg" class="singlefield" name="msg" rows=4></textarea>
         </td></tr>
         <tr><td colspan=2>
         %(form_append)s
@@ -183,11 +180,19 @@ def invite_share_link_helper(configuration, client_id, share_dict,
                              output_format, form_append=''):
     """Build share link invitation helper dict to fill strings"""
     fill_helper = {'vgrid_label': configuration.site_vgrid_label, 'short_title':
-                   configuration.short_title, 'output_format': output_format}
+                   configuration.short_title, 'output_format': output_format,
+                   # Legacy: make sure single_file is always set
+                   'single_file': False,
+                   }
     fill_helper.update(share_dict)
-    fill_helper['share_url'] = "%s/sharelink/%s" \
-                               % (configuration.migserver_https_sid_url,
-                                  fill_helper['share_id'])
+    if fill_helper['single_file']:
+        fill_helper['share_url'] = "%s/share_redirect/%s" \
+                                   % (configuration.migserver_https_sid_url,
+                                      fill_helper['share_id'])
+    else:
+        fill_helper['share_url'] = "%s/sharelink/%s" \
+                                   % (configuration.migserver_https_sid_url,
+                                      fill_helper['share_id'])
     fill_helper['name'] = extract_field(client_id, 'full_name')
     fill_helper['email'] = extract_field(client_id, 'email')
     fill_helper['form_append'] = form_append

@@ -59,7 +59,7 @@ def signature():
 
     defaults = {'action': ['show'], 'share_id': [''], 'path': [''],
                 'read_access':[''], 'write_access':[''], 'expire': [''],
-                'password':[''], 'invite': [''], 'msg': ['']}
+                'invite': [''], 'msg': ['']}
     return ['text', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -86,7 +86,6 @@ def main(client_id, user_arguments_dict):
     read_access = accepted['read_access'][-1].lower() in enabled_strings
     write_access = accepted['write_access'][-1].lower() in enabled_strings
     expire = accepted['expire'][-1]
-    password = accepted['password'][-1]
     # Merge and split invite to make sure 'a@b, c@d' entries are handled
     invite_list = ','.join(accepted['invite']).split(',')
     invite_list = [i for i in invite_list if i]
@@ -279,6 +278,7 @@ comma-separated recipients.
                                                 client_dir)) + os.sep
         
         abs_path = os.path.join(base_dir, path.lstrip(os.sep))
+        single_file = os.path.isfile(abs_path)
 
         if action == 'delete':
             header_entry['text'] = 'Delete Share Link'
@@ -348,12 +348,6 @@ comma-separated recipients.
                                            })
             if expire:
                 share_dict['expire'] = expire
-            if password:
-                # Only store password hash on disk
-                password_hash = make_hash(password)
-                share_dict['password_hash'] = password_hash
-            else:
-                password_hash = share_dict.get("password_hash", "")
             (save_status, _) = update_share_link(share_dict, client_id,
                                                  configuration, share_map)
             desc = "update"
@@ -377,6 +371,13 @@ comma-separated recipients.
                 output_objects.append(
                     {'object_type': 'error_text', 'text'
                      : 'Provided path "%s" does not exist!' % path})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+            elif single_file and write_access:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': '''Individual files
+cannot be shared with write access - please share a directory with the file in
+it or only share with read access.
+                     '''})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             vgrid_name = in_vgrid_share(configuration, abs_path)
             if vgrid_name is not None and \
@@ -419,14 +420,9 @@ comma-separated recipients.
             else:
                 desc = "create"
 
-            if password:
-                # Only store password hash on disk
-                password_hash = make_hash(password)
-            else:
-                password_hash = ''
             share_dict.update(
                 {'path': path, 'access': access_list, 'expire': expire,
-                 'password_hash': password_hash, 'invites': invite_list})
+                 'invites': invite_list, 'single_file': single_file})
             if not share_id:
                 # Make share with random ID and retry a few times on collision
                 for i in range(3):
