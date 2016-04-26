@@ -385,13 +385,8 @@ comma-separated recipients.
                                                               recursive=False,
                                                               as_dict=True)
                 if not load_status:
-                    output_objects.append(
-                        {'object_type': 'error_text', 'text': '''
-Failed to look up vgrid sharelink restrictions. Please report this issue to
-the %s admins (%s) if the problem persists.
-''' % (configuration.site_vgrid_label, configuration.admin_email)
-                         })
-                    return (output_objects, returnvalues.SYSTEM_ERROR)
+                    # Probably owners just never saved settings, use defaults
+                    settings_dict = {'vgrid_name': vgrid_name}
                 allowed = settings_dict.get('create_sharelink', keyword_owners)
                 if allowed != keyword_members:
                      output_objects.append(
