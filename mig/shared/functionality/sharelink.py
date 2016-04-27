@@ -410,9 +410,12 @@ it or only share with read access.
                 allowed = settings_dict.get('create_sharelink', keyword_owners)
                 if allowed != keyword_members:
                      output_objects.append(
-                         {'object_type': 'error_text', 'text'
-                          : 'You are not allowed to re-share %s %s shares!' % \
-                          (vgrid_name, configuration.site_vgrid_label)})
+                         {'object_type': 'error_text', 'text': '''The settings
+for the %(vgrid_name)s %(vgrid_label)s do not permit you to re-share
+%(vgrid_label)s shared folders. Please contact the %(vgrid_name)s owners if you
+think you should be allowed to do that.
+''' % {'vgrid_name': vgrid_name, 'vgrid_label': configuration.site_vgrid_label}
+                          })
                      return (output_objects, returnvalues.CLIENT_ERROR)
 
             if not read_access and not write_access:
