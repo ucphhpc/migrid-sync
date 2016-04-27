@@ -82,7 +82,7 @@ def main(client_id, user_arguments_dict):
 
     action = accepted['action'][-1]
     share_id = accepted['share_id'][-1]
-    path = os.path.normpath(accepted['path'][-1])
+    path = accepted['path'][-1]
     read_access = accepted['read_access'][-1].lower() in enabled_strings
     write_access = accepted['write_access'][-1].lower() in enabled_strings
     expire = accepted['expire'][-1]
@@ -277,8 +277,11 @@ comma-separated recipients.
         base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                                 client_dir)) + os.sep
         
-        abs_path = os.path.join(base_dir, path.lstrip(os.sep))
-        single_file = os.path.isfile(abs_path)
+        # Build absolute path without normalizing or anything yet
+        rel_path = path.lstrip(os.sep)
+        abs_path = os.path.join(base_dir, rel_path)
+        real_path = os.path.realpath(abs_path)
+        single_file = os.path.isfile(real_path)
 
         if action == 'delete':
             header_entry['text'] = 'Delete Share Link'
@@ -353,24 +356,32 @@ comma-separated recipients.
             desc = "update"
         elif action == "create":
             header_entry['text'] = 'Create Share Link'
+            # NOTE: check path here as rel_path is empty for path='/'
             if not path:
                 output_objects.append(
                     {'object_type': 'error_text', 'text'
                      : 'No path provided!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
-            elif not valid_user_path(abs_path, base_dir, True):
+            # We refuse sharing of entire home for security reasons
+            elif not valid_user_path(abs_path, base_dir, allow_equal=False):
                 logger.warning('%s tried to %s restricted path %s ! (%s)' % \
                                (client_id, action, abs_path, path))
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'Illegal path "%s": you can only share your own data!'
-                     % path
+                    {'object_type': 'error_text', 'text': '''Illegal path "%s":
+you can only share your own data, and not your entire home direcory.''' % path
                      })
                 return (output_objects, returnvalues.CLIENT_ERROR)
             elif not os.path.exists(abs_path):
                 output_objects.append(
                     {'object_type': 'error_text', 'text'
                      : 'Provided path "%s" does not exist!' % path})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+            # Refuse sharing of (mainly auth) dot dirs in root of user home
+            elif real_path.startswith(os.path.join(base_dir, '.')):
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': 
+                     'Provided path "%s" cannot be shared for security reasons'
+                     % path})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             elif single_file and write_access:
                 output_objects.append(
