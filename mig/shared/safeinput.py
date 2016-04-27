@@ -321,7 +321,7 @@ def valid_path(
 def valid_safe_path(
     path,
     min_length=1,
-    max_length=256,
+    max_length=1024,
     extra_chars='',
     ):
     """Verify that supplied path only contains characters that we consider
