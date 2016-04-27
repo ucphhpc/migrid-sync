@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadprogress - Plain file upload progress monitor back end
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -104,29 +104,29 @@ Please contact the Grid admins %s if you think they should be enabled.
         # leaking information about file system layout while allowing
         # consistent error messages
 
-        real_path = os.path.abspath(os.path.join(base_dir, path))
-        if not valid_user_path(real_path, base_dir, True):
+        abs_path = os.path.abspath(os.path.join(base_dir, path))
+        if not valid_user_path(abs_path, base_dir, True):
             # out of bounds - save user warning for later to allow
             # partial match:
             # ../*/* is technically allowed to match own files.
 
             logger.warning('%s tried to %s restricted path %s ! (%s)'
-                           % (client_id, op_name, real_path, path))
+                           % (client_id, op_name, abs_path, path))
             output_objects.append({'object_type': 'file_not_found',
                                   'name': path})
             status = returnvalues.FILE_NOT_FOUND
             continue
-        if not os.path.isfile(real_path):
+        if not os.path.isfile(abs_path):
             output_objects.append({'object_type': 'error_text', 'text'
                                    : "no such upload: %s" % path})
             status = returnvalues.CLIENT_ERROR
             continue
 
-        relative_path = real_path.replace(base_dir, '')
+        relative_path = abs_path.replace(base_dir, '')
         try:
-            logger.info('Checking size of upload %s' % real_path)
+            logger.info('Checking size of upload %s' % abs_path)
 
-            cur_size = os.path.getsize(real_path)
+            cur_size = os.path.getsize(abs_path)
             total_size = size_list[index]
             percent = round(100.0 * cur_size / total_size, 1)
             done_list[index] = (cur_size == total_size)

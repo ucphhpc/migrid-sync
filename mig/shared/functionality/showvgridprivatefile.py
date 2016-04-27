@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridprivatefile - View VGrid private files for owners and members
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -83,16 +83,16 @@ access the private files.''' % (vgrid_name, configuration.site_vgrid_label)})
     # Strip leading slashes to avoid join() throwing away prefix 
 
     rel_path = path.lstrip(os.sep)
-    real_path = os.path.abspath(os.path.join(base_dir, rel_path))
+    abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
 
-    if not valid_user_path(real_path, base_dir, True):
+    if not valid_user_path(abs_path, base_dir, True):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''You are not allowed to use paths outside %s
 private files dir.''' % configuration.site_vgrid_label})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
     try:
-        private_fd = open(real_path, 'rb')
+        private_fd = open(abs_path, 'rb')
         entry = {'object_type': 'binary',
                  'data': private_fd.read()}
         # Cut away all the usual web page formatting to show only contents

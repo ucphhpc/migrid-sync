@@ -75,9 +75,9 @@ configuration, logger = None, None
 # TODO: can we enforce connection reuse?
 #       dav clients currently hammer the login functions for every operation
 
-def _handle_allowed(request, real_path):
+def _handle_allowed(request, abs_path):
     """Helper to make sure ordinary handle of a COPY, MOVE or DELETE
-    request is allowed on real_path.
+    request is allowed on abs_path.
         
     As noted in dav_handler.py doc strings raising a DAVError here prevents all
     further handling of the request with an error to the client.
@@ -85,8 +85,8 @@ def _handle_allowed(request, real_path):
     NOTE: We prevent any direct operation on symlinks used in vgrid shares.
     This is in line with other grid_X daemons and the web interface.
     """
-    if os.path.islink(real_path):
-        logger.warning("refused %s on symlink: %s" % (request, real_path))
+    if os.path.islink(abs_path):
+        logger.warning("refused %s on symlink: %s" % (request, abs_path))
         raise DAVError(HTTP_FORBIDDEN)
 
 def _user_chroot_path(environ):
@@ -525,14 +525,14 @@ class MiGFilesystemProvider(FilesystemProvider):
             raise RuntimeError("A recent/patched wsgidav is needed, see code")
         user_chroot = _user_chroot_path(environ)
         pathInfoParts = path.strip(os.sep).split(os.sep)
-        real_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
+        abs_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
         try:
-            real_path = get_fs_path(path, user_chroot, self.chroot_exceptions)
+            abs_path = get_fs_path(path, user_chroot, self.chroot_exceptions)
         except ValueError, vae:
             raise RuntimeError("Access out of bounds: %s in %s : %s"
                                % (path, user_chroot, vae))
-        real_path = force_unicode(real_path)           
-        return real_path
+        abs_path = force_unicode(abs_path)           
+        return abs_path
 
     def getResourceInst(self, path, environ):
         """Return info dictionary for path.
@@ -544,17 +544,17 @@ class MiGFilesystemProvider(FilesystemProvider):
 
         self._count_getResourceInst += 1
         try:
-            real_path = self._locToFilePath(path, environ)
+            abs_path = self._locToFilePath(path, environ)
         except RuntimeError, rte:
             logger.warning("getResourceInst: %s : %s" % (path, rte))
             raise DAVError(HTTP_FORBIDDEN)
             
-        if not os.path.exists(real_path):
+        if not os.path.exists(abs_path):
             return None
         
-        if os.path.isdir(real_path):
-            return MiGFolderResource(path, environ, real_path)
-        return MiGFileResource(path, environ, real_path)
+        if os.path.isdir(abs_path):
+            return MiGFolderResource(path, environ, abs_path)
+        return MiGFileResource(path, environ, abs_path)
                                                             
 
 def update_users(configuration, user_map, username):

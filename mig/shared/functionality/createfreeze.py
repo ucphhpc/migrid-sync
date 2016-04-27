@@ -69,8 +69,8 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
     for i in xrange(max_freeze_files):
         if user_args.has_key(xfer_pattern % i):
             source_path = user_args[xfer_pattern % i][-1].strip()
-            configuration.logger.debug('found %s entry: %s' % (xfer,
-                                                               source_path))
+            configuration.logger.debug('found %s entry: %s' % \
+                                       (xfer, source_path))
             if not source_path:
                 continue
             try:
@@ -79,22 +79,25 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 rejected.append('invalid path: %s (%s)' % (source_path,
                                                            exc))
                 continue
-            source_path = os.path.normpath(source_path).lstrip(os.sep)
-            real_path = os.path.abspath(os.path.join(base_dir, source_path))
-            if not valid_user_path(real_path, base_dir, True):
+            abs_path = os.path.abspath(
+                os.path.join(base_dir, source_path.lstrip(os.sep)))
+            if not valid_user_path(abs_path, base_dir, True):
+                configuration.logger.error(
+                    'found illegal directory traversal %s entry: %s' % \
+                    (xfer, source_path))
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'illegal path!'))
                 continue
             # expand any dirs recursively
-            if os.path.isdir(real_path):
-                for (root, dirnames, filenames) in os.walk(real_path):
+            if os.path.isdir(abs_path):
+                for (root, dirnames, filenames) in os.walk(abs_path):
                     for subname in filenames:
-                        real_sub = os.path.join(root, subname)
-                        sub_base = root.replace(real_path, source_path)
+                        abs_sub = os.path.join(root, subname)
+                        sub_base = root.replace(abs_path, source_path)
                         sub_path = os.path.join(sub_base, subname)
-                        files.append((real_sub, sub_path))
+                        files.append((abs_sub, sub_path))
             else:
-                files.append((real_path, source_path))
+                files.append((abs_path, source_path))
     return (files, rejected)
 
 def parse_form_copy(user_args, client_id, configuration):

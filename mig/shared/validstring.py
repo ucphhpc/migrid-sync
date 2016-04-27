@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# validstring - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# validstring - string validators
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -103,7 +103,7 @@ def valid_user_path(path, home_dir, allow_equal=False):
     tree(s): Check that path is a valid path inside user home directory,
     home_dir and it does not map to an invisible file or dir.
     In  a few situations it may be relevant to not allow an exact
-    match, e.g. to prevent users from deleting the base of their
+    match, e.g. to prevent users from deleting or sharing the base of their
     home directory.
 
     This check also rejects all 'invisible' files like htaccess files.
@@ -113,26 +113,28 @@ def valid_user_path(path, home_dir, allow_equal=False):
     Thus this function should *only* be used in relation to
     checking user home related paths. Other paths should be
     validated with the valid_dir_input function below.
+    It automatically normalizes path to eliminate double slashes and expand
+    '..', but it does not follow e.g. symlinks into vgrid shares. 
     """
 
-    real_path = os.path.abspath(path)
+    norm_path = os.path.normpath(os.path.abspath(path))
 
-    if invisible_path(real_path):
+    if invisible_path(norm_path):
         return False
 
     real_home = os.path.abspath(home_dir)
-    inside = real_path.startswith(real_home + os.sep)
+    inside = norm_path.startswith(real_home + os.sep)
     if not allow_equal:
 
-        # real_path must be real_home/X
+        # norm_path must be real_home/X
 
         return inside
     else:
 
-        # real_path must be either real_home/X or real_home
+        # norm_path must be either real_home/X or real_home
 
         try:
-            same = os.path.samefile(real_home, real_path)
+            same = os.path.samefile(real_home, norm_path)
         except Exception:
 
             # At least one of the paths doesn't exist

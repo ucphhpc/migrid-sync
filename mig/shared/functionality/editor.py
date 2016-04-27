@@ -269,7 +269,7 @@ def advanced_editor_js_deps(include_jquery=True):
        run_editor_js("editorarea", wrap_in_tags=False))
     return js
 
-def lock_info(real_path, time_left):
+def lock_info(abs_path, time_left):
     """This function generates javascript similar to that used in Moin Moin Wiki
     (http://moinmoin.wikiwikiweb.de)
     """
@@ -347,13 +347,13 @@ function newcountdown(path, minutes) {
     return script
 
 
-def edit_file(path, real_path, output_format='html', includes=edit_includes):
+def edit_file(path, abs_path, output_format='html', includes=edit_includes):
     """Format and return the contents of a given file"""
 
     text = ''
-    if os.path.isfile(real_path):
+    if os.path.isfile(abs_path):
         try:
-            src_fd = open(real_path, 'rb')
+            src_fd = open(abs_path, 'rb')
             text = src_fd.read()
             src_fd.close()
         except Exception, exc:
@@ -501,17 +501,17 @@ def main(client_id, user_arguments_dict):
                               : 'No path supplied - creating new file in %s'
                                % path})
 
-    path = os.path.normpath(current_dir + path)
-    real_path = os.path.abspath(base_dir + current_dir + path)
-    if not valid_user_path(real_path, base_dir):
+    rel_path = os.path.join(current_dir.lstrip(os.sep), path.lstrip(os.sep))
+    abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
+    if not valid_user_path(abs_path, base_dir):
         logger.warning('%s tried to %s restricted path %s ! (%s)'
-                       % (client_id, op_name, real_path, path))
+                       % (client_id, op_name, abs_path, rel_path))
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : "Invalid path! (%s expands to an illegal path)" % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (owner, time_left) = acquire_edit_lock(real_path, client_id)
+    (owner, time_left) = acquire_edit_lock(abs_path, client_id)
     if owner == client_id:
         javascript = \
             '''<script type="text/javascript">
@@ -522,7 +522,7 @@ setTimeout("newcountdown('%s', %d)", 1)
         output_objects.append({'object_type': 'html_form', 'text'
                               : javascript})
 
-        html = edit_file(path, real_path)
+        html = edit_file(path, abs_path)
         output_objects.append({'object_type': 'html_form', 'text'
                               : html})
     else:

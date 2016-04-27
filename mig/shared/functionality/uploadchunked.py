@@ -125,10 +125,10 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
                              (filename, exc)))
             continue
         rel_path = os.path.join(rel_dst_dir, filename)
-        real_path = os.path.abspath(os.path.join(base_dir, rel_path))
-        if not valid_user_path(real_path, dst_dir, True):
+        abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
+        if not valid_user_path(abs_path, dst_dir, True):
             logger.error('%s tried to access restricted path %s ! (%s)'
-                             % (user_id, real_path, dst_dir))
+                             % (user_id, abs_path, dst_dir))
             rejected.append("Invalid path (%s expands to an illegal path)" \
                             % filename)
             continue
@@ -320,17 +320,17 @@ def main(client_id, user_arguments_dict):
     # current_dir in move operation where it is the destination.
     if action == 'delete':
         for (rel_path, chunk_tuple) in upload_files:
-            real_path = os.path.abspath(os.path.join(base_dir, rel_path))
-            deleted = delete_file(real_path, logger)
+            abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
+            deleted = delete_file(abs_path, logger)
             uploaded.append({'object_type': 'uploadfile', rel_path: deleted})
         logger.info('delete done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action == 'status':
         # Status automatically takes place relative to dst_dir
         for (rel_path, chunk_tuple) in upload_files:
-            real_path = os.path.abspath(os.path.join(base_dir, rel_path))
+            abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
             file_entry = {'object_type': 'uploadfile', 'name': rel_path}
-            file_entry['size'] = get_file_size(real_path, logger)
+            file_entry['size'] = get_file_size(abs_path, logger)
             file_entry['url'] = "/%s/%s" % (redirect_path, rel_path)
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
@@ -345,7 +345,7 @@ def main(client_id, user_arguments_dict):
     elif action == 'move':
         # Move automatically takes place relative to upload tmp dir
         for (rel_path, chunk_tuple) in upload_files:
-            real_path = os.path.abspath(os.path.join(base_dir, rel_path))
+            abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
             dest_path = os.path.abspath(os.path.join(
                 base_dir, current_dir, os.path.basename(rel_path)))
             if not valid_user_path(dest_path, base_dir, True):
@@ -358,10 +358,10 @@ def main(client_id, user_arguments_dict):
                 moved = False
             else:
                 try: 
-                    move(real_path, dest_path)
+                    move(abs_path, dest_path)
                     moved = True
                 except Exception, exc:
-                    logger.error('could not move %s to %s: %s' % (real_path,
+                    logger.error('could not move %s to %s: %s' % (abs_path,
                                                               dest_path, exc))
                     moved = False
             uploaded.append({'object_type': 'uploadfile', rel_path: moved})
@@ -380,8 +380,8 @@ def main(client_id, user_arguments_dict):
         (chunk, offset, chunk_last) = chunk_tuple
         chunk_size = len(chunk)
         range_size = 1 + chunk_last - offset
-        real_path = os.path.abspath(os.path.join(base_dir, rel_path))
-        if not os.path.isdir(os.path.dirname(real_path)):
+        abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
+        if not os.path.isdir(os.path.dirname(abs_path)):
             output_objects.append({'object_type': 'error_text', 'text'
                                    : "cannot write: no such file or directory:"
                                    " %s)" % rel_path})
@@ -390,12 +390,12 @@ def main(client_id, user_arguments_dict):
         file_entry = {'object_type': 'uploadfile', 'name': rel_path}
         logger.debug('write %s chunk of size %d' % (rel_path, chunk_size))
         if chunk_size == range_size and \
-               write_chunk(real_path, chunk, offset, logger, 'r+b'):
+               write_chunk(abs_path, chunk, offset, logger, 'r+b'):
             output_objects.append({'object_type': 'text', 'text'
                                    : 'wrote chunk %s at %d' % \
                                    (chunk_tuple[1:], offset)})
-            logger.info('wrote %s chunk at %s' % (real_path, chunk_tuple[1:]))
-            file_entry["size"] = os.path.getsize(real_path)
+            logger.info('wrote %s chunk at %s' % (abs_path, chunk_tuple[1:]))
+            file_entry["size"] = os.path.getsize(abs_path)
             file_entry["url"] = "/%s/%s" % (redirect_path, rel_path)
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
@@ -415,7 +415,7 @@ def main(client_id, user_arguments_dict):
                                          current_dir)
         else:
             logger.error('could not write %s chunk %s (%d vs %d)' % \
-                         (real_path, chunk_tuple[1:], chunk_size, range_size))
+                         (abs_path, chunk_tuple[1:], chunk_size, range_size))
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'failed to write chunk %s at %d' % \
                                    (chunk_tuple[1:], offset)})

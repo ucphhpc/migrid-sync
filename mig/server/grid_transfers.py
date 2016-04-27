@@ -390,12 +390,12 @@ def run_transfer(transfer_dict, client_id, configuration):
         dst_path = os.path.join(base_dir, rel_dst.lstrip(os.sep))
         dst_path = os.path.abspath(dst_path)
         for src in rel_src_list:
-            real_dst = os.path.join(dst_path, src.lstrip(os.sep))
-            real_dst = os.path.abspath(real_dst)
+            abs_dst = os.path.join(dst_path, src.lstrip(os.sep))
+            abs_dst = os.path.abspath(abs_dst)
             # Reject illegal directory traversal and hidden files
-            if not valid_user_path(real_dst, base_dir, True):
+            if not valid_user_path(abs_dst, base_dir, True):
                 logger.error('rejecting illegal directory traversal for %s (%s)' \
-                             % (real_dst, blind_pw(transfer_dict)))
+                             % (abs_dst, blind_pw(transfer_dict)))
                 raise ValueError("user provided a destination outside home!")
             if src.endswith(os.sep):
                 target_helper_list.append((get_lftp_target(True, False),
