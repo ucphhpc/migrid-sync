@@ -46,8 +46,8 @@ from shared.pwhash import make_hash
 from shared.sharelinks import create_share_link_form, invite_share_link_form, \
      invite_share_link_message, generate_sharelink_id 
 from shared.validstring import valid_user_path
-from shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings
-
+from shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings, \
+     vgrid_add_sharelinks, vgrid_remove_sharelinks
 
 get_actions = ['show', 'edit']
 post_actions = ['create', 'update', 'delete']
@@ -119,8 +119,9 @@ def main(client_id, user_arguments_dict):
         });
 
         /* init create dialog */
-        /* setup table with tablesorter initially sorted by 3 (created) */
-        var sortOrder = [[3,0]];
+        /* setup table with tablesorter initially sorted by 5, 4 reversed
+           (active first and in growing age). */
+        var sortOrder = [[5,1],[4,1]];
         $("#sharelinkstable").tablesorter({widgets: ["zebra", "saveSort"],
                                         sortList:sortOrder
                                         })
@@ -173,6 +174,8 @@ Please contact the Grid admins %s if you think they should be enabled.
 
     if action in get_actions:
         if action == "show":
+            # Table columns to skip
+            skip_list = ['owner', 'single_file', 'expire']
             sharelinks = []
             for (saved_id, share_dict) in share_map.items():
                 share_item = build_sharelinkitem_object(configuration,
@@ -198,7 +201,7 @@ Please contact the Grid admins %s if you think they should be enabled.
                                    'entry_name': 'share links',
                                    'default_entries': default_pager_entries})
             output_objects.append({'object_type': 'sharelinks', 'sharelinks'
-                                  : sharelinks})
+                                  : sharelinks, 'skip_list': skip_list})
 
             output_objects.append({'object_type': 'html_form', 'text': '<br/>'})
             output_objects.append({'object_type': 'sectionheader', 'text'
@@ -278,16 +281,27 @@ comma-separated recipients.
                                                 client_dir)) + os.sep
         
         # Build absolute path without normalizing or anything yet
-        rel_path = path.lstrip(os.sep)
+        rel_path = share_path.lstrip(os.sep)
         abs_path = os.path.join(base_dir, rel_path)
         real_path = os.path.realpath(abs_path)
         single_file = os.path.isfile(real_path)
+        vgrid_name = in_vgrid_share(configuration, abs_path)
 
         if action == 'delete':
             header_entry['text'] = 'Delete Share Link'
             (save_status, _) = delete_share_link(share_id, client_id,
                                                  configuration,
                                                  share_map)
+            if save_status and vgrid_name:
+                logger.debug("del vgrid sharelink pointer %s" % share_id)
+                (del_status, del_msg) = vgrid_remove_sharelinks(configuration,
+                                                                vgrid_name,
+                                                                [share_id],
+                                                                'share_id')
+                if not del_status:
+                    logger.error("del vgrid sharelink pointer %s failed: %s" \
+                                 % (share_id, del_msg))
+                    return (False, share_map)
             desc = "delete"
         elif action == "update":
             header_entry['text'] = 'Update Share Link'
@@ -356,6 +370,11 @@ comma-separated recipients.
             desc = "update"
         elif action == "create":
             header_entry['text'] = 'Create Share Link'
+            if not read_access and not write_access:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'No access set - please select read, write or both'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
             # NOTE: check path here as rel_path is empty for path='/'
             if not path:
                 output_objects.append(
@@ -394,8 +413,7 @@ it or only share with read access.
             #  We check if path is in vgrid share, but do not worry about
             # private_base or public_base since they are only availabe to
             # owners, who can always share anyway.
-
-            vgrid_name = in_vgrid_share(configuration, abs_path)
+            
             if vgrid_name is not None and \
                    not vgrid_is_owner(vgrid_name, client_id, configuration):
                 # share is inside vgrid share so we must check that user is
@@ -417,12 +435,6 @@ think you should be allowed to do that.
 ''' % {'vgrid_name': vgrid_name, 'vgrid_label': configuration.site_vgrid_label}
                           })
                      return (output_objects, returnvalues.CLIENT_ERROR)
-
-            if not read_access and not write_access:
-                output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'No access set!'})
-                return (output_objects, returnvalues.CLIENT_ERROR)
 
             access_list = []
             if read_access:
@@ -458,6 +470,15 @@ think you should be allowed to do that.
                         # ID Collision?
                         logger.warning('could not create sharelink: %s' % \
                                        save_msg)
+            if save_status and vgrid_name:
+                logger.debug("add vgrid sharelink pointer %s" % share_id)
+                (add_status, add_msg) = vgrid_add_sharelinks(configuration,
+                                                             vgrid_name,
+                                                             [share_dict])
+                if not add_status:
+                    logger.error("save vgrid sharelink pointer %s failed: %s " \
+                                 % (share_id, add_msg))
+                    return (False, share_map)
         else:
             output_objects.append(
                 {'object_type': 'error_text', 'text'

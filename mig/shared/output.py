@@ -42,7 +42,6 @@ from shared.safeinput import html_escape
 
 row_name = ('even', 'odd')
 
-
 def txt_table_if_have_keys(header, input_dict, keywordlist):
     """create txt table contents based on keys in a dictionary"""
 
@@ -1342,6 +1341,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 </table>''')
         elif i['object_type'] == 'sharelinks':
             sharelinks = i['sharelinks']
+            skip_list = i.get('skip_list', [])
+            optional_cols = [('access', 'Access'), ('created', 'Created'),
+                             ('active', 'Active'), ('owner', 'Owner'),
+                             ('invites', 'Invites'),  ('expire', 'Expire'),
+                             ('single_file', 'Single file'),
+                             ]
             # IMPORTANT: AdBlock Plus hides elements with class sharelink(s)
             #            so we stray from naming pattern and call it linkshares
             #            here to avoid trouble.
@@ -1352,11 +1357,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>ID</th>
         <th class="icon">Action<!-- Open, Edit, Delete --></th>
         <th>Path</th>
-        <th>Access</th>
-        <th class="hidden">Expire</th>
-        <th class="hidden">Password</th>
-        <th>Created</th>
-        <th>Invites</th>
+    ''')
+            for (key, title) in optional_cols:
+                if not key in skip_list:
+                    lines.append('<th>%s</th>' % title)
+            lines.append('''
     </tr>
 </thead>
 <tbody>
@@ -1364,32 +1369,38 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             for single_share in sharelinks:
                 openlink = single_share.get('opensharelink', '')
                 openlink_html = ''
-                if openlink:
+                if openlink and not 'opensharelink' in skip_list:
                     openlink_html = html_link(openlink)
                 editlink = single_share.get('editsharelink', '')
                 editlink_html = ''
-                if editlink:
+                if editlink and not 'editsharelink' in skip_list:
                     editlink_html = html_link(editlink)
                 else:
                     # Leave the icon space empty if not set (used in edit)
                     editlink_html = '<span class="iconleftpad"></span>'
                 dellink = single_share.get('delsharelink', '')
                 dellink_html = ''
-                if dellink:
+                if dellink and not 'delsharelink' in skip_list:
                     dellink_html = html_link(dellink)
-                if single_share.get('password_hash', ''):
-                    password = '*' * 8
-                else:
-                    password = ''
                 access = ' & '.join(single_share['access'])
                 lines.append('''
 <tr>
-<td>%s</td><td>%s %s %s</td><td>%s</td><td>%s</td><td class="hidden">%s
-</td><td class="hidden">%s</td><td>%s</td><td>%s</td>
-</tr>''' % (single_share['share_id'], openlink_html, editlink_html,
-            dellink_html, single_share['path'], access, single_share['expire'],
-            password, single_share['created'],
-            ', '.join(single_share['invites'])))
+<td>%s</td><td>%s %s %s</td><td>%s</td>''' % (single_share['share_id'],
+                                              openlink_html, editlink_html,
+                                              dellink_html,
+                                              single_share['path']))
+                for (key, title) in optional_cols:
+                    if not key in skip_list:
+                        if isinstance(single_share[key], basestring):
+                            val = single_share[key]
+                        elif isinstance(single_share[key], list):
+                            val = ', '.join(single_share[key])
+                        else:
+                            val = single_share[key]
+                        lines.append('<td>%s</td>' % val)
+                lines.append('''
+</tr>
+''')
 
             lines.append('''
 </tbody>

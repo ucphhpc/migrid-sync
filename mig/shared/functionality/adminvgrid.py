@@ -29,15 +29,19 @@
 controls to administrate them.
 """
 
+import os
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
-from shared.defaults import keyword_all, keyword_auto, valid_trigger_changes, \
-     valid_trigger_actions, keyword_owners, keyword_members
+from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
+     valid_trigger_changes, valid_trigger_actions, keyword_owners, \
+     keyword_members
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_settings
+from shared.sharelinks import build_sharelinkitem_object
+from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_settings, \
+     vgrid_sharelinks, vgrid_list_parents
 
 _valid_sharelink = [("owners", keyword_owners), ("members", keyword_members)]
 _valid_visible = _valid_sharelink + [("everyone", keyword_all)]
@@ -247,7 +251,7 @@ def main(client_id, user_arguments_dict):
 
     vgrid_name = accepted['vgrid_name'][-1]
 
-    # prepare support for confirm dialog and toggling the views (by css/jquery)
+    # prepare for confirm dialog, tablesort and toggling the views (css/js)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = "Administrate %s: %s" % \
@@ -256,6 +260,9 @@ def main(client_id, user_arguments_dict):
     title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
 
@@ -266,23 +273,33 @@ def main(client_id, user_arguments_dict):
         $(classname).toggleClass('hidden');
     }
 
-$(document).ready(function() {
+    $(document).ready(function() {
 
-          // init confirmation dialog
-          $( "#confirm_dialog" ).dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
+        // init confirmation dialog
+        $( "#confirm_dialog" ).dialog(
+            // see http://jqueryui.com/docs/dialog/ for options
+            { autoOpen: false,
                 modal: true, closeOnEscape: true,
-                width: 500,
+                width: 600,
                 buttons: {
                    "Cancel": function() { $( "#" + name ).dialog("close"); }
-                }
-              });
+            }
+        });
+
+        /* setup table with tablesorter initially sorted by 5, 4 reversed
+           (active first and in growing age). */
+        var sortOrder = [[5,1],[4,1]];
+        $("#sharelinkstable").tablesorter({widgets: ["zebra", "saveSort"],
+                                        sortList:sortOrder
+                                        })
+                               .tablesorterPager({ container: $("#pager"),
+                                        size: %s
+                                        });
+        $("#pagerrefresh").click(function() { location.reload(); });
      }
 );
 </script>
-'''
-
+''' % default_pager_entries
     output_objects.append({'object_type': 'html_form',
                            'text':'''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
@@ -361,6 +378,44 @@ $(document).ready(function() {
                  'text': 'Show %ss' % item.title() })
             output_objects.append({'object_type': 'html_form', 
                                    'text': '</div>' })
+
+    # VGrid Share links
+
+    # Table columns to skip
+    skip_list = ['editsharelink', 'delsharelink', 'invites', 'expire',
+                 'single_file']
+    
+    # NOTE: Inheritance is a bit tricky for sharelinks because parent shares
+    # only have relevance if they actually share a path that is a prefix of
+    # vgrid_name.
+    
+    (share_status, share_list) = vgrid_sharelinks(vgrid_name, configuration)
+    sharelinks = []
+    if share_status:
+        for share_dict in share_list:
+            rel_path = share_dict['path'].strip(os.sep)
+            parent_vgrids = vgrid_list_parents(vgrid_name, configuration)
+            include_share = False
+            # Direct sharelinks (careful not to greedy match A/B with A/BCD)
+            if rel_path == vgrid_name or \
+                   rel_path.startswith(vgrid_name+os.sep):
+                include_share = True
+            # Parent vgrid sharelinks that in effect also give access here
+            for parent in parent_vgrids:
+                if rel_path == parent: 
+                    include_share = True
+            if include_share:
+                share_item = build_sharelinkitem_object(configuration, share_dict)
+                sharelinks.append(share_item)
+
+    output_objects.append({'object_type': 'sectionheader',
+                           'text': "Share Links"})
+    output_objects.append({'object_type': 'html_form', 
+                 'text': '<p>Current share links in %s shared folder</p>' % \
+                           vgrid_name})
+    output_objects.append({'object_type': 'sharelinks',
+                           'sharelinks': sharelinks,
+                           'skip_list': skip_list})
 
     # VGrid settings
     

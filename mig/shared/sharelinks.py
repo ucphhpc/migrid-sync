@@ -55,6 +55,8 @@ __wo_mode_chars = __mode_charset[2 * __mode_len:]
 mode_chars_map = {'read-only': __ro_mode_chars, 'read-write': __rw_mode_chars,
                   'write-only': __wo_mode_chars}
 
+__bool_map = {True: 'Yes', False: 'No'}
+
 def generate_sharelink_id(configuration, share_mode):
     """We use one random char from the substring matching share_mode and
     configuration.sharelink_length-1 random chars for the actual ID part. With
@@ -79,6 +81,27 @@ def extract_mode_id(configuration, share_id):
             return (mode, share_id[1:])
     raise ValueError("Invalid share_id '%s' !" % share_id)
 
+def is_active(configuration, share_dict):
+    """Check if share link inf share_dict is active in the sense that the
+    symlink and target path both exist.
+    """
+    share_id = share_dict['share_id']
+    rel_path = share_dict['path'].lstrip('/')
+    client_id = share_dict['owner']
+    single_file = share_dict['single_file']
+    (access_dir, _) = extract_mode_id(configuration, share_id)
+    symlink_path = os.path.join(configuration.sharelink_home, access_dir,
+                                share_id)
+    target_path = os.path.join(configuration.user_home,
+                               client_id_dir(client_id), rel_path)
+    if not os.path.islink(symlink_path):
+        return False
+    if single_file and not os.path.isfile(target_path):
+        return False
+    if not single_file and not os.path.isdir(target_path):
+        return False
+    return True
+
 def build_sharelinkitem_object(configuration, share_dict):
     """Build a share link object based on input share_dict"""
 
@@ -94,6 +117,7 @@ def build_sharelinkitem_object(configuration, share_dict):
         }
     share_id = share_dict['share_id']
     share_item.update(share_dict)
+    share_item['active'] = __bool_map[is_active(configuration, share_item)]
     access = '-'.join((share_item['access'] + ['only'])[:2])
     if share_item['single_file']:
         share_url = "%s/share_redirect/%s" \
@@ -353,7 +377,7 @@ def modify_share_links(action, share_dict, client_id, configuration,
             logger.error("could not delete share symlink: %s (missing?)" % \
                          symlink_path)
             return (False, share_map)
-        del share_map[share_id]        
+        del share_map[share_id]
     else:
         return (False, "Invalid action %s on share links" % action)
         
@@ -374,8 +398,8 @@ def create_share_link(share_dict, client_id, configuration,
     can be used to pass an already loaded dictionary of saved share links to
     avoid reloading.
     """
-    return modify_share_links("create", share_dict, client_id,
-                              configuration, share_map)
+    return modify_share_links("create", share_dict, client_id, configuration,
+                              share_map)
 
 def update_share_link(share_dict, client_id, configuration,
                          share_map=None):
@@ -383,13 +407,14 @@ def update_share_link(share_dict, client_id, configuration,
     argument can be used to pass an already loaded dictionary of saved share
     links to avoid reloading.
     """
-    return modify_share_links("modify", share_dict, client_id,
-                              configuration, share_map)
+    return modify_share_links("modify", share_dict, client_id, configuration,
+                              share_map)
 
 def delete_share_link(share_id, client_id, configuration, share_map=None):
     """Delete an existing share link without checking ownership. The optional
     share_map argument can be used to pass an already loaded dictionary of
-    saved share links to avoid reloading.    """
+    saved share links to avoid reloading.
+    """
     share_dict = {'share_id': share_id}
-    return modify_share_links("delete", share_dict, client_id,
-                              configuration, share_map)
+    return modify_share_links("delete", share_dict, client_id, configuration,
+                              share_map)
