@@ -51,6 +51,8 @@ from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
 from shared.refunctions import create_runtimeenv
 from shared.settings import parse_and_save_settings
+from shared.safeinput import valid_path, valid_sid, valid_alphanumeric
+from shared.sharelinks import extract_mode_id
 
 
 block_size = 1024 * 1024
@@ -66,7 +68,7 @@ client_dir = client_id_dir(client_id)
 
 # Check we are using a PUT method
 
-put_methods = ['PUT', 'SIDPUT', 'CERTPUT']
+put_methods = ['PUT', 'SIDPUT', 'CERTPUT', 'SHAREPUT']
 if not os.getenv('REQUEST_METHOD') in put_methods:
 
     # Request method is not a PUT method
@@ -97,7 +99,8 @@ else:
 
 # 'urllib.unquote(string)': Replaces urlencode chars "%xx" by their single-character equivalent.
 # REQUEST_URI is relative path suffix i.e. without protocol and FQDN part
-# We normalize path to remove double slashes that would otherwise cause problems
+# We normalize path to remove double slashes that would otherwise cause
+# problems and to avoid illegal directory traversal attempts.
 
 filename = os.path.normpath(urllib.unquote(str(os.getenv('REQUEST_URI'))))
 rel_name = filename.lstrip(os.sep)
@@ -109,15 +112,26 @@ if invisible_path(filename):
     o.out('Upload to %s is prohibited!' % rel_name)
     o.reply_and_exit(o.CLIENT_ERROR)
 
+try:
+    valid_path(filename)
+except Exception, exc:
+    o.out('Invalid path: %s!' % exc)
+    o.reply_and_exit(o.CLIENT_ERROR)
+
 # Check cert and decide if it is a user or resource or without cert using the put method
 
-if not client_id:
+if not client_id and filename.startswith('/sid_redirect/'):
 
-    # o.internal("no certificate found. You must be a resource using /sid_redirect/sessionid/filename.")
+    # o.internal("detected a job session upload using %s" % filename)
 
-    filename_slash_stripped = filename.replace('/sid_redirect/', '')
-    sessionid = \
-        filename_slash_stripped[:filename_slash_stripped.find('/')]
+    redir_path = filename.replace('/sid_redirect/', '')
+    sessionid = redir_path[:redir_path.find('/')]
+
+    try:
+        valid_sid(sessionid)
+    except Exception, exc:
+        o.out('Error in sessionid: %s!' % exc)
+        o.reply_and_exit(o.CLIENT_ERROR)
 
     # check that the sessionid is ok (does symlink exist?)
 
@@ -128,10 +142,9 @@ if not client_id:
     else:
         o.internal('Session id OK: %s' % sessionid)
 
-    dest_dir = configuration.webserver_home\
-         + filename_slash_stripped[:filename_slash_stripped.rfind('/')]
-    dest_file = \
-        filename_slash_stripped[filename_slash_stripped.rfind('/') + 1:]
+    dest_dir = configuration.webserver_home + \
+               redir_path[:redir_path.rfind('/')]
+    dest_file = redir_path[redir_path.rfind('/') + 1:]
 
     # make sure that path exists
 
@@ -139,7 +152,7 @@ if not client_id:
 
         # o.internal("making sure this dir exists, otherwise create:" + dest_dir)
 
-        os.makedirs(dest_dir, mode=0777)
+        os.makedirs(dest_dir, mode=0775)
     except Exception, e:
 
         # An exception is thrown if the leaf exists
@@ -287,7 +300,7 @@ if not client_id:
             configuration.myfiles_py_location,
             'SUCCESS',
             logger,
-            configuration.webserver_home + filename_slash_stripped,
+            configuration.webserver_home + redir_path,
             configuration,
             )
 
@@ -325,6 +338,68 @@ if not client_id:
         # if the notify daemon is listening and blocks indefinitely otherwise.
         notifier.join(900)
         o.reply_and_exit(out_status)
+
+elif not client_id and filename.startswith('/share_redirect/'):
+
+    # o.internal("detected a sharelink upload using: %s" % filename)
+
+    redir_path = filename.replace('/share_redirect/', '')
+    share_id = redir_path[:redir_path.find('/')]
+
+    try:
+        valid_alphanumeric(share_id)
+    except Exception, exc:
+        o.out('Error in sharelink id: %s!' % exc)
+        o.reply_and_exit(o.CLIENT_ERROR)
+
+    # check that the share_id is ok (does symlink exist?)
+    (access_dir, _) = extract_mode_id(configuration, share_id)
+    symlink_path = os.path.join(configuration.sharelink_home, access_dir,
+                                share_id)
+    if not os.path.islink(symlink_path):
+        o.out('INVALID SHARE ID! %s' % share_id)
+        o.internal('invalid share_id from filename %s' % filename)
+        o.reply_and_exit(o.ERROR)
+    elif access_dir == "read-only" or \
+             not os.path.isdir(os.path.realpath(symlink_path)):
+        o.out('INVALID SHARE ID %s - NOT A WRITABLE DIRECTORY SHARE! %s' % \
+                       share_id)
+        o.internal('invalid upload share_id from filename %s' % filename)
+        o.reply_and_exit(o.ERROR)
+    else:
+        o.internal('Share id OK: %s' % share_id)
+
+    dest_dir = configuration.sharelink_home + os.sep + access_dir + os.sep + \
+               redir_path[:redir_path.rfind('/')]
+    dest_file = redir_path[redir_path.rfind('/') + 1:]
+
+    # make sure that path exists
+
+    try:
+
+        # o.internal("making sure this dir exists, otherwise create:" + dest_dir)
+
+        os.makedirs(dest_dir, mode=0775)
+    except Exception, e:
+
+        # An exception is thrown if the leaf exists
+
+        pass
+
+    dest_path = dest_dir + '/' + dest_file
+    try:
+        upload_fd = open(dest_path, 'wb')
+        while True:
+            chunk = sys.stdin.read(block_size)
+            if not chunk:
+                break
+            upload_fd.write(chunk)
+        upload_fd.close()
+    except Exception, err:
+        o.out('Could not write file %s: %s' % (dest_path, err))
+        o.reply_and_exit(o.ERROR)
+
+    o.reply_and_exit(o.OK)
 
 elif is_user(client_id, configuration.mig_server_home):
 
@@ -551,7 +626,7 @@ elif is_server(client_id, configuration.server_home):
     # make sure that path exists
 
     try:
-        os.makedirs(dest_dir, mode=0777)
+        os.makedirs(dest_dir, mode=0775)
     except Exception:
 
         # An exception is thrown if the leaf exists
