@@ -334,8 +334,8 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     """Shared helper function to get a list of group entities in vgrid. The
     optional recursive argument is used to switch between direct vgrid and
     recursive vgrid operation including entities from parent vgrids.
-    If allow_missing is set a missing entity file results in success and an
-    empty list.
+    If allow_missing is set a missing entity file does not prevent success or
+    change the output list.
     """
     if group == 'owners':
         name = configuration.vgrid_owners
@@ -375,7 +375,7 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
             if msg != ['']:
                 output.extend(msg)
         elif allow_missing and not os.path.exists(name_path):
-            output = []
+            continue
         else:
             return (False, msg)
     return (True, output)
@@ -392,20 +392,26 @@ def vgrid_resources(vgrid_name, configuration, recursive=True):
     """Extract resources list for a vgrid"""
     return vgrid_list(vgrid_name, 'resources', configuration, recursive)
 
-def vgrid_triggers(vgrid_name, configuration, recursive=True):
+def vgrid_triggers(vgrid_name, configuration, recursive=True,
+                   allow_missing=True):
     """Extract triggers list for a vgrid"""
-    return vgrid_list(vgrid_name, 'triggers', configuration, recursive)
+    return vgrid_list(vgrid_name, 'triggers', configuration, recursive,
+                      allow_missing)
 
-def vgrid_settings(vgrid_name, configuration, recursive=True, as_dict=False):
+def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True,
+                   as_dict=False):
     """Extract settings list for a vgrid"""
-    (status, output)= vgrid_list(vgrid_name, 'settings', configuration, recursive)
+    (status, output)= vgrid_list(vgrid_name, 'settings', configuration,
+                                 recursive, allow_missing)
     if not isinstance(output, basestring):
         output = dict(output)
     return (status, output)
 
-def vgrid_sharelinks(vgrid_name, configuration, recursive=True):
+def vgrid_sharelinks(vgrid_name, configuration, recursive=True,
+                     allow_missing=True):
     """Extract sharelinks list for a vgrid"""
-    return vgrid_list(vgrid_name, 'sharelinks', configuration, recursive)
+    return vgrid_list(vgrid_name, 'sharelinks', configuration, recursive,
+                      allow_missing)
 
 def vgrid_match_resources(vgrid_name, resources, configuration):
     """Return a list of resources filtered to only those allowed in
