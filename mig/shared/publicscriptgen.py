@@ -213,8 +213,9 @@ def basic_usage_options(usage_str, lang):
         s += """
     echo \"%s\"
     echo \"Where OPTIONS include:\"
-    echo \"-c CONF\t\tread configuration from CONF instead of\"
-    echo \"\t\t\tdefault (~/.mig/miguser.conf).\"
+    echo \"-A AUTHTYPE\tuse e.g. sharelink auth rather than user cert\"
+    echo \"-c CONF\tread configuration from CONF instead of\"
+    echo \"\t\tdefault (~/.mig/miguser.conf).\"
     echo \"-h\t\tdisplay this help\"
     echo \"-s MIG_SERVER\tforce use of MIG_SERVER.\"
     echo \"-v\t\tverbose mode\"
@@ -224,7 +225,8 @@ def basic_usage_options(usage_str, lang):
         s += """
     print \"%s\"
     print \"Where OPTIONS include:\"
-    print \"-c CONF\t\tread configuration from CONF instead of\"
+    print \"-A AUTHTYPE\tuse e.g. sharelink auth rather than user cert\"
+    print \"-c CONF\tread configuration from CONF instead of\"
     print \"\t\tdefault (~/.mig/miguser.conf).\"
     print \"-h\t\tdisplay this help\"
     print \"-s MIG_SERVER\tforce use of MIG_SERVER.\"
@@ -242,7 +244,8 @@ def basic_usage_options(usage_str, lang):
 # ##########################
 
 
-def ca_check_init(lang):
+def auth_check_init(lang):
+    """Init all auth variables"""
     s = ''
     if lang == 'sh':
         s += """
@@ -254,6 +257,21 @@ def ca_check_init(lang):
     else
         ca_check=(\"--cacert $ca_cert_file\")
     fi
+    declare -a auth_check
+    if [ \"$auth_redir\" == \"cert_redirect\" ]; then
+        auth_check=(\"--cert $cert_file\" \"--key $key_file\")
+        put_arg=\"CERTPUT\"
+        auth_data=\"\"
+    else
+        auth_check=(\"\")
+        put_arg=\"SHAREPUT\"
+        auth_data=\"share_id=${auth_redir/share_redirect\//}\"
+    fi
+    if [ -z \"$password\" ]; then
+        password_check=("")
+    else
+        password_check=(\"--pass $password\")
+    fi
     """
     elif lang == 'python':
         s += """
@@ -263,26 +281,15 @@ def ca_check_init(lang):
         ca_check = []
     else:
         ca_check = [\"--cacert\", ca_cert_file]
-"""
+    if auth_redir == \"cert_redirect\":
+        auth_check = [\"--cert\", cert_file, \"--key\", key_file]
+        put_arg = \"CERTPUT\"
+        auth_data = \"\"
     else:
-        print 'Error: %s not supported!' % lang
-        return ''
-
-    return s
-
-
-def password_check_init(lang):
-    s = ''
-    if lang == 'sh':
-        s += """
-    if [ -z \"$password\" ]; then
-        password_check=("")
-    else
-        password_check=(\"--pass $password\")
-    fi
-    """
-    elif lang == 'python':
-        s += """
+        auth_check = []
+        put_arg = \"SHAREPUT\"
+        auth_data = \"share_id=%s\" % auth_redir.replace(\"share_redirect/\",
+                                                         \"\")
     if not password:
         password_check = []
     else:
@@ -294,8 +301,8 @@ def password_check_init(lang):
 
     return s
 
-
 def timeout_check_init(lang):
+    """Init timeout_check"""
     s = ''
     if lang == 'sh':
         s += """
@@ -356,6 +363,7 @@ def curl_perform(
             i=$((i+1))
         done
     }
+    default_args=\"$auth_data;output_format=txt\"
     curl=\"%s %s --location --fail --silent --show-error\"
     target_data=%s
     location=%s
@@ -395,9 +403,8 @@ def curl_perform(
     fi
     # Make sure e.g. spaces are encoded since they are not allowed in URL
     url=\"--url '$mig_server/$(urlquote $location)$query'\"
-    command=\"$curl --cert $cert_file --key $key_file ${ca_check[@]} \"
-    command+=\"${password_check[@]} ${timeout[@]} ${data[@]} ${urlenc[@]} \"
-    command+=\"${target[@]} $url\"
+    command=\"$curl ${auth_check[@]} ${ca_check[@]} ${password_check[@]} \"
+    command+=\"${timeout[@]} ${data[@]} ${urlenc[@]} ${target[@]} $url\"
     #echo \"DEBUG: command: $command\"
     eval $command
 """\
@@ -412,6 +419,7 @@ def curl_perform(
             )
     elif lang == 'python':
         s += """
+    default_args = \"%%s;output_format=txt\" %% auth_data
     curl = ['%s'] + '%s'.split() + ['--location', '--fail', '--silent',
                                     '--show-error']
     target_data = %s
@@ -444,9 +452,8 @@ def curl_perform(
     from urllib import quote as urlquote
     url = ['--url', mig_server + '/' + urlquote(location) + query]
     # NOTE: we build list directly in order to preserve e.g. spaces in paths
-    command_list = curl + ['--cert', cert_file, '--key', key_file] + \\
-                   ca_check + password_check + timeout + data + urlenc + \\
-                   target + url
+    command_list = curl + auth_check + ca_check + password_check + timeout + \\
+                   data + urlenc + target + url
     #print \"DEBUG: command: %%s\" %% command_list
     # NOTE: for security we do not invoke shell here
     proc = subprocess.Popen(command_list, stdout=subprocess.PIPE,
@@ -486,6 +493,7 @@ def basic_main_init(lang):
         s += """
 verbose=0
 conf=\"$HOME/.mig/miguser.conf\"
+auth_redir=""
 flags=""
 server_flags=""
 mig_server=""
@@ -499,6 +507,7 @@ script_dir=`dirname $script_path`
         s += """
 verbose = 0
 conf = os.path.expanduser(\"~/.mig/miguser.conf\")
+auth_redir=""
 flags = ""
 mig_server = ""
 server_flags = ""
@@ -518,12 +527,13 @@ def parse_options(lang, extra_opts, extra_opts_handler):
         # Advice about parsing taken from:
         # http://www.shelldorado.com/goodcoding/cmdargs.html
 
-        opts_str = 'c:hrs:vV'
+        opts_str = 'A:c:hrs:vV'
         if extra_opts:
             opts_str += extra_opts
         s += 'while getopts %s opt; do' % opts_str
         s += """
     case \"$opt\" in
+        A)  auth_redir=\"$OPTARG\";;
         c)  conf=\"$OPTARG\"
             flags="$flags -c $conf";;
         h)  usage
@@ -548,7 +558,7 @@ shift `expr $OPTIND - 1`
 
 """
     elif lang == 'python':
-        opts_str = 'c:hrs:vV'
+        opts_str = 'A:c:hrs:vV'
         if extra_opts:
             opts_str += extra_opts
         s += 'opt_args = "%s"' % opts_str
@@ -565,7 +575,9 @@ except getopt.GetoptError, goe:
     sys.exit(1)
 
 for (opt, val) in opts:
-    if opt == \"-c\":
+    if opt == \"-A\":
+        auth_redir = val
+    elif opt == \"-c\":
         conf = val
     elif opt == \"-h\":
         usage()
@@ -629,6 +641,14 @@ if [ -z \"$mig_server\" ]; then
     read_conf $conf 'migserver'
     mig_server=\"$conf_value\"
 fi
+if [ -z \"$auth_redir\" ]; then
+    read_conf $conf 'auth_redir'
+    auth_redir=\"$conf_value\"
+fi
+# Fall back to cert if not set
+if [ -z \"$auth_redir\" ]; then
+    auth_redir=\"cert_redirect\"
+fi
 
 # Force tilde and variable expansion on path vars
 read_conf $conf 'certfile'
@@ -645,13 +665,20 @@ read_conf $conf 'max_time'
 max_time=\"$conf_value\"
 
 check_var migserver \"$mig_server\"
-check_var certfile \"$cert_file\"
-check_var keyfile \"$key_file\"
+if [ \"$auth_redir\" == \"cert_redirect\" ]; then
+    check_var certfile \"$cert_file\"
+    check_var keyfile \"$key_file\"
+fi
 """
     elif lang == 'python':
         s += """
 if not mig_server:
     mig_server = read_conf(conf, 'migserver')
+if not auth_redir:
+    auth_redir = read_conf(conf, 'auth_redir')
+# Fall back to cert if not set
+if not auth_redir:
+    auth_redir = \"cert_redirect\"
 
 def expand_path(path):
     '''Expand user home'''
@@ -669,8 +696,9 @@ connect_timeout = read_conf(conf, 'connect_timeout')
 max_time = read_conf(conf, 'max_time')
 
 check_var('migserver', mig_server)
-check_var('certfile', cert_file)
-check_var('keyfile', key_file)
+if auth_redir == \"cert_redirect\":
+    check_var('certfile', cert_file)
+    check_var('keyfile', key_file)
 """
     else:
         print 'Error: %s not supported!' % lang

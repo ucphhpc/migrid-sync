@@ -174,10 +174,10 @@ def vgrid_single_argument_function(
     relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt"'
+        post_data = '"$default_args"'
         urlenc_data = '("%s=$%s")' % (first_arg, first_arg)
     elif lang == 'python':
-        post_data = "'output_format=txt'"
+        post_data = "'%s' % default_args"
         urlenc_data = "['%s=' + %s]" % (first_arg, first_arg)
     else:
         print 'Error: %s not supported!' % lang
@@ -186,8 +186,7 @@ def vgrid_single_argument_function(
     s = ''
     s += begin_function(lang, 'submit_command', [first_arg],
                         'Call corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -229,8 +228,7 @@ def vgrid_single_argument_upload_function(
     s = ''
     s += begin_function(lang, 'submit_command', [first_arg],
                         'Call corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -259,11 +257,11 @@ def vgrid_two_arguments_function(
     relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt"'
+        post_data = '"$default_args"'
         urlenc_data = '("%s=$%s" "%s=$%s")' % (first_arg, first_arg,
                                                second_arg, second_arg)
     elif lang == 'python':
-        post_data = "'output_format=txt'"
+        post_data = "'%s' % default_args"
         urlenc_data = "['%s=' + %s, '%s=' + %s]" % (first_arg, first_arg,
                                                    second_arg, second_arg)
     else:
@@ -274,8 +272,7 @@ def vgrid_two_arguments_function(
     s = ''
     s += begin_function(lang, 'submit_command', [first_arg, second_arg],
                         'Call corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -311,7 +308,7 @@ def vgrid_ten_arguments_function(
     relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt"'
+        post_data = '"$default_args"'
         urlenc_data = '("%s=$%s" "%s=$%s" "%s=$%s" "%s=$%s" "%s=$%s" ' % \
                       (first_arg, first_arg, second_arg, second_arg, third_arg,
                        third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg)
@@ -320,7 +317,7 @@ def vgrid_ten_arguments_function(
                         eighth_arg, eighth_arg, ninth_arg, ninth_arg, 
                         tenth_arg, tenth_arg)
     elif lang == 'python':
-        post_data = "'output_format=txt'"
+        post_data = "'%s' % default_args"
         urlenc_data = "['%s=' + %s, '%s=' + %s, '%s=' + %s, '%s=' + %s, " % \
                       (first_arg, first_arg, second_arg, second_arg, third_arg,
                        third_arg, fourth_arg, fourth_arg)
@@ -341,8 +338,7 @@ def vgrid_ten_arguments_function(
                                                  seventh_arg, eighth_arg,
                                                  ninth_arg, tenth_arg],
                         'Call corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,

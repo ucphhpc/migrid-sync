@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # expand - emulate shell wild card expansion
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,26 +32,27 @@ wild card expansion.
 
 import os
 import glob
+from urllib import quote
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_path
-from shared.functional import validate_input_and_cert
-from shared.functionality.ls import select_all_javascript, \
-    selected_file_actions_javascript
+from shared.functional import validate_input
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive
-from shared.settings import load_settings
+from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 
 
 def signature():
     """Signature of the main function"""
-
-    defaults = {'flags': [''], 'path': ['.'], 'with_dest': ['false']}
+    defaults = {'flags': [''], 'path': ['.'], 'share_id': [''],
+                'current_dir': ['.'],'with_dest': ['false']}
     return ['dir_listings', defaults]
 
 
 def handle_file(
+    configuration,
     listing,
     filename,
     file_with_dir,
@@ -72,6 +73,10 @@ def handle_file(
         'object_type': 'direntry',
         'type': 'file',
         'name': filename,
+        'rel_path': file_with_dir,
+        'rel_path_enc': quote(file_with_dir),
+        'rel_dir_enc': quote(os.path.dirname(file_with_dir)),
+        # NOTE: file_with_dir is kept for backwards compliance
         'file_with_dir': file_with_dir,
         'flags': flags,
         }
@@ -83,6 +88,7 @@ def handle_file(
 
 
 def handle_expand(
+    configuration,
     output_objects,
     listing,
     base_dir,
@@ -114,19 +120,14 @@ def handle_expand(
         base_name = os.path.basename(real_path)
         relative_path = real_path.replace(base_dir, '')
 
+    # Recursion can get here when called without explicit invisible files
+    
     if invisible_path(relative_path):
         return
 
     if os.path.isfile(real_path):
-        handle_file(
-            listing,
-            relative_path,
-            relative_path,
-            real_path,
-            flags,
-            dest,
-            show_dest,
-            )
+        handle_file(configuration, listing, relative_path, relative_path,
+                    real_path, flags, dest, show_dest)
     else:
         try:
             contents = os.listdir(real_path)
@@ -148,20 +149,16 @@ def handle_expand(
                 path = real_path + os.sep + name
                 rel_path = path.replace(base_dir, '')
                 if os.path.isfile(path):
-                    handle_file(
-                        listing,
-                        rel_path,
-                        rel_path,
-                        path,
-                        flags,
-                        os.path.join(dest, os.path.basename(rel_path)),
-                        show_dest,
-                        )
+                    handle_file(configuration, listing, rel_path, rel_path,
+                                path, flags, 
+                                os.path.join(dest, os.path.basename(rel_path)),
+                                show_dest)
         else:
 
             # Force pure content listing first by passing a negative depth
 
             handle_expand(
+                configuration,
                 output_objects,
                 listing,
                 base_dir,
@@ -177,6 +174,7 @@ def handle_expand(
                 rel_path = path.replace(base_dir, '')
                 if os.path.isdir(path):
                     handle_expand(
+                        configuration,
                         output_objects,
                         listing,
                         base_dir,
@@ -192,15 +190,13 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
-    client_dir = client_id_dir(client_id)
+        initialize_main_variables(client_id, op_header=False,
+                                  op_menu=client_id)
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input_and_cert(
+    (validate_status, accepted) = validate_input(
         user_arguments_dict,
         defaults,
         output_objects,
-        client_id,
-        configuration,
         allow_rejects=False,
         )
     if not validate_status:
@@ -208,53 +204,131 @@ def main(client_id, user_arguments_dict):
 
     flags = ''.join(accepted['flags'])
     pattern_list = accepted['path']
+    current_dir = accepted['current_dir'][-1].lstrip('/')
+    share_id = accepted['share_id'][-1]
     show_dest = accepted['with_dest'][0].lower() == 'true'
-    listing = []
-
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
-
-    base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
 
     status = returnvalues.OK
 
-    settings_dict = load_settings(client_id, configuration)
-    javascript = '%s\n%s' % (select_all_javascript(),
-                             selected_file_actions_javascript())
+    read_mode, write_mode = True, True
+    # Either authenticated user client_id set or sharelink ID
+    if client_id:
+        user_id = client_id
+        target_dir = client_id_dir(client_id)
+        base_dir = configuration.user_home
+        redirect_name = configuration.site_user_redirect
+        redirect_path = redirect_name
+        id_args = ''
+        root_link_name = 'USER HOME'
+        main_id = "user_expand"
+        page_title = 'User Files'
+        visibility_mods = '''
+            #%(main_id)s .disable_read { display: none; }
+            #%(main_id)s .disable_write { display: none; }
+            '''
+    elif share_id:
+        (share_mode, _) = extract_mode_id(configuration, share_id)
+        # TODO: load and check sharelink pickle (currently requires client_id)
+        # then include shared by %(owner)s on page header
+        user_id = 'anonymous user through share ID %s' % share_id
+        target_dir = os.path.join(share_mode, share_id)
+        base_dir = configuration.sharelink_home
+        redirect_name = 'share_redirect'
+        redirect_path = os.path.join(redirect_name, share_id)
+        id_args = 'share_id=%s;' % share_id
+        root_link_name = '%s' % share_id
+        main_id = "sharelink_expand"
+        page_title = 'Shared Files'
+        if share_mode == 'read-only':
+            write_mode = False
+            visibility_mods = '''
+            #%(main_id)s .enable_write { display: none; }
+            #%(main_id)s .disable_read { display: none; }
+            '''
+        elif share_mode == 'write-only':
+            read_mode = False
+            visibility_mods = '''
+            #%(main_id)s .enable_read { display: none; }
+            #%(main_id)s .disable_write { display: none; }
+            '''
+        else:
+            visibility_mods = '''
+            #%(main_id)s .disable_read { display: none; }
+            #%(main_id)s .disable_write { display: none; }
+            '''
+    else:
+        logger.error('%s called without proper auth: %s' % (op_name, accepted))
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Authentication is missing!'
+                              })
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+        
+    visibility_toggle = '''
+        <style>
+        %s
+        </style>
+        ''' % (visibility_mods % {'main_id': main_id})
+    
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(base_dir, target_dir)) + os.sep
+
+    if not os.path.isdir(base_dir):
+        logger.error('%s called on missing base_dir: %s' % (op_name, base_dir))
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'No such %s!' % page_title.lower()
+                              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s Files' % configuration.short_title
-    title_entry['javascript'] = javascript
-    output_objects.append({'object_type': 'header', 
-                           'text': '%s Files' % configuration.short_title
-                          })
+    title_entry['text'] = page_title
 
-    location_pre_html = \
-        """
+    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
+                   'skin_base': configuration.site_skin_base}
+    styles = themed_styles(configuration, base=['jquery.fileupload.css',
+                                                'jquery.fileupload-ui.css'],
+                           skin=['fileupload-ui.custom.css'])
+    styles['advanced'] += '''
+    %s
+    ''' % visibility_toggle
+    title_entry['style'] = styles
+    title_entry['javascript'] = ''
+
+    title_entry['bodyfunctions'] += ' id="%s"' % main_id
+    output_objects.append({'object_type': 'header', 'text': page_title})
+
+    # Shared URL helpers 
+    ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s;flags=%s' % \
+                      (id_args, flags)
+    redirect_url_template = '/%s/%%(rel_path_enc)s' % redirect_path
+
+    location_pre_html = """
 <div class='files'>
 <table class='files'>
-<tr class='title'><td class='centertext'>
+<tr class=title><td class=centertext>
 Working directory:
 </td></tr>
 <tr><td class='centertext'>
 """
     output_objects.append({'object_type': 'html_form', 'text'
                           : location_pre_html})
-    for pattern in pattern_list:
+    # Use current_dir nav location links
+    for pattern in pattern_list[:1]:
         links = []
-        links.append({'object_type': 'link', 'text': 
-                      '%s HOME' % configuration.short_title,
-                      'destination': 'ls.py?path=.'})
+        links.append({'object_type': 'link', 'text': root_link_name,
+                      'destination': ls_url_template % {'rel_dir_enc': '.'}})
         prefix = ''
-        parts = pattern.split(os.sep)
+        parts = os.path.normpath(current_dir).split(os.sep)
         for i in parts:
+            if i == ".":
+                continue
             prefix = os.path.join(prefix, i)
             links.append({'object_type': 'link', 'text': i,
-                         'destination': 'ls.py?path=%s' % prefix})
+                         'destination': ls_url_template % \
+                          {'rel_dir_enc': quote(prefix)}})
         output_objects.append({'object_type': 'multilinkline', 'links'
-                              : links})
-
+                              : links, 'sep': ' %s ' % os.sep})
     location_post_html = """
 </td></tr>
 </table>
@@ -264,19 +338,19 @@ Working directory:
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : location_post_html})
-    more_html = \
-              """
-<div class='files'>
+
+    more_html = """
+<div class='files if_full'>
 <form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
 <table class='files'>
-<tr class='title'><td class='centertext' colspan=2>
+<tr class=title><td class=centertext colspan=2>
 Advanced file actions
 </td></tr>
 <tr><td>
 Action on paths selected below
 (please hold mouse cursor over button for a description):
 </td>
-<td class='centertext'>
+<td class=centertext>
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='flags' value='v' />
 <input type='submit' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat' />
@@ -302,6 +376,14 @@ Action on paths selected below
         'object_type': 'dir_listings',
         'dir_listings': dir_listings,
         'flags': flags,
+        'redirect_name': redirect_name,
+        'redirect_path': redirect_path,
+        'share_id': share_id,
+        'ls_url_template': ls_url_template,
+        'rm_url_template': '',
+        'rmdir_url_template': '',
+        'editor_url_template': '',
+        'redirect_url_template': redirect_url_template,
         'show_dest': show_dest,
         })
 
@@ -312,13 +394,14 @@ Action on paths selected below
         # leaking information about file system layout while allowing
         # consistent error messages
 
-        unfiltered_match = glob.glob(base_dir + pattern)
+        current_path = os.path.normpath(os.path.join(base_dir, current_dir))
+        unfiltered_match = glob.glob(current_path + os.sep + pattern)
         match = []
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
-                logger.warning('%s tried to %s restricted path %s! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (user_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
             if not first_match:
@@ -361,72 +444,69 @@ Action on paths selected below
 
                         dest = os.path.basename(real_path) + os.sep
 
-            handle_expand(
-                output_objects,
-                entries,
-                base_dir,
-                real_path,
-                flags,
-                dest,
-                0,
-                show_dest,
-                )
+            handle_expand(configuration, output_objects, entries, base_dir,
+                          real_path, flags, dest, 0, show_dest)
             dir_listings.append(dir_listing)
 
+    fill_helper = {'dest_dir': current_dir + os.sep, 'share_id': share_id,
+                   'flags': flags, 'tmp_flags': flags, 'long_set':
+                   long_list(flags), 'recursive_set': recursive(flags),
+                   'all_set': all(flags)}
+        
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-    <div class='files'>
-    <table class='files'>
-    <tr class='title'><td class='centertext'>
-    Filter paths (wildcards like * and ? are allowed)
+    <div class='files disable_read'>
     <form method='post' action='ls.py'>
+    <table class='files'>
+    <tr class=title><td class=centertext>
+    Filter paths (wildcards like * and ? are allowed)
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />
+    <input type='hidden' name='flags' value='%(flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
     <input type='text' name='path' value='' />
     <input type='submit' value='Filter' />
-    </form>
     </td></tr>
     </table>    
+    </form>
     </div>
-    """
-                           % flags})
+    """ % fill_helper})
 
     # Short/long format buttons
 
-    htmlform = \
-        """<table class='files'>
-    <tr class='title'><td class='centertext' colspan=4>
+    fill_helper['tmp_flags'] = flags + 'l'
+    htmlform = """
+    <table class='files if_full'>
+    <tr class=title><td class=centertext colspan=4>
     File view options
     </td></tr>
     <tr><td colspan=4><br /></td></tr>
-    <tr class='title'><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
+    <tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
     <tr><td>Long format</td><td>
-    %s</td><td>"""\
-         % long_list(flags)\
-         + """
+    %(long_set)s</td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-         % (flags + 'l')
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
 
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"\
-             % entry
-    htmlform += \
-        """
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
+    fill_helper['tmp_flags'] = flags.replace('l', '')
+    htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-         % flags.replace('l', '')
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"\
-             % entry
-
-    htmlform += \
-        """
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
+    htmlform += """
     <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
@@ -434,111 +514,98 @@ Action on paths selected below
 
     # Recursive output
 
-    htmlform += \
-             """
+    fill_helper['tmp_flags'] = flags + 'r'
+    htmlform += """
     <!-- Non-/recursive list buttons -->
     <tr><td>Recursion</td><td>
-    %s</td><td>"""\
-             % recursive(flags)
-    htmlform += \
-             """
+    %(recursive_set)s</td><td>""" % fill_helper
+    htmlform += """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-             % (flags + 'r')
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
     for entry in pattern_list:
-        htmlform += " <input type='hidden' name='path' value='%s' />"\
-                    % entry
-    htmlform += \
-            """
+        htmlform += "<input type='hidden' name='path' value='%s' />"% entry
+    fill_helper['tmp_flags'] = flags.replace('r', '')
+    htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-             % flags.replace('r', '')
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
+                                  
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
                     % entry
-        htmlform += \
-                 """
+        htmlform += """
     <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
     """
 
-    htmlform += \
-        """
+    htmlform += """
     <!-- Show dot files buttons -->
     <tr><td>Show hidden files</td><td>
-    %s</td><td>"""\
-         % all(flags)
-    htmlform += \
-        """
+    %(all_set)s</td><td>""" % fill_helper
+    fill_helper['tmp_flags'] = flags + 'a'
+    htmlform += """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-         % (flags + 'a')
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"\
-             % entry
-    htmlform += \
-        """
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
+    fill_helper['tmp_flags'] = flags.replace('a', '')
+    htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
-    <input type='hidden' name='flags' value='%s' />"""\
-         % flags.replace('a', '')
+    <input type='hidden' name='flags' value='%(tmp_flags)s' />
+    <input type='hidden' name='share_id' value='%(share_id)s' />
+    <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+    """ % fill_helper
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"\
-             % entry
-    htmlform += \
-        """
+        htmlform += "<input type='hidden' name='path' value='%s' />"% entry
+    htmlform += """
     <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
     </table>
     """
 
-    # show flag buttons after contents to avoid
+    # show flag buttons after contents to limit clutter
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : htmlform})
 
-    # create upload file form
+    # create additional action forms
 
     if first_match:
-
-        # use first match for current directory
-        # Note that base_dir contains an ending slash
-
-        if os.path.isdir(first_match):
-            dir_path = first_match
-        else:
-            dir_path = os.path.dirname(first_match)
-
-        if dir_path + os.sep == base_dir:
-            relative_dir = '.'
-        else:
-            relative_dir = dir_path.replace(base_dir, '')
-
         output_objects.append({'object_type': 'html_form', 'text'
                               : """
 <br />
-<table class='files'>
-<tr class='title'><td class='centertext' colspan=2>
+<table class='files enable_write if_full'>
+<tr class=title><td class=centertext colspan=3>
 Edit file
-</td><td><br /></td></tr>
+</td></tr>
 <tr><td>
 Fill in the path of a file to edit and press 'edit' to open that file in the<br />
 online file editor. Alternatively a file can be selected for editing through<br />
 the listing of personal files. 
-</td><td colspan=2 class='righttext'>
+</td><td colspan=2 class=righttext>
 <form name='editor' method='post' action='editor.py'>
 <input type='hidden' name='output_format' value='html' />
+<input type='hidden' name='share_id' value='%(share_id)s' />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
 <input type='text' name='path' size=50 value='' />
 <input type='submit' value='edit' />
@@ -546,56 +613,54 @@ the listing of personal files.
 </td></tr>
 </table>
 <br />
-<table class='files'>
-<tr class='title'><td class='centertext' colspan=4>
+<table class='files enable_write'>
+<tr class=title><td class=centertext colspan=4>
 Create directory
 </td></tr>
 <tr><td>
 Name of new directory to be created in current directory (%(dest_dir)s)
-</td><td class='righttext' colspan=3>
+</td><td class=righttext colspan=3>
 <form action='mkdir.py' method=post>
-<input name='path' size=50 />
+<input type='hidden' name='share_id' value='%(share_id)s' />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
+<input name='path' size=50 />
 <input type='submit' value='Create' name='mkdirbutton' />
 </form>
 </td></tr>
 </table>
 <br />
 <form enctype='multipart/form-data' action='textarea.py' method='post'>
-<table class='files'>
-<tr class='title'><td class='centertext' colspan=4>
+<input type='hidden' name='share_id' value='%(share_id)s' />
+<table class='files enable_write if_full'>
+<tr class='title'><td class=centertext colspan=4>
 Upload file
 </td></tr>
 <tr><td colspan=4>
 Upload file to current directory (%(dest_dir)s)
 </td></tr>
-<tr><td colspan=2>
+<tr class='if_full'><td colspan=2>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
-<input type='checkbox' name='extract_0' />
+<input type=checkbox name='extract_0' />
 </td></tr>
-<tr><td colspan=2>
+<tr class='if_full'><td colspan=2>
 Submit mRSL files (also .mRSL files included in packages)
 </td><td colspan=2>
-<input type='checkbox' name='submitmrsl_0' checked />
+<input type=checkbox name='submitmrsl_0' />
 </td></tr>
 <tr><td>    
 File to upload
-</td><td class='righttext' colspan=3>
-<input name='fileupload_0_0_0' type='file' />
+</td><td class=righttext colspan=3>
+<input name='fileupload_0_0_0' type='file'/>
 </td></tr>
 <tr><td>
 Optional remote filename (extra useful in windows)
-</td><td class='righttext' colspan=3>
-<input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s' />
-<input name='remotefilename_0' type='text' size='50' value='%(dest_dir)s' />
-<input type='submit' value='Upload' name='sendfile' />
+</td><td class=righttext colspan=3>
+<input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
+<input name='remotefilename_0' type='text' size='50' value='%(dest_dir)s'/>
+<input type='submit' value='Upload' name='sendfile'/>
 </td></tr>
 </table>
 </form>
-    """
-                               % {'dest_dir': relative_dir + os.sep}})
-
+    """ % fill_helper})
     return (output_objects, status)
-
-

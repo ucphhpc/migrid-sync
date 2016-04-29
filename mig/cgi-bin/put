@@ -405,6 +405,12 @@ elif is_user(client_id, configuration.mig_server_home):
 
     # logger.info("Certificate found as a user cert: " + client_id)
 
+    # We are switching to explicit cert_redirect in PUT for symmetry with GET
+    # but leave it optional for now to remain backward compatible
+    
+    filename = filename.replace('/cert_redirect/', '')
+    rel_name = filename.lstrip(os.sep)
+
     if content_type == 'text/resourceconf':
         pending_file = os.path.join(configuration.resource_pending,
                                     client_dir, rel_name + '.' + str(time.time()))

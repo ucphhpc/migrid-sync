@@ -43,7 +43,6 @@ from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
      confirm_js, confirm_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
-from shared.settings import load_settings
 from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 
@@ -381,7 +380,6 @@ def main(client_id, user_arguments_dict):
         base_dir = configuration.user_home
         redirect_name = configuration.site_user_redirect
         redirect_path = redirect_name
-        settings_dict = load_settings(client_id, configuration)
         id_args = ''
         root_link_name = 'USER HOME'
         main_id = "user_ls"
@@ -399,7 +397,6 @@ def main(client_id, user_arguments_dict):
         base_dir = configuration.sharelink_home
         redirect_name = 'share_redirect'
         redirect_path = os.path.join(redirect_name, share_id)
-        settings_dict = {}
         id_args = 'share_id=%s;' % share_id
         root_link_name = '%s' % share_id
         main_id = "sharelink_ls"

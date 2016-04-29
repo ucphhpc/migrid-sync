@@ -789,10 +789,10 @@ def cancel_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/jobaction.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;action=cancel"'
+        post_data = '"$default_args;flags=$server_flags;action=cancel"'
         urlenc_data = '${job_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;action=cancel' % server_flags"
+        post_data = "'%s;flags=%s;action=cancel' % (default_args, server_flags)"
         urlenc_data = "job_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -801,8 +801,7 @@ def cancel_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'cancel_job', ['job_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -823,10 +822,10 @@ def cat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/cat.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -835,8 +834,7 @@ def cat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'cat_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -857,10 +855,10 @@ def cp_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/cp.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags" 
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
@@ -869,8 +867,7 @@ def cp_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'cp_file', ['src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -893,10 +890,10 @@ def doc_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/docs.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '("search=$search" "show=$show")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["search=" + search, "show=" + show]'
     else:
         print 'Error: %s not supported!' % lang
@@ -905,8 +902,7 @@ def doc_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'show_doc', ['search', 'show'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -929,10 +925,10 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/expand.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;with_dest=$destinations"'
+        post_data = '"$default_args;flags=$server_flags;with_dest=$destinations"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;with_dest=%s' % (server_flags, destinations)"
+        post_data = "'%s;flags=%s;with_dest=%s' % (default_args, server_flags, destinations)"
         urlenc_data = 'path_list'
     else:
         print 'Error: %s not supported!' % lang
@@ -942,8 +938,7 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s += begin_function(lang, 'expand_name', ['path_list',
                         'server_flags', 'destinations'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -967,10 +962,10 @@ def filemetaio_function(configuration, lang, curl_cmd, curl_flags='--compressed'
     query = '""'
     # TODO: is arg_list realy a list here?
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;action=$action"'
+        post_data = '"$default_args;flags=$server_flags;action=$action"'
         urlenc_data = '("path=$path" "${arg_list[@]}")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;action=%s' % (server_flags, action)"
+        post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = '["path=" + path] + arg_list'
         
     else:
@@ -980,8 +975,7 @@ def filemetaio_function(configuration, lang, curl_cmd, curl_flags='--compressed'
     s = ''
     s += begin_function(lang, 'filemetaio', ['action', 'path', 'arg_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1008,14 +1002,14 @@ def get_function(configuration, lang, curl_cmd, curl_flags='--compressed --creat
 
         # TODO: should we handle below double slash problem here, too?
 
-        relative_url = '"cert_redirect/$src_path"'
+        relative_url = '"$auth_redir/$src_path"'
         curl_target = '("--output \'$dst_path\'")'
     elif lang == 'python':
 
         # Apache chokes on possible double slash in url and that causes
         # fatal errors in migfs-fuse - remove it from src_path.
 
-        relative_url = '"cert_redirect/%s" % src_path.lstrip("/")'
+        relative_url = "'%s/%s' % (auth_redir, src_path.lstrip('/'))"
         curl_target = "['--output', dst_path]"
     else:
         print 'Error: %s not supported!' % lang
@@ -1024,8 +1018,7 @@ def get_function(configuration, lang, curl_cmd, curl_flags='--compressed --creat
     s = ''
     s += begin_function(lang, 'get_file', ['src_path', 'dst_path'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1049,10 +1042,10 @@ def grep_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/grep.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '("${path_list[@]}" "pattern=$pattern")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'path_list + ["pattern=" + pattern]'
     else:
         print 'Error: %s not supported!' % lang
@@ -1061,8 +1054,7 @@ def grep_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'grep_file', ['pattern', 'path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1083,10 +1075,10 @@ def head_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/head.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;lines=$lines"'
+        post_data = '"$default_args;flags=$server_flags;lines=$lines"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;lines=%s' % (server_flags, lines)"
+        post_data = "'%s;flags=%s;lines=%s' % (default_args, server_flags, lines)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1095,8 +1087,7 @@ def head_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'head_file', ['lines', 'path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1119,10 +1110,10 @@ def jobaction_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/jobaction.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;action=$action"'
+        post_data = '"$default_args;flags=$server_flags;action=$action"'
         urlenc_data = '${job_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;action=%s' % (server_flags, action)"
+        post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = "job_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1131,8 +1122,7 @@ def jobaction_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'job_action', ['action', 'job_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1155,10 +1145,10 @@ def liveio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/liveio.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;action=$action"'
+        post_data = '"$default_args;flags=$server_flags;action=$action"'
         urlenc_data = '("${src_list[@]}" "job_id=$job_id" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;action=%s' % (server_flags, action)"
+        post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = 'src_list + ["job_id=" + job_id, "dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
@@ -1167,8 +1157,7 @@ def liveio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'job_liveio', ['action', 'job_id', 'src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1189,10 +1178,10 @@ def ls_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/ls.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1201,8 +1190,7 @@ def ls_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'ls_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1225,10 +1213,10 @@ def md5sum_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/chksum.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;hash_algo=md5"'
+        post_data = '"$default_args;flags=$server_flags;hash_algo=md5"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;hash_algo=md5' % server_flags"
+        post_data = "'%s;flags=%s;hash_algo=md5' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1237,8 +1225,7 @@ def md5sum_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'md5_sum', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1259,10 +1246,10 @@ def mkdir_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/mkdir.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1271,8 +1258,7 @@ def mkdir_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'mk_dir', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1294,10 +1280,10 @@ def mqueue_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/mqueue.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;action=$action"'
+        post_data = '"$default_args;flags=$server_flags;action=$action"'
         urlenc_data = '("queue=$queue" "msg=$msg")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;action=%s' % (server_flags, action)"
+        post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = '["queue=" + queue, "msg=" + msg]'
     else:
         print 'Error: %s not supported!' % lang
@@ -1306,8 +1292,7 @@ def mqueue_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'job_mqueue', ['action', 'queue', 'msg'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1328,10 +1313,10 @@ def mv_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/mv.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
@@ -1340,8 +1325,7 @@ def mv_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'mv_file', ['src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1368,17 +1352,17 @@ def put_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
 
         # TODO: should we handle below double slash problem here, too?
 
-        relative_url = '"$dst_path"'
+        relative_url = '"$auth_redir/$dst_path"'
         curl_target = \
-            '("--upload-file \'$src_path\'" "--header $content_type" "-X CERTPUT")'
+            '("--upload-file \'$src_path\'" "--header $content_type" "-X $put_arg")'
     elif lang == 'python':
 
         # Apache chokes on possible double slash in url and that causes
         # fatal errors in migfs-fuse - remove it from src_path.
 
-        relative_url = '"%s" % dst_path.lstrip("/")'
+        relative_url = '"%s/%s" % (auth_redir, dst_path.lstrip("/"))'
         curl_target = \
-            "['--upload-file', src_path, '--header', '%s' % content_type, '-X', 'CERTPUT']"
+            "['--upload-file', src_path, '--header', '%s' % content_type, '-X', put_arg]"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1387,8 +1371,7 @@ def put_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s += begin_function(lang, 'put_file', ['src_path', 'dst_path',
                         'submit_mrsl', 'extract_package'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     if lang == 'sh':
         s += """
@@ -1441,16 +1424,16 @@ def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     urlenc_data = '""'
     if lang == 'sh':
         query = \
-            '"?output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$src_path"'
+            '"?$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$src_path"'
         #post_data = \
-        #    '"output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
+        #    '"$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
         #urlenc_data = '("src_path=$src_path")'
         curl_target = '("--output \'$dst_path\'")'
     elif lang == 'python':
         query = \
-            "'?output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (server_flags, first, last, src_path)"
+            "'?%s;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (default_args, server_flags, first, last, src_path)"
         #post_data = \
-        #    "'output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s' % (server_flags, first, last)"
+        #    "'%s;flags=%s;file_startpos=%s;file_endpos=%s' % (default_args, server_flags, first, last)"
         #urlenc_data = '["src_path=%s" % src_path]'
         curl_target = "['--output', dst_path]"
     else:
@@ -1461,8 +1444,7 @@ def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s += begin_function(lang, 'read_file', ['first', 'last', 'src_path'
                         , 'dst_path'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1484,10 +1466,10 @@ def resubmit_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/resubmit.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${job_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "job_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1496,8 +1478,7 @@ def resubmit_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'resubmit_job', ['job_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1518,10 +1499,10 @@ def rm_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/rm.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1530,8 +1511,7 @@ def rm_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'rm_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1552,10 +1532,10 @@ def rmdir_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/rmdir.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1564,8 +1544,7 @@ def rmdir_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'rm_dir', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1588,10 +1567,10 @@ def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/chksum.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;hash_algo=sha1"'
+        post_data = '"$default_args;flags=$server_flags;hash_algo=sha1"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;hash_algo=sha1' % server_flags"
+        post_data = "'%s;flags=%s;hash_algo=sha1' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1600,8 +1579,7 @@ def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'sha1_sum', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1622,10 +1600,10 @@ def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/statpath.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1634,8 +1612,7 @@ def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'stat_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1656,10 +1633,10 @@ def status_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/jobstatus.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;max_jobs=$max_job_count"'
+        post_data = '"$default_args;flags=$server_flags;max_jobs=$max_job_count"'
         urlenc_data = '${job_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;max_jobs=%s' % (server_flags, max_job_count)"
+        post_data = "'%s;flags=%s;max_jobs=%s' % (default_args, server_flags, max_job_count)"
         urlenc_data = "job_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1668,8 +1645,7 @@ def status_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'
                         ], 'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1690,10 +1666,10 @@ def submit_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/submit.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1711,8 +1687,7 @@ def submit_function(configuration, lang, curl_cmd, curl_flags=''):
     
     s += begin_function(lang, 'submit_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -1733,10 +1708,10 @@ def tail_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/tail.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;lines=$lines"'
+        post_data = '"$default_args;flags=$server_flags;lines=$lines"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;lines=%s' % (server_flags, lines)"
+        post_data = "'%s;flags=%s;lines=%s' % (default_args, server_flags, lines)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -1745,8 +1720,7 @@ def tail_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'tail_file', ['lines', 'path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -2153,10 +2127,10 @@ def touch_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/touch.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -2165,8 +2139,7 @@ def touch_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'touch_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -2187,10 +2160,10 @@ def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/truncate.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;size=$size"'
+        post_data = '"$default_args;flags=$server_flags;size=$size"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s;size=%s' % (server_flags, size)"
+        post_data = "'%s;flags=%s;size=%s' % (default_args, server_flags, size)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -2199,8 +2172,7 @@ def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'truncate_file', ['size', 'path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -2222,10 +2194,10 @@ def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/unzip.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
@@ -2234,8 +2206,7 @@ def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'unzip_file', ['src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -2256,10 +2227,10 @@ def wc_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/wc.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '${path_list[@]}'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print 'Error: %s not supported!' % lang
@@ -2268,8 +2239,7 @@ def wc_function(configuration, lang, curl_cmd, curl_flags=''):
     s = ''
     s += begin_function(lang, 'wc_file', ['path_list'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -2297,16 +2267,16 @@ def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     urlenc_data = '""'
     if lang == 'sh':
         query = \
-              '"?output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$dst_path"'
+              '"?$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$dst_path"'
         #post_data = \
-        #    '"output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
+        #    '"$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
         #urlenc_data = '("path=$dst_path")'
         curl_target = '("--upload-file \'$src_path\'")'
     elif lang == 'python':
         query = \
-              "'?output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (server_flags, first, last, dst_path)"
+              "'?%s;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (default_args, server_flags, first, last, dst_path)"
         #post_data = \
-        #    "'output_format=txt;flags=%s;file_startpos=%s;file_endpos=%s' % (server_flags, first, last)"
+        #    "'%s;flags=%s;file_startpos=%s;file_endpos=%s' % (default_args, server_flags, first, last)"
         #urlenc_data = '["path=%s" % dst_path]'
         curl_target = "['--upload-file', src_path]"
     else:
@@ -2317,8 +2287,7 @@ def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s += begin_function(lang, 'write_file', ['first', 'last', 'src_path'
                         , 'dst_path'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
@@ -2342,10 +2311,10 @@ def zip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/zip.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags"'
+        post_data = '"$default_args;flags=$server_flags"'
         urlenc_data = '("${src_list[@]}" "current_dir=$current_dir" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'output_format=txt;flags=%s' % server_flags"
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["current_dir=" + current_dir, "dst=" + dst]'
     else:
         print 'Error: %s not supported!' % lang
@@ -2354,8 +2323,7 @@ def zip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'zip_file', ['current_dir', 'src_list', 'dst'],
                         'Execute the corresponding server operation')
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
         lang,
