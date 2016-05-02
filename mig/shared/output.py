@@ -163,6 +163,77 @@ ___%s___
                 lines += pprint_table(txt_table_if_have_keys(header,
                                   submitstatuslist, ['name', 'status',
                                                      'job_id', 'message']))
+        elif i['object_type'] == 'datatransfers':
+            datatransferslist = i['datatransfers']
+            header = [['ID', 'Action', 'Protocol', 'Host', 'Port', 'Login',
+                       'Source(s)', 'Destination', 'Created', 'Status']]
+            mangle_fields = ['created', 'src']
+            content_keys = ['transfer_id', 'action', 'protocol', 'fqdn',
+                            'port', 'username', 'src_mangled', 'dst',
+                            'created_mangled', 'status']
+            for single_transfer in datatransferslist:
+                for key in mangle_fields:
+                    val = single_transfer[key]
+                    key = "%s_mangled" % key
+                    if key.startswith('created_'):
+                        marker = '</div>'
+                        val = val[val.find(marker) + len(marker):]
+                    else:
+                        val = ','.join(val)
+                    single_transfer[key] = val
+            lines += pprint_table(txt_table_if_have_keys(header,
+                                                         datatransferslist,
+                                                         content_keys))
+        elif i['object_type'] == 'transferkeys':
+            transferkeyslist = i['transferkeys']
+            header = [['ID', 'Created', 'Type', 'Bits', 'Public Key']]
+            mangle_fields = ['created']
+            content_keys = ['key_id', 'created_mangled', 'type', 'bits',
+                            'public_key']
+            for single_key in transferkeyslist:
+                for key in mangle_fields:
+                    val = single_key[key]
+                    key = "%s_mangled" % key
+                    if key.startswith('created_'):
+                        marker = '</div>'
+                        val = val[val.find(marker) + len(marker):]
+                    else:
+                        val = ','.join(val)
+                    single_key[key] = val
+            lines += pprint_table(txt_table_if_have_keys(header,
+                                                         transferkeyslist,
+                                                         content_keys))
+        elif i['object_type'] == 'sharelinks':
+            sharelinkslist = i['sharelinks']
+            skip_list = i.get('skip_list', [])
+            header = [['ID', 'Path']]
+            optional_cols = [('access', 'Access'), ('created', 'Created'),
+                             ('active', 'Active'), ('owner', 'Owner'),
+                             ('invites', 'Invites'),  ('expire', 'Expire'),
+                             ('single_file', 'Single file'),
+                             ]
+            content_keys = ['share_id', 'path']
+            mangle_fields = ['access', 'created', 'invites']
+            for (key, title) in optional_cols:
+                if not key in skip_list:
+                    header[0].append(title)
+                    # Some fields need mangling for text print
+                    if key in mangle_fields:
+                        key = "%s_mangled" % key
+                    content_keys.append(key)
+            for single_share in sharelinkslist:
+                for key in mangle_fields:
+                    val = single_share[key]
+                    key = "%s_mangled" % key
+                    if key.startswith('created_'):
+                        marker = '</div>'
+                        val = val[val.find(marker) + len(marker):]
+                    else:
+                        val = ','.join(val)
+                    single_share[key] = val
+            lines += pprint_table(txt_table_if_have_keys(header, 
+                                                         sharelinkslist,
+                                                         content_keys))
         elif i['object_type'] == 'table_pager':
             continue
         elif i['object_type'] == 'resubmitobjs':

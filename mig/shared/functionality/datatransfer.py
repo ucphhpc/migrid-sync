@@ -75,9 +75,11 @@ warn_key = [i for (i, _) in valid_proto if not i in ('sftp', 'rsyncssh')]
 def signature():
     """Signature of the main function"""
 
+    # NOTE: we use transfer_pw rather than password to avoid interference with
+    # user script curl password argument for the user key/cert
     defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
-                'fqdn':[''], 'port': [''], 'transfer_src':[''],
-                'transfer_dst': [''], 'username': [''], 'password': [''],
+                'fqdn':[''], 'port': [''], 'transfer_src': [''],
+                'transfer_dst': [''], 'username': [''], 'transfer_pw': [''],
                 'key_id': [''], 'notify': [''], 'flags': ['']}
     return ['text', defaults]
 
@@ -107,7 +109,7 @@ def main(client_id, user_arguments_dict):
     src_list = accepted['transfer_src']
     dst = accepted['transfer_dst'][-1]
     username = accepted['username'][-1]
-    password = accepted['password'][-1]
+    password = accepted['transfer_pw'][-1]
     key_id = accepted['key_id'][-1]
     notify = accepted['notify'][-1]
     flags = accepted['flags']
@@ -508,7 +510,7 @@ Username:<br />
 <br/>
 <span id="password_entry">
 Password:<br />
-<input id="password" type=password size=60 name=password value="" />
+<input id="password" type=password size=60 name=transfer_pw value="" />
 </span>
 <span id="key_entry">
 Key:<br />
@@ -665,8 +667,8 @@ Key name:<br/>
             if not [src for src in src_list if src] or not dst:
                 output_objects.append(
                     {'object_type': 'error_text',
-                     'text': 'transfer_src and transfer_dst parameters required for all'
-                     'data transfers!'})
+                     'text': 'transfer_src and transfer_dst parameters '
+                     'required for all data transfers!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if protocol == "rsyncssh" and not key_id:
                 output_objects.append(

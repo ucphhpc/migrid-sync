@@ -158,6 +158,24 @@ def cp_usage_function(lang, extension):
     return s
 
 
+def datatransfer_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] ' % (mig_prefix, op, extension)
+    usage_str += 'ACTION [TRANSFER_ID PROTOCOL FQDN PORT USERNAME PASSWORD'
+    usage_str += 'KEY_ID NOTIFY FLAGS SRC [SRC...] DST]'
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def doc_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
     
@@ -539,6 +557,23 @@ def sha1sum_usage_function(lang, extension):
     return s
 
 
+def sharelink_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] ' % (mig_prefix, op, extension)
+    usage_str += 'ACTION [SHARE_ID PATH READ WRITE EXPIRE INVITE MSG]'
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def stat_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
     
@@ -879,6 +914,51 @@ def cp_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
         )
     s += end_function(lang, 'cp_file')
+    return s
+
+
+def datatransfer_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with all arguments"""
+
+    relative_url = '"%s/datatransfer.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args;flags=$server_flags;action=$action;'
+        post_data += 'transfer_id=$transfer_id;protocol=$protocol;fqdn=$fqdn;'
+        post_data += 'port=$port;username=$username;key_id=$key_id;'
+        post_data += 'flags=$flags;"'
+        urlenc_data = '("transfer_pw=$transfer_pw" "notify=$notify" '
+        urlenc_data += '"${src_list[@]}" "transfer_dst=$transfer_dst")'
+    elif lang == 'python':
+        post_data = "'%s;flags=%s;action=%s;transfer_id=%s;protocol=%s;"
+        post_data += "fqdn=%s;port=%s;username=%s;key_id=%s;flags=%s'"
+        post_data += "% (default_args, server_flags, action, transfer_id, "
+        post_data += "protocol, fqdn, port, username, key_id, flags)"
+        urlenc_data = '["transfer_pw=" + transfer_pw, "notify=" + notify] + '
+        urlenc_data += 'src_list + ["transfer_dst=" + transfer_dst]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'datatransfer', ['action', 'transfer_id',
+                                               'protocol', 'fqdn', 'port',
+                                               'username', 'transfer_pw',
+                                               'key_id', 'notify', 'flags',
+                                               'transfer_src', 'transfer_dst'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'datatransfer')
     return s
 
 
@@ -1594,6 +1674,46 @@ def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
     return s
 
 
+def sharelink_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with all arguments"""
+
+    relative_url = '"%s/sharelink.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args;flags=$server_flags;action=$action;'
+        post_data += 'share_id=$share_id;read_access=$read_access;'
+        post_data += 'write_access=$write_access;expire=$expire"'
+        urlenc_data = '("path=$path" "invite=$invite" "msg=$msg")'
+    elif lang == 'python':
+        post_data = "'%s;flags=%s;action=%s;share_id=%s;read_access=%s;"
+        post_data += "write_access=%s;expire=%s' % (default_args, "
+        post_data += "server_flags, action, share_id, read_access, "
+        post_data += "write_access, expire)"
+        urlenc_data = '["path=" + path, "invite=" + invite, "msg=" + msg]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'sharelink', ['action', 'share_id', 'path',
+                                            'read_access', 'write_access',
+                                            'expire', 'invite', 'msg'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'sharelink')
+    return s
+
+
 def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with path_list as argument"""
 
@@ -1804,6 +1924,9 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
             post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
             ;;
+        'datatransfer')
+            cmd_args[1]=\"show\"
+            ;;
         'doc')
             cmd_args[1]=''
             ;;
@@ -1873,6 +1996,9 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             cmd_args[1]=\"'${dir_test}'\"
             verify_cmds[1]=\"${ls_cmd} -la '${dir_test}'\"
             post_cmds[1]=\"${rm_cmd} -r '${dir_test}'\"
+            ;;
+        'sharelink')
+            cmd_args[1]=\"show\"
             ;;
         'status')
             cmd_args[1]=''
@@ -1996,6 +2122,8 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             cmd_args.append([txt_helper, txt_test])
             verify_cmds.append([ls_cmd, '-l', txt_test])
             post_cmds.append([rm_cmd, txt_test])
+    elif op == 'datatransfer':
+            cmd_args.append(['show'])
     elif op in ('doc', 'status'):
             cmd_args.append([''])
     elif op == 'get':
@@ -2054,6 +2182,8 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             cmd_args.append([dir_test])
             verify_cmds.append([ls_cmd, '-la', dir_test])
             post_cmds.append([rm_cmd, '-r', dir_test])
+    elif op == 'sharelink':
+            cmd_args.append(['show'])
     elif op == 'submit':
             cmd_args.append([mrsl_test])
             cmd_args.append(['-l', mrsl_helper])
@@ -2548,6 +2678,70 @@ sys.exit(status)
     return s
 
 
+def datatransfer_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 1, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    s += pack_list(lang, 'src_list', 'transfer_src')
+    if lang == 'sh':
+        s += """
+# We included most args in packing above - remove again
+action=\"${orig_args[0]}\"
+transfer_id=\"${orig_args[1]}\"
+protocol=\"${orig_args[2]}\"
+fqdn=\"${orig_args[3]}\"
+port=\"${orig_args[4]}\"
+username=\"${orig_args[5]}\"
+transfer_pw=\"${orig_args[6]}\"
+key_id=\"${orig_args[7]}\"
+notify=\"${orig_args[8]}\"
+flags=\"${orig_args[9]}\"
+last_index=$((${#src_list[@]}-1))
+dst=\"${orig_args[$last_index]}\"
+for i in 0 1 2 3 4 5 6 7 8 9 $last_index; do
+    unset src_list[$i]
+done
+datatransfer \"$action\" \"$transfer_id\" \"$protocol\" \"$fqdn\" \"$port\" \"$username\" \"$transfer_pw\" \"$key_id\" \"$notify\" \"$flags\" ${src_list[@]} \"$dst\" '' '' '' '' '' '' '' '' '' '' ''
+"""
+    elif lang == 'python':
+        s += """
+# optional 2nd to 12th argument depending on action - add dummies
+sys.argv += (12 - len(sys.argv)) * ['']
+# We included most args in packing above - remove again
+action = \"%s\" % sys.argv[1]
+transfer_id = \"%s\" % sys.argv[2]
+protocol = \"%s\" % sys.argv[3]
+fqdn = \"%s\" % sys.argv[4]
+port = \"%s\" % sys.argv[5]
+username = \"%s\" % sys.argv[6]
+transfer_pw = \"%s\" % sys.argv[7]
+key_id = \"%s\" % sys.argv[8]
+notify = \"%s\" % sys.argv[9]
+flags = \"%s\" % sys.argv[10]
+dst = \"%s\" % sys.argv[-1]
+src_list = src_list[10:-1]
+(status, out) = datatransfer(action, transfer_id, protocol, fqdn, port,
+                             username, transfer_pw, key_id, notify, flags, src_list,
+                             dst)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
 def doc_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -2743,7 +2937,7 @@ def grep_main(lang):
     if lang == 'sh':
         s += """
 # We included pattern in packing above - remove again
-pattern=\"${orig_args[1]}\"
+pattern=\"${orig_args[0]}\"
 unset path_list[0]
 grep_file \"$pattern\" ${path_list[@]}
 """
@@ -2819,7 +3013,7 @@ def jobaction_main(lang):
     if lang == 'sh':
         s += """
 # We included action in packing above - remove again
-action=\"${orig_args[1]}\"
+action=\"${orig_args[0]}\"
 unset job_id_list[0]
 job_action $action ${job_id_list[@]}
 """
@@ -2856,10 +3050,10 @@ def liveio_main(lang):
     if lang == 'sh':
         s += """
 # We included all args in packing above - remove again
-action=\"${orig_args[1]\"
-job_id=\"${orig_args[2]\"
+action=\"${orig_args[0]\"
+job_id=\"${orig_args[1]\"
 last_index=$((${#src_list[@]}-1))
-dst=\"${orig_args[$last_index]\"
+dst=\"${orig_args[$last_index]}\"
 unset src_list[$last_index]
 unset src_list[1]
 unset src_list[0]
@@ -3401,6 +3595,39 @@ sha1_sum ${path_list[@]}
     elif lang == 'python':
         s += """
 (status, out) = sha1_sum(path_list)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def sharelink_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 1, 8)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+# optional 2nd to 8th argument depending on action - add dummies
+sharelink \"$@\" '' '' '' '' '' '' ''
+"""
+    elif lang == 'python':
+        s += """
+# optional 2nd to 8th argument depending on action - add dummies
+sys.argv +=  (8 - len(sys.argv) * ['']
+(status, out) = sharelink(*(sys.argv[1:9]))
 # Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
@@ -4018,6 +4245,34 @@ def generate_cp(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_datatransfer(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_doc(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
@@ -4556,6 +4811,34 @@ def generate_sha1sum(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_sharelink(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_stat(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
@@ -4885,6 +5168,7 @@ script_ops = [
     'cancel',
     'cat',
     'cp',
+    'datatransfer',
     'doc',
     'filemetaio',
     'get',
@@ -4902,6 +5186,7 @@ script_ops = [
     'rm',
     'rmdir',
     'sha1sum',
+    'sharelink',
     'stat',
     'status',
     'submit',
