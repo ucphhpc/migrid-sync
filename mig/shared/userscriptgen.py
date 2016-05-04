@@ -2383,18 +2383,26 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
     query = '""'
     post_data = '""'
     urlenc_data = '""'
+    curl_stdin_move = '""'
     if lang == 'sh':
-        curl_target = '("--form \\"$default_args\\"" "--form \\"flags=$server_flags\\"" "--form \\"action=$action\\"" "--form \\"files[]=@-;filename=$(basename $path)\\"" "--form \\"current_dir=$current_dir\\"" "--range \\"$start-$end\\"")'
+        target_template = '("--form \\"$default_args\\"" "--form \\"flags=$server_flags\\"" "--form \\"current_dir=$current_dir\\"" %s)'
+        curl_target_put = target_template % '"--form \\"action=put\\"" "--form \\"files[]=@-;filename=$(basename $path)\\"" "--range \\"$start-$end\\""'
+        curl_target_move = target_template % '"--form \\"action=move\\"" "--form \\"files[]=@-;filename=$(basename $path)\\""'
+        curl_stdin_put = '"split -n $((chunk_no+1))/$total_chunks $path"'
     elif lang == 'python':
-        curl_target = "['--form', '%s' % default_args, '--form', 'flags=%s' % server_flags, '--form', 'action=put', '--form', 'files[]=@-;filename=%s' % os.path.basename(path), '--form', 'current_dir=%s' % current_dir, '--range', '%d-%d' % (start, end)]"
+        target_template = "['--form', '%%s' %% default_args, '--form', 'flags=%%s' %% server_flags, '--form', 'current_dir=%%s' %% current_dir, %s]"
+        curl_target_put = target_template % "'--form', 'action=put', '--form', 'files[]=@-;filename=%s' % os.path.basename(path), '--range', '%d-%d' % (start, end)"
+        curl_target_move = target_template % "'--form', 'action=move', '--form', 'files[]=@-;filename=%s' % os.path.basename(path)"
+        curl_stdin_put = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
 
     s = ''
-    s += begin_function(lang, 'upload_chunked', ['action', 'path', 'current_dir',
-                                                 'chunk_no', 'chunk_size',
-                                                 'total_chunks', 'total_size'],
+    s += begin_function(lang, 'uploadchunked_put', ['path', 'current_dir',
+                                                    'chunk_no', 'chunk_size',
+                                                    'total_chunks',
+                                                    'total_size'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -2408,7 +2416,6 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
         end=$((total_size-1))
     fi
 '''
-        curl_stdin = '"split -n $((chunk_no+1))/$total_chunks $path"'
     elif lang == 'python':
         s += '''
     start = chunk_no * chunk_size
@@ -2417,8 +2424,7 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
     # Last chunk includes remainder after splitting evenly into total_chunks
     if chunk_no == total_chunks - 1:
         end = total_size - 1
-'''
-        curl_stdin = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
+'''        
     s += curl_perform(
         lang,
         relative_url,
@@ -2427,10 +2433,32 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
         query,
         curl_cmd,
         curl_flags,
-        curl_target,
-        curl_stdin
+        curl_target_put,
+        curl_stdin_put,
         )
-    s += end_function(lang, 'upload_chunked')
+    s += end_function(lang, 'uploadchunked_put')
+
+    s += begin_function(lang, 'uploadchunked_move', ['path', 'current_dir',
+                                                     'chunk_no', 'chunk_size',
+                                                    'total_chunks',
+                                                    'total_size'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        curl_target_move,
+        #curl_stdin_move,
+        curl_stdin_put,
+        )
+    s += end_function(lang, 'uploadchunked_move')
+
     return s
 
 
@@ -4163,12 +4191,12 @@ function upload_file_chunks() {
     action=\"put\"
     chunk_no=0
     while [ $chunk_no -lt $chunk_count ]; do
-        upload_chunked \"$action\" \"$path\" \"$current_dir\" $chunk_no $chunk_size $chunk_count $file_size
+        uploadchunked_put \"$path\" \"$current_dir\" $chunk_no $chunk_size $chunk_count $file_size
         chunk_no=$((chunk_no+1))
     done
-    # TODO: finalize upload like this
-    #action=\"move\"
-    #upload_chunked \"$action\" \"$path\" \"$current_dir\" $chunk_no $chunk_size $chunk_count $file_size
+    # Fake last chunk again with move to final destination
+    chunk_no=$((chunk_no-1))
+    uploadchunked_move \"$path\" \"$current_dir\" $chunk_no $chunk_size $chunk_count $file_size
 }
 """ % upload_block_size
         s += """
@@ -4228,14 +4256,13 @@ def upload_file_chunks(path, current_dir):
     chunk_size = file_size / chunk_count
     action = \"put\"
     for chunk_no in xrange(chunk_count):
-        (cur, tmp) = upload_chunked(action, path, current_dir, chunk_no,
-                                    chunk_size, chunk_count, file_size)
+        (cur, tmp) = uploadchunked_put(path, current_dir, chunk_no, chunk_size,
+                                       chunk_count, file_size)
         status &= cur
         out += tmp
-    # TODO: finalize upload like this
-    #action = \"move\"
-    #(cur, tmp) = upload_chunked(action, path, current_dir, chunk_no,
-    #                            chunk_size, chunk_count, file_size)
+    # Fake last chunk again for move to final destination
+    (cur, tmp) = uploadchunked_move(path, current_dir, chunk_no, chunk_size,
+                                    chunk_count, file_size)
     status &= cur
     out += tmp
     # Trailing comma to prevent double newlines
