@@ -48,7 +48,7 @@ __version__ = '$Revision$'
 _userscript_version = __version__
 
 from shared.conf import get_configuration_object
-from shared.defaults import file_dest_sep
+from shared.defaults import file_dest_sep, upload_block_size
 from shared.publicscriptgen import *
 _publicscript_version = __version__
 __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
@@ -734,6 +734,30 @@ def unzip_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
+def uploadchunked_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC ...] DST' % (mig_prefix,
+            op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+
+    recursive_usage_string = '-r\t\tact recursively'
+    if lang == 'sh':
+        s += '\n    echo "%s"' % recursive_usage_string
+    elif lang == 'python':
+        s += '\n    print "%s"' % recursive_usage_string
+
     s += end_function(lang, 'usage')
 
     return s
@@ -2351,6 +2375,65 @@ def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
+def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with action, src_path, dst_path
+    arguments.
+    """
+    relative_url = '"%s/uploadchunked.py"' % get_xgi_bin(configuration)
+    query = '""'
+    post_data = '""'
+    urlenc_data = '""'
+    if lang == 'sh':
+        curl_target = '("--form \\"$default_args\\"" "--form \\"flags=$server_flags\\"" "--form \\"action=$action\\"" "--form \\"files[]=@-;filename=$(basename $path)\\"" "--form \\"current_dir=$current_dir\\"" "--range \\"$start-$end\\"")'
+    elif lang == 'python':
+        curl_target = "['--form', '%s' % default_args, '--form', 'flags=%s' % server_flags, '--form', 'action=put', '--form', 'files[]=@-;filename=%s' % os.path.basename(path), '--form', 'current_dir=%s' % current_dir, '--range', '%d-%d' % (start, end)]"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'upload_chunked', ['action', 'path', 'current_dir',
+                                                 'chunk_no', 'chunk_size',
+                                                 'total_chunks', 'total_size'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    if lang == 'sh':
+        s += '''
+    start=$((chunk_no*chunk_size))
+    # The range parameter takes is on the form "first-last" i.e. inclusive
+    end=$(((chunk_no+1)*chunk_size-1))
+    # Last chunk includes remainder after splitting evenly into total_chunks
+    if [ $chunk_no -eq $((total_chunks - 1)) ]; then
+        end=$((total_size-1))
+    fi
+'''
+        curl_stdin = '"split -n $((chunk_no+1))/$total_chunks $path"'
+    elif lang == 'python':
+        s += '''
+    start = chunk_no * chunk_size
+    # The range parameter takes is on the form "first-last" i.e. inclusive
+    end = (chunk_no + 1) * chunk_size - 1
+    # Last chunk includes remainder after splitting evenly into total_chunks
+    if chunk_no == total_chunks - 1:
+        end = total_size - 1
+'''
+        curl_stdin = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        curl_target,
+        curl_stdin
+        )
+    s += end_function(lang, 'upload_chunked')
+    return s
+
+
 def wc_function(configuration, lang, curl_cmd, curl_flags=''):
     """Call the corresponding cgi script with path_list as argument"""
 
@@ -3185,7 +3268,7 @@ def mkdir_main(lang):
         s += parse_options(lang, 'p',
                            '    elif opt == "-p":\n        server_flags += "p"'
                            )
-    s += arg_count_check(lang, 1, 2)
+    s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
     s += pack_list(lang, 'path_list', 'path')
@@ -4021,6 +4104,186 @@ del src_list[-1]
 (status, out) = unzip_file(src_list, dst)
 # Trailing comma to prevent double newlines
 print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def uploadchunked_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    # We should handle uploads like this:
+    # migupload localfile . -> localfile
+    # migupload localfile remotefile -> remotefile
+    # migupload localfile remotedir -> remotedir/localfile
+    # migupload ../localdir/localfile remotedir -> upload as file and expect server ERROR
+    # migupload ../localdir/localfile remotedir/ -> remotedir/localfile
+    # migupload ../localdir . -> ERROR?
+    # migupload -r ../localdir . -> localdir
+    # migupload -r ../localdir remotedir -> remotedir/localdir
+    #                                   -> remotedir/localdir/*
+
+    s = ''
+    s += basic_main_init(lang)
+    if lang == 'sh':
+        s += 'recursive=0\n'
+        s += parse_options(lang, 'r',
+                           '        r)  recursive=1;;'
+                           )
+    elif lang == 'python':
+        s += 'recursive = False\n'
+        s += parse_options(lang, 'r',
+                           '''    elif opt == "-r":
+        recursive = True''')
+    s += arg_count_check(lang, 2, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    # NOTE: using pack_list is cumbersome here so we don't
+    if lang == 'sh':
+        s += """
+function upload_file_chunks() {
+    path=\"$1\"
+    current_dir=\"$2\"
+    target_chunk_size=%d
+    file_size=$(stat --printf='%%s' \"$path\") 
+    chunk_count=$((file_size/target_chunk_size))
+    # Make sure we have at least one chunk and chunks are about even size
+    if [ $((chunk_size*chunk_count)) -lt $file_size ]; then
+        chunk_count=$((chunk_count+1))
+    fi
+    # NOTE: split distributes evenly on chunk_count with remainder on last one
+    chunk_size=$((file_size/chunk_count))
+    action=\"put\"
+    chunk_no=0
+    while [ $chunk_no -lt $chunk_count ]; do
+        upload_chunked \"$action\" \"$path\" \"$current_dir\" $chunk_no $chunk_size $chunk_count $file_size
+        chunk_no=$((chunk_no+1))
+    done
+    # TODO: finalize upload like this
+    #action=\"move\"
+    #upload_chunked \"$action\" \"$path\" \"$current_dir\" $chunk_no $chunk_size $chunk_count $file_size
+}
+""" % upload_block_size
+        s += """
+src_list=(\"$@\")
+dst=\"${src_list[$(($#-1))]}\"
+unset src_list[$(($#-1))]
+
+# For loop automatically expands wild cards
+# we set IFS empty to prevent spaces in filenames breaking things
+IFS=''
+for src in ${src_list[@]}; do
+    if [ ! -e \"$src\" ]; then
+        echo \"No such file or directory: $src !\"
+        continue
+    fi
+    if [ -d \"$src\" ]; then
+        if [ $recursive -ne 1 ]; then
+            echo \"Nonrecursive upload skipping directory: $src\"
+            continue
+        fi
+        # Recursive dirs may not exist - create them first
+        src_parent=`dirname $src`
+        src_target=`basename $src`
+        dirs=`cd $src_parent && find $src_target -type d`
+        # force mkdir -p
+        old_flags=\"$server_flags\"
+        server_flags=\"p\"
+        dir_list=\"\"
+        for dir in $dirs; do
+            dir_list=\"$dir_list;path=$dst/$dir\"
+        done
+        mk_dir \"$dir_list\"
+        server_flags=\"$old_flags\"
+        sources=`cd $src_parent && find $src_target -type f`
+        current_dir=\"$dst\"
+        for path in $sources; do
+            upload_file_chunks \"$source_parent/$path\" \"$current_dir/\"
+        done
+    else
+        current_dir=\"$dst\"
+        upload_file_chunks \"$src\" \"$current_dir/\"
+    fi
+done
+"""
+    elif lang == 'python':
+        s += """
+from glob import glob
+from math import ceil
+
+def upload_file_chunks(path, current_dir):
+    '''Split file into parts for chunked uploading like the fancy upload on web'''
+    target_chunk_size = %d
+    status, out, file_size = 0, [], os.path.getsize(path)
+    # Make sure we have at least one chunk and chunks are about even size
+    chunk_count = int(ceil((1.0 * file_size) / target_chunk_size))
+    # NOTE: split distributes evenly on chunk_count with remainder on last one
+    chunk_size = file_size / chunk_count
+    action = \"put\"
+    for chunk_no in xrange(chunk_count):
+        (cur, tmp) = upload_chunked(action, path, current_dir, chunk_no,
+                                    chunk_size, chunk_count, file_size)
+        status &= cur
+        out += tmp
+    # TODO: finalize upload like this
+    #action = \"move\"
+    #(cur, tmp) = upload_chunked(action, path, current_dir, chunk_no,
+    #                            chunk_size, chunk_count, file_size)
+    status &= cur
+    out += tmp
+    # Trailing comma to prevent double newlines
+    print ''.join(out),
+    return status
+""" % upload_block_size
+        s += """
+raw_list = sys.argv[1:-1]
+dst = sys.argv[-1]
+
+# Expand sources
+status = 2
+src_list = []
+for src in raw_list:
+    expanded = glob(src)
+    if expanded:
+        src_list += expanded
+    else:
+        # keep bogus pattern for correct output order
+        src_list += [src]
+
+for src in src_list:
+    if not os.path.exists(src):
+        print \"No such file or directory: %s !\" % src
+        continue
+    if os.path.isdir(src):
+        if not recursive:
+            print \"Nonrecursive upload skipping directory: %s\" % src
+            continue
+        src_parent = os.path.abspath(os.path.dirname(src))
+        for root, dirs, files in os.walk(os.path.abspath(src)):
+            # Recursive dirs may not exist - create them first
+            # force mkdir -p
+            old_flags = server_flags
+            server_flags = \"p\"
+            rel_root = root.replace(src_parent, '', 1).lstrip(os.sep)
+            dir_list = ';'.join(['path=%s' % os.path.join(dst, rel_root, i) for i in dirs])
+            # add current root
+            dir_list += ';path=%s' % os.path.join(dst, rel_root)
+            mk_dir(dir_list)
+            server_flags = old_flags
+            for name in files:
+                src_path = os.path.join(root, name)
+                current_dir = os.path.join(dst, rel_root)
+                status &= upload_file_chunks(src_path, current_dir)
+    else:
+        current_dir = dst
+        status = upload_file_chunks(src, current_dir)
 sys.exit(status)
 """
     else:
@@ -5068,6 +5331,38 @@ def generate_unzip(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_uploadchunked(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+
+        # Recursive upload requires mkdir
+
+        script += mkdir_function(configuration, lang, curl_cmd)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_wc(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
@@ -5195,6 +5490,7 @@ script_ops = [
     'touch',
     'truncate',
     'unzip',
+    'uploadchunked',
     'wc',
     'write',
     'zip',

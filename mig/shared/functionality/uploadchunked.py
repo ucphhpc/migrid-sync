@@ -195,7 +195,9 @@ def main(client_id, user_arguments_dict):
 
     reject_write = False
     uploaded = []
+    header_item = {'object_type': 'header', 'text': ''}
     # Always include a files reply even if empty
+    output_objects.append(header_item)
     output_objects.append({'object_type': 'uploadfiles', 'files': uploaded})
 
     # Either authenticated user client_id set or sharelink ID
@@ -242,8 +244,7 @@ def main(client_id, user_arguments_dict):
         dst_dir = cache_dir
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = page_title
-    output_objects.append({'object_type': 'header', 'text': page_title})
+    title_entry['text'] = header_item['text'] = page_title
 
     # Input validation assures target_dir can't escape base_dir
     if not os.path.isdir(base_dir):
@@ -304,8 +305,9 @@ def main(client_id, user_arguments_dict):
 
     logger.info('Filtered input validated with result: %s' % accepted)
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Uploading file chunk(s)'})
+    if verbose(flags):
+        output_objects.append({'object_type': 'text', 'text'
+                               : 'Uploading file chunk(s)'})
 
     logger.info('Looping through files: %s' % \
                 ' '.join([i[0] for i in upload_files]))
@@ -391,9 +393,10 @@ def main(client_id, user_arguments_dict):
         logger.debug('write %s chunk of size %d' % (rel_path, chunk_size))
         if chunk_size == range_size and \
                write_chunk(abs_path, chunk, offset, logger, 'r+b'):
-            output_objects.append({'object_type': 'text', 'text'
-                                   : 'wrote chunk %s at %d' % \
-                                   (chunk_tuple[1:], offset)})
+            if verbose(flags):
+                output_objects.append({'object_type': 'text', 'text'
+                                       : 'wrote chunk %s at %d' % \
+                                       (chunk_tuple[1:], offset)})
             logger.info('wrote %s chunk at %s' % (abs_path, chunk_tuple[1:]))
             file_entry["size"] = os.path.getsize(abs_path)
             file_entry["url"] = "/%s/%s" % (redirect_path, rel_path)

@@ -234,6 +234,13 @@ ___%s___
             lines += pprint_table(txt_table_if_have_keys(header, 
                                                          sharelinkslist,
                                                          content_keys))
+        elif i['object_type'] == 'uploadfiles':
+            fileslist = i['files']
+            header = [['Name', 'Size', 'URL']]
+            content_keys = ['name', 'size', 'url']
+            lines += pprint_table(txt_table_if_have_keys(header,
+                                                         fileslist,
+                                                         content_keys))
         elif i['object_type'] == 'table_pager':
             continue
         elif i['object_type'] == 'resubmitobjs':

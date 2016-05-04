@@ -338,6 +338,7 @@ def curl_perform(
     curl_cmd='curl',
     curl_flags='',
     curl_target="''",
+    curl_stdin="''"
     ):
     """Expands relative_url, query and curl_target before
     issuing curl command. Thus those variables should contain
@@ -363,13 +364,18 @@ def curl_perform(
             i=$((i+1))
         done
     }
-    default_args=\"$auth_data;output_format=txt\"
+    default_args=\"\"
+    if [ -n \"$auth_data\" ]; then
+        default_args+=\"$auth_data;\"
+    fi
+    default_args+=\"output_format=txt\"
     curl=\"%s %s --location --fail --silent --show-error\"
     target_data=%s
     location=%s
     post_data=%s
     urlenc_data=%s
     query=%s
+    curl_stdin=%s
     # Keep target, data and urlenc as arrays to preserve quoting of spaces
     declare -a target
     declare -a data
@@ -403,23 +409,31 @@ def curl_perform(
     fi
     # Make sure e.g. spaces are encoded since they are not allowed in URL
     url=\"--url '$mig_server/$(urlquote $location)$query'\"
-    command=\"$curl ${auth_check[@]} ${ca_check[@]} ${password_check[@]} \"
+    if [ -z \"$curl_stdin\" ]; then
+        command=\"\"
+    else
+        command=\"$curl_stdin | \"
+    fi
+    command+=\"$curl ${auth_check[@]} ${ca_check[@]} ${password_check[@]} \"
     command+=\"${timeout[@]} ${data[@]} ${urlenc[@]} ${target[@]} $url\"
     #echo \"DEBUG: command: $command\"
     eval $command
-"""\
-             % (
-            curl_cmd,
-            curl_flags,
-            curl_target,
-            relative_url,
-            post_data,
-            urlenc_data,
-            query,
+"""% (
+                    curl_cmd,
+                    curl_flags,
+                    curl_target,
+                    relative_url,
+                    post_data,
+                    urlenc_data,
+                    query,
+                    curl_stdin,
             )
     elif lang == 'python':
         s += """
-    default_args = \"%%s;output_format=txt\" %% auth_data
+    default_args = \"\"
+    if auth_data:
+        default_args += \"%%s;\" %% auth_data
+    default_args += \"output_format=txt\"
     curl = ['%s'] + '%s'.split() + ['--location', '--fail', '--silent',
                                     '--show-error']
     target_data = %s
@@ -427,6 +441,7 @@ def curl_perform(
     post_data = %s
     urlenc_data = %s
     query = %s
+    curl_stdin = %s
     target = []
     data = []
     urlenc = []
@@ -451,13 +466,20 @@ def curl_perform(
     # Make sure e.g. spaces are encoded since they are not allowed in URL
     from urllib import quote as urlquote
     url = ['--url', mig_server + '/' + urlquote(location) + query]
+    if curl_stdin:
+        input_gen = subprocess.Popen(curl_stdin, stdout=subprocess.PIPE)
+        input_source = input_gen.stdout
+    else:
+        input_source = None
     # NOTE: we build list directly in order to preserve e.g. spaces in paths
     command_list = curl + auth_check + ca_check + password_check + timeout + \\
                    data + urlenc + target + url
     #print \"DEBUG: command: %%s\" %% command_list
     # NOTE: for security we do not invoke shell here
     proc = subprocess.Popen(command_list, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
+                            stderr=subprocess.STDOUT, stdin=input_source)
+    if curl_stdin:
+        input_source.close()  # Allow p1 to receive a SIGPIPE if p2 exits. 
     out_buffer = StringIO.StringIO(proc.communicate()[0])
     proc.stdout.close()
     out = out_buffer.readlines()
@@ -472,6 +494,7 @@ def curl_perform(
             post_data,
             urlenc_data,
             query,
+            curl_stdin,
       )
     else:
         print 'Error: %s not supported!' % lang
@@ -585,7 +608,8 @@ for (opt, val) in opts:
     elif opt == \"-s\":
         mig_server = val
     elif opt == \"-v\":
-        verbose = True
+        verbose = 1
+        server_flags += \"v\"
     elif opt == \"-V\":
         version()
         sys.exit(0)
