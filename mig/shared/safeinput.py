@@ -987,6 +987,7 @@ def guess_type(name):
         for key in (
             'fileupload',
             'public_image',
+            'script_dir',
             ):
             __type_map[key] = valid_path
         for key in (

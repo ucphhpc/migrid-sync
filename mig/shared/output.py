@@ -234,6 +234,10 @@ ___%s___
             lines += pprint_table(txt_table_if_have_keys(header, 
                                                          sharelinkslist,
                                                          content_keys))
+        elif i['object_type'] == 'upgrade_info':
+            lines.append('%s\n' % i['text'])
+            for cmd in i['commands']:
+                lines.append('%s\n' % cmd)
         elif i['object_type'] == 'uploadfiles':
             fileslist = i['files']
             header = [['Name', 'Size', 'URL']]
@@ -1687,6 +1691,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 </table>
 '''
             lines.append(resource_html)
+        elif i['object_type'] == 'upgrade_info':
+            user_html = ''
+            user_html += '<h3>%s</h3>' % i['text']
+            for cmd in i['commands']:
+                user_html += '<tt>%s</tt><br/>' % cmd
+            lines.append(user_html)
         elif i['object_type'] == 'user_list':
             if len(i['users']) > 0:
                 user_fields = []

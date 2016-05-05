@@ -242,6 +242,8 @@ resource_list = {'object_type': 'resource_list',
                  'required_list': [('resources', 'resource')]}
 resource_info = {'object_type': 'resource_info',
                  'required': ['unique_resource_name', 'fields', 'exes']}
+upgrade_info = {'object_type': 'upgrade_info', 'required': ['text',
+                                                            'commands']}
 user_list = {'object_type': 'user_list', 'required_list': [('users',
              'user')]}
 user_info = {'object_type': 'user_info', 'required': ['user_id',
@@ -373,6 +375,7 @@ valid_types_list = [
     jobobj,
     resource_list,
     resource_info,
+    upgrade_info,
     user_list,
     user_info,
     vgrid_info,

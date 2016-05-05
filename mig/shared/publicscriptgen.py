@@ -83,7 +83,7 @@ def begin_function(lang, name, arguments, doc=''):
             if arg.endswith('_list'):
                 remain = len(arguments) - i
                 s += '''    local extract_count=$((${#@}-%d))
-    local %s=${@:1:$extract_count}
+    local %s=(${@:1:$extract_count})
     shift $extract_count
 ''' % (remain, arg)
             else:

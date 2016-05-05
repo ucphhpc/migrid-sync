@@ -37,6 +37,7 @@ import shared.returnvalues as returnvalues
 import shared.userscriptgen as usergen
 import shared.vgridscriptgen as vgridgen
 from shared.base import client_id_dir
+from shared.defaults import keyword_all, keyword_auto
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
@@ -50,10 +51,11 @@ def signature():
 
     defaults = {
         'flags': [''],
-        'lang': [],
+        'lang': [keyword_all],
         'flavor': [],
         'sh_cmd': [sh_cmd_def],
         'python_cmd': [python_cmd_def],
+        'script_dir': [keyword_auto]
         }
     return ['link', defaults]
 
@@ -118,6 +120,7 @@ def main(client_id, user_arguments_dict):
     flavor_list = accepted['flavor']
     sh_cmd = accepted['sh_cmd'][-1]
     python_cmd = accepted['python_cmd'][-1]
+    script_dir = accepted['script_dir'][-1]
 
     flavors = []
 
@@ -154,21 +157,7 @@ def main(client_id, user_arguments_dict):
                                   })
         flavors = ['user']
 
-    # Generate scripts in a "unique" destination directory
-    # gmtime([seconds]) -> (tm_year, tm_mon, tm_day, tm_hour, tm_min,
-    #                       tm_sec, tm_wday, tm_yday, tm_isdst)
-
-    now = time.gmtime()
-    timestamp = '%.2d%.2d%.2d-%.2d%.2d%.2d' % (
-        now[2],
-        now[1],
-        now[0],
-        now[3],
-        now[4],
-        now[5],
-        )
-
-    if not langs:
+    if not langs or keyword_all in langs:
 
         # Add new languages here
 
@@ -202,9 +191,26 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for flavor in flavors:
-        script_dir = '%s-%s-scripts-%s' % (configuration.short_title, flavor, timestamp)
-        dest_dir = '%s%s' % (base_dir, script_dir)
+        if not script_dir or script_dir == keyword_auto:
+            # Generate scripts in a "unique" destination directory
+            # gmtime([seconds]) -> (tm_year, tm_mon, tm_day, tm_hour, tm_min,
+            #                       tm_sec, tm_wday, tm_yday, tm_isdst)
+            now = time.gmtime()
+            timestamp = '%.2d%.2d%.2d-%.2d%.2d%.2d' % (
+                now[2],
+                now[1],
+                now[0],
+                now[3],
+                now[4],
+                now[5],
+                )
+            script_dir = '%s-%s-scripts-%s' % (configuration.short_title,
+                                               flavor, timestamp)
+        else:
+            # Avoid problems from especially trailing slash (zip recursion)
+            script_dir = script_dir.strip(os.sep)
 
+        dest_dir = '%s%s' % (base_dir, script_dir)
         if not os.path.isdir(dest_dir):
             try:
                 os.mkdir(dest_dir)
@@ -220,6 +226,8 @@ def main(client_id, user_arguments_dict):
                                   : 'Generating %s %s scripts in the %s subdirectory of your %s home directory'
                                    % (lang, flavor, script_dir, configuration.short_title )})
 
+        logger.debug('generate %s scripts in %s' % (flavor, dest_dir))
+        
         # Generate all scripts
 
         if flavor == 'user':
@@ -275,6 +283,9 @@ def main(client_id, user_arguments_dict):
 
         script_zip = script_dir + '.zip'
         dest_zip = '%s%s' % (base_dir, script_zip)
+        logger.debug('packing generated scripts from %s in %s' % (dest_dir,
+                                                                  dest_zip))
+            
         # Force compression
         zip_file = zipfile.ZipFile(dest_zip, 'w', zipfile.ZIP_DEFLATED)
 
@@ -310,9 +321,15 @@ def main(client_id, user_arguments_dict):
                               : 'Zip archive of the %s %s scripts are now available in your %s home directory'
                                % (configuration.short_title, flavor, configuration.short_title)})
         output_objects.append({'object_type': 'link', 'text'
-                              : 'Download zip archive', 'destination'
+                              : 'Download zip archive %s' % script_zip, 'destination'
                               : os.path.join('..', client_dir,
                               script_zip)})
+        output_objects.append({'object_type': 'upgrade_info', 'text': '''
+You can upgrade from an existing user scripts folder with the commands:''',
+                               'commands': ["./migget.sh '%s' ../" % script_zip,
+                                            "cd ..", "unzip '%s'" % script_zip,
+                                            "cd '%s'" % script_dir]
+                               })
     return (output_objects, status)
 
 

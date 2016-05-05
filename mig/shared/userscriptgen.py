@@ -48,7 +48,7 @@ __version__ = '$Revision$'
 _userscript_version = __version__
 
 from shared.conf import get_configuration_object
-from shared.defaults import file_dest_sep, upload_block_size
+from shared.defaults import file_dest_sep, upload_block_size, keyword_auto
 from shared.publicscriptgen import *
 _publicscript_version = __version__
 __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
@@ -540,6 +540,28 @@ def rmdir_usage_function(lang, extension):
     return s
 
 
+def scripts_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] LANG FLAVOR' % (mig_prefix,
+                                                          op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    dest_usage_string = '-d DST_DIR\t: write scripts to DST_DIR'
+    if lang == 'sh':
+        s += '\n    echo "%s"' % dest_usage_string
+    elif lang == 'python':
+        s += '\n    print "%s"' % dest_usage_string
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def sha1sum_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
     
@@ -849,7 +871,7 @@ def cancel_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;action=cancel"'
-        urlenc_data = '${job_list[@]}'
+        urlenc_data = '(${job_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;action=cancel' % (default_args, server_flags)"
         urlenc_data = "job_list"
@@ -882,7 +904,7 @@ def cat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1030,7 +1052,7 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;with_dest=$destinations"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;with_dest=%s' % (default_args, server_flags, destinations)"
         urlenc_data = 'path_list'
@@ -1180,7 +1202,7 @@ def head_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;lines=$lines"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;lines=%s' % (default_args, server_flags, lines)"
         urlenc_data = "path_list"
@@ -1215,7 +1237,7 @@ def jobaction_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;action=$action"'
-        urlenc_data = '${job_list[@]}'
+        urlenc_data = '(${job_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = "job_list"
@@ -1283,7 +1305,7 @@ def ls_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1318,7 +1340,7 @@ def md5sum_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;hash_algo=md5"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;hash_algo=md5' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1351,7 +1373,7 @@ def mkdir_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1571,7 +1593,7 @@ def resubmit_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${job_list[@]}'
+        urlenc_data = '(${job_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "job_list"
@@ -1604,7 +1626,7 @@ def rm_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1637,7 +1659,7 @@ def rmdir_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1663,6 +1685,42 @@ def rmdir_function(configuration, lang, curl_cmd, curl_flags=''):
     return s
 
 
+def scripts_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the search and show as
+    arguments.
+    """
+
+    relative_url = '"%s/scripts.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args;flags=$server_flags"'
+        urlenc_data = '("lang=$lang" "flavor=$flavor" "script_dir=$script_dir")'
+    elif lang == 'python':
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        urlenc_data = '["lang=" + lang, "flavor=" + flavor, "script_dir=" + script_dir]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'generate_scripts', ['lang', 'flavor',
+                                                   'script_dir'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'generate_scripts')
+    return s
+
+
 def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
     """Call the chksum cgi script with implicit sha1 and 'path_list' as
     argument.
@@ -1672,7 +1730,7 @@ def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;hash_algo=sha1"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;hash_algo=sha1' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1745,7 +1803,7 @@ def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1778,7 +1836,7 @@ def status_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;max_jobs=$max_job_count"'
-        urlenc_data = '${job_list[@]}'
+        urlenc_data = '(${job_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;max_jobs=%s' % (default_args, server_flags, max_job_count)"
         urlenc_data = "job_list"
@@ -1811,7 +1869,7 @@ def submit_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -1853,7 +1911,7 @@ def tail_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;lines=$lines"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;lines=%s' % (default_args, server_flags, lines)"
         urlenc_data = "path_list"
@@ -2021,6 +2079,16 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             verify_cmds[1]=\"${ls_cmd} -la '${dir_test}'\"
             post_cmds[1]=\"${rm_cmd} -r '${dir_test}'\"
             ;;
+        'scripts')
+            pre_cmds[1]=\"${mkdir_cmd} '${dir_test}'\"
+            cmd_args[1]=\"-d '${dir_test}' ALL user\"
+            verify_cmds[1]=\"${ls_cmd} -l '${dir_test}.zip'\"
+            post_cmds[1]=\"${rm_cmd} -r '${dir_test}' '${dir_test}.zip'\"
+            pre_cmds[2]=\"${mkdir_cmd} '${dir_test}'\"
+            cmd_args[2]=\"-d '${dir_test}' ALL resource\"
+            verify_cmds[2]=\"${ls_cmd} -l '${dir_test}.zip'\"
+            post_cmds[2]=\"${rm_cmd} -r '${dir_test}' '${dir_test}.zip'\"
+            ;;
         'sharelink')
             cmd_args[1]=\"show\"
             ;;
@@ -2053,6 +2121,20 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             cmd_args[1]=\"'${zip_test}' ./\"
             verify_cmds[1]=\"${ls_cmd} -l '${txt_helper}'\"
             post_cmds[1]=\"${rm_cmd} '${zip_test}'\"
+            ;;
+        'uploadchunked')
+            pre_cmds[1]=\"${rm_cmd} '${txt_test}'\"
+            cmd_args[1]=\"'${txt_test}' .\"
+            verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
+            pre_cmds[2]=\"${mkdir_cmd} '${dir_test}'\"
+            cmd_args[2]=\"'${txt_test}' '${dir_test}/'\"
+            verify_cmds[2]=\"${ls_cmd} -l '${dir_test}/${txt_test}'\"
+            post_cmds[2]=\"${rm_cmd} -r '${dir_test}'\"
+            pre_cmds[3]=\"${mkdir_cmd} '${dir_test}'\"
+            cmd_args[3]=\"'${test_prefix}.*' '${dir_test}/'\"
+            verify_cmds[3]=\"${ls_cmd} -l '${dir_test}/${test_prefix}.*'\"
+            post_cmds[3]=\"${rm_cmd} -r '${dir_test}'\"
             ;;
         'write')
             pre_cmds[1]=\"${put_cmd} '${txt_test}' .\"
@@ -2282,7 +2364,7 @@ def touch_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -2315,7 +2397,7 @@ def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;size=$size"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s;size=%s' % (default_args, server_flags, size)"
         urlenc_data = "path_list"
@@ -2469,7 +2551,7 @@ def wc_function(configuration, lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
-        urlenc_data = '${path_list[@]}'
+        urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
@@ -3673,6 +3755,48 @@ rm_dir ${path_list[@]}
     elif lang == 'python':
         s += """
 (status, out) = rm_dir(path_list)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def scripts_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    if lang == 'sh':
+        s += 'script_dir="%s"\n' % keyword_auto
+        s += parse_options(lang, 'd:', '        d)  script_dir="$OPTARG";;')
+    elif lang == 'python':
+        s += 'script_dir = "%s"\n' % keyword_auto
+        s += parse_options(lang, 'd:',
+                           '''    elif opt == "-d":
+        script_dir = "%s" % val
+''')
+    s += arg_count_check(lang, 2, 2)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+lang=$1
+flavor=$2
+generate_scripts \"$lang\" \"$flavor\" \"$script_dir\"
+"""
+    elif lang == 'python':
+        s += """
+lang = sys.argv[1]
+flavor = sys.argv[2]
+(status, out) = generate_scripts(lang, flavor, script_dir)
 # Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
@@ -5073,6 +5197,34 @@ def generate_rmdir(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_scripts(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_sha1sum(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
@@ -5507,6 +5659,7 @@ script_ops = [
     'read',
     'rm',
     'rmdir',
+    'scripts',
     'sha1sum',
     'sharelink',
     'stat',
