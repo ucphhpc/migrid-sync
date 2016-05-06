@@ -2288,6 +2288,15 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             cmd_args.append([dir_test])
             verify_cmds.append([ls_cmd, '-la', dir_test])
             post_cmds.append([rm_cmd, '-r', dir_test])
+    elif op == 'scripts':
+            pre_cmds.append([mkdir_cmd, dir_test])
+            cmd_args.append(['-d', dir_test, 'ALL', 'user'])
+            verify_cmds.append([ls_cmd, '-l', '%s.zip' % dir_test])
+            post_cmds.append([rm_cmd, '-r', dir_test, '%s.zip' % dir_test])
+            pre_cmds.append([mkdir_cmd, dir_test])
+            cmd_args.append(['-d', dir_test, 'ALL', 'resource'])
+            verify_cmds.append([ls_cmd, '-l', '%s.zip' % dir_test])
+            post_cmds.append([rm_cmd, '-r', dir_test, '%s.zip' % dir_test])
     elif op == 'sharelink':
             cmd_args.append(['show'])
     elif op == 'submit':
@@ -2313,6 +2322,19 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             cmd_args.append([zip_test,'./'])
             verify_cmds.append([ls_cmd, '-l', txt_helper])
             post_cmds.append([rm_cmd, zip_test])
+    elif op == 'uploadchunked':
+            pre_cmds.append([rm_cmd, txt_test])
+            cmd_args.append([txt_test, '.'])
+            verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
+            pre_cmds.append([mkdir_cmd, dir_test])
+            cmd_args.append([txt_test, '%s/' % dir_test])
+            verify_cmds.append([ls_cmd, '-l', '%s/%s' % (dir_test, txt_test)])
+            post_cmds.append([rm_cmd, '-r', dir_test])
+            pre_cmds.append([mkdir_cmd, dir_test])
+            cmd_args.append(['%s.*' % test_prefix, '%s/' % dir_test])
+            verify_cmds.append([ls_cmd, '-l', '%s/%s.*' % (dir_test, test_prefix)])
+            post_cmds.append([rm_cmd, '-r', dir_test])
     elif op == 'write':
             pre_cmds.append([put_cmd, txt_test, '.'])
             cmd_args.append(['4', '8', txt_test, txt_test])
@@ -2471,11 +2493,13 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
         curl_target_put = target_template % '"--form \\"action=put\\"" "--form \\"files[]=@-;filename=$(basename $path)\\"" "--range \\"$start-$end\\""'
         curl_target_move = target_template % '"--form \\"action=move\\"" "--form \\"files[]=@-;filename=$(basename $path)\\""'
         curl_stdin_put = "'split -n $((chunk_no+1))/$total_chunks \"$path\"'"
+        curl_stdin_move = "'echo DUMMY'"
     elif lang == 'python':
         target_template = "['--form', '%%s' %% default_args, '--form', 'flags=%%s' %% server_flags, '--form', 'current_dir=%%s' %% current_dir, %s]"
         curl_target_put = target_template % "'--form', 'action=put', '--form', 'files[]=@-;filename=%s' % os.path.basename(path), '--range', '%d-%d' % (start, end)"
         curl_target_move = target_template % "'--form', 'action=move', '--form', 'files[]=@-;filename=%s' % os.path.basename(path)"
         curl_stdin_put = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
+        curl_stdin_move = '["echo", "DUMMY"]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2536,8 +2560,7 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
         curl_cmd,
         curl_flags,
         curl_target_move,
-        #curl_stdin_move,
-        curl_stdin_put,
+        curl_stdin_move,
         )
     s += end_function(lang, 'uploadchunked_move')
 
@@ -2910,7 +2933,7 @@ datatransfer \"$action\" \"$transfer_id\" \"$protocol\" \"$fqdn\" \"$port\" \"$u
     elif lang == 'python':
         s += """
 # optional 2nd to 12th argument depending on action - add dummies
-sys.argv += (12 - len(sys.argv)) * ['']
+sys.argv += (12 - len(sys.argv[1:])) * ['']
 # We included most args in packing above - remove again
 action = \"%s\" % sys.argv[1]
 transfer_id = \"%s\" % sys.argv[2]
@@ -3605,9 +3628,9 @@ for src in src_list:
             old_flags = \"$server_flags\"
             server_flags = \"p\"
             rel_root = root.replace(src_parent, '', 1).lstrip(os.sep)
-            dir_list = ';'.join(['path=%s' % os.path.join(dst, rel_root, i) for i in dirs])
+            dir_list = ['path=%s' % os.path.join(dst, rel_root, i) for i in dirs]
             # add current root
-            dir_list += ';path=%s' % os.path.join(dst, rel_root)
+            dir_list.append('path=%s' % os.path.join(dst, rel_root))
             mk_dir(dir_list)
             server_flags = \"$old_flags\"
             for name in files:
@@ -3866,7 +3889,7 @@ sharelink \"$@\" '' '' '' '' '' '' ''
     elif lang == 'python':
         s += """
 # optional 2nd to 8th argument depending on action - add dummies
-sys.argv +=  (8 - len(sys.argv) * ['']
+sys.argv +=  (8 - len(sys.argv[1:])) * ['']
 (status, out) = sharelink(*(sys.argv[1:9]))
 # Trailing comma to prevent double newlines
 print ''.join(out),
@@ -4363,8 +4386,9 @@ for src in ${src_list[@]}; do
         mk_dir ${dir_list[@]}
         server_flags=\"$old_flags\"
         sources=`cd $src_parent && find $src_target -type f`
-        current_dir=\"$dst\"
         for path in $sources; do
+            rel_root=`dirname $path`
+            current_dir=\"$dst/$rel_root\"
             upload_file_chunks \"$src_parent/$path\" \"$current_dir/\"
         done
     else
@@ -4431,9 +4455,9 @@ for src in src_list:
             old_flags = server_flags
             server_flags = \"p\"
             rel_root = root.replace(src_parent, '', 1).lstrip(os.sep)
-            dir_list = ';'.join(['path=%s' % os.path.join(dst, rel_root, i) for i in dirs])
+            dir_list = ['path=%s' % os.path.join(dst, rel_root, i) for i in dirs]
             # add current root
-            dir_list += ';path=%s' % os.path.join(dst, rel_root)
+            dir_list.append('path=%s' % os.path.join(dst, rel_root))
             mk_dir(dir_list)
             server_flags = old_flags
             for name in files:
