@@ -208,7 +208,7 @@ def main(client_id, user_arguments_dict):
         redirect_name = configuration.site_user_redirect
         redirect_path = redirect_name
         id_args = ''
-        page_title = 'Upload to User Directory'
+        page_title = 'Upload to User Directory: %s' % action
     elif share_id:
         (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
@@ -223,7 +223,7 @@ def main(client_id, user_arguments_dict):
         redirect_name = 'share_redirect'
         redirect_path = os.path.join(redirect_name, share_id)
         id_args = 'share_id=%s;' % share_id
-        page_title = 'Upload to Shared Directory'
+        page_title = 'Upload to Shared Directory: %s' % action
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
         output_objects.append({'object_type': 'error_text', 'text'
@@ -345,11 +345,12 @@ def main(client_id, user_arguments_dict):
         logger.info('status done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action == 'move':
-        # Move automatically takes place relative to upload tmp dir
+        # Move automatically takes place relative to dst_dir and current_dir
         for (rel_path, chunk_tuple) in upload_files:
-            abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
-            dest_path = os.path.abspath(os.path.join(
-                base_dir, current_dir, os.path.basename(rel_path)))
+            abs_src_path = os.path.abspath(os.path.join(base_dir, rel_path))
+            dest_dir = os.path.abspath(os.path.join(base_dir, current_dir))
+            dest_path = os.path.join(dest_dir, os.path.basename(rel_path))
+            rel_dst = dest_path.replace(base_dir, '')
             if not valid_user_path(dest_path, base_dir, True):
                 logger.error('%s tried to %s move to restricted path %s ! (%s)'
                              % (user_id, op_name, dest_path, current_dir))
@@ -359,14 +360,20 @@ def main(client_id, user_arguments_dict):
                      % current_dir})
                 moved = False
             else:
-                try: 
-                    move(abs_path, dest_path)
+                try:
+                    makedirs_rec(dest_dir, configuration)
+                    move(abs_src_path, dest_path)
                     moved = True
                 except Exception, exc:
-                    logger.error('could not move %s to %s: %s' % (abs_path,
-                                                              dest_path, exc))
+                    logger.error('could not move %s to %s: %s' % \
+                                 (abs_src_path, dest_path, exc))
                     moved = False
-            uploaded.append({'object_type': 'uploadfile', rel_path: moved})
+            file_entry = {'object_type': 'uploadfile', rel_path: moved}
+            if moved:
+                file_entry['name'] = rel_dst
+                file_entry['size'] = get_file_size(dest_path, logger)
+                file_entry['url'] = "/%s/%s" % (redirect_path, rel_dst)
+            uploaded.append(file_entry)
         logger.info('move done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action != 'put':

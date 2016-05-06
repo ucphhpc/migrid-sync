@@ -2470,7 +2470,7 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
         target_template = '("--form \\"$default_args\\"" "--form \\"flags=$server_flags\\"" "--form \\"current_dir=$current_dir\\"" %s)'
         curl_target_put = target_template % '"--form \\"action=put\\"" "--form \\"files[]=@-;filename=$(basename $path)\\"" "--range \\"$start-$end\\""'
         curl_target_move = target_template % '"--form \\"action=move\\"" "--form \\"files[]=@-;filename=$(basename $path)\\""'
-        curl_stdin_put = '"split -n $((chunk_no+1))/$total_chunks $path"'
+        curl_stdin_put = "'split -n $((chunk_no+1))/$total_chunks \"$path\"'"
     elif lang == 'python':
         target_template = "['--form', '%%s' %% default_args, '--form', 'flags=%%s' %% server_flags, '--form', 'current_dir=%%s' %% current_dir, %s]"
         curl_target_put = target_template % "'--form', 'action=put', '--form', 'files[]=@-;filename=%s' % os.path.basename(path), '--range', '%d-%d' % (start, end)"
@@ -2694,8 +2694,10 @@ orig_args=(\"${%s[@]}\")
 
 index=1
 # For loop automatically expands wild cards
-# we set IFS empty to prevent spaces in filenames breaking things
-IFS=''
+# We use the advice from http://tldp.org/LDP/abs/html/internalvariables.html
+# to explicitly remove ordinary space from IFS to prevent spaces in filenames
+# breaking things. Newlines and tabs are still effective.
+IFS=\"$(printf '\n\t')\" 
 for pattern in ${src_list[@]}; do
     expanded_path=$(expand_name \"path=$pattern\" \"$server_flags\" \"%s\" 2> /dev/null)
     # Expected output format is something like
@@ -3529,8 +3531,10 @@ else
 fi
 
 # For loop automatically expands wild cards
-# we set IFS empty to prevent spaces in filenames breaking things
-IFS=''
+# We use the advice from http://tldp.org/LDP/abs/html/internalvariables.html
+# to explicitly remove ordinary space from IFS to prevent spaces in filenames
+# breaking things. Newlines and tabs are still effective.
+IFS=\"$(printf '\n\t')\" 
 for src in ${src_list[@]}; do
     if [ ! -e \"$src\" ]; then
         echo \"No such file or directory: $src !\"
@@ -3542,17 +3546,18 @@ for src in ${src_list[@]}; do
             continue
         fi
         # Recursive dirs may not exist - create them first
+        # we could leave it to backend handler but then we miss empty dirs
         src_parent=`dirname $src`
         src_target=`basename $src`
         dirs=`cd $src_parent && find $src_target -type d`
         # force mkdir -p
         old_flags=\"$server_flags\"
         server_flags=\"p\"
-        dir_list=\"\"
+        declare -a dir_list
         for dir in $dirs; do
-            dir_list=\"$dir_list;path=$dst/$dir\"
+            dir_list+=(\"path=$dst/$dir\")
         done
-        mk_dir \"$dir_list\"
+        mk_dir ${dir_list[@]}
         server_flags=\"$old_flags\"
         sources=`cd $src_parent && find $src_target -type f`
         for path in $sources; do
@@ -4329,8 +4334,10 @@ dst=\"${src_list[$(($#-1))]}\"
 unset src_list[$(($#-1))]
 
 # For loop automatically expands wild cards
-# we set IFS empty to prevent spaces in filenames breaking things
-IFS=''
+# We use the advice from http://tldp.org/LDP/abs/html/internalvariables.html
+# to explicitly remove ordinary space from IFS to prevent spaces in filenames
+# breaking things. Newlines and tabs are still effective.
+IFS=\"$(printf '\n\t')\" 
 for src in ${src_list[@]}; do
     if [ ! -e \"$src\" ]; then
         echo \"No such file or directory: $src !\"
@@ -4342,22 +4349,23 @@ for src in ${src_list[@]}; do
             continue
         fi
         # Recursive dirs may not exist - create them first
+        # we could leave it to backend handler but then we miss empty dirs
         src_parent=`dirname $src`
         src_target=`basename $src`
         dirs=`cd $src_parent && find $src_target -type d`
         # force mkdir -p
         old_flags=\"$server_flags\"
         server_flags=\"p\"
-        dir_list=\"\"
+        declare -a dir_list
         for dir in $dirs; do
-            dir_list=\"$dir_list;path=$dst/$dir\"
+            dir_list+=(\"path=$dst/$dir\")
         done
-        mk_dir \"$dir_list\"
+        mk_dir ${dir_list[@]}
         server_flags=\"$old_flags\"
         sources=`cd $src_parent && find $src_target -type f`
         current_dir=\"$dst\"
         for path in $sources; do
-            upload_file_chunks \"$source_parent/$path\" \"$current_dir/\"
+            upload_file_chunks \"$src_parent/$path\" \"$current_dir/\"
         done
     else
         current_dir=\"$dst\"
