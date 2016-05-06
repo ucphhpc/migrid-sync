@@ -365,10 +365,11 @@ def curl_perform(
         done
     }
     default_args=\"\"
+    out_form=\"output_format=txt\"
     if [ -n \"$auth_data\" ]; then
         default_args+=\"$auth_data;\"
     fi
-    default_args+=\"output_format=txt\"
+    default_args+=\"$out_form\"
     curl=\"%s %s --location --fail --silent --show-error\"
     target_data=%s
     location=%s
@@ -431,9 +432,10 @@ def curl_perform(
     elif lang == 'python':
         s += """
     default_args = \"\"
+    out_form = \"output_format=txt\"
     if auth_data:
         default_args += \"%%s;\" %% auth_data
-    default_args += \"output_format=txt\"
+    default_args += out_form
     curl = ['%s'] + '%s'.split() + ['--location', '--fail', '--silent',
                                     '--show-error']
     target_data = %s

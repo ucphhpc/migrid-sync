@@ -2489,13 +2489,13 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
     urlenc_data = '""'
     curl_stdin_move = '""'
     if lang == 'sh':
-        target_template = '("--form \\"$default_args\\"" "--form \\"flags=$server_flags\\"" "--form \\"current_dir=$current_dir\\"" %s)'
+        target_template = '("--form \\"$auth_data\\"" "--form \\"$out_form\\"" "--form \\"flags=$server_flags\\"" "--form \\"current_dir=$current_dir\\"" %s)'
         curl_target_put = target_template % '"--form \\"action=put\\"" "--form \\"files[]=@-;filename=$(basename $path)\\"" "--range \\"$start-$end\\""'
         curl_target_move = target_template % '"--form \\"action=move\\"" "--form \\"files[]=@-;filename=$(basename $path)\\""'
         curl_stdin_put = "'split -n $((chunk_no+1))/$total_chunks \"$path\"'"
         curl_stdin_move = "'echo DUMMY'"
     elif lang == 'python':
-        target_template = "['--form', '%%s' %% default_args, '--form', 'flags=%%s' %% server_flags, '--form', 'current_dir=%%s' %% current_dir, %s]"
+        target_template = "['--form', '%%s' %% auth_data, '--form', '%%s' %% out_form, '--form', 'flags=%%s' %% server_flags, '--form', 'current_dir=%%s' %% current_dir, %s]"
         curl_target_put = target_template % "'--form', 'action=put', '--form', 'files[]=@-;filename=%s' % os.path.basename(path), '--range', '%d-%d' % (start, end)"
         curl_target_move = target_template % "'--form', 'action=move', '--form', 'files[]=@-;filename=%s' % os.path.basename(path)"
         curl_stdin_put = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
