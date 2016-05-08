@@ -39,7 +39,7 @@ import logging.handlers
 import os
 import sys
 import time
-import threading
+import multiprocessing
 
 from shared.fileio import makedirs_rec, pickle
 from shared.conf import get_configuration_object
@@ -480,9 +480,10 @@ def run_transfer(transfer_dict, client_id, configuration):
         transfer_proc = subprocess_popen(command_list,
                                          stdout=subprocess_pipe,
                                          stderr=subprocess_pipe)
+        # TODO: write transfer_proc.pid to file here for use in daemon restart
+        out, err = transfer_proc.communicate()
         exit_code = transfer_proc.wait()
         status |= exit_code
-        out, err = transfer_proc.communicate()
         logger.info('done running transfer %s: %s' % (run_dict['transfer_id'],
                                                       blind_str))
         logger.debug('raw output is: %s' % out)
@@ -572,10 +573,9 @@ def background_transfer(transfer_dict, client_id, configuration):
     stopping further transfer handling.
     """
 
-    worker = threading.Thread(target=wrap_run_transfer, args=(transfer_dict,
-                                                              client_id,
-                                                              configuration))
-    worker.daemon = True
+    worker = multiprocessing.Process(target=wrap_run_transfer,
+                                     args=(transfer_dict, client_id,
+                                           configuration))
     worker.start()
     all_workers[transfer_dict['transfer_id']] = worker
 
@@ -584,8 +584,9 @@ def foreground_transfer(transfer_dict, client_id, configuration):
     """Run a transfer in the foreground so that it can block without
     stopping further transfer handling.
     """
-    wrap_run_transfer(transfer_dict, client_id, configuration)
     all_workers[transfer_dict['transfer_id']] = None
+    wrap_run_transfer(transfer_dict, client_id, configuration)
+    del all_workers[transfer_dict['transfer_id']]
 
 def handle_transfer(configuration, client_id, transfer_dict):
     """Actually handle valid transfer request in transfer_dict"""
@@ -666,7 +667,7 @@ def manage_transfers(configuration):
 if __name__ == '__main__':
     print '''This is the MiG data transfer handler daemon which runs requested
 data transfers in the background on behalf of the users. It monitors the saved
-data transfer files for changes and launches external client threads to take
+data transfer files for changes and launches external client processes to take
 care of the tranfers, writing status and output to a transfer output directory
 in the corresponding user home.
 
@@ -692,6 +693,16 @@ unless it is available in mig/server/MiGserver.conf
         try:
             manage_transfers(configuration)
 
+            for (transfer_id, worker) in all_workers.items():
+                if worker:
+                    logger.debug('Checking if %s with pid %d is finished' % \
+                                 (transfer_id, worker.pid))
+                    worker.join(1)
+                    if not worker.is_alive():
+                        logger.info('Removing finished %s with pid %d' % \
+                                    (transfer_id, worker.pid))
+                        del all_workers[transfer_id]
+                
             # Throttle down
 
             time.sleep(30)
@@ -699,6 +710,14 @@ unless it is available in mig/server/MiGserver.conf
             keep_running = False
         except Exception, exc:
             print 'Caught unexpected exception: %s' % exc
+
+    logger.info('Cleaning up workers to prepare for exit')
+    for (transfer_id, worker) in all_workers.items():
+        if worker and worker.is_alive():
+            logger.info('Terminating %s worker with pid %d' % \
+                        (transfer_id, worker.pid))
+            worker.terminate()
+            del all_workers[transfer_id]
 
     print 'Data transfer handler daemon shutting down'
     logger.info('Stop data transfer handler daemon')
