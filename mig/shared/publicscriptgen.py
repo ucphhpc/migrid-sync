@@ -261,7 +261,8 @@ def auth_check_init(lang):
     if [ \"$auth_redir\" == \"cert_redirect\" ]; then
         auth_check=(\"--cert $cert_file\" \"--key $key_file\")
         put_arg=\"CERTPUT\"
-        auth_data=\"\"
+        # We must set something for form argument
+        auth_data=\"_=certauth\"
     else
         auth_check=(\"\")
         put_arg=\"SHAREPUT\"
@@ -284,7 +285,8 @@ def auth_check_init(lang):
     if auth_redir == \"cert_redirect\":
         auth_check = [\"--cert\", cert_file, \"--key\", key_file]
         put_arg = \"CERTPUT\"
-        auth_data = \"\"
+        # We must set something for form argument
+        auth_data = \"_=certauth\"
     else:
         auth_check = []
         put_arg = \"SHAREPUT\"
@@ -468,9 +470,17 @@ def curl_perform(
     # Make sure e.g. spaces are encoded since they are not allowed in URL
     from urllib import quote as urlquote
     url = ['--url', mig_server + '/' + urlquote(location) + query]
+    input_fd = None
     if curl_stdin:
-        input_gen = subprocess.Popen(curl_stdin, stdout=subprocess.PIPE)
-        input_source = input_gen.stdout
+        input_source = subprocess.PIPE
+        if isinstance(curl_stdin, basestring):
+            input_fd = open(curl_stdin, 'rb')
+            input_fd.seek(start)
+        elif isinstance(curl_stdin, list):
+            input_gen = subprocess.Popen(curl_stdin, stdout=subprocess.PIPE)
+            input_fd = input_gen.stdout
+        else:
+            print 'ERROR: unexpected curl input: %%s' %% curl_stdin
     else:
         input_source = None
     # NOTE: we build list directly in order to preserve e.g. spaces in paths
@@ -480,9 +490,11 @@ def curl_perform(
     # NOTE: for security we do not invoke shell here
     proc = subprocess.Popen(command_list, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, stdin=input_source)
-    if curl_stdin:
-        input_source.close()  # Allow p1 to receive a SIGPIPE if p2 exits. 
-    out_buffer = StringIO.StringIO(proc.communicate()[0])
+    if input_fd:
+        out_buffer = StringIO.StringIO(proc.communicate(input_fd.read(chunk_bytes))[0])
+        input_fd.close()
+    else:
+        out_buffer = StringIO.StringIO(proc.communicate()[0])
     proc.stdout.close()
     out = out_buffer.readlines()
     #print \"DEBUG: out: %%s\" %% out

@@ -2498,8 +2498,11 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
         target_template = "['--form', '%%s' %% auth_data, '--form', '%%s' %% out_form, '--form', 'flags=%%s' %% server_flags, '--form', 'current_dir=%%s' %% current_dir, %s]"
         curl_target_put = target_template % "'--form', 'action=put', '--form', 'files[]=@-;filename=%s' % os.path.basename(path), '--range', '%d-%d' % (start, end)"
         curl_target_move = target_template % "'--form', 'action=move', '--form', 'files[]=@-;filename=%s' % os.path.basename(path)"
-        curl_stdin_put = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
-        curl_stdin_move = '["echo", "DUMMY"]'
+        # Don't require external split command with python - just read chunks
+        #curl_stdin_put = '["split", "-n", "%d/%d" % (chunk_no + 1, total_chunks), path]'
+        curl_stdin_put = 'path'
+        # Don't require external echo, just read first byte from path
+        curl_stdin_move = 'path'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2514,6 +2517,7 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
     s += timeout_check_init(lang)
     if lang == 'sh':
         s += '''
+    # Helpers used for input chunking below
     start=$((chunk_no*chunk_size))
     # The range parameter takes is on the form "first-last" i.e. inclusive
     end=$(((chunk_no+1)*chunk_size-1))
@@ -2521,15 +2525,18 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
     if [ $chunk_no -eq $((total_chunks - 1)) ]; then
         end=$((total_size-1))
     fi
+    chunk_bytes=$((1+end-start)) 
 '''
     elif lang == 'python':
         s += '''
+    # Helpers used for input chunking below
     start = chunk_no * chunk_size
     # The range parameter takes is on the form "first-last" i.e. inclusive
     end = (chunk_no + 1) * chunk_size - 1
     # Last chunk includes remainder after splitting evenly into total_chunks
     if chunk_no == total_chunks - 1:
         end = total_size - 1
+    chunk_bytes = 1 + end - start
 '''        
     s += curl_perform(
         lang,
@@ -2551,6 +2558,19 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
+    if lang == 'sh':
+        s += '''
+    start=0
+    end=0
+    chunk_bytes=1 
+    chunk_bytes=$((1+end-start)) 
+'''
+    elif lang == 'python':
+        s += '''
+    start = 0
+    end = 0
+    chunk_bytes = 1 + end - start
+'''
     s += curl_perform(
         lang,
         relative_url,
