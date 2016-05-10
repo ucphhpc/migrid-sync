@@ -408,9 +408,9 @@ if (jQuery) (function($){
             var buttonWidth = 16;
             var statusbarWidth = $("#fm_statusbar").width();
             console.debug("statusbar is "+statusbarWidth+ "px wide");
-            // leave a couple of pixels for rounding
             var buttonbarWidth = buttonCount * (buttonWidth + 2 * buttonSpacing);
-            var breadcrumbsWidth = statusbarWidth - buttonbarWidth;
+            // save a couple of extra pixels after breadcrumbs (needed on OSX)
+            var breadcrumbsWidth = statusbarWidth - buttonbarWidth - 2;
             console.debug("set breadcrumbsWidth to "+breadcrumbsWidth+ "px");
             console.debug("set buttonbarWidth to "+buttonbarWidth+ "px");
 
