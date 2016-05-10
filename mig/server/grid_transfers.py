@@ -642,11 +642,11 @@ def manage_transfers(configuration):
 
     for (client_id, transfers) in all_transfers.items():
         for (transfer_id, transfer_dict) in transfers.items():
-            logger.debug('inspecting transfer:\n%s' % blind_pw(transfer_dict))
+            #logger.debug('inspecting transfer:\n%s' % blind_pw(transfer_dict))
             transfer_status = transfer_dict['status']
             if transfer_status in ("DONE", "FAILED", "PAUSED"):
-                logger.debug('skip %(status)s transfer %(transfer_id)s' % \
-                             transfer_dict)
+                #logger.debug('skip %(status)s transfer %(transfer_id)s' % \
+                #             transfer_dict)
                 continue
             if transfer_status in ("ACTIVE", ) and \
                    all_workers.has_key(transfer_id):
@@ -677,10 +677,14 @@ unless it is available in mig/server/MiGserver.conf
 
     configuration = get_configuration_object()
 
+    log_level = 'info'
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+
     # Use separate logger
 
     logger = daemon_logger('transfers', configuration.user_transfers_log,
-                           "info")
+                           log_level)
     configuration.logger = logger
 
     keep_running = True
