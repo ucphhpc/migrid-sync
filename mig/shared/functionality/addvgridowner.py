@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridowner - add vgrid owner
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -60,6 +60,17 @@ def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
              % (tracker_dir, configuration.site_vgrid_label, vgrid_name)
              })
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # Trac requires tweaking for certain versions of setuptools
+    # http://trac.edgewall.org/wiki/setuptools
+    admin_env = {}
+    # strip non-string args from env to avoid wsgi execv errors like
+    # http://stackoverflow.com/questions/13213676
+    for (key, val) in os.environ.items():
+        if isinstance(val, basestring):
+            admin_env[key] = val
+    admin_env["PKG_RESOURCES_CACHE_ZIP_MANIFESTS"] = "1"
+
     try:
         admin_user = distinguished_name_to_user(cert_id)
         admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
@@ -71,7 +82,7 @@ def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                                   perms_cmd)
         # NOTE: We already verified command variables to be shell-safe
         proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
-                         stderr=subprocess_stdout)
+                         stderr=subprocess_stdout, env=admin_env)
         proc.wait()
         if proc.returncode != 0:
             raise Exception("tracker permissions %s failed: %s (%d)" % \

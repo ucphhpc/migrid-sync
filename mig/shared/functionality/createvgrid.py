@@ -28,6 +28,7 @@
 """Create a new VGrid"""
 
 import os
+import traceback
 import ConfigParser
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
@@ -65,6 +66,7 @@ def create_scm(
     ):
     """Create new Mercurial SCM repository"""
 
+    logger = configuration.logger
     kind = 'member'
     scm_alias = 'vgridscm'
     # TODO: we only support scm cert access for now
@@ -208,6 +210,7 @@ the commands and work flows of this distributed SCM.
         os.chmod(scm_dir, 0555)
         return True
     except Exception, exc:
+        logger.error('Could not create vgrid public_base directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not create %s scm: %s' % \
                                (configuration.site_vgrid_label, exc)})
@@ -263,10 +266,16 @@ def create_tracker(
     project_name = '%s %s project tracker' % (vgrid_name, kind)
     create_cmd = None
     create_status = True
-    # Trac requires this for certain versions of setuptools
+    # Trac requires tweaking for certain versions of setuptools
     # http://trac.edgewall.org/wiki/setuptools
-    admin_env = os.environ.copy()
-    admin_env["PKG_RESOURCES_CACHE_ZIP_MANIFESTS"] = "1"    
+    admin_env = {}
+    # strip non-string args from env to avoid wsgi execv errors like
+    # http://stackoverflow.com/questions/13213676
+    for (key, val) in os.environ.items():
+        if isinstance(val, basestring):
+            admin_env[key] = val
+    admin_env["PKG_RESOURCES_CACHE_ZIP_MANIFESTS"] = "1"
+    
     try:
 
         # Create tracker directory
@@ -298,11 +307,10 @@ def create_tracker(
             # NOTE: we use command list here to avoid shell requirement
             proc = subprocess_popen(create_cmd, stdout=subprocess_pipe,
                                     stderr=subprocess_stdout, env=admin_env)
-            proc.wait()
-            if proc.returncode != 0:
+            retval = proc.wait()
+            if retval != 0:
                 raise Exception("tracker creation %s failed: %s (%d)" % \
-                                (create_cmd, proc.stdout.read(),
-                                 proc.returncode))
+                                (create_cmd, proc.stdout.read(), retval))
 
             # We want to customize generated project trac.ini with project info
         
@@ -362,11 +370,10 @@ def create_tracker(
             # NOTE: we use command list here to avoid shell requirement
             proc = subprocess_popen(upgrade_cmd, stdout=subprocess_pipe,
                                     stderr=subprocess_stdout, env=admin_env)
-            proc.wait()
-            if proc.returncode != 0:
+            retval = proc.wait()
+            if retval != 0:
                 raise Exception("tracker 1st upgrade db %s failed: %s (%d)" % \
-                                (upgrade_cmd, proc.stdout.read(),
-                                 proc.returncode))
+                                (upgrade_cmd, proc.stdout.read(), retval))
 
             # Create cgi-bin with scripts using trac-admin command:
             # trac-admin tracker_dir deploy target_tracker_bin
@@ -376,11 +383,10 @@ def create_tracker(
             # NOTE: we use command list here to avoid shell requirement
             proc = subprocess_popen(deploy_cmd, stdout=subprocess_pipe,
                                     stderr=subprocess_stdout, env=admin_env)
-            proc.wait()
-            if proc.returncode != 0:
+            retval = proc.wait()
+            if retval != 0:
                 raise Exception("tracker deployment %s failed: %s (%d)" % \
-                                (deploy_cmd, proc.stdout.read(),
-                                 proc.returncode))
+                                (deploy_cmd, proc.stdout.read(), retval))
 
         if not repair or not os.path.isdir(target_tracker_cgi_link):
             os.chmod(target_tracker_var, 0755)
@@ -407,11 +413,10 @@ def create_tracker(
             # NOTE: we use command list here to avoid shell requirement
             proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
                                     stderr=subprocess_stdout, env=admin_env)
-            proc.wait()
-            if proc.returncode != 0:
+            retval = proc.wait()
+            if retval != 0:
                 raise Exception("tracker permissions %s failed: %s (%d)" % \
-                                (perms_cmd, proc.stdout.read(),
-                                 proc.returncode))
+                                (perms_cmd, proc.stdout.read(), retval))
 
             # Customize Wiki front page using trac-admin commands:
             # trac-admin tracker_dir wiki export WikiStart tracinfo.txt
@@ -539,11 +544,10 @@ body {
                 proc = subprocess_popen(wiki_cmd, stdout=subprocess_pipe,
                                         stderr=subprocess_stdout,
                                         env=admin_env)
-                proc.wait()
-                if proc.returncode != 0:
+                retval = proc.wait()
+                if retval != 0:
                     raise Exception("tracker wiki %s failed: %s (%d)" % \
-                                    (perms_cmd, proc.stdout.read(),
-                                     proc.returncode))
+                                    (perms_cmd, proc.stdout.read(), retval))
 
             wiki_fd.close()
 
@@ -556,11 +560,10 @@ body {
         # NOTE: we use command list here to avoid shell requirement
         proc = subprocess_popen(upgrade_cmd, stdout=subprocess_pipe,
                                 stderr=subprocess_stdout, env=admin_env)
-        proc.wait()
-        if proc.returncode != 0:
+        retval = proc.wait()
+        if retval != 0:
             raise Exception("tracker 2nd upgrade db %s failed: %s (%d)" % \
-                            (upgrade_cmd, proc.stdout.read(),
-                             proc.returncode))
+                            (upgrade_cmd, proc.stdout.read(), retval))
 
         if repair:
             # Touch WSGI scripts to force reload of running instances
@@ -570,6 +573,8 @@ body {
         create_status = False
         logger.error('create %s tracker failed: %s' % \
                      (configuration.site_vgrid_label, exc))
+        logger.error("creation env:\n%s" % admin_env)
+        logger.error("creation trace:\n%s" % traceback.format_exc())
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not create %s tracker: %s'
                                % (configuration.site_vgrid_label, exc)})
@@ -625,11 +630,13 @@ def create_forum(
     repair=False
     ):
     """Create new forum - just the base dir"""
+    logger = configuration.logger
     try:
         if not repair or not os.path.isdir(forum_dir):
             os.mkdir(forum_dir)
         return True
     except Exception, exc:
+        logger.error('Could not create forum directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not create %s forum: %s'
                                % (configuration.site_vgrid_label, exc)})
@@ -799,7 +806,7 @@ name, please try again with a new name!""" % configuration.site_vgrid_label
     try:
         os.mkdir(base_dir)
     except Exception, exc:
-        
+        logger.error('Could not create vgrid base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : """Could not create %(_label)s directory, remember to create
