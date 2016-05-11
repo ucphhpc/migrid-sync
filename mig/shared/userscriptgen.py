@@ -1086,7 +1086,7 @@ def filemetaio_function(configuration, lang, curl_cmd, curl_flags='--compressed'
    
     relative_url = '"%s/filemetaio.py"' % get_xgi_bin(configuration)
     query = '""'
-    # TODO: is arg_list realy a list here?
+    # TODO: is arg_list really a list here?
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags;action=$action"'
         urlenc_data = '("path=$path" "${arg_list[@]}")'

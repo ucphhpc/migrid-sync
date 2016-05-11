@@ -880,7 +880,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('<td colspan=%d>Select/deselect all files</td>'
                          % (columns - cols))
             lines.append('</tr>')
-            lines.append('<tr>')
+            lines.append('<tr class="if_full">')
             cols = 0
             lines.append('<td colspan=%d><hr></td>'
                           % (columns - cols))
