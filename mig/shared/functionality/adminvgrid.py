@@ -424,7 +424,7 @@ def main(client_id, user_arguments_dict):
 
     (settings_status, settings_dict) = vgrid_settings(vgrid_name, configuration,
                                                  as_dict=True)
-    if not settings_status:
+    if not settings_status or not settings_dict:
         settings_dict = {'vgrid_name': vgrid_name}
     settings_dict.update({
         'vgrid_label': configuration.site_vgrid_label,

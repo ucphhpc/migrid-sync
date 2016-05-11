@@ -335,6 +335,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     print 'could not open and unpickle: '\
                          + mon_file_name
                     continue
+                if not last_request_dict.has_key('CREATED_TIME'):
+                    print 'skip broken last request dict: '\
+                         + mon_file_name
+                    continue
 
                 difference = datetime.datetime.now()\
                      - last_request_dict['CREATED_TIME']
@@ -502,6 +506,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 last_status_dict = unpickle(mon_file_name, logger)
                 if not last_status_dict:
                     print 'could not open and unpickle: '\
+                         + mon_file_name
+                    continue
+                if not last_status_dict.has_key('CREATED_TIME'):
+                    print 'skip broken last request dict: '\
                          + mon_file_name
                     continue
 

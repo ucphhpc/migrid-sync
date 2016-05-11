@@ -1014,7 +1014,8 @@ def guess_type(name):
             ):
             __type_map[key] = valid_safe_path
         # We include vgrid_name and a few more here to enforce sane name policy
-        for key in ('vgrid_name', 'rate_limit', ):
+        for key in ('vgrid_name', 'rate_limit', 'vgrids_allow_im',
+                    'vgrids_allow_email', ):
             __type_map[key] = valid_vgrid_name
         for key in ('jobname', ):
             __type_map[key] = valid_job_name
