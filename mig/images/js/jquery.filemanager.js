@@ -406,11 +406,13 @@ if (jQuery) (function($){
                 buttonCount += 1;
             }
             var buttonWidth = 16;
-            var statusbarWidth = $("#fm_statusbar").width();
-            console.debug("statusbar is "+statusbarWidth+ "px wide");
+            var fileManagerWidth = $("#fm_filemanager").width();
+            console.debug("fm is "+fileManagerWidth+ "px wide");
+            var fileManagerWidthPadding = $("#fm_filemanager").outerWidth() - fileManagerWidth;
+            console.debug("fm padding is "+fileManagerWidthPadding+ "px wide");
             var buttonbarWidth = buttonCount * (buttonWidth + 2 * buttonSpacing);
-            // save a couple of extra pixels after breadcrumbs (needed on OSX)
-            var breadcrumbsWidth = statusbarWidth - buttonbarWidth - 2;
+            // Leave a few pixels after breadcrumbs to avoid wrap on OSX/iOS
+            var breadcrumbsWidth = fileManagerWidth - buttonbarWidth - 6;
             console.debug("set breadcrumbsWidth to "+breadcrumbsWidth+ "px");
             console.debug("set buttonbarWidth to "+buttonbarWidth+ "px");
 
@@ -419,6 +421,7 @@ if (jQuery) (function($){
             
             var headerHeight = $.fn.fmSelect("").offset().top;
             var innerWindowHeight = $(window).height();
+            var contentHeightPadding = $("#content").outerHeight() - $("#content").height();
             var statusbarHeight = $("#fm_statusbar").outerHeight();
             var optionsHeight = $("#fm_options").outerHeight();
             var exitCodeHeight = $("#exitcode").outerHeight();
@@ -426,7 +429,7 @@ if (jQuery) (function($){
             var bottomspaceHeight = $("#bottomspace").outerHeight();
             var footerHeight = exitCodeHeight + bottomLogoHeight + bottomspaceHeight;
             var minHeight = $("div.menublock").height() - $("div.menublock").offset().top;
-            var fileManagerHeight = innerWindowHeight - (headerHeight + statusbarHeight + optionsHeight + footerHeight);
+            var fileManagerHeight = innerWindowHeight - (headerHeight + statusbarHeight + optionsHeight + footerHeight + contentHeightPadding);
             if (fileManagerHeight < minHeight) {
                 fileManagerHeight = minHeight;
             }
