@@ -16,7 +16,7 @@ All keys should be kept protected with restrictive permissions:
 chown 0:0 *.key server.pem ca.pem
 chmod 400 *.key server.pem ca.pem combined.pem
 
-Do not change keys unecessarily since it makes sftp clients fail with 
+Do not change keys unnecessarily since it makes sftp clients fail with 
 possible MITM warning. It is even worse for sshfs which just fails with a
 vague error in that case. 
 This leaves us in a bit of a mess with the one-year startssl keys/certs. If 

@@ -244,7 +244,8 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
 </tr><tr>
 <td><textarea name=request_text cols=72 rows=10>
 We have granted you membership access to our %(vgrid_name)s %(_label)s.
-You can access the %(_label)s components from the %(_label)ss page.
+You can access the %(_label)s components and collaboration tools from your
+%(_label)ss page on %(short_title)s.
 
 Regards, the %(vgrid_name)s %(_label)s owners
 </textarea></td>
@@ -256,7 +257,8 @@ Regards, the %(vgrid_name)s %(_label)s owners
 </form>
 <br />
 """ % {'vgrid_name': vgrid_name, 'cert_id': cert_id, 'protocol': any_protocol,
-       '_label': configuration.site_vgrid_label}})
+       '_label': configuration.site_vgrid_label,
+       'short_title': configuration.short_title}})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

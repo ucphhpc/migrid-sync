@@ -296,7 +296,7 @@ class Configuration:
     user_davs_log = 'davs.log'
     user_ftps_address = ''
     user_ftps_ctrl_port = 8021
-    user_ftps_pasv_ports = range(8100, 8500)
+    user_ftps_pasv_ports = range(8100, 8400)
     user_ftps_show_address = ''
     user_ftps_show_ctrl_port = 8021
     user_ftps_key = ''
