@@ -629,7 +629,7 @@ Action on paths selected below
                    }
         
     output_objects.append({'object_type': 'html_form', 'text'
-                           : """
+                           : """<br/>
     <div class='files disable_read'>
     <p class='info icon'>
     This is a write-only share so you do not have access to see the files, only

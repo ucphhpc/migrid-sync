@@ -84,12 +84,15 @@ from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_user_creds, refresh_job_creds, \
      update_login_map, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-     penalize_rate_limit
+     penalize_rate_limit, track_open_session, track_close_session, \
+     active_sessions
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
-configuration, logger = None, None
+# Limit users to this many concurrent active sessions to prevent DoS effects
+DEFAULT_MAX_USER_SESSIONS = 4
 
+configuration, logger = None, None
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
@@ -711,6 +714,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
+    max_user_sessions = conf.get('max_user_sessions', DEFAULT_MAX_USER_SESSIONS)
     host_key_file = StringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client, default_window_size=window_size,
@@ -741,13 +745,24 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     
     channel = transport.accept(conf['auth_timeout'])
     username = server.get_authenticated_user()
-    if username is not None:
-        logger.info("Login for %s from %s" % (username, addr))
-        print "Login for %s from %s" % (username, addr)
+    # Throttle excessive concurrent active sessions from same user
+    active_count = active_sessions(configuration, 'sftp', username)
+    if active_count > max_user_sessions:
+        logger.warning("Refusing additional open sessions for %s" % username)
+        print "Too many open sessions for %s - refusing" % username
+        username = None
     else:
+        logger.info("Allowing login for %s with %d active sessions" % \
+                     (username, active_count))
+
+    if username is None:
         logger.warning("Login from %s failed" % (addr, ))
         print "Login from %s failed - closing connection" % (addr, )
         transport.close()
+    else:
+        logger.info("Login for %s from %s" % (username, addr, ))
+        print "Login for %s from %s" % (username, addr, )
+        track_open_session(configuration, 'sftp', username, addr)
 
     # Ignore user connection here as we only care about sftp.
     # Keep the connection alive until user disconnects or server is halted.
@@ -756,6 +771,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         if conf['stop_running'].is_set():
             transport.close()
         time.sleep(1)
+    track_close_session(configuration, 'sftp', username, addr)
 
 
 def start_service(configuration):

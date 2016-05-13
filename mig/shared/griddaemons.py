@@ -49,6 +49,8 @@ default_max_hits, default_fail_cache = 5, 120
 
 _rate_limits = {}
 _rate_limits_lock = threading.Lock()
+_active_sessions = {}
+_sessions_lock = threading.Lock()
 
 
 class Login(object):
@@ -841,6 +843,55 @@ def penalize_rate_limit(configuration, proto, client_address, client_id, hits,
         time.sleep(sleep_secs)
     return sleep_secs
 
+def track_open_session(configuration, proto, client_id, client_address):
+    """Track that client_id opened a new session from client_address"""
+    logger = configuration.logger
+    logger.debug("track open session for %s from %s" % (client_id,
+                                                        client_address))
+    _sessions_lock.acquire()
+    try:
+        _cached = _active_sessions.get(client_id, {})
+        if not _cached:
+            _active_sessions[client_id] = _cached
+        _active = _cached.get(proto, [])
+        if not _active:
+            _cached[proto] = _active 
+        _active.append(client_address)
+    except Exception, exc:
+        logger.error("track open session failed: %s" % exc)
+    _sessions_lock.release()
+
+def track_close_session(configuration, proto, client_id, client_address):
+    """Track that client_id opened a new session from client_address"""
+    logger = configuration.logger
+    logger.debug("track close session for %s from %s" % (client_id,
+                                                         client_address))
+    _sessions_lock.acquire()
+    try:
+        _cached = _active_sessions.get(client_id, {})
+        _active = _cached.get(proto, [])
+        first_match = _active.index(client_address)
+        del _active[first_match]
+    except Exception, exc:
+        logger.error("track close session failed: %s" % exc)
+    _sessions_lock.release()
+
+def active_sessions(configuration, proto, client_id):
+    """Look up how many active proto sessions client_id has running"""
+    logger = configuration.logger
+    active_count = 0
+    _sessions_lock.acquire()
+    try:
+        logger.info("active sessions: %s" % _active_sessions)
+        _cached = _active_sessions.get(client_id, {})
+        _active = _cached.get(proto, [])
+        active_count = len(_active)
+    except Exception, exc:
+        logger.error("active sessions failed: %s" % exc)
+    _sessions_lock.release()
+    return active_count
+    
+
 if __name__ == "__main__":
     from shared.conf import get_configuration_object
     conf = get_configuration_object()
@@ -908,4 +959,22 @@ if __name__ == "__main__":
     hit = hit_rate_limit(conf, test_proto, other_address, test_id)
     print "Blocked: %s" % hit
 
-    
+    print "Test active session counting"
+    active_count = active_sessions(conf, test_proto, test_id)
+    print "Open sessions: %d" %  active_count
+    print "Track open session"
+    track_open_session(conf, test_proto, test_id, test_address)
+    active_count = active_sessions(conf, test_proto, test_id)
+    print "Open sessions: %d" %  active_count
+    print "Track open session"
+    track_open_session(conf, test_proto, test_id, test_address)
+    active_count = active_sessions(conf, test_proto, test_id)
+    print "Open sessions: %d" %  active_count
+    print "Track close session"
+    track_close_session(conf, test_proto, test_id, test_address)
+    active_count = active_sessions(conf, test_proto, test_id)
+    print "Open sessions: %d" %  active_count
+    print "Track close session"
+    track_close_session(conf, test_proto, test_id, test_address)
+    active_count = active_sessions(conf, test_proto, test_id)
+    print "Open sessions: %d" %  active_count
