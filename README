@@ -371,7 +371,7 @@ Seafile integration and OpenID login:
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path='' --trac_ini_path='' \
                    --public_port=80 --cert_port=443 --oid_port=443 --sid_port=443 \
-                   --openid_providers='https://openid.ku.dk/ https://erda.dk:8443/openid/' \
+                   --openid_providers='https://openid.ku.dk/ https://io.erda.dk:8001/openid/' \
                    --enable_openid=True --enable_wsgi=True --enable_sftp=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_hsts=True --enable_sandboxes=False --enable_vmachines=False \
