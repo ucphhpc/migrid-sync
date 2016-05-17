@@ -89,9 +89,6 @@ from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
-# Limit users to this many concurrent active sessions to prevent DoS effects
-DEFAULT_MAX_USER_SESSIONS = 4
-
 configuration, logger = None, None
 
 class SFTPHandle(paramiko.SFTPHandle):
@@ -714,7 +711,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
-    max_user_sessions = conf.get('max_user_sessions', DEFAULT_MAX_USER_SESSIONS)
+    max_sftp_sessions = conf.get('max_sftp_sessions', -1)
     host_key_file = StringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client, default_window_size=window_size,
@@ -747,8 +744,9 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     username = server.get_authenticated_user()
     # Throttle excessive concurrent active sessions from same user
     active_count = active_sessions(configuration, 'sftp', username)
-    if active_count > max_user_sessions:
-        logger.warning("Refusing additional open sessions for %s" % username)
+    if max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
+        logger.warning("Refusing additional open sessions for %s (%d)" % \
+                       (username, active_count))
         print "Too many open sessions for %s - refusing" % username
         username = None
     else:
@@ -771,7 +769,9 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         if conf['stop_running'].is_set():
             transport.close()
         time.sleep(1)
-    track_close_session(configuration, 'sftp', username, addr)
+
+    if username is not None:
+        track_close_session(configuration, 'sftp', username, addr)
 
 
 def start_service(configuration):
@@ -926,6 +926,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'stop_running': threading.Event(),
         'window_size': configuration.user_sftp_window_size,
         'max_packet_size': configuration.user_sftp_max_packet_size,
+        'max_sftp_sessions': configuration.user_sftp_max_sessions,
         }
     logger.info("Starting SFTP server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)

@@ -286,6 +286,7 @@ class Configuration:
     user_sftp_log = 'sftp.log'
     user_sftp_window_size = 0
     user_sftp_max_packet_size = 0
+    user_sftp_max_sessions = -1
     user_davs_address = ''
     user_davs_port = 4443
     user_davs_show_address = ''
@@ -660,6 +661,9 @@ class Configuration:
         if not (1024 < self.user_sftp_max_packet_size < 2**19):
             # Default to 512K if unset or above valid max
             self.user_sftp_max_packet_size = 512 * 2**10
+        if config.has_option('GLOBAL', 'user_sftp_max_sessions'):
+            self.user_sftp_max_sessions = config.getint(
+                'GLOBAL', 'user_sftp_max_sessions')
         if config.has_option('GLOBAL', 'user_davs_address'):
             self.user_davs_address = config.get('GLOBAL', 
                                                 'user_davs_address')

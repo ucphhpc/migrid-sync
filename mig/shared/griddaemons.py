@@ -882,7 +882,7 @@ def active_sessions(configuration, proto, client_id):
     active_count = 0
     _sessions_lock.acquire()
     try:
-        logger.info("active sessions: %s" % _active_sessions)
+        logger.debug("active sessions: %s" % _active_sessions)
         _cached = _active_sessions.get(client_id, {})
         _active = _cached.get(proto, [])
         active_count = len(_active)
