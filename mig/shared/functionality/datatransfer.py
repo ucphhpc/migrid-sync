@@ -396,7 +396,7 @@ else, so the public key can inserted in authorized_keys as:<br/>
             key_note = '''No keys available - you can add a key for use in
 transfers below.'''
 
-        import_checked, export_checked, scroll_to_create = '', '', ''
+        import_checked, export_checked, scroll_to_create = 'checked', '', ''
         if action in ['fillimport', 'fillexport']:
             scroll_to_create = '''
 <script>
@@ -409,6 +409,7 @@ transfers below.'''
                 import_checked = 'checked'
             elif action == 'fillexport':
                 export_checked = 'checked'
+                import_checked = ''
                 
         fill_helper= {'import_checked': import_checked, 'export_checked':
                       export_checked, 'anon_checked': anon_checked,
