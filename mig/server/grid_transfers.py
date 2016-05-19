@@ -52,7 +52,7 @@ from shared.pwhash import unscramble_digest
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.useradm import client_dir_id, client_id_dir
 from shared.transferfunctions import blind_pw, load_data_transfers, \
-     modify_data_transfers, get_status_dir
+     update_data_transfer, get_status_dir
 from shared.validstring import valid_user_path
 
 # Global transfers dictionary with requests for all users
@@ -522,8 +522,8 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
     transfer_dict['status'] = "ACTIVE"
     transfer_dict['exit_code'] = -1
     all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
-    (save_status, save_msg) = modify_data_transfers('modify', transfer_dict,
-                                                    client_id, configuration)
+    (save_status, save_msg) = update_data_transfer(transfer_dict, client_id,
+                                                    configuration)
     if not save_status:
         logger.error("failed to save %s status for %s: %s" % \
                      (transfer_dict['status'], transfer_id, save_msg))
@@ -539,8 +539,8 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
             logger.error('writing transfer status for %s failed' % transfer_id)
 
     all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
-    (save_status, save_msg) = modify_data_transfers('modify', transfer_dict,
-                                                    client_id, configuration)
+    (save_status, save_msg) = update_data_transfer(transfer_dict, client_id,
+                                                    configuration)
     if not save_status:
         logger.error("failed to save %s status for %s: %s" % \
                      (transfer_dict['status'], transfer_id, save_msg))

@@ -63,17 +63,28 @@ def blind_pw(transfer_dict):
 def build_transferitem_object(configuration, transfer_dict):
     """Build a data transfer object based on input transfer_dict"""
 
-    created_timetuple = transfer_dict['created_timestamp'].timetuple()
+    created_timestamp = transfer_dict['created_timestamp']
+    created_timetuple = created_timestamp.timetuple()
     created_asctime = time.asctime(created_timetuple)
     created_epoch = time.mktime(created_timetuple)
+    # Update timestamp was added later and thus may not be set
+    transfer_dict['updated_timestamp'] = transfer_dict.get('updated_timestamp',
+                                                           created_timestamp)
+    updated_timestamp = transfer_dict['updated_timestamp']
+    updated_timetuple = updated_timestamp.timetuple()
+    updated_asctime = time.asctime(updated_timetuple)
+    updated_epoch = time.mktime(updated_timetuple)
     transfer_obj = {
         'object_type': 'datatransfer',
         'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
                                                         created_asctime),
+        'updated': "<div class='sortkey'>%d</div>%s" % (updated_epoch,
+                                                        updated_asctime),
         }
     transfer_obj.update(blind_pw(transfer_dict))
     # NOTE: datetime is not json serializable so we remove
     del transfer_obj['created_timestamp']
+    del transfer_obj['updated_timestamp']
     return transfer_obj
 
 def build_keyitem_object(configuration, key_dict):
@@ -142,13 +153,15 @@ def modify_data_transfers(action, transfer_dict, client_id, configuration,
             return (load_status, transfers)
 
     if action == "create":
+        now = datetime.datetime.now()
         transfer_dict.update({
-            'created_timestamp': datetime.datetime.now(),
+            'created_timestamp': now,
+            'updated_timestamp': now,
             'owner': client_id,
             })
         transfers[transfer_id] = transfer_dict
     elif action == "modify":
-        transfer_dict['created_timestamp'] = datetime.datetime.now()
+        transfer_dict['updated_timestamp'] = datetime.datetime.now()
         transfers[transfer_id].update(transfer_dict)
     elif action == "delete":
         del transfers[transfer_id]
@@ -175,6 +188,15 @@ def create_data_transfer(transfer_dict, client_id, configuration,
     saved transfers to avoid reloading.
     """
     return modify_data_transfers("create", transfer_dict, client_id,
+                                 configuration, transfers)
+
+def update_data_transfer(transfer_dict, client_id, configuration,
+                         transfers=None):
+    """Update existing data transfer for client_id. The optional transfers
+    argument can be used to pass an already loaded dictionary of saved
+    transfers to avoid reloading.
+    """
+    return modify_data_transfers("modify", transfer_dict, client_id,
                                  configuration, transfers)
 
 def delete_data_transfer(transfer_id, client_id, configuration,

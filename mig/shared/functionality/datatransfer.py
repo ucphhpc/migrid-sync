@@ -39,7 +39,8 @@ from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.transferfunctions import build_transferitem_object, \
      build_keyitem_object, load_data_transfers, create_data_transfer, \
-     delete_data_transfer, load_user_keys, generate_user_key, delete_user_key
+     update_data_transfer, delete_data_transfer, load_user_keys, \
+     generate_user_key, delete_user_key
 from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
      transfers_log_name
 from shared.fileio import read_tail
@@ -655,7 +656,7 @@ Key name:<br/>
                      })
                 return (output_objects, returnvalues.CLIENT_ERROR)
             transfer_dict['status'] = 'NEW'
-            (save_status, _) = create_data_transfer(transfer_dict, client_id,
+            (save_status, _) = update_data_transfer(transfer_dict, client_id,
                                                     configuration,
                                                     transfer_map)
             desc = "reschedule"

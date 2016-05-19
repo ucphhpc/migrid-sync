@@ -1345,7 +1345,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>Login</th>
         <th>Source(s)</th>
         <th>Destination</th>
-        <th>Created</th>
+        <th>Updated</th>
         <th>Status</th>
     </tr>
 </thead>
@@ -1385,7 +1385,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             single_transfer['action'], single_transfer['protocol'],
             single_transfer['fqdn'], single_transfer['port'], login,
             ', '.join(single_transfer['src']), single_transfer['dst'],
-            single_transfer['created'], single_transfer['status'], outputlink,
+            single_transfer['updated'], single_transfer['status'], outputlink,
             datalink_html, redolink_html))
             lines.append('''
 </tbody>
