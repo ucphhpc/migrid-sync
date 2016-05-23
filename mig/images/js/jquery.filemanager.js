@@ -133,17 +133,6 @@ if (jQuery) (function($){
     
     /* Use this helper whenever explicitly selecting a sub element of the
        current fileman container, which may be #fm_filemanager, 
-       #fm_filechooser or whatever depending on context.
-       It works as long as the container has the common .fm_folders element.
-    */
-    $.fn.fmSelect = function(sub) {
-        var parentId = $(".fm_folders").parent().attr('id');
-        var selector ="#"+parentId+sub;
-        return $(selector);
-    }
-
-    /* Use this helper whenever explicitly selecting a sub element of the
-       current fileman container, which may be #fm_filemanager, 
        #fm_filechooser or whatever depending on context. 
        It works as long as the container has the common .fm_folders element.
     */
@@ -406,9 +395,9 @@ if (jQuery) (function($){
                 buttonCount += 1;
             }
             var buttonWidth = 16;
-            var fileManagerWidth = $("#fm_filemanager").width();
+            var fileManagerWidth = $.fn.fmSelect("").width();
             console.debug("fm is "+fileManagerWidth+ "px wide");
-            var fileManagerWidthPadding = $("#fm_filemanager").outerWidth() - fileManagerWidth;
+            var fileManagerWidthPadding = $.fn.fmSelect("").outerWidth() - fileManagerWidth;
             console.debug("fm padding is "+fileManagerWidthPadding+ "px wide");
             var buttonbarWidth = buttonCount * (buttonWidth + 2 * buttonSpacing);
             // Leave a few pixels after breadcrumbs to avoid wrap on OSX/iOS
@@ -2363,6 +2352,12 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
         /* force reload to get zebra-coloring right (ignored unless visible) */
         $.fn.reload(start_path);
         $.fn.refresh_fileman_layout();
+        /* the layout height calculation goes haywire here because of
+           autoHeight and a dialog smaller than entire window. Explicitly pad
+           below fileman to make sure the dialog button pane doesn't overlap so
+           that we avoid overflow and scroll bar breaking things.
+        */
+        $.fn.fmSelect("").css("padding-bottom", 16);
     };
     // code entangled with specific filemanager naming
     var pathAttribute = "rel_path";

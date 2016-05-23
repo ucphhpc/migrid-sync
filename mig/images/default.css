@@ -659,6 +659,10 @@ table th.icon {
   text-align: center;
 }
 
+.verticalcenter {
+  vertical-align: middle;
+}
+
 .publickey {
   width: 99%;
 }
