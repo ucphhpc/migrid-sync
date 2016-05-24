@@ -203,36 +203,42 @@ def get_exclude_list(keyword, sep_char, to_string):
 def get_lftp_target(is_import, is_file):
     """Get a target helper for lftp-based transfers. The is_import argument is
     used to distinguish the direction and the is_file argument decides whether
-    to use a plain get/put or a mirror command.
+    to use a plain get/put or a mirror command. We try to continue/resume
+    transfers in any case.
     Returns the target helper as a string. 
     """
     exclude_str = get_exclude_list('--exclude', ' ', True)
     if is_file:
         file_dst_str = '-O %(dst)s/ %(src)s'
         if is_import:
-            return "get %s" % file_dst_str
+            return "get -c %s" % file_dst_str
         else:
-            return "put %s" % file_dst_str
+            return "put -c %s" % file_dst_str
     else:
         mirror_dst_str = '%(src)s %(dst)s/'
         if is_import:
-            return "mirror -Lvs %s %s" % (exclude_str, mirror_dst_str)
+            return "mirror -cLv %s %s" % (exclude_str, mirror_dst_str)
         else:
-            return "mirror -Lvs -R %s %s" % (exclude_str, mirror_dst_str)
+            return "mirror -cLv -R %s %s" % (exclude_str, mirror_dst_str)
 
-def get_rsync_target(is_import, is_file):
+def get_rsync_target(is_import, is_file, compress=False):
     """Get target helpers for rsync-based transfers. The is_import argument is
     used to distinguish the direction and the is_file argument decides whether
     to use a plain or recursive transfer command. Basically we could always
     use recursive for rsync, but we explicitly set it for symmetry with the
     lftp commands.
+    The optional compress option specifies if the compression flag should be
+    enabled.
     Returns a 3-tuple of lists containing flags, excludes and source+dst
     suitable for eventually plugging into the command list from command map.
     """
     # IMPORTANT: follow symlinks and don't preserve device files
-    rsync_flags = '-LptgoS'
+    # NOTE: enabling -S (efficient sparse file handling) kills performance
+    rsync_flags = '-Lptgo'
     if not is_file:
         rsync_flags += 'r'
+    if compress:
+        rsync_flags += 'z'
     exclude_list = get_exclude_list('--exclude', '=', False)
     if is_import:
         transfer_target = ['%(fqdn)s:%(src)s', '%(dst)s/']
@@ -384,6 +390,7 @@ def run_transfer(transfer_dict, client_id, configuration):
             raise ValueError("user provided a key outside own settings!")
     rel_src_list = transfer_dict['src']
     rel_dst = transfer_dict['dst']
+    compress = transfer_dict.get("compress", False)
     if transfer_dict['action'] in ('import', ):
         logger.debug('setting abs dst for action %(action)s' % transfer_dict)
         src_path_list = transfer_dict['src']
@@ -399,10 +406,12 @@ def run_transfer(transfer_dict, client_id, configuration):
                 raise ValueError("user provided a destination outside home!")
             if src.endswith(os.sep):
                 target_helper_list.append((get_lftp_target(True, False),
-                                           get_rsync_target(True, False)))
+                                           get_rsync_target(True, False,
+                                                            compress)))
             else:
                 target_helper_list.append((get_lftp_target(True, True),
-                                           get_rsync_target(True, True)))
+                                           get_rsync_target(True, True,
+                                                            compress)))
         makedirs_rec(dst_path, configuration)
     elif transfer_dict['action'] in ('export', ):
         logger.debug('setting abs src for action %(action)s' % transfer_dict)
@@ -419,10 +428,12 @@ def run_transfer(transfer_dict, client_id, configuration):
             src_path_list.append(src_path)
             if src.endswith(os.sep) or os.path.isdir(src):
                 target_helper_list.append((get_lftp_target(False, False),
-                                           get_rsync_target(False, False)))
+                                           get_rsync_target(False, False,
+                                                            compress)))
             else:
                 target_helper_list.append((get_lftp_target(False, True),
-                                          get_rsync_target(False, True)))
+                                          get_rsync_target(False, True,
+                                                           compress)))
     else:
         raise ValueError('unsupported action for %(transfer_id)s: %(action)s' \
                          % transfer_dict)

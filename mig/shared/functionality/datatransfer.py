@@ -81,7 +81,8 @@ def signature():
     defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
                 'fqdn':[''], 'port': [''], 'transfer_src': [''],
                 'transfer_dst': [''], 'username': [''], 'transfer_pw': [''],
-                'key_id': [''], 'notify': [''], 'flags': ['']}
+                'key_id': [''], 'compress': [''], 'notify': [''],
+                'flags': ['']}
     return ['text', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -113,6 +114,7 @@ def main(client_id, user_arguments_dict):
     password = accepted['transfer_pw'][-1]
     key_id = accepted['key_id'][-1]
     notify = accepted['notify'][-1]
+    compress = accepted['compress'][-1]
     flags = accepted['flags']
 
     anon_checked, pw_checked, key_checked = '', '', ''
@@ -126,6 +128,9 @@ def main(client_id, user_arguments_dict):
     else:
         anon_checked = 'checked'
         init_login = "anonymous"
+    use_compress = False
+    if compress.lower() in ("true", "1", "yes", "on"):
+        use_compress = True
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Background Data Transfers'
@@ -144,7 +149,8 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript">
     var fields = 0;
     var max_fields = 20;
-    var src_input = "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'\' />";
+    var src_input = "<label for=\'transfer_src\'>Source path(s)</label>";
+    src_input += "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'\' />";
     src_input += "<input id=\'src_file_FIELD\' type=radio onclick=\'setSrcDir(FIELD, false);\' checked />Source file";
     src_input += "<input id=\'src_dir_FIELD\' type=radio onclick=\'setSrcDir(FIELD, true);\' />Source directory (recursive)";
     src_input += "<br />";
@@ -419,7 +425,8 @@ transfers below.'''
                       'fqdn': fqdn, 'port': port, 'username': username,
                       'password': password, 'key_id': key_id, 
                       'transfer_src': src_list, 'transfer_dst': dst,
-                      'notify': notify, 'scroll_to_create': scroll_to_create}
+                      'compress': use_compress, 'notify': notify,
+                      'scroll_to_create': scroll_to_create}
         
         # Make page with manage transfers tab and manage keys tab
 
@@ -468,16 +475,19 @@ requests.<br/>
 Destination is a always handled as a directory path to transfer source files
 into.<br/>
 <form method="post" action="datatransfer.py" onSubmit="return beforeSubmit();">
+<fieldset id="transferbox">
 <table id="createtransfer" class="addexttransfer">
 <tr><td>
+<label for="action">Action</label>
 <input type=radio name=action %(import_checked)s value="import" />import data
 <input type=radio name=action %(export_checked)s value="export" />export data
 </td></tr>
 <tr><td>
-Transfer ID:<br />
+<label for="transfer_id">Optional Transfer ID / Name </label>
 <input type=text size=60 name=transfer_id value="%(transfer_id)s" />
 </td></tr>
 <tr><td>
+<label for="protocol">Protocol</label>
 <select id="protocol_select" name="protocol" onblur="setDefaultPort();">
 '''
         # select requested protocol
@@ -490,12 +500,15 @@ Transfer ID:<br />
                              (selected, key, val)
         transfer_html += '''
 </select>
-Host:
-<input type=text size=30 name=fqdn value="%(fqdn)s" />
-Port:
-<input id="port_input" type=text size=4 name=port value="%(port)s" />
 </td></tr>
 <tr><td>
+<label for="fqdn">Host and port</label>
+<input type=text size=37 name=fqdn value="%(fqdn)s" />
+<input id="port_input" type=number step=1 min=1 max=65535 name=port
+    value="%(port)s" />
+</td></tr>
+<tr><td>
+<label for="">Login method</label>
 <input id="anonymous_choice" type=radio %(anon_checked)s
     onclick="enableLogin(\'anonymous\');" />
 anonymous access
@@ -507,15 +520,15 @@ login with password
 login with key
 </td></tr>
 <tr id="login_fields" style="display: none;"><td>
-Username:<br />
+<label for="username">Username</label>
 <input id="username" type=text size=60 name=username value="%(username)s" />
 <br/>
 <span id="password_entry">
-Password:<br />
+<label for="transfer_pw">Password</label>
 <input id="password" type=password size=60 name=transfer_pw value="" />
 </span>
 <span id="key_entry">
-Key:<br />
+<label for="key_id">Key</label>
 <select id="key" name=key_id />
 '''
         # select requested key
@@ -534,7 +547,6 @@ Key:<br />
 </span>
 </td></tr>
 <tr><td>
-Source path(s):<br />
 <div id="srcfields">
 <!-- NOTE: automatically filled by addSource function -->
 </div>
@@ -542,13 +554,17 @@ Source path(s):<br />
     value="Add another source field" />
 </td></tr>
 <tr><td>
-Destination path:<br />
+<label for="transfer_dst">Destination path</label>
 <input id=\'dst_0\' type=text size=60 name=transfer_dst value="%(transfer_dst)s" />
 <input id=\'dst_dir_0\' type=radio checked />Destination directory
 <input id=\'dst_file_0\' type=radio disabled />Destination file<br />
 </td></tr>
 <tr><td>
-Notify on completion (e.g. email address):<br />
+<label for="compress">Enable compression (leave unset except for <em>slow</em> sites)</label>
+<input type=checkbox name=compress>
+</td></tr>
+<tr><td>
+<label for="notify">Optional notify on completion (e.g. email address)</label>
 <input type=text size=60 name=notify value=\'%(notify)s\'>
 </td></tr>
 <tr><td>
@@ -558,6 +574,7 @@ Notify on completion (e.g. email address):<br />
 </span>
 </td></tr>
 </table>
+</fieldset>
 </form>
 </td>
 </tr>
@@ -709,8 +726,8 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                 {'transfer_id': transfer_id, 'action': action,
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
                  'username': username, 'password_digest': password_digest,
-                 'key': key_id, 'src': src_list, 'dst': dst, 'notify': notify,
-                 'status': 'NEW'})
+                 'key': key_id, 'src': src_list, 'dst': dst,
+                 'compress': use_compress, 'notify': notify, 'status': 'NEW'})
             (save_status, _) = create_data_transfer(transfer_dict, client_id,
                                                     configuration,
                                                     transfer_map)
@@ -735,6 +752,8 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
 Please note that the status files only appear after the transfer starts, so it
 may be empty now.
 '''})
+        logger.debug('datatransfer %s from %s done: %s' % (action, client_id,
+                                                          transfer_dict))
     elif action in key_actions:
         if action == 'generatekey':
             (gen_status, pub) = generate_user_key(configuration, client_id, key_id)
