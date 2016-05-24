@@ -215,6 +215,9 @@ def get_lftp_target(is_import, is_file):
         else:
             return "put -c %s" % file_dst_str
     else:
+        # IMPORTANT: Use Resume, follow symlinks and keep all but suid perms.
+        #            We DON'T preserve device files, owner/group and can't
+        #            preserve timestamps.
         mirror_dst_str = '%(src)s %(dst)s/'
         if is_import:
             return "mirror -cLv %s %s" % (exclude_str, mirror_dst_str)
@@ -232,9 +235,10 @@ def get_rsync_target(is_import, is_file, compress=False):
     Returns a 3-tuple of lists containing flags, excludes and source+dst
     suitable for eventually plugging into the command list from command map.
     """
-    # IMPORTANT: follow symlinks and don't preserve device files
-    # NOTE: enabling -S (efficient sparse file handling) kills performance
-    rsync_flags = '-Lptgo'
+    # IMPORTANT: Follow symlinks, preserve executability and timestamps.
+    #            We DON'T preserve device files, owner/group and other perms.
+    # NOTE: enabling -S (efficient sparse file handling) kills performance.
+    rsync_flags = '-LEt'
     if not is_file:
         rsync_flags += 'r'
     if compress:
