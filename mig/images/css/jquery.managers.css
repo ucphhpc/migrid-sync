@@ -27,14 +27,18 @@
 
 */
 
-#fm_filemanager {
-    width: auto;
-    margin-top: -10px;
-    background: #ccc;
-    border: 1px solid grey;
+/* Shared fm_filemanager and fm_filechooser settings */
+#fm_filemanager, #fm_filechooser {
+    background: #eee;
     padding: 4px;
     border-radius: 4px;
     cursor: default;  
+}
+/* Extras for fm_filemanager */
+#fm_filemanager {
+    /* Pull filemanager up close to title block */
+    margin-top: -10px;
+    border: 1px solid grey;
 }
 #jm_jobmanager {
     border-spacing: 0;
@@ -43,18 +47,18 @@
     border-radius: 4px;
     cursor: default;
 }
-#fm_filemanager table, #jm_jobmanager table {
+#fm_filemanager table, #fm_filechooser table, #jm_jobmanager table {
     border: 0;
     padding: 0;
     background-color: #fff;
     /* no space between elements - to avoid gap without context menu */
     border-spacing: 0px;
 }
-#fm_filemanager thead, #jm_jobmanager thead {
+#fm_filemanager thead, #fm_filechooser thead, #jm_jobmanager thead {
     background-color: #eee;
 }
 
-#fm_filemanager thead td, #jm_jobmanager thead td {
+#fm_filemanager thead td, #fm_filechooser thead td, #jm_jobmanager thead td {
     border: 0;
     border-right: 1px solid #ccc;
     border-bottom: 1px solid grey;
@@ -86,15 +90,16 @@ tbody tr td div.sortkey { display: none; }
     float: left;
     padding: 0;
     margin: 0;
-    }
+}
 .fm_path_breadcrumbs {
-    padding-bottom: 4px;
     display: inline-block;
-    }
+    border: 1px solid grey;
+}
 .fm_buttonbar {
     background: #F0F0F0;
     display: inline-block;
     vertical-align: top;
+    margin: 1px 0px;
 }
 .fm_buttonbar ul {
     margin: 0;
@@ -129,7 +134,6 @@ tbody tr td div.sortkey { display: none; }
     background-image: url('/images/icons/table_link.png');
 }
 .fm_addressbar {
-    padding-bottom: 2px;
     border: 0;
     }
 .fm_addressbar input {
@@ -394,9 +398,8 @@ tbody tr td div.sortkey { display: none; }
 /* statusbar with info left and progress right */
 #fm_statusbar {
     padding: 2px;
-    border: 0;
-    border-top: 1px solid #ccc;  
-    background-color: #eee;
+    border: 1px solid grey;  
+    background-color: #ddd;
     clear: both;
     overflow: hidden;
 }
@@ -451,10 +454,7 @@ UL.jqueryFileTree div:hover {
 }
 
 /* Core Styles */
-#fm_filemanager .wait { 
-    background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; 
-}
-#jm_jobmanager .wait { 
+#fm_filemanager .wait, #fm_filechooser .wait, #jm_jobmanager .wait { 
     background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; 
 }
 .jqueryFileTree LI.wait {

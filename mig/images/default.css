@@ -420,6 +420,11 @@ table th.icon {
   float: left;
 }
 
+/* align checkboxes vertically with text */
+input[type=checkbox], input[type=radio] {
+  vertical-align: middle;
+}
+
 .premenuwidgets {
   color: black;
 }
@@ -657,10 +662,6 @@ table th.icon {
 .centerall {
   margin: 0;
   text-align: center;
-}
-
-.verticalcenter {
-  vertical-align: middle;
 }
 
 .publickey {

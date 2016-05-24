@@ -418,12 +418,11 @@ if (jQuery) (function($){
             var bottomspaceHeight = $("#bottomspace").outerHeight();
             var footerHeight = exitCodeHeight + bottomLogoHeight + bottomspaceHeight;
             var minHeight = $("div.menublock").height() - $("div.menublock").offset().top;
-            var fileManagerHeight = innerWindowHeight - (headerHeight + statusbarHeight + optionsHeight + footerHeight + contentHeightPadding);
+            var fileManagerHeight = innerWindowHeight - (headerHeight + statusbarHeight + footerHeight + contentHeightPadding);
             if (fileManagerHeight < minHeight) {
                 fileManagerHeight = minHeight;
             }
-            var fileManagerInnerHeight = fileManagerHeight -
-                                            (statusbarHeight + $.fn.fmSelect(" .fm_previews").offset().top - 
+            var fileManagerInnerHeight = fileManagerHeight - (statusbarHeight + optionsHeight + $.fn.fmSelect(" .fm_previews").offset().top - 
                                             headerHeight);
             if (preview.settings.zoom == 0) {
                 previewInnerHeight = 0;
@@ -2352,12 +2351,6 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
         /* force reload to get zebra-coloring right (ignored unless visible) */
         $.fn.reload(start_path);
         $.fn.refresh_fileman_layout();
-        /* the layout height calculation goes haywire here because of
-           autoHeight and a dialog smaller than entire window. Explicitly pad
-           below fileman to make sure the dialog button pane doesn't overlap so
-           that we avoid overflow and scroll bar breaking things.
-        */
-        $.fn.fmSelect("").css("padding-bottom", 16);
     };
     // code entangled with specific filemanager naming
     var pathAttribute = "rel_path";
