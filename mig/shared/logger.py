@@ -155,3 +155,46 @@ def daemon_logger(name, path=None, level="INFO", log_format=None):
     logger = logging.getLogger(name)
     logger.addHandler(handler)
     return logger
+
+def reopen_log(conf):
+    """A helper to force reopening of any associated log FileHandlers like:
+    https://groups.google.com/forum/#!topic/comp.lang.python/h6-h95PiPTU
+    Particularly useful to avoid full restart after log rotation.
+    """
+    logger = conf.logger
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            handler.close()
+
+if __name__ == "__main__":
+    from shared.conf import get_configuration_object
+    import os
+    conf = get_configuration_object()
+    print "Unit testing logger functions"
+    print "=== daemon logger functions ==="
+    log_path = "/tmp/logger-dummy.log"
+    print "Open a daemon logger"
+    logger = daemon_logger("testing", log_path)
+    conf.logger = logger
+    print "Add some log entries"
+    logger.debug("for unit testing")
+    logger.info("for unit testing")
+    logger.warning("for unit testing")
+    logger.error("for unit testing")
+    print "Now log contains:"
+    log_fd = open(log_path, "r")
+    for line in log_fd:
+        print line.strip()
+    log_fd.close()
+    print "Remove log and force reopen"
+    os.remove(log_path)
+    reopen_log(conf)
+    print "Add another log entry"
+    logger.info("for unit testing")
+    print "Now log contains:"
+    log_fd = open(log_path, "r")
+    for line in log_fd:
+        print line.strip()
+    log_fd.close()
+    print "Cleaning up"
+    os.remove(log_path)

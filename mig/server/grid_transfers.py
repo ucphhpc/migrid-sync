@@ -37,6 +37,7 @@ import glob
 import logging
 import logging.handlers
 import os
+import signal
 import sys
 import time
 import multiprocessing
@@ -46,19 +47,23 @@ from shared.conf import get_configuration_object
 from shared.defaults import datatransfers_filename, transfers_log_name, \
      transfers_log_size, transfers_log_cnt, user_keys_dir, \
      _user_invisible_paths
-from shared.logger import daemon_logger
+from shared.logger import daemon_logger, reopen_log
 from shared.notification import notify_user_thread
 from shared.pwhash import unscramble_digest
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.useradm import client_dir_id, client_id_dir
 from shared.transferfunctions import blind_pw, load_data_transfers, \
-     update_data_transfer, get_status_dir
+     update_data_transfer, get_status_dir, sub_pid_list, add_sub_pid, \
+     del_sub_pid, kill_sub_pid, add_worker_transfer, del_worker_transfer, \
+     all_worker_transfers, get_worker_transfer
 from shared.validstring import valid_user_path
 
-# Global transfers dictionary with requests for all users
+# Global helper dictionaries with requests for all users
 
 all_transfers = {}
 all_workers = {}
+sub_pid_map = None
+stop_running = multiprocessing.Event()
 (configuration, logger, last_update) = (None, None, 0)
 
 # Tune default lftp buffer size - the built-in size is 32k, but a 128k buffer
@@ -77,6 +82,17 @@ lftp_buffer_bytes = 131072
 lftp_sftp_block_bytes = 65536
 
 
+def stop_handler(signal, frame):
+    """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
+    # Print blank line to avoid mix with Ctrl-C line
+    print ''
+    stop_running.set()
+
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    reopen_log(configuration)
+    logger.info("log reopened after hangup signal")
+    
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""
     status_dir = get_status_dir(configuration, client_id)
@@ -356,7 +372,7 @@ def get_cmd_map():
                }
     return cmd_map
 
-def run_transfer(transfer_dict, client_id, configuration):
+def run_transfer(configuration, client_id, transfer_dict):
     """Actual data transfer built from transfer_dict on behalf of client_id"""
 
     logger.debug('run transfer for %s: %s' % (client_id,
@@ -491,23 +507,31 @@ def run_transfer(transfer_dict, client_id, configuration):
         command_str = ' '.join(command_list)
         blind_list = [i % blind_dict for i in command_pattern]
         blind_str = ' '.join(blind_list)
-        logger.debug('run %s on behalf of %s' % (blind_str, client_id))
+        logger.info('run %s on behalf of %s' % (blind_str, client_id))
         transfer_proc = subprocess_popen(command_list,
                                          stdout=subprocess_pipe,
                                          stderr=subprocess_pipe)
-        # TODO: write transfer_proc.pid to file here for use in daemon restart
+        # Save transfer_proc.pid for use in clean up during shutdown
+        # in that way we can resume pretty smoothly in next run.
+        sub_pid = transfer_proc.pid
+        logger.info('%s %s running transfer process %s' % (client_id,
+                                                           transfer_id,
+                                                           sub_pid))
+        add_sub_pid(configuration, sub_pid_map, client_id, transfer_id,
+                    sub_pid)
         out, err = transfer_proc.communicate()
         exit_code = transfer_proc.wait()
         status |= exit_code
-        logger.info('done running transfer %s: %s' % (run_dict['transfer_id'],
-                                                      blind_str))
+        del_sub_pid(configuration, sub_pid_map, client_id, transfer_id,
+                    sub_pid)
+        logger.info('done running transfer %s: %s' % (transfer_id, blind_str))
         logger.debug('raw output is: %s' % out)
         logger.debug('raw error is: %s' % err)
         logger.debug('result was %s' % exit_code)
         if not transfer_result(configuration, client_id, run_dict, exit_code,
                                out.replace(base_dir, ''),
                                err.replace(base_dir, '')):
-            logger.error('writing transfer status for %s failed' % transfer_id)            
+            logger.error('writing transfer status for %s failed' % transfer_id)
 
     logger.debug('done handling transfers in %(transfer_id)s' % transfer_dict)
     transfer_dict['exit_code'] = status
@@ -517,18 +541,30 @@ def run_transfer(transfer_dict, client_id, configuration):
         transfer_dict['status'] = 'FAILED'
 
 
-def clean_transfer(configuration, client_id, transfer_dict):
-    """Actually clean valid transfer request in transfer_dict"""
-    transfer_id = transfer_dict['transfer_id']
-    logger.debug('in cleaning of %s %s for %s' % (transfer_id,
-                                                 transfer_dict['action'],
-                                                 client_id))
-    if all_workers.has_key(transfer_id):
-        del all_workers[transfer_id]
-    # TODO: clean up any removed transfers/processes here?
+def clean_transfer(configuration, client_id, transfer_id, force=False):
+    """Actually clean transfer worker from client_id and transfer_id"""
+    logger.debug('in cleaning of %s %s' % (client_id, transfer_id))
+    worker = get_worker_transfer(configuration, all_workers, client_id,
+                                 transfer_id)
+    logger.debug('cleaning worker %s for %s %s' % (worker, client_id,
+                                                   transfer_id))
+    del_worker_transfer(configuration, all_workers, client_id, transfer_id)
+    sub_procs = sub_pid_list(configuration, sub_pid_map, client_id,
+                             transfer_id)
+    logger.debug('cleaning sub procs %s for %s %s' % (sub_procs, client_id,
+                                                      transfer_id))
+    for sub_pid in sub_procs:
+        if not force:
+            logger.warning('left-over child in %s %s: %s' % \
+                           (client_id, transfer_id, sub_procs))
+        if not kill_sub_pid(configuration, client_id, transfer_id, sub_pid):
+            logger.error('could not terminate child process in %s %s: %s' % \
+                         (client_id, transfer_id, sub_procs))
+        del_sub_pid(configuration, sub_pid_map, client_id, transfer_id,
+                    sub_pid)
 
 
-def wrap_run_transfer(transfer_dict, client_id, configuration):
+def wrap_run_transfer(configuration, client_id, transfer_dict):
     """Wrap the execution of data transfer so that exceptions and errors are
     caught and logged. Updates state, calls the run_transfer function on input
     and finally updates state again afterwards.
@@ -537,14 +573,14 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
     transfer_dict['status'] = "ACTIVE"
     transfer_dict['exit_code'] = -1
     all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
-    (save_status, save_msg) = update_data_transfer(transfer_dict, client_id,
-                                                    configuration)
+    (save_status, save_msg) = update_data_transfer(configuration, client_id,
+                                                   transfer_dict)
     if not save_status:
         logger.error("failed to save %s status for %s: %s" % \
                      (transfer_dict['status'], transfer_id, save_msg))
         return save_status
     try:
-        run_transfer(transfer_dict, client_id, configuration)
+        run_transfer(configuration, client_id, transfer_dict)
     except Exception, exc:
         logger.error("run transfer failed: %s" % exc)
         transfer_dict['status'] = "FAILED"
@@ -554,8 +590,8 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
             logger.error('writing transfer status for %s failed' % transfer_id)
 
     all_transfers[client_id][transfer_id]['status'] = transfer_dict['status']
-    (save_status, save_msg) = update_data_transfer(transfer_dict, client_id,
-                                                    configuration)
+    (save_status, save_msg) = update_data_transfer(configuration, client_id,
+                                                   transfer_dict)
     if not save_status:
         logger.error("failed to save %s status for %s: %s" % \
                      (transfer_dict['status'], transfer_id, save_msg))
@@ -568,7 +604,6 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
         transfer_error(configuration, client_id, status_msg)
     else:
         transfer_info(configuration, client_id, status_msg)
-    clean_transfer(configuration, client_id, transfer_dict)
     notify = transfer_dict.get('notify', False)
     if notify:
         job_dict = {'NOTIFY': [notify], 'JOB_ID': 'NOJOBID',
@@ -583,40 +618,45 @@ def wrap_run_transfer(transfer_dict, client_id, configuration):
     logger.info("finished wrap run transfer %(transfer_id)s" % transfer_dict)
 
 
-def background_transfer(transfer_dict, client_id, configuration):
+def background_transfer(configuration, client_id, transfer_dict):
     """Run a transfer in the background so that it can block without
     stopping further transfer handling.
     """
-
+    transfer_id = transfer_dict['transfer_id']
     worker = multiprocessing.Process(target=wrap_run_transfer,
-                                     args=(transfer_dict, client_id,
-                                           configuration))
+                                     args=(configuration, client_id,
+                                           transfer_dict))
     worker.start()
-    all_workers[transfer_dict['transfer_id']] = worker
+    add_worker_transfer(configuration, all_workers, client_id, transfer_id,
+                        worker)
 
 
-def foreground_transfer(transfer_dict, client_id, configuration):
+def foreground_transfer(configuration, client_id, transfer_dict):
     """Run a transfer in the foreground so that it can block without
     stopping further transfer handling.
     """
-    all_workers[transfer_dict['transfer_id']] = None
-    wrap_run_transfer(transfer_dict, client_id, configuration)
-    del all_workers[transfer_dict['transfer_id']]
+    transfer_id = transfer_dict['transfer_id']
+    add_worker_transfer(configuration, all_workers, client_id, transfer_id,
+                        None)
+    wrap_run_transfer(configuration, client_id, transfer_dict)
+    del_worker_transfer(configuration, all_workers, client_id, transfer_id)
 
 def handle_transfer(configuration, client_id, transfer_dict):
     """Actually handle valid transfer request in transfer_dict"""
-
     logger.debug('in handling of %s %s for %s' % (transfer_dict['transfer_id'],
                                                  transfer_dict['action'],
                                                  client_id))
-    transfer_info(configuration, client_id,
-                  'handle %s %s' % (transfer_dict['transfer_id'],
-                                    transfer_dict['action']))
+    if transfer_dict['status'] == "ACTIVE":
+        msg = 'transfer service restarted: resume interrupted %(transfer_id)s '
+        msg += '%(action)s (please ignore any recent log errors)'
+    else:
+        msg = 'start %(transfer_id)s %(action)s'
+    transfer_info(configuration, client_id, msg % transfer_dict)
 
     try:
         # Switch to foreground here for easier debugging
-        #foreground_transfer(transfer_dict, client_id, configuration)
-        background_transfer(transfer_dict, client_id, configuration)
+        #foreground_transfer(configuration, client_id, transfer_dict)
+        background_transfer(configuration, client_id, transfer_dict)
     except Exception, exc:
         logger.error('failed to run %s %s from %s: %s (%s)'
                      % (transfer_dict['protocol'], transfer_dict['action'],
@@ -636,8 +676,8 @@ def manage_transfers(configuration):
                                datatransfers_filename)
     for transfers_path in glob.glob(src_pattern):
         if os.path.getmtime(transfers_path) < last_update:
-            logger.debug('skip transfer update for unchanged path: %s' % \
-                          transfers_path)
+            #logger.debug('skip transfer update for unchanged path: %s' % \
+            #              transfers_path)
             continue
         logger.debug('handling update of transfers file: %s' % transfers_path)
         abs_client_dir = os.path.dirname(transfers_path)
@@ -663,20 +703,18 @@ def manage_transfers(configuration):
                 #logger.debug('skip %(status)s transfer %(transfer_id)s' % \
                 #             transfer_dict)
                 continue
-            if transfer_status in ("ACTIVE", ) and \
-                   all_workers.has_key(transfer_id):
-                logger.debug('wait for %(status)s transfer %(transfer_id)s' % \
-                             transfer_dict)
-                continue
-            logger.debug('handle %(status)s transfer %(transfer_id)s' % \
+            if transfer_status in ("ACTIVE", ):
+                if get_worker_transfer(configuration, all_workers, client_id,
+                                       transfer_id):
+                    logger.debug('wait for transfer %(transfer_id)s' % \
+                                 transfer_dict)
+                    continue
+                else:
+                    logger.info('restart transfer %(transfer_id)s' % \
+                                 transfer_dict)
+            logger.info('handle %(status)s transfer %(transfer_id)s' % \
                          transfer_dict)
             handle_transfer(configuration, client_id, transfer_dict)
-
-    for (client_id, transfers) in old_transfers.items():
-        for (transfer_id, transfer_dict) in transfers.items():
-            if transfer_dict['status'] in ("ACTIVE", "PAUSE", ) and \
-                   not transfer_id in all_transfers.get(client_id, {}).keys():
-                clean_transfer(configuration, client_id, transfer_dict)
 
     
 if __name__ == '__main__':
@@ -701,42 +739,66 @@ unless it is available in mig/server/MiGserver.conf
     logger = daemon_logger('transfers', configuration.user_transfers_log,
                            log_level)
     configuration.logger = logger
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
 
-    keep_running = True
+    # IMPORTANT: If SIGINT reaches multiprocessing it kills manager dict
+    # proxies and makes sub_pid_map access fail. Register a signal handler
+    # here to avoid that and allow proper clean up
+    signal.signal(signal.SIGINT, stop_handler)
 
+    # Keep track of worker subprocesses for proper clean up on shutdown.
+    # They get orphaned if worker is terminated, so we kill them in order to
+    # allow a clean resume on next start.
+    # We use a shared manager dictionary with a pid list for each transfer_id
+    # to have multiprocessing access without races.
+    transfer_manager = multiprocessing.Manager()
+    sub_pid_map = transfer_manager.dict()
+    
     print 'Starting Data Transfer handler daemon - Ctrl-C to quit'
 
     logger.info('Starting data transfer handler daemon')
 
-    while keep_running:
+    while not stop_running.is_set():
         try:
             manage_transfers(configuration)
-
-            for (transfer_id, worker) in all_workers.items():
-                if worker:
-                    logger.debug('Checking if %s with pid %d is finished' % \
-                                 (transfer_id, worker.pid))
-                    worker.join(1)
-                    if not worker.is_alive():
-                        logger.info('Removing finished %s with pid %d' % \
-                                    (transfer_id, worker.pid))
-                        del all_workers[transfer_id]
+            
+            for (client_id, transfer_id, worker) in \
+                    all_worker_transfers(configuration, all_workers):
+                if not worker:
+                    continue
+                logger.debug('Checking if %s %s with pid %d is finished' % \
+                             (client_id, transfer_id, worker.pid))
+                worker.join(1)
+                if worker.is_alive():
+                    logger.debug('Worker for %s %s running with pid %d' % \
+                                 (client_id, transfer_id, worker.pid))
+                else:
+                    logger.info('Removing finished %s %s with pid %d' % \
+                                (client_id, transfer_id, worker.pid))
+                    clean_transfer(configuration, client_id, transfer_id)
                 
             # Throttle down
 
             time.sleep(30)
-        except KeyboardInterrupt:
-            keep_running = False
         except Exception, exc:
             print 'Caught unexpected exception: %s' % exc
+            time.sleep(10)
 
+    print 'Cleaning up active transfers'
     logger.info('Cleaning up workers to prepare for exit')
-    for (transfer_id, worker) in all_workers.items():
-        if worker and worker.is_alive():
-            logger.info('Terminating %s worker with pid %d' % \
-                        (transfer_id, worker.pid))
-            worker.terminate()
-            del all_workers[transfer_id]
+    for (client_id, transfer_id, worker) in \
+            all_worker_transfers(configuration, all_workers):
+        if not worker or not worker.is_alive():
+            continue
+        # Terminate worker first to stop further handling, then kill any
+        # orphaned subprocesses associated with it for clean resume later
+        logger.info('Terminating %s %s worker with pid %d' % \
+                    (client_id, transfer_id, worker.pid))
+        worker.terminate()
+        logger.info('Terminating any %s %s child processes' % (client_id,
+                                                               transfer_id))
+        clean_transfer(configuration, client_id, transfer_id, force=True)
 
     print 'Data transfer handler daemon shutting down'
     logger.info('Stop data transfer handler daemon')

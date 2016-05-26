@@ -661,9 +661,8 @@ Key name:<br/>
                     {'object_type': 'error_text',
                      'text': 'existing transfer_id is required for delete'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
-            (save_status, _) = delete_data_transfer(transfer_id, client_id,
-                                                    configuration,
-                                                    transfer_map)
+            (save_status, _) = delete_data_transfer(configuration, client_id,
+                                                    transfer_id, transfer_map)
             desc = "delete"
         elif action == 'redotransfer':
             if transfer_dict is None:
@@ -673,8 +672,8 @@ Key name:<br/>
                      })
                 return (output_objects, returnvalues.CLIENT_ERROR)
             transfer_dict['status'] = 'NEW'
-            (save_status, _) = update_data_transfer(transfer_dict, client_id,
-                                                    configuration,
+            (save_status, _) = update_data_transfer(configuration, client_id,
+                                                    transfer_dict,
                                                     transfer_map)
             desc = "reschedule"
         else:
@@ -728,8 +727,8 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                  'username': username, 'password_digest': password_digest,
                  'key': key_id, 'src': src_list, 'dst': dst,
                  'compress': use_compress, 'notify': notify, 'status': 'NEW'})
-            (save_status, _) = create_data_transfer(transfer_dict, client_id,
-                                                    configuration,
+            (save_status, _) = create_data_transfer(configuration, client_id,
+                                                    transfer_dict,
                                                     transfer_map)
         if not save_status:
             output_objects.append(
@@ -803,4 +802,3 @@ Key removal for name %s failed with error: %s''' % (key_id, msg)})
                            'destination': 'datatransfer.py',
                            'text': 'Return to data transfers overview'})
     return (output_objects, returnvalues.OK)
-

@@ -118,7 +118,7 @@ def load_data_transfers(configuration, client_id):
         return (False, "could not load saved data transfers: %s" % exc)
     return (True, transfers)
 
-def get_data_transfer(transfer_id, client_id, configuration, transfers=None):
+def get_data_transfer(configuration, client_id, transfer_id, transfers=None):
     """Helper to extract all details for a data transfer. The optional
     transfers argument can be used to pass an already loaded dictionary of
     saved transfers to avoid reloading.
@@ -135,7 +135,7 @@ def get_data_transfer(transfer_id, client_id, configuration, transfers=None):
     return (True, transfer_dict)
 
 
-def modify_data_transfers(action, transfer_dict, client_id, configuration,
+def modify_data_transfers(configuration, client_id, transfer_dict, action, 
                           transfers=None):
     """Modify data transfers with given action and transfer_dict for client_id.
     In practice this a shared helper to add or remove transfers from the saved
@@ -181,32 +181,32 @@ def modify_data_transfers(action, transfer_dict, client_id, configuration,
     return (True, transfer_id)
 
 
-def create_data_transfer(transfer_dict, client_id, configuration,
+def create_data_transfer(configuration, client_id, transfer_dict, 
                          transfers=None):
     """Create a new data transfer for client_id. The optional
     transfers argument can be used to pass an already loaded dictionary of
     saved transfers to avoid reloading.
     """
-    return modify_data_transfers("create", transfer_dict, client_id,
-                                 configuration, transfers)
+    return modify_data_transfers(configuration, client_id, transfer_dict,
+                                 "create", transfers)
 
-def update_data_transfer(transfer_dict, client_id, configuration,
+def update_data_transfer(configuration, client_id, transfer_dict, 
                          transfers=None):
     """Update existing data transfer for client_id. The optional transfers
     argument can be used to pass an already loaded dictionary of saved
     transfers to avoid reloading.
     """
-    return modify_data_transfers("modify", transfer_dict, client_id,
-                                 configuration, transfers)
+    return modify_data_transfers(configuration, client_id, transfer_dict,
+                                 "modify", transfers)
 
-def delete_data_transfer(transfer_id, client_id, configuration,
+def delete_data_transfer(configuration, client_id, transfer_id, 
                          transfers=None):
     """Delete an existing data transfer without checking ownership. The
     optional transfers argument can be used to pass an already loaded
     dictionary of saved transfers to avoid reloading.    """
     transfer_dict = {'transfer_id': transfer_id}
-    return modify_data_transfers("delete", transfer_dict, client_id,
-                                 configuration, transfers)
+    return modify_data_transfers(configuration, client_id, transfer_dict,
+                                 "delete", transfers)
 
 def load_user_keys(configuration, client_id):
     """Load a list of generated/imported keys from settings dir. Each item is
@@ -292,3 +292,154 @@ def delete_user_key(configuration, client_id, key_filename):
             msg += "removal of user key '%s' failed! \n" % filename
             status = False
     return (status, msg)
+
+# IMPORTANT: We can't use nested dicts because it is not supported by our 
+#       multiprocessing.manager.dict shared object. Merge IDs into one instead
+#       to get a single flat key-space.
+#       Furthermore mutable objects in such dicts can not be directly operated
+#       upon for proxy safety reasons, and instead require full reassignment
+#       every time!
+__id_sep = '#'
+def __merge_transfer_id(client_id, transfer_id):
+    """Helper to merge a client_id and a transfer_id into a single key for our
+    dictionaries. We can't use nested dicts because it is not supported by
+    multiprocessing.manager.dict .
+    """
+    return "%s%s%s" % (client_id, __id_sep, transfer_id)
+
+def __split_transfer_id(merged_id):
+    """Helper to split a previosuly merged client_id and transfer_id key into
+    the two original parts.
+    """
+    return merged_id.split(__id_sep, 1)
+
+def all_worker_transfers(configuration, all_workers):
+    """Extract the list of [client_id, transfer_id, worker] lists for all
+    transfers with workers associated.
+    """
+    return [__split_transfer_id(i) + [j] for (i, j) in all_workers.items()]
+
+def add_worker_transfer(configuration, all_workers, client_id, transfer_id,
+                        worker):
+    """Add worker for transfer_id owned by client_id"""
+    full_id = __merge_transfer_id(client_id, transfer_id)
+    all_workers[full_id] = worker
+    return True
+
+def get_worker_transfer(configuration, all_workers, client_id, transfer_id):
+    """Return any worker associated with transfer_id owned by client_id, or
+    None if no worker is associated.
+    """
+    full_id = __merge_transfer_id(client_id, transfer_id)
+    return all_workers.get(full_id, None)
+
+def del_worker_transfer(configuration, all_workers, client_id, transfer_id,
+                        worker=None):
+    """Remove worker for transfer owned by client_id. If worker is provided
+    only a matching worker will succeed, otherwise any worker will be removed.
+    """
+    full_id = __merge_transfer_id(client_id, transfer_id)
+    if worker is None or all_workers.get(full_id, None) == worker:
+        del all_workers[full_id]
+        return True
+    else:
+        return False
+
+# NOTE: Please refer to IMPORTANT note above about reassignments
+def sub_pid_list(configuration, pid_map, client_id, transfer_id):
+    """Extract the list of subprocess PIDs from pid_map for transfer_id
+    owned by client_id. Returns a (possibly empty) list of PIDs.
+    """
+    full_id = __merge_transfer_id(client_id, transfer_id)
+    return pid_map.get(full_id, [])
+
+def add_sub_pid(configuration, pid_map, client_id, transfer_id, sub_pid):
+    """Add sub_pid to the list of subprocess PIDs from pid_map for transfer_id
+    owned by client_id.
+    Please note that we have to reassign dict values in full here for
+    multiprocessing.manager.dict support.
+    """
+    full_id = __merge_transfer_id(client_id, transfer_id)
+    pid_map[full_id] = pid_map.get(full_id, [])
+    pid_map[full_id] = pid_map[full_id] + [sub_pid]
+    return True
+
+def del_sub_pid(configuration, pid_map, client_id, transfer_id, sub_pid):
+    """Remove sub_pid from the list of subprocess PIDs from pid_map for
+    transfer_id owned by client_id.
+    Please note that we have to reassign dict values in full here for
+    multiprocessing.manager.dict support.
+    """
+    logger = configuration.logger
+    full_id = __merge_transfer_id(client_id, transfer_id)
+    pid_map[full_id] = pid_map.get(full_id, [])
+    if not sub_pid in pid_map[full_id]:
+        logger.error('could not remove %s %s child process %d' % \
+                     (client_id, transfer_id, sub_pid))
+        return False
+    else:
+        tmp = pid_map[full_id]
+        tmp.remove(sub_pid)
+        pid_map[full_id] = tmp
+        return True
+
+def kill_sub_pid(configuration, client_id, transfer_id, sub_pid, sig=9):
+    """Send signal sig to the subprocess with process ID sub_pid from transfer
+    with transfer_id and owned by client_id.
+    """
+    logger = configuration.logger
+    try:
+        os.kill(sub_pid, sig)
+        return True
+    except Exception, exc:
+        logger.error('could not kill %s %s child process %d' % \
+                     (client_id, transfer_id, sub_pid))
+        return False
+
+
+if __name__ == "__main__":
+    from shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    print "Unit testing transfer functions"
+    print "=== sub pid functions ==="
+    import multiprocessing
+    manager = multiprocessing.Manager()
+    sub_procs_map = manager.dict()
+    client, transfer = "testuser", "testtransfer"
+    sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
+    print "initial sub pids: %s" % sub_procs
+    for pid in xrange(3):
+        print "add sub pid: %s" % pid
+        add_sub_pid(conf, sub_procs_map, client, transfer, pid)
+        sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
+        print "current sub pids: %s" % sub_procs
+    for pid in xrange(3):
+        print "del sub pid: %s" % pid
+        del_sub_pid(conf, sub_procs_map, client, transfer, pid)
+        sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
+        print "current sub pids: %s" % sub_procs
+    print "=== workers functions ==="
+    workers_map = {}
+    transfer_workers = all_worker_transfers(conf, workers_map)
+    print "initial transfer workers: %s" % transfer_workers
+    for i in xrange(3):
+        transfer_id = "%s-%d" % (transfer, i)
+        worker = "dummy-worker-%d" % i
+        print "add %s %s %s " % (client, transfer_id, worker)
+        add_worker_transfer(conf, workers_map, client, transfer_id, worker)
+        verify_worker = get_worker_transfer(conf, workers_map, client,
+                                            transfer_id)
+        print "verify latest transfer worker: %s" % verify_worker
+    transfer_workers = all_worker_transfers(conf, workers_map)
+    print "all transfer workers: %s" % transfer_workers
+    for i in xrange(3):
+        transfer_id = "%s-%d" % (transfer, i)
+        worker = "dummy-worker-%d" % i
+        print "remove %s %s %s " % (client, transfer_id, worker)
+        del_worker_transfer(conf, workers_map, client,
+                            transfer_id, worker)
+        verify_worker = get_worker_transfer(conf, workers_map, client,
+                                            transfer_id)
+        print "verify transfer worker is no longer found: %s" % verify_worker
+    transfer_workers = all_worker_transfers(conf, workers_map)
+    print "final transfer workers: %s" % transfer_workers
