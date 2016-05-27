@@ -90,8 +90,8 @@ def stop_handler(signal, frame):
 
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
-    logger.info("log reopened after hangup signal")
     
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""
@@ -718,6 +718,21 @@ def manage_transfers(configuration):
 
     
 if __name__ == '__main__':
+    configuration = get_configuration_object()
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+
+    # Use separate logger
+
+    logger = daemon_logger('transfers', configuration.user_transfers_log,
+                           log_level)
+    configuration.logger = logger
+    
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
     print '''This is the MiG data transfer handler daemon which runs requested
 data transfers in the background on behalf of the users. It monitors the saved
 data transfer files for changes and launches external client processes to take
@@ -728,19 +743,9 @@ Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 '''
 
-    configuration = get_configuration_object()
+    print 'Starting Data Transfer handler daemon - Ctrl-C to quit'
 
-    log_level = 'info'
-    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
-        log_level = sys.argv[1]
-
-    # Use separate logger
-
-    logger = daemon_logger('transfers', configuration.user_transfers_log,
-                           log_level)
-    configuration.logger = logger
-    # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    logger.info('Starting data transfer handler daemon')
 
     # IMPORTANT: If SIGINT reaches multiprocessing it kills manager dict
     # proxies and makes sub_pid_map access fail. Register a signal handler
@@ -753,12 +758,9 @@ unless it is available in mig/server/MiGserver.conf
     # We use a shared manager dictionary with a pid list for each transfer_id
     # to have multiprocessing access without races.
     transfer_manager = multiprocessing.Manager()
-    sub_pid_map = transfer_manager.dict()
+    # Ignore bogus "Instance of 'SyncManager' has no 'dict' member (no-member)"
+    sub_pid_map = transfer_manager.dict() # pylint: disable=no-member
     
-    print 'Starting Data Transfer handler daemon - Ctrl-C to quit'
-
-    logger.info('Starting data transfer handler daemon')
-
     while not stop_running.is_set():
         try:
             manage_transfers(configuration)

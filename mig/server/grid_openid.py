@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -63,9 +63,9 @@ import Cookie
 import base64
 import cgi
 import cgitb
-import logging
 import os
 import ssl
+import signal
 import sys
 import time
 
@@ -84,7 +84,7 @@ from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.griddaemons import hit_rate_limit, update_rate_limit, \
      expire_rate_limit, penalize_rate_limit
-from shared.logger import daemon_logger
+from shared.logger import daemon_logger, reopen_log
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url
 from shared.useradm import load_user_db, cert_field_map, \
@@ -99,6 +99,11 @@ cert_field_names = cert_field_map.keys()
 cert_field_values = cert_field_map.values()
 cert_field_aliases = {}
 
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
+    
 def quoteattr(val):
     """Escape string for safe printing"""
     esc = cgi.escape(val, 1)
@@ -1151,22 +1156,29 @@ def start_service(configuration):
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
-    nossl = False
-    expandusername = False
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
 
     # Use separate logger
-    logger = daemon_logger("openid", configuration.user_openid_log, "debug")
+    logger = daemon_logger("openid", configuration.user_openid_log, log_level)
     configuration.logger = logger
 
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
     # Allow configuration overrides on command line
-    if sys.argv[1:]:
-        nossl = sys.argv[1].lower() in ('yes', 'true', '1')
+    nossl = False
+    expandusername = False
     if sys.argv[2:]:
-        expandusername = sys.argv[2].lower() in ('yes', 'true', '1')
+        configuration.user_openid_address = sys.argv[2]
     if sys.argv[3:]:
-        configuration.user_openid_address = sys.argv[3]
+        configuration.user_openid_port = int(sys.argv[3])
     if sys.argv[4:]:
-        configuration.user_openid_port = int(sys.argv[4])
+        nossl = (sys.argv[4].lower() in ('1', 'true', 'yes', 'on'))
+    if sys.argv[5:]:
+        expandusername = (sys.argv[5].lower() in ('1', 'true', 'yes', 'on'))
 
     if not configuration.site_enable_openid:
         err_msg = "OpenID service is disabled in configuration!"

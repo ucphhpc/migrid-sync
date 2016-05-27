@@ -68,8 +68,8 @@ Extended to fit MiG user auth and access restrictions.
 Requires PyOpenSSL module (http://pypi.python.org/pypi/pyOpenSSL).
 """
 
-#import logging
 import os
+import signal
 #import socket
 import sys
 import time
@@ -88,12 +88,17 @@ from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, update_login_map, hit_rate_limit, update_rate_limit, \
      expire_rate_limit, penalize_rate_limit
-from shared.logger import daemon_logger
+from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
 
 configuration, logger = None, None
 
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
+    
 
 class MiGUserAuthorizer(DummyAuthorizer):
     """Authenticate/authorize against MiG users DB and user password files.
@@ -319,19 +324,26 @@ def start_service(conf):
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
-    nossl = False
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
 
     # Use separate logger
-    logger = daemon_logger("ftps", configuration.user_ftps_log, "info")
+    logger = daemon_logger("ftps", configuration.user_ftps_log, log_level)
     configuration.logger = logger
 
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
     # Allow configuration overrides on command line
-    if sys.argv[1:]:
-        nossl = bool(sys.argv[1])
+    nossl = False
     if sys.argv[2:]:
         configuration.user_ftps_address = sys.argv[2]
     if sys.argv[3:]:
         configuration.user_ftps_ctrl_port = int(sys.argv[3])
+    if sys.argv[4:]:
+        nossl = (sys.argv[4].lower() in ('1', 'true', 'yes', 'on'))
 
     if not configuration.site_enable_ftps:
         err_msg = "FTPS access to user homes is disabled in configuration!"

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sshmux - open ssh multiplexing master connections
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,8 +41,15 @@ from time import sleep
 from shared.base import sandbox_resource
 from shared.conf import get_resource_configuration, \
     get_configuration_object
+from shared.logger import daemon_logger, reopen_log
 from shared.ssh import execute_on_resource
 
+configuration, logger = None, None
+
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
 
 def persistent_connection(resource_config, logger):
     """Keep running a persistent master connection"""
@@ -105,7 +112,17 @@ def graceful_shutdown(signum, frame):
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
-    logger = configuration.logger
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+
+    # Use separate logger
+    logger = daemon_logger("sshmux", configuration.user_sshmux_log, log_level)
+    configuration.logger = logger
+
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
 
     print """
 Running grid ssh multiplexing server for resource ssh connection reuse.

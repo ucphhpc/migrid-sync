@@ -33,15 +33,37 @@ import sys
 import time
 
 from shared.conf import get_configuration_object
+from shared.logger import daemon_logger, reopen_log
 from shared.safeeval import subprocess_popen
 
-def handle_signal(signum, stack):
+configuration, logger = None, None
+
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
+
+def handle_stop(signum, stack):
     print "Got signal %s - fake ctrl-c" % signum
     raise KeyboardInterrupt
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
-    logger = configuration.logger
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+
+    # Use separate logger
+    logger = daemon_logger("vmproxy", configuration.user_vmproxy_log,
+                           log_level)
+    configuration.logger = logger
+
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
+    # Allow clean exit
+    signal.signal(signal.SIGTERM, handle_stop)
 
     if not configuration.site_enable_vmachines:
         err_msg = "VMachines and proxy helper is disabled in configuration!"
@@ -70,7 +92,6 @@ unless it is available in mig/server/MiGserver.conf
     print 'Starting VM proxy helper daemon - Ctrl-C to quit'
     logger.info("Starting VM proxy daemon")
 
-    signal.signal(signal.SIGTERM, handle_signal)        
     daemon_proc = None
     while keep_running:
         try:

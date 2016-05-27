@@ -62,10 +62,10 @@
 Requires Paramiko module (http://pypi.python.org/pypi/paramiko).
 """
 
-import logging
 import os
-import socket
+import signal
 import shutil
+import socket
 import sys
 import threading
 import time
@@ -86,10 +86,16 @@ from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      update_login_map, hit_rate_limit, update_rate_limit, expire_rate_limit, \
      penalize_rate_limit, track_open_session, track_close_session, \
      active_sessions
-from shared.logger import daemon_logger
+from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
 configuration, logger = None, None
+
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
+    
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
@@ -98,7 +104,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         self.sftpserver = None
         if sftpserver is not None:
             self.sftpserver = sftpserver
-            self.logger = sftpserver.conf.get("logger", logging.getLogger())
+            self.logger = logger
             self.logger.debug("SFTPHandle init: %s" % repr(flags))
 
     def stat(self):
@@ -134,7 +140,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         paramiko.SFTPServerInterface.__init__(self, server)
         conf = kwargs.get('conf', {})
         self.conf = conf
-        self.logger = conf.get("logger", logging.getLogger())
+        self.logger = logger
         self.transport = transport
         self.root = fs_root
         self.login_map = conf.get('login_map', {})
@@ -571,7 +577,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
     def __init__(self, *largs, **kwargs):
         conf = kwargs.get('conf', {})
         paramiko.ServerInterface.__init__(self)
-        self.logger = conf.get("logger", logging.getLogger())
+        self.logger = logger
         self.event = threading.Event()
         self.login_map = conf.get('login_map', {})
         self.client_addr = kwargs.get('client_addr')
@@ -706,7 +712,6 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
 def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     """Handle a single client session"""
-    logger = conf.get("logger", logging.getLogger())
     logger.debug("In session handler thread from %s %s" % (client, addr))
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
@@ -777,7 +782,6 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 def start_service(configuration):
     """Service daemon"""
     daemon_conf = configuration.daemon_conf
-    logger = daemon_conf.get("logger", logging.getLogger())
     window_size = daemon_conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = daemon_conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
     server_socket = None
@@ -833,16 +837,22 @@ def start_service(configuration):
 if __name__ == "__main__":
     configuration = get_configuration_object()
 
-    # Use separate logger
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
 
-    logger = daemon_logger("sftp", configuration.user_sftp_log, "info")
+    # Use separate logger
+    logger = daemon_logger("sftp", configuration.user_sftp_log, log_level)
     configuration.logger = logger
-    
+
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
     # Allow configuration overrides on command line
-    if sys.argv[1:]:
-        configuration.user_sftp_address = sys.argv[1]
     if sys.argv[2:]:
-        configuration.user_sftp_port = int(sys.argv[2])
+        configuration.user_sftp_address = sys.argv[2]
+    if sys.argv[3:]:
+        configuration.user_sftp_port = int(sys.argv[3])
 
     if not configuration.site_enable_sftp:
         err_msg = "SFTP access to user homes is disabled in configuration!"

@@ -10,7 +10,7 @@ __MIG_STATE__/log/*.log __MIG_STATE__/log/*.out __MIG_STATE__/log/*.err {
 	sharedscripts
 	postrotate
            if [ -x /etc/init.d/migrid ]; then \
-                /etc/init.d/migrid restart ; \
+                /etc/init.d/migrid reload ; \
            elif [ -p __MIG_CODE__/server/server.stdin ]; then \
                echo RELOADCONFIG >> __MIG_CODE__/server/server.stdin; \
 	   fi;

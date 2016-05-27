@@ -35,8 +35,8 @@ or with a minor patch (see https://github.com/mar10/wsgidav/issues/29) to allow
 per-user subdir chrooting inside root_dir.
 """
 
-#import logging
 import os
+import signal
 import sys
 import threading
 import time
@@ -64,7 +64,7 @@ from shared.defaults import dav_domain
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, update_login_map, hit_rate_limit, update_rate_limit, \
      expire_rate_limit, penalize_rate_limit, add_user_object
-from shared.logger import daemon_logger
+from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
      generate_password_digest
@@ -75,6 +75,11 @@ configuration, logger = None, None
 # TODO: can we enforce connection reuse?
 #       dav clients currently hammer the login functions for every operation
 
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
+    
 def _handle_allowed(request, abs_path):
     """Helper to make sure ordinary handle of a COPY, MOVE or DELETE
     request is allowed on abs_path.
@@ -663,30 +668,33 @@ def run(configuration):
 
 if __name__ == "__main__":
     configuration = get_configuration_object()
-    loglevel = configuration.loglevel
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+
+    # Use separate logger
+    logger = daemon_logger("webdavs", configuration.user_davs_log, log_level)
+    configuration.logger = logger
+
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
+    # Allow configuration overrides on command line
     litmus = False
     readonly = False
     nossl = False
-
-    # Allow configuration overrides on command line
-    if sys.argv[1:]:
-        configuration.user_davs_address = sys.argv[1]
     if sys.argv[2:]:
-        configuration.user_davs_port = int(sys.argv[2])
-    if sys.argv[3:] and sys.argv[3] in ("debug", "info", "warn", "error"):
-        loglevel = sys.argv[3]
+        configuration.user_davs_address = sys.argv[2]
+    if sys.argv[3:]:
+        configuration.user_davs_port = int(sys.argv[3])
     if sys.argv[4:]:
-        litmus = bool(sys.argv[4])
+        litmus = (sys.argv[4].lower() in ('1', 'true', 'yes', 'on'))
     if sys.argv[5:]:
-        readonly = bool(sys.argv[5])
+        readonly = (sys.argv[5].lower() in ('1', 'true', 'yes', 'on'))
     if sys.argv[6:]:
-        nossl = bool(sys.argv[6])
+        nossl = (sys.argv[6].lower() in ('1', 'true', 'yes', 'on'))
         
-    # Use separate logger - cherrypy hijacks root logger
-
-    logger = daemon_logger("webdavs", configuration.user_davs_log, loglevel)
-    configuration.logger = logger
-
     # Web server doesn't allow empty string alias for all interfaces
     if configuration.user_davs_address == '':
         configuration.user_davs_address = '0.0.0.0'

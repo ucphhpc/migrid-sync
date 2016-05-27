@@ -149,6 +149,9 @@ def fix_missing(config_file, verbose=True):
         'user_openid_alias': '',
         'user_openid_log': 'openid.log',
         'user_openid_providers': [],
+        'user_monitor_log': 'monitor.log',
+        'user_sshmux_log': 'sshmux.log',
+        'user_vmproxy_log': 'vmproxy.log',
         'user_events_log': 'events.log',
         'user_transfers_log': 'transfers.log',
         'logfile': 'server.log',
@@ -317,6 +320,9 @@ class Configuration:
     user_openid_alias = ''
     user_openid_log = 'openid.log'
     user_openid_providers = []
+    user_monitor_log = 'monitor.log'
+    user_sshmux_log = 'sshmux.log'
+    user_vmproxy_log = 'vmproxy.log'
     user_events_log = 'events.log'
     user_transfers_log = 'transfers.log'
     user_imnotify_address = ''
@@ -798,6 +804,12 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_openid_providers'):
             self.user_openid_providers = config.get('GLOBAL', 
                                                    'user_openid_providers').split()
+        if config.has_option('GLOBAL', 'user_monitor_log'):
+            self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
+        if config.has_option('GLOBAL', 'user_sshmux_log'):
+            self.user_sshmux_log = config.get('GLOBAL', 'user_sshmux_log')
+        if config.has_option('GLOBAL', 'user_vmproxy_log'):
+            self.user_vmproxy_log = config.get('GLOBAL', 'user_vmproxy_log')
         if config.has_option('GLOBAL', 'user_events_log'):
             self.user_events_log = config.get('GLOBAL', 'user_events_log')
         if config.has_option('GLOBAL', 'user_transfers_log'):
@@ -1311,8 +1323,10 @@ class Configuration:
         # Force absolute log paths
 
         for log_var in ('user_sftp_log', 'user_davs_log', 'user_ftps_log',
-                        'user_openid_log', 'user_events_log',
-                        'user_transfers_log', 'user_imnotify_log', ):
+                        'user_openid_log', 'user_monitor_log',
+                        'user_sshmux_log', 'user_vmproxy_log',
+                        'user_events_log', 'user_transfers_log',
+                        'user_imnotify_log', ):
             log_path = getattr(self, log_var)
             if not os.path.isabs(log_path):
                 setattr(self, log_var, os.path.join(self.log_dir, log_path))

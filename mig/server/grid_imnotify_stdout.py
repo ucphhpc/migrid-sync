@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify_stdout - Dummy IM daemon
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,12 +28,42 @@
 """Dummy IM daemon writing requests to stdout instead of sending them"""
 
 import os
+import signal
 import sys
 import time
 
 from shared.conf import get_configuration_object
+from shared.logger import daemon_logger, reopen_log
+
+configuration, logger = None, None
+
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
 
 if __name__ == '__main__':
+    configuration = get_configuration_object()
+    print os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+
+    # Use separate logger
+    logger = daemon_logger("imnotify", configuration.user_imnotify_log,
+                           log_level)
+    configuration.logger = logger
+
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
+    if not configuration.site_enable_imnotify:
+        err_msg = "IM notify helper is disabled in configuration!"
+        logger.error(err_msg)
+        print err_msg
+        sys.exit(1)
+
     print '''This is a dummy MiG IM notification daemon which just prints all
     requests.
 
@@ -46,8 +76,7 @@ if __name__ == '__main__':
     unless it is available in mig/server/MiGserver.conf
     '''
 
-    configuration = get_configuration_object()
-    print os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn
+    print 'Starting Dummy IM daemon - Ctrl-C to quit'
 
     stdin_path = configuration.im_notify_stdin
 
@@ -64,8 +93,6 @@ if __name__ == '__main__':
         sys.exit(1)
 
     keep_running = True
-
-    print 'Starting Dummy IM daemon - Ctrl-C to quit'
 
     print 'Reading commands from %s' % stdin_path
     try:

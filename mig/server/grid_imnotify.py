@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify - IM notifier daemon
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,6 +42,7 @@ multiprotocol transports.
 """
 
 import os
+import signal
 import sys
 import time
 import thread
@@ -52,6 +53,7 @@ except ImportError:
     irclib = None
 
 from shared.conf import get_configuration_object
+from shared.logger import daemon_logger, reopen_log
 
 getting_buddy_list = False
 protocol_online_dict = {
@@ -63,6 +65,12 @@ protocol_online_dict = {
     }
 nick_and_id_dict = {}
 
+configuration, logger = None, None
+
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
 
 def send_msg(
     connection,
@@ -292,7 +300,18 @@ def irc_process_forever(*args):
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
-    logger = configuration.logger
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+
+    # Use separate logger
+    logger = daemon_logger("imnotify", configuration.user_imnotify_log,
+                           log_level)
+    configuration.logger = logger
+
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
 
     if not configuration.site_enable_imnotify:
         err_msg = "IM notify helper is disabled in configuration!"

@@ -38,6 +38,7 @@ import logging
 import logging.handlers
 import os
 import re
+import signal
 import sys
 import tempfile
 import time
@@ -58,7 +59,7 @@ from shared.defaults import valid_trigger_changes, workflows_log_name, \
 from shared.events import get_expand_map, map_args_to_vars, get_command_map
 from shared.fileio import makedirs_rec, pickle
 from shared.job import fill_mrsl_template, new_job
-from shared.logger import daemon_logger
+from shared.logger import daemon_logger, reopen_log
 from shared.serial import load
 from shared.vgrid import vgrid_is_owner_or_member
 
@@ -80,6 +81,10 @@ _hits_lock = threading.Lock()
 _trigger_event = '_trigger_event'
 (configuration, logger) = (None, None)
 
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
 
 def make_fake_event(path, state):
     """Create a fake state change event for path. Looks up path to see if the
@@ -882,6 +887,19 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
 
 if __name__ == '__main__':
+    configuration = get_configuration_object()
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+
+    # Use separate logger
+    logger = daemon_logger("events", configuration.user_events_log, log_level)
+    configuration.logger = logger
+
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
     print '''This is the MiG event handler daemon which monitors VGrid files
 and triggers any configured events when target files are created, modifed or
 deleted. VGrid owners can configure rules to trigger such events based on file
@@ -891,19 +909,11 @@ Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 '''
 
-    configuration = get_configuration_object()
-
-    # Use separate logger
-
-    logger = daemon_logger('events', configuration.user_events_log,
-                           configuration.loglevel)
-    configuration.logger = logger
-
-    keep_running = True
-
     print 'Starting Event handler daemon - Ctrl-C to quit'
 
     logger.info('Starting Event handler daemon')
+
+    keep_running = True
 
     logger.info('initializing rule listener')
 

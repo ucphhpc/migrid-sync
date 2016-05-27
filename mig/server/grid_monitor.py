@@ -27,38 +27,28 @@
 
 """Creating the MiG monitor page"""
 
-import os
-import time
 import datetime
+import os
+import signal
+import sys
+import time
 
 from shared.conf import get_configuration_object
 from shared.defaults import default_vgrid
 from shared.fileio import unpickle
 from shared.gridstat import GridStat
 from shared.html import get_cgi_html_header, get_cgi_html_footer, themed_styles
+from shared.logger import daemon_logger, reopen_log
 from shared.output import format_timedelta
 from shared.resource import anon_resource_id
 from shared.vgrid import vgrid_list_vgrids
 
-print """
-Running grid monitor generator.
+configuration, logger = None, None
 
-Set the MIG_CONF environment to the server configuration path
-unless it is available in mig/server/MiGserver.conf
-"""
-
-configuration = get_configuration_object()
-logger = configuration.logger
-
-# Make sure that the default VGrid home used by monitor exists
-
-default_vgrid_dir = os.path.join(configuration.vgrid_home, default_vgrid)
-if not os.path.isdir(default_vgrid_dir):
-    try:
-        os.makedirs(default_vgrid_dir)
-    except OSError, ose:
-        logger.error('Failed to create default VGrid home: %s' % ose)
-
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
 
 def create_monitor(vgrid_name):
     """Write monitor HTML file for vgrid_name"""
@@ -703,18 +693,59 @@ A total of <b>'''\
         print 'Could not write monitor page %s: %s' % (html_file, exc)
 
 
-while True:
-    (status, vgrids_list) = vgrid_list_vgrids(configuration)
+if __name__ == '__main__':
+    configuration = get_configuration_object()
 
-    # create global statistics ("")
-    # vgrids_list.append("")
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
 
-    print 'Updating cache.'
-    grid_stat = GridStat(configuration, logger)
-    grid_stat.update()
-    for vgrid_name in vgrids_list:
-        print 'creating monitor for vgrid: %s' % vgrid_name
-        create_monitor(vgrid_name)
+    # Use separate logger
+    logger = daemon_logger("monitor", configuration.user_monitor_log,
+                           log_level)
+    configuration.logger = logger
 
-    print 'sleeping for %s seconds' % configuration.sleep_secs
-    time.sleep(float(configuration.sleep_secs))
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
+
+    print """
+Running grid monitor generator.
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
+"""
+
+    # Make sure that the default VGrid home used by monitor exists
+
+    default_vgrid_dir = os.path.join(configuration.vgrid_home, default_vgrid)
+    if not os.path.isdir(default_vgrid_dir):
+        try:
+            os.makedirs(default_vgrid_dir)
+        except OSError, ose:
+            logger.error('Failed to create default VGrid home: %s' % ose)
+
+    keep_running = True
+    while keep_running:
+        try:
+            (status, vgrids_list) = vgrid_list_vgrids(configuration)
+
+            # create global statistics ("")
+            # vgrids_list.append("")
+
+            print 'Updating cache.'
+            grid_stat = GridStat(configuration, logger)
+            grid_stat.update()
+            for vgrid_name in vgrids_list:
+                print 'creating monitor for vgrid: %s' % vgrid_name
+                create_monitor(vgrid_name)
+
+            print 'sleeping for %s seconds' % configuration.sleep_secs
+            time.sleep(float(configuration.sleep_secs))
+        except KeyboardInterrupt:
+            keep_running = False
+        except Exception, exc:
+            print 'Caught unexpected exception: %s' % exc
+            time.sleep(10)
+
+    print 'Monitor daemon shutting down'
+    sys.exit(0)

@@ -51,7 +51,7 @@ MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
 MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 
 show_usage() {
-    echo "Usage: migrid {start|stop|status|restart} [daemon]"
+    echo "Usage: migrid {start|stop|status|restart|reload} [daemon]"
     echo "where daemon is left empty for all or given as one of the following"
     echo "(script|monitor|sshmux|events|transfers|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)"
 }
@@ -374,6 +374,157 @@ stop_all() {
     stop_vmproxy
 }
 
+# NOTE: start-stop-daemon --stop --signal HUP BLA just means send HUP signal
+reload_script() {
+    DAEMON_PATH=${MIG_SCRIPT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG server" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_monitor() {
+    DAEMON_PATH=${MIG_MONITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG monitor" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_sshmux() {
+    DAEMON_PATH=${MIG_SSHMUX}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG sshmux" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_events() {
+    DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG events" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_transfers() {
+    DAEMON_PATH=${MIG_TRANSFERS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG transfers" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_openid() {
+    DAEMON_PATH=${MIG_OPENID}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG openid" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_sftp() {
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG sftp" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_webdavs() {
+    DAEMON_PATH=${MIG_WEBDAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG webdavs" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_davs() {
+    DAEMON_PATH=${MIG_DAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG davs" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_ftps() {
+    DAEMON_PATH=${MIG_FTPS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG ftps" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_imnotify() {
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG IM notify" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_vmproxy() {
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG VM proxy" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+
+reload_all() {
+    # Stop script first to leave it some time to save state
+    reload_script
+    reload_monitor
+    reload_sshmux
+    reload_events
+    reload_transfers
+    reload_openid
+    reload_sftp
+    # Use wsgidav implementation instead of outdated PyWebDav one
+    reload_webdavs
+    #reload_davs
+    reload_ftps
+    reload_imnotify
+    reload_vmproxy
+}
+
 status_script() {
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -493,9 +644,12 @@ case "$1" in
     status)
         eval "status_$TARGET" && exit 0 || exit $?
 	;;
-    restart|reload|force-reload)
+    restart|force-reload)
         eval "stop_$TARGET"
         eval "start_$TARGET"
+	;;
+    reload)
+        eval "reload_$TARGET"
 	;;
     *)
 	show_usage

@@ -8,6 +8,7 @@
 #	    start   - start MiG system components
 #	    stop    - terminate MiG system components
 #	    restart - terminate and start MiG system 
+#	    reload  - reload MiG system components
 #	    status  - report MiG system component's status
 #
 #	Customization of the MiG installation should be specified by
@@ -75,7 +76,7 @@ MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
 MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 
 show_usage() {
-    echo "Usage: migrid {start|stop|status|restart} [daemon]"
+    echo "Usage: migrid {start|stop|status|restart|reload} [daemon]"
     echo "where daemon is left empty for all or given as one of the following"
     echo "(script|monitor|sshmux|events|transfers|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)"
 }
@@ -372,6 +373,120 @@ stop_all() {
     stop_vmproxy
 }
 
+reload_script() {
+    DAEMON_PATH=${MIG_SCRIPT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG server: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_monitor() {
+    DAEMON_PATH=${MIG_MONITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG monitor: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_sshmux() {
+    DAEMON_PATH=${MIG_SSHMUX}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG sshmux: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_events() {
+    DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG events: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_transfers() {
+    DAEMON_PATH=${MIG_TRANSFERS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG transfers: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_openid() {
+    DAEMON_PATH=${MIG_OPENID}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG openid: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_sftp() {
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG sftp: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_webdavs() {
+    DAEMON_PATH=${MIG_WEBDAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG webdavs: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_davs() {
+    DAEMON_PATH=${MIG_DAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG davs: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_ftps() {
+    DAEMON_PATH=${MIG_FTPS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG ftps: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_imnotify() {
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG IM notify: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_vmproxy() {
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG VM proxy: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+
+reload_all() {
+    # Stop script first to leave it some time to save state
+    reload_script
+    reload_monitor
+    reload_sshmux
+    reload_events
+    reload_transfers
+    reload_openid
+    reload_sftp
+    # Use wsgidav implementation instead of outdated PyWebDav one
+    reload_webdavs
+    #reload_davs
+    reload_ftps
+    reload_imnotify
+    reload_vmproxy
+}
+
 status_script() {
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -495,13 +610,11 @@ case "$1" in
         eval "stop_$TARGET"
         eval "start_$TARGET"
 	;;
-#    reload)
-#	<cause the service configuration to be reread, either with
-#	kill -HUP or by restarting the daemons, in a manner similar
-#	to restart above>
-#	;;
+    reload)
+        eval "reload_$TARGET"
+	;;
 #    condrestart)
-#    	<Restarts the servce if it is already running. For example:>
+#    	<Restarts the service if it is already running. For example:>
 #	[ -f /var/lock/subsys/<service> ] && restart || :
 #    probe)
 #	<optional.  If it exists, then it should determine whether

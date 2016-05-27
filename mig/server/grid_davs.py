@@ -37,8 +37,8 @@ Requires pywebdav module (https://pypi.python.org/pypi/PyWebDAV).
 
 import BaseHTTPServer
 import SocketServer
-import logging
 import os
+import signal
 import ssl
 import sys
 import time
@@ -58,10 +58,15 @@ from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, \
      acceptable_chmod, refresh_users, hit_rate_limit, update_rate_limit, \
      penalize_rate_limit, expire_rate_limit
+from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
-
 configuration, logger = None, None
+
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    logger.info("reopening log in reaction to hangup signal")
+    reopen_log(configuration)
 
 
 class ThreadedHTTPServer(SocketServer.ThreadingMixIn,
@@ -462,21 +467,26 @@ def run(configuration):
 
 if __name__ == "__main__":
     configuration = get_configuration_object()
-    nossl = False
+
+    log_level = configuration.loglevel
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
 
     # Use separate logger
-    logging.basicConfig(filename=configuration.user_davs_log,
-                        level=logging.DEBUG,
-                        format="%(asctime)s %(levelname)s %(message)s")
-    logger = logging
+    logger = daemon_logger("davs", configuration.user_davs_log, log_level)
+    configuration.logger = logger
+
+    # Allow e.g. logrotate to force log re-open after rotates
+    signal.signal(signal.SIGHUP, hangup_handler)
 
     # Allow configuration overrides on command line
-    if sys.argv[1:]:
-        nossl = bool(sys.argv[1])
+    nossl = False
     if sys.argv[2:]:
         configuration.user_davs_address = sys.argv[2]
     if sys.argv[3:]:
         configuration.user_davs_port = int(sys.argv[3])
+    if sys.argv[4:]:
+        nossl = (sys.argv[4].lower() in ('1', 'true', 'yes', 'on'))
 
     configuration.dav_cfg = {
                'verbose': False,
