@@ -92,6 +92,7 @@ def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
     logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
+    logger.info("reopened log after hangup signal")
     
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""

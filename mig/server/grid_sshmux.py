@@ -50,6 +50,7 @@ def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
     logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
+    logger.info("reopened log after hangup signal")
 
 def persistent_connection(resource_config, logger):
     """Keep running a persistent master connection"""

@@ -41,6 +41,7 @@ def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
     logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
+    logger.info("reopened log after hangup signal")
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
@@ -118,7 +119,6 @@ if __name__ == '__main__':
 
             time.sleep(1)
         except KeyboardInterrupt:
-
             keep_running = False
         except Exception, exc:
             print 'Caught unexpected exception: %s' % exc
