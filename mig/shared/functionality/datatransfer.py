@@ -41,8 +41,7 @@ from shared.transferfunctions import build_transferitem_object, \
      build_keyitem_object, load_data_transfers, create_data_transfer, \
      update_data_transfer, delete_data_transfer, load_user_keys, \
      generate_user_key, delete_user_key
-from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
-     transfers_log_name
+from shared.defaults import all_jobs, job_output_dir, default_pager_entries
 from shared.fileio import read_tail
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
@@ -393,7 +392,8 @@ else, so the public key can inserted in authorized_keys as:<br/>
             datatransfers.append(transfer_item)
         #logger.debug("found datatransfers: %s" % datatransfers)
         log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
-                                "transfer_output", transfers_log_name)
+                                "transfer_output",
+                                configuration.site_transfer_log)
         show_lines = 40
         log_lines = read_tail(log_path, show_lines, logger)
         available_keys = load_user_keys(configuration, client_id)

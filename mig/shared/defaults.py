@@ -143,7 +143,6 @@ workflows_log_name = 'workflow.log'
 workflows_log_size = 67108864
 workflows_log_cnt = 2
 
-transfers_log_name = 'transfer.log'
 # 64M = 67108864
 transfers_log_size = 67108864
 transfers_log_cnt = 2

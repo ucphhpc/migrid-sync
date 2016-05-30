@@ -44,9 +44,8 @@ import multiprocessing
 
 from shared.fileio import makedirs_rec, pickle
 from shared.conf import get_configuration_object
-from shared.defaults import datatransfers_filename, transfers_log_name, \
-     transfers_log_size, transfers_log_cnt, user_keys_dir, \
-     _user_invisible_paths
+from shared.defaults import datatransfers_filename, transfers_log_size, \
+     transfers_log_cnt, user_keys_dir, _user_invisible_paths
 from shared.logger import daemon_logger, reopen_log
 from shared.notification import notify_user_thread
 from shared.pwhash import unscramble_digest
@@ -97,7 +96,7 @@ def hangup_handler(signal, frame):
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""
     status_dir = get_status_dir(configuration, client_id)
-    log_path = os.path.join(status_dir, transfers_log_name)
+    log_path = os.path.join(status_dir, configuration.site_transfer_log)
     makedirs_rec(os.path.dirname(log_path), configuration)
     transfers_logger = logging.getLogger('background-transfer')
     transfers_logger.setLevel(logging.INFO)

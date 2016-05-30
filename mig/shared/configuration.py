@@ -1180,6 +1180,10 @@ class Configuration:
             self.site_transfers_from = unique_transfers_from
         else:
             self.site_transfers_from = []
+        if config.has_option('SITE', 'transfer_log'):
+            self.site_transfer_log = config.get('SITE', 'transfer_log')
+        else:
+            self.site_transfer_log = "transfer.log"
         # Fall back to server_fqdn if not set or no valid entries
         if not self.site_transfers_from:
             self.site_transfers_from = [self.server_fqdn]
