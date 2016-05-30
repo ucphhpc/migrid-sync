@@ -62,8 +62,8 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
-     refresh_user_creds, update_login_map, hit_rate_limit, update_rate_limit, \
-     expire_rate_limit, penalize_rate_limit, add_user_object
+     refresh_user_creds, update_login_map, login_map_lookup, hit_rate_limit, \
+     update_rate_limit, expire_rate_limit, penalize_rate_limit, add_user_object
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
@@ -571,7 +571,7 @@ def update_users(configuration, user_map, username):
     litmus_id, litmus_pw = 'litmus', 'test'
     if username == litmus_id and \
            daemon_conf.get('enable_litmus', False) and \
-           not daemon_conf['login_map'].get(litmus_id, []):
+           not login_map_lookup(daemon_conf, litmus_id):
         litmus_home = os.path.join(configuration.user_home, litmus_id)
         try:
             os.makedirs(litmus_home)
@@ -600,9 +600,8 @@ def run(configuration):
 
     dav_conf = configuration.dav_cfg
     daemon_conf = configuration.daemon_conf
-    login_map = daemon_conf['login_map']
     # We just wrap login_map in domain user map as needed here
-    user_map = {dav_domain: login_map}
+    user_map = {dav_domain: daemon_conf['login_map']}
     config = DEFAULT_CONFIG.copy()
     config.update(dav_conf)
     config.update(daemon_conf)

@@ -86,8 +86,8 @@ except ImportError:
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
-     refresh_user_creds, update_login_map, hit_rate_limit, update_rate_limit, \
-     expire_rate_limit, penalize_rate_limit
+     refresh_user_creds, update_login_map, login_map_lookup, hit_rate_limit, \
+     update_rate_limit, expire_rate_limit, penalize_rate_limit
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
@@ -119,9 +119,9 @@ class MiGUserAuthorizer(DummyAuthorizer):
         Only called from central auth thread - no locking required.
         """
         daemon_conf = configuration.daemon_conf
-        login_map = daemon_conf['login_map']
         # No need for locking here - please see docstring note
-        changed_users = update_users(configuration, login_map, username)
+        changed_users = update_users(configuration, daemon_conf['login_map'],
+                                     username)
         if not changed_users:
             return None
         logger.debug("update user_table")
@@ -129,7 +129,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         # matching User objects since each user may have multiple logins (e.g.
         # public keys)
         for username in changed_users:
-            user_obj_list = login_map.get(username, [])
+            user_obj_list = login_map_lookup(daemon_conf, username)
             if self.has_user(username):
                 self.remove_user(username)
             # We prefer last entry with password but fall back to any entry

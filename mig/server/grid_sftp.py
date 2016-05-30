@@ -83,9 +83,9 @@ from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_user_creds, refresh_job_creds, \
-     update_login_map, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-     penalize_rate_limit, track_open_session, track_close_session, \
-     active_sessions
+     update_login_map, login_map_lookup, hit_rate_limit, update_rate_limit, \
+     expire_rate_limit, penalize_rate_limit, track_open_session, \
+     track_close_session, active_sessions
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
@@ -144,13 +144,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.logger = logger
         self.transport = transport
         self.root = fs_root
-        self.login_map = conf.get('login_map', {})
         self.chmod_exceptions = conf.get('chmod_exceptions', [])
         self.chroot_exceptions = conf.get('chroot_exceptions', [])
         self.user_name = self.transport.get_username()
         # list of User login objects for user_name
 
-        entries = self.login_map[self.user_name]
+        entries = login_map_lookup(conf, self.user_name)
         for entry in entries:
             if entry.chroot:
                 # IMPORTANT: Must be utf8 for 'ls' to work on user home!
@@ -580,7 +579,6 @@ class SimpleSSHServer(paramiko.ServerInterface):
         paramiko.ServerInterface.__init__(self)
         self.logger = logger
         self.event = threading.Event()
-        self.login_map = conf.get('login_map', {})
         self.client_addr = kwargs.get('client_addr')
         self.authenticated_user = None
         self.allow_password = conf.get('allow_password', True)
@@ -613,9 +611,9 @@ class SimpleSSHServer(paramiko.ServerInterface):
         if hit_rate_limit(configuration, "sftp-pw", self.client_addr[0],
                           username):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
-        elif self.allow_password and self.login_map.has_key(username):
+        elif self.allow_password:
             # list of User login objects for username
-            entries = self.login_map[username]
+            entries = login_map_lookup(daemon_conf, username)
             offered = password
             for entry in entries:
                 if entry.password is not None:
@@ -660,9 +658,9 @@ class SimpleSSHServer(paramiko.ServerInterface):
         if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
                           username, max_fails=10):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
-        elif self.allow_publickey and self.login_map.has_key(username):
+        elif self.allow_publickey:
             # list of User login objects for username
-            entries = self.login_map[username]
+            entries = login_map_lookup(daemon_conf, username)
             offered = key.get_base64()
             for entry in entries:
                 if entry.public_key is not None:

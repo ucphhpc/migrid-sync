@@ -705,6 +705,20 @@ def update_login_map(daemon_conf, changed_users, changed_jobs=[]):
     if creds_lock:
         creds_lock.release()
 
+def login_map_lookup(daemon_conf, username):
+    """Get creds associated with username in login_map in a thread-safe
+    fashion. Returns a list of credential objects, which is empty if username
+    is not found in login_map.
+    """
+    login_map = daemon_conf['login_map']
+    creds_lock = daemon_conf.get('creds_lock', None)
+    if creds_lock:
+        creds_lock.acquire()
+    creds = login_map.get(username, [])
+    if creds_lock:
+        creds_lock.release()
+    return creds
+
 def hit_rate_limit(configuration, proto, client_address, client_id,
                    max_fails=default_max_hits,
                    fail_cache=default_fail_cache):
