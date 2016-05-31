@@ -264,8 +264,14 @@ stop_script() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Shutting down MiG server: $SHORT_NAME "
-    killproc ${DAEMON_PATH}
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
     echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
 }
 stop_monitor() {
     DAEMON_PATH=${MIG_MONITOR}

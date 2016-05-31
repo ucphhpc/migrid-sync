@@ -217,8 +217,17 @@ stop_script() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG server" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
-        rm -f ${PID_FILE}
+    # Try graceful shutdown so that state is properly saved
+    start-stop-daemon --stop --signal INT --quiet --oknodo --pidfile ${PID_FILE}
+    for delay in 1 2 3; do
+	status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} || break
+	sleep $delay
+    done
+    # Force kill if still running
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && \
+	start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE}
+    if ! status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}; then
+	rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
