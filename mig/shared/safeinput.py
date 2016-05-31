@@ -1216,7 +1216,7 @@ def guess_type(name):
         for key in ('preview_cutoff_min', 'preview_cutoff_max'):
             __type_map[key] = valid_float
 
-        for key in ('volume_slice_filepattern',):
+        for key in ('volume_slice_filepattern', ):
             __type_map[key] = valid_path_pattern
 
     # Return type checker from __type_map with fall back to alphanumeric
@@ -1378,7 +1378,8 @@ if __name__ == '__main__':
 
     for test_path in ('test.txt', 'Test Æøå', 'Test Überh4x0r',
                       'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ', 
-                      'Test valid special%&()!$¶â€', 'Test exotic لرحيم',
+                      'Test valid special%&()!$¶â€', 'Test look-alike-å å',
+                      'Test exotic لرحيم',
                       'Test Invalid ?', 'Test Invalid `',
                       'Test invalid <', 'Test Invalid >',
                       'Test Invalid *', 'Test Invalid "'):

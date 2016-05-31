@@ -159,7 +159,7 @@ def html_tmpl(configuration, client_id, title_entry):
                     </div>
                 </div>
                 <!-- The table listing the files available for upload/download -->
-                <table role="presentation" class="table table-striped"><tw class="uploadfileslist">
+                <table role="presentation" class="table table-striped"><tbody class="uploadfileslist">
                 </tbody></table>
             </form>
             <!-- For status and error output messages -->
