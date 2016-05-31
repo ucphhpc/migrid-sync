@@ -365,21 +365,16 @@ if (jQuery) (function($){
 
         console.debug("define layout/view functions");
 
-        function get_fileman_layout() {
-
-            /* Preview layout */
-
-            var previewInnerHeight;
-            var centerTileWidthFrac = 0.40;
-            var previewWidth = $.fn.fmSelect(" .fm_previews").outerWidth() 
-            var previewTilesInnerWidth = $.fn.fmSelect(" .fm_previews").width() 
-                - $.fn.fmSelect(" .fm_preview_menubar").outerWidth();
-            var previewCenterTileWidth = Math.floor(previewTilesInnerWidth * centerTileWidthFrac);
-            var previewLeftTileWidth = Math.floor((previewTilesInnerWidth - previewCenterTileWidth)/2);
-            var previewRightTileWidth = previewLeftTileWidth;
+        function get_fm_layout() {
+            var is_dialog = false;
+            if ($.fn.fmSelect("").is(':ui-dialog')) {
+                is_dialog = true;
+            }
+            console.debug('is_dialog: ' + is_dialog);
 
             /* Dynamically fit buttonbar and buttons inline with breadcrumbs */
-            var breadcrumbsHeight = $("#fm_xbreadcrumbs").height();
+            var breadcrumbsHeight = $.fn.fmSelect(" #fm_xbreadcrumbs").height();
+
             var buttonbarHeight = breadcrumbsHeight;
             // Spacing for border, padding and margin
             var buttonSpacing = 5;
@@ -397,299 +392,123 @@ if (jQuery) (function($){
             var buttonWidth = 16;
             var fileManagerWidth = $.fn.fmSelect("").width();
             console.debug("fm is "+fileManagerWidth+ "px wide");
-            var fileManagerWidthPadding = $.fn.fmSelect("").outerWidth() - fileManagerWidth;
+            var fileManagerWidthPadding = $.fn.fmSelect("").outerWidth() - 
+                                        fileManagerWidth;
             console.debug("fm padding is "+fileManagerWidthPadding+ "px wide");
             var buttonbarWidth = buttonCount * (buttonWidth + 2 * buttonSpacing);
             // Leave a few pixels after breadcrumbs to avoid wrap on OSX/iOS
-            var breadcrumbsWidth = fileManagerWidth - buttonbarWidth - 6;
+            var breadcrumbsWidth = fileManagerWidth - buttonbarWidth - 8;
             console.debug("set breadcrumbsWidth to "+breadcrumbsWidth+ "px");
             console.debug("set buttonbarWidth to "+buttonbarWidth+ "px");
 
             /* Try hard to fit fileman in the window without global scroll bar */
             /* Make sure fileman fills at least as much vertically as the menu */
             
-            var headerHeight = $.fn.fmSelect("").offset().top;
+            var fileManagerHeight = 0;
+
+            var offsetTop = $.fn.fmSelect("").offset().top;
             var innerWindowHeight = $(window).height();
-            var contentHeightPadding = $("#content").outerHeight() - $("#content").height();
-            var statusbarHeight = $("#fm_statusbar").outerHeight();
-            var optionsHeight = $("#fm_options").outerHeight();
-            var exitCodeHeight = $("#exitcode").outerHeight();
-            var bottomLogoHeight = $("#bottomlogo").outerHeight();
-            var bottomspaceHeight = $("#bottomspace").outerHeight();
-            var footerHeight = exitCodeHeight + bottomLogoHeight + bottomspaceHeight;
-            var minHeight = $("div.menublock").height() - $("div.menublock").offset().top;
-            var fileManagerHeight = innerWindowHeight - (headerHeight + statusbarHeight + footerHeight + contentHeightPadding);
-            if (fileManagerHeight < minHeight) {
-                fileManagerHeight = minHeight;
-            }
-            var fileManagerInnerHeight = fileManagerHeight - (statusbarHeight + optionsHeight + $.fn.fmSelect(" .fm_previews").offset().top - 
-                                            headerHeight);
-            if (preview.settings.zoom == 0) {
-                previewInnerHeight = 0;
-                fileFolderInnerHeight = fileManagerInnerHeight;
-            }
-            else if (preview.settings.zoom == 1) {
-                previewInnerHeight = minHeight -
-                                            (statusbarHeight + $.fn.fmSelect(" .fm_previews").offset().top - 
-                                            headerHeight);
 
-                fileFolderInnerHeight = fileManagerInnerHeight - previewInnerHeight;
-            }
-            else if (preview.settings.zoom > 1) {
-                previewInnerHeight = fileManagerInnerHeight;
-                fileFolderInnerHeight = 0;
-            }
+            var contentHeightPadding = $("#content").outerHeight() - 
+                                    $("#content").height();
+            var filemanHeightPadding = $.fn.fmSelect("").outerHeight() - 
+                            $.fn.fmSelect("").height();
+            var exitCodeOuterHeight = $("#exitcode").outerHeight();
+            var bottomLogoOuterHeight = $("#bottomlogo").outerHeight();
+            var bottomspaceOuterHeight = $("#bottomspace").outerHeight();
+            var footerOuterHeight = exitCodeOuterHeight + 
+                                    bottomLogoOuterHeight + 
+                                    bottomspaceOuterHeight;
+            var pathBreadcrumbsOuterHeight = $.fn.fmSelect(" .fm_path_breadcrumbs").outerHeight();
+            var addressbarOuterHeight = $.fn.fmSelect(" .fm_addressbar").outerHeight();
+            var statusbarOuterHeight = $.fn.fmSelect(" #fm_statusbar").outerHeight();
+            var optionsOuterHeight = $.fn.fmSelect(" #fm_options").outerHeight();
+            var fileManagerInnerHeader = pathBreadcrumbsOuterHeight + 
+                                        addressbarOuterHeight;
+            var fileManagerInnerFooter = statusbarOuterHeight + 
+                                        optionsOuterHeight;                                        
+            if (is_dialog) {
+                fileManagerHeight = $.fn.fmSelect("").height();
+            } else {
+                var minHeight = fileManagerInnerHeader +
+                                fileManagerInnerFooter;
+                                
+                fileManagerHeight = innerWindowHeight - 
+                                (offsetTop + 
+                                footerOuterHeight + 
+                                contentHeightPadding);
 
-            return {
-                previewInnerHeight: previewInnerHeight,
-                previewWidth: previewWidth,
-                previewLeftTileWidth: previewLeftTileWidth,
-                previewCenterTileWidth: previewCenterTileWidth,
-                previewRightTileWidth: previewRightTileWidth,
-                breadcrumbsHeight: breadcrumbsHeight,
-                breadcrumbsWidth: breadcrumbsWidth,
-                buttonbarHeight: buttonbarHeight,
-                buttonbarWidth: buttonbarWidth,
-                buttonHeight: buttonHeight,
-                buttonLineHeight: buttonLineHeight,
-                buttonWidth: buttonWidth,
-                fileManagerHeight: fileManagerHeight,
-                fileManagerInnerHeight: fileManagerInnerHeight,
-                fileFolderInnerHeight: fileFolderInnerHeight
-            };
+                if (fileManagerHeight < minHeight) {
+                    fileManagerHeight = minHeight;
+                }                
+            }            
+            var fileManagerInnerHeight = fileManagerHeight -
+                                            fileManagerInnerHeader - 
+                                            fileManagerInnerFooter;
+            var fileFolderInnerHeight = fileManagerInnerHeight;
+            
+            var layout = {
+                    system : {
+                        innerWindowHeight: innerWindowHeight,
+                        contentHeightPadding: contentHeightPadding,
+                        filemanHeightPadding: filemanHeightPadding,
+                        pathBreadcrumbsOuterHeight: pathBreadcrumbsOuterHeight,
+                        addressbarOuterHeight: addressbarOuterHeight,
+                        statusbarOuterHeight: statusbarOuterHeight,
+                        optionsOuterHeight: optionsOuterHeight,
+                        exitCodeOuterHeight: exitCodeOuterHeight,
+                        bottomLogoOuterHeight: bottomLogoOuterHeight,
+                        bottomspaceOuterHeight: bottomspaceOuterHeight,
+                        headerOuterHeight: offsetTop,
+                        footerOuterHeight: footerOuterHeight
+                    },
+                    fm : {
+                        height: fileManagerHeight,
+                        innerHeight: fileManagerInnerHeight,
+                        fileFolderInnerHeight: fileFolderInnerHeight,
+                        breadcrumbsHeight: breadcrumbsHeight,
+                        breadcrumbsWidth: breadcrumbsWidth,
+                        buttonbarHeight: buttonbarHeight,
+                        buttonbarWidth: buttonbarWidth,
+                        buttonHeight: buttonHeight,
+                        buttonLineHeight: buttonLineHeight,
+                        buttonWidth: buttonWidth
+                    }
+                };
+            if (options['imagesettings']) {
+                layout = preview.update_fm_layout(layout);
+            }
+            return layout;
         }
 
-        function refresh_fileman_layout(callback) {
-            console.debug('refresh_fileman_layout');
-            var layout = get_fileman_layout();
+        function refresh_fm_layout(callback) {
+            console.debug('refresh_fm_layout');
 
-            $.fn.fmSelect("").css("height", layout.fileManagerHeight + "px");
-            $.fn.fmSelect(" .fm_previews").css("height", layout.previewInnerHeight + "px");
-            $.fn.fmSelect(" .fm_files").css("height", layout.fileFolderInnerHeight + "px");
-            $.fn.fmSelect(" .fm_folders").css("height", layout.fileFolderInnerHeight + "px");
-            $.fn.fmSelect(" .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
-            $.fn.fmSelect(" .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
-            $.fn.fmSelect(" .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");
-            $.fn.fmSelect(" .fm_path_breadcrumbs").css("height", layout.breadcrumbsHeight+"px")
-                .css("width", layout.breadcrumbsWidth+"px");
-            $.fn.fmSelect(" .fm_buttonbar").css("height", layout.buttonbarHeight+"px")
-                .css("width", layout.buttonbarWidth+"px");
-            $.fn.fmSelect(" #fm_buttons li").css("height", layout.buttonHeight+"px")
-                .css("line-height", layout.buttonLineHeight+"px")
-                .css("width", layout.buttonWidth+"px");
+            var layout = get_fm_layout();
+            console.debug('checkpoint refresh buttonbarHeight: ' + layout.fm.buttonbarHeight);
+            $.fn.fmSelect("").css("height", layout.fm.height+"px");
+            $.fn.fmSelect(" .fm_files").css("height", layout.fm.fileFolderInnerHeight+"px");
+            $.fn.fmSelect(" .fm_folders").css("height", layout.fm.fileFolderInnerHeight+"px");
+            $.fn.fmSelect(" .fm_path_breadcrumbs").css("height", layout.fm.breadcrumbsHeight+"px")
+                .css("width", layout.fm.breadcrumbsWidth+"px");
+            $.fn.fmSelect(" .fm_buttonbar").css("height", layout.fm.buttonbarHeight+"px")
+                .css("width", layout.fm.buttonbarWidth+"px");
+            $.fn.fmSelect(" #fm_buttons li").css("height", layout.fm.buttonHeight+"px")
+                .css("line-height", layout.fm.buttonLineHeight+"px")
+                .css("width", layout.fm.buttonWidth+"px");
 
             if (typeof callback === "function") {
                 callback();
             }
+
+            return layout;
         }
-
-        var preview = new Preview(enable_debug);
-
-        function refresh_preview(callback) {
-            show_preview(function() {
-                preview.refresh(callback);
-            });
-        }
-
-        function zoom_out_preview(callback) {
-            if (preview.settings.zoom > preview.settings.min_zoom) {
-                preview.settings.last_zoom = preview.settings.zoom;
-                preview.settings.zoom -= 1;
-                refresh_preview(callback);
-            }
-        }
-
-        function zoom_in_preview(callback) {
-            if (preview.settings.zoom < preview.settings.max_zoom) {
-                preview.settings.last_zoom = preview.settings.zoom;
-                preview.settings.zoom += 1;
-                refresh_preview(callback);
-            }
-        }
-
-        function set_visibility_preview_left_tile(visibility) {
-            $("#fm_preview_left_tile").css("visibility", visibility);
-            $("#fm_preview_left_tile_histogram").css("visibility", visibility);
-            $("#fm_preview_left_tile_histogram_actions").css("visibility", visibility);
-            $("#fm_preview_left_output").css("visibility", visibility);
-        }
-
-        function set_visibility_preview_center_tile(visibility) {
-            $("#fm_preview_center_tile").css("visibility", visibility);
-        }
-
-        function set_visibility_preview_right_tile(visibility) {
-            $("#fm_preview_right_tile").css("visibility", visibility);
-            $("#fm_preview_right_output").css("visibility", visibility);
-        }
-
-        function set_visibility_preview(visibility) {
-            $("#fm_preview_menubar").css('visibility', visibility);
-            set_visibility_preview_left_tile(visibility);
-            set_visibility_preview_center_tile(visibility);
-            set_visibility_preview_right_tile(visibility);
-        }   
-
-        function show_preview(callback) {
-            var layout = get_fileman_layout();
-            var visibility = (preview.settings.zoom == 0) ? 
-                'hidden' :
-                'visible';
-            var animate_speed = (preview.settings.zoom < preview.settings.last_zoom) ?
-                options.collapseSpeed :
-                options.expandSpeed;
-            var animate_easing = (preview.settings.zoom < preview.settings.last_zoom) ?
-                options.collapseEasing :
-                options.expandEasing;
-            $.fn.fmSelect(" .fm_folders").animate(
-                {height: layout.fileFolderInnerHeight + 'px'},
-                {duration: animate_speed,
-                easing: animate_easing});
-            $.fn.fmSelect(" .fm_files").animate(
-                {height: layout.fileFolderInnerHeight + 'px'},
-                {duration: animate_speed,
-                easing: animate_easing});
-            $.fn.fmSelect(" .fm_preview_left_tile").css("width", layout.previewLeftTileWidth + "px");
-            $.fn.fmSelect(" .fm_preview_center_tile").css("width", layout.previewCenterTileWidth + "px");
-            $.fn.fmSelect(" .fm_preview_right_tile").css("width", layout.previewRightTileWidth + "px");            
-            $.fn.fmSelect(" .fm_previews").animate(
-                {height: layout.previewInnerHeight + 'px'},
-                {duration: animate_speed,
-                easing: animate_easing,
-                complete: function() {  
-                    set_visibility_preview(visibility);
-                    if (typeof callback === "function") {
-                        callback();
-                    }
-                }});
-        }
-        
-        $.fn.refresh_fileman_layout = refresh_fileman_layout;
-
-        $(window).on("resize", function() {
-            set_visibility_preview('hidden');
-            $.fn.refresh_fileman_layout();
-        });
-
-        $(window).on("debouncedresize", function() {
-            refresh_preview();
-        });
-
-        console.debug("past layout/view functions");
 
         function clickEvent(el) {
             if (!options['imagesettings']) {
                 console.debug('clickEvent: imagesettings is false');
             } else {
-
-                // Grey out cutoff butten as default
-
-                $("#preview_histogram_set_cutoff_button").attr('disabled', true);
-
-                // Get image data
-
-                $.ajax({url: 'filemetaio.py',
-                        data: { path: $(el).attr(pathAttribute), output_format: 'json' ,
-                                action: 'get_file', flags: 'i'},
-                        type: "GET",
-                        dataType: "json",
-                        cache: false,
-                        success: function(jsonRes, textStatus) {
-                            var errors = $(this).renderError(jsonRes);
-                            var warnings = $(this).renderWarning(jsonRes);
-                            var right_html_out = '';
-                            var left_html_out = '';
-                            var image_filepath;
-                            for (i = 0; i < jsonRes.length; i++) {
-                                if (jsonRes[i].object_type == 'image_meta') {
-                                    $(".fm_previews input[name=fm_preview_base_path]").val(jsonRes[i].base_path);
-                                    $(".fm_previews input[name=fm_preview_path]").val(jsonRes[i].path);
-                                    $(".fm_previews input[name=fm_preview_filename]").val(jsonRes[i].name);
-                                    $(".fm_previews input[name=fm_preview_extension]").val(jsonRes[i].extension);
-
-                                    preview_image_url = jsonRes[i].preview_image_url;
-                                    preview_histogram = new Uint32Array(jsonRes[i].preview_histogram);
-
-                                    if (jsonRes[i].path === '') {
-                                        image_filepath = jsonRes[i].base_path + jsonRes[i].name;
-                                    }
-                                    else {
-                                        image_filepath = jsonRes[i].base_path + jsonRes[i].path +  "/" + jsonRes[i].name;
-                                    }
-                                    right_html_out  += '<p>Image: ' + image_filepath + '</p>'
-                                        + '<p>Image Type: ' + jsonRes[i].image_type + '</p>'
-                                        + '<p>Data Type: ' + jsonRes[i].data_type + '</p>'
-                                        + '<p>Offset: ' + jsonRes[i].offset + '</p>'
-                                        + '<p>X dimension: ' + jsonRes[i].x_dimension + '</p>'
-                                        + '<p>Y dimension: ' + jsonRes[i].y_dimension + '</p>'
-                                        + '<p>Min Value: ' + Number(jsonRes[i].min_value).toExponential(preview.get_format_decimals()) + '</p>'
-                                        + '<p>Max Value: ' + Number(jsonRes[i].max_value).toExponential(preview.get_format_decimals()) + '</p>'
-                                        + '<p>Mean Value: '  + Number(jsonRes[i].mean_value).toExponential(preview.get_format_decimals()) + '</p>'
-                                        + '<p>Median Value: ' + Number(jsonRes[i].median_value).toExponential(preview.get_format_decimals()) + '</p>';
-
-                                    // TODO: Move input fields HTML to fileman.py ?
-
-                                    left_html_out += '<input type="hidden" value="' + jsonRes[i].preview_cutoff_min + '" name="cutoff_min_value" />' 
-                                        + '<input type="hidden" value="' + jsonRes[i].preview_cutoff_max + '" name="cutoff_max_value" />' 
-                                        + '<input type="hidden" value="' + jsonRes[i].preview_cutoff_min + '" name="current_min_value" />' 
-                                        + '<input type="hidden" value="' + jsonRes[i].preview_cutoff_max + '" name="current_max_value" />' 
-                                        + '<input type="hidden" value="' + jsonRes[i].preview_image_scale + '" name="scale_value" />' 
-                                        + '<p><span id="fm_preview_left_output_min_value_show"></span></p>' 
-                                        + '<p><span id="fm_preview_left_output_max_value_show"></span></p>' 
-                                        + '<p><span id="fm_preview_left_output_preview_image_scale_value_show"></span></p>'
-
-                                    // Check for preview settings status, and mark cutoff butten active if folder ready
-
-                                    $.ajax({url: 'filemetaio.py',
-                                            data: { path: jsonRes[i].base_path,
-                                                    extension: jsonRes[i].extension,
-                                                    output_format: 'json',
-                                                    action: 'get_dir',
-                                                    flags: 'i',
-                                                  },
-                                            type: "GET",
-                                            dataType: "json",
-                                            cache: false,
-                                            success: function(jsonRes, textStatus) {
-                                                var i;
-                                                var errors = $(this).renderError(jsonRes);
-                                                var warnings = $(this).renderWarning(jsonRes);
-                                                if (errors.length > 0) {
-                                                    console.error(errors);
-                                                } else if (warnings.length > 0) {
-                                                    console.warn(warnings);
-                                                }
-                                                for (i = 0; i < jsonRes.length; i++) {
-                                                    if (jsonRes[i].object_type == 'image_setting') {
-                                                        if (jsonRes[i].settings_status.toLowerCase() == 'ready' ) {
-                                                            $("#preview_histogram_set_cutoff_button").attr('disabled', false);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                           });
-                                }
-                            }
-                            if (errors.length > 0) {
-                                $("#fm_preview_right_output").html(errors);
-                                $("#fm_preview_left_output").html('');
-                                console.error(errors);
-                            } else if (warnings.length > 0) {
-                                $("#fm_preview_right_output").html(warnings);
-                                $("#fm_preview_left_output").html('');
-                                console.warn(warnings);
-                            } else {
-                                $("#fm_preview_right_output").html(right_html_out);
-                                $("#fm_preview_left_output").html(left_html_out);
-
-                                preview.set_histogram_data(preview_histogram);
-                                preview.settings.zoom = 1;
-                                show_preview(function() {
-                                    preview.load(preview_image_url);
-                                });
-                            }
-                        }
-                       });
+                preview.open($(el).attr(pathAttribute));
             }
         }
 
@@ -1267,7 +1086,6 @@ if (jQuery) (function($){
                 var open_dialog = mig_imagesettings_init("imagesettings_dialog", rel_path, options);
                 open_dialog("Image Settings");
             }
-
         };
 
         var defaults = {
@@ -1295,6 +1113,49 @@ if (jQuery) (function($){
         };
 
         var options = $.extend(defaults, user_options);
+
+        // reestablish defaults for undefined actions:
+        $.each(callbacks, function(name, fct) {
+            if (options['actions'][name] == undefined) {
+                options['actions'][name] = callbacks[name];
+            } else {
+                //console.debug(name + " overloaded");
+            }
+        });
+
+        // Initiate preview
+        
+        var preview = null;
+        if (options['imagesettings']) {
+            preview = new Preview(
+                                get_fm_layout,
+                                options,
+                                enable_debug);
+        }
+
+        $.fn.refresh_fm_layout = refresh_fm_layout;
+
+        // Define window behavior
+
+        $(window).on("resize", function() {
+            if (options['imagesettings']) {
+                preview.set_visibility('hidden');
+            }
+            $.fn.refresh_fm_layout();
+        });
+
+        $(window).on("debouncedresize", function() {
+            if (options['imagesettings']) {
+                preview.refresh();
+            }
+
+        });
+
+        $(window).on('beforeunload', function(){
+            if (options['imagesettings']) {
+                preview.close();
+            }
+        });
 
         // reestablish defaults for undefined actions:
         $.each(callbacks, function(name, fct) {
@@ -1884,7 +1745,7 @@ if (jQuery) (function($){
                 bindContextMenus();
 
                 console.debug("add click handler");
-                $.fn.fmSelect("").on("click",
+                 $.fn.fmSelect("").on("click",
                                         "tr.file",
                                         function(event) {
                                             clickEvent(this);
@@ -2030,123 +1891,11 @@ if (jQuery) (function($){
              * Bind preview buttons
              */
 
-            $("#fm_preview_menubar_zoom_out").on('click',
-                                                 function(event) {
-                                                     console.debug('fm_preview_menubar_zoom_out');
-                                                     zoom_out_preview();
-                                                 });
+            if (options['imagesettings']) {
+                preview.bind_buttons();
+            }
 
-            $("#fm_preview_menubar_zoom_in").on('click',
-                                                function(event) {
-                                                    console.debug('fm_preview_menubar_zoom_in');
-                                                    zoom_in_preview();
-                                                });
-
-            $("#fm_preview_menubar_refresh").on('click',
-                                                function(event) {
-                                                    console.debug('fm_preview_menubar_refresh');
-                                                    refresh_preview();
-                                                });
-
-            $("#preview_histogram_reset_button").on('click',
-                                                    function(event) {
-                                                        preview.reset();
-                                                    });
-
-            $("#preview_histogram_set_cutoff_button").on('click',
-                                                         function(event) {
-                                                             var histogram_scale = $("#fm_preview_left_tile_histogram_actions input[name=fm_preview_histogram_scale]").val();
-                                                             var path = $(".fm_previews input[name=fm_preview_base_path]").val();
-                                                             var extension = $(".fm_previews input[name=fm_preview_extension]").val();
-                                                             var min_value = $("#fm_preview_left_output input[name='current_min_value']").val();
-                                                             var max_value = $("#fm_preview_left_output input[name='current_max_value']").val();
-                                                             var data;
-
-                                                             // Grey out button as default
-
-                                                             $("#preview_histogram_set_cutoff_button").attr('disabled', true);
-
-                                                             // Get data for update
-                                                             // TODO: implement *update* action in filemetaio.py,
-                                                             // and replace this get_dir+put_dir
-
-                                                             $.ajax({
-                                                                 url: 'filemetaio.py',
-                                                                 data: { extension: extension,
-                                                                         path: path,
-                                                                         output_format: 'json',
-                                                                         action: 'get_dir',
-                                                                         flags: 'i',
-                                                                       },
-                                                                 type: "GET",
-                                                                 dataType: "json",
-                                                                 cache: false,
-                                                             }).success(function (jsonRes) {
-                                                                 var errors = $(this).renderError(jsonRes);
-                                                                 var warnings = $(this).renderWarning(jsonRes);
-                                                                 var i;
-                                                                 var json_put;
-
-                                                                 if (errors.length > 0) {
-                                                                     $("#fm_preview_left_output").html(errors);
-                                                                     logger.debug(errors);
-                                                                 } else if (warnings.length > 0) {
-                                                                     $("#fm_preview_left_output").html(warnings);
-                                                                     logger.debug(warnings);
-                                                                 }
-                                                                 else {
-                                                                     for (i = 0; i < jsonRes.length; i++) {
-                                                                         if (jsonRes[i].object_type == 'image_setting') {
-                                                                             data = jsonRes[i];
-                                                                         }
-                                                                     }
-
-                                                                     // Update settings with new cutoff values
-
-                                                                     $.ajax({
-                                                                         url: 'filemetaio.py',
-                                                                         data: { extension: extension,
-                                                                                 path: path,
-                                                                                 output_format: 'json',
-                                                                                 action: 'put_dir',
-                                                                                 flags: 'i',
-                                                                                 settings_recursive: data['settings_recursive'],
-                                                                                 image_type: data['image_type'],
-                                                                                 data_type: data['data_type'],
-                                                                                 offset: data['offset'],
-                                                                                 x_dimension: data['x_dimension'],
-                                                                                 y_dimension: data['y_dimension'],
-                                                                                 preview_image_extension: data['preview_image_extension'],
-                                                                                 preview_x_dimension: data['preview_x_dimension'],
-                                                                                 preview_y_dimension: data['preview_y_dimension'],
-                                                                                 preview_cutoff_min: min_value,
-                                                                                 preview_cutoff_max: max_value,
-                                                                               },
-                                                                         type: "POST",
-                                                                         dataType: "json",
-                                                                         cache: false,
-                                                                     }).success(function (jsonRes) {
-                                                                         var errors = $(this).renderError(jsonRes);
-                                                                         var warnings = $(this).renderWarning(jsonRes);
-                                                                         var i;
-                                                                         if (errors.length > 0) {
-                                                                             $("#fm_preview_left_output").html(errors);
-                                                                             logger.debug(errors);
-                                                                         } else if (warnings.length > 0) {
-                                                                             $("#fm_preview_left_output").html(warnings);
-                                                                             logger.debug(warnings);
-                                                                         }
-                                                                     });
-                                                                 }
-                                                             });
-
-                                                         });
-
-            $("#preview_histogram_auto_button").on('click',
-                                                   function(event) {
-                                                       alert('Auto pressed');
-                                                   });
-
+            
             /**
              * Bind handlers for forms. This is ridiculous and tedious repetitive code.
              *
@@ -2347,10 +2096,10 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
 
         $("#" + name).dialog("open");
         /* We call refresh twice here to get fitting right after loading */
-        $.fn.refresh_fileman_layout();
+        $.fn.refresh_fm_layout();
         /* force reload to get zebra-coloring right (ignored unless visible) */
         $.fn.reload(start_path);
-        $.fn.refresh_fileman_layout();
+        $.fn.refresh_fm_layout();
     };
     // code entangled with specific filemanager naming
     var pathAttribute = "rel_path";
@@ -2549,9 +2298,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                      showWaitInfo("aborting active uploads", 0, 3000);
                      $(".fileupload-buttons button.cancel").click();
                  }
-                 console.info("before callback");
                  callback();
-                 console.info("after callback");
                  $("#" + name).dialog("close");
              }
          }
@@ -2873,6 +2620,20 @@ function mig_fancyuploadchunked_init(name, callback) {
 function mig_imagesettings_init(name, path, options) {
     var path = path;
     var name = name;
+    var edit_form_values = { 
+            extension: '',
+            settings_status: '',
+            settings_recursive: '',
+            image_type: '',
+            data_type: '',
+            volume_slice_filepattern: '',
+            offset: 0,
+            x_dimension: 0,
+            y_dimension: 0,
+            z_dimension: 0,
+            preview_cutoff_min: 0.0,
+            preview_cutoff_max: 0.0,
+        };
 
     init_html_and_handlers();
 
@@ -2881,7 +2642,7 @@ function mig_imagesettings_init(name, path, options) {
         {
             autoOpen: false,
             modal: true,
-            width: 355,
+            width: 480,
             position: { my: "top", at: "top+100px", of: window},
             buttons: dialog_list_buttons()
         });
@@ -2938,39 +2699,56 @@ function mig_imagesettings_init(name, path, options) {
 
     function init_html_and_handlers() {
         $("#imagesettings_edit").hide();
-        $("#imagesettings_list").hide();
+        $("#imagesettings_edit_tabs").hide()
 
-        // Handle image settings form submit
+        // Handle image settings file form submit
 
-        $("#imagesettings_form").ajaxForm(
-            {target: '#imagesettings_output', dataType: 'json',
-             success: function(responseObject, statusText) {
-                 var errors = $(this).renderError(responseObject);
-                 var warnings = $(this).renderWarning(responseObject);
-                 if (errors.length > 0) {
-                     msg = errors;
-                     console.debug(errors);
-                 } else if (warnings.length > 0) {
-                     msg = warnings;
-                     console.debug(warnings);
-                 } else {
-                     msg = 'Image settings updated';
-                 }
-                 show_list(msg);
-             }
-            });
+        $("#imagesettings_form").ajaxForm({
+            target: '#imagesettings_output', dataType: 'json',
+            success: function(responseObject, statusText) {
+                var errors = $(this).renderError(responseObject);
+                var warnings = $(this).renderWarning(responseObject);
+                if (errors.length > 0) {
+                    msg = errors;
+                    console.debug(errors);
+                } else if (warnings.length > 0) {
+                    msg = warnings;
+                    console.debug(warnings);
+                } else {
+                    msg = 'Image file settings updated';
+                }
+                show_list(msg);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error("imagesettings_form error: "+ textStatus);
+                console.debug("imagesettings_form error: "+ errorThrown);
+            }
+        });
 
-        // Only display options for raw data if 'raw' is selected'
+        // Changes based on image_type
 
         $("#imagesettings_form select[name='image_type']").on('change', function() {
-            var value = $("#imagesettings_form select[name='image_type']").val();
+            var image_type_value = $("#imagesettings_form select[name='image_type']").val();
+            var data_type_value = $("#imagesettings_form select[name='data_type']").val()
 
-            if (value == 'raw') {
-                $("#imagesettings_edit_image_type_raw").show({duration: options.expandSpeed,
+            // Set data_type based on image_type
+            
+            if (image_type_value === 'tiff') {
+                data_type_value = 'uint16';
+            } 
+            else {
+                data_type_value = edit_form_values['data_type'];
+            }            
+            $("#imagesettings_form select[name='data_type']").val(data_type_value).prop('selected', true);
+
+            // Only display options for raw data if 'raw' is selected'
+
+            if (image_type_value === 'raw') {
+                $("#imagesettings_edit_image_type_raw").show({duration: options.expandSpeed, 
                                                               easing: options.expandEasing });
             }
             else {
-                $("#imagesettings_edit_image_type_raw").hide({duration: options.expandSpeed,
+                $("#imagesettings_edit_image_type_raw").hide({duration: options.expandSpeed, 
                                                               easing: options.expandEasing });
             }
         });
@@ -3001,8 +2779,8 @@ function mig_imagesettings_init(name, path, options) {
         $("#imagesettings_output").html(html_out);
         $("#imagesettings_list").hide(({duration: options.expandSpeed,
                                         easing: options.expandEasing }));
-        $("#imagesettings_edit").hide(({duration: options.expandSpeed,
-                                        easing: options.expandEasing }));
+        $("#imagesettings_edit_tabs").hide(({duration: options.expandSpeed, 
+                                             easing: options.expandEasing }));
 
         // Retrieve image settings list
 
@@ -3015,81 +2793,105 @@ function mig_imagesettings_init(name, path, options) {
             type: "GET",
             dataType: "json",
             cache: false,
-        }).success(function (jsonRes) {
-            var errors = $(this).renderError(jsonRes);
-            var warnings = $(this).renderWarning(jsonRes);
-            if (errors.length > 0) {
-                console.debug(errors);
-            } else if (warnings.length > 0) {
-                console.debug(warnings);
+            success: function (jsonRes) {
+                var errors = $(this).renderError(jsonRes);
+                var warnings = $(this).renderWarning(jsonRes);
+                if (errors.length > 0) {
+                    console.debug(errors);
+                } else if (warnings.length > 0) {
+                    console.debug(warnings);
+                }
+
+                var i;
+                var extension_list = new Array();
+                var image_settings_status_list = new Array();
+                var image_settings_progress_list = new Array();
+                var image_count_list = new Array();
+                var volume_settings_status_list = new Array();
+                var volume_settings_progress_list = new Array();
+                var volume_count_list = new Array();
+                
+                // Generate extension, status, progress and count lists for each entry
+
+                for (i = 0; i < jsonRes.length; i++) {
+                    if (jsonRes[i].object_type == 'image_settings_list') {
+                        extension_list = extension_list.concat(jsonRes[i].extension_list);
+                        image_settings_status_list = image_settings_status_list.concat(jsonRes[i].image_settings_status_list);
+                        image_settings_progress_list = image_settings_progress_list.concat(jsonRes[i].image_settings_progress_list);
+                        image_count_list = image_count_list.concat(jsonRes[i].image_count_list);
+                        volume_settings_status_list = image_settings_status_list.concat(jsonRes[i].image_settings_status_list);
+                        volume_settings_progress_list = volume_settings_progress_list.concat(jsonRes[i].volume_settings_progress_list);
+                        volume_count_list = volume_count_list.concat(jsonRes[i].volume_count_list);
+                    }
+                }
+
+                // Generate html for each entry
+
+                var html_out = '<p><b>Image file extensions:</b></p>';
+                if (image_settings_status_list.length == 0) {
+                    html_out += '<p>-- No folder image settings configured --</p>';
+                }
+
+                for (i = 0; i < image_settings_status_list.length; i++) {
+                    if (image_settings_status_list[i].toLowerCase() === 'ready' ||
+                        image_settings_status_list[i].toLowerCase() === 'failed') {
+                        html_out += '<ul class="edit">';
+                        html_out += '<li title="Edit" ';
+                    }
+                    else if (image_settings_status_list[i].toLowerCase() === 'pending') {
+                        html_out += '<ul class="pending">';
+                        html_out += '<li title="Pending" ';
+                    }
+                    else if (image_settings_status_list[i].toLowerCase() === 'updating') {
+                        html_out += '<ul class="updating">';
+                        console.debug('mig_imagesettings_init: extension_list[' +i+ ']: ' + extension_list[i] + ' <- updating');
+                        html_out += '<li title="Updating" ';
+                    }
+                    html_out += 'extension="' + extension_list[i] + '">';
+                    html_out += '<span style="top:-2px; position:relative;">';
+                    html_out +=  extension_list[i];
+                    if (image_settings_status_list[i].toLowerCase() === 'ready') {
+                        html_out += ' (Files: ' + image_count_list[i];
+                        if (volume_count_list[i] !== 0) {
+                            html_out += ', Volumes: ' + volume_count_list[i];
+                        }
+                        html_out += ')'
+                    }
+                    else if (image_settings_status_list[i].toLowerCase() === 'updating' ) {
+                        html_out +=  ' (Files: ' + image_settings_progress_list[i];
+                        if (volume_settings_progress_list[i] !== '' && 
+                            volume_settings_progress_list[i] !== 'None') {
+                                html_out += ', Volumes: ' + volume_settings_progress_list[i];
+                        }
+                        html_out += ')'
+                    }                        
+                    else if (image_settings_status_list[i].toLowerCase() === 'failed' ) {
+                        html_out +=  '<span style="color:red"> (Failed)</span>';
+                    }                        
+                    
+                    html_out += '</li></scan></ul>'; 
+                }
+                $("#imagesettings_list").html(html_out);
+
+                // Attach 'edit' handler to each list element
+
+                $("#imagesettings_list ul.edit li").click(function() {
+                    edit($(this).attr('extension'));
+                });
+
+                // Show list
+
+                $("#imagesettings_list").show(({duration: options.expandSpeed,
+                                                easing: options.expandEasing}));
+
+                // Set dialog buttons
+
+                $("#" + name).dialog('option', 'buttons', dialog_list_buttons());
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error("image settings -> show_list error: " + textStatus);
+                console.debug("image settings -> show_list error: " + errorThrown);
             }
-
-            var i;
-            var extension_list = new Array();
-            var settings_status_list = new Array();
-            var settings_progress_list = new Array();
-            var image_count_list = new Array();
-
-            // Generate extension, status, progress and count lists for each entry
-
-            for (i = 0; i < jsonRes.length; i++) {
-                if (jsonRes[i].object_type == 'image_settings_list') {
-                    extension_list = extension_list.concat(jsonRes[i].extension_list);
-                    settings_status_list = settings_status_list.concat(jsonRes[i].settings_status_list);
-                    settings_progress_list = settings_progress_list.concat(jsonRes[i].settings_progress_list);
-                    image_count_list = image_count_list.concat(jsonRes[i].image_count_list);
-                }
-            }
-
-            // Generate html for each entry
-
-            var html_out = 'Image file extensions:';
-            for (i = 0; i < settings_status_list.length; i++) {
-                if (settings_status_list[i].toLowerCase() === 'ready' ||
-                    settings_status_list[i].toLowerCase() === 'failed') {
-                    html_out += '<ul class="edit">';
-                    html_out += '<li title="Edit" ';
-                }
-                else if (settings_status_list[i].toLowerCase() === 'pending') {
-                    html_out += '<ul class="pending">';
-                    html_out += '<li title="Pending" ';
-                }
-                else if (settings_status_list[i].toLowerCase() === 'updating') {
-                    html_out += '<ul class="updating">';
-                    console.debug('mig_imagesettings_init: extension_list[' +i+ ']: ' + extension_list[i] + ' <- updating');
-                    html_out += '<li title="Updating" ';
-                }
-                html_out += 'extension="' + extension_list[i] + '">';
-                html_out += '<span style="top:-2px; position:relative;">';
-                html_out +=  extension_list[i];
-                if (settings_status_list[i].toLowerCase() === 'ready') {
-                    html_out += ' (' + image_count_list[i] + ')';
-                }
-                else if (settings_status_list[i].toLowerCase() === 'updating' ) {
-                    html_out +=  ' (' + settings_progress_list[i] + ')';
-                }
-                else if (settings_status_list[i].toLowerCase() === 'failed' ) {
-                    html_out +=  '<span style="color:red"> (Failed)</span>';
-                }
-
-                html_out += '</li></scan></ul>';
-            }
-            $("#imagesettings_list").html(html_out);
-
-            // Attach 'edit' handler to each list element
-
-            $("#imagesettings_list ul.edit li").click(function() {
-                edit($(this).attr('extension'));
-            });
-
-            // Show list
-
-            $("#imagesettings_list").show(({duration: options.expandSpeed,
-                                            easing: options.expandEasing}));
-
-            // Set dialog buttons
-
-            $("#" + name).dialog('option', 'buttons', dialog_list_buttons());
         });
     }
 
@@ -3105,26 +2907,28 @@ function mig_imagesettings_init(name, path, options) {
             type: "GET",
             dataType: "json",
             cache: false,
-            type: "GET",
-            dataType: "json",
-            cache: false,
-        }).success(function (jsonRes) {
-            console.debug('imagesettings edit jsonRes.length: ' + jsonRes.length);
-            var i;
-            var errors = $(this).renderError(jsonRes);
-            var warnings = $(this).renderWarning(jsonRes);
-            var msg = '';
+            success: function (jsonRes) {
+                console.debug('imagesettings edit jsonRes.length: ' + jsonRes.length);
+                var i;
+                var errors = $(this).renderError(jsonRes);
+                var warnings = $(this).renderWarning(jsonRes);
+                var msg = '';
 
-            if (errors.length > 0) {
-                msg = errors;
-                console.debug(msg);
-            } else if (warnings.length > 0) {
-                msg = warnings;
-                console.debug(msg);
-            } else {
-                msg = 'Image Settings Cleared';
+                if (errors.length > 0) {
+                    msg = errors;
+                    console.debug(msg);
+                } else if (warnings.length > 0) {
+                    msg = warnings;
+                    console.debug(msg);
+                } else {
+                    msg = 'Image Settings Cleared';
+                }
+                show_list(msg);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error("image settings -> remove_all error: " + textStatus);
+                console.debug("image settings -> remove_all error: " + errorThrown);
             }
-            show_list(msg);
         });
     }
 
@@ -3144,44 +2948,56 @@ function mig_imagesettings_init(name, path, options) {
             cache: false,
             dataType: "json",
             cache: false,
-        }).success(function (jsonRes) {
-            var i;
-            var errors = $(this).renderError(jsonRes);
-            var warnings = $(this).renderWarning(jsonRes);
-            var msg = '';
+            success: function (jsonRes) {
+                var i;
+                var errors = $(this).renderError(jsonRes);
+                var warnings = $(this).renderWarning(jsonRes);
+                var msg = '';
 
-            if (errors.length > 0) {
-                msg = errors;
-                console.debug(msg);
-            } else if (warnings.length > 0) {
-                msg = warnings;
-                console.debug(msg);
-            } else {
-                msg = "Image setting for: '" + extension + "'' removed";
+                if (errors.length > 0) {
+                    msg = errors;
+                    console.debug(msg);
+                } else if (warnings.length > 0) {
+                    msg = warnings;
+                    console.debug(msg);
+                } else {
+                    msg = "Image setting for: '" + extension + "'' removed";
+                }
+                show_list(msg);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error("image settings -> remove error: " + textStatus);
+                console.debug("image settings -> remove error: " + errorThrown);
             }
-            show_list(msg);
         });
+    }
+
+    function hide_edit_tabs() {
+        return;
+    }
+
+    function show_edit_tabs() {
+        return;
     }
 
     // Prepare edit image setting data
 
     function edit(extension) {
-        var edit_form_values = {
-            extension: '',
-            settings_status: 'Pending',
-            settings_recursive: 'False',
-            image_type: 'raw',
-            data_type: 'float32',
-            offset: 0,
-            x_dimension: 0,
-            y_dimension: 0,
-            preview_cutoff_min: 0.0,
-            preview_cutoff_max: 0.0,
-        };
         if (extension === null) {
-            do_edit(edit_form_values)
-        }
-        else {
+            edit_form_values['extension'] = '';
+            edit_form_values['settings_status'] = 'Pending';
+            edit_form_values['settings_recursive'] = 'False';
+            edit_form_values['image_type'] = 'raw';
+            edit_form_values['data_type'] = 'float32';
+            edit_form_values['volume_slice_filepattern'] = ''
+            edit_form_values['offset'] = 0
+            edit_form_values['x_dimension'] = 0
+            edit_form_values['y_dimension'] = 0
+            edit_form_values['z_dimension'] = 0
+            edit_form_values['preview_cutoff_min'] = 0
+            edit_form_values['preview_cutoff_max'] = 0
+            do_edit()
+        } else {
             $.ajax({
                 url: 'filemetaio.py',
                 data: { extension: extension,
@@ -3193,54 +3009,63 @@ function mig_imagesettings_init(name, path, options) {
                 type: "GET",
                 dataType: "json",
                 cache: false,
-            }).success(function (jsonRes) {
-                console.debug('imagesettings edit jsonRes.length: ' + jsonRes.length);
-                var i;
-                var errors = $(this).renderError(jsonRes);
-                var warnings = $(this).renderWarning(jsonRes);
+                success:function (jsonRes) {
+                    console.debug('imagesettings edit jsonRes.length: ' + jsonRes.length);
+                    var i;
+                    var errors = $(this).renderError(jsonRes);
+                    var warnings = $(this).renderWarning(jsonRes);
 
-                if (errors.length > 0) {
-                    $("#imagesettings_output").html(errors);
-                    console.debug(errors);
-                } else if (warnings.length > 0) {
-                    $("#imagesettings_output").html(warnings);
-                    console.debug(warnings);
-                }
-
-                for (i = 0; i < jsonRes.length; i++) {
-                    if (jsonRes[i].object_type == 'image_setting') {
-                        edit_form_values['extension'] = jsonRes[i]['extension'];
-                        edit_form_values['settings_recursive'] = jsonRes[i]['settings_recursive'];
-                        edit_form_values['image_type'] = jsonRes[i]['image_type'];
-                        edit_form_values['data_type'] = jsonRes[i]['data_type'];
-                        edit_form_values['offset'] = jsonRes[i]['offset'];
-                        edit_form_values['x_dimension'] = jsonRes[i]['x_dimension'];
-                        edit_form_values['y_dimension'] = jsonRes[i]['y_dimension'];
-                        edit_form_values['preview_cutoff_min'] = jsonRes[i]['preview_cutoff_min'];
-                        edit_form_values['preview_cutoff_max'] = jsonRes[i]['preview_cutoff_max'];
+                    if (errors.length > 0) {
+                        $("#imagesettings_output").html(errors);
+                        console.debug(errors);
+                    } else if (warnings.length > 0) {
+                        $("#imagesettings_output").html(warnings);
+                        console.debug(warnings);
                     }
+
+                    for (i = 0; i < jsonRes.length; i++) {
+                        if (jsonRes[i].object_type == 'image_setting') {
+                            edit_form_values['extension'] = jsonRes[i]['extension'];
+                            edit_form_values['settings_recursive'] = jsonRes[i]['settings_recursive'];
+                            edit_form_values['image_type'] = jsonRes[i]['image_type'];
+                            edit_form_values['data_type'] = jsonRes[i]['data_type'];
+                            edit_form_values['volume_slice_filepattern']  = jsonRes[i]['volume_slice_filepattern'];
+                            edit_form_values['offset'] = jsonRes[i]['offset'];
+                            edit_form_values['x_dimension'] = jsonRes[i]['x_dimension'];
+                            edit_form_values['y_dimension'] = jsonRes[i]['y_dimension'];
+                            edit_form_values['z_dimension'] = jsonRes[i]['z_dimension'];
+                            edit_form_values['preview_cutoff_min'] = jsonRes[i]['preview_cutoff_min'];
+                            edit_form_values['preview_cutoff_max'] = jsonRes[i]['preview_cutoff_max'];
+                        }
+                    }
+                    do_edit();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error("image settings edit-> remove error: " + textStatus);
+                    console.debug("image settings edit-> remove error: " + errorThrown);
                 }
-                do_edit(edit_form_values);
             });
         }
     }
 
     // Handle edit image setting
 
-    function do_edit(edit_form_values) {
+    function do_edit() {
         $("#imagesettings_output").html('');
 
         $("#imagesettings_list").hide(({duration: options.expandSpeed,
                                         easing: options.expandEasing }));
-        $("#imagesettings_edit").hide(({duration: options.expandSpeed,
-                                        easing: options.expandEasing }));
+        $("#imagesettings_edit_file_tab").hide(({duration: options.expandSpeed, 
+                                                 easing: options.expandEasing }));
+        $("#imagesettings_edit_volume_tab").hide({duration: options.expandSpeed, 
+                                             easing: options.expandEasing });
 
         // Fill edit html form
 
         $("#imagesettings_form input[name='path']").val(path);
         $("#imagesettings_form input[name='flags']").val('i');
         $("#imagesettings_form input[name='action']").val('put_dir');
-        $("#imagesettings_form input[name='settings_status']").val(edit_form_values['settings_status']);
+        $("#imagesettings_form input[name='settings_status']").val(edit_form_values['image_settings_status']);
         $("#imagesettings_form input[name='extension']").val(edit_form_values['extension']);
         if (edit_form_values['extension'] !== '') {
             $("#imagesettings_form input[name='extension']").attr("readonly", true);
@@ -3258,16 +3083,24 @@ function mig_imagesettings_init(name, path, options) {
         if (edit_form_values['data_type'] !== 'None') {
             $("#imagesettings_form select[name='data_type']").val(edit_form_values['data_type']).prop('selected', true);
         }
+        $("#imagesettings_form input[name='volume_slice_filepattern']").val(edit_form_values['volume_slice_filepattern']);
         $("#imagesettings_form input[name='offset']").val(edit_form_values['offset']);
         $("#imagesettings_form input[name='x_dimension']").val(edit_form_values['x_dimension']);
         $("#imagesettings_form input[name='y_dimension']").val(edit_form_values['y_dimension']);
+        $("#imagesettings_form input[name='z_dimension']").val(edit_form_values['z_dimension']);
         $("#imagesettings_form input[name='preview_cutoff_min']").val(edit_form_values['preview_cutoff_min']);
         $("#imagesettings_form input[name='preview_cutoff_max']").val(edit_form_values['preview_cutoff_max']);
 
-        // Show edit html form
+        // Show edit file html form and tab
 
-        $("#imagesettings_edit").show({duration: options.expandSpeed,
+        $("#imagesettings_edit_file_tab").show({duration: options.expandSpeed, 
                                        easing: options.expandEasing});
+
+        $("#imagesettings_edit_tabs").show({duration: options.expandSpeed, 
+                                             easing: options.expandEasing });
+
+
+        $('#imagesettings_edit_tabs').tabs({ active: 0 });
 
         // Set dialog buttons
 

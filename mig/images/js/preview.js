@@ -1,10 +1,9 @@
 /*
-
 #
 # --- BEGIN_HEADER ---
 #
 # preview - javascript based image preview library
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -24,58 +23,299 @@
 #
 # -- END_HEADER ---
 #
-
 */
+    
+Preview = function (layout, options, debug) {
+	//console.debug('Preview: constructor: ' + selfname);
+    console.debug('Preview: constructor');
+    var _this = this;
+    _this.settings = {
+        layout: layout,
+        options: options,
+        debug: debug,
+        paraview: false,
+        volume: false,
+        caman: false,
+        visible: false,
+        height: 0,
+        zoom: 0,
+        min_zoom: 0,
+        max_zoom: 2, 
+        last_zoom: 0,
+    };
+
+    var callback = function() {
+        var max_decimals = _this.get_format_decimals();
+        _this.caman = new PreviewCaman(max_decimals, debug);
+        _this.paraview = new PreviewParaview(debug);    
+    }
+    _this.init_html(callback);
+}
 
 /*
-
-This module is based on the CamanJS module: http://camanjs.com/
-
-# Copyright notice follows here:
-
-Copyright (c) 2010, Ryan LeFevre
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, 
-are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright notice, 
-      this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice, 
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-    * Neither the name of Ryan LeFevre nor the names of its contributors may be 
-      used to endorse or promote products derived from this software without
-      specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+// For Paraview DEBUG
+setTimeout(function() { 
+    console.debug('starting paraview');
+    toggle_paraview();
+}, 1000); 
+    // End: For Paraview DEBUG
 */
 
-Preview = function (selfname, debug) {
-	console.debug('Preview: constructor');
-    this.selfname = selfname;
-    this.image = this.init_image();
-    this.histogram = this.init_histogram();
-    this.init_min_max_slider(); 
-    this.settings = {debug: debug,
-                     visible: false,
-                     height: 0,
-                     zoom: 0,
-                     min_zoom: 0,
-                     max_zoom: 2, 
-                     last_zoom: 0
-                    };
+Preview.prototype.debug_js_object = function (js_object) {
+    console.debug('debug_js_object: ');
+    console.debug(JSON.stringify(js_object).split(",").join("'\n").split(":").join(": '").split("}").join("'}"));
+    console.debug('end debug_js_object: ');
+}
 
+Preview.prototype.init_html = function(callback) {
+    var html_out = '<input type="hidden" value="" name="fm_preview_base_path" />';
+    html_out += '<input type="hidden" value="" name="fm_preview_path" />';
+    html_out += '<input type="hidden" value="" name="fm_preview_filename" />';
+    html_out += '<input type="hidden" value="" name="fm_preview_extension" />';
+    html_out += '<div id="fm_preview_menubar" class="fm_preview_menubar">';
+    html_out += '   <div id="fm_preview_menubar_refresh" class="fm_preview_menubar_entry" title="Refresh Preview">';
+    html_out += '       <img src="/images/icons/arrow_refresh.png">';
+    html_out += '   </div>';
+    html_out += '   <div id="fm_preview_menubar_zoom_in" class="fm_preview_menubar_entry" title="Zoom In">';
+    html_out += '       <img src="/images/icons/add.png">';
+    html_out += '   </div>';
+    html_out += '   <div id="fm_preview_menubar_zoom_out" class="fm_preview_menubar_entry" title="Zoom Out">';
+    html_out += '       <img src="/images/icons/delete.png">';
+    html_out += '   </div>';
+    html_out += '   <div id="fm_preview_menubar_paraview" class="fm_preview_menubar_entry" title="Toggle Volume">';
+    html_out += '       <img src="/images/icons/paraview.png">';
+    html_out += '   </div>';
+    html_out += '</div>';
+    html_out += '<div id="fm_preview_caman" class="fm_preview_caman">';
+    html_out += '   <div id="fm_preview_left_tile" class="fm_preview_left_tile">';
+    html_out += '       <div id="fm_preview_left_tile_histogram">';
+    html_out += '           <canvas id="fm_preview_histogram_image"></canvas>';
+    html_out += '       </div>';
+    html_out += '       <div id="fm_preview_left_tile_histogram_actions">';
+    html_out += '           <div id="fm_preview_histogram_min_max_slider"></div>   ';
+    html_out += '           <br>';
+    html_out += '           <button id="preview_histogram_reset_button" title="Reset sliders">Reset</button>';
+    html_out += '           <button id="preview_histogram_set_cutoff_button" title="Set preview cutoff based on sliders">Set Cutoff</button>';
+    html_out += '           <!-- <button id="preview_histogram_auto_button">Auto</button> -->';
+    html_out += '       </div>';
+    html_out += '       <div id="fm_preview_left_output">';
+    html_out += '           <!-- this is a placeholder for contents: do not remove! -->';
+    html_out += '       </div>';
+    html_out += '   </div>';
+    html_out += '   <div id="fm_preview_center_tile" class="fm_preview_center_tile">';
+    html_out += '       <canvas id="fm_preview_image"></canvas>';
+    html_out += '   </div>';
+    html_out += '   <div id="fm_preview_right_tile" class="fm_preview_right_tile">';
+    html_out += '       <div id="fm_preview_right_output">';
+    html_out += '           <!-- this is a placeholder for contents: do not remove! -->';
+    html_out += '       </div>';
+    html_out += '   </div>';
+    html_out += '</div>';
+    html_out += '<div id="fm_preview_paraview" class="fm_preview_paraview">';
+    html_out += '   <!-- this is a placeholder for contents: do not remove! -->';
+    html_out += '</div>';
+
+    if(typeof callback === "function"){
+        $("#fm_previews").html(html_out).promise().done(callback);
+    } else {
+        $("#fm_previews").html(html_out);
+    }
+}
+
+Preview.prototype.init_tiles_HTML = function(image_meta) {
+    var right_html_out = '';
+    var left_html_out = '';
+    var image_filepath;
+    var image_path;
+
+    $(".fm_previews input[name=fm_preview_base_path]").val(image_meta.base_path);
+    $(".fm_previews input[name=fm_preview_path]").val(image_meta.path);
+    $(".fm_previews input[name=fm_preview_filename]").val(image_meta.name);
+    $(".fm_previews input[name=fm_preview_extension]").val(image_meta.extension);
+
+    preview_image_url = image_meta.preview_image_url;
+
+    if (image_meta.path === '') {
+        image_path = image_meta.base_path;
+    }
+    else {
+        image_path = image_meta.base_path + image_meta.path +  "/";
+    }
+    image_filepath = image_path + image_meta.name;
+
+    right_html_out  += '<p>Image: ' + image_filepath + '</p>'
+        + '<p>Image Type: ' + image_meta.image_type + '</p>'
+        + '<p>Data Type: ' + image_meta.data_type + '</p>'
+        + '<p>Offset: ' + image_meta.offset + '</p>'
+        + '<p>X dimension: ' + image_meta.x_dimension + '</p>'
+        + '<p>Y dimension: ' + image_meta.y_dimension + '</p>'
+        + '<p>Min Value: ' + Number(image_meta.min_value).toExponential(this.get_format_decimals()) + '</p>'
+        + '<p>Max Value: ' + Number(image_meta.max_value).toExponential(this.get_format_decimals()) + '</p>'
+        + '<p>Mean Value: '  + Number(image_meta.mean_value).toExponential(this.get_format_decimals()) + '</p>'
+        + '<p>Median Value: ' + Number(image_meta.median_value).toExponential(this.get_format_decimals()) + '</p>';
+
+    // TODO: Move input fields HTML to fileman.py ?
+
+    left_html_out += '<input type="hidden" value="' + image_meta.preview_cutoff_min + '" name="cutoff_min_value" />' 
+        + '<input type="hidden" value="' + image_meta.preview_cutoff_max + '" name="cutoff_max_value" />' 
+        + '<input type="hidden" value="' + image_meta.preview_cutoff_min + '" name="current_min_value" />' 
+        + '<input type="hidden" value="' + image_meta.preview_cutoff_max + '" name="current_max_value" />' 
+        + '<input type="hidden" value="' + image_meta.preview_image_scale + '" name="scale_value" />' 
+        + '<p><span id="fm_preview_left_output_min_value_show"></span></p>' 
+        + '<p><span id="fm_preview_left_output_max_value_show"></span></p>' 
+        + '<p><span id="fm_preview_left_output_preview_image_scale_value_show"></span></p>'
+
+    $("#fm_preview_right_output").html(right_html_out);
+    $("#fm_preview_left_output").html(left_html_out);
+}
+
+Preview.prototype.update_fm_layout = function(layout) {    
+    var fileManagerInnerHeight = layout.fm.innerHeight;
+    var fileFolderInnerHeight = layout.fm.fileFolderInnerHeight;
+    var previewInnerHeight = 0;
+    var previewInnerHeightFrac = 0.50;
+    var centerTileWidthFrac = 0.40;
+    var previewWidth = $("#fm_filemanager .fm_previews").outerWidth() 
+    var previewInnerWidth = $("#fm_filemanager .fm_previews").width() 
+        - $("#fm_filemanager .fm_preview_menubar").outerWidth();
+    var previewCenterTileWidth = Math.floor(previewInnerWidth * centerTileWidthFrac);
+    var previewLeftTileWidth = Math.floor((previewInnerWidth - previewCenterTileWidth)/2);
+    var previewRightTileWidth = previewLeftTileWidth;
+
+   
+    if (this.settings.zoom == 0) {
+        previewInnerHeight = 0;
+        fileFolderInnerHeight = fileManagerInnerHeight;    
+    }
+    else if (this.settings.zoom == 1) {
+        previewInnerHeight = fileFolderInnerHeight * previewInnerHeightFrac;
+
+        fileFolderInnerHeight = fileManagerInnerHeight - previewInnerHeight;
+    }
+    else if (this.settings.zoom > 1) {
+        previewInnerHeight = fileManagerInnerHeight;
+        fileFolderInnerHeight = 0;
+    }
+
+    layout.fm.fileFolderInnerHeight = fileFolderInnerHeight;
+    layout.fm.preview = {
+        width: previewWidth,
+        innerHeight: previewInnerHeight,
+        innerWidth: previewInnerWidth,
+        leftTileWidth: previewLeftTileWidth,
+        centerTileWidth: previewCenterTileWidth,
+        rightTileWidth: previewRightTileWidth
+    };
+    return layout;
+}
+       
+Preview.prototype.update_html_layout = function(callback) {
+    var layout = (typeof this.settings.layout === "function") ?
+        _this.settings.layout() : 
+        _this.settings.layout;
+    $("#fm_filemanager .fm_previews").css("height", layout.fm.preview.innerHeight + "px");
+    $("#fm_filemanager .fm_preview_caman").css("width", layout.fm.preview.innerWidth + "px");
+    $("#fm_filemanager .fm_preview_left_tile").css("width", layout.fm.preview.leftTileWidth + "px");
+    $("#fm_filemanager .fm_preview_center_tile").css("width", layout.fm.preview.centerTileWidth + "px");
+    $("#fm_filemanager .fm_preview_right_tile").css("width", layout.fm.preview.rightTileWidth + "px");
+    $("#fm_filemanager .fm_preview_paraview").css("width", layout.fm.preview.innerWidth + "px");
+    $("#fm_filemanager .pv-viewport").css("width", layout.fm.preview.innerWidth + "px");
+}
+
+Preview.prototype.init_image_settings = function(image_settings, image_meta, volume_meta) {
+    
+    // Check if preview files are ready
+
+    if (image_settings.image_settings_status.toLowerCase() == 'ready' ) {
+        $("#preview_histogram_set_cutoff_button").attr('disabled', false);
+    } else {
+        $("#preview_histogram_set_cutoff_button").attr('disabled', true);
+
+    }
+
+
+    // Check if preview volumes are ready
+    
+    if (volume_meta != null && image_settings.volume_settings_status.toLowerCase() == 'ready') {
+        this.paraview.set_volume_xdmf(volume_meta.preview_xdmf_filepath);
+        $("#fm_preview_menubar_paraview").css('opacity', 1.0);
+        this.settings.volume = true;
+    } else {
+        $("#fm_preview_menubar_paraview").css('opacity', 0.5);
+        this.settings.volume = false;
+        console.debug('volume_meta is null or _NOT_ ready');
+    }
+}
+
+Preview.prototype.bind_buttons = function() {
+    var _this = this;
+    $("#fm_preview_menubar_zoom_out").on('click',
+        function(event) {
+            console.debug('fm_preview_menubar_zoom_out');
+            _this.zoom_out();
+        });
+
+    $("#fm_preview_menubar_zoom_in").on('click',
+        function(event) {
+            console.debug('fm_preview_menubar_zoom_in');
+            _this.zoom_in();
+        });
+
+    $("#fm_preview_menubar_refresh").on('click',
+        function(event) {
+            console.debug('fm_preview_menubar_refresh');
+            _this.refresh();
+        });
+
+    $("#fm_preview_menubar_paraview").on('click',
+        function(event) {
+            console.debug('fm_preview_menubar_paraview');
+            _this.toggle_paraview();
+        });
+
+    $("#preview_histogram_reset_button").on('click',
+        function(event) {
+            _this.caman.reset();
+        });
+
+    $("#preview_histogram_set_cutoff_button").on('click',
+        function(event) {
+
+            // Disable button
+
+            $("#preview_histogram_set_cutoff_button").attr('disabled', true);
+
+            var path = $(".fm_previews input[name=fm_preview_base_path]").val();
+            var extension = $(".fm_previews input[name=fm_preview_extension]").val();
+            var min_value = $("#fm_preview_left_output input[name='current_min_value']").val();
+            var max_value = $("#fm_preview_left_output input[name='current_max_value']").val();
+
+            var error_callback = function(errors) {
+                $("#fm_preview_left_output").html(errors);
+                console.error(errors);
+            }
+        
+            var warning_callback = function(warnings) {
+                $("#fm_preview_left_output").html(warnings);
+                console.warn(warnings);
+            }
+
+            var ok_callback = function(image_setting, image_meta, volume_meta) {
+                console.debug('preview_histogram_set_cutoff_button OK');
+            }
+            _this.update_image_dir(path,
+                                   extension,
+                                   min_value,
+                                   max_value,
+                                   ok_callback, 
+                                   error_callback, 
+                                   warning_callback);
+        }
+    );
+}                                           
+
+Preview.prototype.get_preview_histogram_data = function(image_meta) {
+    return new Uint32Array(image_meta.preview_histogram);
 }
 
 Preview.prototype.get_format_decimals = function() {
@@ -84,431 +324,365 @@ Preview.prototype.get_format_decimals = function() {
     return format_decimals;
 }
 
-Preview.prototype.init_preview_struct = function() {
+Preview.prototype.open = function(path) {
+    // Disable content depending buttons by default
+    var _this = this;
 
-    return {div_id:         null, 
-            canvas_id:      null,
-            canvas_width:   0,
-            canvas_height:  0,
-            image_width:    0,
-            image_height:   0,
-            image_offset_x: 0,
-            image_offset_y: 0, 
-            image_url:      null,
-            image_obj:      new Image()
-           };
-}
-
-Preview.prototype.init_image = function() {
-    var result = this.init_preview_struct();
-    result.div_id = "#fm_preview_center_tile";
-    result.canvas_id = "#fm_preview_image";
-
-    return result;
-}
-
-Preview.prototype.init_histogram = function() {
-    var result = this.init_preview_struct();
-    result.div_id = "#fm_preview_left_tile_histogram";
-    result.canvas_id = "#fm_preview_histogram_image";
-    return result;
-}
-
-Preview.prototype.clear_canvas = function(canvas) {
-    var context = canvas.getContext('2d');
-
-    // Clear rect and ensure white background
-
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "#FFFFFF";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-}
-
-Preview.prototype.set_image_url = function(image_url) {
-    this.image.image_url = image_url;
-}
-
-Preview.prototype.set_histogram_data = function(data) {
-    this.histogram.data = data;
-}
-
-
-Preview.prototype.load_image = function(image_url) {
-    this.image_dim_update();
-    if (image_url !== undefined) {
-        this.image.image_url = image_url;
+    var error_callback = function(errors) {
+        $("#fm_preview_right_output").html(errors);
+        $("#fm_preview_left_output").html('');
+        console.error(errors);
     }
-    this.image_data_load(this.image);
-}
-
-Preview.prototype.dim_update = function() {
-    this.image_dim_update();
-    this.histogram_dim_update();
-}
-
-Preview.prototype.image_dim_update = function() {
-    var image_border = 1;
-    var canvas = $(this.image.canvas_id)[0];
-    var context = canvas.getContext('2d');
-    var width = $(this.image.div_id).width();
-    var height = $(this.image.div_id).height();
-    var image_size = width < height ? width : height < width ? height : width;
-
-    context.canvas.width = width;
-    context.canvas.height = height;
-
-    image_size -= Math.floor(image_size * (image_border/100.0));
-
-    this.image.canvas_width = width;
-    this.image.canvas_height = height;
-    this.image.image_width = image_size;
-    this.image.image_height = image_size;
-    this.image.image_offset_x = Math.floor((width - image_size)/2);
-    this.image.image_offset_y = Math.floor((height - image_size)/2);
-
-    console.debug("Preview load image canvas id: " + this.image.div_id);
-    console.debug("Preview load image canvas: width: " + width);
-    console.debug("Preview load image canvas: height: " + height);
-    console.debug("Preview load image_image_size: " + image_size);
-    console.debug("Preview load image image_width: " + this.image.image_width);
-    console.debug("Preview load image image_height: " + this.image.image_height);
-    console.debug("Preview load image x_offset: " + this.image.image_offset_x);
-    console.debug("Preview load image y_offset: " + this.image.image_offset_y);
-}
-
-Preview.prototype.histogram_dim_update = function() {
-    var canvas = $(this.histogram.canvas_id)[0];
-    var context = canvas.getContext('2d');
-    var width = $(this.histogram.div_id).width();
-    var height = width/3;
-
-
-    console.debug("Preview: update_histogram: width: " + width);
-    console.debug("Preview: update_histogram: height: " + height);
-
-    context.canvas.width = width;
-    context.canvas.height = height;
-
-    $(this.histogram.div_id).css("height", height);
-    this.histogram.image_width = context.canvas.width;
-    this.histogram.image_height = context.canvas.height;
-    this.histogram.image_offset_x = 0;
-    this.histogram.image_offset_y = 0;
-
-    console.debug("Preview load histogram canvas id: " + this.histogram.canvas_id);
-    console.debug("Preview load histogram canvas: width: " + width);
-    console.debug("Preview load histogram canvas: height: " + height);
-    console.debug("Preview load histogram image_width: " + this.histogram.image_width);
-    console.debug("Preview load histogram image_height: " + this.histogram.image_height);
-    console.debug("Preview load histogram x_offset: " + this.histogram.image_offset_x);
-    console.debug("Preview load histogram y_offset: " + this.histogram.image_offset_y);
-}
-
-Preview.prototype.load = function(image_url) {
-    // If we allready loaded image, then just refresh
-    // NOTE: Safari do not trigger onLoad if image_url 
-    // is unchanged.
-    if (this.image.image_url === image_url) {
-        this.refresh();
+    var warning_callback = function(warnings) {
+        $("#fm_preview_right_output").html(warnings);
+        $("#fm_preview_left_output").html('');
+        console.warn(warnings);
     }
-    else {
-        this.load_image(image_url);
-        this.draw_histogram();
+    var ok_callback = function(image_setting, image_meta, volume_meta) {
+        var preview_histogram = _this.get_preview_histogram_data(image_meta);
+        _this.init_tiles_HTML(image_meta);
+        _this.init_image_settings(image_setting, image_meta, volume_meta);
+        _this.caman.set_histogram_data(preview_histogram);
+        _this.settings.zoom = 1;
+        _this.settings.caman = true;
+        _this.show(function() {
+            _this.caman.load(image_meta.preview_image_url);
+        });
     }
+    _this.get_image_file(path, ok_callback, error_callback, warning_callback);
 }
 
+Preview.prototype.close = function() {
+    this.paraview.close();
+}
 
 Preview.prototype.refresh = function(callback) {
-    if (this.settings.zoom > 0) {
-        this.draw_histogram();
-        this.image_data_update(this.image, callback);    
+    var _this = this;
+    console.debug('refresh callback: ' + callback);
+
+    var refresh_callback = function() {
+        console.debug('refresh_callback: zoom: ' + _this.settings.zoom + ', caman: ' + _this.settings.caman + ', paraview: ' + _this.settings.paraview);
+        _this.caman.refresh(_this.settings.caman, callback);
+        _this.paraview.refresh(_this.settings.paraview, callback);
+    }
+    _this.show(refresh_callback);
+}
+
+Preview.prototype.zoom_out = function(callback) {
+    console.debug('zoom_out: paraview: ' + this.settings.paraview);
+    console.debug('zoom_out: caman: ' + this.settings.caman);
+    console.debug('zoom_out: zoom: ' + this.settings.zoom);
+    if (this.settings.paraview  == true) {
+        this.toggle_paraview(callback);
+    }
+    else if (this.settings.caman == true) {
+        if (this.settings.zoom > this.settings.min_zoom) {
+            this.settings.last_zoom = this.settings.zoom;
+            this.settings.zoom -= 1;
+            if (this.settings.zoom == this.settings.min_zoom) {
+                this.settings.caman = false;    
+            } 
+            console.debug('zoom_out check: paraview: ' + this.settings.paraview);
+            console.debug('zoom_out check: caman: ' + this.settings.caman);
+            console.debug('zoom_out check: zoom: ' + this.settings.zoom);
+            this.refresh(callback);
+        }
     }
 }
 
-Preview.prototype.image_data_update = function(preview_struct, callback) {
+Preview.prototype.zoom_in = function(callback) {
+    if (this.settings.paraview == false && 
+        this.settings.zoom < this.settings.max_zoom) {
+            this.settings.caman = true;
+            this.settings.last_zoom = this.settings.zoom;
+            this.settings.zoom += 1;
+            this.refresh(callback);
+    }
+}
+
+Preview.prototype.set_visibility_left_tile = function(visibility) {
+    $("#fm_preview_left_tile").css("visibility", visibility);
+    $("#fm_preview_left_tile_histogram").css("visibility", visibility);
+    $("#fm_preview_left_tile_histogram_actions").css("visibility", visibility);
+    $("#fm_preview_left_output").css("visibility", visibility);
+}
+
+Preview.prototype.set_visibility_center_tile = function(visibility) {
+    $("#fm_preview_center_tile").css("visibility", visibility);
+}
+
+Preview.prototype.set_visibility_right_tile = function(visibility) {
+    $("#fm_preview_right_tile").css("visibility", visibility);
+    $("#fm_preview_right_output").css("visibility", visibility);
+}
+
+Preview.prototype.set_visibility_caman = function(visibility) {
+    $("#fm_preview_caman").css('visibility', visibility);
+    this.set_visibility_left_tile(visibility);
+    this.set_visibility_center_tile(visibility);
+    this.set_visibility_right_tile(visibility);
+}  
+Preview.prototype.set_visibility_paraview = function(visibility) {
+    $("#fm_preview_paraview").css('visibility', visibility);
+}  
+
+Preview.prototype.set_visibility = function(visibility) {
+    $("#fm_preview_menubar").css('visibility', visibility);
+    var caman_visibility;
+    var paraview_visibility;
+
+    if (this.settings.paraview == false) {
+        $("#fm_preview_caman").css('height', '100%');
+        $("#fm_preview_paraview").css('height', '0%');
+        caman_visibility = visibility;
+        paraview_visibility = 'hidden';
+    }
+    else {
+        caman_visibility = 'hidden';
+        $("#fm_preview_caman").css('height', '0%');
+        $("#fm_preview_paraview").css('height', '100%');
+        paraview_visibility = visibility;
+    }
+
+    this.set_visibility_caman(caman_visibility);
+    this.set_visibility_paraview(paraview_visibility);
+}   
+
+Preview.prototype.show = function(callback) {
     var _this = this;
-    var canvas = $(preview_struct.canvas_id)[0];
-    var context = canvas.getContext('2d');
+    var layout = (typeof this.settings.layout === "function") ?
+        _this.settings.layout() : 
+        _this.settings.layout;
+    //console.debug('layout: ' + Object.keys(layout));
+    //_this.debug_js_object(layout);
+    /*for (var key in Object.keys(layout)) {
+        console.debug('layout -> ' + key + ' : ' + layout[key]);
+    }
+    */
+    console.debug('preview show');
     
-    var min_value = $(this.min_slider_value_id).text();
-    var max_value = $(this.max_slider_value_id).text();
 
-    // Update image dimensions
+    var visibility = (_this.settings.zoom == 0) ? 
+        'hidden' :
+        'visible';
+    var animate_speed = (_this.settings.zoom < _this.settings.last_zoom) ?
+        _this.settings.options.collapseSpeed :
+        _this.settings.options.expandSpeed;
+    var animate_easing = (_this.settings.zoom < _this.settings.last_zoom) ?
+        _this.settings.options.collapseEasing :
+        _this.settings.options.expandEasing;
+    $("#fm_filemanager .fm_folders").animate(
+        {height: layout.fm.fileFolderInnerHeight + 'px'},
+        {duration: animate_speed,
+        easing: animate_easing});
+    $("#fm_filemanager .fm_files").animate(
+        {height: layout.fm.fileFolderInnerHeight + 'px'},
+        {duration: animate_speed,
+        easing: animate_easing});
+    $("#fm_filemanager .fm_preview_caman").css("width", layout.fm.preview.innerWidth + "px");
+    $("#fm_filemanager .fm_preview_left_tile").css("width", layout.fm.preview.leftTileWidth + "px");
+    $("#fm_filemanager .fm_preview_center_tile").css("width", layout.fm.preview.centerTileWidth + "px");
+    $("#fm_filemanager .fm_preview_right_tile").css("width", layout.fm.preview.rightTileWidth + "px");
+    $("#fm_filemanager .fm_preview_paraview").css("width", layout.fm.preview.innerWidth + "px");
+    $("#fm_filemanager .fm_previews").animate(
+        {height: layout.fm.preview.innerHeight + 'px'},
+        {duration: animate_speed,
+        easing: animate_easing,
+        complete: function() {  
+            _this.set_visibility(visibility);
+            if (typeof callback === "function") {
+                console.debug('show callback called: ' + callback);
+                callback();
+            }
+        }});
+}
 
-    this.image_dim_update();
+Preview.prototype.toggle_paraview = function(callback) {
+    
+    console.debug('toggle_paraview');
+    if (this.settings.volume == true) {
+        if (this.settings.paraview == true) {
+            this.settings.paraview = false;
+            this.settings.caman = true;
+            this.settings.zoom = this.settings.last_zoom;
+            //this.paraview.close();
+        }
+        else {
+            this.settings.paraview = true;
+            this.settings.caman = false;
+            this.settings.last_zoom = this.settings.zoom;
+            this.settings.zoom = this.settings.max_zoom;
+            //callback = $.proxy(this.paraview.open, this.paraview);
+        }
+        console.debug('toggle_paraview zoom: ' + this.settings.zoom);
+        this.refresh(callback);    
+    }    
+}
 
-    // Caman function calls are put in a queue and
-    // when .render() is called
+Preview.prototype.get_image_file = function(path, ok_callback, error_callback, warning_callback) {
+    console.debug('get_image_file -> path: ' + path);
 
-    Caman(preview_struct.canvas_id, function() {
+    $.ajax({
+        url: 'filemetaio.py',
+        data: { path: path,
+                output_format: 'json',
+                action: 'get_file',
+                flags: 'i',
+              },
+        type: "GET",
+        dataType: "json",
+        cache: false,
+        success: function(jsonRes, textStatus) {
+            var i;
+            var errors = $(this).renderError(jsonRes);
+            var warnings = $(this).renderWarning(jsonRes);
+            var image_settings = null;
+            var image_meta = null;
+            var volume_meta = null;
 
-        // Clear rect and ensure white background
-
-        _this.clear_canvas(canvas);
-      
-        // Draw image
-
-        context.drawImage(preview_struct.image_obj, 
-                          preview_struct.image_offset_x,
-                          preview_struct.image_offset_y,
-                          preview_struct.image_width,
-                          preview_struct.image_height);                            
-
-        // Renew Caman canvas from drawn context
-
-        this.replaceCanvas(canvas);
-
-        // Issue a copy of loaded pixel data
-        
-        this.idmc_reset_original_pixeldata();
-        
-        // Adjust min/max values
-
-        this.idmc_set_min_max_pixel_values(min_value, max_value);
-
-        // Render image 
-
-        this.render();
-
-        // Callback 
-
-        if (typeof callback === "function") {
-            callback();
+            for (i = 0; i < jsonRes.length; i++) {
+                if (jsonRes[i].object_type == 'image_setting') {
+                    image_setting = jsonRes[i];
+                } else if (jsonRes[i].object_type == 'image_meta') {
+                    image_meta = jsonRes[i];
+                } else if (jsonRes[i].object_type == 'volume_meta') {
+                    volume_meta = jsonRes[i];
+                }
+            }
+            if (errors.length > 0) {
+                if (typeof error_callback === "function") {
+                    console.error(errors);
+                } else {
+                    error_callback(errors);
+                }
+                
+            } else if (warnings.length > 0) {
+                if (typeof warning_callback === "function") {
+                    console.warn(warnings);
+                } else {
+                    warning_callback(warnings);
+                }                    
+            } else {
+                if (typeof ok_callback === "function") {
+                    ok_callback(image_setting, image_meta, volume_meta);
+                }
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("get_image_file error: " + errorThrown);
         }
     });
 }
 
-Preview.prototype.image_data_load = function(preview_struct) {
-    var preview_obj = this;
-    var image_obj = preview_struct.image_obj;
-    var image_url = preview_struct.image_url;
 
-    console.debug("Preview: image_data_load -> loading:  " + preview_struct.image_url);
-  
-    image_obj.onload = function(event) {
-      preview_obj.image_data_update(preview_struct);
-    };
-    image_obj.src = image_url;
-}
+Preview.prototype.get_image_dir = function(
+                                        path, 
+                                        extension, 
+                                        ok_callback,
+                                        error_callback,
+                                        warning_callback) {
 
-Preview.prototype.update_preview_min_max_values = function() {
-    var max_decimals = this.get_format_decimals();
-    var slider_min_value = $("#fm_preview_histogram_min_slider_value").html();
-    var slider_max_value = $("#fm_preview_histogram_max_slider_value").html(); 
-    var cutoff_min_value = $("#fm_preview_left_output input[name='cutoff_min_value']").val();
-    var current_min_value = $("#fm_preview_left_output input[name='current_min_value']").val();
-    var current_max_value = $("#fm_preview_left_output input[name='current_max_value']").val();
-    var scale_value = $("#fm_preview_left_output input[name='scale_value']").val();
+    console.debug('get_image_dir -> path: ' + path + ', extension: ' + extension);
+    $.ajax({
+        url: 'filemetaio.py',
+        data: { path: path,
+                extension: extension,
+                output_format: 'json',
+                action: 'get_dir',
+                flags: 'i',
+              },
+        type: "GET",
+        dataType: "json",
+        cache: false,
+        success: function(jsonRes, textStatus) {
+            var i;
+            var errors = $(this).renderError(jsonRes);
+            var warnings = $(this).renderWarning(jsonRes);
+            var image_setting = null;
+            for (i = 0; i < jsonRes.length; i++) {
+                if (jsonRes[i].object_type == 'image_setting') {
+                    image_setting = jsonRes[i];
+                }
+            }
 
-    var new_min_value;
-    var new_max_value;
-
-    if (slider_min_value !== undefined &&
-        slider_max_value !== undefined &&
-        current_min_value !== undefined && 
-        current_max_value !== undefined &&
-        scale_value !== undefined) {
-
-        slider_min_value = Number(slider_min_value);
-        slider_max_value = Number(slider_max_value);
-        cutoff_min_value = Number(cutoff_min_value);
-        current_min_value = Number(current_min_value);
-        current_max_value = Number(current_max_value);
-        scale_value = Number(scale_value);
-        
-        new_min_value = cutoff_min_value + (slider_min_value / scale_value);
-        new_max_value = cutoff_min_value + (slider_max_value / scale_value);
-
-        $("#fm_preview_left_output input[name='current_min_value']").val(new_min_value);
-        $("#fm_preview_left_output input[name='current_max_value']").val(new_max_value);
-        $("#fm_preview_left_output_min_value_show").html("Preview Min: " + Number(new_min_value).toExponential(max_decimals));
-        $("#fm_preview_left_output_max_value_show").html("Preview Max: " + Number(new_max_value).toExponential(max_decimals));
-        $("#fm_preview_left_output_preview_image_scale_value_show").html("Slider scale: " + Number(scale_value).toExponential(max_decimals));
-    }
-}
-
-Preview.prototype.init_min_max_slider = function() {
-    
-    // http://refreshless.com/nouislider/
-
-    var _this = this;
-
-    this.slider_id = "#fm_preview_histogram_min_max_slider";
-    this.min_slider_value_id = "#fm_preview_histogram_min_slider_value";
-    this.min_slider_value = 0;
-    
-    this.max_slider_value_id = "#fm_preview_histogram_max_slider_value";
-    this.max_slider_value = 255;
-
-    var min_slider_value_id = this.min_slider_value_id;
-    var min_slider_value = this.min_slider_value;
-    var max_slider_value_id = this.max_slider_value_id;
-    var max_slider_value = this.max_slider_value;
-    var image = this.image;
-
-    $(this.slider_id).noUiSlider({
-        start: [ min_slider_value, max_slider_value ],
-        connect: true,
-        step: 1,
-        range: {
-            'min': min_slider_value,
-            'max': max_slider_value,
-        },    
-
-        // Full number format support.
-
-        format: wNumb({
-            mark: ',',
-            decimals: 0
-        }),
-    });
- 
-    // Setup min slider
-
-    $(this.slider_id).Link('lower').to('-inline-<div class="fm_preview_histogram_min_max_slider_tooltip"></div>', function ( value ) {
-
-        // The tooltip HTML is 'this', so additional markup can be inserted here.
-
-        $(this).html(
-            '<br>' +
-            '<span id="fm_preview_histogram_min_slider_value">' + value + '</span>'
-        );
-       
-        _this.update_preview_min_max_values();
-    });
-    
-    // Setup max slider
-
-    $(this.slider_id).Link('upper').to('-inline-<div class="fm_preview_histogram_min_max_slider_tooltip"></div>', function ( value ) {
-
-        // The tooltip HTML is 'this', so additional markup can be inserted here.
-        $(this).html(
-            '<br>' +
-            '<span id="fm_preview_histogram_max_slider_value">' + value + '</span>'
-            );
-
-        _this.update_preview_min_max_values();
-      });
-      
-      
-    // Setup slider change handler
-
-    $(this.slider_id).on('change', function() {    
-        var min_value = $(min_slider_value_id).text();
-        var max_value = $(max_slider_value_id).text();
-
-        var caman = Caman(image.canvas_id, function() {
-            this.idmc_set_min_max_pixel_values(min_value, max_value);
-            this.render();
-        });
-    }); 
-}
-
-// Reset sliders 
-
-Preview.prototype.reset = function() {
-  var slider_id = this.slider_id;
-  var min_slider_value = this.min_slider_value;
-  var max_slider_value = this.max_slider_value;
-  var image = this.image;
-
-  $(slider_id).val([min_slider_value, max_slider_value]);
-
-  Caman(image.canvas_id, function() {
-    this.idmc_set_min_max_pixel_values(min_slider_value, max_slider_value);
-    this.render();
-  });
-}
-
-// Inspired by:
-//  http://mihai.sucan.ro/coding/svg-or-canvas/histogram.html
-
-// Check this out:
-// https://github.com/devongovett/png.js/blob/master/png.js
-
-Preview.prototype.draw_histogram = function(image_pixel_data) {
-    var hist_canvas = $(this.histogram.canvas_id)[0];
-    var hist_context = hist_canvas.getContext('2d'); 
-    var pixel_bins = this.histogram.data;
-    var nr_pixel_bins = pixel_bins.length;
-
-    // Update histogram dimesions
-
-    this.histogram_dim_update();
-
-    // Clear histogram canvas
-
-    this.clear_canvas(hist_canvas);
-
-    // The min/max pixel bins are not displayed
-    // because pixels masked out (cutoff min/max) at preview generation
-    // are placed in those bins and therefore overrepresented
-
-    pixel_bins[0] = 0;
-    pixel_bins[pixel_bins.length-1] = 0;
-
-    // Find maximum
-
-    max_count = Math.max.apply(Math, pixel_bins);
-    
-    // Draw histogram
-
-    // Define line and fill color
-
-    hist_context.strokeStyle = '#000000';
-    hist_context['fillStyle'] = '#000000';
-
-    // Draw border
-
-    hist_context.beginPath();
-    hist_context.moveTo(0, hist_canvas.height);
-    hist_context.rect(0, 0, hist_canvas.width, hist_canvas.height);
-    hist_context.stroke();
-
-    // Draw histogram 
-
-    var border_size = hist_context.lineWidth;
-    var max_curve_width = hist_canvas.width;
-    var min_curve_x_pos = 0;
-    var max_curve_x_pos = hist_canvas.width;
-
-    var max_curve_height = hist_canvas.height - border_size;
-    var min_curve_y_pos = hist_canvas.height - border_size;
-    var max_curve_y_pos = border_size;
-
-    // Start in lower left corner
-
-    hist_context.beginPath();
-    hist_context.moveTo(0, hist_canvas.height);
-    
-    // Draw curve 
-
-    for (var x, y, i = 0; i < nr_pixel_bins; i++) {
-        if (!(i in pixel_bins)) {
-          continue;
+            if (errors.length > 0) {
+                if (typeof error_callback === "function") {
+                    console.error(errors);
+                } else {
+                    error_callback(errors);
+                }                
+            } else if (warnings.length > 0) {
+                if (typeof warning_callback === "function") {
+                    console.warn(warnings);
+                } else {
+                    warning_callback(warnings);
+                }                        
+            } else {
+                if (typeof ok_callback === "function") {
+                    ok_callback(image_setting);
+                }
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("get_image_dir error: " + errorThrown);
         }
-        y = Math.round((pixel_bins[i]/max_count)*max_curve_height);
-        console.debug('i: ' + i + ', x: ' + x + ', y: ' + y + ', pixel_bins[i]: ' + pixel_bins[i] + ', max_count: ' + max_count);
-        x = Math.round((i/(nr_pixel_bins-1))*max_curve_width);
+    });
+}
 
-        hist_context.lineTo(x, min_curve_y_pos - y);
-    }
+Preview.prototype.update_image_dir = function(
+                                        path, 
+                                        extension, 
+                                        preview_cutoff_min,
+                                        preview_cutoff_max,
+                                        ok_callback,
+                                        error_callback,
+                                        warning_callback) {
 
-    // End in lower right corner
+    console.debug('get_image_dir -> path: ' + path + ', extension: ' + extension);
 
-    hist_context.lineTo(hist_canvas.width, hist_canvas.height);
-
-    // Draw stroke
-
-    hist_context.stroke();
-    
-    // Fill curve
-
-    hist_context.fill();
-    hist_context.closePath();
-
-    // Update preview min max values
-
-    this.update_preview_min_max_values();
+    $.ajax({
+        url: 'filemetaio.py',
+        data: { path: path,
+                extension: extension,
+                output_format: 'json',
+                action: 'update_dir',
+                flags: 'i',
+                preview_cutoff_min: preview_cutoff_min,
+                preview_cutoff_max: preview_cutoff_max,
+              },
+        type: "POST",
+        dataType: "json",
+        cache: false,
+        success: function(jsonRes, textStatus) {
+            var i;
+            var errors = $(this).renderError(jsonRes);
+            var warnings = $(this).renderWarning(jsonRes);
+            var image_setting = null;
+            for (i = 0; i < jsonRes.length; i++) {
+                if (jsonRes[i].object_type == 'image_setting') {
+                    image_setting = jsonRes[i];
+                }
+            }
+            if (errors.length > 0) {
+                if (typeof error_callback === "function") {
+                    console.error(errors);
+                } else {
+                    error_callback(errors);
+                }                
+            } else if (warnings.length > 0) {
+                if (typeof warning_callback === "function") {
+                    console.warn(warnings);
+                } else {
+                    warning_callback(warnings);
+                }                        
+            } else {
+                if (typeof ok_callback === "function") {
+                    ok_callback(image_setting);
+                }
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("getImageDir error: " + errorThrown);
+        }
+    });
 }

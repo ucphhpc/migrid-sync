@@ -77,47 +77,10 @@ def html_tmpl(configuration, client_id, title_entry):
         <div class="fm_addressbar">
             <input type="hidden" value="/" name="fm_current_path" />
         </div>
-        <div class="fm_previews">
-            <input type="hidden" value="" name="fm_preview_base_path" />
-            <input type="hidden" value="" name="fm_preview_path" />
-            <input type="hidden" value="" name="fm_preview_filename" />
-            <input type="hidden" value="" name="fm_preview_extension" />
-            <div id="fm_preview_menubar" class="fm_preview_menubar">
-                <div id="fm_preview_menubar_refresh" class="fm_preview_menubar_entry" title="Refresh Preview">
-                    <img src="/images/icons/arrow_refresh.png">
-                </div>
-                <div id="fm_preview_menubar_zoom_in" class="fm_preview_menubar_entry" title="Zoom In">
-                    <img src="/images/icons/add.png">
-                </div>
-                <div id="fm_preview_menubar_zoom_out" class="fm_preview_menubar_entry" title="Zoom Out">
-                    <img src="/images/icons/delete.png">
-                </div>                  
-            </div>
-            <div id="fm_preview_left_tile" class="fm_preview_left_tile">
-                <div id="fm_preview_left_tile_histogram">
-                    <canvas id="fm_preview_histogram_image"></canvas>
-                </div>
-                <div id="fm_preview_left_tile_histogram_actions">
-                    <div id="fm_preview_histogram_min_max_slider"></div>   
-                    <br>
-                    <button id="preview_histogram_reset_button" title="Reset sliders">Reset</button>
-                    <button id="preview_histogram_set_cutoff_button" title="Set preview cutoff based on sliders">Set Cutoff</button>
-                    <!-- <button id="preview_histogram_auto_button">Auto</button> -->
-                </div>
-                <div id="fm_preview_left_output">
-                <!-- this is a placeholder for contents: do not remove! -->
-                </div>
-            </div>
-            <div id="fm_preview_center_tile" class="fm_preview_center_tile">
-                <canvas id="fm_preview_image"></canvas>
-            </div>
-            <div id="fm_preview_right_tile" class="fm_preview_right_tile"> 
-                <div id="fm_preview_right_output">
-                <!-- this is a placeholder for contents: do not remove! -->
-                </div>
-            </div>
+        <div id="fm_previews" class="fm_previews">       
+            <!-- this is a placeholder for contents: do not remove! -->
+            <!-- filled by preview.js : init_html -->
         </div>
-
         <div class="fm_folders">
             <ul class="jqueryFileTree">
                 <li class="directory expanded">
@@ -127,7 +90,6 @@ def html_tmpl(configuration, client_id, title_entry):
         </div>
         
         <div class="fm_files">
-        
             <table id="fm_filelisting" style="border-spacing=0;" >
             <thead>
                 <tr>
@@ -147,9 +109,9 @@ def html_tmpl(configuration, client_id, title_entry):
             <div id="fm_statusprogress"><div class="progress-label">Loading...</div></div>
             <div id="fm_statusinfo">&nbsp;</div>
         </div>
-        <div id="fm_options"><input id="fm_touchscreen" type="checkbox">
+        <div id="fm_options"><input id="fm_touchscreen" type="checkbox" />
             Enable touch screen interface (all clicks trigger menu)
-            <input id="fm_dotfiles" type="checkbox">
+            <input id="fm_dotfiles" type="checkbox" />
             Show hidden files and dirs
         </div>
     </div>
@@ -157,7 +119,6 @@ def html_tmpl(configuration, client_id, title_entry):
     <div id="cmd_dialog" title="Command output" style="display: none;"></div>
 
     <div id="upload_dialog" title="Upload File" style="display: none;">
-
       <div id="upload_tabs">
         <ul>
               <li><a href="#fancyuploadtab">Fancy Upload</a></li>
@@ -198,7 +159,7 @@ def html_tmpl(configuration, client_id, title_entry):
                     </div>
                 </div>
                 <!-- The table listing the files available for upload/download -->
-                <table role="presentation" class="table table-striped"><tbody class="uploadfileslist">
+                <table role="presentation" class="table table-striped"><tw class="uploadfileslist">
                 </tbody></table>
             </form>
             <!-- For status and error output messages -->
@@ -300,69 +261,106 @@ def html_tmpl(configuration, client_id, title_entry):
     </div>
 
     <div id="imagesettings_dialog" title="Image Settings" style="display: none;">
-    <form id="imagesettings_form" method="post" action="filemetaio.py">
     <fieldset>
+    <div id="imagesettings_list" class="fm_metaio_list"></div>
+    <div id="imagesettings_edit_tabs">
+        <form id="imagesettings_form" method="post" action="filemetaio.py">
         <input type="hidden" name="output_format" value="json" />
         <input type="hidden" name="flags" value="" />
         <input type="hidden" name="action" value="" />
         <input type="hidden" name="path" value="" />
         <input type="hidden" name="settings_status" value="" />
-        <div id="imagesettings_list" class="fm_metaio_list"></div>
-        <div id="imagesettings_edit">
-            <label for="extension">Image extension:</label>
-            <br>
-            <input type="text" name="extension" value="" />
-            <br>
-            <label for="setting_recursive">Apply to sub-folders:</label>
-            <br>
-            <input type="checkbox" name="settings_recursive" value="False" />
-            <br>
-            <label for="image_type">Image type:</label>
-            <br>
-            <select name="image_type">
-                <option value="raw">Raw</option>
-                <option value="tiff">Tiff</option>
-            </select>
-            <br>
-            <div id="imagesettings_edit_image_type_raw">
-                <label for="data_type">Image data type:</label>
-                <br>
-                <select name="data_type">
-                    <option value="float32">float32</option>
-                    <option value="float64">float64</option>
-                    <option value="uint8">uint8</option>
-                    <option value="uint16">uint16</option>
-                    <option value="uint32">uint32</option>
-                    <option value="uint64">uint64</option>
-                    <option value="int8">int8</option>
-                    <option value="int16">int16</option>
-                    <option value="int32">int32</option>
-                    <option value="int64">int64</option>
+        <ul>
+            <li><a href="#imagesettings_edit_file_tab">File</a></li>
+            <li><a href="#imagesettings_edit_volume_tab">Volume</a></li>
+        </ul>
+        <div id="imagesettings_edit_file_tab">
+            <table class="fm_metaio_edit_table">
+            <tr><td>
+                <label class="halffield">-- Image --</label>
+            </td></tr>
+            <tr><td>            
+                <label class="halffield" for="extension">Extension:</label>
+                <input type="text" name="extension" value="" />
+            </td></tr>
+            <tr><td>     
+                <label class="halffield" for="setting_recursive">Apply to sub-folders:</label>
+                <input type="checkbox" name="settings_recursive" value="False" />      
+            </td></tr>
+            <tr><td>     
+                <label class="halffield" for="image_type">Type:</label>
+                <select name="image_type">
+                    <option value="raw">Raw</option>
+                    <option value="tiff">Tiff</option>
                 </select>
-                <br>
-                <label for="offset">Image offset:</label>
-                <br>
-                <input type="text" name="offset" value="" />
-                <br>
-                <label for="x_dimension">Image width:</label>
-                <br>
-                <input type="text" name="x_dimension" value="" />
-                <br>
-                <label for="y_dimension">Image height:</label>
-                <br>
-                <input type="text" name="y_dimension" value="" />
-                <br>
+            </td></tr>
+            </table>   
+            <div id="imagesettings_edit_image_type_raw">
+                <table class="fm_metaio_edit_table">
+                <tr><td>
+                    <label class="halffield" for="data_type">Data type:</label>
+                    <select name="data_type">
+                        <option value="float32">float32</option>
+                        <option value="float64">float64</option>
+                        <option value="uint8">uint8</option>
+                        <option value="uint16">uint16</option>
+                        <option value="uint32">uint32</option>
+                        <option value="uint64">uint64</option>
+                        <option value="int8">int8</option>
+                        <option value="int16">int16</option>
+                        <option value="int32">int32</option>
+                        <option value="int64">int64</option>
+                    </select>
+                </td></tr>
+                <tr><td> 
+                    <label class="halffield" for="offset">Offset:</label>
+                    <input type="text" name="offset" value="" />
+                </td></tr>
+                <tr><td> 
+                    <label class="halffield" for="x_dimension">Width:</label>
+                    <input type="text" name="x_dimension" value="" />
+                </td></tr>
+                <tr><td> 
+                    <label class="halffield" for="y_dimension">Height:</label>
+                    <input type="text" name="y_dimension" value="" />
+                </td></tr>
+                </table>   
             </div>
-            <label for="preview_cutoff_min">Preview image cutoff min value:</label>
-            <br>
-            <input type="text" name="preview_cutoff_min" value="" />
-            <br>
-            <label for="preview_cutoff_max">Preview image cutoff max value:</label>
-            <br>
-            <input type="text" name="preview_cutoff_max" value="" />
-        </div>    
+            <table class="fm_metaio_edit_table">
+            <tr><td> 
+            </td></tr>
+            <tr><td> 
+                <label class="halffield" for="dummy">-- Preview --</label>
+                <input type="hidden" name="dummy" value="" />
+            </td></tr>
+            <tr><td>
+                <label class="halffield" for="preview_cutoff_min">Cutoff min value:</label>
+                <input type="text" name="preview_cutoff_min" value="" />
+            </td></tr>
+            <tr><td>         
+                <label class="halffield" for="preview_cutoff_max">Cutoff max value:</label>
+                <input type="text" name="preview_cutoff_max" value="" />
+            </td></tr>
+            </table>
+        </div>
+        <div id="imagesettings_edit_volume_tab">
+            <table class="fm_metaio_edit_table">
+            <tr><td>
+                <label class="halffield">-- Volume --</label>
+            </td></tr>
+            <tr><td>         
+                <label class="halffield" for="volume_slice_filepattern">Slice file pattern:</label>
+                <input type="text" name="volume_slice_filepattern" value="" />
+            </td></tr>
+            <tr><td> 
+                <label class="halffield" for="z_dimension">Number of slices:</label>
+                <input type="text" name="z_dimension" value="" />
+            </td></tr>
+            </table>
+        </div>
+        </form>                
+    </div>
     </fieldset>
-    </form>                
     <div id="imagesettings_output"></div>
     </div>
     ''' % fill_entries
@@ -389,6 +387,8 @@ def css_tmpl(configuration):
     css['advanced'] += '''
 <link href="/images/lib/noUiSlider/jquery.nouislider.css"  rel="stylesheet"
     type="text/css" />   
+<link href="/images/lib/ParaView/Visualizer/main.css" rel="stylesheet"
+    type="text/css" />   
 '''
     css['advanced'] += advanced_editor_css_deps()
     return css
@@ -411,7 +411,10 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
 <script type="text/javascript" src="/images/js/jquery.debouncedresize.js"></script>
 <!-- The preview image plugin -->
 <script type="text/javascript" src="/images/js/preview.js"></script>
+<!-- The paraview rendering plugin -->
+<script type="text/javascript" src="/images/js/preview-paraview.js" load="core, pv.visualizer"></script>
 <!-- The image manipulation CamanJS plugin used by the preview image plugin -->
+<script type="text/javascript" src="/images/js/preview-caman.js"></script>
 <script type="text/javascript" src="/images/lib/CamanJS/dist/caman.full.js"></script>
 <script type="text/javascript">
        Caman.DEBUG = false

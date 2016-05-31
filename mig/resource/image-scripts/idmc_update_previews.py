@@ -41,7 +41,7 @@ def main():
 
     argc = len(sys.argv) - 1
     if argc != 3:
-        logger.error('USAGE: %s action base_path triggerpath'
+        logger.error('USAGE: %s action base_path extension'
                      % sys.argv[0])
         sys.exit(1)
 

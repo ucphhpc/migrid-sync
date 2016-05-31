@@ -40,23 +40,25 @@ def main():
     logger = logging
 
     argc = len(sys.argv) - 1
-    if argc != 3:
-        logger.error('USAGE: %s action base_path triggerpath'
+    if argc != 4:
+        logger.error('USAGE: %s action base_path path filename'
                      % sys.argv[0])
         sys.exit(1)
 
     action = sys.argv[1]
     base_path = sys.argv[2]
-    triggerpath = sys.argv[3]
-    filepath = triggerpath.replace(base_path, '', 1)
-    logger.info('idmc_create_preview: action: %s, base_path: %s, triggerpath: %s, filepath: %s'
-                 % (action, base_path, triggerpath, filepath))
+    path = sys.argv[3]
+    filename = sys.argv[4]
+
+    path = path.replace(base_path, '', 1)
+    logger.info('idmc_create_preview: action: %s, base_path: %s, path: %s, filename: %s'
+                 % (action, base_path, path, filename))
 
     update_status = None
     cleanup_status = None
-
     if action == 'created' or action == 'modified':
-        update_status = update_preview(logger, base_path, filepath)
+        update_status = update_preview(logger, base_path, path,
+                filename)
         if update_status:
             cleanup_status = cleanup_previews(logger, base_path)
     elif action == 'deleted':
@@ -66,7 +68,7 @@ def main():
         cleanup_status = cleanup_previews(logger, base_path)
     else:
 
-    #    status = update_preview(logger, 'remove', base_path, filepath)
+    #    status = update_preview(logger, 'remove', base_path, path, filename)
 
         logger.error('idmc_create_preview: unsupported action: %s'
                      % action)

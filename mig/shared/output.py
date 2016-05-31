@@ -473,7 +473,8 @@ ctime\t%(ctime)s
                 lines.append(certificate_info)
         elif i['object_type'] == 'image_settings_list' or \
              i['object_type'] == 'image_setting' or \
-             i['object_type'] == 'image_meta':
+             i['object_type'] == 'image_meta' or \
+             i['object_type'] == 'volume_meta':
             for elm in i:
                 lines.append('%s: %s\n' % (str(elm), str(i[elm])))
         elif i['object_type'] == 'script_status':
@@ -1168,7 +1169,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <tr><td>Name:</td><td>%(name)s</td>
 </tr>
 <tr>
-  <td>Url:</td><td><a class="urllink iconspace" href="%(url)s">%(url)s</a></td>
+    <td>Url:</td><td><a class="urllink iconspace" href="%(url)s">%(url)s</a></td>
 </tr>
 <tr>
     <td>Description:</td><td>%(description)s</td>
@@ -1286,7 +1287,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             for frozenfile in i['frozenfiles']:
                 frozenfile_html += '''
     <tr>
-    <td>%(name)s</td><td>%(size)s</td><td>%(md5sum)s</td><td class="hidden">%(sha1sum)s</td>
+        <td>%(name)s</td><td>%(size)s</td><td>%(md5sum)s</td><td class="hidden">%(sha1sum)s</td>
     </tr>
 ''' % frozenfile
             frozenfile_html += '</tbody></table>'

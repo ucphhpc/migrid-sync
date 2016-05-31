@@ -329,9 +329,6 @@ $(document).ready(function() {
     <div class='fm_addressbar'>
         <input type='hidden' value='/' name='fm_current_path' />
     </div>
-    <!-- dummy previews needed for auto resize -->
-    <div class='fm_previews'>
-    </div>
     <div class='fm_folders'>
         <ul class='jqueryFileTree'>
             <li class='directory expanded'>

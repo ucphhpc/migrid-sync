@@ -135,7 +135,7 @@ tbody tr td div.sortkey { display: none; }
 }
 .fm_addressbar {
     border: 0;
-    }
+}
 .fm_addressbar input {
     width: 98%;
 }
@@ -158,6 +158,23 @@ tbody tr td div.sortkey { display: none; }
     background-color: #FFF; 
     visibility: hidden;
 }
+.fm_preview_caman {
+    float: right;
+    border: 0px;
+    width: 0px;
+    height: 0px;
+    background-color: #FFF; 
+    visibility: hidden;
+}
+.fm_preview_paraview {
+    float: right;
+    border: 0px;
+    width: 0px;
+    height: 0px;
+    background-color: #FFF; 
+    visibility: hidden;
+}
+
 .fm_preview_menubar {
     float: left;
     border: 0px;
@@ -319,6 +336,12 @@ tbody tr td div.sortkey { display: none; }
 .fm_metaio_list ul.edit:hover {
     background-color: #ffdd7f;
 }
+.fm_metaio_edit_table {
+    background: #fff;
+    border: 0px;
+    padding: 0px;
+}
+
 .fm_files {
     float: right;
     width: 74%;
@@ -400,7 +423,7 @@ tbody tr td div.sortkey { display: none; }
     padding: 2px;
     border: 1px solid grey;  
     background-color: #ddd;
-    clear: both;
+    clear: right;
     overflow: hidden;
 }
 #fm_statusprogress {
@@ -666,7 +689,6 @@ background: url(/images/icons/code.png) left center no-repeat;
     width: 18px; 
     cursor: pointer;
 }
-
 .tablesorter-header { 
     background-image: url('/images/icons/desc.gif'); 
     background-image: url('/images/icons/small.gif');
@@ -793,7 +815,10 @@ fieldset label {
     padding-top: 0.2em;
     font-weight: bold;
 }
-fieldset label.widefield {
+fieldset label.halffield {
+    width: 50%;
+}
+fieldset label.widefield_center {
     width: 70%;
     text-align: center;
 }

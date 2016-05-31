@@ -90,6 +90,7 @@ def fix_missing(config_file, verbose=True):
         'sharelink_home': '~/state/sharelink_home',
         'seafile_mount': '~/state/seafile_mount',
         'openid_store': '~/state/openid_store/',
+        'paraview_home': '~/state/paraview_home/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'rate_limit_db': '~/mig/mig_system_files/daemon-rate-limit.db',
@@ -260,6 +261,7 @@ class Configuration:
     javabin_home = ''
     seafile_mount = ''
     openid_store = ''
+    paraview_home = ''
     rate_limit_db = ''
     site_skin = 'migrid-basic'
     site_collaboration_links = ''
@@ -620,6 +622,8 @@ class Configuration:
             self.seafile_mount = config.get('GLOBAL', 'seafile_mount')
         if config.has_option('GLOBAL', 'openid_store'):
             self.openid_store = config.get('GLOBAL', 'openid_store')
+        if config.has_option('GLOBAL', 'paraview_home'):
+            self.paraview_home = config.get('GLOBAL', 'paraview_home')
         if config.has_option('GLOBAL', 'user_sftp_address'):
             self.user_sftp_address = config.get('GLOBAL', 
                                                 'user_sftp_address')

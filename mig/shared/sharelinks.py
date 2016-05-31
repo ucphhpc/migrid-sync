@@ -174,10 +174,10 @@ def create_share_link_form(configuration, client_id, output_format, form_append=
         <br/>
         </td></tr>
         <tr><td>
-        <label for="read_access" class="widefield">Read Access</label>
+        <label for="read_access" class="widefield_center">Read Access</label>
         <input id="extreadaccess" type="checkbox" name="read_access" checked />
         </td><td>
-        <label for="write_access" class="widefield">Write Access</label>
+        <label for="write_access" class="widefield_center">Write Access</label>
         <input id="extwriteaccess" type="checkbox" name="write_access" />
         </td></tr>
         <tr><td colspan=2>
