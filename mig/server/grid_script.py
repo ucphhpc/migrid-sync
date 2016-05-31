@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_script - the core job handling daemon on a MiG server
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -61,6 +61,15 @@ except ImportError, ime:
 (job_queue, executing_queue, scheduler) = (None, None, None)
 (job_time_out_thread, job_time_out_stop) = (None, None)
 
+def hangup_handler(signal, frame):
+    """A simple signal handler to force configuration reload and log reopening
+    on SIGHUP.
+    Please note that we don't use daemon log but default log here and thus need
+    to use reload_config rather than reopen_log.
+    """
+    logger.info("reloading configuration and reopening log on hangup signal")
+    configuration.reload_config(True)
+    logger.info("reloaded configuration and reopened log after hangup signal")
 
 def time_out_jobs(stop_event):
     """Examine queue of current executing jobs and send a JOBTIMEOUT
@@ -237,6 +246,9 @@ def graceful_shutdown():
 # register ctrl+c signal handler to shutdown system cleanly
 
 signal.signal(signal.SIGINT, clean_shutdown)
+
+# Allow e.g. logrotate to force log re-open after rotates
+signal.signal(signal.SIGHUP, hangup_handler)
 
 print """
 Running main grid 'daemon'.
