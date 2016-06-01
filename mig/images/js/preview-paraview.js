@@ -201,22 +201,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         "/images/lib/ParaView/lib/widgets/vtkweb-widgets-min.css",
         "/images/lib/ParaView/lib/widgets/vtkweb-widgets-min.js"
         ],
-        "pv.visualizer": [
+        "pv-visualizer": [
         "/images/lib/ParaView/ext/fontello/css/animation.css",
         "/images/lib/ParaView/ext/fontello/css/fontello.css",
         "/images/lib/ParaView/ext/bootstrap3/js/bootstrap.min.js",
         "/images/lib/ParaView/lib/js/paraview.ui.action.list.js",
         "/images/lib/ParaView/lib/js/paraview.ui.files.js",
         "/images/lib/ParaView/lib/js/paraview.ui.data.js",
-        "/images/lib/ParaView/lib/js/paraview.ui.proxy.editor.js",
-        "/images/lib/ParaView/lib/css/paraview.ui.proxy.editor.css",
         "/images/lib/ParaView/lib/js/paraview.ui.svg.pipeline.js",
         "/images/lib/ParaView/lib/js/paraview.ui.opacity.editor.js",
         "/images/lib/ParaView/lib/css/paraview.ui.opacity.editor.css",
         "/images/lib/ParaView/lib/js/paraview.ui.color.editor.js",
         "/images/lib/ParaView/lib/css/paraview.ui.color.editor.css"
+        ],
+        "pv-preview-visualizer": [
+        "/images/lib/ParaView/ext/fontello/css/animation.css",
+        "/images/lib/ParaView/ext/fontello/css/fontello.css",    
+        "/images/lib/ParaView/lib/js/paraview.ui.svg.pipeline.js",
+        "/images/lib/ParaView/lib/js/paraview.ui.proxy.editor.js",
         ]
-
     },
     modules = [],
     script = document.getElementsByTagName("script")[document.getElementsByTagName("script").length - 1],

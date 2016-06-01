@@ -412,7 +412,7 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
 <!-- The preview image plugin -->
 <script type="text/javascript" src="/images/js/preview.js"></script>
 <!-- The paraview rendering plugin -->
-<script type="text/javascript" src="/images/js/preview-paraview.js" load="core, pv.visualizer"></script>
+<script type="text/javascript" src="/images/js/preview-paraview.js" load="core, pv-preview-visualizer"></script>
 <!-- The image manipulation CamanJS plugin used by the preview image plugin -->
 <script type="text/javascript" src="/images/js/preview-caman.js"></script>
 <script type="text/javascript" src="/images/lib/CamanJS/dist/caman.full.js"></script>
