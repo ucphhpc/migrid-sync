@@ -26,10 +26,11 @@ echo " * vgrid_private_base/vgrid_public_base are all vgrid web portals"
 echo " * user_home is all user home dirs"
 echo " * freeze_home is frozen archives from all users"
 
+echo ""
 
+echo "== Totals =="
 echo "=== Registered Users ==="
 $SERVERDIR/searchusers.py | grep -v 'Matching users' | sed 's/ : .*//g' | sort | uniq | wc -l
-
 
 echo "=== Registered VGrids ==="
 find $STATEDIR/vgrid_home -type d | grep -v .svn | wc -l
@@ -37,3 +38,14 @@ find $STATEDIR/vgrid_home -type d | grep -v .svn | wc -l
 echo "=== Frozen Archives ==="
 find $STATEDIR/freeze_home -maxdepth 1 -type d -name 'archive-*' | wc -l
 
+echo ""
+
+echo "== This Week =="
+echo "=== Registered Users ==="
+find $STATEDIR/user_home -maxdepth 1 -type d -ctime -7 | grep -v .svn | wc -l
+
+echo "=== Registered VGrids ==="
+find $STATEDIR/vgrid_home -maxdepth 1 -type d -ctime -7 | grep -v .svn | wc -l
+
+echo "=== Frozen Archives ==="
+find $STATEDIR/freeze_home -maxdepth 1 -type d -name 'archive-*' -ctime -7 | wc -l
