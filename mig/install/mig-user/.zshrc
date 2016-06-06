@@ -30,6 +30,10 @@ alias pylintchanged="svn status | grep -v '\?' | egrep '.py$' | sed 's/.* //' | 
 setenv() { typeset -x "${1}${1:+=}${(@)argv[2,$#]}" }  # csh compatibility
 freload() { while (( $# )); do; unfunction $1; autoload -U $1; shift; done }
 
+vdocond() {
+    diff -q $@ | grep -q differ && vdo $@
+}
+
 # Where to look for autoloaded function definitions
 fpath=($fpath ~/.zfunc)
 
