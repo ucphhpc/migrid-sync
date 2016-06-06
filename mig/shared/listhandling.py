@@ -56,16 +56,14 @@ def add_item_to_pickled_list(path, item, logger):
     return (True, '')
 
 
-def list_items_in_pickled_list(path, logger):
+def list_items_in_pickled_list(path, logger, allow_missing=False):
 
     # list items
 
-    list_ = unpickle(path, logger)
-    if list_ == []:
-        pass
-    elif not list_:
+    _list = unpickle(path, logger, allow_missing)
+    if _list is False:
         return (False, 'Failure: could not unpickle list')
-    return (True, list_)
+    return (True, _list)
 
 
 def remove_item_from_pickled_list(

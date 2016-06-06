@@ -230,15 +230,16 @@ def unpickle_and_change_status(path, newstatus, logger):
         return False
 
 
-def unpickle(path, logger):
+def unpickle(path, logger, allow_missing=False):
     """Unpack pickled object in path"""
     try:
         job_dict = load(path)
         logger.debug('%s was unpickled successfully' % path)
         return job_dict
     except Exception, err:
-        logger.error('%s could not be opened/unpickled! %s'
-                      % (path, err))
+        if not allow_missing:
+            logger.error('%s could not be opened/unpickled! %s'
+                         % (path, err))
         return False
 
 

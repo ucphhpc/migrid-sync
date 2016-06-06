@@ -361,7 +361,7 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
         vgrid_dir = os.path.join(vgrid_dir, sub_vgrid)
         name_path = os.path.join(configuration.vgrid_home, vgrid_dir, name)
         (status, msg) = list_items_in_pickled_list(name_path,
-                configuration.logger)
+                configuration.logger, allow_missing)
         if status:
 
             # msg is a list
