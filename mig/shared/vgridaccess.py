@@ -58,7 +58,7 @@ SETTINGS = '__settings__'
 # Never repeatedly refresh maps within this number of seconds in same process
 # Used to avoid refresh floods with e.g. runtime envs page calling
 # refresh for each env when extracting providers.
-MAP_CACHE_SECONDS = 30
+MAP_CACHE_SECONDS = 60
 
 last_refresh = {USERS: 0, RESOURCES: 0, VGRIDS: 0}
 last_load = {USERS: 0, RESOURCES: 0, VGRIDS: 0}
@@ -70,6 +70,8 @@ def load_entity_map(configuration, kind, do_lock):
     disable locking during load.
     Entity IDs are stored in their raw (non-anonymized form).
     Returns tuple with map and time stamp of last map modification.
+    Please note that time stamp is explicitly set to start of last update
+    to make sure any concurrent updates get caught in next run.
     """
     home_map = home_paths(configuration)
     map_path = os.path.join(configuration.mig_system_files, "%s.map" % kind)
@@ -120,7 +122,9 @@ def refresh_user_map(configuration):
     dictionary for efficiency. 
     User IDs are stored in their raw (non-anonymized form).
     Only update map for users that updated conf after last map save.
+    NOTE: Save start time so that any concurrent updates get caught next time.
     """
+    start_time = time.time()
     dirty = []
     map_path = os.path.join(configuration.mig_system_files, "user.map")
     lock_path = os.path.join(configuration.mig_system_files, "user.lock")
@@ -170,10 +174,11 @@ def refresh_user_map(configuration):
     if dirty:
         try:
             dump(user_map, map_path)
+            os.utime(map_path, (start_time, start_time))
         except Exception, exc:
             configuration.logger.error("Could not save user map: %s" % exc)
 
-    last_refresh[USERS] = time.time()
+    last_refresh[USERS] = start_time
     lock_handle.close()
 
     return user_map
@@ -183,7 +188,9 @@ def refresh_resource_map(configuration):
     dictionary for efficiency. 
     Resource IDs are stored in their raw (non-anonymized form).
     Only update map for resources that updated conf after last map save.
+    NOTE: Save start time so that any concurrent updates get caught next time.
     """
+    start_time = time.time()
     dirty = []
     map_path = os.path.join(configuration.mig_system_files, "resource.map")
     lock_path = os.path.join(configuration.mig_system_files, "resource.lock")
@@ -237,10 +244,11 @@ def refresh_resource_map(configuration):
     if dirty:
         try:
             dump(resource_map, map_path)
+            os.utime(map_path, (start_time, start_time))
         except Exception, exc:
             configuration.logger.error("Could not save resource map: %s" % exc)
 
-    last_refresh[RESOURCES] = time.time()
+    last_refresh[RESOURCES] = start_time
     lock_handle.close()
 
     return resource_map
@@ -252,7 +260,9 @@ def refresh_vgrid_map(configuration):
     Resource and user IDs are stored in their raw (non-anonymized form).
     Only update map for users and resources that updated conf after last map
     save.
+    NOTE: Save start time so that any concurrent updates get caught next time.
     """
+    start_time = time.time()
     dirty = {}
     vgrid_changes = {}
     map_path = os.path.join(configuration.mig_system_files, "vgrid.map")
@@ -283,16 +293,19 @@ def refresh_vgrid_map(configuration):
                  (OWNERS, configuration.vgrid_owners, vgrid_owners),
                  (MEMBERS, configuration.vgrid_members, vgrid_members),
                  (SETTINGS, configuration.vgrid_settings, vgrid_settings)]
+    optional_conf = [SETTINGS, ]
 
     for vgrid in all_vgrids:
         for (field, name, list_call) in conf_read:
             conf_path = os.path.join(configuration.vgrid_home, vgrid, name)
             if not os.path.isfile(conf_path):
-                configuration.logger.warning('missing file: %s' % (conf_path)) 
                 # Make sure vgrid dict exists before filling it
                 vgrid_map[VGRIDS][vgrid] = vgrid_map[VGRIDS].get(vgrid, {})
                 vgrid_map[VGRIDS][vgrid][field] = []
-                dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
+                if  vgrid != default_vgrid and field not in optional_conf:
+                    configuration.logger.warning('missing file: %s' % \
+                                                 conf_path)
+                    dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
 
             elif not vgrid_map[VGRIDS].has_key(vgrid) or \
                    os.path.getmtime(conf_path) >= map_stamp:
@@ -452,12 +465,14 @@ def refresh_vgrid_map(configuration):
             vgrid_map[USERS][user][ALLOW] = allow
 
     if dirty:
+        configuration.logger.info("Saving vgrid map changes: %s" % dirty)
         try:
             dump(vgrid_map, map_path)
+            os.utime(map_path, (start_time, start_time))
         except Exception, exc:
             configuration.logger.error("Could not save vgrid map: %s" % exc)
 
-    last_refresh[VGRIDS] = time.time()
+    last_refresh[VGRIDS] = start_time
     lock_handle.close()
 
     return vgrid_map
