@@ -106,6 +106,7 @@ def generate_confs(
     enable_sharelinks='True',
     enable_transfers='True',
     enable_freeze='True',
+    enable_preview='False',
     enable_hsts='',
     enable_vhost_certs='',
     enable_seafile='False',
@@ -173,6 +174,7 @@ def generate_confs(
     user_dict['__ENABLE_SHARELINKS__'] = enable_sharelinks
     user_dict['__ENABLE_TRANSFERS__'] = enable_transfers
     user_dict['__ENABLE_FREEZE__'] = enable_freeze
+    user_dict['__ENABLE_PREVIEW__'] = enable_preview
     user_dict['__ENABLE_HSTS__'] = enable_hsts
     user_dict['__ENABLE_VHOST_CERTS__'] = enable_vhost_certs
     user_dict['__ENABLE_SEAFILE__'] = enable_seafile
@@ -258,6 +260,12 @@ cert, oid and sid based https!
         user_dict['__SEAFILE_COMMENTED__'] = ''
     else:
         user_dict['__SEAFILE_COMMENTED__'] = '#'
+
+    # Enable Paraview integration only if explicitly requested
+    if user_dict['__ENABLE_PREVIEW__'].lower() == 'true':
+        user_dict['__PREVIEW_COMMENTED__'] = ''
+    else:
+        user_dict['__PREVIEW_COMMENTED__'] = '#'
 
     dev_suffix = '$(echo ${APACHE_CONFDIR} | sed "s@/etc/${APACHE_DAEMON}@@")'
     if user_dict['__ENABLE_DEV_ACCOUNTS__'].lower() == "true":
@@ -492,6 +500,7 @@ def create_user(
     enable_sharelinks = 'True'
     enable_transfers = 'True'
     enable_freeze = 'True'
+    enable_preview = 'False'
     enable_hsts = 'False'
     enable_vhost_certs = 'False'
     enable_seafile = 'False'
@@ -572,6 +581,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_sharelinks,
         enable_transfers,
         enable_freeze,
+        enable_preview,
         enable_hsts,
         enable_vhost_certs,
         enable_seafile,

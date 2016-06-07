@@ -74,6 +74,7 @@ if '__main__' == __name__:
         'enable_sharelinks',
         'enable_transfers',
         'enable_freeze',
+        'enable_preview',
         'enable_hsts',
         'enable_vhost_certs',
         'enable_seafile',
