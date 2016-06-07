@@ -195,7 +195,7 @@ tbody tr td div.sortkey { display: none; }
     height: 100%;
     background-color: #FFF; 
     overflow-x: hidden;
-    overflow-y: hidden;
+    overflow-y: auto;
 }
 .fm_preview_center_tile {
     float: left;

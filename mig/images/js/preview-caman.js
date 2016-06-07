@@ -313,9 +313,9 @@ PreviewCaman.prototype.update_preview_min_max_values = function() {
 
         $("#fm_preview_left_output input[name='current_min_value']").val(new_min_value);
         $("#fm_preview_left_output input[name='current_max_value']").val(new_max_value);
-        $("#fm_preview_left_output_min_value_show").html("PreviewCaman Min: " + Number(new_min_value).toExponential(max_decimals));
-        $("#fm_preview_left_output_max_value_show").html("PreviewCaman Max: " + Number(new_max_value).toExponential(max_decimals));
-        $("#fm_preview_left_output_PreviewCaman_image_scale_value_show").html("Slider scale: " + Number(scale_value).toExponential(max_decimals));
+        $("#fm_preview_left_output_min_value_show").html("Min: " + Number(new_min_value).toExponential(max_decimals));
+        $("#fm_preview_left_output_max_value_show").html("Max: " + Number(new_max_value).toExponential(max_decimals));
+        $("#fm_preview_left_output_preview_image_scale_value_show").html("Slider scale: " + Number(scale_value).toExponential(max_decimals));
     }
 }
 
@@ -499,7 +499,7 @@ PreviewCaman.prototype.draw_histogram = function(image_pixel_data) {
     hist_context.fill();
     hist_context.closePath();
 
-    // Update PreviewCaman min max values
+    // Update min max values
 
     this.update_preview_min_max_values();
 }
