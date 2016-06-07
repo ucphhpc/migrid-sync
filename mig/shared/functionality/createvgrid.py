@@ -259,6 +259,9 @@ def create_tracker(
     target_tracker_wsgi_link = os.path.join(tracker_dir, 'wsgi-bin')
     target_tracker_gvcache = os.path.join(target_tracker_var, 'gvcache')
     target_tracker_downloads = os.path.join(target_tracker_var, 'downloads')
+    target_tracker_files = os.path.join(target_tracker_var, 'files')
+    target_tracker_attachments = os.path.join(target_tracker_var,
+                                              'files/attachments')
     target_tracker_log = os.path.join(target_tracker_var, 'log')
     target_tracker_log_file = os.path.join(target_tracker_log, 'trac.log')
     repo_base = 'repo'
@@ -400,6 +403,12 @@ def create_tracker(
         if not repair or not os.path.isdir(target_tracker_downloads):
             os.chmod(target_tracker_var, 0755)
             os.mkdir(target_tracker_downloads)
+        if not repair or not os.path.isdir(target_tracker_files):
+            os.chmod(target_tracker_var, 0755)
+            os.mkdir(target_tracker_files)
+        if not repair or not os.path.isdir(target_tracker_attachments):
+            os.chmod(target_tracker_var, 0755)
+            os.mkdir(target_tracker_attachments)
         if not repair or not os.path.isfile(target_tracker_log_file):
             os.chmod(target_tracker_log, 0755)
             open(target_tracker_log_file, 'w').close()
@@ -590,8 +599,8 @@ body {
         logger.info('fix permissions on %s' % project_name)
         perms = {}
         for real_path in [os.path.join(target_tracker_var, i) for i in \
-                          ['db', 'attachments', 'log', 'gvcache',
-                           'downloads']]:
+                          ['db', 'attachments', 'files/attachments', 'log',
+                           'gvcache', 'downloads']]:
             perms[real_path] = 0755
         for real_path in [os.path.join(target_tracker_var, 'db', 'trac.db'),
                           target_tracker_log_file]:
