@@ -315,7 +315,7 @@ PreviewCaman.prototype.update_preview_min_max_values = function() {
         $("#fm_preview_left_output input[name='current_max_value']").val(new_max_value);
         $("#fm_preview_left_output_min_value_show").html("Min: " + Number(new_min_value).toExponential(max_decimals));
         $("#fm_preview_left_output_max_value_show").html("Max: " + Number(new_max_value).toExponential(max_decimals));
-        $("#fm_preview_left_output_preview_image_scale_value_show").html("Slider scale: " + Number(scale_value).toExponential(max_decimals));
+        $("#fm_preview_left_output_preview_image_scale_value_show").html("Slider Scale: " + Number(scale_value).toExponential(max_decimals));
     }
 }
 
