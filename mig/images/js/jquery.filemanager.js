@@ -433,7 +433,11 @@ if (jQuery) (function($){
             var fileManagerInnerFooter = statusbarOuterHeight + 
                                         optionsOuterHeight;                                        
             if (is_dialog) {
-                fileManagerHeight = $.fn.fmSelect("").height();
+                /* TODO: force to auto height for now since chrome insists on
+                   making filechooser be as high as dialog otherwise which 
+                   causes consistent overflow. */
+                //fileManagerHeight = $.fn.fmSelect("").height();
+                fileManagerHeight = 'auto';
             } else {
                 var minHeight = fileManagerInnerHeader +
                                 fileManagerInnerFooter;
@@ -2081,6 +2085,8 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
         {autoOpen: false,
          modal: true,
          width: '1000px',
+         minWidth: 800,
+         minHeight: 720,
          buttons: {"Cancel": function() { $("#" + name).dialog("close"); }
                   }
         });
