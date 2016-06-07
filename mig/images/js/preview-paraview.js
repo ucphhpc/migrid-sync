@@ -201,6 +201,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         "/images/lib/ParaView/lib/widgets/vtkweb-widgets-min.css",
         "/images/lib/ParaView/lib/widgets/vtkweb-widgets-min.js"
         ],
+        /* NOTE: bootstrap.min.js conflicts with our dialog buttons */
         "pv-visualizer": [
         "/images/lib/ParaView/ext/fontello/css/animation.css",
         "/images/lib/ParaView/ext/fontello/css/fontello.css",

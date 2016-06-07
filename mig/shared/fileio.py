@@ -323,6 +323,21 @@ def remove_rec(dir_path, configuration):
 
     return True
 
+def remove_dir(dir_path, configuration):
+    """
+    Remove the given dir_path, if it's empty
+
+    Returns Boolean to indicate success, writes messages to log.
+    """
+    try:
+       os.rmdir(dir_path)
+    except Exception, err:
+       configuration.logger.error("Could not remove_dir %s: %s" % \
+                                  (dir_path, err))
+       return False
+
+    return True
+
 def move(src, dst):
     """Recursively move a file or directory from src to dst. This version works
     even in cases rename does not - e.g. for src and dst on different devices.

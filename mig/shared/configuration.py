@@ -247,6 +247,7 @@ class Configuration:
     vgrid_triggers = 'triggers'
     vgrid_settings = 'settings'
     vgrid_sharelinks = 'sharelinks'
+    vgrid_imagesettings = 'imagesettings'
     vgrid_monitor = 'monitor'
     resource_pending = ''
     user_pending = ''
@@ -868,6 +869,8 @@ class Configuration:
             self.vgrid_settings = config.get('GLOBAL', 'vgrid_settings')
         if config.has_option('GLOBAL', 'vgrid_sharelinks'):
             self.vgrid_sharelinks = config.get('GLOBAL', 'vgrid_sharelinks')
+        if config.has_option('GLOBAL', 'vgrid_imagesettings'):
+            self.vgrid_imagesettings = config.get('GLOBAL', 'vgrid_imagesettings')
         if config.has_option('GLOBAL', 'vgrid_monitor'):
             self.vgrid_monitor = config.get('GLOBAL', 'vgrid_monitor')
 
