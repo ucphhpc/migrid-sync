@@ -37,6 +37,7 @@ from numpy import dtype, float32, float64, uint8, uint16, uint32, \
 from shared.fileio import acquire_file_lock, release_file_lock
 import traceback
 
+__revision = '3093'
 __metapath = '.meta'
 __settings_file = 'settings.h5'
 __settings_filepath = os.path.join(__metapath, __settings_file)
