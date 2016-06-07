@@ -376,8 +376,9 @@ if (jQuery) (function($){
             var breadcrumbsHeight = $.fn.fmSelect(" #fm_xbreadcrumbs").height();
 
             var buttonbarHeight = breadcrumbsHeight;
-            // Spacing for border, padding and margin
+            // Spacing for border (1), padding (2) and margin (2)
             var buttonSpacing = 5;
+            var buttonWidth = 16;
             // compensate for margin and padding
             var buttonHeight = buttonbarHeight - 2 * buttonSpacing;
             var buttonLineHeight = buttonbarHeight - 2 * buttonSpacing;
@@ -389,7 +390,6 @@ if (jQuery) (function($){
             if (options.datatransfersbutton) {
                 buttonCount += 1;
             }
-            var buttonWidth = 16;
             var fileManagerWidth = $.fn.fmSelect("").width();
             console.debug("fm is "+fileManagerWidth+ "px wide");
             var fileManagerWidthPadding = $.fn.fmSelect("").outerWidth() - 
@@ -409,20 +409,25 @@ if (jQuery) (function($){
             var offsetTop = $.fn.fmSelect("").offset().top;
             var innerWindowHeight = $(window).height();
 
-            var contentHeightPadding = $("#content").outerHeight() - 
-                                    $("#content").height();
-            var filemanHeightPadding = $.fn.fmSelect("").outerHeight() - 
+            /* content and contentblock come with bottom margin which need to
+               be included in available height calculation. We include their top
+               margins here as well to be on the safe side if they are unevenly 
+               distributed. */
+            var contentHeightSpacing = $("#content").outerHeight(true) - 
+                $("#content").height() + $(".contentblock").outerHeight(true) - 
+                $(".contentblock").height();
+            var filemanHeightSpacing = $.fn.fmSelect("").outerHeight(true) - 
                             $.fn.fmSelect("").height();
-            var exitCodeOuterHeight = $("#exitcode").outerHeight();
-            var bottomLogoOuterHeight = $("#bottomlogo").outerHeight();
-            var bottomspaceOuterHeight = $("#bottomspace").outerHeight();
+            var exitCodeOuterHeight = $("#exitcode").outerHeight(true);
+            var bottomLogoOuterHeight = $("#bottomlogo").outerHeight(true);
+            var bottomspaceOuterHeight = $("#bottomspace").outerHeight(true);
             var footerOuterHeight = exitCodeOuterHeight + 
                                     bottomLogoOuterHeight + 
                                     bottomspaceOuterHeight;
-            var pathBreadcrumbsOuterHeight = $.fn.fmSelect(" .fm_path_breadcrumbs").outerHeight();
-            var addressbarOuterHeight = $.fn.fmSelect(" .fm_addressbar").outerHeight();
-            var statusbarOuterHeight = $.fn.fmSelect(" #fm_statusbar").outerHeight();
-            var optionsOuterHeight = $.fn.fmSelect(" #fm_options").outerHeight();
+            var pathBreadcrumbsOuterHeight = $.fn.fmSelect(" .fm_path_breadcrumbs").outerHeight(true);
+            var addressbarOuterHeight = $.fn.fmSelect(" .fm_addressbar").outerHeight(true);
+            var statusbarOuterHeight = $.fn.fmSelect(" #fm_statusbar").outerHeight(true);
+            var optionsOuterHeight = $.fn.fmSelect(" #fm_options").outerHeight(true);
             var fileManagerInnerHeader = pathBreadcrumbsOuterHeight + 
                                         addressbarOuterHeight;
             var fileManagerInnerFooter = statusbarOuterHeight + 
@@ -433,10 +438,11 @@ if (jQuery) (function($){
                 var minHeight = fileManagerInnerHeader +
                                 fileManagerInnerFooter;
                                 
-                fileManagerHeight = innerWindowHeight - 
-                                (offsetTop + 
-                                footerOuterHeight + 
-                                contentHeightPadding);
+                fileManagerHeight = innerWindowHeight - (offsetTop + 
+                                                         footerOuterHeight + 
+                                                         contentHeightSpacing +
+                                                         filemanHeightSpacing);
+                console.debug('fileManagerHeight: ' + fileManagerHeight+" innerWindowHeight "+innerWindowHeight+" offsetTop "+offsetTop+" footerOuterHeight "+footerOuterHeight+" contentHeightSpacing "+contentHeightSpacing);
 
                 if (fileManagerHeight < minHeight) {
                     fileManagerHeight = minHeight;
@@ -450,8 +456,8 @@ if (jQuery) (function($){
             var layout = {
                     system : {
                         innerWindowHeight: innerWindowHeight,
-                        contentHeightPadding: contentHeightPadding,
-                        filemanHeightPadding: filemanHeightPadding,
+                        contentHeightSpacing: contentHeightSpacing,
+                        filemanHeightSpacing: filemanHeightSpacing,
                         pathBreadcrumbsOuterHeight: pathBreadcrumbsOuterHeight,
                         addressbarOuterHeight: addressbarOuterHeight,
                         statusbarOuterHeight: statusbarOuterHeight,
@@ -497,10 +503,14 @@ if (jQuery) (function($){
                 .css("line-height", layout.fm.buttonLineHeight+"px")
                 .css("width", layout.fm.buttonWidth+"px");
 
+            console.debug('refresh_fm_layout callback');
             if (typeof callback === "function") {
+                console.debug('refresh_fm_layout calling callback');
                 callback();
+                console.debug('refresh_fm_layout done with callback');
             }
 
+            console.debug('refresh_fm_layout returning');
             return layout;
         }
 
@@ -1141,6 +1151,7 @@ if (jQuery) (function($){
             if (options['imagesettings']) {
                 preview.set_visibility('hidden');
             }
+            console.debug("refresh layout on resize");
             $.fn.refresh_fm_layout();
         });
 
@@ -2095,6 +2106,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
                                };
 
         $("#" + name).dialog("open");
+        console.debug("refresh layout on dialog open");
         /* We call refresh twice here to get fitting right after loading */
         $.fn.refresh_fm_layout();
         /* force reload to get zebra-coloring right (ignored unless visible) */

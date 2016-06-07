@@ -35,9 +35,11 @@
     cursor: default;  
 }
 /* Extras for fm_filemanager */
-#fm_filemanager {
+h1.fileman-title {
     /* Pull filemanager up close to title block */
-    margin-top: -10px;
+    margin-bottom: 2px;
+}
+#fm_filemanager {
     border: 1px solid grey;
 }
 #jm_jobmanager {

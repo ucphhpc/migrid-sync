@@ -578,7 +578,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('<p class="warningtext">%s</p>' % \
                          html_escape(i['text']))
         elif i['object_type'] == 'header':
-            lines.append('<h1>%s</h1>' % html_escape(i['text']))
+            lines.append('<h1 class="%s">%s</h1>' % (i.get('class', ''),
+                                                     html_escape(i['text'])))
         elif i['object_type'] == 'sectionheader':
             lines.append('<h3>%s</h3>' % html_escape(i['text']))
         elif i['object_type'] == 'title':
