@@ -132,7 +132,9 @@ def vgrid_add_remove_table(client_id,
             if isinstance(elem, dict) and elem.has_key(id_field):
                 for (field, _) in extra_fields + optional_fields:
                     val = elem.get(field, '')
-                    if not isinstance(val, basestring):
+                    if isinstance(val, bool):
+                        val = str(val)
+                    elif not isinstance(val, basestring):
                         val = ' '.join(val)
                     extra_fields_html += '<td>%s</td>' % val
                 table += \
