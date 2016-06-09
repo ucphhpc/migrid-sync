@@ -436,7 +436,10 @@ if (jQuery) (function($){
                 /* TODO: force to auto height for now since chrome insists on
                    making filechooser be as high as dialog otherwise which 
                    causes consistent overflow. */
-                //fileManagerHeight = $.fn.fmSelect("").height();
+                /*
+                fileManagerHeight = $(".ui-dialog-content").height() - (
+                    filemanHeightSpacing); 
+                */
                 fileManagerHeight = 'auto';
             } else {
                 var minHeight = fileManagerInnerHeader +
@@ -2084,9 +2087,13 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
         // see http://jqueryui.com/docs/dialog/ for options
         {autoOpen: false,
          modal: true,
-         width: '1000px',
+         width: 1000,
          minWidth: 800,
          minHeight: 720,
+         resizeStop: function(event, ui) { 
+             console.debug("refresh layout on dialog resize");
+             $.fn.refresh_fm_layout(); 
+         },
          buttons: {"Cancel": function() { $("#" + name).dialog("close"); }
                   }
         });
@@ -2110,14 +2117,14 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
                                  files_only = f;
                                  callback = c;
                                };
-
+        $("#" + name).dialog({
+            open: function(event, ui) {
+                console.debug("refresh layout on dialog open");
+                $.fn.reload(start_path);
+                $.fn.refresh_fm_layout();
+            }
+        });
         $("#" + name).dialog("open");
-        console.debug("refresh layout on dialog open");
-        /* We call refresh twice here to get fitting right after loading */
-        $.fn.refresh_fm_layout();
-        /* force reload to get zebra-coloring right (ignored unless visible) */
-        $.fn.reload(start_path);
-        $.fn.refresh_fm_layout();
     };
     // code entangled with specific filemanager naming
     var pathAttribute = "rel_path";
