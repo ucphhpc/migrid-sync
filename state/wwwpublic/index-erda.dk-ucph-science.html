@@ -31,8 +31,40 @@ ERDA
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
 <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
-<script type="text/javascript" >
+<script type="text/javascript">
+    /* We assume UCPH users here and leave external users to FAQ entry */
+    function login(user) {
+        if (user == "ucph") {
+            window.open('https://erda.dk', '_blank');
+        } else if (user == "cert") {
+            window.open('https://cert.erda.dk', '_blank');
+        } else {
+            window.open('https://sid.erda.dk/cgi-sid/login.py', '_blank');
+        }
+    }
+    function signup(user) {
+        if (user == "ucph") {
+            /* TODO: switch to direct OpenID signup? */
+            window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank');
+        } else if (user == "cert") {
+            window.open('https://sid.erda.dk/cgi-sid/signup.py?show=extcert',
+                        '_blank');
+        } else {
+            window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank');
+        }
+    }
     $(document).ready(function() {
+        /* Init links centrally */
+        $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
+            "https://sites.google.com/site/minimumintrusiongrid/" +
+            "getting-started/how-to-get-started");
+        $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
+            "https://sites.google.com/site/minimumintrusiongrid/" +
+            "mig-in-danish/saadan-kommer-du-igang");
+        $("a.extsignup-link").attr("target", "_blank").attr("href", 
+            "https://sid.erda.dk/cgi-sid/signup.py?show=extcert");
+        $("a.extlogin-link").attr("target", "_blank").attr("href", 
+            "https://cert.erda.dk");
         /* Init FAQ as foldable but closed and with individual heights */
         $(".faq-accordion").accordion({
                                        collapsible: true,
@@ -91,6 +123,30 @@ University of Copenhagen - Electronic Research Data Archive
 <div class="english i18n" lang="en">
 <h1 class="staticpage">Welcome to UCPH ERDA</h1>
 
+<div class="staticpage quickstartfields">
+<h2 class="staticpage">Quick Start</h2>
+<div class="staticpage centertext signupfield">
+<h2 class="staticpage">New to ERDA?</h2>
+<p>If you haven't used ERDA before you need to first</p>
+<input class="signupbutton" type="button" value="sign up"
+       onClick="signup('ucph');" />
+<p><!--to get a user account. --></p> 
+</div>
+<div class="staticpage centertext loginfield">
+<h2 class="staticpage">I'm already on ERDA!</h2>
+<p>In case you already signed up, you can proceed with</p>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('ucph');" />
+<p><!-- to your account. --></p>
+</div>
+</div>
+<p>
+You may also want to refer to the 
+<a href="https://erda.dk/public/ucph-erda-user-guide.pdf">
+ERDA User Guide</a> for a more thorough introduction, with help on
+getting started and making the most of your account.
+</p>
+
 <h2 class="staticpage">About UCPH ERDA</h2>
 <p>
 University of Copenhagen - Electronic Research Data Archive (UCPH ERDA or just ERDA) is a 
@@ -99,24 +155,10 @@ employees and students. For now it is limited to the faculty of Science,
 but it may be extended to all of UCPH in the future.
 ERDA delivers centralized storage space for personal and shared files in
 addition to archiving of e.g. PhD theses and research data for
-safe keeping and publishing. It also comes with a file synchronization
+safe-keeping and publishing. It also comes with a file synchronization
 service similar to Dropbox, but with the data stored locally at UCPH.
 </p>
-<h2 class="staticpage">Sign up and use ERDA</h2>
-<p>
-If you haven't used ERDA before you first need to
-<input class="signupbutton" type="button" value="sign up"
-       onClick="window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank')"
-/> to get a user account. You may also want to refer to the 
-<a href="https://erda.dk/public/ucph-erda-user-guide.pdf">
-ERDA User Guide</a> for an introduction and help on how to get started and
-get the most out of your account.
-</p>
-<p>In case you already signed up for your account above, you can proceed with 
-<input class="loginbutton" type="button" value="log in"
-       onClick="window.open('https://sid.erda.dk/cgi-sid/login.py', '_blank')"
-/> to your account.
-</p>
+
 <h2 class="staticpage">Frequently Asked Questions (FAQ)</h2>
 <div class="faq-accordion">
 <h4 class="staticpage">How much storage space do I have on ERDA?</h4>
@@ -139,7 +181,7 @@ Workgroup shares. Only files explicitly duplicated with the Archive
 feature get backed up to tape. Eventually this will include off-site
 tape backup for extra safety.
 </p>
-<h4 class="staticpage">Can I Publish and Share Data in e.g. a Read-only Fashion on ERDA?</h4>
+<h4 class="staticpage">Can I Share, Exchange and Publish Data in e.g. a Read-only Fashion on ERDA?</h4>
 <p>
 Yes, depending on the audience and dynamics of the data to share you can
 use one of three overall methods.<br/> 
@@ -152,7 +194,7 @@ come in a public and in a group-wide flavor, where the publishing is done
 by Workgroup owners storing data in the public_base and private_base
 workgroup subdirectories respectively on ERDA. Your Workgroups page
 includes links to those and to the resulting web pages.<br/>
-For quick sharing with anyone and particularly people <em>not</em> on
+For quick data exchange with anyone and particularly people <em>not</em> on
 ERDA, we recommend the Share Link feature. From your Files page you can
 create a share link for a file or folder and choose what kind of read
 and write access share link recipients should be granted. A similar
@@ -160,7 +202,7 @@ feature applies for any data you may store in our optional Seafile data
 synchronization service. Just use the <em>share by email</em> feature to
 similarly create upload or download shares with optional password and
 time limit. Both share link methods include the option to send out an
-invitation with the link directly on email, but they can also be
+invitation with the link directly on email, but they can of course also be
 manually distributed by other means.
 </p>
 <h4 class="staticpage">How Are Workgroups Managed?</h4>
@@ -193,26 +235,25 @@ of allowing any additional characters that you may miss.
 <h4 class="staticpage">Can I get an ERDA account without a UCPH account?</h4>
 <p>
 It is possible but more complex to set up access even if you do not have
-a general UCPH account (i.e. the <em>Swedish numberplate</em>). Our
+a general UCPH account (i.e. the <em>Swedish numberplate</em> login). Our
 general username+password access described in the user guide relies on
 the OpenID login from KU Koncern-IT and they strictly use the UCPH user
 database.
 <br />
-We do provide an alternative access method with user certificates, so if
-you
-<a  class="urllink" 
- href="https://sites.google.com/site/minimumintrusiongrid/getting-started/how-to-get-started" 
- target="_blank">request a grid certificate</a> then you can reuse
-that for ERDA signup and access.<br />
+We do provide an alternative access method with user certificates. To
+proceed with that you need to request and install one of our grid
+certificates as described on the corresponding <a class="reqcert-en-link"> 
+getting started</a> page. As you can see in the user-cert-import guide there,
+the certificate install process takes quite a few steps, but then at
+least login gets simpler afterwards. After installing your certificate
+you can use it in the ERDA <a class="extsignup-link">sign up</a> and 
+<a class="extlogin-link">log in</a> with certificate.<br /> 
 <span class="warningtext">
-IMPORTANT: please note that management requires such users not employed
+IMPORTANT: please note that UCPH management requires such users not employed
 at UCPH to explicitly register with their affiliation to a local
 user. So please include a reference to your associate/advisor at UCPH
 Science in the comment field when you fill in the certificate request.
 </span><br />
-As you can see in the user-cert-import guide there, the certificate
-install process takes quite a few steps but then at least login is
-simpler afterwards.
 </p>
 </div>
 <h2 class="staticpage">Questions and Support</h2>
@@ -231,7 +272,30 @@ available from here.
 </p>
 </div>
 <div class="danish i18n" lang="da">
-<h1 class="staticpage">Velkommen til UCPH ERDA!</h1>
+<h1 class="staticpage">Velkommen til UCPH ERDA</h1>
+
+<div class="staticpage quickstartfields">
+<h2 class="staticpage">Hurtigt igang</h2>
+<div class="staticpage centertext signupfield">
+<h2 class="staticpage">Ny på ERDA?</h2>
+<p>Hvis ikke du har brugt ERDA før, skal du først igennem</p>
+<input class="signupbutton" type="button" value="tilmelding"
+       onClick="signup('ucph');" />
+<p><!--  for at få en brugerkonto. --></p> 
+</div>
+<div class="staticpage centertext loginfield">
+<h2 class="staticpage">Jeg er allerede på ERDA!</h2>
+<p>Hvis du allerede har tilmeldt dig ERDA, kan du gå direkte til</p>
+<input class="loginbutton" type="button" value="log ind"
+       onClick="login('ucph');" />
+<p><!-- på din brugerkonto. --></p>
+</div>
+</div>
+<p>Vi anbefaler at du også ser nærmere på
+<a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">
+ERDA Brugervejledningen</a> for en grundigere introduktion, med hjælp
+til at komme igang og få størst nytte af din konto.
+</p>
 
 <h2 class="staticpage">Om UCPH ERDA</h2>
 <p>
@@ -246,22 +310,7 @@ for datasikring og publicering. Desuden tilbydes en
 filsynkroniserings-service i stil med Dropbox, men med datalagringen
 lokalt på KU.
 </p>
-<h2 class="staticpage">Tilmelding og brug af ERDA</h2>
-<p>
-Hvis ikke du har brugt ERDA før, er det nødvendigt først at 
-<input class="signupbutton" type="button" value="tilmelde"
-       onClick="window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank')"
-/> dig for at få en brugerkonto. Det kan i den sammenhæng også anbefales
-at se nærmere på
-<a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">
-ERDA Brugervejledningen</a> med introduktion og hjælp til at komme igang
- og drage mest muligt nytte af kontoen.
-</p>
-<p>Hvis du allerede har tilmeldt dig ERDA ovenfor, kan du gå videre med at
-<input class="loginbutton" type="button" value="logge ind"
-       onClick="window.open('https://sid.erda.dk/cgi-sid/login.py', '_blank')"
-/> på din brugerkonto.
-</p>
+
 <h2 class="staticpage">Ofte stillede spørgsmål (OSS)</h2>
 <div class="faq-accordion">
 <h4 class="staticpage">Hvor meget plads har jeg på ERDA?</h4>
@@ -269,12 +318,12 @@ ERDA Brugervejledningen</a> med introduktion og hjælp til at komme igang
 Vi håndhæver ikke som sådan pladskvoter på selve ERDA datalageret, men
 kæmpe datasæt, som dem man kender fra højenergi-fysik eller
 bioinformatik-databaser, er eksempler på indhold, som <em>ikke</em> regnes for
-egnede til lagring på ERDA. Så længe vi taler datamængder op til omkring
-30 terabytes, skulle der ikke være nogen problemer. Hvis du gerne vil
-gemme mere end det, kan det sikkert også lade sig gøre - bare tag en
-snak med os om det.<br/>
+egnede til lagring på ERDA. Så længe vi taler datamængder op til en snes
+terabytes, skulle der ikke være nogen problemer. Hvis du gerne vil gemme
+mere end det, kan det sikkert også lade sig gøre - bare tag en snak med
+os om det.<br/>
 ERDA inkluderer også en filsynkroniserings-service ved navn Seafile, og
-den er muligvis ikke så velegnet til store datasæt, så den har en 100 GB
+den er sandsynligvis ikke så velegnet til kæmpe datasæt, så den har en 100 GB
 kvote for hver bruger.
 </p>
 <h4 class="staticpage">Er mine ERDA data replikerede og med backup?</h4>
@@ -286,7 +335,7 @@ Workgroup shares. Kun filer som eksplicit er gemt som Archive bliver
 der gemt backup af på bånd. Med tiden vil det også inkludere
 bånd-backup på en fjernlokation for ekstra sikkerhed.
 </p>
-<h4 class="staticpage">Kan jeg publicere og dele ERDA data f.eks. så der kun er læse-adgang?</h4>
+<h4 class="staticpage">Kan jeg dele, udveklse og publicere ERDA data f.eks. så der kun er læse-adgang?</h4>
 <p>
 Ja, der er overordnet tre forskellige måder at gøre det på afhængigt af
 hvor dynamiske data er, og hvem du vil dele med.<br/> 
@@ -301,7 +350,7 @@ vej foregår ved at Workgroup ejere gemmer data i de tilhørende
 public_base hhv private_base workgroup undermapper på ERDA. På din
 Workgroups side finder du links til disse og til de resulterende
 web-sider.<br/>
-Til hurtig deling af data med hvem som helst, herunder ikke mindst folk
+Til hurtig udveksling af data med hvem som helst, herunder ikke mindst folk
 som <em>ikke</em> er på ERDA, kan vi anbefale Share Link metoden. Fra
 din Files side kan du oprette et share link og vælge hvilken kombination
 af læse- og skrive-adgang modtageren skal gives. En lignende
@@ -310,7 +359,7 @@ filsynkroniserings-service. Her hedder den <em>del via e-post</em> og
 tillader udover tilsvarende upload- og download-delinger også mulighed
 for kodeord og tidsbegrænsning. Begge share link metoder inkluderer
 muligheden for at udsende en invitation med link direkte på email, men
-det kan også gøres manuelt via andre kanaler.
+det kan naturligvis også gøres manuelt via andre kanaler.
 </p>
 <h4 class="staticpage">Hvordan styres Workgroups?</h4>
 <p>
@@ -343,24 +392,26 @@ du måtte savne tilladt.
 <h4 class="staticpage">Kan jeg oprette en ERDA-konto uden en KU-konto?</h4>
 <p>
 Det er muligt men mere besværligt at opsætte adgang selv hvis ikke du
-har en generel KU-konto (d.v.s. den <em>svenske nummerplade</em>).
+har en generel KU-konto (d.v.s. login med <em>svensk nummerplade</em>).
 Vores generelle adgangskontrol med brugernavn+kode, som beskrevet i
 brugervejledningen, benytter OpenID-login fra KU Koncern-IT og er dermed
-strengt knyttet til KUs brugerdatabase.<br />
-Vi tilbyder adgang med brugercertifikater som alternativ, så hvis du
-<a class="urllink" 
- href="https://sites.google.com/site/minimumintrusiongrid/mig-in-danish/saadan-kommer-du-igang" 
- target="_blank">anmoder om et grid-certifikat</a> kan du genbruge det
-til ERDA-tilmelding og -adgang.<br/> 
+strengt knyttet til KUs brugerdatabase.
+<br />
+Vi tilbyder adgang med brugercertifikater som alternativ, og for at
+benytte den løsning skal du anmode om - og installere et af vores grid
+brugercertifikater, jvf den tilhørende <a class="reqcert-da-link">
+sådan kommer du igang</a> side. Som det fremgår af user-cert-import
+guiden dér, kræver certifikat-installationen en del trin, men i det
+mindste er login så efterfølgende simplere. Når du har installeret dit
+certifikat kan du bruge det i
+ERDAs <a class="extsignup-link">tilmelding</a> og 
+<a class="extlogin-link">log ind</a> med certifikat.<br/>
 <span class="warningtext">
-VIGTIGT: bemærk at ledelsen har bedt om at sådanne brugere ikke ansat på
+VIGTIGT: bemærk at KU-ledelsen har bedt om at sådanne brugere ikke ansat på
 KU registrerer sig med eksplicit tilknytning til en lokal bruger. Så
 henvis venligst til din samarbejdspartner/vejleder på KU Science i
 kommentarfeltet når du anmoder om certifikatet.
-</span><br />  
-Som det fremgår af user-cert-import guiden der kræver
-certifikat-installationen en del trin, men i det mindste er login så
-efterfølgende simplere. 
+</span><br />
 </p>
 </div>
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
@@ -369,11 +420,13 @@ Brugervejledningen indeholder basal information om brugen af ERDA, men
 kontakt os gerne (på dansk eller engelsk) med spørgsmål og kommentarer
 v.h.a. email-linket nederst på siden.
 </p>
+<!--
 <p class="warningtext">
 Bemærk at ERDA siderne p.t. kun findes på engelsk. Den danske
 brugervejledning kan forhåbentlig afhjælpe eventuelle
 forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
 </p>
+-->
 <h2 class="staticpage">Brugerregler</h2>
 <p>
 ERDA er kun begrænset af få regler, og de skulle gerne være i tråd med

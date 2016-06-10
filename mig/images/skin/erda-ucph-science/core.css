@@ -52,6 +52,7 @@ a:hover, a:active {
   color: #165AAD;
 }
 
+
 h1 {
   border: 1px solid darkgrey;
   color: #fff;
@@ -82,6 +83,22 @@ h4.staticpage {
   padding: 2px;
 }
 
+div.quickstartfields {
+  color: #000;
+}
+div.loginfield, div.signupfield {
+  display: inline-block;
+  border: 2px solid #679c5b;
+  color: #fff;
+  background-color: #46743c;
+  margin: 0px 6px;
+  font-size: 12px;
+  width: 462px;
+  border-radius: 4px;
+}
+div.loginfield > h2, div.signupfield > h2 {
+  padding: 0px;
+}
 
 
 table {

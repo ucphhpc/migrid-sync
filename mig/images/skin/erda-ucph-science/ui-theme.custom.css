@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui-theme.custom - style overrides for jquery-ui theme
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,6 +37,11 @@
 /* lighter border on accordion widgets - should probably be fixed in theme roller instead */
 .ui-state-default {
     border: 1px solid #679c5b; 
+}
+
+/* Don't obfuscate links in accordion */
+.ui-widget-content a {
+	color: #165AAD;
 }
 
 #fm_filemanager .ui-progressbar-value, #fm_filechooser .ui-progressbar-value {
