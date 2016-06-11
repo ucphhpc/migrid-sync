@@ -558,6 +558,7 @@ def __get_image_meta(
         image_type = str(image_meta['image_type'])
         preview_image_url = get_preview_image_url(logger,
                 '/cert_redirect/%s' % image_meta['base_path'],
+                image_meta['path'],
                 image_meta['preview_image_filename'])
         base_path = str(image_meta['base_path'])
         path = str(image_meta['path'])

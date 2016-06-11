@@ -506,7 +506,7 @@ def __get_data_node_name(logger, path, name):
     """Returns data node name"""
 
     result = os.path.join(path, name)
-    result.replace('/', '|')
+    result = result.replace('/', '|')
 
     return result
 
@@ -1116,11 +1116,12 @@ def __get_image_volume_preview_histogram_data(
     return result
 
 
-def get_preview_image_url(logger, base_url, filename):
+def get_preview_image_url(logger, base_url, path, filename):
     """Returns VGrid image url for generated preview image file"""
 
-    return '%s/%s/%s' % (base_url, __image_preview_path.strip('/'),
-                         filename)
+    return '%s/%s/%s/%s' % (base_url, __image_preview_path.strip('/'),
+                        path,
+                        filename)
 
 
 def to_ndarray(logger, tables_array, out=None):
