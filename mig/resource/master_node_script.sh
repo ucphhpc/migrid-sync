@@ -10,6 +10,7 @@ debug=""
 copy_command="$debug ${copy_command}"
 move_command="$debug ${move_command}"
 clean_command="$debug rm -f"
+umount_command="$debug fusermount -uz"
 # We don't want recursive clean up to delete mounted file systems
 clean_recursive="${clean_command} -r --one-file-system"
 end_marker="### END OF SCRIPT ###"
@@ -83,6 +84,17 @@ sync_clean() {
     return 1
 }
 
+fuseumount_job() {
+    localjobdir=$1
+    jobfusemounts=`mount | grep "${localjobdir}" | awk -F' ' '{ORS=" "; print $3}'` 1>> $exehostlog 2>> $exehostlog
+    
+    if [ ! -z "$jobfusemounts" ]; then
+        for jobmount in $jobfusemounts; do
+            $umount_command $jobmount 1>> $exehostlog 2>> $exehostlog
+        done
+    fi
+}
+
 clean_job() {
     localjobname="$1"
     echo "deleting .jobdone " 1>> $exehostlog 2>> $exehostlog
@@ -91,6 +103,9 @@ clean_job() {
     
     # Leave job dir before cleaning it (recursively removing working dir is not portable) 
     cd ${execution_dir}
+
+    echo "unmounting fuse mounts in job-dir_${localjobname}" 1>> $exehostlog 2>> $exehostlog
+    fuseumount_job ${execution_dir}/job-dir_${localjobname}
 
     echo "deleting recursive job-dir_${localjobname}" 1>> $exehostlog 2>> $exehostlog
     $clean_recursive ${execution_dir}/job-dir_${localjobname} 1>> $exehostlog 2>> $exehostlog
