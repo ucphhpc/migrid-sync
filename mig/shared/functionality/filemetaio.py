@@ -113,13 +113,13 @@ python idmc_update_previews.py +TRIGGERCHANGE+ %(datapath)s %(extension)s
 ::EXECUTABLES::
 
 ::INPUTFILES::
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/imagepreview.py imagepreview.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/idmc_update_previews.py idmc_update_previews.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/__init__.py shared/__init__.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/defaults.py shared/defaults.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/fileio.py shared/fileio.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/imagemetaio.py shared/imagemetaio.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/serial.py shared/serial.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/imagepreview.py imagepreview.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/idmc_update_previews.py idmc_update_previews.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/__init__.py shared/__init__.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/defaults.py shared/defaults.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/fileio.py shared/fileio.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/imagemetaio.py shared/imagemetaio.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/serial.py shared/serial.py
 """ \
         % {'datapath': datapath, 'extension': extension} \
         + __get_mrsl_template()
@@ -156,13 +156,13 @@ python idmc_update_preview.py +TRIGGERCHANGE+ %(datapath)s +TRIGGERDIRNAME+ +TRI
 ::EXECUTABLES::
 
 ::INPUTFILES::
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/imagepreview.py imagepreview.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/idmc_update_preview.py idmc_update_preview.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/__init__.py shared/__init__.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/defaults.py shared/defaults.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/fileio.py shared/fileio.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/imagemetaio.py shared/imagemetaio.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts_develop/shared/serial.py shared/serial.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/imagepreview.py imagepreview.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/idmc_update_preview.py idmc_update_preview.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/__init__.py shared/__init__.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/defaults.py shared/defaults.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/fileio.py shared/fileio.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/imagemetaio.py shared/imagemetaio.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/serial.py shared/serial.py
 """ \
         % {'datapath': datapath} + __get_mrsl_template()
 
