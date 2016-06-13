@@ -46,8 +46,9 @@ from shared.imagemetaio import __tables_image_volumes_preview_data_group, \
     allowed_settings_status, add_image_volume, \
     update_image_volume_setting
 
-from numpy import fromfile, uint8, uint32, cast, mean, zeros, floor, \
-    mean, median, empty
+from numpy import zeros, empty, fromfile, int8, uint8, int16, uint16, \
+    int32, uint32, int64, uint64, float64, cast, rint, mean, floor, \
+    median
 from libtiff import TIFF
 import hashlib
 
@@ -217,13 +218,13 @@ def fill_image_preview(logger, meta):
     new_y_dimension = int(floor(data.shape[0] / dim_scale))
     new_x_dimension = int(floor(data.shape[1] / dim_scale))
 
-    logger.debug('Resizing to: %s, %s' % (new_x_dimension,
-                 new_y_dimension))
+    logger.debug('Resizing to: %s, %s' % (new_y_dimension,
+                 new_x_dimension))
 
     rescaled_data = zeros((new_y_dimension, new_x_dimension),
                           dtype=uint8)
-    rescaled_data[:] = cv2.resize(bytedata, (new_y_dimension,
-                                  new_x_dimension))
+    rescaled_data[:] = cv2.resize(bytedata, (new_x_dimension,
+                                  new_y_dimension))
     logger.debug('Rescaled and resized data -> dtype: %s, shape: %s'
                  % (rescaled_data.dtype, rescaled_data.shape))
 
@@ -232,8 +233,22 @@ def fill_image_preview(logger, meta):
     preview['cutoff_max'] = cmax
     preview['scale'] = scale
     preview['rescaled_data'] = rescaled_data
-    preview['resized_data'] = cv2.resize(data, (new_y_dimension,
-            new_x_dimension))
+    logger.debug('data.shape: %s' % str(data.shape))
+    logger.debug('data.dtype: %s' % str(data.dtype))
+
+    # cv2.resize can't handle (u)ints of more than 16 bit
+
+    if data.dtype == int32 or data.dtype == uint32 or data.dtype \
+        == int64 or data.dtype == uint64:
+        preview['resized_data'] = zeros((new_y_dimension,
+                new_x_dimension), dtype=data.dtype)
+        resized_data = cv2.resize(data.astype(float64),
+                                  (new_x_dimension, new_y_dimension))
+        rint(resized_data, out=preview['resized_data'])
+    else:
+        preview['resized_data'] = cv2.resize(data, (new_x_dimension,
+                new_y_dimension))
+
     preview['x_dimension'] = new_x_dimension
     preview['y_dimension'] = new_y_dimension
 

@@ -144,8 +144,17 @@ PreviewCaman.prototype.image_dim_update = function() {
     var context = canvas.getContext('2d');
     var width = $(this.image.div_id).width();
     var height = $(this.image.div_id).height();
-    var image_size = width < height ? width : height < width ? height : width;
+    var image_size = width < height ? width : height;
+    var loaded_image_width = this.image.image_obj.width;
+    var loaded_image_height = this.image.image_obj.height;
+    var loaded_image_ratio = loaded_image_width/loaded_image_height;
 
+    console.debug('html image width: ' + width);
+    console.debug('html image height: ' + height);
+    console.debug('html image_size: ' + image_size);
+    console.debug('loaded_image_width: ' + loaded_image_width);
+    console.debug('loaded_image_height: ' + loaded_image_height);
+    console.debug('loaded_image_ratio: ' + loaded_image_ratio);
     context.canvas.width = width;
     context.canvas.height = height;
 
@@ -153,19 +162,33 @@ PreviewCaman.prototype.image_dim_update = function() {
 
     this.image.canvas_width = width;
     this.image.canvas_height = height;
-    this.image.image_width = image_size;
-    this.image.image_height = image_size;
-    this.image.image_offset_x = Math.floor((width - image_size)/2);
-    this.image.image_offset_y = Math.floor((height - image_size)/2);
 
-    console.debug("PreviewCaman load image canvas id: " + this.image.div_id);
-    console.debug("PreviewCaman load image canvas: width: " + width);
-    console.debug("PreviewCaman load image canvas: height: " + height);
-    console.debug("PreviewCaman load image_image_size: " + image_size);
-    console.debug("PreviewCaman load image image_width: " + this.image.image_width);
-    console.debug("PreviewCaman load image image_height: " + this.image.image_height);
-    console.debug("PreviewCaman load image x_offset: " + this.image.image_offset_x);
-    console.debug("PreviewCaman load image y_offset: " + this.image.image_offset_y);
+    // Adjust for NON-Square images
+
+    this.image.image_width = Math.floor(image_size * loaded_image_ratio);   
+    this.image.image_height = image_size;
+
+    if (this.image.image_width > width) {
+        this.image.image_width = width;
+        this.image.image_height = width / loaded_image_ratio;
+    } 
+    if (this.image.image_height > height) {
+        this.image.image_width = height * loaded_image_ratio;
+        this.image.image_height = height;
+    }
+    
+    //this.image.image_offset_x = Math.floor((width - image_size)/2);
+    this.image.image_offset_x = Math.floor((width - this.image.image_width)/2);
+    this.image.image_offset_y = Math.floor((height - this.image.image_height)/2);
+
+    console.debug("PreviewCaman image canvas id: " + this.image.div_id);
+    console.debug("PreviewCaman image canvas width: " + width);
+    console.debug("PreviewCaman image canvas height: " + height);
+    console.debug("PreviewCaman image_size: " + image_size);
+    console.debug("PreviewCaman image_width: " + this.image.image_width);
+    console.debug("PreviewCaman image_height: " + this.image.image_height);
+    console.debug("PreviewCaman x_offset: " + this.image.image_offset_x);
+    console.debug("PreviewCaman y_offset: " + this.image.image_offset_y);
 }
 
 PreviewCaman.prototype.histogram_dim_update = function() {
@@ -227,7 +250,6 @@ PreviewCaman.prototype.image_data_update = function(caman_struct, callback) {
     // Update image dimensions
 
     this.image_dim_update();
-
     // PreviewCaman function calls are put in a queue and
     // when .render() is called
 

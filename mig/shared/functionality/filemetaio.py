@@ -89,23 +89,23 @@ def __get_image_create_previews_mrsl_template(datapath, extension):
         """::EXECUTE::
 echo "hostname: `hostname -f`"
 echo "uname: `uname -a`"
-echo "TRIGGERPATH: +TRIGGERPATH+"
-echo "TRIGGERDIRNAME: +TRIGGERDIRNAME+"
-echo "TRIGGERFILENAME: +TRIGGERFILENAME+"
-echo "TRIGGERPREFIX: +TRIGGERPREFIX+"
-echo "TRIGGEREXTENSION: +TRIGGEREXTENSION+"
-echo "TRIGGERCHANGE: +TRIGGERCHANGE+"
-echo "TRIGGERVGRIDNAME: +TRIGGERVGRIDNAME+"
-echo "TRIGGERRUNAS: +TRIGGERRUNAS+"
-echo "datapath: %(datapath)s"
-echo "extension: %(extension)s"
+echo "TRIGGERPATH: '+TRIGGERPATH+'"
+echo "TRIGGERDIRNAME: '+TRIGGERDIRNAME+'"
+echo "TRIGGERFILENAME: '+TRIGGERFILENAME+'"
+echo "TRIGGERPREFIX: '+TRIGGERPREFIX+'"
+echo "TRIGGEREXTENSION: '+TRIGGEREXTENSION+'"
+echo "TRIGGERCHANGE: '+TRIGGERCHANGE+'"
+echo "TRIGGERVGRIDNAME: '+TRIGGERVGRIDNAME+'"
+echo "TRIGGERRUNAS: '+TRIGGERRUNAS+'"
+echo "datapath: '%(datapath)s'"
+echo "extension: '%(extension)s'"
 # DEBUG
 ls -la
-ls -la shared/*
-ls -la %(datapath)s/
-ls -la %(datapath)s/.meta
+ls -la 'shared/*'
+ls -la '%(datapath)s/'
+ls -la '%(datapath)s/.meta'
 # end DEBUG
-python idmc_update_previews.py +TRIGGERCHANGE+ %(datapath)s %(extension)s
+python idmc_update_previews.py '+TRIGGERCHANGE+' '%(datapath)s' '%(extension)s'
 
 ::MOUNT::
 +TRIGGERVGRIDNAME+ +TRIGGERVGRIDNAME+
@@ -134,21 +134,21 @@ def __get_image_update_preview_mrsl_template(datapath):
         """::EXECUTE::
 echo "hostname: `hostname`"
 echo "uname: `uname`"
-echo "TRIGGERPATH: +TRIGGERPATH+"
-echo "TRIGGERDIRNAME: +TRIGGERDIRNAME+"
-echo "TRIGGERFILENAME: +TRIGGERFILENAME+"
-echo "TRIGGERPREFIX: +TRIGGERPREFIX+"
-echo "TRIGGEREXTENSION: +TRIGGEREXTENSION+"
-echo "TRIGGERCHANGE: +TRIGGERCHANGE+"
-echo "TRIGGERVGRIDNAME: +TRIGGERVGRIDNAME+"
-echo "TRIGGERRUNAS: +TRIGGERRUNAS+"
-echo "datapath: %(datapath)s"
+echo "TRIGGERPATH: '+TRIGGERPATH+'"
+echo "TRIGGERDIRNAME: '+TRIGGERDIRNAME+'"
+echo "TRIGGERFILENAME: '+TRIGGERFILENAME+'"
+echo "TRIGGERPREFIX: '+TRIGGERPREFIX+'"
+echo "TRIGGEREXTENSION: '+TRIGGEREXTENSION+'"
+echo "TRIGGERCHANGE: '+TRIGGERCHANGE+'"
+echo "TRIGGERVGRIDNAME: '+TRIGGERVGRIDNAME+'"
+echo "TRIGGERRUNAS: '+TRIGGERRUNAS+'"
+echo "datapath: '%(datapath)s'"
 # DEBUG
 ls -la
-ls -la %(datapath)s/
-ls -la %(datapath)s/.meta
+ls -la '%(datapath)s/'
+ls -la '%(datapath)s/.meta'
 # end DEBUG
-python idmc_update_preview.py +TRIGGERCHANGE+ %(datapath)s +TRIGGERDIRNAME+ +TRIGGERFILENAME+
+python idmc_update_preview.py '+TRIGGERCHANGE+' '%(datapath)s' '+TRIGGERDIRNAME+' '+TRIGGERFILENAME+'
 
 ::MOUNT::
 +TRIGGERVGRIDNAME+ +TRIGGERVGRIDNAME+
@@ -558,8 +558,8 @@ def __get_image_meta(
         image_type = str(image_meta['image_type'])
         preview_image_url = get_preview_image_url(logger,
                 '/cert_redirect/%s' % image_meta['base_path'],
-                image_meta['path'],
-                image_meta['preview_image_filename'])
+                image_meta['path'], image_meta['preview_image_filename'
+                ])
         base_path = str(image_meta['base_path'])
         path = str(image_meta['path'])
         name = str(image_meta['name'])
