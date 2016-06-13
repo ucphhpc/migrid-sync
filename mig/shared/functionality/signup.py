@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # signup - general sign up entry point backend
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -108,7 +108,7 @@ here as described below.
 """ % configuration.short_title
     if configuration.user_openid_providers and 'kitoid' in show or \
            'migoid' in show:
-        html += """<h2>OpenID</h2>
+        html += """<h2>OpenID Login</h2>
 The simplest sign up method is to use an existing OpenID login if you have one.
 """
         if 'kitoid' in show:
@@ -128,7 +128,7 @@ OpenID as well.
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input id='kitoid_button' type='submit' value='Sign Up with KU OpenID' />
+<input id='kitoid_button' type='submit' value='Sign Up with KU Login' />
 </form>
 </div>
 """
@@ -148,7 +148,7 @@ OpenID access to the account using the local MiG OpenID server.
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input id='migoid_button' type='submit' value='Sign Up with MiG OpenID' />
+<input id='migoid_button' type='submit' value='Sign Up with MiG Login' />
 </form>
 </p>
 </div>
@@ -156,7 +156,7 @@ OpenID access to the account using the local MiG OpenID server.
             
         html += """
 <p>
-When you click the Sign Up with OpenID button you will be taken to a login
+When you click the Sign Up with Login button you will be taken to a login
 page where you need to enter your credentials and accept that your identity is
 used for login with this site as well.
 </p>
@@ -179,7 +179,7 @@ You can sign up for an account with an associated x509 user certificate here.
 </p>
 <div class='form_container'>
 <form method='get' action='%(migcert_url)s'>
-<input id='reqcert_button' type='submit' value='Sign Up for a User Certificate' />
+<input id='reqcert_button' type='submit' value='Sign Up for a New User Certificate' />
 </form>
 </div>
 """
