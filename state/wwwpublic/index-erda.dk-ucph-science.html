@@ -44,8 +44,8 @@ ERDA
     }
     function signup(user) {
         if (user == "ucph") {
-            /* TODO: switch to direct OpenID signup? */
-            window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank');
+            window.open('https://sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
+                        '_blank');
         } else if (user == "cert") {
             window.open('https://sid.erda.dk/cgi-sid/signup.py?show=extcert',
                         '_blank');
@@ -128,8 +128,11 @@ University of Copenhagen - Electronic Research Data Archive
 <div class="staticpage centertext signupfield">
 <h2 class="staticpage">New to ERDA?</h2>
 <p>If you haven't used ERDA before you need to first</p>
-<input class="signupbutton" type="button" value="sign up"
-       onClick="signup('ucph');" />
+<form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+<input class="signupbutton" type="submit" value="sign up" />
 <p><!--to get a user account. --></p> 
 </div>
 <div class="staticpage centertext loginfield">
@@ -279,8 +282,11 @@ available from here.
 <div class="staticpage centertext signupfield">
 <h2 class="staticpage">Ny på ERDA?</h2>
 <p>Hvis ikke du har brugt ERDA før, skal du først igennem</p>
-<input class="signupbutton" type="button" value="tilmelding"
-       onClick="signup('ucph');" />
+<form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+<input class="signupbutton" type="submit" value="tilmelding" />
 <p><!--  for at få en brugerkonto. --></p> 
 </div>
 <div class="staticpage centertext loginfield">
