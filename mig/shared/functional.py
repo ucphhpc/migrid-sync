@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # functional - functionality backend helpers
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -81,10 +81,11 @@ def validate_input(
     ):
     """A wrapper used by most back end functionality"""
 
-    # always allow output_format and underscore cache-prevention dummy, we
-    # don't want to use unnecessary lines in all scripts to specify this
+    # always allow output_format, _crsf and underscore cache-prevention dummy,
+    # we don't want to use unnecessary lines in all scripts to specify this
 
     defaults['output_format'] = ['allow_me']
+    defaults['_csrf'] = ['allow_me']
     defaults['_'] = ['allow_me']
     if prefilter_map:
         prefilter_input(user_arguments_dict, prefilter_map)

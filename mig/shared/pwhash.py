@@ -123,3 +123,16 @@ def check_digest(realm, username, password, digest, salt, digest_cache=None):
         digest_cache[creds_hash] = digest
         # print "cached digest: %s" % digest_cache.get(creds_hash, None)
     return match 
+
+def make_csrf_token(configuration, method, operation, client_id, limit=None):
+    """Generate a Cross-Site Request Forgery (CSRF) token to help verify the
+    authenticity of user requests. The optional limit argument can be used to
+    e.g. put a timestamp into the mix, so that the token automatically expires. 
+    """
+    salt = configuration.site_digest_salt
+    merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
+    configuration.logger.debug("CSRF for %s" % merged)
+    xor_id = "%s" % (int(salt, 16) ^ int(b16encode(merged), 16))
+    token = hashlib.sha256(xor_id).hexdigest()
+    return token
+

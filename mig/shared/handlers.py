@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# handlers - [insert a few words of module description on this line]
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# handlers - back.end handler helpers
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,12 +34,65 @@ import urllib
 
 from shared.base import client_id_dir
 from shared.findtype import is_user, is_server
+from shared.pwhash import make_csrf_token
 
+def correct_handler(name, environ=None):
+    """Verify that the handler name matches handler method using the provided
+    environ. Fall back to os.environ if environ is left to None.
+    """
 
-def correct_handler(name):
-    """Verify that the handler name matches handler method"""
+    if environ is None:
+        environ = os.environ
+    return environ.get('REQUEST_METHOD', 'UNSET').upper() == name.upper()
 
-    return os.getenv('REQUEST_METHOD') == name
+def get_csrf_limit(configuration, environ=None):
+    """Create a suitable limit argument for make_csrf_token. We just use None
+    for now to disable limit. CSRF token is already impossible to predict
+    without access to server salt or previous client session.
+    We could add a limit to get forward-secrecy and prevent replay attacks.
+    """
+    # TODO: add time limit for full forward-secrecy?
+    limit = None
+    return limit
+
+def csrf_needed(configuration, environ=None):
+    """Detect if client is a browser so that CSRF should be enabled or e.g. a 
+    command line client like cURL or XMLRPC where it doesn't make sense.
+    """
+
+    if environ is None:
+        environ = os.environ
+    agent = environ.get('HTTP_USER_AGENT', 'UNKNOWN')
+    if agent.startswith('curl'):
+        return False
+    # TODO: add XMLRPC detection here
+    else:
+        return True
+
+def safe_handler(configuration, method, operation, client_id, limit,
+                 accepted_dict, environ=None):
+    """Verify that the method is correct for operation and that the csrf_token
+    from accepted_dict fits operation from client_id with salt from
+    configuration and limit from back-end handler.
+    The limit argument can be used to e.g. limit the validity of a csrf token
+    to a certain time-frame.
+    """
+    if not correct_handler(method, environ):
+        return False
+    # NOTE: CSRF checks are automatically disabled for e.g. cURL clients here
+    elif not csrf_needed(configuration, environ):
+        return True
+    csrf_token = accepted_dict.get('_csrf', [''])[-1]
+    csrf_required = make_csrf_token(configuration, method, operation,
+                                    client_id, limit)
+    configuration.logger.debug("CSRF check: %s vs %s" % (csrf_required,
+                                                         csrf_token))
+    if csrf_required != csrf_token:
+        configuration.logger.warning("CSRF check failed: %s vs %s" % \
+                                     (csrf_required, csrf_token))
+        return False
+    else:
+        return True
 
 
 def get_path():

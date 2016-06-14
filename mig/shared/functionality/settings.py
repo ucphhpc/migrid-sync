@@ -36,6 +36,7 @@ from shared.defaults import any_vgrid, default_mrsl_filename, \
      seafile_ro_dirname
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, console_log_javascript
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
@@ -201,14 +202,22 @@ $(document).ready(function() {
                                'No valid topics!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    method = 'post'
+    limit = get_csrf_limit(configuration)
+    fill_helpers = {'method': method, 'site': configuration.short_title}
     if 'general' in topics:
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = \
              '''
         <div id="settings">
-        <form method="post" action="settingsaction.py">
+        <form method="%(method)s" action="%(target_op)s.py">
+        <input type="hidden" name="_csrf" value="%(csrf_token)s" />
         <table class="settings fixedlayout">
         <tr class="title"><td class="centertext">
-        Select your %s settings
+        Select your %(site)s settings
         </td></tr>
         <tr><td>
         </td></tr>
@@ -220,7 +229,7 @@ $(document).ready(function() {
         </td></tr>
         <tr><td>
         </td></tr>
-        ''' % configuration.short_title
+        '''
         settings_entries = get_settings_specs()
         for (keyword, val) in settings_entries:
             if 'SUBMITUI' == keyword and \
@@ -310,25 +319,29 @@ $(document).ready(function() {
             </td></tr>
             """ % entry
 
-        html += \
-            """
+        html += """
         <tr><td>
-        <input type="submit" value="Save General Settings" />
+        <input type='submit' value='Save General Settings' />
         </td></tr>
         </table>
         </form>
         </div>
         """
-        output_objects.append({'object_type': 'html_form', 'text': html})
+        output_objects.append({'object_type': 'html_form', 'text':
+                               html % fill_helpers})
 
     if 'job' in topics:
         mrsl_path = os.path.join(base_dir, default_mrsl_filename)
 
         default_mrsl = get_default_mrsl(mrsl_path)
-        html = \
-        '''
+        target_op = 'editfile'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
 <div id="defaultmrsl">
-<form method="post" action="editfile.py">
+<form method="%(method)s" action="%(target_op)s.py">
+<input type="hidden" name="_csrf" value="%(csrf_token)s" />
 <table class="defaultjob fixedlayout">
 <tr class="title"><td class="centertext">
 Default job on submit page
@@ -363,22 +376,26 @@ your submit job page.
 </form>
 </div>
 '''
-        html = html % {
+        fill_helpers.update({
             'default_mrsl': default_mrsl,
             'mrsl_template': default_mrsl_filename,
-            'site': configuration.short_title,
             'keyword': keyword
-            }
-
-        output_objects.append({'object_type': 'html_form', 'text': html})
+            })
+        output_objects.append({'object_type': 'html_form', 'text':
+                               html % fill_helpers})
 
     if 'style' in topics:
         css_path = os.path.join(base_dir, default_css_filename)
         default_css = get_default_css(css_path)
+        target_op = 'editfile'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = \
              '''
 <div id="defaultcss">
-<form method="post" action="editfile.py">
+<form method="%(method)s" action="%(target_op)s.py">
+<input type="hidden" name="_csrf" value="%(csrf_token)s" />
 <table class="defaultstyle fixedlayout">
 <tr class="title"><td class="centertext">
 Default CSS (style) for all pages
@@ -425,14 +442,13 @@ here.
 </form>
 </div>
 '''
-        html = html % {
+        fill_helpers.update({
             'default_css': default_css,
             'css_template': default_css_filename,
-            'site': configuration.short_title,
             'keyword': keyword
-            }
-
-        output_objects.append({'object_type': 'html_form', 'text': html})
+            })
+        output_objects.append({'object_type': 'html_form', 'text':
+                               html % fill_helpers})
 
     if 'widgets' in topics:
 
@@ -488,9 +504,14 @@ disabling of widgets while experimenting here.</div>
 <tr><td>
 '''
             
-        html = \
-             '''<div id="widgets">
-<form method="post" action="settingsaction.py">
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
+<div id="widgets">
+<form method="%(method)s" action="%(target_op)s.py">
+<input type="hidden" name="_csrf" value="%(csrf_token)s" />
 <table class="widgets fixedlayout">
 <tr class="title"><td class="centertext">
 Default user defined widgets for all pages
@@ -498,11 +519,11 @@ Default user defined widgets for all pages
 <tr><td>
 </td></tr>
 <tr><td>
-If you want to customize the look and feel of the %s web interfaces you can
-add your own widgets here. If you leave the widgets blank you will just get
-the default empty widget spaces.<br />
-''' % configuration.short_title
-
+If you want to customize the look and feel of the %(site)s web interfaces you
+can add your own widgets here. If you leave the widgets blank you will just
+get the default empty widget spaces.<br />
+'''
+        
         widgets_entries = get_widgets_specs()
         widgets_html = ''
         for (keyword, val) in widgets_entries:
@@ -561,14 +582,14 @@ Widgets are disabled on your <em>General</em> settings page. Please enable
 them there first if you want to customize your grid pages.
 </div>
 '''            
-        html += \
-             '''
+        html += '''
 %s
 </table>
 </form>
 </div>
 ''' % edit_widgets
-        output_objects.append({'object_type': 'html_form', 'text': html})
+        output_objects.append({'object_type': 'html_form', 'text':
+                               html % fill_helpers})
 
     if 'profile' in topics:
 
@@ -595,10 +616,14 @@ them there first if you want to customize your grid pages.
                    and os.path.getsize(real_path) < profile_img_max_kb*1024:
                 images.append(path)
         configuration.public_image = images
-        html = \
-             '''
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
 <div id="profile">
-<form method="post" action="settingsaction.py">
+<form method="%(method)s" action="%(target_op)s.py">
+<input type="hidden" name="_csrf" value="%(csrf_token)s" />
 <table class="profile fixedlayout">
 <tr class="title"><td class="centertext">
 Public profile information visible to other users.
@@ -691,7 +716,8 @@ so you may have to avoid blank lines in your text below.
 </form>
 </div>
 '''
-        output_objects.append({'object_type': 'html_form', 'text': html})
+        output_objects.append({'object_type': 'html_form', 'text':
+                               html % fill_helpers})
 
     if 'sftp' in topics:
 
@@ -712,10 +738,14 @@ so you may have to avoid blank lines in your text below.
             create_alias_link(username, client_id, configuration.user_home)
         sftp_server = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
-        html = \
-        '''
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
 <div id="sshaccess">
-<form method="post" action="settingsaction.py">
+<form method="%(method)s" action="%(target_op)s.py">
+<input type="hidden" name="_csrf" value="%(csrf_token)s" />
 <table class="sshsettings fixedlayout">
 <tr class="title"><td class="centertext">
 SFTP access to your %(site)s account
@@ -834,19 +864,19 @@ value="%(default_authpassword)s" />
 </form>
 </div>
 '''
-        html = html % {
+        fill_helpers.update({
             'default_authkeys': default_authkeys,
             'default_authpassword': default_authpassword,
-            'site': configuration.short_title,
             'keyword_keys': keyword_keys,
             'keyword_password': keyword_password,
             'username': username,
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
             'auth_methods': ' / '.join(configuration.user_sftp_auth).title(),
-            }
+            })
 
-        output_objects.append({'object_type': 'html_form', 'text': html})
+        output_objects.append({'object_type': 'html_form', 'text':
+        html % fill_helpers})
 
     if 'webdavs' in topics:
 
@@ -867,10 +897,14 @@ value="%(default_authpassword)s" />
             create_alias_link(username, client_id, configuration.user_home)
         davs_server = configuration.user_davs_show_address
         davs_port = configuration.user_davs_show_port
-        html = \
-        '''
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
 <div id="davsaccess">
-<form method="post" action="settingsaction.py">
+<form method="%(method)s" action="%(target_op)s.py">
+<input type="hidden" name="_csrf" value="%(csrf_token)s" />
 <table class="davssettings fixedlayout">
 <tr class="title"><td class="centertext">
 WebDAVS access to your %(site)s account
@@ -977,19 +1011,19 @@ value="%(default_authpassword)s" />
 </form>
 </div>
 '''
-        html = html % {
+        fill_helpers.update({
             'default_authkeys': default_authkeys,
             'default_authpassword': default_authpassword,
-            'site': configuration.short_title,
             'keyword_keys': keyword_keys,
             'keyword_password': keyword_password,
             'username': username,
             'davs_server': davs_server,
             'davs_port': davs_port,
             'auth_methods': ' / '.join(configuration.user_davs_auth).title(),
-            }
+            })
 
-        output_objects.append({'object_type': 'html_form', 'text': html})
+        output_objects.append({'object_type': 'html_form', 'text':
+        html % fill_helpers})
 
     if 'ftps' in topics:
 
@@ -1010,10 +1044,14 @@ value="%(default_authpassword)s" />
             create_alias_link(username, client_id, configuration.user_home)
         ftps_server = configuration.user_ftps_show_address
         ftps_ctrl_port = configuration.user_ftps_show_ctrl_port
-        html = \
-        '''
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
 <div id="ftpsaccess">
-<form method="post" action="settingsaction.py">
+<form method="%(method)s" action="%(target_op)s.py">
+<input type="hidden" name="_csrf" value="%(csrf_token)s" />
 <table class="ftpssettings fixedlayout">
 <tr class="title"><td class="centertext">
 FTPS access to your %(site)s account
@@ -1134,19 +1172,18 @@ value="%(default_authpassword)s" />
 </form>
 </div>
 '''
-        html = html % {
-            'default_authkeys': default_authkeys,
-            'default_authpassword': default_authpassword,
-            'site': configuration.short_title,
-            'keyword_keys': keyword_keys,
-            'keyword_password': keyword_password,
-            'username': username,
-            'ftps_server': ftps_server,
-            'ftps_ctrl_port': ftps_ctrl_port,
-            'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
-            }
-
-        output_objects.append({'object_type': 'html_form', 'text': html})
+        fill_helpers.update({
+        'default_authkeys': default_authkeys,
+        'default_authpassword': default_authpassword,
+        'keyword_keys': keyword_keys,
+        'keyword_password': keyword_password,
+        'username': username,
+        'ftps_server': ftps_server,
+        'ftps_ctrl_port': ftps_ctrl_port,
+        'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
+        })
+        output_objects.append({'object_type': 'html_form', 'text':
+        html % fill_helpers})
 
     if 'seafile' in topics:
 
@@ -1166,6 +1203,10 @@ value="%(default_authpassword)s" />
             username = extract_field(client_id, configuration.user_seafile_alias)
             create_alias_link(username, client_id, configuration.user_home)
         
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, method, target_op,
+                                     client_id, limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <script type="text/javascript" >
 /* Helper function to open Seafile login window and fill username. Gives up
@@ -1302,7 +1343,8 @@ and sharing solution.<br/>
 </fieldset>
 </td></tr>
 <tr><td>
-<form method="post" action="settingsaction.py">
+<form method="%(method)s" action="%(target_op)s.py">
+<input type="hidden" name="_csrf" value="%(csrf_token)s" />
 <input type="hidden" name="topic" value="seafile" />
 <fieldset>
 <legend>%(site)s Seafile Integration</legend>
@@ -1341,9 +1383,8 @@ value="%(default_authpassword)s" />
 </script>
 </div>
 '''
-        html = html % {
+        fill_helpers.update({
             'default_authpassword': default_authpassword,
-            'site': configuration.short_title,
             'keyword_password': keyword_password,
             'username': username,
             'seafile_ro_dirname': seafile_ro_dirname,
@@ -1353,9 +1394,9 @@ value="%(default_authpassword)s" />
             'auth_methods': ' / '.join(configuration.user_seafile_auth).title(),
             'ro': 'readonly=readonly',
             'size': 'size=50',
-            }
-
-        output_objects.append({'object_type': 'html_form', 'text': html})
+            })
+        output_objects.append({'object_type': 'html_form', 'text':
+        html % fill_helpers})
 
     # if ARC-enabled server:
     if 'arc' in topics:
