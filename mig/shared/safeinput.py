@@ -1120,6 +1120,7 @@ def guess_type(name):
             'openid.sreg.association',
             'changes',
             'miguser',
+            'version',
             ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', 'run_as'):
