@@ -80,7 +80,7 @@ function selectedFilesAction() {
        document.fileform.action = 'rmdir.py';
     }
     else if (document.pressed == 'stat') {
-       document.fileform.action = 'stat.py';
+       document.fileform.action = 'statpath.py';
     }
     else if (document.pressed == 'submit') {
        document.fileform.action = 'submit.py';

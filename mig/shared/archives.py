@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # archives - zip/tar packing and unpacking helpers
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,7 @@ import os
 import zipfile
 import tarfile
 
-from shared.base import client_id_dir, invisible_path
+from shared.base import client_id_dir, invisible_path, force_utf8
 from shared.fileio import write_file
 from shared.job import new_job
 from shared.safeinput import valid_user_path_name
@@ -90,13 +90,14 @@ def handle_package_upload(
         logger.info("unpack entries of %s to %s" % \
                                   (real_src, real_dst))
         for zip_entry in zip_object.infolist():
-            msg += 'Extracting: %s . ' % zip_entry.filename
+            entry_filename = force_utf8(zip_entry.filename)
+            msg += 'Extracting: %s . ' % entry_filename
 
             # write zip_entry to disk
 
-            local_zip_entry_name = os.path.join(real_dst, zip_entry.filename)
+            local_zip_entry_name = os.path.join(real_dst, entry_filename)
             valid_status, valid_err = valid_user_path_name(
-                zip_entry.filename, local_zip_entry_name, base_dir)
+                entry_filename, local_zip_entry_name, base_dir)
             if not valid_status:
                 status = False
                 msg += "Filename validation error: %s! " % valid_err
@@ -107,7 +108,7 @@ def handle_package_upload(
             zip_entry_dir = os.path.dirname(local_zip_entry_name)
 
             if not os.path.isdir(zip_entry_dir):
-                msg += 'Creating dir %s . ' % zip_entry.filename
+                msg += 'Creating dir %s . ' % entry_filename
                 try:
                     os.makedirs(zip_entry_dir, 0775)
                 except Exception, exc:
@@ -129,13 +130,14 @@ def handle_package_upload(
             # were supposed to link to: This is inconsistent but safe :-S
 
             # write file - symbolic links are written as files! (good for
-            # security)
+            # security).
+            # NB: Needs to use undecoded filename here
 
             if not write_file(zip_object.read(zip_entry.filename),
                               local_zip_entry_name,
                               logger) and \
                               not os.path.exists(local_zip_entry_name):
-                msg += 'Error unpacking %s to disk! ' % zip_entry.filename
+                msg += 'Error unpacking %s to disk! ' % entry_filename
                 status = False
                 continue
 
@@ -147,7 +149,7 @@ def handle_package_upload(
                 logger.warning("unpack may have failed: %s" % exc)
                 msg += \
                     'File %s unpacked, but could not get file size %s! '\
-                     % (zip_entry.filename, exc)
+                     % (entry_filename, exc)
                 status = False
                 continue
 
@@ -198,14 +200,15 @@ def handle_package_upload(
         logger.info("unpack entries of %s to %s" % \
                                   (real_src, real_dst))
         for tar_entry in tar_object:
-            msg += 'Extracting: %s . ' % tar_entry.name
+            entry_filename = force_utf8(tar_entry.name)
+            msg += 'Extracting: %s . ' % entry_filename
 
             # write tar_entry to disk
 
-            local_tar_entry_name = os.path.join(real_dst, tar_entry.name)
+            local_tar_entry_name = os.path.join(real_dst, entry_filename)
 
             valid_status, valid_err = valid_user_path_name(
-                tar_entry.name, local_tar_entry_name, base_dir)
+                entry_filename, local_tar_entry_name, base_dir)
             if not valid_status:
                 status = False
                 msg += "Filename validation error: %s! " % valid_err
@@ -224,7 +227,7 @@ def handle_package_upload(
 
             if not os.path.isdir(tar_entry_dir):
                 logger.info("make tar parent dir: %s" % tar_entry_dir)
-                msg += 'Creating dir %s . ' % tar_entry.name
+                msg += 'Creating dir %s . ' % entry_filename
                 try:
                     os.makedirs(tar_entry_dir, 0775)
                 except Exception, exc:
@@ -245,16 +248,17 @@ def handle_package_upload(
                 # access
 
                 msg += 'Skipping %s: not a regular file or directory! ' % \
-                       tar_entry.name
+                       entry_filename
                 status = False
                 continue
 
             # write file!
+            # NB: Need to user undecoded filename here
 
             if not write_file(tar_file_content.extractfile(tar_entry).read(),
                               local_tar_entry_name,
                               logger):
-                msg += 'Error unpacking file %s to disk! ' % tar_entry.name
+                msg += 'Error unpacking file %s to disk! ' % entry_filename
                 status = False
                 continue
 
@@ -266,7 +270,7 @@ def handle_package_upload(
                 logger.warning("file save may have failed: %s" % exc)
                 msg += \
                     'File %s unpacked, but could not get file size %s! ' % \
-                    (tar_entry.name, exc)
+                    (entry_filename, exc)
                 status = False
                 continue
 
