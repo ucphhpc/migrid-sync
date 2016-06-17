@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cat - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -66,7 +66,7 @@ def main(client_id, user_arguments_dict):
 
     flags = ''.join(accepted['flags'])
     patterns = accepted['path']
-    dst = accepted['dst'][-1]
+    dst = accepted['dst'][-1].lstrip(os.sep)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name

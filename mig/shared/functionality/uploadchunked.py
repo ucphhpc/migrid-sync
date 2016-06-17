@@ -188,7 +188,7 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     action = accepted['action'][-1]
-    current_dir = os.path.normpath(accepted['current_dir'][-1])
+    current_dir = os.path.normpath(accepted['current_dir'][-1].lstrip(os.sep))
     flags = ''.join(accepted['flags'])
     share_id = accepted['share_id'][-1]
     output_format = accepted['output_format'][-1]

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # pack - Pack one or more files/dirs into a zip/tar archive
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -103,9 +103,9 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     flags = ''.join(accepted['flags'])
-    dst = accepted['dst'][-1]
+    dst = accepted['dst'][-1].lstrip(os.sep)
     pattern_list = accepted['src']
-    current_dir = accepted['current_dir'][-1]
+    current_dir = accepted['current_dir'][-1].lstrip(os.sep)
 
     # All paths are relative to current_dir
     
@@ -148,7 +148,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                            : "working in %s" % current_dir})
 
-    real_dest = os.path.join(base_dir, dst.lstrip(os.sep))
+    real_dest = os.path.join(base_dir, dst)
 
     # Don't use real_path in output as it may expose underlying
     # fs layout.
