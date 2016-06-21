@@ -38,7 +38,7 @@ basis.
 
 import cgi
 from string import letters, digits, printable
-from unicodedata import category, name as unicode_name
+from unicodedata import category, normalize, name as unicode_name
 
 from shared.base import force_unicode, force_utf8
 from shared.defaults import src_dst_sep
@@ -148,6 +148,7 @@ def __valid_contents(
     min_length=0,
     max_length=-1,
     include_accented=NO_ACCENTED,
+    unicode_normalize=False,
     ):
     """This is a general function to verify that the supplied contents string
     only contains characters from the supplied valid_chars string. Both input
@@ -162,9 +163,17 @@ def __valid_contents(
     characters considered unicode word letters before giving up. This adds a
     wider acceptance of exotic accented characters without letting through any
     control characters.
+    The optional unicode_normalize argument is used to first force any
+    decomposed unicode characters to the Normal Form Composed (NFC) version.
+    This is typically useful when certain language setups in e.g. OS X write
+    the Danish letter 'å' as an 'a' followed by the 'combining-dot' code. For
+    more background information please refer to something like:
+    http://en.wikipedia.org/wiki/Unicode_equivalence
     """
 
     contents = force_unicode(contents)
+    if unicode_normalize:
+        contents = normalize('NFC', contents)
     valid_chars = force_unicode(valid_chars)
     accented_chars = force_unicode(VALID_ACCENTED)
     if len(contents) < min_length:
@@ -183,7 +192,7 @@ def __valid_contents(
 
 
 def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED,
-                      illegal_handler=None):
+                      illegal_handler=None, unicode_normalize=False):
     """This is a general function to filter out any illegal characters
     from the supplied contents.
     Please see the documentation for __valid_contents for information about
@@ -191,9 +200,13 @@ def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED,
     The optional illegal_handler option can be used to replace any illegal
     characters with the output of the call illegal_handler(char). The default
     None value results in simply skipping illegal characters.
+    Please refer to __valid_contents doc-string for an explanation of the
+    unicode_normalize argument.
     """
 
     contents = force_unicode(contents)
+    if unicode_normalize:
+        contents = normalize('NFC', contents)
     valid_chars = force_unicode(valid_chars)
     accented_chars = force_unicode(VALID_ACCENTED)
     result = ''
@@ -315,7 +328,8 @@ def valid_path(
     valid"""
 
     valid_chars = VALID_PATH_CHARACTERS + extra_chars
-    __valid_contents(path, valid_chars, min_length, max_length, ANY_ACCENTED)
+    __valid_contents(path, valid_chars, min_length, max_length, ANY_ACCENTED,
+                     unicode_normalize=True)
 
 
 def valid_safe_path(
@@ -704,7 +718,8 @@ def filter_path(contents):
     """Filter supplied contents to only contain valid path characters"""
 
     # TODO: consider switching to illegal_handler=__wrap_unicode_val here
-    return __filter_contents(contents, VALID_PATH_CHARACTERS, ANY_ACCENTED)
+    return __filter_contents(contents, VALID_PATH_CHARACTERS, ANY_ACCENTED,
+                             unicode_normalize=True)
 
 
 def filter_safe_path(contents):
