@@ -33,8 +33,8 @@ import time
 import fcntl
 
 from shared.base import sandbox_resource, client_id_dir
-from shared.conf import get_all_exe_vgrids, get_resource_fields, \
-     get_resource_configuration
+from shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
+     get_resource_fields, get_resource_configuration
 from shared.defaults import settings_filename, profile_filename, default_vgrid
 from shared.modified import home_paths, mark_resource_modified, \
      mark_vgrid_modified, check_users_modified, check_resources_modified, \
@@ -49,9 +49,13 @@ from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
 
 MAP_SECTIONS = (USERS, RESOURCES, VGRIDS) = ("__users__", "__resources__",
                                              "__vgrids__")
-RES_SPECIALS = (ALLOW, ASSIGN, USERID, RESID, OWNERS, MEMBERS, CONF, MODTIME) = \
-               ('__allow__', '__assign__', '__userid__', '__resid__',
-                '__owners__', '__members__', '__conf__', '__modtime__')
+RES_SPECIALS = (ALLOW, ALLOWEXE, ALLOWSTORE, ASSIGN, ASSIGNEXE, ASSIGNSTORE,
+                USERID, RESID, OWNERS, MEMBERS, CONF, MODTIME, EXEVGRIDS,
+                STOREVGRIDS) = \
+                ('__allow__', '__allowexe__', '__allowstore__', '__assign__',
+                 '__assignexe__', '__assignstore__', '__userid__', '__resid__',
+                 '__owners__', '__members__', '__conf__', '__modtime__',
+                 '__exevgrids__', '__storevgrids__')
 # VGrid-specific settings
 SETTINGS = '__settings__'
 
@@ -221,6 +225,7 @@ def refresh_resource_map(configuration):
             (status, res_conf) = get_resource_configuration(
                 configuration.resource_home, res, configuration.logger)
             if not status:
+                configuration.logger.warning("could not load conf for %s" % res)
                 continue
             resource_map[res][CONF] = res_conf
             public_id = res
@@ -344,15 +349,30 @@ def refresh_vgrid_map(configuration):
         if not os.path.isfile(conf_path):
             continue
         if os.path.getmtime(conf_path) >= map_stamp:
-            vgrid_map[RESOURCES][res] = get_all_exe_vgrids(res)
-            assigned = []
-            all_exes = [i for i in vgrid_map[RESOURCES][res].keys() \
-                        if not i in RES_SPECIALS]
-            for exe in all_exes:
-                exe_vgrids = vgrid_map[RESOURCES][res][exe]
-                assigned += [i for i in exe_vgrids if i and i not in assigned]
-            vgrid_map[RESOURCES][res][ASSIGN] = assigned
+            # Read maps of exe name to vgrid list and of store name to vgrid
+            # list. Save them separately to be able to distinguish them in
+            # exe / store access and visibility
+            store_vgrids = get_all_store_vgrids(res)
+            exe_vgrids = get_all_exe_vgrids(res)
+            # Preserve top level exes for backward compatibility until we have
+            # switched to new EXEVGRIDS and STOREVGRIDS sub dicts everywhere.
+            # NOTE: we copy exe_vgrids values here to avoid polluting it below!
+            vgrid_map[RESOURCES][res] = {}
+            vgrid_map[RESOURCES][res].update(exe_vgrids)
+            vgrid_map[RESOURCES][res][EXEVGRIDS] = exe_vgrids
+            vgrid_map[RESOURCES][res][STOREVGRIDS] = store_vgrids
+            assignexe, assignstore = [], []
+            for (res_unit, unit_vgrids) in exe_vgrids.items():
+                assignexe += [i for i in unit_vgrids if i and i not in assignexe]
+            for (res_unit, unit_vgrids) in store_vgrids.items():
+                assignstore += [i for i in unit_vgrids if i and i not in assignstore]
+            # Preserve these two unspecific legacy fields for now
+            vgrid_map[RESOURCES][res][ASSIGN] = assignexe
             vgrid_map[RESOURCES][res][ALLOW] = vgrid_map[RESOURCES][res].get(ALLOW, [])
+            vgrid_map[RESOURCES][res][ASSIGNEXE] = assignexe
+            vgrid_map[RESOURCES][res][ASSIGNSTORE] = assignstore
+            vgrid_map[RESOURCES][res][ALLOWEXE] = vgrid_map[RESOURCES][res].get(ALLOWEXE, [])
+            vgrid_map[RESOURCES][res][ALLOWSTORE] = vgrid_map[RESOURCES][res].get(ALLOWSTORE, [])
             public_id = res
             anon_val = get_resource_fields(configuration.resource_home, res,
                                            ['ANONYMOUS'], configuration.logger)
@@ -389,11 +409,23 @@ def refresh_vgrid_map(configuration):
                 update_res.append(res)
     # configuration.logger.info("update res assign vgrid")
     for res in [i for i in update_res if i not in missing_res]:
-        allow = []
-        for vgrid in vgrid_map[RESOURCES][res][ASSIGN]:
+        allowexe, allowstore = [], []
+        res_data = vgrid_map[RESOURCES][res]
+        # Gracefully update any legacy values
+        res_data[ALLOWEXE] = res_data.get(ALLOWEXE, res_data[ALLOW])
+        res_data[ALLOWSTORE] = res_data.get(ALLOWSTORE, [])
+        assignexe = res_data[ASSIGNEXE]
+        assignstore = res_data[ASSIGNSTORE]
+        for vgrid in assignexe:
             if vgrid_allowed(res, vgrid_map[VGRIDS][vgrid][RESOURCES]):
-                allow.append(vgrid)
-            vgrid_map[RESOURCES][res][ALLOW] = allow
+                allowexe.append(vgrid)
+            # Preserve legacy field for now
+            vgrid_map[RESOURCES][res][ALLOW] = allowexe
+            vgrid_map[RESOURCES][res][ALLOWEXE] = allowexe
+        for vgrid in assignstore:
+            if vgrid_allowed(res, vgrid_map[VGRIDS][vgrid][RESOURCES]):
+                allowstore.append(vgrid)
+            vgrid_map[RESOURCES][res][ALLOWSTORE] = allowstore
 
     configuration.logger.info("done updating vgrid res participations")
 
@@ -590,8 +622,10 @@ def user_owned_res_confs(configuration, client_id):
     return owned
 
 def user_allowed_res_confs(configuration, client_id):
-    """Extract a map of resources that client_id can really submit to.
-    There is no guarantee that they will ever accept any further jobs.
+    """Extract a map of resources that client_id can really submit to or store
+    data on.
+    There is no guarantee that they will ever be online to accept any further
+    jobs or host data.
 
     Returns a map from resource IDs to resource conf dictionaries.
 
@@ -623,8 +657,13 @@ def user_allowed_res_confs(configuration, client_id):
 
     # Now select only the ones that actually still are allowed for that vgrid
 
-    for (res, all_exes) in vgrid_map_res.items():
-        shared = [i for i in all_exes[ALLOW] if i in allowed_vgrids]
+    for (res, res_data) in vgrid_map_res.items():
+        # Gracefully update any legacy values
+        res_data[ALLOWEXE] = res_data.get(ALLOWEXE, res_data[ALLOW])
+        res_data[ALLOWSTORE] = res_data.get(ALLOWSTORE, [])
+        allowexe = res_data[ALLOWEXE]
+        allowstore = res_data[ALLOWSTORE]
+        shared = [i for i in allowexe + allowstore if i in allowed_vgrids]
         if not shared:
             continue
         allowed[anon_map[res]] = resource_map.get(res, {CONF: {}})[CONF]
@@ -646,7 +685,7 @@ def user_visible_res_confs(configuration, client_id):
     return visible
 
 def user_owned_res_exes(configuration, client_id):
-    """Extract a map of resources that client_id owns.
+    """Extract a map of resource exes that client_id owns.
 
     Returns a map from resource IDs to lists of exe node names.
 
@@ -658,17 +697,22 @@ def user_owned_res_exes(configuration, client_id):
         owned[res_id] = [exe["name"] for exe in res["EXECONFIG"]]
     return owned
 
-def user_allowed_res_exes(configuration, client_id):
-    """Extract a map of resources that client_id can really submit to.
-    There is no guarantee that they will ever accept any further jobs.
+def user_owned_res_stores(configuration, client_id):
+    """Extract a map of resources that client_id owns.
 
-    Returns a map from resource IDs to lists of exe node names.
+    Returns a map from resource IDs to lists of store node names.
 
     Resource IDs are anonymized unless explicitly configured otherwise.
-    
-    Please note that vgrid participation is a mutual agreement between vgrid
-    owners and resource owners, so that a resource only truly participates
-    in a vgrid if the vgrid *and* resource owners configured it so.
+    """
+    owned = {}
+    owned_confs = user_owned_res_confs(configuration, client_id)
+    for (res_id, res) in owned_confs.items():
+        owned[res_id] = [store["name"] for store in res["STORECONFIG"]]
+    return owned
+
+def user_allowed_res_units(configuration, client_id, unit_type):
+    """Find resource units of unit_type exe or store that client_id is allowed
+    to use.
     """
     allowed = {}
 
@@ -690,16 +734,62 @@ def user_allowed_res_exes(configuration, client_id):
 
     # Now select only the ones that actually still are allowed for that vgrid
 
-    for (res, all_exes) in vgrid_map_res.items():
-        shared = [i for i in all_exes[ALLOW] if i in allowed_vgrids]
+    for (res, res_data) in vgrid_map_res.items():
+        # Gracefully update any legacy values
+        res_data[EXEVGRIDS] = res_data.get(EXEVGRIDS,
+                                           dict([(i, j) for (i, j) in \
+                                                 res_data.items() if i not in \
+                                                 RES_SPECIALS]))
+        res_data[STOREVGRIDS] = res_data.get(STOREVGRIDS, {})
+        res_data[ALLOWEXE] = res_data.get(ALLOWEXE, res_data[ALLOW])
+        res_data[ALLOWSTORE] = res_data.get(ALLOWSTORE, [])
+        if unit_type == "exe":
+            allowunit = res_data[ALLOWEXE]
+            assignvgrid = res_data[EXEVGRIDS]
+        elif unit_type == "store":
+            allowunit = res_data[ALLOWSTORE]
+            assignvgrid = res_data[STOREVGRIDS]
+        else:
+            configuration.logger.error("unexpected unit_type: %s" % unit_type)
+            return allowed
+        shared = [i for i in allowunit if i in allowed_vgrids]
         if not shared:
             continue
         match = []
-        for exe in [i for i in all_exes.keys() if i not in RES_SPECIALS]:
-            if [i for i in shared if i in all_exes[exe]]:
-                match.append(exe)
+        for (res_unit, unit_vgrids) in assignvgrid.items():
+            if [i for i in shared if i in unit_vgrids]:
+                match.append(res_unit)
         allowed[anon_map[res]] = match
     return allowed
+
+def user_allowed_res_exes(configuration, client_id):
+    """Extract a map of resources that client_id can really submit to.
+    There is no guarantee that they will ever accept any further jobs.
+
+    Returns a map from resource IDs to lists of exe node names.
+
+    Resource IDs are anonymized unless explicitly configured otherwise.
+    
+    Please note that vgrid participation is a mutual agreement between vgrid
+    owners and resource owners, so that a resource only truly participates
+    in a vgrid if the vgrid *and* resource owners configured it so.
+    """
+    return user_allowed_res_units(configuration, client_id, "exe")
+
+
+def user_allowed_res_stores(configuration, client_id):
+    """Extract a map of resources that client_id can really store data on.
+    There is no guarantee that they will ever be available for storing again.
+
+    Returns a map from resource IDs to lists of store node names.
+
+    Resource IDs are anonymized unless explicitly configured otherwise.
+    
+    Please note that vgrid participation is a mutual agreement between vgrid
+    owners and resource owners, so that a resource only truly participates
+    in a vgrid if the vgrid *and* resource owners configured it so.
+    """
+    return user_allowed_res_units(configuration, client_id, "store")
 
 def user_visible_res_exes(configuration, client_id):
     """Extract a map of resources that client_id owns or can submit jobs to.
@@ -712,6 +802,19 @@ def user_visible_res_exes(configuration, client_id):
     """
     visible = user_allowed_res_exes(configuration, client_id)
     visible.update(user_owned_res_exes(configuration, client_id))
+    return visible
+
+def user_visible_res_stores(configuration, client_id):
+    """Extract a map of resources that client_id owns or can store data on.
+    This is a wrapper combining user_owned_res_stores and
+    user_allowed_res_stores.
+
+    Returns a map from resource IDs to resource store node names.
+    
+    Resource IDs are anonymized unless explicitly configured otherwise.
+    """
+    visible = user_allowed_res_stores(configuration, client_id)
+    visible.update(user_owned_res_stores(configuration, client_id))
     return visible
 
 def user_allowed_user_confs(configuration, client_id):
@@ -800,21 +903,21 @@ if "__main__" == __name__:
         runtime_env = sys.argv[2]
     conf = get_configuration_object()
     res_map = get_resource_map(conf)
-    print "raw resource map: %s" % res_map
+    #print "raw resource map: %s" % res_map
     all_resources = res_map.keys()
     print "raw resource IDs: %s" % ', '.join(all_resources)
     all_anon = [res_map[i][RESID] for i in all_resources]
     print "raw anon names: %s" % ', '.join(all_anon)
     print
     user_map = get_user_map(conf)
-    print "raw user map: %s" % user_map
+    #print "raw user map: %s" % user_map
     all_users = user_map.keys()
     print "raw user IDs: %s" % ', '.join(all_users)
     all_anon = [user_map[i][USERID] for i in all_users]
     print "raw anon names: %s" % ', '.join(all_anon)
     print
     full_map = get_vgrid_map(conf)
-    print "raw vgrid map: %s" % full_map
+    #print "raw vgrid map: %s" % full_map
     all_resources = full_map[RESOURCES].keys()
     print "raw resource IDs: %s" % ', '.join(all_resources)
     all_users = full_map[USERS].keys()
@@ -822,26 +925,31 @@ if "__main__" == __name__:
     all_vgrids = full_map[VGRIDS].keys()
     print "raw vgrid names: %s" % ', '.join(all_vgrids)
     print
-    user_access_exes = user_allowed_res_exes(conf, user_id)
     user_access_confs = user_allowed_res_confs(conf, user_id)
-    print "%s can access: %s" % \
-          (user_id, ', '.join(["%s: %s" % (i, j) for (i, j) \
-                               in user_access_exes.items()]))
-    user_owned_exes = user_owned_res_exes(conf, user_id)
+    user_access_exes = user_allowed_res_exes(conf, user_id)
+    user_access_stores = user_allowed_res_stores(conf, user_id)
+    print "%s can access resources: %s" % \
+          (user_id, ', '.join(user_access_confs.keys()))
+    print "%s can access exes: %s" % \
+          (user_id, ', '.join(user_access_exes.keys()))
+    print "%s can access stores: %s" % \
+          (user_id, ', '.join(user_access_stores.keys()))
     user_owned_confs = user_owned_res_confs(conf, user_id)
+    #user_owned_exes = user_owned_res_exes(conf, user_id)
+    #user_owned_stores = user_owned_res_stores(conf, user_id)
     print "%s owns: %s" % \
-          (user_id, ', '.join(["%s" % i for i in \
-                               user_owned_confs.keys()]))
-    user_visible_exes = user_visible_res_exes(conf, user_id)
+          (user_id, ', '.join(user_owned_confs.keys()))
     user_visible_confs = user_visible_res_confs(conf, user_id)
+    user_visible_exes = user_visible_res_exes(conf, user_id)
+    user_visible_stores = user_visible_res_stores(conf, user_id)
+    print "%s can view resources: %s" % \
+          (user_id, ', '.join([i for i in user_visible_confs.keys()]))
+    #print "full access exe dicts for %s:\n%s\n%s\n%s" % \
+    #      (user_id, user_access_exes, user_owned_exes, user_visible_exes)
+    #print "full access conf dicts for %s:\n%s\n%s\n%s" % \
+    #      (user_id, user_access_confs, user_owned_confs, user_visible_confs)
     user_visible_users = user_visible_user_confs(conf, user_id)
-    print "%s can view: %s" % \
-          (user_id, ', '.join([i for i in user_visible_exes.keys()]))
-    print "full access exe dicts for %s:\n%s\n%s\n%s" % \
-          (user_id, user_access_exes, user_owned_exes, user_visible_exes)
-    print "full access conf dicts for %s:\n%s\n%s\n%s" % \
-          (user_id, user_access_confs, user_owned_confs, user_visible_confs)
-    print "%s can view: %s" % \
+    print "%s can view people: %s" % \
           (user_id, ', '.join([i for i in user_visible_users.keys()]))
     re_resources = resources_using_re(conf, runtime_env)
     print "%s in use on resources: %s" % \

@@ -37,7 +37,7 @@ from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.resource import anon_to_real_res_map
-from shared.vgridaccess import user_visible_res_exes, get_resource_map, \
+from shared.vgridaccess import user_visible_res_confs, get_resource_map, \
      OWNERS, CONF
 
 
@@ -68,7 +68,7 @@ def main(client_id, user_arguments_dict):
 
     show_sandboxes = (accepted['show_sandboxes'][-1] != 'false')
 
-    visible_exes = user_visible_res_exes(configuration, client_id)
+    visible_res_confs = user_visible_res_confs(configuration, client_id)
     res_map = get_resource_map(configuration)
     anon_map = anon_to_real_res_map(configuration.resource_home)
 
@@ -78,7 +78,7 @@ def main(client_id, user_arguments_dict):
     fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE',
               'SANDBOX', 'RUNTIMEENVIRONMENT']
     # Leave the sorting to jquery tablesorter
-    for visible_res_name in visible_exes.keys():
+    for visible_res_name in visible_res_confs.keys():
         unique_resource_name = visible_res_name
         if visible_res_name in anon_map.keys():
             unique_resource_name = anon_map[visible_res_name]
