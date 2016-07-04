@@ -782,6 +782,9 @@ if (jQuery) (function($){
                         activeEntry.addClass("currentSet");
                         enable_editorarea_editor(activeSet)
                     },
+                    /* TODO: error method is deprecated from jquery 3.0:
+                       http://api.jquery.com/jQuery.ajax/
+                     */
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.error("editor load error: "+textStatus);
                     }
@@ -2514,7 +2517,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                     showError("upload done handler failed: "+err);
                 }
             },
-            fail: function (e, data) {
+            fail: function (jqXHR, textStatus, errorThrown) {
                 console.debug("fail file");
                 // jQuery Widget Factory uses "namespace-widgetname" since version 1.10.0:
                 var uploader = $(this).data('blueimp-fileupload') || $(this).data('fileupload');
@@ -2528,6 +2531,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         data.submit();
                         return;
                     }
+                    console.error("upload failed: "+$.fn.dump(errorThrown));
                 }
                 data.context.removeData('retries');
                 $.each(data.files, function (index, file) {
@@ -2561,11 +2565,12 @@ function mig_fancyuploadchunked_init(name, callback) {
                 data: {"share_id": share_id},
                 dataType: "json",
                 type: "POST"
-            }).fail(function () {
+            }).fail(function (jqXHR, textStatus, errorThrown) {
                 console.debug("server status fail");
                 $("<div class=\'alert alert-danger\'/>")
                     .text("Upload server currently unavailable - " + new Date())
                     .appendTo("#fancyfileupload");
+                console.error("checking server failed: "+$.fn.dump(errorThrown));
             }).done(function (raw_result) {
                 console.debug("done checking server");
                 //var result = parseReply(raw_result);
@@ -2589,8 +2594,9 @@ function mig_fancyuploadchunked_init(name, callback) {
         }).always(function () {
             //console.debug("load existing files always handler");
             $(this).removeClass("fileupload-processing");
-        }).fail(function () {
+        }).fail(function (jqXHR, textStatus, errorThrown) {
             showError("load existing files failed");
+            console.error("load cached failed: "+$.fn.dump(errorThrown));
         }).done(function (raw_result) {
             //console.debug("loaded existing files: "+$.fn.dump(raw_result));
             var result = parseReply(raw_result);
