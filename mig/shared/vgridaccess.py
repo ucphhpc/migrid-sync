@@ -694,7 +694,8 @@ def user_owned_res_exes(configuration, client_id):
     owned = {}
     owned_confs = user_owned_res_confs(configuration, client_id)
     for (res_id, res) in owned_confs.items():
-        owned[res_id] = [exe["name"] for exe in res["EXECONFIG"]]
+        # NOTE: we need to allow missing EXECONFIG
+        owned[res_id] = [exe["name"] for exe in res.get("EXECONFIG", [])]
     return owned
 
 def user_owned_res_stores(configuration, client_id):
@@ -707,7 +708,8 @@ def user_owned_res_stores(configuration, client_id):
     owned = {}
     owned_confs = user_owned_res_confs(configuration, client_id)
     for (res_id, res) in owned_confs.items():
-        owned[res_id] = [store["name"] for store in res["STORECONFIG"]]
+        # NOTE: we need to allow missing STORECONFIG
+        owned[res_id] = [store["name"] for store in res.get("STORECONFIG", [])]
     return owned
 
 def user_allowed_res_units(configuration, client_id, unit_type):
