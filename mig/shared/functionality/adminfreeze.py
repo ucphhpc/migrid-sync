@@ -32,7 +32,8 @@ from shared.defaults import upload_tmp_dir
 from shared.freezefunctions import freeze_flavors
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-from shared.html import themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     fancy_upload_js, fancy_upload_html, themed_styles
 
 def signature():
     """Signature of the main function"""
@@ -77,140 +78,34 @@ Please contact the Grid admins %s if you think it should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
-    # jquery support for dynamic addition of copy/upload fields
+    # jquery fancy upload
 
-    title_entry['style'] = themed_styles(configuration,
-                                         base=['jquery.contextmenu.css',
-                                               'jquery.xbreadcrumbs.css',
-                                               'jquery.fmbreadcrumbs.css',
-                                               'jquery.fileupload.css',
-                                               'jquery.fileupload-ui.css'],
-                                         skin=['fileupload-ui.custom.css',
-                                               'xbreadcrumbs.custom.css'])
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<!-- Filemanager and dependencies -->
-<script type="text/javascript" src="/images/js/jquery.form.js"></script>
-<script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
-<script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
+    (add_import, add_init, add_ready) = fancy_upload_js(configuration)
+
+    # We need filechooser deps and dynamic addition of copy/upload fields
+    
+    add_import += '''
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
+<script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
 <!-- The preview image plugin -->
 <script type="text/javascript" src="/images/js/preview.js"></script>
 <!-- The image manipulation CamanJS plugin used by the preview image plugin -->
 <script type="text/javascript" src="/images/lib/CamanJS/dist/caman.full.js"></script>
-<script type="text/javascript">
-       Caman.DEBUG = false
-</script>
 <!-- The nouislider plugin used by the preview image plugin -->
 <script type="text/javascript" src="/images/lib/noUiSlider/jquery.nouislider.all.js"></script>
-
-<!-- Fancy file uploader and dependencies -->
-<!-- The Templates plugin is included to render the upload/download listings -->
-<script type="text/javascript" src="/images/js/tmpl.min.js"></script>
-<!-- The Load Image plugin is included for the preview images and image resizing functionality -->
-<script type="text/javascript" src="/images/js/load-image.min.js"></script>
-<!-- Bootstrap JS is not required, but included for the responsive demo navigation -->
-<!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
-<script type="text/javascript" src="/images/js/jquery.iframe-transport.js"></script>
-<!-- The basic File Upload plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
-<!-- The File Upload processing plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-process.js"></script>
-<!-- The File Upload image preview & resize plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-image.js"></script>
-<!-- The File Upload validation plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-validate.js"></script>
-<!-- The File Upload user interface plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
-<!-- The File Upload jQuery UI plugin -->
-<script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
-
-<!-- The template to display files available for upload -->
-<script id="template-upload" type="text/x-tmpl">
-{% console.log("using upload template"); %}
-{% console.log("... with upload files: "+$.fn.dump(o)); %}
-{% var dest_dir = "./" + $("#fancyfileuploaddest").val(); %}
-{% console.log("using upload dest: "+dest_dir); %}
-{% for (var i=0, file; file=o.files[i]; i++) { %}
-    {% var rel_path = $.fn.normalizePath(dest_dir+"/"+file.name); %}
-    {% console.log("using upload rel_path: "+rel_path); %}
-    <tr class="template-upload fade">
-        <td>
-            <span class="preview"></span>
-        </td>
-        <td>
-            <p class="name">{%=rel_path%}</p>
-            <strong class="error"></strong>
-        </td>
-        <td>
-            <div class="size pending">Processing...</div>
-            <div class="progress"></div>
-        </td>
-        <td>
-            {% if (!i && !o.options.autoUpload) { %}
-                <button class="start" disabled>Start</button>
-            {% } %}
-            {% if (!i) { %}
-                <button class="cancel">Cancel</button>
-            {% } %}
-        </td>
-    </tr>
-{% } %}
-</script>
-<!-- The template to display files available for download -->
-<script id="template-download" type="text/x-tmpl">
-{% console.log("using download template"); %}
-{% console.log("... with download files: "+$.fn.dump(o)); %}
-{% for (var i=0, file; file=o.files[i]; i++) { %}
-    {% var rel_path = $.fn.normalizePath("./"+file.name); %}
-    {% console.log("using download rel_path: "+rel_path); %}
-    {% console.log("original delete URL: "+file.deleteUrl); %}
-    {% function encodeName(str, match) { return "filename="+encodeURIComponent(match)+";files"; }  %}
-    {% if (file.deleteUrl != undefined) { file.deleteUrl = file.deleteUrl.replace(/filename\=(.+)\;files/, encodeName); console.debug("updated delete URL: "+file.deleteUrl); } %}    
-    <tr class="template-download fade">
-        <td>
-            <span class="preview">
-                {% if (file.thumbnailUrl) { %}
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" data-gallery><img src="{%=file.thumbnailUrl%}"></a>
-                {% } %}
-            </span>
-        </td>
-        <td>
-            <p class="name">
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=rel_path%}</a>
-            </p>
-            {% if (file.error) { %}
-                <div><span class="error">Error</span> {%=file.error%}</div>
-            {% } %}
-        </td>
-        <td>
-            <div class="size">{%=o.formatFileSize(file.size)%}</div>
-        </td>
-        <td>
-            <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>{% if (file.deleteUrl) { %}Delete{% } else { %}Dismiss{% } %}</button>
-            <input type="checkbox" name="delete" value="1" class="toggle">
-        </td>
-    </tr>
-{% } %}
-</script>
-
-<script type="text/javascript" >
+    '''
+    add_init += '''
+Caman.DEBUG = false
 
 var copy_fields = 0;
 var upload_fields = 0;
 var open_file_chooser;
 var open_upload_dialog;
-'''
-    title_entry['javascript'] += '''
 /* default upload destination */
 var remote_path = "%s";
-''' % upload_tmp_dir
-    title_entry['javascript'] += '''
+
 function add_copy(div_id) {
     var field_id = "freeze_copy_"+copy_fields;
     var field_name = "freeze_copy_"+copy_fields;
@@ -301,14 +196,22 @@ function init_dialogs() {
 function init_page() {
     init_dialogs();
 }
-
-$(document).ready(function() {
+    ''' % upload_tmp_dir
+    add_ready += '''
          // do sequenced initialisation (separate function)
          init_page();
-     }
-);
-</script>
-'''
+    '''
+    fancy_dialog = fancy_upload_html(configuration)
+    title_entry['style'] = themed_styles(configuration,
+                                         base=['jquery.contextmenu.css',
+                                               'jquery.xbreadcrumbs.css',
+                                               'jquery.fmbreadcrumbs.css',
+                                               'jquery.fileupload.css',
+                                               'jquery.fileupload-ui.css'],
+                                         skin=['fileupload-ui.custom.css',
+                                               'xbreadcrumbs.custom.css'])
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
 
     shared_files_form = """
 <!-- and now this... we do not want to see it, except in a dialog: -->

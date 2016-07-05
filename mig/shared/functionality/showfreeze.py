@@ -34,7 +34,8 @@ from shared.defaults import default_pager_entries
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
      build_freezeitem_object, freeze_flavors
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.html import themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 
 
@@ -85,46 +86,17 @@ Please contact the Grid admins %s if you think it should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
-    # jquery support for tablesorter
+    # jquery support for tablesorter (and unused confirmation dialog)
+    # table initially sorted by col. 0 (filename)
 
-    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
-                   'skin_base': configuration.site_skin_base}
+    table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]'}
+    (add_import, add_init, add_ready) = man_base_js(configuration,
+                                                    [table_spec])
     title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
-          // table initially sorted by col. 0 (filename)
-          var sortOrder = [[0,1]];
-
-          // use image path for sorting if there is any inside
-          var imgTitle = function(contents) {
-              var key = $(contents).find("a").attr("class");
-              if (key == null) {
-                  key = $(contents).html();
-              }
-              return key;
-          }
-
-
-          $("#frozenfilestable").tablesorter({widgets: ["zebra", "saveSort"],
-                                        sortList:sortOrder,
-                                        textExtraction: imgTitle
-                                        })
-                               .tablesorterPager({ container: $("#pager"),
-                                        size: %s
-                                        });
-     }
-);
-</script>
-''' % default_pager_entries
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
+    output_objects.append({'object_type': 'html_form',
+                           'text': man_base_html(configuration)})
 
     # NB: the restrictions on freeze_id prevents illegal directory traversal
     

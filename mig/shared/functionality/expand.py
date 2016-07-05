@@ -284,8 +284,6 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = page_title
 
-    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
-                   'skin_base': configuration.site_skin_base}
     styles = themed_styles(configuration, base=['jquery.fileupload.css',
                                                 'jquery.fileupload-ui.css'],
                            skin=['fileupload-ui.custom.css'])

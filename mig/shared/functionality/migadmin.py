@@ -36,7 +36,8 @@ from shared.defaults import default_pager_entries
 from shared.fileio import send_message_to_grid_script, read_tail
 from shared.findtype import is_admin
 from shared.functional import validate_input_and_cert
-from shared.html import html_post_helper, themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.safeeval import subprocess_popen, subprocess_pipe, \
      subprocess_stdout
@@ -82,60 +83,21 @@ def main(client_id, user_arguments_dict):
 
     meta = '''<meta http-equiv="refresh" content="%s" />
 ''' % configuration.sleep_secs
-    style = themed_styles(configuration)
-    script = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js">
-</script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
-          // init confirmation dialog
-          $( "#confirm_dialog" ).dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 500,
-                buttons: {
-                   "Cancel": function() { $( "#" + name ).dialog("close"); }
-                }
-              });
-
-          // table initially sorted by col. 9 (created)
-          var sortOrder = [[9,0]];
-
-          $("#certreqtable").tablesorter({widgets: ["zebra", "saveSort"],
-                                        sortList:sortOrder
-                                        })
-                               .tablesorterPager({ container: $("#pager"),
-                                        size: %s
-                                        });
-          $("#pagerrefresh").click(function() { location.reload(); });
-     }
-);
-</script>
-''' % default_pager_entries
-
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s administration panel' % configuration.short_title
     title_entry['meta'] = meta
-    title_entry['style'] = style
-    title_entry['javascript'] = script
 
+    # jquery support for tablesorter and confirmation on "remove"
+    # table initially sorted by col. 9 (created)
+    
+    table_spec = {'table_id': 'certreqtable', 'sort_order': '[[9,0]]'}
+    (add_import, add_init, add_ready) = man_base_js(configuration,
+                                                    [table_spec])
+    title_entry['style'] = themed_styles(configuration)
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input"
-       style="display:none;"></textarea>
- </div>
-'''                       })
+                           'text': man_base_html(configuration)})
 
     if not is_admin(client_id, configuration, logger):
         output_objects.append(

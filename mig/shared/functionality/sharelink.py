@@ -39,7 +39,8 @@ from shared.defaults import  default_pager_entries, keyword_owners, \
      keyword_members
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
-from shared.html import html_post_helper, themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.pwhash import make_hash
@@ -95,43 +96,19 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'Share Link'
 
     # jquery support for tablesorter and confirmation on delete/redo:
-
+    # table initially sorted by 5, 4 reversed (active first and in growing age)
+    
+    table_spec = {'table_id': 'sharelinkstable', 'sort_order':
+                  '[[5,1],[4,1]]'}
+    (add_import, add_init, add_ready) = man_base_js(configuration, 
+                                                    [table_spec],
+                                                    {'width': 600})
     title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] += '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
+    output_objects.append({'object_type': 'html_form',
+                           'text': man_base_html(configuration)})
 
-<script type="text/javascript">
-    $(document).ready(function() {
-        // init confirmation dialog
-        $( "#confirm_dialog" ).dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 600,
-                buttons: {
-                   "Cancel": function() { $( "#" + name ).dialog("close"); }
-                }
-        });
-
-        /* init create dialog */
-        /* setup table with tablesorter initially sorted by 5, 4 reversed
-           (active first and in growing age). */
-        var sortOrder = [[5,1],[4,1]];
-        $("#sharelinkstable").tablesorter({widgets: ["zebra", "saveSort"],
-                                        sortList:sortOrder
-                                        })
-                               .tablesorterPager({ container: $("#pager"),
-                                        size: %s
-                                        });
-        $("#pagerrefresh").click(function() { location.reload(); });
-    });
-</script>
-''' % default_pager_entries
     header_entry = {'object_type': 'header', 'text'
                            : 'Manage share links'}
     output_objects.append(header_entry)
@@ -142,15 +119,6 @@ Share links are disabled on this site.
 Please contact the Grid admins %s if you think they should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
-
-    output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input"
-       style="display:none;"></textarea>
- </div>
-'''                       })
 
     logger.info('sharelink %s from %s' % (action, client_id))
     logger.debug('sharelink from %s: %s' % (client_id, accepted))

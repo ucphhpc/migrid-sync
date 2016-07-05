@@ -45,7 +45,8 @@ from shared.defaults import all_jobs, job_output_dir, default_pager_entries
 from shared.fileio import read_tail
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
-from shared.html import html_post_helper, themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.pwhash import make_digest
 from shared.validstring import valid_user_path
@@ -135,17 +136,16 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'Background Data Transfers'
 
     # jquery support for tablesorter and confirmation on delete/redo:
-
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] += '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript">
+    # datatransfer and key tables initially sorted by 0 (id) */
+    
+    datatransfer_spec = {'table_id': 'datatransferstable', 'pager_id':
+                         'datatransfers_pager', 'sort_order': '[[0,0]]'}
+    transferkey_spec = {'table_id': 'transferkeystable', 'pager_id':
+                        'transferkeys_pager', 'sort_order': '[[0,0]]'}
+    (add_import, add_init, add_ready) = man_base_js(configuration, 
+                                                    [datatransfer_spec,
+                                                     transferkey_spec])
+    add_init += '''
     var fields = 0;
     var max_fields = 20;
     var src_input = "<label for=\'transfer_src\'>Source path(s)</label>";
@@ -244,49 +244,21 @@ def main(client_id, user_arguments_dict):
             $("#login_fields").hide();
         }
     }
-
-    $(document).ready(function() {
-          // init confirmation dialog
-          $( "#confirm_dialog" ).dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 500,
-                buttons: {
-                   "Cancel": function() { $( "#" + name ).dialog("close"); }
-                }
-              });
-
-        /* init create dialog */
+    '''
+    # Mangle ready handling to begin with dynamic init and end with tab init
+    add_ready = '''
         enableLogin("%s");
-
         addSource();
+        %s
+        $(".datatransfer-tabs").tabs();
+        $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
+    ''' % (init_login, add_ready)
+    title_entry['style'] = themed_styles(configuration)
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
+    output_objects.append({'object_type': 'html_form',
+                           'text': man_base_html(configuration)})
 
-        /* setup table with tablesorter initially sorted by 0 (id) */
-        var sortOrder = [[0,0]];
-        $("#datatransferstable").tablesorter({widgets: ["zebra", "saveSort"],
-                                        sortList:sortOrder
-                                        })
-                               .tablesorterPager({ container: $("#datatransfers_pager"),
-                                        size: %s
-                                        });
-
-        /* setup table with tablesorter initially sorted by 0 (id) */
-        var sortOrder = [[0,0]];
-        $("#transferkeystable").tablesorter({widgets: ["zebra", "saveSort"],
-                                        sortList:sortOrder
-                                        })
-                               .tablesorterPager({ container: $("#transferkeys_pager"),
-                                        size: %s
-                                        });
-
-          $(".datatransfer-tabs").tabs();
-          $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
-          $("#datatransfers_pagerrefresh").click(function() { location.reload(); });
-          $("#transferkeys_pagerrefresh").click(function() { location.reload(); });
-    });
-</script>
-''' % (init_login, default_pager_entries, default_pager_entries)
     output_objects.append({'object_type': 'header', 'text'
                            : 'Manage background data transfers'})
 
@@ -297,15 +269,6 @@ this site.
 Please contact the Grid admins %s if you think they should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
-
-    output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input"
-       style="display:none;"></textarea>
- </div>
-'''                       })
 
     logger.info('datatransfer %s from %s' % (action, client_id))
 

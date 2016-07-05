@@ -37,7 +37,8 @@ from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
      valid_trigger_changes, valid_trigger_actions, keyword_owners, \
      keyword_members
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.html import html_post_helper, themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.sharelinks import build_sharelinkitem_object
 from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_settings, \
@@ -259,56 +260,25 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = "Administrate %s: %s" % \
                           (configuration.site_vgrid_label, vgrid_name)
 
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript" >
-
-    var toggleHidden = function(classname) {
+    # jquery support for tablesorter and confirmation on request and leave
+    # table initially sorted by 5, 4 reversed (active first and in growing age)
+    
+    table_spec = {'table_id': 'sharelinkstable', 'sort_order':
+                  '[[5,1],[4,1]]'}
+    (add_import, add_init, add_ready) = man_base_js(configuration, 
+                                                    [table_spec],
+                                                    {'width': 600})
+    add_init += '''
+        var toggleHidden = function(classname) {
         // classname supposed to have a leading dot 
-        $(classname).toggleClass('hidden');
+        $(classname).toggleClass("hidden");
     }
-
-    $(document).ready(function() {
-
-        // init confirmation dialog
-        $( "#confirm_dialog" ).dialog(
-            // see http://jqueryui.com/docs/dialog/ for options
-            { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 600,
-                buttons: {
-                   "Cancel": function() { $( "#" + name ).dialog("close"); }
-            }
-        });
-
-        /* setup table with tablesorter initially sorted by 5, 4 reversed
-           (active first and in growing age). */
-        var sortOrder = [[5,1],[4,1]];
-        $("#sharelinkstable").tablesorter({widgets: ["zebra", "saveSort"],
-                                        sortList:sortOrder
-                                        })
-                               .tablesorterPager({ container: $("#pager"),
-                                        size: %s
-                                        });
-        $("#pagerrefresh").click(function() { location.reload(); });
-     }
-);
-</script>
-''' % default_pager_entries
+    '''
+    title_entry['style'] = themed_styles(configuration)
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"></textarea>
- </div>
-'''                       })
+                           'text': man_base_html(configuration)})
     
     output_objects.append({'object_type': 'header', 'text'
                           : "Administrate '%s'" % vgrid_name })
@@ -415,6 +385,9 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 
                  'text': '<p>Current share links in %s shared folder</p>' % \
                            vgrid_name})
+    output_objects.append({'object_type': 'table_pager', 'entry_name':
+                           'share links', 'default_entries':
+                           default_pager_entries})
     output_objects.append({'object_type': 'sharelinks',
                            'sharelinks': sharelinks,
                            'skip_list': skip_list})

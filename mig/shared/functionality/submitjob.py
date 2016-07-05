@@ -155,8 +155,6 @@ def main(client_id, user_arguments_dict):
     $("#%s").click(openFancyUpload);
     ''' % (submit_style + "_form", open_button_id)
     fancy_dialog = fancy_upload_html(configuration)
-    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
-                   'skin_base': configuration.site_skin_base}
     title_entry['style'] = themed_styles(configuration,
                                          base=['jquery.fileupload.css',
                                                'jquery.fileupload-ui.css'],

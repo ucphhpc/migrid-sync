@@ -467,8 +467,6 @@ def main(client_id, user_arguments_dict):
     $("#%s").click(openFancyUpload);
     $("#checkall_box").click(toggleChecked);
     ''' % (cf_ready, fu_ready, open_button_id)
-    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
-                   'skin_base': configuration.site_skin_base}
     styles = themed_styles(configuration, base=['jquery.fileupload.css',
                                                 'jquery.fileupload-ui.css'],
                            skin=['fileupload-ui.custom.css'])

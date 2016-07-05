@@ -29,6 +29,7 @@ import os
 import sys
 
 from shared.base import requested_page
+from shared.defaults import default_pager_entries
 
 # Define all possible menu items
 menu_items = {}
@@ -268,7 +269,8 @@ def tablesorter_js(configuration, tables_list=[]):
 
 def confirm_js(configuration, width=500):
     """Build standard confirm dialog dependency imports, init and ready
-    snippets."""
+    snippets.
+    """
     add_import = '''
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
     '''
@@ -297,6 +299,79 @@ def confirm_html(configuration, rows=4, cols=40):
     </div>
     ''' % (cols, rows)
     return html
+
+def man_base_js(configuration, table_dicts, overrides={}):
+    """Build base js for managers, i.e. dependency imports, init and ready
+    snippets. The table_dicts argument is a list of table dictionaries to set
+    up tablesorter and pager for. They come with common defaults for things
+    like sorting and pager, but can contain complete setting if needed.
+    """
+    confirm_overrides = {}
+    for name in ('width', ):
+        if overrides.has_key(name):
+            confirm_overrides[name] = overrides[name]
+    filled_table_dicts = []
+    tablesort_init = '''
+        // initial table sorting column and direction is %(sort_order)s.
+        // use image path for sorting if there is any inside
+        var imgTitle = function(contents) {
+            var key = $(contents).find("a").attr("class");
+            if (key == null) {
+                key = $(contents).html();
+            }
+            return key;
+        }
+    '''
+    tablesort_args = '''{widgets: ["zebra", "saveSort"],
+                         sortList: %(sort_order)s,
+                         textExtraction: imgTitle
+                         }'''
+    pager_args = '''{container: $("#%(pager_id)s"),
+                     size: %(pager_entries)d
+                     }'''
+    pager_init = '''$("#%(pager_id)srefresh").click(function() {
+                        location.reload();
+                    });
+    '''
+    for entry in table_dicts:
+        filled = {'table_id': entry.get('table_id', 'managertable'),
+                  'pager_id': entry.get('pager_id', 'pager'), 
+                  'sort_order': entry.get('sort_order', '[[0,1]]'),
+                  'pager_entries': entry.get('pager_entries',
+                                             default_pager_entries)}
+        filled.update({'tablesort_init': tablesort_init % filled,
+                       'tablesort_args': tablesort_args % filled,
+                       'pager_args': pager_args % filled,
+                       'pager_init': pager_init % filled})
+        filled.update(entry)
+        filled_table_dicts.append(filled)
+    (cf_import, cf_init, cf_ready) = confirm_js(configuration,
+                                                **confirm_overrides)
+    (ts_import, ts_init, ts_ready) = tablesorter_js(configuration,
+                                                    filled_table_dicts)
+    add_import = '''
+%s
+%s
+    ''' % (cf_import, ts_import)
+    add_init = '''
+%s
+%s
+    ''' % (cf_init, ts_init)
+    add_ready = '''
+%s
+%s
+    ''' % (cf_ready, ts_ready)
+    return (add_import, add_init, add_ready)
+
+def man_base_html(configuration, overrides={}):
+    """Build base html skeleton for js-filled managers, i.e. prepare confirm
+    dialog and a table with dynamic tablesorter and pager.
+    """
+    confirm_overrides = {}
+    for name in ('rows', 'cols', ):
+        if overrides.has_key(name):
+            confirm_overrides[name] = overrides[name]
+    return confirm_html(configuration, **confirm_overrides)
 
 def fancy_upload_js(configuration, callback=None, share_id=''):
     """Build standard fancy upload dependency imports, init and ready

@@ -45,7 +45,8 @@ from shared.events import get_expand_map, get_command_map
 from shared.fileio import unpickle, makedirs_rec, move_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.functionality.adminvgrid import vgrid_add_remove_table
-from shared.html import themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_is_owner_or_member, vgrid_triggers, \
     vgrid_set_triggers
@@ -114,63 +115,32 @@ access the workflows.'''
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s Workflows' \
         % configuration.site_vgrid_label
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = \
-        '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 
-<script type="text/javascript">
-$(document).ready(function() {
-
-          // table initially sorted by 0 (last update / date) 
-          var sortOrder = [[0,1]];
-
-          // use image path for sorting if there is any inside
-          var imgTitle = function(contents) {
-              var key = $(contents).find("a").attr("class");
-              if (key == null) {
-                  key = $(contents).html();
-              }
-              return key;
-          }
-
-          $("#workflowstable").tablesorter({widgets: ["zebra", "saveSort"],
-                                        sortList:sortOrder,
-                                        textExtraction: imgTitle
-                                        })
-                               .tablesorterPager({ container: $("#pager"),
-                                        size: %s
-                                        });
-
-          /* Init variables helper as foldable but closed and with individual heights */
+    # jquery support for tablesorter (and unused confirmation dialog)
+    # table initially sorted by 0 (last update / date) 
+    
+    table_spec = {'table_id': 'workflowstable', 'sort_order': '[[0,1]]'}
+    (add_import, add_init, add_ready) = man_base_js(configuration,
+                                                    [table_spec])
+    add_ready += '''
+          /* Init variables helper as foldable but closed and with individual
+          heights */
           $(".variables-accordion").accordion({
                                        collapsible: true,
                                        active: false,
                                        heightStyle: "content"
                                       });
           /* fix and reduce accordion spacing */
-          $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
-
+          $(".ui-accordion-header").css("padding-top", 0)
+                                   .css("padding-bottom", 0).css("margin", 0);
           $(".workflow-tabs").tabs();
           $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
-          $("#pagerrefresh").click(function() { location.reload(); });
-     }
-);
-</script>
-''' \
-        % default_pager_entries
-
+    '''
+    title_entry['style'] = themed_styles(configuration)
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
     output_objects.append({'object_type': 'html_form',
-                          'text': '''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="72" rows="10" id="confirm_input" style="display:none;"></textarea>
- </div>
-'''})
+                           'text': man_base_html(configuration)})
 
     output_objects.append({'object_type': 'header',
                           'text': '%s Workflows for %s'

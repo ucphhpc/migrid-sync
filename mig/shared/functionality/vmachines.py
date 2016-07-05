@@ -101,8 +101,6 @@ def main(client_id, user_arguments_dict):
 
     # jquery support for tablesorter and confirmation on "leave":
 
-    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
-                   'skin_base': configuration.site_skin_base}
     title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>

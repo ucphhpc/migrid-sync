@@ -33,7 +33,8 @@ from urllib import quote
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, any_vgrid
 from shared.functional import validate_input_and_cert
-from shared.html import html_post_helper, themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.user import anon_to_real_user_map
 from shared.vgridaccess import user_visible_user_confs, user_allowed_vgrids, \
@@ -67,64 +68,19 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'People'
 
-    # jquery support for tablesorter and confirmation on "leave":
-
+    # jquery support for tablesorter and confirmation on "send"
+    # table initially sorted by 0 (name)
+    
+    table_spec = {'table_id': 'usertable', 'sort_order': '[[0,0]]'}
+    (add_import, add_init, add_ready) = man_base_js(configuration,
+                                                    [table_spec],
+                                                    {'width': 640})
     title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
-          // init confirmation dialog
-          $( "#confirm_dialog" ).dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 640,
-                buttons: {
-                   "Cancel": function() { $( "#" + name ).dialog("close"); }
-                }
-              });
-
-          // table initially sorted by 0 (name)
-          var sortOrder = [[0,0]];
-
-          // use image path for sorting if there is any inside
-          var imgTitle = function(contents) {
-              var key = $(contents).find("a").attr("class");
-              if (key == null) {
-                  key = $(contents).html();
-              }
-              return key;
-          }
-
-          $("#usertable").tablesorter({widgets: ["zebra", "saveSort"],
-                                        sortList:sortOrder,
-                                        textExtraction: imgTitle
-                                        })
-                               .tablesorterPager({ container: $("#pager"),
-                                        size: %s
-                                        });
-          $("#pagerrefresh").click(function() { location.reload(); });
-     }
-);
-</script>
-''' % default_pager_entries
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
 
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="72" rows="10" id="confirm_input" style="display:none;"></textarea>
- </div>
-'''                       })
+                           'text': man_base_html(configuration)})
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'People'})
