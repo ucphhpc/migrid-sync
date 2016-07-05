@@ -140,8 +140,9 @@ def build_sharelinkitem_object(configuration, share_dict):
         'class': 'editlink iconspace', 
         'title': 'Edit or invite to share link %s' % share_id,
         'text': ''}
-    # NOTE: datetime is not json serializable so we remove
-    del share_item['created_timestamp']
+    # NOTE: datetime is not json-serializable so we force to string
+    for field in ['created_timestamp']:
+        share_item[field] = str(share_item[field])
     return share_item
 
 def create_share_link_form(configuration, client_id, output_format, form_append=''):

@@ -82,9 +82,9 @@ def build_transferitem_object(configuration, transfer_dict):
                                                         updated_asctime),
         }
     transfer_obj.update(blind_pw(transfer_dict))
-    # NOTE: datetime is not json serializable so we remove
-    del transfer_obj['created_timestamp']
-    del transfer_obj['updated_timestamp']
+    # NOTE: datetime is not json-serializable so we force to string
+    for field in ['created_timestamp', 'updated_timestamp']:
+        transfer_obj[field] = str(transfer_obj[field])
     return transfer_obj
 
 def build_keyitem_object(configuration, key_dict):

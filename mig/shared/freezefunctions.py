@@ -70,12 +70,17 @@ def published_url(freeze_dict, configuration):
                         public_archive_dir, public_freeze_id(freeze_dict),
                         public_archive_index)
 
-def build_freezeitem_object(configuration, freeze_dict):
-    """Build a frozen archive object based on input freeze_dict"""
-
-    freeze_files = []
-    for file_item in freeze_dict['FILES']:
-        freeze_files.append({
+def build_freezeitem_object(configuration, freeze_dict, summary=False):
+    """Build a frozen archive object based on input freeze_dict.
+    The optional summary argument can be used to build just a archive summary
+    rather than the full dictionary of individual file details.
+    """
+    if summary:
+        freeze_files = len(freeze_dict.get('FILES', []))
+    else:
+        freeze_files = []
+        for file_item in freeze_dict['FILES']:
+            freeze_files.append({
                 'object_type': 'frozenfile',
                 'name': file_item['name'],
                 'size': file_item['size'],
@@ -96,9 +101,13 @@ def build_freezeitem_object(configuration, freeze_dict):
         'frozenfiles': freeze_files,
         }
     for field in ('author', 'department', 'organization', 'publish',
-                  'publish_url', 'flavor', 'location'):
+                  'publish_url', 'flavor'):
         if not freeze_dict.get(field.upper(), None) is None:
             freeze_obj[field] = freeze_dict[field.upper()]
+    # NOTE: datetime is not json-serializable so we force to string
+    for field in ('location', ):
+        if not freeze_dict.get(field.upper(), None) is None:
+            freeze_obj[field] = [(i, str(j)) for (i, j) in freeze_dict[field.upper()]]
     return freeze_obj
 
 def parse_time_delta(str_value):
