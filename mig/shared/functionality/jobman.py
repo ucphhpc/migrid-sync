@@ -52,11 +52,6 @@ def pager_append():
         matching <input class="filterid" name="filterid" size=16 value="*_%s_*"/>
 ''' % datetime.date.today().year
 
-def html_pre():
-    """HTML page start"""
-    html = '  <div>'
-    return html
-
 def html_post():
     """HTML page end"""
 
@@ -77,15 +72,14 @@ def html_post():
                 <tr><td>.</td><td>Job ID</td><td>Status</td><td>Date</td></tr>
             </tbody>
         </table>
+        <div id="jm_options">
+            <input id="jm_touchscreen" type="checkbox">Enable touch screen
+            interface (all clicks trigger menu)
+            <input id="jm_autorefresh" type="checkbox">Enable automatic refresh
+        </div>
     </div>
-    <div id="jm_options">
-        <input id="jm_touchscreen" type="checkbox">Enable touch screen
-        interface (all clicks trigger menu)
-        <input id="jm_autorefresh" type="checkbox">Enable automatic refresh
-    </div>
-  </div>
   
-  <div id="cmd_helper" title="Command output" style="display: none;"></div>
+    <div id="cmd_helper" title="Command output" style="display: none;"></div>
 '''
     return html
 
@@ -165,7 +159,6 @@ def main(client_id, user_arguments_dict):
     title_entry['javascript'] = js_tmpl()
   
     output_objects.append({'object_type': 'header', 'text': 'Job Manager'})
-    output_objects.append({'object_type': 'html_form', 'text': html_pre()})
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'jobs',
                            'default_entries': default_pager_entries,
                            'form_append': pager_append()})
