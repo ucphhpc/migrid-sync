@@ -110,101 +110,15 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
-        add_init += '''
-        function format_url(url) {
-            return "<a class=\'link\' href=\\""+url+"\\">"+url+"</a>";
-        }
-        function refresh_archive(freeze_id, checksum) {
-            console.debug("load archive "+freeze_id+" with "+checksum+" checksum");
-            $("#load_status").addClass("spinner iconleftpad");
-            $("#load_status").html("Loading archive "+freeze_id+" ...");
-            /* Request archive list in the background and handle as soon as
-            results come in */
-            $.ajax({
-              url: "?freeze_id="+freeze_id+";checksum="+checksum+
-                   ";output_format=json;operation=list",
-              type: "GET",
-              dataType: "json",
-              cache: false,
-              success: function(jsonRes, textStatus) {
-                  console.debug("got response from list");
-                  var i = 0, j = 0;
-                  var arch, entry, error = "";
-                  //console.debug("empty table");
-                  $("#frozenfilestable tbody").empty();
-                  $(".frozenarchivedetails tbody").empty();
-                  /*
-                      Grab results from json response and insert archive items
-                      in table and append delete helpers to body to make
-                      confirm dialog work.
-                  */
-                  for(i=0; i<jsonRes.length; i++) {
-                      //console.debug("looking for content: "+ jsonRes[i].object_type);
-                      if (jsonRes[i].object_type == "error_text") {
-                          console.error("list: "+jsonRes[i].text);
-                          error += " "+jsonRes[i].text;
-                      } else if (jsonRes[i].object_type == "frozenarchive") {
-                          //console.debug("found frozenarchive");
-                          var arch = jsonRes[i];
-                          //console.debug("append details");
-                          var published = "No";
-                          if (arch.publish) {
-                              published = "Yes ("+format_url(arch.publish_url)+")";
-                          }
-                          var location = "";
-                          if (arch.location != undefined) {
-                              var loc = arch.location;
-                              for(j=0; j<loc.length; j++) {
-                                  location += "<tr><td class=\'title\'>On "+
-                                  loc[j][0]+"</td><td>"+loc[j][1]+"</td></tr>";
-                              }
-                          }
-                          entry = "<tr><td class=\'title\'>ID</td><td>"+arch.id+
-                          "</td></tr><tr><td class=\'title\'>Name</td><td>"+arch.name+
-                          "</td></tr><tr><td class=\'title\'>Description</td><td>"+
-                          arch.description+"</td></tr><tr><td class=\'title\'>Published</td><td>"+published+
-                          "</td></tr><tr><td class=\'title\'>Creator</td><td>"+arch.creator+
-                          "</td></tr>"+location;                           
-                          $(".frozenarchivedetails tbody").append(entry);
-                          var files = arch.frozenfiles;
-                          var j = 0;
-                          for(j=0; j<files.length; j++) {
-                              file = files[j];
-                              //console.info("found file: "+file.name);
-                              entry = "<tr><td>"+file.name+"</td><td>"+
-                                      file.size+"</td><td>"+
-                                      file.md5sum+"</td></tr>";
-                              //console.debug("append entry: "+entry);
-                              $("#frozenfilestable tbody").append(entry);
-                          }
-                      }
-                  }
-                  //console.debug("updated files table is: "+$("#frozenfilestable tbody").html());
-                  //console.debug("updated details table is: "+$(".frozenarchivedetails tbody").html());
-                  $("#load_status").removeClass("spinner iconleftpad");
-                  $("#load_status").empty();
-                  if (error) {
-                      $("#load_status").append("<span class=\'errortext\'>"+
-                                               "Error: "+error+"</span>");
-                  }
-                  $("#frozenfilestable").trigger("update");
-
-              },
-              error: function(jqXHR, textStatus, errorThrown) {
-                  console.error("list failed: "+errorThrown);
-                  $("#load_status").removeClass("spinner iconleftpad");
-                  $("#load_status").empty();
-                  $("#load_status").append("<span class=\'errortext\'>"+
-                                           "Error: "+errorThrown+"</span>");
-              }
-          });
-        }
-        '''
 
         if operation == "show":
+            add_import += '''
+<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
+            '''
             add_ready += '''
-        refresh_archive("%s", "%s");
+        ajax_showfreeze("%s", "%s");
             ''' % (freeze_id, checksum)
+
         title_entry['style'] = themed_styles(configuration)
         title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                                  add_init, add_ready)
