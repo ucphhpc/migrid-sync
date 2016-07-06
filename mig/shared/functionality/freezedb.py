@@ -38,11 +38,14 @@ from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 
+list_operations = ['showlist', 'list']
+show_operations = ['show', 'showlist']
+allowed_operations = list(set(list_operations + show_operations))
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'action': ['show']}
+    defaults = {'operation': ['show']}
     return ['frozenarchives', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -62,12 +65,25 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    action = accepted['action'][-1]
+    operation = accepted['operation'][-1]
     
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Frozen Archives'
 
-    if action in ["show", "showlist"]:
+    if not configuration.site_enable_freeze:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Freezing archives is disabled on this site.
+Please contact the Grid admins %s if you think it should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
+
+    if not operation in allowed_operations:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Operation must be one of %s.''' % \
+                               ', '.join(allowed_operations)})
+        return (output_objects, returnvalues.OK)
+
+    if operation in show_operations:
 
         # jquery support for tablesorter and confirmation on delete
         # table initially sorted by col. 3 (Created date) then 2 (name)
@@ -89,14 +105,14 @@ def main(client_id, user_arguments_dict):
             /* Request archive list in the background and handle as soon as
             results come in */
             $.ajax({
-              url: "?output_format=json;action=list",
+              url: "?output_format=json;operation=list",
               type: "GET",
               dataType: "json",
               cache: false,
               success: function(jsonRes, textStatus) {
                   console.debug("got response from list");
                   var i = 0, j = 0;
-                  var arch, entry;
+                  var arch, entry, error = "";
                   //console.debug("empty table");
                   $("#frozenarchivetable tbody").empty();
                   /*
@@ -106,7 +122,10 @@ def main(client_id, user_arguments_dict):
                   */
                   for(i=0; i<jsonRes.length; i++) {
                       //console.debug("looking for content: "+ jsonRes[i].object_type);
-                      if (jsonRes[i].object_type == "html_form") {
+                      if (jsonRes[i].object_type == "error_text") {
+                          console.error("list: "+jsonRes[i].text);
+                          error += jsonRes[i].text;
+                      } else if (jsonRes[i].object_type == "html_form") {
                           entry = jsonRes[i].text;
                           if (entry.match(/function delete[0-9]+/)) {
                               //console.debug("append delete helper: "+entry);
@@ -135,20 +154,25 @@ def main(client_id, user_arguments_dict):
                   }
                   $("#load_status").removeClass("spinner iconleftpad");
                   $("#load_status").empty();
+                  if (error) {
+                      $("#load_status").append("<span class=\'errortext\'>"+
+                                               "Error: "+error+"</span>");
+                  }
                   $("#frozenarchivetable").trigger("update");
 
               },
               error: function(jqXHR, textStatus, errorThrown) {
                   console.error("list failed: "+errorThrown);
                   $("#load_status").removeClass("spinner iconleftpad");
-                  var err = "<span class=\'errortext\'>Failed to load list of archives: "+errorThrown+"</span>";
-                  $("#load_status").html(err);
+                  $("#load_status").empty();
+                  $("#load_status").append("<span class=\'errortext\'>"+
+                                           "Error: "+errorThrown+"</span>");
               }
           });
         }
         ''' % str(configuration.site_permanent_freeze).lower()
 
-        if action == "show":
+        if operation == "show":
             add_ready += '''
         refresh_archives();
             '''
@@ -160,13 +184,6 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'Frozen Archives'})
-
-    if not configuration.site_enable_freeze:
-        output_objects.append({'object_type': 'text', 'text':
-                               '''Freezing archives is disabled on this site.
-Please contact the Grid admins %s if you think it should be enabled.
-''' % configuration.admin_email})
-        return (output_objects, returnvalues.OK)
 
     output_objects.append(
         {'object_type': 'text', 'text' :
@@ -184,7 +201,7 @@ Please contact the Grid admins %s if you think it should be enabled.
     '''})
 
     frozenarchives = []
-    if action in ["list", "showlist"]:
+    if operation in list_operations:
         (status, ret) = list_frozen_archives(configuration, client_id)
         if not status:
             logger.error("%s: failed for '%s': %s" % (op_name,
@@ -193,7 +210,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                                    : ret})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        logger.debug("%s %s: building list of archives" % (op_name, action))
+        logger.debug("%s %s: building list of archives" % (op_name, operation))
         for freeze_id in ret:
             # TODO: add file count to meta and switch here
             #(load_status, freeze_dict) = get_frozen_meta(freeze_id,
@@ -234,8 +251,8 @@ Please contact the Grid admins %s if you think it should be enabled.
                     freeze_id, 'text': ''}
             frozenarchives.append(freeze_item)
         logger.debug("%s %s: inserting list of %d archives" % \
-                     (op_name, action, len(frozenarchives)))
-    if action in ["show", "showlist"]:
+                     (op_name, operation, len(frozenarchives)))
+    if operation in show_operations:
         output_objects.append({'object_type': 'table_pager', 'entry_name':
                                'frozen archives',
                                'default_entries': default_pager_entries})
@@ -243,7 +260,7 @@ Please contact the Grid admins %s if you think it should be enabled.
     output_objects.append({'object_type': 'frozenarchives',
                            'frozenarchives': frozenarchives})
 
-    if action in ["show", "showlist"]:
+    if operation in show_operations:
         output_objects.append({'object_type': 'sectionheader', 'text':
                                'Additional Frozen Archives'})
         output_objects.append({'object_type': 'link',
