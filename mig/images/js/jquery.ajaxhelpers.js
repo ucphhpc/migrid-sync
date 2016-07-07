@@ -56,6 +56,77 @@ function format_link(link_item) {
     return link
 }
 
+function ajax_redb(_freeze) {
+    console.debug("load runtime envs");
+    $("#load_status").addClass("spinner iconleftpad");
+    $("#load_status").html("Loading runtime envs ...");
+    /* Request runtime envs list in the background and handle as soon as
+    results come in */
+    $.ajax({
+      url: "?output_format=json;operation=list",
+      type: "GET",
+      dataType: "json",
+      cache: false,
+      success: function(jsonRes, textStatus) {
+          console.debug("got response from list");
+          var i = 0, j = 0;
+          var rte, entry, error = "";
+          //console.debug("empty table");
+          $("#runtimeenvtable tbody").empty();
+          /*
+              Grab results from json response and insert rte items in table
+              and append POST helpers to body to make confirm dialog work.
+          */
+          for (i=0; i<jsonRes.length; i++) {
+              //console.debug("looking for content: "+ jsonRes[i].object_type);
+              if (jsonRes[i].object_type == "error_text") {
+                  console.error("list: "+jsonRes[i].text);
+                  error += jsonRes[i].text;
+              } else if (jsonRes[i].object_type == "html_form") {
+                  entry = jsonRes[i].text;
+                  if (entry.match(/function delete[0-9]+/)) {
+                      //console.debug("append delete helper: "+entry);
+                      $("body").append(entry);
+                  }
+              } else if (jsonRes[i].object_type == "runtimeenvironments") {
+                  var runtimeenvs = jsonRes[i].runtimeenvironments;
+                  var j = 0;
+                  for (j=0; j<runtimeenvs.length; j++) {
+                      rte = runtimeenvs[j];
+                      //console.info("found runtimeenv: "+rte.name);
+                      var viewlink = format_link(rte.viewruntimeenvlink);
+                      var dellink = "";
+                      if(rte.ownerlink != undefined) {
+                          dellink = format_link(rte.ownerlink);
+                      }
+                      entry = "<tr><td>"+rte.name+"</td><td>"+viewlink+
+                          "</td><td>"+dellink+"</td><td>"+rte.description+
+                          "</td><td>"+rte.resource_count+"</td><td>"+
+                          rte.created+"</td><td></tr>";
+                      console.debug("append entry: "+entry);
+                      $("#runtimeenvtable tbody").append(entry);
+                  }
+              }
+          }
+          $("#load_status").removeClass("spinner iconleftpad");
+          $("#load_status").empty();
+          if (error) {
+              $("#load_status").append("<span class=\'errortext\'>"+
+                                       "Error: "+error+"</span>");
+          }
+          $("#runtimeenvtable").trigger("update");
+
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+          console.error("list failed: "+errorThrown);
+          $("#load_status").removeClass("spinner iconleftpad");
+          $("#load_status").empty();
+          $("#load_status").append("<span class=\'errortext\'>"+
+                                   "Error: "+errorThrown+"</span>");
+      }
+  });
+}
+
 function ajax_freezedb(permanent_freeze) {
     console.debug("load archives");
     $("#load_status").addClass("spinner iconleftpad");

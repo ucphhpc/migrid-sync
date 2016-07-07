@@ -58,6 +58,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = title
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -80,13 +82,12 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     title = freeze_flavors[flavor]['showfreeze_title']
+    title_entry['text'] = title
     output_objects.append({'object_type': 'header', 'text': title})
     output_objects.append({'object_type': 'html_form',
                            'text': '''
     <div id="load_status"><!-- Dynamically filled by js --></div>
     '''})
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = title
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'error_text', 'text':

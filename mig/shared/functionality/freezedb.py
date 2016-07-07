@@ -54,6 +54,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Frozen Archives'
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -67,9 +69,6 @@ def main(client_id, user_arguments_dict):
 
     operation = accepted['operation'][-1]
     
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Frozen Archives'
-
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
                                '''Freezing archives is disabled on this site.
@@ -107,23 +106,23 @@ Please contact the Grid admins %s if you think it should be enabled.
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Frozen Archives'})
+        output_objects.append({'object_type': 'header', 'text'
+                               : 'Frozen Archives'})
 
-    output_objects.append(
-        {'object_type': 'text', 'text' :
-         '''Frozen archives are write-once collections of files used e.g. in
- relation to conference paper submissions. Please note that local policies may
- prevent users from deleting frozen archives without explicit acceptance from
- the management.
-         '''})
+        output_objects.append(
+            {'object_type': 'text', 'text' :
+             '''Frozen archives are write-once collections of files used e.g.
+in relation to conference paper submissions. Please note that local policies
+may prevent users from deleting frozen archives without explicit acceptance
+from the management.
+        '''})
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
+        output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Existing frozen archives'})
-    output_objects.append({'object_type': 'html_form',
-                           'text': '''
+        output_objects.append({'object_type': 'html_form',
+                               'text': '''
     <div id="load_status"><!-- Dynamically filled by js --></div>
-    '''})
+        '''})
 
     frozenarchives = []
     if operation in list_operations:

@@ -58,6 +58,9 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     status = returnvalues.OK
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%ss" % configuration.site_vgrid_label
+    title_entry['text'] = "%s management" % label
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -72,15 +75,6 @@ def main(client_id, user_arguments_dict):
     vgrid_map = get_vgrid_map(configuration)
     vgrid_list = vgrid_map[VGRIDS].keys()
     operation = accepted['operation'][-1]
-
-    title_entry = find_entry(output_objects, 'title')
-    label = "%ss" % configuration.site_vgrid_label
-    title = '%s management' % label
-    # Append VGrid alias note if custom
-    if configuration.site_vgrid_label != 'VGrid':
-        label += ' (i.e. VGrids)'
-    title_entry['text'] = title
-    output_objects.append({'object_type': 'header', 'text': title})
 
     if not operation in allowed_operations:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -125,6 +119,9 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
 
+        # Append VGrid alias note if custom
+        if configuration.site_vgrid_label != 'VGrid':
+            label += ' (i.e. VGrids)'
         output_objects.append({'object_type': 'header', 'text': label})
         output_objects.append({'object_type': 'text', 'text'
                               : '''

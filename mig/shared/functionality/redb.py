@@ -39,10 +39,14 @@ from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments, get_re_dict
 from shared.vgridaccess import resources_using_re
 
+list_operations = ['showlist', 'list']
+show_operations = ['show', 'showlist']
+allowed_operations = list(set(list_operations + show_operations))
+
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'operation': ['show']}
     return ['runtimeenvironments', defaults]
 
 
@@ -65,95 +69,122 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # jquery support for tablesorter and confirmation on delete
-    # table initially sorted by col. 2 (admin), then 0 (name)
+    operation = accepted['operation'][-1]
     
-    table_spec = {'table_id': 'runtimeenvtable', 'sort_order':
-                  '[[2,1],[0,0]]'}
-    (add_import, add_init, add_ready) = man_base_js(configuration,
-                                                    [table_spec])
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
-    output_objects.append({'object_type': 'html_form',
-                           'text': man_base_html(configuration)})
+    if not operation in allowed_operations:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Operation must be one of %s.''' % \
+                               ', '.join(allowed_operations)})
+        return (output_objects, returnvalues.OK)
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Runtime Environments'})
+    if operation in show_operations:
 
-    output_objects.append(
-        {'object_type': 'text', 'text' :
-         'Runtime environments specify software/data available on resources.'
-         })
-    output_objects.append(
-        {'object_type': 'link',
-         'destination': 'docs.py?show=Runtime+Environments',
-         'class': 'infolink iconspace',
-         'title': 'Show information about runtime environment',
-         'text': 'Documentation on runtime environments'})
+        # jquery support for tablesorter and confirmation on delete
+        # table initially sorted by col. 2 (admin), then 0 (name)
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Existing runtime environments'})
+        table_spec = {'table_id': 'runtimeenvtable', 'sort_order':
+                      '[[2,1],[0,0]]'}
+        (add_import, add_init, add_ready) = man_base_js(configuration,
+                                                        [table_spec])
 
-    (status, ret) = list_runtime_environments(configuration)
-    if not status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : ret})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
+        if operation == "show":
+            add_import += '''
+<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
+            '''
+            add_ready += '''
+        ajax_redb();
+            '''
+
+        title_entry['style'] = themed_styles(configuration)
+        title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                                 add_init, add_ready)
+        output_objects.append({'object_type': 'html_form',
+                               'text': man_base_html(configuration)})
+
+        output_objects.append({'object_type': 'header', 'text'
+                              : 'Runtime Environments'})
+
+        output_objects.append(
+            {'object_type': 'text', 'text' :
+             'Runtime environments specify software/data available on resources.'
+             })
+        output_objects.append(
+            {'object_type': 'link',
+             'destination': 'docs.py?show=Runtime+Environments',
+             'class': 'infolink iconspace',
+             'title': 'Show information about runtime environment',
+             'text': 'Documentation on runtime environments'})
+
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                              : 'Existing runtime environments'})
+        output_objects.append({'object_type': 'html_form',
+                               'text': '''
+    <div id="load_status"><!-- Dynamically filled by js --></div>
+        '''})
 
     runtimeenvironments = []
-    for single_re in ret:
-        (re_dict, msg) = get_re_dict(single_re, configuration)
-        if not re_dict:
+    if operation in list_operations:
+        (status, ret) = list_runtime_environments(configuration)
+        if not status:
             output_objects.append({'object_type': 'error_text', 'text'
-                                  : msg})
+                                  : ret})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        # Set providers explicitly after build_reitem_object to avoid import loop
-        re_item = build_reitem_object(configuration, re_dict)
-        re_name = re_item['name']
-        re_item['providers'] = resources_using_re(configuration, re_name)
-        re_item['resource_count'] = len(re_item['providers'])
-        
-        re_item['viewruntimeenvlink'] = {'object_type': 'link',
-                                         'destination': "showre.py?re_name=%s" % re_name,
-                                         'class': 'infolink iconspace',
-                                         'title': 'View %s runtime environment' % re_name, 
-                                         'text': ''}
-        if client_id == re_item['creator']:
-            js_name = 'delete%s' % hexlify(re_name)
-            helper = html_post_helper(js_name, 'deletere.py',
-                                      {'re_name': re_name})
-            output_objects.append({'object_type': 'html_form', 'text': helper})
-            re_item['ownerlink'] = {'object_type': 'link',
-                                    'destination':
-                                    "javascript: confirmDialog(%s, '%s');"\
-                                    % (js_name, 'Really delete %s?' % re_name),
-                                    'class': 'removelink iconspace',
-                                    'title': 'Delete %s runtime environment' % re_name, 
-                                    'text': ''}
-        runtimeenvironments.append(re_item)
 
-    output_objects.append({'object_type': 'table_pager', 'entry_name': 'runtime envs',
-                           'default_entries': default_pager_entries})
+        for single_re in ret:
+            (re_dict, msg) = get_re_dict(single_re, configuration)
+            if not re_dict:
+                output_objects.append({'object_type': 'error_text', 'text'
+                                      : msg})
+                return (output_objects, returnvalues.SYSTEM_ERROR)
+            # Set providers explicitly after build_reitem_object to avoid import loop
+            re_item = build_reitem_object(configuration, re_dict)
+            re_name = re_item['name']
+            re_item['providers'] = resources_using_re(configuration, re_name)
+            re_item['resource_count'] = len(re_item['providers'])
+
+            re_item['viewruntimeenvlink'] = {'object_type': 'link',
+                                             'destination': "showre.py?re_name=%s" % re_name,
+                                             'class': 'infolink iconspace',
+                                             'title': 'View %s runtime environment' % re_name, 
+                                             'text': ''}
+            if client_id == re_item['creator']:
+                js_name = 'delete%s' % hexlify(re_name)
+                helper = html_post_helper(js_name, 'deletere.py',
+                                          {'re_name': re_name})
+                output_objects.append({'object_type': 'html_form', 'text': helper})
+                re_item['ownerlink'] = {'object_type': 'link',
+                                        'destination':
+                                        "javascript: confirmDialog(%s, '%s');"\
+                                        % (js_name, 'Really delete %s?' % re_name),
+                                        'class': 'removelink iconspace',
+                                        'title': 'Delete %s runtime environment' % re_name, 
+                                        'text': ''}
+            runtimeenvironments.append(re_item)
+
+    if operation in show_operations:
+        output_objects.append({'object_type': 'table_pager', 'entry_name': 'runtime envs',
+                               'default_entries': default_pager_entries})
+
     output_objects.append({'object_type': 'runtimeenvironments',
                           'runtimeenvironments': runtimeenvironments})
 
-    if configuration.site_swrepo_url:
-        output_objects.append({'object_type': 'sectionheader', 'text': 'Software Packages'})
-        output_objects.append({'object_type': 'link',
-                               'destination': configuration.site_swrepo_url,
-                               'class': 'swrepolink iconspace',
-                               'title': 'Browse available software packages',
-                               'text': 'Open software catalogue for %s' % \
-                               configuration.short_title,
-                               })
+    if operation in show_operations:
+        if configuration.site_swrepo_url:
+            output_objects.append({'object_type': 'sectionheader', 'text': 'Software Packages'})
+            output_objects.append({'object_type': 'link',
+                                   'destination': configuration.site_swrepo_url,
+                                   'class': 'swrepolink iconspace',
+                                   'title': 'Browse available software packages',
+                                   'text': 'Open software catalogue for %s' % \
+                                   configuration.short_title,
+                                   })
 
-    output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Runtime Environments'})
-    output_objects.append({'object_type': 'link',
-                           'destination': 'adminre.py',
-                           'class': 'addlink iconspace',
-                           'title': 'Specify a new runtime environment', 
-                           'text': 'Create a new runtime environment'})
+        output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Runtime Environments'})
+        output_objects.append({'object_type': 'link',
+                               'destination': 'adminre.py',
+                               'class': 'addlink iconspace',
+                               'title': 'Specify a new runtime environment', 
+                               'text': 'Create a new runtime environment'})
 
     return (output_objects, returnvalues.OK)
 
