@@ -59,7 +59,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = title
+    title_entry['text'] = "Show freeze"
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

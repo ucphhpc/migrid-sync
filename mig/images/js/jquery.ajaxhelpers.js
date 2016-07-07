@@ -244,11 +244,13 @@ function ajax_showfreeze(freeze_id, checksum) {
                       }
                   }
                   entry = "<tr><td class=\'title\'>ID</td><td>"+arch.id+
-                  "</td></tr><tr><td class=\'title\'>Name</td><td>"+arch.name+
-                  "</td></tr><tr><td class=\'title\'>Description</td><td>"+
-                  arch.description+"</td></tr><tr><td class=\'title\'>Published</td><td>"+published+
-                  "</td></tr><tr><td class=\'title\'>Creator</td><td>"+arch.creator+
-                  "</td></tr>"+location;                           
+                      "</td></tr><tr><td class=\'title\'>Name</td><td>"+arch.name+
+                      "</td></tr><tr><td class=\'title\'>Description</td>"+
+                      "<td class='border'>"+arch.description+"</td></tr><tr>"+
+                      "<td class=\'title\'>Published</td><td>"+published+
+                      "</td></tr><tr><td class=\'title\'>Creator</td><td>"+
+                      arch.creator+"</td></tr><tr><td class=\'title\'>Created"+
+                      "</td><td>"+arch.created+"</td></tr>"+location;                  
                   $(".frozenarchivedetails tbody").append(entry);
                   var files = arch.frozenfiles;
                   var j = 0;

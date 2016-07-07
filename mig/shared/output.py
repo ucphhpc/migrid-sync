@@ -1320,12 +1320,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                          '<td class="border">%s</td></tr>'
                           % i['description'].replace('\n', '<br />'))
             if i.get('publish', False):
-                published = 'yes'
+                published = 'Yes'
                 publish_url = i.get('publish_url', '')
                 published += ' (<a href="%s">%s</a>)' % (publish_url,
                                                          publish_url)
             else:
-                published = 'no'
+                published = 'No'
             lines.append('<tr><td class="title">Published</td>'
                              '<td>%s</td></tr>' % published)
             lines.append('<tr><td class="title">Creator</td><td>%s</td></tr>'
