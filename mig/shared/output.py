@@ -1386,8 +1386,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     login = 'anonymous'
                 lines.append('''
 <tr>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>
+<td>%s</td><td class="centertext">%s</td><td>%s</td><td>%s</td><td>%s</td>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>
 <!-- use nested table to distribute status and icons consistenly -->
 <table style="width: 100%%;"><tr><td style="min-width: 60%%;">%s</td>
 <td>%s</td><td>%s</td><td>%s</td></tr></table>
@@ -1424,7 +1424,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     dellink_html = html_link(dellink)
                 lines.append('''
 <tr>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td style="width: 70%%;">
+<td>%s</td><td class="centertext">%s</td><td>%s</td><td>%s</td><td>%s</td>
+<td style="width: 70%%;">
 <textarea class="publickey" rows="5" readonly="readonly">%s</textarea>
 </tr>''' % (single_key['key_id'], dellink_html,
             single_key['created'], single_key['type'],
@@ -1478,7 +1479,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 access = ' & '.join(single_share['access'])
                 lines.append('''
 <tr>
-<td>%s</td><td>%s %s %s</td><td>%s</td>''' % (single_share['share_id'],
+<td>%s</td><td class="centertext">%s %s %s</td><td>%s</td>''' % (single_share['share_id'],
                                               openlink_html, editlink_html,
                                               dellink_html,
                                               single_share['path']))
@@ -1531,7 +1532,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     dellink_html = '%s' % html_link(dellink)
                 lines.append('''
 <tr>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+<td>%s</td><td class="centertext">%s</td><td class="centertext">%s</td>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
 </tr>''' % (single_certreq['id'], addlink_html, dellink_html,
             single_certreq['full_name'], single_certreq['email'],
             single_certreq['organization'], single_certreq['country'],
@@ -1732,7 +1734,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     lines.append('<tr>')
                     lines.append('<td class="user" title="user">%s</td>' % \
                                  obj['name'])
-                    lines.append('<td>')
+                    lines.append('<td class="centertext">')
                     if obj.has_key('userdetailslink'):
                         lines.append('%s' % html_link(obj['userdetailslink']))
                     lines.append('</td>')
