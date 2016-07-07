@@ -121,6 +121,8 @@ def main(client_id, user_arguments_dict):
                                'text': '''
     <div id="load_status"><!-- Dynamically filled by js --></div>
         '''})
+        output_objects.append({'object_type': 'table_pager', 'entry_name': 'runtime envs',
+                               'default_entries': default_pager_entries})
 
     runtimeenvironments = []
     if operation in list_operations:
@@ -160,10 +162,6 @@ def main(client_id, user_arguments_dict):
                                         'title': 'Delete %s runtime environment' % re_name, 
                                         'text': ''}
             runtimeenvironments.append(re_item)
-
-    if operation in show_operations:
-        output_objects.append({'object_type': 'table_pager', 'entry_name': 'runtime envs',
-                               'default_entries': default_pager_entries})
 
     output_objects.append({'object_type': 'runtimeenvironments',
                           'runtimeenvironments': runtimeenvironments})

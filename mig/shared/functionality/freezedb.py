@@ -123,6 +123,9 @@ from the management.
                                'text': '''
     <div id="load_status"><!-- Dynamically filled by js --></div>
         '''})
+        output_objects.append({'object_type': 'table_pager', 'entry_name':
+                               'frozen archives',
+                               'default_entries': default_pager_entries})
 
     frozenarchives = []
     if operation in list_operations:
@@ -176,10 +179,6 @@ from the management.
             frozenarchives.append(freeze_item)
         logger.debug("%s %s: inserting list of %d archives" % \
                      (op_name, operation, len(frozenarchives)))
-    if operation in show_operations:
-        output_objects.append({'object_type': 'table_pager', 'entry_name':
-                               'frozen archives',
-                               'default_entries': default_pager_entries})
 
     output_objects.append({'object_type': 'frozenarchives',
                            'frozenarchives': frozenarchives})

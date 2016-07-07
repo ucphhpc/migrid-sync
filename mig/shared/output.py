@@ -1715,7 +1715,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 user_fields = []
                 notify_headers = ''
                 for proto in configuration.notify_protocols:
-                    user_fields.append('send%slink iconspace' % proto)
+                    user_fields.append('send%slink' % proto)
                     notify_headers += '  <th class="centertext">%s</th>' % \
                                       proto
                 users = i['users']

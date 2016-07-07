@@ -84,10 +84,6 @@ def main(client_id, user_arguments_dict):
     title = freeze_flavors[flavor]['showfreeze_title']
     title_entry['text'] = title
     output_objects.append({'object_type': 'header', 'text': title})
-    output_objects.append({'object_type': 'html_form',
-                           'text': '''
-    <div id="load_status"><!-- Dynamically filled by js --></div>
-    '''})
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -125,6 +121,13 @@ Please contact the Grid admins %s if you think it should be enabled.
                                                  add_init, add_ready)
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
+        output_objects.append({'object_type': 'html_form',
+                               'text': '''
+    <div id="load_status"><!-- Dynamically filled by js --></div>
+        '''})
+        output_objects.append({'object_type': 'table_pager', 'entry_name':
+                               'frozen files', 'default_entries':
+                               default_pager_entries, 'refresh_button': False})
 
     # NB: the restrictions on freeze_id prevents illegal directory traversal
     
@@ -137,10 +140,6 @@ Please contact the Grid admins %s if you think it should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
 
-    if operation in show_operations:
-        output_objects.append({'object_type': 'table_pager', 'entry_name':
-                               'frozen files', 'default_entries':
-                               default_pager_entries, 'refresh_button': False})
 
     if operation in list_operations:
         (load_status, freeze_dict) = get_frozen_archive(freeze_id, configuration,

@@ -104,12 +104,11 @@ function ajax_redb(_freeze) {
               } else if (jsonRes[i].object_type == "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function delete[0-9]+/)) {
-                      //console.debug("append delete helper: "+entry);
+                      //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
               } else if (jsonRes[i].object_type == "runtimeenvironments") {
                   var runtimeenvs = jsonRes[i].runtimeenvironments;
-                  var j = 0;
                   for (j=0; j<runtimeenvs.length; j++) {
                       rte = runtimeenvs[j];
                       //console.info("found runtimeenv: "+rte.name);
@@ -177,12 +176,11 @@ function ajax_freezedb(permanent_freeze) {
               } else if (jsonRes[i].object_type == "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function delete[0-9]+/)) {
-                      //console.debug("append delete helper: "+entry);
+                      //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
               } else if (jsonRes[i].object_type == "frozenarchives") {
                   var archives = jsonRes[i].frozenarchives;
-                  var j = 0;
                   for (j=0; j<archives.length; j++) {
                       arch = archives[j];
                       //console.info("found archive: "+arch.name);
@@ -246,6 +244,12 @@ function ajax_showfreeze(freeze_id, checksum) {
               if (jsonRes[i].object_type == "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += " "+jsonRes[i].text;
+              } else if (jsonRes[i].object_type == "html_form") {
+                  entry = jsonRes[i].text;
+                  if (entry.match(/function delete[0-9]+/)) {
+                      //console.debug("append POST helper: "+entry);
+                      $("body").append(entry);
+                  }
               } else if (jsonRes[i].object_type == "frozenarchive") {
                   //console.debug("found frozenarchive");
                   var arch = jsonRes[i];
@@ -271,7 +275,6 @@ function ajax_showfreeze(freeze_id, checksum) {
                       "</tr>"+location;
                   $(".frozenarchivedetails tbody").append(entry);
                   var files = arch.frozenfiles;
-                  var j = 0;
                   for (j=0; j<files.length; j++) {
                       file = files[j];
                       //console.info("found file: "+file.name);
@@ -511,6 +514,80 @@ function ajax_resman() {
                                        "Error: "+error+"</span>");
           }
           $("#resourcetable").trigger("update");
+
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+          console.error("list failed: "+errorThrown);
+          $("#load_status").removeClass("spinner iconleftpad");
+          $("#load_status").empty();
+          $("#load_status").append("<span class=\'errortext\'>"+
+                                   "Error: "+errorThrown+"</span>");
+      }
+  });
+}
+
+function ajax_people(protocols) {
+    console.debug("load users");
+    $("#load_status").addClass("spinner iconleftpad");
+    $("#load_status").html("Loading users ...");
+    /* Request user list in the background and handle as soon as
+    results come in */
+    $.ajax({
+      url: "?output_format=json;operation=list",
+      type: "GET",
+      dataType: "json",
+      cache: false,
+      success: function(jsonRes, textStatus) {
+          console.debug("got response from list");
+          var i = 0, j = 0, k = 0;
+          var usr, link_name, proto, entry, error = "";
+          //console.debug("empty table");
+          $("#usertable tbody").empty();
+          /*
+              Grab results from json response and insert user items in table
+              and append POST helpers to body to make confirm dialog work.
+          */
+          for (i=0; i<jsonRes.length; i++) {
+              //console.debug("looking for content: "+ jsonRes[i].object_type);
+              if (jsonRes[i].object_type == "error_text") {
+                  console.error("list: "+jsonRes[i].text);
+                  error += jsonRes[i].text;
+              } else if (jsonRes[i].object_type == "html_form") {
+                  entry = jsonRes[i].text;
+                  if (entry.match(/function send[a-z]+[0-9]+/)) {
+                      //console.debug("append POST helper: "+entry);
+                      $("body").append(entry);
+                  }
+              } else if (jsonRes[i].object_type == "user_list") {
+                  var users = jsonRes[i].users;
+                  for (j=0; j<users.length; j++) {
+                      usr = users[j];
+                      //console.info("found user: "+usr.name);
+                      var viewlink = format_link(usr.userdetailslink);
+                      var sendlink = "";
+                      entry = "<tr>"+base_td(usr.name)+center_td(viewlink);
+                      for (k=0; k<protocols.length; k++) {
+                          proto = protocols[k];
+                          link_name = "send"+proto+"link";
+                          sendlink = "---";
+                          if (usr[link_name] != undefined) {
+                              sendlink = format_link(usr["send"+proto+"link"]);
+                          }
+                          entry += center_td(sendlink);
+                      }
+                      entry += "</tr>";
+                      //console.debug("append entry: "+entry);
+                      $("#usertable tbody").append(entry);
+                  }
+              }
+          }
+          $("#load_status").removeClass("spinner iconleftpad");
+          $("#load_status").empty();
+          if (error) {
+              $("#load_status").append("<span class=\'errortext\'>"+
+                                       "Error: "+error+"</span>");
+          }
+          $("#usertable").trigger("update");
 
       },
       error: function(jqXHR, textStatus, errorThrown) {
