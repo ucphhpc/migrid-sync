@@ -1578,13 +1578,18 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 '''
             if i.get('form_append', False):
                 toolbar += '%(form_append)s' % i
+            refresh_button = ""
             if i.get('refresh_button', True):
-                toolbar += '''
-        <div id="%spagerrefresh" class="inline">
+                refresh_button = '''
             <img class="pagerrefresh icon" alt="refresh" src="/images/icons/arrow_refresh.png"
                 title="Refresh" />
+                '''
+            toolbar += '''
+        <div id="%spagerrefresh" class="inline">
+            %s
+            <div id="ajax_status" class="inline"><!-- Dynamically filled by js --></div>
         </div>
-''' % id_prefix
+''' % (id_prefix, refresh_button)
             toolbar += '''
       </form>
       </div>

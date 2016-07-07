@@ -245,10 +245,12 @@ def jquery_ui_js(configuration, js_import, js_init, js_ready):
 </script>
 ''' % {'js_import': js_import, 'js_init': js_init, 'js_ready': js_ready}
             
-def tablesorter_js(configuration, tables_list=[]):
+def tablesorter_js(configuration, tables_list=[], include_ajax=True):
     """Build standard tablesorter dependency imports, init and ready snippets.
     The tables_list contains one or more table definitions with id and options
     to intitialize the table(s) with.
+    The optional include_ajax option can be used to disable the AJAX loading
+    setup needed by most managers.
     """
     add_import = '''
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
@@ -256,6 +258,11 @@ def tablesorter_js(configuration, tables_list=[]):
 </script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
     '''
+    if include_ajax:
+        add_import += '''
+<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
+        '''
+
     add_init = ''
     add_ready = ''
     for table_dict in tables_list:
@@ -264,6 +271,7 @@ def tablesorter_js(configuration, tables_list=[]):
 
         $("#%(table_id)s").tablesorter(%(tablesort_args)s).tablesorterPager(%(pager_args)s);
         %(pager_init)s
+        %(refresh_init)s
         ''' % table_dict
     return (add_import, add_init, add_ready)
 
@@ -330,19 +338,27 @@ def man_base_js(configuration, table_dicts, overrides={}):
                      size: %(pager_entries)d
                      }'''
     pager_init = '''$("#%(pager_id)srefresh").click(function() {
-                        location.reload();
+                        %(pager_id)s_refresh();
                     });
     '''
+    refresh_init = '''function %(pager_id)s_refresh() {
+    %(refresh_call)s;
+}
+'''
     for entry in table_dicts:
         filled = {'table_id': entry.get('table_id', 'managertable'),
                   'pager_id': entry.get('pager_id', 'pager'), 
                   'sort_order': entry.get('sort_order', '[[0,1]]'),
                   'pager_entries': entry.get('pager_entries',
-                                             default_pager_entries)}
+                                             default_pager_entries),
+                  'refresh_call': entry.get('refresh_call',
+                                            'location.reload()')}
         filled.update({'tablesort_init': tablesort_init % filled,
                        'tablesort_args': tablesort_args % filled,
                        'pager_args': pager_args % filled,
-                       'pager_init': pager_init % filled})
+                       'pager_init': pager_init % filled,
+                       'refresh_init': refresh_init % filled
+                       })
         filled.update(entry)
         filled_table_dicts.append(filled)
     (cf_import, cf_init, cf_ready) = confirm_js(configuration,

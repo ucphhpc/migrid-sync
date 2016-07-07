@@ -77,8 +77,10 @@ function format_link(link_item) {
 
 function ajax_redb(_freeze) {
     console.debug("load runtime envs");
-    $("#load_status").addClass("spinner iconleftpad");
-    $("#load_status").html("Loading runtime envs ...");
+    //console.debug("empty table");
+    $("#runtimeenvtable tbody").empty();
+    $("#ajax_status").addClass("spinner iconleftpad");
+    $("#ajax_status").html("Loading runtime envs ...");
     /* Request runtime envs list in the background and handle as soon as
     results come in */
     $.ajax({
@@ -90,8 +92,6 @@ function ajax_redb(_freeze) {
           console.debug("got response from list");
           var i = 0, j = 0;
           var rte, rte_hint, entry, error = "";
-          //console.debug("empty table");
-          $("#runtimeenvtable tbody").empty();
           /*
               Grab results from json response and insert rte items in table
               and append POST helpers to body to make confirm dialog work.
@@ -128,10 +128,10 @@ function ajax_redb(_freeze) {
                   }
               }
           }
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
           if (error) {
-              $("#load_status").append("<span class=\'errortext\'>"+
+              $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
           }
           $("#runtimeenvtable").trigger("update");
@@ -139,9 +139,9 @@ function ajax_redb(_freeze) {
       },
       error: function(jqXHR, textStatus, errorThrown) {
           console.error("list failed: "+errorThrown);
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
-          $("#load_status").append("<span class=\'errortext\'>"+
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
+          $("#ajax_status").append("<span class=\'errortext\'>"+
                                    "Error: "+errorThrown+"</span>");
       }
   });
@@ -149,8 +149,10 @@ function ajax_redb(_freeze) {
 
 function ajax_freezedb(permanent_freeze) {
     console.debug("load archives");
-    $("#load_status").addClass("spinner iconleftpad");
-    $("#load_status").html("Loading archives ...");
+    //console.debug("empty table");
+    $("#frozenarchivetable tbody").empty();
+    $("#ajax_status").addClass("spinner iconleftpad");
+    $("#ajax_status").html("Loading archives ...");
     /* Request archive list in the background and handle as soon as
     results come in */
     $.ajax({
@@ -162,8 +164,6 @@ function ajax_freezedb(permanent_freeze) {
           console.debug("got response from list");
           var i = 0, j = 0;
           var arch, entry, error = "";
-          //console.debug("empty table");
-          $("#frozenarchivetable tbody").empty();
           /*
               Grab results from json response and insert archive items in table
               and append POST helpers to body to make confirm dialog work.
@@ -197,10 +197,10 @@ function ajax_freezedb(permanent_freeze) {
                   }
               }
           }
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
           if (error) {
-              $("#load_status").append("<span class=\'errortext\'>"+
+              $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
           }
           $("#frozenarchivetable").trigger("update");
@@ -208,9 +208,9 @@ function ajax_freezedb(permanent_freeze) {
       },
       error: function(jqXHR, textStatus, errorThrown) {
           console.error("list failed: "+errorThrown);
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
-          $("#load_status").append("<span class=\'errortext\'>"+
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
+          $("#ajax_status").append("<span class=\'errortext\'>"+
                                    "Error: "+errorThrown+"</span>");
       }
   });
@@ -218,8 +218,11 @@ function ajax_freezedb(permanent_freeze) {
 
 function ajax_showfreeze(freeze_id, checksum) {
     console.debug("load archive "+freeze_id+" with "+checksum+" checksum");
-    $("#load_status").addClass("spinner iconleftpad");
-    $("#load_status").html("Loading archive "+freeze_id+" ...");
+    //console.debug("empty table");
+    $("#frozenfilestable tbody").empty();
+    $(".frozenarchivedetails tbody").empty();
+    $("#ajax_status").addClass("spinner iconleftpad");
+    $("#ajax_status").html("Loading archive "+freeze_id+" ...");
     /* Request archive list in the background and handle as soon as
     results come in */
     $.ajax({
@@ -232,9 +235,6 @@ function ajax_showfreeze(freeze_id, checksum) {
           console.debug("got response from list");
           var i = 0, j = 0;
           var arch, entry, error = "";
-          //console.debug("empty table");
-          $("#frozenfilestable tbody").empty();
-          $(".frozenarchivedetails tbody").empty();
           /*
               Grab results from json response and insert archive items in table
               and append POST helpers to body to make confirm dialog work.
@@ -287,19 +287,19 @@ function ajax_showfreeze(freeze_id, checksum) {
           }
           //console.debug("updated files table is: "+$("#frozenfilestable tbody").html());
           //console.debug("updated details table is: "+$(".frozenarchivedetails tbody").html());
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
           if (error) {
-              $("#load_status").append("<span class=\'errortext\'>"+
+              $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
           }
           $("#frozenfilestable").trigger("update");
       },
       error: function(jqXHR, textStatus, errorThrown) {
           console.error("list failed: "+errorThrown);
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
-          $("#load_status").append("<span class=\'errortext\'>"+
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
+          $("#ajax_status").append("<span class=\'errortext\'>"+
                                    "Error: "+errorThrown+"</span>");
       }
   });
@@ -307,8 +307,10 @@ function ajax_showfreeze(freeze_id, checksum) {
 
 function ajax_vgridman(vgrid_label, vgrid_links) {
     console.debug("load vgrids");
-    $("#load_status").addClass("spinner iconleftpad");
-    $("#load_status").html("Loading "+vgrid_label+"s ...");
+    //console.debug("empty table");
+    $("#vgridtable tbody").empty();
+    $("#ajax_status").addClass("spinner iconleftpad");
+    $("#ajax_status").html("Loading "+vgrid_label+"s ...");
     /* Request vgrid list in the background and handle as soon as
     results come in */
     $.ajax({
@@ -320,8 +322,6 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
           console.debug("got response from list");
           var i, j, k;
           var vgrid, entry, error = "";
-          //console.debug("empty table");
-          $("#vgridtable tbody").empty();
           /*
               Grab results from json response and insert vgrid items in table
               and append POST helpers to body to make confirm dialog work.
@@ -422,10 +422,10 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                   }
               }
           }
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
           if (error) {
-              $("#load_status").append("<span class=\'errortext\'>"+
+              $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
           }
           $("#vgridtable").trigger("update");
@@ -433,9 +433,9 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
       },
       error: function(jqXHR, textStatus, errorThrown) {
           console.error("list failed: "+errorThrown);
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
-          $("#load_status").append("<span class=\'errortext\'>"+
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
+          $("#ajax_status").append("<span class=\'errortext\'>"+
                                    "Error: "+errorThrown+"</span>");
       }
   });
@@ -443,8 +443,10 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
 
 function ajax_resman() {
     console.debug("load resources");
-    $("#load_status").addClass("spinner iconleftpad");
-    $("#load_status").html("Loading resources ...");
+    //console.debug("empty table");
+    $("#resourcetable tbody").empty();
+    $("#ajax_status").addClass("spinner iconleftpad");
+    $("#ajax_status").html("Loading resources ...");
     /* Request resource list in the background and handle as soon as
     results come in */
     $.ajax({
@@ -456,8 +458,6 @@ function ajax_resman() {
           console.debug("got response from list");
           var i, j, k;
           var resource, res_type, res_hint, rte_list, entry, error = "";
-          //console.debug("empty table");
-          $("#resourcetable tbody").empty();
           /*
               Grab results from json response and insert resource items in table
               and append POST helpers to body to make confirm dialog work.
@@ -507,10 +507,10 @@ function ajax_resman() {
                   }
               }
           }
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
           if (error) {
-              $("#load_status").append("<span class=\'errortext\'>"+
+              $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
           }
           $("#resourcetable").trigger("update");
@@ -518,9 +518,9 @@ function ajax_resman() {
       },
       error: function(jqXHR, textStatus, errorThrown) {
           console.error("list failed: "+errorThrown);
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
-          $("#load_status").append("<span class=\'errortext\'>"+
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
+          $("#ajax_status").append("<span class=\'errortext\'>"+
                                    "Error: "+errorThrown+"</span>");
       }
   });
@@ -528,8 +528,10 @@ function ajax_resman() {
 
 function ajax_people(protocols) {
     console.debug("load users");
-    $("#load_status").addClass("spinner iconleftpad");
-    $("#load_status").html("Loading users ...");
+    //console.debug("empty table");
+    $("#usertable tbody").empty();
+    $("#ajax_status").addClass("spinner iconleftpad");
+    $("#ajax_status").html("Loading users ...");
     /* Request user list in the background and handle as soon as
     results come in */
     $.ajax({
@@ -541,8 +543,6 @@ function ajax_people(protocols) {
           console.debug("got response from list");
           var i = 0, j = 0, k = 0;
           var usr, link_name, proto, entry, error = "";
-          //console.debug("empty table");
-          $("#usertable tbody").empty();
           /*
               Grab results from json response and insert user items in table
               and append POST helpers to body to make confirm dialog work.
@@ -581,10 +581,10 @@ function ajax_people(protocols) {
                   }
               }
           }
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
           if (error) {
-              $("#load_status").append("<span class=\'errortext\'>"+
+              $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
           }
           $("#usertable").trigger("update");
@@ -592,9 +592,9 @@ function ajax_people(protocols) {
       },
       error: function(jqXHR, textStatus, errorThrown) {
           console.error("list failed: "+errorThrown);
-          $("#load_status").removeClass("spinner iconleftpad");
-          $("#load_status").empty();
-          $("#load_status").append("<span class=\'errortext\'>"+
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
+          $("#ajax_status").append("<span class=\'errortext\'>"+
                                    "Error: "+errorThrown+"</span>");
       }
   });

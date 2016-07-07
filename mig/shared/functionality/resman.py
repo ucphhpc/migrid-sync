@@ -86,19 +86,13 @@ def main(client_id, user_arguments_dict):
         # jquery support for tablesorter and confirmation on delete
         # table initially sorted by col. 1 (admin), then 0 (name)
 
+        refresh_call = 'ajax_resman()'
         table_spec = {'table_id': 'resourcetable', 'sort_order':
-                      '[[1,0],[0,0]]'}
+                      '[[1,0],[0,0]]', 'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
-
         if operation == "show":
-            add_import += '''
-<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
-            '''
-            add_ready += '''
-        ajax_resman();
-            '''
-
+            add_ready += refresh_call
         title_entry['style'] = themed_styles(configuration)
         title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                                  add_init, add_ready)
@@ -110,10 +104,6 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'sectionheader', 'text'
                               : 'Resources available on this server'})
-        output_objects.append({'object_type': 'html_form',
-                               'text': '''
-    <div id="load_status"><!-- Dynamically filled by js --></div>
-        '''})
         output_objects.append({'object_type': 'text', 'text'
                               : '''
 All available resources are listed below with overall hardware specifications. Any resources that you own will have a administration icon that you can click to open resource management.

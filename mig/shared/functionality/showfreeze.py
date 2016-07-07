@@ -103,28 +103,18 @@ Please contact the Grid admins %s if you think it should be enabled.
         # jquery support for tablesorter (and unused confirmation dialog)
         # table initially sorted by col. 0 (filename)
 
-        table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]'}
-
+        refresh_call = 'ajax_showfreeze("%s", "%s")' % (freeze_id, checksum)
+        table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
+                      'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
-
         if operation == "show":
-            add_import += '''
-<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
-            '''
-            add_ready += '''
-        ajax_showfreeze("%s", "%s");
-            ''' % (freeze_id, checksum)
-
+            add_ready += refresh_call
         title_entry['style'] = themed_styles(configuration)
         title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                                  add_init, add_ready)
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
-        output_objects.append({'object_type': 'html_form',
-                               'text': '''
-    <div id="load_status"><!-- Dynamically filled by js --></div>
-        '''})
         output_objects.append({'object_type': 'table_pager', 'entry_name':
                                'frozen files', 'default_entries':
                                default_pager_entries, 'refresh_button': False})

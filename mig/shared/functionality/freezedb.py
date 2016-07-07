@@ -86,20 +86,15 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         # jquery support for tablesorter and confirmation on delete
         # table initially sorted by col. 3 (Created date) then 2 (name)
-    
+
+        refresh_call = 'ajax_freezedb(%s)' % \
+                       str(configuration.site_permanent_freeze).lower()
         table_spec = {'table_id': 'frozenarchivetable', 'sort_order':
-                      '[[3,1],[2,0]]'}
+                      '[[3,1],[2,0]]', 'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
-
         if operation == "show":
-            add_import += '''
-<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
-            '''
-            add_ready += '''
-        ajax_freezedb(%s);
-            ''' % str(configuration.site_permanent_freeze).lower()
-
+            add_ready += refresh_call
         title_entry['style'] = themed_styles(configuration)
         title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                                  add_init, add_ready)
@@ -119,10 +114,6 @@ from the management.
 
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Existing frozen archives'})
-        output_objects.append({'object_type': 'html_form',
-                               'text': '''
-    <div id="load_status"><!-- Dynamically filled by js --></div>
-        '''})
         output_objects.append({'object_type': 'table_pager', 'entry_name':
                                'frozen archives',
                                'default_entries': default_pager_entries})

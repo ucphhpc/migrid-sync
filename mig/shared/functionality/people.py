@@ -82,19 +82,14 @@ def main(client_id, user_arguments_dict):
         # jquery support for tablesorter and confirmation on "send"
         # table initially sorted by 0 (name)
 
-        table_spec = {'table_id': 'usertable', 'sort_order': '[[0,0]]'}
+        refresh_call = 'ajax_people(%s)' % configuration.notify_protocols
+        table_spec = {'table_id': 'usertable', 'sort_order': '[[0,0]]',
+                      'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec],
                                                         {'width': 640})
-
         if operation == "show":
-            add_import += '''
-<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
-            '''
-            add_ready += '''
-        ajax_people(%s);
-            ''' % configuration.notify_protocols
-
+            add_ready += refresh_call
         title_entry['style'] = themed_styles(configuration)
         title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                                  add_init, add_ready)
@@ -112,10 +107,6 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'sectionheader', 'text'
                               : 'All users'})
-        output_objects.append({'object_type': 'html_form',
-                               'text': '''
-    <div id="load_status"><!-- Dynamically filled by js --></div>
-        '''})
         output_objects.append({'object_type': 'table_pager', 'entry_name':
                                'people', 'default_entries':
                                default_pager_entries})

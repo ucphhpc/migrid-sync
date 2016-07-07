@@ -101,18 +101,14 @@ def main(client_id, user_arguments_dict):
         # jquery support for tablesorter and confirmation on request and leave
         # table initially sorted by col. 2 (admin), then 3 (member), then 0 (name)
 
+        refresh_call = 'ajax_vgridman("%s", %s)' % \
+                       (configuration.site_vgrid_label, active_vgrid_links)
         table_spec = {'table_id': 'vgridtable', 'sort_order':
-                      '[[2,1],[3,1],[0,0]]'}
+                      '[[2,1],[3,1],[0,0]]', 'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration, 
                                                         [table_spec])
         if operation == "show":
-            add_import += '''
-<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
-            '''
-            add_ready += '''
-        ajax_vgridman("%s", %s);
-            ''' % (configuration.site_vgrid_label, active_vgrid_links)
-
+            add_ready += refresh_call
         title_entry['style'] = themed_styles(configuration)
         title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                                  add_init, add_ready)
@@ -138,10 +134,6 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'sectionheader', 'text'
                               : '%ss managed on this server' % \
                                configuration.site_vgrid_label})
-        output_objects.append({'object_type': 'html_form',
-                               'text': '''
-    <div id="load_status"><!-- Dynamically filled by js --></div>
-        '''})
         output_objects.append({'object_type': 'table_pager', 'entry_name': '%ss' % \
                                configuration.site_vgrid_label,
                                'default_entries': default_pager_entries})
