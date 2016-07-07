@@ -1151,7 +1151,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     ownerlink = html_link(ownerlink)
                 lines.append('''
 <tr>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td title="%s">%s</td><td>%s</td>
+<td>%s</td><td class="centertext">%s</td><td class="centertext">%s</td><td>%s
+</td><td class="centertext" title="%s">%s</td><td>%s</td>
 </tr>''' % (single_re['name'], viewlink, ownerlink, single_re['description'],
             ', '.join(single_re['providers']), single_re['resource_count'],
             single_re['created']))
@@ -1260,14 +1261,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 dellink = single_freeze.get('delfreezelink', '')
                 dellink_html = ''
                 if dellink and not configuration.site_permanent_freeze:
-                    dellink_html = '<td>%s</td>' % html_link(dellink)
+                    dellink_html = '<td class="centertext">%s</td>' % html_link(dellink)
                 if isinstance(single_freeze['frozenfiles'], int):
                     file_count = single_freeze['frozenfiles']
                 else:
                     file_count = len(single_freeze['frozenfiles'])
                 lines.append('''
 <tr>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>%s
+<td>%s</td><td class="centertext">%s</td><td>%s</td><td>%s</td>
+<td class="centertext">%s</td>%s
 </tr>''' % (single_freeze['id'], viewlink,
             single_freeze['name'], single_freeze['created'],
             file_count, dellink_html))
@@ -1292,7 +1294,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             for frozenfile in i['frozenfiles']:
                 frozenfile_html += '''
     <tr>
-        <td>%(name)s</td><td>%(size)s</td><td>%(md5sum)s</td><td class="hidden">%(sha1sum)s</td>
+        <td>%(name)s</td><td class="centertext">%(size)s</td><td>%(md5sum)s
+        </td><td class="hidden">%(sha1sum)s</td>
     </tr>
 ''' % frozenfile
             frozenfile_html += '</tbody></table>'
@@ -1619,12 +1622,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     lines.append(
                         '<td class="%sres" title="%s resource">%s</td>' % \
                         (res_type, res_type, obj['name']))
-                    lines.append('<td>')
+                    lines.append('<td class="centertext">')
                     # view or admin link depending on ownership
                     if obj.has_key('resdetailslink'):
                         lines.append('%s' % html_link(obj['resdetailslink']))
                     lines.append('</td>')
-                    lines.append('<td>')
+                    lines.append('<td class="centertext">')
                     if obj.has_key('resownerlink'):
                         lines.append('%s' % html_link(obj['resownerlink']))
                     lines.append('</td>')
@@ -1996,17 +1999,17 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                 for obj in vgrids:
                     lines.append('<tr>')
                     lines.append('<td>%s</td>' % obj['name'])
-                    lines.append('<td>')
+                    lines.append('<td class="centertext">')
                     if obj.has_key('viewvgridlink'):
                         lines.append('%s'
                                  % html_link(obj['viewvgridlink']))
                     lines.append('</td>')
-                    lines.append('<td>')
+                    lines.append('<td class="centertext">')
                     if obj.has_key('administratelink'):
                         lines.append('%s'
                                  % html_link(obj['administratelink']))
                     lines.append('</td>')
-                    lines.append('<td>')
+                    lines.append('<td class="centertext">')
                     # membership links: should be there in any case
                     if obj.has_key('memberlink'):
                         lines.append('%s'

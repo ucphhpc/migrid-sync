@@ -30,6 +30,25 @@
 
 */
 
+var center_class="class='centertext'";
+var title_class="class='title'";
+var border_class="class='border'";
+function base_td(content) {
+    return "<td>"+content+"</td>";
+}
+function attr_td(content, attr_helper) {
+    return "<td "+attr_helper+">"+content+"</td>";
+}
+function center_td(content) {
+    return attr_td(content, center_class);
+}
+function title_td(content) {
+    return attr_td(content, title_class);
+}
+function border_td(content) {
+    return attr_td(content, border_class);
+}
+
 function format_url(url) {
     return '<a class="link" href="'+url+'">'+url+'</a>';
 }
@@ -70,7 +89,7 @@ function ajax_redb(_freeze) {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var i = 0, j = 0;
-          var rte, entry, error = "";
+          var rte, rte_hint, entry, error = "";
           //console.debug("empty table");
           $("#runtimeenvtable tbody").empty();
           /*
@@ -99,11 +118,13 @@ function ajax_redb(_freeze) {
                       if(rte.ownerlink != undefined) {
                           dellink = format_link(rte.ownerlink);
                       }
-                      entry = "<tr><td>"+rte.name+"</td><td>"+viewlink+
-                          "</td><td>"+dellink+"</td><td>"+rte.description+
-                          "</td><td>"+rte.resource_count+"</td><td>"+
-                          rte.created+"</td><td></tr>";
-                      console.debug("append entry: "+entry);
+                      rte_hint = center_class+" title='"+rte.providers+"'";
+                      entry = "<tr>"+base_td(rte.name)+center_td(viewlink)+
+                          center_td(dellink)+base_td(rte.description)+
+                          attr_td(rte.resource_count, rte_hint)+
+                          base_td(rte.created)+
+                          "</tr>";
+                      //console.debug("append entry: "+entry);
                       $("#runtimeenvtable tbody").append(entry);
                   }
               }
@@ -168,13 +189,11 @@ function ajax_freezedb(permanent_freeze) {
                       var viewlink = format_link(arch.viewfreezelink);
                       var dellink = "";
                       if(!permanent_freeze) {
-                          dellink = "<td>"+format_link(arch.delfreezelink)+"</td>";
+                          dellink = base_td(format_link(arch.delfreezelink));
                       }
-                      entry = "<tr><td>"+arch.id+"</td><td>"+viewlink+
-                              "</td><td>"+arch.name+"</td><td>"+
-                              arch.created+"</td><td>"+
-                              arch.frozenfiles+"</td>"+dellink+
-                              "</tr>";
+                      entry = "<tr>"+base_td(arch.id)+center_td(viewlink)+
+                          base_td(arch.name)+base_td(arch.created)+
+                          center_td(arch.frozenfiles)+dellink+"</tr>";
                       //console.debug("append entry: "+entry);
                       $("#frozenarchivetable tbody").append(entry);
                   }
@@ -239,27 +258,25 @@ function ajax_showfreeze(freeze_id, checksum) {
                   if (arch.location != undefined) {
                       var loc = arch.location;
                       for (j=0; j<loc.length; j++) {
-                          location += "<tr><td class=\'title\'>On "+
-                          loc[j][0]+"</td><td>"+loc[j][1]+"</td></tr>";
+                          location += "<tr>"+title_td("On "+loc[j][0])+
+                              base_td(loc[j][1])+"</tr>";
                       }
                   }
-                  entry = "<tr><td class=\'title\'>ID</td><td>"+arch.id+
-                      "</td></tr><tr><td class=\'title\'>Name</td><td>"+arch.name+
-                      "</td></tr><tr><td class=\'title\'>Description</td>"+
-                      "<td class='border'>"+arch.description+"</td></tr><tr>"+
-                      "<td class=\'title\'>Published</td><td>"+published+
-                      "</td></tr><tr><td class=\'title\'>Creator</td><td>"+
-                      arch.creator+"</td></tr><tr><td class=\'title\'>Created"+
-                      "</td><td>"+arch.created+"</td></tr>"+location;                  
+                  entry = "<tr>"+title_td("ID")+base_td(arch.id)+"</tr><tr>"+
+                      title_td("Name")+base_td(arch.name)+"</tr><tr>"+
+                      title_td("Description")+border_td(arch.description)+
+                      "</tr><tr>"+title_td("Published")+base_td(published)+
+                      "</tr><tr>"+title_td("Creator")+base_td(arch.creator)+
+                      "</tr><tr>"+title_td("Created")+base_td(arch.created)+
+                      "</tr>"+location;
                   $(".frozenarchivedetails tbody").append(entry);
                   var files = arch.frozenfiles;
                   var j = 0;
                   for (j=0; j<files.length; j++) {
                       file = files[j];
                       //console.info("found file: "+file.name);
-                      entry = "<tr><td>"+file.name+"</td><td>"+
-                              file.size+"</td><td>"+
-                              file.md5sum+"</td></tr>";
+                      entry = "<tr>"+base_td(file.name)+center_td(file.size)+
+                          base_td(file.md5sum)+"</tr>";
                       //console.debug("append entry: "+entry);
                       $("#frozenfilestable tbody").append(entry);
                   }
@@ -314,7 +331,7 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
               } else if (jsonRes[i].object_type == "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function (rm|req)vgrid(owner|member)[0-9]+/)) {
-                      console.debug("append POST helper: "+entry);
+                      //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
               } else if (jsonRes[i].object_type == "vgrid_list") {
@@ -332,10 +349,8 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                       if(vgrid.memberlink != undefined) {
                           memberlink = format_link(vgrid.memberlink);
                       }
-                      var center="class='centertext'";
-                      entry = "<tr><td>"+vgrid.name+"</td><td "+center+">"+
-                          viewlink+"</td><td "+center+">"+adminlink+
-                          "</td><td "+center+">"+memberlink+"</td>";
+                      entry = "<tr>"+base_td(vgrid.name)+center_td(viewlink)+
+                          center_td(adminlink)+center_td(memberlink);
                       /* Adhere to vgrid_links list content and order */
                       for (k=0; k<vgrid_links.length; k++) {
                           activelinks = "";
@@ -347,22 +362,28 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                           } else if (linkname == "web") {
                               if(vgrid.enterprivatelink != undefined) {
                                   activelinks += format_link(vgrid.enterprivatelink);
+                                  activelinks += " ";
                               }
                               if(vgrid.editprivatelink != undefined) {
                                   activelinks += format_link(vgrid.editprivatelink);
+                                  activelinks += " ";
                               }
                               if(vgrid.enterpubliclink != undefined) {
                                   activelinks += format_link(vgrid.enterpubliclink);
+                                  activelinks += " ";
                               }
                               if(vgrid.editpubliclink != undefined) {
                                   activelinks += format_link(vgrid.editpubliclink);
+                                  activelinks += " ";
                               }
                           } else if (linkname == "scm") {
                               if(vgrid.ownerscmlink != undefined) {
                                   activelinks += format_link(vgrid.ownerscmlink);
+                                  activelinks += " ";
                               }
                               if(vgrid.memberscmlink != undefined) {
                                   activelinks += format_link(vgrid.memberscmlink);
+                                  activelinks += " ";
                               }
                           } else if (linkname == "tracker") {
                               if(vgrid.ownertrackerlink != undefined) {
@@ -390,10 +411,10 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                               console.error("unknown vgrid link: "+linkname+
                                             " or missing vgrid item link!");
                           }
-                          entry += "<td "+center+">"+activelinks+"</td>";
+                          entry += center_td(activelinks);
                       }
                       entry += "</tr>";
-                      console.debug("append entry: "+entry);
+                      //console.debug("append entry: "+entry);
                       $("#vgridtable tbody").append(entry);
                   }
               }
@@ -417,3 +438,87 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
   });
 }
 
+function ajax_resman() {
+    console.debug("load resources");
+    $("#load_status").addClass("spinner iconleftpad");
+    $("#load_status").html("Loading resources ...");
+    /* Request resource list in the background and handle as soon as
+    results come in */
+    $.ajax({
+      url: "?output_format=json;operation=list",
+      type: "GET",
+      dataType: "json",
+      cache: false,
+      success: function(jsonRes, textStatus) {
+          console.debug("got response from list");
+          var i, j, k;
+          var resource, res_type, res_hint, rte_list, entry, error = "";
+          //console.debug("empty table");
+          $("#resourcetable tbody").empty();
+          /*
+              Grab results from json response and insert resource items in table
+              and append POST helpers to body to make confirm dialog work.
+          */
+          for (i=0; i<jsonRes.length; i++) {
+              //console.debug("looking for content: "+ jsonRes[i].object_type);
+              if (jsonRes[i].object_type == "error_text") {
+                  console.error("list: "+jsonRes[i].text);
+                  error += jsonRes[i].text;
+              } else if (jsonRes[i].object_type == "html_form") {
+                  entry = jsonRes[i].text;
+                  if (entry.match(/function (rm|req)resowner[0-9]+/)) {
+                      //console.debug("append POST helper: "+entry);
+                      $("body").append(entry);
+                  }
+              } else if (jsonRes[i].object_type == "resource_list") {
+                  var resources = jsonRes[i].resources;
+                  for (j=0; j<resources.length; j++) {
+                      resource = resources[j];
+                      //console.info("found resource: "+resource.name);
+                      var detailslink = "";
+                      var ownerlink = "";
+                      if(resource.resdetailslink != undefined) {
+                          detailslink = format_link(resource.resdetailslink);
+                      }
+                      if (resource.resownerlink != undefined) {
+                          ownerlink = format_link(resource.resownerlink);
+                      }
+                      res_type = "real";
+                      if (resource.SANDBOX) {
+                        res_type = 'sandbox'
+                      }
+                      res_hint = 'class="'+res_type+'res" title="'+res_type+
+                          ' resource"';
+                      rte_hint = center_class+' title="'+
+                          resource.RUNTIMEENVIRONMENT.toString()+'"';
+                      entry = "<tr>"+attr_td(resource.name, res_hint)+
+                          center_td(detailslink)+center_td(ownerlink)+
+                          attr_td(resource.RUNTIMEENVIRONMENT.length, rte_hint)+
+                          center_td(resource.PUBLICNAME)+
+                          center_td(resource.NODECOUNT)+
+                          center_td(resource.CPUCOUNT)+
+                          center_td(resource.MEMORY)+center_td(resource.DISK)+
+                          center_td(resource.ARCHITECTURE)+"</tr>";
+                      //console.debug("append entry: "+entry);
+                      $("#resourcetable tbody").append(entry);
+                  }
+              }
+          }
+          $("#load_status").removeClass("spinner iconleftpad");
+          $("#load_status").empty();
+          if (error) {
+              $("#load_status").append("<span class=\'errortext\'>"+
+                                       "Error: "+error+"</span>");
+          }
+          $("#resourcetable").trigger("update");
+
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+          console.error("list failed: "+errorThrown);
+          $("#load_status").removeClass("spinner iconleftpad");
+          $("#load_status").empty();
+          $("#load_status").append("<span class=\'errortext\'>"+
+                                   "Error: "+errorThrown+"</span>");
+      }
+  });
+}

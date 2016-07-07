@@ -41,11 +41,14 @@ from shared.resource import anon_to_real_res_map
 from shared.vgridaccess import user_visible_res_confs, get_resource_map, \
      OWNERS, CONF
 
+list_operations = ['showlist', 'list']
+show_operations = ['show', 'showlist']
+allowed_operations = list(set(list_operations + show_operations))
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'show_sandboxes': ['false']}
+    defaults = {'show_sandboxes': ['false'], 'operation': ['show']}
     return ['resources', defaults]
 
 
@@ -56,6 +59,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     status = returnvalues.OK
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Resource management'
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -68,184 +73,212 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     show_sandboxes = (accepted['show_sandboxes'][-1] != 'false')
+    operation = accepted['operation'][-1]
 
-    visible_res_confs = user_visible_res_confs(configuration, client_id)
-    res_map = get_resource_map(configuration)
-    anon_map = anon_to_real_res_map(configuration.resource_home)
+    if not operation in allowed_operations:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Operation must be one of %s.''' % \
+                               ', '.join(allowed_operations)})
+        return (output_objects, returnvalues.OK)
 
-    # Iterate through resources and show management for each one requested
+    if operation in show_operations:
 
-    res_list = {'object_type': 'resource_list', 'resources': []}
-    fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE',
-              'SANDBOX', 'RUNTIMEENVIRONMENT']
-    # Leave the sorting to jquery tablesorter
-    for visible_res_name in visible_res_confs.keys():
-        unique_resource_name = visible_res_name
-        if visible_res_name in anon_map.keys():
-            unique_resource_name = anon_map[visible_res_name]
+        # jquery support for tablesorter and confirmation on delete
+        # table initially sorted by col. 1 (admin), then 0 (name)
 
-        if not show_sandboxes and sandbox_resource(unique_resource_name):
-            continue
-        res_obj = {'object_type': 'resource', 'name': visible_res_name}
+        table_spec = {'table_id': 'resourcetable', 'sort_order':
+                      '[[1,0],[0,0]]'}
+        (add_import, add_init, add_ready) = man_base_js(configuration,
+                                                        [table_spec])
 
-        if client_id in res_map[unique_resource_name][OWNERS]:
+        if operation == "show":
+            add_import += '''
+<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
+            '''
+            add_ready += '''
+        ajax_resman();
+            '''
 
-            # Admin of resource when owner
+        title_entry['style'] = themed_styles(configuration)
+        title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                                 add_init, add_ready)
+        output_objects.append({'object_type': 'html_form',
+                               'text': man_base_html(configuration)})
 
-            js_name = 'rmresowner%s' % hexlify(unique_resource_name)
-            helper = html_post_helper(js_name, 'rmresowner.py',
-                                      {'unique_resource_name':
-                                       unique_resource_name,
-                                       'cert_id': client_id})
-            output_objects.append({'object_type': 'html_form', 'text': helper})
-            res_obj['resownerlink'] = \
-                                    {'object_type': 'link',
-                                     'destination':
-                                     "javascript: confirmDialog(%s, '%s');"\
-                                     % (js_name, 'Really leave %s owners?' % \
-                                        unique_resource_name),
-                                     'class': 'removelink iconspace',
-                                     'title': 'Leave %s owners' % unique_resource_name, 
-                                     'text': ''}
-            res_obj['resdetailslink'] = \
-                                    {'object_type': 'link',
-                                     'destination':
-                                     'resadmin.py?unique_resource_name=%s'\
-                                     % unique_resource_name,
-                                     'class': 'adminlink iconspace',
-                                     'title': 'Administrate %s' % unique_resource_name, 
-                                     'text': ''}
-        else:
+        output_objects.append({'object_type': 'header', 'text': 'Available Resources'
+                              })
 
-            # link to become owner
-
-            js_name = 'reqresowner%s' % hexlify(unique_resource_name)
-            helper = html_post_helper(js_name, 'sendrequestaction.py',
-                                      {'unique_resource_name':
-                                       visible_res_name,
-                                       'request_type': 'resourceowner',
-                                       'request_text': ''})
-            output_objects.append({'object_type': 'html_form', 'text': helper})
-            res_obj['resownerlink'] = \
-                                    {'object_type': 'link',
-                                     'destination':
-                                     "javascript: confirmDialog(%s, '%s', '%s');"\
-                                     % (js_name, "Request ownership of " + \
-                                        visible_res_name + ":<br/>" + \
-                                        "\nPlease write a message to the owners (field below).",
-                                        'request_text'),
-                                     'class': 'addlink iconspace',
-                                     'title': 'Request ownership of %s' % visible_res_name,
-                                     'text': ''}
-            
-            res_obj['resdetailslink'] = \
-                                    {'object_type': 'link',
-                                     'destination':
-                                     'viewres.py?unique_resource_name=%s'\
-                                     % visible_res_name,
-                                     'class': 'infolink iconspace',
-                                     'title': 'View detailed %s specs' % \
-                                     visible_res_name, 
-                                     'text': ''}
-            
-        # fields for everyone: public status
-        for name in fields:
-            res_obj[name] = res_map[unique_resource_name][CONF].get(name, '')
-        # Use runtimeenvironment names instead of actual definitions
-        res_obj['RUNTIMEENVIRONMENT'] = [i[0] for i in res_obj['RUNTIMEENVIRONMENT']]
-        res_list['resources'].append(res_obj)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Resource management'
-
-    # jquery support for tablesorter and confirmation on delete
-    # table initially sorted by col. 1 (admin), then 0 (name)
-    
-    table_spec = {'table_id': 'resourcetable', 'sort_order':
-                  '[[1,0],[0,0]]'}
-    (add_import, add_init, add_ready) = man_base_js(configuration,
-                                                    [table_spec])
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
-    output_objects.append({'object_type': 'html_form',
-                           'text': man_base_html(configuration)})
-
-    output_objects.append({'object_type': 'header', 'text': 'Available Resources'
-                          })
-
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Resources available on this server'})
-    output_objects.append({'object_type': 'text', 'text'
-                          : '''
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                              : 'Resources available on this server'})
+        output_objects.append({'object_type': 'html_form',
+                               'text': '''
+    <div id="load_status"><!-- Dynamically filled by js --></div>
+        '''})
+        output_objects.append({'object_type': 'text', 'text'
+                              : '''
 All available resources are listed below with overall hardware specifications. Any resources that you own will have a administration icon that you can click to open resource management.
 '''
-                       })
+                           })
+        output_objects.append({'object_type': 'table_pager', 'entry_name':
+                               'resources', 'default_entries':
+                               default_pager_entries})
 
-    output_objects.append({'object_type': 'table_pager', 'entry_name': 'resources',
-                           'default_entries': default_pager_entries})
-    output_objects.append(res_list)
+    resources = []
+    if operation in list_operations:
+        visible_res_confs = user_visible_res_confs(configuration, client_id)
+        res_map = get_resource_map(configuration)
+        anon_map = anon_to_real_res_map(configuration.resource_home)
 
-    if configuration.site_enable_sandboxes:
-        if show_sandboxes:
-            output_objects.append({'object_type': 'link',
-                                   'destination': '?show_sandboxes=false',
-                                   'class': 'removeitemlink iconspace',
-                                   'title': 'Hide sandbox resources', 
-                                   'text': 'Exclude sandbox resources',
-                                   })
+        # Iterate through resources and show management for each one requested
 
-        else:
-            output_objects.append({'object_type': 'link',
-                                   'destination': '?show_sandboxes=true',
-                                   'class': 'additemlink iconspace',
-                                   'title': 'Show sandbox resources', 
-                                   'text': 'Include sandbox resources',
-                                   })
+        fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE',
+                  'SANDBOX', 'RUNTIMEENVIRONMENT']
+        # Leave the sorting to jquery tablesorter
+        for visible_res_name in visible_res_confs.keys():
+            unique_resource_name = visible_res_name
+            if visible_res_name in anon_map.keys():
+                unique_resource_name = anon_map[visible_res_name]
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Resource Status'})
-    output_objects.append({'object_type': 'text',
-                           'text': '''
+            if not show_sandboxes and sandbox_resource(unique_resource_name):
+                continue
+            res_obj = {'object_type': 'resource', 'name': visible_res_name}
+
+            if client_id in res_map[unique_resource_name][OWNERS]:
+
+                # Admin of resource when owner
+
+                js_name = 'rmresowner%s' % hexlify(unique_resource_name)
+                helper = html_post_helper(js_name, 'rmresowner.py',
+                                          {'unique_resource_name':
+                                           unique_resource_name,
+                                           'cert_id': client_id})
+                output_objects.append({'object_type': 'html_form', 'text': helper})
+                res_obj['resownerlink'] = \
+                                        {'object_type': 'link',
+                                         'destination':
+                                         "javascript: confirmDialog(%s, '%s');"\
+                                         % (js_name, 'Really leave %s owners?' % \
+                                            unique_resource_name),
+                                         'class': 'removelink iconspace',
+                                         'title': 'Leave %s owners' % unique_resource_name, 
+                                         'text': ''}
+                res_obj['resdetailslink'] = \
+                                        {'object_type': 'link',
+                                         'destination':
+                                         'resadmin.py?unique_resource_name=%s'\
+                                         % unique_resource_name,
+                                         'class': 'adminlink iconspace',
+                                         'title': 'Administrate %s' % unique_resource_name, 
+                                         'text': ''}
+            else:
+
+                # link to become owner
+
+                js_name = 'reqresowner%s' % hexlify(unique_resource_name)
+                helper = html_post_helper(js_name, 'sendrequestaction.py',
+                                          {'unique_resource_name':
+                                           visible_res_name,
+                                           'request_type': 'resourceowner',
+                                           'request_text': ''})
+                output_objects.append({'object_type': 'html_form', 'text': helper})
+                res_obj['resownerlink'] = \
+                                        {'object_type': 'link',
+                                         'destination':
+                                         "javascript: confirmDialog(%s, '%s', '%s');"\
+                                         % (js_name, "Request ownership of " + \
+                                            visible_res_name + ":<br/>" + \
+                                            "\nPlease write a message to the owners (field below).",
+                                            'request_text'),
+                                         'class': 'addlink iconspace',
+                                         'title': 'Request ownership of %s' % visible_res_name,
+                                         'text': ''}
+                
+                res_obj['resdetailslink'] = \
+                                        {'object_type': 'link',
+                                         'destination':
+                                         'viewres.py?unique_resource_name=%s'\
+                                         % visible_res_name,
+                                         'class': 'infolink iconspace',
+                                         'title': 'View detailed %s specs' % \
+                                         visible_res_name, 
+                                         'text': ''}
+                
+            # fields for everyone: public status
+            for name in fields:
+                res_obj[name] = res_map[unique_resource_name][CONF].get(name, '')
+            # Use runtimeenvironment names instead of actual definitions
+            res_obj['RUNTIMEENVIRONMENT'] = [i[0] for i in res_obj['RUNTIMEENVIRONMENT']]
+            resources.append(res_obj)
+
+    if operation == "show":
+        # insert dummy placeholder to build table
+        res_obj = {'object_type': 'resource', 'name': ''}
+        resources.append(res_obj)
+        
+    output_objects.append({'object_type': 'resource_list', 'resources':
+                           resources})
+
+    if operation in show_operations:
+        if configuration.site_enable_sandboxes:
+            if show_sandboxes:
+                output_objects.append({'object_type': 'link',
+                                       'destination': '?show_sandboxes=false',
+                                       'class': 'removeitemlink iconspace',
+                                       'title': 'Hide sandbox resources', 
+                                       'text': 'Exclude sandbox resources',
+                                       })
+
+            else:
+                output_objects.append({'object_type': 'link',
+                                       'destination': '?show_sandboxes=true',
+                                       'class': 'additemlink iconspace',
+                                       'title': 'Show sandbox resources', 
+                                       'text': 'Include sandbox resources',
+                                       })
+
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                              : 'Resource Status'})
+        output_objects.append({'object_type': 'text',
+                               'text': '''
 Live resource status is available in the resource monitor page with all
 %s/resources you can access
 ''' % configuration.site_vgrid_label})
-    output_objects.append({'object_type': 'link',
-                           'destination': 'showvgridmonitor.py?vgrid_name=ALL',
-                           'class': 'monitorlink iconspace',
-                           'title': 'Show monitor with all resources you can access', 
-                           'text': 'Global resource monitor',
-                           })
-
-    output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Resources'
-                          })
-    output_objects.append({'object_type': 'text',
-                           'text': 'You can sign up spare or dedicated resources to the grid below.'
-                           })
-    output_objects.append({'object_type': 'link',
-                           'destination' : 'resedit.py',
-                           'class': 'addlink iconspace',
-                           'title': 'Show sandbox resources',                            
-                           'text': 'Create a new %s resource' % \
-                           configuration.short_title, 
-                           })
-    output_objects.append({'object_type': 'sectionheader', 'text': ''})
-
-    if configuration.site_enable_sandboxes:
         output_objects.append({'object_type': 'link',
-                               'destination': 'ssslogin.py',
-                               'class': 'adminlink iconspace',
-                               'title': 'Administrate and monitor your sandbox resources',
-                               'text': 'Administrate %s sandbox resources' % \
-                               configuration.short_title,
+                               'destination': 'showvgridmonitor.py?vgrid_name=ALL',
+                               'class': 'monitorlink iconspace',
+                               'title': 'Show monitor with all resources you can access', 
+                               'text': 'Global resource monitor',
+                               })
+
+        output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Resources'
+                              })
+        output_objects.append({'object_type': 'text',
+                               'text': 'You can sign up spare or dedicated resources to the grid below.'
+                               })
+        output_objects.append({'object_type': 'link',
+                               'destination' : 'resedit.py',
+                               'class': 'addlink iconspace',
+                               'title': 'Show sandbox resources',                            
+                               'text': 'Create a new %s resource' % \
+                               configuration.short_title, 
                                })
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
-        output_objects.append({'object_type': 'link',
-                               'destination': 'oneclick.py',
-                               'class': 'sandboxlink iconspace',
-                               'title': 'Run a One-click resource in your browser', 
-                               'text': 'Use this computer as One-click %s resource' % \
-                               configuration.short_title,
-                               })
+
+        if configuration.site_enable_sandboxes:
+            output_objects.append({'object_type': 'link',
+                                   'destination': 'ssslogin.py',
+                                   'class': 'adminlink iconspace',
+                                   'title': 'Administrate and monitor your sandbox resources',
+                                   'text': 'Administrate %s sandbox resources' % \
+                                   configuration.short_title,
+                                   })
+            output_objects.append({'object_type': 'sectionheader', 'text': ''})
+            output_objects.append({'object_type': 'link',
+                                   'destination': 'oneclick.py',
+                                   'class': 'sandboxlink iconspace',
+                                   'title': 'Run a One-click resource in your browser', 
+                                   'text': 'Use this computer as One-click %s resource' % \
+                                   configuration.short_title,
+                                   })
 
     return (output_objects, status)
