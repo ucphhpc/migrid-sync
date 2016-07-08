@@ -115,6 +115,8 @@ def get_all_exe_names(unique_resource_name):
     if not status:
         return exe_names
     exe_units = resource_config.get('EXECONFIG', [])
+    # filter any bogus exes without name
+    exe_units = [exe for exe in exe_units if exe['name']]
     return [exe['name'] for exe in exe_units]
 
 
@@ -128,6 +130,8 @@ def get_all_exe_vgrids(unique_resource_name):
     if not status:
         return exe_vgrids
     exe_units = resource_config.get('EXECONFIG', [])
+    # filter any bogus exes without name
+    exe_units = [exe for exe in exe_units if exe['name']]
     exe_vgrids = dict([(exe['name'], exe['vgrid']) for exe in exe_units])
     return exe_vgrids
 
@@ -166,6 +170,8 @@ def get_all_store_names(unique_resource_name):
     if not status:
         return store_names
     store_units = resource_config.get('STORECONFIG', [])
+    # filter any bogus stores without name
+    store_units = [store for store in store_units if store['name']]
     return [store['name'] for store in store_units]
 
 
@@ -179,5 +185,7 @@ def get_all_store_vgrids(unique_resource_name):
     if not status:
         return store_vgrids
     store_units = resource_config.get('STORECONFIG', [])
+    # filter any bogus stores without name
+    store_units = [store for store in store_units if store['name']]
     store_vgrids = dict([(store['name'], store['vgrid']) for store in store_units])
     return store_vgrids

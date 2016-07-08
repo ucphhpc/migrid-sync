@@ -124,6 +124,11 @@ All available resources are listed below with overall hardware specifications. A
         fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE',
                   'SANDBOX', 'RUNTIMEENVIRONMENT']
         # Leave the sorting to jquery tablesorter
+        # NOTE: only resources that user is allowed to access are listed.
+        #       Resource with neither exes nor stores are not shown to anyone
+        #       but the owners. Similarly resources are not shown if all
+        #       resource units solely participate in VGrids, which the user
+        #       can't access.
         for visible_res_name in visible_res_confs.keys():
             unique_resource_name = visible_res_name
             if visible_res_name in anon_map.keys():

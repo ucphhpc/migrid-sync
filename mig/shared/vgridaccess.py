@@ -655,15 +655,14 @@ def user_allowed_res_confs(configuration, client_id):
     for res in vgrid_map_res.keys():
         anon_map[res] = vgrid_map_res[res][RESID]
 
-    # Now select only the ones that actually still are allowed for that vgrid
+    # Now select only the ones that actually are assigned to a shared vgrid.
+    # TODO: should we prefilter to ALLOWEXE+ALLOWSTORE+[default_vgrid]?
+    #       like we do in user_allowed_res_units
 
     for (res, res_data) in vgrid_map_res.items():
-        # Gracefully update any legacy values
-        res_data[ALLOWEXE] = res_data.get(ALLOWEXE, res_data[ALLOW])
-        res_data[ALLOWSTORE] = res_data.get(ALLOWSTORE, [])
-        allowexe = res_data[ALLOWEXE]
-        allowstore = res_data[ALLOWSTORE]
-        shared = [i for i in allowexe + allowstore if i in allowed_vgrids]
+        assignexe = res_data[ASSIGNEXE]
+        assignstore = res_data[ASSIGNSTORE]
+        shared = [i for i in assignexe + assignstore if i in allowed_vgrids]
         if not shared:
             continue
         allowed[anon_map[res]] = resource_map.get(res, {CONF: {}})[CONF]
@@ -754,14 +753,16 @@ def user_allowed_res_units(configuration, client_id, unit_type):
         else:
             configuration.logger.error("unexpected unit_type: %s" % unit_type)
             return allowed
-        shared = [i for i in allowunit if i in allowed_vgrids]
-        if not shared:
-            continue
+        # We add the implicit default_vgrid here as it is not in allowunit.
+        shared = [i for i in allowunit + [default_vgrid] if i in allowed_vgrids]
+        # Please note that that shared will always include default_vgrid. We
+        # additionally filter on actual assignment to avoid global access.
         match = []
         for (res_unit, unit_vgrids) in assignvgrid.items():
             if [i for i in shared if i in unit_vgrids]:
                 match.append(res_unit)
-        allowed[anon_map[res]] = match
+        if match:
+            allowed[anon_map[res]] = match
     return allowed
 
 def user_allowed_res_exes(configuration, client_id):
@@ -932,10 +933,13 @@ if "__main__" == __name__:
     user_access_stores = user_allowed_res_stores(conf, user_id)
     print "%s can access resources: %s" % \
           (user_id, ', '.join(user_access_confs.keys()))
+          #(user_id, ', '.join([i for (i, j) in user_access_confs.items() if j]))
     print "%s can access exes: %s" % \
           (user_id, ', '.join(user_access_exes.keys()))
+          #(user_id, ', '.join([i for (i, j) in user_access_exes.items() if j]))
     print "%s can access stores: %s" % \
           (user_id, ', '.join(user_access_stores.keys()))
+          #(user_id, ', '.join([i for (i, j) in user_access_stores.items() if j]))
     user_owned_confs = user_owned_res_confs(conf, user_id)
     #user_owned_exes = user_owned_res_exes(conf, user_id)
     #user_owned_stores = user_owned_res_stores(conf, user_id)
