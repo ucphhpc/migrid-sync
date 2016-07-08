@@ -219,7 +219,8 @@ def load_user_keys(configuration, client_id):
     try:
         hits = os.listdir(keys_dir)
     except Exception, exc:
-        logger.error("could not find user keys in %s: %s" % (keys_dir, exc))
+        # This is common for users without transfer keys
+        logger.debug("could not find user keys in %s: %s" % (keys_dir, exc))
         return user_keys
     for key_filename in hits:
         if key_filename.endswith('.pub'):
