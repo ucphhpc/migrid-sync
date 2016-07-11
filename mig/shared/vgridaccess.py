@@ -414,6 +414,8 @@ def refresh_vgrid_map(configuration):
         # Gracefully update any legacy values
         res_data[ALLOWEXE] = res_data.get(ALLOWEXE, res_data[ALLOW])
         res_data[ALLOWSTORE] = res_data.get(ALLOWSTORE, [])
+        res_data[ASSIGNEXE] = res_data.get(ASSIGNEXE, res_data[ASSIGN])
+        res_data[ASSIGNSTORE] = res_data.get(ASSIGNSTORE, [])
         assignexe = res_data[ASSIGNEXE]
         assignstore = res_data[ASSIGNSTORE]
         for vgrid in assignexe:
@@ -660,6 +662,9 @@ def user_allowed_res_confs(configuration, client_id):
     #       like we do in user_allowed_res_units
 
     for (res, res_data) in vgrid_map_res.items():
+        # Gracefully update any legacy values
+        res_data[ASSIGNEXE] = res_data.get(ASSIGNEXE, res_data[ASSIGN])
+        res_data[ASSIGNSTORE] = res_data.get(ASSIGNSTORE, [])
         assignexe = res_data[ASSIGNEXE]
         assignstore = res_data[ASSIGNSTORE]
         shared = [i for i in assignexe + assignstore if i in allowed_vgrids]
