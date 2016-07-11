@@ -30,6 +30,9 @@
 
 */
 
+/* Enable strict mode to help catch tricky errors early */
+"use strict";
+
 var center_class="class='centertext'";
 var title_class="class='title'";
 var border_class="class='border'";
@@ -55,24 +58,24 @@ function format_url(url) {
 
 function format_link(link_item) {
     var link = '<a ';
-    if (link_item.id != undefined) {
+    if (link_item.id !== undefined) {
         link += 'id="'+link_item.id+'" ';
     }
-    if (link_item.class != undefined) {
+    if (link_item.class !== undefined) {
         link += 'class="'+link_item.class+'" ';
     }
-    if (link_item.title != undefined) {
+    if (link_item.title !== undefined) {
         link += 'title="'+link_item.title+'" ';
     }
-    if (link_item.target != undefined) {
+    if (link_item.target !== undefined) {
         link += 'target="'+link_item.target+'" ';
     }
     link += 'href="'+link_item.destination+'">';
-    if (link_item.text != undefined) {
+    if (link_item.text !== undefined) {
         link += link_item.text;
     }
     link += '</a>';
-    return link
+    return link;
 }
 
 function ajax_redb(_freeze) {
@@ -98,23 +101,23 @@ function ajax_redb(_freeze) {
           */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
-              if (jsonRes[i].object_type == "error_text") {
+              if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type == "html_form") {
+              } else if (jsonRes[i].object_type === "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function delete[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
-              } else if (jsonRes[i].object_type == "runtimeenvironments") {
+              } else if (jsonRes[i].object_type === "runtimeenvironments") {
                   var runtimeenvs = jsonRes[i].runtimeenvironments;
                   for (j=0; j<runtimeenvs.length; j++) {
                       rte = runtimeenvs[j];
                       //console.info("found runtimeenv: "+rte.name);
                       var viewlink = format_link(rte.viewruntimeenvlink);
                       var dellink = "";
-                      if(rte.ownerlink != undefined) {
+                      if (rte.ownerlink !== undefined) {
                           dellink = format_link(rte.ownerlink);
                       }
                       rte_hint = center_class+" title='"+rte.providers+"'";
@@ -170,23 +173,23 @@ function ajax_freezedb(permanent_freeze) {
           */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
-              if (jsonRes[i].object_type == "error_text") {
+              if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type == "html_form") {
+              } else if (jsonRes[i].object_type === "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function delete[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
-              } else if (jsonRes[i].object_type == "frozenarchives") {
+              } else if (jsonRes[i].object_type === "frozenarchives") {
                   var archives = jsonRes[i].frozenarchives;
                   for (j=0; j<archives.length; j++) {
                       arch = archives[j];
                       //console.info("found archive: "+arch.name);
                       var viewlink = format_link(arch.viewfreezelink);
                       var dellink = "";
-                      if(!permanent_freeze) {
+                      if (!permanent_freeze) {
                           dellink = base_td(format_link(arch.delfreezelink));
                       }
                       entry = "<tr>"+base_td(arch.id)+center_td(viewlink)+
@@ -234,32 +237,32 @@ function ajax_showfreeze(freeze_id, checksum) {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var i = 0, j = 0;
-          var arch, entry, error = "";
+          var arch, file, entry, error = "";
           /*
               Grab results from json response and insert archive items in table
               and append POST helpers to body to make confirm dialog work.
           */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
-              if (jsonRes[i].object_type == "error_text") {
+              if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += " "+jsonRes[i].text;
-              } else if (jsonRes[i].object_type == "html_form") {
+              } else if (jsonRes[i].object_type === "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function delete[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
-              } else if (jsonRes[i].object_type == "frozenarchive") {
+              } else if (jsonRes[i].object_type === "frozenarchive") {
                   //console.debug("found frozenarchive");
-                  var arch = jsonRes[i];
+                  arch = jsonRes[i];
                   //console.debug("append details");
                   var published = "No";
                   if (arch.publish) {
                       published = "Yes ("+format_url(arch.publish_url)+")";
                   }
                   var location = "";
-                  if (arch.location != undefined) {
+                  if (arch.location !== undefined) {
                       var loc = arch.location;
                       for (j=0; j<loc.length; j++) {
                           location += "<tr>"+title_td("On "+loc[j][0])+
@@ -328,16 +331,16 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
           */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
-              if (jsonRes[i].object_type == "error_text") {
+              if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type == "html_form") {
+              } else if (jsonRes[i].object_type === "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function (rm|req)vgrid(owner|member)[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
-              } else if (jsonRes[i].object_type == "vgrid_list") {
+              } else if (jsonRes[i].object_type === "vgrid_list") {
                   var vgrids = jsonRes[i].vgrids;
                   for (j=0; j<vgrids.length; j++) {
                       vgrid = vgrids[j];
@@ -346,10 +349,10 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                       var adminlink = "";
                       var memberlink = "";
                       var activelinks = "";
-                      if(vgrid.administratelink != undefined) {
+                      if (vgrid.administratelink !== undefined) {
                           adminlink = format_link(vgrid.administratelink);
                       }
-                      if(vgrid.memberlink != undefined) {
+                      if (vgrid.memberlink !== undefined) {
                           memberlink = format_link(vgrid.memberlink);
                       }
                       entry = "<tr>"+base_td(vgrid.name)+center_td(viewlink)+
@@ -358,56 +361,56 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                       for (k=0; k<vgrid_links.length; k++) {
                           activelinks = "";
                           var linkname = vgrid_links[k];
-                          if (linkname == "files") {
-                              if  (vgrid.sharedfolderlink != undefined) {
+                          if (linkname === "files") {
+                              if (vgrid.sharedfolderlink !== undefined) {
                                   activelinks = format_link(vgrid.sharedfolderlink);
                               }
-                          } else if (linkname == "web") {
-                              if(vgrid.enterprivatelink != undefined) {
+                          } else if (linkname === "web") {
+                              if (vgrid.enterprivatelink !== undefined) {
                                   activelinks += format_link(vgrid.enterprivatelink);
                                   activelinks += " ";
                               }
-                              if(vgrid.editprivatelink != undefined) {
+                              if (vgrid.editprivatelink !== undefined) {
                                   activelinks += format_link(vgrid.editprivatelink);
                                   activelinks += " ";
                               }
-                              if(vgrid.enterpubliclink != undefined) {
+                              if (vgrid.enterpubliclink !== undefined) {
                                   activelinks += format_link(vgrid.enterpubliclink);
                                   activelinks += " ";
                               }
-                              if(vgrid.editpubliclink != undefined) {
+                              if (vgrid.editpubliclink !== undefined) {
                                   activelinks += format_link(vgrid.editpubliclink);
                                   activelinks += " ";
                               }
-                          } else if (linkname == "scm") {
-                              if(vgrid.ownerscmlink != undefined) {
+                          } else if (linkname === "scm") {
+                              if (vgrid.ownerscmlink !== undefined) {
                                   activelinks += format_link(vgrid.ownerscmlink);
                                   activelinks += " ";
                               }
-                              if(vgrid.memberscmlink != undefined) {
+                              if (vgrid.memberscmlink !== undefined) {
                                   activelinks += format_link(vgrid.memberscmlink);
                                   activelinks += " ";
                               }
-                          } else if (linkname == "tracker") {
-                              if(vgrid.ownertrackerlink != undefined) {
+                          } else if (linkname === "tracker") {
+                              if (vgrid.ownertrackerlink !== undefined) {
                                   activelinks = format_link(vgrid.ownertrackerlink);
                               }
-                              if(vgrid.membertrackerlink != undefined) {
+                              if (vgrid.membertrackerlink !== undefined) {
                                   activelinks = format_link(vgrid.membertrackerlink);
                               }
-                          } else if (linkname == "forum") {
-                              if(vgrid.privateforumlink != undefined) {
+                          } else if (linkname === "forum") {
+                              if (vgrid.privateforumlink !== undefined) {
                                   activelinks = format_link(vgrid.privateforumlink);
                               }
-                              if(vgrid.publicforumlink != undefined) {
+                              if (vgrid.publicforumlink !== undefined) {
                                   activelinks = format_link(vgrid.publicforumlink);
                               }
-                          } else if (linkname == "workflows") {
-                              if(vgrid.privateworkflowslink != undefined) {
+                          } else if (linkname === "workflows") {
+                              if (vgrid.privateworkflowslink !== undefined) {
                                   activelinks = format_link(vgrid.privateworkflowslink);
                               }
-                          } else if (linkname == "monitor") {
-                              if(vgrid.privatemonitorlink != undefined) {
+                          } else if (linkname === "monitor") {
+                              if (vgrid.privatemonitorlink !== undefined) {
                                   activelinks = format_link(vgrid.privatemonitorlink);
                               }
                           } else {
@@ -457,38 +460,38 @@ function ajax_resman() {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var i, j, k;
-          var resource, res_type, res_hint, rte_list, entry, error = "";
+          var resource, res_type, res_hint, rte_hint, entry, error = "";
           /*
               Grab results from json response and insert resource items in table
               and append POST helpers to body to make confirm dialog work.
           */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
-              if (jsonRes[i].object_type == "error_text") {
+              if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type == "html_form") {
+              } else if (jsonRes[i].object_type === "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function (rm|req)resowner[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
-              } else if (jsonRes[i].object_type == "resource_list") {
+              } else if (jsonRes[i].object_type === "resource_list") {
                   var resources = jsonRes[i].resources;
                   for (j=0; j<resources.length; j++) {
                       resource = resources[j];
                       //console.info("found resource: "+resource.name);
                       var detailslink = "";
                       var ownerlink = "";
-                      if(resource.resdetailslink != undefined) {
+                      if (resource.resdetailslink !== undefined) {
                           detailslink = format_link(resource.resdetailslink);
                       }
-                      if (resource.resownerlink != undefined) {
+                      if (resource.resownerlink !== undefined) {
                           ownerlink = format_link(resource.resownerlink);
                       }
                       res_type = "real";
                       if (resource.SANDBOX) {
-                        res_type = 'sandbox'
+                          res_type = 'sandbox';
                       }
                       res_hint = 'class="'+res_type+'res" title="'+res_type+
                           ' resource"';
@@ -549,16 +552,16 @@ function ajax_people(protocols) {
           */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
-              if (jsonRes[i].object_type == "error_text") {
+              if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type == "html_form") {
+              } else if (jsonRes[i].object_type === "html_form") {
                   entry = jsonRes[i].text;
                   if (entry.match(/function send[a-z]+[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
                       $("body").append(entry);
                   }
-              } else if (jsonRes[i].object_type == "user_list") {
+              } else if (jsonRes[i].object_type === "user_list") {
                   var users = jsonRes[i].users;
                   for (j=0; j<users.length; j++) {
                       usr = users[j];
@@ -570,7 +573,7 @@ function ajax_people(protocols) {
                           proto = protocols[k];
                           link_name = "send"+proto+"link";
                           sendlink = "---";
-                          if (usr[link_name] != undefined) {
+                          if (usr[link_name] !== undefined) {
                               sendlink = format_link(usr["send"+proto+"link"]);
                           }
                           entry += center_td(sendlink);

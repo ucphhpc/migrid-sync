@@ -53,6 +53,14 @@
 
 */
 
+/* Helpers for jshint to know about variables from dependency scripts:
+jquery.prettyprint.js, preview.js, editor.py 
+*/
+/* globals pp_bytes, pp_date, Preview, disable_editorarea_editor, enable_editorarea_editor, lastEdit */
+
+/* Enable strict mode to help catch tricky errors early */
+"use strict";
+
 /* switch on/off console log and debug log globally here */
 var enable_log = true;
 var enable_debug = false;
@@ -69,7 +77,7 @@ if (!window.console || !enable_log) {
         log: noOp,
         warn: noOp,
         error: noOp
-    }
+    };
 }
 /*
    Make sure we can use Date.now which was not available in IE<9
@@ -89,8 +97,8 @@ if (!enable_debug) {
 }
 
 if (jQuery) (function($){
-    console.info("console log enabled")
-    console.debug("console debug log enabled")
+    console.info("console log enabled");
+    console.debug("console debug log enabled");
     var pathAttribute = 'rel_path';
     var sorting = [[0, 0]];
 
@@ -120,9 +128,9 @@ if (jQuery) (function($){
         $("tr.fm_dotfile, li.fm_dotfile").each(function() {
             var t = $(this);
             setTimeout(function() {
-                if (do_show && t.css('display') == 'none') {
+                if (do_show && t.css('display') === 'none') {
                     t.toggle();
-                } else if (!do_show && t.css('display') != 'none') {
+                } else if (!do_show && t.css('display') !== 'none') {
                     t.toggle();
                 }
             }, 10);
@@ -140,11 +148,11 @@ if (jQuery) (function($){
         var parentId = $(".fm_folders").parent().attr('id');
         var selector ="#"+parentId+sub;
         return $(selector);
-    }
+    };
 
     $.fn.dump = function(element) {
         /* some browsers support toSource as easy dump */
-        if (element.toSource != undefined) {
+        if (element.toSource !== undefined) {
             return element.toSource();
         }
         var a = ["Element dump:"];
@@ -156,58 +164,61 @@ if (jQuery) (function($){
         }
         a.push("HTML: " + element.innerHTML);
         return(a.join('\n'));
-    }
+    };
 
     $.fn.renderError = function(jsonRes) {
 
         var errors = '';
 
         for (var i=0; i<jsonRes.length; i++) {
-            if (jsonRes[i]['object_type'] == 'error_text')
+            if (jsonRes[i]['object_type'] === 'error_text') {
                 errors +='<span class="errortext error iconleftpad">'+jsonRes[i].text+'</span><br />';
+            }
         }
         return errors;
-    }
+    };
 
     $.fn.renderWarning = function(jsonRes) {
 
         var warnings = '';
 
         for (var i=0; i<jsonRes.length; i++) {
-            if (jsonRes[i]['object_type'] == 'warning')
+            if (jsonRes[i]['object_type'] === 'warning') {
                 warnings +='<span class="warningtext warning iconleftpad">'+jsonRes[i].text+'</span><br />';
+            }
         }
         return warnings;
-    }
+    };
 
     $.fn.renderFileoutput = function(jsonRes) {
 
         var file_output = '';
 
-        for (i = 0; i < jsonRes.length; i++) {
-            if (jsonRes[i].object_type=='file_output') {
-                for (j = 0; j < jsonRes[i].lines.length; j++) {
+        for (var i = 0; i < jsonRes.length; i++) {
+            if (jsonRes[i].object_type === 'file_output') {
+                for (var j = 0; j < jsonRes[i].lines.length; j++) {
                     file_output += jsonRes[i].lines[j];
                 }
             }
         }
         return file_output;
-    }
+    };
 
     $.fn.tagName = function() {
         return this.get(0).tagName;
-    }
+    };
 
     $.fn.parentPath = function(path) {
         // Extract the parent of the path
-        if (path.lastIndexOf("/") == (path.length-1)) { // is directory?
+        var dirPath;
+        if (path.lastIndexOf("/") === (path.length-1)) { // is directory?
             dirPath = path.substring(0, path.length-1);
             dirPath = path.substring(0, dirPath.lastIndexOf('/'))+'/';
         } else {
             dirPath = path.substring(0, path.lastIndexOf('/'))+'/';
         }
         return dirPath;
-    }
+    };
 
     $.fn.normalizePath = function(path) {
         /* This is a modified version of the path normalizer from Node.js */
@@ -218,14 +229,20 @@ if (jQuery) (function($){
             var directory = parts[i];
 
             // if it's blank, but it's not the first thing, and not the last thing, skip it.
-            if (directory === "" && i !== 0 && i !== l && !keepBlanks) continue;
+            if (directory === "" && i !== 0 && i !== l && !keepBlanks) {
+                continue;
+            }
 
             // if it's a dot, and there was some previous dir already, then skip it.
-            if (directory === "." && prev !== undefined) continue;
+            if (directory === "." && prev !== undefined) {
+                continue;
+            }
 
             // if it starts with "", and is a . or .., then skip it.
             if (directories.length === 1 && directories[0] === "" && (
-                directory === "." || directory === "..")) continue;
+                directory === "." || directory === "..")) {
+                continue;
+            }
 
             if (directory === ".." && directories.length && prev !== ".." &&
                 prev !== "." && prev !== undefined &&
@@ -233,23 +250,25 @@ if (jQuery) (function($){
                 directories.pop();
                 prev = directories.slice(-1)[0];
             } else {
-                if (prev === ".") directories.pop();
+                if (prev === ".") {
+                    directories.pop();
+                }
                 directories.push(directory);
                 prev = directory;
             }
         }
         return directories.join("/");
-    }
+    };
 
     $.fn.reload = function reload(path) {
         var reloadPath = path;
 
-        if (reloadPath == '') {
+        if (reloadPath === '') {
             reloadPath = $(".fm_addressbar input[name='fm_current_path']").val().substr(1);
         }
 
         // Make sure slash remains for home
-        if (reloadPath == '') {
+        if (reloadPath === '') {
             reloadPath = '/';
         }
 
@@ -257,36 +276,36 @@ if (jQuery) (function($){
         /* NOTE: Careful to avoid breakage with paths containing single quote */
         $('.fm_folders [rel_path="'+reloadPath+'"]').click();
         $('.fm_folders [rel_path="'+reloadPath+'"]').click();
-    }
+    };
 
     $.fn.targetDir = function(elem) {
         var remote_path = $(elem).attr(pathAttribute);
         /* if called on element without pathAttribute */
-        if (remote_path == undefined) {
+        if (remote_path === undefined) {
             remote_path = $(".fm_addressbar input[name='fm_current_path']").val();
         }
         /* fix path anchor */
-        if (remote_path == '/') {
+        if (remote_path === '/') {
             remote_path = './';
         } else {
             remote_path = './'+remote_path;
         }
         return remote_path;
-    }
+    };
 
     $.fn.openDir = function(path) {
         /* NOTE: Careful to avoid breakage with paths containing single quote */
         path = path.replace(/%27/g, "'");
         $(".fm_addressbar input[name='fm_current_path']").val(path);
         $.fn.reload(path);
-    }
+    };
 
     $.fn.openParent = function() {
         console.debug('openParent');
         var current_li = $("#fm_xbreadcrumbs li.current");
         var current_path = current_li.find('a').text();
         console.debug('openParent current_path: '+current_path);
-        if (current_path == '/') {
+        if (current_path === '/') {
             console.debug("already at root");
             return;
         }
@@ -295,7 +314,7 @@ if (jQuery) (function($){
         console.debug('openParent prev_path: '+ prev_path);
         prev_li.find('a').click();
         console.debug('done openParent to '+prev_path);
-    }
+    };
 
    
     $.fn.filemanager = function(user_options, clickaction) {
@@ -325,14 +344,14 @@ if (jQuery) (function($){
         console.debug("define progress functions");
 
         function showDirinfo(msg) {
-            if (msg == undefined) {
+            if (msg === undefined) {
                 msg = "";
             }
             console.debug("showDirinfo: "+ msg);
             $(statusinfo).html(msg);
         }
         function startProgress(msg) {
-            if (msg == undefined) {
+            if (msg === undefined) {
                 msg = "working in the background ... please wait";
             }
             var progressLabel = $(".progress-label");
@@ -352,7 +371,7 @@ if (jQuery) (function($){
             console.debug("startProgress done");
         }
         function stopProgress(msg) {
-            if (msg == undefined) {
+            if (msg === undefined) {
                 msg = "";
             }
             var progressLabel = $(".progress-label");
@@ -530,7 +549,7 @@ if (jQuery) (function($){
         }
 
         function doubleClickEvent(el) {
-            if (clickaction != undefined) {
+            if (clickaction !== undefined) {
                 clickaction(el);
                 return;
             }
@@ -560,7 +579,7 @@ if (jQuery) (function($){
                 // Extract last directory from source
                 dst += src.split('/')[src.split('/').length-2];
             }
-            if (dst == '') {
+            if (dst === '') {
                 dst = '.';
             }
 
@@ -583,7 +602,7 @@ if (jQuery) (function($){
                            $($("#cmd_dialog").html('<p>Warning:</p>'+warnings));
                        } else {
                            // Only reload if destination is current folder
-                           if ($(".fm_addressbar input[name='fm_current_path']").val().substr(1) == dst.substring(0, dst.lastIndexOf('/'))+'/') {
+                           if ($(".fm_addressbar input[name='fm_current_path']").val().substr(1) === dst.substring(0, dst.lastIndexOf('/'))+'/') {
                                $(".fm_files").parent().reload($(".fm_addressbar input[name='fm_current_path']").val().substr(1));
                            }
                            $("#cmd_dialog").dialog('close');
@@ -595,60 +614,58 @@ if (jQuery) (function($){
 
         function parseWrapped(jsonRes, jsonSettings) {
             var misc_output = '';
-            var j, field;
-            for (var i = 0; i < jsonRes.length; i++) {
-                if (jsonRes[i]['object_type'] == 'submitstatuslist') {
+            var i, j, field;
+            for (i = 0; i < jsonRes.length; i++) {
+                if (jsonRes[i]['object_type'] === 'submitstatuslist') {
                     field = 'submitstatuslist';
                     for (j = 0; j < jsonRes[i][field].length; j++) {
                         if (jsonRes[i][field][j]['status']) {
-                            misc_output += '<p class="info iconleftpad">Submitted "'
-                                + jsonRes[i][field][j]['name']
-                                + '"</p><p>Job identfier: "'
-                                +jsonRes[i][field][j]['job_id']
-                                + '"</p>';
+                            misc_output += '<p class="info iconleftpad">Submitted "' +
+                                jsonRes[i][field][j]['name'] +
+                                '"</p><p>Job identfier: "' +
+                                jsonRes[i][field][j]['job_id'] + '"</p>';
                         } else {
-                            misc_output +=  '<p class="errortext error iconleftpad">Failed submitting:</p><p>'
-                                + jsonRes[i][field][j]['name']
-                                + ' '+jsonRes[i][field][j]['message']
-                                + '</p>';
+                            misc_output +=  '<p class="errortext error iconleftpad">' +
+                                'Failed submitting:</p><p>' + jsonRes[i][field][j]['name'] +
+                                ' '+jsonRes[i][field][j]['message'] + '</p>';
                         }
                     }
-                } else if (jsonRes[i]['object_type'] == 'stats') {
+                } else if (jsonRes[i]['object_type'] === 'stats') {
                     field = 'stats';
                     for (j = 0; j < jsonRes[i][field].length; j++) {
-                        misc_output += '<h4>Stat on ' + jsonSettings['path'] + '</h4>'
-                            + '<p>mode: ' + jsonRes[i][field][j]['mode']
-                            + '</p><p>size: ' + jsonRes[i][field][j]['size']
-                            + '</p><p>atime: ' + parseInt(jsonRes[i][field][j]['atime'])
-                            + '</p><p>mtime: ' + parseInt(jsonRes[i][field][j]['mtime'])
-                            + '</p><p>ctime: ' + parseInt(jsonRes[i][field][j]['ctime'])
-                            + '</p>';
+                        misc_output += '<h4>Stat on ' + jsonSettings['path'] + '</h4>' +
+                            '<p>mode: ' + jsonRes[i][field][j]['mode'] +
+                            '</p><p>size: ' + jsonRes[i][field][j]['size'] +
+                            '</p><p>atime: ' + parseInt(jsonRes[i][field][j]['atime']) +
+                            '</p><p>mtime: ' + parseInt(jsonRes[i][field][j]['mtime']) +
+                            '</p><p>ctime: ' + parseInt(jsonRes[i][field][j]['ctime']) +
+                            '</p>';
                     }
-                } else if (jsonRes[i]['object_type'] == 'filewcs') {
+                } else if (jsonRes[i]['object_type'] === 'filewcs') {
                     field = 'filewcs';
                     for (j = 0; j < jsonRes[i][field].length; j++) {
-                        misc_output += '<h4>Word count on ' + jsonRes[i][field]['name'] + '</h4>'
-                            + '<p>lines: ' + jsonRes[i][field][j]['lines']
-                            + '</p><p>words: ' + jsonRes[i][field][j]['words']
-                            + '</p><p>bytes: ' + jsonRes[i][field][j]['bytes']
-                            + '</p>';
+                        misc_output += '<h4>Word count on ' + jsonRes[i][field]['name'] +
+                            '</h4><p>lines: ' + jsonRes[i][field][j]['lines'] +
+                            '</p><p>words: ' + jsonRes[i][field][j]['words'] +
+                            '</p><p>bytes: ' + jsonRes[i][field][j]['bytes'] +
+                            '</p>';
                     }
-                } else if (jsonRes[i]['object_type'] == 'sharelinks') {
+                } else if (jsonRes[i]['object_type'] === 'sharelinks') {
                     field = 'sharelinks';
                     var elem;
                     for (j = 0; j < jsonRes[i][field].length; j++) {
                         elem = jsonRes[i][field][0];
-                        console.debug('found share link elem '+$.fn.dump(elem))
-                        misc_output += '<h4>Created Share Link</h4>'
-                            + '<p>ID: <tt>' + elem['share_id'] + '</tt></p>'
-                            + '<p>Path: <tt>' + elem['path'] + '</tt></p>'
-                            + '<p>Access: <tt>' + elem['access'] + '</tt></p>'
-                            + '<p><a class="urllink" target="_blank" href="' 
-                            + elem['opensharelink']['destination'] 
-                            + '">Open share link</a></p>'
-                            + '<p><a class="editlink" target="_blank" href="' 
-                            + elem['editsharelink']['destination'] 
-                            + '">Edit and send share link</a></p>'
+                        console.debug('found share link elem '+$.fn.dump(elem));
+                        misc_output += '<h4>Created Share Link</h4>' +
+                            '<p>ID: <tt>' + elem['share_id'] + '</tt></p>' +
+                            '<p>Path: <tt>' + elem['path'] + '</tt></p>' +
+                            '<p>Access: <tt>' + elem['access'] + '</tt></p>' +
+                            '<p><a class="urllink" target="_blank" href="' +
+                            elem['opensharelink']['destination'] +
+                            '">Open share link</a></p>' +
+                            '<p><a class="editlink" target="_blank" href="' +
+                            elem['editsharelink']['destination'] +
+                            '">Edit and send share link</a></p>'
                         ;
                     }
                 }
@@ -676,10 +693,8 @@ if (jQuery) (function($){
                        var misc_output = parseWrapped(jsonRes, jsonSettings);
 
                        stopProgress(lastinfo);
-                       if ((errors.length > 0)
-                           || (warnings.length > 0)
-                           || (file_output.length > 0)
-                           || (misc_output.length > 0)) {
+                       if ((errors.length > 0) || (warnings.length > 0) || 
+                           (file_output.length > 0) || (misc_output.length > 0)) {
 
                            $(dialog).dialog(okDialog);
                            $(dialog).dialog('open');
@@ -721,13 +736,13 @@ if (jQuery) (function($){
                     window.open('/cert_redirect/'+path_enc);
                 } else {
                     /* Path may contain URL-unfriendly characters */
-                    document.location = 'cat.py?path='
-                        +encodeURIComponent($(el).attr(pathAttribute))+'&output_format=file';
+                    document.location = 'cat.py?path=' +
+                        encodeURIComponent($(el).attr(pathAttribute))+'&output_format=file';
                 }
             },
             edit:   function (action, el, pos) {
                 $("#editor_dialog textarea[name='editarea']").val('');
-                $("#editor_output").removeClass()
+                $("#editor_output").removeClass();
                 $("#editor_output").addClass("hidden");
                 $("#editor_output").html('');
                 $("#editor_dialog").dialog({
@@ -742,9 +757,9 @@ if (jQuery) (function($){
                         },
                         'Download': function() {
                             /* Path may contain URL-unfriendly characters */
-                            document.location = 'cat.py?path='
-                                +encodeURIComponent($(el).attr(pathAttribute))
-                                +'&output_format=file';
+                            document.location = 'cat.py?path=' +
+                                encodeURIComponent($(el).attr(pathAttribute)) +
+                                '&output_format=file';
                         }
                     },
                     autoOpen: false, closeOnEscape: true, modal: true,
@@ -764,9 +779,9 @@ if (jQuery) (function($){
                     cache: false,
                     success: function(jsonRes, textStatus) {
                         var file_output = '';
-                        for (i = 0; i < jsonRes.length; i++) {
-                            if (jsonRes[i].object_type=='file_output') {
-                                for (j = 0; j < jsonRes[i].lines.length; j++) {
+                        for (var i = 0; i < jsonRes.length; i++) {
+                            if (jsonRes[i].object_type === 'file_output') {
+                                for (var j = 0; j < jsonRes[i].lines.length; j++) {
                                     file_output += jsonRes[i].lines[j];
                                 }
                             }
@@ -780,7 +795,7 @@ if (jQuery) (function($){
                         activeEntry.removeClass("currentSet");
                         var activeSet = activeEntry.attr("class");
                         activeEntry.addClass("currentSet");
-                        enable_editorarea_editor(activeSet)
+                        enable_editorarea_editor(activeSet);
                     },
                     /* TODO: error method is deprecated from jquery 3.0:
                        http://api.jquery.com/jQuery.ajax/
@@ -792,7 +807,7 @@ if (jQuery) (function($){
 
             },
             create:    function (action, el, pos) {
-                $("#editor_output").removeClass()
+                $("#editor_output").removeClass();
                 $("#editor_output").html('');
                 $("#editor_dialog").dialog({
                     buttons: {
@@ -817,13 +832,12 @@ if (jQuery) (function($){
                 for (var i=1; name_taken; i++) {
                     name_taken = false;
                     $("#fm_filelisting tbody tr").each(function(item) {
-                        if ($(this).attr('rel_path') == $(el).attr(pathAttribute)+'new_empty_file'+'-'+i) {
+                        if ($(this).attr('rel_path') === $(el).attr(pathAttribute)+'new_empty_file'+'-'+i) {
                             name_taken = true;
                         } else {
                             new_file_name = $(el).attr(pathAttribute)+'new_empty_file'+'-'+i;
                         }
                     });
-
                 }
 
                 $("#editor_dialog input[name='submitjob']").attr('checked', false);
@@ -879,8 +893,8 @@ if (jQuery) (function($){
                 var current_dir = '';
                 var target = $(el).attr(pathAttribute);
                 var path_name = '';
-                pathEl = target.split('/');
-                if (target.lastIndexOf("/") == (target.length-1)) {
+                var pathEl = target.split('/');
+                if (target.lastIndexOf("/") === (target.length-1)) {
                     path_name = pathEl[pathEl.length-2];
                     target = target.substring(0, target.lastIndexOf('/'));
                 } else {
@@ -941,7 +955,7 @@ if (jQuery) (function($){
                     console.error("nothing previously copied - nothing to paste");
                     return;
                 }
-                if (target_path == undefined) {
+                if (target_path === undefined) {
                     target_path = $.fn.targetDir();
                     console.warning("paste falling back to dst "+target_path);
                 }
@@ -952,7 +966,7 @@ if (jQuery) (function($){
             rm:     function (action, el, pos) {
                 var flags = '';
                 var rm_path = $(el).attr(pathAttribute);
-                if ($(el).attr(pathAttribute).lastIndexOf('/') == $(el).attr(pathAttribute).length-1) {
+                if ($(el).attr(pathAttribute).lastIndexOf('/') === $(el).attr(pathAttribute).length-1) {
                     flags = 'r';
                 }
                 $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+rm_path+'" will be permanently deleted. Are you sure?</p></div>');
@@ -1008,8 +1022,8 @@ if (jQuery) (function($){
             //       for folders to be moved so only renaming of files works.
             rename: function(action, el, pos) {
                 var path_name = '';
-                pathEl = $(el).attr(pathAttribute).split('/');
-                if ($(el).attr(pathAttribute).lastIndexOf('/') == $(el).attr(pathAttribute).length-1) {
+                var pathEl = $(el).attr(pathAttribute).split('/');
+                if ($(el).attr(pathAttribute).lastIndexOf('/') === $(el).attr(pathAttribute).length-1) {
                     path_name = pathEl[pathEl.length-2];
                 } else {
                     path_name = pathEl[pathEl.length-1];
@@ -1069,7 +1083,7 @@ if (jQuery) (function($){
                 $("#sharelink_form input[name='read_access']").prop('checked', true);
                 $("#sharelink_form input[name='write_access']").prop('checked', false);
                 // Disable write here for files
-                if (target.lastIndexOf("/") == (target.length-1)) {
+                if (target.lastIndexOf("/") === (target.length-1)) {
                     $("#sharelink_form input[name='write_access']").prop('disabled', false);
                 } else {
                     $("#sharelink_form input[name='write_access']").prop('disabled', true);
@@ -1136,11 +1150,12 @@ if (jQuery) (function($){
 
         // reestablish defaults for undefined actions:
         $.each(callbacks, function(name, fct) {
-            if (options['actions'][name] == undefined) {
+            if (options['actions'][name] === undefined) {
                 options['actions'][name] = callbacks[name];
-            } else {
-                //console.debug(name + " overloaded");
-            }
+            } 
+            /* else {
+                console.debug(name + " overloaded");
+            } */
         });
 
         // Initiate preview
@@ -1180,11 +1195,12 @@ if (jQuery) (function($){
 
         // reestablish defaults for undefined actions:
         $.each(callbacks, function(name, fct) {
-            if (options['actions'][name] == undefined) {
+            if (options['actions'][name] === undefined) {
                 options['actions'][name] = callbacks[name];
-            } else {
-                //console.debug(name + " overloaded");
-            }
+            } 
+            /* else {
+                console.debug(name + " overloaded");
+            } */
         });
 
         return this.each(function() {
@@ -1215,7 +1231,7 @@ if (jQuery) (function($){
 
                 // append current subdir parts to breadcrumbs (from right to left)
                 while (!found_root) {
-                    if (subdir_path == '/') {
+                    if (subdir_path === '/') {
                         a_class = 'class="home"';
                         subdir_name = '/';
                         found_root = true;
@@ -1262,12 +1278,12 @@ if (jQuery) (function($){
                         console.debug('begin ajax handler '+t);
 
                         // Place ls.py output in listing array
-                        var cur_folder_names = new Array();
-                        var cur_file_names = new Array();
-                        var listing = new Array();
+                        var cur_folder_names = [];
+                        var cur_file_names = [];
+                        var listing = [];
                         var i, j;
                         for (i = 0; i < jsonRes.length; i++) {
-                            if (jsonRes[i].object_type == 'dir_listings') {
+                            if (jsonRes[i].object_type === 'dir_listings') {
                                 for (j = 0; j < jsonRes[i].dir_listings.length; j++) {
                                     listing = listing.concat(jsonRes[i].dir_listings[j].entries);
                                 }
@@ -1280,7 +1296,7 @@ if (jQuery) (function($){
                         var folders = '';
 
                         // Root node if not already created
-                        if (t == '/' && $(".fm_folders li.userhome").length == 0) {
+                        if (t === '/' && $(".fm_folders li.userhome").length === 0) {
                             folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="/" title="Home"><div>/</div>\n';
                         }
 
@@ -1306,12 +1322,12 @@ if (jQuery) (function($){
                         for (i = 0; i < listing.length; i++) {
 
                             // ignore the pseudo-dirs
-                            if ((listing[i]['name'] == '.') ||
-                                (listing[i]['name'] == '..')) {
+                            if ((listing[i]['name'] === '.') ||
+                                (listing[i]['name'] === '..')) {
                                 continue;
                             }
 
-                            is_dir = listing[i]['type'] == 'directory';
+                            is_dir = listing[i]['type'] === 'directory';
                             base_css_style = 'file';
                             icon = '';
                             dotfile = '';
@@ -1322,11 +1338,11 @@ if (jQuery) (function($){
                             total_file_size += listing[i]['file_info']['size'];
 
                             path = listing[i]['name'];
-                            if (t != '/') { // Do not prepend the fake-root.
+                            if (t !== '/') { // Do not prepend the fake-root.
                                 path = t+path;
                             }
-                            if (listing[i]['name'].charAt(0) == '.') {
-                                dotfile = 'fm_dotfile'
+                            if (listing[i]['name'].charAt(0) === '.') {
+                                dotfile = 'fm_dotfile';
                             }
 
                             entry_title = path + ' ' + listing[i]['special'];
@@ -1376,7 +1392,7 @@ if (jQuery) (function($){
                             emptyDir = false;
 
                             /* chunked updates - append after after every chunk_files entries */
-                            if (file_count % chunk_files == 0) {
+                            if (file_count % chunk_files === 0) {
                                 console.debug('append chunk of ' + chunk_files + ' files in '+t);
                                 $(files_table).append(entries_html);
                                 entries_html = '';
@@ -1384,7 +1400,7 @@ if (jQuery) (function($){
                         }
 
                         /* Optimize rendering of intermediate dirs */
-                        if (!options.subPath && file_count % chunk_files != 0) {
+                        if (!options.subPath && file_count % chunk_files !== 0) {
                             console.debug('append remaining ' + file_count % chunk_files + ' files in '+t);
                             $(files_table).append(entries_html);
                         }
@@ -1392,14 +1408,14 @@ if (jQuery) (function($){
                         folders += '</ul>\n';
 
                         // End the root node
-                        if (t == '/') {
+                        if (t === '/') {
                             folders += '</li></ul>\n';
                         }
 
                         console.debug('update status bar');
 
                         // Prefix '/' for the visual presentation of the current path.
-                        if (t.substr(0, 1) == '/') {
+                        if (t.substr(0, 1) === '/') {
                             addressbar.find("input[name='fm_current_path']").val(t);
                         } else {
                             addressbar.find("input[name='fm_current_path']").val('/'+t);
@@ -1414,7 +1430,7 @@ if (jQuery) (function($){
                         folder_pane.removeClass('wait').removeClass("leftpad");
 
                         console.debug('show active folder');
-                        if (options.root == t) {
+                        if (options.root === t) {
                             console.debug('show root');
                             folder_pane.find('UL:hidden').show();
                         } else {
@@ -1460,19 +1476,21 @@ if (jQuery) (function($){
                             extraHeight = $(".fm_files").height() - $("#fm_filelisting").height() - headerHeight;
                         }
 
+                        var rel_path = "";
                         if (options.filespacer) {
-                            if (!options.uploadspace)
+                            if (!options.uploadspace) {
                                 spacerHeight = extraHeight;
-                            else
+                            } else {
                                 spacerHeight = extraHeight/2;
-                            var rel_path = "";
+                            }
+                            rel_path = "";
                             /* add or update existing filespacer */
-                            if ($(".fm_files div.filespacer").length == 0) {
+                            if ($(".fm_files div.filespacer").length === 0) {
                                 //console.debug("add filespacer");
                                 $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="" title=""+></div>');
                             }
 
-                            if (t != '/') { // Do not prepend the fake-root.
+                            if (t !== '/') { // Do not prepend the fake-root.
                                 rel_path = t;
                             }
                             //console.debug("update filespacer with path: "+rel_path);
@@ -1481,16 +1499,17 @@ if (jQuery) (function($){
                                 .attr("title", rel_path);
                         }
                         if (options.uploadspace) {
-                            if (!options.filespacer)
+                            if (!options.filespacer) {
                                 uploaderHeight = extraHeight;
-                            else
+                            } else {
                                 uploaderHeight = extraHeight/2;
-                            var rel_path = "";
+                            }
+                            rel_path = "";
                             /* add or update existing uploadspace */
-                            if ($(".fm_files div.uploadspace").length == 0) {
+                            if ($(".fm_files div.uploadspace").length === 0) {
                                 //console.debug("add uploadspace");
                                 $(".fm_files").append('<div class="uploadspace centertext" style="height: '+spacerHeight+'px;" rel_path="" title=""><div class="uploadbutton"><span class="upload icon">Click to open upload helper</span></div></div>');
-                                function openFancyUploadHere() {
+                                $("div.uploadspace .uploadbutton").click(function () {
                                     //alert("upload here!");
                                     var open_dialog = mig_fancyuploadchunked_init("upload_dialog");
                                     var remote_path = $.fn.targetDir($(".fm_files div.filespacer"));
@@ -1502,11 +1521,10 @@ if (jQuery) (function($){
                                                     $(".fm_files").parent().reload('');
                                                 }, remote_path, false);
                                     //alert("done upload!");
-                                }
-                                $("div.uploadspace .uploadbutton").click(openFancyUploadHere);
+                                });
                             }
 
-                            if (t != '/') { // Do not prepend the fake-root.
+                            if (t !== '/') { // Do not prepend the fake-root.
                                 rel_path = t;
                             }
                             //console.debug("update uploadspace with path: "+rel_path);
@@ -1581,25 +1599,25 @@ if (jQuery) (function($){
 
                         var descend = false;
                         for (i = 0; i < cur_folder_names.length; i++) {
-                            if (first_child == cur_folder_names[i]) {
+                            if (first_child === cur_folder_names[i]) {
                                 descend = true;
                                 break;
                             }
                         }
                         var hit = false;
-                        if ((descend == false) && (options.subPath != '')) {
+                        if ((descend === false) && (options.subPath !== '')) {
                             for (i = 0; i < cur_file_names.length; i++) {
-                                if (options.subPath == cur_file_names[i]) {
+                                if (options.subPath === cur_file_names[i]) {
                                     hit = true;
                                     break;
                                 }
                             }
 
-                            if ((hit == false) && (options.subPath!='')) {
+                            if ((hit === false) && (options.subPath !== '')) {
                                 // Inform the user
-                                $("#cmd_dialog").html('Path does not exist! '
-                                                      + current_dir.slice(1)
-                                                      + options.subPath);
+                                $("#cmd_dialog").html('Path does not exist! ' +
+                                                      current_dir.slice(1) +
+                                                      options.subPath);
                                 $("#cmd_dialog").dialog(okDialog);
                                 $("#cmd_dialog").dialog('open');
 
@@ -1611,8 +1629,8 @@ if (jQuery) (function($){
                         if (descend) {
                             options.subPath = options.subPath.slice(first_child.length+1);
                             /* NOTE: careful to avoid breakage with single quote in paths */
-                            $('.fm_folders [rel_path="'+current_dir.slice(1)
-                              +first_child+'/"]').click();
+                            $('.fm_folders [rel_path="'+current_dir.slice(1) +
+                              first_child+'/"]').click();
                         }
                         console.debug('end ajax handler '+t);
                     }
@@ -1895,7 +1913,7 @@ if (jQuery) (function($){
             // Sanitize the subfolder path, simple checks, a malicious user would only hurt himself..
 
             // Ignore the root
-            if (options.subPath == '/') {
+            if (options.subPath === '/') {
                 options.subPath = '';
             }
 
@@ -1906,7 +1924,7 @@ if (jQuery) (function($){
             var folder_pane = $(".fm_folders", obj);
             bindHandlers(folder_pane);
 
-            showBranch(folder_pane, escape(options.root));
+            showBranch(folder_pane, encodeURI(options.root));
 
             /*
              * Bind preview buttons
@@ -2009,7 +2027,7 @@ if (jQuery) (function($){
                      var newName = $("#rename_form input[name='name']").val();
 
                      // Extract the parent of the path
-                     if (src.lastIndexOf("/") == (src.length-1)) { // is directory?
+                     if (src.lastIndexOf("/") === (src.length-1)) { // is directory?
                          dst = src.substring(0, src.length-1);
                          dst = src.substring(0, dst.lastIndexOf('/'))+'/';
                      } else {
@@ -2017,10 +2035,10 @@ if (jQuery) (function($){
                      }
 
                      for (var i=0; i<formData.length; i++) {
-                         if (formData[i].name == 'dst') {
+                         if (formData[i].name === 'dst') {
                              formData[i].value = dst+newName;
                          }
-                         if (formData[i].name == 'name') {
+                         if (formData[i].name === 'name') {
                              formData[i].value = '';
                              // Remove the field value otherwise the backend pukes.
                          }
@@ -2037,7 +2055,7 @@ if (jQuery) (function($){
                      var errors = $(this).renderError(responseObject);
                      var warnings = $(this).renderWarning(responseObject);
                      // Reset any previous CSS
-                     $("#editor_output").removeClass()
+                     $("#editor_output").removeClass();
                      if (errors.length > 0) {
                          $("#editor_output").addClass("error leftpad");
                          edit_out += errors;
@@ -2108,11 +2126,11 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
 
         $("#" + name).dialog("option", "title", text);
 
-        if (files != undefined) {
+        if (files !== undefined) {
             files_only = files;
         }
 
-        if (action == undefined) {
+        if (action === undefined) {
             action = c;
         }
 
@@ -2134,7 +2152,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
     var select_action = function (action, el, pos) {
         var p = $(el).attr(pathAttribute);
         var open_dirs = true;
-        if (action != "dclick" && !files_only) {
+        if (action !== "dclick" && !files_only) {
             open_dirs = false;
         }
         if (open_dirs && $(el).hasClass("directory")) {
@@ -2166,7 +2184,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
         function(el) { select_action("dclick", el, undefined); }
     );
     return do_d;
-};
+}
 
 
 /*  MiG-Special: initialize a local file chooser dialog, installing the
@@ -2196,7 +2214,7 @@ function local_filechooser_init(name, callback) {
 
         $("#" + name).dialog("option", "title", text);
 
-        if (action == undefined) {
+        if (action === undefined) {
             action = c;
         }
 
@@ -2208,7 +2226,7 @@ function local_filechooser_init(name, callback) {
     };
 
     return do_d;
-};
+}
 
 /* expose these helpers in general */
 
@@ -2218,7 +2236,7 @@ var status_url = base_url+"status";
 var delete_url = base_url+"delete";
 var move_url = base_url+"move";
 
-$.fn.delete_upload = function(name, dest_dir, share_id_mode) {
+$.fn.delete_upload = function(name, dest_dir, share_id) {
     console.debug("delete upload: "+name+" "+dest_dir+" "+share_id);
     var deleted = false;
     $.ajax({
@@ -2233,12 +2251,12 @@ $.fn.delete_upload = function(name, dest_dir, share_id_mode) {
             //console.debug("data: "+$.fn.dump(data));
             $.each(data, function (index, obj) {
                 //console.debug("delete result obj: "+index+" "+$.fn.dump(obj));
-                if (obj.object_type == "uploadfiles") {
+                if (obj.object_type === "uploadfiles") {
                     //console.debug("found files in obj "+index);
                     var files = obj.files;
                     $.each(files, function (index, file) {
                         //console.debug("found file entry in results: "+index);
-                        if (file.error != undefined) {
+                        if (file.error !== undefined) {
                             console.error("delete_upload file error: "+file.error);
                         } else if (file[name]) {
                             //console.debug("found success marker: "+file[name]);
@@ -2275,12 +2293,12 @@ $.fn.move_upload = function(name, dest_dir, share_id) {
             //console.debug("data: "+$.fn.dump(data));
             $.each(data, function (index, obj) {
                 //console.debug("move result obj: "+index+" "+$.fn.dump(obj));
-                if (obj.object_type == "uploadfiles") {
+                if (obj.object_type === "uploadfiles") {
                     //console.debug("found files in obj "+index);
                     var files = obj.files;
                     $.each(files, function (index, file) {
                         //console.debug("found file entry in results: "+index);
-                        if (file.error != undefined) {
+                        if (file.error !== undefined) {
                             console.error("move_upload file error: "+file.error);
                         } else if (file[name]) {
                             //console.debug("found success marker: "+file[name]);
@@ -2310,6 +2328,47 @@ function mig_fancyuploadchunked_init(name, callback) {
        drag n drop to fileman drop zone with upload popup?
     */
 
+    function showMessage(msg, html_msg, fadein_ms, fadeout_ms) {
+        if (fadein_ms === undefined) {
+            fadein_ms = 0;
+        }
+        if (fadeout_ms === undefined) {
+            fadeout_ms = 10000;
+        }
+        console.log(msg);
+        $("#fancyuploadchunked_output").html(html_msg).fadeIn(fadein_ms,
+                                                              function() {
+                                                                  $(this).stop();
+                                                                  if (fadeout_ms > 0) {
+                                                                      $(this).fadeOut(fadeout_ms);
+                                                                  }
+                                                              });
+    }
+    function showWaitInfo(msg, fadein_ms, fadeout_ms) {
+        var html_msg = "<div class='spinner' style='margin: 20px;'>";
+        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
+        showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
+    }
+    function showInfo(msg, fadein_ms, fadeout_ms) {
+        var html_msg = "<div class='info' style='margin: 20px;'>";
+        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
+        showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
+    }
+    function showWarning(msg, fadein_ms, fadeout_ms) {
+        var html_msg = "<div class='warn' style='margin: 20px;'>";
+        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
+        showMessage("Warning: "+msg, html_msg, fadein_ms, fadeout_ms);
+    }
+    function showError(msg, fadein_ms, fadeout_ms) {
+        /* Do not auto fade out error messages by default */
+        if (fadeout_ms === undefined) {
+            fadeout_ms = -1;
+        }
+        var html_msg = "<div class='error' style='margin: 20px;'>";
+        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
+        showMessage("Error: "+msg, html_msg, fadein_ms, fadeout_ms);
+    }
+
     console.debug("mig_fancyuploadchunked_init: "+name);
     $.fn.fancyfileupload = $.fn.fileupload;
 
@@ -2332,50 +2391,14 @@ function mig_fancyuploadchunked_init(name, callback) {
          }
         });
 
-    function showMessage(msg, html_msg, fadein_ms, fadeout_ms) {
-        if (fadein_ms == undefined) fadein_ms = 0;
-        if (fadeout_ms == undefined) fadeout_ms = 10000;
-        console.log(msg);
-        $("#fancyuploadchunked_output").html(html_msg).fadeIn(fadein_ms,
-                                                              function() {
-                                                                  $(this).stop();
-                                                                  if (fadeout_ms > 0) {
-                                                                      $(this).fadeOut(fadeout_ms);
-                                                                  }
-                                                              }
-                                                             );
-    }
-    function showWaitInfo(msg, fadein_ms, fadeout_ms) {
-        var html_msg = "<div class='spinner' style='margin: 20px;'>";
-        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
-        showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
-    }
-    function showInfo(msg, fadein_ms, fadeout_ms) {
-        var html_msg = "<div class='info' style='margin: 20px;'>";
-        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
-        showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
-    }
-    function showWarning(msg, fadein_ms, fadeout_ms) {
-        var html_msg = "<div class='warn' style='margin: 20px;'>";
-        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
-        showMessage("Warning: "+msg, html_msg, fadein_ms, fadeout_ms);
-    }
-    function showError(msg, fadein_ms, fadeout_ms) {
-        /* Do not auto fade out error messages by default */
-        if (fadeout_ms == undefined) fadeout_ms = -1;
-        var html_msg = "<div class='error' style='margin: 20px;'>";
-        html_msg += "<span class='iconleftpad'>"+msg+"</span></div>";
-        showMessage("Error: "+msg, html_msg, fadein_ms, fadeout_ms);
-    }
-
     function parseReply(raw_data) {
         var data = {"files": []};
         var target = raw_data;
         //console.debug("parseReply raw data: "+$.fn.dump(raw_data));
-        if (raw_data.result != undefined) {
+        if (raw_data.result !== undefined) {
             //console.debug("parseReply found result entry to parse: "+$.fn.dump(raw_data.result));
             target = raw_data.result;
-        } else if (raw_data.files != undefined) {
+        } else if (raw_data.files !== undefined) {
             //console.debug("parseReply return direct files data: "+$.fn.dump(raw_data.files));
             //return raw_data;
             data.files = raw_data.files;
@@ -2386,7 +2409,7 @@ function mig_fancyuploadchunked_init(name, callback) {
         try {
             $.each(target, function (index, obj) {
                 //console.debug("result obj: "+index+" "+$.fn.dump(obj));
-                if (obj.object_type == "uploadfiles") {
+                if (obj.object_type === "uploadfiles") {
                     //console.debug("found files in obj "+index);
                     var files = obj.files;
                     //console.debug("found files: "+index+" "+$.fn.dump(files));
@@ -2414,7 +2437,7 @@ function mig_fancyuploadchunked_init(name, callback) {
         //console.debug("mig_fancyupload_init init dialog on: "+$("#"+name));
         $("#" + name).dialog("option", "title", text);
 
-        if (action == undefined) {
+        if (action === undefined) {
             action = c;
         }
 
@@ -2475,7 +2498,7 @@ function mig_fancyuploadchunked_init(name, callback) {
             done: function (e, data) {
                 console.debug("done file");
                 //console.debug("done with data: "+$.fn.dump(data));
-                if (data.result.files == undefined) {
+                if (data.result.files === undefined) {
                     var parsed = parseReply(data);
                     //console.debug("done parsed result: "+$.fn.dump(parsed));
                     data.result = parsed;
@@ -2485,7 +2508,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                 console.debug("handle any pending move for done files");
                 $.each(data.result.files, function (index, file) {
                     //console.debug("found file entry in results: "+$.fn.dump(file));
-                    if (file.error != undefined) {
+                    if (file.error !== undefined) {
                         showError("found upload error: "+file.error);
                         // Continue to next iteration on errors
                         return true;
@@ -2511,19 +2534,18 @@ function mig_fancyuploadchunked_init(name, callback) {
                 /* Finally pass control over to native done handler */
                 var that = this;
                 try {
-                    $.blueimp.fileupload.prototype
-                        .options.done.call(that, e, data);
+                    $.blueimp.fileupload.prototype.options.done.call(that, e, data);
                 } catch(err) {
                     showError("upload done handler failed: "+err);
                 }
             },
-            fail: function (jqXHR, textStatus, errorThrown) {
+            fail: function (e, data) {
                 console.debug("fail file");
                 // jQuery Widget Factory uses "namespace-widgetname" since version 1.10.0:
                 var uploader = $(this).data('blueimp-fileupload') || $(this).data('fileupload');
                 var retries = data.context.data('retries') || 0;
                 var max_tries = uploader.options.maxRetries;
-                if (data.errorThrown != 'abort') {
+                if (data.errorThrown !== 'abort') {
                     retries += 1;
                     data.context.data('retries', retries);
                     showWarning("upload error in retry no. "+retries+" of "+max_tries, 0, 2000);
@@ -2531,13 +2553,13 @@ function mig_fancyuploadchunked_init(name, callback) {
                         data.submit();
                         return;
                     }
-                    console.error("upload failed: "+$.fn.dump(errorThrown));
+                    console.error("upload failed: "+$.fn.dump(e));
                 }
                 data.context.removeData('retries');
                 $.each(data.files, function (index, file) {
-                    if (file.error != undefined) {
+                    if (file.error !== undefined) {
                         showError("uploading of "+file.name+" failed: "+file.error);
-                    } else if (data.errorThrown != 'abort' && retries >= max_tries) {
+                    } else if (data.errorThrown !== 'abort' && retries >= max_tries) {
                         console.debug("manually reporting network error for "+file.name);
                         file.error = "gave up after "+retries+" tries (network error?)";
                     } else {
@@ -2613,7 +2635,7 @@ function mig_fancyuploadchunked_init(name, callback) {
             var path;
             $(this).fileupload("option").filesContainer.children().each(function() {
                 //console.debug("in add handler loop");
-                if ($(this).data == undefined || $(this).data("data") == undefined) {
+                if ($(this).data === undefined || $(this).data("data") === undefined) {
                     //showWarning("no this.data field in add handler loop");
                     return true;
                 }
@@ -2644,13 +2666,11 @@ function mig_fancyuploadchunked_init(name, callback) {
     };
 
     return do_d;
-};
+}
 
 /* Image settings dialog */
 
 function mig_imagesettings_init(name, path, options) {
-    var path = path;
-    var name = name;
     var edit_form_values = { 
             extension: '',
             settings_status: '',
@@ -2730,13 +2750,14 @@ function mig_imagesettings_init(name, path, options) {
 
     function init_html_and_handlers() {
         $("#imagesettings_edit").hide();
-        $("#imagesettings_edit_tabs").hide()
+        $("#imagesettings_edit_tabs").hide();
 
         // Handle image settings file form submit
 
         $("#imagesettings_form").ajaxForm({
             target: '#imagesettings_output', dataType: 'json',
             success: function(responseObject, statusText) {
+                var msg;
                 var errors = $(this).renderError(responseObject);
                 var warnings = $(this).renderWarning(responseObject);
                 if (errors.length > 0) {
@@ -2760,7 +2781,7 @@ function mig_imagesettings_init(name, path, options) {
 
         $("#imagesettings_form select[name='image_type']").on('change', function() {
             var image_type_value = $("#imagesettings_form select[name='image_type']").val();
-            var data_type_value = $("#imagesettings_form select[name='data_type']").val()
+            var data_type_value = $("#imagesettings_form select[name='data_type']").val();
 
             // Set data_type based on image_type
             
@@ -2834,18 +2855,18 @@ function mig_imagesettings_init(name, path, options) {
                 }
 
                 var i;
-                var extension_list = new Array();
-                var image_settings_status_list = new Array();
-                var image_settings_progress_list = new Array();
-                var image_count_list = new Array();
-                var volume_settings_status_list = new Array();
-                var volume_settings_progress_list = new Array();
-                var volume_count_list = new Array();
+                var extension_list = [];
+                var image_settings_status_list = [];
+                var image_settings_progress_list = [];
+                var image_count_list = [];
+                var volume_settings_status_list = [];
+                var volume_settings_progress_list = [];
+                var volume_count_list = [];
                 
                 // Generate extension, status, progress and count lists for each entry
 
                 for (i = 0; i < jsonRes.length; i++) {
-                    if (jsonRes[i].object_type == 'image_settings_list') {
+                    if (jsonRes[i].object_type === 'image_settings_list') {
                         extension_list = extension_list.concat(jsonRes[i].extension_list);
                         image_settings_status_list = image_settings_status_list.concat(jsonRes[i].image_settings_status_list);
                         image_settings_progress_list = image_settings_progress_list.concat(jsonRes[i].image_settings_progress_list);
@@ -2859,7 +2880,7 @@ function mig_imagesettings_init(name, path, options) {
                 // Generate html for each entry
 
                 var html_out = '<p><b>Image file extensions:</b></p>';
-                if (image_settings_status_list.length == 0) {
+                if (image_settings_status_list.length === 0) {
                     html_out += '<p>-- No folder image settings configured --</p>';
                 }
 
@@ -2886,7 +2907,7 @@ function mig_imagesettings_init(name, path, options) {
                         if (volume_count_list[i] !== 0) {
                             html_out += ', Volumes: ' + volume_count_list[i];
                         }
-                        html_out += ')'
+                        html_out += ')';
                     }
                     else if (image_settings_status_list[i].toLowerCase() === 'updating' ) {
                         html_out +=  ' (Files: ' + image_settings_progress_list[i];
@@ -2894,7 +2915,7 @@ function mig_imagesettings_init(name, path, options) {
                             volume_settings_progress_list[i] !== 'None') {
                                 html_out += ', Volumes: ' + volume_settings_progress_list[i];
                         }
-                        html_out += ')'
+                        html_out += ')';
                     }                        
                     else if (image_settings_status_list[i].toLowerCase() === 'failed' ) {
                         html_out +=  '<span style="color:red"> (Failed)</span>';
@@ -2977,8 +2998,6 @@ function mig_imagesettings_init(name, path, options) {
             type: "GET",
             dataType: "json",
             cache: false,
-            dataType: "json",
-            cache: false,
             success: function (jsonRes) {
                 var i;
                 var errors = $(this).renderError(jsonRes);
@@ -3020,14 +3039,14 @@ function mig_imagesettings_init(name, path, options) {
             edit_form_values['settings_recursive'] = 'False';
             edit_form_values['image_type'] = 'raw';
             edit_form_values['data_type'] = 'float32';
-            edit_form_values['volume_slice_filepattern'] = ''
-            edit_form_values['offset'] = 0
-            edit_form_values['x_dimension'] = 0
-            edit_form_values['y_dimension'] = 0
-            edit_form_values['z_dimension'] = 0
-            edit_form_values['preview_cutoff_min'] = 0
-            edit_form_values['preview_cutoff_max'] = 0
-            do_edit()
+            edit_form_values['volume_slice_filepattern'] = '';
+            edit_form_values['offset'] = 0;
+            edit_form_values['x_dimension'] = 0;
+            edit_form_values['y_dimension'] = 0;
+            edit_form_values['z_dimension'] = 0;
+            edit_form_values['preview_cutoff_min'] = 0;
+            edit_form_values['preview_cutoff_max'] = 0;
+            do_edit();
         } else {
             $.ajax({
                 url: 'filemetaio.py',
@@ -3055,7 +3074,7 @@ function mig_imagesettings_init(name, path, options) {
                     }
 
                     for (i = 0; i < jsonRes.length; i++) {
-                        if (jsonRes[i].object_type == 'image_setting') {
+                        if (jsonRes[i].object_type === 'image_setting') {
                             edit_form_values['extension'] = jsonRes[i]['extension'];
                             edit_form_values['settings_recursive'] = jsonRes[i]['settings_recursive'];
                             edit_form_values['image_type'] = jsonRes[i]['image_type'];
@@ -3104,7 +3123,7 @@ function mig_imagesettings_init(name, path, options) {
         else {
             $("#imagesettings_form input[name='extension']").attr("readonly", false);
         }
-        if (edit_form_values['settings_recursive'] == 'True') {
+        if (edit_form_values['settings_recursive'] === 'True') {
             $("#imagesettings_form input[name='settings_recursive']").prop('checked', true).change();
         }
         else {
@@ -3154,4 +3173,4 @@ function mig_imagesettings_init(name, path, options) {
     };
 
     return do_d;
-};
+}

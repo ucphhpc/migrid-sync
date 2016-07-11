@@ -27,6 +27,9 @@
 
 */
 
+/* Enable strict mode to help catch tricky errors early */
+"use strict";
+
 /**
  * Returns on the form:
  * 800 -> 800 B
@@ -54,6 +57,13 @@ function pp_bytes(bytes) {
   
 }
 
+function pp_prefix(test) {
+    if (test < 10) {
+	test = "0"+test;
+    }
+    return test;
+}
+
 function pp_date(time) {
   
     var aDate = new Date(time*1000);
@@ -64,13 +74,4 @@ function pp_date(time) {
         pp_prefix(aDate.getHours()) + ':'+
         pp_prefix(aDate.getMinutes());
   
-}
-
-function pp_prefix(test) {
-  
-    if (test < 10) {
-	test = "0"+test;
-    }
-  
-    return test;
 }

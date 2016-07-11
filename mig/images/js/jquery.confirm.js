@@ -51,46 +51,55 @@
 
 */
 
+/* Enable strict mode to help catch tricky errors early */
+"use strict";
+
 function loadPageHelper(url) {
-    /* 
+    /*
        Helper to just open a new page ignoring any input args.
        Useful for generating a target function for runConfirmDialog when the
        target is just new page url.
     */
-    return function(input) { window.location = url; }
+    return function (input) {
+        window.location = url;
+    };
 }
 
 function confirmDialog(target, text, textFieldName) {
-    var link = "#";
-    var input = {}; 
-    if (target == undefined) {
-	alert('internal error: confirm needs a target function!');
-	target = loadPageHelper(window.location);
+    var input = {};
+    if (target === undefined) {
+        alert("internal error: confirm needs a target function!");
+        target = loadPageHelper(window.location);
     }
-    if (text == undefined) {
+    if (text === undefined) {
         text = "Are you sure?";
     }
-    $( "#confirm_text").html(text);
+    $("#confirm_text").html(text);
 
-    var addField = function() { /* doing nothing... */ };
-    if (textFieldName != undefined) {
+    var addField = function () {
+        /* doing nothing... */
+        return;
+    };
+    if (textFieldName !== undefined) {
         $("#confirm_input").show();
-        addField = function() {
-	    input[textFieldName] = $("#confirm_input")[0].value;
-        }
+        addField = function () {
+            input[textFieldName] = $("#confirm_input")[0].value;
+        };
     }
 
-    $( "#confirm_dialog").dialog("option", "buttons", {
-              "No": function() { $("#confirm_input").hide();
-                                 $("#confirm_text").empty();
-                                 $("#confirm_dialog").dialog("close");
-                               },
-              "Yes": function() { addField();
-                                  $("#confirm_input").hide();
-                                  $("#confirm_text").empty();
-                                  $("#confirm_dialog").dialog("close");
-                                  target(input);
-                                }
-            });
-    $( "#confirm_dialog").dialog("open");
+    $("#confirm_dialog").dialog("option", "buttons", {
+        "No": function () {
+            $("#confirm_input").hide();
+            $("#confirm_text").empty();
+            $("#confirm_dialog").dialog("close");
+        },
+        "Yes": function () {
+            addField();
+            $("#confirm_input").hide();
+            $("#confirm_text").empty();
+            $("#confirm_dialog").dialog("close");
+            target(input);
+        }
+    });
+    $("#confirm_dialog").dialog("open");
 }

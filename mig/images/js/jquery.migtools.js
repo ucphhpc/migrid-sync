@@ -30,18 +30,20 @@
 
 */
 
-var todo="TODO:\n"
-    + "-add scheduling-related parameters to dialogs\n"
-    + " (CPU time estimate, or just a switch \"Low priority job\")\n"
-    + " we can model N priorities through REs \"Prio-N\" "
-    + "and give numeric priorities\n"
-    + " Jobs are classified by a given maximum time in minutes,\n"
-    + " and into classes defined in a global configuration variable.\n"
-    + "\n-------------------------------------\n"
-    + "-compile with options -R -nojvm -R -nodisplay (after -m)?\n"
-    + "-store global variables in a json file, and matlab_e, matlab_c\n"
-    + "-add CPUtime field to submit dialog? (high default for now)\n"
-;
+/* Enable strict mode to help catch tricky errors early */
+"use strict";
+
+var todo="TODO:\n" +
+    "-add scheduling-related parameters to dialogs\n" +
+    " (CPU time estimate, or just a switch \"Low priority job\")\n" +
+    " we can model N priorities through REs \"Prio-N\" " +
+    "and give numeric priorities\n" +
+    " Jobs are classified by a given maximum time in minutes,\n" +
+    " and into classes defined in a global configuration variable.\n" +
+    "\n-------------------------------------\n" + 
+    "-compile with options -R -nojvm -R -nodisplay (after -m)?\n" +
+    "-store global variables in a json file, and matlab_e, matlab_c\n" +
+    "-add CPUtime field to submit dialog? (high default for now)\n";
 
 /*
   # (C) 2010 Jost Berthold (berthold at diku.dk), grid.dk
@@ -91,7 +93,7 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
     function extract_result(jsonRes) {
         var errors="";
         var job_id="";
-        for(var i=0; i<jsonRes.length; i++) {
+        for (var i=0; i<jsonRes.length; i++) {
             switch(jsonRes[i]["object_type"]) {
             case "error_text":
                 errors +="<p>"+jsonRes[i].text+"</p>";
@@ -105,9 +107,9 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
                 if (jsonRes[i]["submitstatuslist"][0]["status"]) {
                     job_id = jsonRes[i]["submitstatuslist"][0]["job_id"];
                 } else {
-                    errors += "<p>"
-                        + jsonRes[i]["submitstatuslist"][0]["message"]
-                        + "</p>";
+                    errors += "<p>" + 
+                        jsonRes[i]["submitstatuslist"][0]["message"] +
+                        "</p>";
                 }
                 break;
             case "text":
@@ -117,20 +119,20 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
                 // skip
             }
             // stop as soon as job_id is found
-            if (job_id != "") {
-                return [true,job_id];
+            if (job_id !== "") {
+                return [true, job_id];
             }
         }
 
         // we reach here, so no job_id has been found
-        if (errors == "") {
+        if (errors === "") {
             errors = "<p>Invalid reply (no job id, no errors)</p>";
         }
         return [false, errors];
     }
 
     // make sure we have an "EXECUTE" field
-    if (dict.EXECUTE == undefined || dict.EXECUTE == "") {
+    if (dict.EXECUTE === undefined || dict.EXECUTE === "") {
         callback_error("<p>No EXECUTE sequence given.</p>");
         return;
     }
@@ -167,7 +169,7 @@ function compile_submit() {
 
     var abort = false;
 
-    if (the_vgrid == undefined || matlab_c == undefined) {
+    if (the_vgrid === undefined || matlab_c === undefined) {
         alert("Setup error: VGrid or Runtime Env. unknown.");
         return;
     }
@@ -175,13 +177,13 @@ function compile_submit() {
     var file_name = $( "#file_name" )[0].value;
 
     // check and truncate file name
-    if (file_name == "") {
+    if (file_name === "") {
         alert("Error: No file to compile given.");
         return;
     }
     var match = file_name.match(/^(.*\/)?([^\/]+)\.m$/);
     var base_name;
-    if (match == null) {
+    if (match === null) {
         alert(file_name + ": invalid name (should end in \".m\")");
         return;
     } else {
@@ -191,18 +193,18 @@ function compile_submit() {
     // use explicit output destination if given
     var output_name = base_name;
     match = $( "#output_name" )[0].value;
-    if (match != "") {
+    if (match !== "") {
         output_name = match;
     }
 
     // check for valid output name
     match = output_name.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/);
-    if (match == null) {
-        alert("Invalid name `" + output_name + "' for output.\n"
-              + "Must begin with a letter or '_' and contain "
-              + "only alpha-numeric characters or '_'.\n"
-              + "\nIf your main Matlab file has an inconvenient "
-              + "name, use a different output name.");
+    if (match === null) {
+        alert("Invalid name `" + output_name + "' for output.\n" + 
+              "Must begin with a letter or '_' and contain " + 
+              "only alpha-numeric characters or '_'.\n" +
+              "\nIf your main Matlab file has an inconvenient " +
+              "name, use a different output name.");
         return;
     }
 
@@ -222,16 +224,16 @@ function compile_submit() {
     var extra_files = [];
     var extra_names = "";
     $.each(files_raw, function(i,str) {
-        if (str == "") { // ignore empty lines
+        if (str === "") { // ignore empty lines
             return true;
         }
         if (str.match(/[\t ]/)) {
-            alert("Warning: Ignoring file name with space (\""
-                  + str + "\")");
+            alert("Warning: Ignoring file name with space (\"" +
+                  str + "\")");
             return true;
         }
         var base = str.match(/\/([^/]+$)/);
-    if (base != undefined) {
+    if (base !== undefined) {
         extra_files.push(str + "\t " + base[1]);
         extra_names += ", \"" + base[1] + "\"";
     } else {
@@ -243,28 +245,28 @@ function compile_submit() {
 
 extra_names = extra_names.replace(/^, /,"");
 
-var in_files = file_name + " " + base_name + ".m\n"
-    + extra_files.join("\n");
+var in_files = file_name + " " + base_name + ".m\n" +
+    extra_files.join("\n");
 
 // compilation only, did not work..
-//     var exec = "$MCC -c -W main " + base_name + ".m " + extra_names + "\n"
-//        + "(echo \"<html><head/><body><pre>\"; cat run_" + base_name +".sh; echo \"</pre></body></html>\") > " + base_name + ".html\n";
+//     var exec = "$MCC -c -W main " + base_name + ".m " + extra_names + "\n" +
+//        "(echo \"<html><head/><body><pre>\"; cat run_" + base_name +".sh; echo \"</pre></body></html>\") > " + base_name + ".html\n";
 // compilation, linking, and writing a json info file
-var exec = "$MCC -o " + output_name + " -m "
-    + base_name + ".m "
-    + extra_names.replace(/[",]/g,"") + "\n"
-    + "echo '{ \"arch\": \"" + arch + "\",' "
-    + "> " + output_name + ".info\n"
-    + "[ -f \"run_" + output_name + "\" ] || "
-    + "echo '  \"comment\": \"Compilation +JOBID+ failed\",' "
-    + ">> " + output_name + ".info\n"
-    + "echo '  \"name\": \"" + output_name + "\",' "
-    + ">> " + output_name + ".info\n"
-    + "echo '  \"source\": \"" + file_name + "\",' "
-    + ">> " + output_name + ".info\n"
-    + "echo '  \"other_files\": [" + extra_names + "]}' "
-    + ">> " + output_name + ".info\n"
-    + "mv run_" + output_name + ".sh " + output_name + ".sh\n";
+var exec = "$MCC -o " + output_name + " -m " +
+    base_name + ".m " +
+    extra_names.replace(/[",]/g,"") + "\n" +
+    "echo '{ \"arch\": \"" + arch + "\",' " +
+    "> " + output_name + ".info\n" +
+    "[ -f \"run_" + output_name + "\" ] || " +
+    "echo '  \"comment\": \"Compilation +JOBID+ failed\",' " +
+    ">> " + output_name + ".info\n" +
+    "echo '  \"name\": \"" + output_name + "\",' " +
+    ">> " + output_name + ".info\n" +
+    "echo '  \"source\": \"" + file_name + "\",' " +
+    ">> " + output_name + ".info\n" +
+    "echo '  \"other_files\": [" + extra_names + "]}' " +
+    ">> " + output_name + ".info\n" +
+    "mv run_" + output_name + ".sh " + output_name + ".sh\n";
 
 
 var dict = {"output_format":"json",
@@ -291,11 +293,11 @@ mig_submit_dict(dict,
                 // callback for success:
                 function(job_id) {
                     // write a temp json file to the compiled directory
-                    var json = "{ \"arch\": \"" + arch
-                        + "\", \"name\": \"" + output_name
-                        + "\", \"source\": \"" + file_name
-                        + "\", \"other_files\": [" + extra_names + "]"
-                        + ", \"comment\": \"Pending Job: " + job_id +"\"}\n";
+                    var json = "{ \"arch\": \"" + arch +
+                        "\", \"name\": \"" + output_name +
+                        "\", \"source\": \"" + file_name +
+                        "\", \"other_files\": [" + extra_names + "]" +
+                        ", \"comment\": \"Pending Job: " + job_id +"\"}\n";
                     // if writing it out goes wrong, we cannot do much.
                     $.post("editfile.py", {
                         "path": compiled_dir + output_name + ".info",
@@ -306,24 +308,25 @@ mig_submit_dict(dict,
                     }, "json");
                     // write status message
                     var files = base_name + ".m";
-                    if (extra_names != "") {
+                    if (extra_names !== "") {
                         files += " and " + extra_names.replace(/"/g,"");
                     }
-                    $( "#result" ).append("Compilation of " + files
-                                          + ". Job is: "
-                                          + job_id + "<br/>");
+                    $( "#result" ).append("Compilation of " + files +
+                                          ". Job is: " +
+                                          job_id + "<br/>");
                 },
                 // callback for errors
                 function(errors) {
-                    $( "#result" ).append("<div class='errortext'>"
-                                          + "Submission failed for compiling "
-                                          + base_name + ".m<br/>"
-                                          + "Errors: "
-                                          + errors + "</div><br/>");
+                    $( "#result" ).append("<div class='errortext'>" +
+                                          "Submission failed for compiling " +
+                                          base_name + ".m<br/>" +
+                                          "Errors: " +
+                                          errors + "</div><br/>");
                 });
 
 return;
 }
+
 
 /* list_refresh reads directory contents from the compiled directory,
  * then, for each file *.info, reads that file as json and
@@ -336,7 +339,7 @@ return;
 
 function list_refresh() {
 
-    if ( (app_list_body && compiled_dir) == undefined ) {
+    if ( (app_list_body && compiled_dir) === undefined ) {
         alert("Setup error: list of executables not defined.");
     }
 
@@ -352,9 +355,9 @@ function list_refresh() {
     // returns (success::bool, result) where result is the error msg
     // as a singleton string list if no success
     function extract_info_files(jsonRes) {
-        var errors="";
-        var result=[];
-        for(var i=0; i<jsonRes.length; i++) {
+        var errors = "";
+        var result = [];
+        for (var i=0; i<jsonRes.length; i++) {
             switch(jsonRes[i]["object_type"]) {
             case "error_text":
                 errors +="<p>"+jsonRes[i].text+"</p>";
@@ -363,9 +366,8 @@ function list_refresh() {
                 errors += "<p>Path not found!</p>";
                 break;
             case "dir_listings":
-
                 var list = jsonRes[i]["dir_listings"];
-                if (list == []) {
+                if (list === []) {
                     errors += "<p>Empty result received.</p>";
                     break;
                 } else {
@@ -373,15 +375,15 @@ function list_refresh() {
                     list = list[0]["entries"];
 
                     for (var j=0; j < list.length; j++) {
-                        if (list[j]["type"] == "file"
-                            && list[j]["name"].match(/.*\.info$/)) {
+                        if (list[j]["type"] === "file" &&
+                            list[j]["name"].match(/.*\.info$/)) {
                             result.push(list[j]["file_with_dir"]);
                         }
                     }
                     // done, since we expect exactly one "dir_listings"
                     return [true, result];
                 }
-
+                break;
             case "text":
                 errors += "<p>" + jsonRes[i]["text"] + "</p>";
                 break;
@@ -410,20 +412,20 @@ function list_refresh() {
         }
         row += "<td>" + infos["arch"];
 
-        row += "<td><input type=\"submit\" " + "value=\"Delete\" "
-            + "onclick=\"rm_compiled('" + infos["name"] + "\')\">"
-            + "</input>";
-        if (infos["comment"] == undefined) {
-            row += "<td><input type=\"submit\" "
-                + "value=\"Submit job\" "
-                + "onclick=\"do_run_dialog('"
-                + infos["name"] + "\', \'" + infos["arch"] + "\')\">"
-                + "</input>&nbsp;&nbsp;";
-            row += "<input type=\"submit\" "
-                + "value=\"Do a parameter sweep\" "
-                + "onclick=\"do_sweep_dialog('"
-                + infos["name"] + "\', \'" + infos["arch"] + "\')\">"
-                + "</input>";
+        row += "<td><input type=\"submit\" " + "value=\"Delete\" " +
+            "onclick=\"rm_compiled('" + infos["name"] + "\')\">" +
+             "</input>";
+        if (infos["comment"] === undefined) {
+            row += "<td><input type=\"submit\" " +
+                "value=\"Submit job\" " +
+                "onclick=\"do_run_dialog('" +
+                infos["name"] + "\', \'" + infos["arch"] + "\')\">" +
+                "</input>&nbsp;&nbsp;";
+            row += "<input type=\"submit\" " +
+                "value=\"Do a parameter sweep\" " +
+                "onclick=\"do_sweep_dialog('" +
+                infos["name"] + "\', \'" + infos["arch"] + "\')\">" +
+                "</input>";
         } else {
             row += "<td style=\"font-size:smaller\">" + infos["comment"];
         }
@@ -443,8 +445,8 @@ function list_refresh() {
                               }, "json");
                    });
                } else {
-                   $( app_list_body ).append("<tr><td colspan=\"5\">"
-                                             + res[1][0]);
+                   $( app_list_body ).append("<tr><td colspan=\"5\">" +
+                                             res[1][0]);
                    return;
                }
            }, "json");
@@ -479,13 +481,13 @@ function list_refresh() {
 
 function do_run_dialog(name, arch) {
 
-    if ( (matlab_e && run_output_dir && compiled_dir) == undefined) {
+    if ( (matlab_e && run_output_dir && compiled_dir) === undefined) {
         alert("Setup error: not configured.");
         return;
     }
 
-    $( "#run_text").html("Run the compiled application "
-                         + name + "(on " + arch + " architecture):<br>");
+    $( "#run_text").html("Run the compiled application " +
+                         name + "(on " + arch + " architecture):<br>");
 
     var output_zip   = "+JOBNAME+-+JOBID+.zip";
 
@@ -498,18 +500,18 @@ function do_run_dialog(name, arch) {
                 "VGRID": "ANY",
                 "JOBNAME":"run-" + name,
                 "OUTPUTFILES": output_zip + " " + run_output_dir + output_zip,
-                "EXECUTABLES": compiled_dir + name + ".sh "
-                + "+JOBID+/" + name + ".sh\n" +
-                compiled_dir + name + " "
-                + "+JOBID+/" + name + "\n",
+                "EXECUTABLES": compiled_dir + name + ".sh " +
+                "+JOBID+/" + name + ".sh\n" +
+                compiled_dir + name + " " +
+                "+JOBID+/" + name + "\n",
                 "EXECUTE": [ "cd +JOBID+",
                              "./" + name + ".sh $MCR ARGUMENTS",
                              "cd ..",
                              "cp +JOBID+.std* +JOBID+",
-                             "rm -f  +JOBID+/" + name
-                             + " +JOBID+/" + name + ".sh"
-                             + " +JOBID+/+JOBID+.status"
-                             + " +JOBID+/joblog",
+                             "rm -f  +JOBID+/" + name +
+                             " +JOBID+/" + name + ".sh" +
+                             " +JOBID+/+JOBID+.status" +
+                             " +JOBID+/joblog",
                              "zip " + output_zip + " +JOBID+/*"
                            ].join("\n"),
                 "ARCHITECTURE": arch
@@ -520,16 +522,16 @@ function do_run_dialog(name, arch) {
         // add input files, if any given. Return a multiline string.
         var extra_files = [];
         $.each(files_raw, function(i,str) {
-            if (str == "") { // ignore empty lines
+            if (str === "") { // ignore empty lines
                 return true;
             }
             if (str.match(/[\t ]/)) {
-                alert("Warning: Ignoring file name with space (\""
-                      + str + "\")");
+                alert("Warning: Ignoring file name with space (\"" +
+                      str + "\")");
                 return true;
             }
             var base = str.match(/\/([^/]+$)/);
-        if (base != undefined) {
+        if (base !== undefined) {
             extra_files.push(str + "\t +JOBID+/" + base[1]);
         } else {
             extra_files.push(str + "\t +JOBID+/" + str);
@@ -564,8 +566,8 @@ $( "#run_dialog").dialog("option", "buttons", {
         if (time_limit > 0) {
             dict["CPUTIME"] = 60 * time_limit;
             // classify the job (for priority queues)
-            while (prio_class < priority_classes.length
-                   && dict["CPUTIME"] <=
+            while (prio_class < priority_classes.length &&
+                   dict["CPUTIME"] <=
                    60 * priority_classes[ prio_class ] ) {
                 prio_class++;
             }
@@ -589,21 +591,21 @@ $( "#run_dialog").dialog("option", "buttons", {
         // mig_submit_dict(the_job,...)
         mig_submit_dict(dict,
                         function(job_id) {
-                            output_zip = "run-" + name + "-"
-                                + job_id + ".zip";
-                            $( "#run_result" ).append("Running "
-                                                      + name + ". Job ID is " + job_id
-                                                      + ". Output file: "
-                                                      + "<a href='/cert_redirect/"
-                                                      + run_output_dir + output_zip
-                                                      + "' target='_blank'>"
-                                                      + output_zip + "</a><br/>");
+                            output_zip = "run-" + name + "-" +
+                                job_id + ".zip";
+                            $( "#run_result" ).append("Running " +
+                                                      name + ". Job ID is " + job_id +
+                                                      ". Output file: " +
+                                                      "<a href='/cert_redirect/" +
+                                                      run_output_dir + output_zip +
+                                                      "' target='_blank'>" +
+                                                      output_zip + "</a><br/>");
                         },
                         function(errors) {
                             $( "#run_result" ).append(
-                                "<div class='errortext'>"
-                                    + "<h4>Errors:</h4>"
-                                    + errors + "</div>");
+                                "<div class='errortext'>" +
+                                    "<h4>Errors:</h4>" +
+                                    errors + "</div>");
                         });
 
         clear_close();
@@ -620,7 +622,7 @@ $( "#run_dialog").dialog("open");
  */
 function rm_compiled(name) {
 
-    if ( compiled_dir == undefined) {
+    if ( compiled_dir === undefined) {
         alert("Setup error: directory not configured.");
         return;
     }
@@ -656,7 +658,7 @@ function rm_compiled(name) {
 
 function out_refresh() {
 
-    if ( (out_list_body && run_output_dir) == undefined ) {
+    if ( (out_list_body && run_output_dir) === undefined ) {
         alert("Setup error: output directory not configured.");
         return;
     }
@@ -673,9 +675,9 @@ function out_refresh() {
     // returns (success::bool, result) where result is the error msg
     // as a singleton string list if no success
     function extract_zip_files(jsonRes) {
-        var errors="";
-        var result=[];
-        for(var i=0; i<jsonRes.length; i++) {
+        var errors = "";
+        var result = [];
+        for (var i=0; i<jsonRes.length; i++) {
             switch(jsonRes[i]["object_type"]) {
             case "error_text":
                 errors +="<p>"+jsonRes[i].text+"</p>";
@@ -684,9 +686,8 @@ function out_refresh() {
                 errors += "<p>Path not found!</p>";
                 break;
             case "dir_listings":
-
                 var list = jsonRes[i]["dir_listings"];
-                if (list == undefined || list.length == 0) {
+                if (list === undefined || list.length === 0) {
                     errors += "<p>Empty</p>";
                     break;
                 } else {
@@ -694,15 +695,15 @@ function out_refresh() {
                     list = list[0]["entries"];
 
                     for (var j=0; j < list.length; j++) {
-                        if (list[j]["type"] == "file"
-                            && list[j]["name"].match(/.*\.zip$/)) {
+                        if (list[j]["type"] === "file" &&
+                            list[j]["name"].match(/.*\.zip$/)) {
                             result.push(list[j]["name"]);
                         }
                     }
                     // done, since we expect exactly one "dir_listings"
                     return [true, result];
                 }
-
+                break;
             case "text":
                 errors += "<p>" + jsonRes[i]["text"] + "</p>";
                 break;
@@ -721,21 +722,21 @@ function out_refresh() {
 
         var match = filename.match(/^run-([^-]*)-(.*).zip$/);
 
-        if (match == undefined ) {
-            row += "<td style=\"font-size:x-small\" colspan=\"4\">"
-                + "<a href=\"/cert_redirect/" + run_output_dir + filename
-                + "\" target=\"_blank\">"
-                + filename + "</a>  (filename unexpected)";
+        if (match === undefined ) {
+            row += "<td style=\"font-size:x-small\" colspan=\"4\">" +
+                "<a href=\"/cert_redirect/" + run_output_dir + filename +
+                "\" target=\"_blank\">" +
+                filename + "</a>  (filename unexpected)";
         } else {
             row += "<td>" + match[1]; // name of application
             row += "<td>" + match[2]; // Job ID
 
-            row += "<td><input type=\"submit\" " + "value=\"Delete\" "
-                + "onclick=\"rm_output('" + match[0] + "\')\">"
-                + "</input>";
-            row += "<td style=\"font-size:x-small\">"
-                + "<a href=\"/cert_redirect/" + run_output_dir + match[0]
-                + "\" target=\"_blank\">" + filename + "</a>";
+            row += "<td><input type=\"submit\" " + "value=\"Delete\" " +
+                "onclick=\"rm_output('" + match[0] + "\')\">" +
+                "</input>";
+            row += "<td style=\"font-size:x-small\">" +
+                "<a href=\"/cert_redirect/" + run_output_dir + match[0] +
+                "\" target=\"_blank\">" + filename + "</a>";
         }
 
         $( out_list_body ).append(row);
@@ -748,8 +749,8 @@ function out_refresh() {
                if (res[0]) { // success
                    $.each(res[1], appendRow );
                } else {
-                   $( out_list_body ).append("<tr><td colspan=\"4\">"
-                                             + res[1][0]);
+                   $( out_list_body ).append("<tr><td colspan=\"4\">" +
+                                             res[1][0]);
                    return;
                }
            }, "json");
@@ -762,7 +763,7 @@ function out_refresh() {
  */
 function rm_output(name) {
 
-    if ( run_output_dir == undefined) {
+    if ( run_output_dir === undefined) {
         alert("Setup error: directory not configured.");
         return;
     }
@@ -821,13 +822,13 @@ function rm_output(name) {
 
 function do_sweep_dialog(name, arch) {
 
-    if ( (matlab_e && run_output_dir && compiled_dir) == undefined) {
+    if ( (matlab_e && run_output_dir && compiled_dir) === undefined) {
         alert("Setup error: not configured.");
         return;
     }
 
-    $( "#sweep_text" ).html("Run a parameter sweep for the application "
-                            + name + "(on " + arch + " architecture):<br>");
+    $( "#sweep_text" ).html("Run a parameter sweep for the application " +
+                            name + "(on " + arch + " architecture):<br>");
     $( "#sweep_jobs" )[0].value="1";
 
     /* ARGUMENT SYNTAX
@@ -855,14 +856,14 @@ function do_sweep_dialog(name, arch) {
         /* parse the argument line and identify all ranges
          * then expand all ranges, then chop into number of jobs
          * Returns list of list of argument strings.
-         *  outer.length == jobs
-         *  inner.length == ceil(product of range_extension / jobs)
+         *  outer.length === jobs
+         *  inner.length === ceil(product of range_extension / jobs)
          */
 
         // list of all arguments that are valid "plain" or "enum range"s
         var args_matched = arg_line.match(matchArgs);
 
-        if (args_matched == undefined) {
+        if (args_matched === undefined) {
             // no arguments given? at least none we can understand
             alert("No arguments. Aborting.");
             return([]);
@@ -876,7 +877,7 @@ function do_sweep_dialog(name, arch) {
             var is_range = args_matched[i].match(range);
 
             tmp = [];
-            if ( is_range == undefined ) {
+            if ( is_range === undefined ) {
                 // plain, so only one variant
                 for (j = 0; j < args_all.length; j++ ) {
                     tmp.push( args_all[j] + " " + args_matched[i] );
@@ -884,7 +885,7 @@ function do_sweep_dialog(name, arch) {
             } else {
                 from = new Number(is_range[1]);
                 to   = new Number(is_range[4]);
-                if (is_range[3] == undefined ) {
+                if (is_range[3] === undefined ) {
                     if (from > to) {
                         inc = -1;
                     } else {
@@ -894,7 +895,7 @@ function do_sweep_dialog(name, arch) {
                     inc = new Number(is_range[3]) - new Number(is_range[1]);
                 }
                 // sanity check:
-                if (inc == 0 || from < to && inc < 0 || from > to && inc > 0) {
+                if (inc === 0 || from < to && inc < 0 || from > to && inc > 0) {
                     alert(is_range[0] + ": Invalid range. Aborting.");
                     return([]);
                 }
@@ -923,12 +924,12 @@ function do_sweep_dialog(name, arch) {
         for (j = 0; j < args_all.length; j+=i ) {
             tmp = [];
             // correct target length here for equal distribution
-            if (l == 0) {
+            if (l === 0) {
                 i = Math.floor(args_all.length / jobs);
             }
             l--;
             for (k = 0; k < i; k++) {
-                if (args_all[j + k] == undefined) {
+                if (args_all[j + k] === undefined) {
                     break;
                 }
                 tmp.push(args_all[j + k]);
@@ -954,10 +955,10 @@ function do_sweep_dialog(name, arch) {
     var preprocess = "cd +JOBID+\n";
     var postprocess= [ "cd ..",
                        "cp +JOBID+.std* +JOBID+",
-                       "rm -f  +JOBID+/" + name
-                       + " +JOBID+/" + name + ".sh"
-                       + " +JOBID+/+JOBID+.status"
-                       + " +JOBID+/joblog",
+                       "rm -f  +JOBID+/" + name +
+                       " +JOBID+/" + name + ".sh" +
+                       " +JOBID+/+JOBID+.status" +
+                       " +JOBID+/joblog",
                        "zip " + output_zip + " +JOBID+/*"
                      ].join("\n");
 
@@ -974,16 +975,16 @@ function do_sweep_dialog(name, arch) {
 
         // add input files, if any given, to the extra_files list.
         $.each(files_raw, function(i,str) {
-            if (str == "") { // ignore empty lines
+            if (str === "") { // ignore empty lines
                 return true;
             }
             if (str.match(/[\t ]/)) {
-                alert("Warning: Ignoring file name with space (\""
-                      + str + "\")");
+                alert("Warning: Ignoring file name with space (\"" +
+                      str + "\")");
                 return true;
             }
             var base = str.match(/\/([^/]+$)/);
-        if (base != undefined) {
+        if (base !== undefined) {
             extra_files.push(str + "\t +JOBID+/" + base[1]);
         } else {
             extra_files.push(str + "\t +JOBID+/" + str);
@@ -1003,10 +1004,10 @@ function submit_part(args) {
                 "CPUTIME": max_time,
                 "OUTPUTFILES": output_zip + " " + run_output_dir + output_zip,
                 "INPUTFILES" : extra_files.join("\n"),
-                "EXECUTABLES": compiled_dir + name + ".sh "
-                + "+JOBID+/" + name + ".sh\n" +
-                compiled_dir + name + " "
-                + "+JOBID+/" + name + "\n",
+                "EXECUTABLES": compiled_dir + name + ".sh " +
+                "+JOBID+/" + name + ".sh\n" +
+                compiled_dir + name + " " +
+                "+JOBID+/" + name + "\n",
                 "ARCHITECTURE": arch
                };
     dict["EXECUTE"] = preprocess;
@@ -1017,21 +1018,21 @@ function submit_part(args) {
 
     mig_submit_dict(dict,
                     function(job_id) {
-                        output_zip = "run-" + name + "-"
-                            + job_id + ".zip";
-                        $( "#run_result" ).append("Running "
-                                                  + name + ". Job ID is " + job_id
-                                                  + ". Output file: "
-                                                  + "<a href='/cert_redirect/"
-                                                  + run_output_dir + output_zip
-                                                  + "' target='_blank'>"
-                                                  + output_zip + "</a><br/>");
+                        output_zip = "run-" + name + "-" +
+                            job_id + ".zip";
+                        $( "#run_result" ).append("Running " +
+                                                  name + ". Job ID is " + job_id +
+                                                  ". Output file: " +
+                                                  "<a href='/cert_redirect/" +
+                                                  run_output_dir + output_zip +
+                                                  "' target='_blank'>" +
+                                                  output_zip + "</a><br/>");
                     },
                     function(errors) {
                         $( "#run_result" ).append(
-                            "<div class='errortext'>"
-                                + "<h4>Errors:</h4>"
-                                + errors + "</div>");
+                            "<div class='errortext'>" +
+                                "<h4>Errors:</h4>" +
+                                errors + "</div>");
                     });
     return(true);
 }
@@ -1065,21 +1066,21 @@ function pretty_args(argss) {
         msg += join_head_tail(argss[0], 20, "\n") + "\n";
         break;
     case 2:
-        msg += "Job 1:\n   " + join_head_tail(argss[0], 9, "\n   ") + "\n"
-            +"Job 2:\n   " + join_head_tail(argss[1], 9, "\n   ") + "\n";
+        msg += "Job 1:\n   " + join_head_tail(argss[0], 9, "\n   ") + "\n" +
+            "Job 2:\n   " + join_head_tail(argss[1], 9, "\n   ") + "\n";
         break;
     case 3:
-        msg += "Job 1:\n   " + join_head_tail(argss[0], 6, "\n   ") + "\n"
-            +"Job 2:\n   " + join_head_tail(argss[1], 6, "\n   ") + "\n"
-            +"Job 3:\n   " + join_head_tail(argss[2], 6, "\n   ") + "\n";
+        msg += "Job 1:\n   " + join_head_tail(argss[0], 6, "\n   ") + "\n" +
+            "Job 2:\n   " + join_head_tail(argss[1], 6, "\n   ") + "\n" +
+            "Job 3:\n   " + join_head_tail(argss[2], 6, "\n   ") + "\n";
         break;
     default:
-        msg += "Job 1:\n   " + join_head_tail(argss[0], 5, "\n   ") + "\n"
-            +"Job 2:\n   " + join_head_tail(argss[1], 5, "\n   ") + "\n"
-            + "...   ...\n(" + argss.length + " jobs in total)\n"
-            + "...   ...\n"
-            +"Last :\n   "
-            + join_head_tail(argss[argss.length-1], 5, "\n   ") + "\n";
+        msg += "Job 1:\n   " + join_head_tail(argss[0], 5, "\n   ") + "\n" +
+            "Job 2:\n   " + join_head_tail(argss[1], 5, "\n   ") + "\n" +
+            "...   ...\n(" + argss.length + " jobs in total)\n" +
+            "...   ...\n" +
+            "Last :\n   " +
+            join_head_tail(argss[argss.length-1], 5, "\n   ") + "\n";
         break;
     }
 
@@ -1100,7 +1101,7 @@ $( "#sweep_dialog").dialog("option", "buttons", {
         var limit = new Number($("#sweep_limit")[0].value || "0");
         var argss = make_sweep_args(jobs, arg_line);
 
-        if (argss != undefined && argss.length > 0) {
+        if (argss !== undefined && argss.length > 0) {
 
             var msg = pretty_args(argss);
 
@@ -1110,26 +1111,26 @@ $( "#sweep_dialog").dialog("option", "buttons", {
             // jobs get low priority and default limit.
             if (limit > 0) {
                 max_time = 60 * limit * argss[0].length;
-                while (prio_class < priority_classes.length
-                       && max_time <= 60*priority_classes[prio_class] ) {
+                while (prio_class < priority_classes.length &&
+                       max_time <= 60*priority_classes[prio_class] ) {
                     prio_class++;
                 }
                 // would be nice to have MiG consider this
                 // classification as a job priority into the dictionary
-                msg += "\nJob time limit: " + (max_time / 60)
-                    + " min.\nJob priority class: " + (prio_class+1)
-                    + " (of " + (1+priority_classes.length)
-                    + ", 1 = lowest)\n";
+                msg += "\nJob time limit: " + (max_time / 60) +
+                    " min.\nJob priority class: " + (prio_class+1) +
+                    " (of " + (1+priority_classes.length) +
+                    ", 1 = lowest)\n";
             } else {
-                msg += "\nNo maximum time given,\n"
-                    + "     using default and low priority.";
+                msg += "\nNo maximum time given,\n" +
+                    "     using default and low priority.";
             }
 
             msg +=  "\nSubmit job(s)?";
             var yes = confirm(msg);
 
             if (yes) {
-                $.each(argss, function(i,args) {
+                $.each(argss, function(i, args) {
                     submit_part(args, limit);
                 });
             }
@@ -1184,18 +1185,18 @@ function check_oid_available(action, oid_title, oid_url, tag_prefix) {
                 //alert("debug: parsing entry "+i);
                 //alert("debug: parsing "+jsonRes[i]);
                 //$("#"+tag_prefix+"debug").append(jsonRes[i].toSource());
-                if (jsonRes[i].object_type == "openid_status") {
+                if (jsonRes[i].object_type === "openid_status") {
                     online = jsonRes[i].status;
-                    error = jsonRes[i].error;
+                    err = jsonRes[i].error;
                     $("#"+tag_prefix+"status").removeClass("spinner").css("padding-left", "0px");
                     $("#"+tag_prefix+"msg").empty();
                     $("#"+tag_prefix+"msg").append(online);
-                    if (online == "online") {
+                    if (online === "online") {
                         $("#"+tag_prefix+"status").addClass("ok").css("padding-left", "20px");
                         $("#"+tag_prefix+"msg").addClass("status_online");
                         $("#"+tag_prefix+"button").attr("disabled", false);
                     } else {
-                        $("#"+tag_prefix+"err").append("("+error+")<br/>");
+                        $("#"+tag_prefix+"err").append("("+err+")<br/>");
                         $("#"+tag_prefix+"status").append("<span>Unable to "+action+" with this method until OpenID server comes back online. Please report the problem to the "+oid_title+" OpenID administrators.</span>");
                         $("#"+tag_prefix+"status").addClass("error").css("padding-left", "20px");
                         $("#"+tag_prefix+"msg").addClass("status_offline");
@@ -1212,11 +1213,11 @@ function check_oid_available(action, oid_title, oid_url, tag_prefix) {
 function select_seafile_section(section_prefix) {
     var reg_prefix="seafilereg";
     var save_prefix="seafilesave";
-    if (section_prefix == reg_prefix) {
+    if (section_prefix === reg_prefix) {
         //alert("show reg section");
         $("#"+reg_prefix+"access").show();
         $("#"+save_prefix+"access").hide();
-    } else if (section_prefix == save_prefix) {
+    } else if (section_prefix === save_prefix) {
         //alert("show save section");
         $("#"+reg_prefix+"access").hide();
         $("#"+save_prefix+"access").show();
@@ -1262,7 +1263,7 @@ function prepare_seafile_settings(reg_url, username, integration,
                 $("#"+status_prefix+"status").addClass("ok").css("padding-left", "20px");
                 $("#"+status_prefix+"msg").addClass("status_online");
                 select_seafile_section(save_prefix);
-            } else if (csrf_token != undefined) {
+            } else if (csrf_token !== undefined) {
                 //alert("DEBUG: got csrf token: "+csrf_token);
                 if (integration) {
                     logged_in = "apparently you already registered and integrated as "+username;

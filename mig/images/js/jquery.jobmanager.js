@@ -27,6 +27,9 @@
 
 */
 
+/* Enable strict mode to help catch tricky errors early */
+"use strict";
+
 /* switch on/off console debug globally here */
 var enable_debug = false;
 
@@ -42,7 +45,7 @@ if (!window.console || !enable_debug) {
         log: noOp,
         warn: noOp,
         error: noOp
-    }
+    };
 }
 /* 
    Make sure we can use Date.now which was not available in IE<9
@@ -79,7 +82,7 @@ if (jQuery) (function($){
 
         function dump(element) {
             /* some browsers support toSource as easy dump */
-            if (element.toSource != undefined) {
+            if (element.toSource !== undefined) {
                 return element.toSource();
             }
             var a = ["Element dump:"];
@@ -135,7 +138,7 @@ if (jQuery) (function($){
           
                            case "file_output":
                                file_output += "<p>Contents:</p>";
-                               for(j = 0; j < jsonRes[i].lines.length; j++) {
+                               for(var j = 0; j < jsonRes[i].lines.length; j++) {
                                    file_output += jsonRes[i].lines[j];
                                }
                                break;
@@ -155,16 +158,16 @@ if (jQuery) (function($){
                                for(j = 0; j < jsonRes[i]["submitstatuslist"].length; j++) {
             
                                    if (jsonRes[i]["submitstatuslist"][j]["status"]) {
-                                       misc_output +=  "<p>Submitted '"
-                                           + jsonRes[i]["submitstatuslist"][j]["name"]
-                                           + "'</p>"
-                                           + "<p>Job identfier: '"+jsonRes[i]["submitstatuslist"][j]["job_id"]
-                                           + "'</p>";
+                                       misc_output +=  "<p>Submitted '" +
+                                           jsonRes[i]["submitstatuslist"][j]["name"] +
+                                           "'</p><p>Job identfier: '"+
+                                           jsonRes[i]["submitstatuslist"][j]["job_id"] +
+                                           "'</p>";
                                    } else {
-                                       misc_output +=  "<p>Failed submitting:</p><p>"
-                                           + jsonRes[i]["submitstatuslist"][j]["name"]
-                                           + " "+jsonRes[i]["submitstatuslist"][j]["message"]
-                                           + "</p>";
+                                       misc_output +=  "<p>Failed submitting:</p><p>" +
+                                           jsonRes[i]["submitstatuslist"][j]["name"] + " " +
+                                           jsonRes[i]["submitstatuslist"][j]["message"] +
+                                           "</p>";
                                    }
             
                                }
@@ -191,8 +194,9 @@ if (jQuery) (function($){
                                        success_message = "<p>Job schedule requested for '"+ jsonRes[i]["saveschedulejobs"][j]["oldstatus"]+"' job.</p>";
                                    }
                                }
-                               if (jsonRes[i]["savescheduleinfo"])
+                               if (jsonRes[i]["savescheduleinfo"]) {
                                    success_message += '<p>'+jsonRes[i]["savescheduleinfo"]+'</p>';
+                               }
                                break;
           
                            case "checkcondjobs":
@@ -203,12 +207,12 @@ if (jQuery) (function($){
                                        var cond_item = jsonRes[i]["checkcondjobs"][j];
                                        success_message = "<p><img src='"+cond_item["icon"]+"' /> Job feasibility:<br />" + cond_item["verdict"]+ "<br />";
                                        var err_item = cond_item["error_desc"];
-                                       for(var k in err_item) {
+                                       for (var k in err_item) {
                                            success_message += k + "<br /> " + err_item[k] + "<br />";
                                        }
-                                       if (cond_item["suggestion"] != null) {
-                                           success_message += cond_item["suggestion"] + "<br />"
-                                               }
+                                       if (cond_item["suggestion"] !== undefined) {
+                                           success_message += cond_item["suggestion"] + "<br />";
+                                       }
                                    }
                                }
                                break;
@@ -267,21 +271,22 @@ if (jQuery) (function($){
 
             var defaults = {};
             console.debug("define actions");
+            var url;
             defaults['actions'] = {
                 cancel: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'cancel'})
+                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'cancel'});
                 },
                 freeze: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'freeze'})
+                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'freeze'});
                 },
                 thaw: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'thaw'})
+                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'thaw'});
                 },
                 mrsl: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "mrslview.py", {job_id: job_id})
+                    jsonWrapper(job_id, "#cmd_dialog", "mrslview.py", {job_id: job_id});
                 },
                 resubmit: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "resubmit.py", {job_id: job_id})
+                    jsonWrapper(job_id, "#cmd_dialog", "resubmit.py", {job_id: job_id});
                 },
                 statusfiles: function (job_id) {
                     url = "fileman.py?path=job_output/"+job_id+"/";
@@ -289,7 +294,7 @@ if (jQuery) (function($){
                 },
                 outputfiles: function (job_id, job_output) {
                     /* fall back to default fileman if job has no output files */
-                    if (job_output == undefined) {
+                    if (job_output === undefined) {
                         url = "fileman.py";
                     } else {
                         url = "fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
@@ -301,10 +306,10 @@ if (jQuery) (function($){
                     windowWrapper(job_id, "#cmd_dialog", url);
                 },
                 schedule: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobschedule.py", {job_id: job_id})
+                    jsonWrapper(job_id, "#cmd_dialog", "jobschedule.py", {job_id: job_id});
                 },
                 feasible: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobfeasible.py", {job_id: job_id})
+                    jsonWrapper(job_id, "#cmd_dialog", "jobfeasible.py", {job_id: job_id});
                 },
                 verbosestatus: function (job_id) {
                     url = "jobstatus.py?flags=v;job_id="+job_id;
@@ -319,7 +324,7 @@ if (jQuery) (function($){
                 console.debug = console.log;
                 console.debug(m); 
                 var action = key;
-                if (el == undefined) {
+                if (el === undefined) {
                     el = $(this);
                 }
                 
@@ -344,7 +349,7 @@ if (jQuery) (function($){
                     // Output files redirect to the filemanager with extra args.
                     // All other actions are handled by the general case.
                     console.debug("call "+action+" with job: "+job_id);
-                    if (action == "outputfiles") {
+                    if (action === "outputfiles") {
                         options['actions'][action](job_id, $("input[name='job_output']", $(el).parent()).val());
                     } else {
                         options['actions'][action](job_id);
@@ -364,7 +369,7 @@ if (jQuery) (function($){
             }
 
             function doubleClickEvent(el) {
-                if (clickaction != undefined) {
+                if (clickaction !== undefined) {
                     clickaction(event);
                     return;
                 } 
@@ -440,7 +445,7 @@ if (jQuery) (function($){
             .tablesorter({  widgets: ["zebra", "multiselect", "contextual", "saveSort"],
                         textExtraction: function(node) {
                         var stuff = $("div", node).html();
-                        if (stuff == null) {
+                        if (stuff === undefined) {
                             stuff = "";
                         }
                         return stuff;
@@ -471,7 +476,7 @@ if (jQuery) (function($){
                         limit_opts += "flags=s;max_jobs=" + max_jobs + ';';
                     }
                     filter_id = $(".filterid", config.container).val();
-                    if (filter_id != '') {
+                    if (filter_id !== '') {
                         limit_opts += "job_id=" + filter_id + ';';
                     }
                     // add some html
@@ -482,12 +487,12 @@ if (jQuery) (function($){
                                 cache: false, // Avoid IE caching
                                 success: 
                             function(jsonRes, textStatus) {
-                                var jobList = new Array();
+                                var jobList = [];
                                 var i = 0;
                           
                                 // Grab jobs from json response and place them in jobList.
                                 for(i = 0; i < jsonRes.length; i++) {
-                                    if ((jsonRes[i].object_type == "job_list") && (jsonRes[i].jobs.length > 0)) {
+                                    if ((jsonRes[i].object_type === "job_list") && (jsonRes[i].jobs.length > 0)) {
                                         jobList = jobList.concat(jsonRes[i].jobs);
                                         job_count++;
                                     }
@@ -497,12 +502,12 @@ if (jQuery) (function($){
                                 $("#jm_jobmanager tbody").html("");
                                 // Wrap each json result into html
                                 $.each(jobList, function(i, item) {
-                                        if (item.schedule_hint != null) {
+                                        if (item.schedule_hint !== undefined) {
                                             sched_hint = " ("+item.schedule_hint+")";
                                         } else {
                                             sched_hint = "";
                                         }
-                                        if (item.outputfileslink != null) {
+                                        if (item.outputfileslink !== undefined) {
                                             output_url = item.outputfileslink.destination;
                                         } else {
                                             /* dummy value of user home for jobs without output files */
@@ -538,7 +543,7 @@ if (jQuery) (function($){
 
             /* refresh when pressing enter in the filter input box */
             $("input.filterid").keypress(function (e) {
-                    if (e.which == 13) {
+                    if (e.which === 13) {
                         $("#pagerrefresh").click();
                         return false;
                     }
