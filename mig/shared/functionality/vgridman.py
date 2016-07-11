@@ -72,8 +72,6 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    vgrid_map = get_vgrid_map(configuration)
-    vgrid_list = vgrid_map[VGRIDS].keys()
     operation = accepted['operation'][-1]
 
     if not operation in allowed_operations:
@@ -139,7 +137,9 @@ def main(client_id, user_arguments_dict):
                                'default_entries': default_pager_entries})
 
     if operation in list_operations:
-
+        vgrid_map = get_vgrid_map(configuration)
+        vgrid_list = vgrid_map[VGRIDS].keys()
+        
         # Iterate through vgrids and print details for each
 
         if 'monitor' in active_vgrid_links:
