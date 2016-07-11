@@ -160,3 +160,6 @@ src_dst_sep = " "
 
 # Seperator used in file expansion - must be easily parsable by user scripts
 file_dest_sep = "    ::    "
+
+# For webdavs rfc compliance testing with litmus
+litmus_id = 'litmus'

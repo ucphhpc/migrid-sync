@@ -138,8 +138,8 @@ def refresh_user_map(configuration):
 
     # Find all users and their configurations
     
-    all_users = list_users(configuration.user_home)
-    real_map = real_to_anon_user_map(configuration.user_home)
+    all_users = list_users(configuration)
+    real_map = real_to_anon_user_map(configuration)
     for user in all_users:
         settings_path = os.path.join(configuration.user_settings,
                                      client_id_dir(user), settings_filename)
@@ -434,8 +434,8 @@ def refresh_vgrid_map(configuration):
     # Find all users and their vgrid assignments
     
     # TODO: use get_user_map output instead?
-    all_users = list_users(configuration.user_home)
-    real_map = real_to_anon_user_map(configuration.user_home)
+    all_users = list_users(configuration)
+    real_map = real_to_anon_user_map(configuration)
     for user in all_users:
         settings_path = os.path.join(configuration.user_settings,
                                      client_id_dir(user), settings_filename)

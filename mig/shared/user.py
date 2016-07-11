@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # user - helper functions for user related tasks
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ except ImportError:
     from md5 import new as hash_algo
 
 from shared.base import client_dir_id, client_id_dir
+from shared.defaults import litmus_id
 from shared.settings import load_settings, load_profile
 
 def anon_user_id(user_id):
@@ -45,37 +46,39 @@ def anon_user_id(user_id):
     anon_id = hash_algo(user_id).hexdigest()
     return anon_id
 
-def list_users(user_home):
+def list_users(configuration):
     """Return a list of all users by listing the user homes in user_home.
     Uses dircache for efficiency when used more than once per session.
     """
     users = []
-    children = dircache.listdir(user_home)
+    children = dircache.listdir(configuration.user_home)
     for name in children:
-        path = os.path.join(user_home, name)
+        path = os.path.join(configuration.user_home, name)
 
         # skip all files and dot dirs - they are _not_ users
         
-        if not os.path.isdir(path):
+        if os.path.islink(path) or not os.path.isdir(path):
             continue
         if path.find(os.sep + '.') != -1:
             continue
-        if path.find('no_grid_jobs_in_grid_scheduler') != -1:
+        if path.find(configuration.empty_job_name) != -1:
+            continue
+        if os.path.basename(path) == litmus_id:
             continue
         users.append(client_dir_id(name))
     return users
 
-def anon_to_real_user_map(user_home):
+def anon_to_real_user_map(configuration):
     """Return a mapping from anonymous user names to real names"""
     anon_map = {}
-    for name in list_users(user_home):
+    for name in list_users(configuration):
         anon_map[anon_user_id(name)] = name
     return anon_map
 
-def real_to_anon_user_map(user_home):
+def real_to_anon_user_map(configuration):
     """Return a mapping from real user names to anonymous names"""
     user_map = {}
-    for name in list_users(user_home):
+    for name in list_users(configuration):
         user_map[name] = anon_user_id(name)
     return user_map
 
@@ -89,3 +92,16 @@ def get_user_conf(user_id, configuration, include_meta=False):
     if settings:
         conf.update(settings)
     return conf
+
+
+if __name__ == "__main__":
+    print "= Unit Testing ="
+    from shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    print "== List Users ="
+    all_users = list_users(conf)
+    print "All users:\n%s" % '\n'.join(all_users)
+    real_map = real_to_anon_user_map(conf)
+    print "Real to anon user map:\n%s" % '\n'.join(["%s -> %s" % pair for pair \
+                                                    in real_map.items()])
+    

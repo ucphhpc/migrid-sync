@@ -60,7 +60,7 @@ except ImportError, ierr:
                         
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
-from shared.defaults import dav_domain
+from shared.defaults import dav_domain, litmus_id
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, update_login_map, login_map_lookup, hit_rate_limit, \
      update_rate_limit, expire_rate_limit, penalize_rate_limit, add_user_object
@@ -568,7 +568,7 @@ def update_users(configuration, user_map, username):
     daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
                                                     username)
     # Add dummy user for litmus test if enabled in conf
-    litmus_id, litmus_pw = 'litmus', 'test'
+    litmus_pw = 'test'
     if username == litmus_id and \
            daemon_conf.get('enable_litmus', False) and \
            not login_map_lookup(daemon_conf, litmus_id):

@@ -115,7 +115,7 @@ def main(client_id, user_arguments_dict):
     if operation in list_operations:
         visible_user = user_visible_user_confs(configuration, client_id)
         allow_vgrids = user_allowed_vgrids(configuration, client_id)
-        anon_map = anon_to_real_user_map(configuration.user_home)
+        anon_map = anon_to_real_user_map(configuration)
         if not visible_user:
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'no users found!'})

@@ -125,7 +125,7 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         user_id = visible_user_name
-        anon_map = anon_to_real_user_map(configuration.user_home)
+        anon_map = anon_to_real_user_map(configuration)
         if anon_map.has_key(visible_user_name):
             user_id = anon_map[visible_user_name]
         if not user_map.has_key(user_id):
