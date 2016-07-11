@@ -59,11 +59,12 @@ def list_users(configuration):
         
         if os.path.islink(path) or not os.path.isdir(path):
             continue
-        if path.find(os.sep + '.') != -1:
+        if name.startswith('.'):
             continue
-        if path.find(configuration.empty_job_name) != -1:
+        # We assume user IDs on the form /A=bla/B=bla/... here
+        if not '=' in name:
             continue
-        if os.path.basename(path) == litmus_id:
+        if name in [configuration.empty_job_name, litmus_id]:
             continue
         users.append(client_dir_id(name))
     return users
