@@ -182,7 +182,7 @@ def application(environ, start_response):
     # Explicit None means error during output formatting - empty string is okay
 
     if output is None:
-        output = 'Error: output could not be extracted!'
+        output = 'Error: output could not be correctly delivered!'
 
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
         response_headers.append(('Content-Length', str(len(output))))

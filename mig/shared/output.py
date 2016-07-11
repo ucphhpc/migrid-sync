@@ -2089,23 +2089,14 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
 def soap_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in soap format"""
 
-    try:
-        import SOAPpy
-        return SOAPpy.buildSOAP(out_obj)
-    except Exception, exc:
-        configuration.logger.error('soap unavailable (%s) - using txt' % exc)
-        return None
-
+    import SOAPpy
+    return SOAPpy.buildSOAP(out_obj)
 
 def pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=None):
     """Generate output in requested pickle protocol format"""
 
-    try:
-        from shared.serial import dumps
-        return dumps(out_obj, protocol)
-    except Exception, exc:
-        configuration.logger.error('pickle unavailable (%s) - using txt' % exc)
-        return None
+    from shared.serial import dumps
+    return dumps(out_obj, protocol)
 
 def pickle_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in default pickle protocol format"""
@@ -2126,42 +2117,28 @@ def pickle2_format(configuration, ret_val, ret_msg, out_obj):
 def yaml_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in yaml format"""
 
-    try:
-        import yaml
-        return yaml.dump(out_obj)
-    except Exception, exc:
-        configuration.logger.error('yaml unavailable (%s) - using txt' % exc)
-        return None
-
+    import yaml
+    return yaml.dump(out_obj)
 
 def xmlrpc_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in xmlrpc format"""
 
-    try:
-        import xmlrpclib
-        # Wrap any explicit binary entries to avoid encoding errors
-        for entry in out_obj:
-            if entry.get('wrap_binary', False):
-                for key in entry.get('wrap_targets', []):
-                    if not key in entry:
-                        continue
-                    entry[key] = xmlrpclib.Binary(entry[key])
-        return xmlrpclib.dumps((out_obj, ), allow_none=True)
-    except Exception, exc:
-        configuration.logger.error('xmlrpc unavailable (%s) - using txt' % exc)
-        return None
-
+    import xmlrpclib
+    # Wrap any explicit binary entries to avoid encoding errors
+    for entry in out_obj:
+        if entry.get('wrap_binary', False):
+            for key in entry.get('wrap_targets', []):
+                if not key in entry:
+                    continue
+                entry[key] = xmlrpclib.Binary(entry[key])
+    return xmlrpclib.dumps((out_obj, ), allow_none=True)
 
 def json_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in json format"""
 
-    try:
-        # python >=2.6 includes native json module with loads/dumps methods
-        import json
-        return json.dumps(out_obj)
-    except Exception, exc:
-        configuration.logger.error('json unavailable (%s) - using txt' % exc)
-        return None
+    # python >=2.6 includes native json module with loads/dumps methods
+    import json
+    return json.dumps(out_obj)
 
 def file_format(configuration, ret_val, ret_msg, out_obj):
     """Dump raw file contents"""
@@ -2172,7 +2149,7 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
         if entry['object_type'] == 'file_output':
             for line in entry['lines']:
                 file_content += line
-                
+            
     return file_content
 
 def get_valid_outputformats():
@@ -2202,7 +2179,7 @@ def format_output(
     ):
     """This is the public method that should be called from other scripts"""
 
-    outputformats = get_valid_outputformats()
+    valid_formats = get_valid_outputformats()
     (val_ret, val_msg) = validate(out_obj)
     if not val_ret:
         (ret_val, ret_msg) = returnvalues.OUTPUT_VALIDATION_ERROR
@@ -2244,18 +2221,16 @@ def format_output(
                 'bodyfunctions': '',
                 }] + out_obj
 
-    if not outputformat in outputformats:
+    if not outputformat in valid_formats:
         return txt_format(configuration, ret_val, ret_msg, out_obj)
 
     try:
         return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' % \
                     outputformat)
     except Exception, err:
-        msg = '%s failed on server! Defaulting to txt output. (%s)' % \
-              (outputformat, err)
-        configuration.logger.error(msg)
-        configuration.logger.error(traceback.format_exc())
-        return (txt_format(configuration, ret_val, msg, out_obj))
+        configuration.logger.error("%s formatting failed: %s\n%s" % \
+                                   (outputformat, err, traceback.format_exc()))
+        return None
 
 def format_timedelta(timedelta):
     """Formats timedelta as '[Years,] [days,] HH:MM:SS'"""

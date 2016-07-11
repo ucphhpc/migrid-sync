@@ -82,8 +82,8 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg,
     
     # Explicit None means error during output formatting - empty string is okay
 
-    if output == None:
-        output = 'Output could _not_ be extracted!'
+    if output is None:
+        output = 'Error: output could not be correctly delivered!'
 
     header_out = '\n'.join(["%s: %s" % (key, val) for (key, val) in headers]) 
     
