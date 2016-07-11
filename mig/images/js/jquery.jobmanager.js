@@ -28,6 +28,7 @@
 */
 
 /* Enable strict mode to help catch tricky errors early */
+var __dummy = "IE requires ANY code first to avoid crash on 'use strict' line";
 "use strict";
 
 /* switch on/off console debug globally here */
