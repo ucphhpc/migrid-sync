@@ -178,13 +178,14 @@ def application(environ, start_response):
     response_headers = start_entry['headers']
 
     output = format_output(configuration, ret_code, ret_msg, output_objs, output_format)
+
+    # Explicit None means error during output formatting - empty string is okay
+
+    if output is None:
+        output = 'Error: output could not be extracted!'
+
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
         response_headers.append(('Content-Length', str(len(output))))
-    if not output:
-
-        # Error occured during output print
-
-        output = 'Output could _not_ be extracted!'
 
     start_response(status, response_headers)
 
