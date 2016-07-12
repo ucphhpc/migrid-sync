@@ -27,8 +27,6 @@
 
 """Manage all available runtime environments"""
 
-from binascii import hexlify
-
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
@@ -112,6 +110,13 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'sectionheader', 'text'
                               : 'Existing runtime environments'})
+
+        # Helper form for removes
+
+        helper = html_post_helper('delre', 'deletere.py',
+                                  {'re_name': '__DYNAMIC__'})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+
         output_objects.append({'object_type': 'table_pager', 'entry_name': 'runtime envs',
                                'default_entries': default_pager_entries})
 
@@ -141,17 +146,15 @@ def main(client_id, user_arguments_dict):
                                              'title': 'View %s runtime environment' % re_name, 
                                              'text': ''}
             if client_id == re_item['creator']:
-                js_name = 'delete%s' % hexlify(re_name)
-                helper = html_post_helper(js_name, 'deletere.py',
-                                          {'re_name': re_name})
-                output_objects.append({'object_type': 'html_form', 'text': helper})
-                re_item['ownerlink'] = {'object_type': 'link',
-                                        'destination':
-                                        "javascript: confirmDialog(%s, '%s');"\
-                                        % (js_name, 'Really delete %s?' % re_name),
-                                        'class': 'removelink iconspace',
-                                        'title': 'Delete %s runtime environment' % re_name, 
-                                        'text': ''}
+                re_item['ownerlink'] = {
+                    'object_type': 'link',
+                    'destination':
+                    "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                    ('delre', 'Really delete %s?' % re_name, 'undefined',
+                     "{re_name: '%s'}" % re_name),
+                    'class': 'removelink iconspace',
+                    'title': 'Delete %s runtime environment' % re_name, 
+                    'text': ''}
             runtimeenvironments.append(re_item)
 
     output_objects.append({'object_type': 'runtimeenvironments',

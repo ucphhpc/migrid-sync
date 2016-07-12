@@ -95,24 +95,15 @@ function ajax_redb(_freeze) {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var chunk_size = 200;
-          var form_entries = "", table_entries = "", error = "";
+          var table_entries = "", error = "";
           var i, j;
           var rte, rte_hint, entry;
-          /*
-              Grab results from json response and insert rte items in table
-              and append POST helpers to body to make confirm dialog work.
-          */
+          /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
               if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type === "html_form") {
-                  entry = jsonRes[i].text;
-                  if (entry.match(/function delete[0-9]+/)) {
-                      //console.debug("append POST helper: "+entry);
-                      form_entries += entry;
-                  }
               } else if (jsonRes[i].object_type === "runtimeenvironments") {
                   var runtimeenvs = jsonRes[i].runtimeenvironments;
                   for (j=0; j<runtimeenvs.length; j++) {
@@ -139,10 +130,6 @@ function ajax_redb(_freeze) {
                       }
                   }
               }
-          }
-          if (form_entries) {
-              console.debug('append '+form_entries.length+'b of chunk of form helpers');
-              $("body").append(form_entries);
           }
           if (table_entries) {
               console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
@@ -184,28 +171,15 @@ function ajax_freezedb(permanent_freeze) {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var chunk_size = 200;
-          var form_entries = "", table_entries = "", error = "";
+          var table_entries = "", error = "";
           var i, j;
           var arch, entry;
-          /*
-              Grab results from json response and insert archive items in table
-              and append POST helpers to body to make confirm dialog work.
-          */
+          /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
               if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type === "html_form") {
-                  // NOTE: only include delete helpers if not permanent_freeze
-                  if (permanent_freeze) {
-                      continue;
-                  }
-                  entry = jsonRes[i].text;
-                  if (entry.match(/function delete[0-9]+/)) {
-                      //console.debug("append POST helper: "+entry);
-                      form_entries += entry;
-                  }
               } else if (jsonRes[i].object_type === "frozenarchives") {
                   var archives = jsonRes[i].frozenarchives;
                   for (j=0; j<archives.length; j++) {
@@ -214,11 +188,12 @@ function ajax_freezedb(permanent_freeze) {
                       var viewlink = format_link(arch.viewfreezelink);
                       var dellink = "";
                       if (!permanent_freeze) {
-                          dellink = base_td(format_link(arch.delfreezelink));
+                          dellink = format_link(arch.delfreezelink);
                       }
-                      entry = "<tr>"+base_td(arch.id)+center_td(viewlink)+
+                      entry = "<tr>"+base_td(arch.id)+center_td(viewlink+
+                                                                dellink)+
                           base_td(arch.name)+base_td(arch.created)+
-                          center_td(arch.frozenfiles)+dellink+"</tr>";
+                          center_td(arch.frozenfiles)+"</tr>";
                       //console.debug("append entry: "+entry);
                       table_entries += entry;
                       /* chunked updates - append after after every chunk_size entries */
@@ -229,10 +204,6 @@ function ajax_freezedb(permanent_freeze) {
                       }
                   }
               }
-          }
-          if (form_entries) {
-              console.debug('append '+form_entries.length+'b of chunk of form helpers');
-              $("body").append(form_entries);
           }
           if (table_entries) {
               console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
@@ -277,24 +248,15 @@ function ajax_showfreeze(freeze_id, checksum) {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var chunk_size = 200;
-          var form_entries = "", table_entries = "", error = "";
+          var table_entries = "", error = "";
           var i, j;
           var arch, file, entry;
-          /*
-              Grab results from json response and insert archive items in table
-              and append POST helpers to body to make confirm dialog work.
-          */
+          /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
               if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += " "+jsonRes[i].text;
-              } else if (jsonRes[i].object_type === "html_form") {
-                  entry = jsonRes[i].text;
-                  if (entry.match(/function delete[0-9]+/)) {
-                      //console.debug("append POST helper: "+entry);
-                      form_entries += entry;
-                  }
               } else if (jsonRes[i].object_type === "frozenarchive") {
                   //console.debug("found frozenarchive");
                   arch = jsonRes[i];
@@ -335,10 +297,6 @@ function ajax_showfreeze(freeze_id, checksum) {
                       }
                   }
               }
-          }
-          if (form_entries) {
-              console.debug('append '+form_entries.length+'b of chunk of form helpers');
-              $("body").append(form_entries);
           }
           if (table_entries) {
               console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
@@ -381,25 +339,15 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var chunk_size = 200;
-          var form_entries = "", table_entries = "", error = "";
+          var table_entries = "", error = "";
           var i, j, k;
           var vgrid, entry;
-          /*
-              Grab results from json response and insert vgrid items in table
-              and append POST helpers to body to make confirm dialog work.
-          */
+          /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
               if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type === "html_form") {
-                  entry = jsonRes[i].text;
-                  /* TODO: this form transfer and append gets massive! optimize */
-                  if (entry.match(/function (rm|req)vgrid(owner|member)[0-9]+/)) {
-                      //console.debug("append POST helper: "+entry);
-                      form_entries += entry;
-                  }
               } else if (jsonRes[i].object_type === "vgrid_list") {
                   var vgrids = jsonRes[i].vgrids;
                   for (j=0; j<vgrids.length; j++) {
@@ -491,10 +439,6 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                   }
               }
           }
-          if (form_entries) {
-              console.debug('append '+form_entries.length+'b of chunk of form helpers');
-              $("body").append(form_entries);
-          }
           if (table_entries) {
               console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
               $(tbody_elem).append(table_entries);
@@ -535,24 +479,15 @@ function ajax_resman() {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var chunk_size = 200;
-          var form_entries = "", table_entries = "", error = "";
+          var table_entries = "", error = "";
           var i, j, k;
           var resource, res_type, res_hint, rte_hint, entry;
-          /*
-              Grab results from json response and insert resource items in table
-              and append POST helpers to body to make confirm dialog work.
-          */
+          /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
               if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type === "html_form") {
-                  entry = jsonRes[i].text;
-                  if (entry.match(/function (rm|req)resowner[0-9]+/)) {
-                      //console.debug("append POST helper: "+entry);
-                      form_entries += entry;
-                  }
               } else if (jsonRes[i].object_type === "resource_list") {
                   var resources = jsonRes[i].resources;
                   for (j=0; j<resources.length; j++) {
@@ -592,10 +527,6 @@ function ajax_resman() {
                       }
                   }
               }
-          }
-          if (form_entries) {
-              console.debug('append '+form_entries.length+'b of chunk of form helpers');
-              $("body").append(form_entries);
           }
           if (table_entries) {
               console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
@@ -637,24 +568,15 @@ function ajax_people(protocols) {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var chunk_size = 200;
-          var form_entries = "", table_entries = "", error = "";
+          var table_entries = "", error = "";
           var i, j, k;
           var usr, link_name, proto, entry;
-          /*
-              Grab results from json response and insert user items in table
-              and append POST helpers to body to make confirm dialog work.
-          */
+          /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
               if (jsonRes[i].object_type === "error_text") {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
-              } else if (jsonRes[i].object_type === "html_form") {
-                  entry = jsonRes[i].text;
-                  if (entry.match(/function send[a-z]+[0-9]+/)) {
-                      //console.debug("append POST helper: "+entry);
-                      form_entries += entry;
-                  }
               } else if (jsonRes[i].object_type === "user_list") {
                   var users = jsonRes[i].users;
                   for (j=0; j<users.length; j++) {
@@ -683,10 +605,6 @@ function ajax_people(protocols) {
                       }
                   }
               }
-          }
-          if (form_entries) {
-              console.debug('append '+form_entries.length+'b of chunk of form helpers');
-              $("body").append(form_entries);
           }
           if (table_entries) {
               console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');

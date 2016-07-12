@@ -65,7 +65,7 @@ function loadPageHelper(url) {
     };
 }
 
-function confirmDialog(target, text, textFieldName) {
+function confirmDialog(target, text, textFieldName, hiddenInput) {
     var input = {};
     if (target === undefined) {
         alert("internal error: confirm needs a target function!");
@@ -85,6 +85,11 @@ function confirmDialog(target, text, textFieldName) {
         addField = function () {
             input[textFieldName] = $("#confirm_input")[0].value;
         };
+    }
+    if (hiddenInput !== undefined) {
+        for (var item in hiddenInput) {
+            input[item] = hiddenInput[item];
+        }
     }
 
     $("#confirm_dialog").dialog("option", "buttons", {

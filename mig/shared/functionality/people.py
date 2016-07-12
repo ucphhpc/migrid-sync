@@ -27,7 +27,6 @@
 
 """View and communicate with other users that allow it"""
 
-from binascii import hexlify
 from urllib import quote
 
 import shared.returnvalues as returnvalues
@@ -108,12 +107,24 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'sectionheader', 'text'
                               : 'All users'})
+
+        # Helper form for sends
+        
+        helper = html_post_helper('sendmsg', 'sendrequestaction.py',
+                                  {'cert_id': '__DYNAMIC__',
+                                   'protocol': '__DYNAMIC__',
+                                   'request_type': 'plain',
+                                   'request_text': ''})
+        output_objects.append({'object_type': 'html_form', 'text':
+                               helper})
+
         output_objects.append({'object_type': 'table_pager', 'entry_name':
                                'people', 'default_entries':
                                default_pager_entries})
 
     users = []
     if operation in list_operations:
+        # TODO: next 3 call are slow because we reload pickles and maps
         visible_user = user_visible_user_confs(configuration, client_id)
         allow_vgrids = user_allowed_vgrids(configuration, client_id)
         anon_map = anon_to_real_user_map(configuration)
@@ -157,25 +168,20 @@ def main(client_id, user_arguments_dict):
                 if not im_vgrids and proto != 'email':
                     continue
                 if user_obj[CONF].get(proto.upper(), None):
-                    js_name = 'send%s%s' % (proto, hexlify(visible_user_id))
-                    helper = html_post_helper(js_name, 'sendrequestaction.py',
-                                              {'cert_id': visible_user_id,
-                                               'request_type': 'plain',
-                                               'protocol': proto,
-                                               'request_text': ''})
-                    output_objects.append({'object_type': 'html_form', 'text':
-                                           helper})
                     link = 'send%slink' % proto
-                    user_obj[link] = {'object_type': 'link',
-                                      'destination':
-                                      "javascript: confirmDialog(%s, '%s', '%s');"\
-                                      % (js_name, 'Really send %s message to %s?'\
-                                         % (proto, visible_user_id),
-                                         'request_text'),
-                                      'class': "%s iconspace" % link,
-                                      'title': 'Send %s message to %s' % \
-                                      (proto, visible_user_id), 
-                                      'text': ''}
+                    user_obj[link] = {
+                        'object_type': 'link',
+                        'destination':
+                        "javascript: confirmDialog(%s, '%s', '%s', %s);"\
+                        % ('sendmsg', 'Really send %s message to %s?'\
+                           % (proto, visible_user_id),
+                           'request_text',
+                           "{cert_id: '%s', 'protocol': '%s'}" % \
+                           (visible_user_id, proto)),
+                        'class': "%s iconspace" % link,
+                        'title': 'Send %s message to %s' % \
+                        (proto, visible_user_id), 
+                        'text': ''}
             logger.debug("append user %s" % user_obj)
             users.append(user_obj)
 

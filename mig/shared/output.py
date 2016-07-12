@@ -1237,42 +1237,36 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('</table>')
         elif i['object_type'] == 'frozenarchives':
             frozenarchives = i['frozenarchives']
-            delcol_html = ''
-            if not configuration.site_permanent_freeze:
-                delcol_html = '<th class="icon"><!-- Delete --></th>'
-            
             lines.append('''
 <table class="frozenarchives columnsort" id="frozenarchivetable">
 <thead class="title">
     <tr>
         <th>ID</th>
-        <th class="icon"><!-- View --></th>
+        <th class="icon"><!-- View / Delete--></th>
         <th>Name</th>
         <th>Created</th>
         <th>Files</th>
-        %s
     </tr>
 </thead>
 <tbody>
-''' % delcol_html
+'''
                          )
             for single_freeze in frozenarchives:
                 viewlink = html_link(single_freeze['viewfreezelink'])
                 dellink = single_freeze.get('delfreezelink', '')
-                dellink_html = ''
                 if dellink and not configuration.site_permanent_freeze:
-                    dellink_html = '<td class="centertext">%s</td>' % html_link(dellink)
+                    dellink = html_link(dellink)
                 if isinstance(single_freeze['frozenfiles'], int):
                     file_count = single_freeze['frozenfiles']
                 else:
                     file_count = len(single_freeze['frozenfiles'])
                 lines.append('''
 <tr>
-<td>%s</td><td class="centertext">%s</td><td>%s</td><td>%s</td>
-<td class="centertext">%s</td>%s
-</tr>''' % (single_freeze['id'], viewlink,
+<td>%s</td><td class="centertext">%s%s</td><td>%s</td><td>%s</td>
+<td class="centertext">%s</td>
+</tr>''' % (single_freeze['id'], viewlink, dellink,
             single_freeze['name'], single_freeze['created'],
-            file_count, dellink_html))
+            file_count))
                 
             lines.append('''
 </tbody>

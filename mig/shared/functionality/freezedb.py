@@ -27,8 +27,6 @@
 
 """Manage all owned frozen archives"""
 
-from binascii import hexlify
-
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries
 from shared.freezefunctions import build_freezeitem_object, \
@@ -115,6 +113,14 @@ from the management.
 
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Existing frozen archives'})
+
+        # Helper form for removes
+
+        helper = html_post_helper('delfreeze', 'deletefreeze.py',
+                                  {'freeze_id': '__DYNAMIC__',
+                                   'flavor': '__DYNAMIC__'})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+
         output_objects.append({'object_type': 'table_pager', 'entry_name':
                                'frozen archives',
                                'default_entries': default_pager_entries})
@@ -156,16 +162,13 @@ from the management.
                 'class': 'infolink iconspace', 
                 'title': 'View frozen archive %s' % freeze_id, 
                 'text': ''}
-            if client_id == freeze_item['creator']:
-                js_name = 'delete%s' % hexlify(freeze_id)
-                helper = html_post_helper(js_name, 'deletefreeze.py',
-                                          {'freeze_id': freeze_id,
-                                           'flavor': flavor})
-                output_objects.append({'object_type': 'html_form', 'text': helper})
+            if client_id == freeze_item['creator'] and \
+                   not configuration.site_permanent_freeze:
                 freeze_item['delfreezelink'] = {
                     'object_type': 'link', 'destination':
-                    "javascript: confirmDialog(%s, '%s');" % \
-                    (js_name, 'Really remove %s?' % freeze_id),
+                    "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                    ('delfreeze', 'Really remove %s?' % freeze_id, 'undefined',
+                     "{freeze_id: '%s', flavor: '%s'}" % (freeze_id, flavor)),
                     'class': 'removelink iconspace', 'title': 'Remove %s' % \
                     freeze_id, 'text': ''}
             frozenarchives.append(freeze_item)

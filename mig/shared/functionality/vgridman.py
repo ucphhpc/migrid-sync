@@ -27,8 +27,6 @@
 
 """VGrid management back end functionality"""
 
-from binascii import hexlify
-
 import shared.returnvalues as returnvalues
 from shared.defaults import default_vgrid, all_vgrids, default_pager_entries
 from shared.functional import validate_input_and_cert
@@ -133,6 +131,23 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'sectionheader', 'text'
                               : '%ss managed on this server' % \
                                configuration.site_vgrid_label})
+
+        # Helper forms for requests and removes
+
+        for post_type in ["vgridowner", "vgridmember"]:
+            helper = html_post_helper('req%s' % post_type,
+                                      'sendrequestaction.py',
+                                      {'vgrid_name': '__DYNAMIC__',
+                                       'request_type': post_type,
+                                       'request_text': ''})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+        for post_type in ["vgridowner", "vgridmember"]:
+            helper = html_post_helper('rm%s' % post_type,
+                                      'rm%s.py' % post_type,
+                                      {'vgrid_name': '__DYNAMIC__',
+                                       'cert_id': client_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+
         output_objects.append({'object_type': 'table_pager', 'entry_name': '%ss' % \
                                configuration.site_vgrid_label,
                                'default_entries': default_pager_entries})
@@ -265,45 +280,29 @@ def main(client_id, user_arguments_dict):
 
             # link to become member: overwritten later for members
 
-            js_name = 'reqvgridmember%s' % hexlify(vgrid_name)
-            helper = html_post_helper(js_name, 'sendrequestaction.py',
-                                      {'vgrid_name': vgrid_name,
-                                       'request_type': 'vgridmember',
-                                       'request_text': ''})
-            output_objects.append({'object_type': 'html_form', 'text': helper})
-            vgrid_obj['memberlink'] = \
-                                    {'object_type': 'link',
-                                     'destination':
-                                     "javascript: confirmDialog(%s, '%s', '%s');"\
-                                     % (js_name, "Request membership of " + \
-                                        vgrid_name + ":<br/>" + \
-                                        "\nPlease write a message to the owners (field below).",
-                                        'request_text'),
-                                     'class': 'addlink iconspace',
-                                     'title': 'Request membership of %s' % \
-                                     vgrid_name,
-                                     'text': ''}
+            vgrid_obj['memberlink'] = {
+                'object_type': 'link',
+                'destination':
+                "javascript: confirmDialog(%s, '%s', '%s', %s);" % \
+                ('reqvgridmember', "Request membership of " + vgrid_name + \
+                 ":<br/>\nPlease write a message to the owners (field below).",
+                 'request_text', "{vgrid_name: '%s'}" % vgrid_name),
+                'class': 'addlink iconspace',
+                'title': 'Request membership of %s' % vgrid_name,
+                'text': ''}
 
             # link to become owner: overwritten later for owners
 
-            js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
-            helper = html_post_helper(js_name, 'sendrequestaction.py',
-                                      {'vgrid_name': vgrid_name,
-                                       'request_type': 'vgridowner',
-                                       'request_text': ''})
-            output_objects.append({'object_type': 'html_form', 'text': helper})
-            vgrid_obj['administratelink'] = \
-                                          {'object_type': 'link',
-                                           'destination':
-                                           "javascript: confirmDialog(%s, '%s', '%s');"\
-                                           % (js_name, "Request ownership of " + \
-                                              vgrid_name + ":<br/>" + \
-                                              "\nPlease write a message to the owners (field below).",
-                                              'request_text'),
-                                           'class': 'addadminlink iconspace',
-                                           'title': 'Request ownership of %s' % \
-                                           vgrid_name,
-                                           'text': ''}
+            vgrid_obj['administratelink'] = {
+                'object_type': 'link',
+                'destination':
+                "javascript: confirmDialog(%s, '%s', '%s', %s);" % \
+                ('reqvgridowner', "Request ownership of " + vgrid_name + \
+                 ":<br/>\nPlease write a message to the owners (field below).",
+                 'request_text', "{vgrid_name: '%s'}" % vgrid_name),
+                'class': 'addadminlink iconspace',
+                'title': 'Request ownership of %s' % vgrid_name,
+                'text': ''}
 
             # members/owners are allowed to view private pages and monitor
 
@@ -366,19 +365,15 @@ def main(client_id, user_arguments_dict):
                 # to leave this VGrid (remove ourselves). Note that we are
                 # going to overwrite the link later for owners.
 
-                js_name = 'rmvgridmember%s' % hexlify(vgrid_name)
-                helper = html_post_helper(js_name, 'rmvgridmember.py',
-                                          {'vgrid_name': vgrid_name,
-                                           'cert_id': client_id})
-                output_objects.append({'object_type': 'html_form', 'text': helper})
-                vgrid_obj['memberlink'] = \
-                                        {'object_type': 'link',
-                                         'destination':
-                                         "javascript: confirmDialog(%s, '%s');"\
-                                         % (js_name, "Really leave " + vgrid_name + "?"),
-                                         'class': 'removelink iconspace',
-                                         'title': 'Leave %s members' % vgrid_name, 
-                                         'text': ''}
+                vgrid_obj['memberlink'].update({
+                    'destination':
+                    "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                    ('rmvgridmember', "Really leave " + vgrid_name + "?",
+                     'undefined',
+                     "{vgrid_name: '%s'}" % vgrid_name),
+                    'class': 'removelink iconspace',
+                    'title': 'Leave %s members' % vgrid_name, 
+                    })
 
             # owners are allowed to edit pages and administrate
 
@@ -400,16 +395,14 @@ def main(client_id, user_arguments_dict):
 
                 # correct the link to leave the VGrid
 
-                js_name = 'rmvgridowner%s' % hexlify(vgrid_name)
-                helper = html_post_helper(js_name, 'rmvgridowner.py',
-                                          {'vgrid_name': vgrid_name,
-                                           'cert_id': client_id})
-                output_objects.append({'object_type': 'html_form', 'text': helper})
-                vgrid_obj['memberlink']['destination'] = \
-                          "javascript: confirmDialog(%s, '%s');" % \
-                          (js_name, "Really leave " + vgrid_name + "?")
-                vgrid_obj['memberlink']['class'] = 'removeadminlink iconspace'
-                vgrid_obj['memberlink']['title'] = 'Leave %s owners' % vgrid_name
+                vgrid_obj['memberlink'].update({
+                    'destination':
+                    "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                    ('rmvgridowner', "Really leave " + vgrid_name + "?",
+                     'undefined', "{vgrid_name: '%s'}" % vgrid_name),
+                    'class': 'removeadminlink iconspace',
+                    'title': 'Leave %s owners' % vgrid_name
+                    })
 
                 # add more links: administrate and edit pages
 
