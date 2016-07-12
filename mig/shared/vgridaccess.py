@@ -36,10 +36,9 @@ from shared.base import sandbox_resource, client_id_dir
 from shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
      get_resource_fields, get_resource_configuration
 from shared.defaults import settings_filename, profile_filename, default_vgrid
-from shared.modified import home_paths, mark_resource_modified, \
-     mark_vgrid_modified, check_users_modified, check_resources_modified, \
-     check_vgrids_modified, reset_users_modified, reset_resources_modified, \
-     reset_vgrids_modified
+from shared.modified import mark_resource_modified, mark_vgrid_modified, \
+     check_users_modified, check_resources_modified, check_vgrids_modified, \
+     reset_users_modified, reset_resources_modified, reset_vgrids_modified
 from shared.resource import list_resources, real_to_anon_res_map
 from shared.serial import load, dump
 from shared.user import list_users, real_to_anon_user_map, get_user_conf
@@ -77,7 +76,6 @@ def load_entity_map(configuration, kind, do_lock):
     Please note that time stamp is explicitly set to start of last update
     to make sure any concurrent updates get caught in next run.
     """
-    home_map = home_paths(configuration)
     map_path = os.path.join(configuration.mig_system_files, "%s.map" % kind)
     lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     if do_lock:
@@ -518,18 +516,18 @@ def get_user_map(configuration):
     if last_load[USERS] + MAP_CACHE_SECONDS > time.time():
         configuration.logger.debug("using cached user map")
         return last_map[USERS]
-    modified_users, modified_stamp_ = check_users_modified(configuration)
-    if modified_users or last_load[USERS] <= 0:
+    modified_users, _ = check_users_modified(configuration)
+    if modified_users:
         configuration.logger.info("refreshing user map (%s)" % modified_users)
+        map_stamp = time.time()
         user_map = refresh_user_map(configuration)
         reset_users_modified(configuration)
-        last_map[USERS] = user_map
     else:
         configuration.logger.debug("No changes - not refreshing")
         user_map, map_stamp = load_user_map(configuration)
-        last_map[USERS] = user_map
-        last_refresh[USERS] = map_stamp
-    last_load[USERS] = time.time()
+    last_map[USERS] = user_map
+    last_refresh[USERS] = map_stamp
+    last_load[USERS] = map_stamp
     return user_map
 
 def get_resource_map(configuration):
@@ -539,18 +537,18 @@ def get_resource_map(configuration):
     if last_load[RESOURCES] + MAP_CACHE_SECONDS > time.time():
         configuration.logger.debug("using cached resource map")
         return last_map[RESOURCES]
-    modified_resources, modified_stamp_ = check_resources_modified(configuration)
-    if modified_resources or last_load[RESOURCES] <= 0:
+    modified_resources, _ = check_resources_modified(configuration)
+    if modified_resources:
         configuration.logger.info("refreshing resource map (%s)" % modified_resources)
+        map_stamp = time.time()
         resource_map = refresh_resource_map(configuration)
         reset_resources_modified(configuration)
-        last_map[RESOURCES] = resource_map
     else:
         configuration.logger.debug("No changes - not refreshing")
         resource_map, map_stamp = load_resource_map(configuration)
-        last_map[RESOURCES] = resource_map
-        last_refresh[RESOURCES] = map_stamp
-    last_load[RESOURCES] = time.time()
+    last_map[RESOURCES] = resource_map
+    last_refresh[RESOURCES] = map_stamp
+    last_load[RESOURCES] = map_stamp
     return resource_map
 
 def vgrid_inherit_map(configuration, vgrid_map):
@@ -583,19 +581,19 @@ def get_vgrid_map(configuration, recursive=True):
         configuration.logger.debug("using cached vgrid map")
         vgrid_map = last_map[VGRIDS]
     else:
-        modified_vgrids, modified_stamp_ = check_vgrids_modified(configuration)
-        if modified_vgrids or last_load[VGRIDS] <= 0:
+        modified_vgrids, _ = check_vgrids_modified(configuration)
+        if modified_vgrids:
             configuration.logger.info("refreshing vgrid map (%s)" % \
                                       modified_vgrids)
+            map_stamp = time.time()
             vgrid_map = refresh_vgrid_map(configuration)
             reset_vgrids_modified(configuration)
-            last_map[VGRIDS] = vgrid_map
         else:
             configuration.logger.debug("No changes - not refreshing")
             vgrid_map, map_stamp = load_vgrid_map(configuration)
-            last_map[VGRIDS] = vgrid_map
-            last_refresh[VGRIDS] = map_stamp
-        last_load[VGRIDS] = time.time()
+        last_map[VGRIDS] = vgrid_map
+        last_refresh[VGRIDS] = map_stamp
+        last_load[VGRIDS] = map_stamp
     if recursive:
         return vgrid_inherit_map(configuration, vgrid_map)
     else:

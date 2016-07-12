@@ -31,20 +31,15 @@ import fcntl
 import os
 import time
 
+from shared.defaults import keyword_all
 from shared.serial import load, dump
-
-def home_paths(configuration):
-    """Map entities to home dirs from configuration"""
-    return {'user': configuration.user_home,
-            'resource': configuration.resource_home,
-            'vgrid': configuration.vgrid_home}
 
 def mark_entity_modified(configuration, kind, name):
     """Mark name of given kind modified to signal reload before use from other
     locations.
     """
-    home_map = home_paths(configuration)
-    modified_path = os.path.join(home_map[kind], "%s.modified" % kind)
+    modified_path = os.path.join(configuration.mig_system_files,
+                                 "%s.modified" % kind)
     lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
@@ -79,17 +74,22 @@ def mark_vgrid_modified(configuration, vgrid_name):
 def check_entities_modified(configuration, kind):
     """Check and return any name of given kind that are marked as modified
     along with a time stamp for the latest modification"""
-    home_map = home_paths(configuration)
-    modified_path = os.path.join(home_map[kind], "%s.modified" % kind)
+    modified_path = os.path.join(configuration.mig_system_files,
+                                 "%s.modified" % kind)
+    map_path = os.path.join(configuration.mig_system_files, "%s.map" % kind)
     lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     try:
+        if not os.path.isfile(map_path):
+            configuration.logger.warning("%s map doesn't exist, new install?" \
+                                         % kind)
+            raise Exception("%s map does not exist" % kind)
         modified_list = load(modified_path)
         modified_stamp = os.path.getmtime(modified_path)
     except Exception, exc:
         # No modified list - probably first time so force update
-        modified_list = ['UNKNOWN']
+        modified_list = [keyword_all]
         modified_stamp = time.time()
     lock_handle.close()
     return (modified_list, modified_stamp)
@@ -108,8 +108,8 @@ def check_vgrids_modified(configuration):
 
 def reset_entities_modified(configuration, kind):
     """Reset all modified entity marks of given kind"""
-    home_map = home_paths(configuration)
-    modified_path = os.path.join(home_map[kind], "%s.modified" % kind)
+    modified_path = os.path.join(configuration.mig_system_files,
+                                 "%s.modified" % kind)
     lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
