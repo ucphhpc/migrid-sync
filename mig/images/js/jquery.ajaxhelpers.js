@@ -531,8 +531,9 @@ function ajax_resman() {
 
 function ajax_people(protocols) {
     console.debug("load users");
+    var user_table = $("#usertable tbody");
     //console.debug("empty table");
-    $("#usertable tbody").empty();
+    $(user_table).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html("Loading users ...");
     /* Request user list in the background and handle as soon as
@@ -545,6 +546,9 @@ function ajax_people(protocols) {
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
           var i = 0, j = 0, k = 0;
+          var chunk_size = 100;
+          var merge_appends = true;
+          var form_entries = "", table_entries = "";
           var usr, link_name, proto, entry, error = "";
           /*
               Grab results from json response and insert user items in table
@@ -559,7 +563,11 @@ function ajax_people(protocols) {
                   entry = jsonRes[i].text;
                   if (entry.match(/function send[a-z]+[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
-                      $("body").append(entry);
+                      if (merge_appends) {
+                          form_entries += entry;
+                      } else {
+                          $("body").append(entry);
+                      }
                   }
               } else if (jsonRes[i].object_type === "user_list") {
                   var users = jsonRes[i].users;
@@ -580,8 +588,28 @@ function ajax_people(protocols) {
                       }
                       entry += "</tr>";
                       //console.debug("append entry: "+entry);
-                      $("#usertable tbody").append(entry);
+                      if (merge_appends) {
+                          table_entries += entry;
+                      } else {
+                          $(user_table).append(entry);
+                      }
+                      /* chunked updates - append after after every chunk_size entries */
+                      if (merge_appends && i % chunk_size === 0) {
+                          console.debug('append chunk of ' + chunk_size + ' entries');
+                          $(user_table).append(table_entries);
+                          table_entries = "";
+                      }
                   }
+              }
+          }
+          if (merge_appends) {
+              if (form_entries) {
+                  console.debug('append chunk of form helpers');
+                  $("body").append(form_entries);
+              }
+              if (table_entries) {
+                  console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
+                  $(user_table).append(table_entries);
               }
           }
           $("#ajax_status").removeClass("spinner iconleftpad");
