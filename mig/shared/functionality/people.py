@@ -77,6 +77,7 @@ def main(client_id, user_arguments_dict):
                                ', '.join(allowed_operations)})
         return (output_objects, returnvalues.OK)
 
+    logger.info("%s %s begin for %s" % (op_name, operation, client_id))
     if operation in show_operations:
 
         # jquery support for tablesorter and confirmation on "send"
@@ -186,6 +187,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'user_list',
                           'users': users})
 
+    logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, returnvalues.OK)
 
 

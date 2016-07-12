@@ -82,6 +82,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                                ', '.join(allowed_operations)})
         return (output_objects, returnvalues.OK)
 
+    logger.info("%s %s begin for %s" % (op_name, operation, client_id))
     if operation in show_operations:
 
         # jquery support for tablesorter and confirmation on delete
@@ -183,4 +184,5 @@ from the management.
                                'title': 'Specify a new frozen archive', 
                                'text': 'Create a new frozen archive'})
 
+    logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, returnvalues.OK)

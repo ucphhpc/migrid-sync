@@ -80,8 +80,9 @@ function format_link(link_item) {
 
 function ajax_redb(_freeze) {
     console.debug("load runtime envs");
-    //console.debug("empty table");
-    $("#runtimeenvtable tbody").empty();
+    var tbody_elem = $("#runtimeenvtable tbody");
+    //console.debug("empty table");    
+    $(tbody_elem).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html("Loading runtime envs ...");
     /* Request runtime envs list in the background and handle as soon as
@@ -93,8 +94,10 @@ function ajax_redb(_freeze) {
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
-          var i = 0, j = 0;
-          var rte, rte_hint, entry, error = "";
+          var chunk_size = 200;
+          var form_entries = "", table_entries = "", error = "";
+          var i, j;
+          var rte, rte_hint, entry;
           /*
               Grab results from json response and insert rte items in table
               and append POST helpers to body to make confirm dialog work.
@@ -108,7 +111,7 @@ function ajax_redb(_freeze) {
                   entry = jsonRes[i].text;
                   if (entry.match(/function delete[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
-                      $("body").append(entry);
+                      form_entries += entry;
                   }
               } else if (jsonRes[i].object_type === "runtimeenvironments") {
                   var runtimeenvs = jsonRes[i].runtimeenvironments;
@@ -127,9 +130,23 @@ function ajax_redb(_freeze) {
                           base_td(rte.created)+
                           "</tr>";
                       //console.debug("append entry: "+entry);
-                      $("#runtimeenvtable tbody").append(entry);
+                      table_entries += entry;
+                      /* chunked updates - append after after every chunk_size entries */
+                      if (j > 0 && j % chunk_size === 0) {
+                          console.debug('append chunk of ' + chunk_size + ' entries');
+                          $(tbody_elem).append(table_entries);
+                          table_entries = "";
+                      }
                   }
               }
+          }
+          if (form_entries) {
+              console.debug('append '+form_entries.length+'b of chunk of form helpers');
+              $("body").append(form_entries);
+          }
+          if (table_entries) {
+              console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
+              $(tbody_elem).append(table_entries);
           }
           $("#ajax_status").removeClass("spinner iconleftpad");
           $("#ajax_status").empty();
@@ -152,8 +169,9 @@ function ajax_redb(_freeze) {
 
 function ajax_freezedb(permanent_freeze) {
     console.debug("load archives");
+    var tbody_elem = $("#frozenarchivetable tbody");
     //console.debug("empty table");
-    $("#frozenarchivetable tbody").empty();
+    $(tbody_elem).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html("Loading archives ...");
     /* Request archive list in the background and handle as soon as
@@ -165,8 +183,10 @@ function ajax_freezedb(permanent_freeze) {
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
-          var i = 0, j = 0;
-          var arch, entry, error = "";
+          var chunk_size = 200;
+          var form_entries = "", table_entries = "", error = "";
+          var i, j;
+          var arch, entry;
           /*
               Grab results from json response and insert archive items in table
               and append POST helpers to body to make confirm dialog work.
@@ -177,10 +197,14 @@ function ajax_freezedb(permanent_freeze) {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
               } else if (jsonRes[i].object_type === "html_form") {
+                  // NOTE: only include delete helpers if not permanent_freeze
+                  if (permanent_freeze) {
+                      continue;
+                  }
                   entry = jsonRes[i].text;
                   if (entry.match(/function delete[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
-                      $("body").append(entry);
+                      form_entries += entry;
                   }
               } else if (jsonRes[i].object_type === "frozenarchives") {
                   var archives = jsonRes[i].frozenarchives;
@@ -196,9 +220,23 @@ function ajax_freezedb(permanent_freeze) {
                           base_td(arch.name)+base_td(arch.created)+
                           center_td(arch.frozenfiles)+dellink+"</tr>";
                       //console.debug("append entry: "+entry);
-                      $("#frozenarchivetable tbody").append(entry);
+                      table_entries += entry;
+                      /* chunked updates - append after after every chunk_size entries */
+                      if (j > 0 && j % chunk_size === 0) {
+                          console.debug('append chunk of ' + chunk_size + ' entries');
+                          $(tbody_elem).append(table_entries);
+                          table_entries = "";
+                      }
                   }
               }
+          }
+          if (form_entries) {
+              console.debug('append '+form_entries.length+'b of chunk of form helpers');
+              $("body").append(form_entries);
+          }
+          if (table_entries) {
+              console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
+              $(tbody_elem).append(table_entries);
           }
           $("#ajax_status").removeClass("spinner iconleftpad");
           $("#ajax_status").empty();
@@ -221,9 +259,11 @@ function ajax_freezedb(permanent_freeze) {
 
 function ajax_showfreeze(freeze_id, checksum) {
     console.debug("load archive "+freeze_id+" with "+checksum+" checksum");
+    var tbody_elem = $("#frozenfilestable tbody");
+    var arch_tbody = $(".frozenarchivedetails tbody");
     //console.debug("empty table");
-    $("#frozenfilestable tbody").empty();
-    $(".frozenarchivedetails tbody").empty();
+    $(tbody_elem).empty();
+    $(arch_tbody).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html("Loading archive "+freeze_id+" ...");
     /* Request archive list in the background and handle as soon as
@@ -236,8 +276,10 @@ function ajax_showfreeze(freeze_id, checksum) {
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
-          var i = 0, j = 0;
-          var arch, file, entry, error = "";
+          var chunk_size = 200;
+          var form_entries = "", table_entries = "", error = "";
+          var i, j;
+          var arch, file, entry;
           /*
               Grab results from json response and insert archive items in table
               and append POST helpers to body to make confirm dialog work.
@@ -251,7 +293,7 @@ function ajax_showfreeze(freeze_id, checksum) {
                   entry = jsonRes[i].text;
                   if (entry.match(/function delete[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
-                      $("body").append(entry);
+                      form_entries += entry;
                   }
               } else if (jsonRes[i].object_type === "frozenarchive") {
                   //console.debug("found frozenarchive");
@@ -276,7 +318,7 @@ function ajax_showfreeze(freeze_id, checksum) {
                       "</tr><tr>"+title_td("Creator")+base_td(arch.creator)+
                       "</tr><tr>"+title_td("Created")+base_td(arch.created)+
                       "</tr>"+location;
-                  $(".frozenarchivedetails tbody").append(entry);
+                  $(arch_tbody).append(entry);
                   var files = arch.frozenfiles;
                   for (j=0; j<files.length; j++) {
                       file = files[j];
@@ -284,12 +326,26 @@ function ajax_showfreeze(freeze_id, checksum) {
                       entry = "<tr>"+base_td(file.name)+center_td(file.size)+
                           base_td(file.md5sum)+"</tr>";
                       //console.debug("append entry: "+entry);
-                      $("#frozenfilestable tbody").append(entry);
+                      table_entries += entry;
+                      /* chunked updates - append after after every chunk_size entries */
+                      if (j > 0 && j % chunk_size === 0) {
+                          console.debug('append chunk of ' + chunk_size + ' entries');
+                          $(tbody_elem).append(table_entries);
+                          table_entries = "";
+                      }
                   }
               }
           }
-          //console.debug("updated files table is: "+$("#frozenfilestable tbody").html());
-          //console.debug("updated details table is: "+$(".frozenarchivedetails tbody").html());
+          if (form_entries) {
+              console.debug('append '+form_entries.length+'b of chunk of form helpers');
+              $("body").append(form_entries);
+          }
+          if (table_entries) {
+              console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
+              $(tbody_elem).append(table_entries);
+          }
+          //console.debug("updated files table is: "+$(tbody_elem).html());
+          //console.debug("updated details table is: "+$(arch_tbody).html());
           $("#ajax_status").removeClass("spinner iconleftpad");
           $("#ajax_status").empty();
           if (error) {
@@ -310,8 +366,9 @@ function ajax_showfreeze(freeze_id, checksum) {
 
 function ajax_vgridman(vgrid_label, vgrid_links) {
     console.debug("load vgrids");
+    var tbody_elem = $("#vgridtable tbody");
     //console.debug("empty table");
-    $("#vgridtable tbody").empty();
+    $(tbody_elem).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html("Loading "+vgrid_label+"s ...");
     /* Request vgrid list in the background and handle as soon as
@@ -323,8 +380,10 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
+          var chunk_size = 200;
+          var form_entries = "", table_entries = "", error = "";
           var i, j, k;
-          var vgrid, entry, error = "";
+          var vgrid, entry;
           /*
               Grab results from json response and insert vgrid items in table
               and append POST helpers to body to make confirm dialog work.
@@ -336,9 +395,10 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                   error += jsonRes[i].text;
               } else if (jsonRes[i].object_type === "html_form") {
                   entry = jsonRes[i].text;
+                  /* TODO: this form transfer and append gets massive! optimize */
                   if (entry.match(/function (rm|req)vgrid(owner|member)[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
-                      $("body").append(entry);
+                      form_entries += entry;
                   }
               } else if (jsonRes[i].object_type === "vgrid_list") {
                   var vgrids = jsonRes[i].vgrids;
@@ -421,9 +481,23 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                       }
                       entry += "</tr>";
                       //console.debug("append entry: "+entry);
-                      $("#vgridtable tbody").append(entry);
+                      table_entries += entry;
+                      /* chunked updates - append after after every chunk_size entries */
+                      if (j > 0 && j % chunk_size === 0) {
+                          console.debug('append chunk of ' + chunk_size + ' entries');
+                          $(tbody_elem).append(table_entries);
+                          table_entries = "";
+                      }
                   }
               }
+          }
+          if (form_entries) {
+              console.debug('append '+form_entries.length+'b of chunk of form helpers');
+              $("body").append(form_entries);
+          }
+          if (table_entries) {
+              console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
+              $(tbody_elem).append(table_entries);
           }
           $("#ajax_status").removeClass("spinner iconleftpad");
           $("#ajax_status").empty();
@@ -446,8 +520,9 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
 
 function ajax_resman() {
     console.debug("load resources");
+    var tbody_elem = $("#resourcetable tbody");
     //console.debug("empty table");
-    $("#resourcetable tbody").empty();
+    $(tbody_elem).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html("Loading resources ...");
     /* Request resource list in the background and handle as soon as
@@ -459,8 +534,10 @@ function ajax_resman() {
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
+          var chunk_size = 200;
+          var form_entries = "", table_entries = "", error = "";
           var i, j, k;
-          var resource, res_type, res_hint, rte_hint, entry, error = "";
+          var resource, res_type, res_hint, rte_hint, entry;
           /*
               Grab results from json response and insert resource items in table
               and append POST helpers to body to make confirm dialog work.
@@ -474,7 +551,7 @@ function ajax_resman() {
                   entry = jsonRes[i].text;
                   if (entry.match(/function (rm|req)resowner[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
-                      $("body").append(entry);
+                      form_entries += entry;
                   }
               } else if (jsonRes[i].object_type === "resource_list") {
                   var resources = jsonRes[i].resources;
@@ -506,9 +583,23 @@ function ajax_resman() {
                           center_td(resource.MEMORY)+center_td(resource.DISK)+
                           center_td(resource.ARCHITECTURE)+"</tr>";
                       //console.debug("append entry: "+entry);
-                      $("#resourcetable tbody").append(entry);
+                      table_entries += entry;
+                      /* chunked updates - append after after every chunk_size entries */
+                      if (j > 0 && j % chunk_size === 0) {
+                          console.debug('append chunk of ' + chunk_size + ' entries');
+                          $(tbody_elem).append(table_entries);
+                          table_entries = "";
+                      }
                   }
               }
+          }
+          if (form_entries) {
+              console.debug('append '+form_entries.length+'b of chunk of form helpers');
+              $("body").append(form_entries);
+          }
+          if (table_entries) {
+              console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
+              $(tbody_elem).append(table_entries);
           }
           $("#ajax_status").removeClass("spinner iconleftpad");
           $("#ajax_status").empty();
@@ -531,9 +622,9 @@ function ajax_resman() {
 
 function ajax_people(protocols) {
     console.debug("load users");
-    var user_table = $("#usertable tbody");
+    var tbody_elem = $("#usertable tbody");
     //console.debug("empty table");
-    $(user_table).empty();
+    $(tbody_elem).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html("Loading users ...");
     /* Request user list in the background and handle as soon as
@@ -545,11 +636,10 @@ function ajax_people(protocols) {
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
-          var i = 0, j = 0, k = 0;
-          var chunk_size = 100;
-          var merge_appends = true;
-          var form_entries = "", table_entries = "";
-          var usr, link_name, proto, entry, error = "";
+          var chunk_size = 200;
+          var form_entries = "", table_entries = "", error = "";
+          var i, j, k;
+          var usr, link_name, proto, entry;
           /*
               Grab results from json response and insert user items in table
               and append POST helpers to body to make confirm dialog work.
@@ -563,11 +653,7 @@ function ajax_people(protocols) {
                   entry = jsonRes[i].text;
                   if (entry.match(/function send[a-z]+[0-9]+/)) {
                       //console.debug("append POST helper: "+entry);
-                      if (merge_appends) {
-                          form_entries += entry;
-                      } else {
-                          $("body").append(entry);
-                      }
+                      form_entries += entry;
                   }
               } else if (jsonRes[i].object_type === "user_list") {
                   var users = jsonRes[i].users;
@@ -588,29 +674,23 @@ function ajax_people(protocols) {
                       }
                       entry += "</tr>";
                       //console.debug("append entry: "+entry);
-                      if (merge_appends) {
-                          table_entries += entry;
-                      } else {
-                          $(user_table).append(entry);
-                      }
+                      table_entries += entry;
                       /* chunked updates - append after after every chunk_size entries */
-                      if (merge_appends && i % chunk_size === 0) {
+                      if (j > 0 && j % chunk_size === 0) {
                           console.debug('append chunk of ' + chunk_size + ' entries');
-                          $(user_table).append(table_entries);
+                          $(tbody_elem).append(table_entries);
                           table_entries = "";
                       }
                   }
               }
           }
-          if (merge_appends) {
-              if (form_entries) {
-                  console.debug('append chunk of form helpers');
-                  $("body").append(form_entries);
-              }
-              if (table_entries) {
-                  console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
-                  $(user_table).append(table_entries);
-              }
+          if (form_entries) {
+              console.debug('append '+form_entries.length+'b of chunk of form helpers');
+              $("body").append(form_entries);
+          }
+          if (table_entries) {
+              console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
+              $(tbody_elem).append(table_entries);
           }
           $("#ajax_status").removeClass("spinner iconleftpad");
           $("#ajax_status").empty();
