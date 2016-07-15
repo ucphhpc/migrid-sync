@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridres - add vgrid resource
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,8 +27,11 @@
 
 """Add a resource to a given vgrid"""
 
+from binascii import unhexlify
 import os
 
+from shared.accessrequests import delete_access_request
+from shared.defaults import any_protocol
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
@@ -41,7 +44,8 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'vgrid_name': REJECT_UNSET,
-                'unique_resource_name': REJECT_UNSET}
+                'unique_resource_name': REJECT_UNSET,
+                'request_name': ['']}
     return ['', defaults]
 
 
@@ -73,6 +77,7 @@ def main(client_id, user_arguments_dict):
 
     vgrid_name = accepted['vgrid_name'][-1].strip()
     unique_resource_name = accepted['unique_resource_name'][-1].lower().strip()
+    request_name = unhexlify(accepted['request_name'][-1])
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
@@ -135,10 +140,49 @@ Remove the resource from the sub-%(_label)s and try again''' % \
                                % add_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    if request_name:
+        request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
+        if not delete_access_request(configuration, request_dir, request_name):
+                logger.error("failed to delete res request for %s in %s" % \
+                             (vgrid_name, request_name))
+                output_objects.append({
+                    'object_type': 'error_text', 'text':
+                    'Failed to remove saved request for %s in %s!' % \
+                    (vgrid_name, request_name)})
+
     output_objects.append({'object_type': 'text', 'text'
                           : 'New resource %s successfully added to %s %s!'
                            % (unique_resource_name, vgrid_name,
                               configuration.site_vgrid_label)})
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
+<form method='post' action='sendrequestaction.py'>
+<input type=hidden name=request_type value='vgridaccept' />
+<input type=hidden name=vgrid_name value='%(vgrid_name)s' />
+<input type=hidden name=unique_resource_name value='%(unique_resource_name)s' />
+<input type=hidden name=protocol value='%(protocol)s' />
+<table>
+<tr>
+<td class='title'>Custom message to resource owners</td>
+</tr><tr>
+<td><textarea name=request_text cols=72 rows=10>
+We have granted your resource %(unique_resource_name)s access to our
+%(vgrid_name)s %(_label)s.
+You can assign it to accept jobs from the %(vgrid_name)s %(_label)s from your
+Resources page on %(short_title)s.
+
+Regards, the %(vgrid_name)s %(_label)s owners
+</textarea></td>
+</tr>
+<tr>
+<td><input type='submit' value='Inform owners' /></td>
+</tr>
+</table>
+</form>
+<br />
+""" % {'vgrid_name': vgrid_name, 'unique_resource_name': unique_resource_name,
+       'protocol': any_protocol, '_label': configuration.site_vgrid_label,
+       'short_title': configuration.short_title}})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

@@ -27,8 +27,10 @@
 
 """Add owner to a vgrid"""
 
+from binascii import unhexlify
 import os
 
+from shared.accessrequests import delete_access_request
 from shared.base import client_id_dir
 from shared.defaults import any_protocol
 from shared.fileio import make_symlink
@@ -46,7 +48,8 @@ import shared.returnvalues as returnvalues
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET}
+    defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET,
+                'request_name': ['']}
     return ['text', defaults]
 
 def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
@@ -124,6 +127,7 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1].strip()
     cert_id = accepted['cert_id'][-1].strip()
     cert_dir = client_id_dir(cert_id)
+    request_name = unhexlify(accepted['request_name'][-1])
     # inherited vgrid membership
     inherit_vgrid_member = False
 
@@ -368,6 +372,16 @@ directory exists with the same name!'''})
             if not add_tracker_admin(configuration, cert_id, vgrid_name,
                                      tracker_dir, output_objects):
                 return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    if request_name:
+        request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
+        if not delete_access_request(configuration, request_dir, request_name):
+                logger.error("failed to delete owner request for %s in %s" % \
+                             (vgrid_name, request_name))
+                output_objects.append({
+                    'object_type': 'error_text', 'text':
+                    'Failed to remove saved request for %s in %s!' % \
+                    (vgrid_name, request_name)})
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'New owner %s successfully added to %s %s!'

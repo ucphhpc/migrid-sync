@@ -145,6 +145,11 @@ sharelink = {
                  'invites', 'created', 'owner'],
     'optional': ['viewsharelink', 'delsharelink'],
     }
+accessrequest = {
+    'object_type': 'accessrequest',
+    'required': ['client_id', 'request_type', 'target'],
+    'optional': [],
+    }
 certreq = {'object_type': 'certreq', 'required': [
     'id',
     'full_name',
@@ -213,6 +218,9 @@ transferkeys = {'object_type': 'transferkeys',
                   )]}
 sharelinks = {'object_type': 'sharelinks',
                   'required_list': [('sharelinks', 'sharelink'
+                  )]}
+accessrequests = {'object_type': 'accessrequests',
+                  'required_list': [('accessrequests', 'accessrequest'
                   )]}
 certreqs = {'object_type': 'certreqs', 'required_list': [('certreqs',
             'certreq')]}
@@ -372,6 +380,8 @@ valid_types_list = [
     transferkeys,
     sharelink,
     sharelinks,
+    accessrequest,
+    accessrequests,
     certreq,
     certreqs,
     file_not_found,

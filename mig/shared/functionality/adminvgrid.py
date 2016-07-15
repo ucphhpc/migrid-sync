@@ -36,6 +36,8 @@ import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
      valid_trigger_changes, valid_trigger_actions, keyword_owners, \
      keyword_members
+from shared.accessrequests import list_access_requests, load_access_request, \
+     build_accessrequestitem_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
@@ -261,12 +263,17 @@ def main(client_id, user_arguments_dict):
                           (configuration.site_vgrid_label, vgrid_name)
 
     # jquery support for tablesorter and confirmation on request and leave
-    # table initially sorted by 5, 4 reversed (active first and in growing age)
+    # requests table initially sorted by 0, 2 (type first and with alphabetical
+    # client ID)
+    # sharelinks table initially sorted by 5, 4 reversed (active first and
+    # in growing age)
     
-    table_spec = {'table_id': 'sharelinkstable', 'sort_order':
-                  '[[5,1],[4,1]]'}
+    table_specs = [{'table_id': 'accessrequeststable', 'pager_id':
+                    'accessrequests_pager', 'sort_order': '[[0,0],[2,0]]'},
+                   {'table_id': 'sharelinkstable', 'pager_id':
+                    'sharelinks_pager', 'sort_order': '[[5,1],[4,1]]'}]
     (add_import, add_init, add_ready) = man_base_js(configuration, 
-                                                    [table_spec],
+                                                    table_specs,
                                                     {'width': 600})
     add_init += '''
         var toggleHidden = function(classname) {
@@ -351,6 +358,84 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'html_form', 
                                    'text': '</div>' })
 
+    # Pending requests
+
+    helper = html_post_helper("acceptvgridownerreq", "addvgridowner.py",
+                              {'vgrid_name': vgrid_name,
+                               'cert_id': '__DYNAMIC__',
+                               'request_name': '__DYNAMIC__'
+                               })
+    output_objects.append({'object_type': 'html_form', 'text': helper})
+    helper = html_post_helper("acceptvgridmemberreq", "addvgridmember.py",
+                              {'vgrid_name': vgrid_name,
+                               'cert_id': '__DYNAMIC__',
+                               'request_name': '__DYNAMIC__'
+                               })
+    output_objects.append({'object_type': 'html_form', 'text': helper})
+    helper = html_post_helper("acceptvgridresourcereq", "addvgridres.py",
+                              {'vgrid_name': vgrid_name,
+                               'unique_resource_name': '__DYNAMIC__',
+                               'request_name': '__DYNAMIC__'
+                               })
+    output_objects.append({'object_type': 'html_form', 'text': helper})
+    helper = html_post_helper("rejectvgridreq", "rejectvgridreq.py",
+                              {'vgrid_name': vgrid_name,
+                               'request_name': '__DYNAMIC__'
+                               })
+    output_objects.append({'object_type': 'html_form', 'text': helper})
+
+    request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
+    request_list = []
+    for req_name in list_access_requests(configuration, request_dir):
+        req = load_access_request(configuration, request_dir, req_name)
+        if not req:
+            continue
+        if not req.get('request_type', None) in ["vgridowner", "vgridmember",
+                                                 "vgridresource"]:
+            logger.error("unexpected request_type %(request_type)s" % req)
+            continue
+        request_item = build_accessrequestitem_object(configuration, req)
+        # Convert filename with exotic chars into url-friendly pure hex version
+        shared_args = {"request_name": hexlify(req["request_name"])}
+        accept_args, reject_args = {}, {}
+        accept_args.update(shared_args)
+        reject_args.update(shared_args)
+        if req['request_type'] == "vgridresource":
+            accept_args["unique_resource_name"] = req["entity"]
+        else:
+            accept_args["cert_id"] = req["entity"]
+
+        request_item['acceptrequestlink'] = {
+            'object_type': 'link',
+            'destination':
+             "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+            ("accept%(request_type)sreq" % req,
+             "Accept %(target)s %(request_type)s request from %(entity)s" % req,
+             'undefined', "{%s}" % ', '.join(["'%s': '%s'" % pair for pair in accept_args.items()])),
+            'class': 'addlink iconspace', 'title':
+            'Accept %(target)s %(request_type)s request from %(entity)s' % req,
+            'text': ''}
+        request_item['rejectrequestlink'] = {
+            'object_type': 'link',
+            'destination':
+             "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+            ("rejectvgridreq",
+             "Reject %(target)s %(request_type)s request from %(entity)s" % req,
+             'undefined', "%s" % reject_args),
+            'class': 'removelink iconspace', 'title':
+            'Reject %(target)s %(request_type)s request from %(entity)s' % req,
+            'text': ''}
+
+        request_list.append(request_item)
+
+    output_objects.append({'object_type': 'sectionheader',
+                           'text': "Pending Requests"})
+    output_objects.append({'object_type': 'table_pager', 'id_prefix':
+                           'accessrequests_', 'entry_name': 'access requests',
+                           'default_entries': default_pager_entries})
+    output_objects.append({'object_type': 'accessrequests',
+                           'accessrequests': request_list})
+    
     # VGrid Share links
 
     # Table columns to skip
@@ -385,9 +470,9 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 
                  'text': '<p>Current share links in %s shared folder</p>' % \
                            vgrid_name})
-    output_objects.append({'object_type': 'table_pager', 'entry_name':
-                           'share links', 'default_entries':
-                           default_pager_entries})
+    output_objects.append({'object_type': 'table_pager', 'id_prefix':
+                           'sharelinks_', 'entry_name': 'share links',
+                           'default_entries': default_pager_entries})
     output_objects.append({'object_type': 'sharelinks',
                            'sharelinks': sharelinks,
                            'skip_list': skip_list})

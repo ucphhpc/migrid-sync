@@ -31,9 +31,11 @@
 resource. 
 """
 
+from binascii import unhexlify
 import os
 
 import shared.returnvalues as returnvalues
+from shared.accessrequests import delete_access_request
 from shared.defaults import any_protocol
 from shared.findtype import is_user, is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -46,7 +48,8 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'unique_resource_name': REJECT_UNSET,
-                'cert_id': REJECT_UNSET}
+                'cert_id': REJECT_UNSET,
+                'request_name': ['']}
     return ['text', defaults]
 
 
@@ -77,6 +80,7 @@ def main(client_id, user_arguments_dict):
 
     unique_resource_name = accepted['unique_resource_name'][-1].strip()
     cert_id = accepted['cert_id'][-1].strip()
+    request_name = unhexlify(accepted['request_name'][-1])
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
@@ -102,13 +106,6 @@ def main(client_id, user_arguments_dict):
                                % (cert_id, unique_resource_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # Please note that base_dir must end in slash to avoid access to other
-    # resource dirs when own name is a prefix of another user name
-
-    base_dir = \
-        os.path.abspath(os.path.join(configuration.resource_home,
-                        unique_resource_name)) + os.sep
-
     # Add owner
 
     (add_status, add_msg) = resource_add_owners(configuration,
@@ -119,6 +116,17 @@ def main(client_id, user_arguments_dict):
                               : 'Could not add new owner, reason: %s'
                                % add_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    if request_name:
+        request_dir = os.path.join(configuration.resource_home,
+                                   unique_resource_name)
+        if not delete_access_request(configuration, request_dir, request_name):
+                logger.error("failed to delete owner request for %s in %s" % \
+                             (unique_resource_name, request_name))
+                output_objects.append({
+                    'object_type': 'error_text', 'text':
+                    'Failed to remove saved request for %s in %s!' % \
+                    (unique_resource_name, request_name)})
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'New owner %s successfully added to %s!'

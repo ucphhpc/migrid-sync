@@ -99,12 +99,8 @@ def main(client_id, user_arguments_dict):
                                % (cert_id, unique_resource_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    base_dir = os.path.abspath(os.path.join(configuration.resource_home,
-                                            unique_resource_name)) + os.sep
-
     # Remove owner
 
-    owners_file = os.path.join(base_dir, 'owners')
     (rm_status, rm_msg) = resource_remove_owners(configuration,
                                                  unique_resource_name,
                                                  [cert_id])

@@ -163,3 +163,7 @@ file_dest_sep = "    ::    "
 
 # For webdavs rfc compliance testing with litmus
 litmus_id = 'litmus'
+
+# VGrid and resource request file name helpers
+request_prefix = 'access-'
+request_ext = '.req'

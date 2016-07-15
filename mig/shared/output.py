@@ -1473,7 +1473,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 access = ' & '.join(single_share['access'])
                 lines.append('''
 <tr>
-<td>%s</td><td class="centertext">%s %s %s</td><td>%s</td>''' % (single_share['share_id'],
+<td>%s</td><td class="centertext">%s%s%s</td><td>%s</td>''' % (single_share['share_id'],
                                               openlink_html, editlink_html,
                                               dellink_html,
                                               single_share['path']))
@@ -1489,6 +1489,49 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('''
 </tr>
 ''')
+
+            lines.append('''
+</tbody>
+</table>
+''')
+        elif i['object_type'] == 'accessrequests':
+            accessrequests = i['accessrequests']
+            lines.append('''
+<table class="accessrequests columnsort" id="accessrequeststable">
+<thead class="title">
+    <tr>
+        <th>Type</th>
+        <th class="icon">Action<!-- Accept, Reject --></th>
+        <th>ID</th>
+        <th>Date</th>
+        <th>Message</th>
+    </tr>
+</thead>
+<tbody>
+''')
+            for single_req in accessrequests:
+                # Map request_type from vgridowner/-member or resourceowner
+                if single_req['request_type'].endswith('member'):
+                    req_type = "Member"
+                elif single_req['request_type'].endswith('resource'):
+                    req_type = "Resource"
+                elif single_req['request_type'].endswith('owner'):
+                    req_type = "Owner"
+                else:
+                    req_type = "Unknown"
+                acceptlink = single_req.get('acceptrequestlink', '')
+                acceptlink_html = ''
+                if acceptlink:
+                    acceptlink_html = html_link(acceptlink)
+                rejectlink = single_req.get('rejectrequestlink', '')
+                rejectlink_html = ''
+                if rejectlink:
+                    rejectlink_html = html_link(rejectlink)
+                lines.append('''
+<tr>
+<td>%s</td><td class="centertext">%s%s</td><td>%s</td><td>%s</td><td>%s</td>
+</tr>''' % (req_type, acceptlink_html, rejectlink_html, single_req['entity'],
+            single_req['created_timestamp'], single_req['request_text']))
 
             lines.append('''
 </tbody>

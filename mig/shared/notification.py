@@ -67,6 +67,7 @@ def create_notify_message(
     entity_mapper = {'vgridmember': 'member', 'vgridowner': 'owner',
                      'vgridresource': 'resource', 'resourceowner': 'owner'}
     accept_mapper = {'vgridaccept': 'vgrid', 'resourceaccept': 'resource'}
+    reject_mapper = {'vgridreject': 'vgrid', 'resourcereject': 'resource'}
 
     frame_template = """---
 
@@ -166,21 +167,34 @@ Please contact the %(site)s team for details about expire policies.
             txt += """This is a %s admission note sent on behalf of %s:
 """ % (kind, from_id)
             txt += frame_template % request_text
+        elif request_type in reject_mapper.keys():
+            kind = reject_mapper[request_type]
+            header = '%s %s access rejection note' % (configuration.short_title, kind)
+            txt += """This is a %s access rejection note sent on behalf of %s:
+""" % (kind, from_id)
+            txt += frame_template % request_text
         elif request_type in entity_mapper.keys():
             entity = entity_mapper[request_type]
             header = '%s %s request' % (configuration.short_title, request_type)
             if not request_text:
                 request_text = '(no reason provided)'
 
-            txt += """This is a %s request sent on behalf of
+            if request_type == "vgridresource":
+                txt += """This is a %s request sent on behalf of the owners of
+%s
+who would like it to be added as a %s in %s and included the reason:
+%s
+""" % (request_type, from_id, entity, target_name, request_text)
+            else:
+                txt += """This is a %s request sent on behalf of
 %s
 who would like to be added as a %s in %s and included the reason:
 %s
 """ % (request_type, from_id, entity, target_name, request_text)
                         
             txt += '''
-If you want to accept the request please visit:
-'''
+If you want to handle the %s request please visit:
+''' % entity
             if request_type.startswith('vgrid'):
                 txt += generate_https_urls(
                     configuration,
@@ -193,19 +207,19 @@ If you want to accept the request please visit:
                     '%(auto_base)s/%(auto_bin)s/resadmin.py?' + \
                     'unique_resource_name=%(enc_target_name)s',
                     var_dict)
-            txt += ''' and add the %(entity)s.
-I.e. copy the ID "%(from_id)s"
-from here, paste it into the Add %(vgrid_label)s %(entity)s form there and
-click Add %(entity)s.
+            txt += ''' and add or
+reject it.
+You can find the request in the Pending Requests table there and either click
+the green plus-icon to accept it or the red minus-icon to reject it.
 
-''' % {'from_id': from_id, 'entity': entity,
-       'vgrid_label': configuration.site_vgrid_label}
+'''
         else:
             txt += 'INVALID REQUEST TYPE: %s\n\n' % request_type
 
         txt += """
 If the message didn't include any contact information you may still be able to
-reply using one of the message links on the profile page for the sender:
+reply to the requestor using one of the message links on the profile page for
+the sender:
 """
         txt += generate_https_urls(
             configuration,

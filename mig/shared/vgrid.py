@@ -52,8 +52,8 @@ def vgrid_is_default(vgrid):
 def vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
     """Combines owner and member check"""
 
-    if vgrid_is_owner(vgrid_name, client_id, configuration)\
-         or vgrid_is_member(vgrid_name, client_id, configuration):
+    if vgrid_is_owner(vgrid_name, client_id, configuration) or \
+           vgrid_is_member(vgrid_name, client_id, configuration):
         return True
     else:
         return False
@@ -277,6 +277,11 @@ def init_vgrid_script_add_rem(
                     (subject, configuration.short_title)
             msg += \
                 ' (OK, if removing or e.g. the resource creation is pending)'
+    elif subject_type == 'request':
+        vgrid_base = os.path.join(configuration.vgrid_home, vgrid_name)
+        if not valid_dir_input(vgrid_base, subject):
+            msg += 'Illegal subject: %s' % subject
+            return (False, msg, None)
     elif subject_type in ('trigger', 'settings', ):
         # Rules are checked later
         pass

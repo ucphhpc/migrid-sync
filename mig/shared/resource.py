@@ -1151,4 +1151,3 @@ def resource_set_owners(configuration, unique_resource_name, clients):
     except Exception, exc:
         return (False, "could not set owners for %s: %s" % \
                 (unique_resource_name, exc))
-

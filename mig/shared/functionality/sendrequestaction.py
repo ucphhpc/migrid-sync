@@ -27,17 +27,21 @@
 
 """Send request e.g. for ownership or membership action back end"""
 
+import os
+
 import shared.returnvalues as returnvalues
 from shared.defaults import default_vgrid, any_vgrid, any_protocol, \
      email_keyword_list
+from shared.accessrequests import save_access_request
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
-from shared.resource import anon_to_real_res_map
+from shared.resource import anon_to_real_res_map, resource_owners
 from shared.user import anon_to_real_user_map
 from shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
-     vgrid_is_member, vgrid_is_resource, user_allowed_vgrids
+     vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource, \
+     user_allowed_vgrids
 from shared.vgridaccess import get_user_map, get_resource_map, CONF, OWNERS, \
      USERID
 
@@ -97,9 +101,9 @@ def main(client_id, user_arguments_dict):
         protocols = configuration.notify_protocols
     protocols = [proto.lower() for proto in protocols]
 
-    valid_request_types = ['resourceowner', 'resourceaccept', 'vgridowner',
-                           'vgridmember','vgridresource', 'vgridaccept',
-                           'plain']
+    valid_request_types = ['resourceowner', 'resourceaccept', 'resourcereject',
+                           'vgridowner', 'vgridmember','vgridresource',
+                           'vgridaccept', 'vgridreject', 'plain']
     if not request_type in valid_request_types:
         output_objects.append({
             'object_type': 'error_text', 'text'
@@ -190,9 +194,8 @@ def main(client_id, user_arguments_dict):
                 visible_user_name})
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_list = [user_id]
-    elif request_type == "vgridaccept":
-        # Always allow accept messages but only between vgrid members/owners
-        user_id = visible_user_name
+    elif request_type in ["vgridaccept", "vgridreject"]:
+        # Always allow accept messages but only between owners/members
         if not vgrid_name:
             output_objects.append({
                 'object_type': 'error_text', 'text': 'No vgrid_name specified!'})
@@ -200,7 +203,7 @@ def main(client_id, user_arguments_dict):
         if vgrid_name.upper() == default_vgrid.upper():
             output_objects.append({
                 'object_type': 'error_text', 'text'
-                : 'No requests for %s are not allowed!' % \
+                : 'No requests for %s are allowed!' % \
                 default_vgrid
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
@@ -210,17 +213,23 @@ def main(client_id, user_arguments_dict):
                 : 'You are not an owner of %s or a parent %s!' % \
                 (vgrid_name, configuration.site_vgrid_label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        allow_vgrids = user_allowed_vgrids(configuration, client_id)
-        if not vgrid_name in allow_vgrids:
-            output_objects.append({
-                'object_type': 'error_text', 'text':
-                'Invalid %s message! (%s sv %s)' % (request_type, user_id,
-                                                    allow_vgrids)})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+        if visible_user_name:
+            user_id = visible_user_name
+            target_list = [user_id]
+        elif visible_res_name:
+            # vgrid resource accept - lookup and notify resource owners
+            unique_resource_name = visible_res_name
+            (load_status, target_list) = resource_owners(configuration,
+                                                         unique_resource_name)
+            if not load_status:
+                output_objects.append({
+                    'object_type': 'error_text', 'text':
+                    'Could not lookup owners of %s!' % unique_resource_name})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+
         target_id = '%s %s owners' % (vgrid_name, configuration.site_vgrid_label)
         target_name = vgrid_name
-        target_list = [user_id]
-    elif request_type == "resourceaccept":
+    elif request_type in ["resourceaccept", "resourcereject"]:
         # Always allow accept messages between actual resource owners
         user_id = visible_user_name
         if not visible_res_name:
@@ -238,10 +247,13 @@ def main(client_id, user_arguments_dict):
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
         owners_list = res_map[unique_resource_name][OWNERS]
-        if not client_id in owners_list or not user_id in owners_list:
+        if not client_id in owners_list:
             output_objects.append({
                 'object_type': 'error_text', 'text'
-                : 'Invalid resource owner accept message!'})
+                : 'You are not an owner of %s!' % unique_resource_name})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Invalid resource %s message!' % \
+                                   request_type})
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_id = '%s resource owners' % unique_resource_name
         target_name = unique_resource_name
@@ -272,8 +284,19 @@ def main(client_id, user_arguments_dict):
                 : 'You are already an owner of %s!' % unique_resource_name
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
+        
+        request_dir = os.path.join(configuration.resource_home,
+                                   unique_resource_name)
+        access_request = {'request_type': request_type, 'entity': client_id,
+                          'target': unique_resource_name, 'request_text':
+                          request_text}
+        if not save_access_request(configuration, request_dir, access_request):
+            output_objects.append({
+                'object_type': 'error_text', 'text'
+                : 'Could not save request - owners may still manually add you'
+                })
+            return (output_objects, returnvalues.SYSTEM_ERROR)
     elif request_type in ["vgridmember", "vgridowner", "vgridresource"]:
-        unique_resource_name = visible_res_name
         if not vgrid_name:
             output_objects.append({
                 'object_type': 'error_text', 'text': 'No vgrid_name specified!'})
@@ -290,8 +313,19 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # stop owner or member request if already an owner
+        # and prevent repeated resource access requests
 
-        if request_type != 'vgridresource':
+        if request_type == 'vgridresource':
+            target_id = entity = unique_resource_name = visible_res_name
+            if vgrid_is_resource(vgrid_name, unique_resource_name,
+                                 configuration):
+                output_objects.append({
+                    'object_type': 'error_text', 'text'
+                    : 'You already have access to %s or a parent %s.' % \
+                    (vgrid_name, configuration.site_vgrid_label)})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+        else:
+            target_id = entity = client_id
             if vgrid_is_owner(vgrid_name, client_id, configuration):
                 output_objects.append({
                     'object_type': 'error_text', 'text'
@@ -306,18 +340,6 @@ def main(client_id, user_arguments_dict):
                 output_objects.append({
                     'object_type': 'error_text', 'text'
                     : 'You are already a member of %s or a parent %s.' % \
-                    (vgrid_name, configuration.site_vgrid_label)})
-                return (output_objects, returnvalues.CLIENT_ERROR)
-
-        # set target to resource and prevent repeated resource access requests
-
-        if request_type == 'vgridresource':
-            target_id = unique_resource_name
-            if vgrid_is_resource(vgrid_name, unique_resource_name,
-                                 configuration):
-                output_objects.append({
-                    'object_type': 'error_text', 'text'
-                    : 'You already have access to %s or a parent %s.' % \
                     (vgrid_name, configuration.site_vgrid_label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -341,7 +363,16 @@ def main(client_id, user_arguments_dict):
         prioritized_list = owners_list[::-1]
         target_list = prioritized_list[:request_recipients]
 
-
+        request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
+        access_request = {'request_type': request_type, 'entity': entity,
+                          'target': vgrid_name, 'request_text': request_text}
+        if not save_access_request(configuration, request_dir, access_request):
+            output_objects.append({
+                'object_type': 'error_text', 'text'
+                : 'Could not save request - owners may still manually add you'
+                })
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+        
     else:
         output_objects.append({
             'object_type': 'error_text', 'text': 'Invalid request type: %s' % \

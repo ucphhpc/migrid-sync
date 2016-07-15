@@ -36,9 +36,13 @@ import os
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
+from shared.accessrequests import list_access_requests, load_access_request, \
+     build_accessrequestitem_object
 from shared.base import sandbox_resource
+from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
-from shared.html import html_post_helper, themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.vgrid import res_allowed_vgrids, vgrid_list_vgrids
@@ -297,8 +301,7 @@ certificate.<br />
 </fieldset>
 </form>
 </td></tr></table><br />
-'''\
-         % resourcename
+''' % resourcename
 
     # create html to request vgrid resource access
 
@@ -413,6 +416,32 @@ def main(client_id, user_arguments_dict):
 
     unique_res_names = accepted['unique_resource_name']
 
+    # prepare for confirm dialog, tablesort and toggling the views (css/js)
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = "Resource Administration"
+
+    # jquery support for tablesorter and confirmation on request and leave
+    # requests table initially sorted by 0, 3 (type first and with alphabetical
+    # client ID)
+    
+    table_specs = [{'table_id': 'accessrequeststable', 'pager_id':
+                    'accessrequests_pager', 'sort_order': '[[0,0],[2,0]]'}]
+    (add_import, add_init, add_ready) = man_base_js(configuration, 
+                                                    table_specs,
+                                                    {'width': 600})
+    add_init += '''
+        var toggleHidden = function(classname) {
+        // classname supposed to have a leading dot 
+        $(classname).toggleClass("hidden");
+    }
+    '''
+    title_entry['style'] = themed_styles(configuration)
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
+    output_objects.append({'object_type': 'html_form',
+                           'text': man_base_html(configuration)})
+    
     (re_stat, re_list) = list_runtime_environments(configuration)
     if not re_stat:
         logger.warning('Failed to load list of runtime environments')
@@ -420,39 +449,6 @@ def main(client_id, user_arguments_dict):
                               : 'Error getting list of runtime environments'
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Resource Management'
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript" >
-var toggleHidden = function(classname) {
-    // classname supposed to have a leading dot 
-        $(classname).toggleClass("hidden");
-    }
-    
-$(document).ready(function() {
-
-          // init confirmation dialog
-          $("#confirm_dialog").dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 500,
-                buttons: {
-                   "Cancel": function() { $("#" + name).dialog("close"); }
-	        }
-              });
-     }
-);
-</script>
-'''
-    output_objects.append({'object_type': 'header', 'text'
-                          : ' Resource Management'})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : '%s Resources Owned' % configuration.short_title})
@@ -472,14 +468,6 @@ $(document).ready(function() {
     quick_links_index = len(output_objects)
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
-    output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"></textarea>
- </div>
-'''                       })
-
     owned = 0
     res_map = get_resource_map(configuration)
     for unique_resource_name in res_map.keys():
@@ -487,7 +475,7 @@ $(document).ready(function() {
             continue
         owner_list = res_map[unique_resource_name][OWNERS]
         resource_config = res_map[unique_resource_name][CONF]
-        visible_res_name = res_map[unique_resource_name][RESID]
+        visible_res_name = res_map[unique_resource_name][RESID]            
         if client_id in owner_list:
             quick_res[unique_resource_name] = \
                                             {'object_type': 'multilinkline',
@@ -532,6 +520,79 @@ $(document).ready(function() {
                 output_objects.append({'object_type': 'html_form',
                                        'text': res_html})
 
+                # Pending requests
+
+                helper = html_post_helper("acceptresourceownerreq",
+                                          "addresowner.py",
+                                          {'unique_resource_name':
+                                           unique_resource_name,
+                                           'cert_id': '__DYNAMIC__',
+                                           'request_name': '__DYNAMIC__'
+                                           })
+                output_objects.append({'object_type': 'html_form', 'text':
+                                       helper})
+                helper = html_post_helper("rejectresourcereq", "rejectresreq.py",
+                                          {'unique_resource_name':
+                                           unique_resource_name,
+                                           'request_name': '__DYNAMIC__'
+                                           })
+                output_objects.append({'object_type': 'html_form', 'text':
+                                       helper})
+
+                request_dir = os.path.join(configuration.resource_home,
+                                           unique_resource_name)
+                request_list = []
+                for req_name in list_access_requests(configuration, request_dir):
+                    req = load_access_request(configuration, request_dir,
+                                              req_name)
+                    if not req:
+                        continue
+                    if req.get('request_type', None) != "resourceowner":
+                        logger.error("unexpected request_type %(request_type)s"\
+                                     % req)
+                        continue
+                    request_item = build_accessrequestitem_object(configuration,
+                                                                  req)
+                    # Convert filename with exotic chars into url-friendly pure hex version
+                    shared_args = {"unique_resource_name": unique_resource_name,
+                                   "request_name": hexlify(req["request_name"])}
+                    accept_args, reject_args = {}, {}
+                    accept_args.update(shared_args)
+                    reject_args.update(shared_args)
+                    if req['request_type'] == "resourceowner":
+                        accept_args["cert_id"] = req["entity"]
+                    request_item['acceptrequestlink'] = {
+                        'object_type': 'link',
+                        'destination':
+                        "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                        ("acceptresourceownerreq",
+                         "Accept %(target)s %(request_type)s request from %(entity)s" % req,
+                         'undefined', "{%s}" % ', '.join(["'%s': '%s'" % pair for pair in accept_args.items()])),
+                        'class': 'addlink iconspace', 'title':
+                        'Accept %(target)s %(request_type)s request from %(entity)s' % req,
+                        'text': ''}
+                    request_item['rejectrequestlink'] = {
+                        'object_type': 'link',
+                        'destination':
+                        "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                        ("rejectresourcereq",
+                         "Reject %(target)s %(request_type)s request from %(entity)s" % req,
+                         'undefined', "%s" % reject_args),
+                        'class': 'removelink iconspace', 'title':
+                        'Reject %(target)s %(request_type)s request from %(entity)s' % req,
+                        'text': ''}
+
+                    request_list.append(request_item)
+
+                output_objects.append({'object_type': 'sectionheader',
+                                       'text': "Pending Requests"})
+                output_objects.append({'object_type': 'table_pager',
+                                       'id_prefix': 'accessrequests_',
+                                       'entry_name': 'access requests',
+                                       'default_entries':
+                                       default_pager_entries})
+                output_objects.append({'object_type': 'accessrequests',
+                                       'accessrequests': request_list})
 
                 output_objects.append({'object_type': 'sectionheader', 'text':
                                        'Retire resource'})

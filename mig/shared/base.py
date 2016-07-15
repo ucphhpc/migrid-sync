@@ -177,8 +177,8 @@ def generate_https_urls(configuration, url_template, helper_dict):
     url_str = '\nor\n'.join(filled_list)
     if locations[1:]:
         url_str += '''
-(The URL depends on whether you authenticate with OpenID or a user certificate:
-use the one that looks most familiar or try them in turn)'''
+(The URL depends on whether you log in with OpenID or a user certificate -
+just use the one that looks most familiar or try them in turn)'''
     return url_str
 
 
