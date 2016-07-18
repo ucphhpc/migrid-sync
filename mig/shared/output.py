@@ -1501,7 +1501,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <thead class="title">
     <tr>
         <th>Type</th>
-        <th class="icon">Action<!-- Accept, Reject --></th>
+        <th class="icon"><!-- Accept --></th>
+        <th class="icon"><!-- Reject --></th>
         <th>ID</th>
         <th>Date</th>
         <th>Message</th>
@@ -1529,9 +1530,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     rejectlink_html = html_link(rejectlink)
                 lines.append('''
 <tr>
-<td>%s</td><td class="centertext">%s%s</td><td>%s</td><td>%s</td><td>%s</td>
+<td>%s</td><td class="centertext">%s</td><td class="centertext">%s</td><td>%s</td><td>%s</td><td>%s</td>
 </tr>''' % (req_type, acceptlink_html, rejectlink_html, single_req['entity'],
-            single_req['created_timestamp'], single_req['request_text']))
+            single_req['created'], single_req['request_text']))
 
             lines.append('''
 </tbody>
