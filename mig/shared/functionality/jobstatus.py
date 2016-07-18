@@ -187,7 +187,7 @@ def main(client_id, user_arguments_dict):
     if sorted(flags):
         sort(filelist)
 
-    if max_jobs < len(filelist):
+    if max_jobs > 0 and max_jobs < len(filelist):
         output_objects.append(
             {'object_type': 'text', 'text'
              : 'Only showing first %d of the %d matching jobs as requested'

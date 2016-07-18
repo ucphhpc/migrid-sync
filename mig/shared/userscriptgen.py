@@ -974,14 +974,14 @@ def datatransfer_function(configuration, lang, curl_cmd, curl_flags='--compresse
         post_data += 'port=$port;username=$username;key_id=$key_id;'
         post_data += 'flags=$flags;"'
         urlenc_data = '("transfer_pw=$transfer_pw" "notify=$notify" '
-        urlenc_data += '"${src_list[@]}" "transfer_dst=$transfer_dst")'
+        urlenc_data += '"${transfer_src[@]}" "transfer_dst=$transfer_dst")'
     elif lang == 'python':
         post_data = "'%s;flags=%s;action=%s;transfer_id=%s;protocol=%s;"
         post_data += "fqdn=%s;port=%s;username=%s;key_id=%s;flags=%s'"
         post_data += "% (default_args, server_flags, action, transfer_id, "
         post_data += "protocol, fqdn, port, username, key_id, flags)"
         urlenc_data = '["transfer_pw=" + transfer_pw, "notify=" + notify] + '
-        urlenc_data += 'src_list + ["transfer_dst=" + transfer_dst]'
+        urlenc_data += 'transfer_src + ["transfer_dst=" + transfer_dst]'
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1973,9 +1973,10 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
     mrsl_test=\"${test_prefix}.mRSL\"
     txt_test=\"${test_prefix}.txt\"
     zip_test=\"${test_prefix}.zip\"
-    txt_helper=\"${test_prefix}-helper.txt\"
     mrsl_helper=\"${test_prefix}-helper.mRSL\"
+    txt_helper=\"${test_prefix}-helper.txt\"
     txt_tmp=\"${test_prefix}-tmp.txt\"
+
     echo \"=== running $op test(s) ===\"
     cmd=\"${path_prefix}/${mig_prefix}${op}.${script_ext}\"
     ls_cmd=\"${path_prefix}/${mig_prefix}ls.${script_ext}\"
@@ -1997,7 +1998,7 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             ;;
         'cancel')
             # TODO: submit and cancel real job?
-            #pre_cmds[1]=\"${submit_cmd} '${mrsl_test}'\"
+            #pre_cmds[1]=\"${submit_cmd} '${mrsl_helper}'\"
             cmd_args[1]='DUMMY_JOB_ID'
             ;;
         'cp')
@@ -2020,7 +2021,7 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             ;;
         'jobaction')
             # TODO: submit and cancel real job?
-            #pre_cmds[1]=\"${submit_cmd} '${mrsl_test}'\"
+            #pre_cmds[1]=\"${submit_cmd} '${mrsl_helper}'\"
             cmd_args[1]=\"cancel DUMMY_JOB_ID\"
             ;;
         'mkdir')
@@ -2074,7 +2075,7 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             post_cmds[1]=\"${rm_cmd} -r '${txt_test}'\"
             ;;
         'rmdir')
-            pre_cmds=[1]\"${mkdir_cmd} '${dir_test}'\"
+            pre_cmds[1]=\"${mkdir_cmd} '${dir_test}'\"
             cmd_args[1]=\"'${dir_test}'\"
             verify_cmds[1]=\"${ls_cmd} -la '${dir_test}'\"
             post_cmds[1]=\"${rm_cmd} -r '${dir_test}'\"
@@ -2096,8 +2097,8 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             cmd_args[1]=''
             ;;
         'submit')
-            cmd_args[1]=\"'${mrsl_test}'\"
-            cmd_args[2]=\"-l '${mrsl_helper}'\"
+            cmd_args[1]=\"'${mrsl_helper}'\"
+            cmd_args[2]=\"-l '${mrsl_test}'\"
             # TODO: cancel test jobs
             ;;
         'touch')
@@ -2208,9 +2209,10 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
     mrsl_test = test_prefix + '.mRSL'
     txt_test = test_prefix + '.txt'
     zip_test = test_prefix + '.zip'
-    txt_helper = test_prefix + '-helper.txt'
     mrsl_helper = test_prefix + '-helper.mRSL'
+    txt_helper = test_prefix + '-helper.txt'
     txt_tmp = test_prefix + '-tmp.txt'
+
     ls_cmd = os.path.join(path_prefix, mig_prefix + 'ls.' + script_ext) 
     mkdir_cmd = os.path.join(path_prefix, mig_prefix + 'mkdir.' + script_ext) 
     put_cmd = os.path.join(path_prefix, mig_prefix + 'put.' + script_ext) 
@@ -2300,8 +2302,8 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
     elif op == 'sharelink':
             cmd_args.append(['show'])
     elif op == 'submit':
-            cmd_args.append([mrsl_test])
-            cmd_args.append(['-l', mrsl_helper])
+            cmd_args.append([mrsl_helper])
+            cmd_args.append(['-l', mrsl_test])
             # TODO: cancel test jobs
     elif op == 'touch':
             pre_cmds.append([rm_cmd, txt_test])
@@ -3076,7 +3078,7 @@ filemetaio \"$action\" \"$path\" \"${arg_list[@]}\"
 # action=$1 path=$2 ['abc=$3', ..., 'xyz=$N']
 action = \"%s\" % sys.argv[1]
 path = \"%s\" % sys.argv[2]
-arg_list = %s % sys.argv[3:]
+arg_list = [i for i in sys.argv[3:]]
 (status, out) = filemetaio(action, path, arg_list)
 # Trailing comma to prevent double newlines
 print ''.join(out),
@@ -3219,7 +3221,7 @@ def head_main(lang):
     s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
         s += """
-head_file $lines ${path_list[@]}
+head_file \"$lines\" ${path_list[@]}
 """
     elif lang == 'python':
         s += """
@@ -3253,7 +3255,7 @@ def jobaction_main(lang):
 # We included action in packing above - remove again
 action=\"${orig_args[0]}\"
 unset job_id_list[0]
-job_action $action ${job_id_list[@]}
+job_action \"$action\" ${job_id_list[@]}
 """
     elif lang == 'python':
         s += """
@@ -3288,14 +3290,14 @@ def liveio_main(lang):
     if lang == 'sh':
         s += """
 # We included all args in packing above - remove again
-action=\"${orig_args[0]\"
-job_id=\"${orig_args[1]\"
+action=\"${orig_args[0]}\"
+job_id=\"${orig_args[1]}\"
 last_index=$((${#src_list[@]}-1))
 dst=\"${orig_args[$last_index]}\"
 unset src_list[$last_index]
 unset src_list[1]
 unset src_list[0]
-job_liveio $action $job_id ${src_list[@]} \"$dst\"
+job_liveio \"$action\" \"$job_id\" ${src_list[@]} \"$dst\"
 """
     elif lang == 'python':
         s += """
@@ -3607,7 +3609,7 @@ for src in ${src_list[@]}; do
             put_file \"$src_parent/$path\" \"$dst/$path\" $submit_mrsl $extract_package
         done
     else
-        put_file \"$src\" \"$dst\" $submit_mrsl $extract_package
+        put_file \"$src\" \"$dst\" \"$submit_mrsl\" \"$extract_package\"
     fi
 done
 """
@@ -3962,13 +3964,13 @@ def status_main(lang):
     s = ''
     s += basic_main_init(lang)
     if lang == 'sh':
-        s += "max_job_count=''\n"
+        s += "max_job_count='1000000'\n"
         s += parse_options(lang, 'm:S',
                            '''        m)  max_job_count="$OPTARG";;
         S)  server_flags="${server_flags}s"
             flags="${flags} -S";;''')
     elif lang == 'python':
-        s += "max_job_count = ''\n"
+        s += "max_job_count = '1000000'\n"
         s += parse_options(lang, 'm:S',
                            '''    elif opt == "-m":
         max_job_count = val
@@ -3980,7 +3982,7 @@ def status_main(lang):
     s += pack_list(lang, 'job_id_list', 'job_id')
     if lang == 'sh':
         s += """
-job_status ${job_id_list[@]} $max_job_count
+job_status ${job_id_list[@]} \"$max_job_count\"
 """
     elif lang == 'python':
         s += """
@@ -4023,9 +4025,7 @@ def submit_main(lang):
 if [ \"$local_file\" -eq 1 ]; then
     extract_package=1
     submit_mrsl=1
-
-    src_list=(\"$@\")
-
+    src_list=(\"${orig_args[@]}\")
     for src in \"${src_list[@]}\"; do
         dst=`basename \"$src\"`
         __put_file \"$src\" $dst $submit_mrsl $extract_package
@@ -4083,7 +4083,7 @@ def tail_main(lang):
     s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
         s += """
-tail_file $lines ${path_list[@]}
+tail_file \"$lines\" ${path_list[@]}
 """
     elif lang == 'python':
         s += """
@@ -4121,19 +4121,34 @@ def test_main(lang):
     s += configure(lang)
     if lang == 'sh':
         s += """
-# Prepare for file operations
-echo 'this is a test file used by the MiG self test' > \"${test_prefix}.txt\"
-echo '::EXECUTE::' > \"${test_prefix}.mRSL\"
-echo 'pwd' >> \"${test_prefix}.mRSL\"
+mrsl_test=\"${test_prefix}.mRSL\"
+txt_test=\"${test_prefix}.txt\"
+mrsl_helper=\"${test_prefix}-helper.mRSL\"
+txt_helper=\"${test_prefix}-helper.txt\"
 
-echo 'Upload test files used in other tests'
+echo \"=== prepare local files for file operations ===\"
+echo 'this is a test file used by the MiG self test' > \"${txt_test}\"
+echo '::EXECUTE::' > \"${mrsl_test}\"
+echo 'pwd' >> \"${mrsl_test}\"
+
+echo '=== upload local files used as helpers in tests ==='
 for ext in txt mRSL; do
-    put_file \"${test_prefix}.${ext}\" \"${test_prefix}-helper.${ext}\" 0 0 >& /dev/null
+    if [ \"$ext\" = \"txt\" ]; then 
+        ext_test=\"${txt_test}\"
+        ext_helper=\"${txt_helper}\"
+    elif [ \"$ext\" = \"mRSL\" ]; then 
+        ext_test=\"${mrsl_test}\"
+        ext_helper=\"${mrsl_helper}\"
+    else
+        echo \"Invalid file extension ${ext}!\"
+        exit 1
+    fi
+    put_file \"${ext_test}\" \"${ext_helper}\" 0 0 >& /dev/null
     if [ $? -ne 0 ]; then
-        echo \"Upload ${test_prefix}.${ext} failed!\"
+        echo \"Upload ${ext_test} failed!\"
         exit 1
     else
-        echo \"Upload ${test_prefix}.${ext} succeeded\"
+        echo \"Upload ${ext_test} succeeded\"
     fi
 done
 
@@ -4147,35 +4162,56 @@ for op in \"${op_list[@]}\"; do
     test_op \"$op\" \"${test_prefix}\"
 done
 
-# Clean up (one file at a time required here)
-echo 'Remove test files used in other tests'
+echo '=== remove local and uploaded test files again ==='
 for ext in txt mRSL; do
-    rm_file \"path=${test_prefix}-helper.${ext}\" >& /dev/null
+    if [ \"$ext\" = \"txt\" ]; then 
+        ext_test=\"${txt_test}\"
+        ext_helper=\"${txt_helper}\"
+    elif [ \"$ext\" = \"mRSL\" ]; then 
+        ext_test=\"${mrsl_test}\"
+        ext_helper=\"${mrsl_helper}\"
+    else
+        echo \"Invalid file extension ${ext}!\"
+        exit 1
+    fi
+    rm -f \"${ext_test}\" &> /dev/null
+    rm_file \"path=${ext_helper}\" >& /dev/null
 done
 """ % ' '.join(script_ops)
     elif lang == 'python':
         s += """
-# Prepare for file operations
-txt_fd = open(test_prefix + '.txt', 'w')
-txt_fd.write('''this is a test file used by the MiG self test
-''')
+mrsl_test = test_prefix + '.mRSL'
+txt_test = test_prefix + '.txt'
+mrsl_helper = test_prefix + '-helper.mRSL'
+txt_helper = test_prefix + '-helper.txt'
+
+print '=== prepare local files for file operations ==='
+txt_fd = open(txt_test, 'w')
+txt_fd.write('''this is a test file used by the MiG self test''')
 txt_fd.close()
-job_fd = open(test_prefix + '.mRSL', 'w')
+job_fd = open(mrsl_test, 'w')
 job_fd.write('''::EXECUTE::
 pwd
 ''')
 job_fd.close()
 
-print 'Upload test files used in other tests'
+print '=== upload local files used as helpers in tests ==='
 for ext in ('txt', 'mRSL'):
-    (ret, out) = put_file(test_prefix + '.' + ext, \
-                          test_prefix + '-helper.' + ext, \
-                          False, False)
+    if ext == 'txt':
+        ext_test = txt_test
+        ext_helper = txt_helper
+    elif ext == 'mRSL':
+        ext_test = mrsl_test
+        ext_helper = mrsl_helper
+    else:
+        print 'invalid ext: '+ ext
+        sys.exit(1)
+    (ret, out) = put_file(ext_test, ext_helper, False, False)
     if ret != 0:
-        print 'Upload ' + test_prefix + '.' + ext + ' failed!'
+        print 'Upload ' + ext_test + ' failed!'
         sys.exit(1)
     else:
-        print 'Upload ' + test_prefix + '.' + ext + ' succeeded'
+        print 'Upload ' + ext_test + ' succeeded'
 
 if sys.argv[1:]:
     op_list = sys.argv[1:]
@@ -4185,10 +4221,19 @@ else:
 for op in op_list:
     test_op(op, test_prefix)
     
-# Clean up
-print 'Remove test files used in other tests'
+print '=== remove local and uploaded test files again ==='
 for ext in ('txt', 'mRSL'):
-    rm_file(['path=' + test_prefix + '-helper.' + ext])
+    if ext == 'txt':
+        ext_test = txt_test
+        ext_helper = txt_helper
+    elif ext == 'mRSL':
+        ext_test = mrsl_test
+        ext_helper = mrsl_helper
+    else:
+        print 'invalid file extension: '+ext
+        sys.exit(1)
+    os.remove(ext_test)
+    rm_file(['path=' + ext_helper])
 """ % script_ops
     else:
         print 'Error: %s not supported!' % lang
@@ -4255,7 +4300,7 @@ def truncate_main(lang):
     s += pack_list(lang, 'path_list', 'path')
     if lang == 'sh':
         s += """
-truncate_file $size ${path_list[@]}
+truncate_file \"$size\" ${path_list[@]}
 """
     elif lang == 'python':
         s += """

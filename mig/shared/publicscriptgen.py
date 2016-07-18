@@ -432,6 +432,12 @@ def curl_perform(
                     curl_stdin,
             )
     elif lang == 'python':
+        if curl_stdin == "''":
+            s += """
+    # Init these variables to dummy values: they are only actually used for
+    # scripts using curl_stdin, so only define them to make pylint happy.
+    start, chunk_bytes = 0, 1
+"""
         s += """
     default_args = \"\"
     out_form = \"output_format=txt\"
