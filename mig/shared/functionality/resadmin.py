@@ -272,8 +272,7 @@ Current owners of %s.<br />
 ''' % resourcename
 
     for owner_id in owners:
-        html += \
-            '''<tr><td>
+        html += '''<tr><td>
 <form method="post" action="rmresowner.py">
 <input type="hidden" name="unique_resource_name" value="%s" />
 <input type="hidden" name="cert_id" value="%s" />
@@ -281,19 +280,22 @@ Current owners of %s.<br />
 <input type="submit" value="Remove" />
 </form>
 </td>
-'''\
-             % (resourcename, owner_id)
+''' % (resourcename, owner_id)
         html += '<td>' + owner_id + '</td></tr>'
     html += '</table>'
 
-    html += \
-        '''<table class=resources>
+    openid_add = ""
+    if configuration.user_openid_providers:
+        openid_add = "either the OpenID alias or "
+    html += '''
+<table class=resources>
 <tr><td>
 <form method="post" action="addresowner.py">
 <fieldset>
 <legend>Add resource owner</legend>
-Note: owners are specified with the Distinguished Name (DN) from the
-certificate.<br /> 
+Note: owners are specified with %s the Distinguished Name (DN) of the user.
+If in doubt, just let the user request access and accept it with the
+<span class="addlink"></span>-icon in the Pending Requests table.<br />
 <input type="hidden" name="unique_resource_name" value="%s" />
 <input type="hidden" name="output_format" value="html" />
 <input type="text" name="cert_id" size="72" />
@@ -301,22 +303,22 @@ certificate.<br />
 </fieldset>
 </form>
 </td></tr></table><br />
-''' % resourcename
+''' % (openid_add, resourcename)
 
     # create html to request vgrid resource access
 
     html += '<h3>%s access</h3>' % configuration.site_vgrid_label
 
-    html += \
-        """<table class=resources>
+    html += '''
+<table class=resources>
     <tr><td>
     <form method="post" action="sendrequestaction.py">
     <fieldset>
     <legend>Request resource access to additional %ss</legend>
     <input type="hidden" name="unique_resource_name" value="%s" />
     <input type="hidden" name="request_type" value="vgridresource" />
-    <select name="vgrid_name">"""\
-         % (configuration.site_vgrid_label, resourcename)
+    <select name="vgrid_name">''' % \
+    (configuration.site_vgrid_label, resourcename)
 
     # list all vgrids without access
 
@@ -333,23 +335,23 @@ certificate.<br />
 <input type="text" name="request_text" size=50 value="" />
 <input type="submit" value="send" />
 </fieldset>
+</form>
+</td></tr></table><br />
 '''
-    html += '</form></tr></table><p>'
 
     # create html to select and execute a runtime environment testprocedure
 
     html += '<h3>Runtime environments</h3>'
 
-    html += \
-        """<table class=resources>
+    html += '''
+<table class=resources>
     <tr><td>
     <form method="post" action="testresupport.py">
     <fieldset>
     <legend>Verify that resource supports the selected runtime environment
     </legend>
     <input type="hidden" name="unique_resource_name" value="%s" />
-    <select name="re_name">"""\
-         % resourcename
+    <select name="re_name">''' % resourcename
 
     # list runtime environments that have a testprocedure
 
@@ -362,12 +364,14 @@ certificate.<br />
 
     html += """</select>"""
     html += '<input type="submit" value="verify" /></fieldset>'
-    html += '</form></tr></table><p>'
+    html += '''
+</form>
+</td></tr></table><br/>
+'''
 
     # create html to select and call script to display testprocedure history
 
-    verify_history = \
-        """
+    verify_history = """
 Show testprocedure history for the selected runtime environment and the
 resource with its current configuration.
     <table class=resources>
@@ -388,7 +392,10 @@ resource with its current configuration.
 
     verify_history += """</select>"""
     verify_history += '<input type="submit" value="Show" />'
-    verify_history += '</form></tr></table><p>'
+    verify_history += '''
+</form>
+</td></tr></table><br />
+'''
 
     # TODO: reimplement showresupporthistory in new style and re-enable here
 
@@ -422,11 +429,11 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = "Resource Administration"
 
     # jquery support for tablesorter and confirmation on request and leave
-    # requests table initially sorted by 0, 3 (type first and with alphabetical
+    # requests table initially sorted by 4, 3 (date first and with alphabetical
     # client ID)
     
     table_specs = [{'table_id': 'accessrequeststable', 'pager_id':
-                    'accessrequests_pager', 'sort_order': '[[0,0],[2,0]]'}]
+                    'accessrequests_pager', 'sort_order': '[[4,0],[3,0]]'}]
     (add_import, add_init, add_ready) = man_base_js(configuration, 
                                                     table_specs,
                                                     {'width': 600})
@@ -477,26 +484,24 @@ def main(client_id, user_arguments_dict):
         resource_config = res_map[unique_resource_name][CONF]
         visible_res_name = res_map[unique_resource_name][RESID]            
         if client_id in owner_list:
-            quick_res[unique_resource_name] = \
-                                            {'object_type': 'multilinkline',
-                                             'links': [
-                {'object_type': 'link',
-                 'destination': '?unique_resource_name=%s' % \
-                 unique_resource_name,
-                 'class': 'adminlink iconspace',
-                 'title': 'Manage %s' % unique_resource_name,
-                 'text': 'Manage %s' % unique_resource_name,
-                 },
-                {'object_type': 'link',
-                 'destination': 'viewres.py?unique_resource_name=%s' % \
-                 visible_res_name,
-                 'class': 'infolink iconspace',
-                 'title': 'View %s' % unique_resource_name,
-                 'text': 'View %s' % unique_resource_name,
-                 }
+            quick_res[unique_resource_name] = {
+                'object_type': 'multilinkline', 'links': [
+                    {'object_type': 'link',
+                     'destination': '?unique_resource_name=%s' % \
+                     unique_resource_name,
+                     'class': 'adminlink iconspace',
+                     'title': 'Manage %s' % unique_resource_name,
+                     'text': 'Manage %s' % unique_resource_name,
+                     },
+                    {'object_type': 'link',
+                     'destination': 'viewres.py?unique_resource_name=%s' % \
+                     visible_res_name,
+                     'class': 'infolink iconspace',
+                     'title': 'View %s' % unique_resource_name,
+                     'text': 'View %s' % unique_resource_name,
+                     }
                 ]
-                                             }
-
+                }
 
             if unique_resource_name in unique_res_names:
                 raw_conf_file = os.path.join(configuration.resource_home,

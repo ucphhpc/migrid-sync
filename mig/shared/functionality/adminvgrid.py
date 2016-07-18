@@ -96,6 +96,21 @@ def vgrid_add_remove_table(client_id,
     else:
         id_field = 'cert_id'
 
+    id_note = ""
+    if item_string in ['owner', 'member']:
+        openid_add = ""
+        if configuration.user_openid_providers:
+            openid_add = "either the OpenID alias or "    
+        id_note = """
+      <tr>
+      <td colspan='2'>
+Note: %ss are specified with %s the Distinguished Name (DN) of the user. If in
+doubt, just let the user request access and accept it with the
+<span class='addlink'></span>-icon in the Pending Requests table below.
+      </td>
+      </tr>
+""" % (item_string, openid_add)
+
     # read list of current items and create form to remove one
 
     (status, inherit) = vgrid_list(vgrid_name, '%ss' % item_string,
@@ -219,6 +234,7 @@ def vgrid_add_remove_table(client_id,
       <legend>Add %(_label)s %(item)s</legend>
       <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
       <table>
+      %(id_note)s
       <tr>
       <td>ID</td><td><input type="text" size=70 name="%(id_field)s" /></td>
       </tr>
@@ -229,7 +245,7 @@ def vgrid_add_remove_table(client_id,
       </table>
       </fieldset>
       </form>
-''' % {'vgrid': vgrid_name, 'item': item_string, 
+''' % {'vgrid': vgrid_name, 'item': item_string, 'id_note': id_note,
        'script': script_suffix, 'id_field': id_field,
        'extra_fields': extra_fields_html,
        '_label': configuration.site_vgrid_label}
@@ -263,13 +279,14 @@ def main(client_id, user_arguments_dict):
                           (configuration.site_vgrid_label, vgrid_name)
 
     # jquery support for tablesorter and confirmation on request and leave
-    # requests table initially sorted by 0, 2 (type first and with alphabetical
-    # client ID)
+    # requests table initially sorted by 0, 4, 3 (type first, then date and
+    # with alphabetical client ID last)
     # sharelinks table initially sorted by 5, 4 reversed (active first and
     # in growing age)
     
     table_specs = [{'table_id': 'accessrequeststable', 'pager_id':
-                    'accessrequests_pager', 'sort_order': '[[0,0],[2,0]]'},
+                    'accessrequests_pager', 'sort_order':
+                    '[[0,0],[4,0],[3,0]]'},
                    {'table_id': 'sharelinkstable', 'pager_id':
                     'sharelinks_pager', 'sort_order': '[[5,1],[4,1]]'}]
     (add_import, add_init, add_ready) = man_base_js(configuration, 
