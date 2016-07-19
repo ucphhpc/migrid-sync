@@ -49,8 +49,8 @@ from shared.vgridaccess import get_user_map, get_resource_map, CONF, OWNERS, \
 def signature():
     """Signature of the main function"""
 
-    defaults = {'unique_resource_name': [''],
-                'vgrid_name': [''], 'cert_id': [''],
+    defaults = {'unique_resource_name': [],
+                'vgrid_name': [''], 'cert_id': [],
                 'protocol': [any_protocol],
                 'request_type': REJECT_UNSET,
                 'request_text': REJECT_UNSET}
@@ -90,8 +90,8 @@ def main(client_id, user_arguments_dict):
 
     target_id = client_id
     vgrid_name = accepted['vgrid_name'][-1].strip()
-    visible_user_name = accepted['cert_id'][-1].strip()
-    visible_res_name = accepted['unique_resource_name'][-1].strip()
+    visible_user_names = accepted['cert_id']
+    visible_res_names = accepted['unique_resource_name']
     request_type = accepted['request_type'][-1].strip().lower()
     request_text = accepted['request_text'][-1].strip()
     protocols = [proto.strip() for proto in accepted['protocol']]
@@ -122,20 +122,20 @@ def main(client_id, user_arguments_dict):
     reply_to = user_map[client_id][USERID]
 
     if request_type == "plain":
-        if not visible_user_name:
+        if not visible_user_names:
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 'No user ID specified!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        user_id = visible_user_name
+        user_id = visible_user_names[-1].strip()
         anon_map = anon_to_real_user_map(configuration)
-        if anon_map.has_key(visible_user_name):
-            user_id = anon_map[visible_user_name]
+        if anon_map.has_key(user_id):
+            user_id = anon_map[user_id]
         if not user_map.has_key(user_id):
             output_objects.append({'object_type': 'error_text',
                                    'text': 'No such user: %s' % \
-                                   visible_user_name
+                                   user_id
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_name = user_id
@@ -164,7 +164,7 @@ def main(client_id, user_arguments_dict):
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'You are not allowed to send emails to %s!' % \
-                visible_user_name
+                user_id
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
         if not im_vgrids and [proto for proto in protocols \
@@ -172,7 +172,7 @@ def main(client_id, user_arguments_dict):
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'You are not allowed to send instant messages to %s!' % \
-                visible_user_name
+                user_id
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
         for proto in protocols:
@@ -184,18 +184,23 @@ def main(client_id, user_arguments_dict):
                     output_objects.append({
                         'object_type': 'error_text', 'text'
                         : 'User %s does not accept %s messages!' % \
-                        (visible_user_name, proto)
+                        (user_id, proto)
                         })
                     return (output_objects, returnvalues.CLIENT_ERROR)
         if not protocols:
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 'User %s does not accept requested protocol(s) messages!' % \
-                visible_user_name})
+                user_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_list = [user_id]
     elif request_type in ["vgridaccept", "vgridreject"]:
         # Always allow accept messages but only between owners/members
+        if not visible_user_names and not visible_res_names:
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'No user or resource ID specified!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
         if not vgrid_name:
             output_objects.append({
                 'object_type': 'error_text', 'text': 'No vgrid_name specified!'})
@@ -213,31 +218,43 @@ def main(client_id, user_arguments_dict):
                 : 'You are not an owner of %s or a parent %s!' % \
                 (vgrid_name, configuration.site_vgrid_label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if visible_user_name:
-            user_id = visible_user_name
-            target_list = [user_id]
-        elif visible_res_name:
+        # NOTE: we support exactly one vgrid but multiple users/resources here
+        if visible_user_names:
+            logger.info("setting user recipients: %s" % visible_user_names)
+            target_list = [user_id.strip() for user_id in visible_user_names]
+        elif visible_res_names:
             # vgrid resource accept - lookup and notify resource owners
-            unique_resource_name = visible_res_name
-            (load_status, target_list) = resource_owners(configuration,
-                                                         unique_resource_name)
-            if not load_status:
-                output_objects.append({
-                    'object_type': 'error_text', 'text':
-                    'Could not lookup owners of %s!' % unique_resource_name})
-                return (output_objects, returnvalues.CLIENT_ERROR)
+            logger.info("setting res owner recipients: %s" % visible_res_names)
+            target_list = []
+            for unique_resource_name in visible_res_names:
+                logger.info("loading res owners for %s" % unique_resource_name)
+                (load_status, res_owners) = resource_owners(
+                    configuration, unique_resource_name)
+                if not load_status:
+                    output_objects.append({
+                        'object_type': 'error_text', 'text':
+                        'Could not lookup owners of %s!' % \
+                        unique_resource_name})
+                    continue
+                logger.info("adding res owners to recipients: %s" % res_owners)
+                target_list += [user_id for user_id in res_owners]
 
         target_id = '%s %s owners' % (vgrid_name, configuration.site_vgrid_label)
         target_name = vgrid_name
     elif request_type in ["resourceaccept", "resourcereject"]:
         # Always allow accept messages between actual resource owners
-        user_id = visible_user_name
-        if not visible_res_name:
+        if not visible_user_names:
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'No user ID specified!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        if not visible_res_names:
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 'No resource ID specified!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        unique_resource_name = visible_res_name
+        # NOTE: we support exactly one resource but multiple users here
+        unique_resource_name = visible_res_names[-1].strip()
         target_name = unique_resource_name
         res_map = get_resource_map(configuration)
         if not res_map.has_key(unique_resource_name):
@@ -257,24 +274,24 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_id = '%s resource owners' % unique_resource_name
         target_name = unique_resource_name
-        target_list = [user_id]
+        target_list = [user_id.strip() for user_id in visible_user_names]
     elif request_type == "resourceowner":
-        if not visible_res_name:
+        if not visible_res_names:
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 'No resource ID specified!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        
-        unique_resource_name = visible_res_name
+            return (output_objects, returnvalues.CLIENT_ERROR)        
+        # NOTE: we support exactly one resource but multiple users here
+        unique_resource_name = visible_res_names[-1].strip()
         anon_map = anon_to_real_res_map(configuration.resource_home)
-        if anon_map.has_key(visible_res_name):
-            unique_resource_name = anon_map[visible_res_name]
+        if anon_map.has_key(unique_resource_name):
+            unique_resource_name = anon_map[unique_resource_name]
         target_name = unique_resource_name
         res_map = get_resource_map(configuration)
         if not res_map.has_key(unique_resource_name):
             output_objects.append({'object_type': 'error_text',
                                    'text': 'No such resource: %s' % \
-                                   visible_res_name
+                                   unique_resource_name
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_list = res_map[unique_resource_name][OWNERS]
@@ -316,7 +333,9 @@ def main(client_id, user_arguments_dict):
         # and prevent repeated resource access requests
 
         if request_type == 'vgridresource':
-            target_id = entity = unique_resource_name = visible_res_name
+            # NOTE: we support exactly one resource here
+            unique_resource_name = visible_res_names[-1].strip()
+            target_id = entity = unique_resource_name
             if vgrid_is_resource(vgrid_name, unique_resource_name,
                                  configuration):
                 output_objects.append({
@@ -346,15 +365,17 @@ def main(client_id, user_arguments_dict):
         # Find all VGrid owners configured to receive notifications
 
         target_name = vgrid_name
-        (status, settings_dict) = vgrid_settings(vgrid_name, configuration,
-                                                 recursive=False, as_dict=True)
-        if not status:
+        (settings_status, settings_dict) = vgrid_settings(vgrid_name,
+                                                          configuration,
+                                                          recursive=False,
+                                                          as_dict=True)
+        if not settings_status:
             settings_dict = {}
         request_recipients = settings_dict.get('request_recipients', 42)
         # We load inherited owners and reverse it to take direct owners first
-        (status, owners_list) = vgrid_owners(vgrid_name, configuration,
+        (owners_status, owners_list) = vgrid_owners(vgrid_name, configuration,
                                              recursive=True)
-        if not status:
+        if not owners_status:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'Failed to lookup owners for %s %s - are you sure it exists?'
@@ -381,8 +402,15 @@ def main(client_id, user_arguments_dict):
 
     # Now send request to all targets in turn
     # TODO: inform requestor if no owners have mail/IM set in their settings
-    
+
+    logger.debug("sending notification to recipients: %s" % target_list)
+
     for target in target_list:
+
+        if not target:
+            logger.warning("skipping empty notify target: %s" % target_list)
+            continue
+        
         # USER_CERT entry is destination
 
         notify = []

@@ -292,17 +292,22 @@ Current owners of %s.<br />
 <tr><td>
 <form method="post" action="addresowner.py">
 <fieldset>
-<legend>Add resource owner</legend>
+<legend>Add resource owner(s)</legend>
 Note: owners are specified with %s the Distinguished Name (DN) of the user.
 If in doubt, just let the user request access and accept it with the
-<span class="addlink"></span>-icon in the Pending Requests table.<br />
+<span class="addlink"></span>-icon in the Pending Requests table.
+<br />
 <input type="hidden" name="unique_resource_name" value="%s" />
 <input type="hidden" name="output_format" value="html" />
-<input type="text" name="cert_id" size="72" />
+<div id="dynownerspares">
+    <!-- placeholder for dynamic add owner fields -->
+</div>
 <input type="submit" value=" Add " />
 </fieldset>
 </form>
-</td></tr></table><br />
+</td></tr>
+</table>
+<br />
 ''' % (openid_add, resourcename)
 
     # create html to request vgrid resource access
@@ -439,9 +444,23 @@ def main(client_id, user_arguments_dict):
                                                     {'width': 600})
     add_init += '''
         var toggleHidden = function(classname) {
-        // classname supposed to have a leading dot 
-        $(classname).toggleClass("hidden");
-    }
+            // classname supposed to have a leading dot 
+            $(classname).toggleClass("hidden");
+        };
+        /* helper for dynamic form input fields */
+        function onOwnerInputChange() {
+            makeSpareFields("#dynownerspares", "cert_id");
+        }
+    '''
+    add_ready += '''
+    /* init add owners form with dynamic input fields */
+    onOwnerInputChange();
+    $("#dynownerspares").on("blur", "input[name=cert_id]", 
+        function(event) {
+            //console.debug("in add owner blur handler");
+            onOwnerInputChange();
+        }
+    );
     '''
     title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = jquery_ui_js(configuration, add_import,

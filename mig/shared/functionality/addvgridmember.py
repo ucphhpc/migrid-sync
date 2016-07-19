@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addvgridmember - add vgrid member
+# addvgridmember - add one or more vgrid members
 # Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Add VGrid member"""
+"""Add one or more VGrid member"""
 
 from binascii import unhexlify
 import os
@@ -57,8 +57,9 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    status = returnvalues.OK
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Add %s Member' % configuration.site_vgrid_label})
+                          : 'Add %s Member(s)' % configuration.site_vgrid_label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -77,159 +78,179 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1].strip()
-    cert_id = accepted['cert_id'][-1].strip()
-    cert_dir = client_id_dir(cert_id)
+    cert_id_list = accepted['cert_id']
     request_name = unhexlify(accepted['request_name'][-1])
 
-    # Allow openid alias as subject if openid with alias is enabled
-    if configuration.user_openid_providers and configuration.user_openid_alias:
-        cert_id = expand_openid_alias(cert_id, configuration)
+    cert_id_added = []
+    for cert_id in cert_id_list:
+        cert_id = cert_id.strip()
+        cert_dir = client_id_dir(cert_id)
 
-    # Validity of user and vgrid names is checked in this init function so
-    # no need to worry about illegal directory traversal through variables
+        # Allow openid alias as subject if openid with alias is enabled
+        if configuration.user_openid_providers and configuration.user_openid_alias:
+            cert_id = expand_openid_alias(cert_id, configuration)
 
-    (ret_val, msg, _) = \
-        init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
-                                  'member', configuration)
-    if not ret_val:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+        # Validity of user and vgrid names is checked in this init function so
+        # no need to worry about illegal directory traversal through variables
 
-    # don't add if already an owner
+        (ret_val, msg, _) = \
+            init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
+                                      'member', configuration)
+        if not ret_val:
+            output_objects.append({'object_type': 'error_text', 'text'
+                                  : msg})
+            status = returnvalues.CLIENT_ERROR
+            continue
 
-    if vgrid_is_owner(vgrid_name, cert_id, configuration):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : '%s is already an owner of %s or a parent %s.'
-             % (cert_id, vgrid_name, configuration.site_vgrid_label)})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+        # don't add if already an owner
 
-    # don't add if already a member
-
-    if vgrid_is_member(vgrid_name, cert_id, configuration):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : '''%s is already a member of %s or a parent %s. Please remove
-the person first and then try this operation again.''' % \
-             (cert_id, vgrid_name, configuration.site_vgrid_label)
-             })
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
-    # owner or member of subvgrid?
-
-    (status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
-            configuration)
-    if not status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting list of sub%ss: %s'
-                               % (configuration.site_vgrid_label, subvgrids)})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    # TODO: we DO allow ownership of sub vgrids with parent membership so we
-    # should support the (cumbersome) relinking of vgrid shares here. Leave it
-    # to user to do it manually for now with temporary removal of ownership
-
-    for subvgrid in subvgrids:
-        if vgrid_is_owner(subvgrid, cert_id, configuration, recursive=False):
+        if vgrid_is_owner(vgrid_name, cert_id, configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
-                 : """%(cert_id)s is already an owner of a sub-%(_label)s
-('%(subvgrid)s'). While we DO support members being owners of sub-%(_label)ss,
-we do not support adding parent %(_label)s members at the moment. Please
-(temporarily) remove the person as owner of all sub-%(_label)ss first and then
-try this operation again.""" % {'cert_id': cert_id, 'subvgrid': subvgrid,
-                                '_label': configuration.site_vgrid_label}})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        if vgrid_is_member(subvgrid, cert_id, configuration, recursive=False):
+                 : '%s is already an owner of %s or a parent %s.'
+                 % (cert_id, vgrid_name, configuration.site_vgrid_label)})
+            status = returnvalues.CLIENT_ERROR
+            continue
+
+        # don't add if already a member
+
+        if vgrid_is_member(vgrid_name, cert_id, configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
-                 : """%s is already a member of a sub-%s ('%s'). Please
-remove the person first and then try this operation again.""" % \
-                 (cert_id, configuration.site_vgrid_label, subvgrid)})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+                 : '''%s is already a member of %s or a parent %s. Please remove
+    the person first and then try this operation again.''' % \
+                 (cert_id, vgrid_name, configuration.site_vgrid_label)
+                 })
+            status = returnvalues.CLIENT_ERROR
+            continue
 
-    # getting here means cert_id is neither owner or member of any parent or
-    # sub-vgrids.
+        # owner or member of subvgrid?
 
-    # Please note that base_dir must end in slash to avoid access to other
-    # vgrid dirs when own name is a prefix of another name
+        (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
+                configuration)
+        if not list_status:
+            output_objects.append({'object_type': 'error_text', 'text'
+                                  : 'Error getting list of sub%ss: %s'
+                                   % (configuration.site_vgrid_label, subvgrids)})
+            status = returnvalues.SYSTEM_ERROR
+            continue
 
-    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                               vgrid_name)) + os.sep
-    user_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               cert_dir)) + os.sep
+        # TODO: we DO allow ownership of sub vgrids with parent membership so we
+        # should support the (cumbersome) relinking of vgrid shares here. Leave it
+        # to user to do it manually for now with temporary removal of ownership
 
-    # make sure all dirs can be created (that a file or directory with the same
-    # name do not exist prior to adding the member)
+        skip_entity = False
+        for subvgrid in subvgrids:
+            if vgrid_is_owner(subvgrid, cert_id, configuration, recursive=False):
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : """%(cert_id)s is already an owner of a sub-%(_label)s
+    ('%(subvgrid)s'). While we DO support members being owners of sub-%(_label)ss,
+    we do not support adding parent %(_label)s members at the moment. Please
+    (temporarily) remove the person as owner of all sub-%(_label)ss first and then
+    try this operation again.""" % {'cert_id': cert_id, 'subvgrid': subvgrid,
+                                    '_label': configuration.site_vgrid_label}})
+                status = returnvalues.CLIENT_ERROR
+                skip_entity = True
+                break
+            if vgrid_is_member(subvgrid, cert_id, configuration, recursive=False):
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : """%s is already a member of a sub-%s ('%s'). Please
+    remove the person first and then try this operation again.""" % \
+                     (cert_id, configuration.site_vgrid_label, subvgrid)})
+                status = returnvalues.CLIENT_ERROR
+                skip_entity = True
+                break
+        if skip_entity:
+            continue
 
-    if os.path.exists(user_dir + vgrid_name):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : '''Could not add member, a file or directory in the home
-directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+        # getting here means cert_id is neither owner or member of any parent or
+        # sub-vgrids.
 
-    # Add
+        # Please note that base_dir must end in slash to avoid access to other
+        # vgrid dirs when own name is a prefix of another name
 
-    (add_status, add_msg) = vgrid_add_members(configuration, vgrid_name,
-                                              [cert_id])
-    if not add_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : add_msg})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
+        base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
+                                   vgrid_name)) + os.sep
+        user_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                   cert_dir)) + os.sep
 
-    vgrid_name_parts = vgrid_name.split('/')
-    is_subvgrid = len(vgrid_name_parts) > 1
+        # make sure all dirs can be created (that a file or directory with the same
+        # name do not exist prior to adding the member)
 
-    if is_subvgrid:
-        try:
-
-            # vgrid_name = IMADA/STUD/BACH
-            # vgrid_name_last_fragment = BACH
-
-            vgrid_name_last_fragment = \
-                vgrid_name_parts[len(vgrid_name_parts)
-                                     - 1].strip()
-
-            # vgrid_name_without_last_fragment = IMADA/STUD/
-
-            vgrid_name_without_last_fragment = \
-                ('/'.join(vgrid_name_parts[0:len(vgrid_name_parts)
-                  - 1]) + os.sep).strip()
-
-            # create dirs if they do not exist
-
-            dir1 = user_dir + vgrid_name_without_last_fragment
-            if not os.path.isdir(dir1):
-                os.makedirs(dir1)
-        except Exception, exc:
-
-            # out of range? should not be possible due to is_subvgrid check
-
+        if os.path.exists(user_dir + vgrid_name):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
-                 : ('Could not create needed dirs on %s server! %s'
-                    % (configuration.short_title, exc))})
-            logger.error('%s when looking for dir %s.' % (exc, dir1))
-            return (output_objects, returnvalues.SYSTEM_ERROR)
+                 : '''Could not add member, a file or directory in the home
+    directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
+            status = returnvalues.CLIENT_ERROR
+            continue
 
-    # create symlink from users home directory to vgrid file directory
+        # Add
 
-    link_src = os.path.abspath(configuration.vgrid_files_home + os.sep
-                                + vgrid_name) + os.sep
-    link_dst = user_dir + vgrid_name
+        (add_status, add_msg) = vgrid_add_members(configuration, vgrid_name,
+                                                  [cert_id])
+        if not add_status:
+            output_objects.append({'object_type': 'error_text', 'text'
+                                  : add_msg})
+            status = returnvalues.SYSTEM_ERROR
+            continue
 
-    # create symlink to vgrid files
+        vgrid_name_parts = vgrid_name.split('/')
+        is_subvgrid = len(vgrid_name_parts) > 1
 
-    if not make_symlink(link_src, link_dst, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create link to %s files!' % \
-                               configuration.site_vgrid_label
-                              })
-        logger.error('Could not create link to %s files! (%s -> %s)'
-                      % (configuration.site_vgrid_label, link_src, link_dst))
-        return (output_objects, returnvalues.SYSTEM_ERROR)
+        if is_subvgrid:
+            try:
+
+                # vgrid_name = IMADA/STUD/BACH
+                # vgrid_name_last_fragment = BACH
+
+                vgrid_name_last_fragment = \
+                    vgrid_name_parts[len(vgrid_name_parts)
+                                         - 1].strip()
+
+                # vgrid_name_without_last_fragment = IMADA/STUD/
+
+                vgrid_name_without_last_fragment = \
+                    ('/'.join(vgrid_name_parts[0:len(vgrid_name_parts)
+                      - 1]) + os.sep).strip()
+
+                # create dirs if they do not exist
+
+                dir1 = user_dir + vgrid_name_without_last_fragment
+                if not os.path.isdir(dir1):
+                    os.makedirs(dir1)
+            except Exception, exc:
+
+                # out of range? should not be possible due to is_subvgrid check
+
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : ('Could not create needed dirs on %s server! %s'
+                        % (configuration.short_title, exc))})
+                logger.error('%s when looking for dir %s.' % (exc, dir1))
+                status = returnvalues.SYSTEM_ERROR
+                continue
+
+        # create symlink from users home directory to vgrid file directory
+
+        link_src = os.path.abspath(configuration.vgrid_files_home + os.sep
+                                    + vgrid_name) + os.sep
+        link_dst = user_dir + vgrid_name
+
+        # create symlink to vgrid files
+
+        if not make_symlink(link_src, link_dst, logger):
+            output_objects.append({'object_type': 'error_text', 'text'
+                                  : 'Could not create link to %s files!' % \
+                                   configuration.site_vgrid_label
+                                  })
+            logger.error('Could not create link to %s files! (%s -> %s)'
+                          % (configuration.site_vgrid_label, link_src, link_dst))
+            status = returnvalues.SYSTEM_ERROR
+            continue
+        cert_id_added.append(cert_id)
 
     if request_name:
         request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
@@ -240,21 +261,28 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
                     'object_type': 'error_text', 'text':
                     'Failed to remove saved request for %s in %s!' % \
                     (vgrid_name, request_name)})
-                
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'New member %s successfully added to %s %s!'
-                           % (cert_id, vgrid_name,
-                              configuration.site_vgrid_label)})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+
+    if cert_id_added:
+        output_objects.append(
+            {'object_type': 'html_form', 'text':
+             'New member(s)<br />%s<br />successfully added to %s %s!''' % \
+             ('<br />'.join(cert_id_added), vgrid_name,
+              configuration.site_vgrid_label)
+             })
+        cert_id_fields = ''
+        for cert_id in cert_id_added:
+            cert_id_fields += """<input type=hidden name=cert_id value='%s' />
+""" % cert_id
+
+        output_objects.append({'object_type': 'html_form', 'text': """
 <form method='post' action='sendrequestaction.py'>
 <input type=hidden name=request_type value='vgridaccept' />
 <input type=hidden name=vgrid_name value='%(vgrid_name)s' />
-<input type=hidden name=cert_id value='%(cert_id)s' />
+%(cert_id_fields)s
 <input type=hidden name=protocol value='%(protocol)s' />
 <table>
 <tr>
-<td class='title'>Custom message to user</td>
+<td class='title'>Custom message to user(s)</td>
 </tr><tr>
 <td><textarea name=request_text cols=72 rows=10>
 We have granted you membership access to our %(vgrid_name)s %(_label)s.
@@ -265,17 +293,19 @@ Regards, the %(vgrid_name)s %(_label)s owners
 </textarea></td>
 </tr>
 <tr>
-<td><input type='submit' value='Inform user' /></td>
+<td><input type='submit' value='Inform user(s)' /></td>
 </tr>
 </table>
 </form>
 <br />
 """ % {'vgrid_name': vgrid_name, 'cert_id': cert_id, 'protocol': any_protocol,
        '_label': configuration.site_vgrid_label,
-       'short_title': configuration.short_title}})
+       'short_title': configuration.short_title,
+       'cert_id_fields': cert_id_fields}})
+
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})
-    return (output_objects, returnvalues.OK)
+    return (output_objects, status)
 
 

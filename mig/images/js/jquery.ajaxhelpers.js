@@ -78,6 +78,26 @@ function format_link(link_item) {
     return link;
 }
 
+function makeSpareFields(target, name, min_spare) {
+    /* Make sure that at least spare_fields empty input fields are available 
+       for name in target form */
+    var elem_str = target+" input[name='"+name+"']";
+    //console.debug("fields "+$(elem_str));
+    var field = '<input type="text" name="'+name+'" size="120" value="" />';
+    var min_spare = min_spare || 2;
+    var spare_fields = 0;
+    $(elem_str).each(function(i) {
+        if ($(this).val() === "") {
+            spare_fields += 1;
+        }
+    });
+    //console.debug("add field check with "+spare_fields+" spare fields");
+    for (var i=spare_fields; i<min_spare; i++) {
+        //console.debug("adding spare field for "+target+" "+name);
+        $(target).append(field+'<br />');
+    }
+}
+
 function ajax_redb(_freeze) {
     console.debug("load runtime envs");
     var tbody_elem = $("#runtimeenvtable tbody");

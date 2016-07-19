@@ -113,19 +113,17 @@ doubt, just let the user request access and accept it with the
 
     # read list of current items and create form to remove one
 
-    (status, inherit) = vgrid_list(vgrid_name, '%ss' % item_string,
+    (list_status, inherit) = vgrid_list(vgrid_name, '%ss' % item_string,
                                    configuration, recursive=True,
                                    allow_missing=optional)
-    if not status:
-        out.append({'object_type': 'error_text',
-                    'text': inherit })
+    if not list_status:
+        out.append({'object_type': 'error_text', 'text': inherit})
         return (False, out)
-    (status, direct) = vgrid_list(vgrid_name, '%ss' % item_string,
+    (list_status, direct) = vgrid_list(vgrid_name, '%ss' % item_string,
                                   configuration, recursive=False,
                                   allow_missing=optional)
-    if not status:
-        out.append({'object_type': 'error_text',
-                    'text': direct })
+    if not list_status:
+        out.append({'object_type': 'error_text', 'text': direct})
         return (False, out)
 
     extra_titles_html = ''
@@ -233,16 +231,12 @@ doubt, just let the user request access and accept it with the
       <fieldset>
       <legend>Add %(_label)s %(item)s</legend>
       <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
-      <table>
-      %(id_note)s
-      <tr>
-      <td>ID</td><td><input type="text" size=70 name="%(id_field)s" /></td>
-      </tr>
-      %(extra_fields)s
-      <tr>
-      <td colspan="2"><input type="submit" value="Add %(item)s" /></td>
-      </tr>
-      </table>
+      %(id_note)s<br />
+      <div id="dyn%(item)sspares">
+          <!-- placeholder for dynamic add %(item)s fields -->
+      </div>
+      %(extra_fields)s<br />
+      <input type="submit" value="Add %(item)s" />
       </fieldset>
       </form>
 ''' % {'vgrid': vgrid_name, 'item': item_string, 'id_note': id_note,
@@ -294,9 +288,43 @@ def main(client_id, user_arguments_dict):
                                                     {'width': 600})
     add_init += '''
         var toggleHidden = function(classname) {
-        // classname supposed to have a leading dot 
-        $(classname).toggleClass("hidden");
-    }
+            // classname supposed to have a leading dot 
+            $(classname).toggleClass("hidden");
+        };
+        /* helpers for dynamic form input fields */
+        function onOwnerInputChange() {
+            makeSpareFields("#dynownerspares", "cert_id");
+        }
+        function onMemberInputChange() {
+            makeSpareFields("#dynmemberspares", "cert_id");
+        }
+        function onResourceInputChange() {
+            makeSpareFields("#dynresourcespares", "unique_resource_name");
+        }
+    '''
+    add_ready += '''
+    /* init add owners/member/resource forms with dynamic input fields */
+    onOwnerInputChange();
+    $("#dynownerspares").on("blur", "input[name=cert_id]",
+        function(event) {
+            //console.debug("in add owner blur handler");
+            onOwnerInputChange();
+        }
+    );
+    onMemberInputChange();
+    $("#dynmemberspares").on("blur", "input[name=cert_id]",
+        function(event) {
+            //console.debug("in add member blur handler");
+            onMemberInputChange();
+        }
+    );
+    onResourceInputChange();
+    $("#dynresourcespares").on("blur", "input[name=unique_resource_name]",
+        function(event) {
+            console.debug("in resource blur handler");
+            onResourceInputChange();
+        }
+    );
     '''
     title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = jquery_ui_js(configuration, add_import,
@@ -345,10 +373,10 @@ def main(client_id, user_arguments_dict):
         else:
             extra_fields = []
 
-        (status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, item, 
+        (init_status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, item, 
                                                  scr, configuration,
                                                  extra_fields)
-        if not status:
+        if not init_status:
             output_objects.extend(oobjs)
             return (output_objects, returnvalues.SYSTEM_ERROR)
         else:
