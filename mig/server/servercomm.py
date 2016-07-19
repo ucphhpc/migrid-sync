@@ -139,6 +139,8 @@ def put_data(
     pycurl.global_init(pycurl.GLOBAL_SSL)
 
     curl = pycurl.Curl()
+    # Never use proxy
+    curl.setopt(pycurl.PROXY, "")
     curl.setopt(pycurl.HTTPHEADER, ['User-Agent: MiG HTTP PUT'])
     curl.setopt(pycurl.PUT, 1)
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
@@ -255,6 +257,8 @@ def get_data(
     pycurl.global_init(pycurl.GLOBAL_SSL)
 
     curl = pycurl.Curl()
+    # Never use proxy
+    curl.setopt(pycurl.PROXY, "")
     curl.setopt(pycurl.HTTPHEADER, ['User-Agent: MiG HTTP GET'])
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
     curl.setopt(pycurl.MAXREDIRS, 5)

@@ -250,7 +250,8 @@ Please contact the Grid admins %s if you think they should be enabled.
                                })
     try:
         logger.debug("asking database at %s: %s" % (db_url,query))
-        res = urllib.urlopen('http://' + db_url + query)
+        # Never use proxies
+        res = urllib.urlopen('http://' + db_url + query, proxies={})
         jsonreply = res.read()
         res.close()
     except Exception, err:

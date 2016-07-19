@@ -61,7 +61,8 @@ def main(client_id, user_arguments_dict):
         ping_url = oid_url.replace("/id/", "/ping")
         openid_status['server'] = ping_url
         try:
-            ping_status = urllib.urlopen(ping_url)
+            # Never use proxies
+            ping_status = urllib.urlopen(ping_url, proxies={})
             http_status = ping_status.getcode()
             data = ping_status.read()
             ping_status.close()

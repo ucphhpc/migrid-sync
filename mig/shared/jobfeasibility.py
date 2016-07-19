@@ -680,6 +680,8 @@ def validate_files(configuration, job, errors, mrsl_attribute,
             try:
                 import pycurl
                 curl = pycurl.Curl()
+                # Never use proxy
+                curl.setopt(pycurl.PROXY, "")
                 curl.setopt(pycurl.URL, filename)
                 curl.setopt(pycurl.RANGE, '0-0')
                 curl.setopt(pycurl.NOBODY, True)
