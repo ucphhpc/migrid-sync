@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridmember - remove vgrid member
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -97,9 +97,9 @@ def main(client_id, user_arguments_dict):
 
     # owner of subvgrid?
 
-    (status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
+    (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
             configuration)
-    if not status:
+    if not list_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error getting list of sub%ss: %s'
                                % (configuration.site_vgrid_label, subvgrids)})

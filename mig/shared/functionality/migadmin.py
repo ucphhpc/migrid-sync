@@ -242,8 +242,8 @@ provide access to e.g. managing the grid job queues.
     output_objects.append({'object_type': 'header', 'text'
                           : 'Pending Certificate Requests'})
 
-    (status, ret) = list_cert_reqs(configuration)
-    if not status:
+    (list_status, ret) = list_cert_reqs(configuration)
+    if not list_status:
         logger.error("%s: failed for '%s': %s" % (op_name,
                                                   client_id, ret))
         output_objects.append({'object_type': 'error_text', 'text'

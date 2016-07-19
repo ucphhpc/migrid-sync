@@ -113,8 +113,8 @@ def handle_update(configuration, client_id, resource_id, user_vars,
 <hr />''' % (resource_name, msg)
     else:
         logger.info('Parsing conf %s for %s' % (pending_file, resource_id))
-        (status, msg) = confparser.run(pending_file, resource_id, '')
-        if not status:
+        (run_status, msg) = confparser.run(pending_file, resource_id, '')
+        if not run_status:
             logger.error(msg)
             output_objects.append({'object_type': 'error_text', 'text':
                                'Failed to parse new configuration:'})
@@ -126,12 +126,11 @@ def handle_update(configuration, client_id, resource_id, user_vars,
             return False
 
         logger.info('Sending create request for %s to admins' % resource_id)
-        (status, msg) = send_resource_create_request_mail(client_id,
-                                                          user_vars['HOSTURL'],
-                                                          pending_file, logger,
-                                                          configuration)
+        (send_status, msg) = send_resource_create_request_mail(
+            client_id, user_vars['HOSTURL'], pending_file, logger,
+            configuration)
         logger.info(msg)
-        if not status:
+        if not send_status:
             output_objects.append({'object_type': 'error_text', 'text':
                                    '''Failed to send request with ID "%s" to
 the %s administrator(s):

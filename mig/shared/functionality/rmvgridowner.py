@@ -311,9 +311,10 @@ def main(client_id, user_arguments_dict):
 
     # we need the local owners file to detect inherited ownerships
 
-    (status, owners_direct) = vgrid_owners(vgrid_name, configuration, False)
+    (owners_status, owners_direct) = vgrid_owners(vgrid_name, configuration,
+                                                  False)
     (all_status, owners) = vgrid_owners(vgrid_name, configuration, True)
-    if not status or not all_status:
+    if not owners_status or not all_status:
         logger.error('Error loading owners for %s: %s / %s'
                      % (vgrid_name, owners_direct, owners))
         output_objects.append({'object_type': 'error_text', 'text'
@@ -461,9 +462,9 @@ deleted. Please use either of the links below to confirm or cancel.
 
         # check if any resources participate or sub-vgrids depend on this one
 
-        (status, subs) = vgrid_list_subvgrids(vgrid_name, configuration)
+        (list_status, subs) = vgrid_list_subvgrids(vgrid_name, configuration)
 
-        if not status:
+        if not list_status:
             logger.error('Error loading sub-%ss for %s: %s)'
                          % (configuration.site_vgrid_label, vgrid_name, subs))
             output_objects.append({'object_type': 'error_text', 'text' : '''

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # lsvgridmembers - simple list of vgrid members for a grid with access
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -73,8 +73,8 @@ def main(client_id, user_arguments_dict):
 
     # list
 
-    (status, msg) = vgrid_list(vgrid_name, 'members', configuration)
-    if not status:
+    (list_status, msg) = vgrid_list(vgrid_name, 'members', configuration)
+    if not list_status:
         output_objects.append({'object_type': 'error_text', 'text': '%s'
                                % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)

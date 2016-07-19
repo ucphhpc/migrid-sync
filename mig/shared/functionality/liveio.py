@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # liveio - communication with running jobs
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -63,6 +63,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
+    status = returnvalues.OK
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -277,7 +278,6 @@ jobs before and during execution.
         job_dict = unpickle(filepath, logger)
         if not job_dict:
             status = returnvalues.CLIENT_ERROR
-
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : ('You can only list status of your own jobs. '
@@ -358,13 +358,13 @@ jobs before and during execution.
         # #
 
         # get resource_config, needed by scp_file_to_resource
-        #(status, resource_config) = get_resource_configuration(
+        #(res_status, resource_config) = get_resource_configuration(
         #    resource_home, unique_resource_name, logger)
 
         resource_config = job_dict['RESOURCE_CONFIG']
-        (status, exe) = get_resource_exe(resource_config, job_dict['EXE'],
+        (res_status, exe) = get_resource_exe(resource_config, job_dict['EXE'],
                                          logger)
-        if not status:
+        if not res_status:
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : 'Could not get exe configuration for job %s' % job_id})
@@ -421,9 +421,9 @@ jobs before and during execution.
                  (action, configuration.short_title)})
             continue
 
-        scpstatus = copy_file_to_resource(local_file, '%s.%supdate'
+        scp_status = copy_file_to_resource(local_file, '%s.%supdate'
                  % (job_dict['LOCALJOBNAME'], action), resource_config, logger)
-        if not scpstatus:
+        if not scp_status:
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : 'Error sending request for live io to resource!'})

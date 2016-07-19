@@ -122,8 +122,9 @@ def main(client_id, user_arguments_dict):
 
     runtimeenvironments = []
     if operation in list_operations:
-        (status, ret) = list_runtime_environments(configuration)
-        if not status:
+        # TODO: much of this is static and could easily be cached
+        (list_status, ret) = list_runtime_environments(configuration)
+        if not list_status:
             output_objects.append({'object_type': 'error_text', 'text'
                                   : ret})
             return (output_objects, returnvalues.SYSTEM_ERROR)

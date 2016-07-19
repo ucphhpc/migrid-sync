@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - combined text/mrsl writer and file upload
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -391,10 +391,10 @@ def main(client_id, user_arguments_dict):
                        or local_filename.upper().endswith('.TAR.GZ')
                        or local_filename.upper().endswith('.TGZ')
                        or local_filename.upper().endswith('.TAR.BZ2')):
-                (status, msg) = handle_package_upload(local_filename,
+                (upload_status, msg) = handle_package_upload(local_filename,
                         remote_filename, client_id, configuration,
                         submit_mrslfiles, os.path.dirname(local_filename))
-                if status:
+                if upload_status:
                     if submit_mrslfiles:
                         if isinstance(msg, basestring):
                             output_objects.append(
@@ -501,9 +501,9 @@ def main(client_id, user_arguments_dict):
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_filename}
 
-            (status, newmsg, job_id) = new_job(mrslfile, client_id,
+            (new_status, newmsg, job_id) = new_job(mrslfile, client_id,
                     configuration, False, True)
-            if not status:
+            if not new_status:
 
                 # output_objects.append({"object_type":"error_text", "text":"%s"
                 #                        % newmsg})

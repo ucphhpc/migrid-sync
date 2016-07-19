@@ -123,11 +123,11 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Delete the runtime environment
-    (status, msg) = delete_runtimeenv(re_name, configuration)
+    (del_status, msg) = delete_runtimeenv(re_name, configuration)
     
     # If something goes wrong when trying to delete runtime environment
     # re_name, an error is displayed.
-    if not status:
+    if not del_status:
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Could not remove %s runtime environment: %s'
                                % (re_name, msg)})

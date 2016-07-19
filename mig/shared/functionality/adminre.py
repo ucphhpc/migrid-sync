@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminre - set up a runtime environment
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -127,8 +127,8 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     rekeywords_dict = get_keywords_dict()
-    (status, ret) = list_runtime_environments(configuration)
-    if not status:
+    (list_status, ret) = list_runtime_environments(configuration)
+    if not list_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : ret})
         return (output_objects, returnvalues.SYSTEM_ERROR)

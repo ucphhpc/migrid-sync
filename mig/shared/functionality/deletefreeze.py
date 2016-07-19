@@ -136,11 +136,11 @@ Please contact the Grid admins %s if you think it should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Delete the frozen archive
-    (status, msg) = delete_frozen_archive(freeze_id, configuration)
+    (del_status, msg) = delete_frozen_archive(freeze_id, configuration)
     
     # If something goes wrong when trying to delete frozen archive
     # freeze_id, an error is displayed.
-    if not status:
+    if not del_status:
         logger.error("%s: failed for '%s': %s" % (op_name,
                                                   freeze_id, msg))
         output_objects.append({'object_type': 'error_text', 'text'

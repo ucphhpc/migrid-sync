@@ -162,9 +162,9 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'text', 'text'
                               : 'Submitting saved file to parser'})
         submitstatus = {'object_type': 'submitstatus', 'name': path}
-        (status, msg, job_id) = new_job(real_path, client_id,
-                configuration, False, True)
-        if not status:
+        (new_job_status, msg, job_id) = new_job(real_path, client_id,
+                                                configuration, False, True)
+        if not new_job_status:
             submitstatus['status'] = False
             submitstatus['message'] = msg
         else:

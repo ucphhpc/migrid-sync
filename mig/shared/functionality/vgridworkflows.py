@@ -234,7 +234,7 @@ access the workflows.'''
 
     optional_fields = [('rate_limit', None), ('settle_time', None)]
 
-    (status, oobjs) = vgrid_add_remove_table(
+    (init_status, oobjs) = vgrid_add_remove_table(
         client_id,
         vgrid_name,
         'trigger',
@@ -243,8 +243,7 @@ access the workflows.'''
         extra_fields,
         optional_fields,
         )
-
-    if not status:
+    if not init_status:
         output_objects.append({'object_type': 'error_text', 'text':
                                'failed to load triggers: %s' % oobjs})
         return (output_objects, returnvalues.SYSTEM_ERROR)

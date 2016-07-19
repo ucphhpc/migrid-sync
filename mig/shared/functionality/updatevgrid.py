@@ -153,10 +153,10 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                            : 'Participant update warnings:'})
     for kind in ['owners', 'members', 'resources', 'triggers']:
-        (status, id_list) = vgrid_list(vgrid_name, kind, configuration,
+        (list_status, id_list) = vgrid_list(vgrid_name, kind, configuration,
                                       recursive=False, allow_missing = False)
-        logger.info("vgrid_list returned %s : %s" % (status, id_list))
-        if not status:
+        logger.info("vgrid_list returned %s : %s" % (list_status, id_list))
+        if not list_status:
             if kind == 'owners':
                 id_list = [client_id]
             else:

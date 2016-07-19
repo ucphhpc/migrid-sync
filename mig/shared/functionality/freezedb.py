@@ -127,8 +127,8 @@ from the management.
 
     frozenarchives = []
     if operation in list_operations:
-        (status, ret) = list_frozen_archives(configuration, client_id)
-        if not status:
+        (list_status, ret) = list_frozen_archives(configuration, client_id)
+        if not list_status:
             logger.error("%s: failed for '%s': %s" % (op_name,
                                                       client_id, ret))
             output_objects.append({'object_type': 'error_text', 'text'

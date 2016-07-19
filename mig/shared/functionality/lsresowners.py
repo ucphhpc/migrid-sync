@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # lsresowners - simple list of resource owners for a resource with access
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -79,8 +79,8 @@ def main(client_id, user_arguments_dict):
                                             unique_resource_name)) + os.sep
     owners_file = os.path.join(base_dir, 'owners')
 
-    (status, msg) = list_items_in_pickled_list(owners_file, logger)
-    if not status:
+    (list_status, msg) = list_items_in_pickled_list(owners_file, logger)
+    if not list_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not get list of owners, reason: %s'
                                % msg})
