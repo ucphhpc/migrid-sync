@@ -44,12 +44,11 @@ from shared.defaults import keyword_all, keyword_auto, \
 from shared.events import get_expand_map, get_command_map
 from shared.fileio import unpickle, makedirs_rec, move_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.functionality.adminvgrid import vgrid_add_remove_table
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import vgrid_is_owner_or_member, vgrid_triggers, \
-    vgrid_set_triggers
+from shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
+     vgrid_triggers, vgrid_set_triggers
 
 default_pager_entries = 20
 
@@ -240,8 +239,7 @@ access the workflows.'''
         'trigger',
         'vgridtrigger',
         configuration,
-        extra_fields,
-        optional_fields,
+        extra_fields + optional_fields
         )
     if not init_status:
         output_objects.append({'object_type': 'error_text', 'text':

@@ -31,12 +31,221 @@ import fnmatch
 import os
 import re
 
-from shared.defaults import default_vgrid
+from shared.defaults import default_vgrid, keyword_all
 from shared.findtype import is_user, is_resource
 from shared.listhandling import list_items_in_pickled_list
 from shared.modified import mark_vgrid_modified
 from shared.serial import load, dump
 from shared.validstring import valid_dir_input
+
+
+def vgrid_add_remove_table(client_id,
+                           vgrid_name, 
+                           item_string, 
+                           script_suffix, 
+                           configuration,
+                           extra_fields=[]):
+    """Create a table of owners/members/resources/triggers (item_string),
+    allowing to remove one item by selecting (radio button) and calling a
+    script, and a form to add a new entry.
+    Used from vgrid admin and workflows.
+
+    Arguments: vgrid_name, the vgrid to operate on
+               item_string, one of owner, member, resource, trigger
+               script_suffix, will be prepended with 'add' and 'rm' for forms
+               configuration, for loading the list of current items 
+               extra_fields, additional input fields for some item forms
+
+    Returns: (Bool, list of output_objects)
+    """
+
+    out = []
+
+    if not item_string in ['owner', 'member', 'resource', 'trigger']:
+        out.append({'object_type': 'error_text', 'text': 
+                    'Internal error: Unknown item type %s.' % item_string
+                    })
+        return (False, out)
+
+    optional = False
+
+    # Default to dynamic input fields, and override for triggers
+    
+    id_html_tr = '''<tr><td>
+          <div id="dyn%sspares">
+          <!-- placeholder for dynamic add %s fields -->
+      </div>
+      </td></tr>
+    ''' % (item_string, item_string)
+    
+    if item_string == 'resource':
+        id_field = 'unique_resource_name'
+        optional = True
+    elif item_string == 'trigger':
+        id_field = 'rule_id'
+        optional = True
+        id_html_tr = '''<tr>
+        <td>ID</td><td><input type="text" size=70 name="%s" /></td>
+        </tr>
+        ''' % id_field
+    else:
+        id_field = 'cert_id'
+
+    id_note_tr = ""
+    if item_string in ['owner', 'member']:
+        openid_add = ""
+        if configuration.user_openid_providers:
+            openid_add = "either the OpenID alias or "    
+        id_note_tr = """
+      <tr>
+      <td>
+Note: %ss are specified with %s the Distinguished Name (DN) of the user. If in
+doubt, just let the user request access and accept it with the
+<span class='addlink'></span>-icon in the Pending Requests table below.
+      </td>
+      </tr>
+""" % (item_string, openid_add)
+
+    # read list of current items and create form to remove one
+
+    (list_status, inherit) = vgrid_list(vgrid_name, '%ss' % item_string,
+                                   configuration, recursive=True,
+                                   allow_missing=optional)
+    if not list_status:
+        out.append({'object_type': 'error_text', 'text': inherit})
+        return (False, out)
+    (list_status, direct) = vgrid_list(vgrid_name, '%ss' % item_string,
+                                  configuration, recursive=False,
+                                  allow_missing=optional)
+    if not list_status:
+        out.append({'object_type': 'error_text', 'text': direct})
+        return (False, out)
+
+    extra_titles_html = ''
+    for (field, _) in extra_fields:
+        extra_titles_html += '<th>%s</th>' % field.replace('_', ' ').title()
+
+    # success, so direct and inherit are lists of unique user/res/trigger IDs
+    extras = [i for i in inherit if not i in direct]
+    if extras:
+        table = '''
+        <br />
+        Inherited %(item)ss of %(vgrid)s:
+        <table class="vgrid%(item)s">
+          <thead><tr><th></th><th>%(item)s</th>%(extra_titles)s</thead>
+          <tbody>
+''' % {'item': item_string,
+       'vgrid': vgrid_name,
+       'extra_titles': extra_titles_html}
+
+        for elem in extras:
+            extra_fields_html = ''
+            if isinstance(elem, dict) and elem.has_key(id_field):
+                for (field, _) in extra_fields:
+                    val = elem.get(field, '')
+                    if isinstance(val, bool):
+                        val = str(val)
+                    elif not isinstance(val, basestring):
+                        val = ' '.join(val)
+                    extra_fields_html += '<td>%s</td>' % val
+                table += \
+"""          <tr><td></td><td>%s</td>%s</tr>""" % (elem[id_field],
+                                                   extra_fields_html)
+            elif elem:
+                table += \
+"          <tr><td></td><td>%s</td></tr>"\
+                     % elem
+        table += '''
+        </tbody></table>
+'''
+        out.append({'object_type': 'html_form', 'text': table})
+
+    # TODO: add remove vgrid button if only inherited owners
+    if direct:
+        form = '''
+      <form method="post" action="rm%(scriptname)s.py">
+        <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
+        Current %(item)ss of %(vgrid)s:
+        <table class="vgrid%(item)s">
+          <thead><tr><th>Remove</th><th>%(item)s</th>%(extra_titles)s</thead>
+          <tbody>
+''' % {'item': item_string,
+       'scriptname': script_suffix,
+       'vgrid': vgrid_name,
+       'extra_titles': extra_titles_html}
+
+        for elem in direct:
+            extra_fields_html = ''
+            if isinstance(elem, dict) and elem.has_key(id_field):
+                for (field, _) in extra_fields:
+                    val = elem.get(field, '')
+                    if isinstance(val, bool):
+                        val = str(val)
+                    elif not isinstance(val, basestring):
+                        val = ' '.join(val)
+                    extra_fields_html += '<td>%s</td>' % val
+                form += \
+"""          <tr><td><input type=radio name='%s' value='%s' /></td>
+                 <td>%s</td>%s</tr>""" % (id_field, elem[id_field],
+                 elem[id_field], extra_fields_html)
+            elif elem:
+                form += \
+"""          <tr><td><input type=radio name='%s' value='%s' /></td>
+                 <td>%s</td></tr>""" % (id_field, elem, elem)
+
+        form += '''
+        </tbody></table>
+        <input type="submit" value="Remove %s" />
+      </form>
+''' % item_string
+                    
+        out.append({'object_type': 'html_form', 'text': form})
+
+    # form to add a new item
+
+    extra_fields_html = ''
+    for (field, limit) in extra_fields:
+        extra_fields_html += '<tr><td>%s</td><td>' % \
+                             field.replace('_', ' ').title()
+        if isinstance(limit, basestring):
+            add_html = '%s' % limit
+        elif limit == None:
+            add_html = '<input type="text" size=70 name="%s" />' % field
+        else:
+            multiple = ''
+            if keyword_all in limit:
+                multiple = 'multiple'
+            add_html = '<select %s name="%s">' % (multiple, field)
+            for val in limit:
+                add_html += '<option value="%s">%s</option>' % (val, val)
+            add_html += '</select>'
+        extra_fields_html += add_html + '</td></tr>'
+    out.append({'object_type': 'html_form',
+                'text': '''
+      
+      <form method="post" action="add%(script)s.py">
+      <fieldset>
+      <legend>Add %(_label)s %(item)s</legend>
+      <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
+      <table>
+      %(id_note_tr)s
+      %(id_html_tr)s
+      <tr><td>
+      %(extra_fields)s<br />
+      </td></tr>
+      <tr><td>
+      <input type="submit" value="Add %(item)s" />
+      </td></tr>
+      </table>
+      </fieldset>
+      </form>
+''' % {'vgrid': vgrid_name, 'item': item_string, 'id_note_tr': id_note_tr,
+       'script': script_suffix, 'id_html_tr': id_html_tr,
+       'extra_fields': extra_fields_html,
+       '_label': configuration.site_vgrid_label}
+               })
+    
+    return (True, out)
 
 
 def vgrid_is_default(vgrid):
