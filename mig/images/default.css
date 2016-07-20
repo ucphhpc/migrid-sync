@@ -1090,6 +1090,20 @@ a:hover.genericbutton {
     color: black;
     background-color: gold;
 }
+.systemwarn {
+    margin: 0px 40px;
+    padding: 0px 20px;
+    vertical-align: top;
+    border: 1px solid gold;
+    border-radius: 4px;
+    color: red;
+    font-size: 18px;
+    background-color: gold;
+    background-image: url('/images/icons/error.png');
+    background-position: left center;
+    background-repeat: no-repeat;
+ }
+}
 
 /* 
 *************************************************************************
