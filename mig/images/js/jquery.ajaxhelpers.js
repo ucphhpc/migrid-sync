@@ -83,7 +83,8 @@ function makeSpareFields(target, name, min_spare) {
        for name in target form */
     var elem_str = target+" input[name='"+name+"']";
     //console.debug("fields "+$(elem_str));
-    var field = '<input type="text" name="'+name+'" size="120" value="" />';
+    var field = '<input type="text" class="fillwidth padspace" '+
+        'name="'+name+'" value="" />';
     var min_spare = min_spare || 2;
     var spare_fields = 0;
     $(elem_str).each(function(i) {
