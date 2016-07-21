@@ -38,6 +38,8 @@ from shared.modified import mark_vgrid_modified
 from shared.serial import load, dump
 from shared.validstring import valid_dir_input
 
+# Default value for integer limits in vgrid settings
+default_vgrid_settings_limit = 42
 
 def vgrid_add_remove_table(client_id,
                            vgrid_name, 
@@ -627,7 +629,7 @@ def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True
     """Extract settings list for a vgrid"""
     (status, output)= vgrid_list(vgrid_name, 'settings', configuration,
                                  recursive, allow_missing)
-    if not isinstance(output, basestring):
+    if not isinstance(output, basestring) and as_dict:
         output = dict(output)
     return (status, output)
 
@@ -1044,3 +1046,49 @@ def in_vgrid_share(configuration, path):
                 break
             vgrid_path = os.path.dirname(vgrid_path)
     return vgrid_path
+
+def _shared_allow_adm(configuration, vgrid_name, client_id, target):
+    """Check if client_id is allowed to edit target values for vgrid_name. This
+    requires that client_id is an owner of vgrid_name and that any saved vgrid
+    settings for that vgrid don't restrict administration to only a subset of
+    owners excluding client_id.
+    """
+    _logger = configuration.logger
+    (owners_status, owners) = vgrid_owners(vgrid_name, configuration)
+    if not owners_status:
+        _logger.error("failed to load owners for %s: %s" % (vgrid_name,
+                                                            owners))
+        return (False, 'could not load owners list')
+    (load_status, settings) = vgrid_settings(vgrid_name, configuration,
+                                             as_dict=True)
+    if not load_status:
+        _logger.error("failed to load settings for %s: %s" % (vgrid_name,
+                                                              settings))
+        return (False, 'could not load settings')
+    restrict_adm = settings.get('restrict_%s_adm' % target,
+                                default_vgrid_settings_limit)
+    if restrict_adm > 0 and not client_id in owners[:restrict_adm]:
+        _logger.error("%s is not allowed to admin %s for %s: %s (%s)" % \
+                      (client_id, target, vgrid_name, owners, settings))
+        msg = '%s settings only allow the first %d owner(s) to edit %s' % \
+              (configuration.site_vgrid_label, restrict_adm, target)
+        return (False, msg)
+    _logger.debug("%s is allowed to admin %s for %s: %s (%s)" % \
+                      (client_id, target, vgrid_name, owners, settings))
+    return (True, '')
+
+def allow_settings_adm(configuration, vgrid_name, client_id):
+    """Check if client_id is allowed to edit settings for vgrid"""
+    return _shared_allow_adm(configuration, vgrid_name, client_id, 'settings')
+
+def allow_owners_adm(configuration, vgrid_name, client_id):
+    """Check if client_id is allowed to edit owners for vgrid"""
+    return _shared_allow_adm(configuration, vgrid_name, client_id, 'owners')
+
+def allow_members_adm(configuration, vgrid_name, client_id):
+    """Check if client_id is allowed to edit members for vgrid"""
+    return _shared_allow_adm(configuration, vgrid_name, client_id, 'members')
+
+def allow_resources_adm(configuration, vgrid_name, client_id):
+    """Check if client_id is allowed to edit resources for vgrid"""
+    return _shared_allow_adm(configuration, vgrid_name, client_id, 'resources')

@@ -43,7 +43,8 @@ from shared.safeeval import subprocess_popen, subprocess_pipe, \
 from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
      vgrid_is_member, vgrid_owners, vgrid_members, vgrid_resources, \
-     vgrid_list_subvgrids, vgrid_remove_owners, vgrid_list_parents
+     vgrid_list_subvgrids, vgrid_remove_owners, vgrid_list_parents, \
+     allow_owners_adm
 from shared.vgridaccess import unmap_vgrid, unmap_inheritance
 
 def signature():
@@ -288,6 +289,16 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'Remove %s Owner' % \
                            configuration.site_vgrid_label})
+
+    # always allow owner to remove self
+    if  client_id != cert_id:
+        # make sure vgrid settings allow this owner to edit other owners
+        (allow_status, allow_msg) = allow_owners_adm(configuration, vgrid_name,
+                                                     client_id)
+        if not allow_status:
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   allow_msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables

@@ -36,7 +36,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
-     vgrid_list_subvgrids, vgrid_add_resources
+     vgrid_list_subvgrids, vgrid_add_resources, allow_resources_adm
 import shared.returnvalues as returnvalues
 
 
@@ -80,6 +80,13 @@ def main(client_id, user_arguments_dict):
     res_id_list = accepted['unique_resource_name']
     request_name = unhexlify(accepted['request_name'][-1])
 
+    # make sure vgrid settings allow this owner to edit resources
+
+    (allow_status, allow_msg) = allow_resources_adm(configuration, vgrid_name,
+                                                    client_id)
+    if not allow_status:
+        output_objects.append({'object_type': 'error_text', 'text': allow_msg})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     res_id_added = []
     for res_id in res_id_list:

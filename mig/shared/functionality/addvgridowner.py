@@ -41,7 +41,8 @@ from shared.safeeval import subprocess_popen, subprocess_pipe, \
      subprocess_stdout
 from shared.useradm import distinguished_name_to_user, expand_openid_alias
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-    vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners, vgrid_list_parents
+     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners, \
+     vgrid_list_parents, allow_owners_adm
 import shared.returnvalues as returnvalues
 
 
@@ -130,6 +131,14 @@ def main(client_id, user_arguments_dict):
     request_name = unhexlify(accepted['request_name'][-1])
     # inherited vgrid membership
     inherit_vgrid_member = False
+
+    # make sure vgrid settings allow this owner to edit owners
+
+    (allow_status, allow_msg) = allow_owners_adm(configuration, vgrid_name,
+                                                 client_id)
+    if not allow_status:
+        output_objects.append({'object_type': 'error_text', 'text': allow_msg})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     cert_id_added = []
     for cert_id in cert_id_list:

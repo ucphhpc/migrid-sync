@@ -33,8 +33,8 @@ from shared.defaults import keyword_owners, keyword_members, keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-     vgrid_set_settings
+from shared.vgrid import init_vgrid_script_add_rem, allow_settings_adm, \
+     vgrid_set_settings, default_vgrid_settings_limit
 import shared.returnvalues as returnvalues
 
 _valid_visible = (keyword_owners, keyword_members, keyword_all)
@@ -43,13 +43,18 @@ _valid_sharelink = (keyword_owners, keyword_members)
 def signature():
     """Signature of the main function"""
 
+    default_vgrid_settings_limit_str = "%d" % default_vgrid_settings_limit
     defaults = {'vgrid_name': REJECT_UNSET,
                 'description': [''],
                 'visible_owners': [keyword_owners],
                 'visible_members': [keyword_owners],
                 'visible_resources': [keyword_owners],
                 'create_sharelink': [keyword_owners],
-                'request_recipients': ['42'],
+                'request_recipients': [default_vgrid_settings_limit_str],
+                'restrict_settings_adm': [default_vgrid_settings_limit_str],
+                'restrict_owners_adm': [default_vgrid_settings_limit_str],
+                'restrict_members_adm': [default_vgrid_settings_limit_str],
+                'restrict_resources_adm': [default_vgrid_settings_limit_str],
                 'read_only': ['False'],
                 'hidden': ['False'],
                 }
@@ -89,6 +94,10 @@ def main(client_id, user_arguments_dict):
     visible_resources = accepted['visible_resources'][-1]
     create_sharelink = accepted['create_sharelink'][-1]
     request_recipients = accepted['request_recipients'][-1]
+    restrict_settings_adm = accepted['restrict_settings_adm'][-1]
+    restrict_owners_adm = accepted['restrict_owners_adm'][-1]
+    restrict_members_adm = accepted['restrict_members_adm'][-1]
+    restrict_resources_adm = accepted['restrict_resources_adm'][-1]
     read_only = accepted['read_only'][-1]
     hidden = accepted['hidden'][-1]
 
@@ -105,7 +114,23 @@ def main(client_id, user_arguments_dict):
     try:
         request_recipients_val = int(request_recipients)
     except ValueError:
-        request_recipients_val = 42
+        request_recipients_val = default_vgrid_settings_limit
+    try:
+        restrict_settings_adm = int(restrict_settings_adm)
+    except ValueError:
+        restrict_settings_adm = default_vgrid_settings_limit
+    try:
+        restrict_owners_adm = int(restrict_owners_adm)
+    except ValueError:
+        restrict_owners_adm = default_vgrid_settings_limit
+    try:
+        restrict_members_adm = int(restrict_members_adm)
+    except ValueError:
+        restrict_members_adm = default_vgrid_settings_limit
+    try:
+        restrict_resources_adm = int(restrict_resources_adm)
+    except ValueError:
+        restrict_resources_adm = default_vgrid_settings_limit
 
     is_read_only = False
     if read_only.lower() in ("true", "1", "yes"):
@@ -119,23 +144,27 @@ def main(client_id, user_arguments_dict):
     if hidden.lower() in ("true", "1", "yes"):
         is_hidden = True
 
-    vgrid_settings = {'vgrid_name': vgrid_name,
-                      'description': description,
-                      'visible_owners': visible_owners,
-                      'visible_members': visible_members,
-                      'visible_resources': visible_resources,
-                      'create_sharelink': create_sharelink,
-                      'request_recipients': request_recipients_val,
-                      'read_only': is_read_only,
-                      'hidden': is_hidden,
-                      }
+    new_settings = {'vgrid_name': vgrid_name,
+                    'description': description,
+                    'visible_owners': visible_owners,
+                    'visible_members': visible_members,
+                    'visible_resources': visible_resources,
+                    'create_sharelink': create_sharelink,
+                    'request_recipients': request_recipients_val,
+                    'restrict_settings_adm': restrict_settings_adm,
+                    'restrict_owners_adm': restrict_owners_adm,
+                    'restrict_members_adm': restrict_members_adm,
+                    'restrict_resources_adm': restrict_resources_adm,
+                    'read_only': is_read_only,
+                    'hidden': is_hidden,
+                    }
     
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
         init_vgrid_script_add_rem(vgrid_name, client_id,
-                                  vgrid_settings.items(), 'settings',
+                                  new_settings.items(), 'settings',
                                   configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -147,11 +176,24 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'warning', 'text': msg})
 
+    # Check if this owner is allowed to change settings
+
+    (allow_status, allow_msg) = allow_settings_adm(configuration, vgrid_name,
+                                                   client_id)
+    if not allow_status:
+        output_objects.append({'object_type': 'error_text', 'text': allow_msg})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if restrict_settings_adm > restrict_owners_adm:
+        output_objects.append({'object_type': 'html_form', 'text': '''
+<span class="warningtext">Warning: Restrict owner administration may still be
+circumvented by some owners unless Restrict settings administration is set to
+a lower or equal number.</span>'''})
 
     # format as list of tuples to fit usual form and then pickle
 
     (set_status, set_msg) = vgrid_set_settings(configuration, vgrid_name,
-                                                vgrid_settings.items())
+                                               new_settings.items())
     if not set_status:
         output_objects.append({'object_type': 'error_text', 'text': '%s'
                                % set_msg})

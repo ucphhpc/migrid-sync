@@ -44,7 +44,8 @@ from shared.html import jquery_ui_js, man_base_js, man_base_html, \
 from shared.init import initialize_main_variables, find_entry
 from shared.sharelinks import build_sharelinkitem_object
 from shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
-     vgrid_settings, vgrid_sharelinks, vgrid_list_parents
+     vgrid_settings, vgrid_sharelinks, vgrid_list_parents, \
+     default_vgrid_settings_limit
 
 _valid_sharelink = [("owners", keyword_owners), ("members", keyword_members)]
 _valid_visible = _valid_sharelink + [("everyone", keyword_all)]
@@ -380,6 +381,46 @@ the corresponding participants. Similarly setting a visibility flag to
             <input type="radio" name="%s" value="%s" %s/> %s
 ''' % (field, val, checked, key)
         settings_form += '<br/>'
+    restrict_settings_adm = settings_dict.get('restrict_settings_adm',
+                                          default_vgrid_settings_limit)
+    settings_form += '''
+            <h4>Restrict Settings</h4> 
+            Restrict changing of these settings to only the first
+            <input type="number" name="restrict_settings_adm" min=1 max=100
+            value=%d />
+            owners.
+''' % restrict_settings_adm
+    settings_form += '<br/>'
+    restrict_owners_adm = settings_dict.get('restrict_owners_adm',
+                                          default_vgrid_settings_limit)
+    settings_form += '''
+            <h4>Restrict Owner Administration</h4> 
+            Restrict administration of owners to only the first
+            <input type="number" name="restrict_owners_adm" min=1 max=100
+            value=%d />
+            owners.
+''' % restrict_owners_adm
+    settings_form += '<br/>'
+    restrict_members_adm = settings_dict.get('restrict_members_adm',
+                                          default_vgrid_settings_limit)
+    settings_form += '''
+            <h4>Restrict Member Administration</h4> 
+            Restrict administration of members to only the first
+            <input type="number" name="restrict_members_adm" min=1 max=100
+            value=%d />
+            owners.
+''' % restrict_members_adm
+    settings_form += '<br/>'
+    restrict_resources_adm = settings_dict.get('restrict_resources_adm',
+                                          default_vgrid_settings_limit)
+    settings_form += '''
+            <h4>Restrict Resource Administration</h4> 
+            Restrict administration of resources to only the first
+            <input type="number" name="restrict_resources_adm" min=1 max=100
+            value=%d />
+            owners.
+''' % restrict_resources_adm
+    settings_form += '<br/>'
     sharelink_options = [("Limit sharelink creation to", "create_sharelink")]
     for (title, field) in sharelink_options:
         settings_form += '<h4>%s</h4>' % title
@@ -391,8 +432,8 @@ the corresponding participants. Similarly setting a visibility flag to
             <input type="radio" name="%s" value="%s" %s/> %s
 ''' % (field, val, checked, key)
         settings_form += '<br/>'
-
-    request_recipients = settings_dict.get('request_recipients', 42)
+    request_recipients = settings_dict.get('request_recipients',
+                                           default_vgrid_settings_limit)
     settings_form += '''
             <h4>Request Recipients</h4> 
             Notify only first

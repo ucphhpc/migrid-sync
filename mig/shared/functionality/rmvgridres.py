@@ -32,7 +32,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-     vgrid_is_resource, vgrid_remove_resources
+     vgrid_is_resource, vgrid_remove_resources, allow_resources_adm
 
 
 def signature():
@@ -71,6 +71,14 @@ def main(client_id, user_arguments_dict):
 
     vgrid_name = accepted['vgrid_name'][-1]
     unique_resource_name = accepted['unique_resource_name'][-1].lower()
+
+    # make sure vgrid settings allow this owner to edit resources
+
+    (allow_status, allow_msg) = allow_resources_adm(configuration, vgrid_name,
+                                                    client_id)
+    if not allow_status:
+        output_objects.append({'object_type': 'error_text', 'text': allow_msg})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables

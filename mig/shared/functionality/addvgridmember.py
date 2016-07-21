@@ -39,7 +39,8 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.useradm import expand_openid_alias
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-    vgrid_is_member, vgrid_list_subvgrids, vgrid_add_members
+     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_members, \
+     allow_members_adm
 import shared.returnvalues as returnvalues
 
 
@@ -80,6 +81,14 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1].strip()
     cert_id_list = accepted['cert_id']
     request_name = unhexlify(accepted['request_name'][-1])
+
+    # make sure vgrid settings allow this owner to edit members
+
+    (allow_status, allow_msg) = allow_members_adm(configuration, vgrid_name,
+                                                  client_id)
+    if not allow_status:
+        output_objects.append({'object_type': 'error_text', 'text': allow_msg})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     cert_id_added = []
     for cert_id in cert_id_list:
