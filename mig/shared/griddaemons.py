@@ -860,8 +860,8 @@ def penalize_rate_limit(configuration, proto, client_address, client_id, hits,
 def track_open_session(configuration, proto, client_id, client_address):
     """Track that client_id opened a new session from client_address"""
     logger = configuration.logger
-    logger.debug("track open session for %s from %s" % (client_id,
-                                                        client_address))
+    logger.info("track open session for %s from %s" % (client_id,
+                                                       client_address))
     _sessions_lock.acquire()
     try:
         _cached = _active_sessions.get(client_id, {})
@@ -878,8 +878,8 @@ def track_open_session(configuration, proto, client_id, client_address):
 def track_close_session(configuration, proto, client_id, client_address):
     """Track that client_id opened a new session from client_address"""
     logger = configuration.logger
-    logger.debug("track close session for %s from %s" % (client_id,
-                                                         client_address))
+    logger.info("track close session for %s from %s" % (client_id,
+                                                        client_address))
     _sessions_lock.acquire()
     try:
         _cached = _active_sessions.get(client_id, {})

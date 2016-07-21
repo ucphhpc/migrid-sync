@@ -723,6 +723,8 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     transport.logger = logger
     transport.load_server_moduli()
     transport.add_server_key(host_key)
+    # Force keep-alive and see if it helps detect broken sessions in tracking
+    transport.set_keepalive(900)
 
     if conf.has_key("sftp_implementation"):
         mod_name, class_name = conf['sftp_implementation'].split(':')
@@ -769,7 +771,11 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     # Ignore user connection here as we only care about sftp.
     # Keep the connection alive until user disconnects or server is halted.
 
-    while transport.is_active():
+    # TODO: is_active check does not seem to always catch broken connections
+    # http://stackoverflow.com/questions/20147902/how-to-know-if-a-paramiko-ssh-channel-is-disconnected
+    #       We try to force failure with keep alive above for now.
+    
+    while transport.is_active():        
         if conf['stop_running'].is_set():
             transport.close()
         time.sleep(1)
