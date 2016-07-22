@@ -27,20 +27,17 @@
 
 """XMLRPC client with support for HTTPS using client certificates"""
 
-import sys
-import os
-import time
 import httplib
+import os
+import ssl
+import sys
+import time
 import xmlrpclib
 from urlparse import urlparse
 
-SCRIPTNAME = '/cgi-bin/xmlrpcinterface.py'
-user_conf_dict = {}
-
-
 def read_user_conf():
     """Read and parse 'KEY VAL' formatted user conf file"""
-
+    user_conf = {}
     conf_path = os.path.expanduser(os.path.join('~', '.mig',
                                    'miguser.conf'))
     if not os.path.exists(conf_path):
@@ -70,45 +67,17 @@ def read_user_conf():
                 continue
             if key in expand_paths:
                 val = os.path.expandvars(os.path.expanduser(val))
-            user_conf_dict[key] = val
+            user_conf[key] = val
         conf_fd.close()
     except IOError, exc:
         print 'Could not read miguser conf: %s, %s' % (conf_path, exc)
         sys.exit(1)
     for needed_key in needed_settings:
-        if not user_conf_dict.has_key(needed_key):
+        if not user_conf.has_key(needed_key):
             print 'Needed setting %s not found in %s' % (needed_key,
                     conf_path)
             sys.exit(1)
-
-
-read_user_conf()
-CERTFILE = user_conf_dict['certfile']
-if not os.path.isfile(CERTFILE):
-    print 'Certfile file %s not found!' % CERTFILE
-    sys.exit(1)
-
-KEYCERTFILE = user_conf_dict['keyfile']
-if not os.path.isfile(KEYCERTFILE):
-    print 'Keycertfile %s not found!' % KEYCERTFILE
-    sys.exit(1)
-
-# CA cert is not currently used but we include it for future verification support
-
-CACERTFILE = user_conf_dict.get('cacertfile', None)
-if CACERTFILE and not CACERTFILE == 'AUTO' and not os.path.isfile(CACERTFILE):
-    print 'specified cacertfile %s not found!' % CACERTFILE
-    sys.exit(1)
-
-url_tuple = urlparse(user_conf_dict['migserver'])
-
-# second item in tuple is network location part with hostname and optional port
-
-host_port = url_tuple[1].split(':', 1)
-if len(host_port) < 2:
-    host_port.append('443')
-host_port[1] = int(host_port[1])
-(HOSTNAME, HOSTPORT) = host_port
+    return user_conf
 
 
 class SafeCertTransport(xmlrpclib.SafeTransport):
@@ -116,14 +85,16 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
     """HTTPS with user certificate"""
 
     host = None
+    conf = {}
     
-    def __init__(self, use_datetime=0):
+    def __init__(self, use_datetime=0, conf={}):
         """For backward compatibility with python < 2.7 . Call parent
         constructor and check if the new _connection attribute is set.
         If not we must switch to compatibility mode where the request
         method needs to be overridden.
         """
         xmlrpclib.SafeTransport.__init__(self, use_datetime)
+        self.conf.update(conf)
 
         if not hasattr(self, '_connection'):
             # print "DEBUG: switch to compat mode"
@@ -181,34 +152,33 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
         plumbing for backward compatibility in the constructor instead.
         
         Reuses connections if possible to support HTTP/1.1 keep-alive.
+
+        Finally allows non-interactive use with password from conf file.
         """
         if self._connection and host == self._connection[0]:
             return self._connection[1]
-        # create a HTTPS connection object from a host descriptor
-        # host may be a string, or a (host, x509-dict) tuple
         try:
             HTTPS = httplib.HTTPSConnection
         except AttributeError:
             raise NotImplementedError(
-                "your version of httplib doesn't support HTTPS"
-                )
-        else:
-            chost, self._extra_headers, x509 = self.get_host_info(host)
+                "your version of httplib doesn't support HTTPS")
+        
+        key_pw = self.conf.get('password', None)
+        cacert = None
+        if conf['cacertfile'] and conf['cacertfile'] != 'AUTO':
+            cacert = self.conf['cacertfile']
+        ssl_ctx = ssl.create_default_context(cafile=cacert)
+        ssl_ctx.load_cert_chain(self.conf['certfile'],
+                                keyfile=self.conf['keyfile'], password=key_pw)
+        self._connection = host, HTTPS(self.conf['host'], 
+                                       port=self.conf['port'], context=ssl_ctx)
+        return self._connection[1]
 
-            # Force user key and cert
-            x509_args = (x509 or {})
-            x509_args['key_file'] = KEYCERTFILE
-            x509_args['cert_file'] = CERTFILE
-            
-            self._connection = host, HTTPS(HOSTNAME, HOSTPORT, **x509_args)
-            return self._connection[1]
 
-
-def xmlrpcgetserver():
-    cert_transport = SafeCertTransport()
-    server = xmlrpclib.ServerProxy('https://%s:%s%s' % (HOSTNAME, HOSTPORT,
-                                                        SCRIPTNAME),
-                                   transport=cert_transport)
+def xmlrpcgetserver(conf):
+    cert_transport = SafeCertTransport(conf=conf)
+    server = xmlrpclib.ServerProxy('https://%(host)s:%(port)s%(script)s' % \
+                                   conf, transport=cert_transport)
     return server
 
 
@@ -217,9 +187,32 @@ if '__main__' == __name__:
         job_id_list = sys.argv[1:]
     else:
         job_id_list = ['*']
+
+    conf = {'script': '/cgi-bin/xmlrpcinterface.py'}
+    user_conf = read_user_conf()
+    conf.update(user_conf)
+    if not os.path.isfile(conf['certfile']):
+        print 'Cert file %(certfile)s not found!' % conf
+        sys.exit(1)
+    if not os.path.isfile(conf['keyfile']):
+        print 'Key file %(keyfile)s not found!' % conf
+        sys.exit(1)
+    # CA cert is not currently used, but we include it for future verification
+    cacert = conf.get('cacertfile', None)
+    if cacert and cacert != 'AUTO' and not os.path.isfile(cacert):
+        print 'specified CA cert file %(cacertfile)s not found!' % conf
+        sys.exit(1)
+    url_tuple = urlparse(conf['migserver'])
+    # second item in tuple is network location part with hostname and optional port
+    host_port = url_tuple[1].split(':', 1)
+    if len(host_port) < 2:
+        host_port.append('443')
+    host_port[1] = int(host_port[1])
+    conf['host'], conf['port'] = host_port
+
     print 'Testing XMLRPC client over HTTPS with user certificates'
     print 'You may get prompted for your MiG key/certificate passphrase before you can continue'
-    server = xmlrpcgetserver()
+    server = xmlrpcgetserver(conf)
 
     methods = server.system.listMethods()
     print 'supported remote methods:\n%s' % '\n'.join(methods)
