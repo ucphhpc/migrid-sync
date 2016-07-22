@@ -31,7 +31,7 @@ import os
 
 from shared.defaults import keyword_owners, keyword_members, keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, allow_settings_adm, \
      vgrid_set_settings, default_vgrid_settings_limit
@@ -81,10 +81,12 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1].strip()
@@ -134,7 +136,7 @@ def main(client_id, user_arguments_dict):
 
     is_read_only = False
     if read_only.lower() in ("true", "1", "yes"):
-        # TODO: ennable when we support read-only
+        # TODO: enable when we support read-only
         #is_read_only = True
         msg = 'read-only option is not yet supported'
         output_objects.append({'object_type': 'error_text', 'text'

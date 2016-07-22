@@ -36,6 +36,7 @@ import sys
 import time
 from ConfigParser import ConfigParser
 
+from shared.defaults import CSRF_MINIMAL, CSRF_MEDIUM, CSRF_FULL
 from shared.logger import Logger
 from shared.html import menu_items, vgrid_items
 
@@ -99,6 +100,7 @@ def fix_missing(config_file, verbose=True):
         'site_vgrid_label': 'VGrid',
         'site_signup_methods': '',
         'site_login_methods': '',
+        'site_csrf_protection': '',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -274,6 +276,8 @@ class Configuration:
     # Allowed signup and login methods in prioritized order
     site_signup_methods = ['extcert']
     site_login_methods = ['extcert']
+    # Default to medium CSRF protection (allow legacy script access without)
+    site_csrf_protection = CSRF_MEDIUM
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
@@ -1098,6 +1102,12 @@ class Configuration:
                                                   'login_methods').split()
         else:
             self.site_login_methods = self.site_signup_methods
+        if config.has_option('SITE', 'csrf_protection'):
+            csrf_protection = config.get('SITE', 'csrf_protection')
+            if csrf_protection in (CSRF_MINIMAL, CSRF_MEDIUM, CSRF_FULL):
+                self.site_csrf_protection = csrf_protection
+        else:
+            self.site_csrf_protection = CSRF_MEDIUM
         if config.has_option('SITE', 'script_deps'):
             self.site_script_deps = config.get('SITE', 'script_deps').split()
         else:

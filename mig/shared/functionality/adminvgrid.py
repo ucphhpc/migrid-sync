@@ -39,6 +39,7 @@ from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
 from shared.accessrequests import list_access_requests, load_access_request, \
      build_accessrequestitem_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -341,17 +342,26 @@ def main(client_id, user_arguments_dict):
                                                  as_dict=True)
     if not settings_status or not settings_dict:
         settings_dict = {'vgrid_name': vgrid_name}
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
     settings_dict.update({
         'vgrid_label': configuration.site_vgrid_label,
         'owners': keyword_owners,
         'members': keyword_members,
         'all': keyword_all,
+        'form_method': form_method,
+        'csrf_limit': csrf_limit
         })
+    target_op = 'vgridsettings'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    settings_dict.update({'target_op': target_op, 'csrf_token': csrf_token})
 
     settings_form = '''
-    <form method="post" action="vgridsettings.py">
+    <form method="%(form_method)s" action="%(target_op)s.py">
         <fieldset>
             <legend>%(vgrid_label)s configuration</legend>
+                <input type="hidden" name="_csrf" value="%(csrf_token)s" />
                 <input type="hidden" name="vgrid_name" value="%(vgrid_name)s" />
 '''
     description = settings_dict.get('description', '')
@@ -472,9 +482,14 @@ the corresponding participants. Similarly setting a visibility flag to
 
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Repair/Add Components"})
+    target_op = 'updatevgrid'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    settings_dict.update({'target_op': target_op, 'csrf_token': csrf_token})
     output_objects.append({'object_type': 'html_form',
                            'text': '''
-      <form method="post" action="updatevgrid.py">
+      <form method="%(form_method)s" action="%(target_op)s.py">
+        <input type="hidden" name="_csrf" value="%(csrf_token)s" />
           <input type="hidden" name="vgrid_name" value="%(vgrid_name)s" />
           <input type="submit" value="Repair components" />
       </form>

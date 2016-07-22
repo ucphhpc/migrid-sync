@@ -167,3 +167,7 @@ litmus_id = 'litmus'
 # VGrid and resource request file name helpers
 request_prefix = 'access-'
 request_ext = '.req'
+
+# CSRF helper for client scripts
+CSRF_MINIMAL, CSRF_MEDIUM, CSRF_FULL = ("MINIMAL", "MEDIUM", "FULL")
+csrf_token_header = 'HTTP_CSRF_TOKEN'

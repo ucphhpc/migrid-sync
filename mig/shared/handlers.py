@@ -33,6 +33,7 @@ import os
 import urllib
 
 from shared.base import client_id_dir
+from shared.defaults import CSRF_MINIMAL, CSRF_MEDIUM, CSRF_FULL
 from shared.findtype import is_user, is_server
 from shared.pwhash import make_csrf_token
 
@@ -55,18 +56,35 @@ def get_csrf_limit(configuration, environ=None):
     limit = None
     return limit
 
-def csrf_needed(configuration, environ=None):
+def check_enforce_csrf(configuration, accepted_dict, environ=None):
     """Detect if client is a browser so that CSRF should be enabled or e.g. a 
-    command line client like cURL or XMLRPC where it doesn't make sense.
+    command line client like cURL or XMLRPC where it is partially supported
+    except for legacy script versions. We should eventually disable the
+    legacy support exception.
     """
-
+    _logger = configuration.logger
     if environ is None:
         environ = os.environ
-    agent = environ.get('HTTP_USER_AGENT', 'UNKNOWN')
-    if agent.startswith('curl'):
+    if configuration.site_csrf_protection == CSRF_FULL:
+        return True
+    elif configuration.site_csrf_protection == CSRF_MINIMAL:
         return False
-    # TODO: add XMLRPC detection here
+    # Default is CSRF_MEDIUM - enforce except for legacy clients
+    # We look for curl and xmlrpc first in user agent to match e.g.
+    # * curl/7.38.0
+    # * xmlrpclib.py/1.0.1 (by www.pythonware.com)
+    agent = environ.get('HTTP_USER_AGENT', 'UNKNOWN')
+    if agent.lower().startswith('curl') or agent.lower().startswith('xmlrpc'):
+        # No _csrf input results in the defaults allow_me string
+        csrf_token = accepted_dict.get("_csrf", ['allow_me'])[-1]
+        if csrf_token != 'allow_me':
+            _logger.debug("enable CSRF check for modern script (%s)" % agent)
+            return True
+        else:
+            _logger.debug("disable CSRF check for legacy script (%s)" % agent)
+            return False
     else:
+        _logger.error("enable CSRF check for %s client" % agent)        
         return True
 
 def safe_handler(configuration, method, operation, client_id, limit,
@@ -77,19 +95,26 @@ def safe_handler(configuration, method, operation, client_id, limit,
     The limit argument can be used to e.g. limit the validity of a csrf token
     to a certain time-frame.
     """
+    _logger = configuration.logger
     if not correct_handler(method, environ):
         return False
     # NOTE: CSRF checks are automatically disabled for e.g. cURL clients here
-    elif not csrf_needed(configuration, environ):
+    elif not check_enforce_csrf(configuration, accepted_dict, environ):
         return True
+    # TODO: integrate token in user scripts and in xmlrpc
+    #       Remember that user scripts cannot hardcode token as long as it
+    #       includes client_id (e.g. breaks deb package). Maybe add a get_token
+    #       backend and use everywhere? or include a single shared token for
+    #       scripts which is set/found in Settings and must be set copied to
+    #       miguser.conf / xmlrpc requests?
     csrf_token = accepted_dict.get('_csrf', [''])[-1]
+    # TODO: include any openid session ID headers from environ here?
     csrf_required = make_csrf_token(configuration, method, operation,
                                     client_id, limit)
-    configuration.logger.debug("CSRF check: %s vs %s" % (csrf_required,
-                                                         csrf_token))
+    _logger.debug("CSRF check: %s vs %s" % (csrf_required, csrf_token))
     if csrf_required != csrf_token:
-        configuration.logger.warning("CSRF check failed: %s vs %s" % \
-                                     (csrf_required, csrf_token))
+        _logger.warning("CSRF check failed: %s vs %s" % (csrf_required,
+                                                         csrf_token))
         return False
     else:
         return True
