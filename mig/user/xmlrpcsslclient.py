@@ -210,8 +210,11 @@ if '__main__' == __name__:
     host_port[1] = int(host_port[1])
     conf['host'], conf['port'] = host_port
 
-    print 'Testing XMLRPC client over HTTPS with user certificates'
-    print 'You may get prompted for your MiG key/certificate passphrase before you can continue'
+    print '''Testing XMLRPC client against %(migserver)s with user certificate
+from %(certfile)s , key from %(keyfile)s and
+CA certificate %(cacertfile)s . You may get prompted for your MiG
+key/certificate passphrase before you can continue.
+    ''' % conf
     server = xmlrpcgetserver(conf)
 
     methods = server.system.listMethods()
@@ -235,6 +238,17 @@ if '__main__' == __name__:
         print '%s : %s' % (method, var_list)
 
     print 'Testing some action methods:'
+
+    print 'checking script generation'
+    (inlist, retval) = server.scripts({'flavor': ['user'], 'lang': ['python']})
+    (returnval, returnmsg) = retval
+    if returnval != 0:
+        print 'Error %s:%s ' % (returnval, returnmsg)
+
+    for elem in inlist:
+        if elem.has_key('text'):
+            print elem['text']
+    
     print 'checking job status for job(s) with IDs: %s'\
          % ' '.join(job_id_list)
     (inlist, retval) = server.jobstatus({'job_id': job_id_list, 'flags'
