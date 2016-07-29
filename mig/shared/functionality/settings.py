@@ -798,11 +798,11 @@ From then on you can use sftp and sshfs to access your %(site)s home:
 sftp -B 258048 %(sftp_server)s
 </pre>
 <pre>
-sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g) -o big_writes -o reconnect
+sshfs %(sftp_server)s: remote-home -o uid=$(id -u) -o gid=$(id -g) -o big_writes -o reconnect
 </pre>
 You can also integrate with ordinary mounts by adding a line like:
 <pre>
-sshfs#%(username)s@%(sftp_server)s: /home/USER/mig-home fuse noauto,user,port=%(sftp_port)d 0 0
+sshfs#%(username)s@%(sftp_server)s: /home/USER/remote-home fuse noauto,user,port=%(sftp_port)d 0 0
 </pre>
 to your /etc/fstab .
 </div>
@@ -953,7 +953,7 @@ From then on you can use e.g. cadaver or fusedav to access your %(site)s home:
 cadaver https://%(davs_server)s:%(davs_port)s
 </pre>
 <pre>
-fusedav https://%(davs_server)s:%(davs_port)s mig-home -o uid=$(id -u) -o gid=$(id -g)
+fusedav https://%(davs_server)s:%(davs_port)s remote-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
 </div>
 <div class="div-webdavs-client-notes">
@@ -1111,7 +1111,7 @@ lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on" \\
      -p %(ftps_ctrl_port)s %(ftps_server)s
 </pre>
 <pre>
-curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s mig-home \\
+curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home \\
           -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer
 </pre>
 </div>
