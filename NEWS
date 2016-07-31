@@ -6,6 +6,17 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== July 31st, 2016 ===
+Feature release. It's been another year with quite a lot of new
+development in terms of new features and improvements, especially
+data-centric additions coming from the ERDA and IDMC projects. Just to
+mention a few we have added sharelinks for easy anonymous data exchange,
+data transfers for flexible data import/export, a number of web
+interface improvements including inline visual previews, better
+international character support and flexible VGrid configuration for
+e.g. fine grained access control.
+
+
 === August 27th, 2015 ===
 Feature release. A lot of storage service features and improvements. New
 OpenID, WebDAVS, FTPS and event trigger services. New fancy upload, persistent
@@ -158,6 +169,42 @@ for other users.
 More detailed changelogs for the public releases.
 The full changelog is available from the repository:
 https://sourceforge.net/p/migrid/code/commit_browser
+
+== 1.6.0 ==
+- Updated xmlrpc client example to latest to allow non-interactive password 
+- Dynamic ID fields for VGrid and resource admin to add multiple IDs at once
+- Several bug fixes in user scripts
+- Save and display VGrid and resource access requests to ease management
+- Optimized post helpers for action icons like request VGrid membership
+- Bug fix to only show users once in People page despite aliases and links
+- AJAX'ify all tablesort 'manager' pages for more responsive interfaces
+- Bug fix to make sure storage-only resources show up in Resources page
+- Support HUP in daemons and provide service reload target to avoid restarts
+- Support limit on number of concurrent sftp client sessions to mitigate DoS
+- Bug fixes for issues in vgrid management through WSGI interface
+- Update user scripts and XMLRPC API to match the latest functionalities
+  and e.g. allow scripted upload to sharelinks.
+- Sharelinks feature for easy anonymous data exchange
+- Tuning of Archives pages to avoid time-outs on big archives
+- Security: fix race in webdavs chrooting; matching wsgidav upstream changes
+- Seafile settings and sign-up tuning
+- Data transfers feature for remote data imports/exports; pw or key login
+- VGrid settings features for fine grained access control, hide vgrid, etc.
+- Significantly reduce I/O daemon login lookup/update overhead
+- Imaging preview features for 2D and 3D image visualization 
+- Extended self-testing in user scripts
+- Security: improved parsing and validation of resource configurations
+- Bug fixes in relation to big file (>2GB) uploads
+- Rate limit on failed logins in SFTP/FTPS/WebDAVS/OpenID daemons
+- Significant SFTP server performance improvements
+- Workflow flexibility, interface and performance improvements
+- Interface polish including dynamic file manager sizing to fill window
+- Tuning of allowed file name characters to support international users
+- Switch all command calls to 'subprocess' without shell for better security
+- Separate RH/CentOS and Debian/Ubuntu init scripts and improved daemon wrap
+- Added log rotation of individual I/O daemon logs
+- Security: Apache conf tuning to address recent potential attack vectors like
+  heartbeat, beast, poodle, httpoxy
 
 == 1.5.0 ==
 - Seafile integration to provide Dropbox-like features

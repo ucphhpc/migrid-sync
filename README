@@ -222,12 +222,14 @@ Where supported options include -h/--help for this help or the conf
 settings:
 --source=SOURCE
 --destination=DESTINATION
+--base_fqdn=BASE_FQDN
 --public_fqdn=PUBLIC_FQDN
 --cert_fqdn=CERT_FQDN
 --oid_fqdn=OID_FQDN
 --sid_fqdn=SID_FQDN
 --user=USER
 --group=GROUP
+--apache_version=APACHE_VERSION
 --apache_etc=APACHE_ETC
 --apache_run=APACHE_RUN
 --apache_lock=APACHE_LOCK
@@ -239,15 +241,26 @@ settings:
 --enable_davs=ENABLE_DAVS
 --enable_ftps=ENABLE_FTPS
 --enable_wsgi=ENABLE_WSGI
+--wsgi_procs=WSGI_PROCS
 --enable_sandboxes=ENABLE_SANDBOXES
 --enable_vmachines=ENABLE_VMACHINES
+--enable_sharelinks=ENABLE_SHARELINKS
+--enable_transfers=ENABLE_TRANSFERS
 --enable_freeze=ENABLE_FREEZE
+--enable_preview=ENABLE_PREVIEW
 --enable_hsts=ENABLE_HSTS
 --enable_vhost_certs=ENABLE_VHOST_CERTS
+--enable_seafile=ENABLE_SEAFILE
+--enable_imnotify=ENABLE_IMNOTIFY
+--enable_dev_accounts=ENABLE_DEV_ACCOUNTS
 --enable_openid=ENABLE_OPENID
---openid_providers=OPENID_PROVIDER
+--openid_providers=OPENID_PROVIDERS
 --daemon_keycert=DAEMON_KEYCERT
+--daemon_pubkey=DAEMON_PUBKEY
+--daemon_show_address=DAEMON_SHOW_ADDRESS
 --alias_field=ALIAS_FIELD
+--signup_methods=SIGNUP_METHODS
+--login_methods=LOGIN_METHODS
 --hg_path=HG_PATH
 --hgweb_scripts=HGWEB_SCRIPTS
 --trac_admin_path=TRAC_ADMIN_PATH
@@ -261,6 +274,8 @@ settings:
 --listen_clause=LISTEN_CLAUSE
 --serveralias_clause=SERVERALIAS_CLAUSE
 --distro=DISTRO
+--landing_page=LANDING_PAGE
+--skin=SKIN
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and with Debian apache 1.3.x
@@ -447,6 +462,9 @@ localhost example configuration in MiGserver-localhost.conf.
 At any time you can verify the validity of your configuration with the
 checkconf.py script in the same directory.
 
+Once set up you can use the provided init script to manage all services.
+It is also possible to run the services individually as explained below.
+
 The central daemon is grid_script.py which takes care of all job
 management on the server. If you want to include grid monitor web pages you
 should additionally run the grid_monitor.py daemon. The optional job
@@ -486,9 +504,9 @@ details.
 
 
 == Adding users ==
-You need a MiG certificate+key to fully interact with any MiG
-server as a user. If you don't want to set up your on Certificate
-Authority (CA) you can use e.g. our certificates.
+You need a either an OpenID login or a MiG certificate+key to fully
+interact with any MiG server as a user. If you don't want to set up your
+on Certificate Authority (CA) you can use e.g. our certificates.
 Please use the certificate request link from http://www.migrid.org if
 you haven't got a certificate yet.
 
@@ -522,15 +540,15 @@ Example: adding myself as a user on a MiG server:
 # ./createuser.py
 Please enter the details for the new user:
 Full Name: Jonas Bardino
-Organization: DIKU
+Organization: NBI
 State: 
 2-letter Country Code: DK
-Email: bardino@diku.dk
+Email: bardino@nbi.ku.dk
 Comment: This is my own MiG user
 Password: 
 using user dict: {'comment': 'This is my own MiG user', 'country': 'DK',
-'state': '', 'full_name': 'Jonas Bardino', 'organization': 'DIKU',
-'password': '*****==', 'email': 'bardino@diku.dk'}
+'state': '', 'full_name': 'Jonas Bardino', 'organization': 'NBI',
+'password': '*****==', 'email': 'bardino@nbi.ku.dk'}
 logging to: server.log ; level: info
 Creating dirs and files for new user: Jonas Bardino
 User name without spaces: Jonas_Bardino
