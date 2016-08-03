@@ -233,9 +233,9 @@ def unpickle_and_change_status(path, newstatus, logger):
 def unpickle(path, logger, allow_missing=False):
     """Unpack pickled object in path"""
     try:
-        job_dict = load(path)
+        data_object = load(path)
         logger.debug('%s was unpickled successfully' % path)
-        return job_dict
+        return data_object
     except Exception, err:
         if not allow_missing:
             logger.error('%s could not be opened/unpickled! %s'
@@ -243,10 +243,10 @@ def unpickle(path, logger, allow_missing=False):
         return False
 
 
-def pickle(job_dict, path, logger):
-    """Pack job_dict as pickled object in path"""
+def pickle(data_object, path, logger):
+    """Pack data_object as pickled object in path"""
     try:
-        dump(job_dict, path)
+        dump(data_object, path)
         logger.debug('pickle success: %s' % path)
         return True
     except Exception, err:

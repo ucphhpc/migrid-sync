@@ -43,21 +43,32 @@ import sys
 import tempfile
 import time
 import threading
+import multiprocessing
 
 try:
     from watchdog.observers import Observer
     from watchdog.events import PatternMatchingEventHandler, \
         FileModifiedEvent, FileCreatedEvent, FileDeletedEvent, \
         DirModifiedEvent, DirCreatedEvent, DirDeletedEvent
-except ImportError:
+except ImportError, e:
     print 'ERROR: the python watchdog module is required for this daemon'
     sys.exit(1)
 
+# Use the built-in version of scandir/walk if possible, otherwise
+# use the scandir module version
+# https://github.com/benhoyt/scandir
+
+try:
+    from os import scandir, walk
+except ImportError:
+    from scandir import scandir, walk
+from shared.base import force_utf8
 from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
     workflows_log_size, workflows_log_cnt
-from shared.events import get_expand_map, map_args_to_vars, get_command_map
-from shared.fileio import makedirs_rec, pickle
+from shared.events import get_expand_map, map_args_to_vars, \
+    get_command_map
+from shared.fileio import makedirs_rec, pickle, unpickle
 from shared.job import fill_mrsl_template, new_job
 from shared.logger import daemon_logger, reopen_log
 from shared.serial import load
@@ -67,6 +78,12 @@ from shared.vgrid import vgrid_is_owner_or_member
 
 all_rules = {}
 rule_hits = {}
+dir_cache = {}
+file_inotify = None
+file_handler = None
+rule_handler = None
+rule_inotify = None
+
 (_rate_limit_field, _settle_time_field) = ('rate_limit', 'settle_time')
 _default_period = 'm'
 _default_time = '0'
@@ -78,14 +95,20 @@ _unit_periods = {
     'w': 7 * 24 * 60 * 60,
     }
 _hits_lock = threading.Lock()
+_file_monitor_lock = threading.Lock()
+_rule_monitor_lock = threading.Lock()
 _trigger_event = '_trigger_event'
 (configuration, logger) = (None, None)
 
+
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
+
+    pid = multiprocessing.current_process().pid
+    logger.info('(%s) reopening log in reaction to hangup signal' % pid)
     reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
+    logger.info('(%s) reopened log after hangup signal' % pid)
+
 
 def make_fake_event(path, state):
     """Create a fake state change event for path. Looks up path to see if the
@@ -100,8 +123,10 @@ def make_fake_event(path, state):
     if os.path.isdir(path):
         fake = dir_map[state](path)
     else:
-        fake= file_map[state](path)
+        fake = file_map[state](path)
+
     # mark it a trigger event
+
     setattr(fake, _trigger_event, True)
     return fake
 
@@ -110,6 +135,7 @@ def is_fake_event(event):
     """Check if event came from our trigger-X rules rather than a real file
     system change.
     """
+
     return getattr(event, _trigger_event, False)
 
 
@@ -118,6 +144,8 @@ def extract_time_in_secs(rule, field):
     integer or float string with optional unit letter appended. If no unit is
     given the default period is used and if all empty the default time is used.
     """
+
+    pid = multiprocessing.current_process().pid
 
     limit_str = rule.get(field, '')
     if not limit_str:
@@ -142,7 +170,8 @@ def extract_time_in_secs(rule, field):
     try:
         secs = float(val_str) * _unit_periods[unit_key]
     except Exception, exc:
-        print 'ERROR: failed to parse time %s (%s)!' % (limit_str, exc)
+        print '(%s) ERROR: failed to parse time %s (%s)!' % (pid,
+                limit_str, exc)
         secs = 0.0
     secs = max(secs, 0.0)
     return secs
@@ -180,10 +209,17 @@ def update_rule_hits(
     checking.
     """
 
+    pid = multiprocessing.current_process().pid
     (_, hit_period) = extract_hit_limit(rule, _rate_limit_field)
     settle_period = extract_time_in_secs(rule, _settle_time_field)
-    logger.debug('update rule hits at %s for %s and %s %s %s'
-                 % (time_stamp, rule, path, change, ref))
+    logger.debug('(%s) update rule hits at %s for %s and %s %s %s' % (
+        pid,
+        time_stamp,
+        rule,
+        path,
+        change,
+        ref,
+        ))
     _hits_lock.acquire()
     rule_history = rule_hits.get(rule['rule_id'], [])
     rule_history.append((path, change, ref, time_stamp))
@@ -192,12 +228,14 @@ def update_rule_hits(
                       <= max_period]
     rule_hits[rule['rule_id']] = period_history
     _hits_lock.release()
-    logger.debug('updated rule hits for %s to %s' % (rule['rule_id'],
-                 period_history))
+    logger.debug('(%s) updated rule hits for %s to %s' % (pid,
+                 rule['rule_id'], period_history))
 
 
 def get_rule_hits(rule, limit_field):
     """find rule hit details"""
+
+    pid = multiprocessing.current_process().pid
 
     if limit_field == _rate_limit_field:
         (hit_count, hit_period) = extract_hit_limit(rule, limit_field)
@@ -208,7 +246,7 @@ def get_rule_hits(rule, limit_field):
     rule_history = rule_hits.get(rule['rule_id'], [])
     res = (rule_history, hit_count, hit_period)
     _hits_lock.release()
-    logger.debug('get_rule_hits found %s' % (res, ))
+    logger.debug('(%s) get_rule_hits found %s' % (pid, res))
     return res
 
 
@@ -231,15 +269,17 @@ def above_path_limit(
     indicating if the rate limit or settle time should kick in.
     """
 
+    pid = multiprocessing.current_process().pid
+
     (path_history, hit_count, hit_period) = get_path_hits(rule, path,
             limit_field)
     if hit_count <= 0 or hit_period <= 0:
-        logger.debug('no %s limit set' % limit_field)
+        logger.debug('(%s) no %s limit set' % (pid, limit_field))
         return False
     period_history = [i for i in path_history if time_stamp - i[3]
                       <= hit_period]
-    logger.debug('above path %s test found %s vs %d' % (limit_field,
-                 period_history, hit_count))
+    logger.debug('(%s) above path %s test found %s vs %d' % (pid,
+                 limit_field, period_history, hit_count))
     if len(period_history) >= hit_count:
         return True
     return False
@@ -248,12 +288,14 @@ def above_path_limit(
 def show_path_hits(rule, path, limit_field):
     """Return path hit details for printing"""
 
+    pid = multiprocessing.current_process().pid
+
     msg = ''
     (path_history, hit_count, hit_period) = get_path_hits(rule, path,
             limit_field)
     msg += \
-        'found %d entries in trigger history and limit is %d per %s s' \
-        % (len(path_history), hit_count, hit_period)
+        '(%s) found %d entries in trigger history and limit is %d per %s s' \
+        % (pid, len(path_history), hit_count, hit_period)
     return msg
 
 
@@ -269,13 +311,15 @@ def wait_settled(
     events for changes to be considered settled.
     """
 
+    pid = multiprocessing.current_process().pid
+
     limit_field = _settle_time_field
     (path_history, _, hit_period) = get_path_hits(rule, path,
             limit_field)
     period_history = [i for i in path_history if time_stamp - i[3]
                       <= hit_period]
-    logger.debug('wait_settled: path %s, change %s, settle_secs %s'
-                 % (path, change, settle_secs))
+    logger.debug('(%s) wait_settled: path %s, change %s, settle_secs %s'
+                  % (pid, path, change, settle_secs))
     if not period_history:
         remain = 0.0
     else:
@@ -287,8 +331,8 @@ def wait_settled(
 
         remain = settle_secs - min([time_stamp - i[3] for i in
                                    period_history])
-    logger.debug('wait_settled: remain %.1f , period_history %s'
-                 % (remain, period_history))
+    logger.debug('(%s) wait_settled: remain %.1f , period_history %s'
+                 % (pid, remain, period_history))
     return remain
 
 
@@ -297,6 +341,8 @@ def recently_modified(path, time_stamp, slack=2.0):
     If atime and mtime are the same or if mtime is within slack from time_stamp
     we accept it as recently changed.
     """
+
+    pid = multiprocessing.current_process().pid
 
     try:
         stat_res = os.stat(path)
@@ -307,7 +353,7 @@ def recently_modified(path, time_stamp, slack=2.0):
         # If we get an OSError, *path* is most likely deleted
 
         result = True
-        logger.debug('OSError: %s' % str(ex))
+        logger.debug('(%s) OSError: %s' % (pid, str(ex)))
 
     return result
 
@@ -322,25 +368,28 @@ def run_command(
     rule and with args mapped to the backend variables.
     """
 
+    pid = multiprocessing.current_process().pid
     command_map = get_command_map(configuration)
 
-    logger.info('run command for %s: %s' % (target_path, command_list))
+    logger.info('(%s) run command for %s: %s' % (pid, target_path,
+                command_list))
     if not command_list or not command_list[0] in command_map:
         raise ValueError('unsupported command: %s' % command_list[0])
     function = command_list[0]
     args_form = command_map[function]
     client_id = rule['run_as']
     command_str = ' '.join(command_list)
-    logger.debug('run %s on behalf of %s' % (command_str, client_id))
+    logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
+                 client_id))
     user_arguments_dict = map_args_to_vars(args_form, command_list[1:])
-    logger.debug('import main from %s' % function)
+    logger.debug('(%s) import main from %s' % (pid, function))
     main = id
     txt_format = id
     try:
         exec 'from shared.functionality.%s import main' % function
         exec 'from shared.output import txt_format'
-        logger.debug('run %s on %s and %s' % (function, client_id,
-                     user_arguments_dict))
+        logger.debug('(%s) run %s on %s and %s' % (pid, function,
+                     client_id, user_arguments_dict))
 
         # Fake HTTP POST
 
@@ -348,23 +397,23 @@ def run_command(
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                 user_arguments_dict)
     except Exception, exc:
-        logger.error('failed to run %s on %s: %s' % (function,
-                     user_arguments_dict, exc))
+        logger.error('(%s) failed to run %s on %s: %s' % (pid,
+                     function, user_arguments_dict, exc))
         raise exc
-    logger.info('done running command for %s: %s' % (target_path,
-                command_str))
-    logger.debug('raw output is: %s' % output_objects)
+    logger.info('(%s) done running command for %s: %s' % (pid,
+                target_path, command_str))
+    logger.debug('(%s) raw output is: %s' % (pid, output_objects))
     try:
         txt_out = txt_format(configuration, ret_code, ret_msg,
                              output_objects)
     except Exception, exc:
         txt_out = 'internal command output text formatting failed'
-        logger.error('text formating failed: %s\nraw output is: %s %s %s'
-                      % (exc, ret_code, ret_msg, output_objects))
+        logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
+                      % (pid, exc, ret_code, ret_msg, output_objects))
     if ret_code != 0:
         raise Exception('command error: %s' % txt_out)
-    logger.debug('result was %s : %s:\n%s' % (ret_code, ret_msg,
-               	 txt_out))
+    logger.debug('(%s) result was %s : %s:\n%s' % (pid, ret_code,
+                 ret_msg, txt_out))
 
 
 class MiGRuleEventHandler(PatternMatchingEventHandler):
@@ -385,56 +434,108 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
         PatternMatchingEventHandler.__init__(self, patterns,
                 ignore_patterns, ignore_directories, case_sensitive)
 
+    def __update_rule_monitor(
+        self,
+        configuration,
+        src_path,
+        state,
+        ):
+        pid = multiprocessing.current_process().pid
+
+        if state == 'created':
+            logger.debug('(%s) Updating rule monitor for src_path: %s, event: %s'
+                          % (pid, src_path, state))
+
+            if os.path.exists(src_path):
+                _rule_monitor_lock.acquire()
+
+                if not rule_inotify._wd_for_path.has_key(src_path):
+                    logger.debug('(%s) Adding watch for: %s' % (pid,
+                                 src_path))
+                    rule_inotify.add_watch(force_utf8(src_path))
+
+                    # Fire 'modified' events for all dirs and files in subpath
+                    # to ensure that all rule files are loaded
+
+                    for ent in scandir(src_path):
+                        if ent.is_dir(follow_symlinks=True):
+                            logger.debug('(%s) Dispatch DirCreatedEvent for: %s'
+                                     % (pid, ent.path))
+                            rule_handler.dispatch(DirCreatedEvent(ent.path))
+                        elif ent.path.find(configuration.vgrid_triggers) \
+                            > -1:
+                            logger.debug('(%s) Dispatch FileCreatedEvent for: %s'
+                                     % (pid, ent.path))
+                            rule_handler.dispatch(FileCreatedEvent(ent.path))
+                else:
+                    logger.debug('(%s) rule_monitor watch already exists for: %s'
+                                  % (pid, src_path))
+
+                _rule_monitor_lock.release()
+        else:
+            logger.debug('(%s) unhandled event: %s for: %s' % (pid,
+                         state, src_path))
+
     def update_rules(self, event):
         """Handle all rule updates"""
 
+        pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
+
         if event.is_directory:
-            logger.debug('skip rule update for directory: %s'
-                         % src_path)
-        logger.debug('%s rule file: %s' % (state, src_path))
-        rel_path = \
-            src_path.replace(os.path.join(configuration.vgrid_home, ''
-                             ), '')
-        vgrid_name = rel_path.replace(os.sep
-                + configuration.vgrid_triggers, '')
-        vgrid_prefix = os.path.join(configuration.vgrid_files_home,
-                                    vgrid_name, '')
-        logger.info('refresh %s rules from %s' % (vgrid_name, src_path))
-        try:
-            new_rules = load(src_path)
-        except Exception, exc:
-            new_rules = []
-            if state != 'deleted':
-                logger.error('failed to load event handler rules from %s (%s)'
-                              % (src_path, exc))
-        logger.debug("loaded new rules from '%s':\n%s" % (src_path,
-                     new_rules))
+            self.__update_rule_monitor(configuration, src_path, state)
+        elif src_path.endswith(configuration.vgrid_triggers):
+            logger.debug('(%s) %s -> Updating rule for: %s' % (pid,
+                         state, src_path))
+            rel_path = \
+                src_path.replace(os.path.join(configuration.vgrid_home,
+                                 ''), '')
+            vgrid_name = rel_path.replace(os.sep
+                    + configuration.vgrid_triggers, '')
+            vgrid_prefix = os.path.join(configuration.vgrid_files_home,
+                    vgrid_name, '')
+            logger.info('(%s) refresh %s rules from %s' % (pid,
+                        vgrid_name, src_path))
+            try:
+                new_rules = load(src_path)
+            except Exception, exc:
+                new_rules = []
+                if state != 'deleted':
+                    logger.error('(%s) failed to load event handler rules from %s (%s)'
+                                  % (pid, src_path, exc))
+            logger.debug("(%s) loaded new rules from '%s':\n%s" % (pid,
+                         src_path, new_rules))
 
-        # Remove all old rules for this vgrid and
-        # leave rules for parent and sub-vgrids
+            # Remove all old rules for this vgrid and
+            # leave rules for parent and sub-vgrids
 
-        for target_path in all_rules.keys():
-            all_rules[target_path] = [i for i in all_rules[target_path]
-                    if i['vgrid_name'] != vgrid_name]
-            remain_rules = [i for i in all_rules[target_path]
-                            if i['vgrid_name'] != vgrid_name]
-            if remain_rules:
-                all_rules[target_path] = remain_rules
-                logger.debug('remain_rules for: %s \n%s'
-                             % (target_path, remain_rules))
-            else:
-                logger.debug('removing rules for: %s ' % target_path)
-                del all_rules[target_path]
-        for entry in new_rules:
-            rule_id = entry['rule_id']
-            path = entry['path']
-            logger.info('updating rule: %s, path: %s, entry:\n%s'
-                        % (rule_id, path, entry))
-            abs_path = os.path.join(vgrid_prefix, path)
-            all_rules[abs_path] = all_rules.get(abs_path, []) + [entry]
-        logger.debug('all rules:\n%s' % all_rules)
+            for target_path in all_rules.keys():
+                all_rules[target_path] = [i for i in
+                        all_rules[target_path] if i['vgrid_name']
+                        != vgrid_name]
+                remain_rules = [i for i in all_rules[target_path]
+                                if i['vgrid_name'] != vgrid_name]
+                if remain_rules:
+                    all_rules[target_path] = remain_rules
+                    logger.debug('(%s) remain_rules for: %s \n%s'
+                                 % (pid, target_path, remain_rules))
+                else:
+                    logger.debug('(%s) removing rules for: %s ' % (pid,
+                                 target_path))
+                    del all_rules[target_path]
+            for entry in new_rules:
+                rule_id = entry['rule_id']
+                path = entry['path']
+                logger.info('(%s) updating rule: %s, path: %s, entry:\n%s'
+                             % (pid, rule_id, path, entry))
+                abs_path = os.path.join(vgrid_prefix, path)
+                all_rules[abs_path] = all_rules.get(abs_path, []) \
+                    + [entry]
+            logger.debug('(%s) all rules:\n%s' % (pid, all_rules))
+        else:
+            logger.debug('(%s) %s skipping _NON_ rule file: %s' % (pid,
+                         state, src_path))
 
     def on_modified(self, event):
         """Handle modified rule file"""
@@ -539,7 +640,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         rule,
         jobid,
         ):
+
         result = True
+        pid = multiprocessing.current_process().pid
 
         vgrid_name = rule['vgrid_name']
         trigger_job_dir = os.path.join(configuration.vgrid_home,
@@ -567,13 +670,14 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             trigger_job_dict['event']['event_type'] = event.event_type
             trigger_job_dict['event']['is_directory'] = \
                 event.is_directory
-            logger.debug('trigger_job_dict: %s' % trigger_job_dict)
+            logger.debug('(%s) trigger_job_dict: %s' % (pid,
+                         trigger_job_dict))
             if not pickle(trigger_job_dict, trigger_job_filepath,
                           logger):
                 result = False
         else:
-            logger.error('Failed to create trigger job dir: %s'
-                         % trigger_job_dir)
+            logger.error('(%s) Failed to create trigger job dir: %s'
+                         % (pid, trigger_job_dir))
             result = False
 
         return result
@@ -588,6 +692,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         corresponding target_path pattern and trigger rule.
         """
 
+        pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
         time_stamp = event.time_stamp
@@ -595,8 +700,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         base_dir = configuration.vgrid_files_home
         rel_src = src_path.replace(base_dir, '').lstrip(os.sep)
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
-        logger.info('in handling of %s for %s %s' % (rule['action'],
-                    state, rel_src))
+        logger.info('(%s) in handling of %s for %s %s' % (pid,
+                    rule['action'], state, rel_src))
         above_limit = False
 
         # Run settle time check first to only trigger rate limit if settled
@@ -605,12 +710,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                               ('rate limit', _rate_limit_field)]:
             if above_path_limit(rule, src_path, field, time_stamp):
                 above_limit = True
-                logger.warning('skip %s due to %s: %s' % (src_path,
-                               name, show_path_hits(rule, src_path,
-                               field)))
+                logger.warning('(%s) skip %s due to %s: %s' % (pid,
+                               src_path, name, show_path_hits(rule,
+                               src_path, field)))
                 self.__workflow_warn(configuration, rule['vgrid_name'],
-                        'skip %s trigger due to %s: %s' % (rel_src,
-                        name, show_path_hits(rule, src_path, field)))
+                        '(%s) skip %s trigger due to %s: %s' % (pid,
+                        rel_src, name, show_path_hits(rule, src_path,
+                        field)))
                 break
 
         # TODO: consider if we should skip modified when just created
@@ -618,9 +724,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # We receive modified events even when only atime changed - ignore them
         # but make sure we handle our fake trigger-modified events
 
-        if state == 'modified' and not is_fake_event(event) and not \
-               recently_modified(src_path, time_stamp):
-            logger.info('skip %s which only changed atime' % src_path)
+        if state == 'modified' and not is_fake_event(event) \
+            and not recently_modified(src_path, time_stamp):
+            logger.info('(%s) skip %s which only changed atime' % (pid,
+                        src_path))
             self.__workflow_info(configuration, rule['vgrid_name'],
                                  'skip %s modified access time only event'
                                   % rel_src)
@@ -631,8 +738,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         update_rule_hits(rule, src_path, state, '', time_stamp)
         if above_limit:
             return
-        logger.info('proceed with handling of %s for %s %s'
-                    % (rule['action'], state, rel_src))
+        logger.info('(%s) proceed with handling of %s for %s %s'
+                    % (pid, rule['action'], state, rel_src))
         self.__workflow_info(configuration, rule['vgrid_name'],
                              'handle %s for %s %s' % (rule['action'],
                              state, rel_src))
@@ -641,17 +748,17 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             wait_secs = settle_secs
         else:
             wait_secs = 0.0
-            logger.debug('no settle time for %s (%s)' % (target_path,
-                         rule))
+            logger.debug('(%s) no settle time for %s (%s)' % (pid,
+                         target_path, rule))
         while wait_secs > 0.0:
-            logger.info('wait %.1fs for %s file events to settle down'
-                        % (wait_secs, src_path))
+            logger.info('(%s) wait %.1fs for %s file events to settle down'
+                         % (pid, wait_secs, src_path))
             self.__workflow_info(configuration, rule['vgrid_name'],
                                  'wait %.1fs for events on %s to settle'
                                   % (wait_secs, rel_src))
             time.sleep(wait_secs)
-            logger.debug('slept %.1fs for %s file events to settle down'
-                          % (wait_secs, src_path))
+            logger.debug('(%s) slept %.1fs for %s file events to settle down'
+                          % (pid, wait_secs, src_path))
             time_stamp += wait_secs
             wait_secs = wait_settled(rule, src_path, state,
                     settle_secs, time_stamp)
@@ -669,8 +776,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 filled_argument = argument
                 for (key, val) in expand_map.items():
                     filled_argument = filled_argument.replace(key, val)
-                logger.debug('expanded argument %s to %s' % (argument,
-                        filled_argument))
+                logger.debug('(%s) expanded argument %s to %s' % (pid,
+                             argument, filled_argument))
                 self.__workflow_info(configuration, rule['vgrid_name'],
                         'expanded argument %s to %s' % (argument,
                         filled_argument))
@@ -689,8 +796,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         rel_chain_str = \
                             chain_str.replace(configuration.vgrid_files_home,
                                 '')
-                        logger.warning('breaking trigger cycle %s'
-                                % chain_str)
+                        logger.warning('(%s) breaking trigger cycle %s'
+                                % (pid, chain_str))
                         self.__workflow_warn(configuration,
                                 rule['vgrid_name'],
                                 'breaking trigger cycle %s'
@@ -698,8 +805,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         continue
                     fake = make_fake_event(path, change)
                     fake._chain = _chain
-                    logger.info('trigger %s event on %s' % (change,
-                                path))
+                    logger.info('(%s) trigger %s event on %s' % (pid,
+                                change, path))
                     self.__workflow_info(configuration,
                             rule['vgrid_name'], 'trigger %s event on %s'
                              % (change, rel_path))
@@ -724,8 +831,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         configuration,
                         ):
                         raise Exception('fill template failed')
-                    logger.debug('filled template for %s in %s'
-                                 % (target_path, mrsl_path))
+                    logger.debug('(%s) filled template for %s in %s'
+                                 % (pid, target_path, mrsl_path))
                     (success, msg, jobid) = new_job(mrsl_path,
                             rule['run_as'], configuration, False,
                             returnjobid=True)
@@ -734,8 +841,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         self.__add_trigger_job_ent(configuration,
                                 event, rule, jobid)
 
-                        logger.info('submitted job for %s: %s'
-                                    % (target_path, msg))
+                        logger.info('(%s) submitted job for %s: %s'
+                                    % (pid, target_path, msg))
                         self.__workflow_info(configuration,
                                 rule['vgrid_name'],
                                 'submitted job for %s: %s' % (rel_src,
@@ -743,15 +850,16 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     else:
                         raise Exception(msg)
             except Exception, exc:
-                logger.error('failed to submit job(s) for %s: %s'
-                             % (target_path, exc))
+                logger.error('(%s) failed to submit job(s) for %s: %s'
+                             % (pid, target_path, exc))
                 self.__workflow_err(configuration, rule['vgrid_name'],
                                     'failed to submit job for %s: %s'
                                     % (rel_src, exc))
             try:
                 os.remove(mrsl_path)
             except Exception, exc:
-                logger.warning('clean up after submit failed: %s' % exc)
+                logger.warning('(%s) clean up after submit failed: %s'
+                               % (pid, exc))
         elif rule['action'] == 'command':
 
             # Expand dynamic variables in argument once and for all
@@ -773,23 +881,123 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 self.__workflow_info(configuration, rule['vgrid_name'],
                         'ran command: %s' % ' '.join(command_list))
             except Exception, exc:
-                logger.error('failed to run command for %s: %s (%s)'
-                             % (target_path, command_str, exc))
+                logger.error('(%s) failed to run command for %s: %s (%s)'
+                              % (pid, target_path, command_str, exc))
                 self.__workflow_err(configuration, rule['vgrid_name'],
                                     'failed to run command for %s: %s (%s)'
                                      % (rel_src, command_str, exc))
         else:
-            logger.error('unsupported action: %(action)s' % rule)
+            logger.error('(%s) unsupported action: %s' % (pid,
+                         rule['action']))
+
+    def __update_file_monitor(
+        self,
+        configuration,
+        src_path,
+        state,
+        is_directory,
+        ):
+        global dir_cache
+
+        pid = multiprocessing.current_process().pid
+        rel_path = \
+            src_path.replace(os.path.join(configuration.vgrid_files_home,
+                             ''), '')
+
+        vgrid_name = rel_path.split(os.sep)[0]
+        if not dir_cache.has_key(vgrid_name):
+            dir_cache[vgrid_name] = {}
+        vgrid_dir_cache = dir_cache[vgrid_name]
+
+        # NOTE:
+        # Eg. OSX fuse triggers FileDeletedEvent on 'mv src_dir dest_dir' ?!?
+
+        if is_directory and (state == 'created' or state == 'modified'):
+            logger.debug('(%s) Updating file monitor for src_path: %s, event: %s'
+                          % (pid, src_path, state))
+
+            if os.path.exists(src_path) and os.path.isdir(src_path):
+                _file_monitor_lock.acquire()
+
+                # NOTE:
+                # mtime needs to be updated just before 'add_vgrid_file_monitor'
+
+                if state == 'created':
+                    vgrid_dir_cache[rel_path] = {}
+                    vgrid_dir_cache[rel_path]['mtime'] = \
+                        os.path.getmtime(src_path)
+                    add_vgrid_file_monitor(configuration, rel_path)
+                else:
+                    vgrid_dir_cache[rel_path]['mtime'] = \
+                        os.path.getmtime(src_path)
+
+                # Check if sub paths were changed
+                # For create this occurs by eg. mkdir -p 'path/subpath/subpath2'
+
+                for ent in scandir(src_path):
+                    if ent.is_dir(follow_symlinks=True):
+                        vgrid_sub_path = \
+                            ent.path.replace(os.path.join(configuration.vgrid_files_home,
+                                ''), '')
+
+                        if not vgrid_sub_path in vgrid_dir_cache.keys():
+                            logger.debug('(%s) %s -> Dispatch DirCreatedEvent for: %s'
+                                     % (pid, src_path, ent.path))
+                            file_handler.dispatch(DirCreatedEvent(ent.path))
+                    elif state == 'created':
+
+                        # If directory is created then dispatch FileCreatedEvent
+                        # for all files in it
+                        #
+                        # NOTE: There might be a RACE between FileCreatedEvents
+                        # dispatched by the system between the 'add_vgrid_file_monitor' call
+                        # and this manual FileCreatedEvent dispatch
+                        # Handle this by using settle time/rate limit on triggers
+
+                        logger.debug('(%s) %s -> Dispatch FileCreatedEvent for: %s'
+                                 % (pid, src_path, ent.path))
+                        file_handler.dispatch(FileCreatedEvent(ent.path))
+                _file_monitor_lock.release()
+            else:
+
+                logger.debug('(%s) src_path: %s was deleted before current event: %s'
+                              % (pid, src_path, state))
+        elif state == 'deleted':
+
+            _file_monitor_lock.acquire()
+            if vgrid_dir_cache.has_key(rel_path):
+                del_paths = [key for key in vgrid_dir_cache.keys()
+                             if key == rel_path or key.startswith('%s%s'
+                              % (rel_path, os.sep))]
+                for del_path in del_paths:
+                    logger.debug('(%s) Removing deleted dir: %s dir cache'
+                                  % (pid, del_path))
+                    del vgrid_dir_cache[del_path]
+            else:
+
+                logger.debug('(%s) deleted path: %s allready gone'
+                             % (pid, src_path))
+            _file_monitor_lock.release()
+        else:
+            logger.debug('(%s) skipped src_path: %s, event: %s' % (pid,
+                         src_path, state))
 
     def run_handler(self, event):
         """Trigger any rule actions bound to file state change"""
 
+        pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
         is_directory = event.is_directory
-        logger.debug('got %s event for path: %s' % (state, src_path))
-        logger.debug('filter %s against %s' % (all_rules.keys(),
+        logger.debug('(%s) got %s event for path: %s' % (pid, state,
                      src_path))
+        logger.debug('(%s) filter %s against %s' % (pid,
+                     all_rules.keys(), src_path))
+
+        # Update file_monitor and dir cache
+
+        self.__update_file_monitor(configuration, src_path, state,
+                                   is_directory)
 
         # Each target_path pattern has one or more rules associated
 
@@ -802,17 +1010,18 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             direct_regexp = recursive_regexp.replace('.*', '[^/]*')
             recursive_hit = re.match(recursive_regexp, src_path)
             direct_hit = re.match(direct_regexp, src_path)
+
             if direct_hit or recursive_hit:
-                logger.debug('matched %s for %s and/or %s' % (src_path,
-                             direct_regexp, recursive_regexp))
+                logger.debug('(%s) matched %s for %s and/or %s' % (pid,
+                             src_path, direct_regexp, recursive_regexp))
                 for rule in rule_list:
 
                     # user may have been removed from vgrid - log and ignore
 
                     if not vgrid_is_owner_or_member(rule['vgrid_name'],
                             rule['run_as'], configuration):
-                        logger.warning('no such user in vgrid: %(run_as)s'
-                                 % rule)
+                        logger.warning('(%s) no such user in vgrid: %s'
+                                 % (pid, rule['run_as']))
                         continue
 
                     # Rules may listen for only file or dir events and with
@@ -820,31 +1029,31 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     if is_directory and not rule.get('match_dirs',
                             False):
-                        logger.debug('skip event %s handling for dir: %s'
-                                 % (rule['rule_id'], src_path))
+                        logger.debug('(%s) skip event %s handling for dir: %s'
+                                 % (pid, rule['rule_id'], src_path))
                         continue
                     if not is_directory and not rule.get('match_files',
                             True):
-                        logger.debug('skip %s event handling for file: %s'
-                                 % (rule['rule_id'], src_path))
+                        logger.debug('(%s) skip %s event handling for file: %s'
+                                 % (pid, rule['rule_id'], src_path))
                         continue
                     if not direct_hit and not rule.get('match_recursive'
                             , False):
-                        logger.debug('skip %s recurse event handling for: %s'
-                                 % (rule['rule_id'], src_path))
+                        logger.debug('(%s) skip %s recurse event handling for: %s'
+                                 % (pid, rule['rule_id'], src_path))
                         continue
                     if not state in rule['changes']:
-                        logger.debug('skip %s %s event handling for: %s'
-                                    % (rule['rule_id'], state,
-                                    src_path))
+                        logger.debug('(%s) skip %s %s event handling for: %s'
+                                 % (pid, rule['rule_id'], state,
+                                src_path))
                         continue
 
-                    logger.info('trigger %s for %s: %s' % (rule['action'
-                                ], src_path, rule))
+                    logger.info('(%s) trigger %s for %s: %s' % (pid,
+                                rule['action'], src_path, rule))
                     self.__handle_trigger(event, target_path, rule)
             else:
-                logger.debug('skip %s with no matching rules'
-                             % target_path)
+                logger.debug('(%s) skip %s with no matching rules'
+                             % (pid, target_path))
 
     def handle_event(self, event):
         """Handle an event in the background so that it can block without
@@ -887,18 +1096,346 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             self.handle_event(fake)
 
 
+def add_vgrid_file_monitor(configuration, path):
+    """Adds file inotify watch for *path*"""
+    global file_inotify
+    pid = multiprocessing.current_process().pid
+
+    vgrid_files_path = os.path.join(configuration.vgrid_files_home,
+                                    path)
+
+    if not file_inotify._wd_for_path.has_key(path):
+        file_inotify.add_watch(force_utf8(vgrid_files_path))
+    else:
+        logger.warning('(%s) file_monitor already exists for: %s'
+                       % (pid, path))
+
+
+def add_vgrid_file_monitors(configuration, vgrid_name):
+    """Add file monitors for all files in *vgrid_name*"""
+
+    global file_handler
+    global dir_cache
+    pid = multiprocessing.current_process().pid
+
+    vgrid_dir_cache = dir_cache[vgrid_name]
+
+    _file_monitor_lock.acquire()
+    vgrid_dir_cache_keys = vgrid_dir_cache.keys()
+    for path in vgrid_dir_cache_keys:
+        vgrid_files_path = os.path.join(configuration.vgrid_files_home,
+                path)
+        if os.path.exists(vgrid_files_path):
+
+            add_vgrid_file_monitor(configuration, path)
+
+            if os.path.getmtime(vgrid_files_path) \
+                != vgrid_dir_cache[path]['mtime']:
+
+                # Fire events for dirs created since last run
+
+                for ent in scandir(vgrid_files_path):
+                    if ent.is_dir(follow_symlinks=True):
+                        vgrid_sub_path = \
+                            ent.path.replace(os.path.join(configuration.vgrid_files_home,
+                                ''), '')
+                        if not vgrid_sub_path in vgrid_dir_cache_keys:
+                            file_handler.dispatch(DirCreatedEvent(ent.path))
+        else:
+            logger.debug('(%s) add_vgrid_file_monitors: Removing deleted dir: %s from dir_cahce'
+                          % (pid, path))
+            del vgrid_dir_cache[path]
+
+    _file_monitor_lock.release()
+
+
+def generate_vgrid_dir_cache(configuration, vgrid_base_path):
+    """Generate directory cache for *vgrid_base_path*"""
+    global dir_cache
+    pid = multiprocessing.current_process().pid
+
+    vgrid_path = os.path.join(configuration.vgrid_files_home,
+                              vgrid_base_path)
+    if not dir_cache.has_key(vgrid_base_path):
+        dir_cache[vgrid_base_path] = {}
+
+    vgrid_dir_cache = dir_cache[vgrid_base_path]
+
+    for (root, dir_names, _) in walk(vgrid_path, followlinks=True):
+        for dir_name in dir_names:
+            dir_path = os.path.join(root, dir_name)
+            dir_cache_path = \
+                dir_path.replace(os.path.join(configuration.vgrid_files_home,
+                                 ''), '')
+
+            if not vgrid_dir_cache.has_key(dir_cache_path):
+                logger.debug('(%s) Updating dir_cache %s: %s' % (pid,
+                             dir_cache_path,
+                             vgrid_dir_cache[dir_cache_path]['mtime']))
+                vgrid_dir_cache[dir_cache_path] = {}
+                vgrid_dir_cache[dir_cache_path]['mtime'] = \
+                    os.path.getmtime(dir_path)
+
+    return True
+
+
+def load_dir_cache(configuration, vgrid_name):
+    """Load directory cache for *vgrid_name"""
+    global dir_cache
+
+    result = True
+
+    pid = multiprocessing.current_process().pid
+
+    vgrid_home_path = os.path.join(configuration.vgrid_home, vgrid_name)
+    vgrid_dir_cache_filename = '.%s.dir_cache' \
+        % configuration.vgrid_triggers
+    vgrid_dir_cache_filepath = os.path.join(vgrid_home_path,
+            vgrid_dir_cache_filename)
+
+    logger.debug('(%s) loading dir cache for: %s from: %s' % (pid,
+                 vgrid_name, vgrid_dir_cache_filename))
+
+    # Load dir cache or generate new cache
+
+    if not os.path.exists(vgrid_dir_cache_filepath):
+        cache_t1 = time.time()
+        dir_cache[vgrid_name] = {}
+        generate_vgrid_dir_cache(configuration, vgrid_name)
+        cache_t2 = time.time()
+        logger.debug('(%s) Generated new dir_cache for: %s in %s secs'
+                     % (pid, vgrid_name, str(cache_t2 - cache_t1)))
+    else:
+        cache_t1 = time.time()
+        loaded_dir_cache = unpickle(vgrid_dir_cache_filepath, logger,
+                                    allow_missing=False)
+        cache_t2 = time.time()
+        logger.debug('(%s) Loaded vgrid_dir_cache for: %s in %s secs'
+                     % (pid, vgrid_name, str(cache_t2 - cache_t1)))
+
+        if loaded_dir_cache is False:
+            result = False
+            logger.error('(%s) Failed to load vgrid_dir_cache for: %s from file: %s'
+                          % (pid, vgrid_name, vgrid_dir_cache_filepath))
+        else:
+            dir_cache[vgrid_name] = loaded_dir_cache
+
+    return result
+
+
+def save_dir_cache(logger):
+    """Save directory cache for all vgrids"""
+    global dir_cache
+    pid = multiprocessing.current_process().pid
+
+    dir_cache_filename = '.%s.dir_cache' % configuration.vgrid_triggers
+
+    for ent in scandir(configuration.vgrid_home):
+        vgrid_name = ent.name
+        vgrid_dir_cache = dir_cache.get(vgrid_name, None)
+        if vgrid_dir_cache is not None:
+
+            vgrid_home_path = os.path.join(configuration.vgrid_home,
+                    vgrid_name)
+            dir_cache_filepath = os.path.join(vgrid_home_path,
+                    dir_cache_filename)
+            vgrid_dir_cache_keys = [key for key in
+                                    vgrid_dir_cache.keys() if key
+                                    == vgrid_name
+                                    or key.startswith('%s%s'
+                                    % (vgrid_name, os.sep))]
+
+            if len(vgrid_dir_cache_keys) == 0:
+                logger.warning('(%s) no cache found for: %s' % (pid,
+                               vgrid_name))
+            else:
+                logger.info('(%s) saving cache for: %s to file: %s'
+                            % (pid, vgrid_name, dir_cache_filepath))
+                vgrid_dir_cache = {key: vgrid_dir_cache[key] for key in 
+                                   vgrid_dir_cache_keys}
+                pickle(vgrid_dir_cache, dir_cache_filepath, logger)
+
+    return True
+
+
+def monitor(configuration, vgrid_name):
+    """Monitors the filesystem for changes and match/apply trigger rules.
+    Each top vgrid gets its own process.
+    Handling new vgrids is done through a special root vgrid with vgrid_name='.'.
+    New vgrids are handled by '.' until grid_events is restarted, after restart
+    they get their own process.
+    """
+
+    global dir_cache
+    global rule_handler
+    global rule_inotify
+
+    global file_handler
+    global file_inotify
+
+    pid = multiprocessing.current_process().pid
+    print 'Starting monitor process with PID: %s for vgrid: %s' % (pid,
+            vgrid_name)
+    logger.info('Starting monitor process with PID: %s for vgrid: %s'
+                % (pid, vgrid_name))
+    keep_running = True
+
+    # Allow e.g. logrotate to force log re-open after rotates
+
+    signal.signal(signal.SIGHUP, hangup_handler)
+
+    # Monitor rule configurations
+
+    if vgrid_name == '.':
+        vgrid_home = configuration.vgrid_home
+        vgrid_files_home = configuration.vgrid_files_home
+        recursive_rule_monitor = False
+    else:
+        vgrid_home = os.path.join(configuration.vgrid_home, vgrid_name)
+        vgrid_files_home = os.path.join(configuration.vgrid_files_home,
+                vgrid_name)
+        recursive_rule_monitor = True
+
+    rule_monitor = Observer()
+    rule_patterns = [os.path.join(vgrid_home, '*')]
+    rule_handler = MiGRuleEventHandler(patterns=rule_patterns,
+            ignore_directories=False, case_sensitive=True)
+
+    rule_monitor.schedule(rule_handler, vgrid_home,
+                          recursive=recursive_rule_monitor)
+    rule_monitor.start()
+
+    if len(rule_monitor._emitters) != 1:
+        logger.error('(%s) Number of rule_monitor._emitters != 1' % pid)
+        return 1
+    rule_monitor_emitter = min(rule_monitor._emitters)
+    if not hasattr(rule_monitor_emitter, '_inotify'):
+        logger.error('(%s) rule_monitor_emitter require inotify' % pid)
+        return 1
+    rule_inotify = rule_monitor_emitter._inotify._inotify
+
+    logger.info('(%s) initializing file listener - may take some time'
+                % pid)
+
+    # monitor actual files to handle events for vgrid_files_home
+
+    file_monitor = Observer()
+    file_patterns = [os.path.join(vgrid_files_home, '*')]
+    file_handler = MiGFileEventHandler(patterns=file_patterns,
+            ignore_directories=False, case_sensitive=True)
+    file_monitor.schedule(file_handler, vgrid_files_home,
+                          recursive=False)
+    file_monitor.start()
+
+    if len(file_monitor._emitters) != 1:
+        logger.error('(%s) Number of file_monitor._emitters != 1' % pid)
+        sys.exit(1)
+    file_monitor_emitter = min(file_monitor._emitters)
+    if not hasattr(file_monitor_emitter, '_inotify'):
+        logger.error('(%s) file_monitor require inotify' % pid)
+        sys.exit(1)
+    file_inotify = file_monitor_emitter._inotify._inotify
+
+    logger.info('(%s) trigger rule refresh for: %s' % (pid, vgrid_name))
+
+    # Fake touch event on all rule files to load initial rules
+
+    logger.info('(%s) trigger load on all rule files (greedy) for: %s matching %s'
+                 % (pid, vgrid_name, rule_patterns[0]))
+
+    # We manually walk and test to get the greedy "*" directory match behaviour
+    # of the PatternMatchingEventHandler
+
+    all_trigger_rules = []
+
+    if recursive_rule_monitor == True:
+        for (root, _, files) in walk(vgrid_home):
+            if configuration.vgrid_triggers in files:
+                rule_path = os.path.join(root,
+                        configuration.vgrid_triggers)
+                all_trigger_rules.append(rule_path)
+    else:
+        for ent in scandir(vgrid_home):
+            if configuration.vgrid_triggers in ent.name:
+                rule_path = ent.path
+                all_trigger_rules.append(rule_path)
+
+    for rule_path in all_trigger_rules:
+        logger.debug('(%s) trigger load on rules in %s' % (pid,
+                     rule_path))
+        rule_handler.dispatch(FileModifiedEvent(rule_path))
+
+    logger.debug('(%s) loaded initial rules:\n%s' % (pid, all_rules))
+
+    # Add watches for directories
+
+    if vgrid_name == '.':
+        logger.debug('(%s) Skipping dir_cache load for root dir: %s'
+                     % (pid, vgrid_name))
+    else:
+        load_dir_cache_t1 = time.time()
+        load_status = load_dir_cache(configuration, vgrid_name)
+        load_dir_cache_t2 = time.time()
+        logger.debug('(%s) load_dir_cache for: %s in %s secs' % (pid,
+                     vgrid_name, str(load_dir_cache_t2
+                     - load_dir_cache_t1)))
+
+        # Start paths in vgrid_dir_cache to monitor
+
+        if load_status:
+            add_monitor_t1 = time.time()
+            add_vgrid_file_monitors(configuration, vgrid_name)
+            add_monitor_t2 = time.time()
+            logger.debug('(%s) add_monitor for: %s in %s secs' % (pid,
+                         vgrid_name, str(add_monitor_t2
+                         - add_monitor_t1)))
+
+            print '(%s) ready to handle triggers for: %s in %s secs' \
+                % (pid, vgrid_name, add_monitor_t2 - load_dir_cache_t1)
+            logger.info('(%s) ready to handle triggers for: %s in %s secs'
+                         % (pid, vgrid_name, add_monitor_t2
+                        - load_dir_cache_t1))
+        else:
+
+            logger.error('(%s) Failed to load_dir_cache for: %s'
+                         % (pid, vgrid_name))
+            keep_running = False
+
+    while keep_running:
+        try:
+
+            # Throttle down
+
+            time.sleep(1)
+        except KeyboardInterrupt:
+
+            keep_running = False
+
+            save_dir_cache(logger)
+
+    print '(%s) Exiting monitor for vgrid: %s' % (pid, vgrid_name)
+    logger.info('(%s) Exiting for vgrid: %s' % (pid, vgrid_name))
+
+    return 0
+
+
 if __name__ == '__main__':
+
     configuration = get_configuration_object()
 
     log_level = configuration.loglevel
-    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning',
+            'error']:
         log_level = sys.argv[1]
 
     # Use separate logger
-    logger = daemon_logger("events", configuration.user_events_log, log_level)
+
+    logger = daemon_logger('events', configuration.user_events_log,
+                           log_level)
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
+
     signal.signal(signal.SIGHUP, hangup_handler)
 
     print '''This is the MiG event handler daemon which monitors VGrid files
@@ -912,57 +1449,39 @@ unless it is available in mig/server/MiGserver.conf
 
     print 'Starting Event handler daemon - Ctrl-C to quit'
 
-    logger.info('Starting Event handler daemon')
+    logger.info('(%s) Starting Event handler daemon')
+
+    vgrid_monitors = {}
+
+    # Start monitor for new/removed vgrids
+
+    # vgrid_name = 'XRay'
+    # vgrid_name = 'trigger-test'
+
+    vgrid_name = '.'
+    vgrid_monitors[vgrid_name] = \
+        multiprocessing.Process(target=monitor, args=(configuration,
+                                vgrid_name))
+
+    # for path in os.listdir(configuration.vgrid_home):
+
+    # Each top vgrid gets is own process
+
+    for ent in scandir(configuration.vgrid_home):
+        vgrid_files_path = os.path.join(configuration.vgrid_files_home,
+                ent.name)
+        if os.path.isdir(ent.path) and os.path.isdir(vgrid_files_path):
+            vgrid_name = ent.name
+            vgrid_monitors[vgrid_name] = \
+                multiprocessing.Process(target=monitor,
+                    args=(configuration, vgrid_name))
+        else:
+            logger.debug('Skipping _NON_ vgrid: %s' % ent.path)
+
+    for monitor in vgrid_monitors.values():
+        monitor.start()
 
     keep_running = True
-
-    logger.info('initializing rule listener')
-
-    # Monitor rule configurations
-
-    rule_monitor = Observer()
-    rule_patterns = [os.path.join(configuration.vgrid_home, '*',
-                     configuration.vgrid_triggers)]
-    rule_handler = MiGRuleEventHandler(patterns=rule_patterns,
-            ignore_directories=False, case_sensitive=True)
-    rule_monitor.schedule(rule_handler, configuration.vgrid_home,
-                          recursive=True)
-    rule_monitor.start()
-
-    logger.info('initializing file listener - may take some time')
-
-    # monitor actual files to handle events for
-
-    file_monitor = Observer()
-    file_patterns = [os.path.join(configuration.vgrid_files_home, '*')]
-    file_handler = MiGFileEventHandler(patterns=file_patterns,
-            ignore_directories=False, case_sensitive=True)
-    file_monitor.schedule(file_handler, configuration.vgrid_files_home,
-                          recursive=True)
-    file_monitor.start()
-
-    logger.info('trigger rule refresh')
-
-    # Fake touch event on all rule files to load initial rules
-
-    logger.info('trigger load on all rule files (greedy) matching %s'
-                % rule_patterns[0])
-
-    # We manually walk and test to get the greedy "*" directory match behaviour
-    # of the PatternMatchingEventHandler
-
-    all_trigger_rules = []
-    for (root, _, files) in os.walk(configuration.vgrid_home):
-        if configuration.vgrid_triggers in files:
-            rule_path = os.path.join(root, configuration.vgrid_triggers)
-            all_trigger_rules.append(rule_path)
-    for rule_path in all_trigger_rules:
-        logger.debug('trigger load on rules in %s' % rule_path)
-        rule_handler.dispatch(FileModifiedEvent(rule_path))
-    logger.debug('loaded initial rules:\n%s' % all_rules)
-
-    logger.info('ready to handle triggers')
-
     while keep_running:
         try:
 
@@ -970,13 +1489,18 @@ unless it is available in mig/server/MiGserver.conf
 
             time.sleep(1)
         except KeyboardInterrupt:
-            keep_running = False
-            rule_monitor.stop()
-            file_monitor.stop()
-        except Exception, exc:
-            print 'Caught unexpected exception: %s' % exc
 
-    rule_monitor.join()
-    file_monitor.join()
+            keep_running = False
+
+            # Wait for monitors to shutdown
+
+            for monitor in vgrid_monitors.values():
+
+                # print "%s: %s"  % (monitor, monitor.is_alive())
+
+                monitor.join()
+
     print 'Event handler daemon shutting down'
+    logger.info('Event handler daemon shutting down')
+
     sys.exit(0)
