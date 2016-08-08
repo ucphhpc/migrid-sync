@@ -392,7 +392,7 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                           var linkname = vgrid_links[k];
                           if (linkname === "files") {
                               if (vgrid.sharedfolderlink !== undefined) {
-                                  activelinks = format_link(vgrid.sharedfolderlink);
+                                  activelinks += format_link(vgrid.sharedfolderlink);
                               }
                           } else if (linkname === "web") {
                               if (vgrid.enterprivatelink !== undefined) {
@@ -422,25 +422,29 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                               }
                           } else if (linkname === "tracker") {
                               if (vgrid.ownertrackerlink !== undefined) {
-                                  activelinks = format_link(vgrid.ownertrackerlink);
+                                  activelinks += format_link(vgrid.ownertrackerlink);
+                                  activelinks += " ";
                               }
                               if (vgrid.membertrackerlink !== undefined) {
-                                  activelinks = format_link(vgrid.membertrackerlink);
+                                  activelinks += format_link(vgrid.membertrackerlink);
+                                  activelinks += " ";
                               }
                           } else if (linkname === "forum") {
                               if (vgrid.privateforumlink !== undefined) {
-                                  activelinks = format_link(vgrid.privateforumlink);
+                                  activelinks += format_link(vgrid.privateforumlink);
+                                  activelinks += " ";
                               }
                               if (vgrid.publicforumlink !== undefined) {
-                                  activelinks = format_link(vgrid.publicforumlink);
+                                  activelinks += format_link(vgrid.publicforumlink);
+                                  activelinks += " ";
                               }
                           } else if (linkname === "workflows") {
                               if (vgrid.privateworkflowslink !== undefined) {
-                                  activelinks = format_link(vgrid.privateworkflowslink);
+                                  activelinks += format_link(vgrid.privateworkflowslink);
                               }
                           } else if (linkname === "monitor") {
                               if (vgrid.privatemonitorlink !== undefined) {
-                                  activelinks = format_link(vgrid.privatemonitorlink);
+                                  activelinks += format_link(vgrid.privatemonitorlink);
                               }
                           } else {
                               console.error("unknown vgrid link: "+linkname+
