@@ -50,7 +50,7 @@ try:
     from watchdog.events import PatternMatchingEventHandler, \
         FileModifiedEvent, FileCreatedEvent, FileDeletedEvent, \
         DirModifiedEvent, DirCreatedEvent, DirDeletedEvent
-except ImportError, e:
+except ImportError:
     print 'ERROR: the python watchdog module is required for this daemon'
     sys.exit(1)
 
@@ -440,6 +440,7 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
         src_path,
         state,
         ):
+
         pid = multiprocessing.current_process().pid
 
         if state == 'created':
@@ -897,6 +898,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         state,
         is_directory,
         ):
+
         global dir_cache
 
         pid = multiprocessing.current_process().pid
@@ -919,14 +921,16 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             if os.path.exists(src_path) and os.path.isdir(src_path):
                 _file_monitor_lock.acquire()
 
-                # NOTE:
-                # mtime needs to be updated just before 'add_vgrid_file_monitor'
+                if not vgrid_dir_cache.has_key(rel_path):
+                    if state == 'modified':
+                        logger.warning('(%s) %s expected in directory cache, but not found ?'
+                                 % (pid, rel_path))
 
-                if state == 'created':
                     vgrid_dir_cache[rel_path] = {}
-                    vgrid_dir_cache[rel_path]['mtime'] = \
-                        os.path.getmtime(src_path)
-                    add_vgrid_file_monitor(configuration, rel_path)
+                    rel_path_mtime = os.path.getmtime(src_path)
+                    add_vgrid_file_monitor_watch(configuration,
+                            rel_path)
+                    vgrid_dir_cache[rel_path]['mtime'] = rel_path_mtime
                 else:
                     vgrid_dir_cache[rel_path]['mtime'] = \
                         os.path.getmtime(src_path)
@@ -1021,7 +1025,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     if not vgrid_is_owner_or_member(rule['vgrid_name'],
                             rule['run_as'], configuration):
                         logger.warning('(%s) no such user in vgrid: %s'
-                                 % (pid, rule['run_as']))
+                                % (pid, rule['run_as']))
                         continue
 
                     # Rules may listen for only file or dir events and with
@@ -1096,8 +1100,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             self.handle_event(fake)
 
 
-def add_vgrid_file_monitor(configuration, path):
+def add_vgrid_file_monitor_watch(configuration, path):
     """Adds file inotify watch for *path*"""
+
     global file_inotify
     pid = multiprocessing.current_process().pid
 
@@ -1106,13 +1111,53 @@ def add_vgrid_file_monitor(configuration, path):
 
     if not file_inotify._wd_for_path.has_key(path):
         file_inotify.add_watch(force_utf8(vgrid_files_path))
+        logger.debug('(%s) Adding watch for: %s' % (pid,
+                     vgrid_files_path))
     else:
         logger.warning('(%s) file_monitor already exists for: %s'
                        % (pid, path))
 
+    return True
+
+
+def add_vgrid_file_monitor(configuration, vgrid_name, path):
+    """Add file monitor for all dirs and subdirs in *path*"""
+
+    global dir_cache
+    pid = multiprocessing.current_process().pid
+
+    vgrid_dir_cache = dir_cache[vgrid_name]
+    vgrid_files_path = os.path.join(configuration.vgrid_files_home,
+                                    path)
+
+    if os.path.exists(vgrid_files_path):
+        vgrid_files_path_mtime = os.path.getmtime(vgrid_files_path)
+
+        if not vgrid_dir_cache.has_key(path):
+            vgrid_dir_cache[path] = {}
+            vgrid_dir_cache[path]['mtime'] = 0
+            add_vgrid_file_monitor_watch(configuration, path)
+
+        if vgrid_files_path_mtime != vgrid_dir_cache[path]['mtime']:
+
+            # Traverse dirs for subdirs created since last run
+
+            for ent in scandir(vgrid_files_path):
+                if ent.is_dir(follow_symlinks=True):
+                    vgrid_sub_path = \
+                        ent.path.replace(os.path.join(configuration.vgrid_files_home,
+                            ''), '')
+                    if not vgrid_sub_path in vgrid_dir_cache.keys():
+                        add_vgrid_file_monitor(configuration,
+                                vgrid_name, vgrid_sub_path)
+
+            vgrid_dir_cache[path]['mtime'] = vgrid_files_path_mtime
+
+    return True
+
 
 def add_vgrid_file_monitors(configuration, vgrid_name):
-    """Add file monitors for all files in *vgrid_name*"""
+    """Add file monitors for all dirs and subdirs for *vgrid_name*"""
 
     global file_handler
     global dir_cache
@@ -1121,45 +1166,55 @@ def add_vgrid_file_monitors(configuration, vgrid_name):
     vgrid_dir_cache = dir_cache[vgrid_name]
 
     _file_monitor_lock.acquire()
+
     vgrid_dir_cache_keys = vgrid_dir_cache.keys()
     for path in vgrid_dir_cache_keys:
+
+        # print '(%s) checking: %s' % (pid, path)
+
         vgrid_files_path = os.path.join(configuration.vgrid_files_home,
                 path)
         if os.path.exists(vgrid_files_path):
 
-            add_vgrid_file_monitor(configuration, path)
-
-            if os.path.getmtime(vgrid_files_path) \
-                != vgrid_dir_cache[path]['mtime']:
-
-                # Fire events for dirs created since last run
-
-                for ent in scandir(vgrid_files_path):
-                    if ent.is_dir(follow_symlinks=True):
-                        vgrid_sub_path = \
-                            ent.path.replace(os.path.join(configuration.vgrid_files_home,
-                                ''), '')
-                        if not vgrid_sub_path in vgrid_dir_cache_keys:
-                            file_handler.dispatch(DirCreatedEvent(ent.path))
+            add_vgrid_file_monitor(configuration, vgrid_name, path)
         else:
-            logger.debug('(%s) add_vgrid_file_monitors: Removing deleted dir: %s from dir_cahce'
-                          % (pid, path))
+
+            logger.debug('(%s) Removing deleted dir: %s from dir_cache'
+                         % (pid, path))
+            print '(%s) Removing deleted dir: %s from dir_cache' \
+                % (pid, path)
             del vgrid_dir_cache[path]
 
     _file_monitor_lock.release()
 
+    return True
+
 
 def generate_vgrid_dir_cache(configuration, vgrid_base_path):
     """Generate directory cache for *vgrid_base_path*"""
+
     global dir_cache
     pid = multiprocessing.current_process().pid
 
     vgrid_path = os.path.join(configuration.vgrid_files_home,
                               vgrid_base_path)
+
     if not dir_cache.has_key(vgrid_base_path):
         dir_cache[vgrid_base_path] = {}
 
     vgrid_dir_cache = dir_cache[vgrid_base_path]
+
+    # Add VGrid root to directory cache
+
+    vgrid_dir_cache[vgrid_base_path] = {}
+    vgrid_dir_cache[vgrid_base_path]['mtime'] = \
+        os.path.getmtime(vgrid_path)
+
+    logger.debug('(%s) Updating dir_cache %s: %s' % (pid,
+                 vgrid_base_path,
+                 vgrid_dir_cache[vgrid_base_path]['mtime']))
+
+    # Add VGrid subdirs to directory cache
 
     for (root, dir_names, _) in walk(vgrid_path, followlinks=True):
         for dir_name in dir_names:
@@ -1169,18 +1224,19 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
                                  ''), '')
 
             if not vgrid_dir_cache.has_key(dir_cache_path):
-                logger.debug('(%s) Updating dir_cache %s: %s' % (pid,
-                             dir_cache_path,
-                             vgrid_dir_cache[dir_cache_path]['mtime']))
                 vgrid_dir_cache[dir_cache_path] = {}
                 vgrid_dir_cache[dir_cache_path]['mtime'] = \
                     os.path.getmtime(dir_path)
+                logger.debug('(%s) Updating dir_cache %s: %s' % (pid,
+                             dir_cache_path,
+                             vgrid_dir_cache[dir_cache_path]['mtime']))
 
     return True
 
 
 def load_dir_cache(configuration, vgrid_name):
     """Load directory cache for *vgrid_name"""
+
     global dir_cache
 
     result = True
@@ -1223,39 +1279,37 @@ def load_dir_cache(configuration, vgrid_name):
     return result
 
 
-def save_dir_cache(logger):
-    """Save directory cache for all vgrids"""
+def save_dir_cache(vgrid_name):
+    """Save directory cache for *vgrid_name*"""
+
     global dir_cache
     pid = multiprocessing.current_process().pid
 
+    result = True
+
     dir_cache_filename = '.%s.dir_cache' % configuration.vgrid_triggers
+    vgrid_dir_cache = dir_cache.get(vgrid_name, None)
 
-    for ent in scandir(configuration.vgrid_home):
-        vgrid_name = ent.name
-        vgrid_dir_cache = dir_cache.get(vgrid_name, None)
-        if vgrid_dir_cache is not None:
+    if vgrid_dir_cache is not None:
+        vgrid_home_path = os.path.join(configuration.vgrid_home,
+                vgrid_name)
+        dir_cache_filepath = os.path.join(vgrid_home_path,
+                dir_cache_filename)
+        vgrid_dir_cache_keys = [key for key in vgrid_dir_cache.keys()
+                                if key == vgrid_name
+                                or key.startswith('%s%s' % (vgrid_name,
+                                os.sep))]
+        if len(vgrid_dir_cache_keys) == 0:
+            logger.info('(%s) no dirs in cache for: %s' % (pid,
+                        vgrid_name))
+        else:
+            logger.info('(%s) saving cache for: %s to file: %s' % (pid,
+                        vgrid_name, dir_cache_filepath))
+            vgrid_dir_cache = {key: vgrid_dir_cache[key] for key in
+                               vgrid_dir_cache_keys}
+            pickle(vgrid_dir_cache, dir_cache_filepath, logger)
 
-            vgrid_home_path = os.path.join(configuration.vgrid_home,
-                    vgrid_name)
-            dir_cache_filepath = os.path.join(vgrid_home_path,
-                    dir_cache_filename)
-            vgrid_dir_cache_keys = [key for key in
-                                    vgrid_dir_cache.keys() if key
-                                    == vgrid_name
-                                    or key.startswith('%s%s'
-                                    % (vgrid_name, os.sep))]
-
-            if len(vgrid_dir_cache_keys) == 0:
-                logger.warning('(%s) no cache found for: %s' % (pid,
-                               vgrid_name))
-            else:
-                logger.info('(%s) saving cache for: %s to file: %s'
-                            % (pid, vgrid_name, dir_cache_filepath))
-                vgrid_dir_cache = {key: vgrid_dir_cache[key] for key in 
-                                   vgrid_dir_cache_keys}
-                pickle(vgrid_dir_cache, dir_cache_filepath, logger)
-
-    return True
+    return result
 
 
 def monitor(configuration, vgrid_name):
@@ -1329,11 +1383,11 @@ def monitor(configuration, vgrid_name):
 
     if len(file_monitor._emitters) != 1:
         logger.error('(%s) Number of file_monitor._emitters != 1' % pid)
-        sys.exit(1)
+        return 1
     file_monitor_emitter = min(file_monitor._emitters)
     if not hasattr(file_monitor_emitter, '_inotify'):
         logger.error('(%s) file_monitor require inotify' % pid)
-        sys.exit(1)
+        return 1
     file_inotify = file_monitor_emitter._inotify._inotify
 
     logger.info('(%s) trigger rule refresh for: %s' % (pid, vgrid_name))
@@ -1411,7 +1465,7 @@ def monitor(configuration, vgrid_name):
 
             keep_running = False
 
-            save_dir_cache(logger)
+            save_dir_cache(vgrid_name)
 
     print '(%s) Exiting monitor for vgrid: %s' % (pid, vgrid_name)
     logger.info('(%s) Exiting for vgrid: %s' % (pid, vgrid_name))
@@ -1455,15 +1509,10 @@ unless it is available in mig/server/MiGserver.conf
 
     # Start monitor for new/removed vgrids
 
-    # vgrid_name = 'XRay'
-    # vgrid_name = 'trigger-test'
-
     vgrid_name = '.'
     vgrid_monitors[vgrid_name] = \
         multiprocessing.Process(target=monitor, args=(configuration,
                                 vgrid_name))
-
-    # for path in os.listdir(configuration.vgrid_home):
 
     # Each top vgrid gets is own process
 
