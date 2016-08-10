@@ -31,8 +31,9 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import any_vgrid, default_mrsl_filename
+from shared.defaults import any_vgrid, default_mrsl_filename, csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
      themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -125,7 +126,16 @@ def main(client_id, user_arguments_dict):
     submit_options = ['fields_form', 'textarea_form', 'files_form']
 
     open_button_id = 'open_fancy_upload'
-    (add_import, add_init, add_ready) = fancy_upload_js(configuration)
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {'dest_dir': '.' + os.sep, 'fancy_open': open_button_id,
+                    'default_mrsl': default_mrsl, 'form_method': form_method,
+                    'csrf_field': csrf_field, 'csrf_limit': csrf_limit}
+    target_op = 'uploadchunked'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    (add_import, add_init, add_ready) = fancy_upload_js(configuration,
+                                                        csrf_token=csrf_token)
     add_init += '''
     options = %s;
 
@@ -199,12 +209,18 @@ Please fill in one or more fields below to define your job before hitting
 Submit Job at the bottom of the page.
 Empty fields will simply result in the default value being used and each field
 is accompanied by a help link providing further details about the field."""})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
-<div class="submitjob">
-<form method="post" action="submitfields.py">
-"""
-                          })
+
+    fill_helpers.update({'fancy_dialog': fancy_dialog})
+    target_op = 'submitfields'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
+    output_objects.append({'object_type': 'html_form', 'text': """
+<div class='submitjob'>
+<form method='%(form_method)s' action='%(target_op)s.py'> 
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+""" % fill_helpers})
     show_fields = get_job_specs(configuration)
     try:
         parsed_mrsl = dict(parse_lines(default_mrsl))
@@ -314,8 +330,7 @@ help</a><br />
                                    })
         output_objects.append({'object_type': 'html_form', 'text': "<br />"})
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    output_objects.append({'object_type': 'html_form', 'text': """
 <br />
 <table class='centertext'>
 <tr><td><input type='submit' value='Submit Job' />
@@ -327,8 +342,7 @@ help</a><br />
 </div>
 """
                            })
-    output_objects.append({'object_type': 'html_form', 
-                           'text': '''
+    output_objects.append({'object_type': 'html_form', 'text': '''
 </div><!-- fields_form-->
 <div id="textarea_form" style="display:none;">
 '''})
@@ -355,28 +369,31 @@ Actual examples for inspiration:
 </div>
     """})
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    target_op = 'textarea'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+    output_objects.append({'object_type': 'html_form', 'text': """
 <!-- 
 Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
 are supplied: thus we simply send a bogus jobname which does nothing
 -->
-<form method="post" action="textarea.py">
-<table class="submitjob">
-<tr><td class="centertext">
-<input type=hidden name=jobname_0_0_0 value=" " />
-<textarea cols="82" rows="25" name="mrsltextarea_0">
+<form method='%(form_method)s' action='%(target_op)s.py'> 
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+<table class='submitjob'>
+<tr><td class='centertext'>
+<input type=hidden name=jobname_0_0_0 value=' ' />
+<textarea cols='82' rows='25' name='mrsltextarea_0'>
 %(default_mrsl)s
 </textarea>
 </td></tr>
 <tr><td class='centertext'>
-<input type="submit" value="Submit Job" />
-<input type="checkbox" name="save_as_default" >Save as default job template
+<input type='submit' value='Submit Job' />
+<input type='checkbox' name='save_as_default' >Save as default job template
 </td></tr>
 </table>
 </form>
-"""
-                           % {'default_mrsl': default_mrsl}})
+""" % fill_helpers})
 
     output_objects.append({'object_type': 'html_form', 
                            'text': '''
@@ -389,9 +406,10 @@ are supplied: thus we simply send a bogus jobname which does nothing
                           : 'Please upload your job file or packaged job files'
                            ' below:'
                           })
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
-<form enctype='multipart/form-data' action='textarea.py' method='post'>
+    output_objects.append({'object_type': 'html_form', 'text': """
+<form enctype='multipart/form-data' method='%(form_method)s'
+    action='%(target_op)s.py'> 
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table class='files'>
 <tr class='title'><td class='centertext' colspan=4>
 Upload job files
@@ -434,7 +452,6 @@ Upload other files efficiently (using chunking).
 </div><!-- files_form-->
 
 %(fancy_dialog)s
-""" % {'dest_dir': '.' + os.sep, 'fancy_dialog': fancy_dialog,
-       'fancy_open': open_button_id}})
+""" % fill_helpers})
     
     return (output_objects, status)

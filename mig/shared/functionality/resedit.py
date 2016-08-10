@@ -33,7 +33,9 @@ import socket
 
 import shared.resconfkeywords as resconfkeywords
 import shared.returnvalues as returnvalues
+from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments
 from shared.resource import init_conf, empty_resource_config 
@@ -145,9 +147,21 @@ description, you can likely just leave the field alone.''' % configuration.short
     exe_fields = resconfkeywords.get_exenode_specs(configuration)
     store_fields = resconfkeywords.get_storenode_specs(configuration)
 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'short_title': configuration.short_title,
+                     'form_method': form_method,
+                     'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
+    target_op = 'reseditaction'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
     output_objects.append({'object_type': 'html_form', 'text': """
-<form method='post' action='reseditaction.py'>
-"""
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+""" % fill_helpers
                            })
 
     # Resource overall fields

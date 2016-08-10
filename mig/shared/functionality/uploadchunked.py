@@ -39,11 +39,11 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import max_upload_files, max_upload_chunks, \
-     upload_block_size, upload_tmp_dir
+     upload_block_size, upload_tmp_dir, csrf_field
 from shared.fileio import strip_dir, write_chunk, delete_file, move, \
      get_file_size, makedirs_rec
 from shared.functional import validate_input
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import in_place, verbose
 from shared.safeinput import valid_path
@@ -167,6 +167,8 @@ def main(client_id, user_arguments_dict):
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
                          (key, val) in user_arguments_dict.items() if not key \
                           in manual_validation])
+    # IMPORTANT: we must explicitly inlude CSRF token
+    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, [''])
     (validate_status, accepted) = validate_input(
         validate_args,
         defaults,
@@ -180,18 +182,20 @@ def main(client_id, user_arguments_dict):
 
     logger.info('validated input in %s: %s' % (op_name, validate_args.keys()))
 
-    if not correct_handler('POST'):
-        logger.error('invalid method %s: %s' % (op_name, os.environ))
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     action = accepted['action'][-1]
     current_dir = os.path.normpath(accepted['current_dir'][-1].lstrip(os.sep))
     flags = ''.join(accepted['flags'])
     share_id = accepted['share_id'][-1]
     output_format = accepted['output_format'][-1]
+
+    if action != "status":
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     reject_write = False
     uploaded = []
@@ -312,8 +316,14 @@ def main(client_id, user_arguments_dict):
     logger.info('Looping through files: %s' % \
                 ' '.join([i[0] for i in upload_files]))
 
-    del_url = "uploadchunked.py?%soutput_format=%s;action=delete;%s=%s;%s=%s"
-    move_url = "uploadchunked.py?%soutput_format=%s;action=move;%s=%s;%s=%s;%s=%s"
+    del_url = "uploadchunked.py?%soutput_format=%s;action=delete;%s=%s;%s=%s;%s=%s"
+    move_url = "uploadchunked.py?%soutput_format=%s;action=move;%s=%s;%s=%s;%s=%s;%s=%s"
+
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = op_name
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
 
     # Please refer to https://github.com/blueimp/jQuery-File-Upload/wiki/Setup
     # for details about the status reply format in the uploadfile output object
@@ -324,7 +334,9 @@ def main(client_id, user_arguments_dict):
         for (rel_path, chunk_tuple) in upload_files:
             abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
             deleted = delete_file(abs_path, logger)
-            uploaded.append({'object_type': 'uploadfile', rel_path: deleted})
+            # Caller looks just for filename here since it is always relative
+            uploaded.append({'object_type': 'uploadfile',
+                             os.path.basename(rel_path): deleted})
         logger.info('delete done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action == 'status':
@@ -340,7 +352,8 @@ def main(client_id, user_arguments_dict):
                                           (id_args, output_format,
                                            filename_field,
                                            os.path.basename(rel_path),
-                                           files_field, "dummy")
+                                           files_field, "dummy", csrf_field,
+                                           csrf_token)
             uploaded.append(file_entry)
         logger.info('status done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
@@ -413,7 +426,8 @@ def main(client_id, user_arguments_dict):
                                           (id_args, output_format,
                                            filename_field,
                                            os.path.basename(rel_path),
-                                           files_field, "dummy")
+                                           files_field, "dummy", csrf_field,
+                                           csrf_token)
             else:
                 file_entry["moveType"] = "POST"
                 file_entry["moveDest"] = current_dir
@@ -422,7 +436,8 @@ def main(client_id, user_arguments_dict):
                                          filename_field,
                                          os.path.basename(rel_path),
                                          files_field, "dummy", dest_field,
-                                         current_dir)
+                                         current_dir, csrf_field,
+                                         csrf_token)
         else:
             logger.error('could not write %s chunk %s (%d vs %d)' % \
                          (abs_path, chunk_tuple[1:], chunk_size, range_size))

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmachines - virtual machine management
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,8 +33,9 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared import vms
-from shared.defaults import any_vgrid
+from shared.defaults import any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import render_menu, html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import user_allowed_vgrids
@@ -95,6 +96,14 @@ def main(client_id, user_arguments_dict):
     hypervisor_re = accepted['hypervisor_re'][-1].strip()
     sys_re = accepted['sys_re'][-1].strip()
     action = accepted['action'][-1].strip()
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Virtual Machines'
@@ -219,7 +228,16 @@ Please contact the Grid admins %s if you think they should be enabled.
 
         # request for existing pre-built machine
 
-        vms.create_vm(client_id, configuration, machine_name, machine_req)
+        logger.debug("create new vm: %s" % machine_req)
+        (create_status, create_msg) = vms.create_vm(client_id, configuration,
+                                                    machine_name, machine_req)
+        if not create_status:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "requested virtual machine could not be created: %s" % \
+                 create_msg})
+            status = returnvalues.SYSTEM_ERROR
+            return (output_objects, status)
 
     (action_status, action_msg, job_id) = (True, '', None)
     if action in ['start', 'stop', 'edit', 'delete']:
@@ -303,6 +321,16 @@ Please contact the Grid admins %s if you think they should be enabled.
 
     if len(machines) > 0:
 
+        form_method = 'post'
+        csrf_limit = get_csrf_limit(configuration)
+        fill_helpers =  {'form_method': form_method,
+                         'csrf_field': csrf_field,
+                         'csrf_limit': csrf_limit}
+        target_op = 'vmachines'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op,
+                             'csrf_token': csrf_token})
         # Create a pretty list with start/edit/stop/connect links
 
         pretty_machines = \
@@ -352,8 +380,11 @@ Please contact the Grid admins %s if you think they should be enabled.
 </form></ul></fieldset>"""
             edit_specs = """<fieldset>
 <legend>Edit VM Specs:</legend><ul class="no-bullets">
-<form method="post" action="vmachines.py">
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="action" value="edit">
+""" % fill_helpers
+            edit_specs += """
 <input type="hidden" name="machine_name" value="%(name)s">
 <input type="hidden" name="output_format" value="html">
 
@@ -391,9 +422,10 @@ Please contact the Grid admins %s if you think they should be enabled.
 <input class="styled_button" type="submit" value="Save Changes">
 </form>"""
             js_name = 'deletevm%s' % hexlify("%(name)s" % machine_specs)
-            helper = html_post_helper(js_name, 'vmachines.py',
+            helper = html_post_helper(js_name, '%s.py' % target_op,
                                       {'machine_name': machine_specs['name'],
-                                       'action': 'delete'})
+                                       'action': 'delete',
+                                       csrf_field: csrf_token})
             edit_specs += helper
             edit_specs += """<input class="styled_button" type="submit"
 value="Delete Machine" onClick="javascript: confirmDialog(%s, '%s');" >

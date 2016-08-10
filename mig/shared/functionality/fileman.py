@@ -32,21 +32,22 @@ their home directories.
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import csrf_backends, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_css_deps, \
      advanced_editor_js_deps, lock_info, edit_file
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.sharelinks import create_share_link_form
 
-def html_tmpl(configuration, client_id, title_entry):
+def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
     """HTML page base: some upload and menu entries depend on configuration"""
 
     edit_includes = ['switcher']
     fill_entries = {'vgrid_label': configuration.site_vgrid_label}
-    fill_entries['sharelink_form'] = create_share_link_form(configuration,
-                                                               client_id,
-                                                               'json')
+    fill_entries['sharelink_form'] = create_share_link_form(
+        configuration, client_id, 'json', '', csrf_map.get('sharelink', ''))
     if 'submitjob' in extract_menu(configuration, title_entry):
         fill_entries["upload_submit_entry"] = '''
             <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
@@ -57,7 +58,12 @@ def html_tmpl(configuration, client_id, title_entry):
         fill_entries["upload_submit_entry"] = '''
             <input id="submitmrsl_0" type="hidden" value="0" name="submitmrsl_0"/>
         '''
-        
+    # Fill csrf tokens for targets with static form, others are filled in JS
+    fill_entries["csrf_field"] = csrf_field
+    for (target_op, token) in csrf_map.items():
+        fill_entries["%s_csrf_token" % target_op] = token
+
+    # TODO: switch to use shared fancy_upload_html from shared.html!
     html = '''
     <div id="fm_debug"></div>
     <div id="fm_filemanager">
@@ -126,6 +132,8 @@ def html_tmpl(configuration, client_id, title_entry):
         </ul>
         <div id="fancyuploadtab">
             <!-- The file upload form used as target for the file upload widget -->
+            <!-- TODO: this form action and args do not seem to have any effect -->
+            <!-- Probably all overriden in our filemanager upload JS -->
             <form id="fancyfileupload" action="uploadchunked.py?output_format=json;action=put"
                 method="POST" enctype="multipart/form-data">
                 <fieldset id="fancyfileuploaddestbox">
@@ -196,6 +204,7 @@ def html_tmpl(configuration, client_id, title_entry):
     
         <form id="mkdir_form" method="post" action="mkdir.py">
         <fieldset>
+            <input type="hidden" name="%(csrf_field)s" value="%(mkdir_csrf_token)s" />
             <input type="hidden" name="output_format" value="json" />
             <input type="hidden" name="current_dir" value="./" />
             <label for="path">Directory name:</label>
@@ -208,6 +217,7 @@ def html_tmpl(configuration, client_id, title_entry):
     <div id="rename_dialog" title="Rename" style="display: none;">
     <form id="rename_form" method="post" action="mv.py">
     <fieldset>    
+        <input type="hidden" name="%(csrf_field)s" value="%(mv_csrf_token)s" />
         <input type="hidden" name="output_format" value="json" />
         <input type="hidden" name="flags" value="r" />
         <input type="hidden" name="src" value="" />
@@ -223,6 +233,7 @@ def html_tmpl(configuration, client_id, title_entry):
     <div id="pack_dialog" title="Pack" style="display: none;">
     <form id="pack_form" method="post" action="pack.py">
     <fieldset>
+        <input type="hidden" name="%(csrf_field)s" value="%(pack_csrf_token)s" />
         <input type="hidden" name="output_format" value="json" />
         <input type="hidden" name="flags" value="" />
         <input type="hidden" name="src" value="" />
@@ -368,7 +379,8 @@ def html_tmpl(configuration, client_id, title_entry):
     <div id="editor_dialog" title="Editor" style="display: none;">
     <div class="iconleftpad spinner"></div>
     %s
-''' % edit_file('', '', output_format='json', includes=edit_includes)
+''' % edit_file(configuration, client_id, '', '', output_format='json',
+                includes=edit_includes)
     html += '''
     <div id="editor_output"></div>
     </div>
@@ -393,7 +405,7 @@ def css_tmpl(configuration):
     css['advanced'] += advanced_editor_css_deps()
     return css
 
-def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
+def js_tmpl(entry_path='/', enable_submit='true', preview='true', csrf_map={}):
     """Javascript to include in the page header"""
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
@@ -401,6 +413,16 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
 <!-- Filemanager and dependencies -->
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
+<script type="text/javascript">
+var csrf_field = "%s";
+var csrf_map = {};
+''' % csrf_field
+    for (target_op, token) in csrf_map.items():
+        js += '''
+csrf_map["%s"] = "%s";
+''' % (target_op, token)
+    js += '''
+</script>
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
@@ -511,7 +533,7 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
     </tr>
 {% } %}
 </script>
-'''
+''' 
     js += advanced_editor_js_deps(include_jquery=False)
     js += lock_info('this file', -1)
     js += '''
@@ -597,13 +619,21 @@ def main(client_id, user_arguments_dict):
         enable_submit = 'true'
     else:
         enable_submit = 'false'
+    csrf_map = {}
+    method = 'post'
+    limit = get_csrf_limit(configuration)
+    for target_op in csrf_backends:
+        csrf_map[target_op] = make_csrf_token(configuration, method,
+                                                 target_op, client_id, limit)
     title_entry['javascript'] = js_tmpl(entry_path, enable_submit,
-                                        str(configuration.site_enable_preview))
+                                        str(configuration.site_enable_preview),
+                                        csrf_map)
     
     output_objects.append({'object_type': 'header', 'class': 'fileman-title',
                            'text': 'File Manager' })
     output_objects.append({'object_type': 'html_form', 'text':
-                           html_tmpl(configuration, client_id, title_entry)})
+                           html_tmpl(configuration, client_id, title_entry,
+                                     csrf_map)})
 
     if len(all_paths) > 1:
         output_objects.append({'object_type': 'sectionheader', 'text':

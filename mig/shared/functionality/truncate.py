@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# truncate - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# truncate - truncate a file to given size
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,7 @@ import glob
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose
 from shared.validstring import valid_user_path
@@ -65,15 +65,17 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     flags = ''.join(accepted['flags'])
     size = int(accepted['size'][-1])
     pattern_list = accepted['path']
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name

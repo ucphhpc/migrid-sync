@@ -350,7 +350,7 @@ def create_vm(client_id, configuration, machine_name, machine_req):
     Set sys_re and sys_base to use common images from the runtime env
     on the resource or unset both to use a custom image from user home.
     """
-
+    _logger = configuration.logger
     specs = default_vm_specs(configuration)
     specs.update(machine_req)
    
@@ -377,10 +377,17 @@ def create_vm(client_id, configuration, machine_name, machine_req):
 
     # Create the vm
 
-    if not os.path.exists(vm_home):
+    if os.path.exists(vm_home):
+        _logger.error("VM %s already exists for %s" % (machine_name,
+                                                       client_id))
+        return (False, "VM %s already exists!" % machine_name)
+    else:
+        data_disk_path = os.path.join(server_vms_builder_home, data_disk)
+        if not os.path.isfile(data_disk_path):
+            _logger.error("Missing data disk: %s" % data_disk_path)
+            return (False, "No such data disk: %s" % data_disk)
         os.mkdir(vm_home)
-        shutil.copy(os.path.join(server_vms_builder_home, data_disk),
-                    vm_home + os.sep)
+        shutil.copy(data_disk_path, vm_home + os.sep)
 
         # Use OS image from runtime env resource for performance if possible
         # with fall back to image from user home if custom image
@@ -392,18 +399,24 @@ def create_vm(client_id, configuration, machine_name, machine_req):
         else:
             img_re = ''
             img_location = ''
-            shutil.copy(os.path.join(server_vms_builder_home,
-                                     specs['sys_disk']), vm_home + os.sep)
+            sys_disk_path = os.path.join(server_vms_builder_home, 
+                                         specs['sys_disk'])
+            if not os.path.isfile(data_disk_path):
+                _logger.error("Missing system disk: %s" % sys_disk_path)
+                return (False, "No such system disk: %(sys_disk)s" % specs)
+            shutil.copy(sys_disk_path, vm_home + os.sep)
 
         # Build conf file is always needed for specs like arch, mem and cpu
         # copy default cfg and update with machine_req specs
 
         shutil.copy(os.path.join(server_vms_builder_home, sys_conf),
                     vm_home + os.sep)
-        edit_vm(client_id, configuration, machine_name, machine_req)
+        (edit_status, edit_msg) = edit_vm(client_id, configuration,
+                                          machine_name, machine_req)
         location_fd = open(os.path.join(vm_home, sys_location), 'w')
         location_fd.write("%s:%s:%s" % (img_re, img_location, sys_disk))
         location_fd.close()
+        return (edit_status, edit_msg)
         
 def edit_vm(client_id, configuration, machine_name, machine_specs):
     """Updates the vm configuration for vm with given machine_name"""

@@ -29,7 +29,7 @@ import os
 import sys
 
 from shared.base import requested_page
-from shared.defaults import default_pager_entries
+from shared.defaults import default_pager_entries, csrf_field
 
 # Define all possible menu items
 menu_items = {}
@@ -389,7 +389,7 @@ def man_base_html(configuration, overrides={}):
             confirm_overrides[name] = overrides[name]
     return confirm_html(configuration, **confirm_overrides)
 
-def fancy_upload_js(configuration, callback=None, share_id=''):
+def fancy_upload_js(configuration, callback=None, share_id='', csrf_token=''):
     """Build standard fancy upload dependency imports, init and ready
     snippets.
     """
@@ -491,6 +491,8 @@ def fancy_upload_js(configuration, callback=None, share_id=''):
 </script>
     '''
     add_init = '''
+    var csrf_field = "%(csrf_field)s";
+
     /* Default fancy upload dest - optionally override before open_dialog call */
     var remote_path = ".";
     function setUploadDest(path) {
@@ -499,20 +501,22 @@ def fancy_upload_js(configuration, callback=None, share_id=''):
     function openFancyUpload() {
         var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
         open_dialog("Upload Files", %(callback)s, remote_path, false, 
-                    "%(share_id)s");
+                    "%(share_id)s", "%(csrf_token)s");
     }
-    ''' % {"callback": callback, "share_id": share_id}
+    ''' % {"callback": callback, "share_id": share_id,
+           "csrf_field": csrf_field, "csrf_token": csrf_token}
     add_ready = ''
     return (add_import, add_init, add_ready)
 
-def fancy_upload_html(configuration, id_args=''):
+def fancy_upload_html(configuration):
     """Build standard html fancy upload overlay dialog"""
     html = """
     <div id='fancyuploadchunked_dialog' title='Upload File' style='display: none;'>
 
     <!-- The file upload form used as target for the file upload widget -->
-    <form id='fancyfileupload' action='uploadchunked.py?%soutput_format=json;action=put'
-        method='POST' enctype='multipart/form-data'>
+    <!-- IMPORTANT: the form action and hidden args are set in upload JS -->
+    <form id='fancyfileupload' enctype='multipart/form-data' method='post'
+        action='uploadchunked.py'>
         <fieldset id='fancyfileuploaddestbox'>
             <label id='fancyfileuploaddestlabel' for='fancyfileuploaddest'>
                 Optional final destination dir:
@@ -553,7 +557,7 @@ def fancy_upload_html(configuration, id_args=''):
     <!-- For status and error output messages -->
     <div id='fancyuploadchunked_output'></div>
     </div>
-    """ % id_args
+    """
     return html
 
 def get_cgi_html_preamble(

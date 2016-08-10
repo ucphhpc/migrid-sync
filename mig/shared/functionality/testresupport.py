@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # testresupport - run test job to verify support for a runtime env
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,9 +33,11 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import csrf_field
 from shared.fileio import unpickle, write_file
 from shared.findtype import is_owner, client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.job import new_job
 from shared.refunctions import get_re_dict
@@ -109,6 +111,14 @@ def main(client_id, user_arguments_dict):
     re_name = accepted['re_name'][-1]
     status = returnvalues.OK
     visible_res = user_visible_res_confs(configuration, client_id)
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not re_name:
         output_objects.append(

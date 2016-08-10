@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequest - let user send request to other user or vgrid/resource admin
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,8 +28,9 @@
 """Send request e.g. for access (ownership or membership) back end"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import any_protocol
+from shared.defaults import any_protocol, csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 
 
@@ -73,28 +74,41 @@ will not be tolerated!'''})
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Request %s membership/ownership' % \
                            configuration.site_vgrid_label})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
-<form method='post' action='sendrequestaction.py'>
+
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'vgrid_label': configuration.site_vgrid_label,
+                     'form_method': form_method,
+                     'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
+    target_op = 'sendrequestaction'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
+    output_objects.append({'object_type': 'html_form', 'text': """
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table align='center'>
 <tr><td>Request type</td><td><select name=request_type>
-<option value=vgridmember>%(_label)s membership</option>
-<option value=vgridowner>%(_label)s ownership</option>
+<option value=vgridmember>%(vgrid_label)s membership</option>
+<option value=vgridowner>%(vgrid_label)s ownership</option>
 </select></td></tr>
 <tr><td>
-%(_label)s name </td><td><input name=vgrid_name />
+%(vgrid_label)s name </td><td><input name=vgrid_name />
 </td></tr>
 <tr>
 <td>Reason (text to owners)</td><td><input name=request_text size=40 /></td>
 </tr>
 <tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
-</form>""" % {'_label': configuration.site_vgrid_label}})
+</form>""" % fill_helpers})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Request resource ownership'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method='post' action='sendrequestaction.py'>
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table align='center'>
 <tr><td>Request type</td><td><select name=request_type>
 <option value=resourceowner>Resource ownership</option>
@@ -106,16 +120,18 @@ Resource ID </td><td><input name=unique_resource_name />
 <td>Reason (text to owners)</td><td><input name=request_text size=40 /></td>
 </tr>
 <tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
-</form>"""})
+</form>""" % fill_helpers})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Send message'})
     protocol_options = ''
     for proto in [any_protocol] + configuration.notify_protocols:
         protocol_options += '<option value=%s>%s</option>\n' % (proto, proto)
+    fill_helpers['protocol_options'] = protocol_options
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method='post' action='sendrequestaction.py'>
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table align='center'>
 <tr><td>Request type</td><td><select name=request_type>
 <option value=plain>Plain message</option>
@@ -124,13 +140,13 @@ Resource ID </td><td><input name=unique_resource_name />
 User ID </td><td><input name=cert_id size=50 />
 </td></tr>
 <tr><td>Protocol</td><td><select name=protocol>
-%s
+%(protocol_options)s
 </select></td></tr>
 <tr>
 <td>Message</td>
 <td><textarea name=request_text cols=72 rows=10 /></textarea></td>
 </tr>
 <tr><td><input type='submit' value='Send' /></td><td></td></tr></table>
-</form>""" % protocol_options})
+</form>""" % fill_helpers})
 
     return (output_objects, returnvalues.OK)

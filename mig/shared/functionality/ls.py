@@ -37,8 +37,9 @@ from urllib import quote
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_path
-from shared.defaults import seafile_ro_dirname
+from shared.defaults import seafile_ro_dirname, csrf_field
 from shared.functional import validate_input
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
      confirm_js, confirm_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -447,9 +448,23 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = page_title
 
     open_button_id = 'open_fancy_upload'
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {'dest_dir': current_dir + os.sep, 'share_id': share_id,
+                    'flags': flags, 'tmp_flags': flags, 'long_set':
+                    long_list(flags), 'recursive_set': recursive(flags),
+                    'all_set': all(flags), 'fancy_open': open_button_id,
+                    'fancy_dialog': fancy_upload_html(configuration),
+                    'form_method': form_method, 'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
+    target_op = 'uploadchunked'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     (cf_import, cf_init, cf_ready) = confirm_js(configuration)
     (fu_import, fu_init, fu_ready) = fancy_upload_js(
-        configuration, 'function() { location.reload(); }', share_id)
+        configuration, 'function() { location.reload(); }', share_id,
+        csrf_token)
     add_import = '''
 %s
 %s
@@ -486,8 +501,12 @@ def main(client_id, user_arguments_dict):
     # Shared URL helpers 
     ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s;flags=%s' % \
                       (id_args, flags)
-    rm_url_template = 'rm.py?%spath=%%(rel_path_enc)s' % id_args
-    rmdir_url_template ='rm.py?%spath=%%(rel_path_enc)s;flags=r' % id_args
+    csrf_token = make_csrf_token(configuration, form_method, 'rm', client_id,
+                                 csrf_limit)
+    rm_url_template = 'rm.py?%spath=%%(rel_path_enc)s;%s=%s' % \
+                      (id_args, csrf_field, csrf_token)
+    rmdir_url_template ='rm.py?%spath=%%(rel_path_enc)s;flags=r;%s=%s' % \
+                         (id_args, csrf_field, csrf_token)
     editor_url_template = 'editor.py?%spath=%%(rel_path_enc)s' % id_args
     redirect_url_template = '/%s/%%(rel_path_enc)s' % redirect_path
 
@@ -529,7 +548,7 @@ Working directory:
 
     more_html = """
 <div class='files if_full'>
-<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
+<form method='%(form_method)s' name='fileform' onSubmit='return selectedFilesAction();'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=2>
 Advanced file actions
@@ -555,7 +574,7 @@ Action on paths selected below
 </table>    
 </form>
 </div>
-"""
+""" % {'form_method': form_method}
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : more_html})
@@ -619,13 +638,6 @@ Action on paths selected below
                       real_path, flags, 0)
             dir_listings.append(dir_listing)
 
-    fill_helper = {'dest_dir': current_dir + os.sep, 'share_id': share_id,
-                   'flags': flags, 'tmp_flags': flags, 'long_set':
-                   long_list(flags), 'recursive_set': recursive(flags),
-                   'all_set': all(flags), 'fancy_open': open_button_id,
-                   'fancy_dialog': fancy_upload_html(configuration, id_args)
-                   }
-        
     output_objects.append({'object_type': 'html_form', 'text'
                            : """<br/>
     <div class='files disable_read'>
@@ -635,7 +647,7 @@ Action on paths selected below
     </p>
     </div>
     <div class='files enable_read'>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <table class='files'>
     <tr class=title><td class=centertext>
     Filter paths (wildcards like * and ? are allowed)
@@ -649,11 +661,11 @@ Action on paths selected below
     </table>    
     </form>
     </div>
-    """ % fill_helper})
+    """ % fill_helpers})
 
     # Short/long format buttons
 
-    fill_helper['tmp_flags'] = flags + 'l'
+    fill_helpers['tmp_flags'] = flags + 'l'
     htmlform = """
     <table class='files if_full'>
     <tr class=title><td class=centertext colspan=4>
@@ -663,26 +675,26 @@ Action on paths selected below
     <tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
     <tr><td>Long format</td><td>
     %(long_set)s</td><td>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
 
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />" % entry
-    fill_helper['tmp_flags'] = flags.replace('l', '')
+    fill_helpers['tmp_flags'] = flags.replace('l', '')
     htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />" % entry
     htmlform += """
@@ -693,31 +705,31 @@ Action on paths selected below
 
     # Recursive output
 
-    fill_helper['tmp_flags'] = flags + 'r'
+    fill_helpers['tmp_flags'] = flags + 'r'
     htmlform += """
     <!-- Non-/recursive list buttons -->
     <tr><td>Recursion</td><td>
-    %(recursive_set)s</td><td>""" % fill_helper
+    %(recursive_set)s</td><td>""" % fill_helpers
     htmlform += """
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"% entry
-    fill_helper['tmp_flags'] = flags.replace('r', '')
+    fill_helpers['tmp_flags'] = flags.replace('r', '')
     htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
                                   
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
@@ -731,28 +743,28 @@ Action on paths selected below
     htmlform += """
     <!-- Show dot files buttons -->
     <tr><td>Show hidden files</td><td>
-    %(all_set)s</td><td>""" % fill_helper
-    fill_helper['tmp_flags'] = flags + 'a'
+    %(all_set)s</td><td>""" % fill_helpers
+    fill_helpers['tmp_flags'] = flags + 'a'
     htmlform += """
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />" % entry
-    fill_helper['tmp_flags'] = flags.replace('a', '')
+    fill_helpers['tmp_flags'] = flags.replace('a', '')
     htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"% entry
     htmlform += """
@@ -770,8 +782,7 @@ Action on paths selected below
     # create additional action forms
 
     if first_match:
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : """
+        htmlform = """
 <br />
 <div class='files disable_write'>
 <p class='info icon'>
@@ -788,7 +799,7 @@ Fill in the path of a file to edit and press 'edit' to open that file in the<br 
 online file editor. Alternatively a file can be selected for editing through<br />
 the listing of personal files. 
 </td><td colspan=2 class=righttext>
-<form name='editor' method='post' action='editor.py'>
+<form name='editor' method='get' action='editor.py'>
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='share_id' value='%(share_id)s' />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
@@ -797,7 +808,12 @@ the listing of personal files.
 </form>
 </td></tr>
 </table>
-<br />
+<br />""" % fill_helpers
+        target_op = 'mkdir'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        htmlform += """
 <table class='files enable_write'>
 <tr class=title><td class=centertext colspan=4>
 Create directory
@@ -805,7 +821,8 @@ Create directory
 <tr><td>
 Name of new directory to be created in current directory (%(dest_dir)s)
 </td><td class=righttext colspan=3>
-<form action='mkdir.py' method=post>
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='share_id' value='%(share_id)s' />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
 <input name='path' size=50 />
@@ -814,7 +831,15 @@ Name of new directory to be created in current directory (%(dest_dir)s)
 </td></tr>
 </table>
 <br />
-<form enctype='multipart/form-data' action='textarea.py' method='post'>
+""" % fill_helpers
+        target_op = 'textarea'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        htmlform += """
+<form enctype='multipart/form-data' method='%(form_method)s'
+    action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='share_id' value='%(share_id)s' />
 <table class='files enable_write if_full'>
 <tr class='title'><td class=centertext colspan=4>
@@ -859,5 +884,6 @@ Upload files efficiently (using chunking).
 <script type='text/javascript' >
     setUploadDest('%(dest_dir)s');
 </script>
-    """ % fill_helper})
+    """ % fill_helpers
+        output_objects.append({'object_type': 'html_form', 'text': htmlform})
     return (output_objects, status)

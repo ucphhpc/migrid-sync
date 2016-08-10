@@ -237,12 +237,11 @@ def main(client_id, user_arguments_dict):
                         'lines': output_lines})
             htmlform = \
                 '''
-<form method="post" action="editor.py">
+<form method="get" action="editor.py">
 <input type="hidden" name="path" value="%s" />
 <input type="submit" value="Edit file" />
 </form>
-'''\
-                 % relative_path
+''' % relative_path
             output_objects.append({'object_type': 'html_form', 'text'
                                   : htmlform})
 

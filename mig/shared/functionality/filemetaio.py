@@ -760,6 +760,8 @@ def main(client_id, user_arguments_dict):
     path = ''.join(accepted['path'])
     extension = ''.join(accepted['extension'])
 
+    # TODO: add CSRF checks here like in sharelinks
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 

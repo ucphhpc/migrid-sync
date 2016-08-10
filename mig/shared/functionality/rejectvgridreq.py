@@ -31,9 +31,9 @@ from binascii import unhexlify
 import os
 
 from shared.accessrequests import load_access_request, delete_access_request
-from shared.defaults import any_protocol
+from shared.defaults import any_protocol, csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
      vgrid_list_subvgrids, vgrid_add_resources
@@ -68,14 +68,16 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     vgrid_name = accepted['vgrid_name'][-1].strip()
     request_name = unhexlify(accepted['request_name'][-1])
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
@@ -112,16 +114,26 @@ Deleted %(request_type)s access request to %(target)s for %(entity)s .
         id_field = "unique_resource_name"
     else:
         id_field = "cert_id"
-    fill_helper = {'protocol': any_protocol, 'id_field': id_field,
-                   '_label': configuration.site_vgrid_label}
-    fill_helper.update(req)
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {'protocol': any_protocol, 'id_field': id_field,
+                    'vgrid_label': configuration.site_vgrid_label,
+                    'form_method': form_method, 'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
+    fill_helpers.update(req)
+    target_op = 'sendrequestaction'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
     output_objects.append({'object_type': 'html_form', 'text':
                            """
 <p>
 You can use the reply form below if you want to additionally send an
 explanation for rejecting the request.
 </p>
-<form method='post' action='sendrequestaction.py'>
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type=hidden name=request_type value='vgridreject' />
 <input type=hidden name=vgrid_name value='%(target)s' />
 <input type=hidden name=%(id_field)s value='%(entity)s' />
@@ -132,9 +144,9 @@ explanation for rejecting the request.
 </tr><tr>
 <td><textarea name=request_text cols=72 rows=10>
 We have decided to reject your %(request_type)s request to our %(target)s
-%(_label)s.
+%(vgrid_label)s.
 
-Regards, the %(target)s %(_label)s owners
+Regards, the %(target)s %(vgrid_label)s owners
 </textarea></td>
 </tr>
 <tr>
@@ -143,7 +155,7 @@ Regards, the %(target)s %(_label)s owners
 </table>
 </form>
 <br />
-""" % fill_helper})
+""" % fill_helpers})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

@@ -32,10 +32,11 @@ import os
 import shared.returnvalues as returnvalues
 from shared.certreq import build_certreqitem_object, list_cert_reqs, \
      get_cert_req, delete_cert_req, accept_cert_req
-from shared.defaults import default_pager_entries
+from shared.defaults import default_pager_entries, csrf_field
 from shared.fileio import send_message_to_grid_script, read_tail
 from shared.findtype import is_admin
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -250,6 +251,11 @@ provide access to e.g. managing the grid job queues.
                               : ret})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = 'migadmin'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
     certreqs = []
     for req_id in ret:
         (load_status, req_dict) = get_cert_req(req_id, configuration)
@@ -263,8 +269,9 @@ provide access to e.g. managing the grid job queues.
         req_item = build_certreqitem_object(configuration, req_dict)
         
         js_name = 'create%s' % req_id
-        helper = html_post_helper(js_name, 'migadmin.py',
-                                  {'action': 'addcertreq', 'req_id': req_id})
+        helper = html_post_helper(js_name, '%s.py' % target_op,
+                                  {'action': 'addcertreq', 'req_id': req_id,
+                                   csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
         req_item['addcertreqlink'] = {
             'object_type': 'link', 'destination':
@@ -272,8 +279,9 @@ provide access to e.g. managing the grid job queues.
             (js_name, 'Really accept %s?' % req_id),
             'class': 'addlink iconspace', 'title': 'Accept %s' % req_id, 'text': ''}
         js_name = 'delete%s' % req_id
-        helper = html_post_helper(js_name, 'migadmin.py',
-                                  {'action': 'delcertreq', 'req_id': req_id})
+        helper = html_post_helper(js_name, '%s.py' % target_op,
+                                  {'action': 'delcertreq', 'req_id': req_id,
+                                   csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
         req_item['delcertreqlink'] = {
             'object_type': 'link', 'destination':

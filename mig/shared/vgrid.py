@@ -31,8 +31,9 @@ import fnmatch
 import os
 import re
 
-from shared.defaults import default_vgrid, keyword_all
+from shared.defaults import default_vgrid, keyword_all, csrf_field
 from shared.findtype import is_user, is_resource
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.listhandling import list_items_in_pickled_list
 from shared.modified import mark_vgrid_modified
 from shared.serial import load, dump
@@ -127,6 +128,14 @@ doubt, just let the user request access and accept it with the
     for (field, _) in extra_fields:
         extra_titles_html += '<th>%s</th>' % field.replace('_', ' ').title()
 
+    fill_helpers = {'item': item_string, 'vgrid': vgrid_name, 'extra_titles':
+                    extra_titles_html, 'vgrid_label':
+                    configuration.site_vgrid_label}
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers.update({'form_method': form_method, 'csrf_field': csrf_field,
+                         'csrf_limit': csrf_limit})
+
     # success, so direct and inherit are lists of unique user/res/trigger IDs
     extras = [i for i in inherit if not i in direct]
     if extras:
@@ -136,9 +145,7 @@ doubt, just let the user request access and accept it with the
         <table class="vgrid%(item)s">
           <thead><tr><th></th><th>%(item)s</th>%(extra_titles)s</thead>
           <tbody>
-''' % {'item': item_string,
-       'vgrid': vgrid_name,
-       'extra_titles': extra_titles_html}
+''' % fill_helpers
 
         for elem in extras:
             extra_fields_html = ''
@@ -164,17 +171,20 @@ doubt, just let the user request access and accept it with the
 
     # TODO: add remove vgrid button if only inherited owners
     if direct:
+        target_op = 'rm%s' % script_suffix
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
         form = '''
-      <form method="post" action="rm%(scriptname)s.py">
+      <form method="%(form_method)s" action="%(target_op)s.py">
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
         <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
         Current %(item)ss of %(vgrid)s:
         <table class="vgrid%(item)s">
           <thead><tr><th>Remove</th><th>%(item)s</th>%(extra_titles)s</thead>
           <tbody>
-''' % {'item': item_string,
-       'scriptname': script_suffix,
-       'vgrid': vgrid_name,
-       'extra_titles': extra_titles_html}
+''' % fill_helpers
 
         for elem in direct:
             extra_fields_html = ''
@@ -197,9 +207,9 @@ doubt, just let the user request access and accept it with the
 
         form += '''
         </tbody></table>
-        <input type="submit" value="Remove %s" />
+        <input type="submit" value="Remove %(item)s" />
       </form>
-''' % item_string
+''' % fill_helpers
                     
         out.append({'object_type': 'html_form', 'text': form})
 
@@ -222,12 +232,21 @@ doubt, just let the user request access and accept it with the
                 add_html += '<option value="%s">%s</option>' % (val, val)
             add_html += '</select>'
         extra_fields_html += add_html + '</td></tr>'
-    out.append({'object_type': 'html_form',
-                'text': '''
-      
-      <form method="post" action="add%(script)s.py">
+
+    fill_helpers.update({'id_note_tr': id_note_tr,
+                         'id_html_tr': id_html_tr,
+                         'extra_fields': extra_fields_html
+                         })
+    target_op = 'add%s' % script_suffix
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
+    out.append({'object_type': 'html_form', 'text': '''
+      <form method="%(form_method)s" action="%(target_op)s.py">
       <fieldset>
-      <legend>Add %(_label)s %(item)s</legend>
+      <legend>Add %(vgrid_label)s %(item)s</legend>
+      <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
       <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
       <table>
       %(id_note_tr)s
@@ -241,11 +260,7 @@ doubt, just let the user request access and accept it with the
       </table>
       </fieldset>
       </form>
-''' % {'vgrid': vgrid_name, 'item': item_string, 'id_note_tr': id_note_tr,
-       'script': script_suffix, 'id_html_tr': id_html_tr,
-       'extra_fields': extra_fields_html,
-       '_label': configuration.site_vgrid_label}
-               })
+''' % fill_helpers})
     
     return (True, out)
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ import shared.returnvalues as returnvalues
 from shared.forum import list_single_thread, list_threads, reply, new_subject, \
      search_threads, toggle_subscribe, list_subscribers
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
@@ -118,11 +118,14 @@ access the forum.''' % (vgrid_name, configuration.site_vgrid_label)})
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if action in post_actions and not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+    if action in post_actions:
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name

@@ -31,10 +31,10 @@ from binascii import unhexlify
 import os
 
 from shared.accessrequests import load_access_request, delete_access_request
-from shared.defaults import any_protocol
+from shared.defaults import any_protocol, csrf_field
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables
 from shared.validstring import valid_user_path
 import shared.returnvalues as returnvalues
@@ -67,14 +67,16 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     unique_resource_name = accepted['unique_resource_name'][-1].strip()
     request_name = unhexlify(accepted['request_name'][-1])
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
@@ -115,16 +117,26 @@ you can only reject requests to your own resources.''' % request_name})
     output_objects.append({'object_type': 'text', 'text': '''
 Deleted %(request_type)s access request to %(target)s for %(entity)s .
 ''' % req})
-    fill_helper = {'protocol': any_protocol, 'unique_resource_name':
-                   unique_resource_name}
-    fill_helper.update(req)
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {'protocol': any_protocol,
+                    'unique_resource_name': unique_resource_name, 
+                    'form_method': form_method, 'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
+    fill_helpers.update(req)
+    target_op = 'sendrequestaction'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
     output_objects.append({'object_type': 'html_form', 'text':
                            """
 <p>
 You can use the reply form below if you want to additionally send an
 explanation for rejecting the request.
 </p>
-<form method='post' action='sendrequestaction.py'>
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type=hidden name=request_type value='resourcereject' />
 <input type=hidden name=unique_resource_name value='%(target)s' />
 <input type=hidden name=cert_id value='%(entity)s' />
@@ -146,7 +158,7 @@ Regards, the %(target)s resource owners
 </table>
 </form>
 <br />
-""" % fill_helper})
+""" % fill_helpers})
     output_objects.append({
         'object_type': 'link', 'destination':
         'resadmin.py?unique_resource_name=%s' % unique_resource_name,

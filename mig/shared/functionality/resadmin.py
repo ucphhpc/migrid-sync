@@ -39,8 +39,9 @@ import shared.returnvalues as returnvalues
 from shared.accessrequests import list_access_requests, load_access_request, \
      build_accessrequestitem_object
 from shared.base import sandbox_resource
-from shared.defaults import default_pager_entries
+from shared.defaults import default_pager_entries, csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -57,12 +58,14 @@ def signature():
 
 
 def display_resource(
+    client_id,
     resourcename,
     raw_conf,
     resource_config,
     owners,
     re_list,
     configuration,
+    fill_helpers
     ):
     """Format and print the information and actions for a
     given resource.
@@ -102,36 +105,46 @@ def display_resource(
             'failed to find host identifier from unique resource name!')
         (hosturl, identifier) = (None, 0)
 
-    html += '<a id="%s"></a>' % resourcename
-    html += '<h1>%s</h1>\n' % resourcename
-    html += '<h3>Configuration</h3>'
-    html += '''
-Use the <a class="editlink iconspace" href="resedit.py?hosturl=%s;hostidentifier=%s">
+    form_method = fill_helpers['form_method']
+    csrf_limit = fill_helpers['csrf_limit']
+    fill_helpers.update({'res_id': resourcename, 'hosturl': hosturl,
+                         'identifier': identifier})
+    
+    html += '''<a id="%(res_id)s"></a>
+<h1>%(res_id)ss</h1>
+<h3>Configuration</h3>
+
+Use the <a class="editlink iconspace"
+href="resedit.py?hosturl=%(hosturl)s;hostidentifier=%(identifier)s">
 editing interface
 </a>
 or make any changes manually in the text box below.<br />
 <a class="infolink iconspace" href="docs.py?show=Resource">
 Resource configuration docs
 </a>
-''' % (hosturl, identifier)  
-    html += ''
+'''
+    target_op = 'updateresconfig'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     html += '''
-<form method="post" action="updateresconfig.py">
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class=resources>
 <tr>
 <td class=centertext>
-<textarea class="fillwidth padspace" rows="25" name="resconfig">'''
+<textarea class="fillwidth padspace" rows="25" name="resconfig">''' % \
+    fill_helpers
     for line in raw_conf:
         html += '%s\n' % line.strip()
     html += \
         '''</textarea>
 <br />
-<input type="hidden" name="unique_resource_name" value="%s" />
+<input type="hidden" name="unique_resource_name" value="%(res_id)s" />
 <input type="submit" value="Save" />
 ----------
 <input type="reset" value="Forget changes" />
-'''\
-         % resourcename
+'''
 
     html += '''
 </td></tr>
@@ -153,15 +166,20 @@ Resource configuration docs
                 action_str = '(Re)Start'
             else:
                 action_str = action.capitalize()
-            html += \
-                '''<td>
-            <form method="post" action="%sfe.py">
-            <input type="hidden" name="unique_resource_name" value="%s" />
-            <input type="submit" value="%s" />
+            target_op = "%sfe" % action
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
+            fill_helpers.update({'action_str': action_str,
+                                 'target_op': target_op,
+                                 'csrf_token': csrf_token})
+            html += '''<td>
+            <form method="%(form_method)s" action="%(target_op)s.py">
+            <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+            <input type="hidden" name="unique_resource_name" value="%(res_id)s" />
+            <input type="submit" value="%(action_str)s" />
             </form>
             </td>
-            '''\
-                 % (action, resourcename, action_str)
+            ''' % fill_helpers
         html += '</tr>'
 
     html += '<tr class=title><td colspan=5>Execution Units</td></tr>\n'
@@ -171,24 +189,26 @@ Resource configuration docs
     else:
         html += '<tr><td>ALL UNITS</td>'
         for action in ['restart', 'status', 'stop', 'clean']:
-            html += \
-                '''<td>
-            <form method="post" action="%sexe.py">
-            <input type="hidden" name="unique_resource_name" value="%s" />
-            <input type="hidden" name="all" value="true" />
-            <input type="hidden" name="parallel" value="true" />'''\
-                 % (action, resourcename)
             if action == 'restart':
                 action_str = '(Re)Start'
             else:
                 action_str = action.capitalize()
-            html += \
-                '''
-            <input type="submit" value="%s" />
+            target_op = "%sexe" % action
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
+            fill_helpers.update({'action_str': action_str,
+                                 'target_op': target_op,
+                                 'csrf_token': csrf_token})
+            html += '''<td>
+            <form method="%(form_method)s" action="%(target_op)s.py">
+            <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+            <input type="hidden" name="unique_resource_name" value="%(res_id)s" />
+            <input type="hidden" name="all" value="true" />
+            <input type="hidden" name="parallel" value="true" />
+            <input type="submit" value="%(action_str)s" />
             </form>
             </td>
-            '''\
-                 % action_str
+            ''' % fill_helpers
         html += '</tr>'
 
         row_number = 1
@@ -200,16 +220,22 @@ Resource configuration docs
                     action_str = '(Re)Start'
                 else:
                     action_str = action.capitalize()
-                html += \
-                    '''<td>
-                <form method="post" action="%sexe.py">
-                <input type="hidden" name="unique_resource_name" value="%s" />
-                <input type="hidden" name="exe_name" value="%s" />
-                <input type="submit" value="%s" />
+                target_op = "%sexe" % action
+                csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                             client_id, csrf_limit)
+                fill_helpers.update({'unit': unit,
+                                     'action_str': action_str,
+                                     'target_op': target_op,
+                                     'csrf_token': csrf_token})
+                html += '''<td>
+                <form method="%(form_method)s" action="%(target_op)s.py">
+                <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+                <input type="hidden" name="unique_resource_name" value="%(res_id)s" />
+                <input type="hidden" name="exe_name" value="%(unit)s" />
+                <input type="submit" value="%(action_str)s" />
                 </form>
                 </td>
-                '''\
-                     % (action, resourcename, unit, action_str)
+                ''' % fill_helpers
             html += '</tr>'
             row_number += 1
 
@@ -220,24 +246,26 @@ Resource configuration docs
     else:
         html += '<tr><td>ALL UNITS</td>'
         for action in ['restart', 'status', 'stop', 'clean']:
-            html += \
-                '''<td>
-            <form method="post" action="%sstore.py">
-            <input type="hidden" name="unique_resource_name" value="%s" />
-            <input type="hidden" name="all" value="true" />
-            <input type="hidden" name="parallel" value="true" />'''\
-                 % (action, resourcename)
             if action == 'restart':
                 action_str = '(Re)Start'
             else:
                 action_str = action.capitalize()
-            html += \
-                '''
-            <input type="submit" value="%s" />
+            target_op = "%sstore" % action
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
+            fill_helpers.update({'action_str': action_str,
+                                 'target_op': target_op,
+                                 'csrf_token': csrf_token})
+            html += '''<td>
+            <form method="%(form_method)s" action="%(target_op)s.py">
+            <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+            <input type="hidden" name="unique_resource_name" value="%(res_id)s" />
+            <input type="hidden" name="all" value="true" />
+            <input type="hidden" name="parallel" value="true" />
+            <input type="submit" value="%(action_str)s" />
             </form>
             </td>
-            '''\
-                 % action_str
+            ''' % fill_helpers
         html += '</tr>'
 
         row_number = 1
@@ -249,16 +277,22 @@ Resource configuration docs
                     action_str = '(Re)Start'
                 else:
                     action_str = action.capitalize()
-                html += \
-                    '''<td>
-                <form method="post" action="%sstore.py">
-                <input type="hidden" name="unique_resource_name" value="%s" />
-                <input type="hidden" name="store_name" value="%s" />
-                <input type="submit" value="%s" />
+                target_op = "%sstore" % action
+                csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                             client_id, csrf_limit)
+                fill_helpers.update({'unit': unit,
+                                     'action_str': action_str,
+                                     'target_op': target_op,
+                                     'csrf_token': csrf_token})
+                html += '''<td>
+                <form method="%(form_method)s" action="%(target_op)s.py">
+                <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+                <input type="hidden" name="unique_resource_name" value="%(res_id)s" />
+                <input type="hidden" name="store_name" value="%(unit)s" />
+                <input type="submit" value="%(action_str)s" />
                 </form>
                 </td>
-                '''\
-                     % (action, resourcename, unit, action_str)
+                ''' % fill_helpers
             html += '</tr>'
             row_number += 1
 
@@ -267,37 +301,51 @@ Resource configuration docs
     html += '<h3>Owners</h3>'
     html += \
         '''
-Current owners of %s.<br />
+Current owners of %(res_id)s.<br />
 <table class=resources>
-''' % resourcename
+'''
 
+    target_op = "rmresowner"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op,
+                         'csrf_token': csrf_token})
     for owner_id in owners:
+        fill_helpers['cert_id'] = owner_id
         html += '''<tr><td>
-<form method="post" action="rmresowner.py">
-<input type="hidden" name="unique_resource_name" value="%s" />
-<input type="hidden" name="cert_id" value="%s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+<input type="hidden" name="unique_resource_name" value="%(res_id)s" />
+<input type="hidden" name="cert_id" value="%(cert_id)s" />
 <input type="hidden" name="output_format" value="html" />
 <input type="submit" value="Remove" />
 </form>
 </td>
-''' % (resourcename, owner_id)
+''' % fill_helpers
         html += '<td>' + owner_id + '</td></tr>'
     html += '</table>'
 
     openid_add = ""
     if configuration.user_openid_providers:
         openid_add = "either the OpenID alias or "
+    target_op = "addresowner"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'openid_add': openid_add,
+                         'target_op': target_op,
+                         'csrf_token': csrf_token})
     html += '''
 <table class=resources>
 <tr><td>
-<form method="post" action="addresowner.py">
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <fieldset>
 <legend>Add resource owner(s)</legend>
-Note: owners are specified with %s the Distinguished Name (DN) of the user.
+Note: owners are specified with %(openid_add)s the Distinguished Name (DN) of the user.
 If in doubt, just let the user request access and accept it with the
 <span class="addlink"></span>-icon in the Pending Requests table.
 <br />
-<input type="hidden" name="unique_resource_name" value="%s" />
+<input type="hidden" name="unique_resource_name" value="%(res_id)s" />
 <input type="hidden" name="output_format" value="html" />
 <div id="dynownerspares">
     <!-- placeholder for dynamic add owner fields -->
@@ -308,22 +356,27 @@ If in doubt, just let the user request access and accept it with the
 </td></tr>
 </table>
 <br />
-''' % (openid_add, resourcename)
+''' % fill_helpers
 
     # create html to request vgrid resource access
 
-    html += '<h3>%s access</h3>' % configuration.site_vgrid_label
+    html += '<h3>%(vgrid_label)s access</h3>'
 
+    target_op = "sendrequestaction"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op,
+                         'csrf_token': csrf_token})
     html += '''
 <table class=resources>
     <tr><td>
-    <form method="post" action="sendrequestaction.py">
+    <form method="%(form_method)s" action="%(target_op)s.py">
+    <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
     <fieldset>
-    <legend>Request resource access to additional %ss</legend>
-    <input type="hidden" name="unique_resource_name" value="%s" />
+    <legend>Request resource access to additional %(vgrid_label)ss</legend>
+    <input type="hidden" name="unique_resource_name" value="%(res_id)s" />
     <input type="hidden" name="request_type" value="vgridresource" />
-    <select name="vgrid_name">''' % \
-    (configuration.site_vgrid_label, resourcename)
+    <select name="vgrid_name">''' % fill_helpers
 
     # list all vgrids without access
 
@@ -348,15 +401,20 @@ If in doubt, just let the user request access and accept it with the
 
     html += '<h3>Runtime environments</h3>'
 
+    target_op = "testresupport"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     html += '''
 <table class=resources>
     <tr><td>
-    <form method="post" action="testresupport.py">
+    <form method="%(form_method)s" action="%(target_op)s.py">
+    <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
     <fieldset>
     <legend>Verify that resource supports the selected runtime environment
     </legend>
-    <input type="hidden" name="unique_resource_name" value="%s" />
-    <select name="re_name">''' % resourcename
+    <input type="hidden" name="unique_resource_name" value="%(res_id)s" />
+    <select name="re_name">''' % fill_helpers
 
     # list runtime environments that have a testprocedure
 
@@ -376,15 +434,19 @@ If in doubt, just let the user request access and accept it with the
 
     # create html to select and call script to display testprocedure history
 
-    verify_history = """
+    target_op = "showresupport"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+    verify_history = '''
 Show testprocedure history for the selected runtime environment and the
 resource with its current configuration.
     <table class=resources>
     <tr><td>
-    <form method="post" action="showresupport.py">
-    <input type="hidden" name="unique_resource_name" value="%s" />
-    <select name="re_name">"""\
-         % resourcename
+    <form method="%(form_method)s" action="%(target_op)s.py">
+    <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+    <input type="hidden" name="unique_resource_name" value="%(res_id)s" />
+    <select name="re_name">''' % fill_helpers
 
     # list runtime environments that have a testprocedure
 
@@ -406,7 +468,7 @@ resource with its current configuration.
 
     #html += verify_history
 
-    return html
+    return html % fill_helpers
 
 
 def main(client_id, user_arguments_dict):
@@ -468,6 +530,14 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
     
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'short_title': configuration.short_title,
+                     'vgrid_label': configuration.site_vgrid_label,
+                     'form_method': form_method,
+                     'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
+
     (re_stat, re_list) = list_runtime_environments(configuration)
     if not re_stat:
         logger.warning('Failed to load list of runtime environments')
@@ -477,7 +547,7 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : '%s Resources Owned' % configuration.short_title})
+                          : '%(short_title)s Resources Owned' % fill_helpers})
     quick_links = [{'object_type': 'text', 'text'
                    : 'Quick links to all your resources and individual management'}]
     quick_links.append({'object_type': 'html_form', 
@@ -534,31 +604,42 @@ def main(client_id, user_arguments_dict):
                     raw_conf = ['']
 
                 res_html = display_resource(
+                    client_id,
                     unique_resource_name,
                     raw_conf,
                     resource_config,
                     owner_list,
                     re_list,
                     configuration,
+                    fill_helpers
                     )
                 output_objects.append({'object_type': 'html_form',
                                        'text': res_html})
 
                 # Pending requests
 
-                helper = html_post_helper("acceptresourceownerreq",
-                                          "addresowner.py",
+                target_op = "addresowner"
+                csrf_token = make_csrf_token(configuration, form_method,
+                                             target_op, client_id, csrf_limit)
+                helper = html_post_helper(target_op,
+                                          "%s.py" % target_op,
                                           {'unique_resource_name':
                                            unique_resource_name,
                                            'cert_id': '__DYNAMIC__',
-                                           'request_name': '__DYNAMIC__'
+                                           'request_name': '__DYNAMIC__',
+                                           csrf_field: csrf_token
                                            })
                 output_objects.append({'object_type': 'html_form', 'text':
                                        helper})
-                helper = html_post_helper("rejectresourcereq", "rejectresreq.py",
+                target_op = "rejectresreq"
+                csrf_token = make_csrf_token(configuration, form_method,
+                                             target_op, client_id, csrf_limit)
+                helper = html_post_helper(target_op,
+                                          "%s.py" % target_op,
                                           {'unique_resource_name':
                                            unique_resource_name,
-                                           'request_name': '__DYNAMIC__'
+                                           'request_name': '__DYNAMIC__',
+                                           csrf_field: csrf_token
                                            })
                 output_objects.append({'object_type': 'html_form', 'text':
                                        helper})
@@ -589,9 +670,10 @@ def main(client_id, user_arguments_dict):
                         'object_type': 'link',
                         'destination':
                         "javascript: confirmDialog(%s, '%s', %s, %s);" % \
-                        ("acceptresourceownerreq",
+                        ("addresowner",
                          "Accept %(target)s %(request_type)s request from %(entity)s" % req,
-                         'undefined', "{%s}" % ', '.join(["'%s': '%s'" % pair for pair in accept_args.items()])),
+                         'undefined', "{%s}" % \
+                         ', '.join(["'%s': '%s'" % pair for pair in accept_args.items()])),
                         'class': 'addlink iconspace', 'title':
                         'Accept %(target)s %(request_type)s request from %(entity)s' % req,
                         'text': ''}
@@ -599,7 +681,7 @@ def main(client_id, user_arguments_dict):
                         'object_type': 'link',
                         'destination':
                         "javascript: confirmDialog(%s, '%s', %s, %s);" % \
-                        ("rejectresourcereq",
+                        ("rejectresreq",
                          "Reject %(target)s %(request_type)s request from %(entity)s" % req,
                          'undefined', "%s" % reject_args),
                         'class': 'removelink iconspace', 'title':
@@ -625,10 +707,14 @@ Use the link below to permanently remove the resource from the grid after
 stopping all units and the front end.
 '''
                                        })
+                target_op = "delres"
+                csrf_token = make_csrf_token(configuration, form_method,
+                                             target_op, client_id, csrf_limit)
                 js_name = 'delres%s' % hexlify(unique_resource_name)
-                helper = html_post_helper(js_name, 'delres.py',
+                helper = html_post_helper(js_name, '%s.py' % target_op,
                                           {'unique_resource_name':
-                                           unique_resource_name})
+                                           unique_resource_name,
+                                           csrf_field: csrf_token})
                 output_objects.append({'object_type': 'html_form', 'text': helper})
                 output_objects.append(
                     {'object_type': 'link', 'destination':

@@ -34,10 +34,10 @@ import datetime
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
-from shared.defaults import all_jobs, job_output_dir
+from shared.defaults import all_jobs, job_output_dir, csrf_field
 from shared.fileio import unpickle, pickle
 from shared.functional import validate_input_and_cert
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 from shared.ssh import copy_file_to_resource
 from shared.validstring import valid_user_path
@@ -111,18 +111,31 @@ def main(client_id, user_arguments_dict):
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if action in post_actions and not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+    if action in post_actions:
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not job_ids or action in interactive_actions:
         job_id = ''
         if job_ids:
             job_id = job_ids[-1]
-        output_objects.append({'object_type': 'text', 'text'
-                          : '''
+        form_method = 'post'
+        csrf_limit = get_csrf_limit(configuration)
+        fill_helpers =  {'job_id': job_id,
+                         'form_method': form_method,
+                         'csrf_field': csrf_field,
+                         'csrf_limit': csrf_limit}
+        target_op = 'liveio'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
+        output_objects.append({'object_type': 'text', 'text': '''
 Fill in the live I/O details below to request communication with a running
 job.
 Job ID can be a full ID or a wild card pattern using "*" and "?" to match one
@@ -138,18 +151,19 @@ directory on the resource and your MiG home respectively.
 <table class="liveio">
 <tr>
 <td>
-<form method="post" action="liveio.py">
+<form method="%(form_method)s" action="%(target_op)s.py">
 <table class="liveio">
 <tr><td class=centertext>
 </td></tr>
 <tr><td>
 Action:<br />
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type=radio name=action checked value="send" />send output
 <input type=radio name=action value="get" />get input
 </td></tr>
 <tr><td>
 Job ID:<br />
-<input type=text size=60 name=job_id value="%s" />
+<input type=text size=60 name=job_id value="%(job_id)s" />
 </td></tr>
 <tr><td>
 Source path(s):<br />
@@ -171,7 +185,7 @@ Destination path:<br />
 </td>
 </tr>
 </table>
-''' % job_id
+''' % fill_helpers
         output_objects.append({'object_type': 'html_form', 'text'
                               : html})
         output_objects.append({'object_type': 'text', 'text': '''

@@ -37,12 +37,15 @@ to exist for actions to work.
 import os
 import sys
 
+from shared.conf import get_configuration_object
+from shared.defaults import csrf_field
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.safeeval import subprocess_call
 from shared.useradm import distinguished_name_to_user
 
 
 def usage():
-    print 'Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS]' % sys.argv[0]
+    print 'Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] [AUTO_CSRF]' % sys.argv[0]
 
 
 if len(sys.argv) < 2:
@@ -53,14 +56,28 @@ script = sys.argv[1]
 query = ''
 method = 'GET'
 run_as_dn = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Test User/emailAddress=nosuch@bogusdomain.net'
+auto_csrf = False
+print sys.argv
 if sys.argv[2:]:
     method = sys.argv[2]
-if sys.argv[:3]:
+if sys.argv[3:]:
     query = sys.argv[3]
-if sys.argv[:4]:
+if sys.argv[4:]:
     run_as_dn = sys.argv[4]
+if sys.argv[5:]:
+    auto_csrf = (sys.argv[5].lower() in ('yes', 'true'))
 
 run_as_user = distinguished_name_to_user(run_as_dn)
+
+if method.lower() == 'post' and auto_csrf:
+    configuration = get_configuration_object()
+    form_method = method.lower()
+    client_id = run_as_dn
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = os.path.splitext(os.path.basename(script))[0]
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    query += ";%s=%s" % (csrf_field, csrf_token)
 
 extra_environment = {
     'REQUEST_METHOD': method,
@@ -89,6 +106,7 @@ extra_environment['SCRIPT_URL'] = script
 extra_environment['SCRIPT_NAME'] = script
 extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s'\
      % script
+
 os.environ.update(extra_environment)
 
 if not os.path.isabs(script):

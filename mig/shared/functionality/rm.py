@@ -36,7 +36,7 @@ import glob
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_file
 from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose, recursive
 from shared.sharelinks import extract_mode_id
@@ -71,16 +71,18 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     flags = ''.join(accepted['flags'])
     pattern_list = accepted['path']
     iosessionid = accepted['iosessionid'][-1]
     share_id = accepted['share_id'][-1]
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Either authenticated user client_id set or sharelink ID
     if client_id:

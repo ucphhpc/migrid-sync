@@ -36,7 +36,7 @@ import shared.returnvalues as returnvalues
 from shared.archives import pack_archive
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose
 from shared.validstring import valid_user_path
@@ -96,12 +96,6 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     flags = ''.join(accepted['flags'])
     dst = accepted['dst'][-1].lstrip(os.sep)
     pattern_list = accepted['src']
@@ -111,6 +105,14 @@ def main(client_id, user_arguments_dict):
     
     pattern_list = [os.path.join(current_dir, i) for i in pattern_list]
     dst = os.path.join(current_dir, dst)
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name

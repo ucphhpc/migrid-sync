@@ -27,11 +27,15 @@
 
 */
 
+/* Helpers for jshint to know about variables from dependency scripts */
+/* globals csrf_map */
+
+//var __dummy = "IE requires ANY code first to avoid crash on 'use strict' line";
 /* Enable strict mode to help catch tricky errors early */
-var __dummy = "IE requires ANY code first to avoid crash on 'use strict' line";
 "use strict";
 
-/* switch on/off console debug globally here */
+/* switch on/off console log and debug log globally here */
+var enable_log = true;
 var enable_debug = false;
 
 /* 
@@ -40,7 +44,7 @@ var enable_debug = false;
    without a trace.
 */
 var noOp = function(){}; // no-op function
-if (!window.console || !enable_debug) {
+if (!window.console || !enable_log) {
     console = {
         debug: noOp,
         log: noOp,
@@ -66,6 +70,8 @@ if (!enable_debug) {
 }
 
 if (jQuery) (function($){
+    console.info("console log enabled");
+    console.debug("console debug log enabled");
   
         // Check if touchscreen interface (left click only) is enabled
         function touchscreenChecker() {
@@ -109,10 +115,30 @@ if (jQuery) (function($){
             return true;
         }
 
+        function scriptName(url) {
+            var base = url.substring(url.lastIndexOf('/') + 1); 
+            if (base.lastIndexOf(".") !== -1) { 
+                base = base.substring(0, base.lastIndexOf("."));
+            }
+            return base;
+        }
+
         function jsonWrapper(el_id, dialog, url, jsonOptions) {
         
             var jsonSettings = {output_format: "json"};
     
+            /* The POST backends require a CSRF token. We dynamically make one
+               for each such backend in the fileman backend and just extract 
+               them when needed here. */
+            var target_op = scriptName(url);
+            console.debug("Lookup CSRF token for "+target_op);
+            if (csrf_map[target_op] !== undefined) {
+                jsonSettings['_csrf'] = csrf_map[target_op];
+                console.debug("Found CSRF token "+jsonSettings['_csrf']);
+            } else {
+                console.debug("No CSRF token for "+target_op);
+            }
+
             $.fn.extend(jsonSettings, jsonOptions);
     
             /* We used to use $.getJSON() here but now some back ends require POST */

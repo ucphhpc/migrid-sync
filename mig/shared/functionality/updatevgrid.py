@@ -32,9 +32,9 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.html import html_post_helper
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables
 from shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
 from shared.functionality.createvgrid import create_scm, create_tracker, \
@@ -83,22 +83,27 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append({'object_type': 'error_text', 'text': 
                     'Only owners of %s can administrate it.' % vgrid_name })
 
-        js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
-        helper = html_post_helper(js_name, 'sendrequestaction.py',
-                                  {'vgrid_name': vgrid_name,
-                                   'request_type': 'vgridowner',
-                                   'request_text': ''})
-        output_objects.append({'object_type': 'html_form', 'text': helper})
-        output_objects.append({'object_type': 'link',
-                               'destination':
-                               "javascript: confirmDialog(%s, '%s', '%s');"\
-                               % (js_name, "Request ownership of " + \
-                                  vgrid_name + ":<br/>" + \
-                                  "\nPlease write a message to the owners (field below).",
-                                  'request_text'),
-                               'class': 'addadminlink iconspace',
-                               'title': 'Request ownership of %s' % vgrid_name,
-                               'text': 'Apply to become an owner'})
+        form_method = 'post'
+        csrf_limit = get_csrf_limit(configuration)
+        fill_helpers =  {'vgrid_label': configuration.site_vgrid_label,
+                         'vgrid_name': vgrid_name,
+                         'form_method': form_method,
+                         'csrf_field': csrf_field,
+                         'csrf_limit': csrf_limit}
+        target_op = 'sendrequestaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        output_objects.append({'object_type': 'html_form', 'text': '''
+        <form method="%(form_method)s" action="%(target_op)s.py">
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+        <input type="hidden" name="vgrid_name" value="%(vgrid_name)s"/>
+        <input type="hidden" name="request_type" value="vgridowner"/>
+        <input type="text" size=50 name="request_text" />
+        <input type="hidden" name="output_format" value="html" />
+        <input type="submit" value="Request %(vgrid_label)s access" />
+        </form>
+    ''' % fill_helpers})
 
         return (output_objects, returnvalues.SYSTEM_ERROR)
 

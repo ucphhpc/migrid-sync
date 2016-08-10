@@ -450,7 +450,7 @@ official site support pages:'''})
                                'plain_text': configuration.site_external_doc})
 
     html = '<br />Filter (using *,? etc.)'
-    html += "<form method='post' action='docs.py'>"
+    html += "<form method='get' action='docs.py'>"
     html += "<input type='hidden' name='show' value='' />"
     html += "<input type='text' name='search' value='' />"
     html += "<input type='submit' value='Filter' />"

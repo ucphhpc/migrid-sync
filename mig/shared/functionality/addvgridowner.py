@@ -32,10 +32,10 @@ import os
 
 from shared.accessrequests import delete_access_request
 from shared.base import client_id_dir
-from shared.defaults import any_protocol
+from shared.defaults import any_protocol, csrf_field
 from shared.fileio import make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables
 from shared.safeeval import subprocess_popen, subprocess_pipe, \
      subprocess_stdout
@@ -120,17 +120,19 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     vgrid_name = accepted['vgrid_name'][-1].strip()
     cert_id_list = accepted['cert_id']
     request_name = unhexlify(accepted['request_name'][-1])
     # inherited vgrid membership
     inherit_vgrid_member = False
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # make sure vgrid settings allow this owner to edit owners
 
@@ -430,8 +432,23 @@ def main(client_id, user_arguments_dict):
             cert_id_fields += """<input type=hidden name=cert_id value='%s' />
 """ % cert_id
 
+        form_method = 'post'
+        csrf_limit = get_csrf_limit(configuration)
+        fill_helpers = {'vgrid_name': vgrid_name, 'cert_id': cert_id,
+                        'protocol': any_protocol,
+                        'short_title': configuration.short_title,
+                        'vgrid_label': configuration.site_vgrid_label,
+                        'cert_id_fields': cert_id_fields,
+                        'form_method': form_method,
+                        'csrf_field': csrf_field,
+                        'csrf_limit': csrf_limit}
+        target_op = 'sendrequestaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': """
-<form method='post' action='sendrequestaction.py'>
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type=hidden name=request_type value='vgridaccept' />
 <input type=hidden name=vgrid_name value='%(vgrid_name)s' />
 %(cert_id_fields)s
@@ -441,10 +458,11 @@ def main(client_id, user_arguments_dict):
 <td class='title'>Custom message to user(s)</td>
 </tr><tr>
 <td><textarea name=request_text cols=72 rows=10>
-We have granted you ownership access to our %(vgrid_name)s %(_label)s.
-You can access the %(_label)s administration page from the %(_label)ss page.
+We have granted you ownership access to our %(vgrid_name)s %(vgrid_label)s.
+You can access the %(vgrid_label)s administration page from the
+%(vgrid_label)ss page on %(short_title)s.
 
-Regards, the %(vgrid_name)s %(_label)s owners
+Regards, the %(vgrid_name)s %(vgrid_label)s owners
 </textarea></td>
 </tr>
 <tr>
@@ -453,9 +471,7 @@ Regards, the %(vgrid_name)s %(_label)s owners
 </table>
 </form>
 <br />
-""" % {'vgrid_name': vgrid_name, 'cert_id': cert_id, 'protocol': any_protocol,
-       '_label': configuration.site_vgrid_label, 'cert_id_fields':
-       cert_id_fields}})
+""" % fill_helpers})
 
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':

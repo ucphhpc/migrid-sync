@@ -35,10 +35,10 @@ import time
 import shared.confparser as confparser
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import keyword_auto
+from shared.defaults import keyword_auto, csrf_field
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
 from shared.resource import prepare_conf, write_resource_config, \
@@ -201,6 +201,8 @@ def main(client_id, user_arguments_dict):
 
     critical_arguments = {}
     critical_fields = defaults.keys()
+    # IMPORTANT: we must explicitly inlude CSRF token
+    critical_fields.append(csrf_field)
     for field in critical_fields:
         critical_arguments[field] = user_arguments_dict.get(field, [''])
     
@@ -215,12 +217,6 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     hosturl = accepted['HOSTURL'][-1]
     hostidentifier = accepted['HOSTIDENTIFIER'][-1]
     if hostidentifier:
@@ -230,6 +226,14 @@ def main(client_id, user_arguments_dict):
         hostidentifier = keyword_auto
         accepted['HOSTIDENTIFIER'] = [hostidentifier]
     resource_id = "%s.%s" % (hosturl, hostidentifier)
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Override original critical values with the validated ones
 

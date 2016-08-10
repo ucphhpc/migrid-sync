@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mqueue - POSIX like message queue job inter-communication
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,9 +35,10 @@ import fcntl
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty
+from shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty, \
+     csrf_field
 from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
 
@@ -93,11 +94,14 @@ def main(client_id, user_arguments_dict):
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if action in post_actions and not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+    if action in post_actions:
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Find user home from session or certificate
 
@@ -151,8 +155,19 @@ def main(client_id, user_arguments_dict):
 
     status = returnvalues.OK
     if action == "interactive":
-        output_objects.append({'object_type': 'text', 'text'
-                               : '''
+        form_method = 'post'
+        csrf_limit = get_csrf_limit(configuration)
+        fill_helpers =  {'queue': queue,
+                         'msg': msg,
+                         'form_method': form_method,
+                         'csrf_field': csrf_field,
+                         'csrf_limit': csrf_limit, }
+        target_op = 'mqueue'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        
+        output_objects.append({'object_type': 'text', 'text': '''
 Fill in the fields below to control and access your personal message queues.
 Jobs can receive from and send to the message queues during execution, and use
 them as a means of job inter-communication. Expect message queue operations to
@@ -160,12 +175,13 @@ take several seconds on the resources, however. That is, use it for tasks like
 orchestrating long running jobs, and not for low latency communication.
 '''})
         html = '''
-<form name="mqueueform" method="post" action="mqueue.py">
+<form name="mqueueform" method="%(form_method)s" action="%(target_op)s.py">
 <table class="mqueue">
 <tr><td class=centertext>
 </td></tr>
 <tr><td>
 Action:<br />
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type=radio name=action value="create" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=true;" />create queue
 <input type=radio name=action checked value="send" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=false;" />send message to queue
 <input type=radio name=action value="receive" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=true;" />receive message from queue
@@ -176,11 +192,11 @@ Action:<br />
 </td></tr>
 <tr><td>
 Queue:<br />
-<input type=text size=60 name=queue value="%s" />
+<input type=text size=60 name=queue value="%(queue)s" />
 </td></tr>
 <tr><td>
 <div id="msgfieldf">
-<input type=text size=60 name=msg value="%s" /><br />
+<input type=text size=60 name=msg value="%(msg)s" /><br />
 </div>
 </td></tr>
 <tr><td>
@@ -188,7 +204,7 @@ Queue:<br />
 </td></tr>
 </table>
 </form>
-''' % (queue, msg)
+''' % fill_helpers
         output_objects.append({'object_type': 'html_form', 'text'
                                : html})
         output_objects.append({'object_type': 'text', 'text': '''

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # stopexe - Back end to stop one or more resource exe units
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2106 The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,7 @@ import shared.returnvalues as returnvalues
 from shared.conf import get_all_exe_names
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.resadm import stop_resource_exe
 from shared.worker import Worker, throttle_max_concurrent
@@ -69,16 +69,18 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     unique_resource_name = accepted['unique_resource_name'][-1]
     exe_name_list = accepted['exe_name']
     all = accepted['all'][-1].lower() == 'true'
     parallel = accepted['parallel'][-1].lower() == 'true'
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):

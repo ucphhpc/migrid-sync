@@ -28,10 +28,11 @@
 """Manage all owned frozen archives"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_pager_entries
+from shared.defaults import default_pager_entries, csrf_field
 from shared.freezefunctions import build_freezeitem_object, \
      list_frozen_archives, get_frozen_meta, get_frozen_archive
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -116,9 +117,15 @@ from the management.
 
         # Helper form for removes
 
-        helper = html_post_helper('delfreeze', 'deletefreeze.py',
+        form_method = 'post'
+        csrf_limit = get_csrf_limit(configuration)
+        target_op = 'deletefreeze'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        helper = html_post_helper('delfreeze', '%s.py' % target_op,
                                   {'freeze_id': '__DYNAMIC__',
-                                   'flavor': '__DYNAMIC__'})
+                                   'flavor': '__DYNAMIC__',
+                                   csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
 
         output_objects.append({'object_type': 'table_pager', 'entry_name':

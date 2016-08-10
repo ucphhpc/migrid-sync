@@ -34,6 +34,7 @@ import os
 # REJECT_UNSET is not used directly but exposed to functionality
 
 from shared.base import requested_page, force_utf8
+from shared.defaults import csrf_field
 from shared.findtype import is_user
 from shared.httpsclient import extract_client_cert, extract_client_openid
 from shared.safeinput import validated_input, REJECT_UNSET
@@ -81,11 +82,11 @@ def validate_input(
     ):
     """A wrapper used by most back end functionality"""
 
-    # always allow output_format, _crsf and underscore cache-prevention dummy,
-    # we don't want to use unnecessary lines in all scripts to specify this
+    # always allow output_format, csrf_field and underscore cache-prevention
+    # dummy - we don't want redundant lines in all scripts for that.
 
     defaults['output_format'] = ['allow_me']
-    defaults['_csrf'] = ['allow_me']
+    defaults[csrf_field] = ['allow_me']
     defaults['_'] = ['allow_me']
     if prefilter_map:
         prefilter_input(user_arguments_dict, prefilter_map)

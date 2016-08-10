@@ -31,6 +31,8 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.certreq import valid_name_chars, dn_max_len, cert_js_helpers
+from shared.defaults import csrf_field
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
@@ -93,13 +95,29 @@ def main(client_id, user_arguments_dict):
 
     # If cert auto create is on, add user without admin interaction
 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'valid_name_chars': valid_name_chars,
+                     'client_id': client_id,
+                     'dn_max_len': dn_max_len,
+                     'common_name': new_user.get('full_name', ''),
+                     'org': new_user.get('organization', ''),
+                     'email': new_user.get('email', ''),
+                     'state': new_user.get('state', ''),
+                     'country': new_user.get('country', ''),
+                     'site': configuration.short_title,
+                     'form_method': form_method,
+                     'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
     if configuration.auto_add_cert_user == False:
-        extcertaction = 'extcertaction.py' 
+        target_op = 'extcertaction'
     else:
-        extcertaction = 'autocreate.py'
+        target_op = 'autocreate'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    output_objects.append({'object_type': 'html_form', 'text': """
 This page is used to sign up for %(site)s with an existing certificate from a Certificate Authority (CA) allowed for %(site)s.
 You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for %(site)s access instead of requesting a new one.
 <br />
@@ -110,7 +128,8 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
 <hr />
 <div class=form_container>
 <!-- use post here to avoid field contents in URL -->
-<form method=post action=%(extcertaction)s onSubmit='return validate_form();'>
+<form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table>
 <tr><td class='mandatory label'>Certificate DN</td><td><input id='cert_id_field' type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' /></td><td class=fill_space></td></tr>
 <tr><td class='mandatory label'>Full name</td><td><input id='cert_name_field' type=text name=cert_name value='%(common_name)s' /></td><td class=fill_space></td></tr>
@@ -133,20 +152,6 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
   <div id='state_help'>Optional state of your organization, please just leave empty unless it is in the US or similar</div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
 </div>
-"""
-                           % {
-        'extcertaction': extcertaction,
-        'valid_name_chars': valid_name_chars,
-        'client_id': client_id,
-        'dn_max_len': dn_max_len,
-        'common_name': new_user.get('full_name', ''),
-        'org': new_user.get('organization', ''),
-        'email': new_user.get('email', ''),
-        'state': new_user.get('state', ''),
-        'country': new_user.get('country', ''),
-        'site': configuration.short_title,
-        }})
+""" % fill_helpers})
 
     return (output_objects, returnvalues.OK)
-
-

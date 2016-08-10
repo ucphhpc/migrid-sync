@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssadmin - SSS sandbox generator and monitor for individual users
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,9 +30,10 @@
 import datetime
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_vgrid
+from shared.defaults import default_vgrid, csrf_field
 from shared.functional import validate_input, REJECT_UNSET
 from shared.gridstat import GridStat
+from shared.handlers import get_csrf_limit, safe_handler, make_csrf_token
 from shared.init import initialize_main_variables
 from shared.sandbox import load_sandbox_db, save_sandbox_db
 
@@ -184,14 +185,31 @@ def show_download(configuration, userdb, user, passwd, expert):
 
     # Download sandbox section
 
-    html = """<form method='post' action='ssscreateimg.py?MiG-SSS.zip'> 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {
+        'user': user,
+        'passwd': passwd,
+        'toggle_expert': not expert,
+        'form_method': form_method,
+        'csrf_field': csrf_field,
+        'csrf_limit': csrf_limit
+        }
+    target_op = 'ssscreateimg'
+    csrf_token = make_csrf_token(configuration, form_method, target_op, user,
+                                 csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
+    html = """
+    <form method='%(form_method)s' action='%(target_op)s.py'> 
+    <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
     <table class=sandboxcreateimg>
         <tr class='title'>
             <td class='centertext' colspan='2'>
             Download New Sandbox
             </td>
         </tr>
-"""
+""" % fill_helpers
 
     html += print_hd_selection()
     html += print_mem_selection()
@@ -203,11 +221,11 @@ def show_download(configuration, userdb, user, passwd, expert):
     html += """
         <tr>
             <td colspan='2'>
-            <input type='hidden' name='username' value='%s' />
-            <input type='hidden' name='password' value='%s' />
+            <input type='hidden' name='username' value='%(user)s' />
+            <input type='hidden' name='password' value='%(passwd)s' />
             </td>
         </tr>
-"""% (user, passwd)
+"""% fill_helpers
     html += """
         <tr>
             <td>Press 'Submit' to download - please note that it may take up
@@ -218,28 +236,36 @@ to 2 minutes to generate your sandbox</td>
     </table>
 </form>
 <br />
+"""
+    target_op = 'sssadmin'
+    csrf_token = make_csrf_token(configuration, form_method, target_op, user,
+                                 csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
+    html += """
 <table class=sandboxadmin>
     <tr>
         <td class='centertext'>
         Advanced users may want to fine tune the sandbox to download by
 switching to expert mode:
-        <form action='sssadmin.py' method='post'>
-        <input type='hidden' name='username' value='%s' />
-        <input type='hidden' name='password' value='%s' />
-        <input type='hidden' name='expert' value='%s' />
+        <form method='%(form_method)s' action='%(target_op)s.py'> 
+        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+        <input type='hidden' name='username' value='%(user)s' />
+        <input type='hidden' name='password' value='%(passwd)s' />
+        <input type='hidden' name='expert' value='%(toggle_expert)s' />
         <input type='submit' value='Toggle expert mode' />
         </form>
         </td>
     </tr>    
 </table> 
-    """% (user, passwd, not expert)
+""" % fill_helpers
     return html
 
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
-    (configuration, logger, output_objects, _) = \
+    (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
     output_objects.append({'object_type': 'header', 'text'
@@ -288,6 +314,14 @@ Please contact the Grid admins %s if you think they should be enabled.
     # If it's a new user, check that the username is free
 
     if newuser == 'on':
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
         if userdb.has_key(username):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Username is already taken - please go back and choose another one...'
@@ -377,5 +411,3 @@ If you run into any problems, please contact the grid administrators (%s)""" \
                                % admin_email})
 
     return (output_objects, returnvalues.OK)
-
-

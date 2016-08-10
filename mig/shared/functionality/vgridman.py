@@ -28,8 +28,10 @@
 """VGrid management back end functionality"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_vgrid, all_vgrids, default_pager_entries
+from shared.defaults import default_vgrid, all_vgrids, default_pager_entries, \
+     csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -93,6 +95,15 @@ def main(client_id, user_arguments_dict):
     elif collaboration_links == 'advanced':
         active_vgrid_links += configuration.site_advanced_vgrid_links
 
+    # General fill helpers including CSRF fields
+
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'vgrid_label': configuration.site_vgrid_label,
+                     'form_method': form_method,
+                     'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
+
     if operation in show_operations:
 
         # jquery support for tablesorter and confirmation on request and leave
@@ -135,17 +146,25 @@ def main(client_id, user_arguments_dict):
         # Helper forms for requests and removes
 
         for post_type in ["vgridowner", "vgridmember"]:
+            target_op = 'sendrequestaction'
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
             helper = html_post_helper('req%s' % post_type,
-                                      'sendrequestaction.py',
+                                      '%s.py' % target_op,
                                       {'vgrid_name': '__DYNAMIC__',
                                        'request_type': post_type,
-                                       'request_text': ''})
+                                       'request_text': '',
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
         for post_type in ["vgridowner", "vgridmember"]:
-            helper = html_post_helper('rm%s' % post_type,
-                                      'rm%s.py' % post_type,
+            target_op = 'rm%s' % post_type
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
+            helper = html_post_helper(target_op,
+                                      '%s.py' % target_op,
                                       {'vgrid_name': '__DYNAMIC__',
-                                       'cert_id': client_id})
+                                       'cert_id': client_id,
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
 
         output_objects.append({'object_type': 'table_pager', 'entry_name': '%ss' % \
@@ -452,13 +471,19 @@ def main(client_id, user_arguments_dict):
      specify nesting. I.e. if you own a %(label)s called ABC, you can create a
      sub-%(label)s called DEF by entering ABC/DEF below.''' % \
                  {'label': configuration.site_vgrid_label}})
-            output_objects.append({'object_type': 'html_form', 'text':
-                                    '''<form method="post" action="createvgrid.py">
+            
+            target_op = 'createvgrid'
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
+            fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+            output_objects.append({'object_type': 'html_form', 'text': '''
+        <form method="%(form_method)s" action="%(target_op)s.py">
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
         <input type="text" size=40 name="vgrid_name" />
         <input type="hidden" name="output_format" value="html" />
-        <input type="submit" value="Create %s" />
+        <input type="submit" value="Create %(vgrid_label)s" />
         </form>
-     ''' % configuration.site_vgrid_label})
+     ''' % fill_helpers})
 
         output_objects.append({'object_type': 'sectionheader', 'text'
                                    : 'Request Access to %ss' % \
@@ -468,8 +493,13 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'text', 'text':
              '''You can request access to %(label)ss using the individual plus-icons above directly or by entering the name of the %(label)s to request access to, what kind of access and an optional message to the admins below''' % \
                  {'label': configuration.site_vgrid_label}})
-        output_objects.append({'object_type': 'html_form', 'text':
-                               '''<form method="post" action="sendrequestaction.py">
+        target_op = 'sendrequestaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        output_objects.append({'object_type': 'html_form', 'text': '''
+        <form method="%(form_method)s" action="%(target_op)s.py">
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
         <input type="text" size=40 name="vgrid_name" />
         <select name="request_type">
             <option value="vgridmember">membership</option> 
@@ -477,9 +507,9 @@ def main(client_id, user_arguments_dict):
         </select>
         <input type="text" size=50 name="request_text" />
         <input type="hidden" name="output_format" value="html" />
-        <input type="submit" value="Request %s access" />
+        <input type="submit" value="Request %(vgrid_label)s access" />
         </form>
-    ''' % configuration.site_vgrid_label})
+    ''' % fill_helpers})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, status)

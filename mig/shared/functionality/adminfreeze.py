@@ -28,12 +28,13 @@
 """Request freeze of one or more files into a write-once archive"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import upload_tmp_dir
+from shared.defaults import upload_tmp_dir, csrf_field
 from shared.freezefunctions import freeze_flavors
 from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables, find_entry
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      fancy_upload_js, fancy_upload_html, themed_styles
+from shared.init import initialize_main_variables, find_entry
 
 def signature():
     """Signature of the main function"""
@@ -78,9 +79,19 @@ Please contact the Grid admins %s if you think it should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'flavor': flavor, 'form_method': form_method,
+                     'csrf_field': csrf_field, 'csrf_limit': csrf_limit}
+    target_op = 'uploadchunked'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})    
+
     # jquery fancy upload
 
-    (add_import, add_init, add_ready) = fancy_upload_js(configuration)
+    (add_import, add_init, add_ready) = fancy_upload_js(configuration,
+                                                        csrf_token=csrf_token)
 
     # We need filechooser deps and dynamic addition of copy/upload fields
     
@@ -174,7 +185,7 @@ function add_upload(div_id) {
                     upload_fields += 1;
                 });
             console.log("callback done");
-        }, remote_path, true);
+        }, remote_path, true, "", "%s");
 }
 
 function remove_field(field_id) {
@@ -196,12 +207,11 @@ function init_dialogs() {
 function init_page() {
     init_dialogs();
 }
-    ''' % upload_tmp_dir
+    ''' % (upload_tmp_dir, csrf_token)
     add_ready += '''
          // do sequenced initialisation (separate function)
          init_page();
     '''
-    fancy_dialog = fancy_upload_html(configuration)
     title_entry['style'] = themed_styles(configuration,
                                          base=['jquery.contextmenu.css',
                                                'jquery.xbreadcrumbs.css',
@@ -213,7 +223,37 @@ function init_page() {
     title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                              add_init, add_ready)
 
-    shared_files_form = """
+    if flavor == 'freeze':
+        fill_helpers["archive_header"] = "Freeze Archive Files"
+        fill_helpers["button_label"] = "Create Archive"
+        intro_text = """
+Please enter your archive details below and select any files to be included in
+the archive.
+<p class='warn_message'>Note that a frozen archive can not be changed after
+creation and it can only be manually removed by the management, so please be
+careful when filling in the details.
+</p>
+"""
+    elif flavor == 'phd':
+        fill_helpers["archive_header"] = \
+                                       "Thesis and Associated Files to Archive"
+        fill_helpers["button_label"] = "Archive Thesis"
+        intro_text = """
+Please enter your PhD details below and select any files associated with your
+thesis.
+<p class='warn_message'>Note that a thesis archive can not be changed after
+creation and it can only be manually removed by the management, so please be
+careful when filling in the details.
+</p>
+"""
+    else:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "unknown flavor: %s" % flavor})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    fill_helpers["fancy_dialog"] = fancy_upload_html(configuration)
+
+    files_form = """
 <!-- and now this... we do not want to see it, except in a dialog: -->
 <div id='fm_filechooser' style='display:none'>
     <div class='fm_path_breadcrumbs'>
@@ -266,63 +306,19 @@ function init_page() {
 </div>
 <div id='cmd_dialog' title='Command output' style='display: none;'></div>
 
-<div id='fancyuploadchunked_dialog' title='Upload File' style='display: none;'>
+%(fancy_dialog)s
+    """ % fill_helpers
 
-    <!-- The file upload form used as target for the file upload widget -->
-    <form id='fancyfileupload' action='uploadchunked.py?output_format=json;action=put'
-        method='POST' enctype='multipart/form-data'>
-        <fieldset id='fancyfileuploaddestbox'>
-            <label id='fancyfileuploaddestlabel' for='fancyfileuploaddest'>
-                Optional final destination dir:
-            </label>
-            <input id='fancyfileuploaddest' type='text' size=60 value=''>
-        </fieldset>
+    target_op = 'createfreeze'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
 
-        <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
-        <div class='fileupload-buttonbar'>
-            <div class='fileupload-buttons'>
-                <!-- The fileinput-button span is used to style the file input field as button -->
-                <span class='fileinput-button'>
-                    <span>Add files...</span>
-                    <input type='file' name='files[]' multiple>
-                </span>
-                <button type='submit' class='start'>Start upload</button>
-                <button type='reset' class='cancel'>Cancel upload</button>
-                <button type='button' class='delete'>Delete</button>
-                <input type='checkbox' class='toggle'>
-                <!-- The global file processing state -->
-                <span class='fileupload-process'></span>
-            </div>
-            <!-- The global progress state -->
-            <div class='fileupload-progress fade' style='display:none'>
-                <!-- The global progress bar -->
-                <div class='progress' role='progressbar' aria-valuemin='0' aria-valuemax='100'></div>
-                <!-- The extended global progress state -->
-                <div class='progress-extended'>&nbsp;</div>
-            </div>
-        </div>
-        <!-- The table listing the files available for upload/download -->
-        <table role='presentation' class='table table-striped'><tbody class='uploadfileslist'></tbody></table>
-    </form>
-    <!-- For status and error output messages -->
-    <div id='fancyuploadchunked_output'></div>
-</div>
-    """
-
-    if flavor == 'freeze':
-        intro_text = """
-Please enter your archive details below and select any files to be included in
-the archive.
-<p class='warn_message'>Note that a frozen archive can not be changed after
-creation and it can only be manually removed by the management, so please be
-careful when filling in the details.
-</p>
-"""
-        files_form = shared_files_form
-        freeze_form = """
-<form enctype='multipart/form-data' method='post' action='createfreeze.py'>
+    freeze_form = """
+<form enctype='multipart/form-data' method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <b>Name:</b><br />
-<input type='hidden' name='flavor' value='freeze' />
+<input type='hidden' name='flavor' value='%(flavor)s' />
 <input type='text' name='freeze_name' size=30 autofocus />
 <input type='hidden' name='freeze_author' value='UNSET' />
 <input type='hidden' name='freeze_department' value='UNSET' />
@@ -332,7 +328,7 @@ careful when filling in the details.
 <br />
 <br />
 <div id='freezefiles'>
-<b>Freeze Archive Files:</b>
+<b>%(archive_header)s:</b>
 <input type='button' id='addfilebutton' value='Add file/directory' />
 <input type='button' id='adduploadbutton' value='Add upload' />
 <div id='copyfiles'>
@@ -348,55 +344,9 @@ careful when filling in the details.
 <b>Make Dataset Publicly Available</b>
 </div>
 <br />
-<input type='submit' value='Create Archive' />
+<input type='submit' value='%(button_label)s' />
 </form>
-"""
-    if flavor == 'phd':
-        intro_text = """
-Please enter your PhD details below and select any files associated with your
-thesis.
-<p class='warn_message'>Note that a thesis archive can not be changed after
-creation and it can only be manually removed by the management, so please be
-careful when filling in the details.
-</p>
-"""
-        files_form = shared_files_form
-        freeze_form = """
-<form enctype='multipart/form-data' method='post' action='createfreeze.py'>
-<b>Thesis Title:</b><br />
-<input type='hidden' name='flavor' value='phd' />
-<input type='hidden' name='freeze_organization' value='UNSET' />
-<input type='text' name='freeze_name' size=80 />
-<br /><b>Author Name:</b><br />
-<input type='text' name='freeze_author' size=40 />
-<br /><b>Department:</b><br />
-<input type='text' name='freeze_department' size=40 />
-<br />
-<br />
-<div id='freezefiles'>
-<b>Thesis and Associated Files to Archive:</b>
-<input type='button' id='addfilebutton' value='Add file/directory' />
-<input type='button' id='adduploadbutton' value='Add upload' />
-<div id='copyfiles'>
-<!-- Dynamically filled -->
-</div>
-<div id='uploadfiles'>
-<!-- Dynamically filled -->
-</div>
-</div>
-<br />
-<div id='freezepublish'>
-<input type='checkbox' name='freeze_publish' />
-<b>Make Dataset Publicly Available</b>
-</div>
-<br /><b>Dataset Description:</b><br />
-<textarea cols='80' rows='20' name='freeze_description'></textarea>
-<br />
-<br />
-<input type='submit' value='Archive Thesis' />
-</form>
-"""
-
+""" % fill_helpers
     output_objects.append({'object_type': 'html_form', 'text': intro_text})
     output_objects.append({'object_type': 'html_form', 'text': files_form})
     output_objects.append({'object_type': 'html_form', 'text': freeze_form})

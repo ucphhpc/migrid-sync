@@ -34,8 +34,7 @@ from shared.defaults import default_pager_entries
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
      build_freezeitem_object, freeze_flavors
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+from shared.html import jquery_ui_js, man_base_js, man_base_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
 
 list_operations = ['showlist', 'list']

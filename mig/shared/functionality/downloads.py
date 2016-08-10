@@ -28,6 +28,7 @@
 """Simple front end to script generators"""
 
 import shared.returnvalues as returnvalues
+from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables
@@ -77,6 +78,7 @@ There's a tutorial with examples of all the commands available on the %(site)s p
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers =  {'short_title': configuration.short_title,
                      'form_method': form_method,
+                     'csrf_field': csrf_field,
                      'csrf_limit': csrf_limit}
     target_op = 'scripts'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
@@ -91,7 +93,7 @@ Generate %(short_title)s user scripts to manage jobs and files:<br/>
 <tr>
 <td>
 <form method='%(form_method)s' action='%(target_op)s.py'>
-<input type='hidden' name='_csrf' value='%(csrf_token)s' />
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='lang' value='python' />
 <input type='submit' value='python version' />
@@ -99,7 +101,7 @@ Generate %(short_title)s user scripts to manage jobs and files:<br/>
 </td>
 <td>
 <form method='%(form_method)s' action='%(target_op)s.py'>
-<input type='hidden' name='_csrf' value='%(csrf_token)s' />
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='lang' value='sh' />
 <input type='submit' value='sh version' />
@@ -107,7 +109,7 @@ Generate %(short_title)s user scripts to manage jobs and files:<br/>
 </td>
 <td>
 <form method='%(form_method)s' action='%(target_op)s.py'>
-<input type='hidden' name='_csrf' value='%(csrf_token)s' />
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='output_format' value='html' />
 <input type='submit' value='all versions' />
 </form>
@@ -128,7 +130,7 @@ Generate %(short_title)s scripts to administrate resources and vgrids:<br/>
 <tr>
 <td>
 <form method='%(form_method)s' action='%(target_op)s.py'>
-<input type='hidden' name='_csrf' value='%(csrf_token)s' />
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='lang' value='python' />
 <input type='hidden' name='flavor' value='resource' />
@@ -137,7 +139,7 @@ Generate %(short_title)s scripts to administrate resources and vgrids:<br/>
 </td>
 <td>
 <form method='%(form_method)s' action='%(target_op)s.py'>
-<input type='hidden' name='_csrf' value='%(csrf_token)s' />
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='lang' value='sh' />
 <input type='hidden' name='flavor' value='resource' />
@@ -146,7 +148,7 @@ Generate %(short_title)s scripts to administrate resources and vgrids:<br/>
 </td>
 <td>
 <form method='%(form_method)s' action='%(target_op)s.py'>
-<input type='hidden' name='_csrf' value='%(csrf_token)s' />
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='flavor' value='resource' />
 <input type='submit' value='all versions' />

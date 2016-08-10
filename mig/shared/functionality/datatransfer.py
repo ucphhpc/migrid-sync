@@ -37,18 +37,19 @@ import time
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
-from shared.transferfunctions import build_transferitem_object, \
-     build_keyitem_object, load_data_transfers, create_data_transfer, \
-     update_data_transfer, delete_data_transfer, load_user_keys, \
-     generate_user_key, delete_user_key
-from shared.defaults import all_jobs, job_output_dir, default_pager_entries
+from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
+     csrf_field
 from shared.fileio import read_tail
 from shared.functional import validate_input_and_cert
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.pwhash import make_digest
+from shared.transferfunctions import build_transferitem_object, \
+     build_keyitem_object, load_data_transfers, create_data_transfer, \
+     update_data_transfer, delete_data_transfer, load_user_keys, \
+     generate_user_key, delete_user_key
 from shared.validstring import valid_user_path
 
 
@@ -279,10 +280,12 @@ Please contact the Grid admins %s if you think they should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if action in post_actions:
-        if not correct_handler('POST'):
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'Only accepting POST requests to prevent unintended updates'})
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     (load_status, transfer_map) = load_data_transfers(configuration, client_id)
@@ -304,6 +307,11 @@ else, so the public key can inserted in authorized_keys as:<br/>
 </p>
 ''' % (configuration.short_title, restrict_str)
 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = 'datatransfer'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
     if action in get_actions:
         datatransfers = []
         for (saved_id, transfer_dict) in transfer_map.items():
@@ -331,9 +339,10 @@ else, so the public key can inserted in authorized_keys as:<br/>
                 'title': 'View status files for %s' % saved_id,
                 'text': ''}
             js_name = 'delete%s' % hexlify(saved_id)
-            helper = html_post_helper(js_name, 'datatransfer.py',
+            helper = html_post_helper(js_name, '%s.py' % target_op,
                                       {'transfer_id': saved_id,
-                                       'action': 'deltransfer'})
+                                       'action': 'deltransfer',
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             transfer_item['deltransferlink'] = {
                 'object_type': 'link', 'destination':
@@ -342,9 +351,10 @@ else, so the public key can inserted in authorized_keys as:<br/>
                 'class': 'removelink iconspace', 'title': 'Remove %s' % \
                 saved_id, 'text': ''}
             js_name = 'redo%s' % hexlify(saved_id)
-            helper = html_post_helper(js_name, 'datatransfer.py',
+            helper = html_post_helper(js_name, '%s.py' % target_op,
                                       {'transfer_id': saved_id,
-                                       'action': 'redotransfer'})
+                                       'action': 'redotransfer',
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             transfer_item['redotransferlink'] = {
                 'object_type': 'link', 'destination':
@@ -381,16 +391,19 @@ transfers below.'''
                 export_checked = 'checked'
                 import_checked = ''
                 
-        fill_helper= {'import_checked': import_checked, 'export_checked':
-                      export_checked, 'anon_checked': anon_checked,
-                      'pw_checked': pw_checked, 'key_checked': key_checked,
-                      'transfer_id': transfer_id, 'protocol': protocol,
-                      'fqdn': fqdn, 'port': port, 'username': username,
-                      'password': password, 'key_id': key_id, 
-                      'transfer_src': src_list, 'transfer_dst': dst,
-                      'compress': use_compress, 'notify': notify,
-                      'scroll_to_create': scroll_to_create}
-        
+        fill_helpers= {'import_checked': import_checked, 'export_checked':
+                       export_checked, 'anon_checked': anon_checked,
+                       'pw_checked': pw_checked, 'key_checked': key_checked,
+                       'transfer_id': transfer_id, 'protocol': protocol,
+                       'fqdn': fqdn, 'port': port, 'username': username,
+                       'password': password, 'key_id': key_id, 
+                       'transfer_src': src_list, 'transfer_dst': dst,
+                       'compress': use_compress, 'notify': notify,
+                       'scroll_to_create': scroll_to_create,
+                       'form_method': form_method, 'csrf_field': csrf_field,
+                       'csrf_limit': csrf_limit, 'target_op': target_op,
+                       'csrf_token': csrf_token}
+
         # Make page with manage transfers tab and manage keys tab
 
         output_objects.append({'object_type': 'html_form', 'text':  '''
@@ -437,7 +450,9 @@ is similarly considered in relation to your user home in <em>export</em>
 requests.<br/>
 Destination is a always handled as a directory path to transfer source files
 into.<br/>
-<form method="post" action="datatransfer.py" onSubmit="return beforeSubmit();">
+<form method="%(form_method)s" action="%(target_op)s.py"
+    onSubmit="return beforeSubmit();">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <fieldset id="transferbox">
 <table id="createtransfer" class="addexttransfer">
 <tr><td>
@@ -545,7 +560,7 @@ login with key
 %(scroll_to_create)s
 '''
         output_objects.append({'object_type': 'html_form', 'text'
-                              : transfer_html % fill_helper})
+                              : transfer_html % fill_helpers})
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})
@@ -558,7 +573,8 @@ login with key
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Manage Data Transfer Keys'})
         key_html = '''
-<form method="post" action="datatransfer.py">
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="managetransferkeys">
 <tr><td>
 '''
@@ -567,9 +583,10 @@ login with key
             key_item = build_keyitem_object(configuration, key_dict)
             saved_id = key_item['key_id']
             js_name = 'delete%s' % hexlify(saved_id)
-            helper = html_post_helper(js_name, 'datatransfer.py',
+            helper = html_post_helper(js_name, '%s.py' % target_op,
                                       {'key_id': saved_id,
-                                    'action': 'delkey'})
+                                       'action': 'delkey',
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             key_item['delkeylink'] = {
                 'object_type': 'link', 'destination':
@@ -607,7 +624,7 @@ Key name:<br/>
 </form>
 ''' % (restrict_template % 'ssh-rsa AAAAB3NzaC...', configuration.short_title)
         output_objects.append({'object_type': 'html_form', 'text'
-                              : key_html})
+                              : key_html % fill_helpers})
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})

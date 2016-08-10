@@ -33,7 +33,9 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.certreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, cert_js_helpers
+from shared.defaults import csrf_field
 from shared.functional import validate_input
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.useradm import distinguished_name_to_user
@@ -125,7 +127,16 @@ old files, jobs and privileges.</p>''' % \
         'password_max_len': password_max_len,
         'site': configuration.short_title
         })
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'form_method': form_method, 'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
+    target_op = 'reqcertaction'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
 
+    fill_helpers.update(user_fields)
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the %(site)s administrators.
@@ -136,7 +147,8 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
 <hr />
 <div class=form_container>
 <!-- use post here to avoid field contents in URL -->
-<form method=post action=reqcertaction.py onSubmit='return validate_form();'>
+<form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table>
 <tr><td class='mandatory label'>Full name</td><td><input id='full_name_field' type=text name=cert_name value='%(full_name)s' /></td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=text name=email value='%(email)s' /> </td><td class=fill_space><br /></td></tr>
@@ -165,7 +177,7 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
   <div id='verifypassword_help'>Please repeat password</div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
 </div>
-""" % user_fields})
+""" % fill_helpers})
 
     return (output_objects, returnvalues.OK)
 

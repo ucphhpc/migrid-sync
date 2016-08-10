@@ -33,8 +33,9 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import any_vgrid
+from shared.defaults import any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.output import html_link
@@ -64,8 +65,9 @@ def inline_image(configuration, path):
     data += base64.b64encode(img_data)
     return data
 
-def build_useritem_object_from_user_dict(configuration, visible_user_id,
-                                         user_home, user_dict, allow_vgrids):
+def build_useritem_object_from_user_dict(configuration, client_id,
+                                         visible_user_id, user_home, user_dict,
+                                         allow_vgrids):
     """Build a user object based on input user_dict"""
 
     profile_specs = get_profile_specs()
@@ -134,12 +136,18 @@ def build_useritem_object_from_user_dict(configuration, visible_user_id,
         else:
             show_address = ', '.join(saved)
         if saved:
+            form_method = 'post'
+            csrf_limit = get_csrf_limit(configuration)
+            target_op = 'sendrequestaction'
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
             js_name = 'send%s%s' % (proto, hexlify(visible_user_id))
-            helper = html_post_helper(js_name, 'sendrequestaction.py',
+            helper = html_post_helper(js_name, '%s.py' % target_op,
                                       {'cert_id': visible_user_id,
                                        'request_type': 'plain',
                                        'protocol': proto,
-                                       'request_text': ''})
+                                       'request_text': '',
+                                       csrf_field: csrf_token})
             entry += helper            
             link = 'send%slink' % proto
             link_obj = {'object_type': 'link',
@@ -240,6 +248,7 @@ $(document).ready(function() {
             continue
         user_dict = visible_user[visible_user_name]
         user_item = build_useritem_object_from_user_dict(configuration,
+                                                         client_id,
                                                          visible_user_name,
                                                          base_dir,
                                                          user_dict,

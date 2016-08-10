@@ -34,9 +34,10 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import all_jobs, job_output_dir
+from shared.defaults import all_jobs, job_output_dir, csrf_field
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables
 from shared.job import get_job_ids_with_specified_project_name
@@ -365,51 +366,71 @@ def main(client_id, user_arguments_dict):
                                               path_string,
                                               'text': 'View output files'}
 
+            form_method = 'post'
+            csrf_limit = get_csrf_limit(configuration)
+            target_op = 'resubmit'
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
             js_name = 'resubmit%s' % hexlify(job_id)
-            helper = html_post_helper(js_name, 'resubmit.py',
-                                      {'job_id': job_id})
+            helper = html_post_helper(js_name, '%s.py' % target_op,
+                                      {'job_id': job_id,
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             job_obj['resubmitlink'] = {'object_type': 'link',
                                        'destination':
                                        "javascript: %s();" % js_name,
                                        'text': 'Resubmit job'}
 
+            target_op = 'jobaction'
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
             js_name = 'freeze%s' % hexlify(job_id)
-            helper = html_post_helper(js_name, 'jobaction.py',
-                                      {'action': 'freeze','job_id': job_id})
+            helper = html_post_helper(js_name, '%s.py' % target_op,
+                                      {'action': 'freeze','job_id': job_id,
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             job_obj['freezelink'] = {'object_type': 'link',
                                      'destination':
                                      "javascript: %s();" % js_name,
                                      'text': 'Freeze job in queue'}
             js_name = 'thaw%s' % hexlify(job_id)
-            helper = html_post_helper(js_name, 'jobaction.py',
-                                      {'action': 'thaw','job_id': job_id})
+            helper = html_post_helper(js_name, '%s.py' % target_op,
+                                      {'action': 'thaw','job_id': job_id,
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             job_obj['thawlink'] = {'object_type': 'link',
                                      'destination':
                                      "javascript: %s();" % js_name,
                                      'text': 'Thaw job in queue'}
             js_name = 'cancel%s' % hexlify(job_id)
-            helper = html_post_helper(js_name, 'jobaction.py',
-                                      {'action': 'cancel','job_id': job_id})
+            helper = html_post_helper(js_name, '%s.py' % target_op,
+                                      {'action': 'cancel','job_id': job_id,
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             job_obj['cancellink'] = {'object_type': 'link',
                                      'destination':
                                      "javascript: %s();" % js_name,
                                      'text': 'Cancel job'}
+            target_op = 'jobschedule'
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
             js_name = 'jobschedule%s' % hexlify(job_id)
-            helper = html_post_helper(js_name, 'jobschedule.py',
-                                      {'job_id': job_id})
+            helper = html_post_helper(js_name, '%s.py' % target_op,
+                                      {'job_id': job_id,
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             job_obj['jobschedulelink'] = {'object_type': 'link',
                                           'destination':
                                           "javascript: %s();" % js_name,
                                           'text':
                                           'Request schedule information'}
+            target_op = 'jobfeasible'
+            csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                         client_id, csrf_limit)
             js_name = 'jobfeasible%s' % hexlify(job_id)
-            helper = html_post_helper(js_name, 'jobfeasible.py',
-                                      {'job_id': job_id})
+            helper = html_post_helper(js_name, '%s.py' % target_op,
+                                      {'job_id': job_id,
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             job_obj['jobfeasiblelink'] = {'object_type': 'link',
                                           'destination':

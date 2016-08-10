@@ -37,7 +37,8 @@ from urllib import quote
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_path
 from shared.functional import validate_input
-from shared.html import themed_styles
+from shared.handlers import get_csrf_limit, make_csrf_token
+from shared.html import jquery_ui_js, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive
 from shared.sharelinks import extract_mode_id
@@ -210,7 +211,13 @@ def main(client_id, user_arguments_dict):
 
     status = returnvalues.OK
 
-    read_mode, write_mode = True, True
+    # NOTE: in contrast to 'ls' we never include write operations here
+    read_mode, write_mode = True, False
+    visibility_mods = '''
+            #%(main_id)s .enable_write { display: none; }
+            #%(main_id)s .disable_read { display: none; }
+            #%(main_id)s .if_full { display: none; }
+    '''
     # Either authenticated user client_id set or sharelink ID
     if client_id:
         user_id = client_id
@@ -221,11 +228,7 @@ def main(client_id, user_arguments_dict):
         id_args = ''
         root_link_name = 'USER HOME'
         main_id = "user_expand"
-        page_title = 'User Files'
-        visibility_mods = '''
-            #%(main_id)s .disable_read { display: none; }
-            #%(main_id)s .disable_write { display: none; }
-            '''
+        page_title = 'User Files - Path Expansion'
     elif share_id:
         (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
@@ -238,31 +241,14 @@ def main(client_id, user_arguments_dict):
         id_args = 'share_id=%s;' % share_id
         root_link_name = '%s' % share_id
         main_id = "sharelink_expand"
-        page_title = 'Shared Files'
-        if share_mode == 'read-only':
-            write_mode = False
-            visibility_mods = '''
-            #%(main_id)s .enable_write { display: none; }
-            #%(main_id)s .disable_read { display: none; }
-            '''
-        elif share_mode == 'write-only':
-            read_mode = False
-            visibility_mods = '''
-            #%(main_id)s .enable_read { display: none; }
-            #%(main_id)s .disable_write { display: none; }
-            '''
-        else:
-            visibility_mods = '''
-            #%(main_id)s .disable_read { display: none; }
-            #%(main_id)s .disable_write { display: none; }
-            '''
+        page_title = 'Shared Files - Path Expansion'
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Authentication is missing!'
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
-        
+            
     visibility_toggle = '''
         <style>
         %s
@@ -284,15 +270,16 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = page_title
 
-    styles = themed_styles(configuration, base=['jquery.fileupload.css',
-                                                'jquery.fileupload-ui.css'],
-                           skin=['fileupload-ui.custom.css'])
+    fill_helpers = {'dest_dir': current_dir + os.sep, 'share_id': share_id,
+                   'flags': flags, 'tmp_flags': flags, 'long_set':
+                   long_list(flags), 'recursive_set': recursive(flags),
+                   'all_set': all(flags)}
+    styles = themed_styles(configuration)
     styles['advanced'] += '''
     %s
     ''' % visibility_toggle
     title_entry['style'] = styles
-    title_entry['javascript'] = ''
-
+    title_entry['javascript'] = jquery_ui_js(configuration, '', '', '')
     title_entry['bodyfunctions'] += ' id="%s"' % main_id
     output_objects.append({'object_type': 'header', 'text': page_title})
 
@@ -337,38 +324,6 @@ Working directory:
     output_objects.append({'object_type': 'html_form', 'text'
                           : location_post_html})
 
-    more_html = """
-<div class='files if_full'>
-<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
-<table class='files'>
-<tr class=title><td class=centertext colspan=2>
-Advanced file actions
-</td></tr>
-<tr><td>
-Action on paths selected below
-(please hold mouse cursor over button for a description):
-</td>
-<td class=centertext>
-<input type='hidden' name='output_format' value='html' />
-<input type='hidden' name='flags' value='v' />
-<input type='submit' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat' />
-<input type='submit' onClick='document.pressed=this.value' value='head' title='Show first lines (head)' />
-<input type='submit' onClick='document.pressed=this.value' value='tail' title='Show last lines (tail)' />
-<input type='submit' onClick='document.pressed=this.value' value='wc' title='Count lines/words/chars (wc)' />
-<input type='submit' onClick='document.pressed=this.value' value='stat' title='Show details (stat)' />
-<input type='submit' onClick='document.pressed=this.value' value='touch' title='Update timestamp (touch)' />
-<input type='submit' onClick='document.pressed=this.value' value='truncate' title='truncate! (truncate)' />
-<input type='submit' onClick='document.pressed=this.value' value='rm' title='delete! (rm)' />
-<input type='submit' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)' />
-<input type='submit' onClick='document.pressed=this.value' value='submit' title='Submit file (submit)' />
-</td></tr>
-</table>    
-</form>
-</div>
-"""
-
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : more_html})
     dir_listings = []
     output_objects.append({
         'object_type': 'dir_listings',
@@ -446,15 +401,9 @@ Action on paths selected below
                           real_path, flags, dest, 0, show_dest)
             dir_listings.append(dir_listing)
 
-    fill_helper = {'dest_dir': current_dir + os.sep, 'share_id': share_id,
-                   'flags': flags, 'tmp_flags': flags, 'long_set':
-                   long_list(flags), 'recursive_set': recursive(flags),
-                   'all_set': all(flags)}
-        
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """
+    output_objects.append({'object_type': 'html_form', 'text': """
     <div class='files disable_read'>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <table class='files'>
     <tr class=title><td class=centertext>
     Filter paths (wildcards like * and ? are allowed)
@@ -468,11 +417,11 @@ Action on paths selected below
     </table>    
     </form>
     </div>
-    """ % fill_helper})
+    """ % fill_helpers})
 
     # Short/long format buttons
 
-    fill_helper['tmp_flags'] = flags + 'l'
+    fill_helpers['tmp_flags'] = flags + 'l'
     htmlform = """
     <table class='files if_full'>
     <tr class=title><td class=centertext colspan=4>
@@ -482,26 +431,26 @@ Action on paths selected below
     <tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
     <tr><td>Long format</td><td>
     %(long_set)s</td><td>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
 
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />" % entry
-    fill_helper['tmp_flags'] = flags.replace('l', '')
+    fill_helpers['tmp_flags'] = flags.replace('l', '')
     htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />" % entry
     htmlform += """
@@ -512,31 +461,31 @@ Action on paths selected below
 
     # Recursive output
 
-    fill_helper['tmp_flags'] = flags + 'r'
+    fill_helpers['tmp_flags'] = flags + 'r'
     htmlform += """
     <!-- Non-/recursive list buttons -->
     <tr><td>Recursion</td><td>
-    %(recursive_set)s</td><td>""" % fill_helper
+    %(recursive_set)s</td><td>""" % fill_helpers
     htmlform += """
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"% entry
-    fill_helper['tmp_flags'] = flags.replace('r', '')
+    fill_helpers['tmp_flags'] = flags.replace('r', '')
     htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
                                   
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
@@ -550,28 +499,28 @@ Action on paths selected below
     htmlform += """
     <!-- Show dot files buttons -->
     <tr><td>Show hidden files</td><td>
-    %(all_set)s</td><td>""" % fill_helper
-    fill_helper['tmp_flags'] = flags + 'a'
+    %(all_set)s</td><td>""" % fill_helpers
+    fill_helpers['tmp_flags'] = flags + 'a'
     htmlform += """
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />" % entry
-    fill_helper['tmp_flags'] = flags.replace('a', '')
+    fill_helpers['tmp_flags'] = flags.replace('a', '')
     htmlform += """
     <input type='submit' value='On' /><br />
     </form>
     </td><td>
-    <form method='post' action='ls.py'>
+    <form method='get' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%(tmp_flags)s' />
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-    """ % fill_helper
+    """ % fill_helpers
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"% entry
     htmlform += """
@@ -586,79 +535,4 @@ Action on paths selected below
     output_objects.append({'object_type': 'html_form', 'text'
                           : htmlform})
 
-    # create additional action forms
-
-    if first_match:
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : """
-<br />
-<table class='files enable_write if_full'>
-<tr class=title><td class=centertext colspan=3>
-Edit file
-</td></tr>
-<tr><td>
-Fill in the path of a file to edit and press 'edit' to open that file in the<br />
-online file editor. Alternatively a file can be selected for editing through<br />
-the listing of personal files. 
-</td><td colspan=2 class=righttext>
-<form name='editor' method='post' action='editor.py'>
-<input type='hidden' name='output_format' value='html' />
-<input type='hidden' name='share_id' value='%(share_id)s' />
-<input name='current_dir' type='hidden' value='%(dest_dir)s' />
-<input type='text' name='path' size=50 value='' />
-<input type='submit' value='edit' />
-</form>
-</td></tr>
-</table>
-<br />
-<table class='files enable_write'>
-<tr class=title><td class=centertext colspan=4>
-Create directory
-</td></tr>
-<tr><td>
-Name of new directory to be created in current directory (%(dest_dir)s)
-</td><td class=righttext colspan=3>
-<form action='mkdir.py' method=post>
-<input type='hidden' name='share_id' value='%(share_id)s' />
-<input name='current_dir' type='hidden' value='%(dest_dir)s' />
-<input name='path' size=50 />
-<input type='submit' value='Create' name='mkdirbutton' />
-</form>
-</td></tr>
-</table>
-<br />
-<form enctype='multipart/form-data' action='textarea.py' method='post'>
-<input type='hidden' name='share_id' value='%(share_id)s' />
-<table class='files enable_write if_full'>
-<tr class='title'><td class=centertext colspan=4>
-Upload file
-</td></tr>
-<tr><td colspan=4>
-Upload file to current directory (%(dest_dir)s)
-</td></tr>
-<tr class='if_full'><td colspan=2>
-Extract package files (.zip, .tar.gz, .tar.bz2)
-</td><td colspan=2>
-<input type=checkbox name='extract_0' />
-</td></tr>
-<tr class='if_full'><td colspan=2>
-Submit mRSL files (also .mRSL files included in packages)
-</td><td colspan=2>
-<input type=checkbox name='submitmrsl_0' />
-</td></tr>
-<tr><td>    
-File to upload
-</td><td class=righttext colspan=3>
-<input name='fileupload_0_0_0' type='file'/>
-</td></tr>
-<tr><td>
-Optional remote filename (extra useful in windows)
-</td><td class=righttext colspan=3>
-<input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
-<input name='remotefilename_0' type='text' size='50' value='%(dest_dir)s'/>
-<input type='submit' value='Upload' name='sendfile'/>
-</td></tr>
-</table>
-</form>
-    """ % fill_helper})
     return (output_objects, status)

@@ -30,8 +30,9 @@
 from urllib import quote
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_pager_entries, any_vgrid
+from shared.defaults import default_pager_entries, any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -110,11 +111,17 @@ def main(client_id, user_arguments_dict):
 
         # Helper form for sends
         
-        helper = html_post_helper('sendmsg', 'sendrequestaction.py',
+        form_method = 'post'
+        csrf_limit = get_csrf_limit(configuration)
+        target_op = 'sendrequestaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        helper = html_post_helper('sendmsg', '%s.py' % target_op,
                                   {'cert_id': '__DYNAMIC__',
                                    'protocol': '__DYNAMIC__',
                                    'request_type': 'plain',
-                                   'request_text': ''})
+                                   'request_text': '',
+                                   csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text':
                                helper})
 

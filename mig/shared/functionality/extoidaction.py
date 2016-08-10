@@ -37,7 +37,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import oid_valid_days
 from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
 from shared.serial import dumps
@@ -76,10 +76,12 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     # Unfortunately OpenID does not use POST
-    #if not correct_handler('GET'):
+    #if not safe_handler(configuration, 'post', op_name, client_id,
+    #                    get_csrf_limit(configuration), accepted):
     #    output_objects.append(
-    #        {'object_type': 'error_text', 'text'
-    #         : 'Only accepting POST requests to prevent unintended updates'})
+    #        {'object_type': 'error_text', 'text': '''Only accepting
+#CSRF-filtered POST requests to prevent unintended updates'''
+    #         })
     #    return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')

@@ -28,7 +28,9 @@
 """This script is the welcome site for sandbox users"""
 
 import shared.returnvalues as returnvalues
+from shared.defaults import csrf_field
 from shared.functional import validate_input
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables
 
 default_language = 'english'
@@ -41,15 +43,57 @@ def signature():
     return ['html_form', defaults]
 
 
-html = {}
-html['maintenance'] = \
-    """
+def main(client_id, user_arguments_dict):
+    """Main function used by front end"""
+
+    (configuration, logger, output_objects, op_name) = \
+        initialize_main_variables(client_id, op_header=False,
+                                  op_menu=client_id)
+    output_objects.append({'object_type': 'header', 'text'
+                          : '%s Screen Saver Sandbox' % \
+                            configuration.short_title
+                            })
+    defaults = signature()[1]
+    (validate_status, accepted) = validate_input(user_arguments_dict,
+            defaults, output_objects, allow_rejects=False)
+    if not validate_status:
+        return (accepted, returnvalues.CLIENT_ERROR)
+
+    language = accepted['language'][-1]
+
+    if not configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Sandbox resources are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
+
+    if not language in ("maintenance", "english", "danish"):
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Unsupported language: %s, defaulting to %s'
+                               % (language, default_language)})
+        language = default_language
+
+        # print "<a href='ssslogin.py'>Default language</a>"
+        # sys.exit(1)
+
+    html = {}
+    html['maintenance'] = """
 Sorry we are currently down for maintenance, we'll be back shortly
 """
 
-html['english'] = \
-    """
-<form action='sssadmin.py' method='post'>
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {'site': configuration.short_title, 'form_method': form_method,
+                    'csrf_field': csrf_field, 'csrf_limit': csrf_limit}
+    target_op = 'sssadmin'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+
+    html['english'] = """
+<form method='%(form_method)s' action='%(target_op)s.py'> 
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 
 <table class='sandboxlogintext'>
 <tr><td><a class='danishlink iconspace' href='ssslogin.py?language=danish'>P&aring; dansk</a></td></tr>
@@ -89,11 +133,11 @@ html['english'] = \
 
 
 </table></form>
-"""
+""" % fill_helpers
 
-html['danish'] = \
-    """
-<form action='sssadmin.py' method='post'>
+    html['danish'] = """
+<form method='%(form_method)s' action='%(target_op)s.py'> 
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 
 <table class='sandboxlogintext'>
 <tr><td><a class='englishlink iconspace' href='ssslogin.py?language=english'>In English</a></td></tr>
@@ -130,46 +174,9 @@ html['danish'] = \
 
 
 </table></form>
-"""
+""" % fill_helpers
 
-
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
-
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False,
-                                  op_menu=client_id)
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s Screen Saver Sandbox' % \
-                            configuration.short_title
-                            })
-    defaults = signature()[1]
-    (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
-    if not validate_status:
-        return (accepted, returnvalues.CLIENT_ERROR)
-
-    language = accepted['language'][-1]
-
-    if not configuration.site_enable_sandboxes:
-        output_objects.append({'object_type': 'text', 'text':
-                               '''Sandbox resources are disabled on this site.
-Please contact the Grid admins %s if you think they should be enabled.
-''' % configuration.admin_email})
-        return (output_objects, returnvalues.OK)
-
-    if not language in html.keys():
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Unsupported language: %s, defaulting to %s'
-                               % (language, default_language)})
-        language = default_language
-
-        # print "<a href='ssslogin.py'>Default language</a>"
-        # sys.exit(1)
-
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : html[language] % \
-                           {'site': configuration.short_title}})
+    output_objects.append({'object_type': 'html_form', 'text': html[language]})
     return (output_objects, returnvalues.OK)
 
 

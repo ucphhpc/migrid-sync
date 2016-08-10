@@ -33,7 +33,8 @@ import os
 import urllib
 
 from shared.base import client_id_dir
-from shared.defaults import CSRF_MINIMAL, CSRF_MEDIUM, CSRF_FULL
+from shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
+     CSRF_FULL
 from shared.findtype import is_user, is_server
 from shared.pwhash import make_csrf_token
 
@@ -56,7 +57,7 @@ def get_csrf_limit(configuration, environ=None):
     limit = None
     return limit
 
-def check_enforce_csrf(configuration, accepted_dict, environ=None):
+def check_enable_csrf(configuration, accepted_dict, environ=None):
     """Detect if client is a browser so that CSRF should be enabled or e.g. a 
     command line client like cURL or XMLRPC where it is partially supported
     except for legacy script versions. We should eventually disable the
@@ -66,25 +67,31 @@ def check_enforce_csrf(configuration, accepted_dict, environ=None):
     if environ is None:
         environ = os.environ
     if configuration.site_csrf_protection == CSRF_FULL:
+        _logger.debug("configuration enforces full CSRF protection")
+        return True
+    elif configuration.site_csrf_protection == CSRF_WARN:
+        _logger.debug("configuration enforces minimal CSRF protection, but " + \
+                      "with full warnings")
         return True
     elif configuration.site_csrf_protection == CSRF_MINIMAL:
+        _logger.debug("configuration enforces minimal CSRF protection")
         return False
-    # Default is CSRF_MEDIUM - enforce except for legacy clients
+    # Fall back to CSRF_MEDIUM - enforce CSRF checks except for legacy clients
     # We look for curl and xmlrpc first in user agent to match e.g.
     # * curl/7.38.0
     # * xmlrpclib.py/1.0.1 (by www.pythonware.com)
     agent = environ.get('HTTP_USER_AGENT', 'UNKNOWN')
     if agent.lower().startswith('curl') or agent.lower().startswith('xmlrpc'):
-        # No _csrf input results in the defaults allow_me string
-        csrf_token = accepted_dict.get("_csrf", ['allow_me'])[-1]
-        if csrf_token != 'allow_me':
+        # No csrf_field input results in the defaults allow_me string
+        csrf_token = accepted_dict.get(csrf_field, ['allow_me'])[-1]
+        if csrf_token and csrf_token != 'allow_me':
             _logger.debug("enable CSRF check for modern script (%s)" % agent)
             return True
         else:
             _logger.debug("disable CSRF check for legacy script (%s)" % agent)
             return False
     else:
-        _logger.error("enable CSRF check for %s client" % agent)        
+        _logger.debug("enable CSRF check for %s client" % agent)        
         return True
 
 def safe_handler(configuration, method, operation, client_id, limit,
@@ -99,7 +106,7 @@ def safe_handler(configuration, method, operation, client_id, limit,
     if not correct_handler(method, environ):
         return False
     # NOTE: CSRF checks are automatically disabled for e.g. cURL clients here
-    elif not check_enforce_csrf(configuration, accepted_dict, environ):
+    elif not check_enable_csrf(configuration, accepted_dict, environ):
         return True
     # TODO: integrate token in user scripts and in xmlrpc
     #       Remember that user scripts cannot hardcode token as long as it
@@ -107,16 +114,23 @@ def safe_handler(configuration, method, operation, client_id, limit,
     #       backend and use everywhere? or include a single shared token for
     #       scripts which is set/found in Settings and must be set copied to
     #       miguser.conf / xmlrpc requests?
-    csrf_token = accepted_dict.get('_csrf', [''])[-1]
+    csrf_token = accepted_dict.get(csrf_field, [''])[-1]
     # TODO: include any openid session ID headers from environ here?
     csrf_required = make_csrf_token(configuration, method, operation,
                                     client_id, limit)
     _logger.debug("CSRF check: %s vs %s" % (csrf_required, csrf_token))
     if csrf_required != csrf_token:
-        _logger.warning("CSRF check failed: %s vs %s" % (csrf_required,
-                                                         csrf_token))
-        return False
+        msg = "CSRF check failed: %s vs %s" % (csrf_required, csrf_token)
+        # In the transitional warn-mode we log CSRF errors, but let them pass.
+        if configuration.site_csrf_protection != CSRF_WARN:
+            _logger.error(msg)
+            return False
+        else:
+            _logger.warning(msg)
+            return True
     else:
+        _logger.debug("CSRF check succeeded: %s vs %s" % (csrf_required,
+                                                          csrf_token))
         return True
 
 

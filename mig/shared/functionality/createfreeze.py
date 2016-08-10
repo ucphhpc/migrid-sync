@@ -31,12 +31,12 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import max_freeze_files
+from shared.defaults import max_freeze_files, csrf_field
 from shared.fileio import strip_dir
 from shared.freezefunctions import freeze_flavors, create_frozen_archive, \
      published_url
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.safeinput import valid_path
 from shared.validstring import valid_user_path
@@ -137,7 +137,9 @@ def main(client_id, user_arguments_dict):
     defaults = signature()[1]
     # All non-file fields must be validated
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
-                         (key, val) in defaults.items()])
+                          (key, val) in defaults.items()])
+    # IMPORTANT: we must explicitly inlude CSRF token
+    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, ['allowme'])
     (validate_status, accepted) = validate_input_and_cert(
         validate_args,
         defaults,
@@ -149,13 +151,15 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended use'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     flavor = accepted['flavor'][-1].strip()
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not flavor in freeze_flavors.keys():
         output_objects.append({'object_type': 'error_text', 'text':

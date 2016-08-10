@@ -43,7 +43,7 @@ from shared.base import client_id_dir, force_utf8, force_unicode
 from shared.defaults import user_db_filename, cert_valid_days, oid_valid_days
 from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
 from shared.safeinput import filter_commonname
@@ -193,11 +193,14 @@ def main(client_id, user_arguments_dict, environ=None):
     logger.debug('Accepted arguments: %s' % accepted)
 
     # Unfortunately OpenID redirect does not use POST
-    if login_type != 'oid' and not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+    if login_type != 'oid':
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     admin_email = configuration.admin_email
     openid_names, oid_extras = [], {}

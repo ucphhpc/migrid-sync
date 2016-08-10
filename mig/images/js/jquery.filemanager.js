@@ -56,7 +56,8 @@
 /* Helpers for jshint to know about variables from dependency scripts:
 jquery.prettyprint.js, preview.js, editor.py 
 */
-/* globals pp_bytes, pp_date, Preview, disable_editorarea_editor, enable_editorarea_editor, lastEdit */
+/* globals pp_bytes, pp_date, Preview, disable_editorarea_editor, csrf_map,
+   csrf_field, enable_editorarea_editor, lastEdit */
 
 /* Enable strict mode to help catch tricky errors early */
 "use strict";
@@ -587,11 +588,20 @@ if (jQuery) (function($){
             $("#cmd_dialog").dialog('open');
             $("#cmd_dialog").html('<p class="spinner iconleftpad">Copying... "'+src+'" <br />To: "'+dst+'"</p>');
 
-            $.post('cp.py', { src: src,
-                              dst: dst,
-                              output_format: 'json',
-                              flags: flag
-                            },
+            var jsonSettings = { src: src,
+                                 dst: dst,
+                                 output_format: 'json',
+                                 flags: flag};
+
+            var target_op = 'cp';
+            console.info("Lookup CSRF token for "+target_op);
+            if (csrf_map[target_op] !== undefined) {
+                jsonSettings['_csrf'] = csrf_map[target_op];
+                console.info("Found CSRF token "+jsonSettings['_csrf']);
+            } else {
+                console.info("No CSRF token for "+target_op);
+            }
+            $.post('cp.py', jsonSettings,
                    function(jsonRes, textStatus) {
                        stopProgress();
                        var errors = $(this).renderError(jsonRes);
@@ -673,10 +683,31 @@ if (jQuery) (function($){
             return misc_output;
         }
 
+        function scriptName(url) {
+            var base = url.substring(url.lastIndexOf('/') + 1); 
+            if (base.lastIndexOf(".") !== -1) { 
+                base = base.substring(0, base.lastIndexOf("."));
+            }
+            return base;
+        }
+
         function jsonWrapper(el, dialog, url, jsonOptions) {
 
             var jsonSettings = {path: $(el).attr(pathAttribute),
                                 output_format: 'json'};
+
+            /* The POST backends require a CSRF token. We dynamically make one
+               for each such backend in the fileman backend and just extract 
+               them when needed here. */
+            var target_op = scriptName(url);
+            console.info("Lookup CSRF token for "+target_op);
+            if (csrf_map[target_op] !== undefined) {
+                jsonSettings['_csrf'] = csrf_map[target_op];
+                console.info("Found CSRF token "+jsonSettings['_csrf']);
+            } else {
+                console.info("No CSRF token for "+target_op);
+            }
+
             var lastinfo = $(statusinfo).html();
 
             $.fn.extend(jsonSettings, jsonOptions);
@@ -994,7 +1025,8 @@ if (jQuery) (function($){
                 open_dialog("Upload Files",
                             function () {
                                 $(".fm_files").parent().reload('');
-                            }, remote_path, false);
+                            }, remote_path, false, undefined, 
+                            csrf_map['uploadchunked']);
             },
             mkdir:  function (action, el, pos) {
                 // Initialize the form
@@ -1519,7 +1551,8 @@ if (jQuery) (function($){
                                     open_dialog("Upload Files",
                                                 function () {
                                                     $(".fm_files").parent().reload('');
-                                                }, remote_path, false);
+                                                }, remote_path, false, undefined, 
+                                                csrf_map['uploadchunked']);
                                     //alert("done upload!");
                                 });
                             }
@@ -2236,14 +2269,18 @@ var status_url = base_url+"status";
 var delete_url = base_url+"delete";
 var move_url = base_url+"move";
 
-$.fn.delete_upload = function(name, dest_dir, share_id) {
-    console.debug("delete upload: "+name+" "+dest_dir+" "+share_id);
+$.fn.delete_upload = function(name, dest_dir, share_id, csrf_token) {
+    //console.debug("delete upload: "+name+" "+dest_dir+" "+share_id+" "+csrf_token);
     var deleted = false;
     $.ajax({
-        url: delete_url,
+        url: delete_url+";share_id="+share_id+";"+csrf_field+"="+csrf_token,
         dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
-               "current_dir": dest_dir, "share_id": share_id},
+               "current_dir": dest_dir},
+        /* TODO: can we include these in data instead of url query above??
+               "share_id": share_id, 
+               csrf_field: csrf_token},
+               */
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
@@ -2258,11 +2295,15 @@ $.fn.delete_upload = function(name, dest_dir, share_id) {
                         //console.debug("found file entry in results: "+index);
                         if (file.error !== undefined) {
                             console.error("delete_upload file error: "+file.error);
-                        } else if (file[name]) {
+                        } else if (file[name] === true) {
                             //console.debug("found success marker: "+file[name]);
                             deleted = true;
+                        } else if (file[name] === false) {
+                            /* We may end here if no chunks were written yet */
+                            console.warn("found fail marker: "+name);
+                            deleted = false;
                         } else {
-                            console.error("delete_upload unexpected: "+$.fn.dump(file));
+                            console.error("delete_upload "+name+" unexpected: "+$.fn.dump(file));
                         }
                         // Break upon first hit
                         return false;
@@ -2278,14 +2319,18 @@ $.fn.delete_upload = function(name, dest_dir, share_id) {
     return deleted;
 };
 
-$.fn.move_upload = function(name, dest_dir, share_id) {
-    console.debug("move upload: "+name+" "+dest_dir+" "+share_id);
+$.fn.move_upload = function(name, dest_dir, share_id, csrf_token) {
+    //console.debug("move upload: "+name+" "+dest_dir+" "+share_id+" "+csrf_token);
     var moved = false;
     $.ajax({
-        url: move_url,
+        url: move_url+";share_id="+share_id+";"+csrf_field+"="+csrf_token,
         dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
-               "current_dir": dest_dir, "share_id": share_id},
+               "current_dir": dest_dir},
+        /* TODO: can we include these in data instead of url query above??
+        , "share_id": share_id, 
+               csrf_field: csrf_token},
+               */
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
@@ -2427,9 +2472,9 @@ function mig_fancyuploadchunked_init(name, callback) {
         return data;
     }
 
-    var do_d = function(text, action, dest_dir, automatic_dest, share_id) {
+    var do_d = function(text, action, dest_dir, automatic_dest, share_id, csrf_token) {
 
-        console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir+", "+share_id);
+        //console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir+", "+share_id+", "+csrf_token);
 
         // save and restore original callback
         var c = callback;
@@ -2466,9 +2511,9 @@ function mig_fancyuploadchunked_init(name, callback) {
         $("#fancyfileupload").fancyfileupload({
             // Uncomment the following to send cross-domain cookies:
             //xhrFields: {withCredentials: true},
-            url: upload_url+";share_id="+share_id,
+            url: upload_url+";share_id="+share_id+";"+csrf_field+"="+csrf_token,
             // TODO: can we somehow move to data like this?
-            //data: {"share_id": share_id},
+            //data: {"share_id": share_id, csrf_field: csrf_token},
             dataType: "json",
             maxChunkSize: 32000000, // 32 MB
             filesContainer: ".uploadfileslist",
@@ -2488,6 +2533,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                 //console.debug("add file with data: "+$.fn.dump(data));
                 console.debug("add file with data files: "+$.fn.dump(data.files));
                 var that = this;
+                //console.debug("call add with: "+csrf_token);
                 try {
                     $.blueimp.fileupload.prototype
                         .options.add.call(that, e, data);
@@ -2517,7 +2563,8 @@ function mig_fancyuploadchunked_init(name, callback) {
                         // Continue to next if move was not requested
                         return true;
                     }
-                    if ($.fn.move_upload(file.name, file.moveDest, share_id)) {
+                    //console.debug("call move with: "+csrf_token);
+                    if ($.fn.move_upload(file.name, file.moveDest, share_id, csrf_token)) {
                         console.debug("fix path and strip move info: " + file.name);
                         var purename = file.name.substring(file.name.lastIndexOf("/") + 1);
                         var baseurl = file.url.substring(0, file.url.length - file.name.length);
@@ -2565,8 +2612,8 @@ function mig_fancyuploadchunked_init(name, callback) {
                     } else {
                         console.debug("cancelled file: "+file.name);
                     }
-                    console.debug("call clean up file: "+file.name);
-                    $.fn.delete_upload(file.name, share_id);
+                    //console.debug("call clean up file: "+file.name);
+                    $.fn.delete_upload(file.name, '', share_id, csrf_token);
                 });
                 var that = this;
                 try {
@@ -2949,6 +2996,7 @@ function mig_imagesettings_init(name, path, options) {
 
     // Removes all element from list
 
+    // TODO: switch to POST and add CSRF checks here like in cp
     function remove_all() {
         $.ajax({
             url: 'filemetaio.py',
@@ -2986,6 +3034,7 @@ function mig_imagesettings_init(name, path, options) {
 
     // Remove an element from list
 
+    // TODO: switch to POST and add CSRF checks here like in cp
     function remove() {
         var extension = $("#imagesettings_form input[name='extension']").val();
         $.ajax({
@@ -3048,6 +3097,7 @@ function mig_imagesettings_init(name, path, options) {
             edit_form_values['preview_cutoff_max'] = 0;
             do_edit();
         } else {
+            // TODO: switch to POST and add CSRF checks here like in cp
             $.ajax({
                 url: 'filemetaio.py',
                 data: { extension: extension,

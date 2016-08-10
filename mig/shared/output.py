@@ -926,6 +926,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         # TODO: enable edit in sharelink and remove if_full here?
                         lines.append("<td class='enable_write if_full'></td>")
                         cols += 1
+                        # Note: this includes CSRF token
                         rmdir_url = rmdir_url_template % directory
                         js_name = 'delete%s' % hexlify(directory['rel_path'])
                         helper = html_post_helper(js_name, rmdir_url, {})
@@ -974,6 +975,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         lines.append("<td class='enable_write if_full'>%s</td>"\
                                      % edit_link)
                         cols += 1
+                        # Note: this includes CSRF token
                         rm_url = rm_url_template % this_file
                         js_name = 'delete%s' % hexlify(this_file['rel_path'])
                         helper = html_post_helper(js_name, rm_url, {})

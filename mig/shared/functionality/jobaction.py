@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobaction - Request status change (freeze, cancel, ...) for one or more jobs
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,7 @@ from shared.defaults import all_jobs
 from shared.fileio import unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.validstring import valid_user_path
 
@@ -72,14 +72,16 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     patterns = accepted['job_id']
     action = accepted['action'][-1]
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action in valid_actions.keys():
         output_objects.append({'object_type': 'error_text', 'text'

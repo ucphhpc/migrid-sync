@@ -36,10 +36,12 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import csrf_field
 from shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
      cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
      init_editor_js, run_editor_js, change_editor_mode_js, kill_editor_js
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
 
@@ -347,7 +349,8 @@ function newcountdown(path, minutes) {
     return script
 
 
-def edit_file(path, abs_path, output_format='html', includes=edit_includes):
+def edit_file(configuration, client_id, path, abs_path, output_format='html',
+              includes=edit_includes):
     """Format and return the contents of a given file"""
 
     text = ''
@@ -359,9 +362,21 @@ def edit_file(path, abs_path, output_format='html', includes=edit_includes):
         except Exception, exc:
             return 'Failed to open file %s: %s' % (path, exc)
 
-    html = \
-        '''Select file:<br />
-<form id="editor_form" method="post" action="editfile.py">
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {'path': path, 'lock_suffix': edit_lock_suffix,
+                    'output_format': output_format, 'text': text,
+                    'form_method': form_method, 'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
+    target_op = 'editfile'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+    
+    html = '''Select file:<br />
+<form id="editor_form" enctype="multipart/form-data" method="%(form_method)s"
+    action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="output_format" value="%(output_format)s" />
 <input id="editorpath" class="fillwidth padspace" type="text" name="path"
     value="%(path)s" />
@@ -369,7 +384,7 @@ def edit_file(path, abs_path, output_format='html', includes=edit_includes):
 Edit contents:<br />
 <textarea id="editorarea" class="fillwidth padspace" rows="25"
           name="editarea">%(text)s</textarea>
-'''
+''' % fill_helpers
     if 'switcher' in includes:
         html += '''
 <ul id="switcher">
@@ -411,18 +426,23 @@ Submit file as job after saving <input type=checkbox name="submitjob" />
 '''
     
     if 'discard' in includes:
+        target_op = 'rm'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html += '''
-<form id="discard_form" method="post" action="rm.py">
+<form id="discard_form" method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="output_format" value="%(output_format)s" />
 <input type="hidden" name="flags" value="rf" />
 <input type="hidden" name="path" value="%(path)s%(lock_suffix)s" />
 <input type="submit" value="Discard changes" />
 </form>
-'''
+''' % fill_helpers
     if 'spellcheck' in includes:
         html += '''
 <p>
-<form id="spell_form" method="post" action="spell.py">
+<form id="spell_form" method="%(form_method)s" action="spell.py">
 <input type="hidden" name="output_format" value="%(output_format)s" />
 Spell check (last saved) contents:<br />
 <input type="hidden" name="path" value="%(path)s" />
@@ -446,8 +466,7 @@ Type:
 </form>
 <p>
 '''
-    return html % {'path': path, 'lock_suffix': edit_lock_suffix,
-                   'output_format': output_format, 'text': text}
+    return html % fill_helpers
 
 
 def main(client_id, user_arguments_dict):
@@ -522,7 +541,7 @@ setTimeout("newcountdown('%s', %d)", 1)
         output_objects.append({'object_type': 'html_form', 'text'
                               : javascript})
 
-        html = edit_file(path, abs_path)
+        html = edit_file(configuration, client_id, path, abs_path)
         output_objects.append({'object_type': 'html_form', 'text'
                               : html})
     else:

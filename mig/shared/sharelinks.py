@@ -33,7 +33,7 @@ import time
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
 
-from shared.defaults import sharelinks_filename
+from shared.defaults import sharelinks_filename, csrf_field
 from shared.fileio import makedirs_rec, make_symlink, delete_symlink
 from shared.serial import load, dump
 from shared.useradm import client_id_dir, extract_field
@@ -145,10 +145,16 @@ def build_sharelinkitem_object(configuration, share_dict):
         share_item[field] = str(share_item[field])
     return share_item
 
-def create_share_link_form(configuration, client_id, output_format, form_append=''):
+def create_share_link_form(configuration, client_id, output_format,
+                           form_append='', csrf_token=''):
     """HTML for the creation of share links"""
+    fill_helpers = {'vgrid_label': configuration.site_vgrid_label,
+                    'output_format': output_format, 'form_append': form_append,
+                    'csrf_field': csrf_field, 'csrf_token': csrf_token,
+                    'target_op': 'sharelink', 'form_method': 'post'}
     html = '''
-    <form id="sharelink_form" method="post" action="sharelink.py">
+    <form id="sharelink_form" method="%(form_method)s" action="%(target_op)s.py">
+    <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
     <fieldset>
         <input type="hidden" name="output_format" value="%(output_format)s" />
         <input type="hidden" name="action" value="create" />
@@ -197,53 +203,54 @@ def create_share_link_form(configuration, client_id, output_format, form_append=
         </table>
     </fieldset>
     </form>
-''' %  {'vgrid_label': configuration.site_vgrid_label, 'output_format':
-        output_format, 'form_append': form_append}
+''' %  fill_helpers
     return html
 
 def invite_share_link_helper(configuration, client_id, share_dict,
                              output_format, form_append=''):
     """Build share link invitation helper dict to fill strings"""
-    fill_helper = {'vgrid_label': configuration.site_vgrid_label, 'short_title':
+    fill_helpers = {'vgrid_label': configuration.site_vgrid_label, 'short_title':
                    configuration.short_title, 'output_format': output_format,
                    # Legacy: make sure single_file is always set
-                   'single_file': False,
-                   }
-    fill_helper.update(share_dict)
-    if fill_helper['single_file']:
-        fill_helper['share_url'] = "%s/share_redirect/%s" \
+                   'single_file': False}
+    fill_helpers.update(share_dict)
+    if fill_helpers['single_file']:
+        fill_helpers['share_url'] = "%s/share_redirect/%s" \
                                    % (configuration.migserver_https_sid_url,
-                                      fill_helper['share_id'])
+                                      fill_helpers['share_id'])
     else:
-        fill_helper['share_url'] = "%s/sharelink/%s" \
+        fill_helpers['share_url'] = "%s/sharelink/%s" \
                                    % (configuration.migserver_https_sid_url,
-                                      fill_helper['share_id'])
-    fill_helper['name'] = extract_field(client_id, 'full_name')
-    fill_helper['email'] = extract_field(client_id, 'email')
-    fill_helper['form_append'] = form_append
-    fill_helper['auto_msg'] = '''Hi,
+                                      fill_helpers['share_id'])
+    fill_helpers['name'] = extract_field(client_id, 'full_name')
+    fill_helpers['email'] = extract_field(client_id, 'email')
+    fill_helpers['form_append'] = form_append
+    fill_helpers['auto_msg'] = '''Hi,
 %(name)s (%(email)s) has shared %(short_title)s data with you on:
 %(share_url)s
 
---- Optional invitation message follows below ---''' % fill_helper
-    return fill_helper
+--- Optional invitation message follows below ---''' % fill_helpers
+    return fill_helpers
 
 def invite_share_link_message(configuration, client_id, share_dict,
                               output_format, form_append=""):
     """Get automatic message preamble for invitation mails"""
-    fill_helper = invite_share_link_helper(configuration, client_id,
+    fill_helpers = invite_share_link_helper(configuration, client_id,
                                            share_dict, output_format,
                                            form_append)
-    return fill_helper['auto_msg']
+    return fill_helpers['auto_msg']
 
 def invite_share_link_form(configuration, client_id, share_dict, output_format,
-                           form_append=''):
+                           form_append='', csrf_token=''):
     """HTML for the inviting people to share links"""
-    fill_helper = invite_share_link_helper(configuration, client_id,
+    fill_helpers = invite_share_link_helper(configuration, client_id,
                                            share_dict, output_format,
                                            form_append)
+    fill_helpers.update({'csrf_field': csrf_field, 'csrf_token': csrf_token,
+                         'target_op': 'sharelink', 'form_method': 'post'})
     html = '''
-    <form id="sharelink_form" method="post" action="sharelink.py">
+    <form id="sharelink_form" method="%(form_method)s" action="%(target_op)s.py">
+    <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
     <fieldset>
         <input type="hidden" name="output_format" value="%(output_format)s" />
         <input type="hidden" name="action" value="update" />
@@ -285,7 +292,7 @@ def invite_share_link_form(configuration, client_id, share_dict, output_format,
         </table>
     </fieldset>
     </form>
-''' %  fill_helper
+''' %  fill_helpers
     return html
 
 def load_share_links(configuration, client_id):

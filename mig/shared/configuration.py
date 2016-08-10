@@ -36,7 +36,7 @@ import sys
 import time
 from ConfigParser import ConfigParser
 
-from shared.defaults import CSRF_MINIMAL, CSRF_MEDIUM, CSRF_FULL
+from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL
 from shared.logger import Logger
 from shared.html import menu_items, vgrid_items
 
@@ -276,8 +276,9 @@ class Configuration:
     # Allowed signup and login methods in prioritized order
     site_signup_methods = ['extcert']
     site_login_methods = ['extcert']
-    # Default to medium CSRF protection (allow legacy script access without)
-    site_csrf_protection = CSRF_MEDIUM
+    # TODO: switch to CSRF_MEDIUM and eventually CSRF_FULL when ready
+    # Default to transitional CSRF protection warnings only for now
+    site_csrf_protection = CSRF_WARN
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
@@ -1104,10 +1105,11 @@ class Configuration:
             self.site_login_methods = self.site_signup_methods
         if config.has_option('SITE', 'csrf_protection'):
             csrf_protection = config.get('SITE', 'csrf_protection')
-            if csrf_protection in (CSRF_MINIMAL, CSRF_MEDIUM, CSRF_FULL):
+            if csrf_protection in (CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM,
+                                   CSRF_FULL):
                 self.site_csrf_protection = csrf_protection
         else:
-            self.site_csrf_protection = CSRF_MEDIUM
+            self.site_csrf_protection = CSRF_WARN
         if config.has_option('SITE', 'script_deps'):
             self.site_script_deps = config.get('SITE', 'script_deps').split()
         else:

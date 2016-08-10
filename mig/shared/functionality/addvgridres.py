@@ -31,9 +31,9 @@ from binascii import unhexlify
 import os
 
 from shared.accessrequests import delete_access_request
-from shared.defaults import any_protocol
+from shared.defaults import any_protocol, csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
      vgrid_list_subvgrids, vgrid_add_resources, allow_resources_adm
@@ -70,15 +70,17 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     vgrid_name = accepted['vgrid_name'][-1].strip()
     res_id_list = accepted['unique_resource_name']
     request_name = unhexlify(accepted['request_name'][-1])
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # make sure vgrid settings allow this owner to edit resources
 
@@ -184,8 +186,25 @@ def main(client_id, user_arguments_dict):
         for res_id in res_id_added:
             res_id_fields += """
 <input type=hidden name=unique_resource_name value='%s' />""" % res_id
+
+        form_method = 'post'
+        csrf_limit = get_csrf_limit(configuration)
+        fill_helpers = {'vgrid_name': vgrid_name,
+                        'unique_resource_name': unique_resource_name,
+                        'protocol': any_protocol,
+                        'short_title': configuration.short_title,
+                        'vgrid_label': configuration.site_vgrid_label,
+                        'res_id_fields': res_id_fields,
+                        'form_method': form_method,
+                        'csrf_field': csrf_field,
+                        'csrf_limit': csrf_limit}
+        target_op = 'sendrequestaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': """
-<form method='post' action='sendrequestaction.py'>
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type=hidden name=request_type value='vgridaccept' />
 <input type=hidden name=vgrid_name value='%(vgrid_name)s' />
 %(res_id_fields)s
@@ -195,11 +214,11 @@ def main(client_id, user_arguments_dict):
 <td class='title'>Custom message to resource owners</td>
 </tr><tr>
 <td><textarea name=request_text cols=72 rows=10>
-We have granted your resource access to our %(vgrid_name)s %(_label)s.
-You can assign it to accept jobs from the %(vgrid_name)s %(_label)s from your
-Resources page on %(short_title)s.
+We have granted your resource access to our %(vgrid_name)s %(vgrid_label)s.
+You can assign it to accept jobs from the %(vgrid_name)s %(vgrid_label)s from
+your Resources page on %(short_title)s.
 
-Regards, the %(vgrid_name)s %(_label)s owners
+Regards, the %(vgrid_name)s %(vgrid_label)s owners
 </textarea></td>
 </tr>
 <tr>
@@ -208,10 +227,7 @@ Regards, the %(vgrid_name)s %(_label)s owners
 </table>
 </form>
 <br />
-""" % {'vgrid_name': vgrid_name, 'unique_resource_name': unique_resource_name,
-       'protocol': any_protocol, '_label': configuration.site_vgrid_label,
-       'short_title': configuration.short_title, 'res_id_fields':
-       res_id_fields}})
+""" % fill_helpers})
 
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':

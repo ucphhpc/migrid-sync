@@ -35,7 +35,7 @@ from binascii import hexlify
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
      valid_trigger_changes, valid_trigger_actions, keyword_owners, \
-     keyword_members
+     keyword_members, csrf_field
 from shared.accessrequests import list_access_requests, load_access_request, \
      build_accessrequestitem_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -143,17 +143,30 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
     
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'short_title': configuration.short_title,
+                     'vgrid_label': configuration.site_vgrid_label,
+                     'form_method': form_method,
+                     'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
+
     output_objects.append({'object_type': 'header', 'text'
                           : "Administrate '%s'" % vgrid_name })
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text': 
                     'Only owners of %s can administrate it.' % vgrid_name })
+        target_op = "sendrequestaction"
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
-        helper = html_post_helper(js_name, 'sendrequestaction.py',
+        helper = html_post_helper(js_name, '%s.py' % target_op,
                                   {'vgrid_name': vgrid_name,
                                    'request_type': 'vgridowner',
-                                   'request_text': ''})
+                                   'request_text': '',
+                                   csrf_field: csrf_token
+                                   })
         output_objects.append({'object_type': 'html_form', 'text': helper})
         output_objects.append(
             {'object_type': 'link',
@@ -216,27 +229,43 @@ def main(client_id, user_arguments_dict):
 
     # Pending requests
 
-    helper = html_post_helper("acceptvgridownerreq", "addvgridowner.py",
+    target_op = "addvgridowner"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    helper = html_post_helper("acceptvgridownerreq", "%s.py" % target_op,
                               {'vgrid_name': vgrid_name,
                                'cert_id': '__DYNAMIC__',
-                               'request_name': '__DYNAMIC__'
+                               'request_name': '__DYNAMIC__',
+                               csrf_field: csrf_token
                                })
     output_objects.append({'object_type': 'html_form', 'text': helper})
-    helper = html_post_helper("acceptvgridmemberreq", "addvgridmember.py",
+    target_op = "addvgridmember"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    helper = html_post_helper("acceptvgridmemberreq", "%s.py" % target_op,
                               {'vgrid_name': vgrid_name,
                                'cert_id': '__DYNAMIC__',
-                               'request_name': '__DYNAMIC__'
+                               'request_name': '__DYNAMIC__',
+                               csrf_field: csrf_token
                                })
     output_objects.append({'object_type': 'html_form', 'text': helper})
-    helper = html_post_helper("acceptvgridresourcereq", "addvgridres.py",
+    target_op = "addvgridres"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    helper = html_post_helper("acceptvgridresourcereq", "%s.py" % target_op,
                               {'vgrid_name': vgrid_name,
                                'unique_resource_name': '__DYNAMIC__',
-                               'request_name': '__DYNAMIC__'
+                               'request_name': '__DYNAMIC__',
+                               csrf_field: csrf_token
                                })
     output_objects.append({'object_type': 'html_form', 'text': helper})
-    helper = html_post_helper("rejectvgridreq", "rejectvgridreq.py",
+    target_op = "rejectvgridreq"
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    helper = html_post_helper("rejectvgridreq", "%s.py" % target_op,
                               {'vgrid_name': vgrid_name,
-                               'request_name': '__DYNAMIC__'
+                               'request_name': '__DYNAMIC__',
+                               csrf_field: csrf_token
                                })
     output_objects.append({'object_type': 'html_form', 'text': helper})
 
@@ -350,6 +379,7 @@ def main(client_id, user_arguments_dict):
         'members': keyword_members,
         'all': keyword_all,
         'form_method': form_method,
+        'csrf_field': csrf_field,
         'csrf_limit': csrf_limit
         })
     target_op = 'vgridsettings'
@@ -361,7 +391,7 @@ def main(client_id, user_arguments_dict):
     <form method="%(form_method)s" action="%(target_op)s.py">
         <fieldset>
             <legend>%(vgrid_label)s configuration</legend>
-                <input type="hidden" name="_csrf" value="%(csrf_token)s" />
+                <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
                 <input type="hidden" name="vgrid_name" value="%(vgrid_name)s" />
 '''
     description = settings_dict.get('description', '')
@@ -489,7 +519,7 @@ the corresponding participants. Similarly setting a visibility flag to
     output_objects.append({'object_type': 'html_form',
                            'text': '''
       <form method="%(form_method)s" action="%(target_op)s.py">
-        <input type="hidden" name="_csrf" value="%(csrf_token)s" />
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
           <input type="hidden" name="vgrid_name" value="%(vgrid_name)s" />
           <input type="submit" value="Repair components" />
       </form>

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobobjsubmit - Submit a job object/dictionary directly
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.job import new_job, fields_to_mrsl, create_job_object_from_pickled_mrsl
 from shared.mrslkeywords import get_job_specs, get_keywords_dict
@@ -78,10 +78,12 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     external_dict = get_keywords_dict(configuration)

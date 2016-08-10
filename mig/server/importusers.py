@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # importusers - Import users from XML file in provided URL
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,9 +34,12 @@ import urllib
 import re
 
 import shared.returnvalues as returnvalues
+from shared.conf import get_configuration_object
+from shared.defaults import csrf_field
+from shared.functionality.sendrequestaction import main
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.useradm import init_user_adm, fill_user, default_search, \
     distinguished_name_to_user, create_user, search_users
-from shared.functionality.sendrequestaction import main
 
 
 def usage(name='importusers.py'):
@@ -150,28 +153,34 @@ if '__main__' == __name__:
             continue
         new_users.append(user_dict)
 
+    configuration = get_configuration_object()
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = 'sendrequestaction'
     for user_dict in new_users:
         fill_user(user_dict)
-        user_id = user_dict['distinguished_name']
+        client_id = user_dict['distinguished_name']
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
         user_dict['comment'] = 'imported from external URL'
         try:
             create_user(user_dict, conf_path, db_path, force, verbose)
         except Exception, exc:
             print exc
             continue
-        print 'Created %s in user database and in file system' % user_id
+        print 'Created %s in user database and in file system' % client_id
         for name in vgrids:
-            request = {'cert_id': user_id, 'vgrid_name': [name],
+            request = {'cert_id': client_id, 'vgrid_name': [name],
                        'request_type': ['vgridmember'],
                        'request_text':
-                       ['automatic request from importusers script']}
-            (output, status) = main(user_id, request)
+                       ['automatic request from importusers script'],
+                       csrf_field: csrf_token}
+            (output, status) = main(client_id, request)
             if status == returnvalues.OK:
                 print 'Request for %s membership in %s sent to owners' % \
-                      (user_id, name)
+                      (client_id, name)
             else:
                 print 'Request for %s membership in %s failed: %s' % \
-                      (name, user_id, output)
-                
+                      (name, client_id, output)
 
     print '%d new users imported' % len(new_users)

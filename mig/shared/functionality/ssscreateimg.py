@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssscreateimg - Back end to SSS zip generator
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,7 @@ from shared.conf import get_resource_configuration, get_resource_exe
 from shared.defaults import default_vgrid
 from shared.fileio import make_symlink, write_zipfile, copy
 from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.sandbox import load_sandbox_db, save_sandbox_db, \
     create_sss_resource
@@ -82,12 +82,6 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     username = accepted['username'][-1]
     password = accepted['password'][-1]
     hd_size = accepted['hd_size'][-1]
@@ -109,6 +103,15 @@ def main(client_id, user_arguments_dict):
 Please contact the Grid admins %s if you think they should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
+
+    if not safe_handler(configuration, 'post', op_name, username,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
 
     # check that requested image format is valid
 

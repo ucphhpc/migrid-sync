@@ -32,9 +32,10 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import csrf_field
 from shared.fileio import remove_rec
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import force
@@ -271,18 +272,20 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     vgrid_name = accepted['vgrid_name'][-1]
     flags = ''.join(accepted['flags'])
     cert_id = accepted['cert_id'][-1]
     cert_dir = client_id_dir(cert_id)
     # inherited vgrid membership
     inherit_vgrid_member = False
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Remove %s' % configuration.site_vgrid_label
@@ -455,10 +458,14 @@ Owner removal has to be performed at the topmost vgrid''' % \
 No more direct owners of %s - leaving will result in the %s getting
 deleted. Please use either of the links below to confirm or cancel.
 ''' % (vgrid_name, configuration.site_vgrid_label)})
-            js_name = 'rmvgridowner%s' % hexlify(vgrid_name)
-            helper = html_post_helper(js_name, 'rmvgridowner.py',
+            # Reuse csrf token from this request
+            target_op = 'rmvgridowner' 
+            js_name = target_op
+            csrf_token = accepted[csrf_field][-1]
+            helper = html_post_helper(js_name, '%s.py' % target_op,
                                       {'vgrid_name': vgrid_name,
-                                       'cert_id': cert_id, 'flags': 'f'})
+                                       'cert_id': cert_id, 'flags': 'f',
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             output_objects.append({'object_type': 'link', 'destination':
                                    "javascript: %s();" % js_name, 'class':

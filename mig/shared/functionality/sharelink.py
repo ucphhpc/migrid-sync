@@ -33,19 +33,19 @@ import datetime
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.sharelinks import build_sharelinkitem_object, load_share_links, \
-     create_share_link, update_share_link, delete_share_link
 from shared.defaults import  default_pager_entries, keyword_owners, \
-     keyword_members
+     keyword_members, csrf_field
 from shared.functional import validate_input_and_cert
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.pwhash import make_hash
-from shared.sharelinks import create_share_link_form, invite_share_link_form, \
-     invite_share_link_message, generate_sharelink_id 
+from shared.sharelinks import build_sharelinkitem_object, load_share_links, \
+     create_share_link, update_share_link, delete_share_link, \
+     create_share_link_form, invite_share_link_form, \
+     invite_share_link_message, generate_sharelink_id
 from shared.validstring import valid_user_path
 from shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings, \
      vgrid_add_sharelinks, vgrid_remove_sharelinks
@@ -130,16 +130,23 @@ Please contact the Grid admins %s if you think they should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if action in post_actions:
-        if not correct_handler('POST'):
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'Only accepting POST requests to prevent unintended updates'})
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     (load_status, share_map) = load_share_links(configuration, client_id)
     if not load_status:
         share_map = {}
 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = 'sharelink'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
     if action in get_actions:
         if action == "show":
             # Table columns to skip
@@ -149,16 +156,18 @@ Please contact the Grid admins %s if you think they should be enabled.
                 share_item = build_sharelinkitem_object(configuration,
                                                         share_dict)
                 js_name = 'delete%s' % hexlify(saved_id)
-                helper = html_post_helper(js_name, 'sharelink.py',
+                helper = html_post_helper(js_name, '%s.py' % target_op,
                                           {'share_id': saved_id,
-                                           'action': 'delete'})
-                output_objects.append({'object_type': 'html_form', 'text': helper})
+                                           'action': 'delete',
+                                           csrf_field: csrf_token})
+                output_objects.append({'object_type': 'html_form', 'text':
+                                       helper})
                 share_item['delsharelink'] = {
                     'object_type': 'link', 'destination':
                     "javascript: confirmDialog(%s, '%s');" % \
                     (js_name, 'Really remove %s?' % saved_id),
-                    'class': 'removelink iconspace', 'title': 'Remove share link %s' % \
-                    saved_id, 'text': ''}
+                    'class': 'removelink iconspace', 'title':
+                    'Remove share link %s' % saved_id, 'text': ''}
                 sharelinks.append(share_item)
 
             # Display share links and form to add new ones
@@ -178,7 +187,8 @@ Please contact the Grid admins %s if you think they should be enabled.
     <input type=submit value="Create share link" />
     </span>'''
             sharelink_html = create_share_link_form(configuration, client_id,
-                                                    'html', submit_button)
+                                                    'html', submit_button,
+                                                    csrf_token)
             output_objects.append({'object_type': 'html_form', 'text'
                                   : sharelink_html})
         elif action == "edit":
@@ -202,9 +212,10 @@ comma-separated recipients.
                                                     share_dict)
             saved_id = share_item['share_id']
             js_name = 'delete%s' % hexlify(saved_id)
-            helper = html_post_helper(js_name, 'sharelink.py',
+            helper = html_post_helper(js_name, '%s.py' % target_op,
                                       {'share_id': saved_id,
-                                       'action': 'delete'})
+                                       'action': 'delete',
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             # Hide link to self
             del share_item['editsharelink']
@@ -222,7 +233,7 @@ comma-separated recipients.
     </span>'''
             sharelink_html = invite_share_link_form(configuration, client_id,
                                                     share_dict, 'html',
-                                                    submit_button)
+                                                    submit_button, csrf_token)
             output_objects.append({'object_type': 'html_form', 'text'
                                   : sharelink_html})
             output_objects.append({'object_type': 'link',
@@ -470,9 +481,10 @@ think you should be allowed to do that.
                                                     share_dict)
             saved_id = share_item['share_id']
             js_name = 'delete%s' % hexlify(saved_id)
-            helper = html_post_helper(js_name, 'sharelink.py',
+            helper = html_post_helper(js_name, '%s.py' % target_op,
                                       {'share_id': saved_id,
-                                       'action': 'delete'})
+                                       'action': 'delete',
+                                       csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             share_item['delsharelink'] = {
                 'object_type': 'link', 'destination':
@@ -493,7 +505,7 @@ think you should be allowed to do that.
             </span>'''
                 invite_html = invite_share_link_form(configuration, client_id,
                                                      share_dict, 'html',
-                                                     submit_button)
+                                                     submit_button, csrf_token)
                 output_objects.append({'object_type': 'html_form', 'text':
                                        invite_html})
     else:

@@ -30,8 +30,10 @@
 import base64
 
 import shared.returnvalues as returnvalues
-from shared.defaults import max_software_entries, max_environment_entries
+from shared.defaults import max_software_entries, max_environment_entries, \
+     csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables
 from shared.refunctions import is_runtime_environment, \
     list_runtime_environments, get_re_dict
@@ -134,7 +136,7 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Use existing RE as template'})
+                          : 'Use existing Runtime Environment as template'})
 
     html_form = \
         """<form method='get' action='adminre.py'>
@@ -210,9 +212,20 @@ information.'''
 </form><br />
 """ % (select_string, re_template)
 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'short_title': configuration.short_title,
+                     'form_method': form_method,
+                     'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
+    target_op = 'createre'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     html_form += """
-<form method='post' action='createre.py'>
-<b>RE Name</b><br />
+<form method='%(form_method)s' action='%(target_op)s.py'>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+<b>Runtime Environment Name</b><br />
 <small>(eg. BASH-2.X-1, must be unique):</small><br />
 <input type='text' size='40' name='re_name' /><br />
 <br /><b>Description:</b><br />
@@ -350,8 +363,8 @@ ls
     html_form += """<br /><br /><input type='submit' value='Create' />
     </form>
 """
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : html_form})
+    output_objects.append({'object_type': 'html_form', 'text':
+                           html_form % fill_helpers})
     return (output_objects, returnvalues.OK)
 
 

@@ -33,7 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_alias, client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions, \
-     seafile_ro_dirname
+     seafile_ro_dirname, csrf_field
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
@@ -202,19 +202,21 @@ $(document).ready(function() {
                                'No valid topics!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    method = 'post'
-    limit = get_csrf_limit(configuration)
-    fill_helpers = {'method': method, 'site': configuration.short_title}
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {'site': configuration.short_title,
+                    'form_method': form_method, 'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
     if 'general' in topics:
         target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = \
              '''
         <div id="settings">
-        <form method="%(method)s" action="%(target_op)s.py">
-        <input type="hidden" name="_csrf" value="%(csrf_token)s" />
+        <form method="%(form_method)s" action="%(target_op)s.py">
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
         <table class="settings fixedlayout">
         <tr class="title"><td class="centertext">
         Select your %(site)s settings
@@ -335,13 +337,13 @@ $(document).ready(function() {
 
         default_mrsl = get_default_mrsl(mrsl_path)
         target_op = 'editfile'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="defaultmrsl">
-<form method="%(method)s" action="%(target_op)s.py">
-<input type="hidden" name="_csrf" value="%(csrf_token)s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="defaultjob fixedlayout">
 <tr class="title"><td class="centertext">
 Default job on submit page
@@ -388,14 +390,14 @@ your submit job page.
         css_path = os.path.join(base_dir, default_css_filename)
         default_css = get_default_css(css_path)
         target_op = 'editfile'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = \
              '''
 <div id="defaultcss">
-<form method="%(method)s" action="%(target_op)s.py">
-<input type="hidden" name="_csrf" value="%(csrf_token)s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="defaultstyle fixedlayout">
 <tr class="title"><td class="centertext">
 Default CSS (style) for all pages
@@ -505,13 +507,13 @@ disabling of widgets while experimenting here.</div>
 '''
             
         target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="widgets">
-<form method="%(method)s" action="%(target_op)s.py">
-<input type="hidden" name="_csrf" value="%(csrf_token)s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="widgets fixedlayout">
 <tr class="title"><td class="centertext">
 Default user defined widgets for all pages
@@ -617,13 +619,13 @@ them there first if you want to customize your grid pages.
                 images.append(path)
         configuration.public_image = images
         target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="profile">
-<form method="%(method)s" action="%(target_op)s.py">
-<input type="hidden" name="_csrf" value="%(csrf_token)s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="profile fixedlayout">
 <tr class="title"><td class="centertext">
 Public profile information visible to other users.
@@ -739,13 +741,13 @@ so you may have to avoid blank lines in your text below.
         sftp_server = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
         target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="sshaccess">
-<form method="%(method)s" action="%(target_op)s.py">
-<input type="hidden" name="_csrf" value="%(csrf_token)s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="sshsettings fixedlayout">
 <tr class="title"><td class="centertext">
 SFTP access to your %(site)s account
@@ -898,13 +900,13 @@ value="%(default_authpassword)s" />
         davs_server = configuration.user_davs_show_address
         davs_port = configuration.user_davs_show_port
         target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="davsaccess">
-<form method="%(method)s" action="%(target_op)s.py">
-<input type="hidden" name="_csrf" value="%(csrf_token)s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="davssettings fixedlayout">
 <tr class="title"><td class="centertext">
 WebDAVS access to your %(site)s account
@@ -1045,13 +1047,13 @@ value="%(default_authpassword)s" />
         ftps_server = configuration.user_ftps_show_address
         ftps_ctrl_port = configuration.user_ftps_show_ctrl_port
         target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="ftpsaccess">
-<form method="%(method)s" action="%(target_op)s.py">
-<input type="hidden" name="_csrf" value="%(csrf_token)s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="ftpssettings fixedlayout">
 <tr class="title"><td class="centertext">
 FTPS access to your %(site)s account
@@ -1204,8 +1206,8 @@ value="%(default_authpassword)s" />
             create_alias_link(username, client_id, configuration.user_home)
         
         target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, method, target_op,
-                                     client_id, limit)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <script type="text/javascript" >
@@ -1343,8 +1345,8 @@ and sharing solution.<br/>
 </fieldset>
 </td></tr>
 <tr><td>
-<form method="%(method)s" action="%(target_op)s.py">
-<input type="hidden" name="_csrf" value="%(csrf_token)s" />
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="topic" value="seafile" />
 <fieldset>
 <legend>%(site)s Seafile Integration</legend>

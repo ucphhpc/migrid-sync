@@ -32,8 +32,9 @@ import datetime
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import default_pager_entries
+from shared.defaults import default_pager_entries, csrf_backends
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 
@@ -88,7 +89,7 @@ def css_tmpl(configuration):
     css = themed_styles(configuration, base=['jquery.contextmenu.css'])
     return css
 
-def js_tmpl():
+def js_tmpl(csrf_map={}):
     """Javascript to include in the page header"""
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
@@ -99,6 +100,15 @@ def js_tmpl():
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
+<script type="text/javascript">
+var csrf_map = {};
+'''
+    for (target_op, token) in csrf_map.items():
+        js += '''
+csrf_map["%s"] = "%s";
+''' % (target_op, token)
+    js += '''
+</script>
 <script type="text/javascript" src="/images/js/jquery.jobmanager.js"></script>
 <script type="text/javascript">
 
@@ -156,7 +166,13 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Job Manager'
     title_entry['style'] = css_tmpl(configuration)
-    title_entry['javascript'] = js_tmpl()
+    csrf_map = {}
+    method = 'post'
+    limit = get_csrf_limit(configuration)
+    for target_op in csrf_backends:
+        csrf_map[target_op] = make_csrf_token(configuration, method,
+                                                 target_op, client_id, limit)
+    title_entry['javascript'] = js_tmpl(csrf_map)
   
     output_objects.append({'object_type': 'header', 'text': 'Job Manager'})
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'jobs',

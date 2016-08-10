@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmrequest - request new virtual machine
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,7 +30,9 @@
 
 import shared.returnvalues as returnvalues
 from shared import vms
+from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 
 
@@ -72,11 +74,21 @@ Please contact the Grid admins %s if you think they should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers =  {'form_method': form_method, 'csrf_field': csrf_field,
+                     'csrf_limit': csrf_limit}
+    target_op = 'vmachines'
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     build_form = '''
-<form method="post" action="vmachines.py">
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="output_format" value="html">
 <input type="hidden" name="action" value="create">
-
+''' % fill_helpers
+    build_form += '''
 <table style="margin: 0px; width: 100%;">
 <tr>
   <td style="width: 20%;">Machine name</td>

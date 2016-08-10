@@ -34,7 +34,7 @@ from shared.base import client_id_dir
 from shared.defaults import any_state, keyword_auto, valid_trigger_actions, \
       valid_trigger_changes, keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import correct_handler
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.validstring import valid_user_path
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
@@ -81,12 +81,6 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not correct_handler('POST'):
-        output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Only accepting POST requests to prevent unintended updates'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     # strip leftmost slashes from all fields used in filenames to avoid
     # interference with os.path.join
     # merge multi args into one string and split again to get flat array
@@ -101,6 +95,14 @@ def main(client_id, user_arguments_dict):
     match_files = accepted['match_files'][-1].strip() == 'True'
     match_dirs = accepted['match_dirs'][-1].strip() == 'True'
     match_recursive = accepted['match_recursive'][-1].strip() == 'True'
+
+    if not safe_handler(configuration, 'post', op_name, client_id,
+                        get_csrf_limit(configuration), accepted):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''Only accepting
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
