@@ -1136,7 +1136,8 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
         if not vgrid_dir_cache.has_key(path):
             vgrid_dir_cache[path] = {}
             vgrid_dir_cache[path]['mtime'] = 0
-            add_vgrid_file_monitor_watch(configuration, path)
+
+        add_vgrid_file_monitor_watch(configuration, path)
 
         if vgrid_files_path_mtime != vgrid_dir_cache[path]['mtime']:
 
