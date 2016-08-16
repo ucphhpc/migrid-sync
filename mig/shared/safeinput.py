@@ -1107,8 +1107,9 @@ def guess_type(name):
             ):
             __type_map[key] = valid_fqdn
         # NOTE: we need to allow some empty STORECONFIG and EXECONFIG fields
+        #       and space in RTE software name
         for key in ('name', ):
-            __type_map[key] = lambda x: valid_job_id_pattern(x, min_length=0)
+            __type_map[key] = lambda x: valid_fqdn(x, min_length=0, extra_chars=' ')
         for key in ('execution_node', 'storage_node', ):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
         for key in ('execution_user', 'storage_user', ):

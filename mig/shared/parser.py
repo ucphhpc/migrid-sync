@@ -303,6 +303,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 # found invalid value
                 
+                configuration.logger.error("parser type check for %s: %s" % \
+                                           (sub_key, exc))
                 status = False
                 key = job_keyword
                 val = keyword_data
