@@ -746,9 +746,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
                 lines.append('</table>')
         elif i['object_type'] == 'trigger_job_list':
-            if len(i['trigger_jobs']) > 0:
-                jobs = i['trigger_jobs']
-                lines.append('''
+            jobs = i['trigger_jobs']
+            lines.append('''
 <table id="workflowstable" class="jobs columnsort">
     <thead>
         <tr>
@@ -763,15 +762,22 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     <tbody>
 ''')
 
-                for obj in jobs:
-                    lines.append('''<tr>
+            for obj in jobs:
+                lines.append('''<tr>
     <td>%(job_id)s</td><td>%(rule_id)s</td><td>%(path)s</td><td>%(action)s</td>
     <td>%(time)s</td></td><td>%(status)s</td>
 </tr>''' % obj)
-                lines.append('''
+            lines.append('''
     </tbody>
 </table>
 ''')
+        elif i['object_type'] == 'trigger_log':
+            log_content = i['log_content']
+            lines.append('''
+ <div class="form_container">
+ <textarea id="logarea" rows=20 readonly="readonly">%s</textarea>
+ </div>
+''' % log_content)
         elif i['object_type'] == 'resubmitobjs':
             resubmitobjs = i['resubmitobjs']
             if len(resubmitobjs) == 0:

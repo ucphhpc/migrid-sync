@@ -653,3 +653,79 @@ function ajax_people(protocols) {
       }
   });
 }
+
+function ajax_workflowjobs(vgrid_name) {
+    console.debug("load workflow jobs and log");
+    var tbody_elem = $("#workflowstable tbody");
+    var logarea_elem = $("#logarea");
+    //console.debug("empty table");
+    $(tbody_elem).empty();
+    $(logarea_elem).empty();
+    $("#ajax_status").addClass("spinner iconleftpad");
+    $("#ajax_status").html("Loading workflow jobs and log ...");
+    /* Request workflow jobs and log in the background and handle as soon as
+    results come in */
+    $.ajax({
+      url: "?output_format=json;operation=list;vgrid_name="+vgrid_name,
+      type: "GET",
+      dataType: "json",
+      cache: false,
+      success: function(jsonRes, textStatus) {
+          console.debug("got response from list");
+          var chunk_size = 200;
+          var table_entries = "", error = "";
+          var i, j;
+          var job, entry;
+          /* Grab results from json response and insert items in table */
+          for (i=0; i<jsonRes.length; i++) {
+              console.debug("looking for content: "+ jsonRes[i].object_type);
+              if (jsonRes[i].object_type === "error_text") {
+                  console.error("list: "+jsonRes[i].text);
+                  error += jsonRes[i].text;
+              } else if (jsonRes[i].object_type === "trigger_job_list") {
+                  var workflowjobs = jsonRes[i].trigger_jobs;
+                  for (j=0; j<workflowjobs.length; j++) {
+                      job = workflowjobs[j];
+                      console.info("found job: "+job.job_id);
+                      entry = "<tr>"+base_td(job.job_id)+base_td(job.rule_id)+
+                          base_td(job.path)+base_td(job.action)+
+                          base_td(job.time)+base_td(job.status)+
+                          "</tr>";
+                      console.debug("append entry: "+entry);
+                      table_entries += entry;
+                      /* chunked updates - append after after every chunk_size entries */
+                      if (j > 0 && j % chunk_size === 0) {
+                          console.debug('append chunk of ' + chunk_size + ' entries');
+                          $(tbody_elem).append(table_entries);
+                          table_entries = "";
+                      }
+                  }
+              } else if (jsonRes[i].object_type === "trigger_log") {
+                  var log_content = jsonRes[i].log_content;
+                  console.debug("append log: "+log_content);
+                  $(logarea_elem).append(log_content);
+                  $(logarea_elem).scrollTop($(logarea_elem)[0].scrollHeight);
+              }
+          }
+          if (table_entries) {
+              console.debug('append remaining chunk of ' + (j % chunk_size) + ' entries');
+              $(tbody_elem).append(table_entries);
+          }
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
+          if (error) {
+              $("#ajax_status").append("<span class=\'errortext\'>"+
+                                       "Error: "+error+"</span>");
+          }
+          $("#workflowstable").trigger("update");
+
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+          console.error("list failed: "+errorThrown);
+          $("#ajax_status").removeClass("spinner iconleftpad");
+          $("#ajax_status").empty();
+          $("#ajax_status").append("<span class=\'errortext\'>"+
+                                   "Error: "+errorThrown+"</span>");
+      }
+  });
+}

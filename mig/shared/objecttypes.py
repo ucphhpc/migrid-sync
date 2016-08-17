@@ -192,6 +192,8 @@ job_list = {'object_type': 'job_list', 'required_list': [('jobs', 'job'
 trigger_job_list = {'object_type': 'trigger_job_list', 'required_list':
                     [('trigger_jobs', 'trigger_job'
             )]}
+trigger_log = {'object_type': 'trigger_log', 'required':
+                    ['log_content']}
 filewcs = {'object_type': 'filewcs', 'required_list': [('filewcs',
            'filewc')]}
 stats = {'object_type': 'stats', 'required_list': [('stats', 'stat')]}
@@ -365,6 +367,7 @@ valid_types_list = [
     warning,
     job_list,
     trigger_job_list,
+    trigger_log,
     direntry,
     file,
     progress,
