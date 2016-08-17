@@ -116,7 +116,7 @@ access the workflows.'''
 
     # jquery support for tablesorter (and unused confirmation dialog)
     # table initially sorted by 0 (last update / date) 
-    
+
     table_spec = {'table_id': 'workflowstable', 'sort_order': '[[0,1]]'}
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
@@ -147,19 +147,9 @@ access the workflows.'''
 
     logger.info('vgridworkflows %s' % vgrid_name)
 
-    jobs_html = '''<table id="workflowstable" class="jobs columnsort">
-    <thead>
-        <tr>
-            <th>Job ID</th>
-            <th>Rule</th>
-            <th>Path</th>
-            <th>Change</th>
-            <th>Time</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-'''
+    # Iterate through jobs and list details for each
+
+    trigger_jobs = []
 
     trigger_job_dir = os.path.join(configuration.vgrid_home,
                                    os.path.join(vgrid_name, '.%s.jobs'
@@ -194,10 +184,12 @@ access the workflows.'''
                             ].replace(abs_vgrid_dir, ''),
                             trigger_event['dest_path'
                             ].replace(abs_vgrid_dir, ''))
-                    jobs_html += '''<tr>
-    <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td><td>%s</td>
-</tr>''' % (trigger_job['jobid'], trigger_rule['rule_id'], trigger_path,
-       trigger_action, trigger_time, serverjob['STATUS'])
+                    job = {'object_type': 'trigger_job', 'job_id':
+                           trigger_job['jobid'], 'rule_id':
+                           trigger_rule['rule_id'], 'path': trigger_path,
+                           'action': trigger_action, 'time': trigger_time,
+                           'status': serverjob['STATUS']}
+                    trigger_jobs.append(job)
                 elif serverjob['STATUS'] in final_states:
                     src_path = os.path.join(trigger_job_pending_dir,
                             filename)
@@ -208,10 +200,6 @@ access the workflows.'''
                     logger.error('Trigger job: %s, unknown state: %s'
                                  % (trigger_job['jobid'],
                                  serverjob['STATUS']))
-    jobs_html += '''
-    </tbody>
-</table>
-'''
 
     log_content = read_trigger_log(configuration, vgrid_name)
 
@@ -318,7 +306,8 @@ your disposal:<br/>
                           'text': 'Active Trigger Jobs'})
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'job',
                            'default_entries': default_pager_entries})
-    output_objects.append({'object_type': 'html_form', 'text': jobs_html})
+    output_objects.append({'object_type': 'trigger_job_list', 'trigger_jobs':
+                           trigger_jobs})
     output_objects.append({'object_type': 'sectionheader',
                           'text': 'Trigger Log'})
     output_objects.append({'object_type': 'html_form',

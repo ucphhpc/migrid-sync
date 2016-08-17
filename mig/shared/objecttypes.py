@@ -50,6 +50,8 @@ error_text = {'object_type': 'error_text', 'required': ['text'],
               'optional': []}
 job = {'object_type': 'job', 'required': ['job_id',
        'execution_histories'], 'optional': []}
+trigger_job = {'object_type': 'trigger_job', 'required': ['job_id',
+       'rule_id'], 'optional': []}
 warning = {'object_type': 'warning', 'required': ['text'],
            'optional': []}
 direntry = {'object_type': 'direntry', 'required': ['name', 'type'],
@@ -186,6 +188,9 @@ jobobj = {'object_type': 'jobobj', 'required': ['jobobj'],
 resubmitobjs = {'object_type': 'resubmitobjs',
                 'required_list': [('resubmitobjs', 'resubmitobj')]}
 job_list = {'object_type': 'job_list', 'required_list': [('jobs', 'job'
+            )]}
+trigger_job_list = {'object_type': 'trigger_job_list', 'required_list':
+                    [('trigger_jobs', 'trigger_job'
             )]}
 filewcs = {'object_type': 'filewcs', 'required_list': [('filewcs',
            'filewc')]}
@@ -356,8 +361,10 @@ valid_types_list = [
     link,
     error_text,
     job,
+    trigger_job,
     warning,
     job_list,
+    trigger_job_list,
     direntry,
     file,
     progress,

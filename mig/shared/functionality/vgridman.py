@@ -116,7 +116,7 @@ def main(client_id, user_arguments_dict):
         (add_import, add_init, add_ready) = man_base_js(configuration, 
                                                         [table_spec])
         if operation == "show":
-            add_ready += refresh_call
+            add_ready += '%s;' % refresh_call
         title_entry['style'] = themed_styles(configuration)
         title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                                  add_init, add_ready)

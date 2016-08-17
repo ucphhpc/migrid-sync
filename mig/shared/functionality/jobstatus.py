@@ -195,7 +195,7 @@ def main(client_id, user_arguments_dict):
              % (max_jobs, len(filelist))})
         filelist = filelist[:max_jobs]
 
-    # Iterate through jobs and print details for each
+    # Iterate through jobs and list details for each
 
     job_list = {'object_type': 'job_list', 'jobs': []}
 

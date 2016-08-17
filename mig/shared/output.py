@@ -745,6 +745,33 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
 
                 lines.append('</table>')
+        elif i['object_type'] == 'trigger_job_list':
+            if len(i['trigger_jobs']) > 0:
+                jobs = i['trigger_jobs']
+                lines.append('''
+<table id="workflowstable" class="jobs columnsort">
+    <thead>
+        <tr>
+            <th>Job ID</th>
+            <th>Rule</th>
+            <th>Path</th>
+            <th>Change</th>
+            <th>Time</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+''')
+
+                for obj in jobs:
+                    lines.append('''<tr>
+    <td>%(job_id)s</td><td>%(rule_id)s</td><td>%(path)s</td><td>%(action)s</td>
+    <td>%(time)s</td></td><td>%(status)s</td>
+</tr>''' % obj)
+                lines.append('''
+    </tbody>
+</table>
+''')
         elif i['object_type'] == 'resubmitobjs':
             resubmitobjs = i['resubmitobjs']
             if len(resubmitobjs) == 0:
