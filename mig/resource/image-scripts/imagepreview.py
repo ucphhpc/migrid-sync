@@ -504,9 +504,9 @@ def write_preview_xdmf(logger, meta):
     path = meta['path']
     volume_slice_filepattern = settings['volume_slice_filepattern']
     data_type = settings['data_type']
-    preview_x_dimension = settings['preview_x_dimension']
-    preview_y_dimension = settings['preview_y_dimension']
-    preview_z_dimension = settings['preview_z_dimension']
+    preview_x_dimension = preview['x_dimension']
+    preview_y_dimension = preview['y_dimension']
+    preview_z_dimension = preview['z_dimension']
 
     xdmf_template = \
         """<?xml version="1.0" ?>
@@ -670,10 +670,12 @@ def add_volume_preview_slice_data(logger, meta):
             # Create tmp array to be resized
             # tmp = empty((z_dimension, preview_y_dimension, preview_x_dimension), dtype=data_type)
 
-            tmp = zeros((z_dimension, preview_y_dimension,
-                        preview_x_dimension), dtype=data_type)
-            logger.debug('tmp: %s' % str(tmp.shape))
+            tmp_volume = zeros((z_dimension, preview_y_dimension,
+                               preview_x_dimension), dtype=data_type)
+            logger.debug('tmp_volume shape: %s' % str(tmp_volume.shape))
             slice_idx = 0
+            max_slice_shape = (0, 0)
+
             for file_idx in sorted_keys:
                 volume_progress += volume_progress_step
                 settings['settings_update_progress'] = '%s/%s : %s%%' \
@@ -682,33 +684,63 @@ def add_volume_preview_slice_data(logger, meta):
                 update_image_volume_setting(logger, base_path, settings)
 
                 filename = volume_slice_filepattern % int(file_idx)
-                tmp[slice_idx] = get_image_file_preview_data(logger,
-                        base_path, path, filename)
-                logger.debug('tmp_slice: %s, shape: %s, min: %s, max: %s'
-                              % (slice_idx, str(tmp[slice_idx].shape),
-                             tmp[slice_idx].min(),
-                             tmp[slice_idx].max()))
+                slice_preview_data = \
+                    get_image_file_preview_data(logger, base_path,
+                        path, filename)
+
+                tmp_volume[slice_idx, :slice_preview_data.shape[0], :
+                           slice_preview_data.shape[1]] = \
+                    slice_preview_data
+                max_slice_shape = (max(max_slice_shape[0],
+                                   slice_preview_data.shape[0]),
+                                   max(max_slice_shape[1],
+                                   slice_preview_data.shape[1]))
+
+                logger.debug('slice_preview_data: %s, shape: %s, min: %s, max: %s'
+                              % (slice_idx,
+                             str(slice_preview_data.shape),
+                             tmp_volume[slice_idx].min(),
+                             tmp_volume[slice_idx].max()))
+                logger.debug('max_slice_shape: %s'
+                             % str(max_slice_shape))
                 slice_idx += 1
 
             # Resize volume
 
             # resized_volume = empty((preview_z_dimension, preview_y_dimension, preview_x_dimension), dtype=data_type)
 
-            resized_volume = zeros((preview_z_dimension,
-                                   preview_y_dimension,
-                                   preview_x_dimension),
+            resized_volume_shape = (preview_z_dimension,
+                                    max_slice_shape[0],
+                                    max_slice_shape[1])
+            resize_z_dimension = resized_volume_shape[0]
+            resize_y_dimension = resized_volume_shape[1]
+            resize_x_dimension = resized_volume_shape[2]
+
+            preview['z_dimension'] = resize_z_dimension
+            preview['y_dimension'] = resize_y_dimension
+            preview['x_dimension'] = resize_x_dimension
+
+            logger.debug('volume settings: %s' % str(volume['settings'
+                         ]))
+
+            tmp_volume = tmp_volume[:resize_z_dimension, :
+                                    resize_y_dimension, :
+                                    resize_x_dimension:]
+            logger.debug('tmp_volume new_shape: %s'
+                         % str(tmp_volume.shape))
+            resized_volume = zeros(resized_volume_shape,
                                    dtype=data_type)
-            for x in xrange(preview_x_dimension):
-                volume_progress += volume_progress_step
+            for x in xrange(resize_x_dimension):
                 settings['settings_update_progress'] = '%s/%s : %s%%' \
                     % (volume_nr, volume_count,
                        int(round(volume_progress)))
                 update_image_volume_setting(logger, base_path, settings)
-                logger.debug('preview_x_dimension: %s, tmp slice: shape: %s, min: %s, max: %s'
-                              % (x, str(tmp[:, :, x].shape), tmp[:, :,
-                             x].min(), tmp[:, :, x].max()))
-                resized_zy_slice = cv2.resize(tmp[:, :, x],
-                        (preview_z_dimension, preview_y_dimension))
+                logger.debug('resize_x_dimension: %s, tmp slice: shape: %s, min: %s, max: %s'
+                              % (x, str(tmp_volume[:, :, x].shape),
+                             tmp_volume[:, :, x].min(), tmp_volume[:, :
+                             , x].max()))
+                resized_zy_slice = cv2.resize(tmp_volume[:, :, x],
+                        (resize_z_dimension, resize_y_dimension))
                 resized_volume[:, :, x] = resized_zy_slice
                 logger.debug('resized_zy_slice: %s, min: %s, max: %s'
                              % (str(resized_zy_slice.shape),

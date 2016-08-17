@@ -85,9 +85,11 @@ allowed_data_types = {
     'int64': int64,
     }
 
-allowed_xdmf_data_types = {'float32': 'Float'}
+allowed_xdmf_data_types = {'float32': 'Float',
+			   'uint16': 'UInt'}
 
-allowed_xdmf_precisions = {'float32': 4}
+allowed_xdmf_precisions = {'float32': 4,
+			   'uint16': 2}
 
 allowed_image_types = {'raw': allowed_data_types.keys(),
                        'tiff': ['uint8', 'uint16']}
