@@ -71,7 +71,7 @@ def harden_ssl_options(sock, logger, options=None):
         options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
         options |= getattr(ssl, 'OP_NO_COMPRESSION', 0x20000)
         options |= getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
-        ssl_ctx = getattr(sock, 'context', None)
+    ssl_ctx = getattr(sock, 'context', None)
     if sys.version_info[:2] >= (2, 7) and ssl_ctx:
         logger.info("enforcing strong SSL/TLS options")
         logger.debug("SSL/TLS options: %s" % options)
