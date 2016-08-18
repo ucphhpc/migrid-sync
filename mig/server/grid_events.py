@@ -1092,7 +1092,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             waiting_for_thread_resources = False
         except threading.ThreadError, exc:
             logger.debug('(%s) Waiting for thread resources to handle event: %s'
-                          % str(event))
+                          % (pid, str(event))
             time.sleep(1)
 
     def on_modified(self, event):
