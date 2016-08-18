@@ -514,6 +514,14 @@ Preview.prototype.toggle_paraview = function(callback) {
             this.settings.zoom = this.settings.max_zoom;
             //callback = $.proxy(this.paraview.open, this.paraview);
         }
+        
+        // TODO: Make contrast slider for volume instead of using the min/max from sliced view
+
+        var min_value = $("#fm_preview_left_output input[name='current_min_value']").val();
+        var max_value = $("#fm_preview_left_output input[name='current_max_value']").val();
+
+        this.paraview.set_value_range(min_value, max_value);
+
         console.debug('toggle_paraview zoom: ' + this.settings.zoom);
         this.refresh(callback);    
     }    

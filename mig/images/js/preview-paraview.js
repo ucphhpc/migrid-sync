@@ -372,7 +372,9 @@ PreviewParaview = function (debug) {
 	console.debug('PreviewParaview: constructor');
     this.settings = {
         visible: false,
-        active: false
+        active: false,
+        value_range: {min: 0,
+                    max: 0}
     };
 
     this.volume_xdmf_path = null;
@@ -865,6 +867,16 @@ PreviewParaview.prototype.set_volume_xdmf = function(volume_xdmf_filepath) {
     console.debug('set_volume_xdmf: volume_xdmf_filepath: ' + this.volume_xdmf_filepath);
 }
 
+PreviewParaview.prototype.get_value_range = function() {
+    return {min: this.settings.value_range.min,
+            max: this.settings.value_range.max};
+}
+
+PreviewParaview.prototype.set_value_range = function(min_value, max_value) {
+    this.settings.value_range.min = min_value;
+    this.settings.value_range.max = max_value;
+}
+
 PreviewParaview.prototype.start_rendering = function() {
     console.debug('PreviewParaview.start_rendering')
     this.render_volume_xdmf();
@@ -946,11 +958,25 @@ PreviewParaview.prototype.render_volume_xdmf = function() {
                 colorBy.array [1] = new String(volume_name);
                 colorBy.array[2] = '';
 
-                
+                // Apply changes
+
                 _this.onProxyApply({
                     colorBy: colorBy,
                     properties: new_props
                 });
+
+                // Rescale
+
+                value_range = _this.get_value_range();
+
+                _this.onRescaleTransferFunction({
+                    id: pipelineDataModel.source.id,
+                    type: 'rescale-transfer-function',
+                    mode: 'custom',
+                    min: value_range.min,
+                    max: value_range.max
+                });
+
                 
             };
             _this.invalidatePipeline(arg); 
