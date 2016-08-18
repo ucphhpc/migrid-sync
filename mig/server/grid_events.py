@@ -348,12 +348,12 @@ def recently_modified(path, time_stamp, slack=2.0):
         stat_res = os.stat(path)
         result = stat_res.st_mtime == stat_res.st_atime \
             or stat_res.st_mtime > time_stamp - slack
-    except OSError, ex:
+    except OSError, exc:
 
         # If we get an OSError, *path* is most likely deleted
 
         result = True
-        logger.debug('(%s) OSError: %s' % (pid, str(ex)))
+        logger.debug('(%s) OSError: %s' % (pid, str(exc)))
 
     return result
 
@@ -921,46 +921,57 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             if os.path.exists(src_path) and os.path.isdir(src_path):
                 _file_monitor_lock.acquire()
 
-                if not vgrid_dir_cache.has_key(rel_path):
-                    if state == 'modified':
-                        logger.warning('(%s) %s expected in directory cache, but not found ?'
-                                 % (pid, rel_path))
+                try:
+                    if not vgrid_dir_cache.has_key(rel_path):
+                        if state == 'modified':
+                            logger.warning('(%s) %s expected in directory cache, but not found ?'
+                                     % (pid, rel_path))
 
-                    vgrid_dir_cache[rel_path] = {}
-                    rel_path_mtime = os.path.getmtime(src_path)
-                    add_vgrid_file_monitor_watch(configuration,
-                            rel_path)
-                    vgrid_dir_cache[rel_path]['mtime'] = rel_path_mtime
-                else:
-                    vgrid_dir_cache[rel_path]['mtime'] = \
-                        os.path.getmtime(src_path)
+                        vgrid_dir_cache[rel_path] = {}
+                        rel_path_mtime = os.path.getmtime(src_path)
+                        add_vgrid_file_monitor_watch(configuration,
+                                rel_path)
+                        vgrid_dir_cache[rel_path]['mtime'] = \
+                            rel_path_mtime
+                    else:
 
-                # Check if sub paths were changed
-                # For create this occurs by eg. mkdir -p 'path/subpath/subpath2'
+                        vgrid_dir_cache[rel_path]['mtime'] = \
+                            os.path.getmtime(src_path)
 
-                for ent in scandir(src_path):
-                    if ent.is_dir(follow_symlinks=True):
-                        vgrid_sub_path = \
-                            ent.path.replace(os.path.join(configuration.vgrid_files_home,
-                                ''), '')
+                    # Check if sub paths were changed
+                    # For create this occurs by eg. mkdir -p 'path/subpath/subpath2'
 
-                        if not vgrid_sub_path in vgrid_dir_cache.keys():
-                            logger.debug('(%s) %s -> Dispatch DirCreatedEvent for: %s'
+                    for ent in scandir(src_path):
+                        if ent.is_dir(follow_symlinks=True):
+                            vgrid_sub_path = \
+                                ent.path.replace(os.path.join(configuration.vgrid_files_home,
+                                    ''), '')
+
+                            if not vgrid_sub_path \
+                                in vgrid_dir_cache.keys():
+                                logger.debug('(%s) %s -> Dispatch DirCreatedEvent for: %s'
+                                         % (pid, src_path, ent.path))
+                                file_handler.dispatch(DirCreatedEvent(ent.path))
+                        elif state == 'created':
+
+                            # If directory is created then dispatch FileCreatedEvent
+                            # for all files in it
+                            #
+                            # NOTE: There might be a RACE between FileCreatedEvents
+                            # dispatched by the system between the 'add_vgrid_file_monitor' call
+                            # and this manual FileCreatedEvent dispatch
+                            # Handle this by using settle time/rate limit on triggers
+
+                            logger.debug('(%s) %s -> Dispatch FileCreatedEvent for: %s'
                                      % (pid, src_path, ent.path))
-                            file_handler.dispatch(DirCreatedEvent(ent.path))
-                    elif state == 'created':
+                            file_handler.dispatch(FileCreatedEvent(ent.path))
+                except OSError, exc:
 
-                        # If directory is created then dispatch FileCreatedEvent
-                        # for all files in it
-                        #
-                        # NOTE: There might be a RACE between FileCreatedEvents
-                        # dispatched by the system between the 'add_vgrid_file_monitor' call
-                        # and this manual FileCreatedEvent dispatch
-                        # Handle this by using settle time/rate limit on triggers
+                    # If we get an OSError, src_path was most likely deleted
+                    # after os.path.exists check
 
-                        logger.debug('(%s) %s -> Dispatch FileCreatedEvent for: %s'
-                                 % (pid, src_path, ent.path))
-                        file_handler.dispatch(FileCreatedEvent(ent.path))
+                    logger.debug('(%s) OSError: %s' % (pid, str(exc)))
+
                 _file_monitor_lock.release()
             else:
 
@@ -1067,6 +1078,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         values obtained deeply in handling calls.
         """
 
+        pid = multiprocessing.current_process().pid
+
         # TODO: Replace try / catch with a 'event queue / thread pool' setup
 
         event.time_stamp = time.time()
@@ -1078,7 +1091,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             worker.start()
             waiting_for_thread_resources = False
         except threading.ThreadError, exc:
-            logger.debug('Waiting for thread resources to handle event: %s'
+            logger.debug('(%s) Waiting for thread resources to handle event: %s'
                           % str(event))
             time.sleep(1)
 
