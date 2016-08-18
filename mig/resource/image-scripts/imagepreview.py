@@ -514,7 +514,7 @@ def write_preview_xdmf(logger, meta):
 <Xdmf xmlns:xi="http://www.w3.org/2003/XInclude" Version="2.2">
 <Domain>
 <Grid Name="Particle Images" GridType="Uniform">
-    <Topology TopologyType="3DCORECTMesh" Dimensions="%(x_dimension)i %(y_dimension)i %(z_dimension)i"/>
+    <Topology TopologyType="3DCORECTMesh" Dimensions="%(z_dimension)i %(y_dimension)i %(x_dimension)i"/>
     <Geometry GeometryType="ORIGIN_DXDYDZ">
         <DataItem Name="Origin" Dimensions="3" NumberType="%(data_type)s" Precision="%(precision)i" Format="XML">
             0 0 0
@@ -524,7 +524,7 @@ def write_preview_xdmf(logger, meta):
         </DataItem>
     </Geometry>
     <Attribute Name="%(name)s" AttributeType="Scalar" Center="Node">
-        <DataItem Format="HDF" NumberType="%(data_type)s" Precision="%(precision)i" Dimensions="%(x_dimension)i %(y_dimension)i %(z_dimension)i">
+        <DataItem Format="HDF" NumberType="%(data_type)s" Precision="%(precision)i" Dimensions="%(z_dimension)i %(y_dimension)i %(x_dimension)i">
             %(volume_path)s
         </DataItem>
     </Attribute>
@@ -567,6 +567,7 @@ def write_preview_xdmf(logger, meta):
     preview['xdmf_filename'] = xdmf_filename = '%s.xdmf' \
         % image_data_node_name
     xdmf_filepath = os.path.join(xdmf_path, xdmf_filename)
+    logger.debug('Writing xdmf: \n%s\nTo : %s' % (xdmf, xdmf_filepath))
 
     fd = open(xdmf_filepath, 'w')
     fd.write(xdmf)
