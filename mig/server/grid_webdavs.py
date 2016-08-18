@@ -64,6 +64,7 @@ from shared.defaults import dav_domain, litmus_id
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, update_login_map, login_map_lookup, hit_rate_limit, \
      update_rate_limit, expire_rate_limit, penalize_rate_limit, add_user_object
+from shared.httpsserver import hardened_ssl_kwargs, harden_ssl_options
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
@@ -148,20 +149,9 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
     certificate = None
     private_key = None
 
+    # private args
     ssl_kwargs = {}
-    # Default is same as BuiltinSSLAdapter
-    ssl_version = ssl.PROTOCOL_SSLv23
-    # Hardened SSL context options: limit to TLS without compression and with
-    #                               forced server cipher preference if python
-    #                               is recent enough (2.7.9+)
-    options = 0
-    options |= getattr(ssl, 'OP_NO_SSLv2', 0x1000000)
-    options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
-    options |= getattr(ssl, 'OP_NO_COMPRESSION', 0x20000)
-    options |= getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
-    
-    # Mirror strong ciphers used in Apache
-    ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
+    options = None
 
     def __init__(self, certificate, private_key, certificate_chain=None,
                  ssl_version=None, ciphers=None, options=None):
@@ -169,24 +159,14 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         BuiltinSSLAdapter.__init__(self, certificate, private_key,
                                    certificate_chain)
 
+        # Use best possible SSL/TLS args for this python version
+        self.ssl_kwargs = hardened_ssl_kwargs(logger)
         if ssl_version is not None:
-            self.ssl_version = ssl_version
+            self.ssl_kwargs['ssl_version'] = ssl_version
         if ciphers is not None:
-            self.ciphers = ciphers
+            self.ssl_kwargs['ciphers'] = ciphers
         if options is not None:
             self.options = options
-
-        if sys.version_info[:3] >= (2, 7, 9):
-            self.ssl_kwargs.update({"ciphers": self.ciphers})
-            logger.info("enforcing strong SSL/TLS connections")
-            logger.debug("using SSL/TLS ciphers: %s" % self.ciphers)
-        else:
-            logger.warning("Unable to enforce explicit strong TLS connections")
-            logger.warning("Upgrade to python 2.7.9+ for maximum security")
-        self.ssl_kwargs.update({"ssl_version": self.ssl_version})
-        logger.debug("using SSL/TLS version: %s (default %s)" % \
-                    (self.ssl_version, ssl.PROTOCOL_SSLv23))
-
 
     def wrap(self, sock):
         """Wrap and return the given socket, plus WSGI environ entries.
@@ -197,40 +177,36 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         try:
             logger.debug("Wrapping socket in SSL/TLS with args: %s" % \
                          self.ssl_kwargs)
-            s = ssl.wrap_socket(sock, do_handshake_on_connect=True,
-                                server_side=True, certfile=self.certificate,
-                                keyfile=self.private_key, **(self.ssl_kwargs))
+            ssl_sock = ssl.wrap_socket(sock, do_handshake_on_connect=True,
+                                       server_side=True,
+                                       certfile=self.certificate,
+                                       keyfile=self.private_key,
+                                       **(self.ssl_kwargs))
         except ssl.SSLError:
-            e = sys.exc_info()[1]
-            if e.errno == ssl.SSL_ERROR_EOF:
+            exc = sys.exc_info()[1]
+            if exc.errno == ssl.SSL_ERROR_EOF:
                 # This is almost certainly due to the cherrypy engine
                 # 'pinging' the socket to assert it's connectable;
                 # the 'ping' isn't SSL.
                 return None, {}
-            elif e.errno == ssl.SSL_ERROR_SSL:
-                if e.args[1].endswith('http request'):
+            elif exc.errno == ssl.SSL_ERROR_SSL:
+                if exc.args[1].endswith('http request'):
                     # The client is speaking HTTP to an HTTPS server.
                     raise wsgiserver.NoSSLError
-                elif e.args[1].endswith('unknown protocol'):
+                elif exc.args[1].endswith('unknown protocol'):
                     # The client is speaking some non-HTTP protocol.
                     # Drop the conn.
                     return None, {}
             raise
 
-        # Futher harden connections if python is recent enough (2.7.9+)
-        
-        ssl_ctx = getattr(s, 'context', None)
-        if sys.version_info[:3] >= (2, 7, 9) and ssl_ctx:
-            logger.info("enforcing strong SSL/TLS options")
-            logger.debug("SSL/TLS options: %s" % self.options)
-            ssl_ctx.options |= self.options
-        else:
-            logger.info("can't enforce strong SSL/TLS options")
-            logger.warning("Upgrade to python 2.7.9+ for maximum security")
-            
-        return s, BuiltinSSLAdapter.get_environ(self, s)
+        # TODO: this tuning does not seem to take effect, unlike in openid!
+        # Futher harden connections if python is recent enough
+        harden_ssl_options(ssl_sock, logger, self.options)
+        ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
+        logger.info("wrapped sock: %s" % ssl_sock)
+        return ssl_sock, ssl_env
 
-    
+
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     """Override auth database lookups to use username and password hash for
     basic auth and digest otherwise.

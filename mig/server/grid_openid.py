@@ -84,6 +84,7 @@ from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.griddaemons import hit_rate_limit, update_rate_limit, \
      expire_rate_limit, penalize_rate_limit
+from shared.httpsserver import hardened_ssl_kwargs, harden_ssl_options
 from shared.logger import daemon_logger, reopen_log
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url
@@ -1135,6 +1136,8 @@ def start_service(configuration):
     if nossl:
         logger.warning('Not wrapping connections in SSL - only for testing!')
     else:
+        # Use best possible SSL/TLS args for this python version
+        ssl_kwargs = hardened_ssl_kwargs(logger)
         cert_path = configuration.user_openid_key
         if not os.path.isfile(cert_path):
             logger.error('No such server key: %s' % cert_path)
@@ -1142,7 +1145,10 @@ def start_service(configuration):
         logger.info('Wrapping connections in SSL')
         httpserver.socket = ssl.wrap_socket(httpserver.socket,
                                             certfile=cert_path,
-                                            server_side=True)
+                                            server_side=True,
+                                            **(ssl_kwargs))
+        # Futher harden connections if python is recent enough
+        harden_ssl_options(httpserver.socket, logger)
         
     print 'Server running at:'
     print httpserver.base_url
