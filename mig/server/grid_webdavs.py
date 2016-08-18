@@ -136,8 +136,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
     with only the strong ciphers recommended by Mozilla:
     https://wiki.mozilla.org/Security/Server_Side_TLS#Apache
     just like we do in the apache conf.
-    Similarly the insecure protocols and compression is disabled if possible
-    (python 2.7.9+).
+    Similarly the insecure protocols, compression and client-side cipher
+    degradation is disabled if possible (python 2.7.9+).
 
     Legacy versions of python (<2.7) support neither ciphers nor options tuning,
     so for those versions a warning is issued and unless a custom ssl_version
@@ -151,12 +151,15 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
     ssl_kwargs = {}
     # Default is same as BuiltinSSLAdapter
     ssl_version = ssl.PROTOCOL_SSLv23
-    # Hardened SSL context options: limit to TLS without compression if
-    #                               python is recent enough (2.7.9+)
+    # Hardened SSL context options: limit to TLS without compression and with
+    #                               forced server cipher preference if python
+    #                               is recent enough (2.7.9+)
     options = 0
     options |= getattr(ssl, 'OP_NO_SSLv2', 0x1000000)
     options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
     options |= getattr(ssl, 'OP_NO_COMPRESSION', 0x20000)
+    options |= getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
+    
     # Mirror strong ciphers used in Apache
     ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
 
@@ -173,17 +176,16 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         if options is not None:
             self.options = options
 
+        if sys.version_info[:3] >= (2, 7, 9):
+            self.ssl_kwargs.update({"ciphers": self.ciphers})
+            logger.info("enforcing strong SSL/TLS connections")
+            logger.debug("using SSL/TLS ciphers: %s" % self.ciphers)
+        else:
+            logger.warning("Unable to enforce explicit strong TLS connections")
+            logger.warning("Upgrade to python 2.7.9+ for maximum security")
         self.ssl_kwargs.update({"ssl_version": self.ssl_version})
         logger.debug("using SSL/TLS version: %s (default %s)" % \
                     (self.ssl_version, ssl.PROTOCOL_SSLv23))
-        logger.debug("using SSL/TLS options: %s" % self.options)
-        if sys.version_info[:2] >= (2, 7):
-            self.ssl_kwargs.update({"ciphers": self.ciphers})
-            logger.info("using strong SSL/TLS ciphers")
-            logger.debug("SSL/TLS ciphers: %s" % self.ciphers)
-        else:
-            logger.warning("Unable to select explicit strong TLS ciphers")
-            logger.warning("Upgrade to python 2.7+ for maximum security")
 
 
     def wrap(self, sock):
@@ -218,8 +220,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         # Futher harden connections if python is recent enough (2.7.9+)
         
         ssl_ctx = getattr(s, 'context', None)
-        if ssl_ctx:
+        if sys.version_info[:3] >= (2, 7, 9) and ssl_ctx:
+            logger.info("enforcing strong SSL/TLS options")
+            logger.debug("SSL/TLS options: %s" % self.options)
             ssl_ctx.options |= self.options
+        else:
+            logger.info("can't enforce strong SSL/TLS options")
+            logger.warning("Upgrade to python 2.7.9+ for maximum security")
             
         return s, BuiltinSSLAdapter.get_environ(self, s)
 
