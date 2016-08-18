@@ -1067,11 +1067,20 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         values obtained deeply in handling calls.
         """
 
+        # TODO: Replace try / catch with a 'event queue / thread pool' setup
+
         event.time_stamp = time.time()
-        worker = threading.Thread(target=self.run_handler, args=(event,
-                                  ))
-        worker.daemon = True
-        worker.start()
+        waiting_for_thread_resources = True
+        try:
+            worker = threading.Thread(target=self.run_handler,
+                    args=(event, ))
+            worker.daemon = True
+            worker.start()
+            waiting_for_thread_resources = False
+        except threading.ThreadError, exc:
+            logger.debug('Waiting for thread resources to handle event: %s'
+                          % str(event))
+            time.sleep(1)
 
     def on_modified(self, event):
         """Handle modified files"""
@@ -1262,6 +1271,7 @@ def load_dir_cache(configuration, vgrid_name):
         cache_t2 = time.time()
         logger.debug('(%s) Generated new dir_cache for: %s in %s secs'
                      % (pid, vgrid_name, str(cache_t2 - cache_t1)))
+        save_dir_cache(vgrid_name)
     else:
         cache_t1 = time.time()
         loaded_dir_cache = unpickle(vgrid_dir_cache_filepath, logger,
@@ -1306,8 +1316,6 @@ def save_dir_cache(vgrid_name):
         else:
             logger.info('(%s) saving cache for: %s to file: %s' % (pid,
                         vgrid_name, dir_cache_filepath))
-            vgrid_dir_cache = {key: vgrid_dir_cache[key] for key in
-                               vgrid_dir_cache_keys}
             pickle(vgrid_dir_cache, dir_cache_filepath, logger)
 
     return result
