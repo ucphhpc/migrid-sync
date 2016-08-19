@@ -326,6 +326,15 @@ tbody tr td div.sortkey { display: none; }
     text-align: center;
     width: 50px;
 }
+/* hide paraview SVG bar which only shows up on IE and covers refresh button */
+.fm_previews .pipelineSVG svg rect {
+    display: none;
+}
+/* avoid waiting banner from flying around */
+.fm_previews .app-wait-start-page {
+    position: absolute;
+}
+
 .fm_metaio_list ul.edit {
     list-style-image: url(/images/icons/page_white_edit.png);
 }
