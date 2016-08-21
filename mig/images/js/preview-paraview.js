@@ -872,9 +872,13 @@ PreviewParaview.prototype.get_value_range = function() {
             max: this.settings.value_range.max};
 }
 
-PreviewParaview.prototype.set_value_range = function(min_value, max_value) {
+PreviewParaview.prototype.set_value_range = function(min_value, max_value, callback) {
     this.settings.value_range.min = min_value;
     this.settings.value_range.max = max_value;
+
+    if (typeof callback === "function") {
+        callback();
+    }
 }
 
 PreviewParaview.prototype.start_rendering = function() {

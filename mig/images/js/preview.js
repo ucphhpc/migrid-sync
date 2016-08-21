@@ -520,10 +520,10 @@ Preview.prototype.toggle_paraview = function(callback) {
         var min_value = $("#fm_preview_left_output input[name='current_min_value']").val();
         var max_value = $("#fm_preview_left_output input[name='current_max_value']").val();
 
-        this.paraview.set_value_range(min_value, max_value);
-
+        var refresh_proxy = $.proxy(this.refresh, this, callback);
+        
         console.debug('toggle_paraview zoom: ' + this.settings.zoom);
-        this.refresh(callback);    
+        this.paraview.set_value_range(min_value, max_value, refresh_proxy); 
     }    
 }
 
