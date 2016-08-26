@@ -303,6 +303,7 @@ def vgrid_is_entity_in_list(
     configuration,
     recursive,
     dict_field=False,
+    allow_missing=False
     ):
     """Return True if specified entity_id is in group
     ('owners', 'members', 'resources', 'triggers', 'settings', 'sharelinks', 
@@ -310,11 +311,14 @@ def vgrid_is_entity_in_list(
     If recursive is True the entities from parent vgrids will be included. The
     optional dict_field is used to check against the trigger case where entries
     are dicts rather than raw strings.
+    The allow_missing flag can be used to let the listing proceed even if one
+    or more parent vgrids don't have the particular entity group file.
     """
 
     # Get the list of entities of specified type (group) in vgrid (vgrid_name)
 
-    (status, entries) = vgrid_list(vgrid_name, group, configuration, recursive)
+    (status, entries) = vgrid_list(vgrid_name, group, configuration, recursive,
+                                   allow_missing)
 
     if not status:
         configuration.logger.error(
@@ -361,20 +365,26 @@ def vgrid_is_resource(vgrid_name, res_id, configuration, recursive=True):
                                    configuration, recursive)
 
 
-def vgrid_is_trigger(vgrid_name, rule_id, configuration, recursive=True):
-    """Check if rule_id is a trigger in vgrid_name"""
+def vgrid_is_trigger(vgrid_name, rule_id, configuration, recursive=True,
+                     allow_missing=True):
+    """Check if rule_id is a trigger in vgrid_name. We allow missing
+    parent pickle to support autonomous multi-frontend systems.
+    """
 
     return vgrid_is_entity_in_list(vgrid_name, rule_id, 'triggers',
-                                   configuration, recursive, 'rule_id')
+                                   configuration, recursive, 'rule_id',
+                                   allow_missing)
 
 
 def vgrid_is_trigger_owner(vgrid_name, rule_id, client_id, configuration,
-                           recursive=True):
+                           recursive=True, allow_missing=True):
     """Check if rule_id is a trigger in vgrid_name with client_id as rule
-    owner.
+    owner. We allow missing parent pickle to support autonomous multi-frontend
+    systems.
     """
 
-    (status, entries) = vgrid_list(vgrid_name, 'triggers', configuration, recursive)
+    (status, entries) = vgrid_list(vgrid_name, 'triggers', configuration,
+                                   recursive, allow_missing)
 
     if not status:
         configuration.logger.error(
@@ -393,23 +403,35 @@ def vgrid_is_trigger_owner(vgrid_name, rule_id, client_id, configuration,
     return False
                 
 
-def vgrid_is_setting(vgrid_name, option_id, configuration, recursive=True):
-    """Check if option_id is a setting in vgrid_name"""
+def vgrid_is_setting(vgrid_name, option_id, configuration, recursive=True,
+                     allow_missing=True):
+    """Check if option_id is a setting in vgrid_name. We allow missing
+    parent pickle to support autonomous multi-frontend systems.
+    """
 
     return vgrid_is_entity_in_list(vgrid_name, option_id, 'settings',
-                                   configuration, recursive, 'option_id')
+                                   configuration, recursive, 'option_id',
+                                   allow_missing)
 
-def vgrid_is_sharelink(vgrid_name, option_id, configuration, recursive=True):
-    """Check if option_id is a sharelink in vgrid_name"""
+def vgrid_is_sharelink(vgrid_name, option_id, configuration, recursive=True,
+                       allow_missing=True):
+    """Check if option_id is a sharelink in vgrid_name. We allow missing
+    parent pickle to support autonomous multi-frontend systems.
+    """
 
     return vgrid_is_entity_in_list(vgrid_name, option_id, 'sharelinks',
-                                   configuration, recursive, 'option_id')
+                                   configuration, recursive, 'option_id',
+                                   allow_missing)
 
-def vgrid_is_imagesetting(vgrid_name, option_id, configuration, recursive=True):
-    """Check if option_id is a imagesetting in vgrid_name"""
+def vgrid_is_imagesetting(vgrid_name, option_id, configuration, recursive=True,
+                          allow_missing=True):
+    """Check if option_id is a imagesetting in vgrid_name. We allow missing
+    parent pickle to support autonomous multi-frontend systems.
+    """
 
     return vgrid_is_entity_in_list(vgrid_name, option_id, 'imagesettings',
-                                   configuration, recursive, 'option_id')
+                                   configuration, recursive, 'option_id',
+                                   allow_missing)
 
 def vgrid_list_subvgrids(vgrid_name, configuration):
     """Return list of subvgrids of vgrid_name"""
