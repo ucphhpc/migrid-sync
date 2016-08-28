@@ -206,8 +206,10 @@ Remove the trigger from the sub-%(_label)s and try again''' % \
                 templates.append(temp_fd.read())
                 temp_fd.close()
             except Exception, err:
-                output_objects.append({'object_type': 'error_text', 'text':
-                                       '%s' % err})
+                logger.error("read submit argument file failed: %s" % err)
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'failed to read submit argument file "%s"' % rel_path})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
     rule_dict = {'rule_id': rule_id,
