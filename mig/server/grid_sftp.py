@@ -394,7 +394,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("stat %s :: %s" % (path, real_path))
         # for consistency with lstat
         if not os.path.exists(real_path):
-            # It's common to check file existence with stat so no warning here
+            # It's common to check file existence with stat so don't warn
             self.logger.debug("stat on missing path %s :: %s" % \
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
@@ -548,7 +548,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('readlink %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
-            self.logger.error("readlink on missing path %s :: %s" % \
+            # It's common to check file existence with readlink so don't warn
+            self.logger.debug("readlink on missing path %s :: %s" % \
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
