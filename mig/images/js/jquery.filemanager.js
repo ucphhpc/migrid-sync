@@ -2996,15 +2996,16 @@ function mig_imagesettings_init(name, path, options) {
 
     // Removes all element from list
 
-    // TODO: switch to POST and add CSRF checks here like in cp
     function remove_all() {
+        var call_args = { path: path,
+                          output_format: 'json' ,
+                          action: 'remove_dir',
+                          flags: 'i'};
+        call_args[csrf_field] = csrf_map['filemetaio'];
         $.ajax({
             url: 'filemetaio.py',
-            data: { path: path,
-                    output_format: 'json' ,
-                    action: 'remove_dir',
-                    flags: 'i'},
-            type: "GET",
+            data: call_args,
+            type: "POST",
             dataType: "json",
             cache: false,
             success: function (jsonRes) {
@@ -3034,17 +3035,18 @@ function mig_imagesettings_init(name, path, options) {
 
     // Remove an element from list
 
-    // TODO: switch to POST and add CSRF checks here like in cp
     function remove() {
         var extension = $("#imagesettings_form input[name='extension']").val();
+        var call_args = { path: path,
+                          output_format: 'json' ,
+                          action: 'remove_dir',
+                          extension: extension,
+                          flags: 'i'};
+        call_args[csrf_field] = csrf_map['filemetaio'];
         $.ajax({
             url: 'filemetaio.py',
-            data: { path: path,
-                    output_format: 'json' ,
-                    action: 'remove_dir',
-                    extension: extension,
-                    flags: 'i'},
-            type: "GET",
+            data: call_args,
+            type: "POST",
             dataType: "json",
             cache: false,
             success: function (jsonRes) {
@@ -3097,15 +3099,13 @@ function mig_imagesettings_init(name, path, options) {
             edit_form_values['preview_cutoff_max'] = 0;
             do_edit();
         } else {
-            // TODO: switch to POST and add CSRF checks here like in cp
             $.ajax({
                 url: 'filemetaio.py',
                 data: { extension: extension,
                         path: path,
                         output_format: 'json',
                         action: 'get_dir',
-                        flags: 'i',
-                      },
+                        flags: 'i'},
                 type: "GET",
                 dataType: "json",
                 cache: false,

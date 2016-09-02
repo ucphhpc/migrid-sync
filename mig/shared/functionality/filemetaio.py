@@ -36,10 +36,11 @@ import traceback
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import csrf_field
+from shared.fileio import touch, makedirs_rec, listdirs_rec, \
+    delete_file, make_symlink, remove_dir
 from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_settings
-from shared.vgrid import vgrid_is_owner
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.imagemetaio import get_image_file, add_image_file_setting, \
     add_image_volume_setting, get_image_file_settings, \
     get_image_file_setting, get_image_volume_setting, \
@@ -49,12 +50,15 @@ from shared.imagemetaio import get_image_file, add_image_file_setting, \
     __image_metapath, allowed_image_types, update_image_file_setting, \
     update_image_volume_setting, get_image_volume, \
     get_image_xdmf_filepath, __revision
-from shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
-    vgrid_list_vgrids, vgrid_is_trigger, vgrid_add_imagesettings, \
-    vgrid_imagesettings, vgrid_remove_imagesettings
-from shared.fileio import touch, makedirs_rec, listdirs_rec, \
-    delete_file, make_symlink, remove_dir
+from shared.init import initialize_main_variables, find_entry
+from shared.settings import load_settings
+from shared.vgrid import vgrid_is_owner, vgrid_add_triggers, \
+     vgrid_remove_triggers, vgrid_list_vgrids, vgrid_is_trigger, \
+     vgrid_add_imagesettings, vgrid_imagesettings, vgrid_remove_imagesettings
 
+get_actions = ['list', 'get_dir', 'get_file']
+post_actions = ['put_dir', 'update_dir', 'remove_dir', 'reset_dir']
+valid_actions = get_actions + post_actions
 
 def __get_mrsl_template():
     """General template for image preview trigger jobs"""
@@ -760,7 +764,22 @@ def main(client_id, user_arguments_dict):
     path = ''.join(accepted['path'])
     extension = ''.join(accepted['extension'])
 
-    # TODO: add CSRF checks here like in sharelinks
+    logger.debug('%s from %s: %s' % (op_name, client_id, accepted))
+
+    if not action in valid_actions:
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'Invalid action "%s" (supported: %s)' % \
+                               (action, ', '.join(valid_actions))})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if action in post_actions:
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -1716,5 +1735,3 @@ def main(client_id, user_arguments_dict):
     logger.debug('output_objects: %s' % str(output_objects))
     logger.debug('status: %s' % str(status))
     return (output_objects, status)
-
-
