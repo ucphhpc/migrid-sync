@@ -84,6 +84,14 @@ table {
   color: #000;
 }
 
+#nomenu.staticpage {
+  margin: 0;
+}
+
+#content.staticpage {
+  border-radius: 0;
+}
+
 .contentblock.staticpage {
   /* Make sure to have some gap between text and footer */
   min-height: 600px;
@@ -122,6 +130,10 @@ table {
   border: 0;
   background: url("/images/skin/idmc-basic/background.png") repeat scroll left center #eee;
   color: white;
+}
+#toplogo.staticpage {
+  height: 36px;
+  font-size: 28px;
 }
 #toplogoleft.staticpage {
   display: none;
