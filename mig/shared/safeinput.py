@@ -1210,7 +1210,8 @@ def guess_type(name):
 
         # sreg required may have commas - reuse password
 
-        for key in ('password', 'verifypassword', 'openid.sreg.required'
+        for key in ('password', 'verifypassword', 'openid.sreg.required',
+                    'transfer_pw',
                     ):
             __type_map[key] = valid_password
         for key in ('hostidentifier'):
