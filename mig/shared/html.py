@@ -297,15 +297,15 @@ def confirm_js(configuration, width=500):
     ''' % width
     return (add_import, add_init, add_ready)    
 
-def confirm_html(configuration, rows=4, cols=40):
+def confirm_html(configuration, rows=4, cols=40, cls="fillwidth padspace"):
     """Build standard js filled confirm overlay dialog html"""
     html = '''
     <div id="confirm_dialog" title="Confirm" style="background:#fff;">
         <div id="confirm_text"><!-- filled by js --></div>
-        <textarea cols="%s" rows="%s" id="confirm_input"
+        <textarea class="%s" cols="%s" rows="%s" id="confirm_input"
        style="display:none;"></textarea>
     </div>
-    ''' % (cols, rows)
+    ''' % (cls, cols, rows)
     return html
 
 def man_base_js(configuration, table_dicts, overrides={}):

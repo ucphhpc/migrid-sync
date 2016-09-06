@@ -88,7 +88,9 @@ def vgrid_add_remove_table(client_id,
         id_field = 'rule_id'
         optional = True
         id_html_tr = '''<tr>
-        <td>ID</td><td><input type="text" size=70 name="%s" /></td>
+        <td>ID</td><td>
+        <input class="fillwidth padspace" type="text" size=70 name="%s" />
+        </td>
         </tr>
         ''' % id_field
     else:
@@ -222,7 +224,9 @@ doubt, just let the user request access and accept it with the
         if isinstance(limit, basestring):
             add_html = '%s' % limit
         elif limit == None:
-            add_html = '<input type="text" size=70 name="%s" />' % field
+            add_html = '''
+        <input class="fillwidth padspace" type="text" size=70 name="%s" />
+        ''' % field
         else:
             multiple = ''
             if keyword_all in limit:

@@ -319,12 +319,12 @@ careful when filling in the details.
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <b>Name:</b><br />
 <input type='hidden' name='flavor' value='%(flavor)s' />
-<input type='text' name='freeze_name' size=30 autofocus />
+<input class='fillwidth padspace' type='text' name='freeze_name' autofocus />
 <input type='hidden' name='freeze_author' value='UNSET' />
 <input type='hidden' name='freeze_department' value='UNSET' />
 <input type='hidden' name='freeze_organization' value='UNSET' />
 <br /><b>Description:</b><br />
-<textarea cols='80' rows='20' name='freeze_description'></textarea>
+<textarea class='fillwidth padspace' rows='20' name='freeze_description'></textarea>
 <br />
 <br />
 <div id='freezefiles'>

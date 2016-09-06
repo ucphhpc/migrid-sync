@@ -227,9 +227,9 @@ information.'''
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <b>Runtime Environment Name</b><br />
 <small>(eg. BASH-2.X-1, must be unique):</small><br />
-<input type='text' size='40' name='re_name' /><br />
+<input class='p80width' type='text' name='re_name' /><br />
 <br /><b>Description:</b><br />
-<textarea cols='50' rows='2' name='redescription'>
+<textarea class='p80width' rows='4' name='redescription'>
 """
     if template:
         html_form += template['DESCRIPTION'].replace('<br />', '\n')
@@ -243,7 +243,7 @@ information.'''
             soft_list = template['SOFTWARE']
             for soft in soft_list:
                 html_form += """
-<textarea cols='50' rows='5' name='software'>"""
+<textarea class='p80width' rows='6' name='software'>"""
                 for keyname in soft.keys():
                     if keyname != '':
                         html_form += '%s=%s\n' % (keyname, soft[keyname])
@@ -261,7 +261,7 @@ information.'''
 
     for _ in range(len(soft_list), software_entries):
         html_form += """
-<textarea cols='50' rows='5' name='software'>"""
+<textarea class='p80width' rows='6' name='software'>"""
         for sub_req in sublevel_required:
             html_form += '%s=   # required\n' % sub_req
         for sub_opt in sublevel_optional:
@@ -272,7 +272,7 @@ information.'''
         if template.has_key('TESTPROCEDURE'):
             html_form += """
 <br /><b>Testprocedure</b> (in mRSL format):<br />
-<textarea cols='50' rows='15' name='testprocedure'>"""
+<textarea class='p80width' rows='15' name='testprocedure'>"""
 
             base64string = ''
             for stringpart in template['TESTPROCEDURE']:
@@ -285,7 +285,7 @@ information.'''
 
             html_form = """
 <br /><b>Expected .stdout file if testprocedure is executed</b><br />
-<textarea cols='50' rows='10' name='verifystdout'>"""
+<textarea class='p80width' rows='10' name='verifystdout'>"""
 
             if template.has_key('VERIFYSTDOUT'):
                 for line in template['VERIFYSTDOUT']:
@@ -311,18 +311,18 @@ information.'''
 
         html_form += """
 <br /><b>Testprocedure</b> (in mRSL format):<br />
-<textarea cols='50' rows='15' name='testprocedure'>"""
+<textarea class='p80width' rows='15' name='testprocedure'>"""
 
         html_form += \
             """::EXECUTE::
 ls    
 </textarea>
 <br /><b>Expected .stdout file if testprocedure is executed</b><br />
-<textarea cols='50' rows='10' name='verifystdout'></textarea>
+<textarea class='p80width' rows='10' name='verifystdout'></textarea>
 <br /><b>Expected .stderr file if testprocedure is executed</b><br />
-<textarea cols='50' rows='10' name='verifystderr'></textarea>
+<textarea class='p80width' rows='10' name='verifystderr'></textarea>
 <br /><b>Expected .status file if testprocedure is executed</b><br />
-<textarea cols='50' rows='10' name='verifystatus'></textarea>
+<textarea class='p80width' rows='10' name='verifystatus'></textarea>
 """
 
     environmentvariable = rekeywords_dict['ENVIRONMENTVARIABLE']
@@ -342,18 +342,17 @@ ls
             env_list = template['ENVIRONMENTVARIABLE']
             for env in env_list:
                 html_form += """
-<textarea cols='50' rows='3' name='environment'>"""
+<textarea class='p80width' rows='4' name='environment'>"""
                 for keyname in env.keys():
                     if keyname != '':
                         html_form += '%s=%s\n' % (keyname, env[keyname])
-
                 html_form += '</textarea><br />'
 
     # loop and create textareas for any missing environment entries
 
     for _ in range(len(env_list), environment_entries):
         html_form += """
-<textarea cols='50' rows='3' name='environment'>"""
+<textarea class='p80width' rows='4' name='environment'>"""
         for sub_req in sublevel_required:
             html_form += '%s=   # required\n' % sub_req
         for sub_opt in sublevel_optional:

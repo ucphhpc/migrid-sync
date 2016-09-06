@@ -192,7 +192,7 @@ description, you can likely just leave the field alone.''' % configuration.short
         output_objects.append({'object_type': 'html_form', 'text'
                                : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
-<input type='text' name='%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field, field_size(conf[field]),
            conf[field])
@@ -213,7 +213,7 @@ description, you can likely just leave the field alone.''' % configuration.short
     output_objects.append({'object_type': 'html_form', 'text'
                            : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#%s'>help</a><br />
-<input type='text' name='%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
            field_size(conf[field]), conf[field])
@@ -228,7 +228,7 @@ description, you can likely just leave the field alone.''' % configuration.short
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
-<input type='text' name='%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field, field_size(conf[field]),
            conf[field])
@@ -283,7 +283,7 @@ description, you can likely just leave the field alone.''' % configuration.short
                          (selected, name, display)
         re_select += """</select><br />\n"""
         values = '\n'.join(['%s=%s' % pair for pair in active[1]])
-        re_select += "<textarea cols='%d' rows='%d' name='re_values%d'>%s</textarea><br />\n" % \
+        re_select += "<textarea class='fillwidth padspace' cols='%d' rows='%d' name='re_values%d'>%s</textarea><br />\n" % \
                      (area_cols, area_rows, i, values)
         i += 1
 
@@ -308,7 +308,7 @@ each selected runtimeenvironment.<br />
     output_objects.append({'object_type': 'html_form', 'text'
                            : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a><br />
-<input type='text' name='exe-%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='exe-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
            field_size(conf['all_exes'][field]), conf['all_exes'][field])
@@ -318,7 +318,7 @@ each selected runtimeenvironment.<br />
     output_objects.append({'object_type': 'html_form', 'text'
                            : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a><br />
-<input type='text' name='exe-%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='exe-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
            field_size(conf['all_exes'][field]), conf['all_exes'][field])
@@ -333,7 +333,7 @@ each selected runtimeenvironment.<br />
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a><br />
-<input type='text' name='exe-%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='exe-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
            field_size(conf['all_exes'][field]), conf['all_exes'][field])
@@ -379,7 +379,7 @@ each selected runtimeenvironment.<br />
     output_objects.append({'object_type': 'html_form', 'text'
                            : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a><br />
-<input type='text' name='store-%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='store-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
            field_size(conf['all_stores'][field]), conf['all_stores'][field])
@@ -389,7 +389,7 @@ each selected runtimeenvironment.<br />
     output_objects.append({'object_type': 'html_form', 'text'
                            : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a><br />
-<input type='text' name='store-%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='store-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
            field_size(conf['all_stores'][field]), conf['all_stores'][field])
@@ -404,7 +404,7 @@ each selected runtimeenvironment.<br />
             output_objects.append({'object_type': 'html_form', 'text'
                            : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a><br />
-<input type='text' name='store-%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='store-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
            field_size(conf['all_stores'][field]), conf['all_stores'][field])

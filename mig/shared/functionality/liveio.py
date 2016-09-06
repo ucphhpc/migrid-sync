@@ -88,7 +88,7 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript">
     var fields = 1;
     var max_fields = 20;
-    var src_input = "<input type=text size=60 name=src value='' /><br />";
+    var src_input = "<input class='fillwidth' type=text name=src value='' /><br />";
     function addSource() {
         if (fields < max_fields) {
             $("#srcfields").append(src_input);
@@ -163,19 +163,19 @@ Action:<br />
 </td></tr>
 <tr><td>
 Job ID:<br />
-<input type=text size=60 name=job_id value="%(job_id)s" />
+<input class="fillwidth" type=text name=job_id value="%(job_id)s" />
 </td></tr>
 <tr><td>
 Source path(s):<br />
 <div id="srcfields">
-<input type=text size=60 name=src value="" /><br />
+<input class="fillwidth" type=text name=src value="" /><br />
 </div>
 <input id="addsrcbutton" type="button" onclick="addSource(); return false;"
     value="Add another source field" />
 </td></tr>
 <tr><td>
 Destination path:<br />
-<input type=text size=60 name=dst value="" />
+<input class="fillwidth" type=text name=dst value="" />
 </td></tr>
 <tr><td>
 <input type="submit" value="Send request" />

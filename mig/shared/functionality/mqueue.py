@@ -192,11 +192,11 @@ Action:<br />
 </td></tr>
 <tr><td>
 Queue:<br />
-<input type=text size=60 name=queue value="%(queue)s" />
+<input class="fillwidth" type=text name=queue value="%(queue)s" />
 </td></tr>
 <tr><td>
 <div id="msgfieldf">
-<input type=text size=60 name=msg value="%(msg)s" /><br />
+<input class="fillwidth" type=text name=msg value="%(msg)s" /><br />
 </div>
 </td></tr>
 <tr><td>

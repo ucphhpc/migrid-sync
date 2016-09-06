@@ -1063,6 +1063,18 @@ a:hover.genericbutton {
   background-color: #999; 
   color: #fff; 
 }
+/* half width */
+.halfwidth {
+  width: 50%;
+}
+/* half width with room for minor padding */
+.halfwidth.padspace {
+  width: 49%;
+}
+/* 80 % width */
+.p80width {
+  width: 80%;
+}
 /* full width */
 .fillwidth {
   width: 100%;
