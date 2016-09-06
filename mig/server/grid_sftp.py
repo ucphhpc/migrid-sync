@@ -548,14 +548,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('readlink %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
-            # It's common to check file existence with readlink so don't warn
-            self.logger.debug("readlink on missing path %s :: %s" % \
+            self.logger.error("readlink on missing path %s :: %s" % \
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
             return self._strip_root(os.readlink(path))
         except Exception, err:
-            self.logger.error("readlink on %s :: %s failed: %s" % \
+            self.logger.warning("readlink on %s :: %s failed: %s" % \
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
 
