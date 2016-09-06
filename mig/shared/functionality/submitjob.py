@@ -286,7 +286,7 @@ help</a><br />
             if field_type.startswith('multiple'):
                 output_objects.append({'object_type': 'html_form', 'text'
                                        : """
-<textarea name='%s' cols='%d' rows='%d'>%s</textarea><br />
+<textarea class='fillwidth padspace' name='%s' cols='%d' rows='%d'>%s</textarea><br />
 """ % (field, area_cols, area_rows, '\n'.join(default))
                                })
             else:
@@ -383,7 +383,7 @@ are supplied: thus we simply send a bogus jobname which does nothing
 <table class='submitjob'>
 <tr><td class='centertext'>
 <input type=hidden name=jobname_0_0_0 value=' ' />
-<textarea cols='82' rows='25' name='mrsltextarea_0'>
+<textarea class='fillwidth padspace' rows='25' name='mrsltextarea_0'>
 %(default_mrsl)s
 </textarea>
 </td></tr>
