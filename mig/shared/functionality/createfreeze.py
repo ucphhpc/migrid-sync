@@ -27,14 +27,14 @@
 
 """Creation of frozen archives for write-once files"""
 
+import datetime
 import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import max_freeze_files, csrf_field
+from shared.defaults import max_freeze_files, csrf_field, freeze_flavors
 from shared.fileio import strip_dir
-from shared.freezefunctions import freeze_flavors, create_frozen_archive, \
-     published_url
+from shared.freezefunctions import create_frozen_archive, published_url
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
@@ -48,7 +48,7 @@ def signature():
     defaults = {
         'flavor': ['freeze'],
         'freeze_name': REJECT_UNSET,
-        'freeze_description': REJECT_UNSET,
+        'freeze_description': [''],
         'freeze_publish': ['False'],
         'freeze_author': [''],
         'freeze_department': [''],
@@ -185,9 +185,22 @@ Please contact the Grid admins %s if you think it should be enabled.
     freeze_organization = accepted['freeze_organization'][-1].strip()
     freeze_publish = (accepted['freeze_publish'][-1].strip() != 'False')
     if not freeze_name:
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'You must provide a name for the archive!'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+        if flavor == 'backup':
+            freeze_name = 'backup-%s' % datetime.datetime.now()
+        else:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'You must provide a name for the archive!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if not freeze_description:
+        if flavor == 'backup':
+            freeze_description = 'manual backup archive created on %s' % \
+                                 datetime.datetime.now()
+        else:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'You must provide a description for the archive!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     freeze_meta = {'NAME': freeze_name, 'DESCRIPTION': freeze_description,
                    'FLAVOR': flavor, 'AUTHOR': freeze_author, 'DEPARTMENT':
@@ -245,16 +258,15 @@ Please contact the Grid admins %s if you think it should be enabled.
     logger.info("%s: successful for '%s': %s" % (op_name,
                                                  freeze_id, client_id))
     output_objects.append({'object_type': 'text', 'text'
-                           : 'Created frozen archive with ID %s successfully!'
-                           % freeze_id})
+                           : 'Successfully created %s archive with ID %s .'
+                           % (flavor, freeze_id)})
     output_objects.append({
         'object_type': 'link',
         'destination': 'showfreeze.py?freeze_id=%s;flavor=%s' % (freeze_id,
                                                                  flavor),
         'class': 'viewlink iconspace',
-        'title': 'View your frozen archive',
-        'text': 'View new %s frozen archive'
-        % freeze_id,
+        'title': 'View your %s archive' % flavor,
+        'text': 'View %s' % freeze_id,
         })
     if freeze_publish:
         public_url = published_url(freeze_meta, configuration)

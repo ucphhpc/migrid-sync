@@ -27,9 +27,10 @@
 
 """Request freeze of one or more files into a write-once archive"""
 
+import datetime
+
 import shared.returnvalues as returnvalues
-from shared.defaults import upload_tmp_dir, csrf_field
-from shared.freezefunctions import freeze_flavors
+from shared.defaults import upload_tmp_dir, csrf_field, freeze_flavors
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
@@ -224,6 +225,7 @@ function init_page() {
                                              add_init, add_ready)
 
     if flavor == 'freeze':
+        fill_helpers['freeze_name'] = ''
         fill_helpers["archive_header"] = "Freeze Archive Files"
         fill_helpers["button_label"] = "Create Archive"
         intro_text = """
@@ -235,6 +237,7 @@ careful when filling in the details.
 </p>
 """
     elif flavor == 'phd':
+        fill_helpers['freeze_name'] = ''
         fill_helpers["archive_header"] = \
                                        "Thesis and Associated Files to Archive"
         fill_helpers["button_label"] = "Archive Thesis"
@@ -245,6 +248,14 @@ thesis.
 creation and it can only be manually removed by the management, so please be
 careful when filling in the details.
 </p>
+"""
+    elif flavor == 'backup':
+        now = datetime.datetime.now().isoformat().replace(':', '')
+        fill_helpers['freeze_name'] = 'backup-%s' % now
+        fill_helpers["archive_header"] = "Files and folders to Archive"
+        fill_helpers["button_label"] = "Archive as Backup"
+        intro_text = """
+Please select the files and folders to backup below.
 """
     else:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -319,36 +330,57 @@ careful when filling in the details.
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <b>Name:</b><br />
 <input type='hidden' name='flavor' value='%(flavor)s' />
-<input class='fillwidth padspace' type='text' name='freeze_name' autofocus />
-<input type='hidden' name='freeze_author' value='UNSET' />
-<input type='hidden' name='freeze_department' value='UNSET' />
-<input type='hidden' name='freeze_organization' value='UNSET' />
+<input class='fillwidth padspace' type='text' name='freeze_name'
+    value='%(freeze_name)s' autofocus />
+"""
+    if flavor != 'backup':
+        freeze_form += """
+<input type='hidden' name='freeze_author' value='' />
+<input type='hidden' name='freeze_department' value='' />
+<input type='hidden' name='freeze_organization' value='' />
 <br /><b>Description:</b><br />
 <textarea class='fillwidth padspace' rows='20' name='freeze_description'></textarea>
 <br />
+"""
+    freeze_form += """    
 <br />
 <div id='freezefiles'>
 <b>%(archive_header)s:</b>
 <input type='button' id='addfilebutton' value='Add file/directory' />
+"""
+    if flavor != 'backup':
+        freeze_form += """
 <input type='button' id='adduploadbutton' value='Add upload' />
+"""
+    freeze_form += """    
 <div id='copyfiles'>
 <!-- Dynamically filled -->
 </div>
+"""
+    if flavor != 'backup':
+        freeze_form += """
 <div id='uploadfiles'>
 <!-- Dynamically filled -->
 </div>
+"""
+    freeze_form += """    
 </div>
 <br />
+"""
+    if flavor != 'backup':
+        freeze_form += """
 <div id='freezepublish'>
 <input type='checkbox' name='freeze_publish' />
 <b>Make Dataset Publicly Available</b>
 </div>
 <br />
+"""
+    freeze_form += """    
 <input type='submit' value='%(button_label)s' />
 </form>
-""" % fill_helpers
+"""
     output_objects.append({'object_type': 'html_form', 'text': intro_text})
     output_objects.append({'object_type': 'html_form', 'text': files_form})
-    output_objects.append({'object_type': 'html_form', 'text': freeze_form})
-
+    output_objects.append({'object_type': 'html_form', 'text': freeze_form % \
+                           fill_helpers})
     return (output_objects, returnvalues.OK)

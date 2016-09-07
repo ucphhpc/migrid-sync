@@ -30,9 +30,9 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_pager_entries
+from shared.defaults import default_pager_entries, freeze_flavors
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
-     build_freezeitem_object, freeze_flavors
+     build_freezeitem_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import jquery_ui_js, man_base_js, man_base_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -102,7 +102,8 @@ Please contact the Grid admins %s if you think it should be enabled.
         # jquery support for tablesorter (and unused confirmation dialog)
         # table initially sorted by col. 0 (filename)
 
-        refresh_call = 'ajax_showfreeze("%s", "%s")' % (freeze_id, checksum)
+        refresh_call = 'ajax_showfreeze("%s", "%s", "%s")' % \
+                       (freeze_id, flavor, checksum)
         table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
                       'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
@@ -127,7 +128,6 @@ Please contact the Grid admins %s if you think it should be enabled.
                                : "'%s' is not an existing frozen archive!"
                                % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
 
 
     if operation in list_operations:

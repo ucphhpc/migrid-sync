@@ -1112,7 +1112,10 @@ def guess_type(name):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0, extra_chars=' ')
         for key in ('execution_node', 'storage_node', ):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
-        for key in ('execution_user', 'storage_user', ):
+        for key in ('execution_user', 'storage_user', 'freeze_name',
+                    'freeze_author', 'freeze_department',
+                    'freeze_organization',
+                    ):
             __type_map[key] = lambda x: valid_commonname(x, min_length=0)
         # EXECONFIG vgrid field which may be empty or a comma-separated list
         for key in ('vgrid', ):
@@ -1122,10 +1125,6 @@ def guess_type(name):
             'cert_name',
             'org',
             'machine_software',
-            'freeze_name',
-            'freeze_author',
-            'freeze_department',
-            'freeze_organization',
             'openid.sreg.cn',
             'openid.sreg.fullname',
             'openid.sreg.full_name',

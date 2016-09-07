@@ -29,8 +29,9 @@
 """Deletion of frozen archives"""
 
 import shared.returnvalues as returnvalues
-from shared.freezefunctions import freeze_flavors, is_frozen_archive, \
-     get_frozen_archive, delete_frozen_archive
+from shared.defaults import freeze_flavors
+from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
+     delete_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
@@ -93,6 +94,14 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     freeze_id = accepted['freeze_id'][-1]
 
+    # Prevent user-delete if the frozen archive if configuration forbids it
+    if flavor in configuration.site_permanent_freeze:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             "Can't delete %s archives like '%s' yourself due to site policy"
+             % (flavor, freeze_id)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     # NB: the restrictions on freeze_id prevents illegal directory traversal
 
     if not is_frozen_archive(freeze_id, configuration):
@@ -112,14 +121,6 @@ Please contact the Grid admins %s if you think it should be enabled.
              'text': 'Could not read frozen archive details for %s'
              % freeze_id})
         return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    # Prevent easy delete if the frozen archive if configuration forbids it
-    if configuration.site_permanent_freeze:
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             "Can't delete frozen archive '%s' yourself due to site policy"
-             % freeze_id})
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Make sure the frozen archive belongs to the user trying to delete it
     if client_id != freeze_dict['CREATOR']:

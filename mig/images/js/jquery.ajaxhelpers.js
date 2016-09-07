@@ -208,7 +208,8 @@ function ajax_freezedb(permanent_freeze) {
                       //console.info("found archive: "+arch.name);
                       var viewlink = format_link(arch.viewfreezelink);
                       var dellink = "";
-                      if (!permanent_freeze) {
+                      var flavor = arch.flavor;
+                      if (permanent_freeze.indexOf(flavor) == -1) {
                           dellink = format_link(arch.delfreezelink);
                       }
                       entry = "<tr>"+base_td(arch.id)+center_td(viewlink+
@@ -249,8 +250,8 @@ function ajax_freezedb(permanent_freeze) {
   });
 }
 
-function ajax_showfreeze(freeze_id, checksum) {
-    console.debug("load archive "+freeze_id+" with "+checksum+" checksum");
+function ajax_showfreeze(freeze_id, flavor, checksum) {
+    console.debug("load archive "+freeze_id+" of flavor "+flavor+" with "+checksum+" checksum");
     var tbody_elem = $("#frozenfilestable tbody");
     var arch_tbody = $(".frozenarchivedetails tbody");
     //console.debug("empty table");
@@ -261,7 +262,7 @@ function ajax_showfreeze(freeze_id, checksum) {
     /* Request archive list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?freeze_id="+freeze_id+";checksum="+checksum+
+      url: "?freeze_id="+freeze_id+";flavor="+flavor+";checksum="+checksum+
            ";output_format=json;operation=list",
       type: "GET",
       dataType: "json",
@@ -295,10 +296,14 @@ function ajax_showfreeze(freeze_id, checksum) {
                       }
                   }
                   entry = "<tr>"+title_td("ID")+base_td(arch.id)+"</tr><tr>"+
-                      title_td("Name")+base_td(arch.name)+"</tr><tr>"+
-                      title_td("Description")+border_td(arch.description)+
-                      "</tr><tr>"+title_td("Published")+base_td(published)+
-                      "</tr><tr>"+title_td("Creator")+base_td(arch.creator)+
+                      title_td("Name")+base_td(arch.name)+"</tr>";
+                  if (arch.flavor !== 'backup') {
+                      entry += "<tr>"+title_td("Description")+border_td(arch.description)+
+                      "</tr><tr>"+title_td("Published")+base_td(published)+"</tr>";
+                  } else {
+                      /* no op */
+                  }
+                  entry += "<tr>"+title_td("Creator")+base_td(arch.creator)+
                       "</tr><tr>"+title_td("Created")+base_td(arch.created)+
                       "</tr>"+location;
                   $(arch_tbody).append(entry);

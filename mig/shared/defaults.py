@@ -181,3 +181,19 @@ csrf_field = "_csrf"
 # 0|~/mig > ./codegrep.py safe_handler|grep import|sort|awk '{ print $1; }'| \
 #               sed 's@.*/functionality/\(.*\).py:from@\\"\1\\",@g'|xargs
 csrf_backends = ["addresowner", "addvgridmember", "addvgridowner", "addvgridres", "addvgridtrigger", "autocreate", "cleanexe", "cleanfe", "cleanstore", "cp", "createfreeze", "createre", "createvgrid", "datatransfer", "deletefreeze", "deletere", "delres", "editfile", "extcertaction", "extoidaction", "filemetaio", "jobaction", "jobfeasible", "jobobjsubmit", "jobschedule", "liveio", "mkdir", "mqueue", "mv", "pack", "rejectresreq", "rejectvgridreq", "reqcertaction", "reseditaction", "restartexe", "restartfe", "restartstore", "resubmit", "rmdir", "rm", "rmresowner", "rmvgridmember", "rmvgridowner", "rmvgridres", "rmvgridtrigger", "scripts", "sendrequestaction", "settingsaction", "sharelink", "sssadmin", "ssscreateimg", "stopexe", "stopfe", "stopstore", "submitfields", "submit", "tar", "testresupport", "textarea", "touch", "truncate", "unpack", "untar", "unzip", "updateresconfig", "updatevgrid", "uploadchunked", "upload", "vgridforum", "vgridsettings", "vmachines", "zip"]
+
+# freeze archive flavor
+freeze_flavors = {
+    'freeze': {'adminfreeze_title': 'Freeze Archive',
+               'createfreeze_title': 'Create Frozen Archive',
+               'showfreeze_title': 'Show Frozen Archive Details',
+               'deletefreeze_title': 'Delete Frozen Archive'},
+    'phd': {'adminfreeze_title': 'PhD Thesis Archival',
+            'createfreeze_title': 'Create Thesis Archive',
+            'showfreeze_title': 'Show Archived Thesis Details',
+            'deletefreeze_title': 'Delete Archived Thesis'},
+    'backup': {'adminfreeze_title': 'Backup Archival',
+            'createfreeze_title': 'Create Backup Archive',
+            'showfreeze_title': 'Show Backup Archive Details',
+            'deletefreeze_title': 'Delete Backup Archive'}
+    }

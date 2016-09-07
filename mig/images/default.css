@@ -911,6 +911,10 @@ input[type=checkbox], input[type=radio] {
   background: url('/images/icons/page_white_get.png') no-repeat;
   padding-left: 18px;
 }
+.seafilelink {
+  background: url('/images/icons/seafile.png') no-repeat;;
+  padding-left: 18px;
+}
 
 .settingsbutton {
   padding: 8px;

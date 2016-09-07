@@ -36,7 +36,8 @@ import sys
 import time
 from ConfigParser import ConfigParser
 
-from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL
+from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
+     freeze_flavors
 from shared.logger import Logger
 from shared.html import menu_items, vgrid_items
 
@@ -1164,10 +1165,18 @@ class Configuration:
         else:
             self.site_enable_freeze = False
         if config.has_option('SITE', 'permanent_freeze'):
-            self.site_permanent_freeze = config.getboolean('SITE',
-                                                           'permanent_freeze')
+            # can be a space separated list of permanent flavors or a boolean
+            # to make ALL flavors permanent or user-removable
+            permanent_freeze = config.get('SITE', 'permanent_freeze').strip()
+            if permanent_freeze.lower() in ('true', '1', 'yes'):
+                permanent_freeze = freeze_flavors.keys()
+            elif permanent_freeze.lower() in ('false', '0', 'no'):
+                permanent_freeze = []
+            else:
+                permanent_freeze = permanent_freeze.split(' ')
+            self.site_permanent_freeze = permanent_freeze
         else:
-            self.site_permanent_freeze = True
+            self.site_permanent_freeze = freeze_flavors.keys()
         if config.has_option('SITE', 'freeze_to_tape'):
             self.site_freeze_to_tape = config.get('SITE', 'freeze_to_tape')
         else:

@@ -88,7 +88,7 @@ Please contact the Grid admins %s if you think it should be enabled.
         # table initially sorted by col. 3 (Created date) then 2 (name)
 
         refresh_call = 'ajax_freezedb(%s)' % \
-                       str(configuration.site_permanent_freeze).lower()
+                       str(configuration.site_permanent_freeze)
         table_spec = {'table_id': 'frozenarchivetable', 'sort_order':
                       '[[3,1],[2,0]]', 'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
@@ -170,7 +170,7 @@ from the management.
                 'title': 'View frozen archive %s' % freeze_id, 
                 'text': ''}
             if client_id == freeze_item['creator'] and \
-                   not configuration.site_permanent_freeze:
+                   flavor not in configuration.site_permanent_freeze:
                 freeze_item['delfreezelink'] = {
                     'object_type': 'link', 'destination':
                     "javascript: confirmDialog(%s, '%s', %s, %s);" % \
@@ -188,11 +188,40 @@ from the management.
     if operation in show_operations:
         output_objects.append({'object_type': 'sectionheader', 'text':
                                'Additional Frozen Archives'})
+        output_objects.append({'object_type': 'text', 'text': '''You can create
+frozen snapshots/archives of particular subsets of your data in order to make
+sure a verbatim copy is preserved. The freeze archive method includes support
+for persistent publishing, so that you can e.g. reference your data in
+publications. Backup archives can be used as a basic backup mechanism, so that
+you can manually recover from any erroneous file removals.'''})
+        if configuration.site_enable_seafile:
+            output_objects.append({'object_type': 'text', 'text': '''We
+recommend our Seafile sync solution for any small or medium sized data sets,
+for which you want automatic file versioning and roll-back support. For further
+details please refer to the '''})
+            output_objects.append({'object_type': 'link',
+                               'destination': 'settings.py?topic=seafile',
+                               'class': 'seafilelink iconspace',
+                               'title': 'Open Seafile settings', 
+                               'text': 'Seafile Settings'})
+            output_objects.append({'object_type': 'text', 'text':
+                                   ''' and the %s documentation.''' % \
+                                   configuration.short_title})
+        output_objects.append({'object_type': 'text', 'text': '''Choose one of
+the archive methods below to make a manual archive:'''})
         output_objects.append({'object_type': 'link',
-                               'destination': 'adminfreeze.py',
+                               'destination': 'adminfreeze.py?flavor=freeze',
                                'class': 'addlink iconspace',
-                               'title': 'Specify a new frozen archive', 
-                               'text': 'Create a new frozen archive'})
+                               'title': 'Make a new freeze archive of e.g. '
+                               'research data to be published', 
+                               'text': 'Create a new freeze archive'})
+        output_objects.append({'object_type': 'text', 'text': ''})
+        output_objects.append({'object_type': 'link',
+                               'destination': 'adminfreeze.py?flavor=backup',
+                               'class': 'addlink iconspace',
+                               'title': 'Make a new backup archive of %s data' \
+                               % configuration.short_title, 
+                               'text': 'Create a new backup archive'})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, returnvalues.OK)

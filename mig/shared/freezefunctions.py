@@ -34,23 +34,12 @@ import time
 from urllib import quote
 
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
-     public_archive_dir, public_archive_index
+     public_archive_dir, public_archive_index, freeze_flavors
 from shared.fileio import md5sum_file, sha1sum_file, write_file, copy_file, \
      copy_rec, move_file, move_rec, remove_rec, makedirs_rec, make_symlink, \
      make_temp_dir
 from shared.html import get_cgi_html_preamble, get_cgi_html_footer
 from shared.serial import load, dump
-
-freeze_flavors = {
-    'freeze': {'adminfreeze_title': 'Freeze Archive',
-               'createfreeze_title': 'Create Frozen Archive',
-               'showfreeze_title': 'Show Frozen Archive Details',
-               'deletefreeze_title': 'Delete Frozen Archive'},
-    'phd': {'adminfreeze_title': 'PhD Thesis Archival',
-            'createfreeze_title': 'Create Thesis Archive',
-            'showfreeze_title': 'Show Archived Thesis Details',
-            'deletefreeze_title': 'Delete Archived Thesis'}
-    }
 
 def public_freeze_id(freeze_dict):
     """Translate internal freeze_id to a public identifier used when publishing
