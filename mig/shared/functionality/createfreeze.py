@@ -88,6 +88,14 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'illegal path!'))
                 continue
+            elif os.path.samefile(abs_path, base_dir):
+                configuration.logger.warning(
+                    'refusing archival of entire user home %s: %s' % \
+                    (xfer, source_path))
+                rejected.append('invalid path: %s (%s)' % \
+                                (source_path, 'entire home not allowed!'))
+                continue
+                
             # expand any dirs recursively
             if os.path.isdir(abs_path):
                 for (root, dirnames, filenames) in os.walk(abs_path):
