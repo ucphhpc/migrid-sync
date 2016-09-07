@@ -1069,24 +1069,48 @@ def vgrid_create_allowed(configuration, user_dict):
             return False
     return True
 
-def in_vgrid_share(configuration, path):
-    """Checks if path is inside a vgrid share and return the deepest such
-    sub-vgrid it is inside if so.
+def __in_vgrid_special(configuration, path, vgrid_special_base):
+    """Helper function to detect subvgrid public/private web hosting dirs and
+    vgrid shares.
+    Checks if path is really inside a vgrid special folder with home in
+    vgrid_special_base, and returns the name of the deepest such sub-vgrid it
+    is inside if so.
     """
     vgrid_path = None
-    vgrid_files_home = configuration.vgrid_files_home
     vgrid_home = configuration.vgrid_home
     real_path = os.path.realpath(path)
-    configuration.logger.debug("in_vgrid_share %s vs %s" % (real_path,
-                                                            vgrid_files_home))
-    if real_path.startswith(vgrid_files_home):
-        vgrid_path = real_path.replace(vgrid_files_home, '').lstrip(os.sep)
+    configuration.logger.debug("in vgrid special %s vs %s" % \
+                               (real_path, vgrid_special_base))
+    if real_path.startswith(vgrid_special_base):
+        vgrid_path = real_path.replace(vgrid_special_base, '').lstrip(os.sep)
         while vgrid_path != os.sep:
             if os.path.isdir(os.path.join(vgrid_home, vgrid_path)):
-                configuration.logger.debug("in_vgrid_share found %s" % vgrid_path)
+                configuration.logger.debug("in vgrid special found %s" % \
+                                           vgrid_path)
                 break
             vgrid_path = os.path.dirname(vgrid_path)
     return vgrid_path
+
+def in_vgrid_share(configuration, path):
+    """Checks if path is inside a vgrid share and returns the name of the
+    deepest such sub-vgrid it is inside if so.
+    """
+    return __in_vgrid_special(configuration, path,
+                              configuration.vgrid_files_home)
+
+def in_vgrid_priv_web(configuration, path):
+    """Checks if path is inside a vgrid priv web dir and returns the name of
+    the deepest such sub-vgrid it is inside if so.
+    """
+    return __in_vgrid_special(configuration, path,
+                              configuration.vgrid_private_base)
+
+def in_vgrid_pub_web(configuration, path):
+    """Checks if path is inside a vgrid pub web dir and returns the name of
+    the deepest such sub-vgrid it is inside if so.
+    """
+    return __in_vgrid_special(configuration, path,
+                              configuration.vgrid_public_base)
 
 def _shared_allow_adm(configuration, vgrid_name, client_id, target):
     """Check if client_id is allowed to edit target values for vgrid_name. This

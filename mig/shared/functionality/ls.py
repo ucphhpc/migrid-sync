@@ -46,6 +46,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
 from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
+from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web
 
 
 def signature():
@@ -212,21 +213,33 @@ def handle_dir(
         return
     special = ''
     extra_class = ''
-    if os.path.islink(actual_dir):
+    real_dir = os.path.realpath(actual_dir)
+    abs_dir =  os.path.abspath(actual_dir)
+    # If we followed a symlink it is not a plain dir
+    if real_dir != abs_dir:
         access_type = configuration.site_vgrid_label
-        dir_type = 'shared files'
-        extra_class = 'vgridshared'
         parent_dir = os.path.basename(os.path.dirname(actual_dir))
-        if parent_dir.find('public_base') >= 0:
+        configuration.logger.debug("checking link %s type (%s)" % \
+                                   (dirname_with_dir, real_dir))
+        # Separate vgrid special dirs from plain ones
+        if in_vgrid_share(configuration, actual_dir) == dirname_with_dir:
+            dir_type = 'shared files'
+            extra_class = 'vgridshared'
+        elif in_vgrid_pub_web(configuration, actual_dir) == \
+                 dirname_with_dir[len('public_base/'):]:
             dir_type = 'public web page'
             extra_class = 'vgridpublicweb'
-        elif parent_dir.find('private_base') >= 0:
+        elif in_vgrid_priv_web(configuration, actual_dir) == \
+                 dirname_with_dir[len('private_base/'):]:
             dir_type = 'private web page'
             extra_class = 'vgridprivateweb'
-        elif actual_dir.find(seafile_ro_dirname) >= 0:
+        elif real_dir.startswith(configuration.seafile_mount):
             access_type = 'read-only'
             dir_type = 'Seafile library access'
-            extra_class = 'seafilereadonly'
+            if os.path.islink(actual_dir):
+                extra_class = 'seafilereadonly'
+        else:
+            dir_type = 'sub'
         special = ' - %s %s directory' % (access_type, dir_type)
     dir_obj = {
         'object_type': 'direntry',
