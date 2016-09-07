@@ -46,6 +46,7 @@ require:
 -Python OpenSSL module (https://pypi.python.org/pypi/pyOpenSSL)
 -Python WSGI WebDAV module (http://wsgidav.readthedocs.org)
 -Python watchdog module (https://pypi.python.org/pypi/watchdog)
+-Python scandir module (https://pypi.python.org/pypi/scandir)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
 -Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
@@ -128,9 +129,17 @@ sudo pip install pywebdav
 The optional grid_openid daemon requires the openid module in a recent
 version, so it is easiest to install it with pip as mentioned above.
 
-The optional grid_events daemon requires the watchdog module which may
-be installed with:
+The optional grid_events daemon requires the watchdog and scandir modules
+ which may be installed with:
 sudo pip install watchdog
+sudo pip install scandir
+it is likely that the inotify default settings are too low to handle any
+serious number of vgrid shares so you may have to additionally tune the sysctl
+settings e.g. by adding the following to your /etc/sysctl.conf :
+# For grid_events daemon
+# It may be necessary to increase the number of watched files
+fs.inotify.max_user_watches=1048576
+fs.inotify.max_user_instances=1024
 
 The optional grid_transfers daemon requires lftp and rsync clients to
 handle the background data transfers. Most Linux distributions come with
