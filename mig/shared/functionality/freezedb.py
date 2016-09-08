@@ -145,9 +145,10 @@ from the management.
         logger.debug("%s %s: building list of archives" % (op_name, operation))
         for freeze_id in ret:
             # TODO: add file count to meta and switch here
-            #(load_status, freeze_dict) = get_frozen_meta(freeze_id,
+            #(load_status, freeze_dict) = get_frozen_meta(client_id, freeze_id,
             #                                             configuration)
-            (load_status, freeze_dict) = get_frozen_archive(freeze_id,
+            (load_status, freeze_dict) = get_frozen_archive(client_id,
+                                                            freeze_id,
                                                             configuration,
                                                             checksum='')
             if not load_status:

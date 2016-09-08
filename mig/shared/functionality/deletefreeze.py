@@ -104,7 +104,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     # NB: the restrictions on freeze_id prevents illegal directory traversal
 
-    if not is_frozen_archive(freeze_id, configuration):
+    if not is_frozen_archive(client_id, freeze_id, configuration):
         logger.error("%s: invalid freeze '%s': %s" % (op_name,
                                                       client_id, freeze_id))
         output_objects.append({'object_type': 'error_text',
@@ -112,7 +112,8 @@ Please contact the Grid admins %s if you think it should be enabled.
                                % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
-    (load_status, freeze_dict) = get_frozen_archive(freeze_id, configuration)
+    (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
+                                                    configuration)
     if not load_status:
         logger.error("%s: load failed for '%s': %s" % \
                      (op_name, freeze_id, freeze_dict))
@@ -139,7 +140,8 @@ Please contact the Grid admins %s if you think it should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Delete the frozen archive
-    (del_status, msg) = delete_frozen_archive(freeze_id, configuration)
+    (del_status, msg) = delete_frozen_archive(client_id, freeze_id,
+                                              configuration)
     
     # If something goes wrong when trying to delete frozen archive
     # freeze_id, an error is displayed.

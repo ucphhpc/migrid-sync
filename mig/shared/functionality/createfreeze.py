@@ -88,13 +88,16 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'illegal path!'))
                 continue
-            elif os.path.samefile(abs_path, base_dir):
+            elif os.path.exists(abs_path) and os.path.samefile(abs_path,
+                                                               base_dir):
                 configuration.logger.warning(
                     'refusing archival of entire user home %s: %s' % \
                     (xfer, source_path))
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'entire home not allowed!'))
                 continue
+
+            # TODO: limit access to vgrid shares (only allow for owners)?
                 
             # expand any dirs recursively
             if os.path.isdir(abs_path):
@@ -103,9 +106,9 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                         abs_sub = os.path.join(root, subname)
                         sub_base = root.replace(abs_path, source_path)
                         sub_path = os.path.join(sub_base, subname)
-                        files.append((abs_sub, sub_path))
+                        files.append((abs_sub, sub_path.lstrip(os.sep)))
             else:
-                files.append((abs_path, source_path))
+                files.append((abs_path, source_path.lstrip(os.sep)))
     return (files, rejected)
 
 def parse_form_copy(user_args, client_id, configuration):

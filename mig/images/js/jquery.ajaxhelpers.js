@@ -311,8 +311,8 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
                   for (j=0; j<files.length; j++) {
                       file = files[j];
                       //console.info("found file: "+file.name);
-                      entry = "<tr>"+base_td(file.name)+center_td(file.size)+
-                          base_td(file.md5sum)+"</tr>";
+                      entry = "<tr>"+base_td(format_link(file.showfile_link))+
+                          center_td(file.size)+base_td(file.md5sum)+"</tr>";
                       //console.debug("append entry: "+entry);
                       table_entries += entry;
                       /* chunked updates - append after after every chunk_size entries */

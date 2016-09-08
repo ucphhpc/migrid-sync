@@ -1289,7 +1289,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             for single_freeze in frozenarchives:
                 viewlink = html_link(single_freeze['viewfreezelink'])
                 dellink = single_freeze.get('delfreezelink', '')
-                if dellink and not configuration.site_permanent_freeze:
+                if dellink and not single_freeze['flavor'] in \
+                       configuration.site_permanent_freeze:
                     dellink = html_link(dellink)
                 if isinstance(single_freeze['frozenfiles'], int):
                     file_count = single_freeze['frozenfiles']
@@ -1321,9 +1322,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <tbody>
 '''
             for frozenfile in i['frozenfiles']:
+                if frozenfile.get('showfile_link', ''):
+                    show_entry = html_link(frozenfile['showfile_link'])
+                else:
+                    show_entry = frozenfile['name']
+
+                frozenfile['show_file'] =  show_entry
                 frozenfile_html += '''
     <tr>
-        <td>%(name)s</td><td class="centertext">%(size)s</td><td>%(md5sum)s
+        <td>%(show_file)s</td><td class="centertext">%(size)s</td><td>%(md5sum)s
         </td><td class="hidden">%(sha1sum)s</td>
     </tr>
 ''' % frozenfile
@@ -1333,7 +1340,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('<table class="frozenarchivedetails">')
             lines.append('<tr><td class="title">ID</td><td>%s</td></tr>' % \
                          i['id'])
-            if flavor == 'freeze':
+            if flavor in ('freeze', 'backup'):
                 lines.append('<tr><td class="title">Name</td>'
                              '<td>%s</td></tr>' % i['name'])
             elif flavor == 'phd':

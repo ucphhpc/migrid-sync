@@ -121,7 +121,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     # NB: the restrictions on freeze_id prevents illegal directory traversal
     
-    if not is_frozen_archive(freeze_id, configuration):
+    if not is_frozen_archive(client_id, freeze_id, configuration):
         logger.error("%s: invalid freeze '%s': %s" % (op_name,
                                                       client_id, freeze_id))
         output_objects.append({'object_type': 'error_text', 'text'
@@ -131,7 +131,8 @@ Please contact the Grid admins %s if you think it should be enabled.
 
 
     if operation in list_operations:
-        (load_status, freeze_dict) = get_frozen_archive(freeze_id, configuration,
+        (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
+                                                        configuration,
                                                         checksum)
         if not load_status:
             logger.error("%s: load failed for '%s': %s" % \

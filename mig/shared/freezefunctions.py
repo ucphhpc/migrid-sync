@@ -33,6 +33,7 @@ import os
 import time
 from urllib import quote
 
+from shared.base import client_id_dir
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
      public_archive_dir, public_archive_index, freeze_flavors
 from shared.fileio import md5sum_file, sha1sum_file, write_file, copy_file, \
@@ -41,22 +42,32 @@ from shared.fileio import md5sum_file, sha1sum_file, write_file, copy_file, \
 from shared.html import get_cgi_html_preamble, get_cgi_html_footer
 from shared.serial import load, dump
 
-def public_freeze_id(freeze_dict):
+def public_freeze_id(freeze_dict, configuration):
     """Translate internal freeze_id to a public identifier used when publishing
-    frozen archives. In the future we may want to map to a global DOI but we
+    frozen archives. I.e. map to new client_id sub-dir for recent archives or
+    fall back to the legacy location directly in freeze_home.
+    In the future we may want to map to a global DOI but we
     just map to to url safe base64 version of the freeze ID for now.
     """
+    # TODO: remove legacy look-up directly in freeze_home when migrated
+    if freeze_dict.get('PERSONAL', False):
+        location = freeze_dict['ID']
+    else:
+        configuration.logger.debug("lookup public id for %s" % freeze_dict)
+        client_dir = client_id_dir(freeze_dict['CREATOR'])
+        location = os.path.join(client_dir, freeze_dict['ID'])
     return base64.urlsafe_b64encode(freeze_dict['ID'])
 
 def published_dir(freeze_dict, configuration):
     """Translate internal freeze_id to a published archive dir"""
     return os.path.join(configuration.wwwpublic, public_archive_dir,
-                        public_freeze_id(freeze_dict))
+                        public_freeze_id(freeze_dict, configuration))
 
 def published_url(freeze_dict, configuration):
     """Translate internal freeze_id to a published archive URL"""
     return os.path.join(configuration.migserver_http_url, 'public',
-                        public_archive_dir, public_freeze_id(freeze_dict),
+                        public_archive_dir, public_freeze_id(freeze_dict,
+                                                             configuration),
                         public_archive_index)
 
 def build_freezeitem_object(configuration, freeze_dict, summary=False):
@@ -69,9 +80,16 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
     else:
         freeze_files = []
         for file_item in freeze_dict['FILES']:
+            showfile_link = {'object_type': 'link',
+                             'destination': 'showfreezefile.py?'
+                             'freeze_id=%s;path=%s' % \
+                             (freeze_dict['ID'], file_item['name']),
+                             'title': 'Show archive file %s' % file_item['name'],
+                             'text': file_item['name']}
             freeze_files.append({
                 'object_type': 'frozenfile',
                 'name': file_item['name'],
+                'showfile_link': showfile_link,
                 'size': file_item['size'],
                 'md5sum': file_item['md5sum'],
                 'sha1sum': file_item['sha1sum'],
@@ -122,20 +140,26 @@ def parse_time_delta(str_value):
     return datetime.timedelta(minutes=minutes)
 
 def list_frozen_archives(configuration, client_id):
-    """Find all frozen_archives owned by user"""
+    """Find all frozen_archives owned by user. We used to store all archives
+    directly in freeze_home, but have switched to client_id sub dirs since they
+    are personal anyway. Look in the client_id folder first.
+    """
     logger = configuration.logger
     frozen_list = []
     dir_content = []
 
-    try:
-        dir_content = os.listdir(configuration.freeze_home)
-    except Exception:
-        if not makedirs_rec(configuration.freeze_home, configuration):
-            logger.error(
-                'freezefunctions.py: not able to create directory %s'
-                % configuration.freeze_home)
-            return (False, "archive setup is broken")
-        dir_content = []
+    # TODO: remove legacy look-up directly in freeze_home when migrated
+    client_dir = client_id_dir(client_id)
+    user_archives = os.path.join(configuration.freeze_home, client_dir)
+    for archive_home in (user_archives, configuration.freeze_home):
+        try:
+            dir_content += os.listdir(archive_home)
+        except Exception:
+            if not makedirs_rec(archive_home, configuration):
+                logger.error(
+                    'freezefunctions.py: not able to create directory %s'
+                    % archive_home)
+                return (False, "archive setup is broken")
 
     for entry in dir_content:
 
@@ -143,11 +167,11 @@ def list_frozen_archives(configuration, client_id):
 
         if entry.startswith('.'):
             continue
-        if is_frozen_archive(entry, configuration):
+        if is_frozen_archive(client_id, entry, configuration):
 
             # entry is a frozen archive - check ownership
 
-            (meta_status, meta_out) = get_frozen_meta(entry, configuration)
+            (meta_status, meta_out) = get_frozen_meta(client_id, entry, configuration)
             if meta_status and meta_out['CREATOR'] == client_id:
                 frozen_list.append(entry)
         else:
@@ -156,33 +180,57 @@ def list_frozen_archives(configuration, client_id):
                 % (entry, configuration.freeze_home))
     return (True, frozen_list)
 
-def is_frozen_archive(freeze_id, configuration):
-    """Check that freeze_id is an existing frozen archive"""
-    freeze_path = os.path.join(configuration.freeze_home, freeze_id)
-    if os.path.isdir(freeze_path) and \
-           os.path.isfile(os.path.join(freeze_path, freeze_meta_filename)):
-        return True
-    else:
-        return False
+def is_frozen_archive(client_id, freeze_id, configuration):
+    """Check that freeze_id is an existing frozen archive. I.e. that it is
+    available either in the new client_id sub-dir or directly in the legacy
+    freeze_home location.
+    """
+    # TODO: remove legacy look-up directly in freeze_home when migrated
+    client_dir = client_id_dir(client_id)
+    user_archives = os.path.join(configuration.freeze_home, client_dir)
+    for archive_home in (user_archives, configuration.freeze_home):
+        freeze_path = os.path.join(archive_home, freeze_id)
+        if os.path.isdir(freeze_path) and \
+               os.path.isfile(os.path.join(freeze_path, freeze_meta_filename)):
+            return True
+    return False
 
-def get_frozen_meta(freeze_id, configuration):
-    """Helper to fetch dictionary of metadata for a frozen archive"""
-    frozen_path = os.path.join(configuration.freeze_home, freeze_id,
-                               freeze_meta_filename)
-    freeze_dict = load(frozen_path)
-    if not freeze_dict:
-        return (False, 'Could not open metadata for frozen archive %s' % \
-                freeze_id)
-    else:
-        return (True, freeze_dict)
+def get_frozen_meta(client_id, freeze_id, configuration):
+    """Helper to fetch dictionary of metadata for a frozen archive. I.e. load
+    the data either from the new client_id sub-dir or directly from the legacy
+    freeze_home location.
+    """
+    # TODO: remove legacy look-up directly in freeze_home when migrated
+    client_dir = client_id_dir(client_id)
+    user_archives = os.path.join(configuration.freeze_home, client_dir)
+    for archive_home in (user_archives, configuration.freeze_home):
+        frozen_path = os.path.join(archive_home, freeze_id,
+                                   freeze_meta_filename)
+        if not os.path.isfile(frozen_path):
+            continue
+        freeze_dict = load(frozen_path)
+        if freeze_dict:
+            return (True, freeze_dict)
+    return (False, 'Could not open metadata for frozen archive %s' % \
+            freeze_id)
 
-def get_frozen_files(freeze_id, configuration, checksum='md5'):
+def get_frozen_files(client_id, freeze_id, configuration, checksum='md5'):
     """Helper to list names and stats for files in a frozen archive.
+    I.e. lookup the contents of an achive either in the new client_id sub-dir
+    or directly in the legacy freeze_home location.
     The optional checksum argument can be used to switch between potentially
     heavy checksum calculation e.g. when used in freezedb.
     """
-    frozen_dir = os.path.join(configuration.freeze_home, freeze_id)
-    if not os.path.isdir(frozen_dir):
+    # TODO: remove legacy look-up directly in freeze_home when migrated
+    client_dir = client_id_dir(client_id)
+    user_archives = os.path.join(configuration.freeze_home, client_dir)
+    found = False
+    for archive_home in (user_archives, configuration.freeze_home):
+        frozen_dir = os.path.join(archive_home, freeze_id)
+        if os.path.isdir(frozen_dir):
+            found = True
+            break
+    if not found:
         return (False, 'Could not open frozen archive %s' % freeze_id)
     files = []
     for (root, _, filenames) in os.walk(frozen_dir):
@@ -198,25 +246,28 @@ def get_frozen_files(freeze_id, configuration, checksum='md5'):
             elif checksum == 'sha1':
                 # Checksum first 32 MB of files
                 sha1_checksum = sha1sum_file(frozen_path)
-            files.append({'name': rel_path,
+            files.append({'name': rel_path.lstrip(os.sep),
                           'timestamp': os.path.getctime(frozen_path),
                           'size': os.path.getsize(frozen_path),
                           'md5sum': md5_checksum,
                           'sha1sum': sha1_checksum})
     return (True, files)
 
-def get_frozen_archive(freeze_id, configuration, checksum='md5'):
-    """Helper to extract all details for a frozen archive.
+def get_frozen_archive(client_id, freeze_id, configuration, checksum='md5'):
+    """Helper to extract all details for a frozen archive. I.e. extract the
+    contents of the archive either in the new client_id sub-dir or directly in
+    the legacy freeze_home location.
     The optional checksum argument can be used to switch between potentially
     heavy checksum calculation e.g. when used in freezedb.
     """
-    if not is_frozen_archive(freeze_id, configuration):
+    if not is_frozen_archive(client_id, freeze_id, configuration):
         return (False, 'no such frozen archive id: %s' % freeze_id)
-    (meta_status, meta_out) = get_frozen_meta(freeze_id, configuration)
+    (meta_status, meta_out) = get_frozen_meta(client_id, freeze_id,
+                                              configuration)
     if not meta_status:
         return (False, 'failed to extract meta data for %s' % freeze_id)
-    (files_status, files_out) = get_frozen_files(freeze_id, configuration,
-                                                 checksum)
+    (files_status, files_out) = get_frozen_files(client_id, freeze_id,
+                                                 configuration, checksum)
     if not files_status:
         return (False, 'failed to extract files for %s' % freeze_id)
     freeze_dict = {'ID': freeze_id, 'FILES': files_out}
@@ -228,20 +279,23 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     """Create a new frozen archive with meta data fields and provided
     freeze_copy files from user home, freeze_move from temporary upload dir
     and freeze_upload files from form.
+    Updates freeze_meta with the saved archive values.
     """
     logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    user_archives = os.path.join(configuration.freeze_home, client_dir)
     try:
         frozen_dir = make_temp_dir(prefix='archive-',
-                                   dir=configuration.freeze_home)
+                                   dir=user_archives)
     except Exception, err:
         return (False, 'Error preparing new frozen archive: %s' % err)
 
-    freeze_id = os.path.basename(frozen_dir)
-    
+    freeze_id = os.path.basename(frozen_dir)    
     freeze_dict = {
         'ID': freeze_id,
         'CREATED_TIMESTAMP': datetime.datetime.now(),
         'CREATOR': client_id,
+        'PERSONAL': True,
         }
     freeze_dict.update(freeze_meta)
     if freeze_meta['PUBLISH']:
@@ -252,6 +306,9 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     logger.info("create_frozen_archive: save meta for %s" % freeze_id)
     try:
         dump(freeze_dict, os.path.join(frozen_dir, freeze_meta_filename))
+        # Make sure caller receives actual meta data to be able to look up
+        # public freeze ID
+        freeze_meta.update(freeze_dict)
     except Exception, err:
         logger.error("create_frozen_archive: failed: %s" % err)
         remove_rec(frozen_dir, configuration)
@@ -306,7 +363,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
             return (False, 'Error writing frozen archive')
 
     if freeze_dict['PUBLISH']:
-        published_id = public_freeze_id(freeze_dict)
+        published_id = public_freeze_id(freeze_dict, configuration)
         public_meta = [('CREATOR', 'Owner'), ('NAME', 'Name'),
                        ('DESCRIPTION', 'Description'),
                        ('CREATED_TIMESTAMP', 'Date')]
@@ -394,14 +451,17 @@ The user-supplied meta data and files are available below.
         return (False, 'Error updating frozen archive info: %s' % err)
     return (True, freeze_id)
 
-def delete_frozen_archive(freeze_id, configuration):
+def delete_frozen_archive(client_id, freeze_id, configuration):
     """Delete an existing frozen archive without checking ownership or
     persistance of frozen archives.
     """
-    frozen_dir = os.path.join(configuration.freeze_home, freeze_id)
-    if remove_rec(frozen_dir, configuration):
-        return (True, '')
-    else:
-        return (False, 'Error deleting frozen archive "%s"' % freeze_id)
+    # TODO: remove legacy look-up directly in freeze_home when migrated
+    client_dir = client_id_dir(client_id)
+    user_archives = os.path.join(configuration.freeze_home, client_dir)
+    for archive_home in (user_archives, configuration.freeze_home):
+        frozen_dir = os.path.join(archive_home, freeze_id)
+        if remove_rec(frozen_dir, configuration):
+            return (True, '')
+    return (False, 'Error deleting frozen archive "%s"' % freeze_id)
 
 
