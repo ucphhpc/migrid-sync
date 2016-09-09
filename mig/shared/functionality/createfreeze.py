@@ -40,6 +40,7 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.safeinput import valid_path
 from shared.validstring import valid_user_path
+from shared.vgrid import in_vgrid_share
 
 
 def signature():
@@ -69,6 +70,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
     for i in xrange(max_freeze_files):
         if user_args.has_key(xfer_pattern % i):
             source_path = user_args[xfer_pattern % i][-1].strip()
+            source_path = os.path.normpath(source_path).lstrip(os.sep)
             configuration.logger.debug('found %s entry: %s' % \
                                        (xfer, source_path))
             if not source_path:
@@ -80,7 +82,8 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                                                            exc))
                 continue
             abs_path = os.path.abspath(
-                os.path.join(base_dir, source_path.lstrip(os.sep)))
+                os.path.join(base_dir, source_path))
+            # Prevent out-of-bounds, and restrict some greedy targets
             if not valid_user_path(abs_path, base_dir, True):
                 configuration.logger.error(
                     'found illegal directory traversal %s entry: %s' % \
@@ -96,9 +99,15 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'entire home not allowed!'))
                 continue
+            elif in_vgrid_share(configuration, abs_path) == source_path:
+                configuration.logger.warning(
+                    'refusing archival of entire %s shared folder %s: %s' % \
+                    (configuration.site_vgrid_label, xfer, source_path))
+                rejected.append('invalid path: %s (%s)' % \
+                                (source_path, 'entire %s share not allowed!' \
+                                 % configuration.site_vgrid_label))
+                continue
 
-            # TODO: limit access to vgrid shares (only allow for owners)?
-                
             # expand any dirs recursively
             if os.path.isdir(abs_path):
                 for (root, dirnames, filenames) in os.walk(abs_path):

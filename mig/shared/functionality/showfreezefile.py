@@ -81,6 +81,11 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.freeze_home,
                                             client_dir, freeze_id)) + os.sep
 
+    # TODO: remove this legacy fall back when done migrating archives
+    if not os.path.isdir(base_dir):
+        base_dir = os.path.abspath(os.path.join(configuration.freeze_home,
+                                                freeze_id)) + os.sep
+
     # Strip leading slashes to avoid join() throwing away prefix 
 
     rel_path = path.lstrip(os.sep)
