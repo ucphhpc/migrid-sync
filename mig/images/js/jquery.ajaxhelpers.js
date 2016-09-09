@@ -220,7 +220,8 @@ function ajax_freezedb(permanent_freeze) {
                       entry = "<tr>"+base_td(arch.id)+center_td(viewlink+
                                                                 dellink)+
                           base_td(arch.name)+base_td(arch.created)+
-                          center_td(arch.frozenfiles)+"</tr>";
+                          base_td(arch.flavor)+center_td(arch.frozenfiles)+
+                          "</tr>";
                       //console.debug("append entry: "+entry);
                       table_entries += entry;
                       /* chunked updates - append after after every chunk_size entries */
@@ -301,7 +302,8 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
                       }
                   }
                   entry = "<tr>"+title_td("ID")+base_td(arch.id)+"</tr><tr>"+
-                      title_td("Name")+base_td(arch.name)+"</tr>";
+                      title_td("Name")+base_td(arch.name)+"</tr><tr>"+
+                      title_td("Flavor")+base_td(arch.flavor)+"</tr>";
                   if (arch.flavor !== 'backup') {
                       entry += "<tr>"+title_td("Description")+border_td(arch.description)+
                       "</tr><tr>"+title_td("Published")+base_td(published)+"</tr>";

@@ -1280,6 +1280,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th class="icon"><!-- View / Delete--></th>
         <th>Name</th>
         <th>Created</th>
+        <th>Flavor</th>
         <th>Files</th>
     </tr>
 </thead>
@@ -1298,11 +1299,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     file_count = len(single_freeze['frozenfiles'])
                 lines.append('''
 <tr>
-<td>%s</td><td class="centertext">%s%s</td><td>%s</td><td>%s</td>
+<td>%s</td><td class="centertext">%s%s</td><td>%s</td><td>%s</td><td>%s</td>
 <td class="centertext">%s</td>
 </tr>''' % (single_freeze['id'], viewlink, dellink,
             single_freeze['name'], single_freeze['created'],
-            file_count))
+            single_freeze['flavor'], file_count))
                 
             lines.append('''
 </tbody>
@@ -1346,26 +1347,29 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             elif flavor == 'phd':
                 lines.append('<tr><td class="title">Title</td>'
                              '<td>%s</td></tr>' % i['name'])
-            if i.get('author', 'UNSET') != 'UNSET':
-                lines.append('<tr><td class="title">Author</td>'
-                             '<td>%s</td></tr>' % i['author'])
-            if i.get('department', 'UNSET') != 'UNSET':
-                lines.append('<tr><td class="title">Department</td>'
-                             '<td>%s</td></tr>' % i['department'])
-            if i.get('organization', 'UNSET') != 'UNSET':
-                lines.append('<tr><td class="title">Organization</td>'
-                             '<td>%s</td></tr>' % i['organization'])
-            lines.append('<tr><td class="title">Description</td>'
-                         '<td class="border">%s</td></tr>'
-                          % i['description'].replace('\n', '<br />'))
-            if i.get('publish', False):
-                published = 'Yes'
-                publish_url = i.get('publish_url', '')
-                published += ' (<a href="%s">%s</a>)' % (publish_url,
-                                                         publish_url)
-            else:
-                published = 'No'
-            lines.append('<tr><td class="title">Published</td>'
+            lines.append('<tr><td class="title">Flavor</td>'
+                             '<td>%s</td></tr>' % i['flavor'])
+            if flavor in ('freeze', 'phd'):
+                if i.get('author', '') not in ('', 'UNSET'):
+                    lines.append('<tr><td class="title">Author</td>'
+                                 '<td>%s</td></tr>' % i['author'])
+                if i.get('department', '') not in ('', 'UNSET'):
+                    lines.append('<tr><td class="title">Department</td>'
+                                 '<td>%s</td></tr>' % i['department'])
+                if i.get('organization', '') not in ('', 'UNSET'):
+                    lines.append('<tr><td class="title">Organization</td>'
+                                 '<td>%s</td></tr>' % i['organization'])
+                lines.append('<tr><td class="title">Description</td>'
+                             '<td class="border">%s</td></tr>'
+                             % i['description'].replace('\n', '<br />'))
+                if i.get('publish', False):
+                    published = 'Yes'
+                    publish_url = i.get('publish_url', '')
+                    published += ' (<a href="%s">%s</a>)' % (publish_url,
+                                                             publish_url)
+                else:
+                    published = 'No'
+                lines.append('<tr><td class="title">Published</td>'
                              '<td>%s</td></tr>' % published)
             lines.append('<tr><td class="title">Creator</td><td>%s</td></tr>'
                           % i['creator'])
