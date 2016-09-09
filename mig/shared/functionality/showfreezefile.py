@@ -97,7 +97,12 @@ archive dir.'''})
         entry = {'object_type': 'binary',
                  'data': private_fd.read()}
         # Cut away all the usual web page formatting to show only contents
-        output_objects = [{'object_type': 'start', 'headers': []}, entry,
+        output_objects = [{'object_type': 'start',
+                           'headers': [('Content-Disposition',
+                                        'attachment; filename="%s";' % \
+                                        os.path.basename(abs_path))]
+                           },
+                          entry,
                           {'object_type': 'script_status'},
                           {'object_type': 'end'}]
         private_fd.close()
