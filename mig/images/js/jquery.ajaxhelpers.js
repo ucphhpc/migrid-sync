@@ -206,11 +206,16 @@ function ajax_freezedb(permanent_freeze) {
                   for (j=0; j<archives.length; j++) {
                       arch = archives[j];
                       //console.info("found archive: "+arch.name);
-                      var viewlink = format_link(arch.viewfreezelink);
+                      var viewlink = "";
+                      if (arch.viewfreezelink !== undefined) {
+                          viewlink = format_link(arch.viewfreezelink);
+                      }
                       var dellink = "";
                       var flavor = arch.flavor;
                       if (permanent_freeze.indexOf(flavor) == -1) {
-                          dellink = format_link(arch.delfreezelink);
+                          if (arch.delfreezelink !== undefined) {
+                              dellink = format_link(arch.delfreezelink);
+                          }
                       }
                       entry = "<tr>"+base_td(arch.id)+center_td(viewlink+
                                                                 dellink)+
@@ -308,11 +313,18 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
                       "</tr>"+location;
                   $(arch_tbody).append(entry);
                   var files = arch.frozenfiles;
+                  var name_link;
                   for (j=0; j<files.length; j++) {
                       file = files[j];
                       //console.info("found file: "+file.name);
-                      entry = "<tr>"+base_td(format_link(file.showfile_link))+
-                          center_td(file.size)+base_td(file.md5sum)+"</tr>";
+                      if (file.showfile_link !== undefined) {
+                          //console.info("found file link: "+file.showfile_link);
+                          name_link = format_link(file.showfile_link);
+                      } else {
+                          name_link = file.name;
+                      }
+                      entry = "<tr>"+base_td(name_link)+center_td(file.size)+
+                          base_td(file.md5sum)+"</tr>";
                       //console.debug("append entry: "+entry);
                       table_entries += entry;
                       /* chunked updates - append after after every chunk_size entries */
@@ -691,7 +703,7 @@ function ajax_workflowjobs(vgrid_name) {
                   var workflowjobs = jsonRes[i].trigger_jobs;
                   for (j=0; j<workflowjobs.length; j++) {
                       job = workflowjobs[j];
-                      console.info("found job: "+job.job_id);
+                      //console.info("found job: "+job.job_id);
                       entry = "<tr>"+base_td(job.job_id)+base_td(job.rule_id)+
                           base_td(job.path)+base_td(job.action)+
                           base_td(job.time)+base_td(job.status)+
