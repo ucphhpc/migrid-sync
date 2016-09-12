@@ -385,6 +385,16 @@ if (jQuery) (function($){
 
         console.debug("define layout/view functions");
 
+        /* inspired by http://stackoverflow.com/a/19015262 */
+        function getScrollBarWidth () {
+            var dummy = 42;
+            var fake = $('<div>').css({visibility: 'hidden', width: dummy, overflow: 'scroll'}).appendTo('body'),
+            fullWidth = $('<div>').css({width: '100%'}).appendTo(fake).outerWidth();
+            fake.remove();
+            var scrollWidth = dummy - fullWidth;
+            return scrollWidth;
+        }
+
         function get_fm_layout() {
             var is_dialog = false;
             if ($.fn.fmSelect("").is(':ui-dialog')) {
@@ -410,14 +420,19 @@ if (jQuery) (function($){
             if (options.datatransfersbutton) {
                 buttonCount += 1;
             }
+            var vertScrollWidth = getScrollBarWidth();
+            console.debug("fm vert scrollbar is "+vertScrollWidth+ "px wide");
             var fileManagerWidth = $.fn.fmSelect("").width();
             console.debug("fm is "+fileManagerWidth+ "px wide");
             var fileManagerWidthPadding = $.fn.fmSelect("").outerWidth() - 
                                         fileManagerWidth;
             console.debug("fm padding is "+fileManagerWidthPadding+ "px wide");
             var buttonbarWidth = buttonCount * (buttonWidth + 2 * buttonSpacing);
+            /* Compensate for potential vertical scroll bar (may appear from
+               popup overflowing, etc. so always leave space for it */
             // Leave a few pixels after breadcrumbs to avoid wrap on OSX/iOS
-            var breadcrumbsWidth = fileManagerWidth - buttonbarWidth - 8;
+            var breadcrumbsWidth = fileManagerWidth - buttonbarWidth - 8 -
+                vertScrollWidth;
             console.debug("set breadcrumbsWidth to "+breadcrumbsWidth+ "px");
             console.debug("set buttonbarWidth to "+buttonbarWidth+ "px");
 
