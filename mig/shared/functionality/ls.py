@@ -415,6 +415,9 @@ def main(client_id, user_arguments_dict):
         root_link_name = '%s' % share_id
         main_id = "sharelink_ls"
         page_title = 'Shared Files'
+        # default to include file info
+        if flags == '':
+            flags += 'f'
         if share_mode == 'read-only':
             write_mode = False
             visibility_mods = '''

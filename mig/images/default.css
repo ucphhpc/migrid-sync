@@ -1096,6 +1096,15 @@ a:hover.genericbutton {
 #sharelink_ls .if_full, #sharelink_ls .empty_cell {
     display: none;
 }
+/* layout table elements on ls page used e.g. for sharelinks */
+.files td.file_details {
+    width: 420px;
+    text-align: center;
+}
+.files td.narrow {
+    width: 32px;
+    text-align: center;
+}
 
 .systemnote {
     margin: 0px 40px;

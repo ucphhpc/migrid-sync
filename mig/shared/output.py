@@ -29,6 +29,7 @@
 specified by the client."""
 
 import os
+import time
 import traceback
 from binascii import hexlify
 
@@ -91,6 +92,16 @@ def txt_cond_summary(job_cond_msg):
                     lines.append('%s' % desc)
     return '\n'.join(lines)
 
+
+def txt_file_info(file_dict):
+    """Format a dir_listing file_info dictionary for ls output"""
+    modified_time = "%(modified)s" % file_dict
+    date_string = time.ctime(float(modified_time))
+    date_pad = date_string.rjust(32)
+    size = "%(size)s" % file_dict
+    size_pad = size.rjust(16)
+    file_details = "%s %s" % (size_pad, date_pad)
+    return file_details
 
 def txt_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in txt format"""
@@ -935,29 +946,33 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                     len(dir_listing['entries'])))
                             cols += 1
                             lines.append(
-                                '''<td class="empty_cell" colspan="%d"></td>
+                                '''<td class="empty_cell narrow" colspan="%d"></td>
                                 ''' % (columns - cols))
                             lines.append('</tr>')
                             cols = columns
 
                         lines.append('<tr class="%s">' % row_class)
                         cols = 0
-                        lines.append('<td class="empty_cell"></td>')
+                        lines.append('<td class="empty_cell narrow"></td>')
                         cols += 1
-                        lines.append("""<td class='if_full'>
+                        lines.append("""<td class='if_full narrow'>
 <input type='checkbox' name='path' value='%s' />
 </td>""" % directory['dirname_with_dir'])
                         cols += 1
-                        
+
+                        cls = "file_details"
                         if directory.has_key('actual_dir'):
-                            actual_dir = directory['actual_dir']
+                            details = directory['actual_dir']
+                        elif directory.has_key('file_info'):
+                            details = txt_file_info(directory['file_info'])
                         else:
-                            actual_dir = ''
-                        lines.append('<td class="if_full">%s</td>' % \
-                                     actual_dir)
+                            cls = ""
+                            details = ''
+                        lines.append('<td class="%s"><tt>%s</tt></td>' % \
+                                     (cls, details.replace(' ', '&nbsp;')))
                         cols += 1
                         # TODO: enable edit in sharelink and remove if_full here?
-                        lines.append("<td class='enable_write if_full'></td>")
+                        lines.append("<td class='enable_write if_full narrow'></td>")
                         cols += 1
                         # Note: this includes CSRF token
                         rmdir_url = rmdir_url_template % directory
@@ -971,7 +986,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                              % directory),
                             'class': 'rmdir icon', 'title': 'Remove %(rel_path)s'\
                             % directory, 'text': ''})
-                        lines.append("<td class='enable_write'>%s</td>" % \
+                        lines.append("<td class='enable_write narrow'>%s</td>" % \
                                      rmdir_link)
                         cols += 1
                         ls_url = ls_url_template % directory
@@ -980,32 +995,36 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         %s</a>''' % (ls_url, directory['name'])
                         lines.append('<td>%s</td>' % open_link)
                         cols += 1
-                        lines.append('''<td class="empty_cell" colspan="%d">
+                        lines.append('''<td class="empty_cell narrow" colspan="%d">
 </td>''' % (columns - cols))
                         cols = columns
                     elif 'file' == entry['type']:
                         this_file = entry
                         lines.append('<tr class="%s">' % row_class)
                         cols = 0
-                        lines.append('<td class="empty_cell"></td>')
+                        lines.append('<td class="empty_cell narrow"></td>')
                         cols += 1
-                        lines.append("""<td class='if_full'>
+                        lines.append("""<td class='if_full narrow'>
 <input type='checkbox' name='path' value='%s' />
 </td>""" % this_file['file_with_dir'])
                         cols += 1
+                        cls = "file_details"
                         if this_file.has_key('long_format'):
-                            long_format = this_file['long_format']
+                            details = this_file['long_format']
+                        elif this_file.has_key('file_info'):
+                            details = txt_file_info(this_file['file_info'])
                         else:
-                            long_format = ''
-                        lines.append('<td class="if_full">%s</td>'\
-                                     % long_format)
+                            cls = ""
+                            details = ''
+                        lines.append('<td class="%s"><tt>%s</tt></td>' % \
+                                     (cls, details.replace(' ', '&nbsp;')))
                         cols += 1
                         edit_url = editor_url_template % this_file
                         edit_link = """
-                        <a class='edit icon' title='edit' href='%s'></a>
+                        <a class='edit icon narrow' title='edit' href='%s'></a>
                         """ % edit_url
                         # TODO: enable edit in sharelink?
-                        lines.append("<td class='enable_write if_full'>%s</td>"\
+                        lines.append("<td class='enable_write if_full narrow'>%s</td>"\
                                      % edit_link)
                         cols += 1
                         # Note: this includes CSRF token
@@ -1020,7 +1039,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                              this_file),
                             'class': 'rm icon', 'title': 'Remove %(rel_path)s'\
                             % this_file, 'text': ''})
-                        lines.append("<td class='enable_write'>%s</td>" % \
+                        lines.append("<td class='enable_write narrow'>%s</td>" % \
                                      rm_link)
                         cols += 1
                         filename = this_file['name']
@@ -1034,10 +1053,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         lines.append("<td>%s</td>" % open_link)
                         cols += 1
                         if this_file.get('file_dest', False):
-                            lines.append('<td class="if_full">%s</td>'
+                            lines.append('<td class="if_full narrow">%s</td>'
                                          % this_file['file_dest'])
                             cols += 1
-                        lines.append('''<td class="empty_cell" colspan="%d">
+                        lines.append('''<td class="empty_cell narrow" colspan="%d">
 </td>''' % (columns - cols))
                         cols = columns
                     row_number += 1
