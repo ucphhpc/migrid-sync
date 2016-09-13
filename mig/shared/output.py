@@ -1082,6 +1082,20 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         lines.append('%s' % filewc['bytes'])
                     lines.append('</td></tr>')
                 lines.append('</table>')
+        elif i['object_type'] == 'filedus':
+            filedus = i['filedus']
+            if len(filedus) == 0:
+                lines.append('No files to run du on')
+            else:
+                lines.append('<table class="du"><tr><th>File</th><th>Bytes</th>'
+                             '</tr>')
+                for filedu in filedus:
+                    lines.append('<tr><td>%s</td>' % filedu['name'])
+                    lines.append('<td>')
+                    if filedu.has_key('bytes'):
+                        lines.append('%s' % filedu['bytes'])
+                    lines.append('</td></tr>')
+                lines.append('</table>')
         elif i['object_type'] == 'file_not_found':
 
             lines.append('File %s was <b>not</b> found!' % i['name'])

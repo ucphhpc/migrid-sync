@@ -675,6 +675,13 @@ if (jQuery) (function($){
                             '</p><p>bytes: ' + jsonRes[i][field][j]['bytes'] +
                             '</p>';
                     }
+                } else if (jsonRes[i]['object_type'] === 'filedus') {
+                    field = 'filedus';
+                    for (j = 0; j < jsonRes[i][field].length; j++) {
+                        misc_output += '<h4>File usage for ' + jsonRes[i][field][j]['name'] +
+                            '</h4><p>bytes: ' + jsonRes[i][field][j]['bytes'] +
+                            '</p>';
+                    }
                 } else if (jsonRes[i]['object_type'] === 'sharelinks') {
                     field = 'sharelinks';
                     var elem;
@@ -901,6 +908,10 @@ if (jQuery) (function($){
                 jsonWrapper(el, '#cmd_dialog', 'tail.py'); },
             wc:   function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'wc.py'); },
+            du:   function (action, el, pos) {
+                jsonWrapper(el, '#cmd_dialog', 'du.py', 
+                            {flags: 's'});
+            },
             touch:   function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'touch.py'); },
             stat:   function (action, el, pos) {
@@ -1722,6 +1733,7 @@ if (jQuery) (function($){
                         "items": {
                             "touch": {name: "Update Timestamp (touch)", icon: "touch"},
                             "stat": {name: "File Info (stat)", icon: "stat"},
+                            "du": {name: "Disk Use (du)", icon: "du"},
                             /* TODO: add find support */
                             //"search-sep": "---------",
                             //"find": {name: "Locate File/Folder (find)", icon: "find"},
@@ -1771,6 +1783,8 @@ if (jQuery) (function($){
                             "head": {name: "Show First Lines (head)", icon: "head"},
                             "tail": {name: "Show Last Lines (tail)", icon: "tail"},
                             "wc": {name: "Word Count (wc)", icon: "wc"},
+                            //NOTE: no point in 'du' for files, since size is already shown
+                            //"du": {name: "Disk Use (du)", icon: "du"},
                             "touch": {name: "Update Timestamp (touch)", icon: "touch"},
                             "stat": {name: "File Info (stat)", icon: "stat"},
                             "truncate": {name: "Clear File (truncate)", icon: "truncate"}

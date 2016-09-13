@@ -94,6 +94,12 @@ def sorted(flags, letter='s'):
     return contains_letter(flags, letter)
 
 
+def summarize(flags, letter='s'):
+    """Verify if flags contain the summarize flag"""
+
+    return contains_letter(flags, letter)
+
+
 def verbose(flags, letter='v'):
     """Verify if flags contain the verbose flag"""
 

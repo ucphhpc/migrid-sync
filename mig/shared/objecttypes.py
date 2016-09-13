@@ -84,7 +84,9 @@ directory = {'object_type': 'directory', 'required': ['name'],
              'optional': []}
 html_form = {'object_type': 'html_form', 'required': ['text'],
              'optional': []}
-filewc = {'object_type': 'filewc', 'required': ['name', 'size'],
+filewc = {'object_type': 'filewc', 'required': ['name'],
+          'optional': ['lines', 'words', 'bytes']}
+filedu = {'object_type': 'filedu', 'required': ['name', 'bytes'],
           'optional': []}
 list = {'object_type': 'list', 'required': ['list'], 'optional': []}
 file_not_found = {'object_type': 'file_not_found', 'required': ['name'
@@ -196,6 +198,8 @@ trigger_log = {'object_type': 'trigger_log', 'required':
                     ['log_content']}
 filewcs = {'object_type': 'filewcs', 'required_list': [('filewcs',
            'filewc')]}
+filedus = {'object_type': 'filedus', 'required_list': [('filedus',
+           'filedu')]}
 stats = {'object_type': 'stats', 'required_list': [('stats', 'stat')]}
 
 # file_list = {"object_type": "file_list", "required_list":[("files", "file")]}
@@ -397,6 +401,8 @@ valid_types_list = [
     file_not_found,
     filewc,
     filewcs,
+    filedu,
+    filedus,
     changedstatusjobs,
     changedstatusjob,
     saveschedulejobs,

@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# rm - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# rm - like the shell command with the same name
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
