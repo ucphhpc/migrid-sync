@@ -47,7 +47,8 @@ def vgrid_add_remove_table(client_id,
                            item_string, 
                            script_suffix, 
                            configuration,
-                           extra_fields=[]):
+                           extra_fields=[],
+                           filter_items=[]):
     """Create a table of owners/members/resources/triggers (item_string),
     allowing to remove one item by selecting (radio button) and calling a
     script, and a form to add a new entry.
@@ -58,6 +59,7 @@ def vgrid_add_remove_table(client_id,
                script_suffix, will be prepended with 'add' and 'rm' for forms
                configuration, for loading the list of current items 
                extra_fields, additional input fields for some item forms
+               filter_items, list of found item IDs to filter from results 
 
     Returns: (Bool, list of output_objects)
     """
@@ -114,14 +116,16 @@ doubt, just let the user request access and accept it with the
     # read list of current items and create form to remove one
 
     (list_status, inherit) = vgrid_list(vgrid_name, '%ss' % item_string,
-                                   configuration, recursive=True,
-                                   allow_missing=optional)
+                                        configuration, recursive=True,
+                                        allow_missing=optional,
+                                        filter_entries=filter_items)
     if not list_status:
         out.append({'object_type': 'error_text', 'text': inherit})
         return (False, out)
     (list_status, direct) = vgrid_list(vgrid_name, '%ss' % item_string,
-                                  configuration, recursive=False,
-                                  allow_missing=optional)
+                                       configuration, recursive=False,
+                                       allow_missing=optional,
+                                       filter_entries=filter_items)
     if not list_status:
         out.append({'object_type': 'error_text', 'text': direct})
         return (False, out)
@@ -595,7 +599,7 @@ def init_vgrid_script_list(vgrid_name, client_id, configuration):
 
 
 def vgrid_list(vgrid_name, group, configuration, recursive=True,
-               allow_missing=False):
+               allow_missing=False, filter_entries=[]):
     """Shared helper function to get a list of group entities in vgrid. The
     optional recursive argument is used to switch between direct vgrid and
     recursive vgrid operation including entities from parent vgrids.
@@ -640,6 +644,16 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
             # The empty lists are put in at createvgrid.py.
 
             if msg != ['']:
+                # We allow filtering e.g. system triggers here
+                for filter_item in filter_entries:
+                    if isinstance(filter_item, tuple):
+                        (key, val) = filter_item
+                        msg = [entry for entry in msg if not \
+                               re.match(val, entry[key])]
+                    else:
+                        msg = [entry for entry in msg if not \
+                               re.match(filter_item, entry)]
+
                 output.extend(msg)
         elif allow_missing and not os.path.exists(name_path):
             continue

@@ -36,7 +36,7 @@ import traceback
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import csrf_field
+from shared.defaults import csrf_field, img_trigger_prefix
 from shared.fileio import touch, makedirs_rec, listdirs_rec, \
     delete_file, make_symlink, remove_dir
 from shared.functional import validate_input_and_cert
@@ -350,8 +350,8 @@ def __get_image_file_trigger_rule_id(logger, path, extension):
 
     path_array = path.split('/')
 
-    return 'system_imagesettings_%s_%s_files' % ('_'.join(path_array),
-            extension)
+    return '%s_%s_%s_files' % (img_trigger_prefix, '_'.join(path_array),
+                               extension)
 
 
 def __get_image_settings_trigger_rule_id(logger, path, extension):
@@ -359,8 +359,8 @@ def __get_image_settings_trigger_rule_id(logger, path, extension):
 
     path_array = path.split('/')
 
-    return 'system_imagesettings_%s_%s_settings' \
-        % ('_'.join(path_array), extension)
+    return '%s_%s_%s_settings' % (img_trigger_prefix, '_'.join(path_array),
+                                  extension)
 
 
 def __get_vgrid_imagesetting_id(logger, path, extension):

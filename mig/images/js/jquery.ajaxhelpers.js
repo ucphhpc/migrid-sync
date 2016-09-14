@@ -673,7 +673,7 @@ function ajax_people(protocols) {
   });
 }
 
-function ajax_workflowjobs(vgrid_name) {
+function ajax_workflowjobs(vgrid_name, flags) {
     console.debug("load workflow jobs and log");
     var tbody_elem = $("#workflowstable tbody");
     var logarea_elem = $("#logarea");
@@ -685,7 +685,7 @@ function ajax_workflowjobs(vgrid_name) {
     /* Request workflow jobs and log in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list;vgrid_name="+vgrid_name,
+        url: "?output_format=json;operation=list;vgrid_name="+vgrid_name+";flags="+flags,
       type: "GET",
       dataType: "json",
       cache: false,

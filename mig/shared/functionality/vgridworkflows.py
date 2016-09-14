@@ -34,18 +34,20 @@ status and so on to ease workflow collaboration.
 """
 
 import os
+import re
 import time
 
 from shared.base import client_id_dir
 import shared.returnvalues as returnvalues
 from shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
-    workflows_log_cnt, pending_states, final_states
+    workflows_log_cnt, pending_states, final_states, img_trigger_prefix
 from shared.events import get_expand_map, get_command_map
 from shared.fileio import unpickle, makedirs_rec, move_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import jquery_ui_js, man_base_js, man_base_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
+from shared.parseflags import verbose
 from shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
      vgrid_triggers, vgrid_set_triggers
 
@@ -62,13 +64,15 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'vgrid_name': REJECT_UNSET,
-                'operation': ['show']}
+                'operation': ['show'],
+                'flags': ['']}
     return ['html_form', defaults]
 
 
-def read_trigger_log(configuration, vgrid_name):
+def read_trigger_log(configuration, vgrid_name, flags):
     """Read in saved trigger logs for vgrid workflows page. We read in all
-    rotated logs.
+    rotated logs. If flags don't include verbose we try to filter out all
+    system trigger lines.
     """
 
     log_content = ''
@@ -87,6 +91,12 @@ def read_trigger_log(configuration, vgrid_name):
             log_fd.close()
         except IOError:
             pass
+
+    if not verbose(flags):
+        # Strip system trigger lines containing '.meta/EXT.last_modified'
+        system_pattern = '[0-9 ,:-]* [A-Z]* .*/\.meta/.*\.last_modified.*\n'
+        log_content = re.sub(system_pattern, '', log_content)
+
     return log_content
 
 
@@ -109,7 +119,8 @@ def main(client_id, user_arguments_dict):
 
     vgrid_name = accepted['vgrid_name'][-1]
     operation = accepted['operation'][-1]
-
+    flags = ''.join(accepted['flags'][-1])
+    
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         output_objects.append({'object_type': 'error_text',
@@ -133,7 +144,7 @@ access the workflows.'''
         # jquery support for tablesorter (and unused confirmation dialog)
         # table initially sorted by 0 (last update / date) 
 
-        refresh_call = 'ajax_workflowjobs("%s")' % vgrid_name
+        refresh_call = 'ajax_workflowjobs("%s", "%s")' % (vgrid_name, flags)
         table_spec = {'table_id': 'workflowstable', 'sort_order': '[[0,1]]',
                       'refresh_call': refresh_call
                       }
@@ -212,7 +223,9 @@ access the workflows.'''
                                trigger_rule['rule_id'], 'path': trigger_path,
                                'action': trigger_action, 'time': trigger_time,
                                'status': serverjob['STATUS']}
-                        trigger_jobs.append(job)
+                        if not job['rule_id'].startswith(img_trigger_prefix) \
+                               or verbose(flags):
+                            trigger_jobs.append(job)
                     elif serverjob['STATUS'] in final_states:
                         src_path = os.path.join(trigger_job_pending_dir,
                                 filename)
@@ -224,7 +237,7 @@ access the workflows.'''
                                      % (trigger_job['jobid'],
                                      serverjob['STATUS']))
 
-        log_content = read_trigger_log(configuration, vgrid_name)
+        log_content = read_trigger_log(configuration, vgrid_name, flags)
 
     if operation in show_operations:
 
@@ -245,13 +258,19 @@ access the workflows.'''
 
         optional_fields = [('rate_limit', None), ('settle_time', None)]
 
+        # Only include system triggers in verbose mode
+        if verbose(flags):
+            system_filter = []
+        else:
+            system_filter = [('rule_id', '%s_.*' % img_trigger_prefix)]
         (init_status, oobjs) = vgrid_add_remove_table(
             client_id,
             vgrid_name,
             'trigger',
             'vgridtrigger',
             configuration,
-            extra_fields + optional_fields
+            extra_fields + optional_fields,
+            filter_items=system_filter
             )
         if not init_status:
             output_objects.append({'object_type': 'error_text', 'text':

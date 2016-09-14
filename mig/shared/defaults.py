@@ -137,6 +137,7 @@ edit_lock_timeout = 600
 valid_trigger_changes = ['created', 'modified', 'deleted']
 valid_trigger_actions = ['submit', 'command'] + ['trigger-%s' % i for i in \
                                                  valid_trigger_changes]
+img_trigger_prefix = 'system_imagesettings'
 
 workflows_log_name = 'workflow.log'
 # 64M = 67108864
