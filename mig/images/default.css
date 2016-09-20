@@ -1082,10 +1082,14 @@ a:hover.genericbutton {
 /* full width */
 .fillwidth {
   width: 100%;
+  width: -moz-available;
+  width: -webkit-fill-available;
 }
 /* full width with room for minor padding */
 .fillwidth.padspace {
-  width: 99%;
+  width: 98%;
+  width: -moz-available;
+  width: -webkit-fill-available;
 }
 
 /* hide complexity for sharelink ls page */
