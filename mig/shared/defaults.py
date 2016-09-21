@@ -198,3 +198,5 @@ freeze_flavors = {
             'showfreeze_title': 'Show Backup Archive Details',
             'deletefreeze_title': 'Delete Backup Archive'}
     }
+
+trash_folder = '.trash'

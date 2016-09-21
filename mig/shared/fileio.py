@@ -355,7 +355,7 @@ def listdirs_rec(dir_path, topdown=True, onerror=None, followlinks=False):
 def makedirs_rec(dir_path, configuration, accept_existing=True):
     """Make sure dir_path is created if it doesn't already exist. The optional
     accept_existing argument can be used to turn off the default behaviour of
-    ignoring if dir_path alrady exists.
+    ignoring if dir_path already exists.
     """
     try:
         os.makedirs(dir_path)

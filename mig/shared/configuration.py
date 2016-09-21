@@ -95,6 +95,7 @@ def fix_missing(config_file, verbose=True):
         'paraview_home': '~/state/paraview_home/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
+        'events_home': '~/state/events_home/',
         'rate_limit_db': '~/mig/mig_system_files/daemon-rate-limit.db',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
@@ -263,6 +264,7 @@ class Configuration:
     freeze_home = ''
     sharelink_home = ''
     javabin_home = ''
+    events_home = ''
     seafile_mount = ''
     openid_store = ''
     paraview_home = ''
@@ -532,6 +534,7 @@ class Configuration:
             self.sss_home = config.get('GLOBAL', 'sss_home')
             self.sandbox_home = config.get('GLOBAL', 'sandbox_home')
             self.javabin_home = config.get('GLOBAL', 'javabin_home')
+            self.events_home = config.get('GLOBAL', 'events_home')
             self.smtp_server = config.get('GLOBAL', 'smtp_server')
             self.wwwpublic = config.get('GLOBAL', 'wwwpublic')
             self.vm_home = config.get('GLOBAL', 'vm_home')
