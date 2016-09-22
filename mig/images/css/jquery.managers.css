@@ -557,6 +557,7 @@ UL.jqueryFileList A:hover {
 .vgridpublicweb { background: url(/images/icons/folder_table.png) left top no-repeat; }
 .vgridprivateweb { background: url(/images/icons/folder_key.png) left top no-repeat; }
 .seafilereadonly { background: url(/images/icons/folder_database.png) left top no-repeat; }
+.trashbin { background: url(/images/icons/trash_closed.png) left top no-repeat; }
 
 /* use top here because it is relative to self plus all expanded children */
 .expanded { 
@@ -577,6 +578,9 @@ UL.jqueryFileList A:hover {
 }
 .expanded.seafilereadonly { 
     background: url(/images/icons/folder_open_database.png) left top no-repeat;
+}
+.expanded.trashbin { 
+    background: url(/images/icons/trash_open.png) left top no-repeat;
 }
 
 .ext_3gp { background: url(/images/icons/film.png) left center no-repeat; }

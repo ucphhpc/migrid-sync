@@ -35,11 +35,14 @@ import glob
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_file
+from shared.defaults import trash_linkname
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import verbose, recursive
+from shared.output import html_link
+from shared.parseflags import verbose, recursive, force
 from shared.sharelinks import extract_mode_id
+from shared.userio import remove_path, delete_path, get_trash_location
 from shared.validstring import valid_user_path
 
 
@@ -91,6 +94,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         base_dir = configuration.user_home
         id_query = ''
         page_title = 'Remove User File'
+        if force(flags):
+            rm_helper = delete_path
+        else:
+            rm_helper = remove_path
     elif share_id:
         (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
@@ -105,11 +112,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
         base_dir = configuration.sharelink_home
         id_query = '?share_id=%s' % share_id
         page_title = 'Remove Shared File'
+        rm_helper = delete_path
     elif iosessionid.strip() and iosessionid.isalnum():
         user_id = iosessionid
         base_dir = configuration.webserver_home
         target_dir = iosessionid
         page_title = 'Remove Session File'
+        rm_helper = delete_path
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
         output_objects.append({'object_type': 'error_text', 'text'
@@ -147,17 +156,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            real_path = os.path.realpath(server_path)
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning('%s tried to %s restricted path %s ! ( %s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -167,8 +177,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
-        for real_path in match:
-            relative_path = real_path.replace(base_dir, '')
+        for abs_path in match:
+            relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                         : relative_path})
@@ -176,86 +186,50 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # Make it harder to accidentially delete too much - e.g. do not delete
             # VGrid files without explicit selection of subdir contents
 
-            if real_path == os.path.abspath(base_dir):
+            if abs_path == os.path.abspath(base_dir):
                 output_objects.append({'object_type': 'warning', 'text'
                         : "You're not allowed to delete your entire home directory!"
                         })
                 status = returnvalues.CLIENT_ERROR
                 continue
-            if os.path.islink(real_path):
-                output_objects.append({'object_type': 'warning', 'text'
-                        : "You're not allowed to delete entire %s shared dirs!"
-                                       % configuration.site_vgrid_label
+            if os.path.islink(abs_path):
+                output_objects.append({'object_type': 'warning', 'text': """
+You're not allowed to delete entire special folders like %s shares and %s
+""" % (configuration.site_vgrid_label, trash_linkname)
                         })
                 status = returnvalues.CLIENT_ERROR
                 continue
-            if os.path.isdir(real_path) and recursive(flags):
-
-                # bottom up traversal of the file tree since rmdir is limited to
-                # empty dirs
-
-                for (root, dirs, files) in os.walk(real_path, topdown=False):
-                    for name in files:
-                        path = os.path.join(root, name)
-                        relative_path = path.replace(base_dir, '')
-                        # Traversal may find additional invisible files to skip
-                        if invisible_file(name):
-                            continue
-                        if verbose(flags):
-                            output_objects.append({'object_type': 'file',
-                                                   'name': relative_path})
-                        try:
-                            os.remove(path)
-                        except Exception, exc:
-                            output_objects.append({'object_type'
-                                    : 'error_text', 'text'
-                                    : "%s: '%s': %s" % (op_name,
-                                    relative_path, exc)})
-                            logger.error("%s: failed on '%s': %s"
-                                     % (op_name, relative_path, exc))
-                            status = returnvalues.SYSTEM_ERROR
-
-                    for name in dirs:
-                        path = os.path.join(root, name)
-                        relative_path = path.replace(base_dir, '')
-                        if verbose(flags):
-                            output_objects.append({'object_type': 'file'
-                                    , 'name': relative_path})
-                        try:
-                            os.rmdir(path)
-                        except Exception, exc:
-                            output_objects.append({'object_type'
-                                    : 'error_text', 'text'
-                                    : "%s: '%s': %s" % (op_name,
-                                    relative_path, exc)})
-                            logger.error("%s: failed on '%s': %s"
-                                     % (op_name, relative_path, exc))
-                            status = returnvalues.SYSTEM_ERROR
-
-                # Finally remove base directory
-
-                relative_path = real_path.replace(base_dir, '')
-                try:
-                    os.rmdir(real_path)
-                except Exception, exc:
-                    output_objects.append({'object_type': 'error_text',
-                            'text': "%s: '%s' failed!" % (op_name,
-                            relative_path)})
-                    logger.error("%s: failed on '%s': %s" % (op_name,
-                                 relative_path, exc))
-                    status = returnvalues.SYSTEM_ERROR
-            else:
-                relative_path = real_path.replace(base_dir, '')
-                try:
-                    os.remove(real_path)
-                except Exception, exc:
-                    output_objects.append({'object_type': 'error_text',
-                            'text': "%s: '%s': %s" % (op_name,
-                            relative_path, exc)})
-                    logger.error("%s: failed on '%s'" % (op_name,
-                                 relative_path))
-                    status = returnvalues.SYSTEM_ERROR
-                    continue
+            if os.path.isdir(abs_path) and not recursive(flags):
+                output_objects.append({'object_type': 'error_text', 'text':
+                                        "cannot remove '%s': is a direcory" \
+                                       % relative_path})
+                logger.error("%s: non-recursive call on dir '%s'" % abs_path)
+                status = returnvalues.CLIENT_ERROR
+                continue
+            trash_base = get_trash_location(configuration, abs_path)
+            # TODO: improve this case here or in fileman
+            if rm_helper == remove_path and \
+                   os.path.commonprefix([real_path, trash_base]) == trash_base:
+                logger.warning("%s: already in trash: '%s'" % (op_name,
+                                                             real_path))
+                output_objects.append({'object_type': 'error_text', 'text': """
+'%s' is already in trash - no action""" % relative_path})
+                status = returnvalues.CLIENT_ERROR
+                continue                                
+            
+            # TODO: limit delete in vgrid share trash to vgrid owners / conf
+            # TODO: user setting to switch on/of trash
+            # TODO: user settings to define read-only and auto-expire in trash
+            
+            (rm_status, rm_err) = rm_helper(configuration, abs_path)
+            if not rm_status:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     "remove '%s' failed: %s" % (relative_path,
+                                                 '. '.join(rm_err))})
+                logger.error("%s: failed on '%s': %s" % \
+                             (op_name, abs_path, ', '.join(rm_err)))
+                status = returnvalues.SYSTEM_ERROR
             output_objects.append({'object_type': 'text',
                         'text': "removed %s" % (relative_path)})
 

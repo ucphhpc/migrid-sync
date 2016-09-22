@@ -92,7 +92,9 @@ datatransfers_filename = 'transfers'
 user_keys_dir = 'keys'
 sharelinks_filename = 'sharelinks'
 seafile_ro_dirname = 'seafile_readonly'
-
+# Trash really goes to this location but only accessible through link 
+trash_destdir = '.trash'
+trash_linkname = 'Trash'
 
 # The htaccess file prevents illegal http access to user files. We completely
 # hide it to not confuse users and to prevent all modification. It is 'only'
@@ -104,7 +106,8 @@ seafile_ro_dirname = 'seafile_readonly'
 # IMPORTANT: please use the invisible_{path,file,dir} helpers from shared.base
 #            instead of using these variables directly.
 _dot_vgrid = ['.vgrid%s' % i for i in ['wiki', 'scm', 'tracker', 'forum']]
-_user_invisible_dirs = _dot_vgrid
+_protected_dirs = [trash_destdir]
+_user_invisible_dirs = _dot_vgrid + _protected_dirs
 _user_invisible_files = [htaccess_filename]
 _user_invisible_paths = _user_invisible_files + _user_invisible_dirs
 
@@ -198,5 +201,3 @@ freeze_flavors = {
             'showfreeze_title': 'Show Backup Archive Details',
             'deletefreeze_title': 'Delete Backup Archive'}
     }
-
-trash_folder = '.trash'

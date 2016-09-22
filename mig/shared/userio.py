@@ -38,7 +38,7 @@ import sys
 import time
 
 from shared.base import invisible_path
-from shared.defaults import trash_folder
+from shared.defaults import trash_destdir, trash_linkname
 from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web
 
 ACTIONS = (CREATE, MODIFY, MOVE, DELETE) = "create", "modify", "move", "delete"
@@ -64,13 +64,21 @@ def get_home_location(configuration, path):
     else:
         return None
 
-def get_trash_location(configuration, path):
+def get_trash_location(configuration, path, visible_link=False):
     """Find the proper trash folder for path. I.e. the one in the root of the
     corresponding user home or vgrid share or web home dir.
+    If the optional visible_link argument is set the result is the path to the
+    trash symlink instead.
+    NOTE: we use this construct to prevent users from inadvertently deleting
+    their entire trash folder and potentially to later change actual trash
+    folder format.
     """
     trash_base = get_home_location(configuration, path)
     if trash_base is not None:
-        trash_base = os.path.join(trash_base, trash_folder)
+        if visible_link:
+            trash_base = os.path.join(trash_base, trash_linkname)
+        else:
+            trash_base = os.path.join(trash_base, trash_destdir)
     return trash_base
 
 def _check_access(configuration, action, target_list):
@@ -78,11 +86,11 @@ def _check_access(configuration, action, target_list):
     _logger = configuration.logger
     for path in target_list:
         if invisible_path(path):
-            _logger.warning("%s rejected on invisible %s" % (action, path))
-            raise ValueError('not allowed on invisible file')
+            _logger.warning("%s rejected on invisible path: %s" % (action, path))
+            raise ValueError('contains protected files/folders')
         elif os.path.islink(path):
             _logger.warning("%s rejected on link %s" % (action, path))
-            raise ValueError('not allowed on link')
+            raise ValueError('contains special files/folders')
 
 def _build_changes_path(configuration, changeset, pending=False):
     """Shared helper to build changes event path for changeset.
@@ -271,18 +279,27 @@ def remove_path(configuration, path):
         result = False
         errors.append('no such path')
         return (result, errors)
-
     home_base = get_home_location(configuration, path)
     trash_base = get_trash_location(configuration, path)
+    trash_link = get_trash_location(configuration, path, True)
     if trash_base is None:
         _logger.error('no suitable trash folder for: %s' % path)
         result = False
         errors.append('no suitable trash folder found')
         return (result, errors)
 
-    # Make sure trash folder exists
+    real_path = os.path.realpath(path)
+    if os.path.commonprefix([real_path, trash_base]) == trash_base:
+        _logger.info('path %s is already in trash - do nothing' % real_path)
+        return (result, errors)
+    
+    # Make sure trash folder and alias exists
     try:
         os.makedirs(trash_base)
+    except:
+        pass
+    try:
+        os.symlink(os.path.basename(trash_base), trash_link)
     except:
         pass
 

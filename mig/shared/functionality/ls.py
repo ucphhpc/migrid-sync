@@ -37,7 +37,7 @@ from urllib import quote
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_path
-from shared.defaults import seafile_ro_dirname, csrf_field
+from shared.defaults import seafile_ro_dirname, trash_destdir, csrf_field
 from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
@@ -240,6 +240,13 @@ def handle_dir(
                 extra_class = 'seafilereadonly'
         else:
             dir_type = 'sub'
+        # TODO: improve this greedy matching here?
+        configuration.logger.debug("check real_dir %s vs %s" % (real_dir,
+                                                                trash_destdir))
+        if real_dir.endswith(trash_destdir):
+            access_type = 'recently deleted data'
+            dir_type = ''
+            extra_class = 'trashbin'
         special = ' - %s %s directory' % (access_type, dir_type)
     dir_obj = {
         'object_type': 'direntry',
