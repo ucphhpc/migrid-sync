@@ -27,99 +27,21 @@
 
 """All I/O operations on behalf of users - needed for e.g. trash/undelete"""
 
+# NOTE: Use faster scandir if available
+try:
+    from scandir import walk
+except ImportError:
+    from os import walk
 import os
 import shutil
 import sys
-import tempfile 
 import time
 
-from shared.base import invisible_file
+from shared.base import invisible_path
 from shared.defaults import trash_folder
 from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web
 
-ACTIONS = (CREATED, MODIFIED, MOVED, DELETED) = \
-          "created", "modified", "moved", "deleted"
-
-def prepare_changes(configuration, changeset, action, target_list):
-    """Prepare events file to match any future user I/O action. Useful for
-    building the event set during recursive traversal and then only commit the
-    changes after successful e.g. move or copy.
-    The target argument may be a list of single path entries or (src, dst)
-    tuples in case of a move. The action argument may take any of the change
-    values CREATED, MODIFIED, MOVED and DELETED defined here.
-    The changeset argument is used to mark the action as a part of a bigger
-    operation, like e.g. a recursive copy or move.
-    Returns a handle to a temporary file with the saved events.
-    """
-    _logger = configuration.logger
-    _logger.debug("prepare %s %s event on %s" % (changeset, action, target_list))
-    # Make sure events dir exists
-    try:
-        os.makedirs(configuration.events_home)
-    except:
-        pass
-    tmp_path = os.path.join(configuration.events_home, ".%s-%s-pending" % \
-                            (configuration.mig_server_id, changeset))
-
-    if os.path.exists(tmp_path):
-        mode = "a"
-    else:
-        mode = "w"
-    try:
-        cfd = open(tmp_path, mode)
-        for target in target_list:
-            cfd.write("%s:%s\n" % (action, target))
-        cfd.close()
-        return tmp_path
-    except Exception, err:
-        _logger.error("Failed to save event: %s %s %s: %s" % (target, action,
-                                                              changeset, err))
-        return None
-
-def commit_changes(configuration, changeset, events_path):
-    """Actually commit prepared events in events_path upon completion of any
-    user I/O action. Used to get consistent event handling no matter where events
-    come from.
-    The events_path argument should point to a temporary events file made by
-    prepare_changes.
-    The changeset argument is used for the naming  of the resulting committed
-    events file.
-    """
-    _logger = configuration.logger
-    _logger.debug("commit %s events in %s" % (changeset, events_path))
-    changeset_path = os.path.join(configuration.events_home, "%s-%s" % \
-                                  (configuration.mig_server_id, changeset))
-    try:
-        os.rename(events_path, changeset_path)
-        return changeset_path
-    except Exception, err:
-        _logger.error("Failed to commit %s events in %s: %s" % \
-                      (changeset, events_path, err))
-        return None
-
-def on_changes(configuration, changeset, action, target_list):
-    """Wrapper to prepare and commit an events file upon completion of any user
-    I/O action. Used to get consistent event handling no matter where events
-    come from.
-    The target argument may be a single path or a (src, dst) tuple
-    in case of a move. The action argument may take any of the change values
-    CREATED, MODIFIED, MOVED and DELETED defined here.
-    The optional changeset argument can be used to mark the change as part of a
-    bigger operation like e.g. a recursive copy or move.
-    """
-    tmp_path = prepare_changes(configuration, changeset, action, target_list)
-    if tmp_path is not None:
-        return commit_changes(configuration, changeset, tmp_path)
-    else:
-        return None
-
-def _wrap_walk(configuration, path, topdown=True):
-    """Return usual os.walk result if path is a directory and fake a simple
-    walk iterator if it is a plain file."""
-    if os.path.isdir(path):
-        return os.walk(path, topdown=topdown)
-    else:
-        return (os.path.dirname(path), [], [os.path.basename(path)]) 
+ACTIONS = (CREATE, MODIFY, MOVE, DELETE) = "create", "modify", "move", "delete"
 
 def get_home_location(configuration, path):
     """Find the proper home folder for path. I.e. the corresponding user home
@@ -151,158 +73,332 @@ def get_trash_location(configuration, path):
         trash_base = os.path.join(trash_base, trash_folder)
     return trash_base
 
-def _prepare_recursive_op(configuration, changeset, action, path, operation):
-    """Helper to walk and prepare events for a recursive action on path"""
+def _check_access(configuration, action, target_list):
+    """Verify access to action on paths in target_list"""
+    _logger = configuration.logger
+    for path in target_list:
+        if invisible_path(path):
+            _logger.warning("%s rejected on invisible %s" % (action, path))
+            raise ValueError('not allowed on invisible file')
+        elif os.path.islink(path):
+            _logger.warning("%s rejected on link %s" % (action, path))
+            raise ValueError('not allowed on link')
+
+def _build_changes_path(configuration, changeset, pending=False):
+    """Shared helper to build changes event path for changeset.
+    The optional pending flag is used to build the temporary path rather than
+    the final destination.
+    """
+    filename = "%s-%s" % (configuration.mig_server_id, changeset)
+    if pending:
+        filename = ".%s-pending" % filename
+    changes_path = os.path.join(configuration.events_home, filename)
+    return changes_path
+    
+def _fill_changes(configuration, changeset, action, target_list):
+    """Helper to fill events file for a future user I/O action. Used internally
+    by prepare_changes for building the event set during recursive traversal.
+    The target_list argument may be a list of single path entries or (src, dst)
+    tuples in case of a move. The action argument may take any of the change
+    values CREATE, MODIFY, MOVE and DELETE defined here.
+    The changeset argument is used to deduct the events file to use.
+    Returns a handle to a temporary file with the saved events or None on
+    failure.
+    """
+    _logger = configuration.logger
+    _logger.debug("prepare %s %s event on %s" % (changeset, action, target_list))
+    # Make sure events dir exists
+    try:
+        os.makedirs(configuration.events_home)
+    except:
+        pass
+    pending_path = _build_changes_path(configuration, changeset, pending=True)
+
+    if os.path.exists(pending_path):
+        mode = "a"
+    else:
+        mode = "w"
+    try:
+        cfd = open(pending_path, mode)
+        for target in target_list:
+            cfd.write("%s:%s\n" % (action, target))
+        cfd.close()
+        return pending_path
+    except Exception, err:
+        _logger.error("Failed to save events: %s %s %s: %s" % \
+                      (changeset, action, target_list, err))
+        return None
+
+def prepare_changes(configuration, operation, changeset, action, path,
+                    recursive):
+    """Prepare events file for a future user I/O action as a part of named
+    operation. 
+    The path argument may be a list of single path entries or (src, dst)
+    tuples in case of a move. The action argument may take any of the change
+    values CREATE, MODIFY, MOVE and DELETE defined here.
+    The changeset argument is used to mark the action as a part of a bigger
+    operation, like e.g. a recursive copy or move.
+    The recursive argument can be used to automatically traverse any sub
+    directories in move or copy operations.
+    Returns a handle to a temporary file with the saved events or raises an
+    exception in case changes would violate MiG file restrictions.
+    """
     _logger = configuration.logger
     _logger.debug('%s user path: %s' % (operation, path))
-    for (root, dirs, files) in _wrap_walk(configuration, path, topdown=False):
-        if files:
-            target_list = [os.path.join(root, name) for name in files]
-            _logger.debug('%s user sub files: %s' % (operation, target_list))
-            prepare_changes(configuration, changeset, action, target_list)
-        if dirs:
-            target_list = [os.path.join(root, name) for name in dirs]
-            _logger.debug('%s user sub dirs: %s' % (operation, target_list))
-            prepare_changes(configuration, changeset, action, target_list)
-    tmp_path = prepare_changes(configuration, changeset, action, [path])
-    return tmp_path
+    # TODO: properly handle MOVEs in walk below
+    if action == MOVE:
+        path = path[0]
+    # First act on path itself
+    target_list = [path]
+    _check_access(configuration, action, target_list)
+    pending_path = _fill_changes(configuration, changeset, action, target_list)
+    # Use walk for recursive dir path - silently ignored for file path
+    if not recursive or not os.path.isdir(path):
+        return pending_path
+    for (root, dirs, files) in walk(path, topdown=False, followlinks=True):
+        for (kind, target) in [('files', files), ('dirs', dirs)]:
+            if target:
+                target_list = [os.path.join(root, name) for name in target]                
+                _check_access(configuration, action, target_list)
+                _logger.debug('%s user sub %s: %s' % (operation, kind,
+                                                      target_list))
+                _fill_changes(configuration, changeset, action, target_list)
+    return pending_path
 
+def commit_changes(configuration, changeset):
+    """Actually commit events file after applying user I/O action. Used
+    after building the event set with one or more calls to prepare_changes.
+    The changeset argument is used to deduct the path to the pending and final
+    events files.
+    Returns a handle to the file with the committed events or None on error.
+    """
+    _logger = configuration.logger
+    _logger.debug("commit %s events" % changeset)
+    # Make sure events dir exists
+    try:
+        os.makedirs(configuration.events_home)
+    except:
+        pass
+    changeset_path = _build_changes_path(configuration, changeset)
+    pending_path = _build_changes_path(configuration, changeset, pending=True)
+    try:
+        os.rename(pending_path, changeset_path)
+        return changeset_path
+    except Exception, err:
+        _logger.error("Failed to commit %s events in %s: %s" % \
+                      (changeset, pending_path, err))
+        return None
+
+def abort_changes(configuration, changeset):
+    """Abort prepared events in changeset upon early failure of any user I/O
+    action. The temporary events file path created by any corresponding
+    prepare_changes call(s) is automatically deducted from the changeset.
+    """
+    _logger = configuration.logger
+    _logger.debug("abort %s events" % changeset)
+    pending_path = _build_changes_path(configuration, changeset, pending=True)
+    if not os.path.exists(pending_path):
+        return True
+    try:
+        
+        os.remove(pending_path)
+        return True
+    except Exception, err:
+        _logger.error("failed to clean up after %s in %s" % (changeset,
+                                                             pending_path))
+        return None
+    
 def delete_path(configuration, path):
-    """Wrapper to handle direct deletion of user file in path. This version
+    """Wrapper to handle direct deletion of user file(s) in path. This version
     skips the user-friendly intermediate step of really just moving path to
     the trash folder in the user home or in the vgrid-special home, depending
     on the location of path.
     Automatically applies recursively for directories.
     """
     _logger = configuration.logger
+    _logger.info('delete user path: %s' % path)
+    result, errors = True, []
+    changeset = "delete-%f" % time.time()
     if not path:
         _logger.error('not allowed to delete without path')
-        return False
-    elif invisible_file(path):
-        _logger.error('not allowed to delete invisible: %s' % path)
-        return False
-    elif os.path.islink(path):
-        _logger.error('not allowed to delete link: %s' % path)
-        return False
+        result = False
+        errors.append('no path provided')
+        return (result, errors)
     elif not os.path.exists(path):
         _logger.error('no such file or directory %s' % path)
-        return False
-
-    result = True
-    _logger.info('deleting user path: %s' % path)
-    changeset = "delete-%f" % time.time()
-    tmp_path = _prepare_recursive_op(configuration, changeset, DELETED, path,
-                                     'delete')
+        result = False
+        errors.append('no such path')
+        return (result, errors)
+        
     try:
+        _logger.info('prepare delete user path %s' % path)
+        pending_path = prepare_changes(configuration, 'delete', changeset,
+                                       DELETE, path, True)
         _logger.info('actually deleting user path %s' % path)
-        shutil.rmtree(path)
-        commit_changes(configuration, changeset, tmp_path)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
     except Exception, err:
-        _logger.error('could not delete dir: %s (%s)' % (path, err))
-    return result
+        _logger.error('could not delete %s: %s' % (path, err))
+        result = False
+        errors.append("%s" % err)
+            
+    if result:
+        commit_changes(configuration, changeset)
+    else:
+        abort_changes(configuration, changeset)
+    return (result, errors)
 
 def remove_path(configuration, path):
-    """Wrapper to handle removal of user file in path. This version uses the
+    """Wrapper to handle removal of user file(s) in path. This version uses the
     default behaviour of really just moving path to the trash folder in the
-    user home or in the vgrid-special home, depending on the location of path.
+    corresponding user home or vgrid-special home, depending on the location
+    of path.
     Automatically applies recursively for directories.
     """
     _logger = configuration.logger
+    _logger.info('remove user path: %s' % path)
+    result, errors = True, []
+    changeset = "remove-%f" % time.time()
     if not path:
         _logger.error('not allowed to remove without path')
-        return False
-    elif invisible_file(path):
-        _logger.error('not allowed to remove invisible: %s' % path)
-        return False
-    elif os.path.islink(path):
-        _logger.error('not allowed to remove link: %s' % path)
-        return False
+        result = False
+        errors.append('no path provided')
+        return (result, errors)
     elif not os.path.exists(path):
         _logger.error('no such file or directory %s' % path)
-        return False
+        result = False
+        errors.append('no such path')
+        return (result, errors)
 
     home_base = get_home_location(configuration, path)
     trash_base = get_trash_location(configuration, path)
     if trash_base is None:
         _logger.error('no suitable trash folder for: %s' % path)
-        return False
-    else:
-        # Make sure trash folder exists
-        try:
-            os.makedirs(trash_base)
-        except:
-            pass
+        result = False
+        errors.append('no suitable trash folder found')
+        return (result, errors)
 
-    result = True
-    _logger.info('remove user path: %s' % path)
-    changeset = "remove-%f" % time.time()
-    tmp_path = _prepare_recursive_op(configuration, changeset, DELETED, path,
-                                     'remove')
+    # Make sure trash folder exists
     try:
+        os.makedirs(trash_base)
+    except:
+        pass
+
+    try:
+        _logger.info('prepare remove user path %s' % path)
+        pending_path = prepare_changes(configuration, 'remove', changeset,
+                                       DELETE, path, True)
         # Find free destination dir and remove last if necessary
         for suffix in [''] + ['.%d' % i for i in range(2, 100)]:
-            trash_path = path.replace(home_base, trash_base) + suffix 
+            sub_path = os.path.basename(path) + suffix
+            trash_path = os.path.join(trash_base, sub_path)
             if not os.path.exists(trash_path):
                 break
-        if os.path.exists(trash_path):
+        if os.path.isdir(trash_path):
             shutil.rmtree(trash_path)
         _logger.info('actually moving user path %s to %s' % (path, trash_path))
         shutil.move(path, trash_path)
-        commit_changes(configuration, changeset, tmp_path)
     except Exception, err:
-        _logger.error('could not remove %s %s' % (path, err))
+        _logger.error('could not remove %s: %s' % (path, err))
         result = False
-    return result
+        errors.append("%s" % err)
+            
+    if result:
+        commit_changes(configuration, changeset)
+    else:
+        abort_changes(configuration, changeset)
+    return (result, errors)
 
-def touch(configuration, path, timestamp=None):
-    """Create or update timestamp for path"""
+def touch_path(configuration, path, timestamp=None):
+    """Create path if it doesn't exist and set/update timestamp"""
     _logger = configuration.logger
+    _logger.info('touch user path: %s (timestamp: %s)' % (path, timestamp))
+    result, errors = True, []
     changeset = "touch-%f" % time.time()
     try:
-        if os.path.exists(path) and os.path.getsize(path) > 0:
-            filehandle = open(path, 'r+w')
-            i = filehandle.read(1)
-            filehandle.seek(0, 0)
-            filehandle.write(i)
-            filehandle.close()
-        else:
+        if not os.path.exists(path):
+            prepare_changes(configuration, 'touch', changeset, CREATE, path,
+                            False)
             open(path, 'w').close()
-            on_changes(configuration, changeset, CREATED, [path])
 
-        if timestamp != None:
+        if timestamp == None:
+            timestamp = time.time()
 
-            # set timestamp to supplied value
+        # set timestamp to supplied value
 
-            os.utime(path, (timestamp, timestamp))
-            on_changes(configuration, changeset, MODIFIED, [path])
+        prepare_changes(configuration, 'touch', changeset, MODIFY, path,
+                        False)
+        os.utime(path, (timestamp, timestamp))
+        commit_changes(configuration, changeset)
     except Exception, err:
-        _logger.error("could not touch file: '%s' (%s)" % (path, err))
-        return False
+        _logger.error("could not touch %s: %s" % (path, err))
+        result = False
+        errors.append("%s" % err)
+    return (result, errors)
 
+def __make_test_files(configuration, test_path, dirs, files, links):
+    """For unit testing setup"""
+    try:
+        os.makedirs(test_path)
+    except:
+        pass
+    for sub_path in dirs + files + links:
+        real_path = os.path.join(test_path, sub_path)
+        if sub_path in dirs:
+            try:
+                os.makedirs(real_path)
+            except:
+                pass
+        elif sub_path in files:
+            fd = open(real_path, "w")
+            fd.write('\n'.join(["sample line %d" % i for i in range(42)]))
+            fd.close()
+        else:
+            os.symlink('.', real_path)
+
+def __clean_test_files(configuration, test_path):
+    """For unit testing cleanup"""
+    try:
+        shutil.rmtree(test_path)
+    except:
+        pass
 
 if __name__ == "__main__":
     from shared.base import client_id_dir
     from shared.conf import get_configuration_object
+    from shared.defaults import htaccess_filename
     print "Unit testing user I/O"
     client_id = "/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk"
+    sub_dir = '.'
     if sys.argv[1:]:
         client_id = sys.argv[1]
-    print "Using client dir for %s for tests" % client_id
-    client_dir = client_id_dir(client_id)
+    if sys.argv[2:]:
+        sub_dir = sys.argv[2]
+    client_dir = os.path.join(client_id_dir(client_id), sub_dir)
     configuration = get_configuration_object()
     tmp_dir = "userio-testdir"
-    real_tmp = os.path.join(configuration.user_home, client_dir, tmp_dir)
-    for del_func in (delete_path, remove_path):
-        for sub_path in ("test1.txt", "sub1/test2.txt", "sub2/sub2.2/test4.txt"):
-            real_path = os.path.join(real_tmp, sub_path)
-            real_dir = os.path.dirname(real_path)
-            try:
-                os.makedirs(real_dir)
-            except:
-                pass
-            fd = open(real_path, "w")
-            fd.write('\n'.join(["sample line %d" % i for i in range(42)]))
-            fd.close()
-            print "Wrote tmp file %s" % real_path
-        print "Run %s on %s" % (del_func, real_tmp)
-        del_func(configuration, real_tmp)
+    real_tmp = os.path.normpath(os.path.join(configuration.user_home,
+                                             client_dir, tmp_dir))
+    print "Using client tmp dir \n%s\nfor tests" % real_tmp
+    basic_test = ([], ["test1.txt"], [])
+    rec_test = (["sub1", "sub1/sub2", "sub1/sub2/sub3"],
+                ["sub1/test1.txt", "sub1/test2.txt", "sub1/sub2/test4.txt",
+                 "sub1/sub2/sub3/test5.txt"], [])
+    invisible_test = ([], [htaccess_filename], [])
+    link_test = ([], [], ['userio-testlink'])
+    for (dirs, files, links) in [basic_test, rec_test, invisible_test,
+                                 link_test]:
+        real_target = os.path.join(real_tmp, (dirs + files + links)[0])
+        for edit_func in (touch_path, ):
+            __make_test_files(configuration, real_tmp, dirs, files, links)
+            print "Run %s on %s" % (edit_func, real_target)
+            print edit_func(configuration, real_target)
+            __clean_test_files(configuration, real_tmp)
+        for del_func in (delete_path, remove_path):
+            __make_test_files(configuration, real_tmp, dirs, files, links)
+            print "Run %s on %s" % (del_func, real_target)
+            print del_func(configuration, real_target)
+            __clean_test_files(configuration, real_tmp)
+            

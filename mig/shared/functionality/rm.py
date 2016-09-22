@@ -194,8 +194,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 # bottom up traversal of the file tree since rmdir is limited to
                 # empty dirs
 
-                for (root, dirs, files) in os.walk(real_path,
-                        topdown=False):
+                for (root, dirs, files) in os.walk(real_path, topdown=False):
                     for name in files:
                         path = os.path.join(root, name)
                         relative_path = path.replace(base_dir, '')
@@ -203,8 +202,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                         if invisible_file(name):
                             continue
                         if verbose(flags):
-                            output_objects.append({'object_type': 'file'
-                                    , 'name': relative_path})
+                            output_objects.append({'object_type': 'file',
+                                                   'name': relative_path})
                         try:
                             os.remove(path)
                         except Exception, exc:
