@@ -207,13 +207,13 @@ You're not allowed to delete entire special folders like %s shares and %s
                 status = returnvalues.CLIENT_ERROR
                 continue
             trash_base = get_trash_location(configuration, abs_path)
-            # TODO: improve this case here or in fileman
             if rm_helper == remove_path and \
                    os.path.commonprefix([real_path, trash_base]) == trash_base:
                 logger.warning("%s: already in trash: '%s'" % (op_name,
                                                              real_path))
                 output_objects.append({'object_type': 'error_text', 'text': """
-'%s' is already in trash - no action""" % relative_path})
+'%s' is already in trash - no action: use force flag to permanently delete""" \
+                                       % relative_path})
                 status = returnvalues.CLIENT_ERROR
                 continue                                
             

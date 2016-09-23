@@ -1023,10 +1023,17 @@ if (jQuery) (function($){
             rm:     function (action, el, pos) {
                 var flags = '';
                 var rm_path = $(el).attr(pathAttribute);
-                if ($(el).attr(pathAttribute).lastIndexOf('/') === $(el).attr(pathAttribute).length-1) {
-                    flags = 'r';
+                /* TODO: get trash_linkname from shared.defaults instead */
+                var trash_linkname = 'Trash';
+                var dest_msg = "moved to "+trash_linkname;
+                if ($(el).attr(pathAttribute).search(trash_linkname+'/') != -1) {
+                    dest_msg = "permanently deleted";
+                    flags += 'f';
                 }
-                $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+rm_path+'" will be permanently deleted. Are you sure?</p></div>');
+                if ($(el).attr(pathAttribute).lastIndexOf('/') === $(el).attr(pathAttribute).length-1) {
+                    flags += 'r';
+                }
+                $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+rm_path+'" will be '+dest_msg+'. Are you sure?</p></div>');
                 $("#cmd_dialog").dialog({
                     buttons: {
                         Ok: function() {

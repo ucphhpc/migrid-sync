@@ -238,13 +238,15 @@ def handle_dir(
             dir_type = 'Seafile library access'
             if os.path.islink(actual_dir):
                 extra_class = 'seafilereadonly'
+        elif real_dir.find(trash_destdir) != -1:
+            access_type = 'recently deleted data'
+            dir_type = 'sub'
         else:
             dir_type = 'sub'
         # TODO: improve this greedy matching here?
         configuration.logger.debug("check real_dir %s vs %s" % (real_dir,
                                                                 trash_destdir))
         if real_dir.endswith(trash_destdir):
-            access_type = 'recently deleted data'
             dir_type = ''
             extra_class = 'trashbin'
         special = ' - %s %s directory' % (access_type, dir_type)
