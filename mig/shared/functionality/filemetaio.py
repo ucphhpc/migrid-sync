@@ -1219,8 +1219,8 @@ def main(client_id, user_arguments_dict):
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
                         'text': ERROR_MSG})
-                output_objects.append({'object_type': 'error_text2',
-                        'text': ERROR_MSG})
+                output_objects.append({'object_type': 'error_text',
+                        'text': ERROR_MSG2})
             else:
                 settings_status = ''.join(accepted['settings_status'])
                 if ''.join(accepted['settings_recursive']) == 'True':
