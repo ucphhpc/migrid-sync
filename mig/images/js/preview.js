@@ -176,8 +176,11 @@ Preview.prototype.update_fm_layout = function(layout) {
     var previewInnerHeightFrac = 0.50;
     var centerTileWidthFrac = 0.40;
     var previewWidth = $("#fm_filemanager .fm_previews").outerWidth() 
+    /* NOTE: compensate for rounding(?) with a couple of extra pixels.
+       preview overflow with FF@Linux in 1920x1080 resolution with zoom twice
+    */
     var previewInnerWidth = $("#fm_filemanager .fm_previews").width() 
-        - $("#fm_filemanager .fm_preview_menubar").outerWidth();
+        - $("#fm_filemanager .fm_preview_menubar").outerWidth() - 2;
     var previewCenterTileWidth = Math.floor(previewInnerWidth * centerTileWidthFrac);
     var previewLeftTileWidth = Math.floor((previewInnerWidth - previewCenterTileWidth)/2);
     var previewRightTileWidth = previewLeftTileWidth;
