@@ -34,12 +34,11 @@ import os
 import glob
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir, invisible_file
+from shared.base import client_id_dir
 from shared.defaults import trash_linkname
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
-from shared.output import html_link
 from shared.parseflags import verbose, recursive, force
 from shared.sharelinks import extract_mode_id
 from shared.userio import remove_path, delete_path, get_trash_location
@@ -125,7 +124,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               : 'Authentication is missing!'
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
-        
+    
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
@@ -135,10 +134,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
     title_entry['text'] = page_title
     output_objects.append({'object_type': 'header', 'text': page_title})
 
+    logger.debug("%s: with paths: %s" % (op_name, pattern_list))
+
     # Input validation assures target_dir can't escape base_dir
     if not os.path.isdir(base_dir):
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Invalid client/sharelink/session id!'})
+        logger.warning('%s used %s with invalid base dir: %s' % \
+                       (user_id, op_name, base_dir))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if verbose(flags):
@@ -148,7 +151,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   flag)})
 
     for pattern in pattern_list:
-
+        
         # Check directory traversal attempts before actual handling to avoid
         # leaking information about file system layout while allowing
         # consistent error messages
@@ -156,7 +159,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.realpath(server_path)
             abs_path = os.path.abspath(server_path)
             if not valid_user_path(abs_path, base_dir, True):
 
@@ -173,26 +175,33 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # (allowed) match
 
         if not match:
+            logger.warning("%s: no matching paths: %s" % (op_name,
+                                                          pattern_list))
             output_objects.append({'object_type': 'file_not_found',
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:
+            real_path = os.path.realpath(abs_path)
             relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                         : relative_path})
 
-            # Make it harder to accidentially delete too much - e.g. do not delete
-            # VGrid files without explicit selection of subdir contents
+            # Make it harder to accidentially delete too much - e.g. do not
+            # deleteVGrid files without explicit selection of subdir contents
 
             if abs_path == os.path.abspath(base_dir):
-                output_objects.append({'object_type': 'warning', 'text'
-                        : "You're not allowed to delete your entire home directory!"
-                        })
+                logger.error("%s: refusing rm home dir: %s" % (op_name,
+                                                               abs_path))
+                output_objects.append(
+                    {'object_type': 'warning', 'text':
+                     "You're not allowed to delete your entire home directory!"
+                     })
                 status = returnvalues.CLIENT_ERROR
                 continue
             if os.path.islink(abs_path):
+                logger.error("%s: refusing rm link: %s" % (op_name, abs_path))
                 output_objects.append({'object_type': 'warning', 'text': """
 You're not allowed to delete entire special folders like %s shares and %s
 """ % (configuration.site_vgrid_label, trash_linkname)
@@ -200,36 +209,54 @@ You're not allowed to delete entire special folders like %s shares and %s
                 status = returnvalues.CLIENT_ERROR
                 continue
             if os.path.isdir(abs_path) and not recursive(flags):
+                logger.error("%s: non-recursive call on dir '%s'" % abs_path)
                 output_objects.append({'object_type': 'error_text', 'text':
                                         "cannot remove '%s': is a direcory" \
                                        % relative_path})
-                logger.error("%s: non-recursive call on dir '%s'" % abs_path)
                 status = returnvalues.CLIENT_ERROR
                 continue
             trash_base = get_trash_location(configuration, abs_path)
-            if rm_helper == remove_path and \
-                   os.path.commonprefix([real_path, trash_base]) == trash_base:
-                logger.warning("%s: already in trash: '%s'" % (op_name,
-                                                             real_path))
-                output_objects.append({'object_type': 'error_text', 'text': """
+            if not trash_base:
+                logger.error("%s: no trash for dir '%s'" % (op_name, abs_path))
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     "No trash enabled for '%s' - read-only?" % relative_path})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            try:
+                if rm_helper == remove_path and \
+                       os.path.commonprefix([real_path, trash_base]) == trash_base:
+                    logger.warning("%s: already in trash: '%s'" % (op_name,
+                                                               real_path))
+                    output_objects.append({'object_type': 'error_text', 'text': """
 '%s' is already in trash - no action: use force flag to permanently delete""" \
                                        % relative_path})
-                status = returnvalues.CLIENT_ERROR
-                continue                                
-            
-            # TODO: limit delete in vgrid share trash to vgrid owners / conf
-            # TODO: user setting to switch on/of trash
-            # TODO: user settings to define read-only and auto-expire in trash
-            
+                    status = returnvalues.CLIENT_ERROR
+                    continue
+            except Exception, err:
+                logger.error("%s: check trash failed: %s" % (op_name, err))
+                continue
+                    
+        
+            # TODO: limit delete in vgrid share trash to vgrid owners / conf?
+            #       ... malicious members can still e.g. truncate all files.
+            #       we could consider removing write bit on move to trash.
+            # TODO: user setting to switch on/off trash?
+            # TODO: add direct delete checkbox in fileman move to trash dialog?
+            # TODO: add empty trash option for Trash?
+            # TODO: user settings to define read-only and auto-expire in trash?
+            # TODO: add trash support for sftp/ftps/webdavs?
+
             (rm_status, rm_err) = rm_helper(configuration, abs_path)
             if not rm_status:
+                logger.error("%s: failed on '%s': %s" % \
+                             (op_name, abs_path, ', '.join(rm_err)))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
                      "remove '%s' failed: %s" % (relative_path,
                                                  '. '.join(rm_err))})
-                logger.error("%s: failed on '%s': %s" % \
-                             (op_name, abs_path, ', '.join(rm_err)))
                 status = returnvalues.SYSTEM_ERROR
+            logger.info("%s: successfully (re)moved %s" % (op_name, abs_path))
             output_objects.append({'object_type': 'text',
                         'text': "removed %s" % (relative_path)})
 
@@ -237,5 +264,3 @@ You're not allowed to delete entire special folders like %s shares and %s
                            'destination': 'ls.py%s' % id_query,
                            'text': 'Return to files overview'})
     return (output_objects, status)
-
-

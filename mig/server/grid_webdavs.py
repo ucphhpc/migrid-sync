@@ -95,6 +95,9 @@ def _handle_allowed(request, abs_path):
     if os.path.islink(abs_path):
         logger.warning("refused %s on symlink: %s" % (request, abs_path))
         raise DAVError(HTTP_FORBIDDEN)
+    elif invisible_path(abs_path):
+        logger.warning("refused %s on hidden path: %s" % (request, abs_path))
+        raise DAVError(HTTP_FORBIDDEN)
 
 def _user_chroot_path(environ):
     """Extract user credentials from environ dicionary to build chroot
