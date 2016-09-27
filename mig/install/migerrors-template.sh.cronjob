@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# Look for typical serious errors in MiG logs.
+# Runs as MiG user and limits to log entries from today and yesterday.
+#
+# IMPORTANT: if placed in /etc/cron.X the script filename must be 
+# something consisting entirely of upper and lower case letters, digits, 
+# underscores, and hyphens. I.e. if the script name contains e.g. a period, 
+# '.', it will be silently ignored! 
+# This is a limitation on the run-parts wrapper used by cron 
+# (see man run-parts for the rationale behind this).
+
+su - mig -c '{
+LOGDIR="__MIG_STATE__/log"
+TODAY=$(date +'%Y-%m-%d')
+YESTERDAY=$(date --date=yesterday +%'Y-%m-%d')
+
+grep -H "Internal Server Error" $LOGDIR/webdavs.out
+grep -H -A 12 "Traceback" $LOGDIR/webdavs.out
+
+grep -H ERROR $LOGDIR/ftps.log
+grep -H ERROR $LOGDIR/sftp.log | \
+	grep -v "Password authentication failed for\|Socket exception: Connection reset by peer\|Error reading SSH protocol banner\|check_banner\|list_folder on missing path\|chmod \(292\|365\) rejected on path\|ERROR $"
+grep -H ERROR $LOGDIR/davs.log
+
+grep -H ERROR $LOGDIR/mig.log | \
+	grep -v "problems importing arclib\|disabled in configuration\|\(settings\|userprofile\) could not be opened/unpickled\|load \(ssh\|ftps\|davs\|seafile\) publickeys failed\|is not a valid openid provider"
+grep -H "CSRF check failed" $LOGDIR/mig.log
+} | grep "$YESTERDAY\|$TODAY"'

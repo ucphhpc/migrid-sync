@@ -197,5 +197,11 @@ The logrotate-mig contains a logrotate configuration to automatically
 rotate and compress log files for all MiG daemons.
 You can install it with:
 sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
+
+The migstateclean and migerrors files are cron scripts to automatically
+clean up state files and grep for important errors in all MiG log files.
+You can install them with:
+chmod 755 %(destination)s/{migstateclean,migerrors}
+sudo cp %(destination)s/{migstateclean,migerrors} /etc/cron.daily/
 ''' % conf
     sys.exit(0)

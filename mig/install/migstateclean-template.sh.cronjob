@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Clean up stale job files and links
+# Clean up stale job files and links in state dir
 #
 # PLEASE NOTE: all mRSL files should be saved for auditing purposes
 #
@@ -12,19 +12,19 @@
 # (see man run-parts for the rationale behind this).
 
 # Modify this base dir variable to fit actual state dir location in your setup
-state_dir="~/state"
+STATEDIR="__MIG_STATE__"
 
 # Clean up after jobs if they haven't done so themselves within a month.
 # Do not delete state files like pickled queues and last start marker, however.
 max_days=30
-for name in $state_dir/mig_system_files/{tmp,no_grid_jobs}* $state_dir/sessid_to_mrsl_link_home $state_dir/webserver_home; do
+for name in $STATEDIR/mig_system_files/{tmp,no_grid_jobs}* $STATEDIR/sessid_to_mrsl_link_home $STATEDIR/webserver_home; do
 	echo "Deleting files older than $max_days days from $name"
 	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 rm -f "
 done
 
 # Empty job cruft can be removed within a week
 max_days=7
-for name in $state_dir/user_home/no_grid_jobs_in_grid_scheduler; do
+for name in $STATEDIR/user_home/no_grid_jobs_in_grid_scheduler; do
 	echo "Deleting files older than $max_days days from $name"
 	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 rm -f " 
 done

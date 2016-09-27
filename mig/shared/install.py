@@ -366,6 +366,9 @@ cert, oid and sid based https!
         # service script for MiG daemons
         ("migrid-init.d-rh-template", "migrid-init.d-rh"),
         ("migrid-init.d-deb-template", "migrid-init.d-deb"),
+        # cron helpers
+        ("migerrors-template.sh.cronjob", "migerrors"),
+        ("migstateclean-template.sh.cronjob", "migstateclean"),
         ]
     for (in_name, out_name) in replacement_list:
         in_path = os.path.join(source, in_name)
