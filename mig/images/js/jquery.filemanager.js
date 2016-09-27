@@ -57,7 +57,7 @@
 jquery.prettyprint.js, preview.js, editor.py 
 */
 /* globals pp_bytes, pp_date, Preview, disable_editorarea_editor, csrf_map,
-   csrf_field, enable_editorarea_editor, lastEdit */
+   csrf_field, trash_linkname, enable_editorarea_editor, lastEdit */
 
 /* Enable strict mode to help catch tricky errors early */
 "use strict";
@@ -1023,27 +1023,33 @@ if (jQuery) (function($){
             rm:     function (action, el, pos) {
                 var flags = '';
                 var rm_path = $(el).attr(pathAttribute);
-                /* TODO: get trash_linkname from shared.defaults instead */
-                var trash_linkname = 'Trash';
-                var dest_msg = "moved to "+trash_linkname;
-                if ($(el).attr(pathAttribute).search(trash_linkname+'/') != -1) {
-                    dest_msg = "permanently deleted";
-                    flags += 'f';
-                }
+                var dest_msg;
+                var choices = {};
                 if ($(el).attr(pathAttribute).lastIndexOf('/') === $(el).attr(pathAttribute).length-1) {
                     flags += 'r';
                 }
+                /* Default is move to trash with optional permanent delete. 
+                   Use direct delete for items already in Trash. */
+                if ($(el).attr(pathAttribute).search(trash_linkname+'/') == -1) {
+                    dest_msg = "moved to "+trash_linkname;
+                    choices['Move To Trash'] = function() {
+                        $(this).dialog('close');
+                        jsonWrapper(el, '#cmd_dialog', 'rm.py', {flags: flags });
+                    };
+                } else {
+                    dest_msg = "permanently deleted";
+                }
+                choices['Permanently Delete'] = function() {
+                    $(this).dialog('close');
+                    jsonWrapper(el, '#cmd_dialog', 'rm.py', {flags: flags + 'f'});
+                };
+                choices['Cancel'] = function() {
+                    $(this).dialog('close');
+                };
+
                 $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+rm_path+'" will be '+dest_msg+'. Are you sure?</p></div>');
                 $("#cmd_dialog").dialog({
-                    buttons: {
-                        Ok: function() {
-                            $(this).dialog('close');
-                            jsonWrapper(el, '#cmd_dialog', 'rm.py', {flags: flags});
-                        },
-                        Cancel: function() {
-                            $(this).dialog('close');
-                        }
-                    },
+                    buttons: choices,
                     autoOpen: false, closeOnEscape: true, modal: true,
                     width: '800px'
                 });

@@ -32,7 +32,7 @@ their home directories.
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import csrf_backends, csrf_field
+from shared.defaults import trash_linkname, csrf_backends, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_css_deps, \
      advanced_editor_js_deps, lock_info, edit_file
@@ -118,7 +118,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
         <div id="fm_options"><input id="fm_touchscreen" type="checkbox" />
             Enable touch screen interface (all clicks trigger menu)
             <input id="fm_dotfiles" type="checkbox" />
-            Show hidden files and dirs
+            Show hidden files and folders
         </div>
     </div>
     
@@ -415,9 +415,10 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true', csrf_map={}):
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript">
+var trash_linkname = "%s";
 var csrf_field = "%s";
 var csrf_map = {};
-''' % csrf_field
+''' % (trash_linkname, csrf_field)
     for (target_op, token) in csrf_map.items():
         js += '''
 csrf_map["%s"] = "%s";

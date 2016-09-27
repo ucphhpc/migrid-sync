@@ -30,7 +30,8 @@
 import datetime
 
 import shared.returnvalues as returnvalues
-from shared.defaults import upload_tmp_dir, csrf_field, freeze_flavors
+from shared.defaults import upload_tmp_dir, trash_linkname, csrf_field, \
+     freeze_flavors
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
@@ -117,6 +118,7 @@ var open_file_chooser;
 var open_upload_dialog;
 /* default upload destination */
 var remote_path = "%s";
+var trash_linkname = "%s";
 
 function add_copy(div_id) {
     var field_id = "freeze_copy_"+copy_fields;
@@ -208,7 +210,7 @@ function init_dialogs() {
 function init_page() {
     init_dialogs();
 }
-    ''' % (upload_tmp_dir, csrf_token)
+    ''' % (upload_tmp_dir, trash_linkname, csrf_token)
     add_ready += '''
          // do sequenced initialisation (separate function)
          init_page();

@@ -236,7 +236,6 @@ You're not allowed to delete entire special folders like %s shares and %s
             except Exception, err:
                 logger.error("%s: check trash failed: %s" % (op_name, err))
                 continue
-                    
         
             # TODO: limit delete in vgrid share trash to vgrid owners / conf?
             #       ... malicious members can still e.g. truncate all files.

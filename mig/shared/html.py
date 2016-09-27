@@ -29,7 +29,7 @@ import os
 import sys
 
 from shared.base import requested_page
-from shared.defaults import default_pager_entries, csrf_field
+from shared.defaults import default_pager_entries, trash_linkname, csrf_field
 
 # Define all possible menu items
 menu_items = {}
@@ -491,6 +491,7 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token=''):
 </script>
     '''
     add_init = '''
+    var trash_linkname = "%(trash_linkname)s";
     var csrf_field = "%(csrf_field)s";
 
     /* Default fancy upload dest - optionally override before open_dialog call */
@@ -504,7 +505,8 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token=''):
                     "%(share_id)s", "%(csrf_token)s");
     }
     ''' % {"callback": callback, "share_id": share_id,
-           "csrf_field": csrf_field, "csrf_token": csrf_token}
+           "trash_linkname": trash_linkname, "csrf_field": csrf_field,
+           "csrf_token": csrf_token}
     add_ready = ''
     return (add_import, add_init, add_ready)
 
