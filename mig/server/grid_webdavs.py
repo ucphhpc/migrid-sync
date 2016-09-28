@@ -43,7 +43,7 @@ import time
 
 try:
     from wsgidav.wsgidav_app import DEFAULT_CONFIG, WsgiDAVApp
-    # Use cherrypy bundled with wsgidav - needs module path mangling
+    # Use cherrypy bundled with wsgidav < 2.0 - needs module path mangling
     from wsgidav.server import __file__ as server_init_path
     sys.path.append(os.path.dirname(server_init_path))
     from cherrypy import wsgiserver
@@ -55,6 +55,7 @@ try:
     from wsgidav.dav_error import DAVError, HTTP_FORBIDDEN
 except ImportError, ierr:
     print "ERROR: the python wsgidav module is required for this daemon"
+    print "You may need to install cherrypy if your wsgidav does not bundle it"
     sys.exit(1)
 
                         
@@ -62,8 +63,9 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
-     refresh_user_creds, update_login_map, login_map_lookup, hit_rate_limit, \
-     update_rate_limit, expire_rate_limit, penalize_rate_limit, add_user_object
+     refresh_user_creds, refresh_share_creds, update_login_map, \
+     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+     penalize_rate_limit, add_user_object
 from shared.httpsserver import hardened_ssl_kwargs, harden_ssl_options
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest
@@ -99,17 +101,12 @@ def _handle_allowed(request, abs_path):
         logger.warning("refused %s on hidden path: %s" % (request, abs_path))
         raise DAVError(HTTP_FORBIDDEN)
 
-def _user_chroot_path(environ):
-    """Extract user credentials from environ dicionary to build chroot
-    directory path for user.
-    """
+def _username_from_env(environ):
+    """Extract authenticated user credentials from environ dicionary"""
     username = environ.get("http_authenticator.username", None)
     if username is None:
         raise Exception("No authenticated username!")
-    # Expand symlinked homes for aliases
-    user_chroot = os.path.realpath(os.path.join(configuration.user_home,
-                                                username))
-    return user_chroot
+    return username
 
 def _get_addr(environ):
     """Extract client address from environ dict"""
@@ -515,7 +512,22 @@ class MiGFilesystemProvider(FilesystemProvider):
         """
         if environ is None:
             raise RuntimeError("A recent/patched wsgidav is needed, see code")
-        user_chroot = _user_chroot_path(environ)
+        #logger.debug("_locToFilePath: %s" % path)
+        username = _username_from_env(environ)
+        #logger.debug("_locToFilePath %s: find chroot for %s" % (path, username))
+        entries = login_map_lookup(self.daemon_conf, username)
+        for entry in entries:
+            if entry.chroot:
+                user_chroot = os.path.join(configuration.user_home,
+                                           entry.home)
+                # Expand symlinked homes for aliases
+                if os.path.islink(user_chroot):
+                    try:
+                        user_chroot = os.readlink(user_chroot)
+                    except Exception, err:
+                        logger.error("could not expand link %s" % user_chroot)
+                        continue
+                break
         pathInfoParts = path.strip(os.sep).split(os.sep)
         abs_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
         try:
@@ -524,6 +536,7 @@ class MiGFilesystemProvider(FilesystemProvider):
             raise RuntimeError("Access out of bounds: %s in %s : %s"
                                % (path, user_chroot, vae))
         abs_path = force_unicode(abs_path)           
+        #logger.debug("_locToFilePath on %s: %s" % (path, abs_path))
         return abs_path
 
     def getResourceInst(self, path, environ):
@@ -534,6 +547,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         Override to chroot and filter MiG invisible paths from content.
         """
 
+        #logger.debug("getResourceInst: %s" % path)
         self._count_getResourceInst += 1
         try:
             abs_path = self._locToFilePath(path, environ)
@@ -551,8 +565,11 @@ class MiGFilesystemProvider(FilesystemProvider):
 
 def update_users(configuration, user_map, username):
     """Update creds dict for username and aliases"""
+    # Only need to update users and shares here, since jobs only use sftp
     daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
                                                     username)
+    daemon_conf, changed_shares = refresh_share_creds(configuration, 'davs',
+                                                      username)
     # Add dummy user for litmus test if enabled in conf
     litmus_pw = 'test'
     if username == litmus_id and \
@@ -578,7 +595,8 @@ def update_users(configuration, user_map, username):
                     configuration.site_digest_salt)
                 add_user_object(daemon_conf, litmus_id, litmus_home,
                                 digest=digest)
-    update_login_map(daemon_conf, changed_users)
+    update_login_map(daemon_conf, changed_users, changed_jobs=[],
+                     changed_shares=changed_shares)
 
 
 def run(configuration):
@@ -727,6 +745,7 @@ unless it is available in mig/server/MiGserver.conf
         # Lock needed here due to threaded creds updates
         'creds_lock': threading.Lock(),
         'users': [],
+        'shares': [],
         'login_map': {},
         # NOTE: enable for litmus test (http://www.webdav.org/neon/litmus/)
         #

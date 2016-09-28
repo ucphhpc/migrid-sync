@@ -278,7 +278,6 @@ def get_share_changes(conf, username, sharelink_path):
     elif os.path.exists(sharelink_path) and \
              os.path.isdir(sharelink_path):
         changed_paths.append(sharelink_path)
-    logging.debug("changed shares: %s" % changed_paths)
     return changed_paths
 
 def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
@@ -605,9 +604,7 @@ def refresh_job_creds(configuration, protocol, username):
 
     link_path = os.path.join(configuration.sessid_to_mrsl_link_home,
                             "%s.mRSL" % username)
-
     logger.debug("Updating job creds for %s" % username)
-
     changed_paths = get_job_changes(conf, username, link_path)
     if not changed_paths:
         logger.debug("No job creds changes for %s" % username)
@@ -743,7 +740,7 @@ def refresh_share_creds(configuration, protocol, username,
     logger = conf.get("logger", logging.getLogger())
     old_usernames = [i.username for i in conf['shares']]
     cur_usernames = []
-    if not protocol in ('sftp', ):
+    if not protocol in ('sftp', 'davs', ):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_shares)
     if [kind for kind in share_modes if kind != 'read-write']:
@@ -755,25 +752,25 @@ def refresh_share_creds(configuration, protocol, username,
         return (conf, changed_shares)
 
     logger.debug("Updating share creds for %s" % username)
-
     link_path = os.path.join(configuration.sharelink_home, mode, username)
-    try:
-        link_dest = os.readlink(link_path)
-        if not link_dest.startswith(base_dir):
-            raise ValueError("Invalid base for share %s" % username)
-    except Exception, err:
-        logger.error("invalid share %s: %s" % (username, err))
-        return (conf, changed_shares)
-
-    logger.debug("inspecting link %s pointing at %s" % (link_path, link_dest))
-
     changed_paths = get_share_changes(conf, username, link_path)
     if not changed_paths:
         logger.debug("No share creds changes for %s" % username)
         return (conf, changed_shares)
 
+    try:
+        link_dest = os.readlink(link_path)
+        if not link_dest.startswith(base_dir):
+            raise ValueError("Invalid base for share: %s" % link_dest)
+        if not os.path.isdir(link_dest):
+            raise ValueError("Unsupported single-file share: %s" % link_dest)
+    except Exception, err:
+        link_dest = None
+        # IMPORTANT: log but don't return as we need to remove user below
+        logger.error("invalid share %s: %s" % (username, err))
+
     share_dict = None
-    if os.path.islink(link_path) and os.path.isdir(link_dest) and \
+    if os.path.islink(link_path) and link_dest and \
            last_update < os.path.getmtime(link_path):
         share_id = username
         # NOTE: share link points inside user home of owner so extract here
@@ -829,7 +826,7 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
     logger = conf.get("logger", logging.getLogger())
     old_usernames = [i.username for i in conf['shares']]
     cur_usernames = []
-    if not protocol in ('sftp', ):
+    if not protocol in ('sftp', 'davs', ):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_shares)
     if [kind for kind in share_modes if kind != 'read-write']:
