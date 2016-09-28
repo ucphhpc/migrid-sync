@@ -37,13 +37,16 @@ import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path, force_utf8
+from shared.defaults import dav_domain
 from shared.fileio import unpickle
 from shared.safeinput import valid_path
+from shared.sharelinks import extract_mode_id
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     get_authkeys, ssh_authpasswords, ssh_authdigests, davs_authpasswords, \
     davs_authdigests, ftps_authpasswords, ftps_authdigests, \
-    get_authpasswords, extract_field
+    get_authpasswords, extract_field, generate_password_hash, \
+    generate_password_digest
 
 default_max_hits, default_fail_cache = 5, 120
 
@@ -52,9 +55,8 @@ _rate_limits_lock = threading.Lock()
 _active_sessions = {}
 _sessions_lock = threading.Lock()
 
-
 class Login(object):
-    """Login class to hold a single valid login for a user or job.
+    """Login class to hold a single valid login for a user, job or share.
 
     The login method can be one of password, password digest or public key.
     The optional chroot marks the ulogin for chrooting to the user home.
@@ -257,20 +259,27 @@ def get_job_changes(conf, username, mrsl_path):
         changed_paths.append(mrsl_path)
     return changed_paths
 
-def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
-                   chroot=True, ip_addr=None):
-    """Add a single Login object to active jobs list"""
+def get_share_changes(conf, username, sharelink_path):
+    """Check if sharelink changed for username using the provided
+    sharelink_path file and the saved time stamp from shares embedded in conf.
+    Returns a list of changed sharelink files with the empty list if none
+    changed.
+    """
     logger = conf.get("logger", logging.getLogger())
-    creds_lock = conf.get('creds_lock', None)
-    job = Login(username=login, home=home, password=password, digest=digest,
-                public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
-    logger.debug("Adding job login:\n%s" % job)
-    if creds_lock:
-        creds_lock.acquire()
-    conf['jobs'].append(job)
-    if creds_lock:
-        creds_lock.release()
-
+    old_users = [i for i in conf['shares'] if i.username == username]
+    changed_paths = []
+    if old_users:
+        first = old_users[0]
+        if not os.path.exists(sharelink_path):
+            changed_paths.append(sharelink_path)
+        elif os.path.getmtime(sharelink_path) > first.last_update:
+            first.last_update = os.path.getmtime(sharelink_path)
+            changed_paths.append(sharelink_path)
+    elif os.path.exists(sharelink_path) and \
+             os.path.isdir(sharelink_path):
+        changed_paths.append(sharelink_path)
+    logging.debug("changed shares: %s" % changed_paths)
+    return changed_paths
 
 def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
                     chroot=True):
@@ -285,6 +294,35 @@ def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
     conf['users'].append(user)
     if creds_lock:
         creds_lock.release()
+
+def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
+                   chroot=True, ip_addr=None):
+    """Add a single Login object to active jobs list"""
+    logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
+    job = Login(username=login, home=home, password=password, digest=digest,
+                public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
+    logger.debug("Adding job login:\n%s" % job)
+    if creds_lock:
+        creds_lock.acquire()
+    conf['jobs'].append(job)
+    if creds_lock:
+        creds_lock.release()
+
+def add_share_object(conf, login, home, password=None, digest=None,
+                     pubkey=None, chroot=True, ip_addr=None):
+    """Add a single Login object to active shares list"""
+    logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
+    share = Login(username=login, home=home, password=password, digest=digest,
+                  public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
+    logger.debug("Adding share login:\n%s" % share)
+    if creds_lock:
+        creds_lock.acquire()
+    conf['shares'].append(share)
+    if creds_lock:
+        creds_lock.release()
+
 
 def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
     """Update login objects for auth_file with path to conf users dict. Remove
@@ -632,7 +670,7 @@ def refresh_jobs(configuration, protocol):
     logger = conf.get("logger", logging.getLogger())
     old_usernames = [i.username for i in conf['jobs']]
     cur_usernames = []
-    if not protocol in ('sftp',):
+    if not protocol in ('sftp', ):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_jobs)
 
@@ -684,12 +722,181 @@ def refresh_jobs(configuration, protocol):
                 len(conf['jobs']))
     return (conf, changed_jobs)
 
-def update_login_map(daemon_conf, changed_users, changed_jobs=[]):
-    """Update internal login_map from contents of daemon_conf['users'] and
-    daemon_conf['jobs'] considering Login objects matching changed_users or
-    changed_jobs.
+def refresh_share_creds(configuration, protocol, username,
+                        share_modes=['read-write']):
+    """Reload sharelink credentials for username (SHARE_ID) if they changed on
+    disk. That is, add user entries in configuration.daemon_conf['shares'] for
+    any corresponding active sharelinks.
+    Removes all sharelink login entries if the sharelink is no longer active,
+    too. The protocol argument specifies which auth files to use.
+    Returns a tuple with the updated daemon_conf and the list of changed share
+    IDs.
+    NOTE: we limit share_modes to read-write sharelinks for now since we don't
+    have guards in place to support read-only or write-only mode in daemons.
+    NOTE: we further limit to directory sharelinks for chroot'ing.
+    """
+    # Must end in sep
+    base_dir = configuration.user_home.rstrip(os.sep) + os.sep
+    changed_shares = []
+    conf = configuration.daemon_conf
+    last_update = conf['time_stamp']
+    logger = conf.get("logger", logging.getLogger())
+    old_usernames = [i.username for i in conf['shares']]
+    cur_usernames = []
+    if not protocol in ('sftp', ):
+        logger.error("invalid protocol: %s" % protocol)
+        return (conf, changed_shares)
+    if [kind for kind in share_modes if kind != 'read-write']:
+        logger.error("invalid share_modes: %s" % share_modes)
+        return (conf, changed_shares)
+    (mode, _) = extract_mode_id(configuration, username)
+    if not mode in share_modes:
+        logger.error("invalid share mode %s for %s" % (mode, username))
+        return (conf, changed_shares)
+
+    logger.debug("Updating share creds for %s" % username)
+
+    link_path = os.path.join(configuration.sharelink_home, mode, username)
+    try:
+        link_dest = os.readlink(link_path)
+        if not link_dest.startswith(base_dir):
+            raise ValueError("Invalid base for share %s" % username)
+    except Exception, err:
+        logger.error("invalid share %s: %s" % (username, err))
+        return (conf, changed_shares)
+
+    logger.debug("inspecting link %s pointing at %s" % (link_path, link_dest))
+
+    changed_paths = get_share_changes(conf, username, link_path)
+    if not changed_paths:
+        logger.debug("No share creds changes for %s" % username)
+        return (conf, changed_shares)
+
+    share_dict = None
+    if os.path.islink(link_path) and os.path.isdir(link_dest) and \
+           last_update < os.path.getmtime(link_path):
+        share_id = username
+        # NOTE: share link points inside user home of owner so extract here
+        share_root = link_dest.replace(base_dir, '').lstrip(os.sep)
+        # NOTE: just use share_id as password/digest for now
+        share_pw_hash = generate_password_hash(share_id)
+        share_pw_digest = generate_password_digest(
+            dav_domain, share_id, share_id,
+            configuration.site_digest_salt)
+        # TODO: load pickle from user_settings of owner (from link_dest)?
+        share_dict = {'share_id': share_id, 'share_root': share_root,
+                      'share_pw_hash': share_pw_hash,
+                      'share_pw_digest': share_pw_digest}
+    
+    # We only allow access to active shares
+    if not share_dict is None and type(share_dict) == dict and \
+           share_dict.has_key('share_id') and \
+           share_dict.has_key('share_root') and \
+           share_dict.has_key('share_pw_hash') and \
+           share_dict.has_key('share_pw_digest'):
+        user_alias = share_id
+        user_dir = share_dict['share_root']
+        user_password = share_dict['share_pw_hash']
+        user_digest = share_dict['share_pw_digest']
+        logger.info("Adding login for share %s" % user_alias)
+        add_share_object(conf, user_alias, user_dir, password=user_password,
+                         digest=user_digest)
+        cur_usernames.append(user_alias)
+        changed_shares.append(user_alias)
+    
+    removed = [i for i in old_usernames if not i in cur_usernames]
+    if removed:
+        logger.info("Removing login for %d inactive shares" % len(removed))
+        conf['shares'] = [i for i in conf['shares'] if not i.username in removed]
+        changed_shares += removed
+    logger.info("Refreshed shares from configuration (%d shares)" % \
+                len(conf['shares']))
+    return (conf, changed_shares)
+
+def refresh_shares(configuration, protocol, share_modes=['read-write']):
+    """Refresh shares keys based on the sharelink state.
+    Add user entries for all active sharelinks. 
+    Removes all the user entries for sharelinks no longer active.
+    Returns a tuple with the daemon_conf and the list of changed sharelink IDs.
+    NOTE: we limit share_modes to read-write sharelinks for now since we don't
+    have guards in place to support read-only or write-only mode in daemons.
+    NOTE: we further limit to directory sharelinks for chroot'ing.
+    """
+    # Must end in sep
+    base_dir = configuration.user_home.rstrip(os.sep) + os.sep
+    changed_shares = []
+    conf = configuration.daemon_conf
+    logger = conf.get("logger", logging.getLogger())
+    old_usernames = [i.username for i in conf['shares']]
+    cur_usernames = []
+    if not protocol in ('sftp', ):
+        logger.error("invalid protocol: %s" % protocol)
+        return (conf, changed_shares)
+    if [kind for kind in share_modes if kind != 'read-write']:
+        logger.error("invalid share_modes: %s" % share_modes)
+        return (conf, changed_shares)
+
+    for link_name in os.listdir(configuration.sharelink_home):
+        link_path = os.path.join(configuration.sharelink_home, link_name)
+        try:
+            link_dest = os.readlink(link_path)
+            if not link_dest.startswith(base_dir):
+                raise ValueError("Invalid base for share %s" % link_name)
+        except Exception, err:
+            logger.error("invalid share %s: %s" % (link_name, err))
+            continue
+        (mode, _) = extract_mode_id(configuration, link_name)
+        if not mode in share_modes:
+            logger.info("invalid share mode %s for %s" % (mode, link_name))
+            continue
+        share_dict = None
+        if os.path.islink(link_path) and os.path.isdir(link_dest):
+            share_id = link_name
+            # NOTE: share link points inside user home of owner so extract here
+            share_root = link_dest.replace(base_dir, '').lstrip(os.sep)
+            # NOTE: just use share_id as password/digest for now
+            share_pw_hash = generate_password_hash(share_id)
+            share_pw_digest = generate_password_digest(
+                dav_domain, share_id, share_id,
+                configuration.site_digest_salt)
+            # TODO: load pickle from user_settings of owner (from link_dest)?
+            share_dict = {'share_id': share_id, 'share_root': share_root,
+                          'share_pw_hash': share_pw_hash,
+                          'share_pw_digest': share_pw_digest}
+            
+        # We only allow access to active shares
+        if not share_dict is None and type(share_dict) == dict and \
+               share_dict.has_key('share_id') and \
+                share_dict.has_key('share_root') and \
+                share_dict.has_key('share_pw_hash') and \
+                share_dict.has_key('share_pw_digest'):
+            user_alias = share_id
+            user_dir = share_dict['share_root']
+            user_password = share_dict['share_pw_hash']
+            user_digest = share_dict['share_pw_digest']
+            logger.info("Adding login for share %s" % user_alias)
+            add_share_object(conf, user_alias, user_dir,
+                             password=user_password,
+                             digest=user_digest)
+            cur_usernames.append(user_alias)
+            changed_shares.append(user_alias)
+                
+    removed = [i for i in old_usernames if not i in cur_usernames]
+    if removed:
+        logger.info("Removing login for %d finished shares" % len(removed))
+        conf['shares'] = [i for i in conf['shares'] if not i.username in removed]
+        changed_shares += removed
+    logger.info("Refreshed shares from configuration (%d shares)" % \
+                len(conf['shares']))
+    return (conf, changed_shares)
+
+def update_login_map(daemon_conf, changed_users, changed_jobs=[],
+                     changed_shares=[]):
+    """Update internal login_map from contents of 'users', 'jobs' and
+    'shares' in daemon_conf. This is done considering Login objects matching
+    changed_users, changed_jobs, and changed_shares.
     The login_map is a dictionary for fast lookup and we create a list of
-    matching Login objects since each user/job may have multiple logins
+    matching Login objects since each user/job/share may have multiple logins
     (e.g. public keys).
     """
     login_map = daemon_conf['login_map']
@@ -701,6 +908,9 @@ def update_login_map(daemon_conf, changed_users, changed_jobs=[]):
                                i.username]
     for username in changed_jobs:
         login_map[username] = [i for i in daemon_conf['jobs'] if username == \
+                               i.username]
+    for username in changed_shares:
+        login_map[username] = [i for i in daemon_conf['shares'] if username == \
                                i.username]
     if creds_lock:
         creds_lock.release()

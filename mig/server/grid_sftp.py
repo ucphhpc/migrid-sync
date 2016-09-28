@@ -83,9 +83,9 @@ from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_user_creds, refresh_job_creds, \
-     update_login_map, login_map_lookup, hit_rate_limit, update_rate_limit, \
-     expire_rate_limit, penalize_rate_limit, track_open_session, \
-     track_close_session, active_sessions
+     refresh_share_creds, update_login_map, login_map_lookup, hit_rate_limit, \
+     update_rate_limit, expire_rate_limit, penalize_rate_limit, \
+     track_open_session, track_close_session, active_sessions
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
@@ -600,11 +600,14 @@ class SimpleSSHServer(paramiko.ServerInterface):
         first place!
         """
         username = force_utf8(username)
-        # Only need to update users here, since jobs only use keys
-        changed_jobs = []
+        # Only need to update users and shares here, since jobs only use keys
         daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
                                                         username)
-        update_login_map(daemon_conf, changed_users, changed_jobs)
+        changed_jobs = []
+        daemon_conf, changed_shares = refresh_share_creds(configuration,
+                                                          'sftp', username)
+        update_login_map(daemon_conf, changed_users, changed_jobs,
+                         changed_shares)
 
         hash_cache = daemon_conf['hash_cache']
         offered = None
@@ -653,7 +656,10 @@ class SimpleSSHServer(paramiko.ServerInterface):
                                                         username)
         daemon_conf, changed_jobs = refresh_job_creds(configuration, 'sftp',
                                                       username)
-        update_login_map(daemon_conf, changed_users, changed_jobs)
+        daemon_conf, changed_shares = refresh_share_creds(configuration,
+                                                          'sftp', username)
+        update_login_map(daemon_conf, changed_users, changed_jobs,
+                         changed_shares)
 
         if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
                           username, max_fails=10):
@@ -933,6 +939,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'creds_lock': threading.Lock(),
         'users': [],
         'jobs': [],
+        'shares': [],
         'login_map': {},
         'hash_cache': {},
         'time_stamp': 0,
