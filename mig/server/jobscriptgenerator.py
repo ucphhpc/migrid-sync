@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobscriptgenerator - dynamically generate job script right before job handout
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,6 +37,7 @@ import genjobscriptpython
 import genjobscriptsh
 import genjobscriptjava
 from shared.base import client_id_dir
+from shared.defaults import session_id_bytes
 from shared.fileio import write_file, pickle, make_symlink
 from shared.mrslparser import expand_variables
 from shared.ssh import copy_file_to_resource, generate_ssh_rsa_key_pair
@@ -180,8 +181,8 @@ def create_job_script(
     # TODO: hexlify is an awfully space wasting URL-safe encoding.
     #       We should just use something like the proposed secure method from
     #       http://stackoverflow.com/a/23728630/2213647
-    sessionid = hexlify(open('/dev/urandom').read(32))
-    iosessionid = hexlify(open('/dev/urandom').read(32))
+    sessionid = hexlify(open('/dev/urandom').read(session_id_bytes))
+    iosessionid = hexlify(open('/dev/urandom').read(session_id_bytes))
     helper_dict_filename = os.path.join(configuration.resource_home,
                                         unique_resource_name,
                                         'empty_job_helper_dict.%s' % exe)
@@ -469,7 +470,7 @@ def create_arc_job(
 
 
     # generate random session ID:
-    sessionid = hexlify(open('/dev/urandom').read(32))
+    sessionid = hexlify(open('/dev/urandom').read(session_id_bytes))
     logger.debug('session ID (for creating links): %s' % sessionid)
 
     client_dir = client_id_dir(client_id)

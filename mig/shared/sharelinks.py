@@ -57,6 +57,19 @@ mode_chars_map = {'read-only': __ro_mode_chars, 'read-write': __rw_mode_chars,
 
 __bool_map = {True: 'Yes', False: 'No'}
 
+def possible_sharelink_id(configuration, share_id):
+    """Check if share_id is a possible sharelink ID based on contents and
+    length.
+    """
+    if len(share_id) != configuration.site_sharelink_length:
+        return False
+    if not share_id[0] in __mode_charset:
+        return False
+    for i in share_id[1:]:
+        if not i in __id_charset:
+            return False
+    return True
+
 def generate_sharelink_id(configuration, share_mode):
     """We use one random char from the substring matching share_mode and
     configuration.sharelink_length-1 random chars for the actual ID part. With

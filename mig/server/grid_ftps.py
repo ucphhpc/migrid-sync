@@ -86,8 +86,9 @@ except ImportError:
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
-     refresh_user_creds, update_login_map, login_map_lookup, hit_rate_limit, \
-     update_rate_limit, expire_rate_limit, penalize_rate_limit
+     refresh_user_creds, refresh_share_creds, update_login_map, \
+     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+     penalize_rate_limit
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
@@ -114,29 +115,42 @@ class MiGUserAuthorizer(DummyAuthorizer):
     min_expire_delay = 120
     last_expire = time.time()
 
-    def _update_logins(self, configuration, username):
-        """Update user DB for username and internal user_table for logins.
+    def _update_logins(self, configuration, user_id):
+        """Update user DB for user_id and internal user_table for logins.
         Only called from central auth thread - no locking required.
         """
         daemon_conf = configuration.daemon_conf
         # No need for locking here - please see docstring note
         changed_users = update_users(configuration, daemon_conf['login_map'],
-                                     username)
+                                     user_id)
+        logger.debug("found changed logins %s" % changed_users)
         if not changed_users:
             return None
-        logger.debug("update user_table")
         # Fill users in dictionary for fast lookup. We create a list of
         # matching User objects since each user may have multiple logins (e.g.
         # public keys)
         for username in changed_users:
-            user_obj_list = login_map_lookup(daemon_conf, username)
+            logger.debug("update user %s" % username)
+            # Always remove old entries
             if self.has_user(username):
                 self.remove_user(username)
+            # Make sure user is still in logins - the change could be removal
+            user_obj_list = login_map_lookup(daemon_conf, username)
+            if not user_obj_list:
+                logger.info("user %s is no longer allowed" % username)
+                continue
             # We prefer last entry with password but fall back to any entry
             # to assure at least a hit
             user_obj = (user_obj_list + [i for i in user_obj_list \
                                          if i.password is not None])[-1]
             home_path = os.path.join(daemon_conf['root_dir'], user_obj.home)
+            # Expand symlinked homes for aliases
+            if os.path.islink(home_path):
+                try:
+                    home_path = os.readlink(home_path)
+                except Exception, err:
+                    logger.error("could not expand link %s" % home_path)
+                    continue
             logger.debug("add user to user_table: %s" % user_obj)
             # The add_user format and perm string meaning is explained at:
             # http://code.google.com/p/pyftpdlib/wiki/Tutorial#2.2_-_Users
@@ -187,6 +201,9 @@ class MiGUserAuthorizer(DummyAuthorizer):
                                           handler.remote_ip, username, True,
                                           offered)
                         return True
+        else:
+            logger.warning("no such user %s" % username)
+                        
         err_msg = "Password authentication failed for %s" % username
         logger.error(err_msg)
         print err_msg
@@ -284,14 +301,18 @@ class MiGRestrictedFilesystem(AbstractedFS):
         except:
             return False
 
-def update_users(configuration, login_map, user_id):
-    """Update login_map with username/password pairs for user_id and any with
+def update_users(configuration, login_map, username):
+    """Update login_map with username/password pairs for username and any
     aliases.
     """
+    # Only need to update users and shares here, since jobs only use sftp
     daemon_conf, changed_users = refresh_user_creds(configuration, 'ftps',
-                                                    user_id)
-    update_login_map(daemon_conf, changed_users)
-    return changed_users
+                                                    username)
+    daemon_conf, changed_shares = refresh_share_creds(configuration, 'ftps',
+                                                      username)
+    update_login_map(daemon_conf, changed_users, changed_jobs=[],
+                     changed_shares=changed_shares)
+    return changed_users + changed_shares
 
 def start_service(conf):
     """Main server"""
@@ -384,6 +405,7 @@ unless it is available in mig/server/MiGserver.conf
         # No creds locking needed here due to central auth
         'creds_lock': None,
         'users': [],
+        'shares': [],
         'login_map': {},
         'hash_cache': {},
         'time_stamp': 0,

@@ -39,8 +39,9 @@ from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path, force_utf8
 from shared.defaults import dav_domain
 from shared.fileio import unpickle
+from shared.job import possible_job_id
 from shared.safeinput import valid_path
-from shared.sharelinks import extract_mode_id
+from shared.sharelinks import possible_sharelink_id, extract_mode_id
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     get_authkeys, ssh_authpasswords, ssh_authdigests, davs_authpasswords, \
@@ -245,7 +246,12 @@ def get_job_changes(conf, username, mrsl_path):
     Returns a list of changed mrsl files with the empty list if none changed.
     """
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
+    if creds_lock:
+        creds_lock.acquire()
     old_users = [i for i in conf['jobs'] if i.username == username]
+    if creds_lock:
+        creds_lock.release()
     changed_paths = []
     if old_users:
         first = old_users[0]
@@ -266,7 +272,12 @@ def get_share_changes(conf, username, sharelink_path):
     changed.
     """
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
+    if creds_lock:
+        creds_lock.acquire()
     old_users = [i for i in conf['shares'] if i.username == username]
+    if creds_lock:
+        creds_lock.release()
     changed_paths = []
     if old_users:
         first = old_users[0]
@@ -578,7 +589,7 @@ def refresh_users(configuration, protocol):
             creds_lock.release()
         changed_users += removed
     logger.info("Refreshed users from configuration (%d users)" % \
-                len(conf['users']))
+                len(cur_usernames))
     conf['time_stamp'] = time.time()
     return (conf, changed_users)
 
@@ -596,11 +607,15 @@ def refresh_job_creds(configuration, protocol, username):
     conf = configuration.daemon_conf
     last_update = conf['time_stamp']
     logger = conf.get("logger", logging.getLogger())
-    old_usernames = [i.username for i in conf['jobs']]
-    cur_usernames = []
     if not protocol in ('sftp',):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_jobs)
+    if not possible_job_id(configuration, username):
+        logger.debug("ruled out %s as a possible job ID" % username)
+        return (conf, changed_jobs)
+    # TODO: this is a race, see refresh_user_creds (probably not even needed)
+    old_usernames = [i.username for i in conf['jobs']]
+    cur_usernames = []
 
     link_path = os.path.join(configuration.sessid_to_mrsl_link_home,
                             "%s.mRSL" % username)
@@ -646,14 +661,16 @@ def refresh_job_creds(configuration, protocol, username):
                            ip_addr=user_ip)
             cur_usernames.append(user_alias)
             changed_jobs.append(user_alias)
-                
+
+    # TODO: this is most likely a wrong copy/paste from refresh_jobs(?)
+    # it should only really delete the entries bound to this sessionid
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d finished jobs" % len(removed))
+        # TODO: this is a race, see refresh_user_creds
         conf['jobs'] = [i for i in conf['jobs'] if not i.username in removed]
         changed_jobs += removed
-    logger.info("Refreshed jobs from configuration (%d jobs)" % \
-                len(conf['jobs']))
+    logger.info("Refreshed jobs from configuration")
     return (conf, changed_jobs)
 
 def refresh_jobs(configuration, protocol):
@@ -665,7 +682,12 @@ def refresh_jobs(configuration, protocol):
     changed_jobs = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
+    if creds_lock:
+        creds_lock.acquire()
     old_usernames = [i.username for i in conf['jobs']]
+    if creds_lock:
+        creds_lock.release()
     cur_usernames = []
     if not protocol in ('sftp', ):
         logger.error("invalid protocol: %s" % protocol)
@@ -713,10 +735,14 @@ def refresh_jobs(configuration, protocol):
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d finished jobs" % len(removed))
+        if creds_lock:
+            creds_lock.acquire()
         conf['jobs'] = [i for i in conf['jobs'] if not i.username in removed]
+        if creds_lock:
+            creds_lock.release()
         changed_jobs += removed
     logger.info("Refreshed jobs from configuration (%d jobs)" % \
-                len(conf['jobs']))
+                len(cur_usernames))
     return (conf, changed_jobs)
 
 def refresh_share_creds(configuration, protocol, username,
@@ -738,14 +764,17 @@ def refresh_share_creds(configuration, protocol, username,
     conf = configuration.daemon_conf
     last_update = conf['time_stamp']
     logger = conf.get("logger", logging.getLogger())
-    old_usernames = [i.username for i in conf['shares']]
-    cur_usernames = []
-    if not protocol in ('sftp', 'davs', ):
+    creds_lock = conf.get('creds_lock', None)
+    if not protocol in ('sftp', 'davs', 'ftps', ):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_shares)
     if [kind for kind in share_modes if kind != 'read-write']:
         logger.error("invalid share_modes: %s" % share_modes)
         return (conf, changed_shares)
+    if not possible_sharelink_id(configuration, username):
+        logger.debug("ruled out %s as a possible sharelink ID" % username)
+        return (conf, changed_shares)
+        
     (mode, _) = extract_mode_id(configuration, username)
     if not mode in share_modes:
         logger.error("invalid share mode %s for %s" % (mode, username))
@@ -791,23 +820,25 @@ def refresh_share_creds(configuration, protocol, username,
            share_dict.has_key('share_root') and \
            share_dict.has_key('share_pw_hash') and \
            share_dict.has_key('share_pw_digest'):
-        user_alias = share_id
+        user_alias = share_dict['share_id']
         user_dir = share_dict['share_root']
         user_password = share_dict['share_pw_hash']
         user_digest = share_dict['share_pw_digest']
         logger.info("Adding login for share %s" % user_alias)
         add_share_object(conf, user_alias, user_dir, password=user_password,
                          digest=user_digest)
-        cur_usernames.append(user_alias)
         changed_shares.append(user_alias)
-    
-    removed = [i for i in old_usernames if not i in cur_usernames]
-    if removed:
-        logger.info("Removing login for %d inactive shares" % len(removed))
-        conf['shares'] = [i for i in conf['shares'] if not i.username in removed]
-        changed_shares += removed
-    logger.info("Refreshed shares from configuration (%d shares)" % \
-                len(conf['shares']))
+
+    # Share was removed: remove from logins and mark as changed
+    if not changed_shares:
+        logger.info("Removing login(s) for inactive share %s" % username)
+        if creds_lock:
+            creds_lock.acquire()
+        conf['shares'] = [i for i in conf['shares'] if i.username != username]
+        if creds_lock:
+            creds_lock.release()
+        changed_shares.append(username)
+    logger.info("Refreshed shares from configuration")
     return (conf, changed_shares)
 
 def refresh_shares(configuration, protocol, share_modes=['read-write']):
@@ -824,9 +855,15 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
     changed_shares = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
+    last_update = conf['time_stamp']
+    if creds_lock:
+        creds_lock.acquire()
     old_usernames = [i.username for i in conf['shares']]
+    if creds_lock:
+        creds_lock.release()
     cur_usernames = []
-    if not protocol in ('sftp', 'davs', ):
+    if not protocol in ('sftp', 'davs', 'ftps', ):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_shares)
     if [kind for kind in share_modes if kind != 'read-write']:
@@ -880,11 +917,16 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
                 
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
-        logger.info("Removing login for %d finished shares" % len(removed))
-        conf['shares'] = [i for i in conf['shares'] if not i.username in removed]
+        logger.info("Removing login for %d inactive shares" % len(removed))
+        if creds_lock:
+            creds_lock.acquire()
+        conf['shares'] = [i for i in conf['shares'] if not i.username in \
+                          removed]
+        if creds_lock:
+            creds_lock.release()
         changed_shares += removed
     logger.info("Refreshed shares from configuration (%d shares)" % \
-                len(conf['shares']))
+                len(cur_usernames))
     return (conf, changed_shares)
 
 def update_login_map(daemon_conf, changed_users, changed_jobs=[],

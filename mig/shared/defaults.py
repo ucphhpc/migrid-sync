@@ -60,6 +60,10 @@ mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
 
+# We hexlify 32 random bytes to get 64 character string
+session_id_bytes = 32
+session_id_chars = session_id_bytes * 2
+
 default_pager_entries = 25
 
 default_http_port = 80
