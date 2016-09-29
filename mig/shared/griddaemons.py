@@ -108,19 +108,19 @@ def get_fs_path(user_path, root, chroot_exceptions):
     except:
         raise ValueError("Invalid path characters")
     # Make sure leading slashes in user_path don't throw away root
-    real_path = os.path.normpath(os.path.join(root, user_path.strip(os.sep)))
+    norm_path = os.path.normpath(os.path.join(root, user_path.lstrip(os.sep)))
+    real_path = os.path.realpath(norm_path)
     accept_roots = [root] + chroot_exceptions
     accepted = False
     for accept_path in accept_roots:
-        expanded_path = os.path.realpath(real_path)
-        if expanded_path.startswith(accept_path):
+        if real_path.startswith(accept_path):
             # Found matching root - check visibility
-            if not invisible_path(real_path):
+            if not invisible_path(norm_path):
                 accepted = True
             break        
     if not accepted:
         raise ValueError("Invalid path")
-    return real_path
+    return norm_path
 
 def strip_root(path, root, chroot_exceptions):
     """Internal helper to strip root prefix for chrooted locations"""
@@ -802,8 +802,10 @@ def refresh_share_creds(configuration, protocol, username,
     if os.path.islink(link_path) and link_dest and \
            last_update < os.path.getmtime(link_path):
         share_id = username
-        # NOTE: share link points inside user home of owner so extract here
-        share_root = link_dest.replace(base_dir, '').lstrip(os.sep)
+        # NOTE: share link points inside user home of owner so we extract here.
+        #       We strip leading AND trailing slashes to make get_fs_path work.
+        #       Otherwise it would choke on shares with trailing slash in path.
+        share_root = link_dest.replace(base_dir, '').strip(os.sep)
         # NOTE: just use share_id as password/digest for now
         share_pw_hash = generate_password_hash(share_id)
         share_pw_digest = generate_password_digest(
