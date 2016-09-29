@@ -595,7 +595,7 @@ def refresh_users(configuration, protocol):
 
 
 def refresh_job_creds(configuration, protocol, username):
-    """Reload job credentials for username (SID) if they changed on disk.
+    """Reload job credentials for username (SESSIONID) if they changed on disk.
     That is, add user entries in configuration.daemon_conf['jobs'] for any
     corresponding active job keys.
     Removes all job login entries if the job is no longer active, too.
@@ -607,15 +607,13 @@ def refresh_job_creds(configuration, protocol, username):
     conf = configuration.daemon_conf
     last_update = conf['time_stamp']
     logger = conf.get("logger", logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
     if not protocol in ('sftp',):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_jobs)
     if not possible_job_id(configuration, username):
         logger.debug("ruled out %s as a possible job ID" % username)
         return (conf, changed_jobs)
-    # TODO: this is a race, see refresh_user_creds (probably not even needed)
-    old_usernames = [i.username for i in conf['jobs']]
-    cur_usernames = []
 
     link_path = os.path.join(configuration.sessid_to_mrsl_link_home,
                             "%s.mRSL" % username)
@@ -659,17 +657,17 @@ def refresh_job_creds(configuration, protocol, username):
         if valid_pubkey:
             add_job_object(conf, user_alias, user_dir, pubkey=user_key,
                            ip_addr=user_ip)
-            cur_usernames.append(user_alias)
             changed_jobs.append(user_alias)
 
-    # TODO: this is most likely a wrong copy/paste from refresh_jobs(?)
-    # it should only really delete the entries bound to this sessionid
-    removed = [i for i in old_usernames if not i in cur_usernames]
-    if removed:
-        logger.info("Removing login for %d finished jobs" % len(removed))
-        # TODO: this is a race, see refresh_user_creds
-        conf['jobs'] = [i for i in conf['jobs'] if not i.username in removed]
-        changed_jobs += removed
+    # Job inative: remove from logins and mark as changed
+    if not changed_jobs:
+        logger.info("Removing login(s) for inactive job %s" % username)
+        if creds_lock:
+            creds_lock.acquire()
+        conf['jobs'] = [i for i in conf['jobs'] if i.username != username]
+        if creds_lock:
+            creds_lock.release()
+        changed_jobs.append(username)
     logger.info("Refreshed jobs from configuration")
     return (conf, changed_jobs)
 
