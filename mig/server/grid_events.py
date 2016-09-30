@@ -54,14 +54,19 @@ except ImportError:
     print 'ERROR: the python watchdog module is required for this daemon'
     sys.exit(1)
 
-# Use the built-in version of scandir/walk if possible, otherwise
-# use the scandir module version
+# Use the scandir module version if available:
 # https://github.com/benhoyt/scandir
+# Otherwise fail
 
 try:
-    from os import scandir, walk
-except ImportError:
-    from scandir import scandir, walk
+    from scandir import scandir, walk, __version__ as scandir_version
+    if float(scandir_version) < 1.3:
+        # Important os.walk compatibility utf8 fixes were not added until 1.3
+        raise ImportError("scandir version is too old >= 1.3 required")
+except ImportError, exc:
+    print 'ERROR: %s' % str(exc)
+    sys.exit(1)
+
 from shared.base import force_utf8
 from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
