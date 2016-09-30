@@ -29,7 +29,10 @@
 
 # NOTE: Use faster scandir if available
 try:
-    from scandir import walk
+    from scandir import walk, __version__ as scandir_version
+    if float(scandir_version) < 1.3:
+        # Important os.walk compatibility utf8 fixes were not added until 1.3
+        raise ImportError("scandir version is too old: fall back to os.walk")
 except ImportError:
     from os import walk
 import os
@@ -164,9 +167,7 @@ def prepare_changes(configuration, operation, changeset, action, path,
     if not recursive or not os.path.isdir(path):
         return pending_path
     _logger.info('%s walking: %s' % (operation, [path]))
-    # TODO: scandir.walk throws exc. on our utf-8 accented paths
-    #       use os.walk for now
-    for (root, dirs, files) in os.walk(path, topdown=False, followlinks=True):
+    for (root, dirs, files) in walk(path, topdown=False, followlinks=True):
         for (kind, target) in [('files', files), ('dirs', dirs)]:
             if target:
                 target_list = [os.path.join(root, name) for name in target]                

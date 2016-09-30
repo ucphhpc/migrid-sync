@@ -31,7 +31,10 @@ import os
 import glob
 # NOTE: Use faster scandir if available
 try:
-    from scandir import walk
+    from scandir import walk, __version__ as scandir_version
+    if float(scandir_version) < 1.3:
+        # Important os.walk compatibility utf8 fixes were not added until 1.3
+        raise ImportError("scandir version is too old: fall back to os.walk")
 except ImportError:
     from os import walk
 
@@ -126,9 +129,7 @@ def main(client_id, user_arguments_dict):
             dir_sizes = {}
             try:
                 # Assume a directory to walk
-                # TODO: scandir.walk throws exc. on our utf-8 accented paths
-                #       use os.walk for now
-                for (root, dirs, files) in os.walk(real_path, topdown=False,
+                for (root, dirs, files) in walk(real_path, topdown=False,
                                                 followlinks=True):
                     if invisible_path(root):
                         continue
