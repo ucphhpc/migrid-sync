@@ -126,7 +126,9 @@ def main(client_id, user_arguments_dict):
             dir_sizes = {}
             try:
                 # Assume a directory to walk
-                for (root, dirs, files) in walk(real_path, topdown=False,
+                # TODO: scandir.walk throws exc. on our utf-8 accented paths
+                #       use os.walk for now
+                for (root, dirs, files) in os.walk(real_path, topdown=False,
                                                 followlinks=True):
                     if invisible_path(root):
                         continue

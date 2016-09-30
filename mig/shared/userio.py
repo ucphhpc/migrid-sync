@@ -163,7 +163,10 @@ def prepare_changes(configuration, operation, changeset, action, path,
     # Use walk for recursive dir path - silently ignored for file path
     if not recursive or not os.path.isdir(path):
         return pending_path
-    for (root, dirs, files) in walk(path, topdown=False, followlinks=True):
+    _logger.info('%s walking: %s' % (operation, [path]))
+    # TODO: scandir.walk throws exc. on our utf-8 accented paths
+    #       use os.walk for now
+    for (root, dirs, files) in os.walk(path, topdown=False, followlinks=True):
         for (kind, target) in [('files', files), ('dirs', dirs)]:
             if target:
                 target_list = [os.path.join(root, name) for name in target]                
@@ -251,6 +254,8 @@ def delete_path(configuration, path):
         _logger.error('could not delete %s: %s' % (path, err))
         result = False
         errors.append("%s" % err)
+        import traceback
+        _logger.error("trace: %s" % traceback.format_exc())
             
     if result:
         commit_changes(configuration, changeset)

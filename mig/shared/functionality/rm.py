@@ -255,6 +255,7 @@ You're not allowed to delete entire special folders like %s shares and %s
                      "remove '%s' failed: %s" % (relative_path,
                                                  '. '.join(rm_err))})
                 status = returnvalues.SYSTEM_ERROR
+                continue
             logger.info("%s: successfully (re)moved %s" % (op_name, abs_path))
             output_objects.append({'object_type': 'text',
                         'text': "removed %s" % (relative_path)})
