@@ -31,6 +31,14 @@ import base64
 import datetime
 import os
 import time
+# NOTE: Use faster scandir if available
+try:
+    from scandir import walk, __version__ as scandir_version
+    if float(scandir_version) < 1.3:
+        # Important os.walk compatibility utf8 fixes were not added until 1.3
+        raise ImportError("scandir version is too old: fall back to os.walk")
+except ImportError:
+    from os import walk
 from urllib import quote
 
 from shared.base import client_id_dir
@@ -41,6 +49,8 @@ from shared.fileio import md5sum_file, sha1sum_file, write_file, copy_file, \
      make_temp_dir
 from shared.html import get_cgi_html_preamble, get_cgi_html_footer
 from shared.serial import load, dump
+
+__cache_ext = ".cache"
 
 def public_freeze_id(freeze_dict, configuration):
     """Translate internal freeze_id to a public identifier used when publishing
@@ -163,9 +173,9 @@ def list_frozen_archives(configuration, client_id):
 
     for entry in dir_content:
 
-        # Skip dot files/dirs
+        # Skip dot files/dirs and cache entries
 
-        if entry.startswith('.'):
+        if entry.startswith('.') or entry.endswith(__cache_ext):
             continue
         if is_frozen_archive(client_id, entry, configuration):
 
@@ -221,6 +231,7 @@ def get_frozen_files(client_id, freeze_id, configuration, checksum='md5'):
     The optional checksum argument can be used to switch between potentially
     heavy checksum calculation e.g. when used in freezedb.
     """
+    _logger = configuration.logger
     # TODO: remove legacy look-up directly in freeze_home when migrated
     client_dir = client_id_dir(client_id)
     user_archives = os.path.join(configuration.freeze_home, client_dir)
@@ -232,25 +243,59 @@ def get_frozen_files(client_id, freeze_id, configuration, checksum='md5'):
             break
     if not found:
         return (False, 'Could not open frozen archive %s' % freeze_id)
+    chksum_unset = 'please request explicitly'
+    cache_path = "%s%s" % (frozen_dir, __cache_ext)
+    file_map = {}
+    try:
+        cached = []
+        if os.path.isfile(cache_path):
+            cached = load(cache_path)
+        if cached:
+            if not checksum or cached[-1].get("%ssum" % checksum,
+                                              chksum_unset) != chksum_unset:
+                _logger.debug("using cached info for %s in %s" % (freeze_id,
+                                                                  cache_path))
+                return (True, cached)
+            else:
+                _logger.info("insufficient cached info in %s" % cache_path)
+                file_map = dict([(entry['name'], entry) for entry in cached])
+        else:
+            _logger.debug("no cached files info in %s" % cache_path)
+    except Exception, err:
+        _logger.warning("failed to load files cache in %s: %s" % \
+                        (cache_path, err))
+    # Walk archive and fill file data using any cached fields for speed
+    # TODO: switch to combined list and stat with scandir instead of walk?
     files = []
-    for (root, _, filenames) in os.walk(frozen_dir):
+    for (root, _, filenames) in walk(frozen_dir):
         for name in filenames:
             if name in [freeze_meta_filename]:
                 continue
             frozen_path = os.path.join(root, name)
             rel_path = os.path.join(root.replace(frozen_dir, '', 1), name)
-            md5_checksum = sha1_checksum = 'please request explicitly'
-            if checksum == 'md5':
+            rel_path = rel_path.lstrip(os.sep)
+            entry = file_map.get(rel_path, None)
+            if entry is None:
+                entry = {'name': rel_path,
+                         'timestamp': os.path.getctime(frozen_path),
+                         'size': os.path.getsize(frozen_path),
+                         'md5sum': chksum_unset,
+                         'sha1sum': chksum_unset}
+            # Update checksum if requested and not there already
+            if checksum == 'md5' and entry['md5sum'] == chksum_unset:
                 # Checksum first 32 MB of files
-                md5_checksum = md5sum_file(frozen_path)
+                entry['md5sum'] = md5sum_file(frozen_path)
             elif checksum == 'sha1':
                 # Checksum first 32 MB of files
-                sha1_checksum = sha1sum_file(frozen_path)
-            files.append({'name': rel_path.lstrip(os.sep),
-                          'timestamp': os.path.getctime(frozen_path),
-                          'size': os.path.getsize(frozen_path),
-                          'md5sum': md5_checksum,
-                          'sha1sum': sha1_checksum})
+                entry['sha1sum'] = sha1sum_file(frozen_path)
+            files.append(entry)
+    # Save updated cache
+    try:
+        dump(files, cache_path)
+        _logger.info("saved files cache in %s" % cache_path)
+    except Exception, err:
+        _logger.warning("failed to save files cache in %s: %s" % \
+                        (cache_path, err))
     return (True, files)
 
 def get_frozen_archive(client_id, freeze_id, configuration, checksum='md5'):
