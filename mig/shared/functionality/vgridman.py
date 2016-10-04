@@ -185,9 +185,16 @@ def main(client_id, user_arguments_dict):
         for vgrid_name in vgrid_list:
             vgrid_dict = vgrid_map[VGRIDS].get(vgrid_name, {})
             settings_dict = dict(vgrid_dict.get(SETTINGS, []))
+            # Mark and show hidden vgrids if owner or member and hide otherwise
+            view_icon, hidden_status = "infolink", " "
             if settings_dict.get('hidden', False):
-                logger.info("skip hidden vgrid %s" % vgrid_name)
-                continue
+                if client_id  in vgrid_dict[OWNERS] + vgrid_dict[MEMBERS]:
+                    logger.debug("show hidden vgrid %s for participant" % \
+                                 vgrid_name)
+                    view_icon, hidden_status = "shadeinfolink", " hidden "
+                else:
+                    logger.debug("skip hidden vgrid %s" % vgrid_name)
+                    continue
             vgrid_obj = {'object_type': 'vgrid', 'name': vgrid_name}
 
             if vgrid_name == default_vgrid:
@@ -291,9 +298,9 @@ def main(client_id, user_arguments_dict):
                                        {'object_type': 'link',
                                         'destination': 'viewvgrid.py?vgrid_name=%s' % \
                                         vgrid_name,
-                                        'class': 'infolink iconspace',
-                                        'title': 'View details for the %s %s' \
-                                        % (vgrid_name,
+                                        'class': '%s iconspace' % view_icon,
+                                        'title': 'View details for the %s%s%s' \
+                                        % (vgrid_name, hidden_status,
                                            configuration.site_vgrid_label),
                                         'text': ''}
 

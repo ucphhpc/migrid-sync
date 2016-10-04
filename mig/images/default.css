@@ -803,6 +803,10 @@ input[type=checkbox], input[type=radio] {
   background: url('/images/icons/information.png') no-repeat;
   padding-left: 18px;
 }
+.shadeinfolink {
+  background: url('/images/icons/information_grey.png') no-repeat;
+  padding-left: 18px;
+}
 .viewlink {
   background: url('/images/icons/html.png') no-repeat;
   padding-left: 18px;
