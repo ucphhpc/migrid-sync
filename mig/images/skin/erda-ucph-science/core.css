@@ -91,15 +91,17 @@ div.loginfield, div.signupfield {
   border: 2px solid #679c5b;
   color: #fff;
   background-color: #46743c;
-  margin: 0px 6px;
+  margin: 0px 4px;
   font-size: 12px;
-  width: 462px;
+  width: 460px;
   border-radius: 4px;
 }
 div.loginfield > h2, div.signupfield > h2 {
   padding: 0px;
 }
-
+div.loginfield {
+    float: right;
+}
 
 table {
   /* no background color or border */
