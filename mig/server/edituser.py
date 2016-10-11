@@ -47,6 +47,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -i CERT_DN          CERT_DN of user to edit
+   -o SHORT_ID         Change OpenID alias of user to SHORT_ID
    -v                  Verbose output
 """\
          % {'name': name}
@@ -60,8 +61,9 @@ if '__main__' == __name__:
     force = False
     verbose = False
     user_id = None
+    short_id = None
     user_dict = {}
-    opt_args = 'c:d:fhi:v'
+    opt_args = 'c:d:fhi:o:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -81,6 +83,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-i':
             user_id = val
+        elif opt == '-o':
+            short_id = val
         elif opt == '-v':
             verbose = True
         else:
@@ -121,6 +125,10 @@ if '__main__' == __name__:
         user_dict['state'] = raw_input('State: ')
         user_dict['country'] = raw_input('2-letter Country Code: ')
         user_dict['email'] = raw_input('Email: ')
+
+    # Pass optional short_id as well
+    if short_id:
+        user_dict['short_id'] = short_id
 
     # Remove empty value fields
     

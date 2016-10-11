@@ -335,8 +335,11 @@ certificate that is still valid."""
                                 client_id)
 
     # Add optional OpenID usernames to user (pickle may include some already)
-    
+
     openid_names = user.get('openid_names', [])
+    short_id = user.get('short_id', '')
+    if short_id and not short_id in openid_names:
+        openid_names.append(short_id)
     add_names = []
     if configuration.user_openid_providers and configuration.user_openid_alias:
         add_names.append(user[configuration.user_openid_alias])
