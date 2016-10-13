@@ -745,6 +745,8 @@ attempt by '%s': vgrid_name '%s'""" % (client_id, vgrid_name))
     vgrid_tracker_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name, '.vgridtracker')) + os.sep
+    vgrid_files_link = os.path.join(configuration.user_home, client_dir,
+                                    vgrid_name)
 
     # does vgrid exist?
 
@@ -753,6 +755,17 @@ attempt by '%s': vgrid_name '%s'""" % (client_id, vgrid_name))
             {'object_type': 'error_text', 'text'
              : '%s %s cannot be created because it already exists!'
              % (configuration.site_vgrid_label, vgrid_name)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # does a matching directory for vgrid share already exist?
+
+    if os.path.exists(vgrid_files_link):
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '''
+%s %s cannot be created because a folder with the same name already exists!
+Please rename your %s folder to something else before creating a %s with that
+name.''' % (configuration.site_vgrid_label, vgrid_name, vgrid_name,
+            configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # verify that client is owner of imada or imada/topology if trying to
@@ -1044,9 +1057,7 @@ for job input and output.
         # containing the vgrid files
 
         src = vgrid_files_dir
-        dst = os.path.join(configuration.user_home, client_dir,
-                           vgrid_name)
-        if not make_symlink(src, dst, logger):
+        if not make_symlink(src, vgrid_files_link, logger):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Could not create link to %s files!' % \
                                    configuration.site_vgrid_label
