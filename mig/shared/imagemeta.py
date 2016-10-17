@@ -1457,7 +1457,7 @@ def remove_image_meta_setting(
                                   'text': ERROR_MSG})
             logger.error('%s' % ERROR_MSG)
 
-    return (status, output_objects)
+    return status
 
 
 def reset_image_meta_setting_status(
