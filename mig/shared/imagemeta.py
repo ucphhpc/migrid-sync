@@ -45,9 +45,9 @@ from shared.imagemetaio import get_image_file_setting, \
     add_image_file_setting, add_image_volume_setting, __image_metapath, \
     __revision, get_image_file, get_image_volume, \
     get_preview_image_url, get_image_xdmf_filepath
-from shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
-    vgrid_list_vgrids, vgrid_is_trigger, vgrid_add_imagesettings, \
-    vgrid_remove_imagesettings
+from shared.vgrid import in_vgrid_share, vgrid_add_triggers, \
+    vgrid_remove_triggers, vgrid_list_vgrids, vgrid_is_trigger, \
+    vgrid_add_imagesettings, vgrid_remove_imagesettings
 
 
 def __get_preview_mrsl_template():
@@ -121,16 +121,12 @@ http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/se
     return result
 
 
-def __get_vgrid_datapath(path):
+def __get_vgrid_datapath(vgrid_name, path):
     """Resolve vgrid datapath from *path*"""
 
-    return '/'.join([x for x in path.split('/') if x][1:])
+    vgrid_datapath = path[len(vgrid_name):]
 
-
-def __get_vgrid_name(path):
-    """Resolve vgrid name from *path*"""
-
-    return path.split('/')[0]
+    return '/'.join([x for x in vgrid_datapath.split('/') if x])
 
 
 def __seek_image_meta(
@@ -804,6 +800,7 @@ def get_image_meta_setting(
     output_objects,
     ):
     """Get image meta setting for *path* and *extension*"""
+
     logger = configuration.logger
     image_settings = __get_image_meta_setting(logger, abs_path, path,
             extension)
@@ -833,9 +830,10 @@ def create_image_meta_setting(
     output_objects,
     ):
     """Create image meta setting for *path* and *extension*"""
+
     logger = configuration.logger
-    vgrid_datapath = __get_vgrid_datapath(path)
-    vgrid_name = __get_vgrid_name(path)
+    vgrid_name = in_vgrid_share(configuration, abs_path)
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
     vgrid_metapath = os.path.join(vgrid_datapath, __metapath)
     vgrid_image_metapath = os.path.join(vgrid_datapath,
             __image_metapath)
@@ -1191,6 +1189,7 @@ def update_image_meta_setting(
     output_objects,
     ):
     """Update image meta setting for *path* and *extension*"""
+
     logger = configuration.logger
     logger.debug('UPDATE: %s' % path)
     status = returnvalues.OK
@@ -1201,8 +1200,8 @@ def update_image_meta_setting(
         % (extension, path)
     ERROR2_MSG = None
 
-    vgrid_datapath = __get_vgrid_datapath(path)
-    vgrid_name = __get_vgrid_name(path)
+    vgrid_name = in_vgrid_share(configuration, abs_path)
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
 
     # Update image file settings
 
@@ -1296,6 +1295,7 @@ def update_image_meta_setting(
 
         timestamp = time.time()
         touch(abs_last_modified_filepath, timestamp)
+        output_objects.append({'object_type': 'text', 'text': OK_MSG})
         logger.debug('trigger timestamp: %s, path: %s ' % (timestamp,
                      abs_last_modified_filepath))
     else:
@@ -1317,10 +1317,11 @@ def remove_image_meta_setting(
     output_objects,
     ):
     """Remove image meta setting for *path* and *extension*"""
+
     logger = configuration.logger
 
-    vgrid_datapath = __get_vgrid_datapath(path)
-    vgrid_name = __get_vgrid_name(path)
+    vgrid_name = in_vgrid_share(configuration, abs_path)
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
 
     if extension != '':
         remove_ext = extension
@@ -1468,6 +1469,7 @@ def reset_image_meta_setting_status(
     output_objects,
     ):
     """Reset status for image meta setting with *path* and *extension*"""
+
     logger = configuration.logger
     status = returnvalues.OK
     file_reset = volume_reset = True
@@ -1521,6 +1523,7 @@ def get_image_meta(
     output_objects,
     ):
     """Get image meta for file with *path*"""
+
     logger = configuration.logger
 
     # Get image settings, image- and volume-meta inforation for file base_dir/path

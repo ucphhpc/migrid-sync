@@ -38,15 +38,14 @@ from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import safe_handler, get_csrf_limit, \
     make_csrf_token
-from shared.imagemeta import __get_vgrid_name, \
-    list_image_meta_settings, get_image_meta_setting, \
-    create_image_meta_setting, update_image_meta_setting, \
-    remove_image_meta_setting, reset_image_meta_setting_status, \
-    get_image_meta
+from shared.imagemeta import list_image_meta_settings, \
+    get_image_meta_setting, create_image_meta_setting, \
+    update_image_meta_setting, remove_image_meta_setting, \
+    reset_image_meta_setting_status, get_image_meta
 from shared.imagemetaio import allowed_settings_status
 from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_settings
-from shared.vgrid import vgrid_is_owner
+from shared.vgrid import vgrid_is_owner, in_vgrid_share
 
 get_actions = ['list', 'get_dir', 'get_file']
 post_actions = ['put_dir', 'update_dir', 'remove_dir', 'reset_dir']
@@ -150,9 +149,9 @@ def main(client_id, user_arguments_dict):
     status = returnvalues.ERROR
 
     if flags == 'i':
-        vgrid_name = __get_vgrid_name(path)
+        vgrid_name = in_vgrid_share(configuration, abs_path)
         vgrid_owner = vgrid_is_owner(vgrid_name, client_id,
-                configuration, recursive=False)
+                configuration)
 
         if action == 'list':
             status = list_image_meta_settings(configuration, abs_path,
