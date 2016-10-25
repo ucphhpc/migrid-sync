@@ -209,8 +209,8 @@ def create_alias_link(username, client_id, user_home):
         return True
     try:
         os.symlink(client_dir, link_path)
-    except:
-        raise Exception('could not symlink alias: %s' % link_path)
+    except Exception, err:
+        raise Exception('could not symlink alias %s : %s' % (link_path, err))
     return True    
 
 
@@ -338,7 +338,8 @@ certificate that is still valid."""
 
     openid_names = user.get('openid_names', [])
     short_id = user.get('short_id', '')
-    if short_id and not short_id in openid_names:
+    # For cert users short_id is the full DN so we should ignore then
+    if short_id and short_id != client_id and not short_id in openid_names:
         openid_names.append(short_id)
     add_names = []
     if configuration.user_openid_providers and configuration.user_openid_alias:
