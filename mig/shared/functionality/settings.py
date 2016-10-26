@@ -782,7 +782,7 @@ Login %(username)s
 Password YOUR_PASSWORD_HERE (passphrase if you configured public key access)
 Security SFTP
 Port %(sftp_port)s
-Private Key ~/.mig/key.pem (if you configured public key access)
+Private Key ~/.mig/id_rsa (if you configured public key access)
 </pre>
 other graphical clients may work as well.
 <h3>Command line SFTP/SSHFS access on Linux/UN*X</h3>
@@ -793,18 +793,20 @@ Host %(sftp_server)s
 Hostname %(sftp_server)s
 User %(username)s
 Port %(sftp_port)s
-IdentityFile ~/.mig/key.pem
+# Assuming you have your private key in ~/.mig/id_rsa
+IdentityFile ~/.mig/id_rsa
 </pre>
 From then on you can use sftp and sshfs to access your %(site)s home:
 <pre>
 sftp -B 258048 %(sftp_server)s
 </pre>
 <pre>
-sshfs %(sftp_server)s: remote-home -o uid=$(id -u) -o gid=$(id -g) -o big_writes -o reconnect
+mkdir -p remote-home 
+sshfs %(sftp_server)s: remote-home -o idmap=user -o big_writes -o reconnect
 </pre>
 You can also integrate with ordinary mounts by adding a line like:
 <pre>
-sshfs#%(username)s@%(sftp_server)s: /home/USER/remote-home fuse noauto,user,port=%(sftp_port)d 0 0
+sshfs#%(username)s@%(sftp_server)s: /home/USER/remote-home fuse noauto,user,idmap=user,big_writes,reconnect,port=%(sftp_port)d 0 0
 </pre>
 to your /etc/fstab .
 </div>
@@ -822,9 +824,9 @@ to your /etc/fstab .
 <tr><td>
 <h3>Authorized Public Keys</h3>
 You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such a key.pem along with
+x509 user certificate, you should also have received such an id_rsa key along with
 your user certificate. In any case you need to save the contents of the
-corresponding public key (X.pub) in the text area below, to be able to connect
+corresponding public key (id_rsa.pub) in the text area below, to be able to connect
 with username and key as described in the Login Details.
 <br/>
 '''
@@ -971,10 +973,11 @@ fusedav https://%(davs_server)s:%(davs_port)s remote-home -o uid=$(id -u) -o gid
 </td></tr>
 <tr><td>
 <h3>Authorized Public Keys</h3>
-You can use any existing RSA key, including the key.pem you received along with
-your user certificate, or create a new one. In any case you need to save the
-contents of the corresponding public key (X.pub) in the text area below, to be
-able to connect with username and key as described in the Login Details.
+You can use any existing RSA key, or create a new one. If you signed up with a
+x509 user certificate, you should also have received such an id_rsa key along with
+your user certificate. In any case you need to save the contents of the
+corresponding public key (id_rsa.pub) in the text area below, to be able to connect
+with username and key as described in the Login Details.
 <br/>'''
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
@@ -1130,10 +1133,11 @@ curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home \\
 </td></tr>
 <tr><td>
 <h3>Authorized Public Keys</h3>
-You can use any existing RSA key, including the key.pem you received along with
-your user certificate, or create a new one. In any case you need to save the
-contents of the corresponding public key (X.pub) in the text area below, to be
-able to connect with username and key as described in the Login Details.
+You can use any existing RSA key, or create a new one. If you signed up with a
+x509 user certificate, you should also have received such an id_rsa key along with
+your user certificate. In any case you need to save the contents of the
+corresponding public key (id_rsa.pub) in the text area below, to be able to connect
+with username and key as described in the Login Details.
 <br/>
 '''
             area = '''
