@@ -214,7 +214,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 <td class='title'>Custom message to resource owners</td>
 </tr><tr>
 <td><textarea name=request_text cols=72 rows=10>
-We have granted your resource access to our %(vgrid_name)s %(vgrid_label)s.
+We have granted your %(unique_resource_name)s resource access to our
+%(vgrid_name)s %(vgrid_label)s.
 You can assign it to accept jobs from the %(vgrid_name)s %(vgrid_label)s from
 your Resources page on %(short_title)s.
 
