@@ -111,7 +111,7 @@ def display_resource(
                          'identifier': identifier})
     
     html += '''<a id="%(res_id)s"></a>
-<h1>%(res_id)ss</h1>
+<h1>%(res_id)s</h1>
 <h3>Configuration</h3>
 
 Use the <a class="editlink iconspace"
