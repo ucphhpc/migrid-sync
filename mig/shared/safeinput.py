@@ -1106,10 +1106,11 @@ def guess_type(name):
             'architecture',
             ):
             __type_map[key] = valid_fqdn
-        # NOTE: we need to allow some empty STORECONFIG and EXECONFIG fields
-        #       and space in RTE software name
+        # NOTE: we need to allow some empty STORECONFIG and EXECONFIG fields,
+        #       underscore in RTE environment name and space in RTE software
+        #       name
         for key in ('name', ):
-            __type_map[key] = lambda x: valid_fqdn(x, min_length=0, extra_chars=' ')
+            __type_map[key] = lambda x: valid_fqdn(x, min_length=0, extra_chars='_ ')
         for key in ('execution_node', 'storage_node', ):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
         for key in ('execution_user', 'storage_user', 'freeze_name',
