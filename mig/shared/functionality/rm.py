@@ -216,7 +216,7 @@ You're not allowed to delete entire special folders like %s shares and %s
                 status = returnvalues.CLIENT_ERROR
                 continue
             trash_base = get_trash_location(configuration, abs_path)
-            if not trash_base:
+            if not trash_base and not force(flags):
                 logger.error("%s: no trash for dir '%s'" % (op_name, abs_path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
