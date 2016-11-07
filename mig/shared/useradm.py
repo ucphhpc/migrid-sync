@@ -328,6 +328,15 @@ certificate that is still valid."""
                         raise Exception(err)
                 if verbose:
                     print 'Renewing existing user'
+                # Take old user details and override fields with new ones but
+                # ONLY if actually set. This leaves any openid_names and roles
+                # alone on cert re-signup after openid signup.
+                updated_user = user_db[client_id]
+                for (key, val) in user.items():
+                    if val:
+                        updated_user[key] = val
+                user.clear()
+                user.update(updated_user)
             elif not force:
                 if verbose:
                     print 'Nothing more to do for existing user %s' % client_id
