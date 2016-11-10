@@ -301,7 +301,8 @@ Please contact the Grid admins %s if you think they should be enabled.
 As usual it is a good security measure to prepend a <em>from</em> restriction
 when you know the key will only be used from a single location.<br/>
 In this case the keys will only ever be used from %s and will not need much
-else, so the public key can inserted in authorized_keys as:<br/>
+else, so the public key can be inserted in your authorized_keys file as:
+<br/>
 <p>
 <textarea class="publickey" rows="5" readonly="readonly">%s %%s</textarea>
 </p>
@@ -604,8 +605,9 @@ login with key
                                : transferkeys})
         
         key_html += '''
-Please copy the public key to your ~/.ssh/authorized_keys file on systems where
-you want to login with the corresponding key.<br/>
+Please copy the public key to your ~/.ssh/authorized_keys or
+~/.ssh/authorized_keys2 file on systems where you want to login with the
+corresponding key.<br/>
 %s
 </td></tr>
 <tr><td>
@@ -741,8 +743,9 @@ may be empty now.
 Generated new key with name %s and associated public key:<br/>
 <textarea class="publickey" rows="5" readonly="readonly">%s</textarea>
 <p>
-Please copy it to your ~/.ssh/authorized_keys file on the host(s) where you
-want to use this key for background transfer login.<br/>
+Please copy it to your ~/.ssh/authorized_keys or ~/.ssh/authorized_keys2 file
+on the host(s) where you want to use this key for background transfer login.
+<br/>
 %s
 </p>
 ''' % (key_id, pub, restrict_template % pub)})
@@ -765,8 +768,8 @@ Deleted the key "%s" and the associated public key:<br/>
 <textarea class="publickey" rows="5" readonly="readonly">%s</textarea>
 <p>
 You will no longer be able to use it in your data transfers and can safely
-remove the public key from your ~/.ssh/authorized_keys file on any hosts where
-you may have previously added it.
+remove the public key from your ~/.ssh/authorized_keys* files on any hosts
+where you may have previously added it.
 </p>
 ''' % (key_id, pubkey)})
             else:
