@@ -403,15 +403,16 @@ if (jQuery) (function($){
             console.debug('is_dialog: ' + is_dialog);
 
             /* Dynamically fit buttonbar and buttons inline with breadcrumbs */
+            var pathBreadcrumbsHeight = $.fn.fmSelect(" .fm_path_breadcrumbs").outerHeight();
             var breadcrumbsHeight = $.fn.fmSelect(" #fm_xbreadcrumbs").height();
 
-            var buttonbarHeight = breadcrumbsHeight;
-            // Spacing for border (1), padding (2) and margin (2)
-            var buttonSpacing = 5;
-            var buttonWidth = 16;
-            // compensate for margin and padding
-            var buttonHeight = buttonbarHeight - 2 * buttonSpacing;
-            var buttonLineHeight = buttonbarHeight - 2 * buttonSpacing;
+            var buttonbarHeight = pathBreadcrumbsHeight;
+            var buttonBorder = 1;
+            /* spacing is really just button left margin */
+            var buttonSpacing = 2;
+            var buttonHeight = breadcrumbsHeight;
+            var buttonWidth = buttonHeight;
+            var buttonLineHeight = buttonHeight
             // Update to reflect the enabled buttons
             var buttonCount = 2;
             if (options.sharelinksbutton) {
@@ -427,7 +428,7 @@ if (jQuery) (function($){
             var fileManagerWidthPadding = $.fn.fmSelect("").outerWidth() - 
                                         fileManagerWidth;
             console.debug("fm padding is "+fileManagerWidthPadding+ "px wide");
-            var buttonbarWidth = buttonCount * (buttonWidth + 2 * buttonSpacing);
+            var buttonbarWidth = buttonCount * (buttonWidth + buttonSpacing + 2 * buttonBorder);
             /* Compensate for potential vertical scroll bar (may appear from
                popup overflowing, etc. so always leave space for it */
             // Leave a few pixels after breadcrumbs to avoid wrap on OSX/iOS
@@ -520,7 +521,8 @@ if (jQuery) (function($){
                         buttonbarWidth: buttonbarWidth,
                         buttonHeight: buttonHeight,
                         buttonLineHeight: buttonLineHeight,
-                        buttonWidth: buttonWidth
+                        buttonWidth: buttonWidth,
+                        buttonSpacing: buttonSpacing
                     }
                 };
             if (options['imagesettings']) {
@@ -543,6 +545,7 @@ if (jQuery) (function($){
                 .css("width", layout.fm.buttonbarWidth+"px");
             $.fn.fmSelect(" #fm_buttons li").css("height", layout.fm.buttonHeight+"px")
                 .css("line-height", layout.fm.buttonLineHeight+"px")
+                .css("margin-left", layout.fm.buttonSpacing+"px")
                 .css("width", layout.fm.buttonWidth+"px");
 
             console.debug('refresh_fm_layout callback');

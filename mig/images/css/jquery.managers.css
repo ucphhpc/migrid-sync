@@ -101,7 +101,7 @@ tbody tr td div.sortkey { display: none; }
     background: #F0F0F0;
     display: inline-block;
     vertical-align: top;
-    margin: 1px 0px;
+    margin: 0;
     float: right;
 }
 .fm_buttonbar ul {
@@ -109,17 +109,17 @@ tbody tr td div.sortkey { display: none; }
     padding: 0;
     list-style: none;
     vertical-align: middle;
-    display: inline-flex;
+    /* Use inline-block here and float left in li to always right-fit buttons */
+    display: inline-block;
 }
-.fm_buttonbar li {
+.fm_buttonbar ul li {
     border: 1px solid grey;
     cursor: pointer;
-    padding: 2px;
-    margin: 2px;
     vertical-align: middle;
     border-radius: 4px;
     background-position: center center;
     background-repeat: no-repeat;
+    float: left;
 }
 .fm_buttonbar li:hover {
     border: 1px solid lightgrey;
