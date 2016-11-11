@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resconfkeywords - Resource configuration keywords and specs
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -106,13 +106,22 @@ def get_resource_specs(configuration):
         'Required': True,
         }))
     specs.append(('FRONTENDNODE', {
-        'Title': 'Frontend Node',        
+        'Title': 'Frontend Node',
         'Description': 'The name of the frontend node seen from the execution nodes. This can be the FQDN of the frontend, but often the frontend can be accessed easier from the nodes than using the FQDN.',
         'Example': 'roadrunner',
         'Type': 'string',
         'Value': '',
         'Editor': 'input',
         'Required': True,
+        }))
+    specs.append(('FRONTENDPROXY', {
+        'Title': 'Frontend Proxy',
+        'Description': 'The optional name of a NAT-proxy that the grid server sees as the source of all network connections coming from the resource frontend. This should be an FQDN of such a proxy, and it is ONLY relevant in special cases like if the resource is behind a transparent NAT-gateway rather than on a public IP. Leave blank unless connections from the frontend appear to come from another IP address than one matching the Frontend Node FQDN. NB: you may have to leave HOSTKEY blank if you use FRONTENDPROXY since the ssh hostkey check may fail in the proxy setup.',
+        'Example': 'gateway.mydomain.org',
+        'Type': 'string',
+        'Value': '',
+        'Editor': 'input',
+        'Required': False,
         }))
     specs.append(('SCRIPTLANGUAGE', {
         'Title': 'Script Language',

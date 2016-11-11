@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -122,11 +122,15 @@ def extract_client_id(configuration, environ):
         distinguished_name = extract_client_openid(configuration, environ)
     return distinguished_name
 
-def check_source_ip(remote_ip, unique_resource_name):
+def check_source_ip(remote_ip, unique_resource_name, proxy_fqdn=None):
     """Check if remote_ip matches any IP available for the FQDN from
-    unique_resource_name"""
+    unique_resource_name or from optional NATed visible address, proxy_fqdn.
+    """
     resource_fqdn = '.'.join(unique_resource_name.split('.')[:-1])
-    (_, _, resource_ip_list) = socket.gethostbyname_ex(resource_fqdn)
-    if not remote_ip in resource_ip_list:
+    (_, _, res_ip_list) = socket.gethostbyname_ex(resource_fqdn)
+    proxy_ip_list = []
+    if proxy_fqdn:
+        (_, _, proxy_ip_list) = socket.gethostbyname_ex(proxy_fqdn)
+    if not remote_ip in res_ip_list + proxy_ip_list:
         raise ValueError("Source IP address %s not in resource alias IPs %s" \
-                         % (remote_ip, ', '.join(resource_ip_list)))
+                         % (remote_ip, ', '.join(res_ip_list + proxy_ip_list)))

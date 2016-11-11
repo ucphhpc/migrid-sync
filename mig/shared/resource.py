@@ -362,7 +362,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
             conf['frontendhome'] = home
 
     if conf.get('HOSTKEY', None):
-        if conf['HOSTKEY'].split()[1].startswith('ssh-'):
+        if re.match('^[a-zA-Z0-9.-]+,[0-9.]+$', conf['HOSTKEY'].split()[0]):
             conf['HOSTKEY'] = conf['HOSTKEY'].split(None, 1)[1]
 
     # Fill in all_X if not already set
@@ -684,8 +684,11 @@ def prepare_conf(configuration, input_args, resource_id):
         # Make sure HOSTIP gets set and that HOSTKEY gets "FQDN,IP" prefix
         # if not already set. Leave key bits and comment alone.
         key_parts = conf['HOSTKEY'].split() + ['']
-        if not key_parts[1].startswith('ssh-'):
-            host_key = ''
+        # Simplified FQDN,IP matcher which just needs to distinguish from raw
+        # ssh keys. We do that since the keys have evolved and may now contain
+        # a number of different prefix strings like e.g. ecdsa-sha2-nistp256
+        # rather than just the old ssh-rsa one.
+        if not re.match('^[a-zA-Z0-9.-]+,[0-9.]+$', key_parts[0]):
             try:
                 fallback_ip = socket.gethostbyname(conf['HOSTURL'])
             except:

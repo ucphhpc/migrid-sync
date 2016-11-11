@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # putrespgid - Put PGID of process on resource for kill in clean up
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@ import fcntl
 import os
 
 import shared.returnvalues as returnvalues
+from shared.conf import get_resource_configuration
 from shared.functional import validate_input, REJECT_UNSET
 from shared.httpsclient import check_source_ip
 from shared.init import initialize_main_variables
@@ -106,13 +107,24 @@ def main(client_id, user_arguments_dict):
                                         % (unique_resource_name, exe_name, client_id))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    (load_status, resource_conf) = \
+                  get_resource_configuration(configuration.resource_home,
+                                             unique_resource_name, logger)
+    if not load_status:
+        logger.error("Invalid putrespgid - no resouce_conf for: %s : %s" % \
+                     (unique_resource_name, resource_conf))
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'invalid request: no such resource!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     # Check that resource address matches request source to make DoS harder
+    proxy_fqdn = resource_conf.get('FRONTENDPROXY', None)
     try:
-        check_source_ip(remote_ip, unique_resource_name)
+        check_source_ip(remote_ip, unique_resource_name, proxy_fqdn)
     except ValueError, vae:
+        logger.error("Invalid put pgid: %s" % vae)
         output_objects.append({'object_type': 'error_text', 'text':
                                'invalid request: %s' % vae})
-        logger.error("Invalid put pgid: %s" % vae)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # TODO: add full session ID check here

@@ -1101,9 +1101,11 @@ def guess_type(name):
             'time_start',
             'time_end',
             'frontendnode',
+            'frontendproxy',
             'lrmstype',
             'platform',
             'architecture',
+            'localjobname',
             ):
             __type_map[key] = valid_fqdn
         # NOTE: we need to allow some empty STORECONFIG and EXECONFIG fields,
