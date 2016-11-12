@@ -1094,6 +1094,7 @@ def guess_type(name):
             'unique_resource_name',
             'hosturl',
             'exe_name',
+            'exe',
             'os',
             'flavor',
             'hypervisor_re',
