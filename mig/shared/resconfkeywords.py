@@ -143,6 +143,15 @@ def get_resource_specs(configuration):
         'Editor': 'select',
         'Required': False,
         }))
+    specs.append(('ENFORCELIMITS', {
+        'Title': 'Enforce Job Limits',
+        'Description': 'An optional space-separated list of job limits to explicitly enforce in the job execution environment. Each entry is a method and limit like e.g. ULIMIT_CPUTIME to enable ulimit to terminate the job if it reaches the requested CPUTIME (i.e. CPUTIME * CPUCOUNT seconds of CPU use). Similarly limits on MEMORY and DISK can be enforced with ULIMIT_MEMORY and ULIMIT_DISK respectively. Finally ULIMIT_PROCESSES puts a cap on the number of proceses the job may spawn. All four limits are enabled by default, so set to a string without one or more of them to disable enforcement of some limits.',
+        'Example': 'ULIMIT_PROCESSES ULIMIT_CPUTIME',
+        'Type': 'string',
+        'Value': 'ULIMIT_PROCESSES ULIMIT_CPUTIME ULIMIT_MEMORY ULIMIT_DISK',
+        'Editor': 'input',
+        'Required': False,
+        }))
     specs.append(('NODECOUNT', {
         'Title': 'Total Node Count',
         'Description': 'Number of total nodes on the resource.',

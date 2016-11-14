@@ -756,14 +756,27 @@ class GenJobScriptSh:
         requested['SECS'] = 1
         requested['MEGS'] = 1024
         requested['GIGS'] = 1024*1024
+        # These are the supported limits in native resource setups. Just some
+        # simple ulimit rules. Owners will need to set up a proper LRMS or e.g.
+        # apply cgroups, firejail or virtualization for stricter control.
+        all_limits = ['ULIMIT_PROCESSES', 'ULIMIT_CPUTIME', 'ULIMIT_MEMORY',
+                      'ULIMIT_DISK']
+        all_str = ' '.join(all_limits)
+        # Default to all limits enabled
+        enforce_limits = self.resource_conf.get('ENFORCELIMITS', all_str)
+        for limit in all_limits:
+            if limit in enforce_limits.split():
+                requested[limit] = 'true'
+            else:
+                requested[limit] = 'false'
         cmd = '''
 # Prevent fork bombs
-ulimit -u %(MAXPROCS)d
+%(ULIMIT_PROCESSES)s && ulimit -u %(MAXPROCS)d
 
 # Actual request limits - not accurate but better than nothing
-ulimit -t $((%(CPUTIME)d*%(CPUCOUNT)d*%(SECS)d))
-ulimit -v $((%(MEMORY)d*%(MEGS)d))
-ulimit -f $((%(DISK)d*%(GIGS)d))
+%(ULIMIT_CPUTIME)s && ulimit -t $((%(CPUTIME)d*%(CPUCOUNT)d*%(SECS)d))
+%(ULIMIT_MEMORY)s && ulimit -v $((%(MEMORY)d*%(MEGS)d))
+%(ULIMIT_DISK)s && ulimit -f $((%(DISK)d*%(GIGS)d))
 ''' % requested
         return cmd
 

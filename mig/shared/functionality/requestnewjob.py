@@ -151,8 +151,8 @@ def main(client_id, user_arguments_dict):
     now = time.time()
     try:
         lock_until = now + min(300.0, float(cputime))
-    except Exception:
-        logger.error('invalid cputime in requestnewjob: %s' % cputime)
+    except Exception, exc:
+        logger.error('invalid cputime in requestnewjob: %s (%s)' % (cputime, exc))
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'invalid cputime: %s - must be a number!' % cputime})
