@@ -50,7 +50,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET,
-                'request_name': ['']}
+                'request_name': [''], 'rank': ['']}
     return ['text', defaults]
 
 def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
@@ -123,6 +123,7 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1].strip()
     cert_id_list = accepted['cert_id']
     request_name = unhexlify(accepted['request_name'][-1])
+    rank_list = accepted['rank'] + ['' for _ in cert_id_list]
     # inherited vgrid membership
     inherit_vgrid_member = False
 
@@ -143,9 +144,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     cert_id_added = []
-    for cert_id in cert_id_list:
+    for (cert_id, rank_str) in zip(cert_id_list, rank_list):
         cert_id = cert_id.strip()
         cert_dir = client_id_dir(cert_id)
+        try:
+            rank = int(rank_str)
+        except ValueError:
+            rank = None
 
         # Allow openid alias as subject if openid with alias is enabled
         if configuration.user_openid_providers and configuration.user_openid_alias:
@@ -163,9 +168,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
             status = returnvalues.CLIENT_ERROR
             continue
 
-        # don't add if already an owner
+        # don't add if already an owner unless rank is given
 
-        if vgrid_is_owner(vgrid_name, cert_id, configuration):
+        if rank is None and vgrid_is_owner(vgrid_name, cert_id, configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : '%s is already an owner of %s or a parent %s.'
@@ -234,7 +239,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
                  (cert_id, configuration.site_vgrid_label, inherit_vgrid_member)
                  })
 
-        # getting here means cert_id is not owner of any parent or child vgrids.
+        # Check if only rank change was requested and apply if so
+
+        if rank is not None:
+            (add_status, add_msg) = vgrid_add_owners(configuration, vgrid_name,
+                                                     [cert_id], rank=rank)
+            if not add_status:
+                output_objects.append({'object_type': 'error_text', 'text'
+                                       : add_msg})
+                status = returnvalues.SYSTEM_ERROR
+            else:
+                output_objects.append({'object_type': 'text', 'text':
+                                       'changed %s to owner %d' % (cert_id,
+                                                                   rank)})
+            # No further action after rank change as everything else exists
+            continue
+
+        # Getting here means cert_id is not owner of any parent or child vgrids.
         # may still be member of a parent grid but not a child vgrid.
 
         public_base_dir = \

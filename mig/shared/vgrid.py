@@ -819,7 +819,8 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
             break
     return answer
 
-def vgrid_add_entities(configuration, vgrid_name, kind, id_list, update_id=None):
+def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
+                       update_id=None, rank=None):
     """Append list of IDs to pickled list of kind for vgrid_name"""
 
     if kind == 'owners':
@@ -850,55 +851,65 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list, update_id=None)
             configuration.logger.info(log_msg)
 
         if update_id is None:
+            entities = [i for i in entities if i not in id_list]
             configuration.logger.info("adding new %s: %s" % (kind, id_list))
-            entities += [i for i in id_list if not i in entities]
         else:
-            # A trigger with same id exists and needs to be updated
+            # A trigger or similar with same id exists and needs to be updated
             updating = [i[update_id] for i in id_list]
             entities = [i for i in entities if not i[update_id] in updating]
             configuration.logger.info("adding updated %s: %s (%s)" % \
                                       (kind, id_list, entities))
-            entities += id_list
+        # Default to append
+        if rank is None:
+            rank = len(entities)
+        configuration.logger.debug("add %s %s at pos %s in %s" % \
+                                   (kind, id_list, rank, entities))
+        entities = entities[:rank] + id_list + entities[rank:]
+        configuration.logger.debug("added: %s" % entities)
         dump(entities, entity_filepath)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
         return (False, "could not add %s for %s: %s" % (kind, vgrid_name, exc))
 
-def vgrid_add_owners(configuration, vgrid_name, id_list):
+def vgrid_add_owners(configuration, vgrid_name, id_list, rank=None):
     """Append id_list to pickled list of owners for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'owners',
-                              id_list)
+                              id_list, None, rank)
 
-def vgrid_add_members(configuration, vgrid_name, id_list):
+def vgrid_add_members(configuration, vgrid_name, id_list, rank=None):
     """Append id_list to pickled list of members for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'members',
-                              id_list)
+                              id_list, None, rank)
 
-def vgrid_add_resources(configuration, vgrid_name, id_list):
+def vgrid_add_resources(configuration, vgrid_name, id_list, rank=None):
     """Append id_list to pickled list of resources for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'resources',
-                              id_list)
+                              id_list, None, rank)
 
-def vgrid_add_triggers(configuration, vgrid_name, id_list, update_id=None):
+def vgrid_add_triggers(configuration, vgrid_name, id_list, update_id=None,
+                       rank=None):
     """Append id_list to pickled list of triggers for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'triggers',
-                              id_list, update_id)
+                              id_list, update_id, rank)
 
-def vgrid_add_settings(configuration, vgrid_name, id_list, update_id=None):
+def vgrid_add_settings(configuration, vgrid_name, id_list, update_id=None,
+                       rank=None):
     """Append id_list to pickled list of settings for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'settings',
-                              id_list, update_id)
+                              id_list, update_id, rank)
 
-def vgrid_add_sharelinks(configuration, vgrid_name, id_list, update_id=None):
+def vgrid_add_sharelinks(configuration, vgrid_name, id_list, update_id=None,
+                         rank=None):
     """Append id_list to pickled list of sharelinks for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'sharelinks',
-                              id_list, update_id)
+                              id_list, update_id, rank)
 
-def vgrid_add_imagesettings(configuration, vgrid_name, id_list, update_id=None):
+def vgrid_add_imagesettings(configuration, vgrid_name, id_list, update_id=None,
+                            rank=None):
     """Append id_list to pickled list of imagesettings for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'imagesettings',
-                              id_list, update_id)
+                              id_list, update_id, rank)
 
 def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
                           allow_empty, dict_field=False):
