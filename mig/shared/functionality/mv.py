@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mv - backend to move files/directories in user home
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -86,18 +86,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     status = returnvalues.OK
 
-    real_dest = base_dir + dst
-    dst_list = glob.glob(real_dest)
+    abs_dest = base_dir + dst
+    dst_list = glob.glob(abs_dest)
     if not dst_list:
 
         # New destination?
 
-        if not glob.glob(os.path.dirname(real_dest)):
+        if not glob.glob(os.path.dirname(abs_dest)):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Illegal dst path provided!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
-            dst_list = [real_dest]
+            dst_list = [abs_dest]
 
     # Use last match in case of multiple matches
 
@@ -108,15 +108,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
              : 'dst (%s) matches multiple targets - using last: %s'
              % (dst, dest)})
 
-    real_dest = os.path.abspath(dest)
+    abs_dest = os.path.abspath(dest)
 
-    # Don't use real_path in output as it may expose underlying
+    # Don't use abs_path in output as it may expose underlying
     # fs layout.
 
-    relative_dest = real_dest.replace(base_dir, '')
-    if not valid_user_path(real_dest, base_dir, True):
+    relative_dest = abs_dest.replace(base_dir, '')
+    if not valid_user_path(abs_dest, base_dir, True):
         logger.warning('%s tried to %s to restricted path %s ! (%s)'
-                       % (client_id, op_name, real_dest, dst))
+                       % (client_id, op_name, abs_dest, dst))
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : "Invalid path! (%s expands to an illegal path)" % dst})
@@ -126,12 +126,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir):
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -142,26 +142,35 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                    % (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
 
-        for real_path in match:
-            relative_path = real_path.replace(base_dir, '')
+        for abs_path in match:
+            relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                                        : relative_path})
 
-            if os.path.islink(real_path):
+            if os.path.islink(abs_path):
                 output_objects.append(
-                    {'object_type': 'warning', 'text'
-                     : "You're not allowed to move entire %s shared dirs!"
-                     % configuration.site_vgrid_label})
+                    {'object_type': 'warning', 'text': """You're not allowed to
+move entire special folders like %s shared folders!""" % \
+                     configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
+                logger.error("%s: refusing pack home dir: %s" % (op_name,
+                                                                 abs_path))
+                output_objects.append(
+                    {'object_type': 'warning', 'text':
+                     "You're not allowed to pack your entire home directory!"
+                     })
                 status = returnvalues.CLIENT_ERROR
                 continue
             
             # If destination is a directory the src should be moved in there
             # Move with existing directory as target replaces the directory!
 
-            real_target = real_dest
-            if os.path.isdir(real_target):
-                if os.path.samefile(real_target, real_path):
+            abs_target = abs_dest
+            if os.path.isdir(abs_target):
+                if os.path.samefile(abs_target, abs_path):
                     output_objects.append(
                         {'object_type': 'warning', 'text'
                          : "Cannot move '%s' to a subdirectory of itself!" % \
@@ -169,11 +178,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
                          })
                     status = returnvalues.CLIENT_ERROR
                     continue
-                real_target = os.path.join(real_target,
-                                           os.path.basename(real_path))
+                abs_target = os.path.join(abs_target,
+                                           os.path.basename(abs_path))
             
             try:
-                shutil.move(real_path, real_target)
+                shutil.move(abs_path, abs_target)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,

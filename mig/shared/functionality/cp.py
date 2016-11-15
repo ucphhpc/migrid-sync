@@ -95,18 +95,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     status = returnvalues.OK
 
-    real_dest = base_dir + dst
-    dst_list = glob.glob(real_dest)
+    abs_dest = base_dir + dst
+    dst_list = glob.glob(abs_dest)
     if not dst_list:
 
         # New destination?
 
-        if not glob.glob(os.path.dirname(real_dest)):
+        if not glob.glob(os.path.dirname(abs_dest)):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Illegal dst path provided!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
-            dst_list = [real_dest]
+            dst_list = [abs_dest]
 
     # Use last match in case of multiple matches
 
@@ -117,15 +117,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
              : 'dst (%s) matches multiple targets - using last: %s'
              % (dst, dest)})
 
-    real_dest = os.path.abspath(dest)
+    abs_dest = os.path.abspath(dest)
 
-    # Don't use real_path in output as it may expose underlying
+    # Don't use abs_path in output as it may expose underlying
     # fs layout.
 
-    relative_dest = real_dest.replace(base_dir, '')
-    if not valid_user_path(real_dest, base_dir, True):
+    relative_dest = abs_dest.replace(base_dir, '')
+    if not valid_user_path(abs_dest, base_dir, True):
         logger.warning('%s tried to %s restricted path %s ! (%s)'
-                       % (client_id, op_name, real_dest, dst))
+                       % (client_id, op_name, abs_dest, dst))
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : "Invalid destination (%s expands to an illegal path)" % dst})
@@ -135,12 +135,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir):
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -150,49 +150,58 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
-        for real_path in match:
-            relative_path = real_path.replace(base_dir, '')
+        for abs_path in match:
+            relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                         : relative_path})
 
             # Prevent vgrid share copy which would create read-only dot dirs
 
-            if os.path.islink(real_path):
-                output_objects.append({'object_type': 'warning', 'text'
-                        : "You're not allowed to copy entire %s shared dirs!"
-                                       % configuration.site_vgrid_label
-                        })
+            if os.path.islink(abs_path):
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+copy entire special folders like %s shared folders!""" % \
+                     configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
+                logger.error("%s: refusing copy home dir: %s" % (op_name,
+                                                                 abs_path))
+                output_objects.append(
+                    {'object_type': 'warning', 'text':
+                     "You're not allowed to copy your entire home directory!"
+                     })
                 status = returnvalues.CLIENT_ERROR
                 continue
 
             # src must be a file unless recursive is specified
 
-            if not recursive(flags) and os.path.isdir(real_path):
-                logger.warning('skipping directory source %s' % real_path)
+            if not recursive(flags) and os.path.isdir(abs_path):
+                logger.warning('skipping directory source %s' % abs_path)
                 output_objects.append({'object_type': 'warning', 'text'
                         : 'skipping directory src %s!' % relative_path})
                 continue
             
             # If destination is a directory the src should be copied there
 
-            real_target = real_dest
-            if os.path.isdir(real_target):
-                real_target = os.path.join(real_target,
-                                           os.path.basename(real_path))
+            abs_target = abs_dest
+            if os.path.isdir(abs_target):
+                abs_target = os.path.join(abs_target,
+                                           os.path.basename(abs_path))
 
-            if os.path.abspath(real_path) == os.path.abspath(real_target):
+            if os.path.abspath(abs_path) == os.path.abspath(abs_target):
                 logger.warning('%s tried to %s %s to itself! (%s)' % \
-                               (client_id, op_name, real_path, pattern))
+                               (client_id, op_name, abs_path, pattern))
                 output_objects.append(
                     {'object_type': 'warning', 'text'
                      : "Cannot copy '%s' to self!" % relative_path})
                 status = returnvalues.CLIENT_ERROR
                 continue
-            if os.path.isdir(real_path) and \
-                   real_target.startswith(real_path + os.sep):
+            if os.path.isdir(abs_path) and \
+                   abs_target.startswith(abs_path + os.sep):
                 logger.warning('%s tried to %s %s to itself! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 output_objects.append(
                     {'object_type': 'warning', 'text'
                      : "Cannot copy '%s' to (sub) self!" % relative_path})
@@ -200,11 +209,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 continue
             
             try:
-                if os.path.isdir(real_path):
-                    shutil.copytree(real_path, real_target)
+                if os.path.isdir(abs_path):
+                    shutil.copytree(abs_path, abs_target)
                 else:
-                    shutil.copy(real_path, real_target)
-                logger.info('%s %s %s done' % (op_name, real_path, real_target))
+                    shutil.copy(abs_path, abs_target)
+                logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
             except Exception, exc:
                 output_objects.append(
                     {'object_type': 'error_text',

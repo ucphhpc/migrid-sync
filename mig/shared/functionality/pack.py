@@ -134,9 +134,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if 'h' in flags:
         usage(output_objects)
 
-    real_dir = os.path.abspath(os.path.join(base_dir,
+    abs_dir = os.path.abspath(os.path.join(base_dir,
                                             current_dir.lstrip(os.sep)))
-    if not valid_user_path(real_dir, base_dir, True):
+    if not valid_user_path(abs_dir, base_dir, True):
 
         # out of bounds
 
@@ -144,19 +144,20 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               : "You're not allowed to work in %s!"
                                % current_dir})
         logger.warning('%s tried to %s restricted path %s ! (%s)'
-                       % (client_id, op_name, real_dir, current_dir))
+                       % (client_id, op_name, abs_dir, current_dir))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
                            : "working in %s" % current_dir})
 
-    real_dest = os.path.join(base_dir, dst)
+    # NOTE: dst already incorporates current_dir prefix here
+    abs_dest = os.path.join(base_dir, dst)
 
-    # Don't use real_path in output as it may expose underlying
+    # Don't use abs_path in output as it may expose underlying
     # fs layout.
 
-    relative_dest = real_dest.replace(base_dir, '')
-    if not valid_user_path(real_dest, base_dir, True):
+    relative_dest = abs_dest.replace(base_dir, '')
+    if not valid_user_path(abs_dest, base_dir, True):
 
         # out of bounds
 
@@ -164,11 +165,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
             {'object_type': 'error_text', 'text'
              : "Invalid path! (%s expands to an illegal path)" % dst})
         logger.warning('%s tried to %s restricted path %s !(%s)'
-                       % (client_id, op_name, real_dest, dst))
+                       % (client_id, op_name, abs_dest, dst))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
 
-    if not os.path.isdir(os.path.dirname(real_dest)):
+    if not os.path.isdir(os.path.dirname(abs_dest)):
         output_objects.append({'object_type': 'error_text', 'text'
                                : "No such destination directory: %s"
                                % os.path.dirname(relative_dest)})
@@ -185,17 +186,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            logger.debug("%s: inspecting: %s" % (op_name, server_path))
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            else:
+                match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -207,12 +210,29 @@ CSRF-filtered POST requests to prevent unintended updates'''
             status = returnvalues.CLIENT_ERROR
             continue
 
-        for real_path in match:
-            relative_path = real_path.replace(base_dir, '')
-            if real_dest == real_path:
-                output_objects.append({'object_type': 'text', 'text'
-                                       : 'skipping destination file %s'
+        for abs_path in match:
+            relative_path = abs_path.replace(base_dir, '')
+            if os.path.islink(abs_path):
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+pack entire special folders like %s shared folders!""" % \
+                     configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
+                logger.error("%s: refusing pack home dir: %s" % (op_name,
+                                                                 abs_path))
+                output_objects.append(
+                    {'object_type': 'warning', 'text':
+                     "You're not allowed to pack your entire home directory!"
+                     })
+                status = returnvalues.CLIENT_ERROR
+                continue
+            elif os.path.realpath(abs_dest) == os.path.realpath(abs_path):
+                output_objects.append({'object_type': 'warning', 'text'
+                                       : 'overlap in source and destination %s'
                                        % relative_dest})
+                status = returnvalues.CLIENT_ERROR
                 continue
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'

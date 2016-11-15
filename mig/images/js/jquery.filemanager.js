@@ -1371,7 +1371,7 @@ if (jQuery) (function($){
 
                         // Root node if not already created
                         if (t === '/' && $(".fm_folders li.userhome").length === 0) {
-                            folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="/" title="Home"><div>/</div>\n';
+                            folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="./" title="Home"><div>/</div>\n';
                         }
 
                         // Regular nodes from here on after
@@ -1545,6 +1545,7 @@ if (jQuery) (function($){
                         var headerHeight = 20;
                         var spacerHeight = 40;
                         var uploaderHeight = 40;
+                        var title_path = '';
                         var extraHeight = spacerHeight + uploaderHeight;
                         if ($("#fm_filelisting").height() + extraHeight < $(".fm_files").height() - headerHeight) {
                             extraHeight = $(".fm_files").height() - $("#fm_filelisting").height() - headerHeight;
@@ -1566,11 +1567,15 @@ if (jQuery) (function($){
 
                             if (t !== '/') { // Do not prepend the fake-root.
                                 rel_path = t;
+                                title_path = rel_path;
+                            } else {
+                                rel_path = './';
+                                title_path = 'Home'
                             }
                             //console.debug("update filespacer with path: "+rel_path);
                             $(".fm_files div.filespacer").css("height", spacerHeight+"px")
                                 .attr("rel_path", rel_path)
-                                .attr("title", rel_path);
+                                .attr("title", title_path);
                         }
                         if (options.uploadspace) {
                             if (!options.filespacer) {
@@ -2045,8 +2050,9 @@ if (jQuery) (function($){
                          $("#mkdir_output").html(warnings);
                      } else {
                          $("#mkdir_dialog").dialog('close');
-                         $(".fm_files").parent().reload('');
                      }
+                     /* always reload parent to reset progress, etc */
+                     $(".fm_files").parent().reload('');
                  }
                 });
 
@@ -2061,8 +2067,9 @@ if (jQuery) (function($){
                          $("#pack_output").html(warnings);
                      } else {
                          $("#pack_dialog").dialog('close');
-                         $(".fm_files").parent().reload('');
                      }
+                     /* always reload parent to reset progress, etc */
+                     $(".fm_files").parent().reload('');
                  }
                 });
 
@@ -2078,8 +2085,9 @@ if (jQuery) (function($){
                      } else {
                          $("#sharelink_output").html("created!");
                          $("#sharelink_dialog").dialog('close');
-                         $(".fm_files").parent().reload('');
                      }
+                     /* always reload parent to reset progress, etc */
+                     $(".fm_files").parent().reload('');
                  }
                 });
 
@@ -2094,8 +2102,9 @@ if (jQuery) (function($){
                          $("#rename_output").html(warnings);
                      } else {
                          $("#rename_dialog").dialog('close');
-                         $(".fm_files").parent().reload('');
                      }
+                     /* always reload parent to reset progress, etc */
+                     $(".fm_files").parent().reload('');
                  },
                  beforeSubmit: function(formData, jqForm, options) {
                      var src = $("#rename_form input[name='src']").val();
@@ -2143,8 +2152,10 @@ if (jQuery) (function($){
                      } else {
                          $("#editor_output").addClass("ok leftpad");
                          //$("#editor_dialog").dialog('close');
-                         $(".fm_files").parent().reload('');
                      }
+                     /* always reload parent to reset progress, etc */
+                     $(".fm_files").parent().reload('');
+
                      for (var i=0; i<(responseObject.length); i++) {
                          switch(responseObject[i]['object_type']) {
                          case 'text':
