@@ -56,6 +56,8 @@ email_keyword_list = ['mail', 'email']
 pending_states = ['PARSE', 'QUEUED', 'EXECUTING', 'RETRY', 'FROZEN']
 final_states = ['FINISHED', 'CANCELED', 'EXPIRED', 'FAILED']
 
+maxfill_fields = ['CPUTIME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK']
+
 mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'

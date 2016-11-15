@@ -38,6 +38,7 @@ from math import exp, floor
 
 import shared.safeeval as safeeval
 from jobqueue import print_job
+from shared.defaults import maxfill_fields
 from shared.resource import anon_resource_id
 from shared.vgrid import vgrid_access_match, validated_vgrid_list
 
@@ -1093,25 +1094,34 @@ class Scheduler:
         return unit_price
 
     def current_prices(self, job, res):
-
-        # Returns a tuple with current job maxprice and resource price for
-        # executing the job now.
-        # If price is broken we just ignore it and leave job to expire.
-
+        """Returns a tuple with current job maxprice and resource price for
+        executing the job now.
+        If price is broken we just ignore it and leave job to expire.
+        """
+        
         attr = 'MAXPRICE'
+        # Bump requested values to any resource specs requested in MAXFILL
+        job_maxfill = job.get('MAXFILL', [])
+        maxed = job.copy()
+        #self.logger.debug('current_prices: job_maxfill is %s' % job_maxfill)
         try:
-            cpucount = int(job['CPUCOUNT'])
-            nodecount = int(job['NODECOUNT'])
-            cputime = int(job['CPUTIME'])
+            for name in maxfill_fields:
+                if name in job_maxfill:
+                    maxed[name] = int(res[name])
+                else:
+                    maxed[name] = int(job[name])
         except:
-            self.logger.error('current_prices: integer conversion in cpu_secs for %s failed!'
-                               % job)
+            self.logger.error(
+                'current_prices: integer conversion in cpu_secs for %s failed!'
+                % job)
 
             # Make sure job_price - res_price is negative for now
 
             return (self.illegal_price, 0.0)
 
-        cpu_secs = (cpucount * nodecount) * cputime
+        #self.logger.debug('current_prices: maxed is %s' % maxed)
+
+        cpu_secs = (maxed['CPUCOUNT'] * maxed['NODECOUNT']) * maxed['CPUTIME']
         units = cpu_secs / self.unit_length
         if cpu_secs % self.unit_length != 0:
             units += 1
@@ -1121,9 +1131,9 @@ class Scheduler:
         # temporary account.
         # Additionally fairness demands the price decision here.
 
-        unit_price = self.get_min_price(res, job['RUNTIMEENVIRONMENT'])
+        unit_price = self.get_min_price(res, maxed['RUNTIMEENVIRONMENT'])
         res_price = units * unit_price
-        job_price = self.get_max_price(job)
+        job_price = self.get_max_price(maxed)
 
         # self.logger.debug("current_prices: job %s, price %d, units %d" % \
         #                                (job["JOB_ID"], job_price, units))

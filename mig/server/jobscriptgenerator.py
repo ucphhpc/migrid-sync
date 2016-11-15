@@ -37,7 +37,7 @@ import genjobscriptpython
 import genjobscriptsh
 import genjobscriptjava
 from shared.base import client_id_dir
-from shared.defaults import session_id_bytes
+from shared.defaults import session_id_bytes, maxfill_fields
 from shared.fileio import write_file, pickle, make_symlink
 from shared.mrslparser import expand_variables
 from shared.ssh import copy_file_to_resource, generate_ssh_rsa_key_pair
@@ -189,6 +189,11 @@ def create_job_script(
     
     # Deep copy job for local changes
     job_dict = deepcopy(job)
+    # Bump requested values to any resource specs requested in MAXFILL
+    job_maxfill = job_dict.get('MAXFILL', [])
+    for name in maxfill_fields:
+        if name in job_maxfill:
+            job_dict[name] = resource_config[name]
 
     job_dict['SESSIONID'] = sessionid
     job_dict['IOSESSIONID'] = iosessionid

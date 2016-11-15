@@ -40,7 +40,7 @@ import jobscriptgenerator
 from jobqueue import JobQueue
 from shared.base import client_id_dir, generate_https_urls
 from shared.conf import get_configuration_object, get_resource_exe
-from shared.defaults import default_vgrid
+from shared.defaults import default_vgrid, maxfill_fields
 from shared.fileio import pickle, unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
 from shared.gridscript import clean_grid_stdin, \
@@ -1056,18 +1056,17 @@ while True:
 
                         last_request_dict['STATUS'] = 'Job assigned'
                         last_request_dict['CPUTIME'] = \
-                            job_dict['CPUTIME']
+                            new_job['CPUTIME']
                         last_request_dict['EXECUTION_DELAY'] = \
                             execution_delay
                         last_request_dict['NODECOUNT'] = \
-                            job_dict['NODECOUNT']
+                            new_job['NODECOUNT']
 
                         # job id and user_cert is used to check if the current
                         # job is done when a resource requests a new job
 
-                        last_request_dict['JOB_ID'] = job_dict['JOB_ID']
-                        last_request_dict['USER_CERT'] = \
-                            job_dict['USER_CERT']
+                        last_request_dict['JOB_ID'] = new_job['JOB_ID']
+                        last_request_dict['USER_CERT'] = new_job['USER_CERT']
 
                         # Save actual VGrid for fair VGrid cycling
 
@@ -1081,14 +1080,18 @@ while True:
                             vgrid_index = last_vgrid
                         last_request_dict['LAST_VGRID'] = vgrid_index
 
-                        print 'Job assigned ' + job_dict['JOB_ID']
+                        print 'Job assigned ' + new_job['JOB_ID']
                         logger.info('Job %s assigned to %s execution unit %s'
-                                     % (job_dict['JOB_ID'],
-                                    unique_resource_name, exe))
+                                    % (new_job['JOB_ID'], 
+                                       unique_resource_name, exe))
 
-                        # put job in executing queue
+                        # put job in executing queue - with maxfilled values
 
-                        executing_queue.enqueue_job(mrsl_dict,
+                        active_job = copy.deepcopy(mrsl_dict)
+                        for name in maxfill_fields:
+                            active_job[name] = new_job[name]
+
+                        executing_queue.enqueue_job(active_job,
                                 executing_queue.queue_length())
 
                         print 'executing_queue length %d'\
