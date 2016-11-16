@@ -32,6 +32,7 @@ import base64
 import StringIO
 import tempfile
 
+from shared.defaults import keyword_all, maxfill_fields
 from shared.rekeywords import get_keywords_dict
 from shared.resconfkeywords import get_keywords_dict as resconf_get_keywords_dict
 from shared.safeinput import valid_job_name, guess_type, html_escape
@@ -237,7 +238,7 @@ def format_type_error(
     -->
     ''' % {'keyword': html_escape(keyword), 'msg': html_escape(msg),
     'safe_data': ' '.join([html_escape(i) for i in keyword_data]),
-    'example': keyword_dict['Example'],
+    'example': keyword_dict['Example'].replace('\n', '<br/>'),
     'description': keyword_dict['Description']}     
     return out
 
@@ -419,7 +420,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                 'specified jobname not valid: %s' % err,
                                 keyword_dict, keyword_data)
             elif keyword_type == 'multiplestrings':
-
+                maxfill_values = [keyword_all] + maxfill_fields
                 for single_line in keyword_data:
                     try:
                         value.append(str(single_line))
@@ -427,6 +428,14 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         status = False
                         msg += format_type_error(job_keyword,
                                 'requires one or more strings',
+                                keyword_dict, keyword_data)
+                    if job_keyword == 'MAXFILL':
+                        if not single_line.strip() in maxfill_values:
+                            status = False
+                            msg += format_type_error(
+                                job_keyword,
+                                'specified maxfill not valid, should be in %s' % 
+                                maxfill_values,
                                 keyword_dict, keyword_data)
             elif keyword_type == 'testprocedure':
 

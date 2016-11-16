@@ -45,8 +45,7 @@ def get_job_specs(configuration):
     specs.append(('EXECUTE', {
         'Title': 'Execute Commands',
         'Description': 'One or more commands to execute',
-        'Example': '''
-::EXECUTE::
+        'Example': '''::EXECUTE::
 uname -a
 echo text >> file
 ls
@@ -79,8 +78,7 @@ External sources are also allowed as long as they can be downloaded with the "cu
 Inputfiles may be specified as a single name per line or as lines of source and destination path separated by a "%(sep)s". In the single name format the file will be called the same on the destination as on the source.
 Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
 ''' % sep_helper,
-        'Example': '''
-::INPUTFILES::
+        'Example': '''::INPUTFILES::
 somefile
 another_file%(sep)sanother_file_renamed
 
@@ -103,8 +101,7 @@ Relative paths like plain file names are automatically sent to the user home on 
 Outputfiles may be specified as a single name per line or as lines of source and destination path separated by a "%(sep)s". In the single name format the file will be called the same on the destination as on the source.
 Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
 ''' % sep_helper,
-        'Example': '''
-::OUTPUTFILES::
+        'Example': '''::OUTPUTFILES::
 file
 another_file_renamed%(sep)sanother_file
 
@@ -126,8 +123,7 @@ Uploads some_file on the resource to some_url (e.g. ftp://myuser:mypw@myhost.org
 These files are exactly like the INPUTFILES, but the files are made executable (chmod +x) after they are copied to the resource.
 Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
 ''',
-        'Example': '''
-::EXECUTABLES::
+        'Example': '''::EXECUTABLES::
 myscript
 myfile_or_url%(sep)ssome_name
 
@@ -141,8 +137,7 @@ Copies myscript and myfile_or_url from your %(short)s home to the resource, but 
     specs.append(('MOUNT', {
         'Title': 'Mount',
         'Description': '''Mounts your %s home on resource before job execution.''' % configuration.short_title,
-        'Example': '''
-:::MOUNT:::
+        'Example': ''':::MOUNT:::
 home_path%(sep)sresource_mount_point
 
 Mounts your %(short)s home_path on resource_mount_point, the mount is disabled when the job finishes.
@@ -156,8 +151,7 @@ Mounts your %(short)s home_path on resource_mount_point, the mount is disabled w
         'Title': 'Target Resources',
         'Description': '''A list of resources allowed to execute the job (default is unset which means any resource).
 Each entry can be a full resource ID or a pattern with wild card support to match multiple resources or execution nodes.''',
-        'Example': '''
-::RESOURCE::
+        'Example': '''::RESOURCE::
 6ad933abfde57855d45fd805654508f9_*
 f92dc607c8d1bc4710fad44f89cfd40b_localhost
 
@@ -175,11 +169,10 @@ Leave unset or empty to submit with execution on the first suitable resource.
         'Description': '''A prioritized list of the VGRIDs allowed to execute the job (default value is %s).
 During job submit the keyword %s is replaced by a list of all the VGrids that you can access.
 ''' % (default_vgrid, any_vgrid),
-        'Example': '''
-::VGRID::
-Dalton
+        'Example': '''::VGRID::
+eScience
 
-To submit with execution on the Dalton VGrid only.
+To submit with execution on the eScience VGrid only.
 
 ::VGRID::
 %s
@@ -239,14 +232,12 @@ To submit with execution on the first suitable and allowed VGrid.
     specs.append(('ARCHITECTURE', {
         'Title': 'CPU Architecture',
         'Description': 'CPU architecture required for execution',
-        'Example': '''
-::ARCHITECTURE::
+        'Example': '''::ARCHITECTURE::
 X86
 
 This particular server supports the following values:
 %s
-'''\
-             % ', '.join(configuration.architectures),
+''' % ', '.join(configuration.architectures),
         'Type': 'string',
         'Value': '',
         'Editor': 'select',
@@ -255,8 +246,7 @@ This particular server supports the following values:
     specs.append(('MAXFILL', {
         'Title': 'Fill available resources',
         'Description': 'Optional list of resource specification field names for which the job should automatically fill the maximum available value on the first suitable resource. That is, if a job requests CPUCOUNT 8 and includes CPUCOUNT in MAXFILL, then the job will be scheduled as usual to a resource with at least a CPUCOUNT of 8, but it will get acces to the actual CPUCOUNT that the resource advertizes. Thus, in combination with MAXFILL any of the CPUTIME, CPUCOUNT, NODECOUNT, MEMORY and DISK variables can effectively be used to specify MINIMUM resource requirements without restricting to exactly the minimum when running on more capable resources.',
-        'Example': '''
-::MAXFILL:
+        'Example': '''::MAXFILL::
 CPUTIME
 MEMORY
 
@@ -279,11 +269,11 @@ To bump the CPUTIME and MEMORY to whatever the executing resource can provide.
     specs.append(('RUNTIMEENVIRONMENT', {
         'Title': 'Runtime Environments',
         'Description': 'Runtime environments like e.g. software packages that the job requires',
-        'Example': '''
-::RUNTIMEENVIRONMENT::
-POVRAY3-6
+        'Example': '''::RUNTIMEENVIRONMENT::
+BASH-ANY-1
 
-The job will only be executed on resources that advertize the same runtime environment(s).
+The job will only be executed on resources that advertize at least the same
+list of runtime environment(s). In this case the availability of BASH-ANY-1.
 ''',
         'Type': 'multiplestrings',
         'Value': [],
@@ -295,8 +285,7 @@ The job will only be executed on resources that advertize the same runtime envir
         'Description': '''Email and/or Instant Messenger account to notify when the job is done or if it fails.
 If you have configured your %s settings you may leave the address part empty or set it to "SETTINGS" to use the saved setting.
 ''' % configuration.short_title ,
-        'Example': '''
-::NOTIFY::
+        'Example': '''::NOTIFY::
 myemail@mailserver.org
 jabber: myaccount@jabberserver.org
 yahoo: 
@@ -312,8 +301,7 @@ Sends email to myemail@mailserver.org, jabber message to myaccount@jabberserver.
     specs.append(('VERIFYFILES', {
         'Title': 'Result Verification Files',
         'Description': 'Files to verify job execution results and output against',
-        'Example': '''
-::VERIFYFILES::
+        'Example': '''::VERIFYFILES::
 EXPECTED.status
 EXPECTED.stdout
 EXPECTED.stderr

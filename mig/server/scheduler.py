@@ -38,7 +38,7 @@ from math import exp, floor
 
 import shared.safeeval as safeeval
 from jobqueue import print_job
-from shared.defaults import maxfill_fields
+from shared.defaults import maxfill_fields, keyword_all
 from shared.resource import anon_resource_id
 from shared.vgrid import vgrid_access_match, validated_vgrid_list
 
@@ -1102,6 +1102,8 @@ class Scheduler:
         attr = 'MAXPRICE'
         # Bump requested values to any resource specs requested in MAXFILL
         job_maxfill = job.get('MAXFILL', [])
+        if keyword_all in job_maxfill:
+            job_maxfill = maxfill_fields
         maxed = job.copy()
         #self.logger.debug('current_prices: job_maxfill is %s' % job_maxfill)
         try:
