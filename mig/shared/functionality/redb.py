@@ -35,7 +35,7 @@ from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
-from shared.refunctions import list_runtime_environments, get_re_dict
+from shared.refunctions import get_re_map, CONF
 from shared.vgridaccess import resources_using_re, get_re_provider_map
 
 list_operations = ['showlist', 'list']
@@ -129,21 +129,11 @@ def main(client_id, user_arguments_dict):
 
     runtimeenvironments = []
     if operation in list_operations:
-        # TODO: much of this is static and could easily be cached
-        (list_status, ret) = list_runtime_environments(configuration)
-        if not list_status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : ret})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
-
+        re_map = get_re_map(configuration)
         provider_map = get_re_provider_map(configuration)
 
-        for single_re in ret:
-            (re_dict, msg) = get_re_dict(single_re, configuration)
-            if not re_dict:
-                output_objects.append({'object_type': 'error_text', 'text'
-                                      : msg})
-                return (output_objects, returnvalues.SYSTEM_ERROR)
+        for (re_name, cache_dict) in re_map.items():
+            re_dict = cache_dict[CONF]
             # Set providers explicitly after build_reitem_object to avoid import loop
             re_item = build_reitem_object(configuration, re_dict)
             re_name = re_item['name']

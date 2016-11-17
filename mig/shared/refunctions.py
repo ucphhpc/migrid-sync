@@ -33,11 +33,128 @@ import fcntl
 import os
 import time
 
+from shared.modified import mark_re_modified, check_res_modified, \
+     reset_res_modified
 import shared.rekeywords as rekeywords
 import shared.parser as parser
 from shared.serial import load, dump
 
 WRITE_LOCK = 'write.lock'
+RTE_SPECIALS = RUNTIMEENVS, CONF, MODTIME = \
+               ['__runtimeenvs__', '__conf__', '__modtime__']
+
+# Never repeatedly refresh maps within this number of seconds in same process
+# Used to avoid refresh floods with e.g. runtime envs page calling
+# refresh for each env when extracting providers.
+MAP_CACHE_SECONDS = 60
+
+last_refresh = {RUNTIMEENVS: 0}
+last_load = {RUNTIMEENVS: 0}
+last_map = {RUNTIMEENVS: {}}
+
+def load_re_map(configuration, do_lock=True):
+    """Load map of runtime environments. Uses a pickled dictionary for
+    efficiency. The do_lock option is used to enable and disable locking
+    during load.
+    Returns tuple with map and time stamp of last map modification.
+    Please note that time stamp is explicitly set to start of last update
+    to make sure any concurrent updates get caught in next run.
+    """
+    map_path = os.path.join(configuration.mig_system_files, "runtimeenvs.map")
+    lock_path = map_path.replace('.map', '.lock')
+    if do_lock:
+        lock_handle = open(lock_path, 'a')
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    try:
+        configuration.logger.info("before re map load")
+        re_map = load(map_path)
+        configuration.logger.info("after re map load")
+        map_stamp = os.path.getmtime(map_path)
+    except IOError:
+        configuration.logger.warning("No re map to load")
+        re_map = {}
+        map_stamp = -1
+    if do_lock:
+        lock_handle.close()
+    return (re_map, map_stamp)
+
+def refresh_re_map(configuration):
+    """Refresh map of runtime environments and their configuration. Uses a
+    pickled dictionary for efficiency. 
+    Only update map for runtime environments that appeared or disappeared after
+    last map save.
+    NOTE: Save start time so that any concurrent updates get caught next time.
+    """
+    start_time = time.time()
+    dirty = []
+    map_path = os.path.join(configuration.mig_system_files, "runtimeenvs.map")
+    lock_path = map_path.replace('.map', '.lock')
+    lock_handle = open(lock_path, 'a')
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    re_map, map_stamp = load_re_map(configuration, do_lock=False)
+
+    # Find all runtimeenvs and their configurations
+    
+    (load_status, all_res) = list_runtime_environments(configuration)
+    if not load_status:
+        configuration.logger.error("failed to load runtimeenv list: %s" % all_res)
+        return re_map
+    for re_name in all_res:
+        re_path = os.path.join(configuration.re_home, re_name)
+        re_mtime = 0
+        if os.path.isfile(re_path):
+            re_mtime = os.path.getmtime(re_path)
+
+        # init first time
+        re_map[re_name] = re_map.get(re_name, {})
+        if not re_map[re_name].has_key(CONF) or re_mtime >= map_stamp:
+            re_conf = get_re_conf(re_name, configuration)
+            if not re_conf:
+                re_conf = {}
+            re_map[re_name][CONF] = re_conf
+            re_map[re_name][MODTIME] = map_stamp
+            dirty += [re_name]
+    # Remove any missing runtimeenvs from map
+    missing_re = [re_name for re_name in re_map.keys() \
+                   if not re_name in all_res]
+    for re_name in missing_re:
+        del re_map[re_name]
+        dirty += [re_name]
+
+    if dirty:
+        try:
+            dump(re_map, map_path)
+            os.utime(map_path, (start_time, start_time))
+        except Exception, exc:
+            configuration.logger.error("Could not save re map: %s" % exc)
+
+    last_refresh[RUNTIMEENVS] = start_time
+    lock_handle.close()
+
+    return re_map
+
+def get_re_map(configuration):
+    """Returns the current map of runtime environments and their
+    configurations. Caches the map for load prevention with repeated calls
+    within short time span.
+    """
+    if last_load[RUNTIMEENVS] + MAP_CACHE_SECONDS > time.time():
+        configuration.logger.debug("using cached re map")
+        return last_map[RUNTIMEENVS]
+    modified_res, _ = check_res_modified(configuration)
+    if modified_res:
+        configuration.logger.info("refreshing re map (%s)" % modified_res)
+        map_stamp = time.time()
+        re_map = refresh_re_map(configuration)
+        reset_res_modified(configuration)
+    else:
+        configuration.logger.debug("No changes - not refreshing")
+        re_map, map_stamp = load_re_map(configuration)
+    last_map[RUNTIMEENVS] = re_map
+    last_refresh[RUNTIMEENVS] = map_stamp
+    last_load[RUNTIMEENVS] = map_stamp
+    return re_map
+
 
 def list_runtime_environments(configuration):
     """Find all runtime environments"""
@@ -92,6 +209,11 @@ def get_re_dict(name, configuration):
     else:
         return (re_dict, '')
 
+def get_re_conf(re_name, configuration):
+    """Wrapper to mimic other get_X_conf functions but using get_re_dict"""
+    (conf, msg) = get_re_dict(re_name, configuration)
+    return conf
+
 def delete_runtimeenv(re_name, configuration):
     """Delete an existing runtime environment"""
     status, msg = True, ""
@@ -105,6 +227,7 @@ def delete_runtimeenv(re_name, configuration):
     if os.path.isfile(filename):
         try:
             os.remove(filename)
+            mark_re_modified(configuration, re_name)
         except Exception, err:
             msg = "Exception during deletion of runtime enviroment '%s': %s"\
                   % (re_name, err)
@@ -163,6 +286,7 @@ def create_runtimeenv(filename, client_id, configuration):
 
     try:
         dump(new_dict, re_filename)
+        mark_re_modified(configuration, re_name)
     except Exception, err:
         status = False
         msg = 'Internal error saving new runtime environment: %s' % err
@@ -186,6 +310,7 @@ def update_runtimeenv_owner(re_name, old_owner, new_owner, configuration):
         if re_dict['CREATOR'] == old_owner:
             re_dict['CREATOR'] = new_owner
             dump(re_dict, re_filename)
+            mark_re_modified(configuration, re_name)
         else:
             status = False
     except Exception, err:

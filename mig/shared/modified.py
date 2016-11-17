@@ -71,6 +71,11 @@ def mark_vgrid_modified(configuration, vgrid_name):
     use"""
     return mark_entity_modified(configuration, 'vgrid', vgrid_name)
 
+def mark_re_modified(configuration, re_name):
+    """Mark re_name modified to signal e.g. re_map refresh
+    before next use"""
+    return mark_entity_modified(configuration, 'runtimeenvs', re_name)
+
 def check_entities_modified(configuration, kind):
     """Check and return any name of given kind that are marked as modified
     along with a time stamp for the latest modification"""
@@ -106,6 +111,10 @@ def check_vgrids_modified(configuration):
     """Check for modified vgrids and return list of such IDs"""
     return check_entities_modified(configuration, 'vgrid')
 
+def check_res_modified(configuration):
+    """Check for modified re and return list of such IDs"""
+    return check_entities_modified(configuration, 'runtimeenvs')
+
 def reset_entities_modified(configuration, kind):
     """Reset all modified entity marks of given kind"""
     modified_path = os.path.join(configuration.mig_system_files,
@@ -131,3 +140,20 @@ def reset_resources_modified(configuration):
 def reset_vgrids_modified(configuration):
     """Reset vgrid modified marks"""
     return reset_entities_modified(configuration, 'vgrid')
+
+def reset_res_modified(configuration):
+    """Reset res modified marks"""
+    return reset_entities_modified(configuration, 'runtimeenvs')
+
+if __name__ == "__main__":
+    import sys
+    from shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    re_name = 'BASH-ANY-1'
+    if sys.argv[1:]:
+        re_name = sys.argv[1]
+    print "Check runtime envs modified: %s %s" % check_res_modified(conf)
+    print "Marking runtime envs modified: %s" % re_name
+    mark_re_modified(conf, re_name)
+    print "Check runtime envs modified: %s %s" % check_res_modified(conf)
+        
