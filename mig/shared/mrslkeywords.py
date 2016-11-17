@@ -245,7 +245,7 @@ This particular server supports the following values:
         }))
     specs.append(('MAXFILL', {
         'Title': 'Fill available resources',
-        'Description': 'Optional list of resource specification field names for which the job should automatically fill the maximum available value on the first suitable resource. That is, if a job requests CPUCOUNT 8 and includes CPUCOUNT in MAXFILL, then the job will be scheduled as usual to a resource with at least a CPUCOUNT of 8, but it will get acces to the actual CPUCOUNT that the resource advertizes. Thus, in combination with MAXFILL any of the CPUTIME, CPUCOUNT, NODECOUNT, MEMORY and DISK variables can effectively be used to specify MINIMUM resource requirements without restricting to exactly the minimum when running on more capable resources.',
+        'Description': 'Optional list of resource specification field names for which the job should automatically fill the maximum available value on the first suitable resource. That is, if a job requests CPUCOUNT 8 and includes CPUCOUNT in MAXFILL, then the job will be scheduled as usual to a resource with at least a CPUCOUNT of 8, but it will get acces to the actual CPUCOUNT that the resource advertizes. Thus, in combination with MAXFILL any of the CPUTIME, CPUCOUNT, NODECOUNT, MEMORY and DISK variables can effectively be used to specify MINIMUM resource requirements without restricting to exactly the minimum when running on more capable resources. The keyword ALL may also be used to request MAXFILL of all possible fields.',
         'Example': '''::MAXFILL::
 CPUTIME
 MEMORY
