@@ -871,13 +871,30 @@ def resources_using_re(configuration, re_name):
 
     # Map only contains the raw resource names - anonymize as requested
 
-    anon_map = {}
     for (res_id, res) in resource_map.items():
         anon_id = resource_map[res_id][RESID]
         for env in resource_map[res_id][CONF]['RUNTIMEENVIRONMENT']:
             if env[0] == re_name:
                 resources.append(anon_id)
     return resources
+
+def get_re_provider_map(configuration):
+    """Find providers for all runtime environments in one go.
+
+    Resources are anonymized unless explicitly configured otherwise.
+    """
+    provider_map = {}
+    resource_map = get_resource_map(configuration)
+
+    # Map only contains the raw resource names - anonymize as requested
+
+    for (res_id, res) in resource_map.items():
+        anon_id = resource_map[res_id][RESID]
+        for env in resource_map[res_id][CONF]['RUNTIMEENVIRONMENT']:
+            re_name = env[0]
+            provider_map[re_name] = provider_map.get(re_name, [])
+            provider_map[re_name].append(anon_id)
+    return provider_map
 
 def unmap_resource(configuration, res_id):
     """Remove res_id from resource and vgrid maps - simply force refresh"""

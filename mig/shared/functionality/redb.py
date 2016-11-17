@@ -36,7 +36,7 @@ from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments, get_re_dict
-from shared.vgridaccess import resources_using_re
+from shared.vgridaccess import resources_using_re, get_re_provider_map
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
@@ -136,6 +136,8 @@ def main(client_id, user_arguments_dict):
                                   : ret})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
+        provider_map = get_re_provider_map(configuration)
+
         for single_re in ret:
             (re_dict, msg) = get_re_dict(single_re, configuration)
             if not re_dict:
@@ -145,7 +147,7 @@ def main(client_id, user_arguments_dict):
             # Set providers explicitly after build_reitem_object to avoid import loop
             re_item = build_reitem_object(configuration, re_dict)
             re_name = re_item['name']
-            re_item['providers'] = resources_using_re(configuration, re_name)
+            re_item['providers'] = provider_map.get(re_name, [])
             re_item['resource_count'] = len(re_item['providers'])
 
             re_item['viewruntimeenvlink'] = {'object_type': 'link',
