@@ -872,12 +872,11 @@ def resources_using_re(configuration, re_name):
     # Map only contains the raw resource names - anonymize as requested
 
     anon_map = {}
-    for res in resource_map.keys():
-        anon_map[res] = resource_map[res][RESID]
     for (res_id, res) in resource_map.items():
+        anon_id = resource_map[res_id][RESID]
         for env in resource_map[res_id][CONF]['RUNTIMEENVIRONMENT']:
             if env[0] == re_name:
-                resources.append(anon_map[res_id])
+                resources.append(anon_id)
     return resources
 
 def unmap_resource(configuration, res_id):
