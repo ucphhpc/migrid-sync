@@ -1064,6 +1064,10 @@ if (jQuery) (function($){
                 /* unpack file to user specified directory */
                 var src = $(el).attr(pathAttribute);
                 var dst = $(".fm_addressbar input[name='fm_current_path']").val();
+                dst = dst.replace(/\/$/, '').replace(/^\//, '')
+                if (dst === '') {
+                    dst = '.';
+                }
                 $("#unpack_form input[name='dst']").val(dst);
                 $("#unpack_dialog").dialog({
                     buttons: {
@@ -1125,32 +1129,34 @@ if (jQuery) (function($){
             },
             rm:     function (action, el, pos) {
                 var flags = '';
-                var rm_path = $(el).attr(pathAttribute);
+                var target = $(el).attr(pathAttribute);
                 var dest_msg;
                 var choices = {};
-                if ($(el).attr(pathAttribute).lastIndexOf('/') === $(el).attr(pathAttribute).length-1) {
+                if (target.lastIndexOf('/') === target.length-1) {
                     flags += 'r';
                 }
                 /* Default is move to trash with optional permanent delete. 
                    Use direct delete for items already in Trash. */
-                if ($(el).attr(pathAttribute).search(trash_linkname+'/') == -1) {
+                if (target.search(trash_linkname+'/') == -1) {
                     dest_msg = "moved to "+trash_linkname;
                     choices['Move To Trash'] = function() {
                         $(this).dialog('close');
-                        jsonWrapper(el, '#cmd_dialog', 'rm.py', {flags: flags });
+                        jsonWrapper(el, '#cmd_dialog', 'rm.py', 
+                                    {flags: flags, path: target});
                     };
                 } else {
                     dest_msg = "permanently deleted";
                 }
                 choices['Permanently Delete'] = function() {
                     $(this).dialog('close');
-                    jsonWrapper(el, '#cmd_dialog', 'rm.py', {flags: flags + 'f'});
+                    jsonWrapper(el, '#cmd_dialog', 'rm.py', 
+                                {flags: flags + 'f', path: target});
                 };
                 choices['Cancel'] = function() {
                     $(this).dialog('close');
                 };
 
-                $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+rm_path+'" will be '+dest_msg+'. Are you sure?</p></div>');
+                $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+target+'" will be '+dest_msg+'. Are you sure?</p></div>');
                 $("#cmd_dialog").dialog({
                     buttons: choices,
                     autoOpen: false, closeOnEscape: true, modal: true,
@@ -1196,15 +1202,16 @@ if (jQuery) (function($){
             //       for folders to be moved so only renaming of files works.
             rename: function(action, el, pos) {
                 var path_name = '';
-                var pathEl = $(el).attr(pathAttribute).split('/');
-                if ($(el).attr(pathAttribute).lastIndexOf('/') === $(el).attr(pathAttribute).length-1) {
+                var target = $(el).attr(pathAttribute);
+                var pathEl = target.split('/');
+                if (target.lastIndexOf('/') === target.length-1) {
                     path_name = pathEl[pathEl.length-2];
                 } else {
                     path_name = pathEl[pathEl.length-1];
                 }
 
                 // Initialize the form
-                $("#rename_form input[name='src']").val($(el).attr(pathAttribute));
+                $("#rename_form input[name='src']").val(target);
                 $("#rename_form input[name='name']").val(path_name);
                 $("#rename_output").html('');
                 $("#rename_dialog").dialog({
@@ -1471,7 +1478,7 @@ if (jQuery) (function($){
 
                         // Root node if not already created
                         if (t === '/' && $(".fm_folders li.userhome").length === 0) {
-                            folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="./" title="Home"><div>/</div>\n';
+                            folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="/" title="Home"><div>/</div>\n';
                         }
 
                         // Regular nodes from here on after
@@ -1662,14 +1669,14 @@ if (jQuery) (function($){
                             /* add or update existing filespacer */
                             if ($(".fm_files div.filespacer").length === 0) {
                                 //console.debug("add filespacer");
-                                $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="" title=""+></div>');
+                                $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path=""></div>');
                             }
 
-                            if (t !== '/') { // Do not prepend the fake-root.
+                            if (t !== '/') {
                                 rel_path = t;
                                 title_path = rel_path;
                             } else {
-                                rel_path = './';
+                                rel_path = '.'
                                 title_path = 'Home'
                             }
                             //console.debug("update filespacer with path: "+rel_path);
