@@ -231,7 +231,8 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
     </div>
 
     <div id="pack_dialog" title="Pack" style="display: none;">
-    <form id="pack_form" method="post" action="pack.py">
+    <!-- NOTE: no explicit form action, only submit through jquery -->
+    <form id="pack_form" action="javascript:void(0);">
     <fieldset>
         <input type="hidden" name="%(csrf_field)s" value="%(pack_csrf_token)s" />
         <input type="hidden" name="output_format" value="json" />
@@ -248,6 +249,22 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
     </p>
     </form>
     <div id="pack_output"></div>
+    </div>
+
+    <div id="unpack_dialog" title="Unpack" style="display: none;">
+    <!-- NOTE: no explicit form action, only submit through jquery -->
+    <form id="unpack_form" action="javascript:void(0);">
+    <fieldset>
+        <input type="hidden" name="%(csrf_field)s" value="%(unpack_csrf_token)s" />
+        <input type="hidden" name="output_format" value="json" />
+        <input type="hidden" name="flags" value="" />
+        <input type="hidden" name="src" value="" />
+        
+        <label for="dst">Unpack to folder:</label>
+        <input id="dst" class="singlefield" type="text" name="dst" size=50  value="" />
+    </fieldset>
+    </form>
+    <div id="unpack_output"></div>
     </div>
 
     <div id="grep_dialog" title="Text search in file" style="display: none;">

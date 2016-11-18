@@ -604,7 +604,8 @@ if (jQuery) (function($){
 
             $("#cmd_dialog").dialog(okDialog);
             $("#cmd_dialog").dialog('open');
-            $("#cmd_dialog").html('<p class="spinner iconleftpad">Copying... "'+src+'" <br />To: "'+dst+'"</p>');
+            $("#cmd_dialog").html('<p class="spinner iconleftpad">Copying... "'+
+                                  src+'" <br />To: "'+dst+'"</p>');
 
             var jsonSettings = { src: src,
                                  dst: dst,
@@ -619,7 +620,7 @@ if (jQuery) (function($){
             } else {
                 console.info("No CSRF token for "+target_op);
             }
-            $.post('cp.py', jsonSettings,
+            $.post(target_op+'.py', jsonSettings,
                    function(jsonRes, textStatus) {
                        stopProgress();
                        var errors = $(this).renderError(jsonRes);
@@ -634,6 +635,79 @@ if (jQuery) (function($){
                                $(".fm_files").parent().reload($(".fm_addressbar input[name='fm_current_path']").val().substr(1));
                            }
                            $("#cmd_dialog").dialog('close');
+                       }
+                   }, "json"
+                  );
+
+        }
+
+        function pack(current_dir, src, dst) {
+            $("#cmd_dialog").dialog(okDialog);
+            $("#cmd_dialog").dialog('open');
+            $("#cmd_dialog").html('<p class="spinner iconleftpad">Packing... "'+
+                                  src+'" <br />in: "'+dst+'"</p>');
+
+            var jsonSettings = {current_dir: current_dir,
+                                src: src,
+                                dst: dst,
+                                output_format: 'json'};
+
+            var target_op = 'pack';
+            console.info("Lookup CSRF token for "+target_op);
+            if (csrf_map[target_op] !== undefined) {
+                jsonSettings['_csrf'] = csrf_map[target_op];
+                console.info("Found CSRF token "+jsonSettings['_csrf']);
+            } else {
+                console.info("No CSRF token for "+target_op);
+            }
+            $.post(target_op+'.py', jsonSettings,
+                   function(jsonRes, textStatus) {
+                       stopProgress();
+                       var errors = $(this).renderError(jsonRes);
+                       var warnings = $(this).renderWarning(jsonRes);
+                       if (errors.length > 0) {
+                           $($("#cmd_dialog").html('<p>Error:</p>'+errors));
+                       } else if (warnings.length > 0) {
+                           $($("#cmd_dialog").html('<p>Warning:</p>'+warnings));
+                       } else {
+                           $("#cmd_dialog").dialog('close');
+                           $(".fm_files").parent().reload('');
+                       }
+                   }, "json"
+                  );
+
+        }
+
+        function unpack(src, dst) {
+            $("#cmd_dialog").dialog(okDialog);
+            $("#cmd_dialog").dialog('open');
+            $("#cmd_dialog").html('<p class="spinner iconleftpad">Unpacking... "'
+                                  +src+'" <br />in: "'+dst+'"</p>');
+
+            var jsonSettings = {src: src,
+                                dst: dst,
+                                output_format: 'json'};
+
+            var target_op = 'unpack';
+            console.info("Lookup CSRF token for "+target_op);
+            if (csrf_map[target_op] !== undefined) {
+                jsonSettings['_csrf'] = csrf_map[target_op];
+                console.info("Found CSRF token "+jsonSettings['_csrf']);
+            } else {
+                console.info("No CSRF token for "+target_op);
+            }
+            $.post(target_op+'.py', jsonSettings,
+                   function(jsonRes, textStatus) {
+                       stopProgress();
+                       var errors = $(this).renderError(jsonRes);
+                       var warnings = $(this).renderWarning(jsonRes);
+                       if (errors.length > 0) {
+                           $($("#cmd_dialog").html('<p>Error:</p>'+errors));
+                       } else if (warnings.length > 0) {
+                           $($("#cmd_dialog").html('<p>Warning:</p>'+warnings));
+                       } else {
+                           $("#cmd_dialog").dialog('close');
+                           $(".fm_files").parent().reload('');
                        }
                    }, "json"
                   );
@@ -945,33 +1019,37 @@ if (jQuery) (function($){
             spell:   function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'spell.py'); },
             md5sum:   function (action, el, pos) {
-                jsonWrapper(el, '#cmd_dialog', 'chksum.py', {path: $(el).attr(pathAttribute), hash_algo: "md5"}); },
+                jsonWrapper(el, '#cmd_dialog', 'chksum.py', 
+                            {path: $(el).attr(pathAttribute), hash_algo: "md5"}); },
             sha1sum:   function (action, el, pos) {
-                jsonWrapper(el, '#cmd_dialog', 'chksum.py', {path: $(el).attr(pathAttribute), hash_algo: "sha1"}); },
+                jsonWrapper(el, '#cmd_dialog', 'chksum.py', 
+                            {path: $(el).attr(pathAttribute), hash_algo: "sha1"}); },
             pack:    function (action, el, pos) {
                 /* pack file or directory to user specified file */
                 var current_dir = '';
                 var target = $(el).attr(pathAttribute);
-                var path_name = '';
+                var src = '';
+                var dst = ''; 
                 var pathEl = target.split('/');
                 if (target.lastIndexOf("/") === (target.length-1)) {
-                    path_name = pathEl[pathEl.length-2];
+                    src = pathEl[pathEl.length-2];
                     target = target.substring(0, target.lastIndexOf('/'));
                 } else {
-                    path_name = pathEl[pathEl.length-1];
+                    src = pathEl[pathEl.length-1];
                 }
                 current_dir = target.substring(0, target.lastIndexOf('/'));
 
                 // Initialize the form with default to zip file
-                $("#pack_form input[name='current_dir']").val(current_dir);
-                $("#pack_form input[name='src']").val(path_name);
-                $("#pack_form input[name='dst']").val(path_name + '.zip');
+                $("#pack_form input[name='dst']").val(src + '.zip');
                 $("#pack_output").html('');
                 $("#pack_dialog").dialog({
                     buttons: {
                         Ok: function() {
-                            startProgress("Packing folder...");
-                            $("#pack_form").submit();
+                            dst = $("#pack_form input[name='dst']").val();
+                            $(this).dialog('close');
+                            console.debug('pack '+src+" in "+dst);
+                            startProgress("Packing "+dst+" ...");
+                            pack(current_dir, src, dst);
                         },
                         Cancel: function() {
                             $(this).dialog('close');
@@ -983,11 +1061,33 @@ if (jQuery) (function($){
                 $("#pack_dialog").dialog('open');
             },
             unpack:   function (action, el, pos) {
+                /* unpack file to user specified directory */
+                var src = $(el).attr(pathAttribute);
                 var dst = $(".fm_addressbar input[name='fm_current_path']").val();
-                // unpack uses src instead of path parameter
-                console.debug("starting unpack");
-                jsonWrapper(el, '#cmd_dialog', 'unpack.py', {dst: dst, src: $(el).attr(pathAttribute), path: ''});
-                console.debug("done in unpack");
+                $("#unpack_form input[name='dst']").val(dst);
+                $("#unpack_dialog").dialog({
+                    buttons: {
+                        Ok: function() {
+                            dst = $("#unpack_form input[name='dst']").val();
+                            /* leading slash gets stripped, so we insert . to
+                               prevent '/' resulting in implicit dst relative
+                               to src */
+                            if (dst === '/') {
+                                dst = '.';
+                            }
+                            $(this).dialog('close');
+                            console.info('unpack '+src+" in "+dst);
+                            startProgress("Unpacking "+src+" ...");
+                            unpack(src, dst);
+                        },
+                        Cancel: function() {
+                            $(this).dialog('close');
+                        }
+                    },
+                    autoOpen: false, closeOnEscape: true, modal: true, 
+                    width: '700px'
+                });
+                $("#unpack_dialog").dialog('open');
             },
             datatransfers:   function (action, el, pos) {
                 //var path_enc = encodeURI($(el).attr(pathAttribute));
@@ -2050,23 +2150,6 @@ if (jQuery) (function($){
                          $("#mkdir_output").html(warnings);
                      } else {
                          $("#mkdir_dialog").dialog('close');
-                     }
-                     /* always reload parent to reset progress, etc */
-                     $(".fm_files").parent().reload('');
-                 }
-                });
-
-            $("#pack_form").ajaxForm(
-                {target: '#pack_output', dataType: 'json',
-                 success: function(responseObject, statusText) {
-                     var errors = $(this).renderError(responseObject);
-                     var warnings = $(this).renderWarning(responseObject);
-                     if (errors.length > 0) {
-                         $("#pack_output").html(errors);
-                     } else if (warnings.length > 0) {
-                         $("#pack_output").html(warnings);
-                     } else {
-                         $("#pack_dialog").dialog('close');
                      }
                      /* always reload parent to reset progress, etc */
                      $(".fm_files").parent().reload('');
