@@ -906,6 +906,22 @@ input[type=checkbox], input[type=radio] {
   background: url('/images/icons/page_white_delete.png') no-repeat;
   padding-left: 18px;
 }
+.previouslink {
+  background: url('/images/icons/resultset_previous.png') no-repeat;
+  padding-left: 18px;
+}
+.nextlink {
+  background: url('/images/icons/resultset_next.png') no-repeat;
+  padding-left: 18px;
+}
+.firstlink {
+  background: url('/images/icons/resultset_first.png') no-repeat;
+  padding-left: 18px;
+}
+.lastlink {
+  background: url('/images/icons/resultset_last.png') no-repeat;
+  padding-left: 18px;
+}
 .submitfieldslink {
   background: url('/images/icons/table.png') no-repeat;
   padding-left: 18px;

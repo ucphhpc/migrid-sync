@@ -45,7 +45,7 @@ def signature():
 
     defaults = {'vgrid_name': REJECT_UNSET,
                 'unique_resource_name': REJECT_UNSET,
-                'request_name': ['']}
+                'request_name': [''], 'rank': ['']}
     return ['', defaults]
 
 
@@ -73,6 +73,7 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1].strip()
     res_id_list = accepted['unique_resource_name']
     request_name = unhexlify(accepted['request_name'][-1])
+    rank_list = accepted['rank'] + ['' for _ in res_id_list]
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -91,8 +92,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     res_id_added = []
-    for res_id in res_id_list:
+    for (res_id, rank_str) in zip(res_id_list, rank_list):
         unique_resource_name = res_id.lower().strip()
+        try:
+            rank = int(rank_str)
+        except ValueError:
+            rank = None
 
         # Validity of user and vgrid names is checked in this init function so
         # no need to worry about illegal directory traversal through variables
@@ -112,10 +117,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             output_objects.append({'object_type': 'warning', 'text': msg})
 
-        # don't add if already in vgrid or parent vgrid
+        # don't add if already in vgrid or parent vgrid unless rank is given
 
-        if vgrid_is_resource(vgrid_name, unique_resource_name,
-                             configuration):
+        if rank is None and vgrid_is_resource(vgrid_name, unique_resource_name,
+                                              configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : '%s is already a resource in the %s'
                                    % (unique_resource_name,
@@ -136,7 +141,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         skip_entity = False
         for subvgrid in subvgrids:
             if vgrid_is_resource(subvgrid, unique_resource_name,
-                                 configuration):
+                                 configuration, recursive=False):
                 output_objects.append({'object_type': 'error_text', 'text':
                                        '''%(res_name)s is already in a
     sub-%(_label)s (%(subvgrid)s).
@@ -150,6 +155,30 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if skip_entity:
             continue
         
+        # Check if only rank change was requested and apply if so
+
+        if rank is not None:
+            (add_status, add_msg) = vgrid_add_resources(configuration,
+                                                        vgrid_name,
+                                                        [unique_resource_name],
+                                                        rank=rank)
+            if not add_status:
+                output_objects.append({'object_type': 'error_text', 'text'
+                                       : add_msg})
+                status = returnvalues.SYSTEM_ERROR
+            else:
+                output_objects.append({'object_type': 'text', 'text':
+                                       'changed %s to resource %d' % (res_id,
+                                                                      rank)})
+            # No further action after rank change as everything else exists
+            continue
+
+        # Getting here means res_id is neither resource of any parent or
+        # sub-vgrids.
+
+        # Please note that base_dir must end in slash to avoid access to other
+        # vgrid dirs when own name is a prefix of another name
+
         base_dir = os.path.abspath(configuration.vgrid_home + os.sep
                                     + vgrid_name) + os.sep
         resources_file = base_dir + 'resources'

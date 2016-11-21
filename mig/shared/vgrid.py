@@ -34,8 +34,10 @@ import re
 from shared.defaults import default_vgrid, keyword_all, csrf_field
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
+from shared.html import html_post_helper
 from shared.listhandling import list_items_in_pickled_list
 from shared.modified import mark_vgrid_modified
+from shared.output import html_link
 from shared.serial import load, dump
 from shared.validstring import valid_dir_input
 
@@ -175,26 +177,46 @@ doubt, just let the user request access and accept it with the
 '''
         out.append({'object_type': 'html_form', 'text': table})
 
-    # TODO: add remove vgrid button if only inherited owners
+    # TODO: insert remove vgrid button if only inherited owners on admin page
+    #       or do like runtime env admin where the button just errs otherwise
     if direct:
+        # Shared forms to use dynamically for ALL table entries
+        dyn_helper = {'vgrid_name': vgrid_name, 
+                      id_field: '__DYNAMIC__'}
+        target_op = 'add%s' % script_suffix
+        csrf_token = make_csrf_token(configuration, form_method,
+                                     target_op, client_id, csrf_limit)
+        dyn_dict = dyn_helper.copy()
+        dyn_dict[csrf_field] = csrf_token
+        dyn_dict['rank'] = '__DYNAMIC__'
+        helper = html_post_helper(target_op,
+                                  '%s.py' % target_op,
+                                  dyn_dict)
+        out.append({'object_type': 'html_form', 'text': helper})
+        dyn_dict = dyn_helper.copy()
         target_op = 'rm%s' % script_suffix
-        csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                     client_id, csrf_limit)
+        csrf_token = make_csrf_token(configuration, form_method,
+                                     target_op, client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        dyn_dict[csrf_field] = csrf_token
+        helper = html_post_helper(target_op,
+                                  '%s.py' % target_op,
+                                  dyn_dict)
+        out.append({'object_type': 'html_form', 'text': helper})
 
-        form = '''
-      <form method="%(form_method)s" action="%(target_op)s.py">
-        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-        <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
+        vgrid_table = '''
         Current %(item)ss of %(vgrid)s:
         <table class="vgrid%(item)s">
-          <thead><tr><th>Remove</th><th>%(item)s</th>%(extra_titles)s</thead>
+          <thead><tr><th>Actions</th><th>%(item)ss</th>
+%(extra_titles)s</thead>
           <tbody>
-''' % fill_helpers
-
+        '''
+        index = 0
         for elem in direct:
             extra_fields_html = ''
+            dyn_dict = {}
             if isinstance(elem, dict) and elem.has_key(id_field):
+                elem_id = elem[id_field]
                 for (field, _) in extra_fields:
                     val = elem.get(field, '')
                     if isinstance(val, bool):
@@ -202,23 +224,101 @@ doubt, just let the user request access and accept it with the
                     elif not isinstance(val, basestring):
                         val = ' '.join(val)
                     extra_fields_html += '<td>%s</td>' % val
-                form += \
-"""          <tr><td><input type=radio name='%s' value='%s' /></td>
-                 <td>%s</td>%s</tr>""" % (id_field, elem[id_field],
-                 elem[id_field], extra_fields_html)
             elif elem:
-                form += \
-"""          <tr><td><input type=radio name='%s' value='%s' /></td>
-                 <td>%s</td></tr>""" % (id_field, elem, elem)
+                elem_id = elem
+                extra_fields_html = ''
 
-        form += '''
-        </tbody></table>
-        <input type="submit" value="Remove %(item)s" />
-      </form>
-''' % fill_helpers
-                    
-        out.append({'object_type': 'html_form', 'text': form})
-
+            dyn_dict[id_field] = elem_id
+            vgrid_table += """
+            <tr>
+                <td>
+            """
+            dyn_dict['rank'] = 0
+            vgrid_table += html_link({
+                'destination':
+                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                ('add%s' % script_suffix , "Really move %s first?" % \
+                 elem_id, 'undefined', "%s" % dyn_dict),
+                'class': 'firstlink iconspace',
+                'title': 'Move %s %s of %s first in list' % (item_string,
+                                                             elem_id,
+                                                             vgrid_name),
+                'text': ''})
+            dyn_dict['rank'] = max(index - 1, 0)
+            vgrid_table += html_link({
+                'destination':
+                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                ('add%s' % script_suffix , "Really move %s up?" % \
+                 elem_id, 'undefined', "%s" % dyn_dict),
+                'class': 'previouslink iconspace',
+                'title': 'Move %s %s of %s previous in list' % (item_string,
+                                                                elem_id, 
+                                                                vgrid_name),
+                'text': ''})
+            dyn_dict['rank'] = min(index + 1, len(direct) - 1)
+            vgrid_table += html_link({
+                'destination':
+                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                ('add%s' % script_suffix , "Really move %s down?" % \
+                 elem_id, 'undefined', "%s" % dyn_dict),
+                'class': 'nextlink iconspace',
+                'title': 'Move %s %s of %s next in list' % (item_string,
+                                                            elem_id,
+                                                            vgrid_name),
+                'text': ''})
+            dyn_dict['rank'] = len(direct) - 1
+            vgrid_table += html_link({
+                'destination':
+                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                ('add%s' % script_suffix , "Really move %s last?" % \
+                 elem_id, 'undefined', "%s" % dyn_dict),
+                'class': 'lastlink iconspace',
+                'title': 'Move %s %s of %s last in list' % (item_string,
+                                                            elem_id,
+                                                            vgrid_name),
+                'text': ''})
+            if "trigger" == item_string:
+                # Unset rank to enforce update
+                dyn_dict['rank'] = ''
+                dst = "confirmDialog(%s, '%s', %s, %s);" % \
+                      ('add%s' % script_suffix , "Really refresh %s %s ?" % \
+                       (item_string, elem_id), 'undefined', "%s" % dyn_dict)
+                if elem['action'] != 'submit':
+                    dst = "alert('only relevant for submit %ss');" % \
+                          item_string
+                elif elem['run_as'] != client_id:
+                    dst = "alert('only owner is allowed to refresh %ss');" % \
+                          item_string
+                vgrid_table += html_link({
+                    'destination': "javascript: %s" % dst,
+                    'class': 'refreshlink iconspace',
+                    'title': 'Reload %s job for %s in %s' % (item_string,
+                                                             elem_id,
+                                                             vgrid_name),
+                    'text': ''})
+            # No rank here
+            del dyn_dict['rank']
+            vgrid_table += html_link({
+                'destination':
+                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                ('rm%s' % script_suffix , "Really remove %s %s ?" % \
+                 (item_string, elem_id), 'undefined', "{%s: '%s'}" % \
+                 (id_field, elem_id)),
+                'class': 'removelink iconspace',
+                'title': 'Remove %s %s of %s' % (item_string, elem_id,
+                                                 vgrid_name),
+                'text': ''})
+            vgrid_table += """
+                </td>
+                <td>%s</td>%s
+            </tr>""" % (elem_id, extra_fields_html)
+            index += 1
+        vgrid_table += '''
+          </tbody>
+        </table>
+        '''
+        out.append({'object_type': 'html_form', 'text': vgrid_table % fill_helpers})
+        
     # form to add a new item
 
     extra_fields_html = ''
