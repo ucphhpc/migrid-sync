@@ -435,6 +435,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     exes += '<td>' + vgrid_name + '</td>'
                     runtime_envs = last_request_dict['RESOURCE_CONFIG'
                                ]['RUNTIMEENVIRONMENT']
+                    runtime_envs.sort()
                     re_list_text = ', '.join([i[0] for i in runtime_envs])
                     exes += '<td title="%s">' % re_list_text \
                          + str(len(runtime_envs)) + '</td>'

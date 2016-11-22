@@ -222,6 +222,7 @@ to open resource management.
             # Use runtimeenvironment names instead of actual definitions
             res_obj['RUNTIMEENVIRONMENT'] = [i[0] for i in \
                                              res_obj['RUNTIMEENVIRONMENT']]
+            res_obj['RUNTIMEENVIRONMENT'].sort()
             resources.append(res_obj)
 
     if operation == "show":
