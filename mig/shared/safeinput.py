@@ -467,7 +467,8 @@ def valid_password(
     """
 
     valid_chars = VALID_PASSWORD_CHARACTERS + extra_chars
-    __valid_contents(password, valid_chars, min_length, max_length)
+    __valid_contents(password, valid_chars, min_length, max_length,
+                     COMMON_ACCENTED)
 
 
 def valid_sid(
@@ -705,7 +706,8 @@ def filter_commonname(contents):
 def filter_password(contents):
     """Filter supplied contents to only contain valid password characters"""
 
-    return __filter_contents(contents, VALID_PASSWORD_CHARACTERS)
+    return __filter_contents(contents, VALID_PASSWORD_CHARACTERS,
+                             COMMON_ACCENTED)
 
 
 def filter_plain_text(contents):
