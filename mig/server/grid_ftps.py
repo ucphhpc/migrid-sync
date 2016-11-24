@@ -251,7 +251,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
             #logger.debug("accepted access to %s" % path)
             return True
         except ValueError:
-            logger.error("rejected access to %s" % path)
+            logger.warning("rejected access to %s" % path)
             return False
 
     def chmod(self, path, mode):
@@ -271,8 +271,8 @@ class MiGRestrictedFilesystem(AbstractedFS):
                         (new_mode, mode, path, real_path))
             return AbstractedFS.chmod(self, path, new_mode)
         # Prevent users from messing up access modes
-        logger.error("chmod %s rejected on path %s :: %s" % (mode, path,
-                                                             real_path))
+        logger.warning("chmod %s rejected on path %s :: %s" % (mode, path,
+                                                               real_path))
         raise FilesystemError("requested permission change no allowed")
 
     def listdir(self, path):

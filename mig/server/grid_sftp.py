@@ -196,8 +196,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('chattr %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
-            self.logger.error("chattr on missing path %s :: %s" % (path,
-                                                                   real_path))
+            self.logger.warning("chattr on missing path %s :: %s" % \
+                                (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         if sftphandle is not None:
             active = getattr(sftphandle, 'active')
@@ -285,8 +285,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 return paramiko.SFTP_PERMISSION_DENIED
             return paramiko.SFTP_OK
         # Prevent users from messing up access modes
-        self.logger.error("chmod %s rejected on path %s :: %s" % (mode, path,
-                                                                  real_path))
+        self.logger.warning("chmod %s rejected on path %s :: %s" % (mode, path,
+                                                                    real_path))
         return paramiko.SFTP_OP_UNSUPPORTED
 
     # Public interface functions
@@ -359,8 +359,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("list_folder %s :: %s" % (path, real_path))
         reply = []
         if not os.path.exists(real_path):
-            self.logger.error("list_folder on missing path %s :: %s" % \
-                              (path, real_path))
+            self.logger.warning("list_folder on missing path %s :: %s" % \
+                                (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
             files = os.listdir(real_path)
@@ -687,7 +687,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
                         return paramiko.AUTH_SUCCESSFUL
         err_msg = 'Public key authentication failed for %s:\n%s' % \
                   (username, offered)
-        self.logger.error(err_msg)
+        # Typically tries one or more keys from ssh-agent before success
+        self.logger.warning(err_msg)
         print err_msg
         failed_count = update_rate_limit(configuration, "sftp-key",
                                          self.client_addr[0], username, False,
