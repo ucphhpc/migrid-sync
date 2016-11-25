@@ -773,9 +773,11 @@ status_leader() {
 
 clean_leader() {
     stop_leader $@
-    script=`basename $0`
-    echo "leader node stopping all $script scripts" >> $exehostlog
-    killall -9 -g -e "$script"
+    start_script="`basename $0` start"
+    echo "leader node stopping all ${start_script} scripts" >> $exehostlog
+    killall -9 -g -e "${start_script}"
+    killall_status=$?
+    echo "killed all ${start_script} scripts returned: ${killall_status}" >> $exehostlog
 }
 
 ### Main ###

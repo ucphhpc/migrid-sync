@@ -236,6 +236,9 @@ start_master() {
     export MIG_LOCALJOBNAME=$localjobname
     export MIG_JOBDIR="$execution_dir/job-dir_$localjobname"
     export MIG_EXENODE=$execution_node
+    export MIG_ADMINEMAIL="$admin_email"
+    export MIG_LRMS_OUT="MiG_$exe.out"
+    export MIG_LRMS_ERR="MiG_$exe.err"
     echo "MiG environment settings:" >> $exehostlog
     env|grep -E '^MIG_' >> $exehostlog
 
