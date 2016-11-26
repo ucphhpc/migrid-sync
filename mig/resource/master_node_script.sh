@@ -10,9 +10,9 @@ debug=""
 copy_command="$debug ${copy_command}"
 move_command="$debug ${move_command}"
 clean_command="$debug rm -f"
-umount_command="$debug fusermount -uz"
 # We don't want recursive clean up to delete mounted file systems
 clean_recursive="${clean_command} -r --one-file-system"
+umount_command="$debug fusermount -uz"
 end_marker="### END OF SCRIPT ###"
 
 
@@ -501,31 +501,53 @@ start_master() {
 }
 
 stop_master() {
-    if [ $# -lt 1 ]; then
-        pgid=`cat $master_pgid`
-    else
-        pgid=$1
+    if [ ! -z "$remove_job_command" ]; then
+        export MIG_JOBNAME="MiG_$exe"
+        export MIG_SUBMITUSER=${execution_user}
+        export MIG_EXENODE=${execution_node}    
+        echo "MiG environment settings:" >> $exehostlog
+        env|grep -E '^MIG_' >> $exehostlog
+        ${remove_job_command} >> $exehostlog
     fi
-    echo "master node stopping pgid $pgid" >> $exehostlog
-    kill -n 9 -- -$pgid
-    ${clean_command} $master_pgid
+    if [ $# -lt 1 ]; then
+        stop_pgid=`cat $master_pgid`
+    else
+        stop_pgid=$1
+    fi
+    # Avoid killing yourself
+    if [ ! -z "$stop_pgid" ]; then
+        echo "master node stopping PGID $stop_pgid" >> $exehostlog
+        kill -n 9 -- -$stop_pgid
+    fi
+    $clean_command $master_pgid >> $exehostlog
     sync_clean $master_pgid
+    fuseumount_job ${execution_dir}
 }
 
 status_master() {
     if [ $# -lt 1 ]; then
-        pgid=`cat $master_pgid`
+        status_pgid=`cat $master_pgid`
     else
-        pgid=$1
+        status_pgid=$1
     fi
-    ps -o pid= -g $pgid
+    ps -o pid= -g $status_pgid  
 }
 
 clean_master() {
     stop_master $@
-    script=`basename $0`
-    echo "master node stopping all $script scripts" >> $exehostlog
-    killall -9 -g -e "$script"
+    script="`basename $0`"
+    clean_pgids=`ps -C $script -o pgid=`
+    for clean_pgid in $clean_pgids; do
+        # Avoid killing yourself
+        if [ $clean_pgid -ne $pgid ]; then
+            kill -n 9 -- -$clean_pgid
+            kill_status="$?"
+            if [ $kill_status -eq 0 ]; then
+                echo "master node cleaned pgid $clean_pgid" >> $exehostlog
+            fi
+        fi
+    done
+    $clean_recursive ${execution_dir}
 }
 
 ### Main ###

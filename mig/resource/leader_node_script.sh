@@ -1,6 +1,9 @@
 
 # $Revision: 2326 $
 
+pid=$$
+pgid=`ps -o pgid= -p $pid`
+
 debug="echo"
 # Uncomment next line to enable debugging
 debug=""
@@ -752,32 +755,44 @@ start_leader() {
 
 stop_leader() {
     if [ $# -lt 1 ]; then
-        pgid=`awk '/leader_pgid/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $leader_pgid`
+        stop_pgid=`awk '/leader_pgid/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $leader_pgid`
     else
-        pgid=$1
+        stop_pgid=$1
     fi
-    echo "leader node stopping pgid $pgid" >> $exehostlog
-    kill -n 9 -- -$pgid
+    # Avoid killing yourself
+    if [ ! -z "$stop_pgid" ]; then
+        echo "leader node stopping pgid $pgid" >> $exehostlog
+        kill -n 9 -- -$stop_pgid
+    fi
     ${clean_command} $leader_pgid
     sync_clean $leader_pgid
 }
 
 status_leader() {
     if [ $# -lt 1 ]; then
-        pgid=`awk '/leader_pgid/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $leader_pgid`
+        status_pgid=`awk '/leader_pgid/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $leader_pgid`
     else
-        pgid=$1
+        status_pgid=$1
     fi
-    ps -o pid= -g $pgid
+    ps -o pid= -g $status_pgid
 }
 
 clean_leader() {
     stop_leader $@
-    start_script="`basename $0` start"
-    echo "leader node stopping all ${start_script} scripts" >> $exehostlog
-    killall -9 -g -e "${start_script}"
-    killall_status=$?
-    echo "killed all ${start_script} scripts returned: ${killall_status}" >> $exehostlog
+    script="`basename $0`"
+    clean_pgids=`ps -C $script -o pgid=`
+    status="$?"
+    for clean_pgid in $clean_pgids; do
+        # Avoid killing yourself
+        if [ $clean_pgid -ne $pgid ]; then
+            kill -n 9 -- -$clean_pgid
+            kill_status="$?"
+            if [ $kill_status -eq 0 ]; then
+                echo "leader node cleaned pgid $clean_pgid" >> $exehostlog
+            fi
+        fi
+    done
+    return $status
 }
 
 ### Main ###

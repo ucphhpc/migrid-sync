@@ -1,10 +1,25 @@
 
 # $Revision: 2326 $
 
+pid=$$
+pgid=`ps -o pgid= -p $pid`
+
 clean_command="$debug rm -f"
 # We don't want recursive clean up to delete mounted file systems
 clean_recursive="${clean_command} -r --one-file-system"
+umount_command="$debug fusermount -uz"
 end_marker="### END OF SCRIPT ###"
+
+fuseumount_job() {
+    localjobdir=$1
+    jobfusemounts=`mount | grep "${localjobdir}" | awk -F' ' '{ORS=" "; print $3}'` 1>> $exehostlog 2>> $exehostlog
+    
+    if [ ! -z "$jobfusemounts" ]; then
+        for jobmount in $jobfusemounts; do
+            $umount_command $jobmount 1>> $exehostlog 2>> $exehostlog
+        done
+    fi
+}
 
 start_dummy() {
     #jobname is full date (DateMonthYear-HourMinuteSecond) with .PID appended. In that way it should be both portable and unique :)
@@ -92,7 +107,8 @@ stop_dummy() {
     echo "dummy node cleaning up after job ${localjobname}" >> $exehostlog
     ${clean_command} $dummyrunning
     ${clean_command} run_handle_updates.${localjobname}
-    ${clean_recursive} job-dir_${localjobname}
+    fuseumount_job ${execution_dir}/job-dir_${localjobname}
+    ${clean_recursive} ${execution_dir}/job-dir_${localjobname}
     # Remove all dummy files for this exe unit
     ${clean_command} $exe.dummy*
 }
