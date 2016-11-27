@@ -654,7 +654,7 @@ def add_volume_preview_slice_data(logger, meta):
         volume_progress = 0
         volume_progress_step = 100.0 / (slice_count
                 + preview_x_dimension)
-        if slice_count == z_dimension:
+        if slice_count >= z_dimension:
             logger.debug('Creating preview volume from: %s slices'
                          % slice_count)
             settings['settings_status'] = \
@@ -677,7 +677,7 @@ def add_volume_preview_slice_data(logger, meta):
             slice_idx = 0
             max_slice_shape = (0, 0)
 
-            for file_idx in sorted_keys:
+            for file_idx in sorted_keys[:z_dimension]:
                 volume_progress += volume_progress_step
                 settings['settings_update_progress'] = '%s/%s : %s%%' \
                     % (volume_nr, volume_count,
