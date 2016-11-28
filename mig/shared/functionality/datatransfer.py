@@ -150,7 +150,7 @@ def main(client_id, user_arguments_dict):
     var fields = 0;
     var max_fields = 20;
     var src_input = "<label for=\'transfer_src\'>Source path(s)</label>";
-    src_input += "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'\' />";
+    src_input += "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'\' required title=\'relative source path: local for exports and remote for imports\' />";
     src_input += "<input id=\'src_file_FIELD\' type=radio onclick=\'setSrcDir(FIELD, false);\' checked />Source file";
     src_input += "<input id=\'src_dir_FIELD\' type=radio onclick=\'setSrcDir(FIELD, true);\' />Source directory (recursive)";
     src_input += "<br />";
@@ -463,7 +463,9 @@ into.<br/>
 </td></tr>
 <tr><td>
 <label for="transfer_id">Optional Transfer ID / Name </label>
-<input type=text size=60 name=transfer_id value="%(transfer_id)s" />
+<input type=text size=60 name=transfer_id value="%(transfer_id)s"
+    pattern="[a-zA-Z0-9._-]*"
+    title="Optional ID string containing only ASCII letters and digits possibly with separators like hyphen, underscore and period" />
 </td></tr>
 <tr><td>
 <label for="protocol">Protocol</label>
@@ -482,9 +484,11 @@ into.<br/>
 </td></tr>
 <tr><td>
 <label for="fqdn">Host and port</label>
-<input type=text size=37 name=fqdn value="%(fqdn)s" />
+<input type=text size=37 name=fqdn value="%(fqdn)s" required
+    pattern="[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)+"
+    title="A fully qualified domain name or Internet IP address for the remote location"/>
 <input id="port_input" type=number step=1 min=1 max=65535 name=port
-    value="%(port)s" />
+    value="%(port)s" required />
 </td></tr>
 <tr><td>
 <label for="">Login method</label>
@@ -500,7 +504,10 @@ login with key
 </td></tr>
 <tr id="login_fields" style="display: none;"><td>
 <label for="username">Username</label>
-<input id="username" type=text size=60 name=username value="%(username)s" />
+<input id="username" type=text size=60 name=username value="%(username)s"
+    pattern="[a-zA-Z0-9._-]*"
+    title="Optional username used to login on the remote site, if required"/>
+/>
 <br/>
 <span id="password_entry">
 <label for="transfer_pw">Password</label>
@@ -534,7 +541,9 @@ login with key
 </td></tr>
 <tr><td>
 <label for="transfer_dst">Destination path</label>
-<input id=\'dst_0\' type=text size=60 name=transfer_dst value="%(transfer_dst)s" />
+<input id=\'dst_0\' type=text size=60 name=transfer_dst
+    value="%(transfer_dst)s" required
+    title="relative destination path: local for imports and remote for exports" />
 <input id=\'dst_dir_0\' type=radio checked />Destination directory
 <input id=\'dst_file_0\' type=radio disabled />Destination file<br />
 </td></tr>
