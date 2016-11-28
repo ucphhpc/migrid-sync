@@ -1026,8 +1026,6 @@ def guess_type(name):
             'storage_dir',
             'cmd',
             'site_script_deps',
-            'transfer_src',
-            'transfer_dst',
             ):
             __type_map[key] = valid_safe_path
         # We include vgrid_name and a few more here to enforce sane name policy
@@ -1225,7 +1223,10 @@ def guess_type(name):
             __type_map[key] = valid_printable
         for key in ('openid.ns', 'openid.ns.sreg', 'url', 'icon', ):
             __type_map[key] = valid_base_url
-        for key in ('modauthopenid.referrer', ):
+        for key in ('modauthopenid.referrer',
+                    'transfer_src',
+                    'transfer_dst',
+                    ):
             __type_map[key] = valid_url
 
         # Image meta data (filemetaio.py)
