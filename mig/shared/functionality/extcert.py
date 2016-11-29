@@ -136,13 +136,13 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
            full check takes place in the backend, but users are better of with
            sane early warnings than the cryptic backend errors.
 -->
-<tr><td class='mandatory label'>Certificate DN</td><td><input id='cert_id_field' type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' required pattern='(/[a-zA-Z]+=[^ ]+([ ][^ ]+)*)+' /></td><td class=fill_space></td></tr>
-<tr><td class='mandatory label'>Full name</td><td><input id='cert_name_field' type=text name=cert_name value='%(common_name)s' required pattern='[^ ]+([ ][^ ]+)+' /></td><td class=fill_space></td></tr>
-<tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=email name=email value='%(email)s' /></td><td class=fill_space></td></tr>
-<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(org)s' required pattern='[^ ]+([ ][^ ]+)*' /></td><td class=fill_space></td></tr>
-<tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' /></td><td class=fill_space></td></tr>
-<tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' pattern='([A-Z]{2})?' maxlength=2 /></td><td class=fill_space></td></tr>
-<tr><td class='optional label'>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment></textarea></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Certificate DN</td><td><input id='cert_id_field' type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' required pattern='(/[a-zA-Z]+=[^/ ]+([ ][^/ ]+)*)+' title='The Distinguished Name field of your certificate, i.e. key=value pairs separated by slashes' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Full name</td><td><input id='cert_name_field' type=text name=cert_name value='%(common_name)s' required pattern='[^ ]+([ ][^ ]+)+' title='Your full name, i.e. two or more names separated by space' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=email name=email value='%(email)s' title='A valid email address that you read' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(org)s' required pattern='[^ ]+([ ][^ ]+)*' title='Name of your organisation: one or more abbreviations or words separated by space' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' title='The two capital letters used to abbreviate your country' /></td><td class=fill_space></td></tr>
+<tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' pattern='([A-Z]{2})?' maxlength=2 title='Leave empty or enter the capital 2-letter abbreviation of your state if you are a US resident' /></td><td class=fill_space></td></tr>
+<tr><td class='optional label'>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment title='A free-form comment where you can explain what you need the certificate for'></textarea></td><td class=fill_space></td></tr>
 <tr><td class='label'><!-- empty area --></td><td><input id='submit_button' type='submit' value='Send' /></td><td class=fill_space></td></tr>
 </table>
 </form>
