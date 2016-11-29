@@ -486,7 +486,9 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'html_form', 'text': '''
         <form method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-        <input class="p80width" type="text" name="vgrid_name" />
+        <input class="p80width" type="text" name="vgrid_name" required 
+        pattern="[a-zA-Z0-9]+(([_.-]| |/)?[a-zA-Z0-9]+)*"
+        title="unique name of ASCII letters and digits separated only by underscores, periods, spaces and hyphens. Slashes are additionally allowed when creating nested sub-%(vgrid_label)ss" />
         <input type="hidden" name="output_format" value="html" />
         <input type="submit" value="Create %(vgrid_label)s" />
         </form>
@@ -507,13 +509,15 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'html_form', 'text': '''
         <form method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-        <input class="p80width" type="text" name="vgrid_name" />
+        <input class="p80width" type="text" name="vgrid_name" required 
+        pattern="[a-zA-Z0-9]+(([_.-]| |/)?[a-zA-Z0-9]+)*"
+        title="the name of an existing %(vgrid_label)s" />
         <select name="request_type">
             <option value="vgridmember">membership</option> 
             <option value="vgridowner">ownership</option>
         </select>
         <br/>
-        <input class="p80width" type="text" name="request_text" />
+        <input class="p80width" type="text" name="request_text" required />
         <input type="hidden" name="output_format" value="html" />
         <input type="submit" value="Request %(vgrid_label)s access" />
         </form>

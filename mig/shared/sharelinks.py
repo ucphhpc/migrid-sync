@@ -188,7 +188,9 @@ def create_share_link_form(configuration, client_id, output_format,
         <table>
         <tr><td colspan=2>
         <label for="path">File/folder to share:</label>
-        <input id="extpath" class="singlefield" type="text" name="path" size=50  value="" />
+        <input id="extpath" class="singlefield" type="text" name="path" size=50
+        value="" required pattern="[^ ]+"
+        title="relative file or directory path to share" />
         </td></tr>
         <tr><td colspan=2>
         <br/>
@@ -286,13 +288,17 @@ def invite_share_link_form(configuration, client_id, share_dict, output_format,
         </td></tr>
         <tr><td colspan=2>
         <label for="invite">Recipient(s):</label>
+        <!-- NOTE: rather loose email validation to inform user about most
+        basic errors before the backend does full validation -->
         <input id="extinvite" class="singlefield" type="text" name="invite"
-            size=50  value="" />
+            size=50  value="" required
+            pattern="[^, @]+@[^, @]+([ ]*,[ ]*[^, @]+@[^, @]+)*"
+            title="one or more valid email addresses separated by commas" />
         </td></tr>
         <tr><td colspan=2>
         <label for="extromessage">Automatic Message:</label>
         <textarea id="extromessage" class="singlefield fillwidth"
-        rows=3 readonly="readonly">%(auto_msg)s</textarea>
+        rows=5 readonly="readonly">%(auto_msg)s</textarea>
         </td></tr>
         <tr><td colspan=2>
         <label for="extmessage">Optional Message:</label>

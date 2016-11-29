@@ -294,6 +294,12 @@ help</a><br />
 <textarea class='fillwidth padspace' name='%s' cols='%d' rows='%d'>%s</textarea><br />
 """ % (field, area_cols, area_rows, '\n'.join(default))
                                })
+            elif field_type == 'int':
+                output_objects.append({'object_type': 'html_form', 'text'
+                                       : """
+<input type='number' name='%s' size='%d' value='%s' min=0 required pattern='[0-9]+' /><br />
+""" % (field, field_size, default)
+                               })
             else:
                 output_objects.append({'object_type': 'html_form', 'text'
                                        : """

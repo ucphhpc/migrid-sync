@@ -192,7 +192,10 @@ description, you can likely just leave the field alone.''' % configuration.short
         output_objects.append({'object_type': 'html_form', 'text'
                                : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
-<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s'
+    required pattern='[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)+'
+    title='Fully qualified domain name or Internet IP address of the resource'
+/>
 <br />
 <br />""" % (title, field, field, field_size(conf[field]),
            conf[field])
@@ -213,7 +216,9 @@ description, you can likely just leave the field alone.''' % configuration.short
     output_objects.append({'object_type': 'html_form', 'text'
                            : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#%s'>help</a><br />
-<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s' />
+<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s'
+    required pattern='[^ ]+' title='Absolute path to user home on the resource'
+/>
 <br />
 <br />""" % (title, field, field,
            field_size(conf[field]), conf[field])
@@ -222,16 +227,30 @@ description, you can likely just leave the field alone.''' % configuration.short
     for (field, spec) in res_fields:
         title = spec['Title']
         field_type = spec['Type']
+        if spec['Required']:
+            required_str = 'required'
+        else:
+            required_str = ''
+
         if 'invisible' == spec['Editor']:
             continue
         elif 'input' == spec['Editor']:
+            if spec['Type'] == 'int':
+                input_str = """
+<input class='fillwidth padspace' type='number' name='%s' size='%d' value='%s'
+    min=0 pattern='[0-9]+' %s />
+""" % (field, field_size(conf[field]), conf[field], required_str)
+            else:
+                input_str = """
+<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s'
+    %s />
+""" % (field, field_size(conf[field]), conf[field], required_str)
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br />
-<b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
-<input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s' />
+<b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a>
 <br />
-<br />""" % (title, field, field, field_size(conf[field]),
-           conf[field])
+%s<br />
+<br />""" % (title, field, input_str)
                                    })
         elif 'select' == spec['Editor']:
             choices = available_choices(configuration, client_id,
@@ -327,16 +346,31 @@ each selected runtimeenvironment.<br />
     for (field, spec) in exe_fields:
         title = spec['Title']
         field_type = spec['Type']
+        # We don't really have a good map of required fields here so disable
+        required_str = ''
         if 'invisible' == spec['Editor']:
             continue
         elif 'input' == spec['Editor']:
+            if spec['Type'] == 'int':
+                input_str = """
+<input class='fillwidth padspace' type='number' name='exe-%s' size='%d' value='%s'
+    min=0 pattern='[0-9]+' %s />
+""" % (field, field_size(conf['all_exes'][field]), conf['all_exes'][field],
+       required_str)
+            else:
+                input_str = """
+<input class='fillwidth padspace' type='text' name='exe-%s' size='%d' value='%s'
+    %s />
+""" % (field, field_size(conf['all_exes'][field]), conf['all_exes'][field],
+       required_str)
+
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br />
-<b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a><br />
-<input class='fillwidth padspace' type='text' name='exe-%s' size='%d' value='%s' />
+<b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a>
 <br />
-<br />""" % (title, field, field,
-           field_size(conf['all_exes'][field]), conf['all_exes'][field])
+%s
+<br />
+<br />""" % (title, field, input_str)
                                    })
         elif 'select' == spec['Editor']:
             choices = available_choices(configuration, client_id,
@@ -398,16 +432,31 @@ each selected runtimeenvironment.<br />
     for (field, spec) in store_fields:
         title = spec['Title']
         field_type = spec['Type']
+        # We don't really have a good map of required fields here so disable
+        required_str = ''
         if 'invisible' == spec['Editor']:
             continue
         elif 'input' == spec['Editor']:
+            if spec['Type'] == 'int':
+                input_str = """
+<input class='fillwidth padspace' type='number' name='store-%s' size='%d' value='%s'
+    min=0 pattern='[0-9]+' %s />
+""" % (field, field_size(conf['all_stores'][field]), conf['all_stores'][field],
+       required_str)
+            else:
+                input_str = """
+<input class='fillwidth padspace' type='text' name='store-%s' size='%d' value='%s'
+    %s />
+""" % (field, field_size(conf['all_stores'][field]), conf['all_stores'][field],
+       required_str)
+
             output_objects.append({'object_type': 'html_form', 'text'
                            : """<br />
-<b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a><br />
-<input class='fillwidth padspace' type='text' name='store-%s' size='%d' value='%s' />
+<b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a>
 <br />
-<br />""" % (title, field, field,
-           field_size(conf['all_stores'][field]), conf['all_stores'][field])
+%s
+<br />
+<br />""" % (title, field, input_str)
                                    })
         elif 'select' == spec['Editor']:
             choices = available_choices(configuration, client_id,

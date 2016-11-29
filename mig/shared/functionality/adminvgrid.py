@@ -426,8 +426,8 @@ the corresponding participants. Similarly setting a visibility flag to
     settings_form += '''
             <h4>Restrict Settings</h4> 
             Restrict changing of these settings to only the first
-            <input type="number" name="restrict_settings_adm" min=1 max=100
-            value=%d />
+            <input type="number" name="restrict_settings_adm" min=1 max=999
+            minlength=1 maxlength=3 value=%d required />
             owners.
 ''' % restrict_settings_adm
     settings_form += '<br/>'
@@ -436,8 +436,8 @@ the corresponding participants. Similarly setting a visibility flag to
     settings_form += '''
             <h4>Restrict Owner Administration</h4> 
             Restrict administration of owners to only the first
-            <input type="number" name="restrict_owners_adm" min=1 max=100
-            value=%d />
+            <input type="number" name="restrict_owners_adm" min=1 max=999
+            minlength=1 maxlength=3 value=%d required />
             owners.
 ''' % restrict_owners_adm
     settings_form += '<br/>'
@@ -446,8 +446,8 @@ the corresponding participants. Similarly setting a visibility flag to
     settings_form += '''
             <h4>Restrict Member Administration</h4> 
             Restrict administration of members to only the first
-            <input type="number" name="restrict_members_adm" min=1 max=100
-            value=%d />
+            <input type="number" name="restrict_members_adm" min=1 max=999
+            minlength=1 maxlength=3 value=%d required />
             owners.
 ''' % restrict_members_adm
     settings_form += '<br/>'
@@ -456,8 +456,8 @@ the corresponding participants. Similarly setting a visibility flag to
     settings_form += '''
             <h4>Restrict Resource Administration</h4> 
             Restrict administration of resources to only the first
-            <input type="number" name="restrict_resources_adm" min=1 max=100
-            value=%d />
+            <input type="number" name="restrict_resources_adm" min=1 max=999
+            minlength=1 maxlength=3 value=%d required />
             owners.
 ''' % restrict_resources_adm
     settings_form += '<br/>'
@@ -477,7 +477,8 @@ the corresponding participants. Similarly setting a visibility flag to
     settings_form += '''
             <h4>Request Recipients</h4> 
             Notify only first
-            <input type="number" name="request_recipients" min=1 max=100 value=%d />
+            <input type="number" name="request_recipients" min=1 max=999
+            minlength=1 maxlength=3 value=%d required />
             owners about access requests.
 ''' % request_recipients
     settings_form += '<br/>'

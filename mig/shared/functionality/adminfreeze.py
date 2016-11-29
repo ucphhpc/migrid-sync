@@ -333,7 +333,8 @@ Please select the files and folders to backup below.
 <b>Name:</b><br />
 <input type='hidden' name='flavor' value='%(flavor)s' />
 <input class='fillwidth padspace' type='text' name='freeze_name'
-    value='%(freeze_name)s' autofocus />
+    value='%(freeze_name)s' autofocus required pattern='[a-zA-Z0-9_.-]+'
+    title='unique name for the freeze archive. I.e. letters and digits separated only by underscores, periods and hyphens' />
 """
     if flavor != 'backup':
         freeze_form += """

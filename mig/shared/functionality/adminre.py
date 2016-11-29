@@ -173,13 +173,17 @@ information.'''
     html_form += """
 <tr>
     <td>Number of needed software entries</td>
-    <td><input type='text' size='2' name='software_entries' value='%s' /></td>
+    <td><input type='number' name='software_entries' min=0 max=99
+    minlength=1 maxlength=2 value='%s' required pattern='[0-9]{1,2}'
+    title='number of software entries needed in runtime environment' /></td>
 </tr>""" % software_entries
     html_form += """
 <tr>
     <td>Number of environment entries</td>
     <td>
-    <input type='text' size='2' name='environment_entries' value='%s' />
+    <input type='number' name='environment_entries' min=0 max=99
+    minlength=1 maxlength=2 value='%s' required pattern='[0-9]{1,2}'
+    title='number of environment variables provided by runtime environment' />
     </td>
 </tr>""" % environment_entries
     output_objects.append({'object_type': 'html_form', 'text'
@@ -227,7 +231,10 @@ information.'''
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <b>Runtime Environment Name</b><br />
 <small>(eg. BASH-2.X-1, must be unique):</small><br />
-<input class='p80width' type='text' name='re_name' /><br />
+<input class='p80width' type='text' name='re_name' required 
+    pattern='[a-zA-Z0-9_.-]+'
+    title='unique name of ASCII letters and digits separated only by underscores, periods and hyphens' />
+<br />
 <br /><b>Description:</b><br />
 <textarea class='p80width' rows='4' name='redescription'>
 """

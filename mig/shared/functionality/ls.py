@@ -828,7 +828,7 @@ the listing of personal files.
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='share_id' value='%(share_id)s' />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-<input type='text' name='path' size=50 value='' />
+<input type='text' name='path' size=50 value='' required />
 <input type='submit' value='edit' />
 </form>
 </td></tr>
@@ -850,7 +850,7 @@ Name of new directory to be created in current directory (%(dest_dir)s)
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <input type='hidden' name='share_id' value='%(share_id)s' />
 <input name='current_dir' type='hidden' value='%(dest_dir)s' />
-<input name='path' size=50 />
+<input name='path' size=50 required />
 <input type='submit' value='Create' name='mkdirbutton' />
 </form>
 </td></tr>

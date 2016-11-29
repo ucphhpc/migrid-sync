@@ -627,7 +627,8 @@ service can access and use it for your transfers.
 <tr><td>
 <input type=hidden name=action value="generatekey" />
 Key name:<br/>
-<input type=text size=60 name=key_id value="" />
+<input type=text size=60 name=key_id value="" required pattern="[a-zA-Z0-9._-]+"
+    title="internal name for the key when used in transfers. I.e. letters and digits separated only by underscores, periods and hyphens" />
 <br/>
 <input type=submit value="Generate key" />
 </td></tr>
