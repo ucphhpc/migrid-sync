@@ -1044,10 +1044,12 @@ def guess_type(name):
             'lang',
             'machine_name',
             'freeze_id',
+            'freeze_name',
             'rule_id',
             'transfer_id',
             'key_id',
             'share_id',
+            'miguser',
             ):
             __type_map[key] = valid_job_id
         for key in (
@@ -1116,8 +1118,9 @@ def guess_type(name):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0, extra_chars='_ ')
         for key in ('execution_node', 'storage_node', ):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
-        for key in ('execution_user', 'storage_user', 'freeze_name',
-                    'freeze_author', 'freeze_department',
+        for key in ('execution_user', 'storage_user'):
+            __type_map[key] = lambda x: valid_job_id(x, min_length=0)
+        for key in ('freeze_author', 'freeze_department',
                     'freeze_organization',
                     ):
             __type_map[key] = lambda x: valid_commonname(x, min_length=0)
@@ -1138,7 +1141,6 @@ def guess_type(name):
             'openid.sreg.role',
             'openid.sreg.association',
             'changes',
-            'miguser',
             'version',
             ):
             __type_map[key] = valid_commonname
