@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcert - Certificate request backend
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -150,13 +150,18 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
 <form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();'>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table>
-<tr><td class='mandatory label'>Full name</td><td><input id='full_name_field' type=text name=cert_name value='%(full_name)s' /></td><td class=fill_space><br /></td></tr>
-<tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=text name=email value='%(email)s' /> </td><td class=fill_space><br /></td></tr>
-<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(organization)s' /></td><td class=fill_space><br /></td></tr>
-<tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country maxlength=2 value='%(country)s' /></td><td class=fill_space><br /></td></tr>
-<tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' /> </td><td class=fill_space><br /></td></tr>
-<tr><td class='mandatory label'>Password</td><td><input id='password_field' type=password name=password maxlength=%(password_max_len)s value='%(password)s' /> </td><td class=fill_space><br /></td></tr>
-<tr><td class='mandatory label'>Verify password</td><td><input id='verifypassword_field' type=password name=verifypassword maxlength=%(password_max_len)s value='%(verifypassword)s' /></td><td class=fill_space><br /></td></tr>
+<!-- NOTE: javascript support for unicode pattern matching is lacking so we
+           only restrict e.g. Full Name to words separated by space here. The
+           full check takes place in the backend, but users are better of with
+           sane early warnings than the cryptic backend errors.
+-->
+<tr><td class='mandatory label'>Full name</td><td><input id='full_name_field' type=text name=cert_name value='%(full_name)s' required pattern='[^ ]+([ ][^ ]+)+' /></td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=email name=email value='%(email)s' required /> </td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(organization)s' required pattern='[^ ]+([ ][^ ]+)*' /></td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' /></td><td class=fill_space><br /></td></tr>
+<tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' pattern='([A-Z]{2})?' maxlength=2 /> </td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Password</td><td><input id='password_field' type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' /> </td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Verify password</td><td><input id='verifypassword_field' type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' /></td><td class=fill_space><br /></td></tr>
 <tr><td class='optional label'>Optional comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment></textarea></td><td class=fill_space><br /></td></tr>
 <tr><td class='label'><!-- empty area --></td><td><input id='submit_button' type=submit value=Send /></td><td class=fill_space><br /></td></tr>
 </table>
@@ -172,7 +177,7 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
   <div id='organization_help'>Organization name or acronym  matching email</div>
   <div id='email_help'>Email address associated with your organization if at all possible</div>
   <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
-  <div id='state_help'>Optional state of your organization, please just leave empty unless it is in the US or similar</div>
+  <div id='state_help'>Optional 2-letter ANSI state code of your organization, please just leave empty unless it is in the US or similar, <a href='https://en.wikipedia.org/wiki/List_of_U.S._state_abbreviations'>help</a></div>
   <div id='password_help'>Password is restricted to the characters in '%(valid_password_chars)s and must be %(password_min_len)s to %(password_max_len)s characters long'</div>
   <div id='verifypassword_help'>Please repeat password</div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
