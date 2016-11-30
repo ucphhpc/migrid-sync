@@ -45,8 +45,8 @@ from shared.html import jquery_ui_js, man_base_js, man_base_html, \
 from shared.init import initialize_main_variables, find_entry
 from shared.sharelinks import build_sharelinkitem_object
 from shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
-     vgrid_settings, vgrid_sharelinks, vgrid_list_parents, \
-     default_vgrid_settings_limit
+     vgrid_settings, vgrid_sharelinks, vgrid_list_parents, vgrid_owners, \
+     vgrid_members, vgrid_resources, default_vgrid_settings_limit
 
 _valid_sharelink = [("owners", keyword_owners), ("members", keyword_members)]
 _valid_visible = _valid_sharelink + [("everyone", keyword_all)]
@@ -526,11 +526,60 @@ the corresponding participants. Similarly setting a visibility flag to
       </form>
 ''' % settings_dict})
 
+    (owners_status, owners_direct) = vgrid_owners(vgrid_name, configuration,
+                                                  False)
+    if not owners_status:
+        logger.error("failed to load owners for %s: %s" % (vgrid_name,
+                                                           owners_direct))
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+    (members_status, members_direct) = vgrid_members(vgrid_name, configuration,
+                                                     False)
+    if not members_status:
+        logger.error("failed to load members for %s: %s" % (vgrid_name,
+                                                            members_direct))
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+    (resources_status, resources_direct) = vgrid_resources(vgrid_name,
+                                                           configuration,
+                                                           False)
+    if not resources_status:
+        logger.error("failed to load resources for %s: %s" % \
+                     (vgrid_name, resources_direct))
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+    
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Delete %s " % vgrid_name})
-    output_objects.append({'object_type': 'html_form',
-                           'text': '''
-To delete <b>%(vgrid)s</b> remove all members and owners ending with yourself.
+    if len(owners_direct) > 1 or members_direct or resources_direct:
+        output_objects.append({'object_type': 'html_form', 'text': '''
+To delete <b>%(vgrid)s</b> first remove all resources, members and owners
+ending with yourself.
 ''' % {'vgrid': vgrid_name}})
+    else:
+        output_objects.append({'object_type': 'html_form', 'text': '''
+<p>As the last owner you can leave and delete <b>%(vgrid)s</b> including all
+associated shared files and components.<br/>
+</p>
+<p class="warningtext">
+You cannot undo such delete operations, so please use with great care!
+</p>
+''' % {'vgrid': vgrid_name}})
+        target_op = "rmvgridowner"
+        csrf_token = make_csrf_token(configuration, form_method,
+                                     target_op, client_id, csrf_limit)
+        js_name = 'rmlastvgridowner'
+        helper = html_post_helper(js_name, '%s.py' % target_op,
+                                  {'vgrid_name': vgrid_name,
+                                   'cert_id': client_id,
+                                   'flags': 'f',
+                                   csrf_field: csrf_token})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+        output_objects.append(
+            {'object_type': 'link', 'destination':
+             "javascript: confirmDialog(%s, '%s');" % \
+             (js_name, 'Really leave and delete %s?' % \
+              vgrid_name),
+             'class': 'removelink iconspace',
+             'title': 'Leave and delete %s' % vgrid_name, 
+             'text': 'Leave and delete %s' % vgrid_name}
+            )
 
     return (output_objects, returnvalues.OK)
