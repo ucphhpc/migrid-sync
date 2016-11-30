@@ -40,6 +40,10 @@ from shared.html import render_menu, html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import user_allowed_vgrids
 
+list_actions = ['show', '']
+edit_actions = ['create', 'start', 'stop', 'edit', 'delete']
+allowed_actions = list(set(list_actions + edit_actions))
+
 def signature():
     """Signature of the main function"""
 
@@ -97,8 +101,9 @@ def main(client_id, user_arguments_dict):
     sys_re = accepted['sys_re'][-1].strip()
     action = accepted['action'][-1].strip()
 
-    if not safe_handler(configuration, 'post', op_name, client_id,
-                        get_csrf_limit(configuration), accepted):
+    if action in edit_actions and \
+           not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
 CSRF-filtered POST requests to prevent unintended updates'''
