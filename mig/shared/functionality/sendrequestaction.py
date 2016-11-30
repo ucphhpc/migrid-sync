@@ -40,10 +40,9 @@ from shared.notification import notify_user_thread
 from shared.resource import anon_to_real_res_map, resource_owners
 from shared.user import anon_to_real_user_map
 from shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
-     vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource, \
-     user_allowed_vgrids
-from shared.vgridaccess import get_user_map, get_resource_map, CONF, OWNERS, \
-     USERID
+     vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource
+from shared.vgridaccess import get_user_map, get_resource_map, \
+     user_vgrid_access, CONF, OWNERS, USERID
 
 
 def signature():
@@ -143,17 +142,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_name = user_id
         user_dict = user_map[user_id]
-        allow_vgrids = user_allowed_vgrids(configuration, client_id)
+        vgrid_access = user_vgrid_access(configuration, client_id)
         vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
         vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
         if any_vgrid in vgrids_allow_email:
-            email_vgrids = allow_vgrids
+            email_vgrids = vgrid_access
         else:
-            email_vgrids = set(vgrids_allow_email).intersection(allow_vgrids)
+            email_vgrids = set(vgrids_allow_email).intersection(vgrid_access)
         if any_vgrid in vgrids_allow_im:
-            im_vgrids = allow_vgrids
+            im_vgrids = vgrid_access
         else:
-            im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
+            im_vgrids = set(vgrids_allow_im).intersection(vgrid_access)
         if use_any:
             # Do not try disabled protocols if ANY was requested
             if not email_vgrids:

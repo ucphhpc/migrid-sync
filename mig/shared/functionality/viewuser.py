@@ -42,7 +42,7 @@ from shared.output import html_link
 from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
 from shared.vgrid import vgrid_request_and_job_match
-from shared.vgridaccess import user_visible_user_confs, user_allowed_vgrids, \
+from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
      CONF
 
 
@@ -236,7 +236,7 @@ $(document).ready(function() {
                           : 'Show user details'})
 
     visible_user = user_visible_user_confs(configuration, client_id)
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    vgrid_access = user_vgrid_access(configuration, client_id)
 
     for visible_user_name in user_list:
         if not visible_user_name in visible_user.keys():
@@ -252,7 +252,7 @@ $(document).ready(function() {
                                                          visible_user_name,
                                                          base_dir,
                                                          user_dict,
-                                                         allowed_vgrids)
+                                                         vgrid_access)
         output_objects.append(user_item)
         
     return (output_objects, status)

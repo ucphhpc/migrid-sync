@@ -33,7 +33,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_owners, vgrid_members, vgrid_resources, \
      vgrid_settings, vgrid_is_owner, vgrid_is_owner_or_member
-from shared.vgridaccess import user_allowed_vgrids
+from shared.vgridaccess import user_vgrid_access
 
 _valid_bool = [("yes", True), ("no", False)]
 
@@ -126,7 +126,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     vgrid_list = accepted['vgrid_name']
     status = returnvalues.OK
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    vgrid_access = user_vgrid_access(configuration, client_id)
 
     for vgrid_name in vgrid_list:
         vgrid_dict = {'vgrid_name': vgrid_name}
@@ -174,7 +174,7 @@ def main(client_id, user_arguments_dict):
         vgrid_item = build_vgriditem_object_from_vgrid_dict(configuration,
                                                             vgrid_name,
                                                             vgrid_dict,
-                                                            allowed_vgrids)
+                                                            vgrid_access)
         output_objects.append(vgrid_item)
     
         if client_id in vgrid_dict.get('owners', []):

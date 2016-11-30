@@ -43,8 +43,7 @@ from shared.parser import parse_lines
 from shared.refunctions import list_runtime_environments
 from shared.settings import load_settings
 from shared.useradm import get_default_mrsl
-from shared.vgrid import user_allowed_vgrids
-from shared.vgridaccess import user_allowed_res_exes
+from shared.vgridaccess import user_vgrid_access, user_allowed_res_exes
 
 
 def signature():
@@ -231,10 +230,10 @@ is accompanied by a help link providing further details about the field."""})
     # Find allowed VGrids and Runtimeenvironments and add them to
     # configuration object for automated choice handling
     
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id) + \
+    vgrid_access = user_vgrid_access(configuration, client_id) + \
                      [any_vgrid]
-    allowed_vgrids.sort()
-    configuration.vgrids = allowed_vgrids
+    vgrid_access.sort()
+    configuration.vgrids = vgrid_access
     (re_status, allowed_run_envs) = list_runtime_environments(configuration)
     if not re_status:
         logger.error('Failed to extract allowed runtime envs: %s' % \
@@ -242,6 +241,7 @@ is accompanied by a help link providing further details about the field."""})
         allowed_run_envs = []
     allowed_run_envs.sort()
     configuration.runtimeenvironments = allowed_run_envs
+    # TODO: next call is slow because we walk and reload all pickles
     user_res = user_allowed_res_exes(configuration, client_id)
 
     # Add valid MAXFILL values to automated choice handling

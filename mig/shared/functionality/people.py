@@ -37,7 +37,7 @@ from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.user import anon_to_real_user_map
-from shared.vgridaccess import user_visible_user_confs, user_allowed_vgrids, \
+from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
      CONF
 
 list_operations = ['showlist', 'list']
@@ -131,9 +131,8 @@ def main(client_id, user_arguments_dict):
 
     users = []
     if operation in list_operations:
-        # TODO: next 3 call are slow because we reload pickles and maps
         visible_user = user_visible_user_confs(configuration, client_id)
-        allow_vgrids = user_allowed_vgrids(configuration, client_id)
+        vgrid_access = user_vgrid_access(configuration, client_id)
         anon_map = anon_to_real_user_map(configuration)
         if not visible_user:
             output_objects.append({'object_type': 'error_text', 'text'
@@ -162,13 +161,13 @@ def main(client_id, user_arguments_dict):
             vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
             vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
             if any_vgrid in vgrids_allow_email:
-                email_vgrids = allow_vgrids
+                email_vgrids = vgrid_access
             else:
-                email_vgrids = set(vgrids_allow_email).intersection(allow_vgrids)
+                email_vgrids = set(vgrids_allow_email).intersection(vgrid_access)
             if any_vgrid in vgrids_allow_im:
-                im_vgrids = allow_vgrids
+                im_vgrids = vgrid_access
             else:
-                im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
+                im_vgrids = set(vgrids_allow_im).intersection(vgrid_access)
             for proto in configuration.notify_protocols:
                 if not email_vgrids and proto == 'email':
                     continue

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobfeasibility - capability of the submitted job to be executed
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,9 +45,9 @@ from shared.resource import anon_resource_id, list_resources, \
      anon_to_real_res_map
 from shared.resconfkeywords import get_resource_keywords
 from shared.validstring import is_valid_email_address
-from shared.vgrid import user_allowed_vgrids, vgrid_resources
+from shared.vgrid import vgrid_resources
 from shared.vgridaccess import get_vgrid_map, get_resource_map, \
-     real_to_anon_res_map, CONF, RESOURCES, ALLOW
+     real_to_anon_res_map, user_vgrid_access, CONF, RESOURCES, ALLOW
 
 # Condition colors in descending order (order is essential!)
 
@@ -538,32 +538,32 @@ def validate_verifyfiles(configuration, job, errors):
 def validate_vgrid(configuration, job, errors):
     """Returns a list of user specified vgrids that are allowed."""
 
-    allowed_vgrids = set(user_allowed_vgrids(configuration, job['USER_CERT']))
+    vgrid_access = set(user_vgrid_access(configuration, job['USER_CERT']))
 
     if skip_validation(configuration, job, 'VGRID'):
 
         # all allowed, possibly empty
 
-        return list(allowed_vgrids)
+        return list(vgrid_access)
 
     specified_vgrids = set(job['VGRID'])
 
-    not_allowed = specified_vgrids.difference(allowed_vgrids)
+    not_allowed = specified_vgrids.difference(vgrid_access)
     if not_allowed:
         errors['VGRID'] = \
         'The following VGrids are not allowed for the current user:, %s' % \
         (not_allowed)
 
-    if not allowed_vgrids.intersection(specified_vgrids):
+    if not vgrid_access.intersection(specified_vgrids):
 
         # all allowed, possibly []
 
-        return list(allowed_vgrids)
+        return list(vgrid_access)
     else:
 
         #validated specifed and allowed
 
-        return list(allowed_vgrids.intersection(specified_vgrids))
+        return list(vgrid_access.intersection(specified_vgrids))
 
 
 def validate_sandbox(configuration, job, resource, errors):
@@ -892,9 +892,9 @@ def complement_vgrids(configuration, job, vgrids):
     have been subtracted.
     """
 
-    allowed_vgrids = set(user_allowed_vgrids(configuration, job['USER_CERT']))
+    vgrid_access = set(user_vgrid_access(configuration, job['USER_CERT']))
 
-    return list(allowed_vgrids.difference(vgrids))
+    return list(vgrid_access.difference(vgrids))
 
 
 def complement_resources(configuration, job, vgrid, resources):

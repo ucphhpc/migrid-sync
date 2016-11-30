@@ -38,7 +38,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import render_menu, html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import user_allowed_vgrids
+from shared.vgridaccess import user_vgrid_access
 
 list_actions = ['show', '']
 edit_actions = ['create', 'start', 'stop', 'edit', 'delete']
@@ -412,7 +412,7 @@ Please contact the Grid admins %s if you think they should be enabled.
 <li><input type="text" name="cpu_time" value="%(cpu_time)s"> s time slot</li>
 <li><select name="vgrid" multiple>"""
             for vgrid_name in [any_vgrid] + \
-                    user_allowed_vgrids(configuration, client_id):
+                    user_vgrid_access(configuration, client_id):
                 select = ''
                 if vgrid_name in machine_specs['vgrid']:
                     select = 'selected'

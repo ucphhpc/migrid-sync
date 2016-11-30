@@ -577,6 +577,7 @@ def get_vgrid_map(configuration, recursive=True):
     participation with inherited entities. The raw vgrid map only mirrors the
     direct participation.
     """
+    # TODO: is it correct that vgrid_map only contains direct participation?
     if last_load[VGRIDS] + MAP_CACHE_SECONDS > time.time():
         configuration.logger.debug("using cached vgrid map")
         vgrid_map = last_map[VGRIDS]
@@ -599,6 +600,25 @@ def get_vgrid_map(configuration, recursive=True):
     else:
         return vgrid_map
 
+def user_vgrid_access(configuration, client_id, recursive=True):
+    """Extract a list of vgrids that user is allowed to access either due to
+    owner or membership. The optional recursive argument is passed directly to
+    the get_vgrid_map call so please refer to the use there.
+    IMPORTANT: recursive is different from the inherited argument supported by
+    user_allowed_vgrids, and we do not support that *parent* inclusion here!
+    Thus this is basically the fast vgrid_map equivalent of the default
+    user_allowed_vgrids from the vgrid module when used for owner/membership
+    lookup.
+    """
+    # TODO: add support for the inherited argument, too? ... often used.
+    vgrid_access = [default_vgrid]
+    vgrid_map = get_vgrid_map(configuration, recursive)
+    for vgrid in vgrid_map[VGRIDS].keys():
+        if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][OWNERS]) or \
+               vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][MEMBERS]):
+            vgrid_access.append(vgrid)
+    return vgrid_access
+    
 def user_owned_res_confs(configuration, client_id):
     """Extract a map of resources that client_id owns.
 
@@ -832,7 +852,7 @@ def user_allowed_user_confs(configuration, client_id):
     User IDs are anonymized unless explicitly configured otherwise.
     """
     allowed = {}
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    allowed_vgrids = user_vgrid_access(configuration, client_id)
 
     # Find all potential users from vgrid member and ownership
 
@@ -924,6 +944,16 @@ if "__main__" == __name__:
     if len(sys.argv) > 2:
         runtime_env = sys.argv[2]
     conf = get_configuration_object()
+    # Verify that old-fashioned user_allowed_vgrids matches user_vgrid_access
+    vgrids_allowed = user_allowed_vgrids(conf, user_id)
+    vgrids_allowed.sort()
+    print "user allowed vgrids: %s" % vgrids_allowed
+    vgrid_access = user_vgrid_access(conf, user_id)
+    vgrid_access.sort()
+    print "user access vgrids: %s" % vgrid_access
+    print "user allow and access match: %s" % (vgrids_allowed == vgrid_access)
+    # TMP!!
+    sys.exit(1)
     res_map = get_resource_map(conf)
     #print "raw resource map: %s" % res_map
     all_resources = res_map.keys()

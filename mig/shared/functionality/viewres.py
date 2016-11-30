@@ -34,7 +34,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.resconfkeywords import get_resource_keywords, \
      get_exenode_keywords, get_storenode_keywords
 from shared.resource import anon_to_real_res_map
-from shared.vgridaccess import user_visible_res_confs, user_allowed_vgrids, \
+from shared.vgridaccess import user_visible_res_confs, user_vgrid_access, \
      user_visible_res_confs, get_resource_map, OWNERS, CONF
 
 
@@ -46,7 +46,7 @@ def signature():
 
 
 def build_resitem_object_from_res_dict(configuration, unique_resource_name,
-                                       res_dict, allow_vgrids):
+                                       res_dict, vgrid_access):
     """Build a resource object based on input res_dict"""
 
     res_keywords = get_resource_keywords(configuration)
@@ -79,7 +79,7 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
             exe_spec.append((exe_keywords[name]['Title'],
                              exe.get(name, 'UNKNOWN')))
         exec_vgrids = exe.get('vgrid', [])
-        visible_vgrids = [i for i in exec_vgrids if i in allow_vgrids]
+        visible_vgrids = [i for i in exec_vgrids if i in vgrid_access]
         if visible_vgrids != exec_vgrids:
             visible_vgrids.append('%d undisclosed' % \
                                   (len(exec_vgrids) - len(visible_vgrids)))
@@ -94,7 +94,7 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
             store_spec.append((store_keywords[name]['Title'],
                              store.get(name, 'UNKNOWN')))
         storage_vgrids = store.get('vgrid', [])
-        visible_vgrids = [i for i in storage_vgrids if i in allow_vgrids]
+        visible_vgrids = [i for i in storage_vgrids if i in vgrid_access]
         if visible_vgrids != storage_vgrids:
             visible_vgrids.append('%d undisclosed' % \
                                   (len(storage_vgrids) - len(visible_vgrids)))
@@ -128,7 +128,7 @@ def main(client_id, user_arguments_dict):
     resource_list = accepted['unique_resource_name']
     status = returnvalues.OK
     visible_res = user_visible_res_confs(configuration, client_id)
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    vgrid_access = user_vgrid_access(configuration, client_id)
     res_map = get_resource_map(configuration)
     anon_map = anon_to_real_res_map(configuration.resource_home)
 
@@ -147,7 +147,7 @@ def main(client_id, user_arguments_dict):
         res_item = build_resitem_object_from_res_dict(configuration,
                                                       visible_res_name,
                                                       res_dict,
-                                                      allowed_vgrids)
+                                                      vgrid_access)
         output_objects.append(res_item)
 
     

@@ -39,7 +39,7 @@ from shared.defaults import default_vgrid, any_vgrid, src_dst_sep
 from shared.fileio import unpickle, pickle, send_message_to_grid_script
 from shared.refunctions import is_runtime_environment
 from shared.safeinput import html_escape, valid_path
-from shared.vgrid import user_allowed_vgrids
+from shared.vgridaccess import user_vgrid_access
 
 try:
     import shared.arcwrapper as arc
@@ -145,13 +145,13 @@ def parse(
     # resubmits to properly expand job ID.
 
     vgrid_list = global_dict['VGRID']
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    vgrid_access = user_vgrid_access(configuration, client_id)
 
     # Replace any_vgrid keyword with all allowed vgrids (on time of submit!)
 
     try:
         any_pos = vgrid_list.index(any_vgrid)
-        vgrid_list[any_pos:any_pos] = allowed_vgrids
+        vgrid_list[any_pos:any_pos] = vgrid_access
 
         # Remove any additional any_vgrid keywords
 
@@ -166,7 +166,7 @@ def parse(
     # Now validate supplied vgrids
 
     for vgrid_name in vgrid_list:
-        if not vgrid_name in allowed_vgrids:
+        if not vgrid_name in vgrid_access:
             return (False, """Failure: You must be an owner or member of the
 '%s' vgrid to submit a job to it!""" % vgrid_name)
 

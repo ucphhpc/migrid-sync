@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridmonitor - show private vgrid monitor to vgrid participants
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,8 @@ from shared.defaults import all_vgrids
 from shared.functional import validate_input_and_cert
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids
+from shared.vgrid import vgrid_is_owner_or_member
+from shared.vgridaccess import user_vgrid_access
 
 
 def signature():
@@ -105,11 +106,11 @@ $(document).ready(function() {
     title_entry['style'] = style
     title_entry['javascript'] = script
 
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    vgrid_access = user_vgrid_access(configuration, client_id)
     vgrid_list = accepted['vgrid_name']
     if all_vgrids in accepted['vgrid_name']:
         vgrid_list = [i for i in vgrid_list if all_vgrids != i]\
-             + allowed_vgrids
+             + vgrid_access
 
     # Force list to sequence of unique entries
 

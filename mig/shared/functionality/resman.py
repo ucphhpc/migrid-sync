@@ -141,7 +141,7 @@ to open resource management.
 
     resources = []
     if operation in list_operations:
-        # TODO: next 3 call are slow because we reload pickles and maps
+        # TODO: next call is slow because we walk and reload all pickles
         visible_res_confs = user_visible_res_confs(configuration, client_id)
         res_map = get_resource_map(configuration)
         anon_map = anon_to_real_res_map(configuration.resource_home)
