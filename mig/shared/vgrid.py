@@ -856,7 +856,8 @@ def user_allowed_vgrids(configuration, client_id, inherited=False):
     """Return a list of all VGrids that the user with client_id is allowed to
     access. I.e. the VGrids that the user is member or owner of.
     The optional inherited argument is used to add any parent vgrids to match
-    inherited access to resources in *parent* vgrids.
+    inherited access to resources in *parent* vgrids. This is actually contrary
+    to the usual inheritance drection, so it will likely change in the future.
     """
 
     allowed = []

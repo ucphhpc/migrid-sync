@@ -46,8 +46,8 @@ from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import get_re_dict, list_runtime_environments
-from shared.vgrid import res_allowed_vgrids, vgrid_list_vgrids
-from shared.vgridaccess import get_resource_map, CONF, OWNERS, RESID
+from shared.vgridaccess import res_vgrid_access, get_vgrid_map, \
+     get_resource_map, CONF, OWNERS, RESID, VGRIDS
 
 
 def signature():
@@ -380,10 +380,9 @@ If in doubt, just let the user request access and accept it with the
 
     # list all vgrids without access
 
-    allowed_vgrids = res_allowed_vgrids(configuration, resourcename)
-    (vgrid_status, vgrid_list) = vgrid_list_vgrids(configuration)
-    if not vgrid_status:
-        vgrid_list = []
+    allowed_vgrids = res_vgrid_access(configuration, resourcename)
+    vgrid_map = get_vgrid_map(configuration)
+    vgrid_list = vgrid_map.get(VGRIDS, {}).keys()
     for vgrid_name in vgrid_list:
         if not vgrid_name in allowed_vgrids:
             html += '<option value=%s>%s' % (vgrid_name, vgrid_name)

@@ -39,7 +39,7 @@ from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments
 from shared.resource import init_conf, empty_resource_config 
-from shared.vgrid import res_allowed_vgrids
+from shared.vgridaccess import res_vgrid_access
 
 
 def signature():
@@ -107,7 +107,7 @@ def main(client_id, user_arguments_dict):
     # Find allowed VGrids and Runtimeenvironments and add them to
     # configuration object for automated choice handling    
 
-    allowed_vgrids = [''] + res_allowed_vgrids(configuration, resource_id)
+    allowed_vgrids = [''] + res_vgrid_access(configuration, resource_id)
     allowed_vgrids.sort()
 
     configuration.vgrids = allowed_vgrids

@@ -44,7 +44,7 @@ from shared.serial import load, dump
 from shared.user import list_users, real_to_anon_user_map, get_user_conf
 from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
      user_allowed_vgrids, vgrid_owners, vgrid_members, vgrid_settings, \
-     vgrid_list_subvgrids, vgrid_list_parents
+     vgrid_list_subvgrids, vgrid_list_parents, res_allowed_vgrids
 
 MAP_SECTIONS = (USERS, RESOURCES, VGRIDS) = ("__users__", "__resources__",
                                              "__vgrids__")
@@ -622,6 +622,21 @@ def user_vgrid_access(configuration, client_id, inherited=False,
             vgrid_access.append(vgrid)
     return vgrid_access
     
+def res_vgrid_access(configuration, client_id, recursive=True):
+    """Extract a list of vgrids that resource is allowed to access.
+    The optional recursive argument is passed directly to the get_vgrid_map
+    call so please refer to the use there.
+    Thus this is basically the fast equivalent of the res_allowed_vgrids from
+    the vgrid module and should replace that one everywhere that only vgrid map
+    (cached) lookups are needed.
+    """
+    vgrid_access = [default_vgrid]
+    vgrid_map = get_vgrid_map(configuration, recursive)
+    for vgrid in vgrid_map[VGRIDS].keys():
+        if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][RESOURCES]):
+            vgrid_access.append(vgrid)
+    return vgrid_access
+    
 def user_owned_res_confs(configuration, client_id):
     """Extract a map of resources that client_id owns.
 
@@ -946,6 +961,9 @@ if "__main__" == __name__:
     runtime_env = 'PYTHON'
     if len(sys.argv) > 2:
         runtime_env = sys.argv[2]
+    res_id = 'localhost.0'
+    if len(sys.argv) > 3:
+        res_id = sys.argv[3]
     conf = get_configuration_object()
     # Verify that old-fashioned user_allowed_vgrids matches user_vgrid_access
     vgrids_allowed = user_allowed_vgrids(conf, user_id)
@@ -963,6 +981,16 @@ if "__main__" == __name__:
     vgrid_access.sort()
     print "inherit user access vgrids: %s" % vgrid_access
     print "inherit user allow and access match: %s" % (vgrids_allowed == vgrid_access)
+    # Verify that old-fashioned res_allowed_vgrids matches res_vgrid_access
+    vgrids_allowed = res_allowed_vgrids(conf, res_id)
+    vgrids_allowed.sort()
+    print "res allowed vgrids: %s" % vgrids_allowed
+    vgrid_access = res_vgrid_access(conf, res_id)
+    vgrid_access.sort()
+    print "res access vgrids: %s" % vgrid_access
+    print "res allow and access match: %s" % (vgrids_allowed == vgrid_access)
+    # TMP!
+    sys.exit(42)
     res_map = get_resource_map(conf)
     #print "raw resource map: %s" % res_map
     all_resources = res_map.keys()
