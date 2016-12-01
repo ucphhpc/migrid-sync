@@ -989,8 +989,6 @@ if "__main__" == __name__:
     vgrid_access.sort()
     print "res access vgrids: %s" % vgrid_access
     print "res allow and access match: %s" % (vgrids_allowed == vgrid_access)
-    # TMP!
-    sys.exit(42)
     res_map = get_resource_map(conf)
     #print "raw resource map: %s" % res_map
     all_resources = res_map.keys()

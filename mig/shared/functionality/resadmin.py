@@ -383,6 +383,7 @@ If in doubt, just let the user request access and accept it with the
     allowed_vgrids = res_vgrid_access(configuration, resourcename)
     vgrid_map = get_vgrid_map(configuration)
     vgrid_list = vgrid_map.get(VGRIDS, {}).keys()
+    vgrid_list.sort()
     for vgrid_name in vgrid_list:
         if not vgrid_name in allowed_vgrids:
             html += '<option value=%s>%s' % (vgrid_name, vgrid_name)
