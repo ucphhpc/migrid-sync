@@ -45,7 +45,7 @@ from shared.init import initialize_main_variables
 from shared.sandbox import load_sandbox_db, save_sandbox_db, \
     create_sss_resource
 from shared.safeeval import subprocess_call
-from shared.vgrid import vgrid_list_vgrids
+from shared.vgridaccess import get_vgrid_map_vgrids
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
 
@@ -125,9 +125,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # for a vgrid but it is still left to the vgrid owners to explicitly
     # accept all resources
 
-    (vg_status, all_vgrids) = vgrid_list_vgrids(configuration)
+    all_vgrids = get_vgrid_map_vgrids(configuration)
     for vgrid in vgrid_list:
-        if not vg_status or not vgrid in all_vgrids:
+        if not vgrid in all_vgrids:
             output_objects.append({'object_type': 'error_text', 'text'
                               : 'Failed to validate %s %s: %s'
                                % (configuration.site_vgrid_label, vgrid,

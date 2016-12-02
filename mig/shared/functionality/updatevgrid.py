@@ -245,7 +245,7 @@ if __name__ == "__main__":
     from shared.conf import get_configuration_object
     from shared.defaults import default_vgrid
     from shared.output import txt_format
-    from shared.vgrid import vgrid_list_vgrids
+    from shared.vgridaccess import get_vgrid_map_vgrids
     
     # use dummy owner check
     vgrid_is_owner = dummy_owner_check
@@ -280,10 +280,7 @@ if __name__ == "__main__":
                                       % script
     os.environ.update(extra_environment)
 
-    (list_status, all_vgrids) = vgrid_list_vgrids(configuration)
-    if not list_status:
-        print "Error: could not load %s list" % configuration.site_vgrid_label
-        sys.exit(1)
+    all_vgrids = get_vgrid_map_vgrids(configuration)
     for vgrid_name in all_vgrids:
         if vgrid_name == default_vgrid:
             continue

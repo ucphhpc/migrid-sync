@@ -41,7 +41,7 @@ from shared.html import get_cgi_html_header, get_cgi_html_footer, themed_styles
 from shared.logger import daemon_logger, reopen_log
 from shared.output import format_timedelta
 from shared.resource import anon_resource_id
-from shared.vgrid import vgrid_list_vgrids
+from shared.vgridaccess import get_vgrid_map_vgrids
 
 configuration, logger = None, None
 
@@ -729,7 +729,7 @@ unless it is available in mig/server/MiGserver.conf
     keep_running = True
     while keep_running:
         try:
-            (status, vgrids_list) = vgrid_list_vgrids(configuration)
+            vgrids_list = get_vgrid_map_vgrids(configuration)
 
             # create global statistics ("")
             # vgrids_list.append("")

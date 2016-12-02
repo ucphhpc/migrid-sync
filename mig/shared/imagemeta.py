@@ -46,8 +46,9 @@ from shared.imagemetaio import get_image_file_setting, \
     __revision, get_image_file, get_image_volume, \
     get_preview_image_url, get_image_xdmf_filepath
 from shared.vgrid import in_vgrid_share, vgrid_add_triggers, \
-    vgrid_remove_triggers, vgrid_list_vgrids, vgrid_is_trigger, \
-    vgrid_add_imagesettings, vgrid_remove_imagesettings
+    vgrid_remove_triggers, vgrid_is_trigger, vgrid_add_imagesettings, \
+    vgrid_remove_imagesettings
+from shared.vgridaccess import get_vgrid_map_vgrids
 
 
 def __get_preview_mrsl_template():
@@ -214,8 +215,8 @@ def __is_valid_image_settings_update(
     # Check for vgrid
 
     if result:
-        (status, vgrid_list) = vgrid_list_vgrids(configuration)
-        if not status or status and not vgrid_name in vgrid_list:
+        vgrid_list = get_vgrid_map_vgrids(configuration)
+        if not vgrid_name in vgrid_list:
             result = False
             msg = "'%s' is _NOT_ workflow enabled." % vgrid_name
 

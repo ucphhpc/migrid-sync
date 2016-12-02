@@ -47,7 +47,7 @@ from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import get_default_mrsl, get_default_css, extract_field, \
      create_alias_link
-from shared.vgrid import vgrid_list_vgrids
+from shared.vgridaccess import get_vgrid_map_vgrids
 
 try:
     import shared.arcwrapper as arc
@@ -604,11 +604,7 @@ them there first if you want to customize your grid pages.
             
             current_profile_dict = {}
 
-        (got_list, all_vgrids) = vgrid_list_vgrids(configuration)
-        if not got_list:
-            all_vgrids = []
-        all_vgrids.append(any_vgrid)
-        all_vgrids.sort()
+        all_vgrids = get_vgrid_map_vgrids(configuration)
         configuration.vgrids_allow_email = all_vgrids
         configuration.vgrids_allow_im = all_vgrids
         images = []

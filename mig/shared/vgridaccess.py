@@ -286,7 +286,7 @@ def refresh_vgrid_map(configuration):
         vgrid_map[USERS] = {}
         dirty[USERS] = dirty.get(USERS, [])
 
-    # Find all vgrids and their allowed users and resources
+    # Find all vgrids and their allowed users and resources - from disk
 
     (status, all_vgrids) = vgrid_list_vgrids(configuration)
     if not status:
@@ -569,11 +569,11 @@ def vgrid_inherit_map(configuration, vgrid_map):
                 vgrid[field] += [i for i in parent_vgrid[field] if not i in \
                                  vgrid[field]]
     return inherit_map
-                
+
 def get_vgrid_map(configuration, recursive=True):
     """Returns the current map of vgrids and their configurations. Caches the
     map for load prevention with repeated calls within short time span.
-    the recursive parameter is there to request extension of all sub-vgrids
+    The recursive parameter is there to request extension of all sub-vgrids
     participation with inherited entities. The raw vgrid map only mirrors the
     direct participation.
     """
@@ -599,6 +599,18 @@ def get_vgrid_map(configuration, recursive=True):
         return vgrid_inherit_map(configuration, vgrid_map)
     else:
         return vgrid_map
+
+def get_vgrid_map_vgrids(configuration, recursive=True, sort=True):
+    """Returns the current list of vgrids from vgrid map. Caches the
+    map for load prevention with repeated calls within short time span.
+    The recursive parameter is there to request extension of all sub-vgrids
+    participation with inherited entities.
+    """
+    vgrid_map = get_vgrid_map(configuration, recursive)
+    vgrid_list = vgrid_map.get(VGRIDS, {}).keys()
+    if sort:
+        vgrid_list.sort()
+    return vgrid_list
 
 def user_vgrid_access(configuration, client_id, inherited=False,
                       recursive=True):
@@ -965,6 +977,9 @@ if "__main__" == __name__:
     if len(sys.argv) > 3:
         res_id = sys.argv[3]
     conf = get_configuration_object()
+    # Test listing alternative to vgrid_list_vgrids
+    vgrid_list = get_vgrid_map_vgrids(conf)
+    print "all vgrids: %s" % vgrid_list
     # Verify that old-fashioned user_allowed_vgrids matches user_vgrid_access
     vgrids_allowed = user_allowed_vgrids(conf, user_id)
     vgrids_allowed.sort()
