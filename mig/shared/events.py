@@ -55,11 +55,13 @@ def get_command_map(configuration):
         'jobaction': ['job_id', 'action'],
         'liveio': ['action', 'src', 'dst', 'job_id'],
         'mqueue': ['queue', 'action', 'msg_id', 'msg'],
+        'filemetaio': ['flags', 'action', 'path', 'extension'],
         }
 
-def get_expand_map(trigger_path, rule, state_change):
+def get_expand_map(trigger_path, rule, state_change, src_trigger_path=None):
     """Generate a dictionary with the supported variables to be expanded and
     the actual expanded values based on trigger_path and rule dictionary.
+    *src_trigger_path* is used by move events and therefore optional
     """
 
     trigger_filename = os.path.basename(trigger_path)
@@ -79,6 +81,22 @@ def get_expand_map(trigger_path, rule, state_change):
         '+TRIGGERVGRIDNAME+': rule['vgrid_name'],
         '+TRIGGERRUNAS+': rule['run_as'],
         }
+
+    if src_trigger_path is not None:
+        src_trigger_filename = os.path.basename(src_trigger_path)
+        src_trigger_dirname = os.path.dirname(src_trigger_path)
+        src_trigger_relpath = os.path.relpath(src_trigger_path, rule['vgrid_name'])
+        src_trigger_reldirname = os.path.dirname(src_trigger_relpath)
+        (src_prefix, src_extension) = os.path.splitext(src_trigger_filename)
+        expand_map.update({
+            '+SRCTRIGGERPATH+': src_trigger_path,
+            '+SRCTRIGGERRELPATH+': src_trigger_relpath,
+            '+SRCTRIGGERDIRNAME+': src_trigger_dirname,
+            '+SRCTRIGGERRELDIRNAME+': src_trigger_reldirname,
+            '+SRCTRIGGERFILENAME+': src_trigger_filename,
+            '+SRCTRIGGERPREFIX+': src_prefix,
+            '+SRCTRIGGEREXTENSION+': src_extension,
+        })
 
     # TODO: provide exact expanded wildcards?
 
