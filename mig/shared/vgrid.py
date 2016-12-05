@@ -172,6 +172,9 @@ doubt, just let the user request access and accept it with the
                 table += \
 "          <tr><td></td><td>%s</td></tr>"\
                      % elem
+            else:
+                # We should not see empty elements here, but skip if we do
+                continue
         table += '''
         </tbody></table>
 '''
@@ -227,6 +230,9 @@ doubt, just let the user request access and accept it with the
             elif elem:
                 elem_id = elem
                 extra_fields_html = ''
+            else:
+                # We should not see empty elements here, but skip if we do
+                continue
 
             dyn_dict[id_field] = elem_id
             vgrid_table += """
