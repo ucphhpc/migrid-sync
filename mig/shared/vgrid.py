@@ -173,7 +173,8 @@ doubt, just let the user request access and accept it with the
 "          <tr><td></td><td>%s</td></tr>"\
                      % elem
             else:
-                # We should not see empty elements here, but skip if we do
+                # We can encounter empty string elements here, because creation
+                # of subvgrids have historically always set owners to [''] .
                 continue
         table += '''
         </tbody></table>
@@ -231,7 +232,8 @@ doubt, just let the user request access and accept it with the
                 elem_id = elem
                 extra_fields_html = ''
             else:
-                # We should not see empty elements here, but skip if we do
+                # We can encounter empty string elements here, because creation
+                # of subvgrids have historically always set owners to [''] .
                 continue
 
             dyn_dict[id_field] = elem_id
