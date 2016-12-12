@@ -61,8 +61,10 @@ except ImportError:
 try:
     from scandir import scandir, walk, __version__ as scandir_version
     if float(scandir_version) < 1.3:
+
         # Important os.walk compatibility utf8 fixes were not added until 1.3
-        raise ImportError("scandir version is too old >= 1.3 required")
+
+        raise ImportError('scandir version is too old >= 1.3 required')
 except ImportError, exc:
     print 'ERROR: %s' % str(exc)
     sys.exit(1)
@@ -827,10 +829,12 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             change = rule['action'].replace('trigger-', '')
 
             # Expand dynamic variables in argument once and for all
+
             if len(rel_dest) == 0:
                 expand_map = get_expand_map(rel_src, rule, state)
             else:
-                expand_map = get_expand_map(rel_dest, rule, state, rel_src)
+                expand_map = get_expand_map(rel_dest, rule, state,
+                        rel_src)
 
             for argument in rule['arguments']:
                 filled_argument = argument
@@ -846,9 +850,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 pattern = os.path.join(vgrid_prefix, filled_argument)
                 for path in glob.glob(pattern):
                     rel_path = path[base_dir_len:]
-
-                        # path.replace(configuration.vgrid_files_home, '')
-
                     _chain += [(path, change)]
 
                     # Prevent obvious trigger chain cycles
@@ -858,9 +859,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                 _chain]
                         chain_str = ' <-> '.join(flat_chain)
                         rel_chain_str = chain_str[base_dir_len:]
-
-                            # chain_str.replace(configuration.vgrid_files_home,
-                                # '')
 
                         logger.warning('(%s) breaking trigger cycle %s'
                                 % (pid, chain_str))
@@ -886,7 +884,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             if len(rel_dest) == 0:
                 expand_map = get_expand_map(rel_src, rule, state)
             else:
-                expand_map = get_expand_map(rel_dest, rule, state, rel_src)
+                expand_map = get_expand_map(rel_dest, rule, state,
+                        rel_src)
             try:
                 for job_template in rule['templates']:
                     mrsl_fd.truncate(0)
@@ -934,32 +933,45 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         elif rule['action'] == 'command':
 
             # Expand dynamic variables in argument once and for all
-            
+
             if len(rel_dest) == 0:
                 expand_map = get_expand_map(rel_src, rule, state)
             else:
-                expand_map = get_expand_map(rel_dest, rule, state, rel_src)
+                expand_map = get_expand_map(rel_dest, rule, state,
+                        rel_src)
             command_str = ''
             command_list = (rule['arguments'])[:1]
-            for argument in (rule['arguments'])[1:]:
-                filled_argument = argument
-                for (key, val) in expand_map.items():
-                    filled_argument = filled_argument.replace(key, val)
-                self.__workflow_info(configuration, rule['vgrid_name'],
-                        'expanded argument %s to %s' % (argument,
-                        filled_argument))
-                command_list.append(filled_argument)
-            try:
-                run_command(command_list, target_path, rule,
-                            configuration)
-                self.__workflow_info(configuration, rule['vgrid_name'],
-                        'ran command: %s' % ' '.join(command_list))
-            except Exception, exc:
-                logger.error('(%s) failed to run command for %s: %s (%s)'
-                              % (pid, target_path, command_str, exc))
+            if not isinstance(command_list, list):
+                logger.error('(%s) invalid command arguments format %s: %s'
+                              % (pid, target_path, rule['arguments']))
                 self.__workflow_err(configuration, rule['vgrid_name'],
-                                    'failed to run command for %s: %s (%s)'
-                                     % (rel_src, command_str, exc))
+                                    '(%s) invalid command arguments format %s: %s'
+                                     % (pid, target_path,
+                                    rule['arguments']))
+            else:
+                for argument in (rule['arguments'])[1:]:
+                    filled_argument = argument
+                    for (key, val) in expand_map.items():
+                        filled_argument = filled_argument.replace(key,
+                                val)
+                    self.__workflow_info(configuration,
+                            rule['vgrid_name'],
+                            'expanded argument %s to %s' % (argument,
+                            filled_argument))
+                    command_list.append(filled_argument)
+                try:
+                    run_command(command_list, target_path, rule,
+                                configuration)
+                    self.__workflow_info(configuration,
+                            rule['vgrid_name'], 'ran command: %s'
+                            % ' '.join(command_list))
+                except Exception, exc:
+                    logger.error('(%s) failed to run command for %s: %s (%s)'
+                                  % (pid, target_path, command_str,
+                                 exc))
+                    self.__workflow_err(configuration, rule['vgrid_name'
+                            ], 'failed to run command for %s: %s (%s)'
+                            % (rel_src, command_str, exc))
         else:
             logger.error('(%s) unsupported action: %s' % (pid,
                          rule['action']))
@@ -998,8 +1010,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                             rel_path)
                     vgrid_dir_cache[rel_path]['mtime'] = rel_path_mtime
 
-                    # Check if sub paths were changed
+                    # Check if sub paths or files were changed
                     # For create this occurs by eg. mkdir -p 'path/subpath/subpath2'
+                    # or 'cp -rf'
 
                     for ent in scandir(src_path):
                         if ent.is_dir(follow_symlinks=True):
@@ -1012,6 +1025,12 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                 #         % (pid, src_path, ent.path))
 
                                 file_handler.dispatch(DirCreatedEvent(ent.path))
+                        elif ent.is_file(follow_symlinks=True):
+
+                            # logger.debug('(%s) %s -> Dispatch FileCreatedEvent for: %s'
+                            #            % (pid, src_path, ent.path))
+
+                            file_handler.dispatch(FileCreatedEvent(ent.path))
                 except OSError, exc:
 
                     # If we get an OSError, src_path was most likely deleted
@@ -1101,8 +1120,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                         continue
 
-                    logger.info('(%s) trigger %s for src_path: %s, dest_path: %s -> %s' % (pid,
-                                rule['action'], src_path, dest_path, rule))
+                    logger.info('(%s) trigger %s for src_path: %s, dest_path: %s -> %s'
+                                 % (pid, rule['action'], src_path,
+                                dest_path, rule))
 
                     # TODO: Replace try / catch with a 'event queue / thread pool' setup
 
@@ -1163,6 +1183,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
     def on_moved(self, event):
         """Handle moved files"""
+
         self.handle_event(event)
 
 
@@ -1216,10 +1237,6 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
             for ent in scandir(vgrid_files_path):
                 if ent.is_dir(follow_symlinks=True):
                     vgrid_sub_path = ent.path[base_dir_len:]
-
-                        # ent.path.replace(os.path.join(configuration.vgrid_files_home,
-                        #    ''), '')
-
                     if not vgrid_sub_path in vgrid_dir_cache.keys():
                         add_vgrid_file_monitor(configuration,
                                 vgrid_name, vgrid_sub_path)
@@ -1286,10 +1303,6 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
         for dir_name in dir_names:
             dir_path = os.path.join(root, dir_name)
             dir_cache_path = dir_path[base_dir_len:]
-
-                # dir_path.replace(os.path.join(configuration.vgrid_files_home,
-                #                 ''), '')
-
             if not vgrid_dir_cache.has_key(dir_cache_path):
                 vgrid_dir_cache[dir_cache_path] = {}
                 vgrid_dir_cache[dir_cache_path]['mtime'] = \
