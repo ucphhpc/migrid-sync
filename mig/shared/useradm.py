@@ -1280,7 +1280,15 @@ def search_users(search_filter, conf_path, db_path, verbose=False):
     for (uid, user_dict) in user_db.items():
         match = True
         for (key, val) in search_filter.items():
-            if not fnmatch.fnmatch(str(user_dict.get(key, '')), val):
+            if key == 'expire_after':
+                if user_dict.get('expire', val) < val:
+                    match = False
+                    break
+            elif key == 'expire_before':
+                if user_dict.get('expire', 0) > val:
+                    match = False
+                    break
+            elif not fnmatch.fnmatch(str(user_dict.get(key, '')), val):
                 match = False
                 break
         if not match:

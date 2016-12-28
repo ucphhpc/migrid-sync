@@ -27,9 +27,11 @@
 
 """Find all users with given data base field(s)"""
 
-import sys
 import getopt
+import sys
+import time
 
+from shared.defaults import cert_valid_days, oid_valid_days
 from shared.useradm import init_user_adm, search_users, default_search
 
 
@@ -40,14 +42,17 @@ def usage(name='searchusers.py'):
 Usage:
 %(name)s [SEARCH_OPTIONS]
 Where SEARCH_OPTIONS may be one or more of:
+   -a EXPIRE_AFTER     Limit to users set to expire after EXPIRE_AFTER time
+   -b EXPIRE_BEFORE    Limit to users set to expire before EXPIRE_BEFORE time
    -C COUNTRY          Search for country
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_PATH          Use DB_PATH as user data base file path
+   -f FIELD            Show only FIELD value for matching users
    -E EMAIL            Search for email
    -F FULLNAME         Search for full name
    -h                  Show this help
    -I CERT_DN          Search for user ID (distinguished name)
-   -n                  Show only name
+   -n                  Show only name (equals -f full_name)
    -O ORGANIZATION     Search for organization
    -r ROLE             Match on role pattern
    -S STATE            Search for state
@@ -62,9 +67,10 @@ if '__main__' == __name__:
     conf_path = None
     verbose = False
     user_dict = {}
-    opt_args = 'c:C:d:E:F:hI:nO:r:S:v'
+    opt_args = 'a:b:c:C:d:E:f:F:hI:nO:r:S:v'
     search_filter = default_search()
-    name_only = False
+    expire_before, expire_after = None, None
+    only_fields = []
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -73,17 +79,23 @@ if '__main__' == __name__:
         sys.exit(1)
 
     for (opt, val) in opts:
-        if opt == '-c':
+        if opt == '-a':
+            search_filter['expire_after'] = int(val)
+        elif opt == '-b':
+            search_filter['expire_before'] = int(val)
+        elif opt == '-c':
             conf_path = val
         elif opt == '-d':
             db_path = val
+        elif opt == '-f':
+            only_fields.append(val)
         elif opt == '-h':
             usage()
             sys.exit(0)
         elif opt == '-I':
             search_filter['distinguished_name'] = val
         elif opt == '-n':
-            name_only = True
+            only_fields.append('full_name')
         elif opt == '-C':
             search_filter['country'] = val
         elif opt == '-E':
@@ -106,7 +118,8 @@ if '__main__' == __name__:
     hits = search_users(search_filter, conf_path, db_path, verbose)
     print "Matching users:"
     for (uid, user_dict) in hits:
-        if name_only:
-            print '%s' % user_dict['full_name']
+        if only_fields:
+            field_list = [str(user_dict.get(i, '')) for i in only_fields]
+            print '%s' % ' : '.join(field_list)
         else:
             print '%s : %s' % (uid, user_dict)
