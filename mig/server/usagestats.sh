@@ -43,19 +43,19 @@ find $STATEDIR/freeze_home -mindepth 2 -maxdepth 3 -type f -name meta.pck | wc -
 echo ""
 
 echo "== This Week =="
-echo "=== Registered Local Users ==="
+echo "=== Registered and Renewed Local Users ==="
+# NOTE: first or repeat signup sets expire field to 365 days into the future.
+# We simply lookup all users with expire more than 358 days from now.
 RECENT=$(date +'%s')
 RECENT=$((RECENT+(365-7)*24*3600))
 $SERVERDIR/searchusers.py -f distinguished_name -a $RECENT | grep -v 'Matching users' | sort | uniq | wc -l
 
-echo "=== Registered VGrids ==="
+echo "=== Registered and Updated VGrids ==="
 # NOTE: no maxdepth since nested vgrids are allowed, mindepth is known for target, however
-# NOTE: vgrid_home ctime is wrong as it incorrectly gets updated by glusterfs
+# NOTE: vgrid_home/X ctime also gets updated on any file changes in that dir
 find $STATEDIR/vgrid_home -mindepth 1 -type d -ctime -7 | grep -v '/\.' | wc -l
 
 echo "=== Frozen Archives ==="
+# NOTE: meta.pck file never changes for archives
 # TODO: update to fit only new client_id location when migrated
 find $STATEDIR/freeze_home -mindepth 2 -maxdepth 3 -type f -name meta.pck -ctime -7 | wc -l
-
-echo ""
-echo "NOTE: stats for this week may include e.g. renewed users and updated VGrids."
