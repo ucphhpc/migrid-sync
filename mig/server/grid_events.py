@@ -747,13 +747,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
-        dest_path = ''
-        if hasattr(event, 'dest_path'):
-            dest_path = event.dest_path
         time_stamp = event.time_stamp
         _chain = getattr(event, '_chain', [(src_path, state)])
         rel_src = src_path[base_dir_len:].lstrip(os.sep)
-        rel_dest = dest_path[base_dir_len:].lstrip(os.sep)
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
         logger.info('(%s) in handling of %s for %s %s' % (pid,
                     rule['action'], state, rel_src))
@@ -830,12 +826,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
             # Expand dynamic variables in argument once and for all
 
-            if len(rel_dest) == 0:
-                expand_map = get_expand_map(rel_src, rule, state)
-            else:
-                expand_map = get_expand_map(rel_dest, rule, state,
-                        rel_src)
-
+            expand_map = get_expand_map(rel_src, rule, state)
             for argument in rule['arguments']:
                 filled_argument = argument
                 for (key, val) in expand_map.items():
@@ -881,11 +872,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
             # Expand dynamic variables in argument once and for all
 
-            if len(rel_dest) == 0:
-                expand_map = get_expand_map(rel_src, rule, state)
-            else:
-                expand_map = get_expand_map(rel_dest, rule, state,
-                        rel_src)
+            expand_map = get_expand_map(rel_src, rule, state)
             try:
                 for job_template in rule['templates']:
                     mrsl_fd.truncate(0)
@@ -934,11 +921,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
             # Expand dynamic variables in argument once and for all
 
-            if len(rel_dest) == 0:
-                expand_map = get_expand_map(rel_src, rule, state)
-            else:
-                expand_map = get_expand_map(rel_dest, rule, state,
-                        rel_src)
+            expand_map = get_expand_map(rel_src, rule, state)
             command_str = ''
             command_list = (rule['arguments'])[:1]
             if not isinstance(command_list, list):
@@ -1050,14 +1033,11 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
-        dest_path = ''
-        if hasattr(event, 'dest_path'):
-            dest_path = event.dest_path
 
         is_directory = event.is_directory
 
-        # logger.debug('(%s) got %s event for src_path: %s, dest_path: %s' % (pid, state,
-        #             src_path, dest_path))
+        # logger.debug('(%s) got %s event for src_path: %s' % (pid, state,
+        #             src_path))
         # logger.debug('(%s) filter %s against %s' % (pid,
         #             all_rules.keys(), src_path))
 
@@ -1120,9 +1100,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                         continue
 
-                    logger.info('(%s) trigger %s for src_path: %s, dest_path: %s -> %s'
+                    logger.info('(%s) trigger %s for src_path: %s -> %s'
                                  % (pid, rule['action'], src_path,
-                                dest_path, rule))
+                                rule))
 
                     # TODO: Replace try / catch with a 'event queue / thread pool' setup
 
@@ -1182,9 +1162,17 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         self.handle_event(event)
 
     def on_moved(self, event):
-        """Handle moved files"""
+        """Handle moved files: we translate a move to a created and a deleted
+        event since the single event with src and dst does not really fit our
+        model all that well. Furthermore inotify translate a move event to a 
+        created and a deleted event when moving between diffrent filesystems 
+        or symlinked dirs.
+        """
 
-        self.handle_event(event)
+        for (change, path) in [('created', event.dest_path), ('deleted'
+                               , event.src_path)]:
+            fake = make_fake_event(path, change)
+            self.handle_event(fake)
 
 
 def add_vgrid_file_monitor_watch(configuration, path):
