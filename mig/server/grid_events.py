@@ -118,7 +118,7 @@ def hangup_handler(signal, frame):
     logger.info('(%s) reopened log after hangup signal' % pid)
 
 
-def make_fake_event(path, state):
+def make_fake_event(path, state, is_directory=False):
     """Create a fake state change event for path. Looks up path to see if the
     change is a directory or file.
     """
@@ -128,7 +128,7 @@ def make_fake_event(path, state):
                 'deleted': FileDeletedEvent}
     dir_map = {'modified': DirModifiedEvent,
                'created': DirCreatedEvent, 'deleted': DirDeletedEvent}
-    if os.path.isdir(path):
+    if is_directory or os.path.isdir(path):
         fake = dir_map[state](path)
     else:
         fake = file_map[state](path)
@@ -1039,8 +1039,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         is_directory = event.is_directory
 
-        # logger.debug('(%s) got %s event for src_path: %s' % (pid, state,
-        #             src_path))
+        # logger.debug('(%s) got %s event for src_path: %s, directory: %s' % (pid, state,
+        #             src_path, is_directory))
         # logger.debug('(%s) filter %s against %s' % (pid,
         #             all_rules.keys(), src_path))
 
@@ -1174,7 +1174,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         for (change, path) in [('created', event.dest_path), ('deleted'
                                , event.src_path)]:
-            fake = make_fake_event(path, change)
+            fake = make_fake_event(path, change, event.is_directory)
             self.handle_event(fake)
 
 
