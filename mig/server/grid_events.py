@@ -988,6 +988,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             if os.path.exists(src_path) and os.path.isdir(src_path):
                 try:
                     vgrid_dir_cache[rel_path] = {}
+                    rel_path_ctime = os.path.getctime(src_path)
                     rel_path_mtime = os.path.getmtime(src_path)
                     add_vgrid_file_monitor_watch(configuration,
                             rel_path)
@@ -1002,7 +1003,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                             vgrid_sub_path = ent.path[base_dir_len:]
 
                             if not vgrid_sub_path \
-                                in vgrid_dir_cache.keys():
+                                in vgrid_dir_cache.keys() \
+                                or vgrid_dir_cache[vgrid_sub_path]['mtime'
+                                    ] < rel_path_ctime:
 
                                 # logger.debug('(%s) %s -> Dispatch DirCreatedEvent for: %s'
                                 #         % (pid, src_path, ent.path))
