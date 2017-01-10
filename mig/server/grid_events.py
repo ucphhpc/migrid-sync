@@ -79,7 +79,7 @@ from shared.fileio import makedirs_rec, pickle, unpickle
 from shared.job import fill_mrsl_template, new_job
 from shared.logger import daemon_logger, reopen_log
 from shared.serial import load
-from shared.vgrid import vgrid_is_owner_or_member
+from shared.vgrid import vgrid_is_owner_or_member, vgrid_valid_entities
 
 # Global trigger rule dictionary with rules for all VGrids
 
@@ -541,7 +541,11 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
             logger.info('(%s) refresh %s rules from %s' % (pid,
                         vgrid_name, src_path))
             try:
-                new_rules = load(src_path)
+                raw_rules = load(src_path)
+                # NOTE: manually filter out any broken rules once and for all
+                #       this is like if loaded with vgrid_triggers()
+                new_rules = vgrid_valid_entities(configuration, vgrid_name,
+                                                 'triggers', raw_rules)
             except Exception, exc:
                 new_rules = []
                 if state != 'deleted':
@@ -924,37 +928,25 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             expand_map = get_expand_map(rel_src, rule, state)
             command_str = ''
             command_list = (rule['arguments'])[:1]
-            if not isinstance(command_list, list):
-                logger.error('(%s) invalid command arguments format %s: %s'
-                              % (pid, target_path, rule['arguments']))
+            for argument in (rule['arguments'])[1:]:
+                filled_argument = argument
+                for (key, val) in expand_map.items():
+                    filled_argument = filled_argument.replace(key, val)
+                self.__workflow_info(configuration, rule['vgrid_name'],
+                                     'expanded argument %s to %s' % \
+                                     (argument, filled_argument))
+                command_list.append(filled_argument)
+            try:
+                run_command(command_list, target_path, rule, configuration)
+                self.__workflow_info(configuration, rule['vgrid_name'],
+                                     'ran command: %s' 
+                                     % ' '.join(command_list))
+            except Exception, exc:
+                logger.error('(%s) failed to run command for %s: %s (%s)' % \
+                             (pid, target_path, command_str, exc))
                 self.__workflow_err(configuration, rule['vgrid_name'],
-                                    '(%s) invalid command arguments format %s: %s'
-                                     % (pid, target_path,
-                                    rule['arguments']))
-            else:
-                for argument in (rule['arguments'])[1:]:
-                    filled_argument = argument
-                    for (key, val) in expand_map.items():
-                        filled_argument = filled_argument.replace(key,
-                                val)
-                    self.__workflow_info(configuration,
-                            rule['vgrid_name'],
-                            'expanded argument %s to %s' % (argument,
-                            filled_argument))
-                    command_list.append(filled_argument)
-                try:
-                    run_command(command_list, target_path, rule,
-                                configuration)
-                    self.__workflow_info(configuration,
-                            rule['vgrid_name'], 'ran command: %s'
-                            % ' '.join(command_list))
-                except Exception, exc:
-                    logger.error('(%s) failed to run command for %s: %s (%s)'
-                                  % (pid, target_path, command_str,
-                                 exc))
-                    self.__workflow_err(configuration, rule['vgrid_name'
-                            ], 'failed to run command for %s: %s (%s)'
-                            % (rel_src, command_str, exc))
+                                    'failed to run command for %s: %s (%s)' % \
+                                    (rel_src, command_str, exc))
         else:
             logger.error('(%s) unsupported action: %s' % (pid,
                          rule['action']))

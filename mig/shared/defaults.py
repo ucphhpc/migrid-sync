@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -207,3 +207,7 @@ freeze_flavors = {
             'showfreeze_title': 'Show Backup Archive Details',
             'deletefreeze_title': 'Delete Backup Archive'}
     }
+
+# Default value for integer limits in vgrid settings
+default_vgrid_settings_limit = 4
+

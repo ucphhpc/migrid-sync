@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -87,7 +87,7 @@ def read_trigger_log(configuration, vgrid_name, flags):
         try:
             log_fd = open(log_path)
             log_content += log_fd.read()
-            configuration.logger.debug('read\n%s' % log_content)
+            configuration.logger.debug('read in log lines:\n%s' % log_content)
             log_fd.close()
         except IOError:
             pass

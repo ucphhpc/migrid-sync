@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminvgrid - administrate a vgrid
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ from binascii import hexlify
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
      valid_trigger_changes, valid_trigger_actions, keyword_owners, \
-     keyword_members, csrf_field
+     keyword_members, csrf_field, default_vgrid_settings_limit
 from shared.accessrequests import list_access_requests, load_access_request, \
      build_accessrequestitem_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -46,7 +46,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.sharelinks import build_sharelinkitem_object
 from shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
      vgrid_settings, vgrid_sharelinks, vgrid_list_parents, vgrid_owners, \
-     vgrid_members, vgrid_resources, default_vgrid_settings_limit
+     vgrid_members, vgrid_resources
 
 _valid_sharelink = [("owners", keyword_owners), ("members", keyword_members)]
 _valid_visible = _valid_sharelink + [("everyone", keyword_all)]

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,8 @@ import fnmatch
 import os
 import re
 
-from shared.defaults import default_vgrid, keyword_all, csrf_field
+from shared.defaults import default_vgrid, keyword_owners, keyword_members, \
+     keyword_all, csrf_field, default_vgrid_settings_limit
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
@@ -39,10 +40,10 @@ from shared.listhandling import list_items_in_pickled_list
 from shared.modified import mark_vgrid_modified
 from shared.output import html_link
 from shared.serial import load, dump
+from shared.sharelinkkeywords import get_sharelink_keywords_dict
 from shared.validstring import valid_dir_input
-
-# Default value for integer limits in vgrid settings
-default_vgrid_settings_limit = 42
+from shared.vgridkeywords import get_trigger_keywords_dict, \
+     get_settings_keywords_dict
 
 def vgrid_add_remove_table(client_id,
                            vgrid_name, 
@@ -767,7 +768,9 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
             continue
         else:
             return (False, msg)
-    return (True, output)
+    # Filter any entries on invalid format here to avoid checking everywhere
+    id_list = vgrid_valid_entities(configuration, vgrid_name, group, output)
+    return (True, id_list)
 
 def vgrid_owners(vgrid_name, configuration, recursive=True):
     """Extract owners list for a vgrid"""
@@ -927,6 +930,123 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
             break
     return answer
 
+
+def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
+    """Validate that entities in id_list are on required format"""
+    if not isinstance(id_list, list):
+        raise ValueError("invalid %s list for %s: %s" % (kind, vgrid_name,
+                                                         id_list))
+    if kind in ['owners', 'members', 'resources']:
+        # list of strings
+        for entry in id_list:
+            if not isinstance(entry, basestring):
+                raise ValueError("invalid %s entry for %s: %s" % \
+                      (kind, vgrid_name, entry))
+    elif kind == 'triggers':
+        # list of dictionaries on fixed format
+        specs_map = get_trigger_keywords_dict(configuration)
+        for entry in id_list:
+            if not isinstance(entry, dict):
+                raise ValueError("invalid %s dictionary entry for %s: %s" % \
+                                 (kind, vgrid_name, entry))
+            for (key, spec) in specs_map.items():
+                if not key in entry:
+                    if spec['Required']:
+                        raise ValueError(
+                        "missing value for %s in %s entry" % (key, kind))
+                    else:
+                        continue
+                val = entry[key]
+                required_instance = specs_map[key]['Instance']
+                if not isinstance(val, required_instance):
+                    configuration.logger.warning(
+                        "invalid type for '%s' value '%s' in %s entry:\n%s" % \
+                        (key, val, kind, entry))
+                    raise ValueError(
+                        "invalid type for '%s' value %s (%s) in %s entry" % \
+                        (key, val, type(val), kind))
+            # TODO: handle keys outside spec?
+    elif kind == 'settings':
+        # list of tuples on fixed format
+        specs_map = get_settings_keywords_dict(configuration)
+        for item in id_list:
+            if not isinstance(item, tuple):
+                raise ValueError("invalid %s tuple entry for %s: %s" % \
+                                 (kind, vgrid_name, item))
+        entry = dict(id_list)
+        for (key, spec) in specs_map.items():
+            if not key in entry:
+                if spec['Required']:
+                    raise ValueError(
+                        "missing value for %s in %s entry" % (key, kind))
+                else:
+                    continue
+            val = entry[key]
+            required_instance = specs_map[key]['Instance']
+            if not isinstance(val, required_instance):
+                configuration.logger.warning(
+                    "invalid type for '%s' value '%s' in %s entry:\n%s" % \
+                    (key, val, kind, entry))
+                raise ValueError(
+                    "invalid type for '%s' value %s (%s) in %s entry" % \
+                    (key, val, type(val), kind))
+        # TODO: handle keys outside spec?
+    elif kind == 'sharelinks':
+        # list of dictionaries on fixed format
+        specs_map = get_sharelink_keywords_dict(configuration)
+        for entry in id_list:
+            if not isinstance(entry, dict):
+                raise ValueError("invalid %s dictionary entry for %s: %s" % \
+                                 (kind, vgrid_name, entry))
+            for (key, spec) in specs_map.items():
+                if not key in entry:
+                    if spec['Required']:
+                        raise ValueError(
+                        "missing value for %s in %s entry" % (key, kind))
+                    else:
+                        continue
+                val = entry[key]
+                required_instance = specs_map[key]['Instance']
+                if not isinstance(val, required_instance):
+                    configuration.logger.warning(
+                        "invalid type for '%s' value '%s' in %s entry:\n%s" % \
+                        (key, val, kind, entry))
+                    raise ValueError(
+                        "invalid type for '%s' value %s (%s) in %s entry" % \
+                        (key, val, type(val), kind))
+            # TODO: handle keys outside spec?
+    elif kind == 'imagesettings':
+        for i in id_list:
+            if not isinstance(i, dict):
+                raise ValueError("invalid %s entry for %s: %s" % \
+                      (kind, vgrid_name, i))
+        # TODO: add detailed field validation based on keywords like above
+    else:
+        raise ValueError("unknown kind: '%s'" % kind)
+
+def vgrid_valid_entities(configuration, vgrid_name, kind, id_list):
+    """Return the subset of entries in id_list that are on required format"""
+    valid = []
+
+    if kind == "settings":
+        # id_list is the tuples from dict.items() and requires combined check
+        try:
+            vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
+            return id_list
+        except Exception, exc:
+            configuration.logger.warning("skipping %s on invalid format %s: %s"\
+                                         % (kind, id_list, exc))
+            return valid
+    for i in id_list:
+        try:
+            vgrid_validate_entities(configuration, vgrid_name, kind, [i])
+        except Exception, exc:
+            configuration.logger.warning("skipping %s on invalid format %s: %s"\
+                                         % (kind, i, exc))
+            continue
+        valid.append(i)
+    return valid
+        
 def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
                        update_id=None, rank=None):
     """Append list of IDs to pickled list of kind for vgrid_name"""
@@ -951,6 +1071,7 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
     entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
                                    entity_filename)
     try:
+        vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
         if os.path.exists(entity_filepath):
             entities = load(entity_filepath)
         else:
@@ -1137,6 +1258,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     try:
         if not id_list and not allow_empty:
             raise ValueError("not allowed to set empty list of %s" % kind)
+        vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
         dump(id_list, entity_filepath)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
@@ -1290,3 +1412,104 @@ def allow_members_adm(configuration, vgrid_name, client_id):
 def allow_resources_adm(configuration, vgrid_name, client_id):
     """Check if client_id is allowed to edit resources for vgrid"""
     return _shared_allow_adm(configuration, vgrid_name, client_id, 'resources')
+
+if __name__ == "__main__":
+    from shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    client_id = '/C=DK/CN=John Doe/emailAddress=john@doe.org'
+    vgrid = "MyGroup"
+    kind = 'triggers'
+    valid_trigger = {'rule_id': 'valid_rule',
+                    'vgrid_name': vgrid,
+                    'path': '*.zip',
+                    'changes': ['modified'],
+                    'run_as': client_id,
+                    'action': 'unzip',
+                    'arguments': ['+TRIGGERPATH+'],
+                    'rate_limit': '1/m',
+                    'settle_time': '10s',
+                    'match_files': True,
+                    'match_dirs': False,
+                    'match_recursive': False,
+                     }
+    invalid_trigger = {'rule_id': 1,
+                    'vgrid_name': False,
+                    'path': ['*.zip'],
+                    'changes': 'modified',
+                    'run_as': [client_id],
+                    'action': None,
+                    'arguments': '+TRIGGERPATH+',
+                    'rate_limit': 1,
+                    'settle_time': 10,
+                    'match_files': 'True',
+                    'match_dirs': None,
+                    'match_recursive': 'False',
+                     }
+    test_triggers = [valid_trigger]
+    for (key, val) in invalid_trigger.items():
+        broken_trigger = valid_trigger.copy()
+        broken_trigger['rule_id'] = 'broken_%s' % key
+        broken_trigger[key] = val
+        test_triggers.append(broken_trigger)
+    broken_trigger = valid_trigger.copy()
+    key = 'vgrid_name'
+    broken_trigger['rule_id'] = 'missing_%s' % key
+    del broken_trigger[key]
+    test_triggers.append(broken_trigger)
+    for check_list in test_triggers:
+        print "check trigger: %(rule_id)s" % check_list
+        try:
+            vgrid_validate_entities(conf, vgrid, kind, [check_list])
+            print "trigger check succeeded"
+        except Exception, exc:
+            print "trigger check failed: %s" % exc
+
+    kind = 'settings'
+    valid_settings = {'vgrid_name': vgrid,
+                    'description': 'my project',
+                    'visible_owners': keyword_owners,
+                    'visible_members': keyword_owners,
+                    'visible_resources': keyword_all,
+                    'create_sharelink': keyword_members,
+                    'request_recipients': default_vgrid_settings_limit,
+                    'restrict_settings_adm': default_vgrid_settings_limit,
+                    'restrict_owners_adm': default_vgrid_settings_limit,
+                    'restrict_members_adm': default_vgrid_settings_limit,
+                    'restrict_resources_adm': default_vgrid_settings_limit,
+                    'read_only': False,
+                    'hidden': False,
+                      }
+    invalid_settings = {'vgrid_name': False,
+                    'description': ('my project', ),
+                    'visible_owners': 1,
+                    'visible_members': -1,
+                    'visible_resources': 42.0,
+                    'create_sharelink': True,
+                    'request_recipients': '3',
+                    'restrict_settings_adm': 4.2,
+                    'restrict_owners_adm': None,
+                    'restrict_members_adm': '1',
+                    'restrict_resources_adm': [1],
+                    'read_only': 'False',
+                    'hidden': None,
+                     }
+    test_settings = [valid_settings]
+    for (key, val) in invalid_settings.items():
+        broken_settings = valid_settings.copy()
+        broken_settings['description'] = 'broken %s' % key
+        broken_settings[key] = val
+        test_settings.append(broken_settings)
+    broken_settings = valid_settings.copy()
+    key = 'vgrid_name'
+    broken_settings['description'] = 'missing %s' % key
+    del broken_settings[key]
+    test_settings.append(broken_settings)
+    for check_list in test_settings:
+        print "check settings: %(description)s" % check_list
+        try:
+            # We save settings as a list of tuples
+            vgrid_validate_entities(conf, vgrid, kind, check_list.items())
+            print "settings check succeeded"
+        except Exception, exc:
+            print "settings check failed: %s" % exc
+
