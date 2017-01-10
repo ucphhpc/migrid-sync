@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_events - event handler to monitor files and trigger actions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -72,10 +72,11 @@ except ImportError, exc:
 from shared.base import force_utf8
 from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
-    workflows_log_size, workflows_log_cnt
+    workflows_log_size, workflows_log_cnt, csrf_field
 from shared.events import get_expand_map, map_args_to_vars, \
     get_command_map
 from shared.fileio import makedirs_rec, pickle, unpickle
+from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.job import fill_mrsl_template, new_job
 from shared.logger import daemon_logger, reopen_log
 from shared.serial import load
@@ -407,6 +408,13 @@ def run_command(
 
     user_arguments_dict = map_args_to_vars(args_form, command_list[1:])
 
+    form_method = 'post'
+    target_op = "%s" % function
+    csrf_limit = get_csrf_limit(configuration)
+    csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                 client_id, csrf_limit)
+    user_arguments_dict[csrf_field] = csrf_token
+
     # logger.debug('(%s) import main from %s' % (pid, function))
 
     main = id
@@ -415,17 +423,17 @@ def run_command(
         exec 'from shared.functionality.%s import main' % function
         exec 'from shared.output import txt_format'
 
-        # logger.debug('(%s) run %s on %s and %s' % (pid, function,
-        #             client_id, user_arguments_dict))
+        # logger.debug('(%s) run %s on %s for %s' % \
+        #              (pid, function, user_arguments_dict, client_id))
 
         # Fake HTTP POST
 
-        os.environ['REQUEST_METHOD'] = 'POST'
+        os.environ['REQUEST_METHOD'] = form_method.upper()
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                 user_arguments_dict)
     except Exception, exc:
-        logger.error('(%s) failed to run %s on %s: %s' % (pid,
-                     function, user_arguments_dict, exc))
+        logger.error('(%s) failed to run %s main on %s: %s' % \
+                     (pid, function, user_arguments_dict, exc))
         raise exc
     logger.info('(%s) done running command for %s: %s' % (pid,
                 target_path, command_str))
@@ -440,11 +448,14 @@ def run_command(
         logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
                       % (pid, exc, ret_code, ret_msg, output_objects))
     if ret_code != 0:
+        logger.warning('(%s) command finished but with error code %d :\n%s' \
+                       % (pid, ret_code, output_objects))
         raise Exception('command error: %s' % txt_out)
 
 
     # logger.debug('(%s) result was %s : %s:\n%s' % (pid, ret_code,
-    #             ret_msg, txt_out))
+    #                                               ret_msg, txt_out))
+
 
 class MiGRuleEventHandler(PatternMatchingEventHandler):
 
