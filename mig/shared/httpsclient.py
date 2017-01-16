@@ -127,10 +127,19 @@ def check_source_ip(remote_ip, unique_resource_name, proxy_fqdn=None):
     unique_resource_name or from optional NATed visible address, proxy_fqdn.
     """
     resource_fqdn = '.'.join(unique_resource_name.split('.')[:-1])
-    (_, _, res_ip_list) = socket.gethostbyname_ex(resource_fqdn)
+    res_ip_list = []
+    try:
+        (_, _, res_ip_list) = socket.gethostbyname_ex(resource_fqdn)
+    except socket.gaierror:
+        pass
+
     proxy_ip_list = []
     if proxy_fqdn:
-        (_, _, proxy_ip_list) = socket.gethostbyname_ex(proxy_fqdn)
+        try:
+            (_, _, proxy_ip_list) = socket.gethostbyname_ex(proxy_fqdn)
+        except socket.gaierror:
+            pass
+
     if not remote_ip in res_ip_list + proxy_ip_list:
         raise ValueError("Source IP address %s not in resource alias IPs %s" \
                          % (remote_ip, ', '.join(res_ip_list + proxy_ip_list)))
