@@ -91,7 +91,7 @@ def check_enable_csrf(configuration, accepted_dict, environ=None):
             _logger.debug("disable CSRF check for legacy script (%s)" % agent)
             return False
     else:
-        _logger.debug("enable CSRF check for %s client" % agent)        
+        _logger.debug("enable CSRF check for client: %s" % agent)
         return True
 
 def safe_handler(configuration, method, operation, client_id, limit,

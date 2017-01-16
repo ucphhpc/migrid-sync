@@ -413,7 +413,7 @@ def run_command(
     csrf_limit = get_csrf_limit(configuration)
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
-    user_arguments_dict[csrf_field] = csrf_token
+    user_arguments_dict[csrf_field] = [csrf_token]
 
     # logger.debug('(%s) import main from %s' % (pid, function))
 
@@ -426,8 +426,10 @@ def run_command(
         # logger.debug('(%s) run %s on %s for %s' % \
         #              (pid, function, user_arguments_dict, client_id))
 
-        # Fake HTTP POST
+        # Fake HTTP POST manually setting fields required for CSRF check
 
+        os.environ['HTTP_USER_AGENT'] = 'grid events daemon'
+        os.environ['PATH_INFO'] = '%s.py' % function
         os.environ['REQUEST_METHOD'] = form_method.upper()
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                 user_arguments_dict)
@@ -937,7 +939,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             # Expand dynamic variables in argument once and for all
 
             expand_map = get_expand_map(rel_src, rule, state)
-            command_str = ''
             command_list = (rule['arguments'])[:1]
             for argument in (rule['arguments'])[1:]:
                 filled_argument = argument
@@ -953,6 +954,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                      'ran command: %s' 
                                      % ' '.join(command_list))
             except Exception, exc:
+                command_str = ' '.join(command_list)
                 logger.error('(%s) failed to run command for %s: %s (%s)' % \
                              (pid, target_path, command_str, exc))
                 self.__workflow_err(configuration, rule['vgrid_name'],
