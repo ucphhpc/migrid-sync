@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resedit - Resource editor back end
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -193,7 +193,7 @@ description, you can likely just leave the field alone.''' % configuration.short
                                : """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
 <input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s'
-    required pattern='[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)+'
+    required pattern='[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+'
     title='Fully qualified domain name or Internet IP address of the resource'
 />
 <br />
