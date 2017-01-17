@@ -107,8 +107,15 @@ _unit_periods = {
 _hits_lock = threading.Lock()
 _rule_monitor_lock = threading.Lock()
 _trigger_event = '_trigger_event'
+stop_running = multiprocessing.Event()
 (configuration, logger) = (None, None)
 
+
+def stop_handler(signal, frame):
+    """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
+    # Print blank line to avoid mix with Ctrl-C line
+    print ''
+    stop_running.set()
 
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
@@ -1417,7 +1424,6 @@ def monitor(configuration, vgrid_name):
             vgrid_name)
     logger.info('Starting monitor process with PID: %s for vgrid: %s'
                 % (pid, vgrid_name))
-    keep_running = True
 
     # Set base_dir and base_dir_len
 
@@ -1545,33 +1551,22 @@ def monitor(configuration, vgrid_name):
         else:
             logger.error('(%s) Failed to load_dir_cache for: %s'
                          % (pid, vgrid_name))
-            keep_running = False
+            stop_running.set()
 
-    while keep_running:
+    while not stop_running.is_set():
         try:
 
             # Throttle down
 
             time.sleep(1)
         except KeyboardInterrupt:
-
-            keep_running = False
-
+            stop_running.set()
             save_dir_cache(vgrid_name)
 
     print '(%s) Exiting monitor for vgrid: %s' % (pid, vgrid_name)
     logger.info('(%s) Exiting for vgrid: %s' % (pid, vgrid_name))
 
     return 0
-
-
-def shutdown_handler(signal, frame):
-    """A simple signal handler to force clean shutdown of children on SIGINT"""
-
-    pid = multiprocessing.current_process().pid
-    logger.info('(%s) reopening log in reaction to hangup signal' % pid)
-    reopen_log(configuration)
-    logger.info('(%s) reopened log after hangup signal' % pid)
 
 
 if __name__ == '__main__':
@@ -1595,7 +1590,7 @@ if __name__ == '__main__':
 
     # Allow clean shutdown on SIGINT only to main process
 
-    signal.signal(signal.SIGHUP, shutdown_handler)
+    signal.signal(signal.SIGINT, stop_handler)
 
     print '''This is the MiG event handler daemon which monitors VGrid files
 and triggers any configured events when target files are created, modifed or
@@ -1606,9 +1601,9 @@ Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 '''
 
+    main_pid = os.getpid()
     print 'Starting Event handler daemon - Ctrl-C to quit'
-
-    logger.info('(%s) Starting Event handler daemon')
+    logger.info('(%s) Starting Event handler daemon' % main_pid)
 
     vgrid_monitors = {}
 
@@ -1636,17 +1631,16 @@ unless it is available in mig/server/MiGserver.conf
     for monitor in vgrid_monitors.values():
         monitor.start()
 
-    logger.debug('(%s) Starting main loop' % os.getpid())
+    logger.debug('(%s) Starting main loop' % main_pid)
     print "%s: Start main loop" % os.getpid()
-    keep_running = True
-    while keep_running:
+    while not stop_running.is_set():
         try:
 
             # Throttle down
 
             time.sleep(1)
         except KeyboardInterrupt:
-            keep_running = False
+            stop_running.set()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to all monitor children
             print "Interrupt requested - close monitors and shutdown"
@@ -1675,6 +1669,6 @@ unless it is available in mig/server/MiGserver.conf
             print "All monitors finished shutting down"
 
     print 'Event handler daemon shutting down'
-    logger.info('Event handler daemon shutting down')
+    logger.info('(%s) Event handler daemon shutting down' % main_pid)
 
     sys.exit(0)
