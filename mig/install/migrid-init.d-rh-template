@@ -294,16 +294,28 @@ stop_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Shutting down MiG events: $SHORT_NAME "
-    killproc ${DAEMON_PATH}
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
     echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
 }
 stop_transfers() {
     DAEMON_PATH=${MIG_TRANSFERS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Shutting down MiG transfers: $SHORT_NAME "
-    killproc ${DAEMON_PATH}
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
     echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
 }
 stop_openid() {
     DAEMON_PATH=${MIG_OPENID}
