@@ -1565,6 +1565,15 @@ def monitor(configuration, vgrid_name):
     return 0
 
 
+def shutdown_handler(signal, frame):
+    """A simple signal handler to force clean shutdown of children on SIGINT"""
+
+    pid = multiprocessing.current_process().pid
+    logger.info('(%s) reopening log in reaction to hangup signal' % pid)
+    reopen_log(configuration)
+    logger.info('(%s) reopened log after hangup signal' % pid)
+
+
 if __name__ == '__main__':
 
     configuration = get_configuration_object()
@@ -1583,6 +1592,10 @@ if __name__ == '__main__':
     # Allow e.g. logrotate to force log re-open after rotates
 
     signal.signal(signal.SIGHUP, hangup_handler)
+
+    # Allow clean shutdown on SIGINT only to main process
+
+    signal.signal(signal.SIGHUP, shutdown_handler)
 
     print '''This is the MiG event handler daemon which monitors VGrid files
 and triggers any configured events when target files are created, modifed or
@@ -1623,6 +1636,8 @@ unless it is available in mig/server/MiGserver.conf
     for monitor in vgrid_monitors.values():
         monitor.start()
 
+    logger.debug('(%s) Starting main loop' % os.getpid())
+    print "%s: Start main loop" % os.getpid()
     keep_running = True
     while keep_running:
         try:
@@ -1631,16 +1646,33 @@ unless it is available in mig/server/MiGserver.conf
 
             time.sleep(1)
         except KeyboardInterrupt:
-
             keep_running = False
-
-            # Wait for monitors to shutdown
-
+            # NOTE: we can't be sure if SIGINT was sent to only main process
+            #       so we make sure to propagate to all monitor children
+            print "Interrupt requested - close monitors and shutdown"
+            logger.info('(%s) Shut down monitors and wait' % os.getpid())
             for monitor in vgrid_monitors.values():
+                mon_pid = monitor.pid
+                if mon_pid == None:
+                    continue
+                logger.debug('send exit signal to monitor %s' % mon_pid)
+                os.kill(mon_pid, signal.SIGINT)
 
-                # print "%s: %s"  % (monitor, monitor.is_alive())
-
-                monitor.join()
+            logger.info('Wait for monitors to clean up')
+            for monitor in vgrid_monitors.values():
+                mon_pid = monitor.pid
+                logger.debug('wait for monitor %s: %s' % (mon_pid,
+                                                          monitor.is_alive()))
+                monitor.join(5)
+                if monitor.is_alive():
+                    logger.warning("force kill %s: %s" % (mon_pid,
+                                                          monitor.is_alive()))
+                    monitor.terminate()
+                else:
+                    logger.debug('monitor %s: done' % mon_pid)
+                    
+            logger.info('(%s) Shut down: all monitors done' % os.getpid())
+            print "All monitors finished shutting down"
 
     print 'Event handler daemon shutting down'
     logger.info('Event handler daemon shutting down')
