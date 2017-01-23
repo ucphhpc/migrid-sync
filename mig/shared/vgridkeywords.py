@@ -230,7 +230,7 @@ shared folder''',
         'Type': 'string',
         'Instance': basestring,
         'Value': keyword_owners,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('request_recipients', {
         'Title': 'Request Recipients',
@@ -248,7 +248,7 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('restrict_owners_adm', {
         'Title': 'Restrict Owner Administration',
@@ -257,7 +257,7 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('restrict_members_adm', {
         'Title': 'Restrict Member Administration',
@@ -266,7 +266,7 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('restrict_resources_adm', {
         'Title': 'Restrict Resource Administration',
@@ -275,7 +275,7 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('hidden', {
         'Title': 'Hidden on Public %s List' % vgrid_label,
@@ -285,7 +285,7 @@ shared folder''',
         'Type': 'boolean',
         'Instance': bool,
         'Value': False,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('read_only', {
         'Title': 'Read-only Data',
