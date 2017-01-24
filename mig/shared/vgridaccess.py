@@ -44,7 +44,8 @@ from shared.serial import load, dump
 from shared.user import list_users, real_to_anon_user_map, get_user_conf
 from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
      user_allowed_vgrids, vgrid_owners, vgrid_members, vgrid_settings, \
-     vgrid_list_subvgrids, vgrid_list_parents, res_allowed_vgrids
+     vgrid_list_subvgrids, vgrid_list_parents, res_allowed_vgrids, \
+     merge_vgrid_settings
 
 MAP_SECTIONS = (USERS, RESOURCES, VGRIDS) = ("__users__", "__resources__",
                                              "__vgrids__")
@@ -563,11 +564,22 @@ def vgrid_inherit_map(configuration, vgrid_map):
     all_vgrids.sort()
     for vgrid_name in all_vgrids[::-1]:
         vgrid = inherit_map[VGRIDS][vgrid_name]
-        for parent_name in vgrid_list_parents(vgrid_name, configuration):
+        # Get parent vgrids in root-to-leaf order
+        parent_vgrid_list = vgrid_list_parents(vgrid_name, configuration)
+        # Build a list of dicts to merge and then force back to tuples
+        settings_list = []
+        for parent_name in parent_vgrid_list:
             parent_vgrid = inherit_map[VGRIDS][parent_name]
             for field in (OWNERS, MEMBERS, RESOURCES):
                 vgrid[field] += [i for i in parent_vgrid[field] if not i in \
                                  vgrid[field]]
+            settings_list.append(dict(parent_vgrid.get(SETTINGS, [])))            
+        settings_list.append(dict(vgrid.get(SETTINGS, [])))
+        for field in (SETTINGS, ):
+            merged = merge_vgrid_settings(vgrid_name, configuration,
+                                          settings_list)
+            # Force back to tuple form for symmetry with non-inherit version
+            vgrid[field] = merged.items()
     return inherit_map
 
 def get_vgrid_map(configuration, recursive=True):

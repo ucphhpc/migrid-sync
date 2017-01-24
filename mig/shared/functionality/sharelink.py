@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelink - backend to create and manage share links
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -389,7 +389,7 @@ it or only share with read access.
                      '''})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
-            #  We check if path is in vgrid share, but do not worry about
+            # We check if path is in vgrid share, but do not worry about
             # private_base or public_base since they are only availabe to
             # owners, who can always share anyway.
             
@@ -399,7 +399,7 @@ it or only share with read access.
                 # permitted to create sharelinks there.
                 (load_status, settings_dict) = vgrid_settings(vgrid_name,
                                                               configuration,
-                                                              recursive=False,
+                                                              recursive=True,
                                                               as_dict=True)
                 if not load_status:
                     # Probably owners just never saved settings, use defaults

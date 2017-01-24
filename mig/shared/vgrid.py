@@ -32,7 +32,8 @@ import os
 import re
 
 from shared.defaults import default_vgrid, keyword_owners, keyword_members, \
-     keyword_all, csrf_field, default_vgrid_settings_limit
+     keyword_all, keyword_auto, keyword_never, keyword_any, csrf_field, \
+     default_vgrid_settings_limit
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
@@ -553,23 +554,8 @@ def vgrid_is_imagesetting(vgrid_name, option_id, configuration, recursive=True,
 def vgrid_list_subvgrids(vgrid_name, configuration):
     """Return list of subvgrids of vgrid_name"""
 
-    result_list = []
-    (status, all_vgrids_list) = vgrid_list_vgrids(configuration)
-
-    if not status:
-
-        return (False, 'could not get list of all vgrids on server')
-
-    for vgrid in all_vgrids_list:
-
-        # sub-vgrids have a prefix vgrid_name + os.sep.
-        # os.sep has been added to filter out siblings with this prefix.
-
-        if vgrid.startswith(vgrid_name + os.sep):
-            result_list.append(vgrid)
-
-    return (True, result_list)
-
+    return vgrid_list_vgrids(configuration, include_default=False,
+                             root_vgrid=vgrid_name)
 
 def vgrid_list_parents(vgrid_name, configuration):
     """Return list of parent vgrids of vgrid_name listed with root first"""
@@ -581,12 +567,16 @@ def vgrid_list_parents(vgrid_name, configuration):
         result_list.append(vgrid)
     return result_list
 
-
-def vgrid_list_vgrids(configuration):
-    """List all vgrids and sub-vgrids created on the system"""
+def vgrid_list_vgrids(configuration, include_default=True, root_vgrid=''):
+    """List all vgrids and sub-vgrids created on the system. The optional
+    root_vgrid argument can be used to limit the listing to the vgrids nested
+    below that vgrid.
+    """
 
     vgrids_list = []
-    for (root, dirs, _) in os.walk(configuration.vgrid_home):
+    search_root = os.path.join(configuration.vgrid_home,
+                               root_vgrid.strip(os.sep))
+    for (root, dirs, _) in os.walk(search_root):
 
         # skip all dot dirs - they are from repos etc and _not_ vgrids
 
@@ -604,7 +594,7 @@ def vgrid_list_vgrids(configuration):
                     '', 1)
 
             vgrids_list.append(vgrid_name_without_location)
-    if not default_vgrid in vgrids_list:
+    if include_default and not default_vgrid in vgrids_list:
         vgrids_list.append(default_vgrid)
     return (True, vgrids_list)
 
@@ -706,15 +696,63 @@ def init_vgrid_script_list(vgrid_name, client_id, configuration):
 
     return (True, msg, [])
 
+def merge_vgrid_settings(vgrid_name, configuration, settings_list):
+    """Merge a list of possibly inherited vgrid settings dictionaries into a
+    single effective vgrid settings dictionary.
+    For the recursive case each dictionary represents one vgrid and they are
+    sorted with root vgrid first followed by each nested vgrid in turn down to
+    vgrid_name leaf. Each dict contains particular, and possibly partial, vgrid
+    settings. Thus inheritance means carefully overriding relevant settings
+    from left to right in the list.
+    NOTE: the boolean values like hidden and read-only automatically apply to
+    ALL sub-vgrids for consistency.
+    """
+    _logger = configuration.logger
+    # List of all inherited settings dictionaries, root-to-leaf order. Only
+    # one entry if non-recursive, but same procedure.
+    #_logger.debug("raw settings list %s: %s" % (vgrid_name, settings_list))
+    merged = {}
+    specs_map = get_settings_keywords_dict(configuration)
+    # We start from the back (vgrid_name) for fewest updates
+    for vgrid_dict in settings_list[::-1]:
+        for (key, val) in vgrid_dict.items():
+            if not key in specs_map:
+                _logger.warning("unknown settings key %s for %s (%s)" \
+                                % (key, vgrid_name, vgrid_dict))
+                continue
+            spec = specs_map[key]
+            # Always fill missing field unless it is non-inherited
+            if not key in merged and spec['Inherit'] != keyword_never:
+                #_logger.debug("take first %s value %s in %s" % \
+                #            (key, val, vgrid_name))
+                merged[key] = val
+            elif spec['Inherit'] == keyword_any and val and not merged[key]:
+                # If we find a True value it must be inherited 
+                #_logger.debug("force %s to %s for %s" % (key, val,
+                #                                        vgrid_name))
+                merged[key] = val
+    # Fill non-inherited fields with last dict value or defaults if unset
+    vgrid_dict = settings_list[-1]
+    for (key, spec) in specs_map.items():
+        if spec['Inherit'] == keyword_never:
+            val = vgrid_dict.get(key, spec['Value'])
+            #_logger.debug("take direct value %s for %s in %s" % \
+            #                (key, val, vgrid_name))
+            merged[key] = val
+    # Finally always set correct vgrid_name even if no settings exist
+    merged['vgrid_name'] = vgrid_name
+    return merged
 
 def vgrid_list(vgrid_name, group, configuration, recursive=True,
-               allow_missing=False, filter_entries=[]):
+               allow_missing=False, filter_entries=[], replace_missing=None):
     """Shared helper function to get a list of group entities in vgrid. The
     optional recursive argument is used to switch between direct vgrid and
     recursive vgrid operation including entities from parent vgrids.
     If allow_missing is set a missing entity file does not prevent success or
     change the output list.
+    If optional replace_missing is set that value is inserted for missing entries.
     """
+    _logger = configuration.logger    
     if group == 'owners':
         name = configuration.vgrid_owners
     elif group == 'members':
@@ -740,8 +778,8 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     for sub_vgrid in vgrid_parts:
         vgrid_dir = os.path.join(vgrid_dir, sub_vgrid)
         name_path = os.path.join(configuration.vgrid_home, vgrid_dir, name)
-        (status, msg) = list_items_in_pickled_list(name_path,
-                configuration.logger, allow_missing)
+        (status, msg) = list_items_in_pickled_list(name_path, _logger,
+                                                   allow_missing)
         if status:
 
             # msg is a list
@@ -763,14 +801,21 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
                         msg = [entry for entry in msg if not \
                                re.match(filter_item, entry)]
 
+                # Filter any invalid entries here to avoid checking everywhere
+                msg = vgrid_valid_entities(configuration, vgrid_name, group, msg)
+                # Wrap settings tuples for each vgrid in a separate dict
+                # to make inheritance handling easier.
+                if group == 'settings':
+                    # NOTE: list.extend() expects a list 
+                    msg = [dict(msg)]
                 output.extend(msg)
         elif allow_missing and not os.path.exists(name_path):
-            continue
+            if replace_missing is not None:
+                # NOTE: list.extend() expects a list 
+                output.extend([replace_missing])
         else:
             return (False, msg)
-    # Filter any entries on invalid format here to avoid checking everywhere
-    id_list = vgrid_valid_entities(configuration, vgrid_name, group, output)
-    return (True, id_list)
+    return (True, output)
 
 def vgrid_owners(vgrid_name, configuration, recursive=True):
     """Extract owners list for a vgrid"""
@@ -792,11 +837,18 @@ def vgrid_triggers(vgrid_name, configuration, recursive=True,
 
 def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True,
                    as_dict=False):
-    """Extract settings list for a vgrid"""
-    (status, output)= vgrid_list(vgrid_name, 'settings', configuration,
-                                 recursive, allow_missing)
-    if not isinstance(output, basestring) and as_dict:
-        output = dict(output)
+    """Extract settings list or dict for a vgrid"""
+    _logger = configuration.logger
+    # We replace with empty dict if missing to ease inheritance merging
+    (status, output) = vgrid_list(vgrid_name, 'settings', configuration,
+                                  recursive, allow_missing, replace_missing={})
+    # NOTE: output is an error-string or an ordered lists of dictionaries
+    if not isinstance(output, basestring):
+        # We build the (inherited) settings as a dictionary here and return it
+        # directly or forced to list of tuples depending on as_dict argument.
+        output = merge_vgrid_settings(vgrid_name, configuration, output)
+        if not as_dict:
+            output = output.items()
     return (status, output)
 
 def vgrid_sharelinks(vgrid_name, configuration, recursive=True,
@@ -930,9 +982,19 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
             break
     return answer
 
+def mark_nested_vgrids_modified(configuration, vgrid_name):
+    """Mark vgrid_name and all child vgrids modified to signal e.g. vgrid_map
+    refresh before next use. This recursive version can be used to mark all
+    child vgrids modified as well upon changes to inherited values.
+    """
+    (list_status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
+    for sub in [vgrid_name] + sub_vgrids:
+        mark_vgrid_modified(configuration, sub)
+    return list_status
 
 def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
     """Validate that entities in id_list are on required format"""
+    _logger = configuration.logger
     if not isinstance(id_list, list):
         raise ValueError("invalid %s list for %s: %s" % (kind, vgrid_name,
                                                          id_list))
@@ -959,7 +1021,7 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
                 val = entry[key]
                 required_instance = specs_map[key]['Instance']
                 if not isinstance(val, required_instance):
-                    configuration.logger.warning(
+                    _logger.warning(
                         "invalid type for '%s' value '%s' in %s entry:\n%s" % \
                         (key, val, kind, entry))
                     raise ValueError(
@@ -971,7 +1033,7 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
         specs_map = get_settings_keywords_dict(configuration)
         for item in id_list:
             if not isinstance(item, tuple):
-                raise ValueError("invalid %s tuple entry for %s: %s" % \
+                raise ValueError("invalid %s tuple item for %s: %s" % \
                                  (kind, vgrid_name, item))
         entry = dict(id_list)
         for (key, spec) in specs_map.items():
@@ -984,7 +1046,7 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
             val = entry[key]
             required_instance = specs_map[key]['Instance']
             if not isinstance(val, required_instance):
-                configuration.logger.warning(
+                _logger.warning(
                     "invalid type for '%s' value '%s' in %s entry:\n%s" % \
                     (key, val, kind, entry))
                 raise ValueError(
@@ -1008,7 +1070,7 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
                 val = entry[key]
                 required_instance = specs_map[key]['Instance']
                 if not isinstance(val, required_instance):
-                    configuration.logger.warning(
+                    _logger.warning(
                         "invalid type for '%s' value '%s' in %s entry:\n%s" % \
                         (key, val, kind, entry))
                     raise ValueError(
@@ -1026,31 +1088,28 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
 
 def vgrid_valid_entities(configuration, vgrid_name, kind, id_list):
     """Return the subset of entries in id_list that are on required format"""
+    _logger = configuration.logger
     valid = []
-
-    if kind == "settings":
-        # id_list is the tuples from dict.items() and requires combined check
+    #_logger.debug("validating %s for %s" % (id_list, vgrid_name))
+    # Validate all in one go for settings (unfolded dictionary list)
+    if kind == 'settings':
+        check_list = [id_list]
+    else:
+        check_list = [[i] for i in id_list]
+    for i in check_list:
         try:
-            vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
-            return id_list
+            vgrid_validate_entities(configuration, vgrid_name, kind, i)
         except Exception, exc:
-            configuration.logger.warning("skipping %s on invalid format %s: %s"\
-                                         % (kind, id_list, exc))
-            return valid
-    for i in id_list:
-        try:
-            vgrid_validate_entities(configuration, vgrid_name, kind, [i])
-        except Exception, exc:
-            configuration.logger.warning("skipping %s on invalid format %s: %s"\
-                                         % (kind, i, exc))
+            _logger.warning("skipping %s on invalid format %s: %s" % \
+                            (kind, i, exc))
             continue
-        valid.append(i)
+        valid.extend(i)
     return valid
         
 def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
                        update_id=None, rank=None):
     """Append list of IDs to pickled list of kind for vgrid_name"""
-
+    _logger = configuration.logger
     if kind == 'owners':
         entity_filename = configuration.vgrid_owners
     elif kind == 'members':
@@ -1077,26 +1136,26 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
         else:
             entities = []
             log_msg = "creating missing file: '%s'" % (entity_filepath)
-            configuration.logger.info(log_msg)
+            _logger.info(log_msg)
 
         if update_id is None:
             entities = [i for i in entities if i not in id_list]
-            configuration.logger.info("adding new %s: %s" % (kind, id_list))
+            _logger.info("adding new %s: %s" % (kind, id_list))
         else:
             # A trigger or similar with same id exists and needs to be updated
             updating = [i[update_id] for i in id_list]
             entities = [i for i in entities if not i[update_id] in updating]
-            configuration.logger.info("adding updated %s: %s (%s)" % \
-                                      (kind, id_list, entities))
+            _logger.info("adding updated %s: %s (%s)" % (kind, id_list,
+                                                         entities))
         # Default to append
         if rank is None:
             rank = len(entities)
-        configuration.logger.debug("add %s %s at pos %s in %s" % \
-                                   (kind, id_list, rank, entities))
+        #_logger.debug("add %s %s at pos %s in %s" % \
+        #                           (kind, id_list, rank, entities))
         entities = entities[:rank] + id_list + entities[rank:]
-        configuration.logger.debug("added: %s" % entities)
+        #_logger.debug("added: %s" % entities)
         dump(entities, entity_filepath)
-        mark_vgrid_modified(configuration, vgrid_name)
+        mark_nested_vgrids_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
         return (False, "could not add %s for %s: %s" % (kind, vgrid_name, exc))
@@ -1184,7 +1243,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         if not entities and not allow_empty:
             raise ValueError("not allowed to remove last entry of %s" % kind)
         dump(entities, entity_filepath)
-        mark_vgrid_modified(configuration, vgrid_name)
+        mark_nested_vgrids_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
         return (False, "could not remove %s for %s: %s" % (kind, vgrid_name,
@@ -1260,7 +1319,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
             raise ValueError("not allowed to set empty list of %s" % kind)
         vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
         dump(id_list, entity_filepath)
-        mark_vgrid_modified(configuration, vgrid_name)
+        mark_nested_vgrids_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
         return (False, "could not set %s for %s: %s" % (kind, vgrid_name, exc))
@@ -1331,16 +1390,17 @@ def __in_vgrid_special(configuration, path, vgrid_special_base):
     vgrid_special_base, and returns the name of the deepest such sub-vgrid it
     is inside if so.
     """
+    _logger = configuration.logger
     vgrid_path = None
     vgrid_home = configuration.vgrid_home
     real_path = os.path.realpath(path)
-    configuration.logger.debug("in vgrid special %s vs %s" % \
-                               (real_path, vgrid_special_base))
+    #_logger.debug("in vgrid special %s vs %s" % \
+    #                           (real_path, vgrid_special_base))
     if real_path.startswith(vgrid_special_base):
         vgrid_path = real_path.replace(vgrid_special_base, '').lstrip(os.sep)
         while vgrid_path != os.sep:
             if os.path.isdir(os.path.join(vgrid_home, vgrid_path)):
-                configuration.logger.debug("in vgrid special found %s" % \
+                _logger.debug("in vgrid special found %s" % \
                                            vgrid_path)
                 break
             vgrid_path = os.path.dirname(vgrid_path)

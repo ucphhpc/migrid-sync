@@ -367,13 +367,22 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Settings"})
 
-    (settings_status, settings_dict) = vgrid_settings(vgrid_name, configuration,
-                                                 as_dict=True)
+    (direct_status, direct_dict) = vgrid_settings(vgrid_name, configuration,
+                                                  recursive=False,
+                                                  as_dict=True)
+    if not direct_status or not direct_dict:
+        direct_dict = {}
+    (settings_status, settings_dict) = vgrid_settings(vgrid_name,
+                                                      configuration,
+                                                      recursive=True,
+                                                      as_dict=True)
     if not settings_status or not settings_dict:
-        settings_dict = {'vgrid_name': vgrid_name}
+        settings_dict = {}
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
+    # Always set these values
     settings_dict.update({
+        'vgrid_name': vgrid_name,
         'vgrid_label': configuration.site_vgrid_label,
         'owners': keyword_owners,
         'members': keyword_members,
@@ -484,21 +493,25 @@ the corresponding participants. Similarly setting a visibility flag to
     settings_form += '<br/>'
 
     # TODO: implement and enable read-only support.
-    #       Maybe just recursively remove write bit on share?
-    #       Careful with .vgridX dirs when reverting to writable if so.
+    #       Split into RW and RO (bind) mounts and symlink accordingly
     bool_options = [("Hidden", "hidden"),
                     #("Read Only", "read_only"),
                     ]
     for (title, field) in bool_options:
         settings_form += '<h4>%s</h4>' % title
         for (key, val) in _valid_bool: 
-            checked = ''
+            checked, inherit_note = '', ''
             if settings_dict.get(field, False) == val:
                 checked = "checked"
+            if direct_dict.get(field, False) != \
+                   settings_dict.get(field, False):
+                inherit_note = '''&nbsp;<span class="warningtext iconspace">
+Forced by a parent %(vgrid_label)s. Please disable there first if you want to
+change the value here.</span>''' % settings_dict
             settings_form += '''
-            <input type="radio" name="%s" value="%s" %s/> %s
+            <input type="radio" name="%s" value="%s" %s /> %s
 ''' % (field, val, checked, key)
-        settings_form += '<br/>'
+        settings_form += '%s<br/>' % inherit_note
     settings_form += '<br/>'
 
     settings_form += '''

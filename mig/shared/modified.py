@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # modified - entity modification mark manipulation
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -68,7 +68,8 @@ def mark_resource_modified(configuration, resource_name):
 
 def mark_vgrid_modified(configuration, vgrid_name):
     """Mark vgrid_name modified to signal e.g. vgrid_map refresh before next
-    use"""
+    use.
+    """
     return mark_entity_modified(configuration, 'vgrid', vgrid_name)
 
 def mark_re_modified(configuration, re_name):

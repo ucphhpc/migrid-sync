@@ -30,7 +30,8 @@ Works as a combined specification of and source of information about keywords.
 """
 
 from shared.defaults import default_vgrid, any_vgrid, keyword_owners, \
-     keyword_members, keyword_all, default_vgrid_settings_limit
+     keyword_members, keyword_all, keyword_auto, keyword_never, \
+     keyword_any, default_vgrid_settings_limit
 
 # This is the main location for defining trigger keywords. All other trigger
 # handling functions should only operate on keywords defined here.
@@ -184,6 +185,7 @@ def get_settings_specs(configuration):
         'Type': 'string',
         'Instance': basestring,
         'Value': '',
+        'Inherit': keyword_never,
         'Required': True,
         }))
     specs.append(('description', {
@@ -193,6 +195,7 @@ def get_settings_specs(configuration):
         'Type': 'string',
         'Instance': basestring,
         'Value': '',
+        'Inherit': keyword_never,
         'Required': True,
         }))
     specs.append(('visible_owners', {
@@ -202,6 +205,7 @@ def get_settings_specs(configuration):
         'Type': 'string',
         'Instance': basestring,
         'Value': keyword_owners,
+        'Inherit': keyword_auto,
         'Required': True,
         }))
     specs.append(('visible_members', {
@@ -211,6 +215,7 @@ def get_settings_specs(configuration):
         'Type': 'string',
         'Instance': basestring,
         'Value': keyword_owners,
+        'Inherit': keyword_auto,
         'Required': True,
         }))
     specs.append(('visible_resources', {
@@ -220,6 +225,7 @@ def get_settings_specs(configuration):
         'Type': 'string',
         'Instance': basestring,
         'Value': keyword_owners,
+        'Inherit': keyword_auto,
         'Required': True,
         }))
     specs.append(('create_sharelink', {
@@ -230,6 +236,7 @@ shared folder''',
         'Type': 'string',
         'Instance': basestring,
         'Value': keyword_owners,
+        'Inherit': keyword_auto,
         'Required': False,
         }))
     specs.append(('request_recipients', {
@@ -239,6 +246,7 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
+        'Inherit': keyword_auto,
         'Required': True,
         }))
     specs.append(('restrict_settings_adm', {
@@ -248,6 +256,7 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
+        'Inherit': keyword_auto,
         'Required': False,
         }))
     specs.append(('restrict_owners_adm', {
@@ -257,6 +266,7 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
+        'Inherit': keyword_auto,
         'Required': False,
         }))
     specs.append(('restrict_members_adm', {
@@ -266,6 +276,7 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
+        'Inherit': keyword_auto,
         'Required': False,
         }))
     specs.append(('restrict_resources_adm', {
@@ -275,25 +286,28 @@ shared folder''',
         'Type': 'int',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
+        'Inherit': keyword_auto,
         'Required': False,
         }))
     specs.append(('hidden', {
         'Title': 'Hidden on Public %s List' % vgrid_label,
-        'Description': 'If %s should be hidden except to participants' % \
-        vgrid_label,
+        'Description': '''If %s should be hidden except to participants
+(recursively)''' % vgrid_label,
         'Example': 'False',
         'Type': 'boolean',
         'Instance': bool,
         'Value': False,
+        'Inherit': keyword_any,
         'Required': False,
         }))
     specs.append(('read_only', {
         'Title': 'Read-only Data',
-        'Description': 'If shared data is write-protected',
+        'Description': 'If shared data is write-protected (recursively)',
         'Example': 'False',
         'Type': 'boolean',
         'Instance': bool,
         'Value': False,
+        'Inherit': keyword_any,
         'Required': False,
         }))
     return specs
@@ -304,6 +318,3 @@ def get_settings_keywords_dict(configuration):
     # create the keywords in a single dictionary
 
     return dict(get_settings_specs(configuration))
-
-
-

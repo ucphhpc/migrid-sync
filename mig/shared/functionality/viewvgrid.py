@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewvgrid - Display public details about a vgrid
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -132,6 +132,7 @@ def main(client_id, user_arguments_dict):
         vgrid_dict = {'vgrid_name': vgrid_name}
         (settings_status, settings_dict) = vgrid_settings(vgrid_name,
                                                           configuration,
+                                                          recursive=True,
                                                           as_dict=True)
         if not settings_status:
             settings_dict = {}

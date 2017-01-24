@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequestaction - send request for e.g. member or ownership action handler
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.defaults import default_vgrid, any_vgrid, any_protocol, \
-     email_keyword_list
+     email_keyword_list, default_vgrid_settings_limit
 from shared.accessrequests import save_access_request
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -369,11 +369,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
         target_name = vgrid_name
         (settings_status, settings_dict) = vgrid_settings(vgrid_name,
                                                           configuration,
-                                                          recursive=False,
+                                                          recursive=True,
                                                           as_dict=True)
         if not settings_status:
             settings_dict = {}
-        request_recipients = settings_dict.get('request_recipients', 42)
+        request_recipients = settings_dict.get('request_recipients',
+                                               default_vgrid_settings_limit)
         # We load inherited owners and reverse it to take direct owners first
         (owners_status, owners_list) = vgrid_owners(vgrid_name, configuration,
                                              recursive=True)
