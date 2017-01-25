@@ -30,7 +30,7 @@
 import os
 
 from shared.defaults import keyword_owners, keyword_members, keyword_all, \
-     default_vgrid_settings_limit
+     keyword_auto, default_vgrid_settings_limit
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
@@ -40,24 +40,24 @@ import shared.returnvalues as returnvalues
 
 _valid_visible = (keyword_owners, keyword_members, keyword_all)
 _valid_sharelink = (keyword_owners, keyword_members)
+_keyword_auto_int = '0'
 
 def signature():
     """Signature of the main function"""
 
-    default_vgrid_settings_limit_str = "%d" % default_vgrid_settings_limit
     defaults = {'vgrid_name': REJECT_UNSET,
-                'description': [''],
-                'visible_owners': [keyword_owners],
-                'visible_members': [keyword_owners],
-                'visible_resources': [keyword_owners],
-                'create_sharelink': [keyword_owners],
-                'request_recipients': [default_vgrid_settings_limit_str],
-                'restrict_settings_adm': [default_vgrid_settings_limit_str],
-                'restrict_owners_adm': [default_vgrid_settings_limit_str],
-                'restrict_members_adm': [default_vgrid_settings_limit_str],
-                'restrict_resources_adm': [default_vgrid_settings_limit_str],
-                'read_only': ['False'],
-                'hidden': ['False'],
+                'description': [keyword_auto],
+                'visible_owners': [keyword_auto],
+                'visible_members': [keyword_auto],
+                'visible_resources': [keyword_auto],
+                'create_sharelink': [keyword_auto],
+                'request_recipients': [_keyword_auto_int],
+                'restrict_settings_adm': [_keyword_auto_int],
+                'restrict_owners_adm': [_keyword_auto_int],
+                'restrict_members_adm': [_keyword_auto_int],
+                'restrict_resources_adm': [_keyword_auto_int],
+                'read_only': [keyword_auto],
+                'hidden': [keyword_auto],
                 }
     return ['', defaults]
 
@@ -91,77 +91,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1].strip()
-    description = accepted['description'][-1].strip()
-    visible_owners = accepted['visible_owners'][-1]
-    visible_members = accepted['visible_members'][-1]
-    visible_resources = accepted['visible_resources'][-1]
-    create_sharelink = accepted['create_sharelink'][-1]
-    request_recipients = accepted['request_recipients'][-1]
-    restrict_settings_adm = accepted['restrict_settings_adm'][-1]
-    restrict_owners_adm = accepted['restrict_owners_adm'][-1]
-    restrict_members_adm = accepted['restrict_members_adm'][-1]
-    restrict_resources_adm = accepted['restrict_resources_adm'][-1]
-    read_only = accepted['read_only'][-1]
-    hidden = accepted['hidden'][-1]
 
-    # Check value sanity and set conservative defaults
-    
-    if not visible_owners in _valid_visible:
-        visible_owners = keyword_owners
-    if not visible_members in _valid_visible:
-        visible_members = keyword_owners
-    if not visible_resources in _valid_visible:
-        visible_resources = keyword_owners
-    if not create_sharelink in _valid_sharelink:
-        create_sharelink = keyword_owners
-    try:
-        request_recipients_val = int(request_recipients)
-    except ValueError:
-        request_recipients_val = default_vgrid_settings_limit
-    try:
-        restrict_settings_adm = int(restrict_settings_adm)
-    except ValueError:
-        restrict_settings_adm = default_vgrid_settings_limit
-    try:
-        restrict_owners_adm = int(restrict_owners_adm)
-    except ValueError:
-        restrict_owners_adm = default_vgrid_settings_limit
-    try:
-        restrict_members_adm = int(restrict_members_adm)
-    except ValueError:
-        restrict_members_adm = default_vgrid_settings_limit
-    try:
-        restrict_resources_adm = int(restrict_resources_adm)
-    except ValueError:
-        restrict_resources_adm = default_vgrid_settings_limit
+    new_settings = {'vgrid_name': vgrid_name}
 
-    is_read_only = False
-    if read_only.lower() in ("true", "1", "yes"):
-        # TODO: enable when we support read-only
-        #is_read_only = True
-        msg = 'read-only option is not yet supported'
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-    is_hidden = False
-    if hidden.lower() in ("true", "1", "yes"):
-        is_hidden = True
-
-    new_settings = {'vgrid_name': vgrid_name,
-                    'description': description,
-                    'visible_owners': visible_owners,
-                    'visible_members': visible_members,
-                    'visible_resources': visible_resources,
-                    'create_sharelink': create_sharelink,
-                    'request_recipients': request_recipients_val,
-                    'restrict_settings_adm': restrict_settings_adm,
-                    'restrict_owners_adm': restrict_owners_adm,
-                    'restrict_members_adm': restrict_members_adm,
-                    'restrict_resources_adm': restrict_resources_adm,
-                    'read_only': is_read_only,
-                    'hidden': is_hidden,
-                    }
-    
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
@@ -186,6 +118,121 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if not allow_status:
         output_objects.append({'object_type': 'error_text', 'text': allow_msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # Build current settings, leaving out unset ones for default/inherit
+    if not keyword_auto in accepted['description']:
+        new_settings['description'] = '\n'.join(accepted['description']).strip()
+    if not keyword_auto in accepted['visible_owners']:
+        visible_owners = accepted['visible_owners'][-1]
+        if visible_owners in _valid_visible:
+            new_settings['visible_owners'] = visible_owners
+        else:
+            msg = "invalid visible_owners value: %s" % visible_owners
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if not keyword_auto in accepted['visible_members']:
+        visible_members = accepted['visible_members'][-1]
+        if visible_members in _valid_visible:
+            new_settings['visible_members'] = visible_members
+        else:
+            msg = "invalid visible_members value: %s" % visible_members
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if not keyword_auto in accepted['visible_resources']:
+        visible_resources = accepted['visible_resources'][-1]
+        if visible_resources in _valid_visible:
+            new_settings['visible_resources'] = visible_resources
+        else:
+            msg = "invalid visible_resources value: %s" % visible_resources
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if not keyword_auto in accepted['create_sharelink']:
+        create_sharelink = accepted['create_sharelink'][-1]
+        if create_sharelink in _valid_sharelink:
+            new_settings['create_sharelink'] = create_sharelink
+        else:
+            msg = "invalid create_sharelink value: %s" % create_sharelink
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+            
+    if not _keyword_auto_int in accepted['request_recipients']:
+        try:
+            request_recipients = accepted['request_recipients'][-1]
+            request_recipients = int(request_recipients)
+            new_settings['request_recipients'] = request_recipients
+        except ValueError:
+            msg = "invalid request_recipients value: %s" % request_recipients
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if not _keyword_auto_int in accepted['restrict_settings_adm']:
+        try:
+            restrict_settings_adm = accepted['restrict_settings_adm'][-1]
+            restrict_settings_adm = int(restrict_settings_adm)
+            new_settings['restrict_settings_adm'] = restrict_settings_adm
+        except ValueError:
+            msg = "invalid restrict_settings_adm value: %s" % \
+                  restrict_settings_adm
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    else:
+        restrict_settings_adm = default_vgrid_settings_limit
+    if not _keyword_auto_int in accepted['restrict_owners_adm']:
+        try:
+            restrict_owners_adm = accepted['restrict_owners_adm'][-1]
+            restrict_owners_adm = int(restrict_owners_adm)
+            new_settings['restrict_owners_adm'] = restrict_owners_adm
+        except ValueError:
+            msg = "invalid restrict_owners_adm value: %s" % restrict_owners_adm
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    else:
+        restrict_owners_adm = default_vgrid_settings_limit
+    if not _keyword_auto_int in accepted['restrict_members_adm']:
+        try:
+            restrict_members_adm = accepted['restrict_members_adm'][-1]
+            restrict_members_adm = int(restrict_members_adm)
+            new_settings['restrict_members_adm'] = restrict_members_adm
+        except ValueError:
+            msg = "invalid restrict_members_adm value: %s" % \
+                  restrict_members_adm
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if not _keyword_auto_int in accepted['restrict_resources_adm']:
+        try:
+            restrict_resources_adm = accepted['restrict_resources_adm'][-1]
+            restrict_resources_adm = int(restrict_resources_adm)
+            new_settings['restrict_resources_adm'] = restrict_resources_adm
+        except ValueError:
+            msg = "invalid restrict_resources_adm value: %s" % \
+                  restrict_resources_adm
+            logger.warning(msg)
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if not keyword_auto in accepted['read_only']:
+        read_only = accepted['read_only'][-1]
+        is_read_only = False
+        if read_only.lower() in ("true", "1", "yes"):
+            # TODO: enable when we support read-only
+            #is_read_only = True
+            #new_settings['read_only'] = is_read_only
+            msg = 'read-only option is not yet supported'
+            output_objects.append({'object_type': 'error_text', 'text'
+                              : msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if not keyword_auto in accepted['hidden']:
+        hidden = accepted['hidden'][-1]
+        is_hidden = False
+        if hidden.lower() in ("true", "1", "yes"):
+            is_hidden = True
+        new_settings['hidden'] = is_hidden
 
     if restrict_settings_adm > restrict_owners_adm:
         output_objects.append({'object_type': 'html_form', 'text': '''

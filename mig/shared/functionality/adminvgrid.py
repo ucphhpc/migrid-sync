@@ -48,9 +48,16 @@ from shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
      vgrid_settings, vgrid_sharelinks, vgrid_list_parents, vgrid_owners, \
      vgrid_members, vgrid_resources
 
-_valid_sharelink = [("owners", keyword_owners), ("members", keyword_members)]
-_valid_visible = _valid_sharelink + [("everyone", keyword_all)]
-_valid_bool = [("yes", True), ("no", False)]
+_user_choice = [("owners", keyword_owners), ("members", keyword_members)]
+_all_choice = [("everyone", keyword_all)]
+_bool_choice = [("yes", True), ("no", False)]
+_keep_choice = [("keep using inherited or default value", keyword_auto)]
+_reset_choice = [("reset to inherited or default value", keyword_auto)]
+_keep_note = '(enter 0 to keep using inherited or default value)'
+_reset_note = '(enter 0 to reset to inherited or default value)'
+_valid_sharelink = _user_choice
+_valid_visible = _user_choice + _all_choice
+_valid_bool = _bool_choice
 
 def signature():
     """Signature of the main function"""
@@ -422,7 +429,11 @@ the corresponding participants. Similarly setting a visibility flag to
                           ("Resources are visible to", "visible_resources")]
     for (title, field) in visibility_options:
         settings_form += '<h4>%s</h4>' % title
-        for (key, val) in _valid_visible: 
+        if direct_dict.get(field, False):
+            choices = _valid_visible + _reset_choice
+        else:
+            choices = _valid_visible + _keep_choice
+        for (key, val) in choices: 
             checked = ''
             if settings_dict.get(field, keyword_owners) == val:
                 checked = "checked"
@@ -430,50 +441,74 @@ the corresponding participants. Similarly setting a visibility flag to
             <input type="radio" name="%s" value="%s" %s/> %s
 ''' % (field, val, checked, key)
         settings_form += '<br/>'
-    restrict_settings_adm = settings_dict.get('restrict_settings_adm',
-                                          default_vgrid_settings_limit)
+    field = 'restrict_settings_adm'
+    restrict_settings_adm = settings_dict.get(field,
+                                              default_vgrid_settings_limit)
+    if direct_dict.get(field, False):
+        direct_note = _reset_note
+    else:
+        direct_note = _keep_note
     settings_form += '''
             <h4>Restrict Settings</h4> 
             Restrict changing of these settings to only the first
-            <input type="number" name="restrict_settings_adm" min=1 max=999
+            <input type="number" name="restrict_settings_adm" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
-            owners.
-''' % restrict_settings_adm
+            owners %s.
+''' % (restrict_settings_adm, direct_note)
     settings_form += '<br/>'
-    restrict_owners_adm = settings_dict.get('restrict_owners_adm',
-                                          default_vgrid_settings_limit)
+    field = 'restrict_owners_adm'
+    restrict_owners_adm = settings_dict.get(field,
+                                            default_vgrid_settings_limit)
+    if direct_dict.get(field, False):
+        direct_note = _reset_note
+    else:
+        direct_note = _keep_note
     settings_form += '''
             <h4>Restrict Owner Administration</h4> 
             Restrict administration of owners to only the first
-            <input type="number" name="restrict_owners_adm" min=1 max=999
+            <input type="number" name="restrict_owners_adm" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
-            owners.
-''' % restrict_owners_adm
+            owners %s.
+''' % (restrict_owners_adm, direct_note)
     settings_form += '<br/>'
-    restrict_members_adm = settings_dict.get('restrict_members_adm',
+    field = 'restrict_members_adm'
+    restrict_members_adm = settings_dict.get(field,
                                           default_vgrid_settings_limit)
+    if direct_dict.get(field, False):
+        direct_note = _reset_note
+    else:
+        direct_note = _keep_note
     settings_form += '''
             <h4>Restrict Member Administration</h4> 
             Restrict administration of members to only the first
-            <input type="number" name="restrict_members_adm" min=1 max=999
+            <input type="number" name="restrict_members_adm" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
-            owners.
-''' % restrict_members_adm
+            owners %s.
+''' % (restrict_members_adm, direct_note)
     settings_form += '<br/>'
-    restrict_resources_adm = settings_dict.get('restrict_resources_adm',
-                                          default_vgrid_settings_limit)
+    field = 'restrict_resources_adm'
+    restrict_resources_adm = settings_dict.get(field,
+                                               default_vgrid_settings_limit)
+    if direct_dict.get(field, False):
+        direct_note = _reset_note
+    else:
+        direct_note = _keep_note
     settings_form += '''
             <h4>Restrict Resource Administration</h4> 
             Restrict administration of resources to only the first
-            <input type="number" name="restrict_resources_adm" min=1 max=999
+            <input type="number" name="restrict_resources_adm" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
-            owners.
-''' % restrict_resources_adm
+            owners %s.
+''' % (restrict_resources_adm, direct_note)
     settings_form += '<br/>'
     sharelink_options = [("Limit sharelink creation to", "create_sharelink")]
     for (title, field) in sharelink_options:
         settings_form += '<h4>%s</h4>' % title
-        for (key, val) in _valid_sharelink: 
+        if direct_dict.get(field, False):
+            choices = _valid_sharelink + _reset_choice
+        else:
+            choices = _valid_sharelink + _keep_choice
+        for (key, val) in choices: 
             checked = ''
             if settings_dict.get(field, keyword_owners) == val:
                 checked = "checked"
@@ -481,15 +516,20 @@ the corresponding participants. Similarly setting a visibility flag to
             <input type="radio" name="%s" value="%s" %s/> %s
 ''' % (field, val, checked, key)
         settings_form += '<br/>'
-    request_recipients = settings_dict.get('request_recipients',
+    field = 'request_recipients'
+    request_recipients = settings_dict.get(field,
                                            default_vgrid_settings_limit)
+    if direct_dict.get(field, False):
+        direct_note = _reset_note
+    else:
+        direct_note = _keep_note
     settings_form += '''
             <h4>Request Recipients</h4> 
             Notify only first
-            <input type="number" name="request_recipients" min=1 max=999
+            <input type="number" name="request_recipients" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
-            owners about access requests.
-''' % request_recipients
+            owners about access requests %s.
+''' % (request_recipients, direct_note)
     settings_form += '<br/>'
 
     # TODO: implement and enable read-only support.
@@ -499,7 +539,11 @@ the corresponding participants. Similarly setting a visibility flag to
                     ]
     for (title, field) in bool_options:
         settings_form += '<h4>%s</h4>' % title
-        for (key, val) in _valid_bool: 
+        if direct_dict.get(field, False):
+            choices = _valid_bool + _reset_choice
+        else:
+            choices = _valid_bool + _keep_choice
+        for (key, val) in choices: 
             checked, inherit_note = '', ''
             if settings_dict.get(field, False) == val:
                 checked = "checked"

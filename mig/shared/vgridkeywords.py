@@ -196,7 +196,7 @@ def get_settings_specs(configuration):
         'Instance': basestring,
         'Value': '',
         'Inherit': keyword_never,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('visible_owners', {
         'Title': 'Visibility of Owners List',
@@ -206,7 +206,7 @@ def get_settings_specs(configuration):
         'Instance': basestring,
         'Value': keyword_owners,
         'Inherit': keyword_auto,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('visible_members', {
         'Title': 'Visibility of Members List',
@@ -216,7 +216,7 @@ def get_settings_specs(configuration):
         'Instance': basestring,
         'Value': keyword_owners,
         'Inherit': keyword_auto,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('visible_resources', {
         'Title': 'Visibility of Resources List',
@@ -226,7 +226,7 @@ def get_settings_specs(configuration):
         'Instance': basestring,
         'Value': keyword_owners,
         'Inherit': keyword_auto,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('create_sharelink', {
         'Title': 'Limit Sharelink Creation',
@@ -247,7 +247,7 @@ shared folder''',
         'Instance': int,
         'Value': default_vgrid_settings_limit,
         'Inherit': keyword_auto,
-        'Required': True,
+        'Required': False,
         }))
     specs.append(('restrict_settings_adm', {
         'Title': 'Restrict Settings Administration',
