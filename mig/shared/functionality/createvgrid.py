@@ -48,6 +48,7 @@ from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
      vgrid_set_resources, vgrid_set_triggers, vgrid_set_settings, \
      vgrid_create_allowed
+from shared.vgridkeywords import get_settings_keywords_dict
 
 
 def signature():
@@ -1030,21 +1031,18 @@ for job input and output.
                                trigger_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # create default pickled settings list
+    # create default pickled settings list with only required values set to
+    # leave all other fields for inheritance by default.
 
-    default_settings = {'vgrid_name': vgrid_name, 
-                        'description': '',
-                        'visible_owners': keyword_owners,
-                        'visible_members': keyword_owners,
-                        'visible_resources': keyword_owners,
-                        'create_sharelink': keyword_owners,
-                        'request_recipients': default_vgrid_settings_limit,
-                        'read_only': False,
-                        'hidden': False,
-                        }.items()
+    init_settings = {}
+    settings_specs = get_settings_keywords_dict(configuration)
+    for (key, spec) in settings_specs.items():
+        if spec['Required']:
+            init_settings[key] = spec['Value']
+    init_settings['vgrid_name'] = vgrid_name
     (settings_status, settings_msg) = vgrid_set_settings(configuration,
                                                          vgrid_name,
-                                                         default_settings)
+                                                         init_settings.items())
     if not settings_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not save settings list: %s' % \
