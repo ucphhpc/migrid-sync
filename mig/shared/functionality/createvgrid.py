@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createvgrid - create a vgrid with all the collaboration components
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ from tempfile import NamedTemporaryFile
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, generate_https_urls
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
-     keyword_owners
+     keyword_owners, default_vgrid_settings_limit
 from shared.fileio import write_file, make_symlink, delete_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -1038,7 +1038,7 @@ for job input and output.
                         'visible_members': keyword_owners,
                         'visible_resources': keyword_owners,
                         'create_sharelink': keyword_owners,
-                        'request_recipients': 42,
+                        'request_recipients': default_vgrid_settings_limit,
                         'read_only': False,
                         'hidden': False,
                         }.items()
