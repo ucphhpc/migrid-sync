@@ -34,12 +34,12 @@ if [[ ${getssl_cmd} =~ .*-q.* ]]; then
 fi
 
 if [ -d ${verbose} ]; then
-   echo "getssl_cmd: $getssl_cmd"
+   echo "getssl_cmd: ${getssl_cmd}"
    echo "cert_path: ${cert_path}"
    echo "domain_cert_path: ${domain_cert_path}"
    echo "server_key_crt_ca_pem: ${server_key_crt_ca_pem}"
-   echo "combined_pem: $combined_pem"
-   echo "combined_pub: $combined_pub"
+   echo "combined_pem: ${combined_pem}"
+   echo "combined_pub: ${combined_pub}"
 fi
 
 if [ ! -d "${domain_cert_path}" ]; then
