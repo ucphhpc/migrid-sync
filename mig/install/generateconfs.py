@@ -203,5 +203,13 @@ clean up state files and grep for important errors in all MiG log files.
 You can install them with:
 chmod 755 %(destination)s/{migstateclean,migerrors}
 sudo cp %(destination)s/{migstateclean,migerrors} /etc/cron.daily/
+
+The migcheckssl file is cron scripts that automatically checks for 
+Let's encrypt certificate renewal. 
+You can install it with:
+chmod 700 %(destination)s/{migcheckssl}
+sudo cp %(destination)s/{migcheckssl} /etc/cron.daily
+
+
 ''' % conf
     sys.exit(0)

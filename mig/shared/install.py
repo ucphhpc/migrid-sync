@@ -369,6 +369,7 @@ cert, oid and sid based https!
         # cron helpers
         ("migerrors-template.sh.cronjob", "migerrors"),
         ("migstateclean-template.sh.cronjob", "migstateclean"),
+        ("migcheckssl-template.sh.cronjob", "migcheckssl"),
         ]
     for (in_name, out_name) in replacement_list:
         in_path = os.path.join(source, in_name)
