@@ -54,9 +54,19 @@ if [ ! -L ${combined_pem} ]; then
    ln -s ${server_key_crt_ca_pem} ${combined_pem}
 fi
 
-org_mtime=$(stat -c %Y ${server_key_crt_ca_pem})
+if [ ! -f ${server_key_crt_ca_pem} ]; then
+   org_mtime=(0)
+else
+   org_mtime=$(stat -c %Y ${server_key_crt_ca_pem})
+fi
+
 ${getssl_cmd}
-new_mtime=$(stat -c %Y ${server_key_crt_ca_pem})
+
+if [ ! -f ${server_key_crt_ca_pem} ]; then
+   new_mtime=(0)
+else
+   new_mtime=$(stat -c %Y ${server_key_crt_ca_pem})
+fi
 
 if [ ${org_mtime} -ne ${new_mtime} ]; then
    if [ -d ${verbose} ]; then
