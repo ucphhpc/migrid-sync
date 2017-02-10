@@ -24,7 +24,7 @@ getssl_cmd="getssl"
 export PATH="${PATH}:/usr/local/sbin"
 
 if [ "$#" -eq 0 ]; then
-   getssl_cmd="${getssl_cmd} -u -q ${domain}"
+   getssl_cmd="${getssl_cmd} -q ${domain}"
 else
    getssl_cmd="${getssl_cmd} $@ ${domain}"
 fi
