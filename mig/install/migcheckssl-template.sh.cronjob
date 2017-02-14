@@ -14,26 +14,46 @@
 # This is a limitation on the run-parts wrapper used by cron
 # (see man run-parts for the rationale behind this).
 
+export PATH="${PATH}:/usr/local/sbin"
+
 domain="__BASE_FQDN__"
 cert_path="__MIG_CERTS__/letsencrypt"
 domain_cert_path="${cert_path}/${domain}"
 server_key_crt_ca_pem="${domain_cert_path}/server.key.crt.ca.pem"
 combined_pem="${domain_cert_path}/combined.pem"
 combined_pub="${domain_cert_path}/combined.pub"
-getssl_cmd="getssl"
-export PATH="${PATH}:/usr/local/sbin"
+getssl_url="https://raw.githubusercontent.com/srvrco/getssl/master/getssl"
+getssl_tmp="/tmp/getssl"
+getssl_script="getssl"
+getssl_path=`which ${getssl_script} 2>/dev/null`
+apache_services="httpd apache2"
+
+# Check getssl script
+
+if [ ! -x "${getssl_path}" ]; then
+   echo "ERROR: Missing getssl script"
+   exit 1
+else   
+   wget -O ${getssl_tmp} ${getssl_url} > /dev/null 2>&1
+   diff -u -w ${getssl_tmp} ${getssl_path} || \
+   echo "--- Updated LetsEncrypt script available - please verify+update ---"
+   echo "${getssl_url}"
+   rm -f ${getssl_tmp}
+fi
+
+# Generate getssl command with args
 
 if [ "$#" -eq 0 ]; then
-   getssl_cmd="${getssl_cmd} -q ${domain}"
+   getssl_cmd="${getssl_script} -q ${domain}"
 else
-   getssl_cmd="${getssl_cmd} $@ ${domain}"
+   getssl_cmd="${getssl_script} $@ ${domain}"
 fi
 
 if [[ ${getssl_cmd} =~ .*-q.* ]]; then
-   verbose="true"
+   verbose=true
 fi
 
-if [ -d ${verbose} ]; then
+if [ -z ${verbose} ]; then
    echo "getssl_cmd: ${getssl_cmd}"
    echo "cert_path: ${cert_path}"
    echo "domain_cert_path: ${domain_cert_path}"
@@ -42,17 +62,25 @@ if [ -d ${verbose} ]; then
    echo "combined_pub: ${combined_pub}"
 fi
 
+# Ensure domain certificate path
+
 if [ ! -d "${domain_cert_path}" ]; then
    mkdir -p ${domain_cert_path}
 fi
+
+# Ensure file containing server: key + cert + ca
 
 if [ ! -f "${server_key_crt_ca_pem}" ]; then
    touch ${server_key_crt_ca_pem}
 fi
 
+# Ensure combined link
+
 if [ ! -L ${combined_pem} ]; then
    ln -s ${server_key_crt_ca_pem} ${combined_pem}
 fi
+
+# Get timestamp of current certificate
 
 if [ ! -f ${server_key_crt_ca_pem} ]; then
    org_mtime=(0)
@@ -60,7 +88,11 @@ else
    org_mtime=$(stat -c %Y ${server_key_crt_ca_pem})
 fi
 
+# Check for new certificate
+
 ${getssl_cmd}
+
+# Get timestamp of new certificate
 
 if [ ! -f ${server_key_crt_ca_pem} ]; then
    new_mtime=(0)
@@ -68,9 +100,11 @@ else
    new_mtime=$(stat -c %Y ${server_key_crt_ca_pem})
 fi
 
+# Update MiG specific certificate paths if certificate is updated
+
 if [ ${org_mtime} -ne ${new_mtime} ]; then
-   if [ -d ${verbose} ]; then
-      echo "--- letsencrypt certificates updated ---"
+   if [ -z ${verbose} ]; then
+      echo "--- LetsEncrypt certificates updated ---"
       echo "Setting permissions and creating: ${combined_pub}"
    fi
 
@@ -80,9 +114,20 @@ if [ ${org_mtime} -ne ${new_mtime} ]; then
    chmod 400 ${domain_cert_path}/*.key
    ssh-keygen -y -f ${combined_pem} > ${combined_pub}
 
-   if [ -d ${verbose} ]; then
-      echo "--- Restarting Apache and MiG services ---"
+   if [ -z ${verbose} ]; then
+      echo "--- Restarting MiG service ---"
    fi
    systemctl restart migrid
-   systemctl restart httpd
+
+   # Restart apache service if it exits
+
+   for apache_service in ${apache_services}; do
+      systemctl status ${apache_service} > /dev/null 2>&1
+      if [ $? -eq 0 ]; then
+         if [ -z ${verbose} ]; then
+            echo "--- Restarting apache service: ${apache_service} ---"
+         fi
+         systemctl restart ${apache_service}
+      fi
+   done
 fi
