@@ -19,6 +19,9 @@ export PATH="${PATH}:/usr/local/sbin"
 domain="__BASE_FQDN__"
 cert_path="__MIG_CERTS__/letsencrypt"
 domain_cert_path="${cert_path}/${domain}"
+server_key="${domain_cert_path}/server.key"
+server_pem="${domain_cert_path}/server.pem"
+server_crt_ca_pem="${domain_cert_path}/server.crt.ca.pem"
 server_key_crt_ca_pem="${domain_cert_path}/server.key.crt.ca.pem"
 combined_pem="${domain_cert_path}/combined.pem"
 combined_pub="${domain_cert_path}/combined.pub"
@@ -57,6 +60,9 @@ if [ -z ${verbose} ]; then
    echo "getssl_cmd: ${getssl_cmd}"
    echo "cert_path: ${cert_path}"
    echo "domain_cert_path: ${domain_cert_path}"
+   echo "server_key: ${server_key}" 
+   echo "server_pem: ${server_pem}" 
+   echo "server_crt_ca_pem: ${server_crt_ca_pem}"
    echo "server_key_crt_ca_pem: ${server_key_crt_ca_pem}"
    echo "combined_pem: ${combined_pem}"
    echo "combined_pub: ${combined_pub}"
@@ -72,12 +78,6 @@ fi
 
 if [ ! -f "${server_key_crt_ca_pem}" ]; then
    touch ${server_key_crt_ca_pem}
-fi
-
-# Ensure combined link
-
-if [ ! -L ${combined_pem} ]; then
-   ln -s ${server_key_crt_ca_pem} ${combined_pem}
 fi
 
 # Get timestamp of current certificate
@@ -108,11 +108,25 @@ if [ ${org_mtime} -ne ${new_mtime} ]; then
       echo "Setting permissions and creating: ${combined_pub}"
    fi
 
-   chown 0:0 ${domain_cert_path}/*.key
+   # Generate combined.pem
+   # Paramiko expects 'combined.pem' to contain plain-text part of server.key
+   # 'server_key_crt_ca_pem' is 'combined.pem'
+   #  without plain-text part of server.key
+
+   openssl rsa -in ${server_key} -text > ${server_pem}
+   cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
+
+   # Set owner and permissions
+
+   chown 0:0 ${domain_cert_path}/*.{key,pem}
    chown mig:mig ${combined_pem}
-   chmod 400 ${combined_pem} ${domain_cert_path}/*.key
-   chmod 400 ${domain_cert_path}/*.key
+   chmod 400 ${domain_cert_path}/*.{key,pem}
+
+   # Generate combined.pub
+
    ssh-keygen -y -f ${combined_pem} > ${combined_pub}
+
+   # Restart migrid service
 
    if [ -z ${verbose} ]; then
       echo "--- Restarting MiG service ---"
