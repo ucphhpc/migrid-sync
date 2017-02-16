@@ -1,6 +1,0 @@
-[proxyd]
-uid =
-gid =
-pidfile = ./proxyd.pid
-logfile = ./proxyd.log
-loglevel = debug
