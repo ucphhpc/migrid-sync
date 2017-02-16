@@ -212,3 +212,6 @@ freeze_flavors = {
 # Default value for integer limits in vgrid settings
 default_vgrid_settings_limit = 4
 
+# Password policy helpers
+POLICY_NONE, POLICY_WEAK = "NONE", "WEAK"
+POLICY_MEDIUM, POLICY_HIGH = "MEDIUM", "HIGH"

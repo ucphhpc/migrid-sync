@@ -110,6 +110,7 @@ dn_extras = name_extras + '/=:'
 integer_extras = '+-eE'
 float_extras = integer_extras + '.'
 password_extras = ' -_#.,:;!@%/()[]{}+=?<>'
+# Absolute length limits for all passwords - further restricted in backends
 password_min_len = 4
 password_max_len = 64
 dn_max_len = 96

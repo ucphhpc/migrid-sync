@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 #
-# pwhash - [optionally add short module description on this line]
+# pwhash - helpers for passwords and hashing
 # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -49,10 +49,12 @@ import hashlib
 from os import urandom
 from base64 import b64encode, b64decode, b16encode, b16decode
 from itertools import izip
-
+from string import lowercase, uppercase, digits
 # From https://github.com/mitsuhiko/python-pbkdf2
 from pbkdf2 import pbkdf2_bin
 
+from shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
+     POLICY_HIGH
 
 # Parameters to PBKDF2. Only affect new passwords.
 SALT_LENGTH = 12
@@ -165,3 +167,46 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     token = hashlib.sha256(xor_id).hexdigest()
     return token
 
+def assure_password_strength(configuration, password):
+    """Make sure password fits site password policy in terms of length and
+    number of different character classes.
+    We split into four classes for now, lowercase, uppercase, digits and other.
+    """
+    logger = configuration.logger
+    site_policy = configuration.site_password_policy
+    policy_fail_msg = 'password does not fit site password policy'
+    if site_policy == POLICY_NONE:
+        logger.debug('site password policy allows any password')
+        min_len, min_classes = 0, 0
+    elif site_policy == POLICY_WEAK:
+        min_len, min_classes = 6, 2
+    elif site_policy == POLICY_MEDIUM:
+        min_len, min_classes = 8, 3
+    elif site_policy == POLICY_HIGH:
+        min_len, min_classes = 10, 4
+    else:
+        raise Exception('invalid site password policy')
+    if len(password) < min_len:
+        err_msg = '%s: too short, at least %d chars required' % \
+                  (policy_fail_msg, min_len)
+        logger.warning(err_msg)
+        raise ValueError(err_msg)
+    char_class_map = {'lower': lowercase, 'upper': uppercase, 'digits': digits}
+    base_chars = ''.join(char_class_map.values())
+    pw_classes = []
+    for i in password:
+        if i not in base_chars and 'other' not in pw_classes:
+            pw_classes.append('other')
+            continue
+        for (char_class, values) in char_class_map.items():
+            if i in values and not char_class in pw_classes:
+                pw_classes.append(char_class)
+                break
+    if len(pw_classes) < min_classes:
+        err_msg = '%s: too simple, at least %d character classes required' % \
+                  (policy_fail_msg, min_classes)
+        logger.warning(err_msg)
+        raise ValueError(err_msg)
+    logger.debug('password compliant with site password policy (%s)' % \
+                 site_policy)
+    return True

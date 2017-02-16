@@ -1153,7 +1153,7 @@ def active_sessions(configuration, proto, client_id):
         logger.error("active sessions failed: %s" % exc)
     _sessions_lock.release()
     return active_count
-    
+
 
 if __name__ == "__main__":
     from shared.conf import get_configuration_object

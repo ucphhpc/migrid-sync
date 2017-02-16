@@ -37,7 +37,7 @@ import time
 from ConfigParser import ConfigParser
 
 from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
-     freeze_flavors
+     POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, freeze_flavors
 from shared.logger import Logger
 from shared.html import menu_items, vgrid_items
 
@@ -103,6 +103,7 @@ def fix_missing(config_file, verbose=True):
         'site_signup_methods': '',
         'site_login_methods': '',
         'site_csrf_protection': '',
+        'site_password_policy': '',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -282,6 +283,9 @@ class Configuration:
     # TODO: switch to CSRF_MEDIUM and eventually CSRF_FULL when ready
     # Default to transitional CSRF protection warnings only for now
     site_csrf_protection = CSRF_WARN
+    # TODO: switch to POLICY_WEAK or POLICY_MEDIUM when ready
+    # Default to legacy POLICY_NONE for now
+    site_password_policy = POLICY_NONE
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
@@ -1114,6 +1118,13 @@ class Configuration:
                 self.site_csrf_protection = csrf_protection
         else:
             self.site_csrf_protection = CSRF_WARN
+        if config.has_option('SITE', 'password_policy'):
+            password_policy = config.get('SITE', 'password_policy')
+            if password_policy in (POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM,
+                                   POLICY_HIGH):
+                self.site_password_policy = password_policy
+        else:
+            self.site_password_policy = POLICY_NONE
         if config.has_option('SITE', 'script_deps'):
             self.site_script_deps = config.get('SITE', 'script_deps').split()
         else:

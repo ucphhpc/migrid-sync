@@ -201,7 +201,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not parse_status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error parsing %s settings file: %s'
+                              : 'Error parsing and saving %s settings: %s'
                                % (topic, parse_msg)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 

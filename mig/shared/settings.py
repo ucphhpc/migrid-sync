@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - helpers for handling user settings
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ from shared.defaults import settings_filename, profile_filename, \
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
-from shared.pwhash import make_hash, make_digest
+from shared.pwhash import make_hash, make_digest, assure_password_strength
 from shared.safeinput import valid_password
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.ssh import parse_pub_key
@@ -142,11 +142,13 @@ def parse_and_save_publickeys(keys_path, keys_content, client_id,
     return (status, msg)
 
 def parse_and_save_passwords(passwords_path, passwords_content, client_id,
-                             configuration):
+                             configuration, check_valid=True):
     """Check password strength and write the hashed content to passwords_path
     using the password hashing helper.
+    The optional check_valid can be used to disable password check for basic
+    validity as well as compliance with configured site policy. No need to do
+    that again if already done in parse_and_save_digests call.
     """
-    # TODO: validate?
     status, msg = True, ''
     if passwords_content == keyword_unchanged:
         return (status, msg)
@@ -154,22 +156,30 @@ def parse_and_save_passwords(passwords_path, passwords_content, client_id,
         if not passwords_content:
             password_hash = ''
         else:
-            valid_password(passwords_content)
+            if check_valid:
+                # Make sure password is valid and complies with site policy
+                valid_password(passwords_content)
+                assure_password_strength(configuration, passwords_content)
             password_hash = make_hash(passwords_content)
         passwords_fd = open(passwords_path, 'wb')
         passwords_fd.write(password_hash)
         passwords_fd.close()
+    except ValueError, vae:
+        status = False
+        msg = 'invalid password: %s' % vae
     except Exception, exc:
         status = False
         msg = 'ERROR: writing %s passwords file: %s' % (client_id, exc)
     return (status, msg)
 
 def parse_and_save_digests(digests_path, passwords_content, client_id,
-                           configuration):
+                           configuration, check_valid=True):
     """Check password strength and write the digest content to passwords_path
     using the credential digest helper.
+    The optional check_valid can be used to disable password check for basic
+    validity as well as compliance with configured site policy. No need to do
+    that again if already done in parse_and_save_passwords call.
     """
-    # TODO: validate?
     status, msg = True, ''
     if passwords_content == keyword_unchanged:
         return (status, msg)
@@ -177,19 +187,22 @@ def parse_and_save_digests(digests_path, passwords_content, client_id,
         if not passwords_content:
             password_digest = ''
         else:
-            valid_password(passwords_content)
-        password_digest = make_digest(dav_domain, client_id, passwords_content,
-                                      configuration.site_digest_salt)
+            if check_valid:
+                # Make sure password is valid and complies with site policy
+                valid_password(passwords_content)
+                assure_password_strength(configuration, passwords_content)
+            password_digest = make_digest(dav_domain, client_id,
+                                          passwords_content,
+                                          configuration.site_digest_salt)
         digests_fd = open(digests_path, 'wb')
         digests_fd.write(password_digest)
         digests_fd.close()
+    except ValueError, vae:
+        status = False
+        msg = 'invalid password: %s' % vae
     except Exception, exc:
         status = False
         msg = 'ERROR: writing %s digests file: %s' % (client_id, exc)
-        import traceback
-        msg += '\n%s' % traceback.format_exc()
-        msg += '\n%s %s %s %s' % (dav_domain, client_id, passwords_content,
-                                  configuration.site_digest_salt)
     return (status, msg)
 
 def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
@@ -210,15 +223,16 @@ def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                            configuration)
     pw_path = os.path.join(proto_conf_path, authpasswords_filename)
     pw_status = parse_and_save_passwords(pw_path, password, client_id,
-                                         configuration)
+                                         configuration, check_valid=True)
     digest_path = os.path.join(proto_conf_path, authdigests_filename)
     if proto == 'davs':
+        # NOTE: we already checked password validity above
         digest_status = parse_and_save_digests(digest_path, password, client_id,
-                                               configuration)
+                                               configuration, check_valid=False)
     else:
         digest_status = (True, '')
     status = (key_status[0] and pw_status[0] and digest_status[0],
-              key_status[1] + pw_status[1] + digest_status[1])
+              key_status[1] + ' ' + pw_status[1] + ' ' + digest_status[1])
     if status[0]:
         mark_user_modified(configuration, client_id)
     return status
