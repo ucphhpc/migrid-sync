@@ -161,6 +161,9 @@ if __name__ == '__main__':
     target = os.getcwd()
     if len(sys.argv) > 1:
         target = os.path.abspath(sys.argv[1])
+    mig_code_base = target
+    if len(sys.argv) > 2:
+        mig_code_base = os.path.abspath(sys.argv[2])
 
     for (root, dirs, files) in os.walk(target):
 
@@ -179,7 +182,7 @@ if __name__ == '__main__':
                 else:
                     needs_block = False
                     
-                pattern = os.path.join(target, pattern)
+                pattern = os.path.join(mig_code_base, pattern)
 
                 # print "Testing %s against %s" % (src_path, pattern)
     

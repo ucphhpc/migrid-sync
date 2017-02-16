@@ -79,7 +79,6 @@ js_code_files = [
     'images/js/preview-caman.js',
     'images/js/preview.js',
     'images/js/preview-paraview.js',
-    
     ]
 code_files = py_code_files + sh_code_files + js_code_files
 
