@@ -77,8 +77,7 @@ license_text += """#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
-# USA.
-"""
+# USA."""
 
 def check_header(path, var_dict, preamble_size=4096):
     """Check if path already has a credible license header. Only looks inside
@@ -87,7 +86,8 @@ def check_header(path, var_dict, preamble_size=4096):
     module_fd = open(path, 'r')
     module_preamble = module_fd.read(4096)
     module_fd.close()
-    if begin_marker in module_preamble:
+    if begin_marker in module_preamble or \
+           proj_vars['authors'] in module_preamble:
         return True
     else:
         return False
@@ -132,7 +132,8 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
             module_lines = module_lines[1:]
 
     if explicit_border:
-        lic = """#
+        lic = """
+#
 # %s
 #
 %s
@@ -180,7 +181,7 @@ if __name__ == '__main__':
                     
                 pattern = os.path.join(target, pattern)
 
-                print "Testing %s against %s" % (src_path, pattern)
+                # print "Testing %s against %s" % (src_path, pattern)
     
                 if src_path == pattern or fnmatch.fnmatch(src_path, pattern):
                     print 'Matched %s against %s' % (src_path, pattern)
