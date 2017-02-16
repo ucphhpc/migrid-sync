@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codegrep - a simple helper to locate strings in the project code.
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,9 @@ py_code_files = [
     'wsgi-bin/%s' % plain,
     'install/%s' % plain,
     'migfs-fuse/%s' % plain,
+    'resource/bin/%s' % plain,
+    'resource/image-scripts/%s' % plain,
+    'resource/keepalive-scripts/%s' % plain,
     'server/%s' % plain,
     'shared/%s' % plain,
     'shared/functionality/%s' % plain,
@@ -44,6 +47,7 @@ py_code_files = [
     'user/%s' % plain,
     'vm-proxy/%s' % plain,
     'webserver/%s' % plain,
+    'wsgi-bin/%s' % plain,
     ]
 py_code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
                'putrespgid']]
