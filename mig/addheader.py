@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addheader - add license header to all code modules.
-# Copyright (C) 2009-2016  Jonas Bardino
+# Copyright (C) 2009-2017  Jonas Bardino
 #
 # This file is part of MiG.
 #
@@ -28,22 +28,25 @@
 
 """Search code tree and add the required header to all python modules"""
 
+import datetime
+import fnmatch
 import os
 import sys
-import fnmatch
 
-from codegrep import code_files
+from codegrep import py_code_files, sh_code_files, js_code_files
 
 # Modify these to fit actual project
 proj_vars = {}
 proj_vars['project_name'] = "MiG"
 proj_vars['authors'] = 'The MiG Project lead by Brian Vinter'
-proj_vars['copyright_year'] = '2003-2016'
+proj_vars['copyright_year'] = '2003-%d' % datetime.date.today().year
 
 # Set interpreter path and file encoding if not already set in source files
 # Use empty string to leave them alone.
 proj_vars['interpreter_path'] = '/usr/bin/python'
 proj_vars['module_encoding'] = 'utf-8'
+
+begin_marker, end_marker = "--- BEGIN_HEADER ---", "--- END_HEADER ---"
 
 # Mandatory copyright notice for any license
 license_text = """#
@@ -77,11 +80,26 @@ license_text += """#
 # USA.
 """
 
-def add_header(path, var_dict, explicit_border=False):
+def check_header(path, var_dict, preamble_size=4096):
+    """Check if path already has a credible license header. Only looks inside
+    the first preamble_size bytes of the file.
+    """
+    module_fd = open(path, 'r')
+    module_preamble = module_fd.read(4096)
+    module_fd.close()
+    if begin_marker in module_preamble:
+        return True
+    else:
+        return False
+    
+def add_header(path, var_dict, explicit_border=True, block_wrap=False):
     """Add the required copyright and license header to module in path.
     The optional explicit_border argument can be set to wrap the license
     text in begin and end lines that are easy to find, so that license can
     be updated or replaced later.
+    The optional block_wrap argument is used to explicitly put license lines
+    into a block comment where needed. This is useful for languages like C and
+    JavaScript where the per-line commenting using hash (#) won't work.
     Creates a '.unlicensed' backup copy of each file changed.
     """
 
@@ -93,7 +111,10 @@ def add_header(path, var_dict, explicit_border=False):
     backup_fd.close()
     # Do not truncate any existing unix executable hint and encoding
     act = '#!%(interpreter_path)s' % var_dict
-    enc = '# -*- coding: %(module_encoding)s -*-' % var_dict
+    if block_wrap:
+        enc = ''
+    else:
+        enc = '# -*- coding: %(module_encoding)s -*-' % var_dict
     lic = license_text % var_dict
     module_header = []
     if var_dict['interpreter_path']:
@@ -110,19 +131,26 @@ def add_header(path, var_dict, explicit_border=False):
         if module_lines and module_lines[0].startswith("# -*- coding"):
             module_lines = module_lines[1:]
 
+    if explicit_border:
+        lic = """#
+# %s
+#
+%s
+#
+# %s
+#
+""" % (begin_marker, lic, end_marker)
+    if block_wrap:
+        lic = """
+/*
+%s
+*/
+""" % lic
+        
     module_header.append(lic)
     module_text = '\n'.join(module_header) % var_dict + '\n'\
          + ''.join(module_lines)
 
-    if explicit_border:
-        module_text = """#
-# -- BEGIN_HEADER ---
-#
-%s
-#
-# -- END_HEADER ---
-#
-""" % module_text
         
     module_fd = open(path, 'w')
     module_fd.write(module_text)
@@ -144,15 +172,23 @@ if __name__ == '__main__':
             if os.path.islink(src_path):
                 continue
             print 'Inspecting %s' % src_path
-            for pattern in code_files:
+            for pattern in py_code_files + sh_code_files + js_code_files:
+                if pattern in js_code_files:
+                    needs_block = True
+                else:
+                    needs_block = False
+                    
                 pattern = os.path.join(target, pattern)
-    
-                # print "Testing %s against %s" % (src_path, pattern)
+
+                print "Testing %s against %s" % (src_path, pattern)
     
                 if src_path == pattern or fnmatch.fnmatch(src_path, pattern):
                     print 'Matched %s against %s' % (src_path, pattern)
                     proj_vars['module_name'] = name.replace('.py', '')
-                    add_header(src_path, proj_vars)
+                    if check_header(src_path, proj_vars):
+                        print 'Skip %s with existing header' % src_path
+                        continue
+                    add_header(src_path, proj_vars, block_wrap=needs_block)
     print
     print "Added license headers to code in %s" % target
     print

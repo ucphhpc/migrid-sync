@@ -69,7 +69,19 @@ sh_code_files = [
     'resource/leader_node_script.sh',
     'resource/dummy_node_script.sh',
     ]
-code_files = py_code_files + sh_code_files
+js_code_files = [
+    'images/js/jquery.ajaxhelpers.js',
+    'images/js/jquery.confirm.js',
+    'images/js/jquery.filemanager.js',
+    'images/js/jquery.jobmanager.js',
+    'images/js/jquery.migtools.js',
+    'images/js/jquery.prettyprint.js',
+    'images/js/preview-caman.js',
+    'images/js/preview.js',
+    'images/js/preview-paraview.js',
+    
+    ]
+code_files = py_code_files + sh_code_files + js_code_files
 
 if '__main__' == __name__:
     if len(sys.argv) < 2:
