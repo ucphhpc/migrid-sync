@@ -642,8 +642,18 @@ def refresh_job_creds(configuration, protocol, username):
         user_alias = sessionid
         user_dir = client_id_dir(job_dict['USER_CERT'])
         user_key = job_dict['MOUNTSSHPUBLICKEY']
-        user_url = job_dict['RESOURCE_CONFIG']['HOSTURL']
-        user_ip = socket.gethostbyname_ex(user_url)[2][0]
+        user_ip = None
+
+        # User frontend proxy if available otherwise hosturl to resolve IP
+        user_url = job_dict['RESOURCE_CONFIG'].get('FRONTENDPROXY', '')
+        if len(user_url) == 0:
+            user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
+        try:
+            user_ip = socket.gethostbyname_ex(user_url)[2][0]
+        except Exception, exc:
+            user_ip = None
+            logger.warning("Skipping key, unresolvable ip for user %s (%s)" % \
+                (user_alias, exc))
 
         # Make sure pub key is valid
         valid_pubkey = True
@@ -654,7 +664,7 @@ def refresh_job_creds(configuration, protocol, username):
             logger.warning("Skipping broken key '%s' for user %s (%s)" % \
                            (user_key, user_alias, exc))
 
-        if valid_pubkey:
+        if user_ip is not None and valid_pubkey:
             add_job_object(conf, user_alias, user_dir, pubkey=user_key,
                            ip_addr=user_ip)
             changed_jobs.append(user_alias)
@@ -714,22 +724,33 @@ def refresh_jobs(configuration, protocol):
             user_alias = sessionid
             user_dir = client_id_dir(job_dict['USER_CERT'])
             user_key = job_dict['MOUNTSSHPUBLICKEY']
-            user_url = job_dict['RESOURCE_CONFIG']['HOSTURL']
-            user_ip = socket.gethostbyname_ex(user_url)[2][0]
+            user_ip = None
+            
+            # Use frontend proxy if available otherwise hosturl to resolve IP
+            user_url = job_dict['RESOURCE_CONFIG'].get('FRONTENDPROXY', '')
+            if len(user_url) == 0:
+                user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
+            try:
+                user_ip = socket.gethostbyname_ex(user_url)[2][0]
+            except Exception, exc:
+                user_ip = None
+                logger.warning("Skipping key due to unresolvable ip for user %s (%s)" % (user_alias, exc))
 
             # Make sure pub key is valid
+            valid_pubkey = True
             try:    
                 _ = parse_pub_key(user_key)
             except Exception, exc:
+                valid_pubkey = False
                 logger.warning("Skipping broken key '%s' for user %s (%s)" % \
                                (user_key, user_alias, exc))
-                continue 
+
+            if user_ip is not None and valid_pubkey:                    
+                add_job_object(conf, user_alias, user_dir, pubkey=user_key,
+                               ip_addr=user_ip)
+                cur_usernames.append(user_alias)
+                changed_jobs.append(user_alias)
                     
-            add_job_object(conf, user_alias, user_dir, pubkey=user_key,
-                           ip_addr=user_ip)
-            cur_usernames.append(user_alias)
-            changed_jobs.append(user_alias)
-                
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d finished jobs" % len(removed))
