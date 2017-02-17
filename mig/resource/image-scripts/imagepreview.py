@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagepreview - Generating MiG image preview and meta data
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,10 +41,9 @@ from shared.imagemetaio import __tables_image_volumes_preview_data_group, \
     add_image_file_preview_data, add_image_file_preview_image, \
     add_image_file_preview_histogram, get_image_files, \
     remove_image_files, update_image_file_setting, \
-    get_image_file_count, get_image_files, get_image_volume_setting, \
-    get_image_file_preview_data, add_image_volume_preview_data, \
-    allowed_settings_status, add_image_volume, \
-    update_image_volume_setting
+    get_image_volume_setting, get_image_file_preview_data, \
+    add_image_volume_preview_data, allowed_settings_status, \
+    add_image_volume, update_image_volume_setting
 
 from numpy import zeros, empty, fromfile, int8, uint8, int16, uint16, \
     int32, uint32, int64, uint64, float64, cast, rint, mean, floor, \
@@ -69,6 +68,7 @@ def __init_meta(
                   % (base_path, path, str(filename), str(extension)))
 
     result = {}
+    result['abs_base_path'] = os.path.abspath(base_path)
     result['base_path'] = base_path
     result['path'] = path
     result['filename'] = filename
@@ -284,6 +284,7 @@ def write_preview_image(logger, meta):
 
     result = False
 
+    abs_base_path = meta['abs_base_path']
     base_path = meta['base_path']
     path = meta['path']
     filename = meta['filename']
@@ -296,7 +297,7 @@ def write_preview_image(logger, meta):
     preview['image_filename'] = preview_image_filename
     preview['extension'] = preview_extension
 
-    preview_path = get_image_preview_path(logger, base_path, path,
+    preview_path = get_image_preview_path(logger, abs_base_path, path,
             makedirs=True)
 
     write_preview_image_filepath = os.path.join(base_path,
@@ -314,11 +315,14 @@ def write_preview_image(logger, meta):
 def add_image_meta_data(logger, meta):
     """Add collected meta data to tables file"""
 
+    logger.debug('base_path: %s' % meta['base_path'])
+
     image = meta['2D']
     settings = image['settings']
 
     result = add_image_file(
         logger,
+        meta['abs_base_path'],
         meta['base_path'],
         meta['path'],
         meta['filename'],
@@ -351,7 +355,7 @@ def add_image_preview_data(logger, meta):
     """Add resized preview data to tables file"""
 
     image = meta['2D']
-    result = add_image_file_preview_data(logger, meta['base_path'],
+    result = add_image_file_preview_data(logger, meta['abs_base_path'],
             meta['path'], meta['filename'], image['preview'
             ]['resized_data'])
     return result
@@ -361,8 +365,8 @@ def add_image_preview_image(logger, meta):
     """Add resized and rescaled preview data to tables file"""
 
     image = meta['2D']
-    result = add_image_file_preview_image(logger, meta['base_path'],
-            meta['path'], meta['filename'], image['preview'
+    result = add_image_file_preview_image(logger, meta['abs_base_path'
+            ], meta['path'], meta['filename'], image['preview'
             ]['rescaled_data'])
     return result
 
@@ -371,9 +375,9 @@ def add_image_preview_histogram(logger, meta):
     """Add histogram data to tables file"""
 
     image = meta['2D']
-    result = add_image_file_preview_histogram(logger, meta['base_path'
-            ], meta['path'], meta['filename'], image['preview'
-            ]['histogram'])
+    result = add_image_file_preview_histogram(logger,
+            meta['abs_base_path'], meta['path'], meta['filename'],
+            image['preview']['histogram'])
     return result
 
 
@@ -382,13 +386,9 @@ def fill_volume_preview_meta(logger, meta):
 
     result = True
 
-    image = meta['2D']
     volume = meta['3D']
     volume['preview'] = preview = {}
     settings = volume['settings']
-    x_dimension = settings['preview_x_dimension']
-    y_dimension = settings['preview_y_dimension']
-    z_dimension = settings['preview_y_dimension']
     preview['data_type'] = settings['data_type']
     preview['cutoff_min'] = 0
     preview['cutoff_max'] = 0
@@ -461,6 +461,7 @@ def add_volume_meta_data(logger, meta):
 
     result = add_image_volume(
         logger,
+        meta['abs_base_path'],
         meta['base_path'],
         meta['path'],
         settings['volume_slice_filepattern'],
@@ -503,7 +504,6 @@ def write_preview_xdmf(logger, meta):
     base_path = meta['base_path']
     path = meta['path']
     volume_slice_filepattern = settings['volume_slice_filepattern']
-    data_type = settings['data_type']
     preview_x_dimension = preview['x_dimension']
     preview_y_dimension = preview['y_dimension']
     preview_z_dimension = preview['z_dimension']
@@ -567,7 +567,7 @@ def write_preview_xdmf(logger, meta):
     preview['xdmf_filename'] = xdmf_filename = '%s.xdmf' \
         % image_data_node_name
     xdmf_filepath = os.path.join(xdmf_path, xdmf_filename)
-    logger.debug('Writing xdmf: \n%s\nTo : %s' % (xdmf, xdmf_filepath))
+    logger.debug('Writing xdmf: %s To : %s' % (xdmf, xdmf_filepath))
 
     fd = open(xdmf_filepath, 'w')
     fd.write(xdmf)
@@ -581,6 +581,7 @@ def add_volume_preview_slice_data(logger, meta):
     """Add volume slice data to tables file"""
 
     result = True
+    abs_base_path = meta['abs_base_path']
     base_path = meta['base_path']
     path = meta['path']
     volume = meta['3D']
@@ -612,8 +613,14 @@ def add_volume_preview_slice_data(logger, meta):
         logger.debug('extension: %s' % extension)
         filepattern_index = volume_slice_filepattern.find('%')
         logger.debug('filepattern_index: %s' % filepattern_index)
-        image_files = get_image_files(logger, base_path, path=path,
-                extension=extension, data_entries=None)
+        image_files = get_image_files(
+            logger,
+            abs_base_path,
+            base_path,
+            path=path,
+            extension=extension,
+            data_entries=None,
+            )
         logger.debug('image_files count: %s' % len(image_files))
 
         # Get metadata
@@ -661,7 +668,8 @@ def add_volume_preview_slice_data(logger, meta):
                 allowed_settings_status['updating']
             settings['settings_update_progress'] = '%s/%s : %s%%' \
                 % (volume_nr, volume_count, int(round(volume_progress)))
-            update_image_volume_setting(logger, base_path, settings)
+            update_image_volume_setting(logger, abs_base_path,
+                    base_path, settings)
 
             # Find slices data type, check if consistent
 
@@ -682,12 +690,13 @@ def add_volume_preview_slice_data(logger, meta):
                 settings['settings_update_progress'] = '%s/%s : %s%%' \
                     % (volume_nr, volume_count,
                        int(round(volume_progress)))
-                update_image_volume_setting(logger, base_path, settings)
+                update_image_volume_setting(logger, abs_base_path,
+                        base_path, settings)
 
                 filename = volume_slice_filepattern % int(file_idx)
                 slice_preview_data = \
-                    get_image_file_preview_data(logger, base_path,
-                        path, filename)
+                    get_image_file_preview_data(logger, abs_base_path,
+                        base_path, path, filename)
 
                 tmp_volume[slice_idx, :slice_preview_data.shape[0], :
                            slice_preview_data.shape[1]] = \
@@ -735,7 +744,8 @@ def add_volume_preview_slice_data(logger, meta):
                 settings['settings_update_progress'] = '%s/%s : %s%%' \
                     % (volume_nr, volume_count,
                        int(round(volume_progress)))
-                update_image_volume_setting(logger, base_path, settings)
+                update_image_volume_setting(logger, abs_base_path,
+                        base_path, settings)
                 logger.debug('resize_x_dimension: %s, tmp slice: shape: %s, min: %s, max: %s'
                               % (x, str(tmp_volume[:, :, x].shape),
                              tmp_volume[:, :, x].min(), tmp_volume[:, :
@@ -755,8 +765,14 @@ def add_volume_preview_slice_data(logger, meta):
                          % (str(resized_volume.shape),
                          resized_volume.min(), resized_volume.max()))
 
-            result = add_image_volume_preview_data(logger, base_path,
-                    path, volume_slice_filepattern, resized_volume)
+            result = add_image_volume_preview_data(
+                logger,
+                abs_base_path,
+                base_path,
+                path,
+                volume_slice_filepattern,
+                resized_volume,
+                )
         else:
             result = False
             logger.debug('Missing: %s slices to create volume'
@@ -768,11 +784,16 @@ def add_volume_preview_slice_data(logger, meta):
 def cleanup_previews(logger, base_path):
     """Remove previews for removed files"""
 
+    abs_base_path = os.path.abspath(base_path)
+
     logger.debug('base_path: %s' % base_path)
+    logger.debug('abs_base_path: %s' % abs_base_path)
 
     result = True
-    image_file_settings = get_image_file_settings(logger, base_path)
-    image_file_entries = get_image_files(logger, base_path)
+    image_file_settings = get_image_file_settings(logger,
+            abs_base_path, base_path)
+    image_file_entries = get_image_files(logger, abs_base_path,
+            base_path)
 
     if image_file_entries is not None:
         for entry in image_file_entries:
@@ -791,8 +812,8 @@ def cleanup_previews(logger, base_path):
                 logger.debug('extension: %s _NOT_ found in settings <= CLEANUP'
                               % extension)
 
-                status = remove_image_files(logger, base_path,
-                        extension=extension)
+                status = remove_image_files(logger, abs_base_path,
+                        base_path, extension=extension)
             elif len(image_settings_index_list) == 1:
 
                 image_settings_index = image_settings_index_list[0]
@@ -811,17 +832,28 @@ def cleanup_previews(logger, base_path):
                     logger.debug('extension: %s, path: %s, settings_recursive: %s <= CLEANUP'
                                   % (extension, path,
                                  settings_recursive))
-                    status = remove_image_files(logger, base_path,
-                            path=path, name=name, extension=extension)
+                    status = remove_image_files(
+                        logger,
+                        abs_base_path,
+                        base_path,
+                        path=path,
+                        name=name,
+                        extension=extension,
+                        )
                 else:
                     filepath = os.path.join(base_path,
                             os.path.join(path, name))
                     if not os.path.isfile(filepath):
                         logger.debug('missing file: %s <= Removing entry from tables'
                                  % filepath)
-                        status = remove_image_files(logger, base_path,
-                                path=path, name=name,
-                                extension=extension)
+                        status = remove_image_files(
+                            logger,
+                            abs_base_path,
+                            base_path,
+                            path=path,
+                            name=name,
+                            extension=extension,
+                            )
                     else:
                         logger.debug('file exists: %s <= OK => _NO_ CLEANUP'
                                  % filepath)
@@ -853,7 +885,7 @@ def update_file_preview(
 
     meta = __init_meta(logger, base_path, path, filename)
     meta['2D']['settings'] = settings = get_image_file_setting(logger,
-            base_path, meta['extension'])
+            meta['abs_base_path'], meta['extension'])
 
     if settings is not None:
         if fill_image_data(logger, meta) and fill_image_stats(logger,
@@ -888,7 +920,7 @@ def update_volume_preview(
     meta = __init_meta(logger, base_path, path, filename)
     volume = meta['3D']
     volume['settings'] = settings = get_image_volume_setting(logger,
-            base_path, meta['extension'])
+            meta['abs_base_path'], meta['base_path'], meta['extension'])
     volume['volume_nr'] = volume_nr
     volume['volume_count'] = volume_count
 
@@ -927,11 +959,14 @@ def update_preview(
 def update_previews(logger, base_path, extension):
     """Update image previews for *extension* in *base_path*"""
 
+    abs_base_path = os.path.abspath(base_path)
+
     logger.debug("base_path: '%s', extension: '%s'" % (base_path,
                  extension))
-    image_setting = get_image_file_setting(logger, base_path, extension)
+    image_setting = get_image_file_setting(logger, abs_base_path,
+            extension)
     logger.debug('image_setting: %s' % image_setting)
-    volume_setting = get_image_volume_setting(logger, base_path,
+    volume_setting = get_image_volume_setting(logger, abs_base_path,
             extension)
     logger.debug('volume_setting: %s' % volume_setting)
 
@@ -974,7 +1009,8 @@ def update_previews(logger, base_path, extension):
                          % image_setting['settings_status'])
             logger.debug('settings_update_progress: %s'
                          % image_setting['settings_update_progress'])
-            update_image_file_setting(logger, base_path, image_setting)
+            update_image_file_setting(logger, abs_base_path,
+                    image_setting)
 
             # Process image files
 
@@ -1007,7 +1043,7 @@ def update_previews(logger, base_path, extension):
                                         % image_setting['settings_update_progress'
                                         ])
                                 update_image_file_setting(logger,
-                                        base_path, image_setting)
+                                        abs_base_path, image_setting)
                                 slice_modified = True
                             else:
                                 image_status = False
@@ -1040,7 +1076,7 @@ def update_previews(logger, base_path, extension):
                                         % image_setting['settings_update_progress'
                                         ])
                                 update_image_file_setting(logger,
-                                        base_path, image_setting)
+                                        abs_base_path, image_setting)
                                 slice_modified = True
                             else:
                                 image_status = False
@@ -1059,7 +1095,8 @@ def update_previews(logger, base_path, extension):
                 image_setting['settings_status'] = status_failed
             logger.debug('image settings status: %s'
                          % image_setting['settings_status'])
-            update_image_file_setting(logger, base_path, image_setting)
+            update_image_file_setting(logger, abs_base_path,
+                    image_setting)
 
             if volume_setting is not None:
                 image_setting['settings_update_progress'] = None
@@ -1069,8 +1106,8 @@ def update_previews(logger, base_path, extension):
                     volume_setting['settings_status'] = status_failed
                 logger.debug('volume settings status: %s'
                              % image_setting['settings_status'])
-                update_image_volume_setting(logger, base_path,
-                        volume_setting)
+                update_image_volume_setting(logger, abs_base_path,
+                        base_path, volume_setting)
         else:
             logger.info("Skipping update for: %s, %s, expected status: 'Pending', found '%s'"
                          % (base_path, extension, settings_status))

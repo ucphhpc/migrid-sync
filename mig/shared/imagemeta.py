@@ -61,15 +61,16 @@ def __get_preview_mrsl_template():
 ::OUTPUTFILES::
 
 ::CPUTIME::
-172800
+86400
 
 ::MEMORY::
 131072
 
 ::DISK::
-100
+10
 
 ::VGRID::
+ANY
 
 ::RUNTIMEENVIRONMENT::
 PYTHON-2.X-1
@@ -477,12 +478,12 @@ def __add_image_dir_trigger(
                 'run_as': client_id,
                 'action': 'command',
                 'arguments': arguments,
-                'templates': '',
+                'templates': [''],
                 'settle_time': '',
                 'rate_limit': '',
                 }
 
-            (add_status, _) = vgrid_add_triggers(configuration,
+            (add_status, add_msg) = vgrid_add_triggers(configuration,
                     vgrid_name, [rule_dict])
             if add_status:
                 status = returnvalues.OK
@@ -494,8 +495,8 @@ def __add_image_dir_trigger(
             else:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
-                    "Failed to create image dir '%s' trigger for path: '%s'" \
-                    % (rule_id, vgrid_name)
+                    "Failed to create trigger: '%s' : '%s' ->\n%s" \
+                    % (vgrid_name, rule_id, add_msg)
                 output_objects.append({'object_type': 'error_text',
                         'text': ERROR_MSG})
                 logger.error('%s' % ERROR_MSG)
@@ -690,12 +691,12 @@ def __add_image_file_trigger(
     rule_id = __get_image_file_trigger_rule_id(logger, vgrid_datapath,
             extension)
 
-    # TODO : Consider removing 'deleted' event to to avoid spamming job queue
-    # when eg. 'rm -rf' is issued.
-    # We should be able to handle deleted slices in eg. a volume
-    # without the 'delete' event.
-    #
-    # NOTE: The 'modifed' event is translated to a 'deleted' + 'created' in grid_events
+    # NOTE: The 'modifed' event is translated to 
+    #       a 'deleted' + 'created' in grid_events
+    # TODO: Find a way to handle image previews for 'deleted' 
+    #       files without spamming the job-queue
+    #       Should imagepreview handle 'addfile' / 'deletefile' 
+    #       as a command ?
 
     rule_dict = {
         'rule_id': rule_id,
@@ -703,10 +704,10 @@ def __add_image_file_trigger(
         'path': vgrid_trigger_path,
         'match_dirs': False,
         'match_recursive': recursive,
-        'changes': ['created', 'modified', 'deleted'],
+        'changes': ['created', 'modified'],
         'run_as': client_id,
         'action': 'submit',
-        'arguments': 'template_from_imagepreview.py',
+        'arguments': ['template_from_imagepreview.py'],
         'templates': [__update_preview_mrsl_template(path)],
         'settle_time': '60s',
         'rate_limit': '',
@@ -714,7 +715,7 @@ def __add_image_file_trigger(
 
     # Add generated vgrid submit trigger for files
 
-    (add_status, _) = vgrid_add_triggers(configuration, vgrid_name,
+    (add_status, add_msg) = vgrid_add_triggers(configuration, vgrid_name,
             [rule_dict])
     if add_status:
         status = returnvalues.OK
@@ -722,14 +723,10 @@ def __add_image_file_trigger(
         output_objects.append({'object_type': 'text', 'text': OK_MSG})
     else:
         status = returnvalues.ERROR
-        ERROR_MSG = "Failed to create trigger: '%s'" % rule_id
-        ERROR_MSG2 = "Makes sure '%s' is a VGrid" % vgrid_name
+        ERROR_MSG = "Failed to create trigger: '%s' : '%s' ->\n%s" % (vgrid_name, rule_id, add_msg)
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
-        output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG2})
         logger.error('%s' % ERROR_MSG)
-        logger.error('%s' % ERROR_MSG2)
 
     return status
 
@@ -763,14 +760,14 @@ def __add_image_settings_modified_trigger(
         'changes': ['modified'],
         'run_as': client_id,
         'action': 'submit',
-        'arguments': 'template_from_imagepreview.py',
+        'arguments': ['template_from_imagepreview.py'],
         'templates': [__create_previews_mrsl_template(path,
                       extension)],
         'settle_time': '1s',
         'rate_limit': '',
         }
 
-    (add_status, _) = vgrid_add_triggers(configuration, vgrid_name,
+    (add_status, add_msg) = vgrid_add_triggers(configuration, vgrid_name,
             [rule_dict])
     if add_status:
         status = returnvalues.OK
@@ -779,14 +776,10 @@ def __add_image_settings_modified_trigger(
         output_objects.append({'object_type': 'text', 'text': OK_MSG})
     else:
         status = returnvalues.ERROR
-        ERROR_MSG = "Failed to create trigger: '%s'" % rule_id
-        ERROR_MSG2 = "Makes sure '%s' is a VGrid" % vgrid_name
+        ERROR_MSG = "Failed to create trigger: '%s' : '%s' ->\n%s" % (vgrid_name, rule_id, add_msg)
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
-        output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG2})
         logger.error('%s' % ERROR_MSG)
-        logger.error('%s' % ERROR_MSG2)
 
     return status
 
@@ -2046,7 +2039,7 @@ def update_setting(
             if update_dict.has_key(key):
                 user_value = value.dtype.type(''.join(update_dict[key]))
                 if value != user_value:
-                    logger.debug('updating image key: %s : %s -> %s'
+                    logger.debug('updating image key: %s : %s ->\n%s'
                                  % (key, value, user_value))
                     image_file_setting[key] = user_value
 
@@ -2059,7 +2052,7 @@ def update_setting(
             if update_dict.has_key(key):
                 user_value = value.dtype.type(''.join(update_dict[key]))
                 if value != user_value:
-                    logger.debug('update volume key: %s : %s -> %s'
+                    logger.debug('update volume key: %s : %s ->\n%s'
                                  % (key, value, user_value))
                     image_volume_setting[key] = user_value
 
