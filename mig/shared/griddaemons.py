@@ -644,7 +644,7 @@ def refresh_job_creds(configuration, protocol, username):
         user_key = job_dict['MOUNTSSHPUBLICKEY']
         user_ip = None
 
-        # User frontend proxy if available otherwise hosturl to resolve IP
+        # Use frontend proxy if available otherwise use hosturl to resolve IP
         user_url = job_dict['RESOURCE_CONFIG'].get('FRONTENDPROXY', '')
         if len(user_url) == 0:
             user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
@@ -725,8 +725,8 @@ def refresh_jobs(configuration, protocol):
             user_dir = client_id_dir(job_dict['USER_CERT'])
             user_key = job_dict['MOUNTSSHPUBLICKEY']
             user_ip = None
-            
-            # Use frontend proxy if available otherwise hosturl to resolve IP
+
+            # Use frontend proxy if available otherwise use hosturl to resolve IP
             user_url = job_dict['RESOURCE_CONFIG'].get('FRONTENDPROXY', '')
             if len(user_url) == 0:
                 user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
