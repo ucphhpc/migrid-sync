@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# filemetaio - front end to file metadata I/O  
+# imagepreview - front end to file metadata I/O  
 # Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,13 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""File metadata helper page"""
+"""Image preview helper page"""
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.filemetaio import main
+from shared.functionality.imagepreview import main
 from shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

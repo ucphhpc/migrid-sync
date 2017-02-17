@@ -541,14 +541,14 @@ def vgrid_is_sharelink(vgrid_name, option_id, configuration, recursive=True,
                                    configuration, recursive, 'option_id',
                                    allow_missing)
 
-def vgrid_is_imagesetting(vgrid_name, option_id, configuration, recursive=True,
+def vgrid_is_imagesetting(vgrid_name, imagesetting_id, configuration, recursive=True,
                           allow_missing=True):
     """Check if option_id is a imagesetting in vgrid_name. We allow missing
     parent pickle to support autonomous multi-frontend systems.
     """
 
-    return vgrid_is_entity_in_list(vgrid_name, option_id, 'imagesettings',
-                                   configuration, recursive, 'option_id',
+    return vgrid_is_entity_in_list(vgrid_name, imagesetting_id, 'imagesettings',
+                                   configuration, recursive, 'imagesetting_id',
                                    allow_missing)
 
 def vgrid_list_subvgrids(vgrid_name, configuration):

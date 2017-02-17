@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagemeta - Managing MiG image meta data
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,34 +35,36 @@ import traceback
 import shared.returnvalues as returnvalues
 from shared.defaults import img_trigger_prefix
 from shared.fileio import touch, makedirs_rec, listdirs_rec, \
-    delete_file, make_symlink, remove_dir
-from shared.imagemetaio import get_image_file_setting, \
-    get_image_volume_setting, get_image_file_count, \
-    get_image_volume_count, remove_image_file_settings, \
-    remove_image_volume_settings, __metapath, get_image_file_settings, \
-    allowed_image_types, allowed_settings_status, \
-    update_image_file_setting, update_image_volume_setting, \
-    add_image_file_setting, add_image_volume_setting, __image_metapath, \
-    __revision, get_image_file, get_image_volume, \
-    get_preview_image_url, get_image_xdmf_filepath
+    delete_file, make_symlink, remove_dir, remove_rec
+from shared.imagemetaio import __metapath, __settings_filepath, \
+    __image_metapath, __image_preview_path, __image_xdmf_path, \
+    __revision, get_image_file_setting, get_image_volume_setting, \
+    get_image_file_count, get_image_volume_count, \
+    remove_image_file_settings, remove_image_volume_settings, \
+    get_image_file_settings, allowed_image_types, \
+    allowed_settings_status, update_image_file_setting, \
+    update_image_volume_setting, add_image_file_setting, \
+    add_image_volume_setting, get_image_file, get_image_volume, \
+    get_preview_image_url, get_image_xdmf_filepath, get_image_files, \
+    update_image_file, get_image_volumes, update_image_volume
 from shared.vgrid import in_vgrid_share, vgrid_add_triggers, \
     vgrid_remove_triggers, vgrid_is_trigger, vgrid_add_imagesettings, \
-    vgrid_remove_imagesettings
+    vgrid_remove_imagesettings, vgrid_imagesettings, \
+    vgrid_list_subvgrids, vgrid_list_parents, vgrid_owners
 from shared.vgridaccess import get_vgrid_map_vgrids
 
 
 def __get_preview_mrsl_template():
-    """General template for image preview trigger jobs"""
+    """General template for preview trigger jobs"""
 
     return """
-
 ::OUTPUTFILES::
 
 ::CPUTIME::
 172800
 
 ::MEMORY::
-2000000
+131072
 
 ::DISK::
 100
@@ -78,7 +80,7 @@ PYLIBTIFF-0.X-1
 
 
 def __create_previews_mrsl_template(datapath, extension):
-    """Template for changed image preview setting trigger jobs"""
+    """Template for changed preview setting trigger jobs"""
 
     result = \
         """::EXECUTE::
@@ -96,9 +98,9 @@ echo "datapath: '%(datapath)s'"
 echo "extension: '%(extension)s'"
 # DEBUG
 ls -la
-ls -la 'shared/*'
-ls -la '%(datapath)s/'
-ls -la '%(datapath)s/.meta'
+ls -la shared/*
+ls -la %(datapath)s/
+ls -la %(datapath)s/.meta
 # end DEBUG
 python idmc_update_previews.py '+TRIGGERCHANGE+' '%(datapath)s' '%(extension)s'
 
@@ -122,12 +124,112 @@ http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/se
     return result
 
 
+def __update_preview_mrsl_template(datapath):
+    """Template for image file changed preview setting trigger jobs"""
+
+    result = \
+        """::EXECUTE::
+echo "hostname: `hostname`"
+echo "uname: `uname`"
+echo "TRIGGERPATH: '+TRIGGERPATH+'"
+echo "TRIGGERDIRNAME: '+TRIGGERDIRNAME+'"
+echo "TRIGGERFILENAME: '+TRIGGERFILENAME+'"
+echo "TRIGGERPREFIX: '+TRIGGERPREFIX+'"
+echo "TRIGGEREXTENSION: '+TRIGGEREXTENSION+'"
+echo "TRIGGERCHANGE: '+TRIGGERCHANGE+'"
+echo "TRIGGERVGRIDNAME: '+TRIGGERVGRIDNAME+'"
+echo "TRIGGERRUNAS: '+TRIGGERRUNAS+'"
+echo "datapath: '%(datapath)s'"
+# DEBUG
+ls -la
+ls -la '%(datapath)s/'
+ls -la '%(datapath)s/.meta'
+# end DEBUG
+python idmc_update_preview.py '+TRIGGERCHANGE+' '%(datapath)s' '+TRIGGERDIRNAME+' '+TRIGGERFILENAME+'
+
+::MOUNT::
++TRIGGERVGRIDNAME+ +TRIGGERVGRIDNAME+
+
+::EXECUTABLES::
+
+::INPUTFILES::
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/imagepreview.py imagepreview.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/idmc_update_preview.py idmc_update_preview.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/__init__.py shared/__init__.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/defaults.py shared/defaults.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/fileio.py shared/fileio.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/imagemetaio.py shared/imagemetaio.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/serial.py shared/serial.py
+""" \
+        % {'datapath': datapath} + __get_preview_mrsl_template()
+
+    return result
+
+
+def __strip_metapath(path):
+    """Some triggers act on meta-paths, remove meta-path part if present"""
+
+    if path.endswith(__metapath):
+        path = path[:-len(__metapath)].strip('/')
+    elif path.endswith(__settings_filepath):
+        path = path[:-len(__settings_filepath)].strip('/')
+    elif path.endswith(__image_preview_path):
+        path = path[:-len(__image_preview_path)].strip('/')
+    elif path.endswith(__image_xdmf_path):
+        path = path[:-len(__image_xdmf_path)].strip('/')
+
+    return path
+
+
 def __get_vgrid_datapath(vgrid_name, path):
-    """Resolve vgrid datapath from *path*"""
+    """Resolve vgrid datapath from *path* and *vgrid_name*"""
 
     vgrid_datapath = path[len(vgrid_name):]
 
     return '/'.join([x for x in vgrid_datapath.split('/') if x])
+
+
+def __get_image_dir_created_trigger_rule_id(logger):
+    """Return id of trigger rule used when image dir created"""
+
+    return '%s_meta_created' % img_trigger_prefix
+
+
+def __get_image_dir_deleted_trigger_rule_id(logger):
+    """Return id of trigger rule used when image dir deleted"""
+
+    return '%s_dir_deleted' % img_trigger_prefix
+
+
+def __get_image_dir_settings_trigger_rule_id(logger, path, extension):
+    """Return id of trigger rule used when image settings changes"""
+
+    path_array = path.split('/')
+    return '%s_%s_%s_settings' % (img_trigger_prefix,
+                                  '_'.join(path_array), extension)
+
+
+def __get_image_file_trigger_rule_id(logger, path, extension):
+    """Return id of trigger rule used when image file changes"""
+
+    path_array = path.split('/')
+
+    return '%s_%s_%s_files' % (img_trigger_prefix,
+                               '_'.join(path_array), extension)
+
+
+def __get_paraview_datapath(logger, path):
+    """Return paraview datapath"""
+
+    return os.path.join('worker', path)
+
+
+def __get_paraview_datapath_link(logger, path):
+    """Return paraview datapath link"""
+
+    paraview_datapath = __get_paraview_datapath(logger, path)
+
+    return os.path.join(paraview_datapath, __metapath)
 
 
 def __seek_image_meta(
@@ -172,7 +274,6 @@ def __seek_volume_meta(
     filename = path_array.pop()
     path = ''
     while result is None and len(path_array) > 0:
-        logger.debug('path: %s' % path)
         abs_base_path = os.path.join(base_dir, os.sep.join(path_array))
         try:
             volume_meta = get_image_volume(logger, abs_base_path, path,
@@ -196,33 +297,38 @@ def __is_valid_image_settings_update(
     settings_recursive,
     image_type,
     data_type,
+    output_objects,
     ):
     """Check if valid image settings update"""
 
-    result = True
-    msg = ''
-
+    status = returnvalues.OK
     logger = configuration.logger
 
     # Check for image types
 
     if image_type not in allowed_image_types or data_type \
         not in allowed_image_types[image_type]:
-        result = False
-        msg = 'Invalid image and data_type: %s -> %s' % (image_type,
-                data_type)
+        status = returnvalues.ERROR
+        ERROR_MSG = 'Invalid image and data_type: %s -> %s' \
+            % (image_type, data_type)
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error(ERROR_MSG)
 
     # Check for vgrid
 
-    if result:
+    if status == returnvalues.OK:
         vgrid_list = get_vgrid_map_vgrids(configuration)
         if not vgrid_name in vgrid_list:
-            result = False
-            msg = "'%s' is _NOT_ workflow enabled." % vgrid_name
+            status = returnvalues.ERROR
+            ERROR_MSG = "'%s' is _NOT_ workflow enabled." % vgrid_name
+            output_objects.append({'object_type': 'error_text',
+                                  'text': ERROR_MSG})
+            logger.error(ERROR_MSG)
 
     # Check for child folder image settings
 
-    if result and settings_recursive:
+    if status == returnvalues.OK and settings_recursive:
 
         abs_vgrid_path = os.path.join(base_dir,
                 os.path.join(vgrid_name, vgrid_path))
@@ -234,20 +340,23 @@ def __is_valid_image_settings_update(
                 image_meta = None
                 logger.debug(str(traceback.format_exc()))
             if image_meta is not None:
-                result = False
+                status == returnvalues.ERROR
                 current_vgrid_path = path.replace(base_dir, '', 1)
-                msg = \
+                ERROR_MSG = \
                     "Settings for extension: '%s' found in path: '%s'." \
                     % (extension, current_vgrid_path)
-                msg = '%s Overloading _NOT_ supported' % msg
+                ERROR_MSG = '%s Overloading _NOT_ supported' % ERROR_MSG
+                output_objects.append({'object_type': 'error_text',
+                        'text': ERROR_MSG})
+                logger.error(ERROR_MSG)
 
     # Check for parent folder image settings
 
-    if result:
+    if status == returnvalues.OK:
         vgrid_path_array = ('%s/%s' % (vgrid_name,
                             vgrid_path)).split('/')[:-2]
 
-        while result and len(vgrid_path_array) > 0:
+        while status == returnvalues.OK and len(vgrid_path_array) > 0:
             current_vgrid_path = os.sep.join(vgrid_path_array)
             abs_vgrid_path = os.path.join(base_dir, current_vgrid_path)
             try:
@@ -257,12 +366,16 @@ def __is_valid_image_settings_update(
                 image_meta = None
                 logger.debug(str(traceback.format_exc()))
             if image_meta is not None \
-                and image_meta['settings_recursive']:
-                result = False
-                msg = \
+                and bool(image_meta['settings_recursive']):
+                status == returnvalues.ERROR
+                ERROR_MSG = \
                     "settings for extension: '%s' found in path: '%s'." \
                     % (extension, current_vgrid_path)
-                msg = '%s Overloading _NOT_ supported' % msg
+                ERROR_MSG = '%s Overloading _NOT_ supported' % ERROR_MSG
+                output_objects.append({'object_type': 'error_text',
+                        'text': ERROR_MSG})
+                logger.error(ERROR_MSG)
+
             vgrid_path_array = vgrid_path_array[:-1]
 
     # Check image settings status
@@ -275,9 +388,13 @@ def __is_valid_image_settings_update(
             ] != allowed_settings_status['ready'] \
         and image_file_meta['settings_status'] \
         != allowed_settings_status['failed']:
-        result = False
-        msg = 'File not ready for update, status: %s' \
+
+        status == returnvalues.ERROR
+        ERROR_MSG = 'File not ready for update, status: %s' \
             % image_file_meta['settings_status']
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error(ERROR_MSG)
 
     image_volume_meta = get_image_volume_setting(logger, abs_path,
             extension)
@@ -286,11 +403,543 @@ def __is_valid_image_settings_update(
         != allowed_settings_status['ready'] \
         and image_volume_meta['settings_status'] \
         != allowed_settings_status['failed']:
-        result = False
-        msg = 'Volume not ready for update, status: %s' \
-            % image_volume_meta['settings_status']
 
-    return (result, msg)
+        status == returnvalues.ERROR
+        ERROR_MSG = 'Volume not ready for update, status: %s' \
+            % image_volume_meta['settings_status']
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error(ERROR_MSG)
+
+    return status
+
+
+def __add_image_dir_trigger(
+    configuration,
+    client_id,
+    vgrid_name,
+    changes,
+    output_objects,
+    ignore_parent=False,
+    ):
+    """Add trigger to monitor changes to image directories"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+
+    recursive = True
+    if ignore_parent:
+        recursive = False
+
+    if changes == 'created':
+        vgrid_trigger_path = '/*/%s' % __settings_filepath
+        match_dirs = False
+        match_files = True
+        rule_id = __get_image_dir_created_trigger_rule_id(logger)
+
+        # NOTE: When grid_events discover a new directory then
+        # DirCreated and FileCreated are dispatched for sub-dirs/files
+        # Therefore we don't need a recursive refresh for new directories
+
+        arguments = ['imagepreview', '', 'refresh', '+TRIGGERPATH+']
+    elif changes == 'deleted':
+
+        vgrid_trigger_path = '*'
+        match_dirs = True
+        match_files = False
+        rule_id = __get_image_dir_deleted_trigger_rule_id(logger)
+        arguments = ['imagepreview', '', 'cleanrecursive',
+                     '+TRIGGERPATH+']
+    else:
+        status = returnvalues.ERROR
+        ERROR_MSG = "Invalid trigger changes: '%s'" % str(changes)
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error(ERROR_MSG)
+
+    if status == returnvalues.OK:
+
+        trigger_exists = vgrid_is_trigger(vgrid_name, rule_id,
+                configuration, recursive)
+
+        if not trigger_exists:
+
+             # Add vgrid create trigger for dir
+
+            rule_dict = {
+                'rule_id': rule_id,
+                'vgrid_name': vgrid_name,
+                'path': vgrid_trigger_path,
+                'match_dirs': match_dirs,
+                'match_files': match_files,
+                'match_recursive': True,
+                'changes': [changes],
+                'run_as': client_id,
+                'action': 'command',
+                'arguments': arguments,
+                'templates': '',
+                'settle_time': '',
+                'rate_limit': '',
+                }
+
+            (add_status, _) = vgrid_add_triggers(configuration,
+                    vgrid_name, [rule_dict])
+            if add_status:
+                status = returnvalues.OK
+                OK_MSG = "Created trigger : '%s' : '%s'" % (vgrid_name,
+                        rule_id)
+                output_objects.append({'object_type': 'text',
+                        'text': OK_MSG})
+                logger.info(OK_MSG)
+            else:
+                status = returnvalues.ERROR
+                ERROR_MSG = \
+                    "Failed to create image dir '%s' trigger for path: '%s'" \
+                    % (rule_id, vgrid_name)
+                output_objects.append({'object_type': 'error_text',
+                        'text': ERROR_MSG})
+                logger.error('%s' % ERROR_MSG)
+        else:
+            MSG = 'Trigger: %s already exists for vgrid: %s' \
+                % (rule_id, vgrid_name)
+
+            logger.warning(MSG)
+
+    return status
+
+
+def __ensure_image_dir_triggers(configuration, vgrid_name,
+                                output_objects):
+    """Ensure that image dir triggers exists"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+    created_trigger_exists = deleted_trigger_exists = True
+    parent_list = vgrid_list_parents(vgrid_name, configuration)
+
+    # Root vgrid is responsible for dir meta
+
+    if len(parent_list) > 0:
+        root_vgrid = parent_list[0]
+    else:
+        root_vgrid = vgrid_name
+
+    # First owner of root vgrid is responsible for dir meta
+
+    (owners_status, owners_id) = vgrid_owners(root_vgrid,
+            configuration, recursive=False)
+
+    if owners_status and len(owners_id) > 0:
+        owner_id = owners_id[0]
+    else:
+        status = returnvalues.ERROR
+
+    if status == returnvalues.OK:
+        created_rule_id = \
+            __get_image_dir_created_trigger_rule_id(logger)
+        created_trigger_exists = vgrid_is_trigger(root_vgrid,
+                created_rule_id, configuration, recursive=False)
+
+        deleted_rule_id = \
+            __get_image_dir_deleted_trigger_rule_id(logger)
+        deleted_trigger_exists = vgrid_is_trigger(root_vgrid,
+                deleted_rule_id, configuration, recursive=False)
+
+        action_list = []
+        if not created_trigger_exists:
+            action_list.append('created')
+        if not deleted_trigger_exists:
+            action_list.append('deleted')
+
+        for action in action_list:
+
+            add_status = __add_image_dir_trigger(configuration,
+                    owner_id, root_vgrid, action, output_objects)
+            if add_status != returnvalues.OK:
+                status = add_status
+
+        # Remove created triggers if one fails
+
+        if status != returnvalues.OK:
+            for action in action_list:
+                __remove_image_dir_trigger(configuration, root_vgrid,
+                        action, output_objects)
+
+    return status
+
+
+def __ensure_image_setting_triggers(
+    configuration,
+    client_id,
+    vgrid_name,
+    abs_path,
+    path,
+    output_objects,
+    ):
+    """Ensure that image settings triggers exists"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
+
+    image_file_settings = get_image_file_settings(logger, abs_path)
+
+    if image_file_settings is not None:
+        trigger_add_list = []
+        for image_file_setting in image_file_settings:
+            extension = image_file_setting['extension']
+            recursive = bool(image_file_setting['settings_recursive'])
+
+            settings_trigger_rule_id = \
+                __get_image_dir_settings_trigger_rule_id(logger,
+                    vgrid_datapath, extension)
+            settings_trigger_exists = vgrid_is_trigger(vgrid_name,
+                    settings_trigger_rule_id, configuration,
+                    recursive=False)
+            if not settings_trigger_exists:
+                trigger_add_list.append(settings_trigger_rule_id)
+                add_status = __add_image_settings_modified_trigger(
+                    configuration,
+                    client_id,
+                    vgrid_name,
+                    path,
+                    extension,
+                    output_objects,
+                    )
+                if add_status != returnvalues.OK:
+                    status = add_status
+
+            file_trigger_rule_id = \
+                __get_image_file_trigger_rule_id(logger,
+                    vgrid_datapath, extension)
+            file_trigger_exists = vgrid_is_trigger(vgrid_name,
+                    file_trigger_rule_id, configuration,
+                    recursive=False)
+            if not file_trigger_exists:
+                trigger_add_list.append(file_trigger_rule_id)
+                add_status = __add_image_file_trigger(
+                    configuration,
+                    client_id,
+                    vgrid_name,
+                    path,
+                    extension,
+                    recursive,
+                    output_objects,
+                    )
+                if add_status != returnvalues.OK:
+                    status = add_status
+
+        if status != returnvalues.OK:
+
+            (remove_status, remove_msg) = \
+                vgrid_remove_triggers(configuration, vgrid_name,
+                    [trigger_add_list])
+
+            if not remove_status:
+                logger.warning(remove_msg)
+
+    return status
+
+
+def __add_image_dir_triggers(
+    configuration,
+    client_id,
+    vgrid_name,
+    output_objects,
+    ):
+    """Add triggers needed to monitor image dir changes"""
+
+    status = __add_image_dir_trigger(configuration, client_id,
+            vgrid_name, 'created', output_objects)
+
+    if status == returnvalues.OK:
+        status = __add_image_dir_trigger(configuration, client_id,
+                vgrid_name, 'deleted', output_objects)
+
+    # Remove meta triggers if not all is successfully created
+
+    if status != returnvalues.OK:
+        status = __remove_image_dir_triggers(configuration, vgrid_name,
+                output_objects)
+
+    return status
+
+
+def __add_image_file_trigger(
+    configuration,
+    client_id,
+    vgrid_name,
+    path,
+    extension,
+    recursive,
+    output_objects,
+    ):
+    """Add image file trigger"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
+
+    if recursive:
+        vgrid_trigger_path = os.path.join(vgrid_datapath, '*/*.%s'
+                % extension)
+    else:
+        vgrid_trigger_path = os.path.join(vgrid_datapath, '*.%s'
+                % extension)
+
+    rule_id = __get_image_file_trigger_rule_id(logger, vgrid_datapath,
+            extension)
+
+    # TODO : Consider removing 'deleted' event to to avoid spamming job queue
+    # when eg. 'rm -rf' is issued.
+    # We should be able to handle deleted slices in eg. a volume
+    # without the 'delete' event.
+    #
+    # NOTE: The 'modifed' event is translated to a 'deleted' + 'created' in grid_events
+
+    rule_dict = {
+        'rule_id': rule_id,
+        'vgrid_name': vgrid_name,
+        'path': vgrid_trigger_path,
+        'match_dirs': False,
+        'match_recursive': recursive,
+        'changes': ['created', 'modified', 'deleted'],
+        'run_as': client_id,
+        'action': 'submit',
+        'arguments': 'template_from_imagepreview.py',
+        'templates': [__update_preview_mrsl_template(path)],
+        'settle_time': '60s',
+        'rate_limit': '',
+        }
+
+    # Add generated vgrid submit trigger for files
+
+    (add_status, _) = vgrid_add_triggers(configuration, vgrid_name,
+            [rule_dict])
+    if add_status:
+        status = returnvalues.OK
+        OK_MSG = "Created trigger : '%s' : '%s'" % (vgrid_name, rule_id)
+        output_objects.append({'object_type': 'text', 'text': OK_MSG})
+    else:
+        status = returnvalues.ERROR
+        ERROR_MSG = "Failed to create trigger: '%s'" % rule_id
+        ERROR_MSG2 = "Makes sure '%s' is a VGrid" % vgrid_name
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG2})
+        logger.error('%s' % ERROR_MSG)
+        logger.error('%s' % ERROR_MSG2)
+
+    return status
+
+
+def __add_image_settings_modified_trigger(
+    configuration,
+    client_id,
+    vgrid_name,
+    path,
+    extension,
+    output_objects,
+    ):
+    """Add vgrid image settings trigger"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
+    vgrid_trigger_path = \
+        __get_image_settings_trigger_last_modified_filepath(logger,
+            vgrid_datapath, extension)
+    rule_id = __get_image_dir_settings_trigger_rule_id(logger,
+            vgrid_datapath, extension)
+
+    rule_dict = {
+        'rule_id': rule_id,
+        'rule_changes': ['created', 'deleted'],
+        'vgrid_name': vgrid_name,
+        'path': vgrid_trigger_path,
+        'match_dirs': False,
+        'match_recursive': False,
+        'changes': ['modified'],
+        'run_as': client_id,
+        'action': 'submit',
+        'arguments': 'template_from_imagepreview.py',
+        'templates': [__create_previews_mrsl_template(path,
+                      extension)],
+        'settle_time': '1s',
+        'rate_limit': '',
+        }
+
+    (add_status, _) = vgrid_add_triggers(configuration, vgrid_name,
+            [rule_dict])
+    if add_status:
+        status = returnvalues.OK
+        OK_MSG = "Created trigger : '%s' : '%s'" % (vgrid_name, rule_id)
+
+        output_objects.append({'object_type': 'text', 'text': OK_MSG})
+    else:
+        status = returnvalues.ERROR
+        ERROR_MSG = "Failed to create trigger: '%s'" % rule_id
+        ERROR_MSG2 = "Makes sure '%s' is a VGrid" % vgrid_name
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG2})
+        logger.error('%s' % ERROR_MSG)
+        logger.error('%s' % ERROR_MSG2)
+
+    return status
+
+
+def __add_paraview_link(configuration, path, output_objects):
+    """Add paraview links to data"""
+
+    logger = configuration.logger
+    status = returnvalues.OK
+
+    dest_path = os.path.join(configuration.vgrid_files_home,
+                             os.path.join(path, __metapath))
+
+    paraview_datapath = __get_paraview_datapath(logger, path)
+
+    src_path = os.path.join(configuration.paraview_home,
+                            paraview_datapath)
+    src_path_link = os.path.join(src_path, __metapath)
+
+    if makedirs_rec(src_path, configuration) \
+        and make_symlink(dest_path, src_path_link, logger, force=True):
+        status = returnvalues.OK
+        OK_MSG = "Created paraview link : '%s' -> '%s'" \
+            % (src_path_link, dest_path)
+        output_objects.append({'object_type': 'text', 'text': OK_MSG})
+        logger.info(OK_MSG)
+    else:
+
+        status = returnvalues.ERROR
+        ERROR_MSG = 'Unable to create paraview link: %s -> %s' \
+            % (src_path_link, dest_path)
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error('%s' % ERROR_MSG)
+
+    return status
+
+
+def __add_vgrid_imagesetting(
+    configuration,
+    vgrid_name,
+    path,
+    extension,
+    output_objects,
+    overwrite=True,
+    ):
+    """Add imagesettings dict"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+
+    imagesetting_dict = __get_vgrid_imagesetting_dict(configuration,
+            vgrid_name, path, extension)
+
+    update_id = None
+    if overwrite:
+        update_id = 'imagesetting_id'
+
+    (vgrid_add_status, vgrid_add_msg) = \
+        vgrid_add_imagesettings(configuration, vgrid_name,
+                                [imagesetting_dict],
+                                update_id=update_id)
+
+    logger.debug('vgrid_add_status: %s, msg: %s' % (vgrid_add_status,
+                 vgrid_add_msg))
+
+    if vgrid_add_status:
+        status = returnvalues.OK
+        OK_MSG = "Created imagesetting : '%s' : '%s'" % (vgrid_name,
+                imagesetting_dict['imagesetting_id'])
+        output_objects.append({'object_type': 'text', 'text': OK_MSG})
+    else:
+        status = returnvalues.ERROR
+        ERROR_MSG = vgrid_add_msg
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error('%s' % ERROR_MSG)
+
+    return status
+
+
+def __remove_image_dir_triggers(configuration, vgrid_name,
+                                output_objects):
+    """Remove image dir triggers"""
+
+    created_status = __remove_image_dir_trigger(configuration,
+            vgrid_name, 'created', output_objects)
+
+    deleted_status = __remove_image_dir_trigger(configuration,
+            vgrid_name, 'deleted', output_objects)
+
+    if created_status == returnvalues.OK and deleted_status \
+        == returnvalues.OK:
+        status = returnvalues.OK
+    else:
+        status = returnvalues.ERROR
+
+    return status
+
+
+def __remove_image_dir_trigger(
+    configuration,
+    vgrid_name,
+    changes,
+    output_objects,
+    ):
+    """Remove image directory trigger"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+
+    if changes == 'created':
+        rule_id = __get_image_dir_created_trigger_rule_id(logger)
+    elif changes == 'deleted':
+        rule_id = __get_image_dir_deleted_trigger_rule_id(logger)
+    else:
+        status = returnvalues.ERROR
+        ERROR_MSG = "Invalid trigger changes: '%s'" % str(changes)
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error(ERROR_MSG)
+
+    if status == returnvalues.OK:
+
+        trigger_exists = vgrid_is_trigger(vgrid_name, rule_id,
+                configuration, recursive=False)
+        if trigger_exists:
+            (remove_status, remove_msg) = \
+                vgrid_remove_triggers(configuration, vgrid_name,
+                    [rule_id])
+            if remove_status:
+                OK_MSG = \
+                    "Removed image dir '%s' trigger for vgrid_name: '%s'" \
+                    % (rule_id, vgrid_name)
+                output_objects.append({'object_type': 'text',
+                        'text': OK_MSG})
+            else:
+                status = returnvalues.ERROR
+                output_objects.append({'object_type': 'text',
+                        'text': remove_msg})
+                ERROR_MSG = \
+                    "Failed to remove image dir '%s' trigger vgrid_name: '%s'" \
+                    % (rule_id, vgrid_name)
+                output_objects.append({'object_type': 'error_text',
+                        'text': ERROR_MSG})
+                logger.error('%s' % ERROR_MSG)
+                logger.error('vgrid_remove_triggers returned: %s'
+                             % remove_msg)
+        else:
+            logger.debug("No trigger: '%s' for vgrid_name: %s"
+                         % (rule_id, vgrid_name))
+
+    return status
 
 
 def __remove_image_file_trigger(
@@ -298,31 +947,35 @@ def __remove_image_file_trigger(
     vgrid_name,
     path,
     extension,
-    rule_id,
     output_objects,
     ):
     """Remove vgrid submit trigger for image files"""
 
+    status = returnvalues.OK
     logger = configuration.logger
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
+
+    rule_id = __get_image_file_trigger_rule_id(logger, vgrid_datapath,
+            extension)
+
     trigger_exists = vgrid_is_trigger(vgrid_name, rule_id,
             configuration, recursive=False)
-    status = returnvalues.OK
     if trigger_exists:
         (remove_status, remove_msg) = \
             vgrid_remove_triggers(configuration, vgrid_name, [rule_id])
         if remove_status:
             status = returnvalues.OK
             OK_MSG = \
-                "Removed old image files trigger for extension: '%s', path '%s'" \
+                "Removed image files trigger for extension: '%s', path: '%s'" \
                 % (extension, path)
             output_objects.append({'object_type': 'text',
                                   'text': OK_MSG})
         else:
             status = returnvalues.ERROR
             ERROR_MSG = \
-                "Failed to remove old image files trigger for extension: '%s', path '%s'" \
+                "Failed to remove old image files trigger for extension: '%s', path: '%s'" \
                 % (extension, path)
-            output_objects.append({'object_type': 'text',
+            output_objects.append({'object_type': 'error_text',
                                   'text': ERROR_MSG})
             logger.error('%s' % ERROR_MSG)
             logger.error('vgrid_remove_triggers returned: %s'
@@ -333,46 +986,31 @@ def __remove_image_file_trigger(
     return status
 
 
-def __get_image_file_trigger_rule_id(logger, path, extension):
-    """Return id of trigger rule used when image file changes"""
-
-    path_array = path.split('/')
-
-    return '%s_%s_%s_files' % (img_trigger_prefix,
-                               '_'.join(path_array), extension)
-
-
-def __get_image_settings_trigger_rule_id(logger, path, extension):
-    """Return id of trigger rule used when image settings changes"""
-
-    path_array = path.split('/')
-    logger.debug('checkpoint: %s' % str(path_array))
-    return '%s_%s_%s_settings' % (img_trigger_prefix,
-                                  '_'.join(path_array), extension)
-
-
-def __remove_image_settings_trigger(
+def __remove_image_settings_modified_trigger(
     configuration,
     vgrid_name,
     path,
     extension,
-    rule_id,
     output_objects,
     ):
     """Remove vgrid submit trigger for image settings"""
 
+    status = returnvalues.OK
     logger = configuration.logger
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
+    rule_id = __get_image_dir_settings_trigger_rule_id(logger,
+            vgrid_datapath, extension)
 
     trigger_exists = vgrid_is_trigger(vgrid_name, rule_id,
             configuration, recursive=False)
-    status = returnvalues.OK
+
     if trigger_exists:
         (remove_status, remove_msg) = \
             vgrid_remove_triggers(configuration, vgrid_name, [rule_id])
         if remove_status:
             status = returnvalues.OK
             OK_MSG = \
-                "Removed old image setting trigger for extension: '%s', path '%s'" \
+                "Removed image setting trigger for extension: '%s', path '%s'" \
                 % (extension, path)
             output_objects.append({'object_type': 'text',
                                   'text': OK_MSG})
@@ -392,12 +1030,173 @@ def __remove_image_settings_trigger(
     return status
 
 
+def __remove_paraview_link(
+    configuration,
+    path,
+    output_objects,
+    recursive=False,
+    ):
+    """Remove paraview links to data"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+
+    paraview_path = os.path.join(configuration.paraview_home,
+                                 os.path.join('worker', path))
+
+    paraview_link = os.path.join(paraview_path, __metapath)
+
+    if os.path.exists(path) or os.path.islink(path):
+        logger.debug('deleting Paraview link: %s' % paraview_link)
+
+        if not delete_file(paraview_link, logger,
+                           allow_broken_symlink=True):
+            status = returnvalues.ERROR
+            ERROR_MSG = 'Unable to remove paraview link: %s ' \
+                % str(paraview_link)
+            output_objects.append({'object_type': 'error_text',
+                                  'text': ERROR_MSG})
+            logger.error('%s' % ERROR_MSG)
+        else:
+            OK_MSG = 'Removed paraview link: %s' % paraview_link
+            output_objects.append({'object_type': 'text',
+                                  'text': OK_MSG})
+            logger.debug('removing paraview_path: %s' % paraview_path)
+            remove_dir_status = remove_dir(paraview_path, configuration)
+            if remove_dir_status:
+                OK_MSG = 'Removed paraview path: %s' % paraview_path
+                output_objects.append({'object_type': 'text',
+                        'text': OK_MSG})
+            else:
+                ERROR_MSG = 'Unable to remove paraview path: %s' \
+                    % paraview_path
+                output_objects.append({'object_type': 'error_text',
+                        'text': ERROR_MSG})
+            logger.debug('remove_dir_status: %s' % remove_dir_status)
+
+            if recursive:
+                path_array = path.split('/')
+                pos = len(path_array) - 2
+                while pos > 0 and remove_dir_status:
+                    logger.debug('removing paraview_path pos: %s' % pos)
+                    logger.debug('removing path: %s' % path_array[:pos])
+                    remove_path = \
+                        os.path.join(configuration.paraview_home,
+                            os.path.join('worker',
+                            os.sep.join(path_array[:pos])))
+                    logger.debug('removing paraview_path: %s'
+                                 % remove_path)
+                    remove_dir_status = remove_dir(remove_path,
+                            configuration)
+                    if remove_dir_status:
+                        OK_MSG = 'Removed paraview path: %s' \
+                            % paraview_path
+                        output_objects.append({'object_type': 'text',
+                                'text': OK_MSG})
+                    else:
+                        ERROR_MSG = \
+                            'Unable to remove paraview path: %s' \
+                            % paraview_path
+                        output_objects.append({'object_type': 'error_text'
+                                , 'text': ERROR_MSG})
+                        logger.debug('remove_dir_status: %s'
+                                % remove_dir_status)
+                    OK_MSG = 'Removed path: %s' % path_array[:pos]
+
+                    pos -= 1
+    else:
+        logger.debug('Missing paraview link: %s' % paraview_link)
+
+    return status
+
+
+def __remove_vgrid_imagesetting(
+    configuration,
+    vgrid_name,
+    path,
+    extension,
+    output_objects,
+    ):
+    """Remove imagesettings dict"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
+    imagesetting_id = __get_vgrid_imagesetting_id(configuration,
+            vgrid_datapath, extension)
+
+    logger.debug('removing: %s' % imagesetting_id)
+
+    (vgrid_remove_status, _) = \
+        vgrid_remove_imagesettings(configuration, vgrid_name,
+                                   [imagesetting_id])
+
+    logger.debug('vgrid_remove_status: %s' % vgrid_remove_status)
+
+    if vgrid_remove_status:
+        status = returnvalues.OK
+        OK_MSG = "Removed vgrid imagesetting for path: '%s'" % path
+        output_objects.append({'object_type': 'text', 'text': OK_MSG})
+    else:
+        status = returnvalues.ERROR
+        ERROR_MSG = 'Unable to remove imagesetting with id: %s ' \
+            % str(imagesetting_id)
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error('%s' % ERROR_MSG)
+
+    return status
+
+
 def __get_vgrid_imagesetting_id(logger, path, extension):
     """Generate unique vgrid imagesettings id"""
 
     path_array = [x for x in path.split('/') if x]
 
     return '%s_%s' % ('_'.join(path_array), extension)
+
+
+def __get_vgrid_imagesetting_dict(
+    configuration,
+    vgrid_name,
+    path,
+    extension,
+    ):
+    """Generate vgrid imagesetting dictionary"""
+
+    logger = configuration.logger
+    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
+    vgrid_metapath = os.path.join(vgrid_datapath, __metapath)
+    vgrid_settingspath = os.path.join(vgrid_datapath,
+            __settings_filepath)
+    vgrid_imagepath = os.path.join(vgrid_datapath, __image_metapath)
+    vgrid_previewpath = os.path.join(vgrid_datapath,
+            __image_preview_path)
+    imagesetting_id = __get_vgrid_imagesetting_id(configuration,
+            vgrid_datapath, extension)
+
+    imagesetting_dict = {
+        'imagesetting_id': imagesetting_id,
+        'metarev': __revision,
+        'updated': time.time(),
+        'extension': extension,
+        'paths': {
+            'data': vgrid_datapath,
+            'meta': vgrid_metapath,
+            'settings': vgrid_settingspath,
+            'image': vgrid_imagepath,
+            'preview': vgrid_previewpath,
+            },
+        'paraview': {'path': __get_paraview_datapath(logger, path),
+                     'link': __get_paraview_datapath_link(logger,
+                     path)},
+        'triggers': {'settings': __get_image_dir_settings_trigger_rule_id(logger,
+                     vgrid_datapath, extension),
+                     'files': __get_image_file_trigger_rule_id(logger,
+                     vgrid_datapath, extension)},
+        }
+
+    return imagesetting_dict
 
 
 def __get_image_settings_trigger_last_modified_filepath(logger, path,
@@ -590,8 +1389,6 @@ def __get_volume_meta(
 
     result = None
 
-    logger.debug('get_volume: base_dir: %s' % base_dir)
-    logger.debug('get_volume: path: %s' % path)
     volume_meta = __seek_volume_meta(logger, base_dir, path,
             data_entries=data_entries)
     logger.debug('volume_meta: : %s' % str(volume_meta))
@@ -612,9 +1409,6 @@ def __get_volume_meta(
         preview_data = volume_meta['preview_data']
         if preview_data is not None:
             preview_data = preview_data.tolist()
-        logger.debug('preview_xdmf_filename: %s'
-                     % volume_meta['preview_xdmf_filename'])
-        logger.debug('base_path: %s' % volume_meta['base_path'])
         preview_xdmf_filepath = get_image_xdmf_filepath(logger,
                 base_path, volume_meta['preview_xdmf_filename'])
         preview_x_dimension = str(volume_meta['preview_x_dimension'])
@@ -631,8 +1425,6 @@ def __get_volume_meta(
         mean_value = str(volume_meta['mean_value'])
         file_md5sum = str(volume_meta['file_md5sum'])
         data_type = str(volume_meta['data_type'])
-
-        logger.debug('get_volume name: %s' % name)
 
         result = {
             'object_type': 'volume_meta',
@@ -665,49 +1457,248 @@ def __get_volume_meta(
     return result
 
 
-def __update_preview_mrsl_template(datapath):
-    """Template for image file changed preview setting trigger jobs"""
+def __check_image_file_meta(
+    configuration,
+    abs_path,
+    path,
+    output_objects,
+    ):
+    """Check and update image files meta data"""
 
-    result = \
-        """::EXECUTE::
-echo "hostname: `hostname`"
-echo "uname: `uname`"
-echo "TRIGGERPATH: '+TRIGGERPATH+'"
-echo "TRIGGERDIRNAME: '+TRIGGERDIRNAME+'"
-echo "TRIGGERFILENAME: '+TRIGGERFILENAME+'"
-echo "TRIGGERPREFIX: '+TRIGGERPREFIX+'"
-echo "TRIGGEREXTENSION: '+TRIGGEREXTENSION+'"
-echo "TRIGGERCHANGE: '+TRIGGERCHANGE+'"
-echo "TRIGGERVGRIDNAME: '+TRIGGERVGRIDNAME+'"
-echo "TRIGGERRUNAS: '+TRIGGERRUNAS+'"
-echo "datapath: '%(datapath)s'"
-# DEBUG
-ls -la
-ls -la '%(datapath)s/'
-ls -la '%(datapath)s/.meta'
-# end DEBUG
-python idmc_update_preview.py '+TRIGGERCHANGE+' '%(datapath)s' '+TRIGGERDIRNAME+' '+TRIGGERFILENAME+'
+    status = returnvalues.OK
+    logger = configuration.logger
 
-::MOUNT::
-+TRIGGERVGRIDNAME+ +TRIGGERVGRIDNAME+
+    image_files = get_image_files(logger, abs_path)
 
-::EXECUTABLES::
+    if image_files is None:
+        WARN_MSG = "No image file meta for path: '%s'" % path
+        output_objects.append({'object_type': 'warning',
+                              'text': WARN_MSG})
+    else:
+        for image_file in image_files:
+            old_base_path = image_file['base_path']
+            filepath = os.path.join(image_file['path'],
+                                    image_file['name'])
 
-::INPUTFILES::
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/imagepreview.py imagepreview.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/idmc_update_preview.py idmc_update_preview.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/__init__.py shared/__init__.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/defaults.py shared/defaults.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/fileio.py shared/fileio.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/imagemetaio.py shared/imagemetaio.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/serial.py shared/serial.py
-""" \
-        % {'datapath': datapath} + __get_preview_mrsl_template()
+            # Tjek base path for image entry
 
-    return result
+            if old_base_path != path:
+                image_status = returnvalues.OK
+                image_setting = get_image_file_setting(logger,
+                        abs_path, image_file['extension'])
+                if image_setting is None:
+                    ERROR_MSG = \
+                        'No image setting for path: %s extension: %s' \
+                        % (path, image_file['extension'])
+                    output_objects.append({'object_type': 'error_text',
+                            'text': ERROR_MSG})
+                    image_status = returnvalues.ERROR
+                elif image_setting['settings_status'] \
+                    != allowed_settings_status['ready']:
+
+                # If settings status != ready reset status, we are out of sync and any other state make no sense !!!
+
+                    reset_status = __reset_file_setting(configuration,
+                            abs_path, path, image_file['extension'],
+                            output_objects)
+                    if reset_status != returnvalues.OK:
+                        image_status = reset_status
+
+                # Update base_path for image entry
+
+                if image_status == returnvalues.OK:
+                    image_file['base_path'] = path
+                    update_status = update_image_file(logger, abs_path,
+                            image_file)
+                    if update_status:
+                        OK_MSG = \
+                            "Updated image: '%s', base_path: '%s' -> '%s'" \
+                            % (filepath, old_base_path, path)
+                        output_objects.append({'object_type': 'text',
+                                'text': OK_MSG})
+                    else:
+                        image_status = returnvalues.ERROR
+                        ERROR_MSG = \
+                            "Unable to update file: '%s', base_path: '%s' -> '%s'" \
+                            % (filepath, old_base_path, path)
+                        output_objects.append({'object_type': 'error_text'
+                                , 'text': ERROR_MSG})
+
+                if image_status != returnvalues.OK:
+                    status = returnvalues.ERROR
+
+    return status
 
 
-def list_image_meta_settings(
+def __check_image_volume_meta(
+    configuration,
+    abs_path,
+    path,
+    output_objects,
+    ):
+    """Check and update image volumes meta data"""
+
+    status = returnvalues.OK
+    logger = configuration.logger
+
+    image_volumes = get_image_volumes(logger, abs_path)
+    if image_volumes is None:
+        WARN_MSG = "No image volume meta for path: '%s'" % path
+        output_objects.append({'object_type': 'warning',
+                              'text': WARN_MSG})
+    else:
+        for image_volume in image_volumes:
+            old_base_path = image_volume['base_path']
+            filepath = os.path.join(image_volume['path'],
+                                    image_volume['name'])
+
+            # Tjek base path for image entry
+
+            if old_base_path != path:
+                image_status = returnvalues.OK
+                image_setting = get_image_volume_setting(logger,
+                        abs_path, image_volume['extension'])
+
+                if image_setting is None:
+                    ERROR_MSG = \
+                        'No image setting for path: %s extension: %s' \
+                        % (path, image_volume['extension'])
+                    output_objects.append({'object_type': 'error_text',
+                            'text': ERROR_MSG})
+                    image_status = returnvalues.ERROR
+                elif image_setting['settings_status'] \
+                    != allowed_settings_status['ready']:
+
+                    # If settings status != ready reset status, we are out of sync and any other state make no sense !!!
+
+                    reset_status = \
+                        __reset_volume_setting(configuration, abs_path,
+                            path, image_volume['extension'],
+                            output_objects)
+                    if reset_status != returnvalues.OK:
+                        image_status = reset_status
+
+                # Update base_path for image entry
+
+                if image_status == returnvalues.OK:
+                    image_volume['base_path'] = path
+                    update_status = update_image_volume(logger,
+                            abs_path, image_volume)
+                    if update_status:
+                        OK_MSG = \
+                            'Updated volume: %s, base_path: %s -> %s' \
+                            % (filepath, old_base_path, path)
+                        output_objects.append({'object_type': 'text',
+                                'text': OK_MSG})
+                    else:
+                        image_status = returnvalues.ERROR
+                        ERROR_MSG = \
+                            'Unable to update volume: %s, base_path: %s -> %s' \
+                            % (filepath, old_base_path, path)
+                        output_objects.append({'object_type': 'error_text'
+                                , 'text': ERROR_MSG})
+                if image_status != returnvalues.OK:
+                    status = returnvalues.ERROR
+
+    return status
+
+
+def __reset_file_setting(
+    configuration,
+    abs_path,
+    path,
+    extension,
+    output_objects,
+    ):
+    """Reset status for image file meta setting with *path* and *extension*"""
+
+    logger = configuration.logger
+    status = returnvalues.OK
+    file_reset = True
+
+    image_file_settings = get_image_file_setting(logger, abs_path,
+            extension)
+
+    if image_file_settings is not None:
+        image_file_settings['settings_status'] = \
+            allowed_settings_status['ready']
+        image_file_settings['settings_update_progress'] = None
+        file_reset = update_image_file_setting(logger, abs_path,
+                image_file_settings)
+        if file_reset:
+            status = returnvalues.OK
+            OK_MSG = \
+                'Reset image file settings status for path: %s, extension: %s' \
+                % (path, extension)
+            output_objects.append({'object_type': 'text',
+                                  'text': OK_MSG})
+        else:
+            status = returnvalues.ERROR
+            ERROR_MSG = \
+                'Reset image file settings status FAILED for path: %s, extension: %s' \
+                % (path, extension)
+            output_objects.append({'object_type': 'error_text',
+                                  'text': ERROR_MSG})
+    else:
+        status = returnvalues.ERROR
+        ERROR_MSG = \
+            'No image file settings found for path: %s, extension: %s' \
+            % (path, extension)
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+
+    return status
+
+
+def __reset_volume_setting(
+    configuration,
+    abs_path,
+    path,
+    extension,
+    output_objects,
+    ):
+    """Reset status for image volume setting with *path* and *extension*"""
+
+    logger = configuration.logger
+    status = returnvalues.OK
+    volume_reset = True
+
+    image_volume_settings = get_image_volume_setting(logger, abs_path,
+            extension)
+    if image_volume_settings is not None:
+        image_volume_settings['settings_status'] = \
+            allowed_settings_status['ready']
+        image_volume_settings['settings_update_progress'] = None
+        volume_reset = update_image_volume_setting(logger, abs_path,
+                image_volume_settings)
+        if volume_reset:
+            status = returnvalues.OK
+            OK_MSG = \
+                'Reset image volume settings status for path: %s, extension: %s' \
+                % (path, extension)
+            output_objects.append({'object_type': 'text',
+                                  'text': OK_MSG})
+        else:
+            status = returnvalues.ERROR
+            ERROR_MSG = \
+                'Reset image volume settings status FAILED for path: %s, extension: %s' \
+                % (path, extension)
+            output_objects.append({'object_type': 'error_text',
+                                  'text': ERROR_MSG})
+    else:
+
+        # NOTE: Volume setting is _NOT_ required therefore only warning is sent
+
+        WARN_MSG = \
+            'No image volume settings found for path: %s, extension: %s' \
+            % (path, extension)
+        output_objects.append({'object_type': 'warning',
+                              'text': WARN_MSG})
+
+    return status
+
+
+def list_settings(
     configuration,
     abs_path,
     path,
@@ -726,6 +1717,11 @@ def list_image_meta_settings(
     volume_settings_status_list = []
     volume_settings_progress_list = []
     volume_count_list = []
+
+    # Remove metapath components from path
+
+    abs_path = __strip_metapath(abs_path)
+    path = __strip_metapath(path)
 
     # TODO: Make support for raw volume files without slices
     # That is, return volume meta entries not in image_meta
@@ -769,13 +1765,10 @@ def list_image_meta_settings(
         image_status = False
         MSG = "No image settings found for path: '%s'" % path
         output_objects.append({'object_type': 'text', 'text': MSG})
-        logger.debug('%s' % MSG)
+        logger.debug(MSG)
 
-    logger.debug('image_status: %s' % str(image_status))
-    logger.debug('volume_status: %s' % str(volume_status))
     if image_status or volume_status:
         status = returnvalues.OK
-        logger.debug('extension_list: %s' % str(extension_list))
         output_objects.append({
             'object_type': 'image_settings_list',
             'extension_list': extension_list,
@@ -786,41 +1779,13 @@ def list_image_meta_settings(
             'volume_settings_progress_list': volume_settings_progress_list,
             'volume_count_list': volume_count_list,
             })
-        logger.debug('output_objects: %s' % str(output_objects))
     else:
         status = returnvalues.ERROR
 
     return status
 
 
-def get_image_meta_setting(
-    configuration,
-    abs_path,
-    path,
-    extension,
-    output_objects,
-    ):
-    """Get image meta setting for *path* and *extension*"""
-
-    logger = configuration.logger
-    image_settings = __get_image_meta_setting(logger, abs_path, path,
-            extension)
-    if image_settings is not None:
-        output_objects.append(image_settings)
-        status = returnvalues.OK
-    else:
-        status = returnvalues.ERROR
-        ERROR_MSG = \
-            "No image setting information for path: '%s', extension: '%s'" \
-            % (path, extension)
-        output_objects.append({'object_type': 'text',
-                              'text': ERROR_MSG})
-        logger.error('%s' % ERROR_MSG)
-
-    return status
-
-
-def create_image_meta_setting(
+def create_setting(
     configuration,
     client_id,
     base_dir,
@@ -833,6 +1798,12 @@ def create_image_meta_setting(
     """Create image meta setting for *path* and *extension*"""
 
     logger = configuration.logger
+
+    # Remove metapath components from path
+
+    abs_path = __strip_metapath(abs_path)
+    path = __strip_metapath(path)
+
     vgrid_name = in_vgrid_share(configuration, abs_path)
     vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
     vgrid_metapath = os.path.join(vgrid_datapath, __metapath)
@@ -867,14 +1838,13 @@ def create_image_meta_setting(
 
     settings_update_progress = None
 
-    OK_MSG = \
-        "Created/updated settings for image extension: '%s' for path '%s'" \
+    OK_MSG = "Created settings for image extension: '%s' for path '%s'" \
         % (extension, path)
     ERROR_MSG = \
-        "Failed to change settings for image extension: '%s' for path: '%s'" \
+        "Failed to complete settings change for image extension: '%s' for path: '%s'" \
         % (extension, path)
 
-    (is_valid, is_valid_msg) = __is_valid_image_settings_update(
+    status = __is_valid_image_settings_update(
         configuration,
         base_dir,
         vgrid_name,
@@ -883,22 +1853,15 @@ def create_image_meta_setting(
         settings_recursive,
         image_type,
         data_type,
+        output_objects,
         )
-
-    if is_valid:
-        status = returnvalues.OK
-    else:
-        status = returnvalues.ERROR
-        output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG})
-        output_objects.append({'object_type': 'error_text',
-                              'text': is_valid_msg})
-        logger.error('%s' % ERROR_MSG)
-        logger.error('%s' % is_valid_msg)
 
     # Ensure meta path existence
 
     if status == returnvalues.OK:
+
+        # Ensure meta path existence
+
         makedirs_rec(os.path.join(base_dir, os.path.join(vgrid_name,
                      vgrid_metapath)), configuration)
 
@@ -974,149 +1937,26 @@ def create_image_meta_setting(
         # Create image meta links used by Paraview render
 
         if add_status:
-            logger.debug('paraview: path: %s' % path)
-
-            dest_path = os.path.join(configuration.vgrid_files_home,
-                    os.path.join(path, __metapath))
-
-            paraview_datapath = os.path.join('worker', path)
-            paraview_datapath_link = os.path.join(paraview_datapath,
-                    __metapath)
-
-            src_path = os.path.join(configuration.paraview_home,
-                                    paraview_datapath)
-
-            src_path_link = os.path.join(src_path, __metapath)
-
-            logger.debug('paraview symlink dest_path: %s' % dest_path)
-            logger.debug('paraview symlink src_path: %s' % src_path)
-            logger.debug('paraview symlink src_path_link: %s'
-                         % src_path_link)
-
-            add_status = makedirs_rec(src_path, configuration)
-            logger.debug('add_status checkpoint1: %s' % str(add_status))
-            if add_status:
-
-                add_status = make_symlink(dest_path, src_path_link,
-                        logger, force=True)
-                logger.debug('add_status checkpoint2: %s'
-                             % str(add_status))
-
-        # logger.debug('add_status checkpoint3: %s' % str(add_status))
-
-        if add_status:
-            status = returnvalues.OK
-            output_objects.append({'object_type': 'text',
-                                  'text': OK_MSG})
+            status = __add_paraview_link(configuration, path,
+                    output_objects)
         else:
             status = returnvalues.ERROR
-            output_objects.append({'object_type': 'error_text',
-                                  'text': ERROR_MSG})
-            logger.error('%s' % ERROR_MSG)
 
     if status == returnvalues.OK:
-        logger.debug('settings_recursive: %s' % settings_recursive)
+        status = __add_image_dir_triggers(configuration, client_id,
+                vgrid_name, output_objects)
+
+    if status == returnvalues.OK:
 
         # Generate vgrid trigger for files
 
-        if settings_recursive:
-            vgrid_trigger_path = os.path.join(vgrid_datapath, '*/*.%s'
-                    % extension)
-        else:
-            vgrid_trigger_path = os.path.join(vgrid_datapath, '*.%s'
-                    % extension)
-
-        rule_id = __get_image_file_trigger_rule_id(logger,
-                vgrid_datapath, extension)
-        logger.debug('RULE_ID: %s' % rule_id)
-        logger.debug('vgrid_datapath: %s' % vgrid_datapath)
-        rule_dict = {
-            'rule_id': rule_id,
-            'vgrid_name': vgrid_name,
-            'path': vgrid_trigger_path,
-            'match_dirs': False,
-            'match_recursive': settings_recursive,
-            'changes': ['created', 'modified', 'deleted', 'moved'],
-            'run_as': client_id,
-            'action': 'submit',
-            'arguments': 'template_from_filemetaio.py',
-            'templates': [__update_preview_mrsl_template(path)],
-            'settle_time': '60s',
-            'rate_limit': '',
-            }
-
-        # Remove old vgrid submit trigger for files
-
-        status = __remove_image_file_trigger(
+        status = __add_image_file_trigger(
             configuration,
+            client_id,
             vgrid_name,
             path,
             extension,
-            rule_id,
-            output_objects,
-            )
-
-    if status == returnvalues.OK:
-
-        # Add generated vgrid submit trigger for files
-
-        (add_status, add_msg) = vgrid_add_triggers(configuration,
-                vgrid_name, [rule_dict])
-        if add_status:
-            status = returnvalues.OK
-            OK_MSG = \
-                "Created/updated image file trigger for extension: '%s', path '%s'" \
-                % (extension, path)
-            output_objects.append({'object_type': 'text',
-                                  'text': OK_MSG})
-        else:
-            status = returnvalues.ERROR
-            ERROR_MSG = \
-                "Failed change image file trigger for extension: '%s', path '%s'" \
-                % (extension, path)
-            ERROR_MSG2 = "Makes sure '%s' is a VGrid" % vgrid_name
-            output_objects.append({'object_type': 'error_text',
-                                  'text': ERROR_MSG})
-            output_objects.append({'object_type': 'error_text',
-                                  'text': ERROR_MSG2})
-            logger.error('%s' % ERROR_MSG)
-            logger.error('%s' % ERROR_MSG2)
-
-    if status == returnvalues.OK:
-
-        # Generate vgrid trigger for settings
-
-        vgrid_trigger_filepath = \
-            __get_image_settings_trigger_last_modified_filepath(logger,
-                vgrid_datapath, extension)
-
-        rule_id = __get_image_settings_trigger_rule_id(logger,
-                vgrid_datapath, extension)
-        rule_dict = {
-            'rule_id': rule_id,
-            'rule_changes': ['created', 'deleted'],
-            'vgrid_name': vgrid_name,
-            'path': vgrid_trigger_filepath,
-            'match_dirs': False,
-            'match_recursive': False,
-            'changes': ['modified', 'deleted'],
-            'run_as': client_id,
-            'action': 'submit',
-            'arguments': 'template_from_filemetaio.py',
-            'templates': [__create_previews_mrsl_template(path,
-                          extension)],
-            'settle_time': '1s',
-            'rate_limit': '',
-            }
-
-        # Remove old vgrid submit trigger for settings
-
-        status = __remove_image_settings_trigger(
-            configuration,
-            vgrid_name,
-            path,
-            extension,
-            rule_id,
+            settings_recursive,
             output_objects,
             )
 
@@ -1124,52 +1964,32 @@ def create_image_meta_setting(
 
         # Add generated vgrid submit trigger for settings
 
-        (add_status, add_msg) = vgrid_add_triggers(configuration,
-                vgrid_name, [rule_dict])
-        if add_status:
-            status = returnvalues.OK
-            OK_MSG = \
-                "Created/updated old image setting trigger for extension: '%s', path '%s'" \
-                % (extension, path)
-            output_objects.append({'object_type': 'text',
-                                  'text': OK_MSG})
-        else:
-            status = returnvalues.ERROR
-            ERROR_MSG = \
-                "Failed change old image setting trigger for extension: '%s', path '%s'" \
-                % (extension, path)
-            ERROR_MSG2 = "Makes sure '%s' is a VGrid" % vgrid_name
-            output_objects.append({'object_type': 'error_text',
-                                  'text': ERROR_MSG})
-            output_objects.append({'object_type': 'error_text',
-                                  'text': ERROR_MSG2})
-            logger.error('%s' % ERROR_MSG)
-            logger.error('%s' % ERROR_MSG2)
+        status = __add_image_settings_modified_trigger(
+            configuration,
+            client_id,
+            vgrid_name,
+            path,
+            extension,
+            output_objects,
+            )
 
     if status == returnvalues.OK:
-        imagesetting_id = __get_vgrid_imagesetting_id(configuration,
+
+        # Add entry to imagesettings dict
+
+        status = __add_vgrid_imagesetting(configuration, vgrid_name,
+                path, extension, output_objects)
+
+    if status == returnvalues.OK:
+
+        # Trigger Trigger (Trigger Happy)
+
+        vgrid_trigger_path = \
+            __get_image_settings_trigger_last_modified_filepath(logger,
                 vgrid_datapath, extension)
-        imagesetting_dict = {
-            'imagesetting_id': imagesetting_id,
-            'metarev': __revision,
-            'metapath': vgrid_metapath,
-            'paraview': {'datapath': paraview_datapath_link},
-            'triggers': {'settings': __get_image_settings_trigger_rule_id(logger,
-                         vgrid_datapath, extension),
-                         'files': __get_image_file_trigger_rule_id(logger,
-                         vgrid_datapath, extension)},
-            }
-
-        logger.debug('imagesetting_dict: %s' % str(imagesetting_dict))
-
-        vgrid_add_status = vgrid_add_imagesettings(configuration,
-                vgrid_name, [imagesetting_dict])
-        logger.debug('vgrid_add_status: %s' % str(vgrid_add_status))
-
-        # Trigger Trigger (Trigger Happty)
 
         abs_vgrid_trigger_filepath = os.path.join(base_dir,
-                os.path.join(vgrid_name, vgrid_trigger_filepath))
+                os.path.join(vgrid_name, vgrid_trigger_path))
 
         # FYSIKER HACK: Sleep 1 to prevent trigger rule/event race
         # TODO: Modify events handler to accept add+trigger action
@@ -1177,10 +1997,18 @@ def create_image_meta_setting(
         time.sleep(1)
         timestamp = time.time()
         touch(abs_vgrid_trigger_filepath, timestamp)
+
+    if status == returnvalues.OK:
+        output_objects.append({'object_type': 'text', 'text': OK_MSG})
+    else:
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error('%s' % ERROR_MSG)
+
     return status
 
 
-def update_image_meta_setting(
+def update_setting(
     configuration,
     base_dir,
     abs_path,
@@ -1192,14 +2020,18 @@ def update_image_meta_setting(
     """Update image meta setting for *path* and *extension*"""
 
     logger = configuration.logger
-    logger.debug('UPDATE: %s' % path)
     status = returnvalues.OK
     OK_MSG = "Updated settings for image extension: '%s' for path '%s'" \
         % (extension, path)
     ERROR_MSG = \
         "Failed to update settings for image extension: '%s' for path: '%s'" \
         % (extension, path)
-    ERROR2_MSG = None
+    ERROR_MSG = None
+
+    # Remove metapath components from path
+
+    abs_path = __strip_metapath(abs_path)
+    path = __strip_metapath(path)
 
     vgrid_name = in_vgrid_share(configuration, abs_path)
     vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
@@ -1210,8 +2042,6 @@ def update_image_meta_setting(
             extension)
     if image_file_setting is not None:
         for (key, value) in image_file_setting.iteritems():
-
-            # logger.debug('key: %s : %s -> %s' % (key, value, type(value)))
 
             if update_dict.has_key(key):
                 user_value = value.dtype.type(''.join(update_dict[key]))
@@ -1237,12 +2067,12 @@ def update_image_meta_setting(
         status = returnvalues.ERROR
 
     if status == returnvalues.OK:
-        settings_recursive = str(image_file_setting['settings_recursive'
-                                 ])
+        settings_recursive = \
+            bool(image_file_setting['settings_recursive'])
         image_type = str(image_file_setting['image_type'])
         data_type = str(image_file_setting['data_type'])
 
-        (is_valid, is_valid_msg) = __is_valid_image_settings_update(
+        status = __is_valid_image_settings_update(
             configuration,
             base_dir,
             vgrid_name,
@@ -1251,15 +2081,10 @@ def update_image_meta_setting(
             settings_recursive,
             image_type,
             data_type,
+            output_objects,
             )
 
-        if is_valid:
-            status = returnvalues.OK
-        else:
-            status = returnvalues.ERROR
-            ERROR2_MSG = is_valid_msg
-
-    # UPDATE tables
+    # Update tables
 
     if status == returnvalues.OK:
 
@@ -1302,28 +2127,40 @@ def update_image_meta_setting(
     else:
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
-        output_objects.append({'object_type': 'error_text',
-                              'text': ERROR2_MSG})
         logger.error('%s' % ERROR_MSG)
-        logger.error('%s' % ERROR2_MSG)
 
     return status
 
 
-def remove_image_meta_setting(
+def remove_setting(
     configuration,
     abs_path,
     path,
     extension,
     output_objects,
     ):
-    """Remove image meta setting for *path* and *extension*"""
+    """Remove image meta setting, image meta, triggers,
+    imagesetting_dict and paraview links for *path*, *extension*
+    """
+
+    # TODO:
+    # 1) Remove image file entries
+    # 2) Remove image volume entries
+    # 3) Remove triggers first
+    # 4) Remove image thumbnails
+    # 5) Make 'helper function' for functionality used by
+    #    both 'remove' and 'clean'
 
     logger = configuration.logger
 
-    vgrid_name = in_vgrid_share(configuration, abs_path)
-    vgrid_datapath = __get_vgrid_datapath(vgrid_name, path)
+    # Remove metapath components from path
 
+    abs_path = __strip_metapath(abs_path)
+    path = __strip_metapath(path)
+
+    vgrid_name = in_vgrid_share(configuration, abs_path)
+
+    remove_ext = None
     if extension != '':
         remove_ext = extension
     try:
@@ -1331,6 +2168,8 @@ def remove_image_meta_setting(
             remove_image_file_settings(logger, abs_path, remove_ext)
     except Exception:
         file_status = None
+        removed_ext_list = []
+
         logger.debug(str(traceback.format_exc()))
 
     try:
@@ -1339,12 +2178,11 @@ def remove_image_meta_setting(
     except Exception:
         volume_status = None
         logger.debug(str(traceback.format_exc()))
-    logger.debug('volume_status: %s' % str(volume_status))
 
     if file_status is not None:
         status = returnvalues.OK
         OK_MSG = \
-            "Removed settings for image extension: '%s' for path '%s'" \
+            "Removed settings for image extension: '%s' for path: '%s'" \
             % (extension, path)
         output_objects.append({'object_type': 'text', 'text': OK_MSG})
     else:
@@ -1362,162 +2200,110 @@ def remove_image_meta_setting(
 
         # Remove trigger
 
-        if delete_file(abs_last_modified_filepath, logger):
-
-            # FYSIKER HACK: Sleep 1 to prevent trigger rule/event race
-            # TODO: Modify events handler to accept trigger action + delete
-
-            time.sleep(1)
+        if delete_file(abs_last_modified_filepath, logger,
+                       allow_missing=True):
 
             # Remove old vgrid submit trigger for files
 
-            rule_id = __get_image_file_trigger_rule_id(logger,
-                    vgrid_datapath, removed_ext)
-            remove_status = __remove_image_file_trigger(
-                configuration,
-                vgrid_name,
-                path,
-                extension,
-                rule_id,
-                output_objects,
-                )
+            remove_status = __remove_image_file_trigger(configuration,
+                    vgrid_name, path, removed_ext, output_objects)
             if remove_status != returnvalues.OK:
                 status = remove_status
 
             # Remove old vgrid submit trigger for settings
 
-            rule_id = __get_image_settings_trigger_rule_id(logger,
-                    vgrid_datapath, removed_ext)
-            remove_status = __remove_image_settings_trigger(
-                configuration,
-                vgrid_name,
-                path,
-                extension,
-                rule_id,
-                output_objects,
-                )
+            remove_status = \
+                __remove_image_settings_modified_trigger(configuration,
+                    vgrid_name, path, removed_ext, output_objects)
             if remove_status != returnvalues.OK:
                 status = remove_status
         else:
             status = returnvalues.ERROR
             ERROR_MSG = 'Unable to remove file: %s ' \
                 % abs_last_modified_filepath
-            output_objects.append({'object_type': 'text',
+            output_objects.append({'object_type': 'error_text',
                                   'text': ERROR_MSG})
             logger.error('%s' % ERROR_MSG)
 
     # Remove image meta links used by Paraview render
 
-    paraview_path = os.path.join(configuration.paraview_home,
-                                 os.path.join('worker', path))
-    paraview_link = os.path.join(paraview_path, __metapath)
+    remove_status = __remove_paraview_link(configuration, path,
+            output_objects, recursive=True)
+    if remove_status != returnvalues.OK:
+        status = remove_status
 
-    logger.debug('deleting Paraview link: %s' % paraview_link)
-
-    if not delete_file(paraview_link, logger):
-        status = returnvalues.ERROR
-        ERROR_MSG = 'Unable to remove paraview link: %s ' \
-            % str(paraview_link)
-        output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG})
-        logger.error('%s' % ERROR_MSG)
-    else:
-        logger.debug('removing paraview_path: %s' % paraview_path)
-        remove_dir_status = remove_dir(paraview_path, configuration)
-        logger.debug('remove_dir_status: %s' % remove_dir_status)
-        path_array = path.split('/')
-        pos = len(path_array) - 2
-        while remove_dir_status:
-            logger.debug('removing paraview_path pos: %s' % pos)
-            logger.debug('removing path: %s' % path_array[:pos])
-            remove_path = os.path.join(configuration.paraview_home,
-                    os.path.join('worker',
-                    os.sep.join(path_array[:pos])))
-            logger.debug('removing paraview_path: %s' % remove_path)
-            remove_dir_status = remove_dir(remove_path, configuration)
-            logger.debug('remove_dir_status: %s' % remove_dir_status)
-            pos -= 1
-
-    imagesetting_id = __get_vgrid_imagesetting_id(configuration,
-            vgrid_datapath, '')
+    # Remove vgrid removed_ext_list
 
     for removed_ext in removed_ext_list:
 
-        imagesetting_remove_id = '%s%s' % (imagesetting_id, removed_ext)
+        remove_status = __remove_vgrid_imagesetting(configuration,
+                vgrid_name, path, removed_ext, output_objects)
 
-        logger.debug('removing: %s' % imagesetting_remove_id)
-        (vgrid_remove_status, _) = \
-            vgrid_remove_imagesettings(configuration, vgrid_name,
-                [imagesetting_remove_id])
-        logger.debug('vgrid_remove_status: %s' % vgrid_remove_status)
-
-        if not vgrid_remove_status:
-            status = returnvalues.ERROR
-            ERROR_MSG = 'Unable to remove imagesetting with id: %s ' \
-                % str(imagesetting_remove_id)
-            output_objects.append({'object_type': 'error_text',
-                                  'text': ERROR_MSG})
-            logger.error('%s' % ERROR_MSG)
+        if remove_status != returnvalues.OK:
+            status = remove_status
 
     return status
 
 
-def reset_image_meta_setting_status(
+def reset_setting(
     configuration,
     abs_path,
     path,
     extension,
     output_objects,
     ):
-    """Reset status for image meta setting with *path* and *extension*"""
+    """Reset image meta setting with *path*, *extension*"""
 
-    logger = configuration.logger
-    status = returnvalues.OK
-    file_reset = volume_reset = True
+    # Remove metapath components from path
 
-    image_file_settings = get_image_file_setting(logger, abs_path,
-            extension)
+    abs_path = __strip_metapath(abs_path)
+    path = __strip_metapath(path)
 
-    if image_file_settings is not None:
-        image_file_settings['settings_status'] = \
-            allowed_settings_status['ready']
-        image_file_settings['settings_update_progress'] = None
-        file_reset = update_image_file_setting(logger, abs_path,
-                image_file_settings)
-        MSG = 'Image file settings reset: %s' % file_reset
-        output_objects.append({'object_type': 'text', 'text': MSG})
+    status = __reset_file_setting(configuration, abs_path, path,
+                                  extension, output_objects)
 
-        # Check volume setting
-        # NOTE: Volume setting is _NOT_ required
+    # NOTE: Volume setting is _NOT_ required therefore doesn't effect status
 
-    image_volume_settings = get_image_volume_setting(logger, abs_path,
-            extension)
-    if image_volume_settings is not None:
-        image_volume_settings['settings_status'] = \
-            allowed_settings_status['ready']
-        image_volume_settings['settings_update_progress'] = None
-        volume_reset = update_image_volume_setting(logger, abs_path,
-                image_volume_settings)
-        MSG = 'Image volume settings reset: %s' % file_reset
-        output_objects.append({'object_type': 'text', 'text': MSG})
-    else:
-        MSG = \
-            'No image volume settings found for path: %s, extension: %s' \
-            % (path, extension)
-        output_objects.append({'object_type': 'error_text',
-                              'text': MSG})
-    if image_file_settings is None and image_volume_settings is None:
-        status = returnvalues.ERROR
-        ERROR_MSG = \
-            'No image file/volume settings found for path: %s, extension: %s' \
-            % (path, extension)
-        output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG})
+    __reset_volume_setting(configuration, abs_path, path, extension,
+                           output_objects)
 
     return status
 
 
-def get_image_meta(
+def get_setting(
+    configuration,
+    abs_path,
+    path,
+    extension,
+    output_objects,
+    ):
+    """Get image meta setting for *path* and *extension*"""
+
+    logger = configuration.logger
+
+    # Remove metapath components from path
+
+    abs_path = __strip_metapath(abs_path)
+    path = __strip_metapath(path)
+
+    image_settings = __get_image_meta_setting(logger, abs_path, path,
+            extension)
+    if image_settings is not None:
+        output_objects.append(image_settings)
+        status = returnvalues.OK
+    else:
+        status = returnvalues.ERROR
+        ERROR_MSG = \
+            "No image setting information for path: '%s', extension: '%s'" \
+            % (path, extension)
+        output_objects.append({'object_type': 'error_text',
+                              'text': ERROR_MSG})
+        logger.error('%s' % ERROR_MSG)
+
+    return status
+
+
+def get(
     configuration,
     base_dir,
     path,
@@ -1527,20 +2313,18 @@ def get_image_meta(
 
     logger = configuration.logger
 
-    # Get image settings, image- and volume-meta inforation for file base_dir/path
+    # Remove metapath components from path
 
-    logger.debug('base_dir: %s' % base_dir)
-    logger.debug('path: %s' % path)
+    path = __strip_metapath(path)
+
+    # Get image settings, image- and volume-meta inforation for file base_dir/path
 
     image_meta = __get_image_meta(logger, base_dir, path,
                                   data_entries=['preview_histogram'])
 
-    logger.debug('IMAGE_META: %s' % str(image_meta))
-
     volume_meta = __get_volume_meta(logger, base_dir, path,
                                     data_entries=['preview_histogram'])
     if image_meta is not None:
-        logger.debug('get_info: image meta')
         output_objects.append(image_meta)
 
         # Return image settings as well as image meta
@@ -1551,12 +2335,11 @@ def get_image_meta(
                 abs_base_path, image_meta['path'],
                 image_meta['extension'])
         if image_settings is not None:
-            logger.debug('get_info: image meta -> image_settings')
             output_objects.append(image_settings)
         else:
-            logger.debug('missing image_settings for path: %s, extension: %s'
-                          % (image_meta['path'], image_meta['extension'
-                         ]))
+            logger.warning('missing image_settings for path: %s, extension: %s'
+                            % (image_meta['path'],
+                           image_meta['extension']))
 
         # Volume exists and is generated from stack of slices
         # Return alogn with image_meta
@@ -1571,30 +2354,26 @@ def get_image_meta(
             slice_volume_meta = __get_volume_meta(logger, base_dir,
                     volume_path)
             if slice_volume_meta is not None:
-                logger.debug('get_info: image meta -> slice_volume_meta'
-                             )
                 output_objects.append(slice_volume_meta)
             else:
-                logger.debug('missing slice_volume_meta for path: %s'
-                             % path)
+                logger.warning('missing slice_volume_meta for path: %s'
+                               % path)
 
         status = returnvalues.OK
 
     if volume_meta is not None:
-        logger.debug('get_info: volume_meta')
         output_objects.append(volume_meta)
 
         abs_base_path = os.path.join(base_dir, volume_meta['base_path'])
 
         image_settings = __get_image_meta_setting(logger,
-                abs_base_path, volume_meta['extension'])
+                abs_base_path, path, volume_meta['extension'])
         if image_settings is not None:
-            logger.debug('get_info: volume_meta -> image_settings')
             output_objects.append(image_settings)
         else:
-            logger.debug('missing image_settings for path: %s, extension: %s'
-                          % (image_meta['path'], image_meta['extension'
-                         ]))
+            logger.warning('missing image_settings for path: %s, extension: %s'
+                            % (image_meta['path'],
+                           image_meta['extension']))
 
         status = returnvalues.OK
 
@@ -1604,6 +2383,305 @@ def get_image_meta(
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
         logger.error('%s' % ERROR_MSG)
+
+    return status
+
+
+def remove(
+    configuration,
+    base_dir,
+    abs_path,
+    path,
+    output_objects,
+    ):
+    """Remove image meta for file with *path*"""
+
+    ERROR_MSG = 'remove _NOT_ implemented yet'
+    output_objects.append({'object_type': 'error_text',
+                          'text': ERROR_MSG})
+
+    return returnvalues.ERROR
+
+
+def refresh(
+    configuration,
+    client_id,
+    base_dir,
+    abs_path,
+    path,
+    output_objects,
+    ):
+    """Refresh image settings, image meta, triggers,
+    imagesetting_dict and paraview links for *path'
+    """
+
+    status = returnvalues.OK
+    logger = configuration.logger
+
+    # Remove metapath components from path
+
+    abs_path = __strip_metapath(abs_path)
+    path = __strip_metapath(path)
+
+    STATUS_MSG = '============= %s ============' % path
+    output_objects.append({'object_type': 'text', 'text': STATUS_MSG})
+
+    # Get vgrid name from path
+
+    vgrid_name = in_vgrid_share(configuration, abs_path)
+
+    # Check and update image base file paths
+
+    __check_image_file_meta(configuration, abs_path, path,
+                            output_objects)
+
+    __check_image_volume_meta(configuration, abs_path, path,
+                              output_objects)
+
+    # Check and update image dir trigger
+
+    __ensure_image_dir_triggers(configuration, vgrid_name,
+                                output_objects)
+
+    # Check and update image settimg trigger
+
+    __ensure_image_setting_triggers(
+        configuration,
+        client_id,
+        vgrid_name,
+        abs_path,
+        path,
+        output_objects,
+        )
+
+    # Check and update image meta
+
+    image_meta = get_image_file_settings(logger, abs_path)
+
+    if image_meta is not None:
+        __add_paraview_link(configuration, path, output_objects)
+
+        status = returnvalues.OK
+        for image in image_meta:
+
+            vgrid_add_status = __add_vgrid_imagesetting(configuration,
+                    vgrid_name, path, image['extension'],
+                    output_objects)
+
+            if vgrid_add_status != returnvalues.OK:
+                status = returnvalues.ERROR
+
+    return status
+
+
+def clean(
+    configuration,
+    base_dir,
+    abs_path,
+    path,
+    output_objects,
+    recursive=False,
+    ):
+    """Removes image settings, image meta, triggers,
+    imagesetting_dict and paraview links for *path'
+    """
+
+    status = returnvalues.OK
+    logger = configuration.logger
+    vgrid_name = in_vgrid_share(configuration, abs_path)
+
+    vgrid_list = [vgrid_name]
+
+    # NOTE: recursive=True is dir top-down
+
+    if recursive:
+        (list_status, sub_vgrid_list) = \
+            vgrid_list_subvgrids(vgrid_name, configuration)
+
+        if list_status:
+            for sub_vgrid in sub_vgrid_list:
+                if sub_vgrid.find(path) == 0:
+                    vgrid_list.extend(sub_vgrid_list)
+
+    for vgrid in vgrid_list:
+        vgrid_datapath = __get_vgrid_datapath(vgrid, path)
+
+        # NOTE: recursive=True for vgrid_imagesettings is vgrid bottom up
+
+        (vgrid_imagesettings_status, imagesettings) = \
+            vgrid_imagesettings(vgrid, configuration, recursive=False,
+                                allow_missing=True)
+
+        remove_imagesettings_ids = []
+        if vgrid_imagesettings_status:
+            for imagesetting in imagesettings:
+                imagesetting_id = imagesetting.get('imagesetting_id',
+                        None)
+                imagesetting_extension = imagesetting.get('extension',
+                        '')
+                imagesetting_datapath = imagesetting.get('paths',
+                        {}).get('data', None)
+                imagesetting_paraview_path = imagesetting.get('paraview'
+                        , {}).get('path', None)
+                imagesetting_paraview_link = imagesetting.get('paraview'
+                        , {}).get('link', None)
+
+                # imagesetting_metapath = imagesetting.get('paths',
+                #         {}).get('meta', None)
+                # imagesetting_settingspath = imagesetting.get('paths',
+                #        {}).get('settings', None)
+                # imagesetting_imagepath = imagesetting.get('paths',
+                #         {}).get('image', None)
+                # imagesetting_previewpath = imagesetting.get('paths',
+                #         {}).get('preview', None)
+
+                if imagesetting_datapath is not None \
+                    and (imagesetting_datapath == vgrid_datapath
+                         or recursive
+                         and imagesetting_datapath[:len(os.path.join(vgrid_datapath,
+                         ''))] == os.path.join(vgrid_datapath, '')):
+
+                    STATUS_MSG = '============= %s : %s ============' \
+                        % (os.path.join(vgrid, imagesetting_datapath),
+                           imagesetting_extension)
+                    output_objects.append({'object_type': 'text',
+                            'text': STATUS_MSG})
+
+                    # Remove meta dir
+
+                    # TODO: Remove imagemeta paths automatically, but make sure that
+                    # we do _NOT_ delete the entire vgrid !!!
+
+                    settings_filepath = os.path.join(path,
+                            __settings_filepath)
+                    image_metapath = os.path.join(path,
+                            __image_metapath)
+                    image_preview_path = os.path.join(path,
+                            __image_preview_path)
+                    image_xdmf_path = os.path.join(path,
+                            __image_xdmf_path)
+
+                    STATUS_MSG = \
+                        'Remove the following imagepreview dir/files manually if needed:\n'
+                    STATUS_MSG += \
+                        '--------------------------------------------------------------\n'
+                    STATUS_MSG += '''%s
+%s
+%s
+%s
+''' \
+                        % (settings_filepath, image_metapath,
+                           image_preview_path, image_xdmf_path)
+                    STATUS_MSG += \
+                        '--------------------------------------------------------------'
+                    output_objects.append({'object_type': 'text',
+                            'text': STATUS_MSG})
+
+                    # Add imagesetting to remove list
+
+                    remove_imagesettings_ids.append(imagesetting_id)
+                    remove_triggers = imagesetting['triggers'].values()
+
+                    (remove_status, remove_msg) = \
+                        vgrid_remove_triggers(configuration, vgrid,
+                            remove_triggers)
+
+                    if remove_status:
+                        OK_MSG = "Removed triggers : '%s' : %s" \
+                            % (vgrid_name, remove_triggers)
+                        output_objects.append({'object_type': 'text',
+                                'text': OK_MSG})
+                        logger.info(OK_MSG)
+                    else:
+                        status = returnvalues.ERROR
+                        ERROR_MSG = remove_msg
+                        output_objects.append({'object_type': 'error_text'
+                                , 'text': ERROR_MSG})
+                        logger.error(ERROR_MSG)
+
+                    # NOTE: We do _NOT_ use '__remove_paraview_link' here as
+                    #       we delete paraview links and paths based on imagesetting_dict
+                    #       rateher than os structure
+
+                    if imagesetting_paraview_link is None:
+                        status = returnvalues.ERROR
+                        WARN_MSG = \
+                            'No valid paraview link found in imagesetting'
+                        output_objects.append({'object_type': 'warning'
+                                , 'text': WARN_MSG})
+                        logger.warning(WARN_MSG)
+                    else:
+                        paraview_link = \
+                            os.path.join(configuration.paraview_home,
+                                imagesetting_paraview_link)
+
+                        if os.path.exists(paraview_link):
+                            delete_status = delete_file(paraview_link,
+                                    logger, allow_broken_symlink=True)
+                            if delete_status:
+                                OK_MSG = "Removed Paraview link : '%s'" \
+                                    % paraview_link
+                                output_objects.append({'object_type': 'text'
+                                        , 'text': OK_MSG})
+                                logger.info(OK_MSG)
+                            else:
+                                status = returnvalues.ERROR
+                                WARN_MSG = \
+                                    'Failed to remove paraview link: %s' \
+                                    % paraview_link
+                                output_objects.append({'object_type': 'warning'
+                                        , 'text': WARN_MSG})
+                                logger.error(WARN_MSG)
+                        else:
+                            logger.warning('Missing paraview_link: %s'
+                                    % paraview_link)
+
+                    if imagesetting_paraview_path is None:
+                        status = returnvalues.ERROR
+                        WARN_MSG = \
+                            'No valid paraview path found in imagesetting'
+                        output_objects.append({'object_type': 'warning'
+                                , 'text': WARN_MSG})
+                        logger.warning(WARN_MSG)
+                    else:
+                        paraview_path = \
+                            os.path.join(configuration.paraview_home,
+                                imagesetting_paraview_path)
+                        if os.path.exists(paraview_path):
+
+                            # TODO: Use remove_rec here when we are sure
+                            # that we do _NOT_ delete the entire vgrid !!!
+
+                            remove_dir_status = \
+                                remove_dir(paraview_path, configuration)
+
+                            if remove_dir_status:
+                                OK_MSG = "Removed paraview_path: '%s'" \
+                                    % paraview_path
+                                output_objects.append({'object_type': 'text'
+                                        , 'text': OK_MSG})
+                                logger.info(OK_MSG)
+                            else:
+                                WARN_MSG = \
+                                    "Failed to remove paraview path: '%s'" \
+                                    % paraview_path
+                                output_objects.append({'object_type': 'warning'
+                                        , 'text': WARN_MSG})
+                                logger.warning(WARN_MSG)
+                        else:
+                            logger.warning('Missing paraview_path: %s'
+                                    % paraview_path)
+
+            (vgrid_remove_status, vgrid_remove_msg) = \
+                vgrid_remove_imagesettings(configuration, vgrid,
+                    remove_imagesettings_ids)
+
+            if not vgrid_remove_status:
+                status = returnvalues.ERROR
+                ERROR_MSG = vgrid_remove_msg
+                output_objects.append({'object_type': 'error_text',
+                        'text': ERROR_MSG})
+                logger.error(ERROR_MSG)
 
     return status
 

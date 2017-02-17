@@ -292,8 +292,8 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
     <fieldset>
     <div id="imagesettings_list" class="fm_metaio_list"></div>
     <div id="imagesettings_edit_tabs">
-        <form id="imagesettings_form" method="post" action="filemetaio.py">
-        <input type="hidden" name="%(csrf_field)s" value="%(filemetaio_csrf_token)s" />
+        <form id="imagesettings_form" method="post" action="imagepreview.py">
+        <input type="hidden" name="%(csrf_field)s" value="%(imagepreview_csrf_token)s" />
         <input type="hidden" name="output_format" value="json" />
         <input type="hidden" name="flags" value="" />
         <input type="hidden" name="action" value="" />

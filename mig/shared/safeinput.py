@@ -1232,7 +1232,7 @@ def guess_type(name):
                     ):
             __type_map[key] = valid_url
 
-        # Image meta data (filemetaio.py)
+        # Image meta data (imagemeta.py)
 
         for key in ('image_type', 'data_type'):
             __type_map[key] = valid_alphanumeric

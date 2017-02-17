@@ -375,10 +375,10 @@ def datatransfer(user_arguments_dict):
     return stub('shared.functionality.datatransfer', user_arguments_dict)
 
 
-def filemetaio(user_arguments_dict):
+def imagepreview(user_arguments_dict):
     """Wrap backend of same name"""
 
-    return stub('shared.functionality.filemetaio', user_arguments_dict)
+    return stub('shared.functionality.imagepreview', user_arguments_dict)
 
 
 def textarea(user_arguments_dict):
@@ -766,7 +766,7 @@ if '__main__' == __name__:
     server.register_function(liveio)
     server.register_function(mqueue)
     server.register_function(datatransfer)
-    server.register_function(filemetaio)
+    server.register_function(imagemeta)
     server.register_function(textarea)
     server.register_function(updateresconfig)
     server.register_function(addresowner)

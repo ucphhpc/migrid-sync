@@ -534,11 +534,10 @@ Preview.prototype.get_image_file = function(path, ok_callback, error_callback, w
     console.debug('get_image_file -> path: ' + path);
 
     $.ajax({
-        url: 'filemetaio.py',
+        url: 'imagepreview.py',
         data: { path: path,
                 output_format: 'json',
-                action: 'get_file',
-                flags: 'i',
+                action: 'get',
               },
         type: "GET",
         dataType: "json",
@@ -595,12 +594,11 @@ Preview.prototype.get_image_dir = function(
 
     console.debug('get_image_dir -> path: ' + path + ', extension: ' + extension);
     $.ajax({
-        url: 'filemetaio.py',
+        url: 'imagepreview.py',
         data: { path: path,
                 extension: extension,
                 output_format: 'json',
-                action: 'get_dir',
-                flags: 'i',
+                action: 'get_setting',
               },
         type: "GET",
         dataType: "json",
@@ -652,12 +650,11 @@ Preview.prototype.update_image_dir = function(
     console.debug('get_image_dir -> path: ' + path + ', extension: ' + extension);
 
     $.ajax({
-        url: 'filemetaio.py',
+        url: 'imagepreview.py',
         data: { path: path,
                 extension: extension,
                 output_format: 'json',
-                action: 'update_dir',
-                flags: 'i',
+                action: 'update_setting',
                 preview_cutoff_min: preview_cutoff_min,
                 preview_cutoff_max: preview_cutoff_max,
               },

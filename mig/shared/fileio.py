@@ -141,7 +141,7 @@ def get_file_size(path, logger):
         result = -1
 
 
-def delete_file(path, logger, allow_broken_symlink=False):
+def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
     """Wrapper to handle deletion of path. The optional allow_broken_symlink is
     used to accept delete even if path is a broken symlink.
     """
@@ -153,6 +153,8 @@ def delete_file(path, logger, allow_broken_symlink=False):
         except Exception, err:
             logger.error('could not delete %s %s' % (path, err))
             result = False
+    elif allow_missing:
+        result = True
     else:
         logger.info('delete_file: %s does not exist.' % path)
         result = False

@@ -55,7 +55,7 @@ def get_command_map(configuration):
         'jobaction': ['job_id', 'action'],
         'liveio': ['action', 'src', 'dst', 'job_id'],
         'mqueue': ['queue', 'action', 'msg_id', 'msg'],
-        'filemetaio': ['flags', 'action', 'path', 'extension'],
+        'imagepreview': ['flags', 'action', 'path', 'extension'],
         }
 
 def get_expand_map(trigger_path, rule, state_change):

@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagemetaio - Managing MiG image meta data
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,9 +37,9 @@ from numpy import dtype, float32, float64, uint8, uint16, uint32, \
 from shared.fileio import acquire_file_lock, release_file_lock
 import traceback
 
-__revision = '3093'
+__revision = '3332'
 __metapath = '.meta'
-__settings_file = 'settings.h5'
+__settings_file = 'imagepreviews.h5'
 __settings_filepath = os.path.join(__metapath, __settings_file)
 __image_metapath = os.path.join(__metapath, 'image')
 __image_preview_path = os.path.join(__image_metapath, 'preview')
@@ -85,11 +85,9 @@ allowed_data_types = {
     'int64': int64,
     }
 
-allowed_xdmf_data_types = {'float32': 'Float',
-			   'uint16': 'UInt'}
+allowed_xdmf_data_types = {'float32': 'Float', 'uint16': 'UInt'}
 
-allowed_xdmf_precisions = {'float32': 4,
-			   'uint16': 2}
+allowed_xdmf_precisions = {'float32': 4, 'uint16': 2}
 
 allowed_image_types = {'raw': allowed_data_types.keys(),
                        'tiff': ['uint8', 'uint16']}
@@ -218,25 +216,25 @@ def __ensure_filepath(logger, filepath, makedirs=False):
     return result
 
 
-def __get_settings_filepath(logger, base_path, makedirs=False):
+def __get_settings_filepath(logger, abs_base_path, makedirs=False):
     """Returns settings filepath, created if non-existent"""
 
     result = None
 
-    metapath = os.path.join(base_path, __metapath)
+    metapath = os.path.join(abs_base_path, __metapath)
     if __ensure_filepath(logger, metapath, makedirs) is not None:
-        result = os.path.join(base_path, __settings_filepath)
+        result = os.path.join(abs_base_path, __settings_filepath)
 
     return result
 
 
-def __get_image_metapath(logger, base_path, makedirs=False):
+def __get_image_metapath(logger, abs_base_path, makedirs=False):
     """Returns image meta path, created if non-existent"""
 
     result = None
 
-    if __ensure_filepath(logger, base_path, makedirs) is not None:
-        image_metapath = os.path.join(base_path, __image_metapath)
+    if __ensure_filepath(logger, abs_base_path, makedirs) is not None:
+        image_metapath = os.path.join(abs_base_path, __image_metapath)
         result = __ensure_filepath(logger, image_metapath, makedirs)
 
     return result
@@ -343,12 +341,12 @@ def __ensure_tables_format(logger, metafile):
     return tables
 
 
-def __clean_image_preview_path(logger, base_path):
+def __clean_image_preview_path(logger, abs_base_path):
     """Clean image preview path"""
 
     result = True
 
-    abs_preview_path = os.path.join(base_path, __image_preview_path)
+    abs_preview_path = os.path.join(abs_base_path, __image_preview_path)
 
     if os.path.exists(abs_preview_path):
         for file_ent in os.listdir(abs_preview_path):
@@ -362,18 +360,17 @@ def __clean_image_preview_path(logger, base_path):
     return result
 
 
-def __open_image_settings_file(logger, base_path, makedirs=False):
+def __open_image_settings_file(logger, abs_base_path, makedirs=False):
     """Opens image settings file with exclusive lock.
     NOTE: Locks are not consistently enforced through fuse"""
 
-    logger.debug('base_path: %s' % base_path)
+    logger.debug('abs_base_path: %s' % abs_base_path)
 
     metafile = None
 
-    if __ensure_filepath(logger, base_path, makedirs) is not None:
-
+    if __ensure_filepath(logger, abs_base_path, makedirs) is not None:
         image_settings_filepath = __get_settings_filepath(logger,
-                base_path, makedirs)
+                abs_base_path, makedirs)
         logger.debug('image_settings_filepath: %s'
                      % image_settings_filepath)
 
@@ -546,6 +543,36 @@ def __add_image_file_ent(
     ):
     """Add image setting or file entry"""
 
+    logger.debug('extension: %s' % extension)
+    logger.debug('image_type: %s' % image_type)
+    logger.debug('settings_status: %s' % settings_status)
+    logger.debug('settings_update_progress: %s'
+                 % settings_update_progress)
+    logger.debug('settings_recursive: %s' % settings_recursive)
+    logger.debug('data_type: %s' % data_type)
+    logger.debug('base_path: %s' % base_path)
+    logger.debug('path: %s' % path)
+    logger.debug('name: %s' % name)
+    logger.debug('offset: %s' % offset)
+    logger.debug('x_dimension: %s' % x_dimension)
+    logger.debug('y_dimension: %s' % y_dimension)
+    logger.debug('min_value: %s' % min_value)
+    logger.debug('max_value: %s' % max_value)
+    logger.debug('mean_value: %s' % mean_value)
+    logger.debug('median_value: %s' % median_value)
+    logger.debug('file_md5sum: %s' % file_md5sum)
+    logger.debug('preview_image_filename: %s' % preview_image_filename)
+    logger.debug('preview_image_extension: %s'
+                 % preview_image_extension)
+    logger.debug('preview_data_type: %s' % preview_data_type)
+    logger.debug('preview_x_dimension: %s' % preview_x_dimension)
+    logger.debug('preview_y_dimension: %s' % preview_y_dimension)
+    logger.debug('preview_cutoff_min: %s' % preview_cutoff_min)
+    logger.debug('preview_cutoff_max: %s' % preview_cutoff_max)
+    logger.debug('preview_image_scale: %s' % preview_image_scale)
+    logger.debug('update: %s' % str(update))
+    logger.debug('settings: %s' % str(settings))
+
     if not image_type in allowed_image_types:
         logger.error("Image_type: '%s' not in allowed: %s'"
                      % (image_type, allowed_image_types))
@@ -717,7 +744,7 @@ def __remove_image_files(
 def __remove_image_file_preview(
     logger,
     metafile,
-    base_path,
+    abs_base_path,
     path,
     name,
     preview_image_filename,
@@ -734,7 +761,7 @@ def __remove_image_file_preview(
 
     # Remove preview image file
 
-    abs_preview_image_filename = os.path.join(base_path,
+    abs_preview_image_filename = os.path.join(abs_base_path,
             os.path.join(__image_preview_path, preview_image_filename))
 
     logger.debug('removing preview image: %s'
@@ -1118,12 +1145,16 @@ def __get_image_volume_preview_histogram_data(
     return result
 
 
-def get_preview_image_url(logger, base_url, path, filename):
+def get_preview_image_url(
+    logger,
+    base_url,
+    path,
+    filename,
+    ):
     """Returns VGrid image url for generated preview image file"""
 
     return '%s/%s/%s/%s' % (base_url, __image_preview_path.strip('/'),
-                        path,
-                        filename)
+                            path, filename)
 
 
 def to_ndarray(logger, tables_array, out=None):
@@ -1143,7 +1174,7 @@ def to_ndarray(logger, tables_array, out=None):
 
 def add_image_file_setting(
     logger,
-    base_path,
+    abs_base_path,
     extension,
     settings_status,
     settings_update_progress,
@@ -1164,7 +1195,7 @@ def add_image_file_setting(
 
     result = False
 
-    metafile = __open_image_settings_file(logger, base_path,
+    metafile = __open_image_settings_file(logger, abs_base_path,
             makedirs=True)
 
     if metafile is not None:
@@ -1216,21 +1247,45 @@ def add_image_file_setting(
     return result
 
 
-def remove_image_file_setting(logger, base_path, extension):
+def update_image_file_setting(logger, abs_base_path, setting):
+    """Update image file setting"""
+
+    return add_image_file_setting(
+        logger,
+        abs_base_path,
+        setting['extension'],
+        setting['settings_status'],
+        setting['settings_update_progress'],
+        setting['settings_recursive'],
+        setting['image_type'],
+        setting['data_type'],
+        setting['offset'],
+        setting['x_dimension'],
+        setting['y_dimension'],
+        setting['preview_image_extension'],
+        setting['preview_x_dimension'],
+        setting['preview_y_dimension'],
+        setting['preview_cutoff_min'],
+        setting['preview_cutoff_max'],
+        overwrite=True,
+        )
+
+
+def remove_image_file_setting(logger, abs_base_path, extension):
     """Remove image file setting"""
 
-    return remove_image_file_settings(logger, base_path, extension)
+    return remove_image_file_settings(logger, abs_base_path, extension)
 
 
-def remove_image_file_settings(logger, base_path, extension=None):
+def remove_image_file_settings(logger, abs_base_path, extension=None):
     """Remove image file settings"""
 
-    logger.debug('base_path: %s, extension: %s' % (base_path,
+    logger.debug('abs_base_path: %s, extension: %s' % (abs_base_path,
                  extension))
     status = False
     removed = []
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
 
     if metafile is not None:
         status = True
@@ -1250,7 +1305,7 @@ def remove_image_file_settings(logger, base_path, extension=None):
             row_idx = row_list[0]
 
             (status_files, _) = __remove_image_files(logger, metafile,
-                    base_path, extension=extension)
+                    abs_base_path, extension=extension)
             if status_files:
                 logger.debug('settings_table.nrows: %s'
                              % settings_table.nrows)
@@ -1272,6 +1327,7 @@ def remove_image_file_settings(logger, base_path, extension=None):
 
 def add_image_file(
     logger,
+    abs_base_path,
     base_path,
     path,
     name,
@@ -1300,10 +1356,12 @@ def add_image_file(
 
     result = False
 
-    logger.debug('x_dimension: %s, y_dimension: %s, data_type: %s'
-                 % (x_dimension, y_dimension, data_type))
+    logger.debug('abs_base_path: %s, path: %s, name: %s, extension: %s'
+                 % (abs_base_path, path, name, extension))
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
+
+    logger.debug('metafile: %s' % str(metafile))
 
     if metafile is not None:
         image_file_table = __get_image_file_meta_node(logger, metafile)
@@ -1324,7 +1382,8 @@ def add_image_file(
         if not overwrite and len(row_list) > 0 or overwrite \
             and len(row_list) > 1:
             logger.debug("'%s' for path: '%s' allready exists, #entries: %s"
-                          % (name, base_path, len(row_list)))
+                          % (name, os.path.join(base_path, path),
+                         len(row_list)))
         else:
             if overwrite and len(row_list) == 1:
                 rows = image_file_table.where(condition)
@@ -1332,6 +1391,8 @@ def add_image_file(
             else:
                 rows = [image_file_table.row]
                 update = False
+
+            logger.debug('update: %s' % str(update))
 
             for row in rows:
                 __add_image_file_ent(
@@ -1371,8 +1432,44 @@ def add_image_file(
     return result
 
 
+def update_image_file(logger, abs_base_path, image_file):
+    """Update image file meta data"""
+
+    logger.debug('update_image_file: abs_base_path: %s, base_path: %s, path: %s, name: %s'
+                  % (abs_base_path, image_file['base_path'],
+                 image_file['path'], image_file['name']))
+    return add_image_file(
+        logger,
+        abs_base_path,
+        image_file['base_path'],
+        image_file['path'],
+        image_file['name'],
+        image_file['extension'],
+        image_file['image_type'],
+        image_file['data_type'],
+        image_file['offset'],
+        image_file['x_dimension'],
+        image_file['y_dimension'],
+        image_file['min_value'],
+        image_file['max_value'],
+        image_file['mean_value'],
+        image_file['median_value'],
+        image_file['file_md5sum'],
+        image_file['preview_image_filename'],
+        image_file['preview_image_extension'],
+        image_file['preview_data_type'],
+        image_file['preview_x_dimension'],
+        image_file['preview_y_dimension'],
+        image_file['preview_cutoff_min'],
+        image_file['preview_cutoff_max'],
+        image_file['preview_image_scale'],
+        overwrite=True,
+        )
+
+
 def remove_image_files(
     logger,
+    abs_base_path,
     base_path,
     path=None,
     name=None,
@@ -1383,7 +1480,7 @@ def remove_image_files(
     logger.debug('base_path: %s, path: %s, name: %s, extension: %s'
                  % (base_path, path, name, extension))
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     (result, removed) = __remove_image_files(
         logger,
         metafile,
@@ -1397,38 +1494,14 @@ def remove_image_files(
     return (result, removed)
 
 
-def update_image_file_setting(logger, base_path, setting):
-    """Update image file setting"""
-
-    return add_image_file_setting(
-        logger,
-        base_path,
-        setting['extension'],
-        setting['settings_status'],
-        setting['settings_update_progress'],
-        setting['settings_recursive'],
-        setting['image_type'],
-        setting['data_type'],
-        setting['offset'],
-        setting['x_dimension'],
-        setting['y_dimension'],
-        setting['preview_image_extension'],
-        setting['preview_x_dimension'],
-        setting['preview_y_dimension'],
-        setting['preview_cutoff_min'],
-        setting['preview_cutoff_max'],
-        overwrite=True,
-        )
-
-
-def get_image_file_setting(logger, base_path, extension):
+def get_image_file_setting(logger, abs_base_path, extension):
     """Get image file setting"""
 
-    logger.debug('base_path: %s, extension: %s' % (base_path,
+    logger.debug('abs_base_path: %s, extension: %s' % (abs_base_path,
                  extension))
     result = None
 
-    settings_result = get_image_file_settings(logger, base_path,
+    settings_result = get_image_file_settings(logger, abs_base_path,
             extension)
     if settings_result is not None:
         if len(settings_result) == 1:
@@ -1440,39 +1513,15 @@ def get_image_file_setting(logger, base_path, extension):
     return result
 
 
-def update_image_file_setting(logger, base_path, setting):
-    """Update image file setting"""
-
-    return add_image_file_setting(
-        logger,
-        base_path,
-        setting['extension'],
-        setting['settings_status'],
-        setting['settings_update_progress'],
-        setting['settings_recursive'],
-        setting['image_type'],
-        setting['data_type'],
-        setting['offset'],
-        setting['x_dimension'],
-        setting['y_dimension'],
-        setting['preview_image_extension'],
-        setting['preview_x_dimension'],
-        setting['preview_y_dimension'],
-        setting['preview_cutoff_min'],
-        setting['preview_cutoff_max'],
-        overwrite=True,
-        )
-
-
-def get_image_file_settings(logger, base_path, extension=None):
+def get_image_file_settings(logger, abs_base_path, extension=None):
     """Get image file settings"""
 
-    logger.debug('base_path: %s, extension: %s' % (base_path,
+    logger.debug('abs_base_path: %s, extension: %s' % (abs_base_path,
                  extension))
 
     result = None
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile is not None:
         result = []
         image_settings_table = __get_image_file_settings_node(logger,
@@ -1481,8 +1530,11 @@ def get_image_file_settings(logger, base_path, extension=None):
         condition = ''
         if extension is not None:
             condition = 'extension == b"%s" ' % extension
+        logger.debug('condition: %s' % str(condition))
+
         row_list = __get_row_idx_list(logger, image_settings_table,
                 condition)
+        logger.debug('row_list len: %s' % str(len(row_list)))
         for row_idx in row_list:
             entry = {}
             entry['extension'] = \
@@ -1521,7 +1573,7 @@ def get_image_file_settings(logger, base_path, extension=None):
 
 def get_image_file(
     logger,
-    base_path,
+    abs_base_path,
     path,
     name,
     data_entries=None,
@@ -1532,7 +1584,7 @@ def get_image_file(
 
     result_list = get_image_files(
         logger,
-        base_path,
+        abs_base_path,
         path,
         name,
         extension=None,
@@ -1550,7 +1602,7 @@ def get_image_file(
 
 def get_image_files(
     logger,
-    base_path,
+    abs_base_path,
     path=None,
     name=None,
     extension=None,
@@ -1560,10 +1612,10 @@ def get_image_files(
 
     result = None
 
-    logger.debug("base_path: '%s', path: '%s', name: '%s', extension: '%s'"
-                  % (base_path, path, name, extension))
+    logger.debug("abs_base_path: '%s', path: '%s', name: '%s', extension: '%s'"
+                  % (abs_base_path, path, name, extension))
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile is not None:
         image_file_table = __get_image_file_meta_node(logger, metafile)
         condition = ''
@@ -1641,7 +1693,7 @@ def get_image_files(
 
 def get_image_file_count(
     logger,
-    base_path,
+    abs_base_path,
     path=None,
     name=None,
     extension=None,
@@ -1649,7 +1701,7 @@ def get_image_file_count(
     """Returns number of files currently in metadata"""
 
     result = 0
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile:
         image_file_table = __get_image_file_meta_node(logger, metafile)
         condition = ''
@@ -1672,18 +1724,18 @@ def get_image_file_count(
 
 def get_image_preview_path(
     logger,
-    base_path,
+    abs_base_path,
     path,
     makedirs=False,
     ):
     """Returns image preview path, created if non-existent"""
 
-    logger.debug('base_path: %s, path: %s' % (base_path, path))
+    logger.debug('abs_base_path: %s, path: %s' % (abs_base_path, path))
     result = None
 
-    if __ensure_filepath(logger, base_path) is not None:
+    if __ensure_filepath(logger, abs_base_path) is not None:
         preview_path = os.path.join(__image_preview_path, path)
-        full_preview_path = os.path.join(base_path, preview_path)
+        full_preview_path = os.path.join(abs_base_path, preview_path)
         if __ensure_filepath(logger, full_preview_path, makedirs) \
             is not None:
             result = preview_path
@@ -1693,7 +1745,7 @@ def get_image_preview_path(
 
 def get_image_xdmf_path(
     logger,
-    base_path,
+    abs_base_path,
     ensure=False,
     makedirs=False,
     ):
@@ -1701,7 +1753,7 @@ def get_image_xdmf_path(
 
     result = None
 
-    image_xdmf_path = os.path.join(base_path, __image_xdmf_path)
+    image_xdmf_path = os.path.join(abs_base_path, __image_xdmf_path)
 
     logger.debug('get_image_xdmf_path: image_xdmf_path: %s'
                  % image_xdmf_path)
@@ -1714,10 +1766,10 @@ def get_image_xdmf_path(
     return result
 
 
-def get_image_xdmf_filepath(logger, base_path, filename):
+def get_image_xdmf_filepath(logger, abs_base_path, filename):
     """Returns xdmf filepath"""
 
-    image_xdmf_path = get_image_xdmf_path(logger, base_path)
+    image_xdmf_path = get_image_xdmf_path(logger, abs_base_path)
 
     logger.debug('image_xdmf_path: %s' % image_xdmf_path)
     return os.path.join(image_xdmf_path, filename)
@@ -1725,7 +1777,7 @@ def get_image_xdmf_filepath(logger, base_path, filename):
 
 def add_image_file_preview_data(
     logger,
-    base_path,
+    abs_base_path,
     path,
     filename,
     data,
@@ -1734,10 +1786,10 @@ def add_image_file_preview_data(
 
     result = False
 
-    logger.debug('base_path: %s, path: %s, filename: %s, data: %s'
-                 % (base_path, path, filename, data))
+    logger.debug('abs_base_path: %s, path: %s, filename: %s, data: %s'
+                 % (abs_base_path, path, filename, data))
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile is not None:
         data_group = __get_image_file_data_node(logger, metafile)
         image_filepath = os.path.join(path, filename)
@@ -1766,13 +1818,13 @@ def add_image_file_preview_data(
 
 def get_image_file_preview_data(
     logger,
-    base_path,
+    abs_base_path,
     path,
     filename,
     ):
     """Returns ndarray copy of preview file data"""
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     result = to_ndarray(logger, __get_image_file_preview_data(logger,
                         metafile, path, filename))
     __close_image_settings_file(logger, metafile)
@@ -1782,7 +1834,7 @@ def get_image_file_preview_data(
 
 def add_image_file_preview_image(
     logger,
-    base_path,
+    abs_base_path,
     path,
     filename,
     data,
@@ -1791,10 +1843,10 @@ def add_image_file_preview_image(
 
     result = False
 
-    logger.debug('base_path: %s, path: %s, filename: %s, data: %s'
-                 % (base_path, path, filename, data))
+    logger.debug('abs_base_path: %s, path: %s, filename: %s, data: %s'
+                 % (abs_base_path, path, filename, data))
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile is not None:
         image_group = __get_image_file_image_node(logger, metafile)
         image_filepath = os.path.join(path, filename)
@@ -1827,13 +1879,13 @@ def add_image_file_preview_image(
 
 def get_image_file_preview_image(
     logger,
-    base_path,
+    abs_base_path,
     path,
     filename,
     ):
     """Returns ndarray copy of rescaled and resized image data"""
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     result = to_ndarray(logger, __get_image_file_preview_image(logger,
                         metafile, path, filename))
     __close_image_settings_file(logger, metafile)
@@ -1843,7 +1895,7 @@ def get_image_file_preview_image(
 
 def add_image_file_preview_histogram(
     logger,
-    base_path,
+    abs_base_path,
     path,
     filename,
     histogram,
@@ -1852,7 +1904,7 @@ def add_image_file_preview_histogram(
 
     result = False
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile is not None:
         histogram_group = __get_image_file_histogram_node(logger,
                 metafile)
@@ -1885,13 +1937,13 @@ def add_image_file_preview_histogram(
 
 def get_image_file_preview_histogram(
     logger,
-    base_path,
+    abs_base_path,
     path,
     filename,
     ):
     """Returns ndarray copy of preview file histogram"""
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     result = to_ndarray(logger,
                         __get_image_file_preview_histogram_data(logger,
                         metafile, path, filename))
@@ -1902,7 +1954,7 @@ def get_image_file_preview_histogram(
 
 def add_image_volume_setting(
     logger,
-    base_path,
+    abs_base_path,
     extension,
     settings_status,
     settings_update_progress,
@@ -1926,7 +1978,7 @@ def add_image_volume_setting(
 
     result = False
 
-    metafile = __open_image_settings_file(logger, base_path,
+    metafile = __open_image_settings_file(logger, abs_base_path,
             makedirs=True)
 
     if metafile is not None:
@@ -1983,7 +2035,7 @@ def add_image_volume_setting(
 
 def add_image_volume_preview_data(
     logger,
-    base_path,
+    abs_base_path,
     path,
     filename,
     data,
@@ -1992,10 +2044,10 @@ def add_image_volume_preview_data(
 
     result = False
 
-    logger.debug('base_path: %s, path: %s, filename: %s, data: %s'
-                 % (base_path, path, filename, data))
+    logger.debug('abs_base_path: %s, path: %s, filename: %s, data: %s'
+                 % (abs_base_path, path, filename, data))
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile is not None:
         data_group = __get_image_volume_data_node(logger, metafile)
         image_filepath = os.path.join(path, filename)
@@ -2023,6 +2075,7 @@ def add_image_volume_preview_data(
 
 def add_image_volume(
     logger,
+    abs_base_path,
     base_path,
     path,
     name,
@@ -2055,7 +2108,7 @@ def add_image_volume(
     logger.debug('x_dimension: %s, y_dimension: %s, z_dimension: %s, data_type: %s'
                   % (x_dimension, y_dimension, z_dimension, data_type))
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
 
     if metafile is not None:
         image_volume_table = __get_image_volume_meta_node(logger,
@@ -2067,7 +2120,8 @@ def add_image_volume(
         if not overwrite and len(row_list) > 0 or overwrite \
             and len(row_list) > 1:
             logger.debug("'%s' for path: '%s' allready exists, #entries: %s"
-                          % (name, base_path, len(row_list)))
+                          % (name, os.path.join(base_path, path),
+                         len(row_list)))
         else:
             if overwrite and len(row_list) == 1:
                 rows = image_volume_table.where(condition)
@@ -2115,12 +2169,45 @@ def add_image_volume(
     return result
 
 
-def update_image_volume_setting(logger, base_path, setting):
+def update_image_volume(logger, abs_base_path, image_volume):
+    """Update image volume meta data"""
+
+    return add_image_volume(
+        logger,
+        abs_base_path,
+        image_volume['base_path'],
+        image_volume['path'],
+        image_volume['name'],
+        image_volume['extension'],
+        image_volume['image_type'],
+        image_volume['volume_type'],
+        image_volume['data_type'],
+        image_volume['offset'],
+        image_volume['x_dimension'],
+        image_volume['y_dimension'],
+        image_volume['z_dimension'],
+        image_volume['min_value'],
+        image_volume['max_value'],
+        image_volume['mean_value'],
+        image_volume['median_value'],
+        image_volume['file_md5sum'],
+        image_volume['preview_xdmf_filename'],
+        image_volume['preview_data_type'],
+        image_volume['preview_x_dimension'],
+        image_volume['preview_y_dimension'],
+        image_volume['preview_z_dimension'],
+        image_volume['preview_cutoff_min'],
+        image_volume['preview_cutoff_max'],
+        overwrite=True,
+        )
+
+
+def update_image_volume_setting(logger, abs_base_path, setting):
     """Update image volume setting"""
 
     return add_image_volume_setting(
         logger,
-        base_path,
+        abs_base_path,
         setting['extension'],
         setting['settings_status'],
         setting['settings_update_progress'],
@@ -2142,14 +2229,14 @@ def update_image_volume_setting(logger, base_path, setting):
         )
 
 
-def get_image_volume_setting(logger, base_path, extension):
+def get_image_volume_setting(logger, abs_base_path, extension):
     """Get image volume setting"""
 
-    logger.debug('base_path: %s, extension: %s' % (base_path,
+    logger.debug('abs_base_path: %s, extension: %s' % (abs_base_path,
                  extension))
     result = None
 
-    settings_result = get_image_volume_settings(logger, base_path,
+    settings_result = get_image_volume_settings(logger, abs_base_path,
             extension)
     if settings_result is not None:
         if len(settings_result) == 1:
@@ -2161,15 +2248,15 @@ def get_image_volume_setting(logger, base_path, extension):
     return result
 
 
-def get_image_volume_settings(logger, base_path, extension=None):
+def get_image_volume_settings(logger, abs_base_path, extension=None):
     """Get image volume settings"""
 
-    logger.debug('base_path: %s, extension: %s' % (base_path,
+    logger.debug('abs_base_path: %s, extension: %s' % (abs_base_path,
                  extension))
 
     result = None
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile is not None:
         result = []
         image_settings_table = __get_image_volume_settings_node(logger,
@@ -2178,8 +2265,10 @@ def get_image_volume_settings(logger, base_path, extension=None):
         condition = ''
         if extension is not None:
             condition = 'extension == b"%s" ' % extension
+        logger.debug('condition: %s' % str(condition))
         row_list = __get_row_idx_list(logger, image_settings_table,
                 condition)
+        logger.debug('row_list len: %s' % str(len(row_list)))
         for row_idx in row_list:
             entry = {}
             entry['extension'] = \
@@ -2225,7 +2314,7 @@ def get_image_volume_settings(logger, base_path, extension=None):
 
 def get_image_volume(
     logger,
-    base_path,
+    abs_base_path,
     path,
     name,
     data_entries=None,
@@ -2236,7 +2325,7 @@ def get_image_volume(
 
     result_list = get_image_volumes(
         logger,
-        base_path,
+        abs_base_path,
         path,
         name,
         extension=None,
@@ -2253,7 +2342,7 @@ def get_image_volume(
 
 def get_image_volumes(
     logger,
-    base_path,
+    abs_base_path,
     path=None,
     name=None,
     extension=None,
@@ -2263,10 +2352,10 @@ def get_image_volumes(
 
     result = None
 
-    logger.debug("base_path: '%s', path: '%s', name: '%s', extension: '%s'"
-                  % (base_path, path, name, extension))
+    logger.debug("abs_base_path: '%s', path: '%s', name: '%s', extension: '%s'"
+                  % (abs_base_path, path, name, extension))
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile is not None:
         image_volume_table = __get_image_volume_meta_node(logger,
                 metafile)
@@ -2348,7 +2437,7 @@ def get_image_volumes(
 
 def get_image_volume_count(
     logger,
-    base_path,
+    abs_base_path,
     path=None,
     name=None,
     extension=None,
@@ -2356,7 +2445,7 @@ def get_image_volume_count(
     """Returns number of volumes currently in metadata"""
 
     result = 0
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
     if metafile:
         image_volume_table = __get_image_volume_meta_node(logger,
                 metafile)
@@ -2379,22 +2468,23 @@ def get_image_volume_count(
     return result
 
 
-def remove_image_file_setting(logger, base_path, extension):
+def remove_image_volume_setting(logger, abs_base_path, extension):
     """Remove image volume setting"""
 
-    return remove_image_volume_settings(logger, base_path, extension)
+    return remove_image_volume_settings(logger, abs_base_path,
+            extension)
 
 
-def remove_image_volume_settings(logger, base_path, extension=None):
+def remove_image_volume_settings(logger, abs_base_path, extension=None):
     """Remove image file settings"""
 
-    logger.debug('base_path: %s, extension: %s' % (base_path,
+    logger.debug('abs_base_path: %s, extension: %s' % (abs_base_path,
                  extension))
 
     status = False
     removed = []
 
-    metafile = __open_image_settings_file(logger, base_path)
+    metafile = __open_image_settings_file(logger, abs_base_path)
 
     if metafile is not None:
         status = True
@@ -2414,7 +2504,7 @@ def remove_image_volume_settings(logger, base_path, extension=None):
             row_idx = row_list[0]
 
             (status_volumes, _) = __remove_image_volumes(logger,
-                    metafile, base_path, extension=extension)
+                    metafile, abs_base_path, extension=extension)
             if status_volumes:
                 logger.debug('settings_table.nrows: %s'
                              % settings_table.nrows)

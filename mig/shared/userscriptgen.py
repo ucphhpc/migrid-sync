@@ -193,7 +193,7 @@ def doc_usage_function(lang, extension):
     return s
 
 
-def filemetaio_usage_function(lang, extension):
+def imagepreview_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
     
     # Extract op from function name
@@ -205,13 +205,19 @@ def filemetaio_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
-    action_usage_string = 'ACTION\t\tlist : List PATH directory meta-data entries'
-    action_usage_string2 = '\t\tget_dir : Get PATH directory meta-data for extension=EXT'
-    action_usage_string3 = '\t\tget_file : Get meta-data for file PATH'
-    action_usage_string4 = '\t\tput_dir : Set PATH directory meta-data for extension=EXT'
-    action_usage_string5 = '\t\tput_file : Set meta-data for file PATH'
-    action_usage_string6 = '\t\tremove_dir : Remove PATH directory meta-data for extension=[EXT]'
-    image_usage_string = '-i\t\tDisplay image meta-data'
+    action_usage_string = 'ACTION\t\tlist_settings : List imagepreview settings for directory PATH'
+    action_usage_string2 = '\t\tcreate_setting : Create imagepreview setting for directory PATH with extension=EXT'
+    action_usage_string3 = '\t\tupdate_setting : Update imagepreview setting for directory PATH with extension=EXT'
+    action_usage_string4 = '\t\tremove_setting : Remove imagepreview setting for directory PATH with extension=EXT'
+    action_usage_string5 = '\t\treset_setting : Reset imagepreview setting for directory PATH with extension=EXT'
+    action_usage_string6 = '\t\tget_setting : Get imagepreview setting for directory PATH with extension=EXT'
+    action_usage_string7 = '\t\tget : Get imagepreview for file PATH'
+    action_usage_string8 = '\t\tremove : Remove imagepreview for file PATH'
+    action_usage_string9 = '\t\tclean : Delete all imagepreview system components for directory PATH'
+    action_usage_string10 = '\t\tcleanrecursive : Recursively delete all imagepreview system components for directory PATH'
+    action_usage_string11 = '\t\trefresh : Update imagepreview system components for directory PATH'
+    image_usage_string = '-i\t\tDisplay imagepreviews'
+
     if lang == 'sh':
         s += '\n    echo "%s"' % action_usage_string
         s += '\n    echo "%s"' % action_usage_string2
@@ -219,6 +225,11 @@ def filemetaio_usage_function(lang, extension):
         s += '\n    echo "%s"' % action_usage_string4
         s += '\n    echo "%s"' % action_usage_string5
         s += '\n    echo "%s"' % action_usage_string6
+        s += '\n    echo "%s"' % action_usage_string7
+        s += '\n    echo "%s"' % action_usage_string8
+        s += '\n    echo "%s"' % action_usage_string9
+        s += '\n    echo "%s"' % action_usage_string10
+        s += '\n    echo "%s"' % action_usage_string11
     elif lang == 'python':
         s += '\n    print "%s"' % action_usage_string
         s += '\n    print "%s"' % action_usage_string2
@@ -226,6 +237,11 @@ def filemetaio_usage_function(lang, extension):
         s += '\n    print "%s"' % action_usage_string4
         s += '\n    print "%s"' % action_usage_string5
         s += '\n    print "%s"' % action_usage_string6
+        s += '\n    print "%s"' % action_usage_string7
+        s += '\n    print "%s"' % action_usage_string8
+        s += '\n    print "%s"' % action_usage_string9
+        s += '\n    print "%s"' % action_usage_string10
+        s += '\n    print "%s"' % action_usage_string11
     s += end_function(lang, 'usage')
 
     return s
@@ -1079,12 +1095,12 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def filemetaio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+def imagepreview_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with path, action and key=val pairs
     as arguments.
     """
    
-    relative_url = '"%s/filemetaio.py"' % get_xgi_bin(configuration)
+    relative_url = '"%s/imagepreview.py"' % get_xgi_bin(configuration)
     query = '""'
     # TODO: is arg_list really a list here?
     if lang == 'sh':
@@ -1099,7 +1115,7 @@ def filemetaio_function(configuration, lang, curl_cmd, curl_flags='--compressed'
         return ''
 
     s = ''
-    s += begin_function(lang, 'filemetaio', ['action', 'path', 'arg_list'],
+    s += begin_function(lang, 'imagepreview', ['action', 'path', 'arg_list'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -1112,7 +1128,7 @@ def filemetaio_function(configuration, lang, curl_cmd, curl_flags='--compressed'
         curl_cmd,
         curl_flags,
         )
-    s += end_function(lang, 'filemetaio')
+    s += end_function(lang, 'imagepreview')
     return s
 
 
@@ -3038,7 +3054,7 @@ sys.exit(status)
     return s
 
 
-def filemetaio_main(lang):
+def imagepreview_main(lang):
     """
     Generate main part of corresponding scripts.
     
@@ -3047,14 +3063,6 @@ def filemetaio_main(lang):
 
     s = ''
     s += basic_main_init(lang)
-    if lang == 'sh':
-        s += parse_options(lang, 'i',
-                           '        i)  server_flags="${server_flags}i";;'
-                          )
-    elif lang == 'python':
-        s += parse_options(lang, 'i',
-                           '''    elif opt == "-i":
-        server_flags += "i"''')
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -3070,7 +3078,7 @@ path=\"$1\"
 shift
 arg_list=(\"$@\")
 shift $#
-filemetaio \"$action\" \"$path\" \"${arg_list[@]}\"
+imagepreview \"$action\" \"$path\" \"${arg_list[@]}\"
 """
     elif lang == 'python':
         s += """
@@ -3079,7 +3087,7 @@ filemetaio \"$action\" \"$path\" \"${arg_list[@]}\"
 action = \"%s\" % sys.argv[1]
 path = \"%s\" % sys.argv[2]
 arg_list = [i for i in sys.argv[3:]]
-(status, out) = filemetaio(action, path, arg_list)
+(status, out) = imagepreview(action, path, arg_list)
 # Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
@@ -4812,7 +4820,7 @@ def generate_doc(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_filemetaio(configuration, scripts_languages, dest_dir='.'):
+def generate_imagepreview(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
     # Extract op from function name
@@ -5741,7 +5749,7 @@ script_ops = [
     'cp',
     'datatransfer',
     'doc',
-    'filemetaio',
+    'imagepreview',
     'get',
     'grep',
     'head',

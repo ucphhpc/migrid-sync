@@ -64,7 +64,7 @@ jquery.prettyprint.js, preview.js, editor.py
 
 /* switch on/off console log and debug log globally here */
 var enable_log = true;
-var enable_debug = false;
+var enable_debug = true;
 
 /*
    Make sure we can always use console.X without scripts crashing. IE<=9
@@ -3030,11 +3030,10 @@ function mig_imagesettings_init(name, path, options) {
         // Retrieve image settings list
 
         $.ajax({
-            url: 'filemetaio.py',
+            url: 'imagepreview.py',
             data: { path: path,
                     output_format: 'json' ,
-                    action: 'list',
-                    flags: 'i'},
+                    action: 'list_settings'},
             type: "GET",
             dataType: "json",
             cache: false,
@@ -3145,11 +3144,10 @@ function mig_imagesettings_init(name, path, options) {
     function remove_all() {
         var call_args = { path: path,
                           output_format: 'json' ,
-                          action: 'remove_dir',
-                          flags: 'i'};
-        call_args[csrf_field] = csrf_map['filemetaio'];
+                          action: 'remove_setting'};
+        call_args[csrf_field] = csrf_map['imagepreview'];
         $.ajax({
-            url: 'filemetaio.py',
+            url: 'imagepreview.py',
             data: call_args,
             type: "POST",
             dataType: "json",
@@ -3185,12 +3183,11 @@ function mig_imagesettings_init(name, path, options) {
         var extension = $("#imagesettings_form input[name='extension']").val();
         var call_args = { path: path,
                           output_format: 'json' ,
-                          action: 'remove_dir',
-                          extension: extension,
-                          flags: 'i'};
-        call_args[csrf_field] = csrf_map['filemetaio'];
+                          action: 'remove_setting',
+                          extension: extension};
+        call_args[csrf_field] = csrf_map['imagepreview'];
         $.ajax({
-            url: 'filemetaio.py',
+            url: 'imagepreview.py',
             data: call_args,
             type: "POST",
             dataType: "json",
@@ -3246,12 +3243,11 @@ function mig_imagesettings_init(name, path, options) {
             do_edit();
         } else {
             $.ajax({
-                url: 'filemetaio.py',
+                url: 'imagepreview.py',
                 data: { extension: extension,
                         path: path,
                         output_format: 'json',
-                        action: 'get_dir',
-                        flags: 'i'},
+                        action: 'get_setting'},
                 type: "GET",
                 dataType: "json",
                 cache: false,
@@ -3309,8 +3305,7 @@ function mig_imagesettings_init(name, path, options) {
         // Fill edit html form
 
         $("#imagesettings_form input[name='path']").val(path);
-        $("#imagesettings_form input[name='flags']").val('i');
-        $("#imagesettings_form input[name='action']").val('put_dir');
+        $("#imagesettings_form input[name='action']").val('create_setting');
         $("#imagesettings_form input[name='settings_status']").val(edit_form_values['image_settings_status']);
         $("#imagesettings_form input[name='extension']").val(edit_form_values['extension']);
         if (edit_form_values['extension'] !== '') {
