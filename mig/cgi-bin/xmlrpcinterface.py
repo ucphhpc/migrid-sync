@@ -766,7 +766,7 @@ if '__main__' == __name__:
     server.register_function(liveio)
     server.register_function(mqueue)
     server.register_function(datatransfer)
-    server.register_function(imagemeta)
+    server.register_function(imagepreview)
     server.register_function(textarea)
     server.register_function(updateresconfig)
     server.register_function(addresowner)
