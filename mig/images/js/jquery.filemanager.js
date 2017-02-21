@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.filemanager - jquery based file manager
-  # Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -64,7 +64,7 @@ jquery.prettyprint.js, preview.js, editor.py
 
 /* switch on/off console log and debug log globally here */
 var enable_log = true;
-var enable_debug = true;
+var enable_debug = false;
 
 /*
    Make sure we can always use console.X without scripts crashing. IE<=9
