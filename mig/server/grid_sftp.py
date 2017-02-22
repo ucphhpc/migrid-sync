@@ -731,6 +731,35 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client, default_window_size=window_size,
                                    default_max_packet_size=max_packet_size)
+    # Restrict transport to strong ciphers+kex+digests used in OpenSSH
+    transport_security = transport.get_security_options()
+    recommended_ciphers = ('chacha20-poly1305@openssh.com',
+                           'aes256-gcm@openssh.com', 'aes128-gcm@openssh.com',
+                           'aes256-ctr', 'aes192-ctr', 'aes128-ctr')
+    available_ciphers = transport_security.ciphers
+    strong_ciphers = [i for i in recommended_ciphers if i in available_ciphers]
+    logger.debug("TLS ciphers available %s, used %s" % (available_ciphers,
+                                                        strong_ciphers))
+    transport_security.ciphers = strong_ciphers
+    recommended_kex = ('curve25519-sha256@libssh.org', 'ecdh-sha2-nistp521',
+                       'ecdh-sha2-nistp384', 'ecdh-sha2-nistp256',
+                       'diffie-hellman-group-exchange-sha256')
+    available_kex = transport_security.kex
+    strong_kex = [i for i in recommended_kex if i in available_kex]
+    logger.debug("TLS kex available %s, used %s" % (available_kex,
+                                                    strong_kex))
+    transport_security.kex = strong_kex
+
+    recommended_digests = ('hmac-sha2-512-etm@openssh.com',
+                           'hmac-sha2-256-etm@openssh.com',
+                           'umac-128-etm@openssh.com', 'hmac-sha2-512',
+                           'hmac-sha2-256', 'umac-128@openssh.com')
+    available_digests = transport_security.digests
+    strong_digests = [i for i in recommended_digests if i in available_digests]
+    logger.debug("TLS digests available %s, used %s" % (available_digests,
+                                                        strong_digests))
+    transport_security.digests = strong_digests
+
     transport.logger = logger
     transport.load_server_moduli()
     transport.add_server_key(host_key)
