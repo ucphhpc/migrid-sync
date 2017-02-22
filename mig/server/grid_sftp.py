@@ -494,6 +494,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except ValueError, err:
             self.logger.warning('mkdir %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
+        if os.path.isdir(real_path):
+            self.logger.warning("mkdir on existing directory %s :: %s" % \
+                                (path, real_path))
+            return paramiko.SFTP_FAILURE
         try:
             # Force MiG default mode
             os.mkdir(real_path, 0755)
@@ -518,8 +522,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                             (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
-            self.logger.error("rmdir on missing path %s :: %s" % (path,
-                                                                  real_path))
+            self.logger.warning("rmdir on missing path %s :: %s" % (path,
+                                                                    real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         #self.logger.debug("rmdir on path %s :: %s" % (path, real_path))
         try:
@@ -751,10 +755,16 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
                                     conf=conf)
 
     server = SimpleSSHServer(conf=conf, client_addr=addr)
-    transport.start_server(server=server)
+    # Catch and only log connection accept errors
+    try:
+        transport.start_server(server=server)
+        channel = transport.accept(conf['auth_timeout'])
+    except Exception, err:
+        logger.warning('client negotiation errors for %s: %s' % \
+                       (addr, err))
     
-    channel = transport.accept(conf['auth_timeout'])
     username = server.get_authenticated_user()
+
     # Throttle excessive concurrent active sessions from same user
     active_count = active_sessions(configuration, 'sftp', username)
     if max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
@@ -763,8 +773,8 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         print "Too many open sessions for %s - refusing" % username
         username = None
     else:
-        logger.info("Allowing login for %s with %d active sessions" % \
-                     (username, active_count))
+        logger.info("Proceed with login for %s with %d active sessions" % \
+                    (username, active_count))
 
     if username is None:
         logger.warning("Login from %s failed" % (addr, ))
