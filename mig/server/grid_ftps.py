@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -65,7 +65,8 @@
 
 Extended to fit MiG user auth and access restrictions.
 
-Requires PyOpenSSL module (http://pypi.python.org/pypi/pyOpenSSL).
+Requires PyOpenSSL module (http://pypi.python.org/pypi/pyOpenSSL) unless
+only used in plain FTP mode.
 """
 
 import os
@@ -82,6 +83,12 @@ try:
 except ImportError:
     print "ERROR: the python pyftpdlib module is required for this daemon"
     raise
+# PyOpenSSL is required for strong encryption
+try:
+    from OpenSSL import SSL, crypto
+except ImportError:
+    print "WARNING: the python OpenSSL module is required for FTPS"
+    SSL, crypto = None, None
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
@@ -89,6 +96,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, refresh_share_creds, update_login_map, \
      login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
      penalize_rate_limit
+from shared.httpsserver import strong_ciphers
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
@@ -321,13 +329,78 @@ def start_service(conf):
     if daemon_conf['nossl'] or not configuration.user_ftps_key:
         logger.warning('Not wrapping connections in SSL - only for testing!')
         handler = FTPHandler
+    elif SSL is None:
+        logger.error("Can't run FTPS server without PyOpenSSL!")
+        return False
     else:
         logger.info("Using fully encrypted mode")
         handler = TLS_FTPHandler
         # requires SSL for both control and data channel
         handler.tls_control_required = True
         handler.tls_data_required = True
-    handler.certfile = conf.user_ftps_key
+        keyfile = certfile = conf.user_ftps_key
+        handler.certfile = certfile
+        # Harden TLS/SSL if possible, requires recent pyftpdlib
+        if hasattr(handler, 'ssl_context'):
+            logger.info("enforcing strong SSL/TLS connections")
+            logger.debug("using SSL/TLS ciphers: %s" % strong_ciphers)
+            ssl_protocol = SSL.SSLv23_METHOD
+            ssl_context = SSL.Context(ssl_protocol)
+            ssl_context.use_certificate_chain_file(certfile)
+            ssl_context.use_privatekey_file(keyfile)
+            ssl_options = 0
+            ssl_options |= getattr(SSL, 'OP_NO_SSLv2', 0x1000000)
+            ssl_options |= getattr(SSL, 'OP_NO_SSLv3', 0x2000000)
+            ssl_options |= getattr(SSL, 'OP_NO_COMPRESSION', 0x20000)
+            ssl_options |= getattr(SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
+            ssl_context.set_options(ssl_options)
+            
+            pfs_available = False
+            dhparamsfile = os.path.join(os.path.dirname(keyfile),
+                                        'dhparams.pem')
+            try:
+                ssl_context.load_tmp_dh(dhparamsfile)
+                pfs_available = True
+            except Exception, exc:
+                logger.warning("Could not load optional dhparams from %s" % \
+                               dhparamsfile)
+                logger.info("""You can create a suitable dhparams file with:
+openssl dhparam 2048 -out %s""" % dhparamsfile)
+
+            # We must explicitly set curve here to actually enable ciphers
+            # using them. They can provide Perfect Forward Secrecy.
+            # http://stackoverflow.com/questions/32094145/python-paste-ssl-server-with-tlsv1-2-and-forward-secrecy#32101078
+            # Some help for installing pyopenssl with EC support at
+            # http://stackoverflow.com/questions/7340784/easy-install-pyopenssl-error/34048924#34048924
+            try:
+                # Returns a python set of curves and we grab one at random
+                available_curves = crypto.get_elliptic_curves()
+                curve_map = dict([(i.name, i) for i in available_curves])
+                curve_priority = ['prime256v1', 'secp384r1', 'secp521r1']
+                for curve_name in curve_priority:
+                    if curve_name in curve_map.keys():
+                        use_curve = curve_map[curve_name]
+                        break
+                logger.debug("Found elliptic curves %s and picked %s" % \
+                             (', '.join(curve_map.keys()), use_curve.name))
+                ssl_context.set_tmp_ecdh(use_curve)
+                pfs_available = True
+            except Exception, exc:
+                logger.warning("Couldn't init elliptic curve ciphers: %s" % \
+                               exc)
+                logger.info("""You need a recent pyopenssl built with elliptic
+curves to take advantage of this optional improved security feature""")
+            
+            if not pfs_available:
+                logger.warning("""No Perfect Forward Secrecy with neither 
+dhparams nor elliptic curves available.""")
+
+            ssl_context.set_cipher_list(strong_ciphers)
+            handler.ssl_context = ssl_context
+        else:
+            logger.warning("Unable to enforce explicit strong TLS connections")
+            logger.warning("Upgrade to a recent pyftpdlib for maximum security")
+            
     # NOTE: We use the threaded FTP server to prevent slow requests from
     # blocking the flow of all other clients. Auth still takes place in main
     # process thread so we don't need locking on user creds refresh.
