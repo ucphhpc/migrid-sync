@@ -82,6 +82,7 @@ def harden_ssl_options(sock, logger, ssl_options=None):
     else:
         logger.info("can't enforce strong SSL/TLS options")
         logger.warning("Upgrade to python 2.7.9+ for maximum security")
+    # TODO: add dhparamsfile support here, too?
     return sock
 
 def hardened_ssl_context(configuration, OpenSSL, keyfile, certfile,

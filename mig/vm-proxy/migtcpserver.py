@@ -5,7 +5,7 @@
 #
 # MiGTCPServer - A tcp server with customization for use with MiG as a proxy
 #
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,14 @@
 #
 # -- END_HEADER ---
 #
-import logging, sys, socket, os, time, threading, SocketServer
+
+import logging
+import os
+import socket
+import sys
+import threading
+import time
+import SocketServer
 from OpenSSL import SSL
 
 """

@@ -5,7 +5,7 @@
 #
 # ProxyAgentHandler - An Mip server
 #
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,15 +25,21 @@
 #
 # -- END_HEADER ---
 #
-from threading import Thread
-from struct import unpack, pack
-import time, socket, random, sys, os, select, SocketServer, logging, threading
-from binascii import hexlify
 
-from OpenSSL import SSL
-from migtcpserver import MiGTCPServer
-import mip, rfb, md5
+import logging
+import md5
+import os
+import sys
+import time
+import SocketServer
+from binascii import hexlify
+from struct import unpack, pack
+
+import mip
+import rfb
 from d3des import generate_response, decrypt_response, verify_response
+from migtcpserver import MiGTCPServer
+from plumber import *
 
 """
 1: Job identifier = 64_5_30_2009__10_10_15_localhost.0

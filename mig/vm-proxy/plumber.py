@@ -5,7 +5,7 @@
 #
 # Plumber - Tunnels traffic between two sockets
 #
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,8 +25,14 @@
 #
 # -- END_HEADER ---
 #
-from threading import Thread
-import logging, select, time, sys, threading
+
+import logging
+import os
+import select
+import sys
+import threading
+import time
+
 from OpenSSL import SSL
 
 """

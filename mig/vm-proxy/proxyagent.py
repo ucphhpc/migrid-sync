@@ -8,7 +8,7 @@
 #
 # @author Simon Andreas Frimann Lund
 #
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,13 +28,25 @@
 #
 # -- END_HEADER ---
 #
-import time, socket, sys, os, logging, ConfigParser
+
+import logging
+import os
+import socket
+import sys
+import threading
+import time
+import ConfigParser
+import SocketServer
 from struct import unpack, pack
 from threading import Thread
+
 from OpenSSL import SSL
 
+
+import daemon
+import mip
 from plumber import *
-import mip, daemon
+
 
 class ProxyAgent(daemon.Daemon):
   

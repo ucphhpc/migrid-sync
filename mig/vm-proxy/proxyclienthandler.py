@@ -6,7 +6,7 @@
 # ProxyClientHandler - Handles connections from clients by setting up tunnels.
 #                      and do content filtering stuff.
 #
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,16 +26,24 @@
 #
 # -- END_HEADER ---
 #
-from struct import unpack, pack
+
+import logging
+import md5
+import os
+import random
+import sys
+import threading
+import time
+import SocketServer
 from binascii import hexlify
-import time, socket, random, sys, os, SocketServer, logging, threading
+from struct import unpack, pack
 
-from OpenSSL import SSL
+import mip
+import rfb
 from d3des import generate_response, decrypt_response, verify_response
-
-from plumber import *
 from migtcpserver import MiGTCPServer
-import mip, rfb
+from plumber import *
+
 
 class ProxyClientHandler(SocketServer.BaseRequestHandler):
   
