@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -84,7 +84,7 @@ from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.griddaemons import hit_rate_limit, update_rate_limit, \
      expire_rate_limit, penalize_rate_limit
-from shared.httpsserver import hardened_ssl_kwargs, harden_ssl_options
+from shared.tlsserver import hardened_ssl_kwargs, harden_ssl_options
 from shared.logger import daemon_logger, reopen_log
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url

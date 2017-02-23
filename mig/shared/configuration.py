@@ -157,9 +157,11 @@ def fix_missing(config_file, verbose=True):
         'user_openid_providers': [],
         'user_monitor_log': 'monitor.log',
         'user_sshmux_log': 'sshmux.log',
+        'user_vmproxy_key': '~/certs/combined.pem',
         'user_vmproxy_log': 'vmproxy.log',
         'user_events_log': 'events.log',
         'user_transfers_log': 'transfers.log',
+        'user_shared_dhparams': '~/certs/dhparams.pem',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -337,9 +339,11 @@ class Configuration:
     user_openid_providers = []
     user_monitor_log = 'monitor.log'
     user_sshmux_log = 'sshmux.log'
+    user_vmproxy_key = ''
     user_vmproxy_log = 'vmproxy.log'
     user_events_log = 'events.log'
     user_transfers_log = 'transfers.log'
+    user_shared_dhparams = ''
     user_imnotify_address = ''
     user_imnotify_port = 6667
     user_imnotify_channel = ''
@@ -826,12 +830,18 @@ class Configuration:
             self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
         if config.has_option('GLOBAL', 'user_sshmux_log'):
             self.user_sshmux_log = config.get('GLOBAL', 'user_sshmux_log')
+        if config.has_option('GLOBAL', 'user_vmproxy_key'):
+            self.user_vmproxy_key = config.get('GLOBAL', 
+                                               'user_vmproxy_key')
         if config.has_option('GLOBAL', 'user_vmproxy_log'):
             self.user_vmproxy_log = config.get('GLOBAL', 'user_vmproxy_log')
         if config.has_option('GLOBAL', 'user_events_log'):
             self.user_events_log = config.get('GLOBAL', 'user_events_log')
         if config.has_option('GLOBAL', 'user_transfers_log'):
             self.user_transfers_log = config.get('GLOBAL', 'user_transfers_log')
+        if config.has_option('GLOBAL', 'user_shared_dhparams'):
+            self.user_shared_dhparams = config.get('GLOBAL', 
+                                                   'user_shared_dhparams')
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
