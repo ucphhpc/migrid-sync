@@ -33,8 +33,10 @@ import sys
 import threading
 import time
 import SocketServer
+
 from OpenSSL import SSL
 
+from shared.tlsserver import STRONG_CIPHERS
 """
  Whitelisting mixin request are only allowed from the list of peers.
 """
@@ -93,12 +95,13 @@ class MiGTCPServer(Whitelist,
     self.tls_conf = tls_conf
     
     if (tls_conf !=None):
-      ctx = SSL.Context(SSL.TLSv1_METHOD)
+      ctx = SSL.Context(SSL.SSLv23_METHOD)
       ctx.set_options(SSL.OP_NO_SSLv2|SSL.OP_NO_SSLv3)
       ctx.set_verify(SSL.VERIFY_NONE, verify_cb)
       dir = os.curdir
       ctx.use_privatekey_file (os.path.join(dir, tls_conf['key']))
       ctx.use_certificate_file(os.path.join(dir, tls_conf['cert']))
+      ctx.set_cipher_list(STRONG_CIPHERS)
   
       self.socket = SSL.Connection(ctx,
                                    socket.socket(self.address_family,

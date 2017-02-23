@@ -42,10 +42,10 @@ from threading import Thread
 
 from OpenSSL import SSL
 
-
 import daemon
 import mip
 from plumber import *
+from shared.tlsserver import STRONG_CIPHERS
 
 
 class ProxyAgent(daemon.Daemon):
@@ -163,11 +163,12 @@ class ProxyAgent(daemon.Daemon):
     if tls:
       
       # Initialize context
-      ctx = SSL.Context(SSL.TLSv1_METHOD)
+      ctx = SSL.Context(SSL.SSLv23_METHOD)
       ctx.set_verify(SSL.VERIFY_NONE, self.verify_cb)
       ctx.use_privatekey_file (os.path.join(dir, 'certs/client.pkey'))
       ctx.use_certificate_file(os.path.join(dir, 'certs/client.cert'))
       ctx.load_verify_locations(os.path.join(dir, 'certs/CA.cert'))
+      ctx.set_cipher_list(STRONG_CIPHERS)
       
       # Set up client
       logging.debug(' Socket: TLS wrapped! %s')
@@ -215,11 +216,12 @@ class ProxyAgent(daemon.Daemon):
         
         if tls:
           # Initialize context
-          ctx = SSL.Context(SSL.TLSv1_METHOD)
+          ctx = SSL.Context(SSL.SSLv23_METHOD)
           ctx.set_verify(SSL.VERIFY_NONE, self.verify_cb) # Demand a certificate
           ctx.use_privatekey_file (os.path.join(dir, 'certs/client.pkey'))
           ctx.use_certificate_file(os.path.join(dir, 'certs/client.cert'))
           ctx.load_verify_locations(os.path.join(dir, 'certs/CA.cert'))
+          ctx.set_cipher_list(STRONG_CIPHERS)
           
           logging.debug(' Socket: TLS wrapped! %s')
           proxy_socket = SSL.Connection(ctx, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
