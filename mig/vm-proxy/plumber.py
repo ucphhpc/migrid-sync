@@ -38,19 +38,18 @@ from OpenSSL import SSL
 
 
 class Plumber:
-
     """Plumber, select only plumber
   
-  A primitive for tunneling traffic between two sockets. If sockets where called
-  pipes then you get why I named it "Plumber".
-  
-  - The sockets are changed to non-blocking mode upon Plumber Construction
-  - The sockets sockets must be connected when instanciating the Plumber
-  - Pipe is a blocking call, it is freed when the sockets are closed
-  - When the first read error occurs both sockets are closed.
-  
-  TODO: - optimize the handling of SSL WantWriteError / WantReadError
-  """
+    A primitive for tunneling traffic between two sockets. If sockets where called
+    pipes then you get why I named it "Plumber".
+    
+    - The sockets are changed to non-blocking mode upon Plumber Construction
+    - The sockets sockets must be connected when instanciating the Plumber
+    - Pipe is a blocking call, it is freed when the sockets are closed
+    - When the first read error occurs both sockets are closed.
+    
+    TODO: - optimize the handling of SSL WantWriteError / WantReadError
+    """
 
     def __init__(
         self,
@@ -150,7 +149,6 @@ class Plumber:
 
 
 class PlumberTS:
-
     """PlumberTS, threading and select
     
     A primitive for tunneling traffic between two sockets. If sockets where called
@@ -230,7 +228,6 @@ class PlumberTS:
 
 
 class PlumberTO:
-
     """PlumberTO, threading
   
     A primitive for tunneling traffic between two sockets. If sockets where called
@@ -296,5 +293,3 @@ class PlumberTO:
         logging.debug('%s %s : closing socket.' % (self, source_name))
         source.close()
         sink.close()
-
-
