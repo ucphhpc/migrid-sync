@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 #
 # --- BEGIN_HEADER ---
 #
@@ -31,34 +32,49 @@
 from struct import *
 
 identifiers = {
-  'PROXY'           : pack('!B', 0),
-  'VIRTUAL_MACHINE' : pack('!B', 1),
-  'RESSOURCE'       : pack('!B', 2),
-  'USER'            : pack('!B', 3)
-}
+    'PROXY': pack('!B', 0),
+    'VIRTUAL_MACHINE': pack('!B', 1),
+    'RESSOURCE': pack('!B', 2),
+    'USER': pack('!B', 3),
+    }
 
-messages = {
-  'HANDSHAKE'       : pack('!B', 0),
-  'SETUP_REQUEST'   : pack('!B', 1),
-  'SETUP_RESPONSE'  : pack('!B', 2)
-}
+messages = {'HANDSHAKE': pack('!B', 0), 'SETUP_REQUEST': pack('!B', 1),
+            'SETUP_RESPONSE': pack('!B', 2)}
+
 
 def handshake(type, identity):
-  return pack('!BBI', 0, type, len(identity))+identity
-  
-def setup_request(ticket, proxy_host, proxy_port, machine_host, machine_port):
-  return  pack('!B', 1) +\
-          pack('!I', ticket) +\
-          pack('!I', len(proxy_host))    + proxy_host    + pack('!I', proxy_port) +\
-          pack('!I', len(machine_host))  + machine_host  + pack('!I', machine_port)  
+    return pack('!BBI', 0, type, len(identity)) + identity
+
+
+def setup_request(
+    ticket,
+    proxy_host,
+    proxy_port,
+    machine_host,
+    machine_port,
+    ):
+    return pack('!B', 1) + pack('!I', ticket) + pack('!I',
+            len(proxy_host)) + proxy_host + pack('!I', proxy_port) \
+        + pack('!I', len(machine_host)) + machine_host + pack('!I',
+            machine_port)
+
 
 def setup_response(ticket, status=0):
-  return pack('!BIB', 2, ticket, status)
-  
+    return pack('!BIB', 2, ticket, status)
+
+
 class ServerInfo:
-  
-  def __init__(self, request, addressInfo, identifier, type):
-    self.request      = request
-    self.addressInfo  = addressInfo
-    self.type         = type
-    self.identifier   = identifier
+
+    def __init__(
+        self,
+        request,
+        addressInfo,
+        identifier,
+        type,
+        ):
+        self.request = request
+        self.addressInfo = addressInfo
+        self.type = type
+        self.identifier = identifier
+
+

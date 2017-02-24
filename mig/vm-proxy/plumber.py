@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 #
 # --- BEGIN_HEADER ---
 #
@@ -35,8 +36,10 @@ import time
 
 from OpenSSL import SSL
 
+
 class Plumber:
-  """Plumber, select only plumber
+
+    """Plumber, select only plumber
   
   A primitive for tunneling traffic between two sockets. If sockets where called
   pipes then you get why I named it "Plumber".
@@ -49,81 +52,106 @@ class Plumber:
   TODO: - optimize the handling of SSL WantWriteError / WantReadError
   """
 
-  def __init__(self, source, sink, buffer_size=1024, detach=False):
-    
-    self.running = True
-    
-    self.buffer_size = buffer_size
-    
-    self.source = source
-    self.sink   = sink
-    
-    self.source.setblocking(0)
-    self.sink.setblocking(0)
+    def __init__(
+        self,
+        source,
+        sink,
+        buffer_size=1024,
+        detach=False,
+        ):
 
-    self.source_name = self.source.getpeername()
-    self.source_fn   = self.source.fileno()
-    
-    self.sink_name   = self.sink.getpeername()
-    self.sink_fn     = self.sink.fileno()
-    
-    logging.debug('%s <--> %s', self.source_name, self.sink_name)
-    logging.debug("[Source=%s %d,%s,\n  Sink=%s %d,%s]" % (self.source, self.source_fn, self.source_name,
-                                                       self.sink, self.sink_fn, self.sink_name))
-    
-    if detach:
-      self.sink_thread = threading.Thread(target=self.pipe)
-      self.sink_thread.setDaemon(False)
-      self.sink_thread.start()
-    else:
-      self.pipe()
-    
-  def pipe(self):
+        self.running = True
 
-    readable = [] # This list will the contain the sockets with data
-    writable = [] # Writable sockets, must be check for throttling
-    errors   = [] # Unused, should be used for error checking
-    
-    while self.running:
-      
-      try:
-        readable, writable, errors = select.select([self.source, self.sink],[],[])
-    
-        if (len(readable)>0):
-          for input_socket in readable:
-                        
-            if input_socket.fileno() == self.sink_fn:
-              
-              r, w, e = select.select([],[self.source],[])
-              if len(w) > 0:
-                data = input_socket.recv(self.buffer_size)                            
-                self.source.send(data)
-              
-            else:
-              
-              r, w, e = select.select([],[self.sink],[])
-              if len(w) > 0:
-                data = input_socket.recv(self.buffer_size)                            
-                self.sink.send(data)
-                
-      except SSL.WantWriteError:
-        #logging.exception('%s PLUMBER: Unexpected error: %s' % (self, sys.exc_info()[2]))
-        pass
-      except SSL.WantReadError:
-        #logging.exception('%s PLUMBER: Unexpected error: %s' % (self, sys.exc_info()[2]))
-        pass
-      except:
-        logging.debug("%s %s %s: read failure, probable disconnect." % (self, self.source_name, self.sink_name))
-        logging.exception('PLUMBER: Unexpected error: %s' % sys.exc_info()[2])
-        self.running = 0
-      
-    self.source.close()
-    self.sink.close()
-    
-    logging.debug("%s: closed sockets (%d,%d)." % (self, self.source_fn, self.sink_fn))
+        self.buffer_size = buffer_size
+
+        self.source = source
+        self.sink = sink
+
+        self.source.setblocking(0)
+        self.sink.setblocking(0)
+
+        self.source_name = self.source.getpeername()
+        self.source_fn = self.source.fileno()
+
+        self.sink_name = self.sink.getpeername()
+        self.sink_fn = self.sink.fileno()
+
+        logging.debug('%s <--> %s', self.source_name, self.sink_name)
+        logging.debug('[Source=%s %d,%s,\n  Sink=%s %d,%s]' % (
+            self.source,
+            self.source_fn,
+            self.source_name,
+            self.sink,
+            self.sink_fn,
+            self.sink_name,
+            ))
+
+        if detach:
+            self.sink_thread = threading.Thread(target=self.pipe)
+            self.sink_thread.setDaemon(False)
+            self.sink_thread.start()
+        else:
+            self.pipe()
+
+    def pipe(self):
+
+        readable = []  # This list will the contain the sockets with data
+        writable = []  # Writable sockets, must be check for throttling
+        errors = []  # Unused, should be used for error checking
+
+        while self.running:
+
+            try:
+                (readable, writable, errors) = \
+                    select.select([self.source, self.sink], [], [])
+
+                if len(readable) > 0:
+                    for input_socket in readable:
+
+                        if input_socket.fileno() == self.sink_fn:
+
+                            (r, w, e) = select.select([],
+                                    [self.source], [])
+                            if len(w) > 0:
+                                data = \
+                                    input_socket.recv(self.buffer_size)
+                                self.source.send(data)
+                        else:
+
+                            (r, w, e) = select.select([], [self.sink],
+                                    [])
+                            if len(w) > 0:
+                                data = \
+                                    input_socket.recv(self.buffer_size)
+                                self.sink.send(data)
+            except SSL.WantWriteError:
+
+        # logging.exception('%s PLUMBER: Unexpected error: %s' % (self, sys.exc_info()[2]))
+
+                pass
+            except SSL.WantReadError:
+
+        # logging.exception('%s PLUMBER: Unexpected error: %s' % (self, sys.exc_info()[2]))
+
+                pass
+            except:
+                logging.debug('%s %s %s: read failure, probable disconnect.'
+                               % (self, self.source_name,
+                              self.sink_name))
+                logging.exception('PLUMBER: Unexpected error: %s'
+                                  % sys.exc_info()[2])
+                self.running = 0
+
+        self.source.close()
+        self.sink.close()
+
+        logging.debug('%s: closed sockets (%d,%d).' % (self,
+                      self.source_fn, self.sink_fn))
+
 
 class PlumberTS:
-  """PlumberTS, threading and select
+
+    """PlumberTS, threading and select
   
   A primitive for tunneling traffic between two sockets. If sockets where called
   pipes then you get why I named it "Plumber".
@@ -133,65 +161,77 @@ class PlumberTS:
   - When the first read error occurs both sockets are closed.  
   """
 
-  def __init__(self, source, sink, buffer_size=1024, detach=False):
-    
-    self.buffer_size = buffer_size
-    logging.debug('%s <--> %s', source.getpeername(), sink.getpeername())
-    
-    source.setblocking(1)
-    sink.setblocking(1)
-    
-    self.running = True
-    self.proxyLock = threading.Lock()
-    
-    self.source_thread = threading.Thread(target=self.pipe, args=(source, sink))
-    self.source_thread.setDaemon(False)
-    self.source_thread.start()
-        
-    if detach:
-      self.sink_thread = threading.Thread(target=self.pipe, args=(sink, source))
-      self.sink_thread.setDaemon(False)
-      self.sink_thread.start()
-    else:
-      self.pipe(sink, source)
+    def __init__(
+        self,
+        source,
+        sink,
+        buffer_size=1024,
+        detach=False,
+        ):
 
-  def pipe(self, source, sink):
+        self.buffer_size = buffer_size
+        logging.debug('%s <--> %s', source.getpeername(),
+                      sink.getpeername())
 
-    source_name = source.getpeername()
-    sink_name   = sink.getpeername()
-        
-    while self.running:
-      
-      try:
-        r,w,e = select.select([source],[],[])
-        
-        if len(r)>0:
-          
-          rr,ww,ee = select.select([],[sink],[])
-          if len(ww)>0:
-                    
-            self.proxyLock.acquire()
-            data = source.recv( self.buffer_size )
-    
-            if not data:
-              self.running = False
-              self.proxyLock.release()
-              break
-            
-            sink.send( data )
-            self.proxyLock.release()
+        source.setblocking(1)
+        sink.setblocking(1)
 
-      except:
-        logging.debug("%s %s : read PWN3D!" % (self, source_name))
-        self.running = False
-        break
-    
-    logging.debug("%s %s : closing socket." % (self, source_name))
-    source.close()
-    sink.close()
+        self.running = True
+        self.proxyLock = threading.Lock()
+
+        self.source_thread = threading.Thread(target=self.pipe,
+                args=(source, sink))
+        self.source_thread.setDaemon(False)
+        self.source_thread.start()
+
+        if detach:
+            self.sink_thread = threading.Thread(target=self.pipe,
+                    args=(sink, source))
+            self.sink_thread.setDaemon(False)
+            self.sink_thread.start()
+        else:
+            self.pipe(sink, source)
+
+    def pipe(self, source, sink):
+
+        source_name = source.getpeername()
+        sink_name = sink.getpeername()
+
+        while self.running:
+
+            try:
+                (r, w, e) = select.select([source], [], [])
+
+                if len(r) > 0:
+
+                    (rr, ww, ee) = select.select([], [sink], [])
+                    if len(ww) > 0:
+
+                        self.proxyLock.acquire()
+                        data = source.recv(self.buffer_size)
+
+                        if not data:
+                            self.running = False
+                            self.proxyLock.release()
+                            break
+
+                        sink.send(data)
+                        self.proxyLock.release()
+            except:
+
+                logging.debug('%s %s : read PWN3D!' % (self,
+                              source_name))
+                self.running = False
+                break
+
+        logging.debug('%s %s : closing socket.' % (self, source_name))
+        source.close()
+        sink.close()
+
 
 class PlumberTO:
-  """PlumberTO, threading
+
+    """PlumberTO, threading
   
   A primitive for tunneling traffic between two sockets. If sockets where called
   pipes then you get why I named it "Plumber".
@@ -203,46 +243,58 @@ class PlumberTO:
   WARN: Only use this plumber with threadsafe sockets!
   """
 
-  def __init__(self, source, sink, buffer_size=1024, detach=False):
-    
-    self.buffer_size = buffer_size
-    logging.debug('%s <--> %s', source.getpeername(), sink.getpeername())
-    
-    self.running = True
-    source.setblocking(1)
-    sink.setblocking(1)
-    
-    self.source_thread = threading.Thread(target=self.pipe, args=(source, sink))
-    self.source_thread.setDaemon(False)
-    self.source_thread.start()
+    def __init__(
+        self,
+        source,
+        sink,
+        buffer_size=1024,
+        detach=False,
+        ):
 
-    if detach:
-      self.sink_thread = threading.Thread(target=self.pipe, args=(sink, source))
-      self.sink_thread.setDaemon(False)
-      self.sink_thread.start()
-    else:
-      self.pipe(sink, source)
+        self.buffer_size = buffer_size
+        logging.debug('%s <--> %s', source.getpeername(),
+                      sink.getpeername())
 
-  def pipe(self, source, sink):
+        self.running = True
+        source.setblocking(1)
+        sink.setblocking(1)
 
-    source_name = source.getpeername()
-    sink_name   = sink.getpeername()
-        
-    while self.running:
-      
-      try:
-      
-        data = source.recv( self.buffer_size )
-        if not data:
-          self.running = False
-          break
-        sink.send( data )
+        self.source_thread = threading.Thread(target=self.pipe,
+                args=(source, sink))
+        self.source_thread.setDaemon(False)
+        self.source_thread.start()
 
-      except:
-        logging.debug("%s %s : read PWN3D!" % (self, source_name))
-        self.running = False
-        break
+        if detach:
+            self.sink_thread = threading.Thread(target=self.pipe,
+                    args=(sink, source))
+            self.sink_thread.setDaemon(False)
+            self.sink_thread.start()
+        else:
+            self.pipe(sink, source)
 
-    logging.debug("%s %s : closing socket." % (self, source_name))
-    source.close()
-    sink.close()
+    def pipe(self, source, sink):
+
+        source_name = source.getpeername()
+        sink_name = sink.getpeername()
+
+        while self.running:
+
+            try:
+
+                data = source.recv(self.buffer_size)
+                if not data:
+                    self.running = False
+                    break
+                sink.send(data)
+            except:
+
+                logging.debug('%s %s : read PWN3D!' % (self,
+                              source_name))
+                self.running = False
+                break
+
+        logging.debug('%s %s : closing socket.' % (self, source_name))
+        source.close()
+        sink.close()
+
+
