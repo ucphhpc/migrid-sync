@@ -152,14 +152,14 @@ class Plumber:
 class PlumberTS:
 
     """PlumberTS, threading and select
-  
-  A primitive for tunneling traffic between two sockets. If sockets where called
-  pipes then you get why I named it "Plumber".
-  
-  - The sockets are changed to BLOCKING mode upon Plumber Construction
-  - The sockets sockets must be connected when instanciating the Plumber
-  - When the first read error occurs both sockets are closed.  
-  """
+    
+    A primitive for tunneling traffic between two sockets. If sockets where called
+    pipes then you get why I named it "Plumber".
+    
+    - The sockets are changed to BLOCKING mode upon Plumber Construction
+    - The sockets sockets must be connected when instanciating the Plumber
+    - When the first read error occurs both sockets are closed.  
+    """
 
     def __init__(
         self,
@@ -233,15 +233,15 @@ class PlumberTO:
 
     """PlumberTO, threading
   
-  A primitive for tunneling traffic between two sockets. If sockets where called
-  pipes then you get why I named it "Plumber".
-  
-  - The sockets are changed to BLOCKING mode upon Plumber Construction
-  - The sockets sockets must be connected when instanciating the Plumber
-  - When the first read error occurs both sockets are closed.
-  
-  WARN: Only use this plumber with threadsafe sockets!
-  """
+    A primitive for tunneling traffic between two sockets. If sockets where called
+    pipes then you get why I named it "Plumber".
+    
+    - The sockets are changed to BLOCKING mode upon Plumber Construction
+    - The sockets sockets must be connected when instanciating the Plumber
+    - When the first read error occurs both sockets are closed.
+    
+    WARN: Only use this plumber with threadsafe sockets!
+    """
 
     def __init__(
         self,
