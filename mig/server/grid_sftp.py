@@ -740,7 +740,11 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     strong_ciphers = [i for i in recommended_ciphers if i in available_ciphers]
     logger.debug("TLS ciphers available %s, used %s" % (available_ciphers,
                                                         strong_ciphers))
-    transport_security.ciphers = strong_ciphers
+    if strong_ciphers:
+        transport_security.ciphers = strong_ciphers
+    else:
+        logger.warning("No strong TLS ciphers available!")
+        logger.info("You need a recent paramiko for best security")
     recommended_kex = ('curve25519-sha256@libssh.org', 'ecdh-sha2-nistp521',
                        'ecdh-sha2-nistp384', 'ecdh-sha2-nistp256',
                        'diffie-hellman-group-exchange-sha256')
@@ -748,8 +752,11 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     strong_kex = [i for i in recommended_kex if i in available_kex]
     logger.debug("TLS kex available %s, used %s" % (available_kex,
                                                     strong_kex))
-    transport_security.kex = strong_kex
-
+    if strong_kex:
+        transport_security.kex = strong_kex
+    else:
+        logger.warning("No strong TLS key exchange algorithm available!")
+        logger.info("You need a recent paramiko for best security")
     recommended_digests = ('hmac-sha2-512-etm@openssh.com',
                            'hmac-sha2-256-etm@openssh.com',
                            'umac-128-etm@openssh.com', 'hmac-sha2-512',
@@ -758,7 +765,11 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     strong_digests = [i for i in recommended_digests if i in available_digests]
     logger.debug("TLS digests available %s, used %s" % (available_digests,
                                                         strong_digests))
-    transport_security.digests = strong_digests
+    if strong_digests:
+        transport_security.digests = strong_digests
+    else:
+        logger.warning("No strong TLS digest algorithm available!")
+        logger.info("You need paramiko 1.16 or later for best security")
 
     transport.logger = logger
     transport.load_server_moduli()
