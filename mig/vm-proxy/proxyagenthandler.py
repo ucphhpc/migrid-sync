@@ -41,20 +41,20 @@ from d3des import generate_response, decrypt_response, verify_response
 from migtcpserver import MiGTCPServer
 from plumber import *
 
-"""
-1: Job identifier = 64_5_30_2009__10_10_15_localhost.0
+def vnc_jobid(job_id='Unknown'):
+  """
+  1: Job identifier = 64_5_30_2009__10_10_15_localhost.0
 
-2: Md5 sum (16bytes) 32 char hex. string = 01b19818762fbaf81693001639b1379c
+  2: Md5 sum (16bytes) 32 char hex. string = 01b19818762fbaf81693001639b1379c
 
-3: Lower to (8bytes) 16 char hex. string: 01 b1 98 18 76 2f ba f8
+  3: Lower to (8bytes) 16 char hex. string: 01 b1 98 18 76 2f ba f8
 
-4: Convert to user inputable ascii table characters:
+  4: Convert to user inputable ascii table characters:
 
-	Ascii table offset by 64 + [0-16]
+      Ascii table offset by 64 + [0-16]
   
   This methods provides 127^8 identifiers.
-"""
-def vnc_jobid(job_id='Unknown'):
+  """
   
   job_id_digest = md5.new(job_id).hexdigest()[:16]  # 2
   password = ''
@@ -71,8 +71,11 @@ def vnc_jobid(job_id='Unknown'):
   return password
 
 
-# Todo: -add timeouts to the handshake, it should not wait forever if the other side is hanging in a handshake
+# TODO: -add timeouts to the handshake, it should not wait forever if the other side is hanging in a handshake
 class ProxyAgentHandler(SocketServer.BaseRequestHandler):
+  """ProxyAgentHandler,
+  A MIP server.
+  """
   
   def setup(self):
 

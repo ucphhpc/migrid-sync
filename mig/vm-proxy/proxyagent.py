@@ -137,26 +137,25 @@ class ProxyAgent(daemon.Daemon):
               
               self.handle_setup_request(ticket, proxy_host, proxy_port, machine_host, machine_port, tls)
             else:
-              logging.debug(' Broken data! %s' % repr(data))
+              logging.debug('Broken data! %s' % repr(data))
             
           except:
-            logging.debug(' Unexpected error, shutting down control connection.')
+            logging.debug('Unexpected error, shutting down control connection.')
             logging.exception('%s ' % sys.exc_info()[2])
             self.control_socket.close()
             break
       
       except:
-        logging.error(' Error in control connections, retrying in %d seconds' % self.retry_timeout)
+        logging.error('Error in control connections, retrying in %d seconds' % self.retry_timeout)
         self.control_socket.close()
         time.sleep(self.retry_timeout)  
   
-  """
-    handshake,
-   
-    Identify proxy agent to proxy server
-    TODO: catch those exceptions and add return error code...
-  """
   def handshake(self, host, port, identity, tls=True):
+    """handshake,
+      
+      Identify proxy agent to proxy server
+      TODO: catch those exceptions and add return error code...
+    """
     
     configuration = get_configuration_object()
     
@@ -174,25 +173,24 @@ class ProxyAgent(daemon.Daemon):
       dhparamsfile = configuration.user_shared_dhparams
       ssl_ctx = hardened_ssl_context(configuration, OpenSSL, keyfile, certfile,
                                      dhparamsfile=dhparamsfile)
-      logging.debug(' Socket: TLS wrapped! %s')
+      logging.debug('Socket: TLS wrapped! %s')
       self.control_socket = OpenSSL.SSL.Connection(
           ssl_ctx, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
       
     else:
-      logging.debug(' Socket: plain! %s')
+      logging.debug('Socket: plain! %s')
       self.control_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   
     self.control_socket.connect((host, port))
     self.control_socket.send(handshakeMessage)      
   
-  """
-   handle_setup_request,
-   
-   Set's up a new tunnel between local endpoint and proxy server
-  """
   def handle_setup_request(self, ticket, proxy_host, proxy_port, machine_host, machine_port, tls=True):
+    """handle_setup_request,
+   
+      Set's up a new tunnel between local endpoint and proxy server
+    """
 
-      configuration = get_configuration_object()
+    configuration = get_configuration_object()
     
     self.setup_count += 1
     logging.debug(" Setup request count = %d" % self.setup_count)
@@ -225,11 +223,11 @@ class ProxyAgent(daemon.Daemon):
           dhparamsfile = configuration.user_shared_dhparams
           ssl_ctx = hardened_ssl_context(configuration, OpenSSL, keyfile,
                                          certfile, dhparamsfile=dhparamsfile)
-          logging.debug(' Socket: TLS wrapped! %s')
+          logging.debug('Socket: TLS wrapped! %s')
           proxy_socket = OpenSSL.SSL.Connection(
               ssl_ctx, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
         else:
-          logging.debug(' Socket: plain! %s')
+          logging.debug('Socket: plain! %s')
           proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
           
         proxy_socket.connect((proxy_host, proxy_port))

@@ -35,8 +35,8 @@ import time
 
 from OpenSSL import SSL
 
-"""
-  Plumber, select only plumber
+class Plumber:
+  """Plumber, select only plumber
   
   A primitive for tunneling traffic between two sockets. If sockets where called
   pipes then you get why I named it "Plumber".
@@ -47,9 +47,7 @@ from OpenSSL import SSL
   - When the first read error occurs both sockets are closed.
   
   TODO: - optimize the handling of SSL WantWriteError / WantReadError
-  
-"""
-class Plumber:
+  """
 
   def __init__(self, source, sink, buffer_size=1024, detach=False):
     
@@ -124,18 +122,16 @@ class Plumber:
     
     logging.debug("%s: closed sockets (%d,%d)." % (self, self.source_fn, self.sink_fn))
 
-"""
-  PlumberTS, threading and select
+class PlumberTS:
+  """PlumberTS, threading and select
   
   A primitive for tunneling traffic between two sockets. If sockets where called
   pipes then you get why I named it "Plumber".
   
   - The sockets are changed to BLOCKING mode upon Plumber Construction
   - The sockets sockets must be connected when instanciating the Plumber
-  - When the first read error occurs both sockets are closed.
-  
-"""
-class PlumberTS:
+  - When the first read error occurs both sockets are closed.  
+  """
 
   def __init__(self, source, sink, buffer_size=1024, detach=False):
     
@@ -194,8 +190,8 @@ class PlumberTS:
     source.close()
     sink.close()
 
-"""
-  PlumberTO, threading
+class PlumberTO:
+  """PlumberTO, threading
   
   A primitive for tunneling traffic between two sockets. If sockets where called
   pipes then you get why I named it "Plumber".
@@ -205,8 +201,7 @@ class PlumberTS:
   - When the first read error occurs both sockets are closed.
   
   WARN: Only use this plumber with threadsafe sockets!
-"""
-class PlumberTO:
+  """
 
   def __init__(self, source, sink, buffer_size=1024, detach=False):
     

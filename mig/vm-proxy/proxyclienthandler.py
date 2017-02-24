@@ -46,6 +46,10 @@ from plumber import *
 
 
 class ProxyClientHandler(SocketServer.BaseRequestHandler):
+  """ProxyClientHandler,
+  Handles connections from clients by setting up tunnels and do content
+  filtering stuff.
+  """
   
   use_tls = False
   

@@ -43,10 +43,8 @@ except ImportError:
 from shared.conf import get_configuration_object
 from shared.tlsserver import hardened_ssl_context
 
-"""
- Whitelisting mixin request are only allowed from the list of peers.
-"""
 class Whitelist:
+  """Whitelisting mixin requests are only allowed from the list of peers"""
   
   peers = []
     
@@ -58,27 +56,24 @@ class Whitelist:
   def peerAllowed(self, peer):
     return peer[0] in self.peers
 
-"""
-  Callback for certificate verification
-"""
 def verify_cb(conn, cert, errnum, depth, ok):
+  """Callback for certificate verification"""
   logging.debug("%s Got certificate: %s" % (conn, cert.get_subject()))
   return ok
 
-"""
-  An extension of TcpServer adding:
-  
-  * Threading (mix-in)
-  * Whitelisting (mix-in + server_bind)
-  * FQDN/Hostname extraction (mix-in + verify_request)
-  * Contains lists of proxy agents and application sockets
-  * TLS, optional TLS socket wrapping:
-      - enabling: tls_conf = {key='path', cert='path'}
-      - disabling: tls_conf = None  
-"""
 class MiGTCPServer(Whitelist,
                   SocketServer.ThreadingMixIn,
                   SocketServer.TCPServer):
+  """An extension of TcpServer adding:
+  
+    * Threading (mix-in)
+    * Whitelisting (mix-in + server_bind)
+    * FQDN/Hostname extraction (mix-in + verify_request)
+    * Contains lists of proxy agents and application sockets
+    * TLS, optional TLS socket wrapping:
+      - enabling: tls_conf = {key='path', cert='path'}
+      - disabling: tls_conf = None
+  """
   
   count = 0
   
@@ -92,10 +87,8 @@ class MiGTCPServer(Whitelist,
   
   allow_reuse_address = 1 # Mostly for testing purposes
   
-  """
-    Constructor overwritten to initialize TLS
-  """
   def __init__(self, server_address, RequestHandlerClass, tls_conf=None):
+    """Constructor overwritten to initialize TLS"""
     SocketServer.BaseServer.__init__(self, server_address, RequestHandlerClass)
     
     self.tls_conf = tls_conf
@@ -114,22 +107,19 @@ class MiGTCPServer(Whitelist,
     self.server_bind()
     self.server_activate()    
   
-  """
-   verify_request,
-  
-   Extended to provide whitelisting features,
-  """
   def verify_request(self, request, client_address):
+    """verify_request,
+      Extended to provide whitelisting features.
+    """
     #return self.peerAllowed(client_address)
     return True
   
-  """
-   server_bind,
-  
-   Extended for hostname extraction, hostname is used in http servers,
-   vnc servers and many others, so it is conveniently added in this generic class.
-  """
   def server_bind(self):
+    """server_bind,
+      
+      Extended for hostname extraction, hostname is used in http servers,
+      vnc servers and many others, so it is conveniently added in this generic class.
+    """
     SocketServer.TCPServer.server_bind(self)
     host, port = self.socket.getsockname()[:2]
     
