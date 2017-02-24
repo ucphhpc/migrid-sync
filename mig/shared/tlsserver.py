@@ -58,13 +58,14 @@ def hardened_ssl_kwargs(logger):
                   (ssl_version, any_ssl_or_tls))
     return ssl_kwargs
 
-def harden_ssl_options(sock, logger, ssl_options=None):
+def harden_ssl_options(sock, logger, ssl_options=None, dhparamsfile=None):
     """Python 2.7 SSL/TLS wrapped sockets can be further hardened after
     the call to ssl.wrap_socket.
     We use this helper to tighten the context where possible. In practice that
     is a matter of disabling old SSL protocols and compression in addition to
     enforcing server cipher order precedence in line with testssl.sh
     recommendations.
+    Optionally enable dhparams helper to allow DHE-* ciphers.
     """
 
     # Futher harden connection options if python is recent enough (2.7+)
@@ -82,7 +83,14 @@ def harden_ssl_options(sock, logger, ssl_options=None):
     else:
         logger.info("can't enforce strong SSL/TLS options")
         logger.warning("Upgrade to python 2.7.9+ for maximum security")
-    # TODO: add dhparamsfile support here, too?
+    if dhparamsfile:
+        try:
+            ssl_ctx.load_tmp_dh(dhparamsfile)
+        except Exception, exc:
+            logger.warning("Could not load optional dhparams from %s" % \
+                            dhparamsfile)
+            logger.info("""You can create a suitable dhparams file with:
+openssl dhparam 2048 -out %s""" % dhparamsfile)
     return sock
 
 def hardened_ssl_context(configuration, OpenSSL, keyfile, certfile,

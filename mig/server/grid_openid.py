@@ -643,13 +643,16 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def writeUserHeader(self):
         """Response helper"""
+        # NOTE: we added secure and httponly flags as suggested by OpenVAS
         if self.user is None:
             t1970 = time.gmtime(0)
             expires = time.strftime(
                 'Expires=%a, %d-%b-%y %H:%M:%S GMT', t1970)
-            self.send_header('Set-Cookie', 'user=;%s' % expires)
+            self.send_header('Set-Cookie', 'user=;%s;secure;httponly' % \
+                             expires)
         else:
-            self.send_header('Set-Cookie', 'user=%s' % self.user)
+            self.send_header('Set-Cookie', 'user=%s;secure;httponly' % \
+                             self.user)
 
     def showAboutPage(self):
         """About page provider"""
@@ -1139,6 +1142,7 @@ def start_service(configuration):
         # Use best possible SSL/TLS args for this python version
         ssl_kwargs = hardened_ssl_kwargs(logger)
         cert_path = configuration.user_openid_key
+        dhparams_path = configuration.user_shared_dhparams
         if not os.path.isfile(cert_path):
             logger.error('No such server key: %s' % cert_path)
             sys.exit(1)
@@ -1148,7 +1152,8 @@ def start_service(configuration):
                                             server_side=True,
                                             **(ssl_kwargs))
         # Futher harden connections if python is recent enough
-        harden_ssl_options(httpserver.socket, logger)
+        harden_ssl_options(httpserver.socket, logger,
+                           dhparamsfile=dhparams_path)
         
     print 'Server running at:'
     print httpserver.base_url

@@ -201,7 +201,9 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
 
         # TODO: this tuning does not seem to take effect, unlike in openid!
         # Futher harden connections if python is recent enough
-        harden_ssl_options(ssl_sock, logger, self.options)
+        dhparams_path = configuration.user_shared_dhparams
+        harden_ssl_options(ssl_sock, logger, self.options,
+                           dhparamsfile=dhparams_path)
         ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
         logger.info("wrapped sock: %s" % ssl_sock)
         return ssl_sock, ssl_env
