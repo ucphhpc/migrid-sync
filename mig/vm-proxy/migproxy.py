@@ -28,15 +28,29 @@
 # --- END_HEADER ---
 #
 
-# This Python file uses the following encoding: utf-8
-import time, logging, sys, threading, os, socket, ConfigParser
 
+import logging
+import os
+import sys
+import threading
+import time
+import ConfigParser
 from SimpleHTTPServer import SimpleHTTPRequestHandler
+
+try:
+    import OpenSSL
+except ImportError:
+    print "WARNING: the python OpenSSL module is required for vm-proxy"
+    OpenSSL = None
+
+# TODO: switch from private tls conf to this general conf
+#from shared.conf import get_configuration_object
+
+import daemon
 from migtcpserver import MiGTCPServer
 from proxyagenthandler import ProxyAgentHandler
 from proxyclienthandler import ProxyClientHandler
 
-import daemon
 
 class Proxy(daemon.Daemon):
   

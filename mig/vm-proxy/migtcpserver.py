@@ -34,9 +34,15 @@ import threading
 import time
 import SocketServer
 
-from OpenSSL import SSL
+try:
+    import OpenSSL
+except ImportError:
+    print "WARNING: the python OpenSSL module is required for vm-proxy"
+    OpenSSL = None
 
-from shared.tlsserver import STRONG_CIPHERS
+from shared.conf import get_configuration_object
+from shared.tlsserver import hardened_ssl_context
+
 """
  Whitelisting mixin request are only allowed from the list of peers.
 """
@@ -93,19 +99,15 @@ class MiGTCPServer(Whitelist,
     SocketServer.BaseServer.__init__(self, server_address, RequestHandlerClass)
     
     self.tls_conf = tls_conf
-    
-    if (tls_conf !=None):
-      ctx = SSL.Context(SSL.SSLv23_METHOD)
-      ctx.set_options(SSL.OP_NO_SSLv2|SSL.OP_NO_SSLv3)
-      ctx.set_verify(SSL.VERIFY_NONE, verify_cb)
-      cur_dir = os.curdir
-      ctx.use_privatekey_file (os.path.join(cur_dir, tls_conf['key']))
-      ctx.use_certificate_file(os.path.join(cur_dir, tls_conf['cert']))
-      ctx.set_cipher_list(STRONG_CIPHERS)
-  
-      self.socket = SSL.Connection(ctx,
-                                   socket.socket(self.address_family,
-                                                 self.socket_type))
+    configuration = get_configuration_object()
+    if configuration.user_vmproxy_key:
+      keyfile = certfile = configuration.user_vmproxy_key
+      dhparamsfile = configuration.user_shared_dhparams
+      ssl_ctx = hardened_ssl_context(configuration, OpenSSL, keyfile, certfile,
+                                     dhparamsfile=dhparamsfile)
+      self.socket = OpenSSL.SSL.Connection(ssl_ctx,
+                                           socket.socket(self.address_family,
+                                                         self.socket_type))
     else:
       self.socket = socket.socket(self.address_family, self.socket_type)
       

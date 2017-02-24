@@ -40,12 +40,19 @@ import SocketServer
 from struct import unpack, pack
 from threading import Thread
 
-from OpenSSL import SSL
+try:
+    import OpenSSL
+except ImportError:
+    print "WARNING: the python OpenSSL module is required for vm-proxy"
+    OpenSSL = None
+
 
 import daemon
 import mip
 from plumber import *
-from shared.tlsserver import STRONG_CIPHERS
+
+from shared.conf import get_configuration_object
+from shared.tlsserver import hardened_ssl_context
 
 
 class ProxyAgent(daemon.Daemon):
@@ -151,6 +158,8 @@ class ProxyAgent(daemon.Daemon):
   """
   def handshake(self, host, port, identity, tls=True):
     
+    configuration = get_configuration_object()
+    
     self.handshake_count += 1
     logging.debug(" Handshake count = %d" % self.handshake_count)
     
@@ -160,19 +169,14 @@ class ProxyAgent(daemon.Daemon):
     if cur_dir == '':
         cur_dir = os.curdir
     
-    if tls:
-      
-      # Initialize context
-      ctx = SSL.Context(SSL.SSLv23_METHOD)
-      ctx.set_verify(SSL.VERIFY_NONE, self.verify_cb)
-      ctx.use_privatekey_file (os.path.join(cur_dir, 'certs/client.pkey'))
-      ctx.use_certificate_file(os.path.join(cur_dir, 'certs/client.cert'))
-      ctx.load_verify_locations(os.path.join(cur_dir, 'certs/CA.cert'))
-      ctx.set_cipher_list(STRONG_CIPHERS)
-      
-      # Set up client
+    if configuration.user_vmproxy_key:
+      keyfile = certfile = configuration.user_vmproxy_key
+      dhparamsfile = configuration.user_shared_dhparams
+      ssl_ctx = hardened_ssl_context(configuration, OpenSSL, keyfile, certfile,
+                                     dhparamsfile=dhparamsfile)
       logging.debug(' Socket: TLS wrapped! %s')
-      self.control_socket = SSL.Connection(ctx, socket.socket(socket.AF_INET, socket.SOCK_STREAM))      
+      self.control_socket = OpenSSL.SSL.Connection(
+          ssl_ctx, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
       
     else:
       logging.debug(' Socket: plain! %s')
@@ -187,6 +191,8 @@ class ProxyAgent(daemon.Daemon):
    Set's up a new tunnel between local endpoint and proxy server
   """
   def handle_setup_request(self, ticket, proxy_host, proxy_port, machine_host, machine_port, tls=True):
+
+      configuration = get_configuration_object()
     
     self.setup_count += 1
     logging.debug(" Setup request count = %d" % self.setup_count)
@@ -214,17 +220,14 @@ class ProxyAgent(daemon.Daemon):
     if endPointConnected:
       try:
         
-        if tls:
-          # Initialize context
-          ctx = SSL.Context(SSL.SSLv23_METHOD)
-          ctx.set_verify(SSL.VERIFY_NONE, self.verify_cb) # Demand a certificate
-          ctx.use_privatekey_file (os.path.join(cur_dir, 'certs/client.pkey'))
-          ctx.use_certificate_file(os.path.join(cur_dir, 'certs/client.cert'))
-          ctx.load_verify_locations(os.path.join(cur_dir, 'certs/CA.cert'))
-          ctx.set_cipher_list(STRONG_CIPHERS)
-          
+        if configuration.user_vmproxy_key:
+          keyfile = certfile = configuration.user_vmproxy_key
+          dhparamsfile = configuration.user_shared_dhparams
+          ssl_ctx = hardened_ssl_context(configuration, OpenSSL, keyfile,
+                                         certfile, dhparamsfile=dhparamsfile)
           logging.debug(' Socket: TLS wrapped! %s')
-          proxy_socket = SSL.Connection(ctx, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+          proxy_socket = OpenSSL.SSL.Connection(
+              ssl_ctx, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
         else:
           logging.debug(' Socket: plain! %s')
           proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
