@@ -156,18 +156,18 @@ class ProxyAgent(daemon.Daemon):
     
     handshakeMessage = mip.handshake(1, identity)
     
-    dir = os.path.dirname(sys.argv[0])
-    if dir == '':
-        dir = os.curdir
+    cur_dir = os.path.dirname(sys.argv[0])
+    if cur_dir == '':
+        cur_dir = os.curdir
     
     if tls:
       
       # Initialize context
       ctx = SSL.Context(SSL.SSLv23_METHOD)
       ctx.set_verify(SSL.VERIFY_NONE, self.verify_cb)
-      ctx.use_privatekey_file (os.path.join(dir, 'certs/client.pkey'))
-      ctx.use_certificate_file(os.path.join(dir, 'certs/client.cert'))
-      ctx.load_verify_locations(os.path.join(dir, 'certs/CA.cert'))
+      ctx.use_privatekey_file (os.path.join(cur_dir, 'certs/client.pkey'))
+      ctx.use_certificate_file(os.path.join(cur_dir, 'certs/client.cert'))
+      ctx.load_verify_locations(os.path.join(cur_dir, 'certs/CA.cert'))
       ctx.set_cipher_list(STRONG_CIPHERS)
       
       # Set up client
@@ -194,9 +194,9 @@ class ProxyAgent(daemon.Daemon):
     logging.debug('Performing setup (ticket:%s, phost:%s, pport:%s,\n  mhost:%s,mport:%s)' % (ticket, proxy_host, proxy_port, machine_host, machine_port))
     
     # Connect to proxy
-    dir = os.path.dirname(sys.argv[0])
-    if dir == '':
-        dir = os.curdir
+    cur_dir = os.path.dirname(sys.argv[0])
+    if cur_dir == '':
+        cur_dir = os.curdir
     
     proxyConnected    = False
     endPointConnected = False
@@ -218,9 +218,9 @@ class ProxyAgent(daemon.Daemon):
           # Initialize context
           ctx = SSL.Context(SSL.SSLv23_METHOD)
           ctx.set_verify(SSL.VERIFY_NONE, self.verify_cb) # Demand a certificate
-          ctx.use_privatekey_file (os.path.join(dir, 'certs/client.pkey'))
-          ctx.use_certificate_file(os.path.join(dir, 'certs/client.cert'))
-          ctx.load_verify_locations(os.path.join(dir, 'certs/CA.cert'))
+          ctx.use_privatekey_file (os.path.join(cur_dir, 'certs/client.pkey'))
+          ctx.use_certificate_file(os.path.join(cur_dir, 'certs/client.cert'))
+          ctx.load_verify_locations(os.path.join(cur_dir, 'certs/CA.cert'))
           ctx.set_cipher_list(STRONG_CIPHERS)
           
           logging.debug(' Socket: TLS wrapped! %s')

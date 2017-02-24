@@ -98,9 +98,9 @@ class MiGTCPServer(Whitelist,
       ctx = SSL.Context(SSL.SSLv23_METHOD)
       ctx.set_options(SSL.OP_NO_SSLv2|SSL.OP_NO_SSLv3)
       ctx.set_verify(SSL.VERIFY_NONE, verify_cb)
-      dir = os.curdir
-      ctx.use_privatekey_file (os.path.join(dir, tls_conf['key']))
-      ctx.use_certificate_file(os.path.join(dir, tls_conf['cert']))
+      cur_dir = os.curdir
+      ctx.use_privatekey_file (os.path.join(cur_dir, tls_conf['key']))
+      ctx.use_certificate_file(os.path.join(cur_dir, tls_conf['cert']))
       ctx.set_cipher_list(STRONG_CIPHERS)
   
       self.socket = SSL.Connection(ctx,
