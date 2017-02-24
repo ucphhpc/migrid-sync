@@ -34,14 +34,18 @@ import sys
 import threading
 import time
 
-from OpenSSL import SSL
+try:
+    import OpenSSL
+except ImportError:
+    print 'WARNING: the python OpenSSL module is required for vm-proxy'
+    OpenSSL = None
 
 
 class Plumber:
     """Plumber, select only plumber
   
     A primitive for tunneling traffic between two sockets. If sockets where called
-    pipes then you get why I named it "Plumber".
+    pipes then you get why I named it 'Plumber'.
     
     - The sockets are changed to non-blocking mode upon Plumber Construction
     - The sockets sockets must be connected when instanciating the Plumber
@@ -123,12 +127,12 @@ class Plumber:
                                 data = \
                                     input_socket.recv(self.buffer_size)
                                 self.sink.send(data)
-            except SSL.WantWriteError:
+            except OpenSSL.SSL.WantWriteError:
 
         # logging.exception('%s PLUMBER: Unexpected error: %s' % (self, sys.exc_info()[2]))
 
                 pass
-            except SSL.WantReadError:
+            except OpenSSL.SSL.WantReadError:
 
         # logging.exception('%s PLUMBER: Unexpected error: %s' % (self, sys.exc_info()[2]))
 
@@ -152,7 +156,7 @@ class PlumberTS:
     """PlumberTS, threading and select
     
     A primitive for tunneling traffic between two sockets. If sockets where called
-    pipes then you get why I named it "Plumber".
+    pipes then you get why I named it 'Plumber'.
     
     - The sockets are changed to BLOCKING mode upon Plumber Construction
     - The sockets sockets must be connected when instanciating the Plumber
@@ -231,7 +235,7 @@ class PlumberTO:
     """PlumberTO, threading
   
     A primitive for tunneling traffic between two sockets. If sockets where called
-    pipes then you get why I named it "Plumber".
+    pipes then you get why I named it 'Plumber'.
     
     - The sockets are changed to BLOCKING mode upon Plumber Construction
     - The sockets sockets must be connected when instanciating the Plumber
