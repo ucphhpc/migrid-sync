@@ -49,7 +49,7 @@ except ImportError:
 
 import daemon
 import mip
-from plumber import *
+from plumber import PlumberTS
 
 from shared.conf import get_configuration_object
 from shared.tlsserver import hardened_ssl_context
@@ -64,20 +64,19 @@ class ProxyAgent(daemon.Daemon):
     control_socket = None  # Life-line to the proxy
     connections = []  # List of connections to close and cleanup gracefully
     buffer_size = 4096  # Must be "mod 2", 4096 might be too big for some...
-
-                          # but it is much faster if it's supported
+                        # but it is much faster if it's supported
 
     retry_count = -1  # Retry forever: retry_count = -1
     retry_timeout = 60  # Seconds to wait before trying to retry
 
-  # Debug variables
+    # Debug variables
 
     handshake_count = 0
     setup_count = 0
 
     def run(self):
 
-    # Load configuration from file
+        # Load configuration from file
 
         cp = ConfigParser.ConfigParser()
         cp.read([self.default_conf])
@@ -112,12 +111,12 @@ class ProxyAgent(daemon.Daemon):
             self.ca,
             )
 
-    # Now connect
+        # Now connect
 
         self.connect(self.proxy_host, self.proxy_port, self.identifier,
                      self.key and self.cert and self.ca)
 
-  # Helper for ssl
+    # Helper for ssl
 
     def verify_cb(
         self,
@@ -146,11 +145,11 @@ class ProxyAgent(daemon.Daemon):
             initial_retry -= 1
             try:
 
-        # Connect to proxy and identify
+                # Connect to proxy and identify
 
                 self.handshake(host, port, identity)
 
-        # Handle Setup request forever
+                # Handle Setup request forever
 
                 while 1:
 
@@ -210,9 +209,9 @@ class ProxyAgent(daemon.Daemon):
         ):
         """handshake,
       
-      Identify proxy agent to proxy server
-      TODO: catch those exceptions and add return error code...
-    """
+        Identify proxy agent to proxy server
+        TODO: catch those exceptions and add return error code...
+        """
 
         configuration = get_configuration_object()
 
@@ -228,8 +227,9 @@ class ProxyAgent(daemon.Daemon):
         if configuration.user_vmproxy_key:
             keyfile = certfile = configuration.user_vmproxy_key
             dhparamsfile = configuration.user_shared_dhparams
-            ssl_ctx = hardened_ssl_context(configuration, OpenSSL,
-                    keyfile, certfile, dhparamsfile=dhparamsfile)
+            ssl_ctx = hardened_ssl_context(configuration, OpenSSL, keyfile,
+                                               certfile,
+                                               dhparamsfile=dhparamsfile)
             logging.debug('Socket: TLS wrapped! %s')
             self.control_socket = OpenSSL.SSL.Connection(ssl_ctx,
                     socket.socket(socket.AF_INET, socket.SOCK_STREAM))
@@ -254,7 +254,7 @@ class ProxyAgent(daemon.Daemon):
         """handle_setup_request,
    
       Set's up a new tunnel between local endpoint and proxy server
-    """
+      """
 
         configuration = get_configuration_object()
 
@@ -265,7 +265,7 @@ class ProxyAgent(daemon.Daemon):
                        % (ticket, proxy_host, proxy_port, machine_host,
                       machine_port))
 
-    # Connect to proxy
+        # Connect to proxy
 
         cur_dir = os.path.dirname(sys.argv[0])
         if cur_dir == '':
@@ -274,7 +274,7 @@ class ProxyAgent(daemon.Daemon):
         proxyConnected = False
         endPointConnected = False
 
-    # Connect to endpoint
+        # Connect to endpoint
 
         try:
             endpoint = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -284,7 +284,7 @@ class ProxyAgent(daemon.Daemon):
         except:
             logging.debug('Socket error when contacting endpoint.')
 
-    # Connect to proxy and prepend setup response
+            # Connect to proxy and prepend setup response
 
         if endPointConnected:
             try:
@@ -292,9 +292,9 @@ class ProxyAgent(daemon.Daemon):
                 if configuration.user_vmproxy_key:
                     keyfile = certfile = configuration.user_vmproxy_key
                     dhparamsfile = configuration.user_shared_dhparams
-                    ssl_ctx = hardened_ssl_context(configuration,
-                            OpenSSL, keyfile, certfile,
-                            dhparamsfile=dhparamsfile)
+                    ssl_ctx = hardened_ssl_context(configuration, OpenSSL,
+                                                       keyfile, certfile,
+                                                       dhparamsfile=dhparamsfile)
                     logging.debug('Socket: TLS wrapped! %s')
                     proxy_socket = OpenSSL.SSL.Connection(ssl_ctx,
                             socket.socket(socket.AF_INET,
@@ -311,31 +311,31 @@ class ProxyAgent(daemon.Daemon):
                 logging.exception('Socket error when contacting proxy. %s %d'
                                    % (proxy_host, proxy_port))
 
-    # Send status to the connection handler in proxy
+        # Send status to the connection handler in proxy
 
         if proxyConnected:
             proxy_socket.sendall(mip.setup_response(ticket,
                                  int(endPointConnected
                                  and proxyConnected)))
 
-    # Send status back over control line to proxy
+        # Send status back over control line to proxy
 
         self.control_socket.sendall(mip.setup_response(ticket,
                                     int(endPointConnected
                                     and proxyConnected)))
 
-    # Setup tunnel between proxy and endpoint
+        # Setup tunnel between proxy and endpoint
 
         if proxyConnected and endPointConnected:
 
-      # Add connections to list so they can be shut down gracefully
+            # Add connections to list so they can be shut down gracefully
 
             self.connections.append(endpoint)
             self.connections.append(proxy_socket)
             mario = PlumberTS(endpoint, proxy_socket, self.buffer_size,
                               True)
 
-      # mario = Plumber(endpoint, ss, 1024, True)
+            # mario = Plumber(endpoint, ss, 1024, True)
 
             logging.debug('Setup done!')
         else:
@@ -346,11 +346,7 @@ class ProxyAgent(daemon.Daemon):
 
 
 if __name__ == '__main__':
-
     try:
         ProxyAgent().main()
     except:
         logging.exception('Unexpected error: %s' % sys.exc_info()[2])
-else:
-
-    pass
