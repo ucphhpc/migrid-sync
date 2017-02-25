@@ -52,7 +52,7 @@ import mip
 from plumber import PlumberTS
 
 from shared.conf import get_configuration_object
-from shared.tlsserver import hardened_ssl_context
+from shared.tlsserver import hardened_openssl_context
 
 
 class ProxyAgent(daemon.Daemon):
@@ -227,7 +227,7 @@ class ProxyAgent(daemon.Daemon):
         if configuration.user_vmproxy_key:
             keyfile = certfile = configuration.user_vmproxy_key
             dhparamsfile = configuration.user_shared_dhparams
-            ssl_ctx = hardened_ssl_context(configuration, OpenSSL, keyfile,
+            ssl_ctx = hardened_openssl_context(configuration, OpenSSL, keyfile,
                                                certfile,
                                                dhparamsfile=dhparamsfile)
             logging.debug('Socket: TLS wrapped! %s')
@@ -292,7 +292,7 @@ class ProxyAgent(daemon.Daemon):
                 if configuration.user_vmproxy_key:
                     keyfile = certfile = configuration.user_vmproxy_key
                     dhparamsfile = configuration.user_shared_dhparams
-                    ssl_ctx = hardened_ssl_context(configuration, OpenSSL,
+                    ssl_ctx = hardened_openssl_context(configuration, OpenSSL,
                                                        keyfile, certfile,
                                                        dhparamsfile=dhparamsfile)
                     logging.debug('Socket: TLS wrapped! %s')

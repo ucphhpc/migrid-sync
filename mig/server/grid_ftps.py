@@ -96,7 +96,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, refresh_share_creds, update_login_map, \
      login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
      penalize_rate_limit
-from shared.tlsserver import hardened_ssl_context
+from shared.tlsserver import hardened_openssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 
@@ -343,8 +343,9 @@ def start_service(conf):
         # Harden TLS/SSL if possible, requires recent pyftpdlib
         if hasattr(handler, 'ssl_context'):
             dhparamsfile = configuration.user_shared_dhparams
-            ssl_ctx = hardened_ssl_context(conf, OpenSSL, keyfile, certfile,
-                                           dhparamsfile=dhparamsfile)
+            ssl_ctx = hardened_openssl_context(conf, OpenSSL, keyfile,
+                                               certfile,
+                                               dhparamsfile=dhparamsfile)
             handler.ssl_context = ssl_ctx
         else:
             logger.warning("Unable to enforce explicit strong TLS connections")

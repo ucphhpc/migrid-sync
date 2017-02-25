@@ -42,7 +42,7 @@ except ImportError:
     OpenSSL = None
 
 from shared.conf import get_configuration_object
-from shared.tlsserver import hardened_ssl_context
+from shared.tlsserver import hardened_openssl_context
 
 
 class Whitelist:
@@ -115,8 +115,9 @@ class MiGTCPServer(Whitelist, SocketServer.ThreadingMixIn,
         if configuration.user_vmproxy_key:
             keyfile = certfile = configuration.user_vmproxy_key
             dhparamsfile = configuration.user_shared_dhparams
-            ssl_ctx = hardened_ssl_context(configuration, OpenSSL,
-                    keyfile, certfile, dhparamsfile=dhparamsfile)
+            ssl_ctx = hardened_openssl_context(configuration, OpenSSL, keyfile,
+                                               certfile,
+                                               dhparamsfile=dhparamsfile)
             self.socket = OpenSSL.SSL.Connection(ssl_ctx,
                     socket.socket(self.address_family,
                     self.socket_type))

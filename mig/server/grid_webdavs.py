@@ -66,7 +66,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, refresh_share_creds, update_login_map, \
      login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
      penalize_rate_limit, add_user_object
-from shared.tlsserver import hardened_ssl_kwargs, harden_ssl_options
+from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
@@ -149,24 +149,10 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
     certificate = None
     private_key = None
 
-    # private args
-    ssl_kwargs = {}
-    options = None
-
-    def __init__(self, certificate, private_key, certificate_chain=None,
-                 ssl_version=None, ciphers=None, options=None):
+    def __init__(self, certificate, private_key, certificate_chain=None):
         """Save ssl_version and ciphers for use in wrap method"""
         BuiltinSSLAdapter.__init__(self, certificate, private_key,
                                    certificate_chain)
-
-        # Use best possible SSL/TLS args for this python version
-        self.ssl_kwargs = hardened_ssl_kwargs(logger)
-        if ssl_version is not None:
-            self.ssl_kwargs['ssl_version'] = ssl_version
-        if ciphers is not None:
-            self.ssl_kwargs['ciphers'] = ciphers
-        if options is not None:
-            self.options = options
 
     def wrap(self, sock):
         """Wrap and return the given socket, plus WSGI environ entries.
@@ -175,13 +161,11 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         Limits protocols and disables compression for modern python versions.
         """
         try:
-            logger.debug("Wrapping socket in SSL/TLS with args: %s" % \
-                         self.ssl_kwargs)
-            ssl_sock = ssl.wrap_socket(sock, do_handshake_on_connect=True,
-                                       server_side=True,
-                                       certfile=self.certificate,
-                                       keyfile=self.private_key,
-                                       **(self.ssl_kwargs))
+            logger.debug("Wrapping socket in SSL/TLS")
+            dhparams = configuration.user_shared_dhparams
+            ssl_ctx = hardened_ssl_context(configuration, self.private_key,
+                                           self.certificate, dhparams)
+            ssl_sock = ssl_ctx.wrap_socket(sock, server_side=True)
         except ssl.SSLError:
             exc = sys.exc_info()[1]
             if exc.errno == ssl.SSL_ERROR_EOF:
@@ -199,11 +183,6 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     return None, {}
             raise
 
-        # TODO: this tuning does not seem to take effect, unlike in openid!
-        # Futher harden connections if python is recent enough
-        dhparams_path = configuration.user_shared_dhparams
-        harden_ssl_options(ssl_sock, logger, self.options,
-                           dhparamsfile=dhparams_path)
         ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
         logger.info("wrapped sock: %s" % ssl_sock)
         return ssl_sock, ssl_env
