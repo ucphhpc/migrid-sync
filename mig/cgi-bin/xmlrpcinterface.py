@@ -448,10 +448,22 @@ def cleanfe(user_arguments_dict):
     return stub('shared.functionality.cleanfe', user_arguments_dict)
 
 
+def restartallexes(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.restartallexes', user_arguments_dict)
+
+
 def restartexe(user_arguments_dict):
     """Wrap backend of same name"""
 
     return stub('shared.functionality.restartexe', user_arguments_dict)
+
+
+def startallexes(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.startallexes', user_arguments_dict)
 
 
 def startexe(user_arguments_dict):
@@ -460,10 +472,22 @@ def startexe(user_arguments_dict):
     return stub('shared.functionality.startexe', user_arguments_dict)
 
 
+def statusallexes(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.statusallexes', user_arguments_dict)
+
+
 def statusexe(user_arguments_dict):
     """Wrap backend of same name"""
 
     return stub('shared.functionality.statusexe', user_arguments_dict)
+
+
+def stopallexes(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.stopallexes', user_arguments_dict)
 
 
 def stopexe(user_arguments_dict):
@@ -472,10 +496,76 @@ def stopexe(user_arguments_dict):
     return stub('shared.functionality.stopexe', user_arguments_dict)
 
 
+def cleanallexes(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.cleanallexes', user_arguments_dict)
+
+
 def cleanexe(user_arguments_dict):
     """Wrap backend of same name"""
 
     return stub('shared.functionality.cleanexe', user_arguments_dict)
+
+
+def restartallstores(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.restartallstores', user_arguments_dict)
+
+
+def restartstore(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.restartstore', user_arguments_dict)
+
+
+def startallstores(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.startallstores', user_arguments_dict)
+
+
+def startstore(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.startstore', user_arguments_dict)
+
+
+def statusallstores(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.statusallstores', user_arguments_dict)
+
+
+def statusstore(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.statusstore', user_arguments_dict)
+
+
+def stopallstores(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.stopallstores', user_arguments_dict)
+
+
+def stopstore(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.stopstore', user_arguments_dict)
+
+
+def cleanallstores(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.cleanallstores', user_arguments_dict)
+
+
+def cleanstore(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.cleanstore', user_arguments_dict)
 
 
 def vgridmemberrequest(user_arguments_dict):
@@ -778,11 +868,26 @@ if '__main__' == __name__:
     server.register_function(statusfe)
     server.register_function(stopfe)
     server.register_function(cleanfe)
+    server.register_function(restartallexes)
     server.register_function(restartexe)
+    server.register_function(startallexes)
     server.register_function(startexe)
+    server.register_function(statusallexes)
     server.register_function(statusexe)
+    server.register_function(stopallexes)
     server.register_function(stopexe)
+    server.register_function(cleanallexes)
     server.register_function(cleanexe)
+    server.register_function(restartallstores)
+    server.register_function(restartstore)
+    server.register_function(startallstores)
+    server.register_function(startstore)
+    server.register_function(statusallstores)
+    server.register_function(statusstore)
+    server.register_function(stopallstores)
+    server.register_function(stopstore)
+    server.register_function(cleanallstores)
+    server.register_function(cleanstore)
     server.register_function(vgridmemberrequest)
     server.register_function(vgridmemberrequestaction)
     server.register_function(createvgrid)
