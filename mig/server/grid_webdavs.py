@@ -154,18 +154,30 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         BuiltinSSLAdapter.__init__(self, certificate, private_key,
                                    certificate_chain)
 
+    def __force_close(self, socket_list):
+        """Force close each socket in socket_list ignoring any errors"""
+        for clean_sock in socket_list:
+            if clean_sock is None:
+                continue
+            try:
+                clean_sock.close()
+            except Exception, exc:
+                pass
+        
     def wrap(self, sock):
         """Wrap and return the given socket, plus WSGI environ entries.
         Extended to pass the provided ssl_version and ciphers arguments to the
         wrap_socket call.
         Limits protocols and disables compression for modern python versions.
         """
+        _socket_list = [sock]
         try:
             logger.debug("Wrapping socket in SSL/TLS")
             dhparams = configuration.user_shared_dhparams
             ssl_ctx = hardened_ssl_context(configuration, self.private_key,
                                            self.certificate, dhparams)
             ssl_sock = ssl_ctx.wrap_socket(sock, server_side=True)
+            _socket_list.append(ssl_sock)
         except ssl.SSLError:
             exc = sys.exc_info()[1]
             if exc.errno == ssl.SSL_ERROR_EOF:
@@ -181,8 +193,12 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     # The client is speaking some non-HTTP protocol.
                     # Drop the conn.
                     return None, {}
-            raise
-
+                else:
+                    # Usually when a client tries to speak e.g. banned SSLv2.
+                    # We force-close such sockets to avoid testssl.sh hanging.
+                    logger.warning("wrap failed, closing socket(s): %s" % exc)
+                    self.__force_close(_socket_list)
+            raise exc
         ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
         logger.info("wrapped sock: %s" % ssl_sock)
         return ssl_sock, ssl_env
