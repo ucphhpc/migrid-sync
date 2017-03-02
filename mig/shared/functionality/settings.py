@@ -33,14 +33,15 @@ import shared.returnvalues as returnvalues
 from shared.base import client_alias, client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions, \
-     seafile_ro_dirname, csrf_field
+     seafile_ro_dirname, duplicati_conf_dir, csrf_field
+from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, console_log_javascript
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
-     load_ssh, load_davs, load_ftps, load_seafile
+     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati
 from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
@@ -67,6 +68,8 @@ widgets_edit = cm_options.copy()
 widgets_edit['mode'] = 'htmlmixed'
 profile_edit = cm_options.copy()
 profile_edit['mode'] = 'htmlmixed'
+duplicati_edit = cm_options.copy()
+duplicati_edit['mode'] = 'htmlmixed'
 
 def signature():
     """Signature of the main function"""
@@ -155,6 +158,8 @@ $(document).ready(function() {
         valid_topics.append('ftps')
     if configuration.site_enable_seafile:
         valid_topics.append('seafile')
+    if configuration.site_enable_duplicati:
+        valid_topics.append('duplicati')
     topics = accepted['topic']
     # Backwards compatibility
     if topics and topics[0] == 'ssh':
@@ -165,7 +170,9 @@ $(document).ready(function() {
         topics.append(valid_topics[0])
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
-                       ('ftps', 'FTPS'), ('seafile', 'Seafile')]:
+                       ('ftps', 'FTPS'), ('seafile', 'Seafile'),
+                       ('duplicati', 'Duplicati')
+                       ]:
         if key in valid_topics:
             topic_titles[key] = val
     output_objects.append({'object_type': 'header', 'text'
@@ -1395,6 +1402,179 @@ value="%(default_authpassword)s" />
             'seafile_url': configuration.user_seafile_url,
             'auth_methods': ' / '.join(configuration.user_seafile_auth).title(),
             'ro': 'readonly=readonly',
+            'size': 'size=50',
+            })
+        output_objects.append({'object_type': 'html_form', 'text':
+        html % fill_helpers})
+
+
+    if 'duplicati' in topics:
+
+        # load current duplicati
+
+        current_duplicati_dict = load_duplicati(client_id, configuration)
+        if not current_duplicati_dict:
+            
+            # no current duplicati found
+            
+            current_duplicati_dict = {}
+                
+        configuration.protocol = []
+        prefer_proto = "davs"
+        if configuration.user_duplicati_protocol:
+            prefer_proto = configuration.user_duplicati_protocol
+        configuration.protocol.append(prefer_proto)
+        enabled_protos = [('ftps', configuration.site_enable_ftps),
+                          ('sftp', configuration.site_enable_sftp),
+                          ('davs', configuration.site_enable_davs)]
+        for (proto, enabled) in enabled_protos:
+            if enabled and not proto in configuration.protocol:
+                configuration.protocol.append(proto)
+
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
+<div id="duplicatiaccess">
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+<input type="hidden" name="topic" value="duplicati" />
+<table class="duplicatisettings fixedlayout">
+<tr class="title"><td class="centertext">
+Duplicati Backup to %(site)s
+</td></tr>
+<tr><td>
+You can install the <a href="https://www.duplicati.com">Duplicati</a> client on
+your local machine and use it to backup arbitrary data to %(site)s.<br/>
+<h3>Configure Backup Sets</h3>
+You can define the backup sets here and then afterwards just download and
+import the configuration file in your Duplicati client, to set up everything
+for %(site)s use.
+</td></tr>
+<tr><td>
+'''
+
+        duplicati_entries = get_duplicati_specs()
+        for (keyword, val) in duplicati_entries:
+            html += """
+            <tr class='title'><td>
+            %s
+            </td></tr>
+            <tr><td>
+            %s
+            </td></tr>
+            <tr><td>
+            """ % (keyword.replace('_', ' ').title(), val['Description'])
+
+            if val['Type'] == 'multiplestrings':
+                try:
+
+                    # get valid choices from conf. multiple selections
+
+                    valid_choices = eval('configuration.%s' % keyword.lower())
+                    current_choice = []
+                    if current_duplicati_dict.has_key(keyword):
+                        current_choice = current_duplicati_dict[keyword]
+
+                    if len(valid_choices) > 0:
+                        html += '<div class="scrollselect">'
+                        for choice in valid_choices:
+                            selected = ''
+                            if choice in current_choice:
+                                selected = 'checked'
+                            html += '''
+                <input type="checkbox" name="%s" %s value="%s">%s<br />''' % \
+                            (keyword, selected, choice, choice)
+                        html += '</div>'
+                except:
+                    area = \
+                         """<textarea id='%s' cols=78 rows=10 name='%s'>""" % \
+                         (keyword, keyword)
+                    if current_duplicati_dict.has_key(keyword):
+                        area += '\n'.join(current_duplicati_dict[keyword])
+                    area += '</textarea>'
+                    html += wrap_edit_area(keyword, area, duplicati_edit)
+            elif val['Type'] == 'string':
+
+                # get valid choices from conf
+
+                valid_choices = eval('configuration.%s' % keyword.lower())
+                current_choice = ''
+                if current_settings_dict.has_key(keyword):
+                    current_choice = current_settings_dict[keyword]
+
+                if len(valid_choices) > 0:
+                    html += '<select name="%s">' % keyword
+                    for choice in valid_choices:
+                        selected = ''
+                        if choice == current_choice:
+                            selected = 'selected'
+                        html += '<option %s value="%s">%s</option>'\
+                             % (selected, choice, choice)
+                    html += '</select><br />'
+                else:
+                    html += ''
+            elif val['Type'] == 'boolean':
+                valid_choices = [True, False]
+                current_choice = ''
+                if current_duplicati_dict.has_key(keyword):
+                    current_choice = current_duplicati_dict[keyword]
+
+                if len(valid_choices) > 0:
+                    html += '<select name="%s">' % keyword
+                    for choice in valid_choices:
+                        selected = ''
+                        if choice == current_choice:
+                            selected = 'selected'
+                        html += '<option %s value="%s">%s</option>'\
+                             % (selected, choice, choice)
+                    html += '</select><br />'
+
+        html += '''
+        <tr><td>
+        <input type="submit" value="Save Duplicati Settings" />
+</td></tr>
+</table>
+</form>
+<table>
+'''
+
+        html += '''
+</td></tr>
+<tr><td>
+<h3>Import Backup Sets</h3>
+Your saved %(site)s Duplicati backup settings are available for download below:
+<p>
+'''
+
+        saved_backup_sets = current_duplicati_dict.get('BACKUPS', [])
+        duplicati_confs = []
+        #duplicati_confs_path = os.path.join(base_dir, duplicati_conf_dir)
+        #if os.path.isdir(duplicati_confs_path):
+        #    for conf_name in os.listdir(duplicati_confs_path):
+        #        if conf_name in saved_backup_sets:
+        #            duplicati_confs.append(conf_name)
+        duplicati_confs += saved_backup_sets
+
+        for conf_name in duplicati_confs:
+            conf_file = "%s.cfg" % conf_name
+            html += '<a href="/cert_redirect/%s/%s">%s</a></br>' % \
+            (duplicati_conf_dir, conf_file, conf_file)
+        if not duplicati_confs:
+            html += '<em>No backup sets configured</em>'
+        
+        html += '''
+</p>
+After downloading you can import them directly in Duplicati.</br>
+</td></tr>
+</table>
+</form>
+</table>
+'''
+
+        fill_helpers.update({
+            'client_id': client_id,
             'size': 'size=50',
             })
         output_objects.append({'object_type': 'html_form', 'text':

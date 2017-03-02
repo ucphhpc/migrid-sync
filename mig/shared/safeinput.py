@@ -1181,6 +1181,7 @@ def guess_type(name):
             'execution_precondition',
             'prepend_execute',
             'minprice',
+            'backups',
             ):
             __type_map[key] = valid_plain_text
         for key in (

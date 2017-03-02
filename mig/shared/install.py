@@ -110,6 +110,7 @@ def generate_confs(
     enable_hsts='',
     enable_vhost_certs='',
     enable_seafile='False',
+    enable_duplicati='False',
     enable_imnotify='False',
     enable_dev_accounts='False',
     enable_openid='True',
@@ -178,6 +179,7 @@ def generate_confs(
     user_dict['__ENABLE_HSTS__'] = enable_hsts
     user_dict['__ENABLE_VHOST_CERTS__'] = enable_vhost_certs
     user_dict['__ENABLE_SEAFILE__'] = enable_seafile
+    user_dict['__ENABLE_DUPLICATI__'] = enable_duplicati
     user_dict['__ENABLE_IMNOTIFY__'] = enable_imnotify
     user_dict['__ENABLE_DEV_ACCOUNTS__'] = enable_dev_accounts
     user_dict['__ENABLE_OPENID__'] = enable_openid
@@ -260,6 +262,12 @@ cert, oid and sid based https!
         user_dict['__SEAFILE_COMMENTED__'] = ''
     else:
         user_dict['__SEAFILE_COMMENTED__'] = '#'
+
+    # Enable Duplicati integration only if explicitly requested
+    if user_dict['__ENABLE_DUPLICATI__'].lower() == 'true':
+        user_dict['__DUPLICATI_COMMENTED__'] = ''
+    else:
+        user_dict['__DUPLICATI_COMMENTED__'] = '#'
 
     # Enable Paraview integration only if explicitly requested
     if user_dict['__ENABLE_PREVIEW__'].lower() == 'true':
@@ -508,6 +516,7 @@ def create_user(
     enable_hsts = 'False'
     enable_vhost_certs = 'False'
     enable_seafile = 'False'
+    enable_duplicati = 'False'
     enable_imnotify = 'False'
     enable_dev_accounts = 'False'
     openid_providers = ''
@@ -589,6 +598,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_hsts,
         enable_vhost_certs,
         enable_seafile,
+        enable_duplicati,
         enable_imnotify,
         enable_dev_accounts,
         enable_openid,

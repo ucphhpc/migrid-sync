@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -142,6 +142,7 @@ def fix_missing(config_file, verbose=True):
         'user_seahub_url': '',
         'user_seafile_url': '',
         'user_seafile_auth': ['password'],
+        'user_duplicati_protocol': 'davs',
         'user_imnotify_address': '',
         'user_imnotify_port': 6667,
         'user_imnotify_channel': '',
@@ -328,6 +329,7 @@ class Configuration:
     user_seafile_url = ''
     user_seafile_auth = ['password']
     user_seafile_alias = ''
+    user_duplicati_protocol = ''
     user_openid_address = ''
     user_openid_port = 8443
     user_openid_show_address = ''
@@ -776,6 +778,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_seafile_alias'):
             self.user_seafile_alias = config.get('GLOBAL', 
                                                  'user_seafile_alias')
+        if config.has_option('GLOBAL', 'user_duplicati_protocol'):
+            self.user_duplicati_protocol = config.get('GLOBAL', 
+                                                      'user_duplicati_protocol')
         if config.has_option('GLOBAL', 'user_imnotify_address'):
             self.user_imnotify_address = config.get('GLOBAL', 
                                                     'user_imnotify_address')
@@ -1171,6 +1176,10 @@ class Configuration:
             self.site_enable_seafile = config.getboolean('SITE', 'enable_seafile')
         else:
             self.site_enable_seafile = False
+        if config.has_option('SITE', 'enable_duplicati'):
+            self.site_enable_duplicati = config.getboolean('SITE', 'enable_duplicati')
+        else:
+            self.site_enable_duplicati = False
         if config.has_option('SITE', 'enable_imnotify'):
             self.site_enable_imnotify = config.getboolean('SITE', 'enable_imnotify')
         else:

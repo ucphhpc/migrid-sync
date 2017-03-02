@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingsaction - handle user settings updates
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,12 +31,13 @@ import os
 import tempfile
 
 import shared.returnvalues as returnvalues
+from shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, safe_handler
 from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
      parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs, \
-     parse_and_save_ftps, parse_and_save_seafile
+     parse_and_save_ftps, parse_and_save_seafile, parse_and_save_duplicati
 from shared.profilekeywords import get_keywords_dict as profile_keywords
 from shared.settingskeywords import get_keywords_dict as settings_keywords
 from shared.useradm import create_seafile_mount_link, remove_seafile_mount_link
@@ -54,6 +55,8 @@ def extend_defaults(defaults, user_args):
         keywords_dict = widgets_keywords()
     elif topic == 'profile':
         keywords_dict = profile_keywords()
+    elif topic == 'duplicati':
+        keywords_dict = duplicati_keywords()
     elif topic == 'sftp':
         keywords_dict = {'publickeys': '', 'password': ''}
     elif topic == 'webdavs':
@@ -95,6 +98,7 @@ def main(client_id, user_arguments_dict):
         allow_rejects=False,
         )
     if not validate_status:
+        logger.debug("failed validation: %s %s" % (accepted, defaults))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     if not safe_handler(configuration, 'post', op_name, client_id,
@@ -114,7 +118,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         keywords_dict = widgets_keywords()
     elif topic == 'profile':
         keywords_dict = profile_keywords()
-    elif topic in ('sftp', 'webdavs', 'ftps', 'seafile'):
+    elif topic == 'duplicati':
+        keywords_dict = duplicati_keywords()
+    elif topic in ('sftp', 'webdavs', 'ftps', 'seafile', ):
         # We don't use mRSL parser here
         keywords_dict = {}
     else:
@@ -122,13 +128,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
         keywords_dict = {}
     for keyword in keywords_dict.keys():
         received_arguments = accepted[keyword]
-        if received_arguments != None and received_arguments != ['\r\n'
-                ]:
+        if received_arguments != None and received_arguments != ['\r\n']:
             topic_mrsl += '''::%s::
 %s
 
-''' % (keyword.upper(),
-                    '\n'.join(received_arguments))
+''' % (keyword.upper(), '\n'.join(received_arguments))
 
     # Save content to temp file
 
@@ -156,6 +160,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         (parse_status, parse_msg) = \
                        parse_and_save_profile(tmptopicfile, client_id,
                                               configuration)
+    elif topic == 'duplicati':
+        (parse_status, parse_msg) = \
+                       parse_and_save_duplicati(tmptopicfile, client_id,
+                                                configuration)
     elif topic == 'sftp':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))
         password = accepted.get('password', [''])[-1].strip()

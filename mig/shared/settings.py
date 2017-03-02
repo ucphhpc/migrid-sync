@@ -31,9 +31,11 @@ import datetime
 import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
-     widgets_filename, ssh_conf_dir, davs_conf_dir, ftps_conf_dir, \
-     seafile_conf_dir, authkeys_filename, authpasswords_filename, \
-     authdigests_filename, keyword_unchanged, dav_domain
+     widgets_filename, duplicati_filename, ssh_conf_dir, davs_conf_dir, \
+     ftps_conf_dir, seafile_conf_dir, authkeys_filename, \
+     authpasswords_filename, authdigests_filename, keyword_unchanged, \
+     dav_domain
+from shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
@@ -114,6 +116,15 @@ def parse_and_save_profile(filename, client_id, configuration):
     """Validate and write profile entries from filename"""
     status = parse_and_save_pickle(filename, profile_filename,
                                    get_profile_fields(), client_id,
+                                   configuration, False, False)
+    if status[0]:
+        mark_user_modified(configuration, client_id)
+    return status
+
+def parse_and_save_duplicati(filename, client_id, configuration):
+    """Validate and write profile entries from filename"""
+    status = parse_and_save_pickle(filename, duplicati_filename,
+                                   get_duplicati_fields(), client_id,
                                    configuration, False, False)
     if status[0]:
         mark_user_modified(configuration, client_id)
@@ -300,6 +311,14 @@ def load_profile(client_id, configuration, include_meta=False):
     return load_section_helper(client_id, configuration, profile_filename,
                                get_profile_fields().keys(), include_meta)
 
+def load_duplicati(client_id, configuration, include_meta=False):
+    """Load backup sets from pickled duplicati file. Optional include_meta
+    controls the inclusion of meta data like creator and creation time.
+    """
+
+    return load_section_helper(client_id, configuration, duplicati_filename,
+                               get_duplicati_fields().keys(), include_meta)
+
 def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
     """Helper to load  keys and password for proto (ssh/davs/ftps/seafile)
     from user proto_conf_dir.
@@ -417,5 +436,16 @@ def update_profile(client_id, configuration, changes, defaults,
     """
 
     return update_section_helper(client_id, configuration, profile_filename,
+                                 changes, defaults, create_missing)
+
+def update_duplicati(client_id, configuration, changes, defaults,
+                     create_missing=True):
+    """Update backup sets in pickled duplicati file with values from changes
+    dictionary. Optional create_missing can be used if the backups pickle
+    should be created if not already there.
+    The defaults dictionary is used to set any missing values.
+    """
+
+    return update_section_helper(client_id, configuration, duplicati_filename,
                                  changes, defaults, create_missing)
 

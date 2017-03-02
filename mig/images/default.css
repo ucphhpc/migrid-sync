@@ -938,6 +938,10 @@ input[type=checkbox], input[type=radio] {
   background: url('/images/icons/seafile.png') no-repeat;;
   padding-left: 18px;
 }
+.duplicatilink {
+  background: url('/images/icons/duplicati.png') no-repeat;;
+  padding-left: 18px;
+}
 
 .settingsbutton {
   padding: 8px;
@@ -998,6 +1002,10 @@ a:hover.settingsbutton {
 }
 .seafilesettingslink {
   background-image: url('/images/icons/seafile.png');
+  padding-left: 18px;
+}
+.duplicatisettingslink {
+  background-image: url('/images/icons/duplicati.png');
   padding-left: 18px;
 }
 .arcsettingslink {
