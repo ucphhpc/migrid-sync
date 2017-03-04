@@ -32,10 +32,11 @@ import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
      widgets_filename, duplicati_filename, ssh_conf_dir, davs_conf_dir, \
-     ftps_conf_dir, seafile_conf_dir, authkeys_filename, \
+     ftps_conf_dir, seafile_conf_dir, duplicati_conf_dir, authkeys_filename, \
      authpasswords_filename, authdigests_filename, keyword_unchanged, \
      dav_domain
-from shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields
+from shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, \
+     extract_duplicati_helper, conf_template
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
@@ -122,12 +123,35 @@ def parse_and_save_profile(filename, client_id, configuration):
     return status
 
 def parse_and_save_duplicati(filename, client_id, configuration):
-    """Validate and write profile entries from filename"""
+    """Validate and write duplicati entries from filename. Generate JSON conf
+    files for import in Duplicati client.
+    """
     status = parse_and_save_pickle(filename, duplicati_filename,
                                    get_duplicati_fields(), client_id,
                                    configuration, False, False)
     if status[0]:
         mark_user_modified(configuration, client_id)
+        saved_values = load_duplicati(client_id, configuration)
+        fill_helper = extract_duplicati_helper(configuration, client_id,
+                                               saved_values)
+        client_dir = client_id_dir(client_id)
+        duplicati_dir = os.path.join(configuration.user_home, client_dir,
+                                     duplicati_conf_dir)
+        for name in saved_values['BACKUPS']:
+            fill_helper['backup_name'] = name
+            fill_helper['backup_dir'] = os.path.join(duplicati_conf_dir, name)
+            filled_json = conf_template % fill_helper
+            backup_dst = os.path.join(duplicati_dir, name)
+            try:
+                os.makedirs(backup_dst)
+            except:
+                # probably exists
+                pass
+            json_name = "%s.json" % name
+            json_path = os.path.join(duplicati_dir, json_name)
+            json_fd = open(json_path, "w")
+            json_fd.write(filled_json)
+            json_fd.close()
     return status
 
 def parse_and_save_publickeys(keys_path, keys_content, client_id,

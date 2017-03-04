@@ -1419,18 +1419,26 @@ value="%(default_authpassword)s" />
             
             current_duplicati_dict = {}
                 
-        configuration.protocol = []
+        configuration.protocol, configuration.username = [], []
         prefer_proto = "davs"
         if configuration.user_duplicati_protocol:
             prefer_proto = configuration.user_duplicati_protocol
         configuration.protocol.append(prefer_proto)
-        enabled_protos = [('ftps', configuration.site_enable_ftps),
-                          ('sftp', configuration.site_enable_sftp),
-                          ('davs', configuration.site_enable_davs)]
-        for (proto, enabled) in enabled_protos:
+        sftp_username = extract_field(client_id, configuration.user_sftp_alias)
+        ftps_username = extract_field(client_id, configuration.user_ftps_alias)
+        davs_username = extract_field(client_id, configuration.user_davs_alias)
+        enabled_protos = [('ftps', configuration.site_enable_ftps,
+                           ftps_username),
+                          ('sftp', configuration.site_enable_sftp,
+                           sftp_username),
+                          ('davs', configuration.site_enable_davs,
+                           davs_username)]
+        for (proto, enabled, username) in enabled_protos:
             if enabled and not proto in configuration.protocol:
                 configuration.protocol.append(proto)
-
+            if enabled and not username in configuration.username:
+                configuration.username.append(username)
+        
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -1447,10 +1455,12 @@ Duplicati Backup to %(site)s
 <tr><td>
 You can install the <a href="https://www.duplicati.com">Duplicati</a> client on
 your local machine and use it to backup arbitrary data to %(site)s.<br/>
+We recommend using a recent 2.x version of Duplicati to be able to import the
+generated configurations from here directly.
 <h3>Configure Backup Sets</h3>
 You can define the backup sets here and then afterwards just download and
 import the configuration file in your Duplicati client, to set up everything
-for %(site)s use.
+for %(site)s backup use.
 </td></tr>
 <tr><td>
 '''
@@ -1497,24 +1507,31 @@ for %(site)s use.
                     html += wrap_edit_area(keyword, area, duplicati_edit)
             elif val['Type'] == 'string':
 
-                # get valid choices from conf
+                if val['Editor'] == 'select':
+                    # get valid choices from conf
 
-                valid_choices = eval('configuration.%s' % keyword.lower())
-                current_choice = ''
-                if current_settings_dict.has_key(keyword):
-                    current_choice = current_settings_dict[keyword]
+                    valid_choices = eval('configuration.%s' % keyword.lower())
+                    current_choice = ''
+                    if current_settings_dict.has_key(keyword):
+                        current_choice = current_settings_dict[keyword]
 
-                if len(valid_choices) > 0:
-                    html += '<select name="%s">' % keyword
-                    for choice in valid_choices:
-                        selected = ''
-                        if choice == current_choice:
-                            selected = 'selected'
-                        html += '<option %s value="%s">%s</option>'\
-                             % (selected, choice, choice)
-                    html += '</select><br />'
+                    if len(valid_choices) > 0:
+                        html += '<select name="%s">' % keyword
+                        for choice in valid_choices:
+                            selected = ''
+                            if choice == current_choice:
+                                selected = 'selected'
+                            html += '<option %s value="%s">%s</option>'\
+                                 % (selected, choice, choice)
+                        html += '</select><br />'
+                    else:
+                        html += ''
+                elif val['Editor'] == 'password':
+                    html += '<input type="password" name="%s" value=""/>' % keyword
+                    html += '<br />'
                 else:
-                    html += ''
+                    html += '<input type="text" name="%s" value=""/>' % keyword
+                    html += '<br />'
             elif val['Type'] == 'boolean':
                 valid_choices = [True, False]
                 current_choice = ''
@@ -1549,24 +1566,25 @@ Your saved %(site)s Duplicati backup settings are available for download below:
 '''
 
         saved_backup_sets = current_duplicati_dict.get('BACKUPS', [])
+        duplicati_confs_path = os.path.join(base_dir, duplicati_conf_dir)
         duplicati_confs = []
-        #duplicati_confs_path = os.path.join(base_dir, duplicati_conf_dir)
-        #if os.path.isdir(duplicati_confs_path):
-        #    for conf_name in os.listdir(duplicati_confs_path):
-        #        if conf_name in saved_backup_sets:
-        #            duplicati_confs.append(conf_name)
         duplicati_confs += saved_backup_sets
-
         for conf_name in duplicati_confs:
-            conf_file = "%s.cfg" % conf_name
-            html += '<a href="/cert_redirect/%s/%s">%s</a></br>' % \
+            conf_file = "%s.json" % conf_name
+            # Check existance of conf_file
+            conf_path = os.path.join(duplicati_confs_path, conf_file)
+            if not os.path.isfile(conf_path):
+                logger.warning("saved duplicati conf %s is missing" % conf_path)
+                continue
+            html += '<a href="/cert_redirect/%s/%s">%s</a><br/>' % \
             (duplicati_conf_dir, conf_file, conf_file)
         if not duplicati_confs:
             html += '<em>No backup sets configured</em>'
         
         html += '''
 </p>
-After downloading you can import them directly in Duplicati.</br>
+After downloading you can import them directly in Duplicati if you have a
+recent enough 2.x client version to support configuration import.<br/>
 </td></tr>
 </table>
 </form>
