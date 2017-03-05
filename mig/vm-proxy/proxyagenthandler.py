@@ -131,17 +131,16 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
         logging.debug('%s MIP Server is here!' % self)
 
+        keep_running = True
         identifier = None
         proxyHost = None
 
-        # try:
-        #  self.request.settimeout(30)
-
-        data = self.request.recv(1)
-
-        # except:
-        #  logging.debug('%s Proxy Agent Request timeout!' % self)
-        #  data = -1
+        try:
+            self.request.settimeout(900)
+            data = self.request.recv(1)
+        except:
+            logging.debug('%s Proxy Agent Request timeout!' % self)
+            data = -1
 
         if data == mip.messages['HANDSHAKE']:
 
@@ -220,10 +219,13 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
             logging.debug('%s Incorrect messagetype %s' % (self,
                           repr(data)))
+            keep_running = False
 
-        # This is fucking annoying! If the handler exited then the socket is closed... so it must stay alive doing shit but consume resources...
+        # TODO: still relevant after we added timeout above and stop on error?
+        # This is fucking annoying! If the handler exited then the socket is
+        # closed... so it must stay alive doing shit but consume resources...
 
-        while True:
+        while keep_running:
             time.sleep(1000)
 
 
