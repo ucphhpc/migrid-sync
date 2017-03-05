@@ -45,18 +45,18 @@ from plumber import *
 
 def vnc_jobid(job_id='Unknown'):
     """
-  1: Job identifier = 64_5_30_2009__10_10_15_localhost.0
+    1: Job identifier = 64_5_30_2009__10_10_15_localhost.0
 
-  2: Md5 sum (16bytes) 32 char hex. string = 01b19818762fbaf81693001639b1379c
+    2: Md5 sum (16bytes) 32 char hex. string = 01b19818762fbaf81693001639b1379c
 
-  3: Lower to (8bytes) 16 char hex. string: 01 b1 98 18 76 2f ba f8
+    3: Lower to (8bytes) 16 char hex. string: 01 b1 98 18 76 2f ba f8
 
-  4: Convert to user inputable ascii table characters:
+    4: Convert to user inputable ascii table characters:
 
       Ascii table offset by 64 + [0-16]
   
-  This methods provides 127^8 identifiers.
-  """
+    This methods provides 127^8 identifiers.
+    """
 
     job_id_digest = md5.new(job_id).hexdigest()[:16]  # 2
     password = ''
@@ -76,10 +76,9 @@ def vnc_jobid(job_id='Unknown'):
 # TODO: -add timeouts to the handshake, it should not wait forever if the other side is hanging in a handshake
 
 class ProxyAgentHandler(SocketServer.BaseRequestHandler):
-
     """ProxyAgentHandler,
-  A MIP server.
-  """
+    A MIP server.
+    """
 
     def setup(self):
 
@@ -90,11 +89,11 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
     def vncServerStrategy(self):
 
-    # ## TODO: Do a fake server handshake
+        # ## TODO: Do a fake server handshake
 
         secType = 1
 
-    # Receive protocol version, send protocol version
+        # Receive protocol version, send protocol version
 
         srv_ver = self.request.recv(12)
         logging.debug('%s received protocol [%s] from vncserver '
@@ -109,7 +108,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
                            % self)
             self.request.close()
 
-    # Receive security type count, choose one and send it back
+        # Receive security type count, choose one and send it back
 
         srv_sec_count = unpack('!B', self.request.recv(1))
 
@@ -124,7 +123,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
             self.closeConnection()
 
-    # Receive security result
+        # Receive security result
 
         srv_sec_res = self.request.recv(4)
 
@@ -135,14 +134,14 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
         identifier = None
         proxyHost = None
 
-    # try:
-    #  self.request.settimeout(30)
+        # try:
+        #  self.request.settimeout(30)
 
         data = self.request.recv(1)
 
-    # except:
-    #  logging.debug('%s Proxy Agent Request timeout!' % self)
-    #  data = -1
+        # except:
+        #  logging.debug('%s Proxy Agent Request timeout!' % self)
+        #  data = -1
 
         if data == mip.messages['HANDSHAKE']:
 
@@ -156,7 +155,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
                 identifier = self.request.recv(initMessage[1])
 
-        # Transform identifier to user inputable representation, vnc style
+                # Transform identifier to user inputable representation, vnc style
 
                 identifier = \
                     hexlify(generate_response(vnc_jobid(identifier),
@@ -170,7 +169,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
                               proxyHost))
             except:
 
-              # Handle premature close of request
+                # Handle premature close of request
 
                 logging.exception('%s Error receiving data.' % self)
 
@@ -182,12 +181,12 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
             MiGTCPServer.proxyLock.acquire()
 
-      # Check if it already there ( in case of reconnect )
+            # Check if it already there ( in case of reconnect )
 
             if identifier in MiGTCPServer.proxy_agents:
                 del MiGTCPServer.proxy_agents[identifier]
 
-      # Add proxy agent to list of agent
+            # Add proxy agent to list of agent
 
             MiGTCPServer.proxy_agents[identifier] = proxyHost
             MiGTCPServer.proxyLock.release()
@@ -195,7 +194,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
             logging.debug('%s Thats it im done..' % self)
         elif data == mip.messages['SETUP_REQUEST']:
 
-    # TODO: this is where daisy chaining stuff chould be added...
+            # TODO: this is where daisy chaining stuff chould be added...
 
             logging.debug('%s setup request ' % self)
         elif data == mip.messages['SETUP_RESPONSE']:
@@ -206,11 +205,11 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
             logging.debug('%s ticket %s, status %s' % (self, ticket,
                           status))
 
-      # handle vnc server
+            # handle vnc server
 
             self.vncServerStrategy()
 
-      # Add proxy_agent to connection pool
+            # Add proxy_agent to connection pool
 
             MiGTCPServer.connectionCondition.acquire()
             MiGTCPServer.connections[ticket] = \
@@ -222,9 +221,9 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
             logging.debug('%s Incorrect messagetype %s' % (self,
                           repr(data)))
 
-    # This is fucking annoying! If the handler exited then the socket is closed... so it must stay alive doing shit but consume resources...
+        # This is fucking annoying! If the handler exited then the socket is closed... so it must stay alive doing shit but consume resources...
 
-        while 1:
+        while True:
             time.sleep(1000)
 
 

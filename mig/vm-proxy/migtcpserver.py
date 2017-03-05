@@ -75,7 +75,6 @@ def verify_cb(
 
 class MiGTCPServer(Whitelist, SocketServer.ThreadingMixIn,
     SocketServer.TCPServer):
-
     """An extension of TcpServer adding:
   
     * Threading (mix-in)
@@ -85,7 +84,7 @@ class MiGTCPServer(Whitelist, SocketServer.ThreadingMixIn,
     * TLS, optional TLS socket wrapping:
       - enabling: tls_conf = {key='path', cert='path'}
       - disabling: tls_conf = None
-  """
+    """
 
     count = 0
 
@@ -130,19 +129,19 @@ class MiGTCPServer(Whitelist, SocketServer.ThreadingMixIn,
 
     def verify_request(self, request, client_address):
         """verify_request,
-      Extended to provide whitelisting features.
-    """
+        Extended to provide whitelisting features.
+        """
 
-    # return self.peerAllowed(client_address)
+        # return self.peerAllowed(client_address)
 
         return True
 
     def server_bind(self):
         """server_bind,
       
-      Extended for hostname extraction, hostname is used in http servers,
-      vnc servers and many others, so it is conveniently added in this generic class.
-    """
+        Extended for hostname extraction, hostname is used in http servers,
+        vnc servers and many others, so it is conveniently added in this generic class.
+        """
 
         SocketServer.TCPServer.server_bind(self)
         (host, port) = self.socket.getsockname()[:2]

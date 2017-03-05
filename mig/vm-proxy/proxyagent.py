@@ -140,7 +140,8 @@ class ProxyAgent(daemon.Daemon):
 
         initial_retry = self.retry_count
 
-        while initial_retry == -1 or initial_retry != 0:  # Retry proxy connection when it fails
+        # Retry proxy connection when it fails
+        while initial_retry == -1 or initial_retry != 0:
 
             initial_retry -= 1
             try:
@@ -151,7 +152,7 @@ class ProxyAgent(daemon.Daemon):
 
                 # Handle Setup request forever
 
-                while 1:
+                while True:
 
                     try:
 

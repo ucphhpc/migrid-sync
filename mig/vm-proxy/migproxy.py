@@ -58,8 +58,8 @@ class Proxy(daemon.Daemon):
     section_settings = 'proxy'
 
     def run(self):
-
-    # Load configuration from file
+        
+        # Load configuration from file
 
         cp = ConfigParser.ConfigParser()
         cp.read([self.default_conf])
@@ -90,13 +90,13 @@ class Proxy(daemon.Daemon):
             self.ca,
             )
 
-    # Get it on!
+        # Get it on!
 
         self.agentServer = None
         self.clientServer = None
         self.appletServer = None
 
-    # Listen for clients, via ProxyClientHandler
+        # Listen for clients, via ProxyClientHandler
 
         ProxyClientHandler.use_tls = self.tls_conf != None
 
@@ -108,7 +108,7 @@ class Proxy(daemon.Daemon):
         broker_thread.setDaemon(True)
         broker_thread.start()
 
-    # Listen for servers, via the ProxyAgentHandler
+        # Listen for servers, via the ProxyAgentHandler
 
         self.agentServer = MiGTCPServer(('', self.agentPort),
                 ProxyAgentHandler, self.tls_conf)
@@ -118,12 +118,13 @@ class Proxy(daemon.Daemon):
         mip_thread.setDaemon(True)
         mip_thread.start()
 
-    # The appletServer below is a quick and dirty http server for serving up applets
-    #
-    # TODO: Find a better way to manage java applets,
-    #       they must be served from the same server as they need to connect to
-    #       in most cases this will be the proxy. So having a integrated applet
-    #       server actually makes sense.
+        # The appletServer below is a quick and dirty http server for serving
+        # up applets
+        #
+        # TODO: Find a better way to manage java applets,
+        #       they must be served from the same server as they need to
+        #       connect to in most cases this will be the proxy. So having an
+        #       integrated applet server actually makes sense.
 
         os.chdir('applets')
         self.appletServer = MiGTCPServer(('', self.appletPort),
@@ -134,18 +135,14 @@ class Proxy(daemon.Daemon):
         client_thread.setDaemon(True)
         client_thread.start()
 
-    # That's it, let the threads do their job
+        # That's it, let the threads do their job
 
-        while 1:
+        while True:
             time.sleep(1000)
 
 
 if __name__ == '__main__':
-
     try:
         Proxy().main()
     except:
         logging.exception('Unexpected error: %s' % sys.exc_info()[2])
-else:
-
-    pass
