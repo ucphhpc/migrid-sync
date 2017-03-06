@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,8 @@ import shared.returnvalues as returnvalues
 from shared.base import client_alias, client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions, \
-     seafile_ro_dirname, duplicati_conf_dir, csrf_field
+     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
+     duplicati_protocol_choices, duplicati_schedule_choices
 from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
@@ -743,6 +744,11 @@ so you may have to avoid blank lines in your text below.
             create_alias_link(username, client_id, configuration.user_home)
         sftp_server = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
+        fingerprint_info = ''
+        sftp_fingerprint = configuration.user_sftp_key_fingerprint
+        if sftp_fingerprint:
+            fingerprint_info = '''You may be asked to verify server key
+fingerprint when you connect first time. It should be %s .<br/>''' % sftp_fingerprint
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -768,6 +774,7 @@ access. On Linux/UN*X it also allows transparent access through SSHFS.
 <li>Username <em>%(username)s</em></li>
 <li>%(auth_methods)s <em>as you choose below</em></li>
 </ul>
+%(fingerprint_info)s
 </td></tr>
 <tr><td>
 <input type="hidden" name="topic" value="sftp" />
@@ -879,6 +886,7 @@ value="%(default_authpassword)s" />
             'username': username,
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
+            'fingerprint_info': fingerprint_info,
             'auth_methods': ' / '.join(configuration.user_sftp_auth).title(),
             })
 
@@ -1420,24 +1428,33 @@ value="%(default_authpassword)s" />
             current_duplicati_dict = {}
                 
         configuration.protocol, configuration.username = [], []
-        prefer_proto = "davs"
-        if configuration.user_duplicati_protocol:
-            prefer_proto = configuration.user_duplicati_protocol
-        configuration.protocol.append(prefer_proto)
-        sftp_username = extract_field(client_id, configuration.user_sftp_alias)
-        ftps_username = extract_field(client_id, configuration.user_ftps_alias)
-        davs_username = extract_field(client_id, configuration.user_davs_alias)
-        enabled_protos = [('ftps', configuration.site_enable_ftps,
-                           ftps_username),
-                          ('sftp', configuration.site_enable_sftp,
-                           sftp_username),
-                          ('davs', configuration.site_enable_davs,
-                           davs_username)]
-        for (proto, enabled, username) in enabled_protos:
-            if enabled and not proto in configuration.protocol:
-                configuration.protocol.append(proto)
-            if enabled and not username in configuration.username:
-                configuration.username.append(username)
+        configuration.schedule = [i for (i, j) in duplicati_schedule_choices]
+        # We save the pretty names in pickle but use internal ones here
+        if configuration.user_duplicati_protocols:
+            protocol_order = configuration.user_duplicati_protocols
+        else:
+            protocol_order = [j for (i, j) in duplicati_protocol_choices]
+        reverse_proto_map = dict([(j, i) for (i, j) in \
+                                duplicati_protocol_choices])
+
+        enabled_map = {
+            'davs': configuration.site_enable_davs,
+            'sftp': configuration.site_enable_sftp,
+            'ftps': configuration.site_enable_ftps
+            }
+        username_map = {
+            'davs': extract_field(client_id, configuration.user_davs_alias),
+            'sftp': extract_field(client_id, configuration.user_sftp_alias),
+            'ftps': extract_field(client_id, configuration.user_ftps_alias)
+            }
+        for proto in protocol_order:
+            pretty_proto = reverse_proto_map[proto]
+            if not enabled_map[proto]:
+                continue
+            if not pretty_proto in configuration.protocol:
+                configuration.protocol.append(pretty_proto)
+            if not username_map[proto] in configuration.username:
+                configuration.username.append(username_map[proto])
         
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
@@ -1507,13 +1524,13 @@ for %(site)s backup use.
                     html += wrap_edit_area(keyword, area, duplicati_edit)
             elif val['Type'] == 'string':
 
+                current_choice = ''
+                if current_duplicati_dict.has_key(keyword):
+                    current_choice = current_duplicati_dict[keyword]
                 if val['Editor'] == 'select':
                     # get valid choices from conf
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
-                    current_choice = ''
-                    if current_settings_dict.has_key(keyword):
-                        current_choice = current_settings_dict[keyword]
 
                     if len(valid_choices) > 0:
                         html += '<select name="%s">' % keyword
@@ -1523,15 +1540,16 @@ for %(site)s backup use.
                                 selected = 'selected'
                             html += '<option %s value="%s">%s</option>'\
                                  % (selected, choice, choice)
-                        html += '</select><br />'
+                        html += '</select>'
                     else:
                         html += ''
                 elif val['Editor'] == 'password':
-                    html += '<input type="password" name="%s" value=""/>' % keyword
-                    html += '<br />'
+                    html += '<input type="password" name="%s" value="%s"/>' % \
+                        (keyword, current_choice)
                 else:
-                    html += '<input type="text" name="%s" value=""/>' % keyword
-                    html += '<br />'
+                    html += '<input type="text" name="%s" value="%s"/>' % \
+                        (keyword, current_choice)
+                html += '<br />'
             elif val['Type'] == 'boolean':
                 valid_choices = [True, False]
                 current_choice = ''
@@ -1554,11 +1572,10 @@ for %(site)s backup use.
 </td></tr>
 </table>
 </form>
-<table>
 '''
 
         html += '''
-</td></tr>
+<table>
 <tr><td>
 <h3>Import Backup Sets</h3>
 Your saved %(site)s Duplicati backup settings are available for download below:
@@ -1586,8 +1603,6 @@ Your saved %(site)s Duplicati backup settings are available for download below:
 After downloading you can import them directly in Duplicati if you have a
 recent enough 2.x client version to support configuration import.<br/>
 </td></tr>
-</table>
-</form>
 </table>
 '''
 

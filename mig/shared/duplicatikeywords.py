@@ -27,14 +27,18 @@
 
 """Keywords in the duplicati files"""
 
-conf_template = '''{
-    "CreatedBy": "%(short_title)s v1.0",
-    "Schedule": {
-        "Repeat": "1D"
-    },
-    "Backup": {
+from urllib import urlencode
+
+from shared.defaults import duplicati_protocol_choices, \
+     duplicati_schedule_choices
+
+duplicati_conf_templates = {'version': '''    "CreatedBy": "%(short_title)s v1.0"''',
+                            'schedule': '''    "Schedule": {
+        "Repeat": "%(schedule_freq)s",
+    }''',
+                            'backup': '''    "Backup": {
         "Name": "%(backup_name)s",
-        "TargetURL": "%(protocol)s://%(fqdn)s/%(backup_dir)s?auth-username=%(username)s&auth-password=%(password)s",
+        "TargetURL": "%(protocol)s://%(fqdn)s/%(backup_dir)s?%(credentials)s",
         "Settings": [
             {
                 "Name": "encryption-module",
@@ -45,31 +49,49 @@ conf_template = '''{
                 "Value": "50mb",
             }
         ],
-    }
-}
-'''
+    }'''
+                            }
+
+protocol_map = dict(duplicati_protocol_choices)
+schedule_map = dict(duplicati_schedule_choices)
 
 def extract_duplicati_helper(configuration, client_id, duplicati_dict):
-    """Fill helper dictionary with values used in conf_template"""
-    # lokop fqdn, username and password for specified protocol
-    protocol = duplicati_dict.get('PROTOCOL',
-                                  configuration.user_duplicati_protocol)
+    """Fill helper dictionary with values used in duplicati_conf_templates"""
+    # lookup fqdn, username, etc for specified protocol
+    default_protocol = duplicati_protocol_choices[0][0]
+    protocol_alias = duplicati_dict.get('PROTOCOL', default_protocol)
     username = duplicati_dict.get('USERNAME')
     password = duplicati_dict.get('PASSWORD', '')
+    credentials = [('auth-username', username)]
+    if password:
+        credentials.append(('auth-password', password))
+    schedule_alias = duplicati_dict.get('SCHEDULE', '')
+    schedule_freq = schedule_map.get(schedule_alias, '')
+    protocol = protocol_map[protocol_alias]
     if protocol in ('webdavs', 'davs'):
+        # Duplicati client requires webdavs://BLA
+        protocol = 'webdavs'
+        # TODO: add server key fingerprint helper?
         fqdn = "%s:%s" % (configuration.user_davs_show_address,
                           configuration.user_davs_show_port)
     elif protocol == 'sftp':
+        # Duplicati client requires webdavs://BLA
+        protocol = 'ssh'
+        # TODO: test and enable this server key fingerprint helper?
+        #if configuration.user_sftp_key_fingerprint:
+        #    fingerprint = configuration.user_sftp_key_fingerprint
+        #    credentials.append(('ssh-fingerprint', fingerprint))
         fqdn = "%s:%s" % (configuration.user_sftp_show_address,
                           configuration.user_sftp_show_port)
     elif protocol == 'ftps':
         fqdn = "%s:%s" % (configuration.user_ftps_show_address,
-                          configuration.user_ftps_show_port)
+                          configuration.user_ftps_show_ctrl_port)
     fill_helper = {'short_title': configuration.short_title,
                    'protocol': protocol,
                    'fqdn': fqdn, 
-                   'username': username,
-                   'password': password}
+                   # We must encode e.g. '@' in username
+                   'credentials': urlencode(credentials),
+                   'schedule_freq': schedule_freq}
     return fill_helper
 
 def get_duplicati_specs():
@@ -110,13 +132,26 @@ def get_duplicati_specs():
         }))
     specs.append(('PASSWORD', {
         'Title': 'Password',
-        'Description': 'Password for given protocol when communicating with the server.',
+        'Description': '''Optionally enter the password for given protocol when
+communicating with the server. You can leave it out here and just enter it in
+the client. It is the password you set on your corresponding protocol Settings
+page here.''',
         'Example': '********',
         'Type': 'string',
         'Value': '',
         'Editor': 'password',
         'Context': 'duplicati',
-        'Required': True,
+        'Required': False,
+        }))
+    specs.append(('SCHEDULE', {
+        'Title': 'Schedule',
+        'Description': 'Optional scheduling of automatic runs this often.',
+        'Example': 'Weekly',
+        'Type': 'string',
+        'Value': 'Daily',
+        'Editor': 'select',
+        'Context': 'duplicati',
+        'Required': False,
         }))
     return specs
 

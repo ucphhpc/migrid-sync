@@ -37,7 +37,8 @@ import time
 from ConfigParser import ConfigParser
 
 from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
-     POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, freeze_flavors
+     POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, freeze_flavors, \
+     duplicati_protocol_choices
 from shared.logger import Logger
 from shared.html import menu_items, vgrid_items
 
@@ -123,6 +124,7 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_port': 2222,
         'user_sftp_key': '~/certs/combined.pem',
         'user_sftp_key_pub': '~/certs/server.pub',
+        'user_sftp_key_fingerprint': '',
         'user_sftp_auth': ['publickey', 'password'],
         'user_sftp_alias': '',
         'user_sftp_log': 'sftp.log',
@@ -142,7 +144,7 @@ def fix_missing(config_file, verbose=True):
         'user_seahub_url': '',
         'user_seafile_url': '',
         'user_seafile_auth': ['password'],
-        'user_duplicati_protocol': 'davs',
+        'user_duplicati_protocols': [],
         'user_imnotify_address': '',
         'user_imnotify_port': 6667,
         'user_imnotify_channel': '',
@@ -302,6 +304,7 @@ class Configuration:
     user_sftp_show_port = 2222
     user_sftp_key = ''
     user_sftp_key_pub = ''
+    user_sftp_key_fingerprint = ''
     user_sftp_auth = ['publickey', 'password']
     user_sftp_alias = ''
     user_sftp_log = 'sftp.log'
@@ -329,7 +332,7 @@ class Configuration:
     user_seafile_url = ''
     user_seafile_auth = ['password']
     user_seafile_alias = ''
-    user_duplicati_protocol = ''
+    user_duplicati_protocols = []
     user_openid_address = ''
     user_openid_port = 8443
     user_openid_show_address = ''
@@ -669,6 +672,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_sftp_key_pub'):
             self.user_sftp_key_pub = config.get('GLOBAL', 
                                             'user_sftp_key_pub')
+        if config.has_option('GLOBAL', 'user_sftp_key_fingerprint'):
+            fingerprint = config.get('GLOBAL', 'user_sftp_key_fingerprint')
+            self.user_sftp_key_fingerprint = fingerprint
         if config.has_option('GLOBAL', 'user_sftp_auth'):
             self.user_sftp_auth = config.get('GLOBAL', 
                                              'user_sftp_auth').split()
@@ -778,9 +784,11 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_seafile_alias'):
             self.user_seafile_alias = config.get('GLOBAL', 
                                                  'user_seafile_alias')
-        if config.has_option('GLOBAL', 'user_duplicati_protocol'):
-            self.user_duplicati_protocol = config.get('GLOBAL', 
-                                                      'user_duplicati_protocol')
+        if config.has_option('GLOBAL', 'user_duplicati_protocols'):
+            allowed_protos = [j for (i, j) in duplicati_protocol_choices]
+            protos = config.get('GLOBAL', 'user_duplicati_protocols').split()
+            valid_protos = [i for i in protos if i in allowed_protos]
+            self.user_duplicati_protocols = valid_protos
         if config.has_option('GLOBAL', 'user_imnotify_address'):
             self.user_imnotify_address = config.get('GLOBAL', 
                                                     'user_imnotify_address')

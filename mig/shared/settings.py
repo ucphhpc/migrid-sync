@@ -36,7 +36,7 @@ from shared.defaults import settings_filename, profile_filename, \
      authpasswords_filename, authdigests_filename, keyword_unchanged, \
      dav_domain
 from shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, \
-     extract_duplicati_helper, conf_template
+     extract_duplicati_helper, duplicati_conf_templates
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
@@ -137,17 +137,26 @@ def parse_and_save_duplicati(filename, client_id, configuration):
         client_dir = client_id_dir(client_id)
         duplicati_dir = os.path.join(configuration.user_home, client_dir,
                                      duplicati_conf_dir)
-        for name in saved_values['BACKUPS']:
-            fill_helper['backup_name'] = name
-            fill_helper['backup_dir'] = os.path.join(duplicati_conf_dir, name)
-            filled_json = conf_template % fill_helper
-            backup_dst = os.path.join(duplicati_dir, name)
+        for backup_name in saved_values['BACKUPS']:
+            fill_helper['backup_name'] = backup_name
+            fill_helper['backup_dir'] = os.path.join(duplicati_conf_dir,
+                                                     backup_name)
+            inner_json = []
+            for (section_name, section) in duplicati_conf_templates.items():
+                # Skip schedule section if disabled
+                if section_name == 'schedule' and \
+                       not fill_helper['schedule_freq']:
+                    continue
+                inner_json.append(duplicati_conf_templates[section_name] % \
+                                  fill_helper)
+            filled_json = '{\n%s\n}' % ',\n'.join(inner_json)
+            backup_dst = os.path.join(duplicati_dir, backup_name)
             try:
                 os.makedirs(backup_dst)
             except:
                 # probably exists
                 pass
-            json_name = "%s.json" % name
+            json_name = "%s.json" % backup_name
             json_path = os.path.join(duplicati_dir, json_name)
             json_fd = open(json_path, "w")
             json_fd.write(filled_json)

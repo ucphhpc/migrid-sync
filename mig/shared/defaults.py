@@ -217,3 +217,10 @@ default_vgrid_settings_limit = 4
 # Password policy helpers
 POLICY_NONE, POLICY_WEAK = "NONE", "WEAK"
 POLICY_MEDIUM, POLICY_HIGH = "MEDIUM", "HIGH"
+
+# Prioritized protocol choices and internal values
+duplicati_protocol_choices = [('WebDAVS', 'davs'), ('SFTP', 'sftp'),
+                              ('FTPS', 'ftps')]
+# Prioritized schedule backup frequency choices and json values
+duplicati_schedule_choices = [('Daily', '1D'), ('Weekly', '1W'),
+                              ('Monthly', '1M'), ('Never', '')]
