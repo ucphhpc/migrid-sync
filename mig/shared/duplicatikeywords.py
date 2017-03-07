@@ -65,6 +65,12 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
     credentials = [('auth-username', username)]
     if password:
         credentials.append(('auth-password', password))
+    fingerprint = configuration.user_sftp_key_fingerprint
+    fingerprint_parts = fingerprint.split(' ', 2)
+    if fingerprint_parts[1:]:
+        bits_part = fingerprint_parts[1]
+    else:
+        bits_part = '__UNSET__'
     schedule_alias = duplicati_dict.get('SCHEDULE', '')
     schedule_freq = schedule_map.get(schedule_alias, '')
     protocol = protocol_map[protocol_alias]
@@ -77,20 +83,24 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
     elif protocol == 'sftp':
         # Duplicati client requires webdavs://BLA
         protocol = 'ssh'
-        # TODO: test and enable this server key fingerprint helper?
-        #if configuration.user_sftp_key_fingerprint:
-        #    fingerprint = configuration.user_sftp_key_fingerprint
-        #    credentials.append(('ssh-fingerprint', fingerprint))
+        # Expose server key fingerprint to client to avoid prompt
+        if fingerprint:
+            credentials.append(('ssh-fingerprint', fingerprint))
         fqdn = "%s:%s" % (configuration.user_sftp_show_address,
                           configuration.user_sftp_show_port)
     elif protocol == 'ftps':
         fqdn = "%s:%s" % (configuration.user_ftps_show_address,
                           configuration.user_ftps_show_ctrl_port)
+    # NOTE: We must encode e.g. '@' in username and exotic chars in password.
+    encoded_creds = urlencode(credentials)
+    # NOTE: duplicati requires '%20' space-encoding and urlencode produces '+'
+    # TODO: drop this workaround once fixed in Duplicati
+    encoded_creds = encoded_creds.replace('+%s+' % bits_part,
+                                          '%%20%s%%20' % bits_part)
     fill_helper = {'short_title': configuration.short_title,
                    'protocol': protocol,
                    'fqdn': fqdn, 
-                   # We must encode e.g. '@' in username
-                   'credentials': urlencode(credentials),
+                   'credentials': encoded_creds,
                    'schedule_freq': schedule_freq}
     return fill_helper
 
