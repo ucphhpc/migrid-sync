@@ -71,13 +71,14 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
         bits_part = fingerprint_parts[1]
     else:
         bits_part = '__UNSET__'
+    # NOTE: we can't use server key fingerprint helper for https/ftps since
+    #       cert renew will change the hash and thus break existing confs.
     schedule_alias = duplicati_dict.get('SCHEDULE', '')
     schedule_freq = schedule_map.get(schedule_alias, '')
     protocol = protocol_map[protocol_alias]
     if protocol in ('webdavs', 'davs'):
         # Duplicati client requires webdavs://BLA
         protocol = 'webdavs'
-        # TODO: add server key fingerprint helper?
         fqdn = "%s:%s" % (configuration.user_davs_show_address,
                           configuration.user_davs_show_port)
     elif protocol == 'sftp':
@@ -89,11 +90,16 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
         fqdn = "%s:%s" % (configuration.user_sftp_show_address,
                           configuration.user_sftp_show_port)
     elif protocol == 'ftps':
+        # TODO: investigate why std ftps fails
+        # Duplicati client requires aftp://BLA with connection tweaks
+        protocol = 'aftp'
+        credentials.append(('aftp-encryption-mode', 'Explicit'))
+        credentials.append(('aftp-data-connection-type', 'PASV'))
         fqdn = "%s:%s" % (configuration.user_ftps_show_address,
                           configuration.user_ftps_show_ctrl_port)
     # NOTE: We must encode e.g. '@' in username and exotic chars in password.
     encoded_creds = urlencode(credentials)
-    # NOTE: duplicati requires '%20' space-encoding and urlencode produces '+'
+    # NOTE: Duplicati requires '%20' space-encoding and urlencode produces '+'
     # TODO: drop this workaround once fixed in Duplicati
     encoded_creds = encoded_creds.replace('+%s+' % bits_part,
                                           '%%20%s%%20' % bits_part)
