@@ -90,11 +90,11 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
         fqdn = "%s:%s" % (configuration.user_sftp_show_address,
                           configuration.user_sftp_show_port)
     elif protocol == 'ftps':
-        # TODO: investigate why std ftps fails
-        # Duplicati client requires aftp://BLA with connection tweaks
-        protocol = 'aftp'
-        credentials.append(('aftp-encryption-mode', 'Explicit'))
-        credentials.append(('aftp-data-connection-type', 'PASV'))
+        # NOTE: we used to need this workaround due to port fwd routing issues
+        ## Duplicati client requires aftp://BLA with connection tweaks
+        #protocol = 'aftp'
+        #credentials.append(('aftp-encryption-mode', 'Explicit'))
+        #credentials.append(('aftp-data-connection-type', 'PASV'))
         fqdn = "%s:%s" % (configuration.user_ftps_show_address,
                           configuration.user_ftps_show_ctrl_port)
     # NOTE: We must encode e.g. '@' in username and exotic chars in password.
