@@ -1230,8 +1230,9 @@ if __name__ == "__main__":
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     conf.logger = logging
-    test_proto, test_address, test_id = 'DUMMY', '127.0.0.42', 'mylocaluser'
+    test_proto, test_address, test_id = 'DUMMY', '127.0.0.42', 'user@some.org'
     test_pw = "T3stp4ss"
+    invalid_id = 'root'
     print "Running unit test on rate limit functions"
     print "Force expire all"
     expired = expire_rate_limit(conf, test_proto, fail_cache=0)
@@ -1257,8 +1258,8 @@ if __name__ == "__main__":
     update_rate_limit(conf, test_proto, test_address, test_id, False, this_pw)
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
     print "Blocked: %s" % hit
-    other_proto, other_address, other_id = "BOGUS", '127.10.20.30', 'otheruser'
-    other_pw = "0th3rP4ss"
+    other_proto, other_address = "BOGUS", '127.10.20.30'
+    other_id, other_pw = 'other@some.org', "0th3rP4ss"
     print "Update with other proto"
     update_rate_limit(conf, other_proto, test_address, test_id, False, test_pw)
     print "Update with other address"
@@ -1292,6 +1293,9 @@ if __name__ == "__main__":
     print "Blocked: %s" % hit
     print "Check with other user from same address"
     hit = hit_rate_limit(conf, test_proto, test_address, other_id)
+    print "Blocked: %s" % hit
+    print "Check with invalid user from same address"
+    hit = hit_rate_limit(conf, test_proto, test_address, invalid_id)
     print "Blocked: %s" % hit
 
     print "Test active session counting"
