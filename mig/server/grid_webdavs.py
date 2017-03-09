@@ -186,18 +186,23 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 # the 'ping' isn't SSL.
                 return None, {}
             elif exc.errno == ssl.SSL_ERROR_SSL:
-                if exc.args[1].endswith('http request'):
+                logger.warning("SSL/TLS wrap failed: %s" % exc)
+                if exc.args[1].find('http request') != -1:
                     # The client is speaking HTTP to an HTTPS server.
                     raise wsgiserver.NoSSLError
-                elif exc.args[1].endswith('unknown protocol'):
-                    # The client is speaking some non-HTTP protocol.
-                    # Drop the conn.
+                elif exc.args[1].find('unknown protocol') != -1:
+                    # Drop clients speaking some non-HTTP protocol.
+                    return None, {}
+                elif exc.args[1].find('wrong version number') != -1 or \
+                         exc.args[1].find('no shared cipher') != -1 or \
+                         exc.args[1].find('inappropriate fallback') != -1 or \
+                         exc.args[1].find('ccs received early') != -1:
+                    # Drop clients trying banned protocol, cipher or operation
                     return None, {}
                 else:
-                    # Usually when a client tries to speak e.g. banned SSLv2.
-                    # We force-close such sockets to avoid testssl.sh hanging.
-                    logger.warning("wrap failed, closing socket(s): %s" % exc)
+                    # Make sure we clean up before we forward unexpected SSL errors
                     self.__force_close(_socket_list)
+            logger.error("unexpected SSL/TLS wrap failure: %s" % exc)
             raise exc
         ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
         logger.info("wrapped sock: %s" % ssl_sock)
