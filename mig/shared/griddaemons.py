@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # griddaemons - grid daemon helper functions
-# Copyright (C) 2010-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,7 @@ from shared.base import client_dir_id, client_id_dir, client_alias, \
 from shared.defaults import dav_domain
 from shared.fileio import unpickle
 from shared.job import possible_job_id
-from shared.safeinput import valid_path
+from shared.safeinput import valid_path, valid_email_address, valid_sid
 from shared.sharelinks import possible_sharelink_id, extract_mode_id
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
@@ -49,12 +49,32 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     get_authpasswords, extract_field, generate_password_hash, \
     generate_password_digest
 
-default_max_hits, default_fail_cache = 5, 120
+default_max_fails, default_fail_cache = 5, 120
 
 _rate_limits = {}
 _rate_limits_lock = threading.Lock()
 _active_sessions = {}
 _sessions_lock = threading.Lock()
+
+def accepting_username_validator(configuration, username):
+    """A simple username validator which accepts everything"""
+    return True
+
+# TODO: include username check early in login phase too to drop dict attacks?
+def default_username_validator(configuration, username):
+    """The default username validator restricted to only accept usernames that
+    are valid in grid daemons, namely a valid email, session or sharelink ID.
+    """
+    if valid_email_address(username):
+        return True
+    if possible_sharelink_id(configuration, username):
+        return True
+    try:
+        valid_sid(username)
+        return True
+    except:
+        return False
+
 
 class Login(object):
     """Login class to hold a single valid login for a user, job or share.
@@ -990,20 +1010,36 @@ def login_map_lookup(daemon_conf, username):
     return creds
 
 def hit_rate_limit(configuration, proto, client_address, client_id,
-                   max_fails=default_max_hits,
-                   fail_cache=default_fail_cache):
+                   max_fails=default_max_fails,
+                   fail_cache=default_fail_cache,
+                   username_validator=default_username_validator):
     """Check if proto login from client_address with client_id should be
-    filtered due to too many recently failed login attempts. Returns True if
-    so and False otherwise based on a lookup in rate limit database defined in
-    configuration.
-    The rate limit database is a dictionary with client_address as key and
-    dictionaries mapping proto to list of failed attempts.
-    We allow up to max_fails failed logins within the last fail_cache seconds.
+    filtered due to too many recently failed login attempts or invalid username
+    format. Returns True if so and False otherwise. The username_validator
+    function is first called as username_validator(configuration, client_id)
+    to check if the username is on the expected format - and hit rate limit
+    always kicks in unless that call returns True. This is mainly to throttle
+    automated dictionary attacks. Otherwise the rate limit check proceeds with
+    a lookup in rate limit cache. Rate limit decisions only take login attempts
+    within the last fail_cache seconds into account.
+    The rate limit cache is a dictionary with client_address as key and
+    dictionaries mapping proto to list of failed attempts. The latter contains
+    credential info to distinguish them.
+    We always allow up to max_fails failed login attempts for a given username
+    from a given address. This is in order to make it more difficult to
+    effectively lock out another user with impersonating or random logins even
+    from the same (gateway) address.
     """
     logger = configuration.logger
     refuse = False
-    hits = 0
+    client_hits, all_hits = 0, 0
     now = time.time()
+
+    # Early refuse on invalid username: eases filter of 'root', 'admin', etc.
+    if not username_validator(configuration, client_id):
+        logger.warning("hit rate limit on invalid username %s from %s" % \
+                       (client_id, client_address))
+        return True
 
     _rate_limits_lock.acquire()
 
@@ -1011,38 +1047,44 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
         _cached = _rate_limits.get(client_address, {})
         if _cached:
             _failed = _cached.get(proto, [])
-            for (time_stamp, client_id, _) in _failed:
+            # logger.debug("hit rate limit found failed history: %s" % _failed)
+            for (time_stamp, failed_id, _) in _failed:
                 if time_stamp + fail_cache < now:
                     continue
-                hits += 1
-            if hits >= max_fails:
+                if failed_id == client_id:
+                    client_hits += 1
+                all_hits += 1
+            if client_hits >= max_fails:
                 refuse = True 
     except Exception, exc:
         logger.error("hit rate limit failed: %s" % exc)
 
     _rate_limits_lock.release()
 
-    if hits > 0:
-        logger.info("hit rate limit found %d hit(s) on %s from %s" % \
-                    (hits, proto, client_address))
+    if all_hits > 0:
+        logger.info("%s hit rate limit got %d of %d hit(s) for %s from %s" % \
+                    (proto, client_hits, all_hits, client_id, client_address))
     return refuse
 
 def update_rate_limit(configuration, proto, client_address, client_id,
-                      success, secret=None):
+                      login_success, secret=None):
     """Update rate limit database after proto login from client_address with
-    client_id and login success status.
+    client_id and boolean login_success status.
     The optional secret can be used to save the hash or similar so that
     repeated failures with the same credentials only count as one error.
     Otherwise some clients will retry on failure and hit the limit easily.
     The rate limit database is a dictionary with client_address as key and
-    dictionaries mapping proto to list of failed attempts.
-    We simply append failed attempts and success results in the list getting
-    cleared for that proto and address combination.
+    dictionaries mapping proto to list of failed attempts holding credential
+    info. This helps distinguish e.g. any other users coming from the same
+    gateway address.
+    We simply append new failed attempts to the list and update the time stamp
+    for logins with the same credentials already registered there. On success
+    we clear failed logins for that particular address and user combination.
     """
     logger = configuration.logger
     _failed = []
     cur = {}
-    failed_count = 0
+    failed_count, cache_fails = 0, 0
     status = {True: "success", False: "failure"}
 
     _rate_limits_lock.acquire()
@@ -1050,24 +1092,31 @@ def update_rate_limit(configuration, proto, client_address, client_id,
         #logger.debug("update rate limit db: %s" % _rate_limits)
         _cached = _rate_limits.get(client_address, {})
         cur.update(_cached)
-        if not success:
-            _failed = _cached.get(proto, [])
-            if not secret or (client_id, secret) not in [(i[1], i[2]) for i in _failed]:
-                _failed.append((time.time(), client_id, secret))
+        _failed = _cached.get(proto, [])
+        cache_fails = len(_failed)
+        if login_success:
+            # Remove all tuples with matching username
+            _failed = [i for i in _failed if i[1] != client_id]
+            failed_count = 0
+        else:
+            fail_entry = (time.time(), client_id, secret)
+            # Remove any matching tuple first to effectively update time stamp
+            _failed = [i for i in _failed if i[1:] != fail_entry[1:]]
+            _failed.append(fail_entry)
             failed_count = len(_failed)
             
         cur[proto] = _failed
         _rate_limits[client_address] = cur
     except Exception, exc:
-        logger.error("update rate limit failed: %s" % exc)
+        logger.error("update %s rate limit failed: %s" % (proto, exc))
 
     _rate_limits_lock.release()
 
-    if failed_count > 0:
-        logger.info("update rate limit %s for %s from %s on %s to %d hits" % \
-                    (status[success], client_id, client_address, proto,
-                     len(_failed)))
-        logger.debug("update rate limit to %s" % _failed)
+    if failed_count != cache_fails:
+        logger.info("update %s rate limit %s for %s from %d to %d hits" % \
+                    (proto, status[login_success], client_address, cache_fails,
+                     failed_count))
+        logger.debug("update %s rate limit to %s" % (proto,_failed))
     return failed_count
 
 def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
@@ -1105,15 +1154,14 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     _rate_limits_lock.release()
 
     if expired:
-        logger.info("expire rate limit on proto %s expired %d items" % \
-                    (proto, len(expired)))
-        logger.debug("expire rate limit on proto %s expired %s" % \
-                    (proto, expired))
+        logger.info("expire %s rate limit expired %d items" % (proto,
+                                                               len(expired)))
+        logger.debug("expire %s rate limit expired %s" % (proto, expired))
 
     return expired
 
 def penalize_rate_limit(configuration, proto, client_address, client_id, hits,
-                        max_fails=default_max_hits):
+                        max_fails=default_max_fails):
     """Stall client for a while based on the number of rate limit failures to
     make sure dictionary attackers don't really load the server with their
     repeated force-failed requests. The stall penalty is a linear function of
@@ -1122,7 +1170,7 @@ def penalize_rate_limit(configuration, proto, client_address, client_id, hits,
     logger = configuration.logger
     sleep_secs = 3 * (hits - max_fails)
     if sleep_secs > 0:
-        logger.info("stall rate limited %s user %s from %s for %ds" % \
+        logger.info("stall %s rate limited user %s from %s for %ds" % \
                     (proto, client_id, client_address, sleep_secs))
         time.sleep(sleep_secs)
     return sleep_secs
@@ -1190,7 +1238,7 @@ if __name__ == "__main__":
     print "Expired: %s" % expired
     this_pw = test_pw
     print "Emulate rate limit"
-    for i in range(default_max_hits-1):
+    for i in range(default_max_fails-1):
         hit = hit_rate_limit(conf, test_proto, test_address, test_id)
         print "Blocked: %s" % hit
         update_rate_limit(conf, test_proto, test_address, test_id, False,
@@ -1223,14 +1271,14 @@ if __name__ == "__main__":
     print "Check with other user from same address"
     hit = hit_rate_limit(conf, test_proto, test_address, other_id)
     print "Blocked: %s" % hit
-    time.sleep(1)
-    print "Emulate cache time out"
+    time.sleep(2)
+    print "Test for same user and address with emulated cache timeout"
     hit = hit_rate_limit(conf, test_proto, test_address, test_id,
                          fail_cache=1)
     print "Blocked: %s" % hit
     print "Force expire some entries"
     expired = expire_rate_limit(conf, test_proto,
-                                fail_cache=default_max_hits)
+                                fail_cache=default_max_fails)
     print "Expired: %s" % expired
     print "Test reset on success"
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
@@ -1241,6 +1289,9 @@ if __name__ == "__main__":
     print "Blocked: %s" % hit
     print "Check with same user from other address"
     hit = hit_rate_limit(conf, test_proto, other_address, test_id)
+    print "Blocked: %s" % hit
+    print "Check with other user from same address"
+    hit = hit_rate_limit(conf, test_proto, test_address, other_id)
     print "Blocked: %s" % hit
 
     print "Test active session counting"

@@ -41,7 +41,7 @@ from string import letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
 from shared.base import force_unicode, force_utf8
-from shared.defaults import src_dst_sep
+from shared.defaults import src_dst_sep, session_id_chars
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -474,13 +474,13 @@ def valid_password(
 
 def valid_sid(
     sid,
-    min_length=1,
-    max_length=255,
+    min_length=session_id_chars,
+    max_length=session_id_chars,
     extra_chars='',
     ):
-    """Verify that supplied session ID, sid, only contains
-    characters that we consider valid. Session IDs are generated using
-    hexlify() on a random string, so it only contains valid hexadecimal
+    """Verify that supplied session ID, sid, is expected length and only
+    contains characters that we consider valid. Session IDs are generated
+    using hexlify() on a random string, so it only contains valid hexadecimal
     values, i.e. digits and a few ascii letters.
     """
 

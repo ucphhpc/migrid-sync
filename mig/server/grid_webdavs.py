@@ -112,6 +112,10 @@ def _get_addr(environ):
     """Extract client address from environ dict"""
     return environ['REMOTE_ADDR']
 
+def _get_digest(environ):
+    """Extract client digest response from environ dict"""
+    return environ.get('RESPONSE', 'UNKNOWN')
+
 def _find_authenticator(application):
     """Find and return handle to HTTPAuthenticator in application stack.
     The application object nests application stack layers by repeatedly
@@ -280,6 +284,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         update_users(configuration, self.user_map, username)
         #logger.info("in authDomainUser from %s" % addr)
         success = False
+        offered = password
         if hit_rate_limit(configuration, "davs", addr, username):
             logger.warning("Rate limiting login from %s" % addr)
         elif self._check_auth_password(addr, realmname, username, password):
@@ -288,7 +293,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         else:
             logger.warning("Invalid login for %s from %s" % (username, addr))
         failed_count = update_rate_limit(configuration, "davs", addr, username,
-                                         success, password)
+                                         success, offered)
         penalize_rate_limit(configuration, "davs", addr, username,
                             failed_count)
         return success
@@ -319,36 +324,33 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         #print "DEBUG: env in getRealmUserPassword: %s" % environ
         addr = _get_addr(environ)
+        offered = _get_digest(environ)
         self._expire_rate_limit()
         #logger.info("in getRealmUserPassword from %s" % addr)
-        if hit_rate_limit(configuration, "davs", addr, username):
-            logger.warning("Rate limiting login from %s" % addr)
-            password = None
-        else:
-            digest_users = self._get_user_digests(addr, realmname, username)
-            #logger.info("found digest_users %s" % digest_users)
-            try:
-                # We expect only one - pick last
-                digest = digest_users[-1].digest
-                _, _, _, payload = digest.split("$")
-                #logger.info("found payload %s" % payload)
-                unscrambled = unscramble_digest(configuration.site_digest_salt,
-                                                payload)
-                _, _, password = unscrambled.split(":")
-                #logger.info("found password")
-            except Exception, exc:
-                logger.error("failed to extract digest password: %s" % exc)
-                password = None
-        if password is not None:
-            success = True
+        digest_users = self._get_user_digests(addr, realmname, username)
+        #logger.info("found digest_users %s" % digest_users)
+        try:
+            # We expect only one - pick last
+            digest = digest_users[-1].digest
+            _, _, _, payload = digest.split("$")
+            #logger.info("found payload %s" % payload)
+            unscrambled = unscramble_digest(configuration.site_digest_salt,
+                                            payload)
+            _, _, password = unscrambled.split(":")
+            #logger.info("found password")
             # TODO: we don't have a hook to log accepted digest logins
             # this one only means that user validation makes it to digest check
             logger.info("extracted digest for valid user %s from %s" % \
                         (username, addr))
-        else:
+            success = True
+        except Exception, exc:
+            logger.error("failed to extract digest password: %s" % exc)
+            success = False
+        if hit_rate_limit(configuration, "davs", addr, username):
+            logger.warning("Rate limiting login from %s" % addr)
             success = False
         failed_count = update_rate_limit(configuration, "davs", addr, username,
-                                         success, password)
+                                         success, offered)
         penalize_rate_limit(configuration, "davs", addr, username,
                             failed_count)
         return password

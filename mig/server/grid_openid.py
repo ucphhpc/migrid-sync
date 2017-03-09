@@ -432,14 +432,15 @@ class ServerHandler(BaseHTTPRequestHandler):
                                   self.password)
             else:
                 print "handleAllow rejected login %s" % identity
+                fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 response = self.rejected(request, identity)    
                 failed_count = update_rate_limit(configuration, "openid",
                                                  self.client_address[0],
-                                                 self.user, False,
-                                                 self.password)
+                                                 fail_user, False,
+                                                 fail_pw)
                 penalize_rate_limit(configuration, "openid",
-                                    self.client_address[0], self.user,
+                                    self.client_address[0], fail_user,
                                     failed_count)
 
         elif 'no' in query:
@@ -619,14 +620,15 @@ class ServerHandler(BaseHTTPRequestHandler):
                 # TODO: Login failed - is this correct behaviour?
                 print "doLogin failed for %s!" % self.user
                 # print "doLogin full query: %s" % self.query
+                fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 self.redirect(self.query['success_to'])
                 failed_count = update_rate_limit(configuration, "openid",
                                                  self.client_address[0],
-                                                 self.user, False,
-                                                 self.password)
+                                                 fail_user, False,
+                                                 fail_pw)
                 penalize_rate_limit(configuration, "openid",
-                                    self.client_address[0], self.user,
+                                    self.client_address[0], fail_user,
                                     failed_count)
         elif 'cancel' in self.query:
             self.redirect(self.query['fail_to'])

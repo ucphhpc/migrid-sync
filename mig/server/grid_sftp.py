@@ -614,14 +614,13 @@ class SimpleSSHServer(paramiko.ServerInterface):
                          changed_shares)
 
         hash_cache = daemon_conf['hash_cache']
-        offered = None
+        offered = password
         if hit_rate_limit(configuration, "sftp-pw", self.client_addr[0],
                           username):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
         elif self.allow_password:
             # list of User login objects for username
             entries = login_map_lookup(daemon_conf, username)
-            offered = password
             for entry in entries:
                 if entry.password is not None:
                     # TODO: Add ssh tunneling on resource frontends
@@ -665,13 +664,13 @@ class SimpleSSHServer(paramiko.ServerInterface):
         update_login_map(daemon_conf, changed_users, changed_jobs,
                          changed_shares)
 
+        offered = key.get_base64()
         if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
                           username, max_fails=10):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
         elif self.allow_publickey:
             # list of User login objects for username
             entries = login_map_lookup(daemon_conf, username)
-            offered = key.get_base64()
             for entry in entries:
                 if entry.public_key is not None:
                     # TODO: Add ssh tunneling on resource frontends

@@ -190,14 +190,13 @@ class MiGUserAuthorizer(DummyAuthorizer):
         
         daemon_conf = configuration.daemon_conf
         hash_cache = daemon_conf['hash_cache']
-        offered = None
+        offered = password
         if hit_rate_limit(configuration, "ftps", handler.remote_ip, username):
             logger.warning("Rate limiting login from %s" % handler.remote_ip)
         elif 'password' in configuration.user_ftps_auth and \
                self.has_user(username):
             # list of User login objects for username
             entries = [self.user_table[username]]
-            offered = password
             for entry in entries:
                 if entry['pwd'] is not None:
                     allowed = entry['pwd']
