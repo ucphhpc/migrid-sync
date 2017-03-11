@@ -102,7 +102,7 @@ if '__main__' == __name__:
         os.environ['MIG_CONF'] = conf_path
     configuration = get_configuration_object()
     matches = []
-    extract_pattern = r".+ WARNING client negotiation errors for "
+    extract_pattern = r"(.+) WARNING client negotiation errors for "
     extract_pattern += r"\('(\d+\.\d+\.\d+\.\d+)', (\d+)\): Incompatible ssh"
     extract_pattern += r" .* \(no acceptable (.*)\)"
     extract_regex = re.compile(extract_pattern)
@@ -118,12 +118,13 @@ if '__main__' == __name__:
     for line in matches:
         match = extract_regex.match(line)
         if match:
-            source_ip, source_port, err_cond = match.group(1, 2, 3)
+            stamp, source_ip, source_port, err_cond = match.group(1, 2, 3, 4)
             if not source_ip in ip_fail_map:
                 ip_fail_map[source_ip] = {'source_ip': source_ip}
             if not err_cond in ip_fail_map[source_ip]:
                 ip_fail_map[source_ip][err_cond] = 0
             ip_fail_map[source_ip][err_cond] += 1
+            ip_fail_map[source_ip]['last'] = stamp
 
     print "Reverse DNS lookup %d source IP(s)" % len(ip_fail_map.keys())
     # Reverse DNS lookup is horribly slow with timeout - use multiprocessing
@@ -144,16 +145,18 @@ if '__main__' == __name__:
     for source_fqdn in sorted_hosts:
         err_map = fqdn_fail_map[source_fqdn]
         source_ip = err_map['source_ip']
+        last = err_map['last']
         host_stats = "%s (%s): " % (source_fqdn, source_ip)
         host_errs = []
         total = 0
         for (err_cond, err_count) in err_map.items():
-            if err_cond == 'source_ip':
+            if err_cond in ['source_ip', 'last']:
                 continue
             host_errs.append("%s: %d" % (err_cond, err_count))
             total += err_count
         host_stats += ' , '.join(host_errs)
         host_stats += ' , total: %d' % total
+        host_stats += ' , last: %s' % last
         # Only display repeated offenders and honor trust
         trust = False
         for trust_prefix in trust_ip_list:
