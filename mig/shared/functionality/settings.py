@@ -1472,8 +1472,9 @@ Duplicati Backup to %(site)s
 <tr><td>
 You can install the <a href="https://www.duplicati.com">Duplicati</a> client on
 your local machine and use it to backup arbitrary data to %(site)s.<br/>
-We recommend using a recent 2.x version of Duplicati to be able to import the
-generated configurations from here directly.
+We recommend the <a href="https://github.com/duplicati/duplicati/releases">
+most recent version of Duplicati</a> to be able to import the generated
+configurations from here directly.
 <h3>Configure Backup Sets</h3>
 You can define the backup sets here and then afterwards just download and
 import the configuration file in your Duplicati client, to set up everything
@@ -1602,8 +1603,8 @@ Your saved %(site)s Duplicati backup settings are available for download below:
         
         html += '''
 </p>
-After downloading you can import them directly in Duplicati if you have a
-recent enough 2.x client version to support configuration import.<br/>
+After downloading you can import them directly in the most recent Duplicati
+client versions from the link above.<br/>
 </td></tr>
 </table>
 '''
