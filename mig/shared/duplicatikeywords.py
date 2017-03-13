@@ -155,7 +155,8 @@ page here.''',
         'Example': '********',
         'Type': 'string',
         'Value': '',
-        'Editor': 'password',
+        # We do not expose password as it would appear as clear text in json
+        'Editor': 'hidden',
         'Context': 'duplicati',
         'Required': False,
         }))

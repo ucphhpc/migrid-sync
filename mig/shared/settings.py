@@ -303,15 +303,17 @@ def parse_and_save_seafile(password, client_id, configuration):
                                         seafile_conf_dir)
 
 def load_section_helper(client_id, configuration, section_filename,
-                        section_keys, include_meta=False):
+                        section_keys, include_meta=False, allow_missing=False):
     """Load settings section from pickled file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
+    Optional allow_missing is used to avoid log errors for sections that may
+    or may not already exist.
     """
 
     client_dir = client_id_dir(client_id)
     section_path = os.path.join(configuration.user_settings, client_dir,
                                 section_filename)
-    section_dict = unpickle(section_path, configuration.logger)
+    section_dict = unpickle(section_path, configuration.logger, allow_missing)
     if section_dict and not include_meta:
         real_keys = section_keys
         for key in section_dict.keys():
@@ -328,33 +330,41 @@ def load_settings(client_id, configuration, include_meta=False):
     return load_section_helper(client_id, configuration, settings_filename,
                                get_settings_fields().keys(), include_meta)
 
-def load_widgets(client_id, configuration, include_meta=False):
+def load_widgets(client_id, configuration, include_meta=False,
+                   allow_missing=True):
     """Load widgets from pickled widgets file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
 
     return load_section_helper(client_id, configuration, widgets_filename,
-                               get_widgets_fields().keys(), include_meta)
+                               get_widgets_fields().keys(), include_meta,
+                               allow_missing)
 
-def load_profile(client_id, configuration, include_meta=False):
+def load_profile(client_id, configuration, include_meta=False,
+                   allow_missing=True):
     """Load profile from pickled profile file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
 
     return load_section_helper(client_id, configuration, profile_filename,
-                               get_profile_fields().keys(), include_meta)
+                               get_profile_fields().keys(), include_meta,
+                               allow_missing)
 
-def load_duplicati(client_id, configuration, include_meta=False):
+def load_duplicati(client_id, configuration, include_meta=False,
+                   allow_missing=True):
     """Load backup sets from pickled duplicati file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
 
     return load_section_helper(client_id, configuration, duplicati_filename,
-                               get_duplicati_fields().keys(), include_meta)
+                               get_duplicati_fields().keys(), include_meta,
+                               allow_missing)
 
-def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
+def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir,
+                       allow_missing=True):
     """Helper to load  keys and password for proto (ssh/davs/ftps/seafile)
-    from user proto_conf_dir.
+    from user proto_conf_dir. Optional allow_missing is used to toggle the log
+    errors about missing pw/keys files, which may not already exist.
     """
     section_dict = {}
     client_dir = client_id_dir(client_id)
@@ -369,8 +379,9 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
         section_dict['authkeys'] = keys_fd.read()
         keys_fd.close()
     except Exception, exc:
-        configuration.logger.error("load %s publickeys failed: %s" % (proto,
-                                                                      exc))
+        if not allow_missing:
+            configuration.logger.error("load %s publickeys failed: %s" % \
+                                       (proto, exc))
     try:
         password = ''
         if os.path.exists(pw_path):
@@ -381,8 +392,9 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
             pw_fd.close()
         section_dict['authpassword'] = password
     except Exception, exc:
-        configuration.logger.error("load %s password failed: %s" % (proto,
-                                                                    exc))
+        if not allow_missing:
+            configuration.logger.error("load %s password failed: %s" % \
+                                       (proto, exc))
     try:
         digest = ''
         if os.path.exists(digest_path):
@@ -393,8 +405,9 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
             digest_fd.close()
         section_dict['authdigests'] = digest
     except Exception, exc:
-        configuration.logger.error("load %s digest failed: %s" % (proto,
-                                                                  exc))
+        if not allow_missing:
+            configuration.logger.error("load %s digest failed: %s" % \
+                                       (proto, exc))
     return section_dict
 
 def load_ssh(client_id, configuration):

@@ -1484,6 +1484,8 @@ for %(site)s backup use.
 
         duplicati_entries = get_duplicati_specs()
         for (keyword, val) in duplicati_entries:
+            if val['Editor'] == 'hidden':
+                continue
             html += """
             <tr class='title'><td>
             %s
