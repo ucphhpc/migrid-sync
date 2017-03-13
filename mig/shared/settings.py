@@ -126,17 +126,39 @@ def parse_and_save_duplicati(filename, client_id, configuration):
     """Validate and write duplicati entries from filename. Generate JSON conf
     files for import in Duplicati client.
     """
+    _logger = configuration.logger
     status = parse_and_save_pickle(filename, duplicati_filename,
                                    get_duplicati_fields(), client_id,
                                    configuration, False, False)
     if status[0]:
         mark_user_modified(configuration, client_id)
         saved_values = load_duplicati(client_id, configuration)
+        if not saved_values:
+            _logger.error('loading just saved %s duplicati settings failed!' \
+                          % client_id)
+            return (False, 'could not load saved Duplicati settings!')
         fill_helper = extract_duplicati_helper(configuration, client_id,
                                                saved_values)
         client_dir = client_id_dir(client_id)
         duplicati_dir = os.path.join(configuration.user_home, client_dir,
                                      duplicati_conf_dir)
+        saved_protocol = saved_values.get('PROTOCOL', None)
+        if saved_protocol.lower() in ['webdavs', 'davs']:
+            saved_creds = load_davs(client_id, configuration)
+        elif saved_protocol.lower() in ['ssh', 'sftp']:
+            saved_creds = load_ssh(client_id, configuration)
+        elif saved_protocol.lower() in ['ftps']:
+            saved_creds = load_ftps(client_id, configuration)
+        else:
+            return (False, 'could not load credentials for verification!')
+        _logger.debug('found saved creds: %s' % saved_creds)
+        if not saved_creds.get('authpassword', None):
+            warn = '''Warning: you need to enable password login on your %s 
+Settings page before you can use it with Duplicati.''' % saved_protocol
+            status = (status[0], status[1] + warn)
+            _logger.warning('no saved %s creds for %s' % (saved_protocol,
+                                                              client_id))
+            
         for backup_name in saved_values['BACKUPS']:
             fill_helper['backup_name'] = backup_name
             fill_helper['backup_dir'] = os.path.join(duplicati_conf_dir,

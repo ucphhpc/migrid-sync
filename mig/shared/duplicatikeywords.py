@@ -124,7 +124,8 @@ def get_duplicati_specs():
         'Value': [],
         'Editor': 'input',
         'Context': 'duplicati',
-        'Required': True,
+        # We need to allow empty to let users disable again
+        'Required': False,
         }))
     specs.append(('PROTOCOL', {
         'Title': 'Transfer protocol',

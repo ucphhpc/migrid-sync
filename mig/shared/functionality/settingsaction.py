@@ -212,6 +212,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               : 'Error parsing and saving %s settings: %s'
                                % (topic, parse_msg)})
         return (output_objects, returnvalues.CLIENT_ERROR)
+    elif parse_msg:
+        output_objects.append({'object_type': 'html_form', 'text': 
+                               '<span class="warningtext">%s</span>' % \
+                               parse_msg})
 
     # print saved topic
 
