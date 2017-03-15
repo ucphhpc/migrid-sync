@@ -237,6 +237,7 @@ settings:
 --cert_fqdn=CERT_FQDN
 --oid_fqdn=OID_FQDN
 --sid_fqdn=SID_FQDN
+--io_fqdn=IO_FQDN
 --user=USER
 --group=GROUP
 --apache_version=APACHE_VERSION
@@ -288,34 +289,14 @@ settings:
 --skin=SKIN
 
 For one of our servers running MiG as the 'mig' user with the code
-checked out directly in the home directory and with Debian apache 1.3.x
-defaults, this could be:
-./generateconfs.py --source=. --destination=generated-confs \
-                   --public_fqdn=mig-1.imada.sdu.dk \
-                   --cert_fqdn=mig-1.imada.sdu.dk \
-                   --sid_fqdn=mig-1.imada.sdu.dk --user=mig \
-                   --group=mig --apache_etc=/etc/apache \
-                   --apache_run=/var/run/apache \
-                   --apache_lock=/var/lock/apache \
-                   --apache_log=/var/log/apache \
-                   --mig_code=/home/mig/mig \
-                   --mig_state=/home/mig/state \
-                   --mig_certs=/home/mig/MiG-certificates \
-                   --hg_path=/usr/bin/hg \
-                   --hgweb_scripts=/usr/share/doc/mercurial/examples \
-                   --trac_admin_path=/usr/bin/trac-admin \
-                   --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --cert_port=443 --sid_port=8092 \
-                   --user_clause=User --group_clause=Group \
-                   --listen_clause='Listen' \
-                   --serveralias_clause='#ServerAlias'
-
-or similarly with Debian apache 2.4 without OpenID:
+checked out directly in the home directory and Debian apache 2.4 without OpenID:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
                    --cert_fqdn=dk-cert.migrid.org \
-                   --sid_fqdn=dk-sid.migrid.org --user=mig --group=mig \
+                   --sid_fqdn=dk-sid.migrid.org \
+                   --io_fqdn=dk-sid.migrid.org \
+                   --user=mig --group=mig \
                    --apache_etc=/etc/apache2 \
                    --apache_run=/var/run/apache2 \
                    --apache_lock=/var/lock/apache2 \
@@ -343,9 +324,9 @@ vhost-specific certificates:
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
                    --cert_fqdn=dk-cert.migrid.org \
-                   --sid_fqdn=dk-sid.migrid.org \
                    --oid_fqdn=dk-oid.migrid.org \
-                   --daemon_show_address=dk-sid.migrid.org \
+                   --sid_fqdn=dk-sid.migrid.org \
+                   --io_fqdn=dk-sid.migrid.org \
                    --user=mig --group=mig \
                    --apache_etc=/etc/apache2 \
                    --apache_run=/var/run/apache2 \
@@ -376,15 +357,16 @@ vhost-specific certificates:
                    --skin=migrid-basic --wsgi_procs=25 \
                    --apache_version=2.4
 
-and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (defaultweb), 
+and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 Seafile integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
                    --cert_fqdn=cert.erda.dk \
                    --oid_fqdn=erda.dk \
-                   --sid_fqdn=sid.erda.dk --user=mig --group=mig \
-                   --daemon_show_address=io.erda.dk \
+                   --sid_fqdn=sid.erda.dk \
+                   --io_fqdn=io.erda.dk \
+                   --user=mig --group=mig \
                    --apache_etc=/etc/httpd \
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \

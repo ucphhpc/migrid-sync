@@ -20,7 +20,7 @@ grep -H -A 12 "Traceback" $LOGDIR/webdavs.out
 
 grep -H ERROR $LOGDIR/ftps.log
 grep -H ERROR $LOGDIR/sftp.log | \
-	grep -v "Password authentication failed for\|Socket exception: Connection reset by peer\|Error reading SSH protocol banner\|check_banner\|list_folder on missing path\|chmod \(292\|365\) rejected on path\|ERROR $"
+	grep -v "Password authentication failed for\|Socket exception: Connection reset by peer\|Error reading SSH protocol banner\|check_banner\|list_folder on missing path\|chmod \(292\|365\) rejected on path\|ERROR Exception: Incompatible (ssh|version) \|ERROR $"
 grep -H ERROR $LOGDIR/davs.log
 
 grep -H ERROR $LOGDIR/mig.log | \

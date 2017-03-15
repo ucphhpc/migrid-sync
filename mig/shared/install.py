@@ -86,6 +86,7 @@ def generate_confs(
     cert_fqdn='localhost',
     oid_fqdn='localhost',
     sid_fqdn='localhost',
+    io_fqdn='localhost',
     user='mig',
     group='mig',
     apache_version='2.2',
@@ -150,6 +151,7 @@ def generate_confs(
     user_dict['__CERT_FQDN__'] = cert_fqdn
     user_dict['__OID_FQDN__'] = oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
+    user_dict['__IO_FQDN__'] = io_fqdn
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
@@ -376,6 +378,7 @@ cert, oid and sid based https!
         ("migrid-init.d-deb-template", "migrid-init.d-deb"),
         # cron helpers
         ("migerrors-template.sh.cronjob", "migerrors"),
+        ("migsftpmon-template.sh.cronjob", "migsftpmon"),
         ("migstateclean-template.sh.cronjob", "migstateclean"),
         ("migcheckssl-template.sh.cronjob", "migcheckssl"),
         ]
@@ -400,6 +403,7 @@ def create_user(
     cert_fqdn=socket.getfqdn(),
     oid_fqdn=socket.getfqdn(),    
     sid_fqdn=socket.getfqdn(),
+    io_fqdn=socket.getfqdn(),
     ):
     """Create MiG unix user with supplied user and group name and show
     commands to make it a MiG developer account.
@@ -574,6 +578,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         cert_fqdn,
         oid_fqdn,
         sid_fqdn,
+        io_fqdn,
         user,
         group,
         apache_version,

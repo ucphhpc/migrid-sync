@@ -54,6 +54,7 @@ if '__main__' == __name__:
         'cert_fqdn',
         'oid_fqdn',
         'sid_fqdn',
+        'io_fqdn',
         'user',
         'group',
         'apache_version',

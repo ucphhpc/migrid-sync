@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# run sftpfailinfo as mig user
+
+# Add any custom trusted IPs and domains here
+trust_ip="." 
+trust_fqdn=""
+
+# No more edits below
+own_fqdn="localhost.localdomain __PUBLIC_FQDN__ __CERT_FQDN__ __OID_FQDN__ __SID_FQDN__ __IO_FQDN__"
+own_ip=""
+for fqdn in $own_fqdn; do
+    own_ip="$own_ip $(getent hosts $fqdn|awk '{ print $1 }')"
+done
+
+trust_ip="$own_ip $trust_ip"
+trust_fqdn="$own_fqdn $trust_fqdn"
+trust=""
+for addr in $trust_ip; do
+    trust="$trust -x $addr"
+done
+for fqdn in $trust_fqdn; do
+    trust="$trust -X $fqdn"
+done
+su - mig -c "python mig/server/sftpfailinfo.py $trust"
