@@ -124,13 +124,15 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_port': 2222,
         'user_sftp_key': '~/certs/combined.pem',
         'user_sftp_key_pub': '~/certs/server.pub',
-        'user_sftp_key_fingerprint': '',
+        'user_sftp_key_md5': '',
+        'user_sftp_key_sha256': '',
         'user_sftp_auth': ['publickey', 'password'],
         'user_sftp_alias': '',
         'user_sftp_log': 'sftp.log',
         'user_davs_address': fqdn,
         'user_davs_port': 4443,
         'user_davs_key': '~/certs/combined.pem',
+        'user_davs_key_sha256': '',        
         'user_davs_auth': ['password'],
         'user_davs_alias': '',
         'user_davs_log': 'davs.log',
@@ -138,6 +140,7 @@ def fix_missing(config_file, verbose=True):
         'user_ftps_ctrl_port': 8021,
         'user_ftps_pasv_ports': range(8100, 8400),
         'user_ftps_key': '~/certs/combined.pem',
+        'user_ftps_key_sha256': '',
         'user_ftps_auth': ['password'],
         'user_ftps_alias': '',
         'user_ftps_log': 'ftps.log',
@@ -304,7 +307,8 @@ class Configuration:
     user_sftp_show_port = 2222
     user_sftp_key = ''
     user_sftp_key_pub = ''
-    user_sftp_key_fingerprint = ''
+    user_sftp_key_md5 = ''
+    user_sftp_key_sha256 = ''
     user_sftp_auth = ['publickey', 'password']
     user_sftp_alias = ''
     user_sftp_log = 'sftp.log'
@@ -316,6 +320,7 @@ class Configuration:
     user_davs_show_address = ''
     user_davs_show_port = 4443
     user_davs_key = ''
+    user_davs_key_sha256 = ''
     user_davs_auth = ['password']
     user_davs_alias = ''
     user_davs_log = 'davs.log'
@@ -325,6 +330,7 @@ class Configuration:
     user_ftps_show_address = ''
     user_ftps_show_ctrl_port = 8021
     user_ftps_key = ''
+    user_ftps_key_sha256 = ''
     user_ftps_auth = ['password']
     user_ftps_alias = ''
     user_ftps_log = 'ftps.log'
@@ -672,9 +678,12 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_sftp_key_pub'):
             self.user_sftp_key_pub = config.get('GLOBAL', 
                                             'user_sftp_key_pub')
-        if config.has_option('GLOBAL', 'user_sftp_key_fingerprint'):
-            fingerprint = config.get('GLOBAL', 'user_sftp_key_fingerprint')
-            self.user_sftp_key_fingerprint = fingerprint
+        if config.has_option('GLOBAL', 'user_sftp_key_md5'):
+            fingerprint = config.get('GLOBAL', 'user_sftp_key_md5')
+            self.user_sftp_key_md5 = fingerprint
+        if config.has_option('GLOBAL', 'user_sftp_key_sha256'):
+            fingerprint = config.get('GLOBAL', 'user_sftp_key_sha256')
+            self.user_sftp_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_sftp_auth'):
             self.user_sftp_auth = config.get('GLOBAL', 
                                              'user_sftp_auth').split()
@@ -722,6 +731,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_davs_key'):
             self.user_davs_key = config.get('GLOBAL', 
                                             'user_davs_key')
+        if config.has_option('GLOBAL', 'user_davs_key_sha256'):
+            fingerprint = config.get('GLOBAL', 'user_davs_key_sha256')
+            self.user_davs_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_davs_auth'):
             self.user_davs_auth = config.get('GLOBAL', 
                                              'user_davs_auth').split()
@@ -756,6 +768,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_ftps_key'):
             self.user_ftps_key = config.get('GLOBAL', 
                                             'user_ftps_key')
+        if config.has_option('GLOBAL', 'user_ftps_key_sha256'):
+            fingerprint = config.get('GLOBAL', 'user_ftps_key_sha256')
+            self.user_ftps_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_ftps_auth'):
             self.user_ftps_auth = config.get('GLOBAL', 
                                              'user_ftps_auth').split()

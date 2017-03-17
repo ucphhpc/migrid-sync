@@ -745,10 +745,16 @@ so you may have to avoid blank lines in your text below.
         sftp_server = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
         fingerprint_info = ''
-        sftp_fingerprint = configuration.user_sftp_key_fingerprint
-        if sftp_fingerprint:
-            fingerprint_info = '''You may be asked to verify server key
-fingerprint when you connect first time. It should be %s .<br/>''' % sftp_fingerprint
+        sftp_md5 = configuration.user_sftp_key_md5
+        sftp_sha256 = configuration.user_sftp_key_sha256
+        fingerprints = []
+        if sftp_md5:
+            fingerprints.append("%s (MD5)" % sftp_md5)
+        if sftp_sha256:
+            fingerprints.append("%s (SHA256)" % sftp_sha256)
+        if fingerprints:
+            fingerprint_info = '''You may be asked to verify the server key
+fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -912,6 +918,19 @@ value="%(default_authpassword)s" />
             create_alias_link(username, client_id, configuration.user_home)
         davs_server = configuration.user_davs_show_address
         davs_port = configuration.user_davs_show_port
+        fingerprint_info = ''
+        # We do not support pretty outdated SHA1 in conf
+        #davs_sha1 = configuration.user_davs_key_sha1
+        davs_sha1 = ''
+        davs_sha256 = configuration.user_davs_key_sha256
+        fingerprints = []
+        if davs_sha1:
+            fingerprints.append("%s (SHA1)" % davs_sha1)
+        if davs_sha256:
+            fingerprints.append("%s (SHA256)" % davs_sha256)
+        if fingerprints:
+            fingerprint_info = '''You may be asked to verify the server key
+fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -937,6 +956,7 @@ access from your PC or workstation.<br/>
 <li>Username <em>%(username)s</em></li>
 <li>%(auth_methods)s <em>as you choose below</em></li>
 </ul>
+%(fingerprint_info)s
 </td></tr>
 <tr><td>
 <input type="hidden" name="topic" value="webdavs" />
@@ -1035,6 +1055,7 @@ value="%(default_authpassword)s" />
             'username': username,
             'davs_server': davs_server,
             'davs_port': davs_port,
+            'fingerprint_info': fingerprint_info,
             'auth_methods': ' / '.join(configuration.user_davs_auth).title(),
             })
 
@@ -1060,6 +1081,19 @@ value="%(default_authpassword)s" />
             create_alias_link(username, client_id, configuration.user_home)
         ftps_server = configuration.user_ftps_show_address
         ftps_ctrl_port = configuration.user_ftps_show_ctrl_port
+        fingerprint_info = ''
+        # We do not support pretty outdated SHA1 in conf
+        #ftps_sha1 = configuration.user_ftps_key_sha1
+        ftps_sha1 = ''
+        ftps_sha256 = configuration.user_ftps_key_sha256
+        fingerprints = []
+        if ftps_sha1:
+            fingerprints.append("%s (SHA1)" % ftps_sha1)
+        if ftps_sha256:
+            fingerprints.append("%s (SHA256)" % ftps_sha256)
+        if fingerprints:
+            fingerprint_info = '''You may be asked to verify the server key
+fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -1084,6 +1118,7 @@ access.<br/>
 <li>Username <em>%(username)s</em></li>
 <li>%(auth_methods)s <em>as you choose below</em></li>
 </ul>
+%(fingerprint_info)s
 </td></tr>
 <tr><td>
 <input type="hidden" name="topic" value="ftps" />
@@ -1197,6 +1232,7 @@ value="%(default_authpassword)s" />
         'username': username,
         'ftps_server': ftps_server,
         'ftps_ctrl_port': ftps_ctrl_port,
+        'fingerprint_info': fingerprint_info,
         'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
         })
         output_objects.append({'object_type': 'html_form', 'text':
