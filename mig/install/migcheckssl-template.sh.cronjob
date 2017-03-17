@@ -109,9 +109,10 @@ if [ ${org_mtime} -ne ${new_mtime} ]; then
    fi
 
    # Generate combined.pem
-   # Paramiko expects 'combined.pem' to contain plain-text part of server.key
+   #
+   # Paramiko expects 'combined.pem' to contain plain-text part of 'server.key'
    # 'server_key_crt_ca_pem' is 'combined.pem'
-   #  without plain-text part of server.key
+   # without plain-text part of 'server.key'
 
    openssl rsa -in ${server_key} -text > ${server_pem}
    cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
