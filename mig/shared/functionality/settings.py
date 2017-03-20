@@ -771,7 +771,8 @@ SFTP access to your %(site)s account
 </td></tr>
 <tr><td>
 You can configure SFTP login to your %(site)s account for efficient file
-access. On Linux/UN*X it also allows transparent access through SSHFS.
+access. On Linux/UN*X it also allows transparent access through SSHFS, and some
+Linux distributions even natively integrate SFTP access in the file manager.
 <br/>
 <h3>Login Details</h3>
 <ul>
@@ -789,18 +790,19 @@ access. On Linux/UN*X it also allows transparent access through SSHFS.
     class="removeitemlink iconspace" title="Toggle view">
     Show less SFTP client details...</a>
 <h3>Graphical SFTP access</h3>
-The FireFTP plugin for Firefox is known to generally work for graphical
-access to your %(site)s home over SFTP.
-Enter the following values in the FireFTP Account Manager:
+The FileZilla client is known to generally work for graphical access to your
+%(site)s home over SFTP. It runs on all popular platforms and in the
+<a href="http://portableapps.com/apps/internet/filezilla_portable">portable
+version</a> it does not even require install privileges.<br/>
+Enter the following values in the FileZilla Site Manager:
 <pre>
 Host %(sftp_server)s
-Login %(username)s
-Password YOUR_PASSWORD_HERE (passphrase if you configured public key access)
-Security SFTP
 Port %(sftp_port)s
-Private Key ~/.mig/id_rsa (if you configured public key access)
+Protocol SFTP
+User %(username)s
+Password YOUR_PASSWORD_HERE (leave empty for ssh key from key-agent)
 </pre>
-other graphical clients may work as well.
+Other graphical clients like WinSCP should work as well.
 <h3>Command line SFTP/SSHFS access on Linux/UN*X</h3>
 Save something like the following lines in your local ~/.ssh/config
 to avoid typing the full login details every time:<br />
@@ -1127,18 +1129,19 @@ access.<br/>
     class="removeitemlink iconspace" title="Toggle view">
     Show less FTPS client details...</a>
 <h3>Graphical FTPS access</h3>
-The FireFTP plugin for Firefox is known to generally work for graphical
-access to your %(site)s home over FTPS.
-Enter the following values in the FireFTP Account Manager:
+The FileZilla client is known to generally work for graphical access to your
+%(site)s home over FTPS.
+Enter the following values in the FileZilla Site Manager:
 <pre>
 Host %(ftps_server)s
-Login %(username)s
-Password YOUR_PASSWORD_HERE
-Security FTPS
 Port %(ftps_ctrl_port)s
+Protocol FTP
+Encryption Explicit FTP over TLS
+User %(username)s
+Password YOUR_PASSWORD_HERE
 </pre>
-Other FTP clients and web browsers may work as well if you enter the address
-ftps://%(ftps_server)s:%(ftps_ctrl_port)s
+Other graphical clients like WinSCP should work as well. Some web browsers may
+also work, if you enter the address ftps://%(ftps_server)s:%(ftps_ctrl_port)s
 and fill in the login details when prompted:
 <pre>
 Username %(username)s
@@ -1153,10 +1156,6 @@ login %(username)s
 password YOUR_PASSWORD_HERE
 </pre>
 From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:
-<!--
-TODO: we need to provide the intermediate cert for server cert check like this
-set ssl:ca-file sub.class1.server.ca.pem
--->
 <pre>
 lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on" \\
      -p %(ftps_ctrl_port)s %(ftps_server)s
