@@ -1507,7 +1507,7 @@ Duplicati Backup to %(site)s
 <tr><td>
 You can install the <a href="https://www.duplicati.com">Duplicati</a> client on
 your local machine and use it to backup arbitrary data to %(site)s.<br/>
-We recommend the <a href="https://github.com/duplicati/duplicati/releases">
+We recommend the <a href="https://www.duplicati.com/download">
 most recent version of Duplicati</a> to be able to import the generated
 configurations from here directly.
 <h3>Configure Backup Sets</h3>
