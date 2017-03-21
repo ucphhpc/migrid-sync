@@ -38,9 +38,10 @@ if [ ! -x "${getssl_path}" ]; then
    exit 1
 else   
    wget -O ${getssl_tmp} ${getssl_url} > /dev/null 2>&1
-   diff -u -w ${getssl_tmp} ${getssl_path} || \
-   echo "--- Updated LetsEncrypt script available - please verify+update ---"
-   echo "${getssl_url}"
+   diff -u -w ${getssl_tmp} ${getssl_path} || { \
+       echo "--- Updated LetsEncrypt script available - please verify+update ---"
+       echo "${getssl_url}"
+   }
    rm -f ${getssl_tmp}
 fi
 
