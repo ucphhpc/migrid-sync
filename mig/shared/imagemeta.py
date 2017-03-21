@@ -2346,8 +2346,12 @@ def refresh(
 
     image_file_settings_count = get_image_file_settings_count(logger,
             abs_path)
+    image_file_count = get_image_volume_count(logger, abs_path)
+
     image_volume_settings_count = \
         get_image_volume_settings_count(logger, abs_path)
+    image_volume_count = get_image_volume_count(logger, abs_path)
+
     if image_file_settings_count > 0:
         STATUS_MSG = '============= %s ============' % path
         output_objects.append({'object_type': 'text',
@@ -2370,7 +2374,7 @@ def refresh(
         status = reset_settings(configuration, abs_path, path,
                                 output_objects, volume=reset_volume)
 
-    if status == returnvalues.OK:
+    if status == returnvalues.OK and image_file_count > 0:
 
         # Check and update image base file paths
 
@@ -2385,7 +2389,10 @@ def refresh(
                                   'text': ERROR_MSG})
             logger.error(ERROR_MSG)
 
-    if status == returnvalues.OK and image_volume_settings_count > 0:
+    if status == returnvalues.OK and image_file_count > 0:
+
+        # Check and update volume base file paths
+
         if update_image_volume(logger, abs_path, {'base_path': path}):
             OK_MSG = "Updated volume meta base path : '%s'" % path
             output_objects.append({'object_type': 'text',
