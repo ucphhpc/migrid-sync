@@ -35,7 +35,7 @@ import traceback
 
 from shared.imagemetaio import __tables_image_volumes_preview_data_group, \
     __settings_file, __get_data_node_name, get_image_xdmf_path, \
-    allowed_data_types, allowed_xdmf_data_types, \
+    allowed_data_types, allowed_xdmf_data_types, allowed_volume_types, \
     allowed_xdmf_precisions, add_image_file, get_image_file_setting, \
     get_image_file_settings, get_image_preview_path, \
     add_image_file_preview_data, add_image_file_preview_image, \
@@ -43,7 +43,8 @@ from shared.imagemetaio import __tables_image_volumes_preview_data_group, \
     remove_image_files, update_image_file_setting, \
     get_image_volume_setting, get_image_file_preview_data, \
     add_image_volume_preview_data, allowed_settings_status, \
-    add_image_volume, update_image_volume_setting
+    add_image_volume, update_image_volume_setting, \
+    get_image_file_ent_template_dict, get_image_volume_ent_template_dict
 
 from numpy import zeros, empty, fromfile, int8, uint8, int16, uint16, \
     int32, uint32, int64, uint64, float64, cast, rint, mean, floor, \
@@ -97,7 +98,7 @@ def fill_image_md5sum(logger, meta, blocksize=65536):
         fh.close()
         image['md5sum'] = hash.hexdigest()
         result = True
-    except Exception, ex:
+    except Exception:
         logger.error(traceback.format_exc())
         result = False
     return result
@@ -127,7 +128,7 @@ def fill_image_data(logger, meta):
             fh.close()
             image['data'].shape = (y_dimension, x_dimension)
             result = True
-        except Exception, ex:
+        except Exception:
             logger.error(traceback.format_exc())
             result = False
     elif settings['image_type'] == 'tiff':
@@ -145,7 +146,7 @@ def fill_image_data(logger, meta):
                          , settings['x_dimension'],
                          settings['y_dimension'], settings['data_type'])
             result = True
-        except Exception, ex:
+        except Exception:
             logger.error(traceback.format_exc())
             result = False
     else:
@@ -320,33 +321,34 @@ def add_image_meta_data(logger, meta):
     image = meta['2D']
     settings = image['settings']
 
-    result = add_image_file(
-        logger,
-        meta['abs_base_path'],
-        meta['base_path'],
-        meta['path'],
-        meta['filename'],
-        settings['extension'],
-        settings['image_type'],
-        settings['data_type'],
-        settings['offset'],
-        settings['x_dimension'],
-        settings['y_dimension'],
-        image['stats']['min_value'],
-        image['stats']['max_value'],
-        image['stats']['mean'],
-        image['stats']['median'],
-        image['md5sum'],
-        image['preview']['image_filename'],
-        image['preview']['extension'],
-        settings['data_type'],
-        image['preview']['x_dimension'],
-        image['preview']['y_dimension'],
-        image['preview']['cutoff_min'],
-        image['preview']['cutoff_max'],
-        image['preview']['scale'],
-        overwrite=True,
-        )
+    image_meta = get_image_file_ent_template_dict(logger)
+    image_meta['extension'] = settings['extension']
+    image_meta['image_type'] = settings['image_type']
+    image_meta['base_path'] = meta['base_path']
+    image_meta['path'] = meta['path']
+    image_meta['name'] = meta['filename']
+    image_meta['data_type'] = settings['data_type']
+    image_meta['offset'] = settings['offset']
+    image_meta['x_dimension'] = settings['x_dimension']
+    image_meta['y_dimension'] = settings['y_dimension']
+    image_meta['min_value'] = image['stats']['min_value']
+    image_meta['max_value'] = image['stats']['max_value']
+    image_meta['mean_value'] = image['stats']['mean']
+    image_meta['median_value'] = image['stats']['median']
+    image_meta['file_md5sum'] = image['md5sum']
+    image_meta['preview_image_filename'] = image['preview'
+            ]['image_filename']
+    image_meta['preview_image_extension'] = image['preview']['extension'
+            ]
+    image_meta['preview_data_type'] = settings['data_type']
+    image_meta['preview_x_dimension'] = image['preview']['x_dimension']
+    image_meta['preview_y_dimension'] = image['preview']['y_dimension']
+    image_meta['preview_cutoff_min'] = image['preview']['cutoff_min']
+    image_meta['preview_cutoff_max'] = image['preview']['cutoff_max']
+    image_meta['preview_image_scale'] = image['preview']['scale']
+
+    result = add_image_file(logger, meta['abs_base_path'], image_meta,
+                            overwrite=True)
 
     return result
 
@@ -459,35 +461,36 @@ def add_volume_meta_data(logger, meta):
     logger.debug('preview_cutoff_min: %s' % preview['cutoff_min'])
     logger.debug('preview_cutoff_max: %s' % preview['cutoff_max'])
 
-    result = add_image_volume(
-        logger,
-        meta['abs_base_path'],
-        meta['base_path'],
-        meta['path'],
-        settings['volume_slice_filepattern'],
-        settings['extension'],
-        settings['image_type'],
-        settings['volume_type'],
-        settings['data_type'],
-        settings['offset'],
-        settings['x_dimension'],
-        settings['y_dimension'],
-        settings['z_dimension'],
-        volume['stats']['min_value'],
-        volume['stats']['max_value'],
-        volume['stats']['mean'],
-        volume['stats']['median'],
-        volume['md5sum'],
-        preview['xdmf_filename'],
-        preview['data_type'],
-        preview['x_dimension'],
-        preview['y_dimension'],
-        preview['z_dimension'],
-        preview['cutoff_min'],
-        preview['cutoff_max'],
-        overwrite=True,
-        )
+    volume_meta = get_image_volume_ent_template_dict(logger)
+    volume_meta['extension'] = settings['extension']
+    volume_meta['image_type'] = settings['image_type']
+    volume_meta['base_path'] = meta['base_path']
+    volume_meta['path'] = meta['path']
+    volume_meta['name'] = settings['volume_slice_filepattern']
+    volume_meta['data_type'] = settings['data_type']
+    volume_meta['volume_type'] = settings['volume_type']
+    volume_meta['offset'] = settings['offset']
+    volume_meta['x_dimension'] = settings['x_dimension']
+    volume_meta['y_dimension'] = settings['y_dimension']
+    volume_meta['z_dimension'] = settings['z_dimension']
+    volume_meta['min_value'] = volume['stats']['min_value']
+    volume_meta['max_value'] = volume['stats']['max_value']
+    volume_meta['mean_value'] = volume['stats']['mean']
+    volume_meta['median_value'] = volume['stats']['median']
+    volume_meta['file_md5sum'] = volume['md5sum']
+    volume_meta['preview_xdmf_filename'] = preview['xdmf_filename']
+    volume_meta['preview_data_type'] = settings['data_type']
+    volume_meta['preview_x_dimension'] = volume['preview']['x_dimension'
+            ]
+    volume_meta['preview_y_dimension'] = volume['preview']['y_dimension'
+            ]
+    volume_meta['preview_z_dimension'] = volume['preview']['z_dimension'
+            ]
+    volume_meta['preview_cutoff_min'] = volume['preview']['cutoff_min']
+    volume_meta['preview_cutoff_max'] = volume['preview']['cutoff_max']
 
+    result = add_image_volume(logger, meta['abs_base_path'],
+                              volume_meta, overwrite=True)
     logger.debug('result: %s' % str(result))
 
     return result
@@ -613,14 +616,8 @@ def add_volume_preview_slice_data(logger, meta):
         logger.debug('extension: %s' % extension)
         filepattern_index = volume_slice_filepattern.find('%')
         logger.debug('filepattern_index: %s' % filepattern_index)
-        image_files = get_image_files(
-            logger,
-            abs_base_path,
-            base_path,
-            path=path,
-            extension=extension,
-            data_entries=None,
-            )
+        image_files = get_image_files(logger, abs_base_path, path=path,
+                extension=extension, data_entries=None)
         logger.debug('image_files count: %s' % len(image_files))
 
         # Get metadata
@@ -668,8 +665,7 @@ def add_volume_preview_slice_data(logger, meta):
                 allowed_settings_status['updating']
             settings['settings_update_progress'] = '%s/%s : %s%%' \
                 % (volume_nr, volume_count, int(round(volume_progress)))
-            update_image_volume_setting(logger, abs_base_path,
-                    base_path, settings)
+            update_image_volume_setting(logger, abs_base_path, settings)
 
             # Find slices data type, check if consistent
 
@@ -691,12 +687,12 @@ def add_volume_preview_slice_data(logger, meta):
                     % (volume_nr, volume_count,
                        int(round(volume_progress)))
                 update_image_volume_setting(logger, abs_base_path,
-                        base_path, settings)
+                        settings)
 
                 filename = volume_slice_filepattern % int(file_idx)
                 slice_preview_data = \
                     get_image_file_preview_data(logger, abs_base_path,
-                        base_path, path, filename)
+                        path, filename)
 
                 tmp_volume[slice_idx, :slice_preview_data.shape[0], :
                            slice_preview_data.shape[1]] = \
@@ -745,7 +741,7 @@ def add_volume_preview_slice_data(logger, meta):
                     % (volume_nr, volume_count,
                        int(round(volume_progress)))
                 update_image_volume_setting(logger, abs_base_path,
-                        base_path, settings)
+                        settings)
                 logger.debug('resize_x_dimension: %s, tmp slice: shape: %s, min: %s, max: %s'
                               % (x, str(tmp_volume[:, :, x].shape),
                              tmp_volume[:, :, x].min(), tmp_volume[:, :
@@ -765,14 +761,9 @@ def add_volume_preview_slice_data(logger, meta):
                          % (str(resized_volume.shape),
                          resized_volume.min(), resized_volume.max()))
 
-            result = add_image_volume_preview_data(
-                logger,
-                abs_base_path,
-                base_path,
-                path,
-                volume_slice_filepattern,
-                resized_volume,
-                )
+            result = add_image_volume_preview_data(logger,
+                    abs_base_path, path, volume_slice_filepattern,
+                    resized_volume)
         else:
             result = False
             logger.debug('Missing: %s slices to create volume'
@@ -790,10 +781,8 @@ def cleanup_previews(logger, base_path):
     logger.debug('abs_base_path: %s' % abs_base_path)
 
     result = True
-    image_file_settings = get_image_file_settings(logger,
-            abs_base_path, base_path)
-    image_file_entries = get_image_files(logger, abs_base_path,
-            base_path)
+    image_file_settings = get_image_file_settings(logger, abs_base_path)
+    image_file_entries = get_image_files(logger, abs_base_path)
 
     if image_file_entries is not None:
         for entry in image_file_entries:
@@ -920,13 +909,13 @@ def update_volume_preview(
     meta = __init_meta(logger, base_path, path, filename)
     volume = meta['3D']
     volume['settings'] = settings = get_image_volume_setting(logger,
-            meta['abs_base_path'], meta['base_path'], meta['extension'])
+            meta['abs_base_path'], meta['extension'])
     volume['volume_nr'] = volume_nr
     volume['volume_count'] = volume_count
 
     result = False
     if settings is not None:
-        if settings['volume_type'] == 'slice':
+        if settings['volume_type'] == allowed_volume_types['slice']:
             if fill_volume_preview_meta(logger, meta) \
                 and add_volume_preview_slice_data(logger, meta) \
                 and write_preview_xdmf(logger, meta) \
@@ -1017,7 +1006,9 @@ def update_previews(logger, base_path, extension):
             processed_volume_count = 0
             total_volume_count = 0
             if volume_setting is not None \
-                and volume_setting['volume_type'] == 'slice':
+                and volume_setting['z_dimension'] > 0 \
+                and volume_setting['volume_type'] \
+                == allowed_volume_types['slice']:
                 total_volume_count = int(floor(total_filecount
                         / volume_setting['z_dimension']))
 
@@ -1047,7 +1038,8 @@ def update_previews(logger, base_path, extension):
                                 slice_modified = True
                             else:
                                 image_status = False
-                    if slice_modified and volume_setting is not None:
+                    if slice_modified and volume_setting is not None \
+                        and volume_setting['z_dimension'] > 0:
                         volume_status = update_volume_preview(logger,
                                 base_path, path,
                                 volume_nr=processed_volume_count,
@@ -1080,7 +1072,8 @@ def update_previews(logger, base_path, extension):
                                 slice_modified = True
                             else:
                                 image_status = False
-                if slice_modified and volume_setting is not None:
+                if slice_modified and volume_setting is not None \
+                    and volume_setting['z_dimension'] > 0:
                     volume_status = update_volume_preview(logger,
                             base_path, path)
                     if volume_status:
@@ -1098,7 +1091,8 @@ def update_previews(logger, base_path, extension):
             update_image_file_setting(logger, abs_base_path,
                     image_setting)
 
-            if volume_setting is not None:
+            if volume_setting is not None \
+                and volume_setting['z_dimension'] > 0:
                 image_setting['settings_update_progress'] = None
                 if volume_status:
                     volume_setting['settings_status'] = status_ready
@@ -1107,7 +1101,7 @@ def update_previews(logger, base_path, extension):
                 logger.debug('volume settings status: %s'
                              % image_setting['settings_status'])
                 update_image_volume_setting(logger, abs_base_path,
-                        base_path, volume_setting)
+                        volume_setting)
         else:
             logger.info("Skipping update for: %s, %s, expected status: 'Pending', found '%s'"
                          % (base_path, extension, settings_status))
