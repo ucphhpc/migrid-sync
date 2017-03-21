@@ -3063,6 +3063,7 @@ def imagepreview_main(lang):
 
     s = ''
     s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
