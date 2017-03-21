@@ -1464,10 +1464,9 @@ def __get_image_meta_setting(
     image_count = get_image_file_count(logger, abs_path,
             extension=extension)
 
-    
     image_file_setting = get_image_file_setting(logger, abs_path,
             extension)
-    
+
     if image_file_setting is not None:
         extension = str(image_file_setting['extension'])
         image_settings_status = str(image_file_setting['settings_status'
@@ -1544,7 +1543,7 @@ def __get_image_meta_setting(
             'preview_cutoff_max': preview_cutoff_max,
             'data_type': data_type,
             }
-    
+
     return result
 
 
@@ -1649,23 +1648,21 @@ def __reset_file_settings(
     if file_reset:
         status = returnvalues.OK
         if extension is None or len(extension) == 0:
-            OK_MSG = \
-                "Reset all image file settings status for path: '%s'" \
+            OK_MSG = "Reset all image file settings status : '%s'" \
                 % path
         else:
             OK_MSG = \
-                "Reset image file setting status for path: '%s', extension: '%s'" \
+                "Reset image file setting status : '%s', extension: '%s'" \
                 % (path, extension)
         output_objects.append({'object_type': 'text', 'text': OK_MSG})
     else:
         status = returnvalues.ERROR
         if extension is None or len(extension) == 0:
             ERROR_MSG = \
-                "Reset image file settings status FAILED for path: '%s'" \
-                % path
+                "Reset image file settings status FAILED : '%s'" % path
         else:
             ERROR_MSG = \
-                "Reset image file settings status FAILED for path: '%s', extension: '%s'" \
+                "Reset image file settings status FAILED : '%s', extension: '%s'" \
                 % (path, extension)
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
@@ -1709,11 +1706,11 @@ def __reset_volume_settings(
         status = returnvalues.ERROR
         if extension is None or len(extension) == 0:
             ERROR_MSG = \
-                "Reset image file settings status FAILED for path: '%s'" \
+                "Reset image volume settings status FAILED for path: '%s'" \
                 % path
         else:
             ERROR_MSG = \
-                "Reset image file settings status FAILED for path: '%s', extension: '%s'" \
+                "Reset image volume settings status FAILED for path: '%s', extension: '%s'" \
                 % (path, extension)
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
@@ -2176,6 +2173,7 @@ def reset_settings(
     path,
     output_objects,
     extension=None,
+    volume=True,
     ):
     """Reset status for image file and volume meta setting
     with *path* and *extension*.
@@ -2188,7 +2186,7 @@ def reset_settings(
 
     # NOTE: Volume setting is _NOT_ required therefore doesn't effect status
 
-    if status:
+    if volume:
         __reset_volume_settings(configuration, abs_path, path,
                                 output_objects, extension)
 
@@ -2245,7 +2243,6 @@ def get(
 
     # Get image settings, image meta for file base_dir/path
 
-
     image_meta = __get_image_meta(logger, base_dir, path,
                                   data_entries=['preview_histogram'])
 
@@ -2256,16 +2253,17 @@ def get(
 
         abs_base_path = os.path.join(base_dir, image_meta['base_path'])
 
-
         image_settings = __get_image_meta_setting(logger,
                 abs_base_path, image_meta['path'],
                 image_meta['extension'])
 
         if image_settings is None:
             status = returnvalues.ERROR
-            ERROR_MSG = 'Missing image_settings for path: %s, extension: %s' % (image_meta['path'], image_meta['extension'])
+            ERROR_MSG = \
+                "Missing image_settings for path: '%s', extension: '%s'" \
+                % (image_meta['path'], image_meta['extension'])
             output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG})
+                                  'text': ERROR_MSG})
             logger.error(ERROR_MSG)
         else:
             output_objects.append(image_settings)
@@ -2274,23 +2272,27 @@ def get(
             # Return alogn with image_meta
 
             if image_settings['volume_count'] > 0:
-                if image_settings['volume_type'] == allowed_volume_types['slice']:                
+                if image_settings['volume_type'] \
+                    == allowed_volume_types['slice']:
                     volume_path = os.path.join(image_meta['base_path'],
                             os.path.join(image_meta['path'],
                             os.path.join(image_settings['volume_slice_filepattern'
                             ])))
 
-                    slice_volume_meta = __get_volume_meta(logger, base_dir,
-                            volume_path)
+                    slice_volume_meta = __get_volume_meta(logger,
+                            base_dir, volume_path)
                     if slice_volume_meta is not None:
                         output_objects.append(slice_volume_meta)
                     else:
                         logger.warning('Missing slice_volume_meta for path: %s'
-                                       % path)
+                                 % path)
                 else:
-                    ERROR_MSG = "Invalid volume type: '%s', allowed: %s" % (image_settings['volume_type'], allowed_volume_types.values())
+                    ERROR_MSG = \
+                        "Invalid volume type: '%s', allowed: %s" \
+                        % (image_settings['volume_type'],
+                           allowed_volume_types.values())
                     output_objects.append({'object_type': 'error_text',
-                                  'text': ERROR_MSG})
+                            'text': ERROR_MSG})
                     logger.error(ERROR_MSG)
     else:
         status = returnvalues.ERROR
@@ -2342,11 +2344,15 @@ def refresh(
 
     vgrid_name = in_vgrid_share(configuration, abs_path)
 
-    image_settings_count = get_image_file_settings_count(logger,
+    image_file_settings_count = get_image_file_settings_count(logger,
             abs_path)
-    image_settings_count = get_image_volume_settings_count(logger,
-            abs_path)
-    if image_settings_count == 0:
+    image_volume_settings_count = \
+        get_image_volume_settings_count(logger, abs_path)
+    if image_file_settings_count > 0:
+        STATUS_MSG = '============= %s ============' % path
+        output_objects.append({'object_type': 'text',
+                              'text': STATUS_MSG})
+    else:
         status = returnvalues.ERROR
         ERROR_MSG = "No image settings found for path: '%s'" % path
         output_objects.append({'object_type': 'error_text',
@@ -2355,14 +2361,14 @@ def refresh(
 
     if status == returnvalues.OK:
 
-        STATUS_MSG = '============= %s ============' % path
-        output_objects.append({'object_type': 'text',
-                              'text': STATUS_MSG})
+        reset_volume = False
+        if image_volume_settings_count > 0:
+            reset_volume = True
 
         # Reset file and volume settings
 
         status = reset_settings(configuration, abs_path, path,
-                                output_objects)
+                                output_objects, volume=reset_volume)
 
     if status == returnvalues.OK:
 
@@ -2374,19 +2380,20 @@ def refresh(
                                   'text': OK_MSG})
         else:
             status = returnvalues.ERROR
-            ERROR_MSG = 'Failed to update volume meta'
+            ERROR_MSG = "Failed to update file meta : '%s'" % path
             output_objects.append({'object_type': 'error_text',
                                   'text': ERROR_MSG})
             logger.error(ERROR_MSG)
 
-    if status == returnvalues.OK:
+    if status == returnvalues.OK and image_volume_settings_count > 0:
         if update_image_volume(logger, abs_path, {'base_path': path}):
             OK_MSG = "Updated volume meta base path : '%s'" % path
             output_objects.append({'object_type': 'text',
                                   'text': OK_MSG})
         else:
             status = returnvalues.ERROR
-            ERROR_MSG = 'Failed to update volume meta'
+            ERROR_MSG = "Failed to update volume meta base path : '%s'" \
+                % path
             output_objects.append({'object_type': 'error_text',
                                   'text': ERROR_MSG})
             logger.error(ERROR_MSG)

@@ -1349,7 +1349,7 @@ def get_image_file_settings(logger, abs_base_path, extension=None):
     result = None
 
     metafile = __open_image_settings_file(logger, abs_base_path)
-    #logger.debug('checkpoint2: %s' % str(metafile))
+
     if metafile is not None:
         result = []
         image_settings_table = __get_image_file_settings_node(logger,
