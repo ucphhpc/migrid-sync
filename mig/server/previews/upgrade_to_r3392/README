@@ -1,0 +1,20 @@
+Updating image previews to svn version 3392
+1) Generate 'settings.h5.list.txt' file:
+$> find /home/mig/state/vgrid_files_home -name 'settings.h5' > settings.h5.list.txt
+
+2) Copy settings.h5 to imagepreviews.h5, for copy:
+$> ./copy_settings_to_imagepreviews.sh
+
+3) Generate trigger dict:
+$> python generate_trigger_dict.py > log/generate_trigger_dict.log 2>&1
+
+4) Update triggers:
+$> python update_triggers.py > log/update_triggers.log 2>&1
+
+5) Update tables:
+$> python update_tables.py > > log/update_tables.log 2>&1
+
+Use 'python update_triggers.py 'VGRID-1, VGRID-2, ..., VGRID-N' to trigger update specific vgrids.
+Use 'dump_trigger_dict_vgrid_names.py' to list vgrid names of the triggers to be updated
+
+Cleanup old settings.h5 files when everyting proves to work
