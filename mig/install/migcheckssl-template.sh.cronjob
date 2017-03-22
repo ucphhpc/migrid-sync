@@ -146,4 +146,8 @@ if [ ${org_mtime} -ne ${new_mtime} ]; then
          systemctl restart ${apache_service}
       fi
    done
+   sha256_fingerprint=$(openssl x509 -noout -fingerprint -sha256 -in ${combined_pem})
+   sha256_fingerprint=$(echo ${sha256_fingerprint} | sed 's/SHA256 Fingerprint=//g')
+   echo "Please update ftps and davs sha256 fingerprint in MiGserver.conf to:"
+   echo ${sha256_fingerprint}
 fi
