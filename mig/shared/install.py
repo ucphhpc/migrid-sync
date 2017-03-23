@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,7 @@ Create MiG developer account with dedicated web server and daemons.
 import base64
 import crypt
 import datetime
+import hashlib
 import os
 import re
 import random
@@ -192,6 +193,9 @@ def generate_confs(
     user_dict['__OPENID_ALL_PROVIDER_IDS__'] = openid_providers
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
+    user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
+    user_dict['__DAEMON_PUBKEY_MD5__'] = ''
+    user_dict['__DAEMON_PUBKEY_SHA256__'] = ''
     user_dict['__DAEMON_SHOW_ADDRESS__'] = daemon_show_address
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__SIGNUP_METHODS__'] = signup_methods
@@ -289,12 +293,49 @@ cert, oid and sid based https!
     else:
         user_dict['__OPENID_COMMENTED__'] = '#'
 
-    # Enable alternativ daemon show address only if explicitly requested
+    # Enable alternative daemon show address only if explicitly requested
     if user_dict['__DAEMON_SHOW_ADDRESS__']:
         user_dict['__SHOW_ADDRESS_COMMENTED__'] = ''
     else:
         user_dict['__SHOW_ADDRESS_COMMENTED__'] = '#'
 
+    # Auto-fill fingerprints if daemon key is set
+    if user_dict['__DAEMON_KEYCERT__']:
+        key_path = os.path.expanduser(user_dict['__DAEMON_KEYCERT__'])
+        openssl_cmd = ["openssl", "x509", "-noout", "-fingerprint", "-sha256",
+                       "-in", key_path]
+        try:
+            openssl_proc = subprocess_popen(openssl_cmd, stdout=subprocess_pipe)
+            raw_sha256 = openssl_proc.stdout.read().strip()
+            daemon_keycert_sha256 = raw_sha256.replace("SHA256 Fingerprint=",
+                                                       "")
+        except Exception, exc:
+            print "ERROR: failed to extract sha256 fingerprint of %s: %s" % \
+                  (key_path, exc)
+        user_dict['__DAEMON_KEYCERT_SHA256__'] = daemon_keycert_sha256
+    if user_dict['__DAEMON_PUBKEY__']:
+        pubkey_path = os.path.expanduser(user_dict['__DAEMON_PUBKEY__'])
+        try:
+            pubkey_fd = open(pubkey_path)
+            pubkey = pubkey_fd.read()
+            pubkey_fd.close()
+        except Exception, exc:
+            print "Failed to read provided daemon key: %s" % exc
+        # The desired values are hashes of the base64 encoded actual key 
+        try:
+            b64_key = base64.b64decode(pubkey.strip().split()[1].encode('ascii'))
+            raw_md5 = hashlib.md5(b64_key).hexdigest()
+            # reformat into colon-spearated octets
+            daemon_pubkey_md5 = ':'.join(a+b for a, b in zip(raw_md5[::2],
+                                                             raw_md5[1::2]))
+            raw_sha256 = hashlib.sha256(b64_key).digest()
+            daemon_pubkey_sha256 = base64.b64encode(raw_sha256).rstrip('=')
+        except Exception, exc:
+            print "ERROR: failed to extract fingerprints of %s : %s" % \
+                  (pubkey_path, exc)
+        user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
+        user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
+        
     # Enable Debian/Ubuntu specific lines only there
     if user_dict['__DISTRO__'].lower() in ('ubuntu', 'debian'):
         user_dict['__NOT_DEB_COMMENTED__'] = ''
