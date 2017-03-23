@@ -38,11 +38,11 @@ from shared.fileio import touch, makedirs_rec, listdirs_rec, \
     delete_file, make_symlink, remove_dir, remove_rec
 from shared.imagemetaio import __metapath, __settings_filepath, \
     __image_metapath, __image_preview_path, __image_xdmf_path, \
-    __revision, allowed_image_types, allowed_volume_types, \
-    allowed_settings_status, add_image_file_setting, \
-    add_image_volume_setting, update_image_file_setting, \
-    update_image_volume_setting, update_image_file, \
-    update_image_volume, remove_image_file_settings, \
+    __revision, allowed_image_types, allowed_data_types, \
+    allowed_volume_types, allowed_settings_status, \
+    add_image_file_setting, add_image_volume_setting, \
+    update_image_file_setting, update_image_volume_setting, \
+    update_image_file, update_image_volume, remove_image_file_settings, \
     remove_image_volume_settings, get_image_file_setting, \
     get_image_file_settings, get_image_file_settings_count, \
     get_image_volume_setting, get_image_volume_settings_count, \
@@ -460,8 +460,8 @@ def __is_valid_settings_dict(
     extension = image_setting_dict.get('extension', '')
     settings_recursive = image_setting_dict.get('settings_recursive',
             False)
-    image_type = image_setting_dict.get('image_type', '')
-    data_type = image_setting_dict.get('data_type', '')
+    image_type = image_setting_dict.get('image_type', None)
+    data_type = image_setting_dict.get('data_type', None)
 
     # Check for extension
 
@@ -474,15 +474,29 @@ def __is_valid_settings_dict(
 
     # Check for image types
 
-    if status == returnvalues.OK and not update and (image_type
-            not in allowed_image_types or data_type
-            not in allowed_image_types[image_type]):
-        status = returnvalues.ERROR
-        ERROR_MSG = "Invalid image and data_type: '%s' -> '%s'" \
-            % (image_type, data_type)
-        output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG})
-        logger.error(ERROR_MSG)
+    if status == returnvalues.OK:
+        if update and image_type is None:
+            pass
+        elif image_type not in allowed_image_types:
+            status = returnvalues.ERROR
+            ERROR_MSG = "Invalid image_type: '%s', allowed: '%s'" \
+                % (image_type, allowed_image_types.keys())
+            output_objects.append({'object_type': 'error_text',
+                                  'text': ERROR_MSG})
+            logger.error(ERROR_MSG)
+
+    # Check for data types:
+
+    if status == returnvalues.OK:
+        if update and data_type is None:
+            pass
+        elif data_type not in allowed_data_types:
+            status = returnvalues.ERROR
+            ERROR_MSG = "Invalid data_type: '%s', allowed: '%s'" \
+                % (data_type, allowed_data_types.keys())
+            output_objects.append({'object_type': 'error_text',
+                                  'text': ERROR_MSG})
+            logger.error(ERROR_MSG)
 
     # Check for vgrid
 
