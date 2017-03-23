@@ -79,6 +79,7 @@ if '__main__' == __name__:
         'enable_hsts',
         'enable_vhost_certs',
         'enable_seafile',
+        'enable_duplicati',
         'enable_imnotify',
         'enable_dev_accounts',
         'enable_openid',
