@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migsftp - sample paramiko-based sftp client for user home access
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -44,6 +44,7 @@ This example should be a good starting point for writing your own custom sftp
 client acting on your MiG home.
 """
 
+import base64
 import os
 import sys
 import paramiko
@@ -51,9 +52,9 @@ import paramiko
 
 ### Global configuration ###
 
-server_fqdn = 'dk-cert.migrid.org'
-server_port = 2222
-server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQCwxYFM1tzy7RyNpPFCSVHG0fTiq1SWnmsFHCJp4UskAuodbWAzuKNml9HBI0Bk0ynOVhMfneh5sv2sFuXfFTHiNVUM+vpqtSNCHEF/2jYHzPnp5aT4jvrTUmJ1PYmzfNQonjrWxPpXt9ROfLAhZib2qs5QzkiqpcY3NNh8EOEZOQ=="
+server_fqdn = 'dk-sid.migrid.org'
+server_port = 22222
+server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSmsGNpTnmOhIhLk+RtOxE+YL+rP77mbJ7os0JZpiId1U2jHkNqNEBr8DpmtkAyWn8DvJf4GtLkykVxysnBqj0fnI4nTOJpYtNT/0cw2IKKf0j5zjRzTzB/Jh1rb5OQKad4U31P8Z4sEHFS3kk4r7Ls2C/Sm8adUMt1SDW4G7TqlSgsq97uWOlCYLb0x0BQNuvjurLZpQCCkz0GIFlGXOKkwEZrhcD8vmAzjRUEbv7YyEwNr442HOJ7DtG/3Q+Zwe0UPojOYackvCKX2itrBA5Ko5eENiOCYXxIXHoVRAbDgGwL8hHHGjpKvIA/yivSB0UP7uMKf4QWz3Ax9HQdQUR"
 known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
 user_key = None
 host_key_policy = paramiko.RejectPolicy()
@@ -89,8 +90,8 @@ if __name__ == "__main__":
 settings page"""
         user_name = raw_input('Username: ')
 
-    if len(user_name) < 64:
-        print """Warning: the supplied username is shorter than expected!
+    if len(user_name) < 64 and user_name.find('@') == -1:
+        print """Warning: the supplied username is not on expected form!
 Please verify it on your MiG ssh Settings page in case of failure."""
 
     # Connect with provided settings
@@ -98,8 +99,11 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     ssh = paramiko.SSHClient()
     known_host_keys = ssh.get_host_keys()
     key_type, key_data = server_host_key.split(' ')[:2]
-    pub_key = paramiko.PKey(msg=server_fqdn, data=key_data)
+    pub_key = paramiko.RSAKey(data=base64.b64decode(key_data))
+    # Add host key both on implicit and explicit port format
+    server_fqdn_port = "[%s]:%d" % (server_fqdn, server_port)
     known_host_keys.add(server_fqdn, key_type, pub_key)
+    known_host_keys.add(server_fqdn_port, key_type, pub_key)
     known_host_keys.load(known_hosts_path)
     ssh.set_missing_host_key_policy(host_key_policy)
     ssh.connect(server_fqdn, username=user_name, port=server_port,
@@ -132,6 +136,11 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     ftp.put(dummy, dummy)
     path_stat = ftp.stat(dummy)
     print "remote stat %s:\n%s" % (dummy, path_stat)
+    path_fd = ftp.file(dummy)
+    block_size = max(len(dummy_text), 256)
+    path_md5 = [path_fd.check("md5", block_size=block_size)]
+    path_fd.close()
+    print "remote md5 sum %s:\n%s" % (dummy, path_md5)
     print "delete dummy in %s" % dummy
     os.remove(dummy)
     print "verify gone: %s" % (dummy not in os.listdir('.'))
