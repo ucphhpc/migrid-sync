@@ -45,6 +45,7 @@ client acting on your MiG home.
 """
 
 import base64
+import getpass
 import os
 import sys
 import paramiko
@@ -53,25 +54,16 @@ import paramiko
 ### Global configuration ###
 
 server_fqdn = 'dk-sid.migrid.org'
-server_port = 22222
-server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSmsGNpTnmOhIhLk+RtOxE+YL+rP77mbJ7os0JZpiId1U2jHkNqNEBr8DpmtkAyWn8DvJf4GtLkykVxysnBqj0fnI4nTOJpYtNT/0cw2IKKf0j5zjRzTzB/Jh1rb5OQKad4U31P8Z4sEHFS3kk4r7Ls2C/Sm8adUMt1SDW4G7TqlSgsq97uWOlCYLb0x0BQNuvjurLZpQCCkz0GIFlGXOKkwEZrhcD8vmAzjRUEbv7YyEwNr442HOJ7DtG/3Q+Zwe0UPojOYackvCKX2itrBA5Ko5eENiOCYXxIXHoVRAbDgGwL8hHHGjpKvIA/yivSB0UP7uMKf4QWz3Ax9HQdQUR"
+server_port = 22
+# This is the current migrid.org key - but we default to auto for flexibility
+#server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSmsGNpTnmOhIhLk+RtOxE+YL+rP77mbJ7os0JZpiId1U2jHkNqNEBr8DpmtkAyWn8DvJf4GtLkykVxysnBqj0fnI4nTOJpYtNT/0cw2IKKf0j5zjRzTzB/Jh1rb5OQKad4U31P8Z4sEHFS3kk4r7Ls2C/Sm8adUMt1SDW4G7TqlSgsq97uWOlCYLb0x0BQNuvjurLZpQCCkz0GIFlGXOKkwEZrhcD8vmAzjRUEbv7YyEwNr442HOJ7DtG/3Q+Zwe0UPojOYackvCKX2itrBA5Ko5eENiOCYXxIXHoVRAbDgGwL8hHHGjpKvIA/yivSB0UP7uMKf4QWz3Ax9HQdQUR"
+server_host_key = 'AUTO'
 known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
+user_auth = 'password'
 user_key = None
+user_pw = ''
 host_key_policy = paramiko.RejectPolicy()
 data_compression = True
-
-# Uncomment the next line if you don't have a valid key in ssh-agent or ~/.ssh/
-# but use a key from ~/.mig/id_rsa instead. Obviously, you can modify the path
-# if your key is stored elsewhere.
-#user_key = [os.path.expanduser('~/.mig/id_rsa')]
-
-# Uncomment the next line if you have not connected to MiG before
-# and want to silently accept the host key - please beware of the
-# security implications!
-#host_key_policy = paramiko.AutoAddPolicy()
-# ... or the next line if you want a warning in that case but want to continue
-#host_key_policy = paramiko.WarningPolicy()
-
 # Uncomment the next line if don't want compressed transfers. This is a trade
 # off between CPU usage and throughput
 #data_compression = False
@@ -81,15 +73,18 @@ data_compression = True
 
 if __name__ == "__main__":
 
-    # Get auto-generated username from command line or interactively
+    # Get server and login details from command line or use defaults
 
     if sys.argv[1:]:
-        user_name = sys.argv[1]
-    else:
-        print """Please enter/paste the long username from your MiG ssh
-settings page"""
-        user_name = raw_input('Username: ')
-
+        server_fqdn = sys.argv[1]
+    if sys.argv[2:]:
+        server_port = int(sys.argv[2])
+    if sys.argv[3:]:
+        user_name = sys.argv[3]
+    if sys.argv[4:]:
+        server_host_key = sys.argv[4]
+    if sys.argv[5:]:
+        user_auth = sys.argv[5]
     if len(user_name) < 64 and user_name.find('@') == -1:
         print """Warning: the supplied username is not on expected form!
 Please verify it on your MiG ssh Settings page in case of failure."""
@@ -98,16 +93,30 @@ Please verify it on your MiG ssh Settings page in case of failure."""
 
     ssh = paramiko.SSHClient()
     known_host_keys = ssh.get_host_keys()
-    key_type, key_data = server_host_key.split(' ')[:2]
-    pub_key = paramiko.RSAKey(data=base64.b64decode(key_data))
-    # Add host key both on implicit and explicit port format
-    server_fqdn_port = "[%s]:%d" % (server_fqdn, server_port)
-    known_host_keys.add(server_fqdn, key_type, pub_key)
-    known_host_keys.add(server_fqdn_port, key_type, pub_key)
+    if server_host_key == 'AUTO':
+        # For silent operation we can just accept all host keys
+        # host_key_policy = paramiko.AutoAddPolicy()
+        # Warn about missing host key
+        host_key_policy = paramiko.WarningPolicy()
+    else:
+        key_type, key_data = server_host_key.split(' ')[:2]
+        pub_key = paramiko.RSAKey(data=base64.b64decode(key_data))
+        # Add host key both on implicit and explicit port format
+        server_fqdn_port = "[%s]:%d" % (server_fqdn, server_port)
+        known_host_keys.add(server_fqdn, key_type, pub_key)
+        known_host_keys.add(server_fqdn_port, key_type, pub_key)
     known_host_keys.load(known_hosts_path)
     ssh.set_missing_host_key_policy(host_key_policy)
+    if user_auth.lower() == 'password':
+        user_pw = getpass.getpass()
+    elif user_auth.lower() == 'agent':
+        user_key = None
+    else:
+        user_key = user_auth
+        user_pw = getpass.getpass()
     ssh.connect(server_fqdn, username=user_name, port=server_port,
-                key_filename=user_key, compress=data_compression)
+                password=user_pw, key_filename=user_key,
+                compress=data_compression)
     ftp = ssh.open_sftp()
 
 
@@ -138,9 +147,11 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     print "remote stat %s:\n%s" % (dummy, path_stat)
     path_fd = ftp.file(dummy)
     block_size = max(len(dummy_text), 256)
-    path_md5 = [path_fd.check("md5", block_size=block_size)]
+    path_md5_digest = path_fd.check("md5", block_size=block_size)
+    path_sha1_digest = path_fd.check("sha1", block_size=block_size)
     path_fd.close()
-    print "remote md5 sum %s:\n%s" % (dummy, path_md5)
+    print "remote md5 sum %s:\n%s" % (dummy, path_md5_digest.encode('hex'))
+    print "remote sha1 sum %s:\n%s" % (dummy, path_sha1_digest.encode('hex'))
     print "delete dummy in %s" % dummy
     os.remove(dummy)
     print "verify gone: %s" % (dummy not in os.listdir('.'))
