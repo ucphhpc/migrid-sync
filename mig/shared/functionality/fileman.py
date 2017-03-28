@@ -5,7 +5,7 @@
 #
 # fileman - File manager UI for browsing and manipulating files and folders
 #
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,8 @@ their home directories.
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import trash_linkname, csrf_backends, csrf_field
+from shared.defaults import trash_linkname, csrf_backends, csrf_field, \
+     default_max_chunks
 from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_css_deps, \
      advanced_editor_js_deps, lock_info, edit_file
@@ -45,7 +46,8 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
     """HTML page base: some upload and menu entries depend on configuration"""
 
     edit_includes = ['switcher']
-    fill_entries = {'vgrid_label': configuration.site_vgrid_label}
+    fill_entries = {'vgrid_label': configuration.site_vgrid_label,
+                    'default_max_chunks': default_max_chunks}
     fill_entries['sharelink_form'] = create_share_link_form(
         configuration, client_id, 'json', '', csrf_map.get('sharelink', ''))
     if 'submitjob' in extract_menu(configuration, title_entry):
@@ -228,6 +230,39 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
     </fieldset>
     </form>
     <div id="rename_output"></div>
+    </div>
+
+    <div id="chksum_dialog" title="Checksum" style="display: none;">
+    <!-- NOTE: no explicit form action, only submit through jquery -->
+    <form id="chksum_form" action="javascript:void(0);">
+    <fieldset>
+        <input type="hidden" name="%(csrf_field)s" value="%(pack_csrf_token)s" />
+        <input type="hidden" name="output_format" value="json" />
+        <input type="hidden" name="flags" value="" />
+        <input type="hidden" name="hash_algo" value="" />
+        <input type="hidden" name="current_dir" value="" />
+        
+        <label for="path">Target file name(s):</label>
+        <input id="path" class="singlefield" type="text" name="path" size=50  value="" />
+        <br/><br/>
+        <input type="hidden" name="path" value="" />
+        <label for="dst">Output file name:</label>
+        <input id="dst" class="singlefield" type="text" name="dst" size=50  value="" />
+        <br/><br/>
+        <label for="max_chunks">Max chunks:</label>
+        <input id="max_chunks" class="singlefield" type="text" name="max_chunks"
+            size=8  value="%(default_max_chunks)s" />
+    </fieldset>
+    <p>
+    The optional output file is particularly convenient for checksums on big
+    files, where the web browser may time-out before the checksum returns an
+    answer.<br />
+    Optionally change Max chunks to 0 in order to checksum the entire file. It
+    may be slow, though, as the run time is proportional to the chunks checked.
+    <br />
+    </p>
+    </form>
+    <div id="chksum_output"></div>
     </div>
 
     <div id="pack_dialog" title="Pack" style="display: none;">
@@ -432,10 +467,11 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true', csrf_map={}):
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript">
+var default_max_chunks = "%s";
 var trash_linkname = "%s";
 var csrf_field = "%s";
 var csrf_map = {};
-''' % (trash_linkname, csrf_field)
+''' % (default_max_chunks, trash_linkname, csrf_field)
     for (target_op, token) in csrf_map.items():
         js += '''
 csrf_map["%s"] = "%s";

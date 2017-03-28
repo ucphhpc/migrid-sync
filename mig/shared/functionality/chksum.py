@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chksum - Calculate a checksum for one or more files
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,8 +34,9 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_max_chunks
 from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
-     sha512sum_file
+     sha512sum_file, write_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose, binary
 from shared.validstring import valid_user_path
@@ -46,8 +47,9 @@ _algo_map = {'md5': md5sum_file, 'sha1': sha1sum_file,
 def signature():
     """Signature of the main function"""
 
-    defaults = {'flags': [''], 'hash_algo': ['md5'], 'max_chunks': [default_max_chunks],
-                'path': REJECT_UNSET}
+    defaults = {'flags': [''], 'hash_algo': ['md5'], 'max_chunks':
+                [default_max_chunks], 'path': REJECT_UNSET, 'dst': [''],
+                'current_dir': ['.']}
     return ['file_output', defaults]
 
 
@@ -73,6 +75,14 @@ def main(client_id, user_arguments_dict):
     algo_list = accepted['hash_algo']
     max_chunks = int(accepted['max_chunks'][-1])
     pattern_list = accepted['path']
+    dst = accepted['dst'][-1]
+    current_dir = accepted['current_dir'][-1].lstrip(os.sep)
+
+    # All paths are relative to current_dir
+    
+    pattern_list = [os.path.join(current_dir, i) for i in pattern_list]
+    if dst:
+        dst = os.path.join(current_dir, dst)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -88,6 +98,46 @@ def main(client_id, user_arguments_dict):
                                   : '%s using flag: %s' % (op_name,
                                   flag)})
 
+
+    abs_dir = os.path.abspath(os.path.join(base_dir, 
+                                           current_dir.lstrip(os.sep)))
+    if not valid_user_path(abs_dir, base_dir, True):
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : "You're not allowed to work in %s!"
+                               % current_dir})
+        logger.warning('%s tried to %s restricted path %s ! (%s)'
+                       % (client_id, op_name, abs_dir, current_dir))
+        return (output_objects, returnvalues.CLIENT_ERROR)
+        
+    if verbose(flags):
+        output_objects.append({'object_type': 'text', 'text':
+                               "working in %s" % current_dir})
+
+    if dst:
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        # NOTE: dst already incorporates current_dir prefix here
+        abs_dest = os.path.join(base_dir, dst)
+
+        # Don't use abs_path in output as it may expose underlying
+        # fs layout.
+
+        relative_dest = abs_dest.replace(base_dir, '')
+        if not valid_user_path(abs_dest, base_dir, True):
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : "Invalid path! (%s expands to an illegal path)" % dst})
+            logger.warning('%s tried to %s restricted path %s !(%s)'
+                           % (client_id, op_name, abs_dest, dst))
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+    all_lines = []
     for pattern in pattern_list:
 
         # Check directory traversal attempts before actual handling to avoid
@@ -97,17 +147,17 @@ def main(client_id, user_arguments_dict):
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -117,16 +167,16 @@ def main(client_id, user_arguments_dict):
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
-        for real_path in match:
-            relative_path = real_path.replace(base_dir, '')
+        for abs_path in match:
+            relative_path = abs_path.replace(base_dir, '')
             output_lines = []
             for hash_algo in algo_list:
                 try:
                     chksum_helper = _algo_map.get(hash_algo, _algo_map["md5"])
-                    checksum = chksum_helper(real_path, max_chunks=max_chunks)
+                    checksum = chksum_helper(abs_path, max_chunks=max_chunks)
                     line = "%s %s\n" % (checksum, relative_path)
                     logger.info("%s %s of %s: %s" % (op_name, hash_algo,
-                                                         real_path, checksum))
+                                                     abs_path, checksum))
                     output_lines.append(line)
                 except Exception, exc:
                     output_objects.append(
@@ -139,5 +189,14 @@ def main(client_id, user_arguments_dict):
             entry = {'object_type': 'file_output',
                        'lines': output_lines}
             output_objects.append(entry)
+            all_lines += output_lines
+            
+    if dst and not write_file(''.join(all_lines), abs_dest, logger):
+        output_objects.append({'object_type': 'error_text',
+                               'text': "failed to write checksums to %s" % \
+                               relative_dest})
+        logger.error("writing checksums to %s for %s failed" % (abs_dest,
+                                                                client_id))
+        status = returnvalues.SYSTEM_ERROR
 
     return (output_objects, status)

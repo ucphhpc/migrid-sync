@@ -57,7 +57,8 @@
 jquery.prettyprint.js, preview.js, editor.py 
 */
 /* globals pp_bytes, pp_date, Preview, disable_editorarea_editor, csrf_map,
-   csrf_field, trash_linkname, enable_editorarea_editor, lastEdit */
+   csrf_field, trash_linkname, enable_editorarea_editor, lastEdit, 
+   default_max_chunks */
 
 /* Enable strict mode to help catch tricky errors early */
 "use strict";
@@ -641,6 +642,47 @@ if (jQuery) (function($){
 
         }
 
+        function chksum(current_dir, src, dst, hash_algo, max_chunks) {
+            $("#cmd_dialog").dialog(okDialog);
+            $("#cmd_dialog").dialog('open');
+            $("#cmd_dialog").html('<p class="spinner iconleftpad">Calculating checksum ... "'+
+                                  src+'" <br />in: "'+dst+'"</p>');
+
+            var jsonSettings = {current_dir: current_dir,
+                                path: src,
+                                dst: dst,
+                                hash_algo: hash_algo,
+                                max_chunks: max_chunks,
+                                output_format: 'json'};
+
+            var target_op = 'chksum';
+            console.info("Lookup CSRF token for "+target_op);
+            if (csrf_map[target_op] !== undefined) {
+                jsonSettings['_csrf'] = csrf_map[target_op];
+                console.info("Found CSRF token "+jsonSettings['_csrf']);
+            } else {
+                console.info("No CSRF token for "+target_op);
+            }
+            $.post(target_op+'.py', jsonSettings,
+                   function(jsonRes, textStatus) {
+                       stopProgress();
+                       var errors = $(this).renderError(jsonRes);
+                       var warnings = $(this).renderWarning(jsonRes);
+                       var file_output = $(this).renderFileoutput(jsonRes);
+                       if (errors.length > 0) {
+                           $($("#cmd_dialog").html('<p>Error:</p>'+errors));
+                       } else if (warnings.length > 0) {
+                           $($("#cmd_dialog").html('<p>Warning:</p>'+warnings));
+                       } else if (file_output.length > 0) {
+                           $($("#cmd_dialog").html('<pre>'+file_output+'</pre>'));
+                       } else {
+                           $("#cmd_dialog").dialog('close');
+                       }
+                       $(".fm_files").parent().reload('');
+                   }, "json"
+                  );
+        }
+
         function pack(current_dir, src, dst) {
             $("#cmd_dialog").dialog(okDialog);
             $("#cmd_dialog").dialog('open');
@@ -788,6 +830,44 @@ if (jQuery) (function($){
                 base = base.substring(0, base.lastIndexOf("."));
             }
             return base;
+        }
+
+        function chksumHelper(el, hash_algo) {
+            var current_dir = '';
+            var target = $(el).attr(pathAttribute);
+            var src = '';
+            var dst = ''; 
+            var max_chunks = default_max_chunks; 
+            var pathEl = target.split('/');
+            src = pathEl[pathEl.length-1];
+            current_dir = target.substring(0, target.lastIndexOf('/'));
+
+            // Initialize the form with default to PATH and PATH.HASH_ALGO
+            $("#chksum_form input[name='path']").val(src);
+            $("#chksum_form input[name='dst']").val(src + '.' + hash_algo);
+            $("#chksum_form input[name='hash_algo']").val(hash_algo);
+            $("#chksum_form input[name='max_chunks']").val(max_chunks);
+            $("#chksum_output").html('');
+            $("#chksum_dialog").dialog({
+                buttons: {
+                    Ok: function() {
+                        src = $("#chksum_form input[name='path']").val();
+                        dst = $("#chksum_form input[name='dst']").val();
+                        hash_algo = $("#chksum_form input[name='hash_algo']").val();
+                        max_chunks = $("#chksum_form input[name='max_chunks']").val();
+                        $(this).dialog('close');
+                        console.debug(hash_algo+'sum '+src+" in "+dst);
+                        startProgress("Calculating "+hash_algo+" checksum for "+dst+" ...");
+                        chksum(current_dir, src, dst, hash_algo, max_chunks);
+                    },
+                    Cancel: function() {
+                        $(this).dialog('close');
+                    }
+                },
+                autoOpen: false, closeOnEscape: true, modal: true, 
+                width: '700px'
+            });
+            $("#chksum_dialog").dialog('open');
         }
 
         function jsonWrapper(el, dialog, url, jsonOptions) {
@@ -1019,11 +1099,11 @@ if (jQuery) (function($){
             spell:   function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'spell.py'); },
             md5sum:   function (action, el, pos) {
-                jsonWrapper(el, '#cmd_dialog', 'chksum.py', 
-                            {path: $(el).attr(pathAttribute), hash_algo: "md5"}); },
+                chksumHelper(el, 'md5');
+            },
             sha1sum:   function (action, el, pos) {
-                jsonWrapper(el, '#cmd_dialog', 'chksum.py', 
-                            {path: $(el).attr(pathAttribute), hash_algo: "sha1"}); },
+                chksumHelper(el, 'sha1');
+            },
             pack:    function (action, el, pos) {
                 /* pack file or directory to user specified file */
                 var current_dir = '';
