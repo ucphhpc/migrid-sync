@@ -117,7 +117,7 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     ssh.connect(server_fqdn, username=user_name, port=server_port,
                 password=user_pw, key_filename=user_key,
                 compress=data_compression)
-    ftp = ssh.open_sftp()
+    sftp = ssh.open_sftp()
 
 
     ### Sample actions on your MiG home directory ###
@@ -125,13 +125,13 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     # List and stat files in the remote .ssh dir which should always be there
 
     base = '.ssh'
-    files = ftp.listdir(base)
-    path_stat = ftp.stat(base)
+    files = sftp.listdir(base)
+    path_stat = sftp.stat(base)
     print "stat %s:\n%s" % (base, path_stat)
     print "files in %s dir:\n%s" % (base, files)
     for name in files:
         rel_path = os.path.join(base, name)
-        path_stat = ftp.stat(rel_path)
+        path_stat = sftp.stat(rel_path)
         print "stat %s:\n%s" % (rel_path, path_stat)
     dummy = 'this-is-a-migsftp-dummy-file.txt'
     dummy_text = "sample file\ncontents from client\n"
@@ -142,10 +142,10 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     path_stat = os.stat(dummy)
     print "local stat %s:\n%s" % (dummy, path_stat)
     print "upload migsftpdummy in %s home" % dummy
-    ftp.put(dummy, dummy)
-    path_stat = ftp.stat(dummy)
+    sftp.put(dummy, dummy)
+    path_stat = sftp.stat(dummy)
     print "remote stat %s:\n%s" % (dummy, path_stat)
-    path_fd = ftp.file(dummy)
+    path_fd = sftp.file(dummy)
     block_size = max(len(dummy_text), 256)
     path_md5_digest = path_fd.check("md5", block_size=block_size)
     path_sha1_digest = path_fd.check("sha1", block_size=block_size)
@@ -156,17 +156,35 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     os.remove(dummy)
     print "verify gone: %s" % (dummy not in os.listdir('.'))
     print "download migsftpdummy from %s home" % dummy
-    ftp.get(dummy, dummy)
+    sftp.get(dummy, dummy)
     path_stat = os.stat(dummy)
     print "local stat %s:\n%s" % (dummy, path_stat)
     dummy_fd = open(dummy, "r")
     verify_text = dummy_fd.read()
     dummy_fd.close()
     print "verify correct contents: %s" % (dummy_text == verify_text)
+    trunc_len = 42
+    print "truncate handle %s to %db" % (dummy, trunc_len)
+    attr = sftp.stat(dummy)
+    print "current size is %db" % attr.st_size
+    dummy_fd = sftp.file(dummy, 'r+b')    
+    dummy_fd.truncate(trunc_len)
+    dummy_fd.close()
+    attr = sftp.stat(dummy)
+    print "verify truncated %s to %d: %s" % (dummy, trunc_len,
+                                             (attr.st_size == trunc_len))
+    trunc_len = 4
+    print "truncate path %s to %db" % (dummy, trunc_len)
+    attr = sftp.stat(dummy)    
+    print "current size is %db" % attr.st_size
+    sftp.truncate(dummy, trunc_len)
+    attr = sftp.stat(dummy)
+    print "verify truncated %s to %d: %s" % (dummy, trunc_len,
+                                             (attr.st_size == trunc_len))
     print "delete dummy in %s" % dummy
     os.remove(dummy)
 
     ### Clean up before exit ###
 
-    ftp.close()
+    sftp.close()
     ssh.close()
