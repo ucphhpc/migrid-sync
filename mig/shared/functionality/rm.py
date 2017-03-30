@@ -209,7 +209,8 @@ You're not allowed to delete entire special folders like %s shares and %s
                 status = returnvalues.CLIENT_ERROR
                 continue
             if os.path.isdir(abs_path) and not recursive(flags):
-                logger.error("%s: non-recursive call on dir '%s'" % abs_path)
+                logger.error("%s: non-recursive call on dir '%s'" % (op_name,
+                                                                     abs_path))
                 output_objects.append({'object_type': 'error_text', 'text':
                                         "cannot remove '%s': is a direcory" \
                                        % relative_path})
