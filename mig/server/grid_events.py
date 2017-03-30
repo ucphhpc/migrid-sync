@@ -400,7 +400,6 @@ def run_command(
 
     pid = multiprocessing.current_process().pid
     command_map = get_command_map(configuration)
-
     logger.info('(%s) run command for %s: %s' % (pid, target_path,
                 command_list))
     if not command_list or not command_list[0] in command_map:
@@ -443,6 +442,8 @@ def run_command(
     except Exception, exc:
         logger.error('(%s) failed to run %s main on %s: %s' % \
                      (pid, function, user_arguments_dict, exc))
+        import traceback
+        logger.info('traceback:\n%s' % traceback.format_exc())
         raise exc
     logger.info('(%s) done running command for %s: %s' % (pid,
                 target_path, command_str))
@@ -540,6 +541,8 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
     def update_rules(self, event):
         """Handle all rule updates"""
 
+        # TODO: is this really needed?
+        #       global is only for *writing* to global vars
         global base_dir_len
 
         pid = multiprocessing.current_process().pid
@@ -765,6 +768,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         corresponding target_path pattern and trigger rule.
         """
 
+        # TODO: are these really needed?
+        #       global is only for *writing* to global vars
         global base_dir
         global base_dir_len
 
@@ -973,6 +978,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
     def __update_file_monitor(self, event):
 
+        # TODO: are these really needed?
+        #       global is only for *writing* to global vars
         global dir_cache
         global base_dir_len
 
@@ -1193,7 +1200,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 def add_vgrid_file_monitor_watch(configuration, path):
     """Adds file inotify watch for *path*"""
 
+    # TODO: is this really needed?
+    #       global is only for *writing* to global vars
     global file_inotify
+    
     pid = multiprocessing.current_process().pid
 
     vgrid_files_path = os.path.join(configuration.vgrid_files_home,
@@ -1215,6 +1225,8 @@ def add_vgrid_file_monitor_watch(configuration, path):
 def add_vgrid_file_monitor(configuration, vgrid_name, path):
     """Add file monitor for all dirs and subdirs in *path*"""
 
+    # TODO: are these really needed?
+    #       global is only for *writing* to global vars
     global dir_cache
     global base_dir_len
 
@@ -1252,8 +1264,11 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 def add_vgrid_file_monitors(configuration, vgrid_name):
     """Add file monitors for all dirs and subdirs for *vgrid_name*"""
 
+    # TODO: are these really needed?
+    #       global is only for *writing* to global vars
     global file_handler
     global dir_cache
+    
     pid = multiprocessing.current_process().pid
 
     vgrid_dir_cache = dir_cache[vgrid_name]
@@ -1277,6 +1292,8 @@ def add_vgrid_file_monitors(configuration, vgrid_name):
 def generate_vgrid_dir_cache(configuration, vgrid_base_path):
     """Generate directory cache for *vgrid_base_path*"""
 
+    # TODO: are these really needed?
+    #       global is only for *writing* to global vars
     global dir_cache
     global base_dir_len
 
@@ -1321,6 +1338,8 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
 def load_dir_cache(configuration, vgrid_name):
     """Load directory cache for *vgrid_name"""
 
+    # TODO: is this really needed?
+    #       global is only for *writing* to global vars
     global dir_cache
 
     result = True
@@ -1374,7 +1393,10 @@ def load_dir_cache(configuration, vgrid_name):
 def save_dir_cache(vgrid_name):
     """Save directory cache for *vgrid_name*"""
 
+    # TODO: is this really needed?
+    #       global is only for *writing* to global vars
     global dir_cache
+    
     pid = multiprocessing.current_process().pid
 
     result = True
@@ -1410,6 +1432,8 @@ def monitor(configuration, vgrid_name):
     they get their own process.
     """
 
+    # TODO: are these really needed?
+    #       global is only for *writing* to global vars
     global dir_cache
     global rule_handler
     global rule_inotify
@@ -1420,6 +1444,9 @@ def monitor(configuration, vgrid_name):
     global base_dir_len
 
     pid = multiprocessing.current_process().pid
+
+    # TODO: We loose access to logger when called through multiprocessing
+
     print 'Starting monitor process with PID: %s for vgrid: %s' % (pid,
             vgrid_name)
     logger.info('Starting monitor process with PID: %s for vgrid: %s'
