@@ -27,3 +27,5 @@ grep -H ERROR $LOGDIR/mig.log | \
 	grep -v "problems importing arclib\|disabled in configuration\|\(settings\|userprofile\) could not be opened/unpickled\|load \(ssh\|ftps\|davs\|seafile\) publickeys failed\|is not a valid openid provider"
 grep -H "CSRF check failed" $LOGDIR/mig.log
 } | grep "$YESTERDAY\|$TODAY"'
+
+exit 0

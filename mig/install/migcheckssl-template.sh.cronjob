@@ -151,3 +151,5 @@ if [ ${org_mtime} -ne ${new_mtime} ]; then
    echo "Please update ftps and davs sha256 fingerprint in MiGserver.conf to:"
    echo ${sha256_fingerprint}
 fi
+
+exit 0

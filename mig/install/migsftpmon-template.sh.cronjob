@@ -23,3 +23,5 @@ for fqdn in $trust_fqdn; do
     trust="$trust -X $fqdn"
 done
 su - mig -c "python mig/server/sftpfailinfo.py $trust"
+
+exit 0
