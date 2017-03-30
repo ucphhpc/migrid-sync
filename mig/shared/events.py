@@ -49,6 +49,7 @@ def get_command_map(configuration):
         'truncate': ['path'],
         'touch': ['path'],
         'mkdir': ['path'],
+        'chksum': ['hash_algo', 'path', 'dst', 'max_chunks'],
         'submit': ['path'],
         'canceljob': ['job_id'],
         'resubmit': ['job_id'],
