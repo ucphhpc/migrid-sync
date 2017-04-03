@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridowner - remove a vgrid owner
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -58,6 +58,7 @@ def signature():
 def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                      output_objects):
     """Remove Trac issue tracker owner"""
+    _logger = configuration.logger
     cgi_tracker_var = os.path.join(tracker_dir, 'var')
     if not os.path.isdir(cgi_tracker_var):
         output_objects.append(
@@ -84,8 +85,7 @@ def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
         # trac-admin tracker_dir deploy cgi_tracker_bin
         perms_cmd = [configuration.trac_admin_path, cgi_tracker_var,
                      'permission', 'remove', admin_id, 'TRAC_ADMIN']
-        configuration.logger.info('remove admin rights from owner: %s' % \
-                                  perms_cmd)
+        _logger.info('remove admin rights from owner: %s' % perms_cmd)
         # NOTE: we use command list here to avoid shell requirement
         proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
                          stderr=subprocess_stdout, env=admin_env)
@@ -93,7 +93,7 @@ def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
         if retval != 0:
             out = proc.stdout.read()
             if out.find("user has not been granted the permission") != -1:
-                configuration.logger.warning(
+                _logger.warning(
                     "ignore missing Trac admin for legacy user %s" % admin_id)
             else:
                 raise Exception("tracker permissions %s failed: %s (%d)" % \
@@ -183,7 +183,8 @@ def abandon_vgrid_files(vgrid, configuration):
     Returns: Success indicator and potential messages.
     """
 
-    configuration.logger.debug('Deleting all files for %s %s' % \
+    _logger = configuration.logger
+    _logger.debug('Deleting all files for %s %s' % \
                                (configuration.site_vgrid_label, vgrid))
     success = True
     msg = ""
@@ -193,19 +194,20 @@ def abandon_vgrid_files(vgrid, configuration):
     try:
         os.remove(os.path.join(configuration.wwwpublic, 'vgrid', vgrid))
     except Exception, err:
-        configuration.logger.debug(
+        _logger.debug(
             'not removing soft link to public %s pages for %s: %s' % \
             (configuration.site_vgrid_label, vgrid, err))
 
     for prefix in [configuration.vgrid_public_base, 
                    configuration.vgrid_private_base, 
                    configuration.vgrid_files_home]:
-        success_here = remove_rec(os.path.join(prefix, vgrid), configuration)
+        data_path = os.path.join(prefix, vgrid)
+        success_here = remove_rec(data_path, configuration)
         if not success_here:
             msg += "Error while removing %s." % os.path.join(prefix, vgrid)
             success = False
 
-    configuration.logger.debug('Messages: %s.' % msg)
+    _logger.debug('Messages: %s.' % msg)
 
     return (success, msg)
 
@@ -224,15 +226,16 @@ def remove_vgrid_entry(vgrid, configuration):
     Returns: Success indicator and potential messages.
     """
 
-    configuration.logger.debug('Removing entry for %s %s' % \
-                               (configuration.site_vgrid_label, vgrid))
+    _logger = configuration.logger
+    _logger.debug('Removing entry for %s %s' % (configuration.site_vgrid_label,
+                                                vgrid))
 
     msg = ''
     success = remove_rec(os.path.join(configuration.vgrid_home, vgrid),
                          configuration)
     if not success:
 
-        configuration.logger.debug('Error while removing %s.' % vgrid)
+        _logger.debug('Error while removing %s.' % vgrid)
         msg += "Error while removing entry for %s." % vgrid
 
     else:
@@ -241,16 +244,18 @@ def remove_vgrid_entry(vgrid, configuration):
                        configuration.vgrid_private_base, 
                        configuration.vgrid_files_home]:
 
-            # delete public, member, and owner scms/trackers
-            # we just remove and do not check success for these
+            # Gracefully delete any public, member, and owner SCMs/Trackers
+            # They may already have been wiped with parent dir if they existed
 
-            if configuration.hg_path and configuration.hgweb_scripts:
-                remove_rec(os.path.join(prefix, vgrid, '.vgridscm'), 
-                           configuration)
-
-            if configuration.trac_admin_path:
-                remove_rec(os.path.join(prefix, vgrid, '.vgridtracker'), 
-                           configuration)
+            scm_path = os.path.join(prefix, vgrid, '.vgridscm')
+            if os.path.exists(scm_path) and not remove_rec(scm_path, _logger):
+                _logger.warning('Error while removing %s.' % scm_path)
+                msg += "Error while removing SCM for %s" % vgrid
+            tracker_path = os.path.join(prefix, vgrid, '.vgridtracker')
+            if os.path.exists(tracker_path) and not remove_rec(tracker_path,
+                                                               _logger):
+                _logger.warning('Error while removing %s' % tracker_path)
+                msg += "Error while removing Tracker for %s." % vgrid
 
     return (success, msg)
 
