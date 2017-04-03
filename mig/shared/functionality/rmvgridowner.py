@@ -184,8 +184,7 @@ def abandon_vgrid_files(vgrid, configuration):
     """
 
     _logger = configuration.logger
-    _logger.debug('Deleting all files for %s %s' % \
-                               (configuration.site_vgrid_label, vgrid))
+    _logger.debug('Deleting all files for vgrid %s' % vgrid)
     success = True
     msg = ""
 
@@ -322,6 +321,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # don't remove if not already an owner
 
     if not vgrid_is_owner(vgrid_name, cert_id, configuration):
+        logger.warning('%s is not allowed to remove owner %s from %s' % \
+                       (client_id, cert_id, vgrid_name))
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is not an owner of %s or a parent %s.'
                                % (cert_id, vgrid_name,
@@ -344,6 +345,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
          via mail about what you wanted to do when the error happened.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    logger.info('%s removing owner %s from %s' % (client_id, cert_id,
+                                                  vgrid_name))
+    
     # find out whether to just remove an owner or delete the whole thing.
     # ask about delete if last or no direct owners.
 
@@ -357,8 +361,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # the owner owns an upper vgrid, ownership is inherited
             # cannot remove, not last (inherited) owner
 
-            logger.debug('Cannot delete: Inherited ownership.' + 
-                         '\n Owners: %s,\n Direct owners: %s.' 
+            logger.warning('Cannot delete: Inherited ownership.' + 
+                           '\n Owners: %s,\n Direct owners: %s.' 
                          % (owners, owners_direct))
             output_objects.append({'object_type': 'error_text', 'text'
                                    : '''%s is owner of a parent %s. 
@@ -552,12 +556,14 @@ To leave (and delete) %s, first remove all members.'''
         #   if top-level: unlink, remove all files and directories, 
         #   in all cases: remove configuration entry for the VGrid
 
+        logger.info('Deleting %s and all related data as requested by %s' % \
+                    (vgrid_name, cert_id))
+
         if (cert_id in owners_direct):
 
             # owner owns this vgrid, direct ownership
 
-            logger.debug('%s looks like a top-level %s.' % \
-                         (configuration.site_vgrid_label, vgrid_name))
+            logger.debug('%s looks like a top-level vgrid.' % vgrid_name)
             logger.debug('Deleting all related files.')
 
             user_dir = os.path.abspath(os.path.join(configuration.user_home,
@@ -589,7 +595,6 @@ To leave (and delete) %s, first remove all members.'''
                                'text': 'Back to the overview.'})
 
         if not share_lnk or not web_lnk or not abandoned or not removed:
-
             logger.error('Errors while removing %s:\n%s.'
                          % (vgrid_name, '\n'.join([msg1,msg2,msg3])))
 
