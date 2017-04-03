@@ -487,7 +487,7 @@ def main(client_id, user_arguments_dict):
         <form method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
         <input class="p80width" type="text" name="vgrid_name" required 
-        pattern="[a-zA-Z0-9]+(([_.-]| |/)?[a-zA-Z0-9]+)*"
+        pattern="[a-zA-Z0-9 /_.-]*"
         title="unique name of ASCII letters and digits separated only by underscores, periods, spaces and hyphens. Slashes are additionally allowed when creating nested sub-%(vgrid_label)ss" />
         <input type="hidden" name="output_format" value="html" />
         <input type="submit" value="Create %(vgrid_label)s" />
@@ -510,7 +510,7 @@ def main(client_id, user_arguments_dict):
         <form method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
         <input class="p80width" type="text" name="vgrid_name" required 
-        pattern="[a-zA-Z0-9]+(([_.-]| |/)?[a-zA-Z0-9]+)*"
+        pattern="[a-zA-Z0-9 /_.-]*"
         title="the name of an existing %(vgrid_label)s" />
         <select name="request_type">
             <option value="vgridmember">membership</option> 
