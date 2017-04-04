@@ -2314,13 +2314,10 @@ if (jQuery) (function($){
                      // Reset any previous CSS
                      $("#editor_output").removeClass();
                      if (errors.length > 0) {
-                         $("#editor_output").addClass("error leftpad");
                          edit_out += errors;
                      } else if (warnings.length > 0) {
-                         $("#editor_output").addClass("warn leftpad");
                          edit_out += warnings;
                      } else {
-                         $("#editor_output").addClass("ok leftpad");
                          //$("#editor_dialog").dialog('close');
                      }
                      /* always reload parent to reset progress, etc */
