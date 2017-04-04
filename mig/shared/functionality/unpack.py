@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # unpack - unpack a zip/tar archive
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ import glob
 import shared.returnvalues as returnvalues
 from shared.archives import unpack_archive
 from shared.base import client_id_dir
+from shared.fileio import check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
@@ -127,22 +128,31 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if 'h' in flags:
         usage(output_objects)
 
-    real_dest = os.path.join(base_dir, dst)
-    logger.info('unpack in %s' % real_dest)
+    abs_dest = os.path.join(base_dir, dst)
+    logger.info('unpack in %s' % abs_dest)
 
-    # Don't use real_path in output as it may expose underlying
+    # Don't use real dest in output as it may expose underlying
     # fs layout.
 
-    relative_dest = real_dest.replace(base_dir, '')
-    if not valid_user_path(real_dest, base_dir, True):
+    relative_dest = abs_dest.replace(base_dir, '')
+    if not valid_user_path(abs_dest, base_dir, True):
 
         # out of bounds
 
         logger.error('%s tried to %s restricted path %s ! (%s)'
-                       % (client_id, op_name, real_dest, dst))
+                       % (client_id, op_name, abs_dest, dst))
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : "Invalid path! (%s expands to an illegal path)" % dst})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if not check_write_access(abs_dest, parent_dir=True, follow_symlink=True):
+        logger.warning('%s called without write access: %s' % \
+                       (op_name, abs_dest))
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'cannot unpack to "%s": inside a read-only location!' % \
+             relative_dest})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     status = returnvalues.OK
@@ -156,12 +166,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -171,8 +181,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
-        for real_path in match:
-            relative_path = real_path.replace(base_dir, '')
+        for abs_path in match:
+            relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                                        : relative_path})

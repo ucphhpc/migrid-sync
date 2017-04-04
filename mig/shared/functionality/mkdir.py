@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mkdir - create directory in user hom
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.fileio import check_write_access
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
@@ -143,17 +144,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
                              + pattern]
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warn('%s tried to %s %s restricted path! (%s)'
-                            % (client_id, op_name, real_path, pattern))
+                            % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -165,23 +166,32 @@ CSRF-filtered POST requests to prevent unintended updates'''
                  % (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
 
-        for real_path in match:
-            relative_path = real_path.replace(base_dir, '')
+        for abs_path in match:
+            relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                         : relative_path})
-            if not parents(flags) and os.path.exists(real_path):
+            if not parents(flags) and os.path.exists(abs_path):
                 output_objects.append({'object_type': 'error_text',
                         'text': '%s: path exist!' % pattern})
                 status = returnvalues.CLIENT_ERROR
                 continue
-
+            if not check_write_access(abs_path, parent_dir=True,
+                                      follow_symlink=True):
+                logger.warning('%s called without write access: %s' % \
+                               (op_name, abs_path))
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'cannot create "%s": inside a read-only location!' % \
+                     pattern})
+                status = returnvalues.CLIENT_ERROR
+                continue
             try:
                 if parents(flags):
-                    if not os.path.isdir(real_path):
-                        os.makedirs(real_path)
+                    if not os.path.isdir(abs_path):
+                        os.makedirs(abs_path)
                 else:
-                    os.mkdir(real_path)
+                    os.mkdir(abs_path)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s' failed!" % (op_name,

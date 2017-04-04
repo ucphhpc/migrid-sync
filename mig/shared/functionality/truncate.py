@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # truncate - truncate a file to given size
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,6 +32,7 @@ import glob
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.fileio import check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
@@ -103,17 +104,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -123,13 +124,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
-        for real_path in match:
-            relative_path = real_path.replace(base_dir, '')
+        for abs_path in match:
+            relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                         : relative_path})
+            if not check_write_access(abs_path):
+                logger.warning('%s called without write access: %s' % \
+                               (op_name, abs_path))
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'cannot truncate "%s": inside a read-only location!' % \
+                     pattern})
+                status = returnvalues.CLIENT_ERROR
+                continue
+
             try:
-                fd = open(real_path, 'r+')
+                fd = open(abs_path, 'r+')
                 fd.truncate(size)
                 fd.close()
             except Exception, exc:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editfile - inline editor back end
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ import glob
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.editing import acquire_edit_lock, release_edit_lock
+from shared.fileio import check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
@@ -111,29 +112,39 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # leaking information about file system layout while allowing consistent
     # error messages
 
-    real_path = ''
+    abs_path = ''
     unfiltered_match = glob.glob(base_dir + path)
     for server_path in unfiltered_match:
-        real_path = os.path.abspath(server_path)
-        if not valid_user_path(real_path, base_dir, True):
+        abs_path = os.path.abspath(server_path)
+        if not valid_user_path(abs_path, base_dir, True):
             logger.warning('%s tried to %s restricted path %s ! (%s)'
-                           % (client_id, op_name, real_path, path))
+                           % (client_id, op_name, abs_path, path))
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : "Invalid path! (%s expands to an illegal path)" % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if real_path == '':
-        real_path = base_dir + path
-        if not valid_user_path(real_path, base_dir, True):
+    if abs_path == '':
+        abs_path = base_dir + path
+        if not valid_user_path(abs_path, base_dir, True):
             logger.warning('%s tried to %s restricted path %s ! (%s)'
-                           % (client_id, op_name, real_path, path))
+                           % (client_id, op_name, abs_path, path))
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : "Invalid path! (%s expands to an illegal path)" % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (owner, time_left) = acquire_edit_lock(real_path, client_id)
+    if not check_write_access(abs_path, parent_dir=True, follow_symlink=True):
+        logger.warning('%s called without write access: %s' % \
+                       (op_name, abs_path))
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'cannot edit "%s": inside a read-only location!' % \
+             path})
+        status = returnvalues.CLIENT_ERROR
+        return (output_objects, returnvalues.CLIENT_ERROR)        
+
+    (owner, time_left) = acquire_edit_lock(abs_path, client_id)
     if owner != client_id:
         output_objects.append({'object_type': 'error_text', 'text'
                                : "You don't have the lock for %s!"
@@ -141,7 +152,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
-        fh = open(real_path, 'w+')
+        fh = open(abs_path, 'w+')
         fh.write(user_arguments_dict['editarea'
                  ][0].replace(form_newline, saved_newline))
         fh.close()
@@ -150,7 +161,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         output_objects.append({'object_type': 'text', 'text'
                               : 'Saved changes to %s.' % path})
-        release_edit_lock(real_path, client_id)
+        release_edit_lock(abs_path, client_id)
     except Exception, exc:
 
         # Don't give away information about actual fs layout
@@ -164,7 +175,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append({'object_type': 'text', 'text'
                               : 'Submitting saved file to parser'})
         submitstatus = {'object_type': 'submitstatus', 'name': path}
-        (new_job_status, msg, job_id) = new_job(real_path, client_id,
+        (new_job_status, msg, job_id) = new_job(abs_path, client_id,
                                                 configuration, False, True)
         if not new_job_status:
             submitstatus['status'] = False

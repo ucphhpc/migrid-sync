@@ -82,14 +82,14 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
                      (path, offset, err))
         return False
 
-def write_file(content, path, logger, mode='w'):
+def write_file(content, path, logger, mode='w', make_parent=True):
     """Wrapper to handle writing of contents to path"""
     logger.debug('writing file: %s' % path)
 
     # create dir if it does not exists
 
     (head, _) = os.path.split(path)
-    if not os.path.isdir(head):
+    if not os.path.isdir(head) and make_parent:
         try:
             logger.debug('making directory %s' % head)
             os.mkdir(head)
@@ -466,6 +466,32 @@ def strip_dir(path):
         name = os.path.basename(path)
     return name
 
+def _check_access(path, mode, parent_dir, follow_symlink):
+    """Internal helper to check for mode access on path. If parent_dir is set
+    the check is applied to the directory part of path. With follow_symlink set
+    any symlinks in path are first expanded so that the corresponding parent is
+    checked if parent_dir is requested.  
+    """
+    if follow_symlink:
+        path = os.path.realpath(path)
+    if parent_dir:
+        path = os.path.dirname(path.rstrip(os.sep))
+    return os.access(path, mode)
+
+def check_read_access(path, parent_dir=False, follow_symlink=False):
+    """Check if path is readable or if the optional parent_dir is set check if
+    the directory part of path is readable and the optional follow_symlink
+    expands any symlinks in path before this check.
+    """
+    return _check_access(path, os.O_RDONLY, parent_dir, follow_symlink)
+
+def check_write_access(path, parent_dir=False, follow_symlink=False):
+    """Check if path is writable or if the optional parent_dir is set check if
+    the directory part of path is writable and the optional follow_symlink
+    expands any symlinks in path before this check.
+    """
+    return _check_access(path, os.O_RDWR, parent_dir, follow_symlink)
+    
 def make_temp_file(suffix='', prefix='tmp', dir=None, text=False):
     """Expose tempfile.mkstemp functionality"""
     return tempfile.mkstemp(suffix, prefix, dir, text)

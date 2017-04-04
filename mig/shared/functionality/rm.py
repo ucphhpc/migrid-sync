@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rm - backend to remove files/directories in user home
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,7 @@ import glob
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import trash_linkname
+from shared.fileio import check_write_access
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
@@ -236,6 +237,15 @@ You're not allowed to delete entire special folders like %s shares and %s
                     continue
             except Exception, err:
                 logger.error("%s: check trash failed: %s" % (op_name, err))
+                continue
+            if not check_write_access(abs_path):
+                logger.warning('%s called without write access: %s' % \
+                               (op_name, abs_path))
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'cannot remove "%s": inside a read-only location!' % \
+                     pattern})
+                status = returnvalues.CLIENT_ERROR
                 continue
         
             # TODO: limit delete in vgrid share trash to vgrid owners / conf?

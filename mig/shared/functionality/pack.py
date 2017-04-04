@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # pack - Pack one or more files/dirs into a zip/tar archive
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.archives import pack_archive
 from shared.base import client_id_dir
+from shared.fileio import check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
@@ -174,6 +175,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                : "No such destination directory: %s"
                                % os.path.dirname(relative_dest)})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if not check_write_access(abs_dest, parent_dir=True, follow_symlink=True):
+        logger.warning('%s called without write access: %s' % \
+                       (op_name, abs_dest))
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'cannot pack to "%s": inside a read-only location!' % \
+             relative_dest})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
 
     status = returnvalues.OK
 

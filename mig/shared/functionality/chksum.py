@@ -34,7 +34,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_max_chunks
 from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
-     sha512sum_file, write_file
+     sha512sum_file, write_file, check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
@@ -136,6 +136,16 @@ def main(client_id, user_arguments_dict):
             logger.warning('%s tried to %s restricted path %s !(%s)'
                            % (client_id, op_name, abs_dest, dst))
             return (output_objects, returnvalues.CLIENT_ERROR)
+        if not check_write_access(abs_dest, parent_dir=True,
+                                  follow_symlink=True):
+            logger.warning('%s called without write access: %s' % \
+                           (op_name, abs_dest))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'cannot checksum to "%s": inside a read-only location!' % \
+                 relative_dest})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
 
     all_lines = []
     for pattern in pattern_list:
