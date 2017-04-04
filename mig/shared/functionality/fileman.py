@@ -138,6 +138,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
             <!-- Probably all overriden in our filemanager upload JS -->
             <form id="fancyfileupload" action="uploadchunked.py?output_format=json;action=put"
                 method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="%(csrf_field)s" value="%(uploadchunked_csrf_token)s" />
                 <fieldset id="fancyfileuploaddestbox">
                     <label id="fancyfileuploaddestlabel" for="fancyfileuploaddest">
                         Optional final destination dir:
@@ -178,6 +179,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
         <div id="legacyuploadtab">
             <form id="upload_form" enctype="multipart/form-data" method="post" action="textarea.py">
                 <fieldset>
+                    <input type="hidden" name="%(csrf_field)s" value="%(textarea_csrf_token)s" />
                     <input type="hidden" name="output_format" value="json"/>
                     <input type="hidden" name="max_file_size" value="100000"/>
 
