@@ -1,3 +1,12 @@
 trashcan icons are from the Matte icon pack:
 http://findicons.com/pack/2226/matte_basic
 only downscaled to 16x16 and renamed for clarity.
+
+folder-*-blue.png are manually color-balanced versions of the corresponding
+famfamfam ones.
+They were made by openin in gimp, selection all folder pixels using color
+match and then using Colors -> Color Balance and setting these values for 
+each of the Shadows, Midtones and Highlights ranges:
+Cyan	<->	Red	 -40
+Magenta	<->	Green 	 0
+Yellow	<->	Blue	 100
