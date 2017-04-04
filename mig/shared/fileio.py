@@ -456,7 +456,7 @@ def strip_dir(path):
     supplies, say, an absolute windows path.
     """
 
-    if path.find(':') >= 0:
+    if path[:4].find(':\\') >= 0:
 
         # Windows absolute path - name is just right of rightmost backslash
 
