@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # updatevgrid - update or repair vgrid components
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ from shared.base import client_id_dir
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
 from shared.functionality.createvgrid import create_scm, create_tracker, \
      create_forum
@@ -54,6 +54,11 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "Update %s Components" % label
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Update %s Components' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -66,9 +71,6 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
-
-    output_objects.append({'object_type': 'header', 'text'
-                          : "Update '%s'" % vgrid_name })
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
