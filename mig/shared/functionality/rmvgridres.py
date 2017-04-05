@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridres - remove vgrid resource
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,7 +30,7 @@
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
      vgrid_is_resource, vgrid_remove_resources, allow_resources_adm
 
@@ -49,9 +49,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove %s Resource' % \
-                           configuration.site_vgrid_label})
+    title_entry = find_entry(output_objects, 'title')
+    label = "%ss" % configuration.site_vgrid_label
+    title_entry['text'] = "Remove %s Resource" % label
+    output_objects.append({'object_type': 'header', 'text':
+                           'Remove %s Resource' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

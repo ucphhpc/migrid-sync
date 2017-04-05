@@ -33,7 +33,7 @@ from shared.defaults import keyword_owners, keyword_members, keyword_all, \
      keyword_auto, default_vgrid_settings_limit
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import init_vgrid_script_add_rem, allow_settings_adm, \
      vgrid_set_settings
 import shared.returnvalues as returnvalues
@@ -68,9 +68,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%ss" % configuration.site_vgrid_label
+    title_entry['text'] = "%s settings" % label
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Save settings for %s' % \
-                           configuration.site_vgrid_label})
+                          : 'Save %s Settings' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

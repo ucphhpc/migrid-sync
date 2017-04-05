@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridmember - remove vgrid member
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
      vgrid_is_member, vgrid_remove_members, vgrid_list_subvgrids, \
      allow_members_adm
@@ -53,8 +53,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%ss" % configuration.site_vgrid_label
+    title_entry['text'] = "Remove %s Member" % label
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove %s Member' % configuration.site_vgrid_label})
+                          : 'Remove %s Member' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

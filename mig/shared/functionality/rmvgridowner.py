@@ -265,6 +265,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%ss" % configuration.site_vgrid_label
+    title_entry['text'] = "Remove %s Owner" % label
+    output_objects.append({'object_type': 'header', 'text':
+                           'Remove %s Owner' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -290,12 +295,6 @@ def main(client_id, user_arguments_dict):
 CSRF-filtered POST requests to prevent unintended updates'''
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Remove %s' % configuration.site_vgrid_label
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove %s Owner' % \
-                           configuration.site_vgrid_label})
 
     # always allow owner to remove self
     if  client_id != cert_id:
@@ -596,7 +595,7 @@ To leave (and delete) %s, first remove all members.'''
 
         if not share_lnk or not web_lnk or not abandoned or not removed:
             logger.error('Errors while removing %s:\n%s.'
-                         % (vgrid_name, '\n'.join([msg1,msg2,msg3])))
+                         % (vgrid_name, '\n'.join([msg1, msg2, msg3])))
 
             output_objects.append({'object_type': 'error_text', 'text' : '''
 An internal error occurred, error conditions have been logged.'''})

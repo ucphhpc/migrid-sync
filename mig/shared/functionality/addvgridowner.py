@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridowner - add one or more vgrid owners
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ from shared.defaults import any_protocol, csrf_field
 from shared.fileio import make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.safeeval import subprocess_popen, subprocess_pipe, \
      subprocess_stdout
 from shared.useradm import distinguished_name_to_user, expand_openid_alias
@@ -106,9 +106,12 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    status = returnvalues.OK
+    title_entry = find_entry(output_objects, 'title')
+    label = "%ss" % configuration.site_vgrid_label
+    title_entry['text'] = "Add %s Owner" % label
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Add %s Owner(s)' % configuration.site_vgrid_label})
+                          : 'Add %s Owner(s)' % label})
+    status = returnvalues.OK
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
