@@ -69,8 +69,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
-    label = "%ss" % configuration.site_vgrid_label
-    title_entry['text'] = "%s settings" % label
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "Save %s Settings" % label
     output_objects.append({'object_type': 'header', 'text'
                           : 'Save %s Settings' % label})
     (validate_status, accepted) = validate_input_and_cert(

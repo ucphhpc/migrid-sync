@@ -50,7 +50,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
-    label = "%ss" % configuration.site_vgrid_label
+    label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = "Remove %s Resource" % label
     output_objects.append({'object_type': 'header', 'text':
                            'Remove %s Resource' % label})
