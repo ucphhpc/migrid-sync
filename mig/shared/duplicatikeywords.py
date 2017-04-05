@@ -55,6 +55,7 @@ duplicati_conf_templates = {'version': '''    "CreatedBy": "%(short_title)s v1.0
 protocol_map = dict(duplicati_protocol_choices)
 schedule_map = dict(duplicati_schedule_choices)
 
+# TODO: this function should probably move to shared.settings or something
 def extract_duplicati_helper(configuration, client_id, duplicati_dict):
     """Fill helper dictionary with values used in duplicati_conf_templates"""
     # lookup fqdn, username, etc for specified protocol
@@ -65,7 +66,9 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
     credentials = [('auth-username', username)]
     if password:
         credentials.append(('auth-password', password))
-    fingerprint = configuration.user_sftp_key_fingerprint
+    # We hard-code knowledge about host user_sftp_key_pub type and size here
+    # TODO: extract key information from key or add conf entry instead?
+    fingerprint = 'ssh-rsa 2048 %s' % configuration.user_sftp_key_md5
     fingerprint_parts = fingerprint.split(' ', 2)
     if fingerprint_parts[1:]:
         bits_part = fingerprint_parts[1]
