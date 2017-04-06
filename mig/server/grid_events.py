@@ -82,17 +82,21 @@ from shared.logger import daemon_logger, reopen_log
 from shared.serial import load
 from shared.vgrid import vgrid_is_owner_or_member, vgrid_valid_entities
 
-# Global trigger rule dictionary with rules for all VGrids
+# Global trigger rule dictionaries with rules for all VGrids
 
 all_rules = {}
 rule_hits = {}
 dir_cache = {}
-base_dir = None
-base_dir_len = 0
-file_inotify = None
-file_handler = None
-rule_handler = None
-rule_inotify = None
+
+# Global state helpers used in a number of functions and methods
+
+shared_state = {}
+shared_state['base_dir'] = None
+shared_state['base_dir_len'] = 0
+shared_state['file_inotify'] = None
+shared_state['file_handler'] = None
+shared_state['rule_handler'] = None
+shared_state['rule_inotify'] = None
 
 (_rate_limit_field, _settle_time_field) = ('rate_limit', 'settle_time')
 _default_period = 'm'
@@ -111,13 +115,13 @@ stop_running = multiprocessing.Event()
 (configuration, logger) = (None, None)
 
 
-def stop_handler(signal, frame):
+def stop_handler(sig, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
     # Print blank line to avoid mix with Ctrl-C line
     print ''
     stop_running.set()
 
-def hangup_handler(signal, frame):
+def hangup_handler(sig, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
 
     pid = multiprocessing.current_process().pid
@@ -506,12 +510,12 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
 
                 # _rule_monitor_lock.acquire()
 
-                if not rule_inotify._wd_for_path.has_key(src_path):
+                if not shared_state['rule_inotify']._wd_for_path.has_key(src_path):
 
                     # logger.debug('(%s) Adding watch for: %s' % (pid,
                     #             src_path))
 
-                    rule_inotify.add_watch(force_utf8(src_path))
+                    shared_state['rule_inotify'].add_watch(force_utf8(src_path))
 
                     # Fire 'modified' events for all dirs and files in subpath
                     # to ensure that all rule files are loaded
@@ -522,14 +526,14 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
                             # logger.debug('(%s) Dispatch DirCreatedEvent for: %s'
                             #         % (pid, ent.path))
 
-                            rule_handler.dispatch(DirCreatedEvent(ent.path))
+                            shared_state['rule_handler'].dispatch(DirCreatedEvent(ent.path))
                         elif ent.path.find(configuration.vgrid_triggers) \
                             > -1:
 
                             # logger.debug('(%s) Dispatch FileCreatedEvent for: %s'
                             #         % (pid, ent.path))
 
-                            rule_handler.dispatch(FileCreatedEvent(ent.path))
+                            shared_state['rule_handler'].dispatch(FileCreatedEvent(ent.path))
 
                 # else:
                 #    logger.debug('(%s) rule_monitor watch already exists for: %s'
@@ -540,10 +544,6 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
 
     def update_rules(self, event):
         """Handle all rule updates"""
-
-        # TODO: is this really needed?
-        #       global is only for *writing* to global vars
-        global base_dir_len
 
         pid = multiprocessing.current_process().pid
         state = event.event_type
@@ -768,18 +768,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         corresponding target_path pattern and trigger rule.
         """
 
-        # TODO: are these really needed?
-        #       global is only for *writing* to global vars
-        global base_dir
-        global base_dir_len
-
         pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
         time_stamp = event.time_stamp
         _chain = getattr(event, '_chain', [(src_path, state)])
-        rel_src = src_path[base_dir_len:].lstrip(os.sep)
-        vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
+        rel_src = src_path[shared_state['base_dir_len']:].lstrip(os.sep)
+        vgrid_prefix = os.path.join(shared_state['base_dir'], rule['vgrid_name'])
         logger.info('(%s) in handling of %s for %s %s' % (pid,
                     rule['action'], state, rel_src))
         above_limit = False
@@ -869,7 +864,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         filled_argument))
                 pattern = os.path.join(vgrid_prefix, filled_argument)
                 for path in glob.glob(pattern):
-                    rel_path = path[base_dir_len:]
+                    rel_path = path[shared_state['base_dir_len']:]
                     _chain += [(path, change)]
 
                     # Prevent obvious trigger chain cycles
@@ -878,7 +873,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         flat_chain = ['%s : %s' % pair for pair in
                                 _chain]
                         chain_str = ' <-> '.join(flat_chain)
-                        rel_chain_str = chain_str[base_dir_len:]
+                        rel_chain_str = chain_str[shared_state['base_dir_len']:]
 
                         logger.warning('(%s) breaking trigger cycle %s'
                                 % (pid, chain_str))
@@ -963,7 +958,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             try:
                 run_command(command_list, target_path, rule, configuration)
                 self.__workflow_info(configuration, rule['vgrid_name'],
-                                     'ran command: %s' 
+                                     'ran command: %s'
                                      % ' '.join(command_list))
             except Exception, exc:
                 command_str = ' '.join(command_list)
@@ -977,12 +972,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                          rule['action']))
 
     def __update_file_monitor(self, event):
-
-        # TODO: are these really needed?
-        #       global is only for *writing* to global vars
-        global dir_cache
-        global base_dir_len
-
+        """Updates file monitor using the global dir_cache"""
+        
         pid = multiprocessing.current_process().pid
         state = event.event_type
         src_path = event.src_path
@@ -991,7 +982,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # If dir_modified is due to a file event we ignore it
 
         if is_directory and state == 'created':
-            rel_path = src_path[base_dir_len:]
+            rel_path = src_path[shared_state['base_dir_len']:]
 
             # TODO: Optimize this such that only '.'
             # extracts vgrid_name and specific dir_cache ?
@@ -1019,7 +1010,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     for ent in scandir(src_path):
                         if ent.is_dir(follow_symlinks=True):
-                            vgrid_sub_path = ent.path[base_dir_len:]
+                            vgrid_sub_path = ent.path[shared_state['base_dir_len']:]
 
                             if not vgrid_sub_path \
                                 in vgrid_dir_cache.keys() \
@@ -1029,13 +1020,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                 # logger.debug('(%s) %s -> Dispatch DirCreatedEvent for: %s'
                                 #         % (pid, src_path, ent.path))
 
-                                file_handler.dispatch(DirCreatedEvent(ent.path))
+                                shared_state['file_handler'].dispatch(DirCreatedEvent(ent.path))
                         elif ent.is_file(follow_symlinks=True):
 
                             # logger.debug('(%s) %s -> Dispatch FileCreatedEvent for: %s'
                             #            % (pid, src_path, ent.path))
 
-                            file_handler.dispatch(FileCreatedEvent(ent.path))
+                            shared_state['file_handler'].dispatch(FileCreatedEvent(ent.path))
                 except OSError, exc:
 
                     # If we get an OSError, src_path was most likely deleted
@@ -1186,9 +1177,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
     def on_moved(self, event):
         """Handle moved files: we translate a move to a created and a deleted
         event since the single event with src and dst does not really fit our
-        model all that well. Furthermore inotify translate a move event to a 
-        created and a deleted event when moving between diffrent filesystems 
-        or symlinked dirs.
+        model all that well. Furthermore inotify emits a created and a deleted
+        event for a move between different filesystems or symlinked dirs.
         """
 
         for (change, path) in [('created', event.dest_path), ('deleted'
@@ -1200,17 +1190,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 def add_vgrid_file_monitor_watch(configuration, path):
     """Adds file inotify watch for *path*"""
 
-    # TODO: is this really needed?
-    #       global is only for *writing* to global vars
-    global file_inotify
-    
     pid = multiprocessing.current_process().pid
 
     vgrid_files_path = os.path.join(configuration.vgrid_files_home,
                                     path)
 
-    if not file_inotify._wd_for_path.has_key(path):
-        file_inotify.add_watch(force_utf8(vgrid_files_path))
+    if not shared_state['file_inotify']._wd_for_path.has_key(path):
+        shared_state['file_inotify'].add_watch(force_utf8(vgrid_files_path))
     else:
 
         # logger.debug('(%s) Adding watch for: %s' % (pid,
@@ -1223,12 +1209,9 @@ def add_vgrid_file_monitor_watch(configuration, path):
 
 
 def add_vgrid_file_monitor(configuration, vgrid_name, path):
-    """Add file monitor for all dirs and subdirs in *path*"""
-
-    # TODO: are these really needed?
-    #       global is only for *writing* to global vars
-    global dir_cache
-    global base_dir_len
+    """Add file monitor for all dirs and subdirs in *path*, using the
+    global dir_cache.
+    """
 
     pid = multiprocessing.current_process().pid
 
@@ -1251,7 +1234,7 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
             for ent in scandir(vgrid_files_path):
                 if ent.is_dir(follow_symlinks=True):
-                    vgrid_sub_path = ent.path[base_dir_len:]
+                    vgrid_sub_path = ent.path[shared_state['base_dir_len']:]
                     if not vgrid_sub_path in vgrid_dir_cache.keys():
                         add_vgrid_file_monitor(configuration,
                                 vgrid_name, vgrid_sub_path)
@@ -1262,13 +1245,10 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
 
 def add_vgrid_file_monitors(configuration, vgrid_name):
-    """Add file monitors for all dirs and subdirs for *vgrid_name*"""
+    """Add file monitors for all dirs and subdirs for *vgrid_name*, using the
+    global dir_cache.
+    """
 
-    # TODO: are these really needed?
-    #       global is only for *writing* to global vars
-    global file_handler
-    global dir_cache
-    
     pid = multiprocessing.current_process().pid
 
     vgrid_dir_cache = dir_cache[vgrid_name]
@@ -1290,12 +1270,9 @@ def add_vgrid_file_monitors(configuration, vgrid_name):
 
 
 def generate_vgrid_dir_cache(configuration, vgrid_base_path):
-    """Generate directory cache for *vgrid_base_path*"""
-
-    # TODO: are these really needed?
-    #       global is only for *writing* to global vars
-    global dir_cache
-    global base_dir_len
+    """Generate directory cache for *vgrid_base_path*, using the global
+    dir_cache.
+    """
 
     pid = multiprocessing.current_process().pid
 
@@ -1322,7 +1299,7 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
     for (root, dir_names, _) in walk(vgrid_path, followlinks=True):
         for dir_name in dir_names:
             dir_path = os.path.join(root, dir_name)
-            dir_cache_path = dir_path[base_dir_len:]
+            dir_cache_path = dir_path[shared_state['base_dir_len']:]
             if not vgrid_dir_cache.has_key(dir_cache_path):
                 vgrid_dir_cache[dir_cache_path] = {}
                 vgrid_dir_cache[dir_cache_path]['mtime'] = \
@@ -1336,11 +1313,7 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
 
 
 def load_dir_cache(configuration, vgrid_name):
-    """Load directory cache for *vgrid_name"""
-
-    # TODO: is this really needed?
-    #       global is only for *writing* to global vars
-    global dir_cache
+    """Load directory cache for *vgrid_name*, into the global dir_cache"""
 
     result = True
 
@@ -1391,12 +1364,8 @@ def load_dir_cache(configuration, vgrid_name):
 
 
 def save_dir_cache(vgrid_name):
-    """Save directory cache for *vgrid_name*"""
+    """Save directory cache for *vgrid_name*, from the global dir_cache"""
 
-    # TODO: is this really needed?
-    #       global is only for *writing* to global vars
-    global dir_cache
-    
     pid = multiprocessing.current_process().pid
 
     result = True
@@ -1432,17 +1401,6 @@ def monitor(configuration, vgrid_name):
     they get their own process.
     """
 
-    # TODO: are these really needed?
-    #       global is only for *writing* to global vars
-    global dir_cache
-    global rule_handler
-    global rule_inotify
-
-    global file_handler
-    global file_inotify
-    global base_dir
-    global base_dir_len
-
     pid = multiprocessing.current_process().pid
 
     # TODO: We loose access to logger when called through multiprocessing
@@ -1454,8 +1412,8 @@ def monitor(configuration, vgrid_name):
 
     # Set base_dir and base_dir_len
 
-    base_dir = os.path.join(configuration.vgrid_files_home)
-    base_dir_len = len(base_dir)
+    shared_state['base_dir'] = os.path.join(configuration.vgrid_files_home)
+    shared_state['base_dir_len'] = len(shared_state['base_dir'])
 
     # Allow e.g. logrotate to force log re-open after rotates
 
@@ -1465,19 +1423,19 @@ def monitor(configuration, vgrid_name):
 
     if vgrid_name == '.':
         vgrid_home = configuration.vgrid_home
-        file_monitor_home = base_dir
+        file_monitor_home = shared_state['base_dir']
         recursive_rule_monitor = False
     else:
         vgrid_home = os.path.join(configuration.vgrid_home, vgrid_name)
-        file_monitor_home = os.path.join(base_dir, vgrid_name)
+        file_monitor_home = os.path.join(shared_state['base_dir'], vgrid_name)
         recursive_rule_monitor = True
 
     rule_monitor = Observer()
     rule_patterns = [os.path.join(vgrid_home, '*')]
-    rule_handler = MiGRuleEventHandler(patterns=rule_patterns,
+    shared_state['rule_handler'] = MiGRuleEventHandler(patterns=rule_patterns,
             ignore_directories=False, case_sensitive=True)
 
-    rule_monitor.schedule(rule_handler, vgrid_home,
+    rule_monitor.schedule(shared_state['rule_handler'], vgrid_home,
                           recursive=recursive_rule_monitor)
     rule_monitor.start()
 
@@ -1488,7 +1446,7 @@ def monitor(configuration, vgrid_name):
     if not hasattr(rule_monitor_emitter, '_inotify'):
         logger.error('(%s) rule_monitor_emitter require inotify' % pid)
         return 1
-    rule_inotify = rule_monitor_emitter._inotify._inotify
+    shared_state['rule_inotify'] = rule_monitor_emitter._inotify._inotify
 
     logger.info('(%s) initializing file listener - may take some time'
                 % pid)
@@ -1497,9 +1455,9 @@ def monitor(configuration, vgrid_name):
 
     file_monitor = Observer()
     file_patterns = [os.path.join(file_monitor_home, '*')]
-    file_handler = MiGFileEventHandler(patterns=file_patterns,
+    shared_state['file_handler'] = MiGFileEventHandler(patterns=file_patterns,
             ignore_directories=False, case_sensitive=True)
-    file_monitor.schedule(file_handler, file_monitor_home,
+    file_monitor.schedule(shared_state['file_handler'], file_monitor_home,
                           recursive=False)
     file_monitor.start()
 
@@ -1510,7 +1468,7 @@ def monitor(configuration, vgrid_name):
     if not hasattr(file_monitor_emitter, '_inotify'):
         logger.error('(%s) file_monitor require inotify' % pid)
         return 1
-    file_inotify = file_monitor_emitter._inotify._inotify
+    shared_state['file_inotify'] = file_monitor_emitter._inotify._inotify
 
     logger.info('(%s) trigger rule refresh for: %s' % (pid, vgrid_name))
 
@@ -1524,7 +1482,7 @@ def monitor(configuration, vgrid_name):
 
     all_trigger_rules = []
 
-    if recursive_rule_monitor == True:
+    if recursive_rule_monitor:
         for (root, _, files) in walk(vgrid_home):
             if configuration.vgrid_triggers in files:
                 rule_path = os.path.join(root,
@@ -1541,7 +1499,7 @@ def monitor(configuration, vgrid_name):
         # logger.debug('(%s) trigger load on rules in %s' % (pid,
         #             rule_path))
 
-        rule_handler.dispatch(FileModifiedEvent(rule_path))
+        shared_state['rule_handler'].dispatch(FileModifiedEvent(rule_path))
 
     # logger.debug('(%s) loaded initial rules:\n%s' % (pid, all_rules))
 
@@ -1674,7 +1632,7 @@ unless it is available in mig/server/MiGserver.conf
             logger.info('(%s) Shut down monitors and wait' % os.getpid())
             for monitor in vgrid_monitors.values():
                 mon_pid = monitor.pid
-                if mon_pid == None:
+                if mon_pid is None:
                     continue
                 logger.debug('send exit signal to monitor %s' % mon_pid)
                 os.kill(mon_pid, signal.SIGINT)
@@ -1691,7 +1649,7 @@ unless it is available in mig/server/MiGserver.conf
                     monitor.terminate()
                 else:
                     logger.debug('monitor %s: done' % mon_pid)
-                    
+
             logger.info('(%s) Shut down: all monitors done' % os.getpid())
             print "All monitors finished shutting down"
 
