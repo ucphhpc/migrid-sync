@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ import os
 import datetime
 import socket
 import time
+from urllib import quote
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
@@ -320,11 +321,13 @@ else, so the public key can be inserted in your authorized_keys file as:
                                                       transfer_dict)
             transfer_item['status'] = transfer_item.get('status', 'NEW')
             data_url = ''
+            # NOTE: we need to urlencode any exotic chars in paths here
             if transfer_item['action'] == 'import':
-                data_url = "fileman.py?path=%(dst)s" % transfer_item
+                enc_path = quote(("%(dst)s" % transfer_item))
+                data_url = "fileman.py?path=%s" % enc_path
             elif transfer_item['action'] == 'export':
-                data_url = "fileman.py?path=%s" % \
-                              ';path='.join(transfer_item['src'])
+                enc_paths = [quote(i) for i in transfer_item['src']]
+                data_url = "fileman.py?path=" + ';path='.join(enc_paths)
             if data_url:
                 transfer_item['viewdatalink'] = {
                     'object_type': 'link',

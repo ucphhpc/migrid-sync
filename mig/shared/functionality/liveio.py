@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # liveio - communication with running jobs
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@
 import glob
 import os
 import datetime
+from urllib import quote
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
@@ -457,13 +458,15 @@ jobs before and during execution.
                     target_path = '%s/%s/*' % (job_output_dir, job_id)
                 else:
                     target_path = dst
-                output_objects.append({'object_type': 'link', 'destination'
-                                       : 'ls.py?path=%s' % target_path,
-                                       'text': 'View uploaded files'})
+                enc_url = 'ls.py?path=%s' % quote(target_path)
+                output_objects.append({'object_type': 'link', 'destination':
+                                       enc_url, 'text': 'View uploaded files'})
             else:
-                output_objects.append({'object_type': 'link', 'destination'
-                                       : 'ls.py?path=%s' % ';path='.join(src),
-                                       'text': 'View files for download'})
+                enc_url = 'ls.py?path='
+                enc_url += ';path='.join([quote(i) for i in src])
+                output_objects.append({'object_type': 'link', 'destination':
+                                       enc_url, 'text':
+                                       'View files for download'})
 
         try:
             os.remove(local_file)

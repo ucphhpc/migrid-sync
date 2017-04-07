@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezefunctions - freeze archive helper functions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -93,8 +93,8 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
             showfile_link = {'object_type': 'link',
                              'destination': 'showfreezefile.py?'
                              'freeze_id=%s;path=%s' % \
-                             (freeze_dict['ID'], file_item['name']),
-                             'title': 'Show archive file %s' % file_item['name'],
+                             (freeze_dict['ID'], quote(file_item['name'])),
+                             'title': 'Show archive file %(name)s' % file_item,
                              'text': file_item['name']}
             freeze_files.append({
                 'object_type': 'frozenfile',
