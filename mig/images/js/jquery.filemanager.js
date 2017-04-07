@@ -2798,7 +2798,9 @@ function mig_fancyuploadchunked_init(name, callback) {
                         delete file.moveUrl;
                         console.debug("updated file entry: "+$.fn.dump(file));
                     } else {
-                        showError("automatic move of "+file.name+" to "+file.moveDest+" failed!");
+                        showError("automatic move of "+file.name+" to "+
+                                  file.moveDest+" failed! Maybe read-only "+
+                                  "destination or login session expired?");
                     }
                 });
                 /* Finally pass control over to native done handler */

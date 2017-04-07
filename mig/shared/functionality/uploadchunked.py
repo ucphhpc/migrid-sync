@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadchunked - Chunked and efficient file upload back end
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,7 +41,7 @@ from shared.base import client_id_dir
 from shared.defaults import max_upload_files, max_upload_chunks, \
      upload_block_size, upload_tmp_dir, csrf_field
 from shared.fileio import strip_dir, write_chunk, delete_file, move, \
-     get_file_size, makedirs_rec
+     get_file_size, makedirs_rec, check_write_access
 from shared.functional import validate_input
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
@@ -371,6 +371,14 @@ def main(client_id, user_arguments_dict):
                     {'object_type': 'error_text', 'text'
                      : "Invalid destination (%s expands to an illegal path)" \
                      % current_dir})
+                moved = False
+            elif not check_write_access(dest_path, parent_dir=True):
+                logger.warning('%s called without write access: %s' % \
+                               (op_name, dest_path))
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'cannot move "%s": inside a read-only location!' % \
+                     rel_dst})
                 moved = False
             else:
                 try:
