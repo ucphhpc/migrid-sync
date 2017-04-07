@@ -116,8 +116,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
                                       'member', configuration)
         if not ret_val:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : msg})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   msg})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -125,9 +125,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if vgrid_is_owner(vgrid_name, cert_id, configuration):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : '%s is already an owner of %s or a parent %s.'
-                 % (cert_id, vgrid_name, configuration.site_vgrid_label)})
+                {'object_type': 'error_text', 'text':
+                 '%s is already an owner of %s or a parent %s.' % \
+                 (cert_id, vgrid_name, label)})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -135,10 +135,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if rank is None and vgrid_is_member(vgrid_name, cert_id, configuration):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : '''%s is already a member of %s or a parent %s. Please remove
+                {'object_type': 'error_text', 'text':
+                 '''%s is already a member of %s or a parent %s. Please remove
     the person first and then try this operation again.''' % \
-                 (cert_id, vgrid_name, configuration.site_vgrid_label)
+                 (cert_id, vgrid_name, label)
                  })
             status = returnvalues.CLIENT_ERROR
             continue
@@ -148,9 +148,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
                 configuration)
         if not list_status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error getting list of sub%ss: %s'
-                                   % (configuration.site_vgrid_label, subvgrids)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Error getting list of sub%ss: %s' % \
+                                   (label, subvgrids)})
             status = returnvalues.SYSTEM_ERROR
             continue
 
@@ -162,22 +162,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
         for subvgrid in subvgrids:
             if vgrid_is_owner(subvgrid, cert_id, configuration, recursive=False):
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : """%(cert_id)s is already an owner of a sub-%(_label)s
-    ('%(subvgrid)s'). While we DO support members being owners of sub-%(_label)ss,
-    we do not support adding parent %(_label)s members at the moment. Please
-    (temporarily) remove the person as owner of all sub-%(_label)ss first and then
-    try this operation again.""" % {'cert_id': cert_id, 'subvgrid': subvgrid,
-                                    '_label': configuration.site_vgrid_label}})
+                    {'object_type': 'error_text', 'text':
+                     """%(cert_id)s is already an owner of a
+sub-%(vgrid_label)s ('%(subvgrid)s'). While we DO support members being owners
+of sub-%(vgrid_label)ss, we do not support adding parent %(vgrid_label)s
+members at the moment. Please (temporarily) remove the person as owner of all
+sub-%(vgrid_label)ss first and then try this operation again.""" % \
+                     {'cert_id': cert_id, 'subvgrid': subvgrid,
+                      'vgrid_label': label}})
                 status = returnvalues.CLIENT_ERROR
                 skip_entity = True
                 break
             if vgrid_is_member(subvgrid, cert_id, configuration, recursive=False):
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : """%s is already a member of a sub-%s ('%s'). Please
-    remove the person first and then try this operation again.""" % \
-                     (cert_id, configuration.site_vgrid_label, subvgrid)})
+                    {'object_type': 'error_text', 'text':
+                     """%s is already a member of a sub-%s ('%s'). Please
+remove the person first and then try this operation again.""" % \
+                     (cert_id, label, subvgrid)})
                 status = returnvalues.CLIENT_ERROR
                 skip_entity = True
                 break
@@ -262,9 +263,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 # out of range? should not be possible due to is_subvgrid check
 
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : ('Could not create needed dirs on %s server! %s'
-                        % (configuration.short_title, exc))})
+                    {'object_type': 'error_text', 'text':
+                     ('Could not create needed dirs on %s server! %s'
+                      % (configuration.short_title, exc))})
                 logger.error('%s when looking for dir %s.' % (exc, dir1))
                 status = returnvalues.SYSTEM_ERROR
                 continue
@@ -278,12 +279,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # create symlink to vgrid files
 
         if not make_symlink(link_src, link_dst, logger):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Could not create link to %s files!' % \
-                                   configuration.site_vgrid_label
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create link to %s files!' % \
+                                   label
                                   })
-            logger.error('Could not create link to %s files! (%s -> %s)'
-                          % (configuration.site_vgrid_label, link_src, link_dst))
+            logger.error('Could not create link to %s files! (%s -> %s)' % \
+                         (label, link_src, link_dst))
             status = returnvalues.SYSTEM_ERROR
             continue
         cert_id_added.append(cert_id)
@@ -302,8 +303,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append(
             {'object_type': 'html_form', 'text':
              'New member(s)<br />%s<br />successfully added to %s %s!''' % \
-             ('<br />'.join(cert_id_added), vgrid_name,
-              configuration.site_vgrid_label)
+             ('<br />'.join(cert_id_added), vgrid_name, label)
              })
         cert_id_fields = ''
         for cert_id in cert_id_added:
@@ -315,7 +315,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         fill_helpers = {'vgrid_name': vgrid_name, 'cert_id': cert_id,
                         'protocol': any_protocol,
                         'short_title': configuration.short_title,
-                        'vgrid_label': configuration.site_vgrid_label,
+                        'vgrid_label': label,
                         'cert_id_fields': cert_id_fields,
                         'form_method': form_method,
                         'csrf_field': csrf_field,

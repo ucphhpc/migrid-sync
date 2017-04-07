@@ -105,10 +105,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # don't remove if not a member
 
     if not vgrid_is_member(vgrid_name, cert_id, configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is not a member of %s or a parent %s.'
-                               % (cert_id, vgrid_name,
-                                  configuration.site_vgrid_label)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '%s is not a member of %s or a parent %s.' % \
+                               (cert_id, vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # owner of subvgrid?
@@ -116,9 +115,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
     (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
             configuration)
     if not list_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting list of sub%ss: %s'
-                               % (configuration.site_vgrid_label, subvgrids)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error getting list of sub%ss: %s' % \
+                               (label, subvgrids)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # TODO: we DO allow ownership of sub vgrids with parent membership so we
@@ -128,13 +127,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
     for subvgrid in subvgrids:
         if vgrid_is_owner(subvgrid, cert_id, configuration, recursive=False):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : """%(cert_id)s is already an owner of a sub-%(_label)s
-('%(subvgrid)s'). While we DO support members being owners of sub-%(_label)ss,
-we do not support removing parent %(_label)s members at the moment. Please
-(temporarily) remove the person as owner of all sub %(_label)ss first and then
-try this operation again.""" % {'cert_id': cert_id, 'subvgrid': subvgrid,
-                                '_label': configuration.site_vgrid_label}})
+                {'object_type': 'error_text', 'text':
+                 """%(cert_id)s is already an owner of a sub-%(vgrid_label)s
+('%(subvgrid)s'). While we DO support members being owners of
+sub-%(vgrid_label)ss, we do not support removing parent %(vgrid_label)s members
+at the moment. Please (temporarily) remove the person as owner of all
+sub-%(vgrid_label)ss first and then try this operation again.""" % \
+                 {'cert_id': cert_id, 'subvgrid': subvgrid,
+                  'vgrid_label': label}})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -161,12 +161,10 @@ try this operation again.""" % {'cert_id': cert_id, 'subvgrid': subvgrid,
         pass
 
     if os.path.exists(dst):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not remove link to %s files!' % \
-                               configuration.site_vgrid_label
-                              })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Could not remove link to %s files!' % label})
         logger.error('Removed member might still have access to %s files! %s'
-                      % (configuration.site_vgrid_label, dst))
+                     % (label, dst))
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     vgrid_name_parts = vgrid_name.split('/')
@@ -212,19 +210,17 @@ try this operation again.""" % {'cert_id': cert_id, 'subvgrid': subvgrid,
                     '/'.join(vgrid_name_parts[0:loop_count + 1])
                 current_path = base_dir + current_vgrid_path
                 if not os.path.isdir(current_path):
-                    output_objects.append({'object_type': 'error_text',
-                            'text': '''Error removing %s placeholder dirs:
-%s is not a directory, not going to remove.''' % \
-                                           (configuration.site_vgrid_label,
-                                            current_vgrid_path)})
+                    output_objects.append(
+                        {'object_type': 'error_text',
+                         'text': '''Error removing %s placeholder dirs:
+%s is not a directory, not going to remove.''' % (label, current_vgrid_path)})
                     continue
 
                 if os.listdir(current_path):
-                    output_objects.append({'object_type': 'error_text',
-                            'text': '''Could not remove %s placeholder dirs:
-%s is not an empty directory (not critical)''' % \
-                                           (configuration.site_vgrid_label,
-                                            current_vgrid_path)})
+                    output_objects.append(
+                        {'object_type': 'error_text',
+                         'text': '''Could not remove %s placeholder dirs:
+%s is not an empty directory (not critical)''' % (label, current_vgrid_path)})
                 else:
 
                     # remove empty directory
@@ -235,8 +231,7 @@ try this operation again.""" % {'cert_id': cert_id, 'subvgrid': subvgrid,
                         output_objects.append(
                             {'object_type': 'error_text',
                              'text': '''Error removing %s placeholder dirs:
-exception removing empty directory %s''' % \
-                             (configuration.site_vgrid_label, exc)})
+exception removing empty directory %s''' % (label, exc)})
                         return (output_objects,
                                 returnvalues.SYSTEM_ERROR)
 
@@ -249,19 +244,17 @@ exception removing empty directory %s''' % \
                               : '%s of member of %s' % (rm_msg,
                               vgrid_name)})
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''(If %(_label)s %(vgrid_name)s has
-sub-%(_label)ss then removal must be performed from the most significant
-%(_label)s possible.)''' % {'vgrid_name': vgrid_name,
-                            '_label': configuration.site_vgrid_label}
-                               })
+                               '''(If %(vgrid_label)s %(vgrid_name)s has
+sub-%(vgrid_label)ss then removal must be performed from the most significant
+%(vgrid_label)s possible.)''' % {'vgrid_name': vgrid_name,
+                                 'vgrid_label': label}})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     unmap_inheritance(configuration, vgrid_name, cert_id)
     
-    output_objects.append({'object_type': 'text', 'text'
-                          : '%s successfully removed as member of %s %s!'
-                           % (cert_id, vgrid_name,
-                              configuration.site_vgrid_label)})
+    output_objects.append({'object_type': 'text', 'text':
+                           '%s successfully removed as member of %s %s!'
+                           % (cert_id, vgrid_name, label)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

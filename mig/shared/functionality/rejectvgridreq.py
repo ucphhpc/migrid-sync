@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rejectvgridreq - reject a vgrid access request
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,7 @@ from shared.accessrequests import load_access_request, delete_access_request
 from shared.defaults import any_protocol, csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
      vgrid_list_subvgrids, vgrid_add_resources
 import shared.returnvalues as returnvalues
@@ -54,9 +54,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "Reject %s Request" % label
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Reject %s Request' % \
-                           configuration.site_vgrid_label})
+                          : 'Reject %s Request' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -117,7 +119,7 @@ Deleted %(request_type)s access request to %(target)s for %(entity)s .
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers = {'protocol': any_protocol, 'id_field': id_field,
-                    'vgrid_label': configuration.site_vgrid_label,
+                    'vgrid_label': label,
                     'form_method': form_method, 'csrf_field': csrf_field,
                     'csrf_limit': csrf_limit}
     fill_helpers.update(req)

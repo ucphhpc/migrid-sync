@@ -88,6 +88,9 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = '%s Forum' % label
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -109,7 +112,7 @@ def main(client_id, user_arguments_dict):
                                     configuration):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''You must be an owner or member of %s %s to
-access the forum.''' % (vgrid_name, configuration.site_vgrid_label)})
+access the forum.''' % (vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action in valid_actions:
@@ -135,8 +138,6 @@ access the forum.''' % (vgrid_name, configuration.site_vgrid_label)})
 
     forum_base = os.path.abspath(os.path.join(base_dir, '.vgridforum'))
 
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s Forum' % configuration.site_vgrid_label
     title_entry['style'] = themed_styles(configuration, advanced=['forum.css'])
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
@@ -209,9 +210,8 @@ $(document).ready(function() {
  </div>
 '''                       })
                           
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : '%s Forum for %s' % \
-                           (configuration.site_vgrid_label, vgrid_name)})
+    output_objects.append({'object_type': 'sectionheader', 'text':
+                           '%s Forum for %s' % (label, vgrid_name)})
 
     try:
         os.makedirs(forum_base)
@@ -275,9 +275,9 @@ $(document).ready(function() {
         thread_list = list_threads(forum_base, client_id)
 
     if post_error:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error handling %s forum operation: %s'
-                               % (configuration.site_vgrid_label, post_error)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error handling %s forum operation: %s' % \
+                               (label, post_error)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if thread:

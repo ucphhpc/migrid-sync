@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridtrigger - add vgrid trigger
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ from shared.defaults import any_state, keyword_auto, valid_trigger_actions, \
       valid_trigger_changes, keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
      vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers, \
@@ -69,9 +69,11 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
-    output_objects.append(
-        {'object_type': 'header', 'text'
-         : 'Add/update %s Trigger' % configuration.site_vgrid_label})
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "Add/Update %s Trigger" % label
+    output_objects.append({'object_type': 'header', 'text':
+                           'Add/Update %s Trigger' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -160,9 +162,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
             update_id = 'rule_id'
         else:
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : '%s is already a trigger owned by somebody else in the %s'
-                 % (rule_id, configuration.site_vgrid_label)})
+                {'object_type': 'error_text', 'text':
+                 '%s is already a trigger owned by somebody else in the %s' % \
+                 (rule_id, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already in subvgrid
@@ -170,18 +172,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
     (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
             configuration)
     if not list_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting list of sub%ss: %s'
-                               % (configuration.site_vgrid_label, subvgrids)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error getting list of sub%ss: %s' % \
+                               (label, subvgrids)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     for subvgrid in subvgrids:
         if vgrid_is_trigger(subvgrid, rule_id, configuration, recursive=False):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '''%(rule_id)s is already in a
-sub-%(_label)s (%(subvgrid)s).
-Remove the trigger from the sub-%(_label)s and try again''' % \
-                                   {'rule_id': rule_id, 'subvgrid': subvgrid,
-                                    '_label': configuration.site_vgrid_label}})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '''%(rule_id)s is already in a
+sub-%(vgrid_label)s (%(subvgrid)s). Please remove the trigger from the
+sub-%(vgrid_label)s and try again''' % {'rule_id': rule_id,
+                                        'subvgrid': subvgrid, 
+                                        'vgrid_label': label}})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action in valid_trigger_actions:
@@ -307,15 +309,15 @@ a job description file path as argument.'''})
     elif update_id:
         logger.info('%s updated trigger: %s' % (client_id, rule_dict))
         output_objects.append(
-            {'object_type': 'text', 'text'
-             : 'Existing trigger %s successfully updated in %s %s!'
-             % (rule_id, vgrid_name, configuration.site_vgrid_label)})
+            {'object_type': 'text', 'text':
+             'Existing trigger %s successfully updated in %s %s!' % \
+             (rule_id, vgrid_name, label)})
     else:
         logger.info('%s added new trigger: %s' % (client_id, rule_dict))
         output_objects.append(
-            {'object_type': 'text', 'text'
-             : 'New trigger %s successfully added to %s %s!'
-             % (rule_id, vgrid_name, configuration.site_vgrid_label)})
+            {'object_type': 'text', 'text':
+             'New trigger %s successfully added to %s %s!' % \
+             (rule_id, vgrid_name, label)})
 
     output_objects.append({'object_type': 'link', 'destination':
                            'vgridworkflows.py?vgrid_name=%s' % vgrid_name,

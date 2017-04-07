@@ -59,8 +59,8 @@ def main(client_id, user_arguments_dict):
     status = returnvalues.OK
     defaults = signature()[1]
     title_entry = find_entry(output_objects, 'title')
-    label = "%ss" % configuration.site_vgrid_label
-    title_entry['text'] = "%s management" % label
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "%s Management" % label
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -99,7 +99,7 @@ def main(client_id, user_arguments_dict):
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'vgrid_label': configuration.site_vgrid_label,
+    fill_helpers =  {'vgrid_label': label,
                      'form_method': form_method,
                      'csrf_field': csrf_field,
                      'csrf_limit': csrf_limit}
@@ -109,8 +109,7 @@ def main(client_id, user_arguments_dict):
         # jquery support for tablesorter and confirmation on request and leave
         # table initially sorted by col. 2 (admin), then 3 (member), then 0 (name)
 
-        refresh_call = 'ajax_vgridman("%s", %s)' % \
-                       (configuration.site_vgrid_label, active_vgrid_links)
+        refresh_call = 'ajax_vgridman("%s", %s)' % (label, active_vgrid_links)
         table_spec = {'table_id': 'vgridtable', 'sort_order':
                       '[[2,1],[3,1],[0,0]]', 'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration, 
@@ -124,24 +123,25 @@ def main(client_id, user_arguments_dict):
                                'text': man_base_html(configuration)})
 
         # Append VGrid alias note if custom
-        if configuration.site_vgrid_label != 'VGrid':
-            label += ' (i.e. VGrids)'
-        output_objects.append({'object_type': 'header', 'text': label})
-        output_objects.append({'object_type': 'text', 'text'
-                              : '''
-    %ss share files, a number of collaboration tools and resources. Members can access web pages, files, tools and resources. Owners can additionally edit pages, as well as add and remove members or resources.
-    ''' % configuration.site_vgrid_label
-                           })
+        if label != 'VGrid':
+            long_label = '%ss (i.e. VGrids)' % label
+        else:
+            long_label = "%ss" % label
+        output_objects.append({'object_type': 'header', 'text':
+                               "%s" % long_label})
+        output_objects.append({'object_type': 'text', 'text':
+                               '''%ss share files, a number of collaboration
+tools and resources. Members can access web pages, files, tools and resources.
+Owners can additionally edit pages, as well as add and remove members or
+resources.''' % label})
 
-        if configuration.site_vgrid_label != 'VGrid':
-            output_objects.append({'object_type': 'text', 'text'
-                              : """Please note that for historical reasons %ss are
-    also referred to as VGrids in some contexts.""" % \
-                                   configuration.site_vgrid_label})
+        if label != 'VGrid':
+            output_objects.append({'object_type': 'text', 'text':
+                                   """Please note that for historical reasons
+%ss are also referred to as VGrids in some contexts.""" % label})
 
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                              : '%ss managed on this server' % \
-                               configuration.site_vgrid_label})
+        output_objects.append({'object_type': 'sectionheader', 'text':
+                               '%ss managed on this server' % label})
 
         # Helper forms for requests and removes
 
@@ -167,8 +167,8 @@ def main(client_id, user_arguments_dict):
                                        csrf_field: csrf_token})
             output_objects.append({'object_type': 'html_form', 'text': helper})
 
-        output_objects.append({'object_type': 'table_pager', 'entry_name': '%ss' % \
-                               configuration.site_vgrid_label,
+        output_objects.append({'object_type': 'table_pager',
+                               'entry_name': '%ss' % label,
                                'default_entries': default_pager_entries})
 
     if operation in list_operations:
@@ -213,23 +213,20 @@ def main(client_id, user_arguments_dict):
                                            'destination':'',
                                            'class': 'infolink iconspace',
                                            'title': 'Every user is member of the %s %s' \
-                                           % (default_vgrid,
-                                              configuration.site_vgrid_label),
+                                           % (default_vgrid, label),
                                            'text': ''}
                 vgrid_obj['administratelink'] = {'object_type': 'link',
                                                  'destination':'',
                                                  'class': 'infolink iconspace',
                                                  'title': 'Nobody owns the %s %s' \
-                                                 % (default_vgrid,
-                                                    configuration.site_vgrid_label),
+                                                 % (default_vgrid, label),
                                                  'text': ''}
                 vgrid_obj['viewvgridlink'] = {'object_type': 'link',
                                               'destination':'viewvgrid.py?vgrid_name=%s' % \
                                               vgrid_name,
                                               'class': 'infolink iconspace',
                                               'title': 'View details for the %s %s' \
-                                              % (default_vgrid,
-                                                 configuration.site_vgrid_label),
+                                              % (default_vgrid, label),
                                               'text': ''}
                 vgrid_items.append(vgrid_obj)
                 continue
@@ -248,7 +245,7 @@ def main(client_id, user_arguments_dict):
                                            'destination':'',
                                            'class': 'infolink iconspace',
                                            'title': 'Not a real %s - only for global monitor' % \
-                                           configuration.site_vgrid_label,
+                                           label,
                                            'text': ''}
                 vgrid_obj['administratelink'] = {'object_type': 'link',
                                                  'destination':'',
@@ -259,7 +256,7 @@ def main(client_id, user_arguments_dict):
                                               'destination':'',
                                               'class': 'infolink iconspace',
                                               'title': 'Not a real %s - only for global monitor' % \
-                                              configuration.site_vgrid_label,
+                                              label,
                                               'text': ''}
                 vgrid_items.append(vgrid_obj)
                 continue
@@ -300,8 +297,7 @@ def main(client_id, user_arguments_dict):
                                         vgrid_name,
                                         'class': '%s iconspace' % view_icon,
                                         'title': 'View details for the %s%s%s' \
-                                        % (vgrid_name, hidden_status,
-                                           configuration.site_vgrid_label),
+                                        % (vgrid_name, hidden_status, label),
                                         'text': ''}
 
             # link to become member: overwritten later for members
@@ -468,16 +464,15 @@ def main(client_id, user_arguments_dict):
         user_dict = user_map.get(client_id, None)
         # Optional limitation of create vgrid permission
         if user_dict and vgrid_create_allowed(configuration, user_dict):
-            output_objects.append({'object_type': 'sectionheader', 'text'
-                                   : 'Additional %ss' % \
-                                   configuration.site_vgrid_label})
+            output_objects.append({'object_type': 'sectionheader', 'text':
+                                   'Additional %ss' % label})
 
             output_objects.append(
                 {'object_type': 'text', 'text':
-                 '''Please enter a name for the new %(label)s to add, using slashes to
-     specify nesting. I.e. if you own a %(label)s called ABC, you can create a
-     sub-%(label)s called DEF by entering ABC/DEF below.''' % \
-                 {'label': configuration.site_vgrid_label}})
+                 '''Please enter a name for the new %(vgrid_label)s to add,
+using slashes to specify nesting. I.e. if you own a %(vgrid_label)s called ABC,
+you can create a sub-%(vgrid_label)s called DEF by entering ABC/DEF below.
+''' % fill_helpers})
             
             target_op = 'createvgrid'
             csrf_token = make_csrf_token(configuration, form_method, target_op,
@@ -494,14 +489,15 @@ def main(client_id, user_arguments_dict):
         </form>
      ''' % fill_helpers})
 
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                                   : 'Request Access to %ss' % \
-                                   configuration.site_vgrid_label})
+        output_objects.append({'object_type': 'sectionheader', 'text':
+                               'Request Access to %ss' % label})
 
         output_objects.append(
             {'object_type': 'text', 'text':
-             '''You can request access to %(label)ss using the individual plus-icons above directly or by entering the name of the %(label)s to request access to, what kind of access and an optional message to the admins below''' % \
-                 {'label': configuration.site_vgrid_label}})
+             '''You can request access to %(vgrid_label)ss using the individual
+plus-icons above directly or by entering the name of the %(vgrid_label)s to
+request access to, what kind of access and an optional message to the admins
+below''' % fill_helpers})
         target_op = 'sendrequestaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)

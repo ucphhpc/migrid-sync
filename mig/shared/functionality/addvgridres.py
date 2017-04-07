@@ -123,10 +123,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if rank is None and vgrid_is_resource(vgrid_name, unique_resource_name,
                                               configuration):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '%s is already a resource in the %s'
-                                   % (unique_resource_name,
-                                      configuration.site_vgrid_label)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s is already a resource in the %s' % \
+                                   (unique_resource_name, label)})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -135,9 +134,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
                 configuration)
         if not list_status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error getting list of sub%ss: %s'
-                                   % (configuration.site_vgrid_label, subvgrids)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Error getting list of sub%ss: %s' % \
+                                   (label, subvgrids)})
             status = returnvalues.SYSTEM_ERROR
             continue
         skip_entity = False
@@ -146,11 +145,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                  configuration, recursive=False):
                 output_objects.append({'object_type': 'error_text', 'text':
                                        '''%(res_name)s is already in a
-    sub-%(_label)s (%(subvgrid)s).
-    Remove the resource from the sub-%(_label)s and try again''' % \
-                                       {'res_name': unique_resource_name,
+sub-%(vgrid_label)s (%(subvgrid)s). Please remove the resource from the
+sub-%(vgrid_label)s and try again''' % {'res_name': unique_resource_name,
                                         'subvgrid': subvgrid,
-                                        '_label': configuration.site_vgrid_label}})
+                                        'vgrid_label': label}})
                 status = returnvalues.CLIENT_ERROR
                 skip_entity = True
                 break
@@ -210,8 +208,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append(
             {'object_type': 'html_form', 'text':
              'New resource(s)<br />%s<br />successfully added to %s %s!''' % \
-             ('<br />'.join(res_id_added), vgrid_name,
-              configuration.site_vgrid_label)
+             ('<br />'.join(res_id_added), vgrid_name, label)
              })
         res_id_fields = ''
         for res_id in res_id_added:
@@ -224,7 +221,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                         'unique_resource_name': unique_resource_name,
                         'protocol': any_protocol,
                         'short_title': configuration.short_title,
-                        'vgrid_label': configuration.site_vgrid_label,
+                        'vgrid_label': label,
                         'res_id_fields': res_id_fields,
                         'form_method': form_method,
                         'csrf_field': csrf_field,

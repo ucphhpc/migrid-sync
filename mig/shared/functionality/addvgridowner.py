@@ -175,9 +175,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if rank is None and vgrid_is_owner(vgrid_name, cert_id, configuration):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : '%s is already an owner of %s or a parent %s.'
-                 % (cert_id, vgrid_name, configuration.site_vgrid_label)})
+                {'object_type': 'error_text', 'text':
+                 '%s is already an owner of %s or a parent %s.' % \
+                 (cert_id, vgrid_name, label)})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -196,9 +196,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
                 configuration)
         if not list_status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error getting list of sub%ss: %s'
-                                   % (configuration.site_vgrid_label, subvgrids)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Error getting list of sub%ss: %s' % \
+                                   (label, subvgrids)})
             status = returnvalues.SYSTEM_ERROR
             continue
 
@@ -209,7 +209,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     {'object_type': 'error_text', 'text'
                      : """%s is already an owner of a sub-%s ('%s'). Please
     remove the person first and then try this operation again.""" % \
-                     (cert_id, configuration.site_vgrid_label, subvgrid)})
+                     (cert_id, label, subvgrid)})
                 status = returnvalues.CLIENT_ERROR
                 skip_entity = True
                 break
@@ -218,7 +218,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     {'object_type': 'error_text', 'text'
                      : """%s is already a member of a sub-%s ('%s'). Please
     remove the person first and then try this operation again.""" % \
-                     (cert_id, configuration.site_vgrid_label, subvgrid)})
+                     (cert_id, label, subvgrid)})
                 status = returnvalues.CLIENT_ERROR
                 skip_entity = True
                 break
@@ -239,7 +239,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append(
                 {'object_type': 'text', 'text'
                  : '''NOTE: %s is already a member of parent %s %s.''' % \
-                 (cert_id, configuration.site_vgrid_label, inherit_vgrid_member)
+                 (cert_id, label, inherit_vgrid_member)
                  })
 
         # Check if only rank change was requested and apply if so
@@ -384,11 +384,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not inherit_vgrid_member and \
                not make_symlink(link_src, link_dst, logger):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Could not create link to %s share!' % \
-                                   configuration.site_vgrid_label})
-            logger.error('Could not create link to %s files (%s -> %s)'
-                         % (configuration.site_vgrid_label, link_src, link_dst))
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create link to %s share!' % \
+                                   label})
+            logger.error('Could not create link to %s files (%s -> %s)' % \
+                         (label, link_src, link_dst))
             status = returnvalues.SYSTEM_ERROR
             continue
 
@@ -448,8 +448,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append(
             {'object_type': 'html_form', 'text':
              'New owner(s)<br />%s<br />successfully added to %s %s!''' % \
-             ('<br />'.join(cert_id_added), vgrid_name,
-              configuration.site_vgrid_label)
+             ('<br />'.join(cert_id_added), vgrid_name, label)
              })
         cert_id_fields = ''
         for cert_id in cert_id_added:
@@ -461,7 +460,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         fill_helpers = {'vgrid_name': vgrid_name, 'cert_id': cert_id,
                         'protocol': any_protocol,
                         'short_title': configuration.short_title,
-                        'vgrid_label': configuration.site_vgrid_label,
+                        'vgrid_label': label,
                         'cert_id_fields': cert_id_fields,
                         'form_method': form_method,
                         'csrf_field': csrf_field,

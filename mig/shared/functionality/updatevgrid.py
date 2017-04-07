@@ -87,7 +87,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         form_method = 'post'
         csrf_limit = get_csrf_limit(configuration)
-        fill_helpers =  {'vgrid_label': configuration.site_vgrid_label,
+        fill_helpers =  {'vgrid_label': label,
                          'vgrid_name': vgrid_name,
                          'form_method': form_method,
                          'csrf_field': csrf_field,
@@ -145,9 +145,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name, '.vgridtracker')) + os.sep
 
-    output_objects.append({'object_type': 'text', 'text'
-                           : 'Updating %s %s components ...' % \
-                           (configuration.site_vgrid_label, vgrid_name)})
+    output_objects.append({'object_type': 'text', 'text':
+                           'Updating %s %s components ...' % \
+                           (label, vgrid_name)})
     
     # Try to create all base directories used for vgrid files
 
@@ -221,13 +221,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects += tmp_output
 
     output_objects.append({'object_type': 'text', 'text'
-                          : '%s %s updated!' % \
-                           (configuration.site_vgrid_label, vgrid_name)})
+                          : '%s %s updated!' % (label, vgrid_name)})
     output_objects.append({'object_type': 'link',
-                           'destination': 'adminvgrid.py?vgrid_name=%s' % vgrid_name,
+                           'destination': 'adminvgrid.py?vgrid_name=%s' % \
+                           vgrid_name,
                            'class': 'adminlink iconspace',
-                           'title': 'Administrate your %s' % \
-                           configuration.site_vgrid_label,
+                           'title': 'Administrate your %s' % label,
                            'text': 'Administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
 

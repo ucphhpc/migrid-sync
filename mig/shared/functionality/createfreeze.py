@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -61,6 +61,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
     """Parse xfer request (i.e. copy, move or upload) file/dir entries from
     user_args.
     """
+    _logger = configuration.logger
     files, rejected = [], []
     i = 0
     client_dir = client_id_dir(client_id)
@@ -71,8 +72,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
         if user_args.has_key(xfer_pattern % i):
             source_path = user_args[xfer_pattern % i][-1].strip()
             source_path = os.path.normpath(source_path).lstrip(os.sep)
-            configuration.logger.debug('found %s entry: %s' % \
-                                       (xfer, source_path))
+            _logger.debug('found %s entry: %s' % (xfer, source_path))
             if not source_path:
                 continue
             try:
@@ -85,24 +85,22 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 os.path.join(base_dir, source_path))
             # Prevent out-of-bounds, and restrict some greedy targets
             if not valid_user_path(abs_path, base_dir, True):
-                configuration.logger.error(
-                    'found illegal directory traversal %s entry: %s' % \
-                    (xfer, source_path))
+                _logger.error('found illegal directory traversal %s entry: %s' \
+                              % (xfer, source_path))
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'illegal path!'))
                 continue
             elif os.path.exists(abs_path) and os.path.samefile(abs_path,
                                                                base_dir):
-                configuration.logger.warning(
-                    'refusing archival of entire user home %s: %s' % \
-                    (xfer, source_path))
+                _logger.warning('refusing archival of entire user home %s: %s' \
+                                % (xfer, source_path))
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'entire home not allowed!'))
                 continue
             elif in_vgrid_share(configuration, abs_path) == source_path:
-                configuration.logger.warning(
-                    'refusing archival of entire %s shared folder %s: %s' % \
-                    (configuration.site_vgrid_label, xfer, source_path))
+                _logger.warning(
+                    'refusing archival of entire vgrid shared folder %s: %s' % \
+                    (xfer, source_path))
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'entire %s share not allowed!' \
                                  % configuration.site_vgrid_label))
@@ -155,6 +153,10 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title') 
+    label = "%s" % configuration.site_vgrid_label   
+    title_entry['text'] = "Create Archive"
+    # NOTE: Delay header entry here to include vgrid_name
     # All non-file fields must be validated
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
                           (key, val) in defaults.items()])
@@ -188,8 +190,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     title = freeze_flavors[flavor]['createfreeze_title']
     output_objects.append({'object_type': 'header', 'text': title})
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = title
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':

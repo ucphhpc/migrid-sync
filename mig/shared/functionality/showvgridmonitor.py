@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridmonitor - show private vgrid monitor to vgrid participants
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -52,6 +52,9 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = '%s Resource Monitor' % label
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -100,8 +103,6 @@ $(document).ready(function() {
 </script>
 '''
 
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s Monitor' % configuration.short_title
     title_entry['meta'] = meta
     title_entry['style'] = style
     title_entry['javascript'] = script
@@ -118,9 +119,9 @@ $(document).ready(function() {
         html = ''
         if not vgrid_is_owner_or_member(vgrid_name, client_id,
                 configuration):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '''You must be an owner or member of %s %s
-to access the monitor.''' % (vgrid_name, configuration.site_vgrid_label)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '''You must be an owner or member of %s %s
+to access the monitor.''' % (vgrid_name, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         monitor_file = os.path.join(configuration.vgrid_home, vgrid_name, 
@@ -139,9 +140,9 @@ to access the monitor.''' % (vgrid_name, configuration.site_vgrid_label)})
                 html += str(line)
             monitor_fd.close()
         except Exception, exc:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error reading %s monitor page (%s)'
-                                   % (configuration.site_vgrid_label, exc)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Error reading %s monitor page (%s)' % \
+                                   (label, exc)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({'object_type': 'html_form', 'text'

@@ -106,6 +106,10 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = '%s Workflows' % label
+    # NOTE: Delay header entry here to include vgrid_name
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -128,10 +132,6 @@ def main(client_id, user_arguments_dict):
 access the workflows.'''
                                % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s Workflows' \
-        % configuration.site_vgrid_label
 
     if not operation in allowed_operations:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -172,10 +172,8 @@ access the workflows.'''
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
 
-        output_objects.append({'object_type': 'header',
-                              'text': '%s Workflows for %s'
-                              % (configuration.site_vgrid_label,
-                              vgrid_name)})
+        output_objects.append({'object_type': 'header', 'text':
+                               '%s Workflows for %s' % (label, vgrid_name)})
 
     logger.info('vgridworkflows %s %s' % (vgrid_name, operation))
 
@@ -313,7 +311,7 @@ your disposal:<br/>
 %s
 </p>
 </div>
-""" % (configuration.site_vgrid_label, vars_html, commands_html)
+""" % (label, vars_html, commands_html)
 
 
         # Make page with manage triggers tab and active jobs and log tab

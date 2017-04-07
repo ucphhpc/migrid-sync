@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequest - let user send request to other user or vgrid/resource admin
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,6 +47,10 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = '%s send request' % configuration.short_title
+    output_objects.append({'object_type': 'header', 'text': 'Send request'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -58,26 +62,18 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s send request' % \
-                          configuration.short_title
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Send request'})
+    output_objects.append({'object_type': 'warning', 'text':
+                           '''Remember that sending a membership or ownership
+request generates a message to the owners of the target. All requests are 
+logged together with the ID of the submitter. Spamming and other abuse will
+not be tolerated!'''})
 
-    output_objects.append({'object_type': 'warning', 'text'
-                          : '''
-Remember that sending a membership or ownership request
-generates a message to the owners of the target. All requests are 
-logged together with the ID of the submitter. Spamming and other abuse
-will not be tolerated!'''})
-
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Request %s membership/ownership' % \
-                           configuration.site_vgrid_label})
+    output_objects.append({'object_type': 'sectionheader', 'text':
+                           'Request %s membership/ownership' % label})
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'vgrid_label': configuration.site_vgrid_label,
+    fill_helpers =  {'vgrid_label': label,
                      'form_method': form_method,
                      'csrf_field': csrf_field,
                      'csrf_limit': csrf_limit}
@@ -103,10 +99,9 @@ will not be tolerated!'''})
 <tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
 </form>""" % fill_helpers})
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Request resource ownership'})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    output_objects.append({'object_type': 'sectionheader', 'text':
+                           'Request resource ownership'})
+    output_objects.append({'object_type': 'html_form', 'text': """
 <form method='%(form_method)s' action='%(target_op)s.py'>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table align='center'>
@@ -122,14 +117,13 @@ Resource ID </td><td><input name=unique_resource_name />
 <tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
 </form>""" % fill_helpers})
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Send message'})
+    output_objects.append({'object_type': 'sectionheader', 'text':
+                           'Send message'})
     protocol_options = ''
     for proto in [any_protocol] + configuration.notify_protocols:
         protocol_options += '<option value=%s>%s</option>\n' % (proto, proto)
     fill_helpers['protocol_options'] = protocol_options
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    output_objects.append({'object_type': 'html_form', 'text': """
 <form method='%(form_method)s' action='%(target_op)s.py'>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <table align='center'>

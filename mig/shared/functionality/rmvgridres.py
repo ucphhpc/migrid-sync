@@ -104,8 +104,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '''You must be an owner of the %s to
-remove a resource!''' % configuration.site_vgrid_label
-                              })
+remove a resource!''' % label})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't remove if not a participant
@@ -113,8 +112,7 @@ remove a resource!''' % configuration.site_vgrid_label
     if not vgrid_is_resource(vgrid_name, unique_resource_name, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is not a resource in %s or a parent %s.'
-                               % (unique_resource_name, vgrid_name,
-                                  configuration.site_vgrid_label)})
+                               % (unique_resource_name, vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # remove
@@ -124,18 +122,16 @@ remove a resource!''' % configuration.site_vgrid_label
     if not rm_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : rm_msg})
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '''%(res_name)s might be listed as a resource
-of this %(_label)s because it is a resource of a parent %(_label)s. Removal
-must be performed from the most significant %(_label)s possible.''' % \
-                               {'res_name': unique_resource_name,
-                                '_label': configuration.site_vgrid_label}})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''%(res_name)s might be listed as a resource
+of this %(vgrid_label)s because it is a resource of a parent %(vgrid_label)s.
+Removal must be performed from the most significant %(vgrid_label)s possible.
+''' % {'res_name': unique_resource_name, 'vgrid_label': label}})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Resource %s successfully removed from %s %s!'
-                           % (unique_resource_name, vgrid_name,
-                              configuration.site_vgrid_label)})
+    output_objects.append({'object_type': 'text', 'text':
+                           'Resource %s successfully removed from %s %s!' % \
+                           (unique_resource_name, vgrid_name, label)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

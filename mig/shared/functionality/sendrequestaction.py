@@ -62,7 +62,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = '%s send request' % configuration.short_title
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s send request' % configuration.short_title})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -73,13 +77,6 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s send request' % \
-                            configuration.short_title
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s send request' % \
-                            configuration.short_title})
 
     target_id = client_id
     vgrid_name = accepted['vgrid_name'][-1].strip()
@@ -215,10 +212,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
         if not vgrid_is_owner(vgrid_name, client_id, configuration):
-            output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'You are not an owner of %s or a parent %s!' % \
-                (vgrid_name, configuration.site_vgrid_label)})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'You are not an owner of %s or a parent %s!' % \
+                 (vgrid_name, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # NOTE: we support exactly one vgrid but multiple users/resources here
         if visible_user_names:
@@ -241,7 +238,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 logger.info("adding res owners to recipients: %s" % res_owners)
                 target_list += [user_id for user_id in res_owners]
 
-        target_id = '%s %s owners' % (vgrid_name, configuration.site_vgrid_label)
+        target_id = '%s %s owners' % (vgrid_name, label)
         target_name = vgrid_name
     elif request_type in ["resourceaccept", "resourcereject"]:
         # Always allow accept messages between actual resource owners
@@ -340,28 +337,28 @@ CSRF-filtered POST requests to prevent unintended updates'''
             target_id = entity = unique_resource_name
             if vgrid_is_resource(vgrid_name, unique_resource_name,
                                  configuration):
-                output_objects.append({
-                    'object_type': 'error_text', 'text'
-                    : 'You already have access to %s or a parent %s.' % \
-                    (vgrid_name, configuration.site_vgrid_label)})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'You already have access to %s or a parent %s.' % \
+                     (vgrid_name, label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
         else:
             target_id = entity = client_id
             if vgrid_is_owner(vgrid_name, client_id, configuration):
-                output_objects.append({
-                    'object_type': 'error_text', 'text'
-                    : 'You are already an owner of %s or a parent %s!' % \
-                    (vgrid_name, configuration.site_vgrid_label)})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'You are already an owner of %s or a parent %s!' % \
+                     (vgrid_name, label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
         # only ownership requests are allowed for existing members
 
         if request_type == 'vgridmember':
             if vgrid_is_member(vgrid_name, client_id, configuration):
-                output_objects.append({
-                    'object_type': 'error_text', 'text'
-                    : 'You are already a member of %s or a parent %s.' % \
-                    (vgrid_name, configuration.site_vgrid_label)})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'You are already a member of %s or a parent %s.' % \
+                     (vgrid_name, label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
         # Find all VGrid owners configured to receive notifications
@@ -379,10 +376,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         (owners_status, owners_list) = vgrid_owners(vgrid_name, configuration,
                                              recursive=True)
         if not owners_status:
-            output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'Failed to lookup owners for %s %s - are you sure it exists?'
-                % (vgrid_name, configuration.site_vgrid_label)})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Failed to lookup owners for %s %s - are you sure it exists?'
+                 % (vgrid_name, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
         prioritized_list = owners_list[::-1]
         target_list = prioritized_list[:request_recipients]

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridtrigger - remove vgrid trigger
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,7 +30,7 @@
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
      vgrid_is_trigger, vgrid_remove_triggers
 
@@ -49,9 +49,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "Remove %s Trigger" % label
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove %s Trigger' % \
-                           configuration.site_vgrid_label})
+                          : 'Remove %s Trigger' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -84,8 +86,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   rule_id, 'trigger',
                                   configuration)
     if not ret_val:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
+        output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif msg:
 
@@ -98,10 +99,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # can't remove if not a participant
 
     if not vgrid_is_trigger(vgrid_name, rule_id, configuration, recursive=False):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is not a trigger in %s %s.'
-                               % (rule_id, vgrid_name,
-                                  configuration.site_vgrid_label)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '%s is not a trigger in %s %s.' % \
+                               (rule_id, vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # remove
@@ -110,21 +110,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                                  [rule_id])
     if not rm_status:
         logger.error('%s failed to remove trigger: %s' % (client_id, rm_msg))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : rm_msg})
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '''%(rule_id)s might be listed as a trigger of
-this %(_label)s because it is a trigger of a parent %(_label)s. Removal must
-be performed from the most significant %(_label)s possible.'''
-                               % {'rule_id': rule_id,
-                                  '_label': configuration.site_vgrid_label}})
+        output_objects.append({'object_type': 'error_text', 'text': rm_msg})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''%(rule_id)s might be listed as a trigger of
+this %(vgrid_label)s because it is a trigger of a parent %(vgrid_label)s.
+Removal must be performed from the most significant %(vgrid_label)s
+possible.''' % {'rule_id': rule_id, 'vgrid_label': label}})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('%s removed trigger: %s' % (client_id, rule_id))
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Trigger %s successfully removed from %s %s!'
-                           % (rule_id, vgrid_name,
-                              configuration.site_vgrid_label)})
+    output_objects.append({'object_type': 'text', 'text':
+                           'Trigger %s successfully removed from %s %s!'
+                           % (rule_id, vgrid_name, label)})
     output_objects.append({'object_type': 'link', 'destination':
                            'vgridworkflows.py?vgrid_name=%s' % vgrid_name,
                            'text': 'Back to workflows for %s' % vgrid_name})

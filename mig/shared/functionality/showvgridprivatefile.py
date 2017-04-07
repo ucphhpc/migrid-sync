@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridprivatefile - View VGrid private files for owners and members
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
 from shared.vgrid import vgrid_is_owner_or_member
 
@@ -53,6 +53,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    label = configuration.site_vgrid_label
+    # NOTE: no title or header here since output is usually raw
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -71,7 +73,7 @@ def main(client_id, user_arguments_dict):
                                     configuration):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''You must be an owner or member of %s %s to
-access the private files.''' % (vgrid_name, configuration.site_vgrid_label)})
+access the private files.''' % (vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -88,7 +90,7 @@ access the private files.''' % (vgrid_name, configuration.site_vgrid_label)})
     if not valid_user_path(abs_path, base_dir, True):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''You are not allowed to use paths outside %s
-private files dir.''' % configuration.site_vgrid_label})
+private files dir.''' % label})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
     try:
@@ -108,7 +110,7 @@ private files dir.''' % configuration.site_vgrid_label})
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error reading %s private file (%s)'
-                               % (configuration.site_vgrid_label, exc)})
+                               % (label, exc)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, returnvalues.OK)
