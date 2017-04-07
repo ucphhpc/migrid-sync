@@ -32,8 +32,9 @@ import os
 import re
 
 from shared.defaults import default_vgrid, keyword_owners, keyword_members, \
-     keyword_all, keyword_auto, keyword_never, keyword_any, csrf_field, \
-     default_vgrid_settings_limit
+     keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
+     csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
+from fileio import make_symlink, move, check_read_access, check_write_access
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
@@ -743,6 +744,180 @@ def merge_vgrid_settings(vgrid_name, configuration, settings_list):
     merged['vgrid_name'] = vgrid_name
     return merged
 
+def vgrid_flat_name(vgrid_name, configuration):
+    """Translates from vgrid_name to the flat-form directory name used to
+    discriminate between readonly and writable access.
+    """
+    return vgrid_name.strip('/').replace('/', vgrid_nest_sep)
+
+def vgrid_restrict_write_paths(vgrid_name, configuration):
+    """Helper to generate vgrid relevant paths for handling readonly changes"""
+    flat_vgrid = vgrid_flat_name(vgrid_name, configuration)
+    link_path = os.path.join(configuration.vgrid_files_home, vgrid_name)
+    rw_path = os.path.join(configuration.vgrid_files_writable, flat_vgrid)
+    ro_path = os.path.join(configuration.vgrid_files_readonly, flat_vgrid)
+    return (flat_vgrid, link_path, rw_path, ro_path)
+    
+def vgrid_restrict_write_support(configuration):
+    """Check and return boolean to indicate if write restricted VGrids shares
+    are supported. Requires the vgrid_files_readonly and vgrid_files_writable
+    options to be set in configuration and to actually enforce read-only and
+    read+write access, respectively.
+    """
+    _logger = configuration.logger
+    if not configuration.vgrid_files_writable:
+        return False
+    elif not configuration.vgrid_files_readonly:
+        return False
+    elif not check_read_access(configuration.vgrid_files_readonly):
+        _logger.warning("vgrid_files_readonly is not readable!")
+        return False
+    elif check_write_access(configuration.vgrid_files_readonly):
+        _logger.warning("vgrid_files_readonly is writable!")
+        return False
+    elif not check_write_access(configuration.vgrid_files_writable):
+        _logger.warning("vgrid_files_writable is not writable!")
+        return False
+    # TODO: check that os.path.ismount on vgrid_files_writable or parent
+    # TODO: check that os.path.ismount on vgrid_files_readonly or parent
+    return True
+
+def vgrid_allow_restrict_write(vgrid_name, write_access, configuration):
+    """Check if vgrid_name shared files can be changed to given write_access
+    restrictions. I.e. make sure it either already uses new layout or that it
+    can be migrated to do so without problems.
+    Additionally make sure that a switch doesn't interfere with nested vgrids.
+    That is, if any existing child vgrids must already enforce at least as
+    tight write_access restrictions.
+    """
+    _logger = configuration.logger
+    if not vgrid_restrict_write_support(configuration):
+        _logger.error("cannot make %s read-only - no read-only support" % \
+                      vgrid_name)
+        return False
+    (flat_vgrid, link_path, rw_path, ro_path) = \
+                 vgrid_restrict_write_paths(vgrid_name, configuration)
+    # If share is a regular folder in vgrid_files_home make sure it can be
+    # migrated to vgrid_files_writable and then symlinked as usual.
+    if not os.path.islink(link_path) and os.path.isdir(link_path):
+        if os.path.exists(rw_path):
+            _logger.error("can't move %s into new layout - %s exists!" % \
+                          (link_path, rw_path))
+            return False
+        # Move fails if read-only .vgridX collab component dirs exists. It
+        # falls back to copy+remove so only the last remove actually fails. We
+        # COULD just chmod and remove after move if we dare(?).
+        # Alternatively we should pack .vgrid_X and unpack in new location,
+        # then chmod and remove orig and make (abs) symlink before proceeding.
+        # TODO: migrate VGRID/.vgridx to _writable/VGRID:.vgridX and symlink?
+        # TODO: migrate .vgridX to new vgrid_collab_home to avoid all interference
+        for collab_dir in _dot_vgrid:
+            collab_path = os.path.join(link_path, collab_dir)
+            if not os.path.exists(collab_path) or os.path.islink(collab_path):
+                continue
+            if not check_write_access(collab_path):
+                _logger.error("can't migrate %s into new layout - RO %s dir" % \
+                              (link_path, collab_path))
+                return False
+
+    (sub_status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
+    if not sub_status:
+        _logger.info('failed to load list of sub vgrids for %s: %s' % \
+                     (vgrid_name, sub_vgrids))
+        return False
+    for sub in sub_vgrids:
+        (load_sub, sub_settings) = vgrid_settings(sub, configuration,
+                                                  recursive=False,
+                                                  as_dict=True)
+        if not load_sub:
+            _logger.error('failed to load %s sub %s settings' % (vgrid_name,
+                                                                 sub))
+            return False
+        # NOTE: sub must already have same or stricter write_access, if not
+        #       altready 
+        if sub_settings.get('write_shared_files', write_access) not in \
+               [keyword_none, write_access]:
+            _logger.info('refuse limit write %s on %s due to %s settings' % \
+                         (write_access, vgrid_name, sub))
+            return False
+    return True
+        
+def vgrid_allow_writable(vgrid_name, configuration):
+    """Check if vgrid_name shared files can be make writable without
+    interfering with nested VGrids. I.e. all parent vgrids must already be
+    writable for this vgrid to be made writable.
+    """
+    _logger = configuration.logger
+    if not vgrid_restrict_write_support(configuration):
+        _logger.error("cannot make %s writable - no restrict write support" % \
+                      vgrid_name)
+        return False
+    parent_vgrid_list = vgrid_list_parents(vgrid_name, configuration)
+    if parent_vgrid_list:
+        parent_vgrid = parent_vgrid_list[-1]
+        (load_inherit, inherit_settings) = vgrid_settings(parent_vgrid,
+                                                          configuration,
+                                                          recursive=True,
+                                                          as_dict=True)
+        if not load_inherit:
+            _logger.error('failed to load inherited %s settings' % vgrid_name)
+            return False
+        if inherit_settings.get('write_shared_files', keyword_members) != \
+               keyword_members:
+            _logger.info('inherited settings prevent making %s writable' % \
+                         vgrid_name)
+            return False
+    return True
+
+def vgrid_restrict_write(vgrid_name, write_access, configuration):
+    """Switch vgrid_name shared folder to enforce write_access limitation by
+    replacing symlinks to the version of the folder which is mounted read-only.
+    This operation applies recursively for consistency.
+    For legacy vgrids the shared folder may exist as a regular folder in
+    vgrid_files_home and in that case it must first manually be migrated to the
+    new location and structure in writable.
+    """
+    _logger = configuration.logger
+    if not vgrid_allow_restrict_write(vgrid_name, write_access, configuration):
+        _logger.error("cannot set %s write on %s - needs manual migration" % \
+                      (write_access, vgrid_name))
+        return False
+    (flat_vgrid, link_path, rw_path, ro_path) = \
+                 vgrid_restrict_write_paths(vgrid_name, configuration)
+    # If share is a regular folder in vgrid_files_home migrate it to new
+    # layout in vgrid_files_writable first and then symlink as usual.
+    if not os.path.islink(link_path) and os.path.isdir(link_path):
+        _logger.info("migrating %s into new layout %s" % \
+                     (link_path, rw_path))
+        if not move(link_path, rw_path):
+            _logger.error("failed to move %s into new layout %s !" % \
+                          (link_path, rw_path))
+        return False    
+    # Force vgrid home link to new read-only location
+    _logger.info("switch %s to read-only path %s" % (vgrid_name, ro_path))
+    make_symlink(ro_path, link_path, _logger, force=True)
+    return True
+
+def vgrid_make_writable(vgrid_name, configuration):
+    """Switch vgrid_name shared folder to read-write by replacing symlinks to
+    the version of the folder which is mounted read-write. This operation
+    applies recursively for consistency.
+    We should never end up here unless the vgrid share was previously read-only
+    and thus already migrated to new layout.
+    """
+    _logger = configuration.logger
+    if not vgrid_allow_writable(vgrid_name, configuration):
+        _logger.error("cannot make %s writable - needs manual migration" % \
+                      vgrid_name)
+        return False
+    (flat_vgrid, link_path, rw_path, ro_path) = \
+                 vgrid_restrict_write_paths(vgrid_name, configuration)
+    # Force vgrid home link to the new read-only location
+    _logger.info("switch %s to writable path %s" % (vgrid_name, rw_path))
+    make_symlink(rw_path, link_path, _logger, force=True)
+    return True
+
+
 def vgrid_list(vgrid_name, group, configuration, recursive=True,
                allow_missing=False, filter_entries=[], replace_missing=None):
     """Shared helper function to get a list of group entities in vgrid. The
@@ -1383,12 +1558,13 @@ def vgrid_create_allowed(configuration, user_dict):
             return False
     return True
 
-def __in_vgrid_special(configuration, path, vgrid_special_base):
+def __in_vgrid_special(configuration, path, vgrid_special_base, flat=False):
     """Helper function to detect subvgrid public/private web hosting dirs and
     vgrid shares.
     Checks if path is really inside a vgrid special folder with home in
     vgrid_special_base, and returns the name of the deepest such sub-vgrid it
     is inside if so.
+    The optional flat parameter can be given to rely on flat naming 
     """
     _logger = configuration.logger
     vgrid_path = None
@@ -1398,6 +1574,8 @@ def __in_vgrid_special(configuration, path, vgrid_special_base):
     #                           (real_path, vgrid_special_base))
     if real_path.startswith(vgrid_special_base):
         vgrid_path = real_path.replace(vgrid_special_base, '').lstrip(os.sep)
+        if flat:
+            vgrid_path = vgrid_path.replace(vgrid_nest_sep, '/')
         while vgrid_path != os.sep:
             if os.path.isdir(os.path.join(vgrid_home, vgrid_path)):
                 _logger.debug("in vgrid special found %s" % \
@@ -1405,6 +1583,24 @@ def __in_vgrid_special(configuration, path, vgrid_special_base):
                 break
             vgrid_path = os.path.dirname(vgrid_path)
     return vgrid_path
+
+def in_vgrid_writable(configuration, path):
+    """Checks if path is inside a writable vgrid share and returns the name of
+    the deepest such sub-vgrid it is inside if so.
+    """
+    if not vgrid_restrict_write_support(configuration):
+        return False
+    return __in_vgrid_special(configuration, path,
+                              configuration.vgrid_files_writable, flat=True)
+
+def in_vgrid_readonly(configuration, path):
+    """Checks if path is inside a readonly vgrid share and returns the name of
+    the deepest such sub-vgrid it is inside if so.
+    """
+    if not vgrid_restrict_write_support(configuration):
+        return False
+    return __in_vgrid_special(configuration, path,
+                              configuration.vgrid_files_readonly, flat=True)
 
 def in_vgrid_share(configuration, path):
     """Checks if path is inside a vgrid share and returns the name of the
@@ -1526,31 +1722,35 @@ if __name__ == "__main__":
 
     kind = 'settings'
     valid_settings = {'vgrid_name': vgrid,
-                    'description': 'my project',
-                    'visible_owners': keyword_owners,
-                    'visible_members': keyword_owners,
-                    'visible_resources': keyword_all,
-                    'create_sharelink': keyword_members,
-                    'request_recipients': default_vgrid_settings_limit,
-                    'restrict_settings_adm': default_vgrid_settings_limit,
-                    'restrict_owners_adm': default_vgrid_settings_limit,
-                    'restrict_members_adm': default_vgrid_settings_limit,
-                    'restrict_resources_adm': default_vgrid_settings_limit,
-                    'read_only': False,
-                    'hidden': False,
+                      'description': 'my project',
+                      'visible_owners': keyword_owners,
+                      'visible_members': keyword_owners,
+                      'visible_resources': keyword_all,
+                      'create_sharelink': keyword_members,
+                      'request_recipients': default_vgrid_settings_limit,
+                      'restrict_settings_adm': default_vgrid_settings_limit,
+                      'restrict_owners_adm': default_vgrid_settings_limit,
+                      'restrict_members_adm': default_vgrid_settings_limit,
+                      'restrict_resources_adm': default_vgrid_settings_limit,
+                      'write_shared_files': keyword_members,
+                      'write_priv_web': keyword_owners,
+                      'write_pub_web': keyword_owners,
+                      'hidden': False,
                       }
     invalid_settings = {'vgrid_name': False,
-                    'description': ('my project', ),
-                    'visible_owners': 1,
-                    'visible_members': -1,
-                    'visible_resources': 42.0,
-                    'create_sharelink': True,
-                    'request_recipients': '3',
-                    'restrict_settings_adm': 4.2,
-                    'restrict_owners_adm': None,
-                    'restrict_members_adm': '1',
-                    'restrict_resources_adm': [1],
-                    'read_only': 'False',
+                        'description': ('my project', ),
+                        'visible_owners': 1,
+                        'visible_members': -1,
+                        'visible_resources': 42.0,
+                        'create_sharelink': True,
+                        'request_recipients': '3',
+                        'restrict_settings_adm': 4.2,
+                        'restrict_owners_adm': None,
+                        'restrict_members_adm': '1',
+                        'restrict_resources_adm': [1],
+                        'write_shared_files': 'me',
+                        'write_priv_web': keyword_all,
+                        'write_pub_web': keyword_any,
                     'hidden': None,
                      }
     test_settings = [valid_settings]

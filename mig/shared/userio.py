@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userio - wrappers to keep user file I/O in a single replaceable module
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,13 +42,14 @@ import time
 
 from shared.base import invisible_path
 from shared.defaults import trash_destdir, trash_linkname
-from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web
+from shared.vgrid import in_vgrid_share, in_vgrid_writable, in_vgrid_priv_web, \
+     in_vgrid_pub_web
 
 ACTIONS = (CREATE, MODIFY, MOVE, DELETE) = "create", "modify", "move", "delete"
 
 def get_home_location(configuration, path):
-    """Find the proper home folder for path. I.e. the corresponding user home
-    or vgrid share or web home dir.
+    """Find the proper home folder for path. I.e. the corresponding user home,
+    vgrid (writable) share or web home dir.
     """
     real_path = os.path.realpath(path)
     if real_path.startswith(configuration.user_home):
@@ -58,6 +59,9 @@ def get_home_location(configuration, path):
     elif real_path.startswith(configuration.vgrid_files_home):
         suffix = in_vgrid_share(configuration, real_path)
         return os.path.join(configuration.vgrid_files_home, suffix)
+    elif real_path.startswith(configuration.vgrid_files_writable):
+        suffix = in_vgrid_writable(configuration, real_path)
+        return os.path.join(configuration.vgrid_files_writable, suffix)
     elif real_path.startswith(configuration.vgrid_private_base):
         suffix = in_vgrid_priv_web(configuration, real_path)
         return os.path.join(configuration.vgrid_private_base, suffix)

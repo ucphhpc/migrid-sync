@@ -137,7 +137,7 @@ def get_fs_path(user_path, root, chroot_exceptions):
             # Found matching root - check visibility
             if not invisible_path(norm_path):
                 accepted = True
-            break        
+            break
     if not accepted:
         raise ValueError("Invalid path")
     return norm_path

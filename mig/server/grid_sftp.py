@@ -81,6 +81,7 @@ except ImportError:
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
+from shared.fileio import check_write_access
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_user_creds, refresh_job_creds, \
      refresh_share_creds, update_login_map, login_map_lookup, hit_rate_limit, \
@@ -88,6 +89,7 @@ from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      track_open_session, track_close_session, active_sessions
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
+from shared.vgrid import vgrid_restrict_write_support
 
 configuration, logger = None, None
 
@@ -199,6 +201,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning("chattr on missing path %s :: %s" % \
                                 (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
+        # TODO: let non-modifying requests through here?
+        if not check_write_access(real_path):
+            self.logger.warning('chattr on read-only path %s :: %s' % \
+                                (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
         if sftphandle is not None:
             active = getattr(sftphandle, 'active')
             file_obj = getattr(sftphandle, active)            
@@ -263,6 +270,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("chmod on missing path %s :: %s" % (path,
                                                                   real_path))
             return paramiko.SFTP_NO_SUCH_FILE
+        if not check_write_access(real_path):
+            self.logger.warning('chmod on read-only path %s :: %s' % \
+                                (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
         if sftphandle is not None:
             active = getattr(sftphandle, 'active')
             file_obj = getattr(sftphandle, active)     
@@ -308,6 +319,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("open existing file on missing path %s :: %s" % \
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
+        if (flags & (os.O_CREAT|os.O_RDWR|os.O_WRONLY|os.O_APPEND|os.O_TRUNC)) \
+               and not check_write_access(real_path, parent_dir=True):
+            self.logger.error("open for modify on read-only path %s :: %s" % \
+                              (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
         handle = SFTPHandle(flags, sftpserver=self)
         setattr(handle, 'real_path', real_path)
         setattr(handle, 'path', path)
@@ -439,6 +455,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except ValueError, err:
             self.logger.warning('remove %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
+        if not check_write_access(real_path):
+            self.logger.warning('remove on read-only path %s :: %s' % \
+                                (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
         #self.logger.debug("remove %s :: %s" % (path, real_path))
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
@@ -476,7 +496,15 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("rename on missing path %s :: %s" % \
                               (oldpath, real_oldpath))
             return paramiko.SFTP_NO_SUCH_FILE
+        if not check_write_access(real_oldpath):
+            self.logger.warning('move on read-only old path %s :: %s' % \
+                                (oldpath, real_oldpath))
+            return paramiko.SFTP_PERMISSION_DENIED
         real_newpath = self._get_fs_path(newpath)
+        if not check_write_access(real_newpath, parent_dir=True):
+            self.logger.warning('move on read-only new path %s :: %s' % \
+                                (newpath, real_newpath))
+            return paramiko.SFTP_PERMISSION_DENIED
         try:
             # Use shutil move to allow move to other file system like external
             # storage mounted file systems
@@ -500,6 +528,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning("mkdir on existing directory %s :: %s" % \
                                 (path, real_path))
             return paramiko.SFTP_FAILURE
+        if not check_write_access(real_path, parent_dir=True):
+            self.logger.warning('mkdir on read-only path %s :: %s' % \
+                                (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
         try:
             # Force MiG default mode
             os.mkdir(real_path, 0755)
@@ -527,6 +559,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning("rmdir on missing path %s :: %s" % (path,
                                                                     real_path))
             return paramiko.SFTP_NO_SUCH_FILE
+        if not check_write_access(real_path):
+            self.logger.warning('rmdir on read-only path %s :: %s' % \
+                                (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
         #self.logger.debug("rmdir on path %s :: %s" % (path, real_path))
         try:
             os.rmdir(real_path)
@@ -676,7 +712,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
             for entry in entries:
                 if entry.public_key is not None:
                     # TODO: Add ssh tunneling on resource frontends
-                    #       before enforcing ip check
+                    #       (proxy host?) before enforcing ip check.
                     # and \
                     # (entry.ip_addr is None or 
                     #  entry.ip_addr == self.client_addr[0]):
@@ -829,9 +865,9 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     # Ignore user connection here as we only care about sftp.
     # Keep the connection alive until user disconnects or server is halted.
 
-    # TODO: is_active check does not seem to always catch broken connections
+    # NOTE: is_active check does not seem to always catch broken connections
     # http://stackoverflow.com/questions/20147902/how-to-know-if-a-paramiko-ssh-channel-is-disconnected
-    #       We try to force failure with keep alive above for now.
+    #       We try to keep connections alive and force failure with timeout.
     
     while transport.is_active():        
         if conf['stop_running'].is_set():
@@ -973,6 +1009,14 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
                          os.path.abspath(configuration.vgrid_files_home),
                          os.path.abspath(configuration.resource_home),
                          os.path.abspath(configuration.seafile_mount)]
+    if vgrid_restrict_write_support(configuration):
+        readonly_dir = configuration.vgrid_files_readonly
+        writable_dir = configuration.vgrid_files_writable
+        logger.debug("allow chroot in vgrid read-only dirs: %s %s" % \
+                     (readonly_dir, writable_dir))
+        chroot_exceptions.append(os.path.abspath(readonly_dir))
+        chroot_exceptions.append(os.path.abspath(writable_dir))
+
     # Any extra chmod exceptions here - we already cover invisible_path check
     # in acceptable_chmod helper.
     chmod_exceptions = []

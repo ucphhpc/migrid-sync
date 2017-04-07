@@ -30,16 +30,18 @@
 import os
 
 from shared.defaults import keyword_owners, keyword_members, keyword_all, \
-     keyword_auto, default_vgrid_settings_limit
+     keyword_auto, keyword_none, default_vgrid_settings_limit
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import init_vgrid_script_add_rem, allow_settings_adm, \
-     vgrid_set_settings
+     vgrid_settings, vgrid_set_settings, vgrid_allow_restrict_write, \
+     vgrid_allow_writable, vgrid_make_writable, vgrid_restrict_write
 import shared.returnvalues as returnvalues
 
 _valid_visible = (keyword_owners, keyword_members, keyword_all)
 _valid_sharelink = (keyword_owners, keyword_members)
+_valid_write_access = (keyword_owners, keyword_members, keyword_none)
 _keyword_auto_int = '0'
 
 def signature():
@@ -56,7 +58,9 @@ def signature():
                 'restrict_owners_adm': [_keyword_auto_int],
                 'restrict_members_adm': [_keyword_auto_int],
                 'restrict_resources_adm': [_keyword_auto_int],
-                'read_only': [keyword_auto],
+                'write_shared_files': [keyword_auto],
+                'write_priv_web': [keyword_auto],
+                'write_pub_web': [keyword_auto],
                 'hidden': [keyword_auto],
                 }
     return ['', defaults]
@@ -218,16 +222,35 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.warning(msg)
             output_objects.append({'object_type': 'error_text', 'text': msg})
             return (output_objects, returnvalues.CLIENT_ERROR)
-    if not keyword_auto in accepted['read_only']:
-        read_only = accepted['read_only'][-1]
-        is_read_only = False
-        if read_only.lower() in ("true", "1", "yes"):
-            # TODO: enable when we support read-only
-            #is_read_only = True
-            #new_settings['read_only'] = is_read_only
-            msg = 'read-only option is not yet supported'
-            output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
+    if keyword_auto in accepted['write_shared_files']:
+        write_shared_files = keyword_members
+    else:
+        write_shared_files = accepted['write_shared_files'][-1]
+        if write_shared_files in _valid_write_access:
+            new_settings['write_shared_files'] = write_shared_files
+        else:
+            msg = 'unknown write_shared_files value: %s' % write_shared_files
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if keyword_auto in accepted['write_priv_web']:
+        write_priv_web = keyword_owners
+    else:
+        write_priv_web = accepted['write_priv_web'][-1]
+        if write_priv_web in _valid_write_access:
+            new_settings['write_priv_web'] = write_priv_web
+        else:
+            msg = 'unknown write_priv_web value: %s' % write_priv_web
+            output_objects.append({'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    if keyword_auto in accepted['write_pub_web']:
+        write_pub_web = keyword_owners
+    else:
+        write_pub_web = accepted['write_pub_web'][-1]
+        if write_pub_web in _valid_write_access:
+            new_settings['write_pub_web'] = write_pub_web
+        else:
+            msg = 'unknown write_pub_web value: %s' % write_pub_web
+            output_objects.append({'object_type': 'error_text', 'text': msg})
             return (output_objects, returnvalues.CLIENT_ERROR)
     if not keyword_auto in accepted['hidden']:
         hidden = accepted['hidden'][-1]
@@ -242,6 +265,71 @@ CSRF-filtered POST requests to prevent unintended updates'''
 circumvented by some owners unless Restrict settings administration is set to
 a lower or equal number.</span>'''})
 
+    # Refuse write access changes to web until we support them
+
+    if write_priv_web != keyword_owners or write_pub_web != keyword_owners:
+        output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 """%s does not yet support changing write access to the
+private and public web pages""" % configuration.short_title})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # Handle any write access limit changes first
+
+    (load_old, old_settings) = vgrid_settings(vgrid_name, configuration,
+                                                 recursive=False, as_dict=True)
+    if not load_old:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'failed to load saved %s settings' % vgrid_name})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+    old_write_shared = old_settings.get('write_shared_files', keyword_members)
+    contact_text = """Please contact the %s admins if you then still get refused.
+Then it is probably because they need to upgrade your %s %s to the new layout
+format first.""" % (configuration.short_title, vgrid_name, label)
+
+    if old_write_shared == write_shared_files:
+        logger.debug("write shared status (%s) is unchanged" % \
+                     old_write_shared)
+    elif write_shared_files != keyword_members:
+        if not vgrid_allow_restrict_write(vgrid_name, write_shared_files,
+                                          configuration):
+            # Refuse if any child vgrid is writable 
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 """Refused to tighten write access for %s - layout or child
+prevents it! You need to make sure all child %ss have at least as strict write
+access before you can proceed to restrict %s. %s.""" % \
+             (vgrid_name, label, vgrid_name, contact_text)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        # TODO: remove once we support owner-only write
+        if write_shared_files == keyword_owners:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 """Owner-only write access is not supported yet"""})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        if not vgrid_restrict_write(vgrid_name, write_shared_files,
+                                    configuration):
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   """failed to set %s write on %s shared
+files""" % (write_shared_files, vgrid_name)})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+    else:
+        if not vgrid_allow_writable(vgrid_name, configuration):
+            # Refuse if parent vgrid restricts write
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 '''Refused to make %s fully writable - layout or parent
+prevents it! You need to remove write restrictions on all parent %ss before
+you can make %s writable. %s.''' % (vgrid_name, label, vgrid_name,
+                                    contact_text)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        if not vgrid_make_writable(vgrid_name, configuration):
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'failed to make %s writable' % vgrid_name})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
     # format as list of tuples to fit usual form and then pickle
 
     (set_status, set_msg) = vgrid_set_settings(configuration, vgrid_name,
@@ -252,8 +340,8 @@ a lower or equal number.</span>'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Settings saved for %s %s!'
-                           % (vgrid_name, configuration.site_vgrid_label)})
+                          : 'Settings saved for %s %s!' % (vgrid_name,
+                                                           label)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

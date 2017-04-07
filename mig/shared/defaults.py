@@ -37,6 +37,7 @@ keyword_any = 'ANY'
 keyword_all = 'ALL'
 keyword_auto = 'AUTO'
 keyword_never = 'NEVER'
+keyword_none = 'NONE'
 keyword_unchanged = 'UNCHANGED'
 keyword_owners = 'OWNERS'
 keyword_members = 'MEMBERS'
@@ -214,6 +215,9 @@ freeze_flavors = {
 
 # Default value for integer limits in vgrid settings
 default_vgrid_settings_limit = 4
+
+# Seperator used in flat vgrid structure for read-only support
+vgrid_nest_sep = ':'
 
 # Password policy helpers
 POLICY_NONE, POLICY_WEAK = "NONE", "WEAK"

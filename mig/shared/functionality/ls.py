@@ -46,7 +46,8 @@ from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
 from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
-from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web
+from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \
+     in_vgrid_readonly, in_vgrid_writable
 
 
 def signature():
@@ -222,9 +223,14 @@ def handle_dir(
         configuration.logger.debug("checking link %s type (%s)" % \
                                    (dirname_with_dir, real_dir))
         # Separate vgrid special dirs from plain ones
-        if in_vgrid_share(configuration, actual_dir) == dirname_with_dir:
+        if dirname_with_dir in (in_vgrid_share(configuration, actual_dir),
+                                in_vgrid_writable(configuration, actual_dir)):
             dir_type = 'shared files'
             extra_class = 'vgridshared'
+        elif in_vgrid_readonly(configuration, actual_dir) == dirname_with_dir:
+            access_type = 'read-only'
+            dir_type = 'shared files'
+            extra_class = 'vgridshared readonly'
         elif in_vgrid_pub_web(configuration, actual_dir) == \
                  dirname_with_dir[len('public_base/'):]:
             dir_type = 'public web page'

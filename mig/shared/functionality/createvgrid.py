@@ -36,7 +36,7 @@ from tempfile import NamedTemporaryFile
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, generate_https_urls
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
-     keyword_owners, default_vgrid_settings_limit
+     keyword_owners, keyword_members, default_vgrid_settings_limit
 from shared.fileio import write_file, make_symlink, delete_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -47,7 +47,8 @@ from shared.useradm import distinguished_name_to_user, get_full_user_map
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
      vgrid_set_resources, vgrid_set_triggers, vgrid_set_settings, \
-     vgrid_create_allowed
+     vgrid_create_allowed, vgrid_restrict_write_support, vgrid_flat_name, \
+     vgrid_settings
 from shared.vgridkeywords import get_settings_keywords_dict
 
 
@@ -230,6 +231,7 @@ def create_tracker(
     """Create new Trac issue tracker bound to SCM repository if given"""
 
     logger = configuration.logger
+    label = "%s" % configuration.site_vgrid_label
     kind = 'member'
     tracker_alias = 'vgridtracker'
     admin_user = distinguished_name_to_user(client_id)
@@ -436,8 +438,7 @@ def create_tracker(
 
             settings = {'vgrid_name': vgrid_name, 'kind': kind, 'cap_kind':
                         kind.capitalize(), 'server_url':  server_url,
-                        'css_wikipage': 'SiteStyle',
-                        '_label': configuration.site_vgrid_label}
+                        'css_wikipage': 'SiteStyle', '_label': label}
             if kind == 'public':
                 settings['access_limit'] = "public"
                 settings['login_info'] = """
@@ -581,13 +582,12 @@ body {
                 os.utime(os.path.join(target_tracker_wsgi_link, name), None)
     except Exception, exc:
         create_status = False
-        logger.error('create %s tracker failed: %s' % \
-                     (configuration.site_vgrid_label, exc))
+        logger.error('create %s tracker failed: %s' % (label, exc))
         logger.error("creation env:\n%s" % admin_env)
         logger.error("creation trace:\n%s" % traceback.format_exc())
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create %s tracker: %s'
-                               % (configuration.site_vgrid_label, exc)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Could not create %s tracker: %s' % (label, exc)
+                               })
 
     try:
         # IMPORTANT NOTE:
@@ -622,11 +622,10 @@ body {
         os.chmod(tracker_dir, 0555)
     except Exception, exc:
         create_status = False
-        logger.error('fix permissions on %s tracker failed: %s' % \
-                     (configuration.site_vgrid_label, exc))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not finish %s tracker: %s'
-                               % (configuration.site_vgrid_label, exc)})
+        logger.error('fix permissions on %s tracker failed: %s' % (label, exc))
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Could not finish %s tracker: %s' % (label, exc)
+                               })
         os.chmod(tracker_dir, 0000)
     return create_status
 
@@ -660,6 +659,11 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "Create %s" % label
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Create %s' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -671,7 +675,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    vgrid_name = accepted['vgrid_name'][-1].strip()
+    vgrid_name = accepted['vgrid_name'][-1].strip().strip('/')
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -680,11 +684,6 @@ def main(client_id, user_arguments_dict):
 CSRF-filtered POST requests to prevent unintended updates'''
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Create %s' % configuration.site_vgrid_label
-    output_objects.append({'object_type': 'header', 'text': 'Create %s' % \
-                           configuration.site_vgrid_label})
 
     # No owner check here so we need to specifically check for illegal
     # directory access
@@ -703,20 +702,18 @@ attempt by '%s': vgrid_name '%s'""" % (client_id, vgrid_name))
     # Optional limitation of create vgrid permission
     if not user_dict or \
            not vgrid_create_allowed(configuration, user_dict):
-        logger.warning("user %s is not allowed to create %ss!" % \
-                       (client_id, configuration.site_vgrid_label))
+        logger.warning("user %s is not allowed to create vgrids!" % client_id)
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : 'Only privileged users can create %ss' % \
-             configuration.site_vgrid_label})
+             : 'Only privileged users can create %ss' % label})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
+    vgrid_home_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
                                vgrid_name)) + os.sep
-    public_base_dir = \
+    public_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name)) + os.sep
     public_scm_dir = \
@@ -725,7 +722,7 @@ attempt by '%s': vgrid_name '%s'""" % (client_id, vgrid_name))
     public_tracker_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name, '.vgridtracker')) + os.sep
-    private_base_dir = \
+    private_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name)) + os.sep
     private_scm_dir = \
@@ -749,60 +746,96 @@ attempt by '%s': vgrid_name '%s'""" % (client_id, vgrid_name))
     vgrid_files_link = os.path.join(configuration.user_home, client_dir,
                                     vgrid_name)
 
+    if vgrid_restrict_write_support(configuration):
+        flat_vgrid = vgrid_flat_name(vgrid_name, configuration)
+        vgrid_writable_dir = os.path.abspath(os.path.join(
+            configuration.vgrid_files_writable, flat_vgrid)) + os.sep
+        vgrid_readonly_dir = os.path.abspath(os.path.join(
+            configuration.vgrid_files_readonly, flat_vgrid)) + os.sep
+    else:
+        vgrid_writable_dir = None
+        vgrid_readonly_dir = None
+
     # does vgrid exist?
 
-    if os.path.isdir(base_dir):
+    if os.path.exists(vgrid_home_dir):
+        logger.warning("user %s can't create vgrid %s - it exists!" % \
+                       (client_id, vgrid_name))
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : '%s %s cannot be created because it already exists!'
-             % (configuration.site_vgrid_label, vgrid_name)})
+             % (label, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # does a matching directory for vgrid share already exist?
 
     if os.path.exists(vgrid_files_link):
+        logger.warning("user %s can't create vgrid %s - a folder shadows!" % \
+                       (client_id, vgrid_name))
         output_objects.append(
             {'object_type': 'error_text', 'text': '''
 %s %s cannot be created because a folder with the same name already exists!
 Please rename your %s folder to something else before creating a %s with that
-name.''' % (configuration.site_vgrid_label, vgrid_name, vgrid_name,
-            configuration.site_vgrid_label)})
+name.''' % (label, vgrid_name, vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # verify that client is owner of imada or imada/topology if trying to
     # create imada/topology/test
 
     vgrid_name_list = vgrid_name.split('/')
-    vgrid_name_list_length = len(vgrid_name_list)
-    if vgrid_name_list_length <= 0:
+    vgrid_name_parts = len(vgrid_name_list)
+    if vgrid_name_parts <= 0:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'vgrid_name not specified?'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
-    elif vgrid_name_list_length == 1:
+    elif vgrid_name_parts == 1:
 
         # anyone can create base vgrid
 
         new_base_vgrid = True
     else:
         new_base_vgrid = False
-        vgrid_name_without_last_fragment = \
-            '/'.join(vgrid_name_list[0:vgrid_name_list_length - 1])
-        parent_base = os.path.dirname(base_dir.rstrip(os.sep))
-        if not os.path.isdir(parent_base):
+        logger.debug("user %s attempts to create sub vgrid %s" % \
+                     (client_id, vgrid_name))
+        parent_vgrid_name = '/'.join(vgrid_name_list[0:vgrid_name_parts - 1])
+        parent_files_base = os.path.dirname(vgrid_home_dir.rstrip(os.sep))
+        if not os.path.isdir(parent_files_base):
+            logger.warning("user %s can't create vgrid %s - no parent!" % \
+                           (client_id, vgrid_name))
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'Parent %s %s does not exist!' % \
-                 (configuration.site_vgrid_label,
-                  vgrid_name_without_last_fragment)
-                 })
+                {'object_type': 'error_text', 'text':
+                 'Parent %s %s does not exist!' % (label, parent_vgrid_name)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if not vgrid_is_owner(vgrid_name_without_last_fragment,
+        if not vgrid_is_owner(parent_vgrid_name,
                               client_id, configuration):
+            logger.warning("user %s can't create vgrid %s - not owner!" % \
+                           (client_id, vgrid_name))
             output_objects.append(
                 {'object_type': 'error_text', 'text'
-                 : 'You must own a parent %s to create a sub vgrid' % \
-                 configuration.site_vgrid_label
-                 })
+                 : 'You must own parent - to create a sub %s' % label})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        # Creating VGrid beneath a write restricted parent is not allowed
+
+        (load_parent, parent_settings) = vgrid_settings(parent_vgrid_name,
+                                                        configuration,
+                                                        as_dict=True)
+        if not load_parent:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'failed to load saved %s settings' % parent_vgrid_name})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        # TODO: change this to support keyword_owners as well?
+        #       at least then same write_shared_files MUST be forced on it
+        if parent_settings.get('write_shared_files', keyword_members) != \
+               keyword_members:
+            logger.warning("%s can't create vgrid %s - write limited parent!" \
+                           % (client_id, vgrid_name))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'You cannot create new %ss under write-restricted ones' % \
+                 label})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # make sure all dirs can be created (that a file or directory with the same
@@ -810,13 +843,13 @@ name.''' % (configuration.site_vgrid_label, vgrid_name, vgrid_name,
 
     try_again_string = \
         """%s cannot be created, a file or directory exists with the same
-name, please try again with a new name!""" % configuration.site_vgrid_label
-    if os.path.exists(public_base_dir):
+name, please try again with a new name!""" % label
+    if os.path.exists(public_files_dir):
         output_objects.append({'object_type': 'error_text', 'text'
                               : try_again_string})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if os.path.exists(private_base_dir):
+    if os.path.exists(private_files_dir):
         output_objects.append({'object_type': 'error_text', 'text'
                               : try_again_string})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -829,22 +862,22 @@ name, please try again with a new name!""" % configuration.site_vgrid_label
     # create directory to store vgrid files
 
     try:
-        os.mkdir(base_dir)
+        os.mkdir(vgrid_home_dir)
     except Exception, exc:
         logger.error('Could not create vgrid base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : """Could not create %(_label)s directory, remember to create
-parent %(_label)s before creating a sub-%(_label)s.""" % \
-             {'_label': configuration.site_vgrid_label}
+             : """Could not create %(vgrid_label)s directory, remember to create
+parent %(vgrid_label)s before creating a sub-%(vgrid_label)s.""" % \
+             {'vgrid_label': label}
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # create directory to store vgrid public_base files
 
     try:
-        os.mkdir(public_base_dir)
-        pub_readme = os.path.join(public_base_dir, 'README')
+        os.mkdir(public_files_dir)
+        pub_readme = os.path.join(public_files_dir, 'README')
         if not os.path.exists(pub_readme):
             https_links = generate_https_urls(
                 configuration,
@@ -860,10 +893,9 @@ link to any other material in this folder or subfolders with relative
 addresses. So it is possible to create a full web site with multiple pages and
 rich content like on other web hosting services. However, there's no support
 for server side scripting with Python, ASP or PHP for security reasons.
-""" % (vgrid_name, configuration.site_vgrid_label,
-       configuration.site_vgrid_label, https_links),
+""" % (vgrid_name, label, label, https_links),
                        pub_readme, logger)
-        pub_entry_page = os.path.join(public_base_dir, 'index.html')
+        pub_entry_page = os.path.join(public_files_dir, 'index.html')
         if not os.path.exists(pub_entry_page):
             write_file("""<!DOCTYPE html>
 <html>
@@ -875,23 +907,23 @@ for server side scripting with Python, ASP or PHP for security reasons.
 No public entrypage created yet! (If you are owner of the %s, overwrite
 public_base/%s/index.html to place it here)
 </body>
-</html>""" % (vgrid_name, configuration.site_vgrid_label),
+</html>""" % (vgrid_name, label),
                        pub_entry_page, logger)
     except Exception, exc:
         logger.error('Could not create vgrid public_base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : """Could not create %(_label)s public_base directory, remember to
-create parent %(_label)s before creating a sub-%(_label)s.""" % \
-             {'_label': configuration.site_vgrid_label}
+             : """Could not create %(vgrid_label)s public_base directory,
+remember to create parent %(vgrid_label)s before creating a
+sub-%(vgrid_label)s.""" % {'vgrid_label': label}
                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # create directory to store vgrid private_base files
 
     try:
-        os.mkdir(private_base_dir)
-        priv_readme = os.path.join(private_base_dir, 'README')
+        os.mkdir(private_files_dir)
+        priv_readme = os.path.join(private_files_dir, 'README')
         if not os.path.exists(priv_readme):
             https_links = generate_https_urls(
                 configuration,
@@ -908,10 +940,9 @@ link to any other material in this folder or subfolders with relative
 addresses. So it is possible to create a full web site with multiple pages and
 rich content like on other web hosting services. However, there's no support
 for server side scripting with Python, ASP or PHP for security reasons.
-""" % (vgrid_name, configuration.site_vgrid_label,
-       configuration.site_vgrid_label, https_links),
+""" % (vgrid_name, label, label, https_links),
                        priv_readme, logger)
-        priv_entry_page = os.path.join(private_base_dir, 'index.html')
+        priv_entry_page = os.path.join(private_files_dir, 'index.html')
         if not os.path.exists(priv_entry_page):
             write_file("""<!DOCTYPE html>
 <html>
@@ -923,23 +954,29 @@ for server side scripting with Python, ASP or PHP for security reasons.
 No private entrypage created yet! (If you are owner of the %s, overwrite
 private_base/%s/index.html to place it here)<br>
 </body>
-</html>""" % (vgrid_name, configuration.site_vgrid_label),
+</html>""" % (vgrid_name, label),
                        priv_entry_page, logger)
     except Exception, exc:
         logger.error('Could not create vgrid private_base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : """Could not create %(_label)s private_base directory, remember to
-create parent %(_label)s before creating a sub-%(_label)s.""" % \
-             {'_label': configuration.site_vgrid_label}
+             : """Could not create %(vgrid_label)s private_base directory,
+remember to create parent %(vgrid_label)s before creating a
+sub-%(vgrid_label)s.""" % {'vgrid_label': label}
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # create directory in vgrid_files_home to contain internal files for the
-    # new vgrid
+    # create directory in vgrid_files_home or vgrid_files_writable to contain
+    # shared files for the new vgrid.
 
     try:
-        os.mkdir(vgrid_files_dir)
+        if vgrid_writable_dir:
+            os.mkdir(vgrid_writable_dir)
+            make_symlink(vgrid_writable_dir.rstrip('/'),
+                         vgrid_files_dir.rstrip('/'),
+                         logger)
+        else:
+            os.mkdir(vgrid_files_dir)
         share_readme = os.path.join(vgrid_files_dir, 'README')
         if not os.path.exists(share_readme):
             write_file("""= Private Share =
@@ -947,13 +984,13 @@ This directory is used for hosting private files for the %s %s.
 It is accessible for all members and owners as a virtual %s directory in the
 user home directory. Therefore it is also usable as source and destination
 for job input and output.
-""" % (vgrid_name, configuration.site_vgrid_label, vgrid_name),
-                       share_readme, logger)
+""" % (vgrid_name, label, vgrid_name),
+                       share_readme, logger, make_parent=False)
     except Exception, exc:
         logger.error('Could not create vgrid files directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not create %s files directory.' % \
-                               configuration.site_vgrid_label
+                               label
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -961,6 +998,7 @@ for job input and output.
     if configuration.hg_path and configuration.hgweb_scripts:
 
         # create participant scm repo in the vgrid shared dir
+        # TODO: split further to save outside vgrid_files_dir?
 
         all_scm_dirs = [public_scm_dir, private_scm_dir, vgrid_scm_dir]
         for scm_dir in all_scm_dirs:
@@ -972,6 +1010,7 @@ for job input and output.
     if configuration.trac_admin_path:
 
         # create participant tracker in the vgrid shared dir
+        # TODO: split further to save outside vgrid_files_dir?
 
         all_tracker_dirs = [public_tracker_dir, private_tracker_dir,
                             vgrid_tracker_dir]
@@ -1056,9 +1095,9 @@ for job input and output.
 
         src = vgrid_files_dir
         if not make_symlink(src, vgrid_files_link, logger):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Could not create link to %s files!' % \
-                                   configuration.site_vgrid_label
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create link to %s files!' % \
+                                   label
                                   })
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -1076,7 +1115,7 @@ for job input and output.
 
         # create sym link for public_base
 
-        if not make_symlink(public_base_dir, public_base_dst, logger):
+        if not make_symlink(public_files_dir, public_base_dst, logger):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Could not create link to public_base dir!'
                                   })
@@ -1096,7 +1135,7 @@ for job input and output.
 
         # create sym link for private_base
 
-        if not make_symlink(private_base_dir, private_base_dst, logger):
+        if not make_symlink(private_files_dir, private_base_dst, logger):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : 'Could not create link to private_base dir!'
@@ -1117,7 +1156,7 @@ for job input and output.
 
             pass
 
-        if not make_symlink(public_base_dir,
+        if not make_symlink(public_files_dir,
                             os.path.join(configuration.wwwpublic,
                             'vgrid', vgrid_name), logger, force=True):
             output_objects.append(
@@ -1127,13 +1166,12 @@ for job input and output.
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : '%s %s created!' % \
-                           (configuration.site_vgrid_label, vgrid_name)})
+                          : '%s %s created!' % (label, vgrid_name)})
     output_objects.append(
         {'object_type': 'link',
          'destination': 'adminvgrid.py?vgrid_name=%s' % vgrid_name,
          'class': 'adminlink iconspace',
-         'title': 'Administrate your new %s' % configuration.site_vgrid_label,
+         'title': 'Administrate your new %s' % label,
          'text': 'Administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
 

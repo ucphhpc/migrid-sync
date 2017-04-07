@@ -92,6 +92,7 @@ except ImportError:
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
+from shared.fileio import check_write_access
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, refresh_share_creds, update_login_map, \
      login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
@@ -99,6 +100,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
 from shared.tlsserver import hardened_openssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
+from shared.vgrid import vgrid_restrict_write_support
 
 
 configuration, logger = None, None
@@ -267,20 +269,21 @@ class MiGRestrictedFilesystem(AbstractedFS):
         daemon_conf = configuration.daemon_conf
         self.chmod_exceptions = daemon_conf['chmod_exceptions']
         # Only allow change of mode on files and only outside chmod_exceptions
-        if self._acceptable_chmod(path, mode):
-            # Only allow permission changes that won't give excessive access
-            # or remove own access.
-            if os.path.isdir(path):
-                new_mode = (mode & 0775) | 0750
-            else:
-                new_mode = (mode & 0775) | 0640
-            logger.info("chmod %s (%s) without damage on %s :: %s" % \
-                        (new_mode, mode, path, real_path))
-            return AbstractedFS.chmod(self, path, new_mode)
-        # Prevent users from messing up access modes
-        logger.warning("chmod %s rejected on path %s :: %s" % (mode, path,
-                                                               real_path))
-        raise FilesystemError("requested permission change no allowed")
+        if not self._acceptable_chmod(path, mode):
+            # Prevent users from messing up access modes
+            logger.warning("chmod %s rejected on path %s :: %s" % (mode, path,
+                                                                   real_path))
+            raise FilesystemError("requested permission change not allowed")
+
+        # Only allow permission changes that won't give excessive access
+        # or remove own access.
+        if os.path.isdir(path):
+            new_mode = (mode & 0775) | 0750
+        else:
+            new_mode = (mode & 0775) | 0640
+        logger.info("chmod %s (%s) without damage on %s :: %s" % \
+                    (new_mode, mode, path, real_path))
+        return AbstractedFS.chmod(self, path, new_mode)
 
     def listdir(self, path):
         """List the content of a directory with MiG restrictions"""
@@ -410,6 +413,12 @@ unless it is available in mig/server/MiGserver.conf
                          os.path.abspath(configuration.vgrid_files_home),
                          os.path.abspath(configuration.resource_home),
                          os.path.abspath(configuration.seafile_mount)]
+    if vgrid_restrict_write_support(configuration):
+        writable_dir = configuration.vgrid_files_writable
+        chroot_exceptions.append(os.path.abspath(writable_dir))
+        readonly_dir = configuration.vgrid_files_readonly
+        chroot_exceptions.append(os.path.abspath(readonly_dir))
+
     # Any extra chmod exceptions here - we already cover invisible_path check
     # in acceptable_chmod helper.
     chmod_exceptions = []

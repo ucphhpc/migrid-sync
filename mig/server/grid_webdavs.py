@@ -62,6 +62,7 @@ except ImportError, ierr:
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id
+from shared.fileio import check_write_access
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, refresh_share_creds, update_login_map, \
      login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
@@ -71,6 +72,7 @@ from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
      generate_password_digest
+from shared.vgrid import vgrid_restrict_write_support
 
 
 configuration, logger = None, None
@@ -99,6 +101,9 @@ def _handle_allowed(request, abs_path):
         raise DAVError(HTTP_FORBIDDEN)
     elif invisible_path(abs_path):
         logger.warning("refused %s on hidden path: %s" % (request, abs_path))
+        raise DAVError(HTTP_FORBIDDEN)
+    elif not check_write_access(abs_path):
+        logger.warning("refused %s read-only path: %s" % (request, abs_path))
         raise DAVError(HTTP_FORBIDDEN)
 
 def _username_from_env(environ):
@@ -732,6 +737,13 @@ unless it is available in mig/server/MiGserver.conf
                          os.path.abspath(configuration.vgrid_files_home),
                          os.path.abspath(configuration.resource_home),
                          os.path.abspath(configuration.seafile_mount)]
+    # TODO: improve handling of attempts to modify read-only locations
+    if vgrid_restrict_write_support(configuration):
+        writable_dir = configuration.vgrid_files_writable
+        chroot_exceptions.append(os.path.abspath(writable_dir))
+        readonly_dir = configuration.vgrid_files_readonly
+        chroot_exceptions.append(os.path.abspath(readonly_dir))
+
     # Any extra chmod exceptions here - we already cover invisible_path check
     # in acceptable_chmod helper.
     chmod_exceptions = []

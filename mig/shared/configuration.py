@@ -73,6 +73,8 @@ def fix_missing(config_file, verbose=True):
         'user_pending': '~/state/user_pending/',
         'vgrid_home': '~/state/vgrid_home/',
         'vgrid_files_home': '~/state/vgrid_files_home/',
+        'vgrid_files_readonly': '~/state/vgrid_files_readonly/',
+        'vgrid_files_writable': '~/state/vgrid_files_writable/',
         'vgrid_public_base': '~/state/vgrid_public_base/',
         'vgrid_private_base': '~/state/vgrid_private_base/',
         'user_home': '~/state/user_home/',
@@ -254,6 +256,8 @@ class Configuration:
     vgrid_public_base = ''
     vgrid_private_base = ''
     vgrid_files_home = ''
+    vgrid_files_readonly = ''
+    vgrid_files_writable = ''
     vgrid_owners = 'owners'
     vgrid_members = 'members'
     vgrid_resources = 'resources'
@@ -924,6 +928,12 @@ class Configuration:
             self.vgrid_imagesettings = config.get('GLOBAL', 'vgrid_imagesettings')
         if config.has_option('GLOBAL', 'vgrid_monitor'):
             self.vgrid_monitor = config.get('GLOBAL', 'vgrid_monitor')
+
+        # Needed for read-only vgrids, but optional
+        if config.has_option('GLOBAL', 'vgrid_files_readonly'): 
+            self.vgrid_files_readonly = config.get('GLOBAL', 'vgrid_files_readonly')
+        if config.has_option('GLOBAL', 'vgrid_files_writable'): 
+            self.vgrid_files_writable = config.get('GLOBAL', 'vgrid_files_writable')
 
         # vm_agent_port is just an alias for vm_proxy_port
 

@@ -35,7 +35,7 @@ from binascii import hexlify
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
      valid_trigger_changes, valid_trigger_actions, keyword_owners, \
-     keyword_members, csrf_field, default_vgrid_settings_limit
+     keyword_members, keyword_none, csrf_field, default_vgrid_settings_limit
 from shared.accessrequests import list_access_requests, load_access_request, \
      build_accessrequestitem_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -46,16 +46,18 @@ from shared.init import initialize_main_variables, find_entry
 from shared.sharelinks import build_sharelinkitem_object
 from shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
      vgrid_settings, vgrid_sharelinks, vgrid_list_parents, vgrid_owners, \
-     vgrid_members, vgrid_resources
+     vgrid_members, vgrid_resources, vgrid_restrict_write_support
 
 _user_choice = [("owners", keyword_owners), ("members", keyword_members)]
 _all_choice = [("everyone", keyword_all)]
+_none_choice = [("none", keyword_none)]
 _bool_choice = [("yes", True), ("no", False)]
 _keep_choice = [("keep using inherited or default value", keyword_auto)]
 _reset_choice = [("reset to inherited or default value", keyword_auto)]
 _keep_note = '(enter 0 to keep using inherited or default value)'
 _reset_note = '(enter 0 to reset to inherited or default value)'
 _valid_sharelink = _user_choice
+_valid_write_access = _user_choice + _none_choice
 _valid_visible = _user_choice + _all_choice
 _valid_bool = _bool_choice
 
@@ -71,6 +73,10 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "Administrate %s" % label
+    # NOTE: Delay header entry here to include vgrid name
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -85,10 +91,6 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
 
     # prepare for confirm dialog, tablesort and toggling the views (css/js)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = "Administrate %s: %s" % \
-                          (configuration.site_vgrid_label, vgrid_name)
 
     # jquery support for tablesorter and confirmation on request and leave
     # requests table initially sorted by 0, 4, 3 (type first, then date and
@@ -153,7 +155,7 @@ def main(client_id, user_arguments_dict):
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers =  {'short_title': configuration.short_title,
-                     'vgrid_label': configuration.site_vgrid_label,
+                     'vgrid_label': label,
                      'form_method': form_method,
                      'csrf_field': csrf_field,
                      'csrf_limit': csrf_limit}
@@ -390,7 +392,7 @@ def main(client_id, user_arguments_dict):
     # Always set these values
     settings_dict.update({
         'vgrid_name': vgrid_name,
-        'vgrid_label': configuration.site_vgrid_label,
+        'vgrid_label': label,
         'owners': keyword_owners,
         'members': keyword_members,
         'all': keyword_all,
@@ -501,6 +503,49 @@ the corresponding participants. Similarly setting a visibility flag to
             owners %s.
 ''' % (restrict_resources_adm, direct_note)
     settings_form += '<br/>'
+    if vgrid_restrict_write_support(configuration):
+        settings_form += '''<p>All write access options below can be set to
+owners, members or none. By default only owners can write web pages while
+owners and members can edit data in the shared folders. In effect setting write
+access to <em>members</em> means that owners and members have full access.
+Similarly setting a write access flag to <em>owners</em> means that only owners
+can modify the data, while members can only read and use it. Finally setting a
+write access flag to <em>none</em> means that neither owners nor members can
+modify the data there, effectively making it read-only. Some options are not
+yet supported and thus are disabled below.
+</p>
+'''
+        writable_options = [("Shared files write access", "write_shared_files",
+                             keyword_members),
+                            ("Private web page write access", "write_priv_web",
+                             keyword_owners),
+                            ("Public web page write access", "write_pub_web",
+                             keyword_owners),
+                            ]
+    for (title, field, default) in writable_options:
+        settings_form += '<h4>%s</h4>' % title
+        if direct_dict.get(field, False):
+            choices = _valid_write_access + _reset_choice
+        else:
+            choices = _valid_write_access + _keep_choice
+        for (key, val) in choices: 
+            disabled = ''
+            # TODO: remove these artifical limits once we support changing
+            if field == 'write_shared_files' and val == keyword_owners:
+                disabled = 'disabled'
+            elif field == 'write_priv_web' and val in [keyword_members,
+                                                       keyword_none]:
+                disabled = 'disabled'
+            elif field == 'write_pub_web' and val in [keyword_members,
+                                                      keyword_none]:
+                disabled = 'disabled'
+            checked = ''
+            if settings_dict.get(field, default) == val:
+                checked = "checked"
+            settings_form += '''
+            <input type="radio" name="%s" value="%s" %s %s /> %s
+''' % (field, val, checked, disabled, key)
+        settings_form += '<br/>'
     sharelink_options = [("Limit sharelink creation to", "create_sharelink")]
     for (title, field) in sharelink_options:
         settings_form += '<h4>%s</h4>' % title
@@ -532,11 +577,7 @@ the corresponding participants. Similarly setting a visibility flag to
 ''' % (request_recipients, direct_note)
     settings_form += '<br/>'
 
-    # TODO: implement and enable read-only support.
-    #       Split into RW and RO (bind) mounts and symlink accordingly
-    bool_options = [("Hidden", "hidden"),
-                    #("Read Only", "read_only"),
-                    ]
+    bool_options = [("Hidden", "hidden"), ]
     for (title, field) in bool_options:
         settings_form += '<h4>%s</h4>' % title
         if direct_dict.get(field, False):

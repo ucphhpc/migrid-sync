@@ -28,7 +28,8 @@
 """Get info about a VGrid"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import keyword_owners, keyword_members, keyword_all
+from shared.defaults import keyword_owners, keyword_members, keyword_none, \
+     keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_owners, vgrid_members, vgrid_resources, \
@@ -57,7 +58,7 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     bool_map = {True: "Yes", False: "No"}
     keyword_map = {keyword_owners: 'Owners',
                    keyword_members: 'Owners and members',
-                   keyword_all: 'Public'}
+                   keyword_all: 'Public', keyword_none: 'No one'}
     description = vgrid_dict.get('description', 'No description available')
     owners = vgrid_dict.get('owners', ['*** Owners hidden ***'])
     members = vgrid_dict.get('members', ['*** Members hidden ***'])
@@ -70,7 +71,12 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     resource_visibility = keyword_map[visible_resources]
     create_sharelink = vgrid_dict.get('create_sharelink', keyword_owners)
     sharelink_access = keyword_map[create_sharelink]
-    read_only = bool_map[vgrid_dict.get('read_only', False)]
+    write_shared_files = keyword_map[vgrid_dict.get('write_shared_files',
+                                                    keyword_members)]
+    write_priv_web = keyword_map[vgrid_dict.get('write_priv_web',
+                                                keyword_owners)]
+    write_pub_web = keyword_map[vgrid_dict.get('write_pub_web',
+                                                keyword_owners)]
     hidden = bool_map[vgrid_dict.get('hidden', False)]
     vgrid_item['fields'].append(('Description', description))
     vgrid_item['fields'].append(('Owners', '\n'.join(owners)))
@@ -80,8 +86,9 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     vgrid_item['fields'].append(('Member visibility', member_visibility))
     vgrid_item['fields'].append(('Resource visibility', resource_visibility))
     vgrid_item['fields'].append(('Sharelink creation', sharelink_access))
-    # TODO: implement and enable read-only support.
-    #vgrid_item['fields'].append(('Read-only', read_only))
+    vgrid_item['fields'].append(('Write Shared Files', write_shared_files))
+    vgrid_item['fields'].append(('Write Private Web Pages', write_priv_web))
+    vgrid_item['fields'].append(('Write Public Web Pages', write_pub_web))
     vgrid_item['fields'].append(('Hidden', hidden))
     return vgrid_item
 
@@ -107,13 +114,12 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s details' % configuration.site_vgrid_label
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Show %s details' % configuration.site_vgrid_label})
-
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
+    title_entry['text'] = "%s Details" % label
+    output_objects.append({'object_type': 'header', 'text':
+                           'Show %s Details' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -163,10 +169,8 @@ def main(client_id, user_arguments_dict):
         
         if settings_dict.get('hidden', False) and \
                not client_id in vgrid_dict.get('owners', []):
-            output_objects.append({'object_type': 'error_text',
-                                   'text': 'No such %s: %s' % \
-                                   (configuration.site_vgrid_label,
-                                    vgrid_name)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'No such %s: %s' % (label, vgrid_name)})
             status = returnvalues.CLIENT_ERROR
             continue
 

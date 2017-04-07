@@ -300,14 +300,34 @@ shared folder''',
         'Inherit': keyword_any,
         'Required': False,
         }))
-    specs.append(('read_only', {
-        'Title': 'Read-only Data',
-        'Description': 'If shared data is write-protected (recursively)',
-        'Example': 'False',
-        'Type': 'boolean',
-        'Instance': bool,
-        'Value': False,
-        'Inherit': keyword_any,
+    specs.append(('write_shared_files', {
+        'Title': 'Restrict Write Access to Shared Data',
+        'Description': 'Who should be allowed to modify data in shared folder',
+        'Example': keyword_owners,
+        'Type': 'string',
+        'Instance': str,
+        'Value': keyword_members,
+        'Inherit': keyword_auto,
+        'Required': False,
+        }))
+    specs.append(('write_priv_web', {
+        'Title': 'Restrict Write Access to Private Web Pages',
+        'Description': 'Who should be allowed to modify data on private web',
+        'Example': keyword_members,
+        'Type': 'string',
+        'Instance': str,
+        'Value': keyword_owners,
+        'Inherit': keyword_auto,
+        'Required': False,
+        }))
+    specs.append(('write_pub_web', {
+        'Title': 'Restrict Write Access to Public Web Pages',
+        'Description': 'Who should be allowed to modify data on public web',
+        'Example': keyword_members,
+        'Type': 'string',
+        'Instance': str,
+        'Value': keyword_owners,
+        'Inherit': keyword_auto,
         'Required': False,
         }))
     return specs
