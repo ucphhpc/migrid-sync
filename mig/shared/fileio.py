@@ -478,18 +478,22 @@ def _check_access(path, mode, parent_dir, follow_symlink):
         path = os.path.dirname(path.rstrip(os.sep))
     return os.access(path, mode)
 
-def check_read_access(path, parent_dir=False, follow_symlink=False):
+def check_read_access(path, parent_dir=False, follow_symlink=True):
     """Check if path is readable or if the optional parent_dir is set check if
-    the directory part of path is readable and the optional follow_symlink
-    expands any symlinks in path before this check.
+    the directory part of path is readable. The optional follow_symlink
+    argument decides if any symlinks in path are expanded before this check
+    and it is on by default.
     """
     return _check_access(path, os.O_RDONLY, parent_dir, follow_symlink)
 
-def check_write_access(path, parent_dir=False, follow_symlink=False):
+def check_write_access(path, parent_dir=False, follow_symlink=True):
     """Check if path is writable or if the optional parent_dir is set check if
-    the directory part of path is writable and the optional follow_symlink
-    expands any symlinks in path before this check.
+    the directory part of path is writable, which is particularly useful to
+    check that a new file can be created. The optional follow_symlink argument
+    decides if any symlinks in path are expanded before this check and it is
+    on by default.
     """
+    # IMPORTANT: we need to use RDWR rather than WRONLY here.
     return _check_access(path, os.O_RDWR, parent_dir, follow_symlink)
     
 def make_temp_file(suffix='', prefix='tmp', dir=None, text=False):

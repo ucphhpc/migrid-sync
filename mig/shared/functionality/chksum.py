@@ -136,8 +136,7 @@ def main(client_id, user_arguments_dict):
             logger.warning('%s tried to %s restricted path %s !(%s)'
                            % (client_id, op_name, abs_dest, dst))
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if not check_write_access(abs_dest, parent_dir=True,
-                                  follow_symlink=True):
+        if not check_write_access(abs_dest, parent_dir=True):
             logger.warning('%s called without write access: %s' % \
                            (op_name, abs_dest))
             output_objects.append(

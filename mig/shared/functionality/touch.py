@@ -124,8 +124,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                         : relative_path})
-            if not check_write_access(abs_path, parent_dir=True,
-                                      follow_symlink=True):
+            if not check_write_access(abs_path, parent_dir=True):
                 logger.warning('%s called without write access: %s' % \
                                (op_name, abs_path))
                 output_objects.append(

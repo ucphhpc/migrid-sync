@@ -176,7 +176,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                % os.path.dirname(relative_dest)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not check_write_access(abs_dest, parent_dir=True, follow_symlink=True):
+    if not check_write_access(abs_dest, parent_dir=True):
         logger.warning('%s called without write access: %s' % \
                        (op_name, abs_dest))
         output_objects.append(
