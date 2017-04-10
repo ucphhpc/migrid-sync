@@ -522,6 +522,8 @@ yet supported and thus are disabled below.
                             ("Public web page write access", "write_pub_web",
                              keyword_owners),
                             ]
+    else:
+        writable_options = []
     for (title, field, default) in writable_options:
         settings_form += '<h4>%s</h4>' % title
         if direct_dict.get(field, False):
