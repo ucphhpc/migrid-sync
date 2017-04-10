@@ -1056,6 +1056,40 @@ if (jQuery) (function($){
                 $("#editor_dialog div.spinner").html("").hide();
                 $("#editor_dialog").dialog('open');
 
+                // Grab file info like in edit to force Code Editor update
+                $.ajax({
+                    url: 'cat.py',
+                    data: { path: $(el).attr(pathAttribute), output_format: 'json' },
+                    type: "GET",
+                    dataType: "json",
+                    cache: false,
+                    success: function(jsonRes, textStatus) {
+                        var file_output = '';
+                        for (var i = 0; i < jsonRes.length; i++) {
+                            if (jsonRes[i].object_type === 'file_output') {
+                                for (var j = 0; j < jsonRes[i].lines.length; j++) {
+                                    file_output += jsonRes[i].lines[j];
+                                }
+                            }
+                        }
+                        // Force refresh on editor field truncating any unsaved contents
+                        disable_editorarea_editor(lastEdit);
+                        $("#editor_dialog textarea[name='editarea']").val(file_output);
+                        $("#editor_dialog div.spinner").html("").hide();
+                        var activeEntry = $("#switcher .currentSet");
+                        // activeEntry has currentSet and type class - extract type
+                        activeEntry.removeClass("currentSet");
+                        var activeSet = activeEntry.attr("class");
+                        activeEntry.addClass("currentSet");
+                        enable_editorarea_editor(activeSet);
+                    },
+                    /* TODO: error method is deprecated from jquery 3.0:
+                       http://api.jquery.com/jQuery.ajax/
+                     */
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error("editor load error: "+textStatus);
+                    }
+                });
             },
             cat:    function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'cat.py'); },
