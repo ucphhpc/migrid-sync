@@ -581,6 +581,7 @@ def __modify_table_row(
     """Modify *table_row* with entries in *modify_dict*"""
 
     logger.debug('----------- modify_dict -----------')
+    modify_dict_keys = modify_dict.keys()
     for key in modify_dict.keys():
         logger.debug("'%s' -> '%s' -> '%s'" % (key,
                      modify_dict[key],
@@ -588,10 +589,11 @@ def __modify_table_row(
         table_row[key] = modify_dict[key]
     logger.debug('--------- end modify_dict ---------')
 
-    if update:
-        table_row.update()
-    else:
-        table_row.append()
+    if len(modify_dict_keys) > 0:
+        if update:
+            table_row.update()
+        else:
+            table_row.append()
 
     return table_row
 

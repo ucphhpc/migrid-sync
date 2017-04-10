@@ -488,9 +488,7 @@ def __is_valid_settings_dict(
     # Check for data types:
 
     if status == returnvalues.OK:
-        if update and data_type is None:
-            pass
-        elif data_type not in allowed_data_types:
+        if data_type is not None and data_type not in allowed_data_types:
             status = returnvalues.ERROR
             ERROR_MSG = "Invalid data_type: '%s', allowed: '%s'" \
                 % (data_type, allowed_data_types.keys())

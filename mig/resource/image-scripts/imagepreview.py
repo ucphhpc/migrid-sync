@@ -107,13 +107,18 @@ def fill_image_md5sum(logger, meta, blocksize=65536):
 def fill_image_data(logger, meta):
     """Load 2D image data"""
 
-    result = False
+    result = True
 
     image = meta['2D']
     settings = image['settings']
     filepath = os.path.join(os.path.join(meta['base_path'], meta['path'
                             ]), meta['filename'])
-    logger.debug('filepath: %s' % filepath)
+    image['data'] = None
+
+    # logger.debug('filepath: %s' % filepath)
+
+    # for key, val in settings.iteritems():
+    #    logger.debug('%s -> %s' % (key, val))
 
     if settings['image_type'] == 'raw':
         offset = settings['offset']
@@ -127,31 +132,73 @@ def fill_image_data(logger, meta):
             image['data'] = fromfile(fh, dtype=data_type)
             fh.close()
             image['data'].shape = (y_dimension, x_dimension)
-            result = True
         except Exception:
-            logger.error(traceback.format_exc())
             result = False
+            logger.error(traceback.format_exc())
     elif settings['image_type'] == 'tiff':
+
         try:
             tif = TIFF.open(filepath, mode='r')
             data = tif.read_image()
             tif.close()
 
-            image['data'] = data
-            settings['offset'] = 0
-            settings['x_dimension'] = data.shape[1]
-            settings['y_dimension'] = data.shape[0]
-            settings['data_type'] = data.dtype.name
+            logger.debug('data.dtype: %s' % data.dtype)
+
+            data_type = None
+            for (key, value) in allowed_data_types.iteritems():
+                if value == data.dtype:
+                    data_type = key
+
+            if data_type is None:
+                result = False
+                logger.error('Tiff image: Unsupported data.dtype: %s'
+                             % data.dtype)
+
+            if len(settings['data_type']) == 0:
+                settings['data_type'] = data_type
+            elif settings['data_type'] != data_type:
+                result = False
+                logger.error('Tiff image: data_type: %s differ from previours processed tiff files: %s'
+                              % (data_type, settings['data_type']))
+
+            if settings['x_dimension'] == 0:
+                settings['x_dimension'] = data.shape[1]
+            elif settings['x_dimension'] != data.shape[1]:
+                result = False
+                logger.error('Tiff image: x_dimension: %s differ from previours processed tiff files: %s'
+                              % (data.shape[1], settings['x_dimension'
+                             ]))
+
+            if settings['y_dimension'] == 0:
+                settings['y_dimension'] = data.shape[0]
+            elif settings['y_dimension'] != data.shape[0]:
+                result = False
+                logger.error('Tiff image: y_dimension: %s differ from previours processed tiff files: %s'
+                              % (data.shape[0], settings['y_dimension'
+                             ]))
+
+            if not result:
+                logger.error("Skipping Tiff image: '%s'" % filepath)
+
             logger.debug('x_dimension: %s, y_dimension: %s, data_type: %s'
                          , settings['x_dimension'],
                          settings['y_dimension'], settings['data_type'])
-            result = True
+
+            if result:
+                image['data'] = data
         except Exception:
-            logger.error(traceback.format_exc())
+
             result = False
+            logger.error(traceback.format_exc())
     else:
+
+        result = False
         logger.error('image_type: %s _NOT_ supported yet'
                      % settings['image_type'])
+
+    # logger.debug('==============================')
+    # for key, val in settings.iteritems():
+    #    logger.debug('%s -> %s' % (key, val))
 
     return result
 
@@ -376,10 +423,34 @@ def add_image_preview_image(logger, meta):
 def add_image_preview_histogram(logger, meta):
     """Add histogram data to tables file"""
 
+    result = True
     image = meta['2D']
     result = add_image_file_preview_histogram(logger,
             meta['abs_base_path'], meta['path'], meta['filename'],
             image['preview']['histogram'])
+    return result
+
+
+def fill_volume_slice_settings(logger, meta):
+    """Fill settings for volume slices"""
+    result = True
+
+    volume_settings = meta['3D']['settings']
+
+    # Update volume settings with image settings values
+    # as volume is based on image slices
+
+    image_settings = get_image_file_setting(logger, meta['abs_base_path'
+            ], meta['extension'])
+
+    logger.debug('%s' % image_settings)
+    if image_settings is None:
+        result = False
+    else:
+        volume_settings['data_type'] = image_settings['data_type']
+        volume_settings['x_dimension'] = image_settings['x_dimension']
+        volume_settings['y_dimension'] = image_settings['y_dimension']
+
     return result
 
 
@@ -584,9 +655,11 @@ def add_volume_preview_slice_data(logger, meta):
     """Add volume slice data to tables file"""
 
     result = True
+    update_volume_setting = {}
     abs_base_path = meta['abs_base_path']
     base_path = meta['base_path']
     path = meta['path']
+    volume = meta['3D']
     volume = meta['3D']
     settings = volume['settings']
     preview = volume['preview']
@@ -661,11 +734,13 @@ def add_volume_preview_slice_data(logger, meta):
         if slice_count >= z_dimension:
             logger.debug('Creating preview volume from: %s slices'
                          % slice_count)
-            settings['settings_status'] = \
+            update_volume_setting['settings_status'] = \
                 allowed_settings_status['updating']
-            settings['settings_update_progress'] = '%s/%s : %s%%' \
-                % (volume_nr, volume_count, int(round(volume_progress)))
-            update_image_volume_setting(logger, abs_base_path, settings)
+            update_volume_setting['settings_update_progress'] = \
+                '%s/%s : %s%%' % (volume_nr, volume_count,
+                                  int(round(volume_progress)))
+            update_image_volume_setting(logger, abs_base_path,
+                    update_volume_setting)
 
             # Find slices data type, check if consistent
 
@@ -683,11 +758,11 @@ def add_volume_preview_slice_data(logger, meta):
 
             for file_idx in sorted_keys[:z_dimension]:
                 volume_progress += volume_progress_step
-                settings['settings_update_progress'] = '%s/%s : %s%%' \
-                    % (volume_nr, volume_count,
-                       int(round(volume_progress)))
+                update_volume_setting['settings_update_progress'] = \
+                    '%s/%s : %s%%' % (volume_nr, volume_count,
+                        int(round(volume_progress)))
                 update_image_volume_setting(logger, abs_base_path,
-                        settings)
+                        update_volume_setting)
 
                 filename = volume_slice_filepattern % int(file_idx)
                 slice_preview_data = \
@@ -697,6 +772,7 @@ def add_volume_preview_slice_data(logger, meta):
                 tmp_volume[slice_idx, :slice_preview_data.shape[0], :
                            slice_preview_data.shape[1]] = \
                     slice_preview_data
+
                 max_slice_shape = (max(max_slice_shape[0],
                                    slice_preview_data.shape[0]),
                                    max(max_slice_shape[1],
@@ -707,6 +783,7 @@ def add_volume_preview_slice_data(logger, meta):
                              str(slice_preview_data.shape),
                              tmp_volume[slice_idx].min(),
                              tmp_volume[slice_idx].max()))
+
                 logger.debug('max_slice_shape: %s'
                              % str(max_slice_shape))
                 slice_idx += 1
@@ -737,11 +814,11 @@ def add_volume_preview_slice_data(logger, meta):
             resized_volume = zeros(resized_volume_shape,
                                    dtype=data_type)
             for x in xrange(resize_x_dimension):
-                settings['settings_update_progress'] = '%s/%s : %s%%' \
-                    % (volume_nr, volume_count,
-                       int(round(volume_progress)))
+                update_volume_setting['settings_update_progress'] = \
+                    '%s/%s : %s%%' % (volume_nr, volume_count,
+                        int(round(volume_progress)))
                 update_image_volume_setting(logger, abs_base_path,
-                        settings)
+                        update_volume_setting)
                 logger.debug('resize_x_dimension: %s, tmp slice: shape: %s, min: %s, max: %s'
                               % (x, str(tmp_volume[:, :, x].shape),
                              tmp_volume[:, :, x].min(), tmp_volume[:, :
@@ -877,6 +954,7 @@ def update_file_preview(
             meta['abs_base_path'], meta['extension'])
 
     if settings is not None:
+        org_settings = settings.copy()
         if fill_image_data(logger, meta) and fill_image_stats(logger,
                 meta) and fill_image_md5sum(logger, meta) \
             and fill_image_preview(logger, meta) \
@@ -886,7 +964,18 @@ def update_file_preview(
             and add_image_preview_image(logger, meta) \
             and fill_image_preview_histogram(logger, meta) \
             and add_image_preview_histogram(logger, meta):
-            result = True
+
+            # Update image settings with values changed by the functions above
+            # NOTE: Keys are added to 'settings' that is not in 'image_file_setting'
+
+            changed_settings = {}
+            for key in org_settings:
+                if org_settings[key] != settings[key]:
+                    changed_settings[key] = settings[key]
+
+            if update_image_file_setting(logger, meta['abs_base_path'],
+                    changed_settings):
+                result = True
         else:
             logger.info('Skipping update for: %s, %s, %s' % (base_path,
                         path, filename))
@@ -907,6 +996,7 @@ def update_volume_preview(
     """Update volume preview"""
 
     meta = __init_meta(logger, base_path, path, filename)
+
     volume = meta['3D']
     volume['settings'] = settings = get_image_volume_setting(logger,
             meta['abs_base_path'], meta['extension'])
@@ -915,13 +1005,25 @@ def update_volume_preview(
 
     result = False
     if settings is not None:
+        org_settings = settings.copy()
         if settings['volume_type'] == allowed_volume_types['slice']:
-            if fill_volume_preview_meta(logger, meta) \
+            if fill_volume_slice_settings(logger, meta) \
+                and fill_volume_preview_meta(logger, meta) \
                 and add_volume_preview_slice_data(logger, meta) \
                 and write_preview_xdmf(logger, meta) \
                 and add_volume_meta_data(logger, meta):
 
-                result = True
+                # Update image settings with values changed by the functions above
+                # NOTE: Keys are added to 'settings' that is not in 'image_file_setting'
+
+                changed_settings = {}
+                for key in org_settings:
+                    if org_settings[key] != settings[key]:
+                        changed_settings[key] = settings[key]
+
+                if update_image_volume_setting(logger,
+                        meta['abs_base_path'], changed_settings):
+                    result = True
         else:
             logger.error('Unsupported volume type: %s'
                          % settings['volume_type'])
@@ -966,15 +1068,17 @@ def update_previews(logger, base_path, extension):
     status_updating = allowed_settings_status['updating']
     status_failed = allowed_settings_status['failed']
     status_ready = allowed_settings_status['ready']
+    update_file_setting = {}
+    update_volume_setting = {}
 
     if image_setting is not None:
         settings_status = image_setting['settings_status']
         if settings_status == status_pending:
             logger.debug('settings recursive: %s'
                          % image_setting['settings_recursive'])
-            image_setting['settings_status'] = status_updating
+            update_file_setting['settings_status'] = status_updating
             logger.debug('settings status: %s'
-                         % image_setting['settings_status'])
+                         % update_file_setting['settings_status'])
 
             # Count files to process and set status / update progress
 
@@ -992,14 +1096,15 @@ def update_previews(logger, base_path, extension):
                             % extension):
                         total_filecount += 1
 
-            image_setting['settings_update_progress'] = '%s/%s' \
+            update_file_setting['settings_update_progress'] = '%s/%s' \
                 % (processed_filecount, total_filecount)
             logger.debug('settings_status: %s'
-                         % image_setting['settings_status'])
+                         % update_file_setting['settings_status'])
             logger.debug('settings_update_progress: %s'
-                         % image_setting['settings_update_progress'])
+                         % update_file_setting['settings_update_progress'
+                         ])
             update_image_file_setting(logger, abs_base_path,
-                    image_setting)
+                    update_file_setting)
 
             # Process image files
 
@@ -1025,16 +1130,17 @@ def update_previews(logger, base_path, extension):
                                     path, name):
                                 processed_filecount += 1
 
-                                image_setting['settings_update_progress'
+                                update_file_setting['settings_update_progress'
                                         ] = '%s/%s' \
                                     % (processed_filecount,
                                         total_filecount)
                                 logger.debug('settings_update_progress: %s'
 
-                                        % image_setting['settings_update_progress'
+                                        % update_file_setting['settings_update_progress'
                                         ])
                                 update_image_file_setting(logger,
-                                        abs_base_path, image_setting)
+                                        abs_base_path,
+                                        update_file_setting)
                                 slice_modified = True
                             else:
                                 image_status = False
@@ -1059,16 +1165,17 @@ def update_previews(logger, base_path, extension):
                                     path, name):
                                 processed_filecount += 1
 
-                                image_setting['settings_update_progress'
+                                update_file_setting['settings_update_progress'
                                         ] = '%s/%s' \
                                     % (processed_filecount,
                                         total_filecount)
                                 logger.debug('settings_update_progress: %s'
 
-                                        % image_setting['settings_update_progress'
+                                        % update_file_setting['settings_update_progress'
                                         ])
                                 update_image_file_setting(logger,
-                                        abs_base_path, image_setting)
+                                        abs_base_path,
+                                        update_file_setting)
                                 slice_modified = True
                             else:
                                 image_status = False
@@ -1081,27 +1188,29 @@ def update_previews(logger, base_path, extension):
 
             # Set final update status and progress
 
-            image_setting['settings_update_progress'] = None
+            update_file_setting['settings_update_progress'] = None
             if image_status:
-                image_setting['settings_status'] = status_ready
+                update_file_setting['settings_status'] = status_ready
             else:
-                image_setting['settings_status'] = status_failed
+                update_file_setting['settings_status'] = status_failed
             logger.debug('image settings status: %s'
-                         % image_setting['settings_status'])
+                         % update_file_setting['settings_status'])
             update_image_file_setting(logger, abs_base_path,
-                    image_setting)
+                    update_file_setting)
 
             if volume_setting is not None \
                 and volume_setting['z_dimension'] > 0:
-                image_setting['settings_update_progress'] = None
+                update_volume_setting['settings_update_progress'] = None
                 if volume_status:
-                    volume_setting['settings_status'] = status_ready
+                    update_volume_setting['settings_status'] = \
+                        status_ready
                 else:
-                    volume_setting['settings_status'] = status_failed
+                    update_volume_setting['settings_status'] = \
+                        status_failed
                 logger.debug('volume settings status: %s'
                              % image_setting['settings_status'])
                 update_image_volume_setting(logger, abs_base_path,
-                        volume_setting)
+                        update_volume_setting)
         else:
             logger.info("Skipping update for: %s, %s, expected status: 'Pending', found '%s'"
                          % (base_path, extension, settings_status))
@@ -1110,5 +1219,3 @@ def update_previews(logger, base_path, extension):
                      % (base_path, extension))
 
     return result
-
-
