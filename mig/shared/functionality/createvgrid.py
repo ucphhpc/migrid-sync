@@ -237,7 +237,7 @@ def create_tracker(
     admin_user = distinguished_name_to_user(client_id)
     admin_email = admin_user.get('email', 'unknown@migrid.org')
     admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
-    # TODO: we only support scm cert access for now
+    # TODO: we only support tracker cert access for now
     server_url = configuration.migserver_https_cert_url
     if tracker_dir.find('private') > -1:
         kind = 'owner'

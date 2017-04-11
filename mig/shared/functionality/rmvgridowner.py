@@ -648,8 +648,7 @@ on the admin page and then try again.""" % label})
         # When reaching here, OK to remove the VGrid.
         #   if top-level: unlink, remove all files and directories, 
         #   in all cases: remove configuration entry for the VGrid
-
-        # TODO: we should unlink and move new-style vgrid sub dir to parent
+        #   unlink and move new-style vgrid sub dir to parent
 
         logger.info('Deleting %s and all related data as requested by %s' % \
                     (vgrid_name, cert_id))

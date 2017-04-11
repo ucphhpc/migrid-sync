@@ -184,8 +184,6 @@ doubt, just let the user request access and accept it with the
 '''
         out.append({'object_type': 'html_form', 'text': table})
 
-    # TODO: insert remove vgrid button if only inherited owners on admin page
-    #       or do like runtime env admin where the button just errs otherwise
     if direct:
         # Shared forms to use dynamically for ALL table entries
         dyn_helper = {'vgrid_name': vgrid_name, 
