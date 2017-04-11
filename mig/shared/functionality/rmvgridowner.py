@@ -32,7 +32,7 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import csrf_field
+from shared.defaults import csrf_field, _dot_vgrid, keyword_members
 from shared.fileio import remove_rec, delete_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -45,7 +45,7 @@ from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
      vgrid_is_member, vgrid_owners, vgrid_members, vgrid_resources, \
      vgrid_list_subvgrids, vgrid_remove_owners, vgrid_list_parents, \
-     allow_owners_adm
+     allow_owners_adm, vgrid_restrict_write_paths, vgrid_settings
 from shared.vgridaccess import unmap_vgrid, unmap_inheritance
 
 def signature():
@@ -251,18 +251,27 @@ def remove_vgrid_entry(vgrid, configuration):
                        configuration.vgrid_private_base, 
                        configuration.vgrid_files_home]:
 
-            # Gracefully delete any public, member, and owner SCMs/Trackers
+            # Gracefully delete any public, member, and owner SCMs/Trackers/...
             # They may already have been wiped with parent dir if they existed
 
-            scm_path = os.path.join(prefix, vgrid, '.vgridscm')
-            if os.path.exists(scm_path) and not remove_rec(scm_path, _logger):
-                _logger.warning('Error while removing %s.' % scm_path)
-                msg += "Error while removing SCM for %s" % vgrid
-            tracker_path = os.path.join(prefix, vgrid, '.vgridtracker')
-            if os.path.exists(tracker_path) and not remove_rec(tracker_path,
-                                                               _logger):
-                _logger.warning('Error while removing %s' % tracker_path)
-                msg += "Error while removing Tracker for %s." % vgrid
+            for collab_dir in _dot_vgrid:
+                collab_path = os.path.join(prefix, vgrid, collab_dir)
+                if not os.path.exists(collab_path):
+                    continue
+
+                # Re-map to writable if collab_path points inside readonly dir
+                if prefix == configuration.vgrid_files_home:
+                    (_, _, rw_path, ro_path) = \
+                        vgrid_restrict_write_paths(vgrid, configuration)
+                    real_collab = os.path.realpath(collab_path)
+                    if real_collab.startswith(ro_path):
+                        collab_path = real_collab.replace(ro_path, rw_path)
+                    
+                if not remove_rec(collab_path, configuration):
+                    _logger.warning('Error while removing %s.' % collab_path)
+                    collab_name = collab_dir.replace('.vgrid', '')
+                    msg += "Error while removing %s for %s" % (collab_name,
+                                                               vgrid)
 
     return (success, msg)
 
@@ -555,9 +564,33 @@ To leave (and delete) %s, first remove all members.'''
 
             return (output_objects, returnvalues.CLIENT_ERROR)
 
+        # Deleting write restricted VGrid is not allowed
+
+        (load_status, saved_settings) = vgrid_settings(vgrid_name,
+                                                       configuration,
+                                                       recursive=True,
+                                                       as_dict=True)
+        if not load_status:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'failed to load saved %s settings' % vgrid_name})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        if saved_settings.get('write_shared_files', keyword_members) != \
+               keyword_members:
+            logger.warning("%s can't delete vgrid %s - write limited!" \
+                           % (client_id, vgrid_name))
+            output_objects.append(
+                {'object_type': 'error_text', 'text': """You can't delete
+write-restricted %ss - first remove any write restrictions for shared files
+on the admin page and then try again.""" % label})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
         # When reaching here, OK to remove the VGrid.
         #   if top-level: unlink, remove all files and directories, 
         #   in all cases: remove configuration entry for the VGrid
+
+        # TODO: we should unlink and move new-style vgrid sub dir to parent
 
         logger.info('Deleting %s and all related data as requested by %s' % \
                     (vgrid_name, cert_id))
@@ -571,12 +604,12 @@ To leave (and delete) %s, first remove all members.'''
 
             user_dir = os.path.abspath(os.path.join(configuration.user_home,
                                                     cert_dir)) + os.sep
-            (share_lnk, msg1)  = unlink_share(user_dir, vgrid_name)
-            (web_lnk, msg1)  = unlink_web_folders(user_dir, vgrid_name)
+            (share_lnk, msg1) = unlink_share(user_dir, vgrid_name)
+            (web_lnk, msg1) = unlink_web_folders(user_dir, vgrid_name)
             (abandoned, msg2) = abandon_vgrid_files(vgrid_name, configuration)
         else:
 
-            # owner owns an upper vgrid, ownership is inherited
+            # owner owns some parent vgrid - ownership is only inherited
 
             logger.debug('%s looks like a sub-vgrid, ownership inherited.' % \
                          vgrid_name)

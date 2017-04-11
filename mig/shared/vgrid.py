@@ -782,24 +782,32 @@ def vgrid_restrict_write_support(configuration):
     # TODO: check that os.path.ismount on vgrid_files_readonly or parent
     return True
 
-def vgrid_allow_restrict_write(vgrid_name, write_access, configuration):
-    """Check if vgrid_name shared files can be changed to given write_access
-    restrictions. I.e. make sure it either already uses new layout or that it
-    can be migrated to do so without problems.
-    Additionally make sure that a switch doesn't interfere with nested vgrids.
-    That is, if any existing child vgrids must already enforce at least as
-    tight write_access restrictions.
+def vgrid_allow_restrict_write(vgrid_name, write_access, configuration,
+                               auto_migrate=False):
+    """Check if vgrid_name shared files can be changed to enforce requested
+    write_access restrictions. I.e. make sure it either already uses new layout
+    or that it can be migrated to do so without problems.
+    Additionally make sure that a switch doesn't interfere with vgrid nesting.
+    That is, any existing child vgrids must already enforce at least as tight
+    write_access restrictions and any parent vgrids must not have tighter write
+    restrictions.
+    The optional auto_migrate is used to decide if old-style vgrids should
+    automatically be migrated to new flat layout.
     """
     _logger = configuration.logger
     if not vgrid_restrict_write_support(configuration):
-        _logger.error("cannot make %s read-only - no read-only support" % \
-                      vgrid_name)
+        _logger.error("cannot change %s write access to %s - no conf support" \
+                      % (vgrid_name, write_access))
         return False
     (flat_vgrid, link_path, rw_path, ro_path) = \
                  vgrid_restrict_write_paths(vgrid_name, configuration)
     # If share is a regular folder in vgrid_files_home make sure it can be
     # migrated to vgrid_files_writable and then symlinked as usual.
     if not os.path.islink(link_path) and os.path.isdir(link_path):
+        if not auto_migrate:
+            _logger.error("Old style vgrid in %s and no auto migrate!" % \
+                          link_path)
+            return False
         if os.path.exists(rw_path):
             _logger.error("can't move %s into new layout - %s exists!" % \
                           (link_path, rw_path))
@@ -820,41 +828,15 @@ def vgrid_allow_restrict_write(vgrid_name, write_access, configuration):
                               (link_path, collab_path))
                 return False
 
-    (sub_status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
-    if not sub_status:
-        _logger.info('failed to load list of sub vgrids for %s: %s' % \
-                     (vgrid_name, sub_vgrids))
-        return False
-    for sub in sub_vgrids:
-        (load_sub, sub_settings) = vgrid_settings(sub, configuration,
-                                                  recursive=False,
-                                                  as_dict=True)
-        if not load_sub:
-            _logger.error('failed to load %s sub %s settings' % (vgrid_name,
-                                                                 sub))
-            return False
-        # NOTE: sub must already have same or stricter write_access, if not
-        #       altready 
-        if sub_settings.get('write_shared_files', write_access) not in \
-               [keyword_none, write_access]:
-            _logger.info('refuse limit write %s on %s due to %s settings' % \
-                         (write_access, vgrid_name, sub))
-            return False
-    return True
-        
-def vgrid_allow_writable(vgrid_name, configuration):
-    """Check if vgrid_name shared files can be make writable without
-    interfering with nested VGrids. I.e. all parent vgrids must already be
-    writable for this vgrid to be made writable.
-    """
-    _logger = configuration.logger
-    if not vgrid_restrict_write_support(configuration):
-        _logger.error("cannot make %s writable - no restrict write support" % \
-                      vgrid_name)
-        return False
-    parent_vgrid_list = vgrid_list_parents(vgrid_name, configuration)
-    if parent_vgrid_list:
-        parent_vgrid = parent_vgrid_list[-1]
+    # Check that no parent vgrids prevent change to requested write_access.
+    # Never the case if read-only (keyword_none) was requested.
+    if write_access == keyword_none:
+        check_parents = []
+    else:
+        check_parents = vgrid_list_parents(vgrid_name, configuration)
+    if check_parents:
+        # Actually just check for direct parent but with inheritance
+        parent_vgrid = check_parents[-1]
         (load_inherit, inherit_settings) = vgrid_settings(parent_vgrid,
                                                           configuration,
                                                           recursive=True,
@@ -862,59 +844,75 @@ def vgrid_allow_writable(vgrid_name, configuration):
         if not load_inherit:
             _logger.error('failed to load inherited %s settings' % vgrid_name)
             return False
-        if inherit_settings.get('write_shared_files', keyword_members) != \
-               keyword_members:
-            _logger.info('inherited settings prevent making %s writable' % \
-                         vgrid_name)
+        if inherit_settings.get('write_shared_files', keyword_members) not in \
+               [keyword_members, write_access]:
+            _logger.info('inherited settings prevent making %s %s writable' % \
+                         (vgrid_name, write_access))
+            return False
+
+    # Check that no child vgrids prevent change to requested write_access.
+    # Never the case if full write (keyword_members) was requested.
+    if write_access == keyword_members:
+        check_children = []
+    else:
+        (sub_status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
+        if not sub_status:
+            _logger.info('failed to load list of sub vgrids for %s: %s' % \
+                         (vgrid_name, sub_vgrids))
+            return False
+        check_children = sub_vgrids
+    for sub in check_children:
+        (load_sub, sub_settings) = vgrid_settings(sub, configuration,
+                                                  recursive=False,
+                                                  as_dict=True)
+        if not load_sub:
+            _logger.error('failed to load %s sub %s settings' % (vgrid_name,
+                                                                 sub))
+            return False
+        # NOTE: sub must already have same or stricter write_access. Default is
+        #       full access, so it must be explicitly limited for all children.
+        if sub_settings.get('write_shared_files', keyword_members) not in \
+               [keyword_none, write_access]:
+            _logger.info('refuse limit write on %s to %s due to %s setting' % \
+                         (write_access, vgrid_name, sub))
             return False
     return True
-
-def vgrid_restrict_write(vgrid_name, write_access, configuration):
+        
+def vgrid_restrict_write(vgrid_name, write_access, configuration,
+                         auto_migrate=False):
     """Switch vgrid_name shared folder to enforce write_access limitation by
     replacing symlinks to the version of the folder which is mounted read-only.
     This operation applies recursively for consistency.
     For legacy vgrids the shared folder may exist as a regular folder in
     vgrid_files_home and in that case it must first manually be migrated to the
     new location and structure in writable.
+    The optional auto_migrate is used to decide if old-style vgrids should
+    automatically be migrated to new flat layout.
     """
     _logger = configuration.logger
-    if not vgrid_allow_restrict_write(vgrid_name, write_access, configuration):
-        _logger.error("cannot set %s write on %s - needs manual migration" % \
-                      (write_access, vgrid_name))
+    if not vgrid_allow_restrict_write(vgrid_name, write_access, configuration,
+                                      auto_migrate):
         return False
     (flat_vgrid, link_path, rw_path, ro_path) = \
                  vgrid_restrict_write_paths(vgrid_name, configuration)
     # If share is a regular folder in vgrid_files_home migrate it to new
     # layout in vgrid_files_writable first and then symlink as usual.
-    if not os.path.islink(link_path) and os.path.isdir(link_path):
+    if auto_migrate and not os.path.islink(link_path) and \
+           os.path.isdir(link_path):
         _logger.info("migrating %s into new layout %s" % \
                      (link_path, rw_path))
         if not move(link_path, rw_path):
             _logger.error("failed to move %s into new layout %s !" % \
                           (link_path, rw_path))
         return False    
-    # Force vgrid home link to new read-only location
-    _logger.info("switch %s to read-only path %s" % (vgrid_name, ro_path))
-    make_symlink(ro_path, link_path, _logger, force=True)
-    return True
-
-def vgrid_make_writable(vgrid_name, configuration):
-    """Switch vgrid_name shared folder to read-write by replacing symlinks to
-    the version of the folder which is mounted read-write. This operation
-    applies recursively for consistency.
-    We should never end up here unless the vgrid share was previously read-only
-    and thus already migrated to new layout.
-    """
-    _logger = configuration.logger
-    if not vgrid_allow_writable(vgrid_name, configuration):
-        _logger.error("cannot make %s writable - needs manual migration" % \
-                      vgrid_name)
-        return False
-    (flat_vgrid, link_path, rw_path, ro_path) = \
-                 vgrid_restrict_write_paths(vgrid_name, configuration)
-    # Force vgrid home link to the new read-only location
-    _logger.info("switch %s to writable path %s" % (vgrid_name, rw_path))
-    make_symlink(rw_path, link_path, _logger, force=True)
+    if write_access == keyword_members:
+        # Force vgrid home link to the new writable location
+        _logger.info("switch %s to writable path %s" % (vgrid_name, rw_path))
+        make_symlink(rw_path, link_path, _logger, force=True)
+    else:
+        # Force vgrid home link to new read-only location
+        _logger.info("switch %s to read-only path %s" % (vgrid_name, ro_path))
+        make_symlink(ro_path, link_path, _logger, force=True)
     return True
 
 

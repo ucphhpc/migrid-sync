@@ -57,7 +57,7 @@ _reset_choice = [("reset to inherited or default value", keyword_auto)]
 _keep_note = '(enter 0 to keep using inherited or default value)'
 _reset_note = '(enter 0 to reset to inherited or default value)'
 _valid_sharelink = _user_choice
-_valid_write_access = _user_choice + _none_choice
+_valid_write_access = _none_choice + _user_choice
 _valid_visible = _user_choice + _all_choice
 _valid_bool = _bool_choice
 

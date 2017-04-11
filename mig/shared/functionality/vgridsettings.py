@@ -36,7 +36,7 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import init_vgrid_script_add_rem, allow_settings_adm, \
      vgrid_settings, vgrid_set_settings, vgrid_allow_restrict_write, \
-     vgrid_allow_writable, vgrid_make_writable, vgrid_restrict_write
+     vgrid_restrict_write
 import shared.returnvalues as returnvalues
 
 _valid_visible = (keyword_owners, keyword_members, keyword_all)
@@ -265,8 +265,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 circumvented by some owners unless Restrict settings administration is set to
 a lower or equal number.</span>'''})
 
-    # Refuse write access changes to web until we support them
-
+    # TODO: remove this bail-out once we've implemented wider web write access
     if write_priv_web != keyword_owners or write_pub_web != keyword_owners:
         output_objects.append(
                 {'object_type': 'error_text', 'text':
@@ -288,46 +287,46 @@ private and public web pages""" % configuration.short_title})
 Then it is probably because they need to upgrade your %s %s to the new layout
 format first.""" % (configuration.short_title, vgrid_name, label)
 
-    if old_write_shared == write_shared_files:
+    # TODO: remove this bail-out once we've implemented owner-only write access
+    if write_shared_files == keyword_owners:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             """Owner-only write access is not supported yet"""})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif old_write_shared == write_shared_files:
         logger.debug("write shared status (%s) is unchanged" % \
                      old_write_shared)
-    elif write_shared_files != keyword_members:
+    else:
         if not vgrid_allow_restrict_write(vgrid_name, write_shared_files,
                                           configuration):
-            # Refuse if any child vgrid is writable 
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 """Refused to tighten write access for %s - layout or child
-prevents it! You need to make sure all child %ss have at least as strict write
-access before you can proceed to restrict %s. %s.""" % \
-             (vgrid_name, label, vgrid_name, contact_text)})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        # TODO: remove once we support owner-only write
-        if write_shared_files == keyword_owners:
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 """Owner-only write access is not supported yet"""})
+            if write_shared_files != keyword_members:
+                # Refuse if any child vgrid is writable 
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': """Refused to tighten
+write access for %s - layout or child prevents it! You need to make sure all
+child %ss have at least as strict write access before you can proceed to
+restrict %s. %s.""" % (vgrid_name, label, vgrid_name, contact_text)})
+            else:
+                # Refuse if parent vgrid restricts write
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': """Refused to make
+%s fully writable - layout or parent prevents it! You need to remove write
+restrictions on all parent %ss before you can make %s writable. %s.""" % \
+                     (vgrid_name, label, vgrid_name, contact_text)})
+
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if not vgrid_restrict_write(vgrid_name, write_shared_files,
                                     configuration):
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   """failed to set %s write on %s shared
-files""" % (write_shared_files, vgrid_name)})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
-    else:
-        if not vgrid_allow_writable(vgrid_name, configuration):
-            # Refuse if parent vgrid restricts write
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 '''Refused to make %s fully writable - layout or parent
-prevents it! You need to remove write restrictions on all parent %ss before
-you can make %s writable. %s.''' % (vgrid_name, label, vgrid_name,
-                                    contact_text)})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        if not vgrid_make_writable(vgrid_name, configuration):
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   'failed to make %s writable' % vgrid_name})
+            if write_shared_files != keyword_members:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': """Failed to restrict
+write to %s on %s shared files""" % (write_shared_files.lower(), vgrid_name)})
+            else:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': """Failed to make %s
+ fully writable""" % vgrid_name})
+
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # format as list of tuples to fit usual form and then pickle
