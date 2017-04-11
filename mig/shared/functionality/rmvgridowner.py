@@ -33,7 +33,7 @@ from binascii import hexlify
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import csrf_field, _dot_vgrid, keyword_members
-from shared.fileio import remove_rec, delete_symlink
+from shared.fileio import remove_rec, move_rec, delete_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.html import html_post_helper
@@ -166,7 +166,8 @@ def abandon_vgrid_files(vgrid, configuration):
     """Remove all files which belong to the given VGrid (parameter).
     This corresponds to the functionality in createvgrid.py, but we 
     can make our life easy by removing recursively, using a function
-    in fileio.py for this purpose. The VGrid is assumed to be abandoned entirely.
+    in fileio.py for this purpose. The VGrid is assumed to be abandoned
+    entirely.
     The function recursively removes the following directories: 
             configuration.vgrid_public_base/<vgrid>
             configuration.vgrid_private_base/<vgrid>
@@ -212,10 +213,68 @@ def abandon_vgrid_files(vgrid, configuration):
         _logger.debug('delete vgrid dir: %s' % data_path)
         success_here = remove_rec(data_path, configuration)
         if not success_here:
-            msg += "Error while removing %s." % os.path.join(prefix, vgrid)
+            kind = prefix.strip(os.sep).split(os.sep)[-1]
+            msg += "Error while removing %s %s" % (vgrid, kind)
             success = False
 
-    _logger.debug('Messages: %s.' % msg)
+    if msg:
+        _logger.debug('Messages: %s.' % msg)
+
+    return (success, msg)
+
+def inherit_vgrid_files(vgrid, configuration):
+    """Transfer ownership of all files which belong to the given VGrid argument
+    to parent VGrid. This is the default when a nested VGrid is removed.
+    This corresponds to the functionality in createvgrid.py, but we 
+    can make our life easy by moving recursively, using a function
+    in fileio.py for this purpose. The VGrid shared and web folders are taken
+    over entirely by parent and the for new flat style VGrids it is more work
+    because they require migration of linked dir into parent one.
+    The function recursively moves the following directories: 
+            configuration.vgrid_public_base/<vgrid>
+            configuration.vgrid_private_base/<vgrid>
+            configuration.vgrid_files_home/<vgrid>
+    including any actual data for new flat format vgrids in
+            configuration.vgrid_files_writable/<vgrid>
+
+    vgrid: The name of the VGrid to let parent take over
+    configuration: to determine the location of the directories 
+
+    Note: the entry for the VGrid itself, configuration.vgrid_home/<vgrid>
+            is removed separately, see remove_vgrid_entry
+    Returns: Success indicator and potential messages.
+    """
+
+    _logger = configuration.logger
+    _logger.debug('Migrate all files for vgrid %s to parent' % vgrid)
+    success = True
+    msg = ""
+
+    parent_vgrid = vgrid_list_parents(vgrid, configuration)[-1]
+    for prefix in [configuration.vgrid_public_base, 
+                   configuration.vgrid_private_base, 
+                   configuration.vgrid_files_home]:
+        data_path = os.path.join(prefix, vgrid)
+        parent_dir_path = os.path.join(prefix, parent_vgrid)
+        # VGrids on flat format with readonly support has a link and a dir.
+        # The actual linked dir must then be renamed/moved to replace the link.
+        if os.path.islink(data_path):
+            link_path = data_path
+            link_name = os.path.basename(link_path)
+            parent_data_path = os.path.join(parent_dir_path, link_name)
+            data_path = os.path.realpath(link_path)
+            _logger.debug('delete symlink: %s' % link_path)
+            delete_symlink(link_path, _logger)
+
+            _logger.debug('migrate old vgrid dir %s to %s' % \
+                          (data_path, parent_data_path))
+            success_here = move_rec(data_path, parent_data_path, configuration)
+            if not success_here:
+                kind = prefix.strip(os.sep).split(os.sep)[-1]
+                msg += "Error while migrating %s %s to parent" % (vgrid, kind)
+                success = False
+    if msg:
+        _logger.debug('Messages: %s.' % msg)
 
     return (success, msg)
 
@@ -604,9 +663,10 @@ on the admin page and then try again.""" % label})
 
             user_dir = os.path.abspath(os.path.join(configuration.user_home,
                                                     cert_dir)) + os.sep
-            (share_lnk, msg1) = unlink_share(user_dir, vgrid_name)
-            (web_lnk, msg1) = unlink_web_folders(user_dir, vgrid_name)
-            (abandoned, msg2) = abandon_vgrid_files(vgrid_name, configuration)
+            (share_lnk, share_msg) = unlink_share(user_dir, vgrid_name)
+            (web_lnk, web_msg) = unlink_web_folders(user_dir, vgrid_name)
+            (files_act, files_msg) = abandon_vgrid_files(vgrid_name,
+                                                           configuration)
         else:
 
             # owner owns some parent vgrid - ownership is only inherited
@@ -614,13 +674,12 @@ on the admin page and then try again.""" % label})
             logger.debug('%s looks like a sub-vgrid, ownership inherited.' % \
                          vgrid_name)
             logger.debug('Only removing entry, leaving files in place.')
-            share_lnk = True
-            web_lnk = True
-            abandoned = True
-            msg1 = ''
-            msg2 = ''
+            share_lnk, share_msg = True, ''
+            web_lnk, web_msg = True, ''
+            (files_act, files_msg) = inherit_vgrid_files(vgrid_name,
+                                                           configuration)            
 
-        (removed, msg3) = remove_vgrid_entry(vgrid_name, configuration)
+        (removed, entry_msg) = remove_vgrid_entry(vgrid_name, configuration)
 
         output_objects.append({'object_type': 'text', 'text'
                                    : '%s has been removed with last owner.'
@@ -630,9 +689,9 @@ on the admin page and then try again.""" % label})
                                'destination': 'vgridman.py', 
                                'text': 'Back to the overview.'})
 
-        if not share_lnk or not web_lnk or not abandoned or not removed:
-            logger.error('Errors while removing %s:\n%s.'
-                         % (vgrid_name, '\n'.join([msg1, msg2, msg3])))
+        if not share_lnk or not web_lnk or not files_act or not removed:
+            err = '\n'.join([share_msg, web_msg, files_msg, entry_msg])
+            logger.error('Errors while removing %s:\n%s.' % (vgrid_name, err))
 
             output_objects.append({'object_type': 'error_text', 'text' : '''
 An internal error occurred, error conditions have been logged.'''})
