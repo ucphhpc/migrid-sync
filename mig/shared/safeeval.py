@@ -283,6 +283,19 @@ def math_expr_eval(expr):
     return eval(c)
 
 
+def subprocess_check_output(command, stdin=None, stdout=None, stderr=None,
+                            env=None, cwd=None,
+                            only_sanitized_variables=False):
+    """Safe execution of command with output returned as byte string.
+    The optional only_sanitized_variables option is used to override the
+    default execution without shell interpretation of control characters.
+    Please be really careful when using it especially if any parts of your
+    command comes from user-provided variables or file names that may contain
+    control characters.
+    """
+    return subprocess.check_output(command, stdin=stdin, env=env, cwd=cwd,
+                                   shell=only_sanitized_variables)
+
 def subprocess_call(command, stdin=None, stdout=None, stderr=None, env=None,
                     cwd=None, only_sanitized_variables=False):
     """Safe execution of command.

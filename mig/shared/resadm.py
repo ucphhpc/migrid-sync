@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadm - Resource administration functions mostly for remote command execution
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,7 @@ from shared.conf import get_resource_configuration, get_resource_exe, \
 from shared.fileio import unpickle, pickle
 from shared.resource import anon_resource_id
 from shared.safeeval import subprocess_popen, subprocess_pipe, \
-     subprocess_stdout
+     subprocess_stdout, subprocess_check_output
 from shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
     copy_file_to_exe, copy_file_to_resource
 
@@ -585,6 +585,20 @@ def get_node_kind(start_cmd):
         return 'master'
 
 
+def check_mounted(target, logger):
+    """Check if target is either detected as a proper mount with ismount, or
+    if it doesn't look like a mount but is listed in 'mount' output. The
+    latter happens for sshfs mounts if sshfs somehow died and then fusermount
+    is still required to clean up before a remount works.
+    """
+    if os.path.ismount(target):
+        return True
+    mount_line = ' on %s type fuse.sshfs '% target
+    mount_out = subprocess_check_output(['mount'])
+    logger.debug("check_mounted out: %s vs %s" % (mount_out, mount_line))
+    return (mount_out.find(mount_line) != -1)
+
+    
 def start_resource_exe(
     unique_resource_name,
     exe_name,
@@ -1443,7 +1457,8 @@ def resource_store_action(
                 
     if 'sftp' == store['storage_protocol']:
         setup = {'mount_point': mount_point}
-        if os.path.ismount(mount_point):
+        # We unmount if mount_point is properly mounted or if sshfs died
+        if check_mounted(mount_point, logger):
             if action in ['stop', 'clean']:
                 flags = ['-u']
                 if action == 'clean':
