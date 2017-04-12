@@ -118,6 +118,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
              : 'dst (%s) matches multiple targets - using last: %s'
              % (dst, dest)})
 
+    # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_dest = os.path.abspath(dest)
 
     # Don't use abs_path in output as it may expose underlying

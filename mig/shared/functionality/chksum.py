@@ -123,7 +123,9 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # NOTE: dst already incorporates current_dir prefix here
-        abs_dest = os.path.join(base_dir, dst)
+        # IMPORTANT: path must be expanded to abs for proper chrooting
+        abs_dest = os.path.abspath(os.path.join(base_dir, dst))
+        logger.info('chksum in %s' % abs_dest)
 
         # Don't use abs_path in output as it may expose underlying
         # fs layout.

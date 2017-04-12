@@ -128,7 +128,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if 'h' in flags:
         usage(output_objects)
 
-    abs_dest = os.path.join(base_dir, dst)
+    # IMPORTANT: path must be expanded to abs for proper chrooting
+    abs_dest = os.path.abspath(os.path.join(base_dir, dst))
     logger.info('unpack in %s' % abs_dest)
 
     # Don't use real dest in output as it may expose underlying
@@ -189,7 +190,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             (unpack_status, msg) = unpack_archive(configuration,
                                                   client_id,
                                                   relative_path,
-                                                  dst)
+                                                  relative_dest)
             if not unpack_status:
                 output_objects.append({'object_type': 'error_text',
                                        'text': 'Error: %s' % msg})

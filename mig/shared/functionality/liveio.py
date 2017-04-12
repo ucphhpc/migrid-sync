@@ -258,21 +258,22 @@ jobs before and during execution.
         unfiltered_match = glob.glob(base_dir + job_id + '.mRSL')
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            # IMPORTANT: path must be expanded to abs for proper chrooting
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning("%s tried to %s restricted path %s ! (%s)" % \
-                                (client_id, op_name, real_path, job_id))
+                                (client_id, op_name, abs_path, job_id))
 
                 continue
 
             # Insert valid job files in filelist for later treatment
 
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match....

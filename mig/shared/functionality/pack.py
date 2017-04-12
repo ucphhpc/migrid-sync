@@ -152,7 +152,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
                            : "working in %s" % current_dir})
 
     # NOTE: dst already incorporates current_dir prefix here
-    abs_dest = os.path.join(base_dir, dst)
+    # IMPORTANT: path must be expanded to abs for proper chrooting
+    abs_dest = os.path.abspath(os.path.join(base_dir, dst))
+    logger.info('pack in %s' % abs_dest)
 
     # Don't use abs_path in output as it may expose underlying
     # fs layout.
@@ -250,7 +252,7 @@ pack entire special folders like %s shared folders!""" % \
                                        : relative_path})
 
             (pack_status, msg) = pack_archive(configuration, client_id,
-                                              relative_path, dst)
+                                              relative_path, relative_dest)
             if not pack_status:
                 output_objects.append({'object_type': 'error_text',
                                        'text': 'Error: %s' % msg})

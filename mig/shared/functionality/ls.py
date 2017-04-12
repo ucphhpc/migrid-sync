@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -635,14 +635,15 @@ Action on paths selected below
         unfiltered_match = glob.glob(current_path + os.sep + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            # IMPORTANT: path must be expanded to abs for proper chrooting
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (user_id, op_name, real_path, pattern))
+                               % (user_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
             if not first_match:
-                first_match = real_path
+                first_match = abs_path
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -652,11 +653,11 @@ Action on paths selected below
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
-        for real_path in match:
-            if real_path + os.sep == base_dir:
+        for abs_path in match:
+            if abs_path + os.sep == base_dir:
                 relative_path = '.'
             else:
-                relative_path = real_path.replace(base_dir, '')
+                relative_path = abs_path.replace(base_dir, '')
             entries = []
             dir_listing = {
                 'object_type': 'dir_listing',
@@ -666,7 +667,7 @@ Action on paths selected below
                 }
 
             handle_ls(configuration, output_objects, entries, base_dir,
-                      real_path, flags, 0)
+                      abs_path, flags, 0)
             dir_listings.append(dir_listing)
 
     output_objects.append({'object_type': 'html_form', 'text'

@@ -85,6 +85,7 @@ access the private files.''' % (vgrid_name, label)})
     # Strip leading slashes to avoid join() throwing away prefix 
 
     rel_path = path.lstrip(os.sep)
+    # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
 
     if not valid_user_path(abs_path, base_dir, True):

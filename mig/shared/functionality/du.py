@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # du - Show disk use for one or more files
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -97,17 +97,18 @@ def main(client_id, user_arguments_dict):
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            # IMPORTANT: path must be expanded to abs for proper chrooting
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -121,15 +122,15 @@ def main(client_id, user_arguments_dict):
         # du -aL --apparent-size --block-size=1 PATH [PATH ...]
         filedus = []
         summarize_output = summarize(flags)
-        for real_path in match:
-            if invisible_path(real_path):
+        for abs_path in match:
+            if invisible_path(abs_path):
                 continue
-            relative_path = real_path.replace(base_dir, '')
+            relative_path = abs_path.replace(base_dir, '')
             # cache accumulated sub dir sizes - du sums into parent dir size
             dir_sizes = {}
             try:
                 # Assume a directory to walk
-                for (root, dirs, files) in walk(real_path, topdown=False,
+                for (root, dirs, files) in walk(abs_path, topdown=False,
                                                 followlinks=True):
                     if invisible_path(root):
                         continue
@@ -153,13 +154,13 @@ def main(client_id, user_arguments_dict):
                     relative_root = root.replace(base_dir, '')
                     dir_bytes += os.path.getsize(root)
                     dir_sizes[root] = dir_bytes
-                    if root == real_path or not summarize_output:
+                    if root == abs_path or not summarize_output:
                         filedus.append({'object_type': 'filedu',
                                         'name': relative_root,
                                         'bytes': dir_bytes})
-                if os.path.isfile(real_path):
+                if os.path.isfile(abs_path):
                     # Fall back to plain file where walk is empty
-                    size = os.path.getsize(real_path)
+                    size = os.path.getsize(abs_path)
                     filedus.append({'object_type': 'filedu',
                                     'name': relative_path,
                                     'bytes': size})

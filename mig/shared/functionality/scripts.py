@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scripts - backend to generate user and resource scripts
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,6 +41,7 @@ from shared.defaults import keyword_all, keyword_auto
 from shared.functional import validate_input_and_cert
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
+from shared.validstring import valid_user_path
 
 sh_cmd_def = '/bin/bash'
 python_cmd_def = '/usr/bin/python'
@@ -212,10 +213,22 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # Avoid problems from especially trailing slash (zip recursion)
             script_dir = script_dir.strip(os.sep)
 
-        dest_dir = '%s%s' % (base_dir, script_dir)
-        if not os.path.isdir(dest_dir):
+        # IMPORTANT: path must be expanded to abs for proper chrooting
+        abs_dir = os.path.abspath(os.path.join(base_dir, script_dir))
+        if not valid_user_path(abs_dir, base_dir, True):
+
+            # out of bounds
+
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : "You're not allowed to work in %s!"
+                                   % script_dir})
+            logger.warning('%s tried to %s restricted path %s ! (%s)'
+                           % (client_id, op_name, abs_dir, script_dir))
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        if not os.path.isdir(abs_dir):
             try:
-                os.mkdir(dest_dir)
+                os.mkdir(abs_dir)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text'
@@ -228,37 +241,37 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   : 'Generating %s %s scripts in the %s subdirectory of your %s home directory'
                                    % (lang, flavor, script_dir, configuration.short_title )})
 
-        logger.debug('generate %s scripts in %s' % (flavor, dest_dir))
+        logger.debug('generate %s scripts in %s' % (flavor, abs_dir))
         
         # Generate all scripts
 
         if flavor == 'user':
             for op in usergen.script_ops:
                 generator = 'usergen.generate_%s' % op
-                eval(generator)(configuration, languages, dest_dir)
+                eval(generator)(configuration, languages, abs_dir)
 
             if usergen.shared_lib:
                 usergen.generate_lib(configuration, usergen.script_ops,
-                                     languages, dest_dir)
+                                     languages, abs_dir)
 
             if usergen.test_script:
-                usergen.generate_test(configuration, languages, dest_dir)
+                usergen.generate_test(configuration, languages, abs_dir)
         elif flavor == 'resource':
             for op in vgridgen.script_ops_single_arg:
                 vgridgen.generate_single_argument(configuration, op[0], op[1],
-                                                  languages, dest_dir)
+                                                  languages, abs_dir)
             for op in vgridgen.script_ops_single_upload_arg:
                 vgridgen.generate_single_argument_upload(configuration, op[0],
                                                          op[1], op[2],
-                                                         languages, dest_dir)
+                                                         languages, abs_dir)
             for op in vgridgen.script_ops_two_args:
                 vgridgen.generate_two_arguments(configuration, op[0], op[1],
-                                                op[2], languages, dest_dir)
+                                                op[2], languages, abs_dir)
             for op in vgridgen.script_ops_ten_args:
                 vgridgen.generate_ten_arguments(configuration, op[0], op[1],
                                                 op[2], op[3], op[4], op[5],
                                                 op[6], op[7], op[8], op[9],
-                                                op[10], languages, dest_dir)
+                                                op[10], languages, abs_dir)
         else:
             output_objects.append({'object_type': 'warning_text', 'text'
                                   : 'Unknown flavor: %s' % flavor})
@@ -266,7 +279,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # Always include license conditions file
         
-        usergen.write_license(configuration, dest_dir)
+        usergen.write_license(configuration, abs_dir)
         
         output_objects.append({'object_type': 'text', 'text': '... Done'
                               })
@@ -285,7 +298,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         script_zip = script_dir + '.zip'
         dest_zip = '%s%s' % (base_dir, script_zip)
-        logger.debug('packing generated scripts from %s in %s' % (dest_dir,
+        logger.debug('packing generated scripts from %s in %s' % (abs_dir,
                                                                   dest_zip))
             
         # Force compression
@@ -293,8 +306,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # Directory write is not supported - add each file manually
 
-        for script in os.listdir(dest_dir):
-            zip_file.write(dest_dir + os.sep + script, script_dir
+        for script in os.listdir(abs_dir):
+            zip_file.write(abs_dir + os.sep + script, script_dir
                             + os.sep + script)
 
         # Preserve executable flag in accordance with:

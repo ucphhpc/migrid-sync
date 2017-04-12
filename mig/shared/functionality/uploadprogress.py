@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadprogress - Plain file upload progress monitor back end
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -104,6 +104,7 @@ Please contact the Grid admins %s if you think they should be enabled.
         # leaking information about file system layout while allowing
         # consistent error messages
 
+        # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_path = os.path.abspath(os.path.join(base_dir, path))
         if not valid_user_path(abs_path, base_dir, True):
             # out of bounds - save user warning for later to allow

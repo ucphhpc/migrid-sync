@@ -115,8 +115,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern + '.mRSL')
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            # IMPORTANT: path must be expanded to abs for proper chrooting
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
@@ -124,12 +125,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
                 logger.error(
                     '%s tried to use %s %s outside own home! (pattern %s)'
-                    % (client_id, op_name, real_path, pattern))
+                    % (client_id, op_name, abs_path, pattern))
                 continue
 
             # Insert valid job files in filelist for later treatment
 
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editor - Online editor back end
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -521,6 +521,7 @@ def main(client_id, user_arguments_dict):
                                % path})
 
     rel_path = os.path.join(current_dir.lstrip(os.sep), path.lstrip(os.sep))
+    # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
     if not valid_user_path(abs_path, base_dir):
         logger.warning('%s tried to %s restricted path %s ! (%s)'

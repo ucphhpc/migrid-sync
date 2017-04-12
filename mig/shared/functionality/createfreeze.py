@@ -81,6 +81,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 rejected.append('invalid path: %s (%s)' % (source_path,
                                                            exc))
                 continue
+            # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(
                 os.path.join(base_dir, source_path))
             # Prevent out-of-bounds, and restrict some greedy targets

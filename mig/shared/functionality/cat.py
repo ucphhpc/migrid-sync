@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cat - [insert a few words of module description on this line]
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ import glob
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose, binary
 from shared.validstring import valid_user_path
@@ -81,12 +82,21 @@ def main(client_id, user_arguments_dict):
                                   flag)})
 
     if dst:
+        if not safe_handler(configuration, 'post', op_name, client_id,
+                            get_csrf_limit(configuration), accepted):
+            output_objects.append(
+                {'object_type': 'error_text', 'text': '''Only accepting
+                CSRF-filtered POST requests to prevent unintended updates'''
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
         dst_mode = "wb"
-        real_dst = os.path.join(base_dir, dst)
-        relative_dst = real_dst.replace(base_dir, '')
-        if not valid_user_path(real_dst, base_dir, True):
+        # IMPORTANT: path must be expanded to abs for proper chrooting
+        abs_dest = os.path.abspath(os.path.join(base_dir, dst))
+        relative_dst = abs_dest.replace(base_dir, '')
+        if not valid_user_path(abs_dest, base_dir, True):
             logger.warning('%s tried to %s into restricted path %s ! (%s)'
-                           % (client_id, op_name, real_dst, dst))
+                           % (client_id, op_name, abs_dest, dst))
             output_objects.append({'object_type': 'error_text',
                                    'text': "invalid destination: '%s'" % \
                                    dst})
@@ -142,14 +152,14 @@ def main(client_id, user_arguments_dict):
                 continue
             if dst:
                 try:
-                    out_fd = open(real_dst, dst_mode)
+                    out_fd = open(abs_dest, dst_mode)
                     out_fd.writelines(output_lines)
                     out_fd.close()
                 except Exception, exc:
                     output_objects.append({'object_type': 'error_text',
                                            'text': "write failed: '%s'" % exc})
                     logger.error("%s: write failed on '%s': %s" % (op_name,
-                                                               real_dst, exc))
+                                                               abs_dest, exc))
                     status = returnvalues.SYSTEM_ERROR
                     continue
                 output_objects.append({'object_type': 'text',

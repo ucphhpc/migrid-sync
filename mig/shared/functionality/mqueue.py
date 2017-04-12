@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mqueue - POSIX like message queue job inter-communication
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -142,6 +142,7 @@ def main(client_id, user_arguments_dict):
         except:
             pass
 
+    # IMPORTANT: path must be expanded to abs for proper chrooting
     queue_path = os.path.abspath(os.path.join(mqueue_base, queue))
     if not valid_user_path(queue_path, mqueue_base):
         output_objects.append({'object_type': 'error_text', 'text'

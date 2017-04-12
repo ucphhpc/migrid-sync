@@ -115,6 +115,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     abs_path = ''
     unfiltered_match = glob.glob(base_dir + path)
     for server_path in unfiltered_match:
+        # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_path = os.path.abspath(server_path)
         if not valid_user_path(abs_path, base_dir, True):
             logger.warning('%s tried to %s restricted path %s ! (%s)'

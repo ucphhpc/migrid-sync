@@ -269,14 +269,16 @@ a job description file path as argument.'''})
 
         if rule_dict['action'] == "submit":
             for rel_path in rule_dict['arguments']:
-                real_path = os.path.join(base_dir, rel_path)
+                # IMPORTANT: path must be expanded to abs for proper chrooting
+                abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
                 try:
-                    if not valid_user_path(real_path, base_dir, True):
+                    if not valid_user_path(abs_path, base_dir, True):
                         logger.warning('%s tried to %s restricted path %s ! (%s)'
-                                       % (client_id, op_name, real_path, rel_path))
+                                       % (client_id, op_name, abs_path,
+                                          rel_path))
                         raise ValueError('invalid submit path argument: %s' \
                                          % rel_path)
-                    temp_fd = open(real_path)
+                    temp_fd = open(abs_path)
                     templates.append(temp_fd.read())
                     temp_fd.close()
                 except Exception, err:

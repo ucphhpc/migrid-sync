@@ -361,6 +361,7 @@ def main(client_id, user_arguments_dict):
         # Move automatically takes place relative to dst_dir and current_dir
         for (rel_path, chunk_tuple) in upload_files:
             abs_src_path = os.path.abspath(os.path.join(base_dir, rel_path))
+            # IMPORTANT: path must be expanded to abs for proper chrooting
             dest_dir = os.path.abspath(os.path.join(base_dir, current_dir))
             dest_path = os.path.join(dest_dir, os.path.basename(rel_path))
             rel_dst = dest_path.replace(base_dir, '')

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # find - find backend
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -97,17 +97,18 @@ def main(client_id, user_arguments_dict):
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            # IMPORTANT: path must be expanded to abs for proper chrooting
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -117,9 +118,9 @@ def main(client_id, user_arguments_dict):
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
-        for real_path in match:
+        for abs_path in match:
             output_lines = []
-            relative_path = real_path.replace(base_dir, '')
+            relative_path = abs_path.replace(base_dir, '')
             entries = []
             dir_listing = {
                 'object_type': 'dir_listing',
@@ -129,11 +130,11 @@ def main(client_id, user_arguments_dict):
                 }
             dir_listings.append(dir_listing)
             try:
-                for (root, dirs, files) in os.walk(real_path):
+                for (root, dirs, files) in os.walk(abs_path):
                     for filename in fnmatch.filter(files, name_pattern):
-                        real_path = os.path.join(root, filename)
-                        relative_path = real_path.replace(base_dir, '')
-                        if not valid_user_path(real_path, base_dir,
+                        abs_path = os.path.join(root, filename)
+                        relative_path = abs_path.replace(base_dir, '')
+                        if not valid_user_path(abs_path, base_dir,
                                 True):
                             continue
                         file_obj = {

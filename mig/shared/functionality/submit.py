@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submit - submit a job file
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -110,17 +110,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            # IMPORTANT: path must be expanded to abs for proper chrooting
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -131,14 +132,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
             status = returnvalues.FILE_NOT_FOUND
 
         submitstatuslist = []
-        for real_path in match:
+        for abs_path in match:
             output_lines = []
-            relative_path = real_path.replace(base_dir, '')
+            relative_path = abs_path.replace(base_dir, '')
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_path}
 
             try:
-                (job_status, newmsg, job_id) = new_job(real_path,
+                (job_status, newmsg, job_id) = new_job(abs_path,
                         client_id, configuration, False, True)
             except Exception, exc:
                 logger.error("%s: failed on '%s': %s" % (op_name,
