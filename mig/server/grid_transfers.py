@@ -455,6 +455,7 @@ def run_transfer(configuration, client_id, transfer_dict):
             configuration.user_settings, client_dir)) + os.sep
         key_path = os.path.join(settings_base_dir, user_keys_dir,
                                 key_path.lstrip(os.sep))
+        # IMPORTANT: path must be expanded to abs for proper chrooting
         key_path = os.path.abspath(key_path)
         if not valid_user_path(key_path, settings_base_dir):
             logger.error('rejecting illegal directory traversal for %s (%s)' \
@@ -470,6 +471,7 @@ def run_transfer(configuration, client_id, transfer_dict):
         dst_path = os.path.abspath(dst_path)
         for src in rel_src_list:
             abs_dst = os.path.join(dst_path, src.lstrip(os.sep))
+            # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_dst = os.path.abspath(abs_dst)
             # Reject illegal directory traversal and hidden files
             if not valid_user_path(abs_dst, base_dir, True):
@@ -491,6 +493,7 @@ def run_transfer(configuration, client_id, transfer_dict):
         src_path_list = []
         for src in rel_src_list:
             src_path = os.path.join(base_dir, src.lstrip(os.sep))
+            # IMPORTANT: path must be expanded to abs for proper chrooting
             src_path = os.path.abspath(src_path)
             # Reject illegal directory traversal and hidden files
             if not valid_user_path(src_path, base_dir, True):

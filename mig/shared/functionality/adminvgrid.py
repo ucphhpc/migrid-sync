@@ -533,6 +533,7 @@ yet supported and thus are disabled below.
         for (key, val) in choices: 
             disabled = ''
             # TODO: remove these artifical limits once we support changing
+            # TODO: also add check for vgrid web reshare in sharelink then
             if field == 'write_shared_files' and val == keyword_owners:
                 disabled = 'disabled'
             elif field == 'write_priv_web' and val in [keyword_members,

@@ -51,7 +51,6 @@ from shared.transferfunctions import build_transferitem_object, \
      build_keyitem_object, load_data_transfers, create_data_transfer, \
      update_data_transfer, delete_data_transfer, load_user_keys, \
      generate_user_key, delete_user_key
-from shared.validstring import valid_user_path
 
 
 get_actions = ['show', 'fillimport', 'fillexport']
@@ -649,6 +648,7 @@ Key name:<br/>
 '''})
         return (output_objects, returnvalues.OK)
     elif action in transfer_actions:
+        # NOTE: all path validation is done at run-time in grid_transfers
         transfer_dict = transfer_map.get(transfer_id, {})
         if action == 'deltransfer':
             if transfer_dict is None:

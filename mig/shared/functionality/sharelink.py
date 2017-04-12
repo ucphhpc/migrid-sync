@@ -259,9 +259,10 @@ comma-separated recipients.
         base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                                 client_dir)) + os.sep
         
-        # Build absolute path without normalizing or anything yet
-        rel_path = share_path.lstrip(os.sep)
-        abs_path = os.path.join(base_dir, rel_path)
+        rel_share_path = share_path.lstrip(os.sep)
+        # IMPORTANT: path must be expanded to abs for proper chrooting
+        abs_path = os.path.abspath(os.path.join(base_dir, rel_share_path))
+        relative_path = abs_path.replace(base_dir, '')
         real_path = os.path.realpath(abs_path)
         single_file = os.path.isfile(real_path)
         vgrid_name = in_vgrid_share(configuration, abs_path)
@@ -354,7 +355,7 @@ comma-separated recipients.
                     {'object_type': 'error_text', 'text'
                      : 'No access set - please select read, write or both'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
-            # NOTE: check path here as rel_path is empty for path='/'
+            # NOTE: check path here as relative_path is empty for path='/'
             if not path:
                 output_objects.append(
                     {'object_type': 'error_text', 'text'
@@ -389,8 +390,8 @@ it or only share with read access.
                      '''})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
-            # We check if path is in vgrid share, but do not worry about
-            # private_base or public_base since they are only availabe to
+            # We check if abs_path is in vgrid share, but do not worry about
+            # private_base or public_base since they are only available to
             # owners, who can always share anyway.
             
             if vgrid_name is not None and \
@@ -430,8 +431,9 @@ think you should be allowed to do that.
             else:
                 desc = "create"
 
+            # IMPORTANT: always use expanded path
             share_dict.update(
-                {'path': path, 'access': access_list, 'expire': expire,
+                {'path': relative_path, 'access': access_list, 'expire': expire,
                  'invites': invite_list, 'single_file': single_file})
             if not share_id:
                 # Make share with random ID and retry a few times on collision
@@ -474,7 +476,7 @@ think you should be allowed to do that.
         output_objects.append({'object_type': 'text', 'text'
                                : '%sd share link %s on %s .' % (desc.title(),
                                                                 share_id,
-                                                                share_path)})
+                                                                relative_path)})
         if action in ['create', 'update']:
             sharelinks = []
             share_item = build_sharelinkitem_object(configuration,
