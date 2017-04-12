@@ -106,6 +106,12 @@ def valid_user_path(path, home_dir, allow_equal=False):
     match, e.g. to prevent users from deleting or sharing the base of their
     home directory.
 
+    IMPORTANT: it is still essential to always ONLY operate on explicitly
+               abs-expanded paths in backends to avoid MYVGRID/../bla silently
+               mapping to vgrid_files_home/bla rather than bla in user home.
+    We include a check to make sure that path is already abspath expanded to
+    help make sure this essential step is always done in backend.
+
     This check also rejects all 'invisible' files like htaccess files.
 
     NB: This check relies on the home_dir already verified from
@@ -113,28 +119,30 @@ def valid_user_path(path, home_dir, allow_equal=False):
     Thus this function should *only* be used in relation to
     checking user home related paths. Other paths should be
     validated with the valid_dir_input function below.
-    It automatically normalizes path to eliminate double slashes and expand
-    '..', but it does not follow e.g. symlinks into vgrid shares. 
+    It  does not follow e.g. symlinks into vgrid shared folders and verify
+    their validity. This is assumed based on the symlink availability.
     """
 
-    norm_path = os.path.normpath(os.path.abspath(path))
-
-    if invisible_path(norm_path):
+    # Make sure caller has explicitly forced abs path 
+    if path != os.path.abspath(path):
         return False
 
-    real_home = os.path.abspath(home_dir)
-    inside = norm_path.startswith(real_home + os.sep)
+    if invisible_path(path):
+        return False
+
+    abs_home = os.path.abspath(home_dir)
+    inside = path.startswith(abs_home + os.sep)
     if not allow_equal:
 
-        # norm_path must be real_home/X
+        # path must be abs_home/X
 
         return inside
     else:
 
-        # norm_path must be either real_home/X or real_home
+        # path must be either abs_home/X or abs_home
 
         try:
-            same = os.path.samefile(real_home, norm_path)
+            same = os.path.samefile(abs_home, path)
         except Exception:
 
             # At least one of the paths doesn't exist

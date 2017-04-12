@@ -132,6 +132,7 @@ def main(client_id, user_arguments_dict):
             try:
                 for (root, dirs, files) in os.walk(abs_path):
                     for filename in fnmatch.filter(files, name_pattern):
+                        # IMPORTANT: this join always yields abs expanded path
                         abs_path = os.path.join(root, filename)
                         relative_path = abs_path.replace(base_dir, '')
                         if not valid_user_path(abs_path, base_dir,

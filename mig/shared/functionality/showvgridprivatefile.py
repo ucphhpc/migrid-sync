@@ -87,7 +87,6 @@ access the private files.''' % (vgrid_name, label)})
     rel_path = path.lstrip(os.sep)
     # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
-
     if not valid_user_path(abs_path, base_dir, True):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''You are not allowed to use paths outside %s

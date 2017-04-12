@@ -99,6 +99,7 @@ def main(client_id, user_arguments_dict):
                                   flag)})
 
 
+    # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_dir = os.path.abspath(os.path.join(base_dir, 
                                            current_dir.lstrip(os.sep)))
     if not valid_user_path(abs_dir, base_dir, True):
@@ -158,6 +159,7 @@ def main(client_id, user_arguments_dict):
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
+            # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(server_path)
             if not valid_user_path(abs_path, base_dir, True):
 

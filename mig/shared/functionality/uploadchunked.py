@@ -125,6 +125,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
                              (filename, exc)))
             continue
         rel_path = os.path.join(rel_dst_dir, filename)
+        # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
         if not valid_user_path(abs_path, dst_dir, True):
             logger.error('%s tried to access restricted path %s ! (%s)'

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rejectresreq - reject a resource access request
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -92,7 +92,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         os.path.abspath(os.path.join(configuration.resource_home,
                         unique_resource_name)) + os.sep
 
-    abs_path = base_dir + request_name
+    # IMPORTANT: path must be expanded to abs for proper chrooting
+    abs_path = os.path.abspath(os.path.join(base_dir, request_name))
     if not valid_user_path(abs_path, base_dir, allow_equal=False):
         logger.warning('%s tried to access restricted path %s ! (%s)' % \
                        (client_id, abs_path, request_name))

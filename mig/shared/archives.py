@@ -340,7 +340,7 @@ def unpack_archive(
     archive into the dst dir. Both src and dst are expected to be relative
     paths.
     Please note that src and dst should be checked for illegal directory
-    traversal attempts before getting here.
+    traversal attempts *before* getting here.
     """
     client_dir = client_id_dir(client_id)
 
@@ -364,7 +364,7 @@ def pack_archive(
     archive in dst. Both src and dst are expected to be relative
     paths.
     Please note that src and dst should be checked for illegal directory
-    traversal attempts before getting here.
+    traversal attempts *before* getting here.
     """
     logger = configuration.logger
     msg = ''
