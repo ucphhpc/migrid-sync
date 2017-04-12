@@ -661,11 +661,12 @@ class SimpleSSHServer(paramiko.ServerInterface):
             entries = login_map_lookup(daemon_conf, username)
             for entry in entries:
                 if entry.password is not None:
-                    # TODO: Add ssh tunneling on resource frontends
-                    #       before enforcing ip check
-                    # and \
-                    #(entry.ip_addr is None or
-                    # entry.ip_addr == self.client_addr[0]):
+                    if entry.ip_addr is not None and \
+                       entry.ip_addr != self.client_addr[0]:
+                        self.logger.warning(
+                            "ignore login as %s with wrong IP: %s vs %s" % \
+                            (username, entry.ip_addr, self.client_addr[0]))
+                        continue
 
                     allowed = entry.password
                     self.logger.debug("Password check for %s" % username)
@@ -711,11 +712,12 @@ class SimpleSSHServer(paramiko.ServerInterface):
             entries = login_map_lookup(daemon_conf, username)
             for entry in entries:
                 if entry.public_key is not None:
-                    # TODO: Add ssh tunneling on resource frontends
-                    #       (proxy host?) before enforcing ip check.
-                    # and \
-                    # (entry.ip_addr is None or 
-                    #  entry.ip_addr == self.client_addr[0]):
+                    if entry.ip_addr is not None and \
+                           entry.ip_addr != self.client_addr[0]:
+                        self.logger.warning(
+                            "ignore login as %s with wrong IP: %s vs %s" % \
+                            (username, entry.ip_addr, self.client_addr[0]))
+                        continue
 
                     allowed = entry.public_key.get_base64()
                     self.logger.debug("Public key check for %s" % username)
