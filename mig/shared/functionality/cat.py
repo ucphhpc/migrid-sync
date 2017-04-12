@@ -111,17 +111,18 @@ def main(client_id, user_arguments_dict):
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
+            # IMPORTANT: path must be expanded to abs for proper chrooting
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
-                               % (client_id, op_name, real_path, pattern))
+                               % (client_id, op_name, abs_path, pattern))
                 continue
-            match.append(real_path)
+            match.append(abs_path)
 
         # Now actually treat list of allowed matchings and notify if no
         # (allowed) match
@@ -131,11 +132,11 @@ def main(client_id, user_arguments_dict):
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
-        for real_path in match:
+        for abs_path in match:
             output_lines = []
-            relative_path = real_path.replace(base_dir, '')
+            relative_path = abs_path.replace(base_dir, '')
             try:
-                fd = open(real_path, 'r')
+                fd = open(abs_path, 'r')
 
                 # use file directly as iterator for efficiency
 
@@ -188,7 +189,7 @@ def main(client_id, user_arguments_dict):
                             {'object_type': 'start', 'headers':
                              [('Content-Disposition',
                                'attachment; filename="%s";' % \
-                               os.path.basename(real_path))]})
+                               os.path.basename(abs_path))]})
             
     return (output_objects, status)
 
