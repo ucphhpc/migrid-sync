@@ -48,6 +48,7 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     davs_authdigests, ftps_authpasswords, ftps_authdigests, \
     get_authpasswords, extract_field, generate_password_hash, \
     generate_password_digest
+from shared.validstring import valid_user_path
 
 default_max_fails, default_fail_cache = 5, 120
 
@@ -122,25 +123,35 @@ last_update: %s''' % self.last_update
 def get_fs_path(user_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
     in mind. Also assures general path character restrictions are applied.
+    Automatically expands to abs path to avoid traversal issues with e.g.
+    MYVGRID/../bla that would expand to vgrid_files_home/bla instead of bla
+    in user home if left as is.
     """
     try:
         valid_path(user_path)
     except:
         raise ValueError("Invalid path characters")
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = root + os.sep
+
     # Make sure leading slashes in user_path don't throw away root
-    norm_path = os.path.normpath(os.path.join(root, user_path.lstrip(os.sep)))
-    real_path = os.path.realpath(norm_path)
+    # IMPORTANT: path must be expanded to abs for proper chrooting
+    abs_path = os.path.abspath(os.path.join(root, user_path.lstrip(os.sep)))
+    if not valid_user_path(abs_path, base_dir, True):
+        raise ValueError("Illegal path access attempt")
+    real_path = os.path.realpath(abs_path)
     accept_roots = [root] + chroot_exceptions
     accepted = False
     for accept_path in accept_roots:
         if real_path.startswith(accept_path):
-            # Found matching root - check visibility
-            if not invisible_path(norm_path):
-                accepted = True
+            # Found matching root - valid_user_path already checked visibility
+            accepted = True
             break
     if not accepted:
         raise ValueError("Invalid path")
-    return norm_path
+    return abs_path
 
 def strip_root(path, root, chroot_exceptions):
     """Internal helper to strip root prefix for chrooted locations"""
