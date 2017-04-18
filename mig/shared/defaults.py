@@ -213,8 +213,12 @@ freeze_flavors = {
             'deletefreeze_title': 'Delete Backup Archive'}
     }
 
-# Default value for integer limits in vgrid settings
-default_vgrid_settings_limit = 4
+# Default value for ALL integer limits in vgrid settings
+# NOTE: spamming more than 10 owners about reqs is rarely popular, but
+# balancing participation management rights is tricky. Owners should at least
+# be urged to consider security implications of allowing too many co-owners.
+# TODO: split into two values and remove default limit on management rights?
+default_vgrid_settings_limit = 10
 
 # Seperator used in flat vgrid structure for read-only support
 vgrid_nest_sep = ':'
