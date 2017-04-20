@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# fairfitscheduler - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# fairfitscheduler - a modified best-fit scheduler to include job age
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,10 @@
 # -- END_HEADER ---
 #
 
-"""Fair Fit Scheduler"""
+"""Fair Fit Scheduler: reuses best-fit scheduler but increases job fitness
+with an absolute and a relative waiting-time bonus to counter inherent
+starvation tendencies of pure best-fit scheduling.
+"""
 
 import time
 
@@ -40,29 +43,22 @@ class FairFitScheduler(BestFitScheduler):
     potential problem with jobs being starved due to bad fitness.
     THIS ADDED 'FAIRNESS' IS CLEARLY WORKING AGAINST FREE MARKET
     FORCES!
-    The level of fairness is strictly bound to the age_mult and
-    expire_mult values below.
+    The level of fairness is strictly bound to the age_mult value below.
 
     """
 
-    # If expiry is disabled at the MiG server:
-    # Multiply the time (in *seconds*) the job has been waiting in
-    # queue by this priority multiplier.
+    # Multiply the queued waiting time by this priority constant and add the
+    # resulting value to the job fitness to balance waiting time with best
+    # fit and to counter starvation in general. A bonus based on the ratio
+    # between queued and job wallclock time is additionally included to
+    # slightly favor shorter jobs more over time.
+    # With the current best fit max fitness value of 300 an age_mult value of
+    # 0.01 means that any job waiting 30000 seconds (approx 8 hours) will
+    # always be in front of even a perfectly fitting job submitted just now.
+    # Due to the added relative wait time ratio bonus the jobs requesting
+    # shorter time will reach that tipping point a bit sooner.
 
     age_mult = 0.01
-
-    # If expiry is enabled at the MiG server:
-    # Multiply the risk of job expiry (in percent) by this multiplier
-
-    expire_mult = 50
-
-    # ---
-    # Please note that age_mult and expire_mult should be decided in
-    # relation to priorities in BestFit fitness function.
-    # However age_mult should be rather small since waiting a few
-    # minutes or even hours should not result in decisive fitness
-    # changes
-    # ---
 
     def __init__(self, logger, config):
         BestFitScheduler.__init__(self, logger, config)
@@ -71,36 +67,24 @@ class FairFitScheduler(BestFitScheduler):
     def fitness(self, job, resource_conf):
 
         # Simply call fitness function from super class and add
-        # queued time fitness value afterwards
+        # absolute and relative queue time fitness bonus afterwards
 
         job_fitness = BestFitScheduler.fitness(self, job, resource_conf)
-        self.logger.debug('fitness: %f without queue time', job_fitness)
+        self.logger.debug('fitness: %f without time bonus', job_fitness)
 
-        queue_time = time.mktime(time.gmtime())\
-             - time.mktime(job['QUEUED_TIMESTAMP'])
+        queue_time = time.mktime(time.gmtime()) - \
+                     time.mktime(job['QUEUED_TIMESTAMP'])
+        job_time = int(job.get('CPUTIME', 60))
 
-        expire_after = self.conf.expire_after
-        if expire_after == 0:
+        # Force rel_bonus between 0 and 1 to avoid very short job "gaming"
 
-            # No risk of expiry so we use pure aging
+        rel_bonus = 10.0 / max(job_time, 10)
 
-            job_fitness += queue_time * self.age_mult
-            self.logger.debug('fitness: %f with queue time %f',
-                              job_fitness, queue_time)
-        else:
+        # Always apply a mix of absolute and relative aging
 
-            # Aging relies on risk of job expiry
-
-            expire_risk = 1 - abs(expire_after - queue_time)\
-                 / expire_after
-            job_fitness += expire_risk * self.expire_mult
-
-            # self.logger.level = 10
-
-            self.logger.debug('fitness: %f with expire risk %f',
-                              job_fitness, expire_risk)
-
-            # self.logger.level = 20
+        job_fitness += self.age_mult * queue_time * (1 + rel_bonus)
+        self.logger.debug('fitness: %f with queue / job time %f / %f (%f)',
+                          job_fitness, queue_time, job_time, rel_bonus)
 
         return job_fitness
 
