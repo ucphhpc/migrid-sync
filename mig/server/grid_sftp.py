@@ -850,6 +850,10 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         logger.warning("Refusing additional open sessions for %s (%d)" % \
                        (username, active_count))
         print "Too many open sessions for %s - refusing" % username
+        # Try to throttle attempts from misbehaving client 
+        logger.info("throttling on refused login for %s (%d)" % \
+                    (username, active_count))
+        time.sleep(active_count * 5 + 60)
         username = None
     else:
         logger.info("Proceed with login for %s with %d active sessions" % \
