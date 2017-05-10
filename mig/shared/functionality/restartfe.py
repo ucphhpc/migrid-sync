@@ -104,7 +104,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # everything ok
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Stop output: %s, Start output %s' % (msg,
+                          : 'Stop output: %s ; Start output: %s' % (msg,
                           msg2)})
     return (output_objects, returnvalues.OK)
 

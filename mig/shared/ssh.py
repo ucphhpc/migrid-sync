@@ -97,16 +97,17 @@ def default_ssh_options(close_stdin=False, x_forward=False):
 
 
 def copy_file_to_resource(
-    filename,
+    local_path,
     dest_path,
     resource_config,
     logger,
     ):
-    """Copy filename to dest_path relative to resource home on resource
+    """Copy local_path to dest_path relative to resource home on resource
     using scp.
     """
 
     configuration = get_configuration_object()
+    local_filename = os.path.basename(local_path) 
     multiplex = '0'
     if resource_config.has_key('SSHMULTIPLEX'):
         multiplex = str(resource_config['SSHMULTIPLEX'])
@@ -155,7 +156,7 @@ def copy_file_to_resource(
         options += ['-o', 'UserKnownHostsFile=' + key_path]
 
     abs_dest_path = os.path.join(resource_config['RESOURCEHOME'], dest_path)
-    scp_command_list = ['scp'] + options + [filename] + \
+    scp_command_list = ['scp'] + options + [local_path] + \
                        ['%s@%s:%s' % (user, host, abs_dest_path)]        
     scp_command = ' '.join(scp_command_list)
     logger.debug('running command: %s' % scp_command)
@@ -190,22 +191,23 @@ def copy_file_to_resource(
             
         return False
 
-    logger.info('scp ok %s' % host)
+    logger.debug('scp %s to %s succeeded' % (local_filename, host))
     return True
 
 
 def copy_file_to_exe(
-    local_filename,
+    local_path,
     dest_path,
     resource_config,
     exe_name,
     logger,
     ):
-    """Copy local_filename to dest_path relative to execution_dir on
+    """Copy local_path to dest_path relative to execution_dir on
     exe_name. This needs to go through the resource front end using scp
     and the copy method to the exe depends on the shared fs setting.
     """
 
+    local_filename = os.path.basename(local_path) 
     msg = ''
     unique_resource_name = resource_config['HOSTURL'] + '.'\
          + resource_config['HOSTIDENTIFIER']
@@ -223,27 +225,26 @@ def copy_file_to_exe(
 
     copy_attempts = 3
     for attempt in range(copy_attempts):
-        copy_status = copy_file_to_resource(local_filename, dest_path,
+        copy_status = copy_file_to_resource(local_path, dest_path,
                 resource_config, logger)
         if not copy_status:
-            logger.warning('scp of file failed in attempt %d of %d'
-                            % (attempt, copy_attempts))
+            logger.warning('scp of %s failed in attempt %d of %d'
+                            % (local_path, attempt, copy_attempts))
         else:
             break
 
     # Remove temporary file no matter what scp returned
 
     try:
-        os.remove(local_filename)
+        os.remove(local_path)
     except Exception, err:
-        logger.error('Could not remove %s (%s)' % (local_filename, err))
+        logger.error('Could not remove %s (%s)' % (local_path, err))
 
     if copy_status:
-        msg += 'scp of file was successful!\n'
-        logger.info('scp of file was successful!')
+        logger.debug('scp of %s was successful.' % local_path)
     else:
-        msg += 'scp of file was NOT successful!\n'
-        logger.error('scp of file was NOT successful!')
+        logger.error('scp of %s was NOT successful!' % local_path)
+        msg += 'scp of %s was NOT successful!\n' % local_filename
         return (False, msg)
 
     # copy file to exe - trailing slash is important
@@ -267,20 +268,19 @@ def copy_file_to_exe(
         (status, executed_command) = execute_on_resource(ssh_command,
                 False, resource_config, logger)
         if status != 0:
-            logger.warning('copy of file to exe failed (%d) in attempt %d of %d'
-                            % (status, attempt, copy_attempts))
+            logger.warning('copy of %s to exe failed (%d) in attempt %d of %d'
+                            % (local_path, status, attempt, copy_attempts))
         else:
             break
 
-    msg += executed_command + '\n'
-
     if 0 != status:
-        logger.error('file not copied to exe!')
-        msg += 'file not copied to exe!\n'
+        logger.error('%s not copied to exe!' % local_path)
+        logger.error('failed copy command was:\n%s' % executed_command)
+        msg += '%s not copied to exe:\n%s\nexit code %s' % \
+               (local_filename, executed_command, status)
         return (False, msg)
     else:
-        logger.info('file copied to exe')
-        msg += 'file copied to exe\n'
+        logger.debug('%s copied to exe' % local_path)
         return (True, '')
 
 

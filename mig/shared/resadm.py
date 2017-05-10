@@ -1016,15 +1016,11 @@ def start_resource(
         logger.error('Could not remove %s (%s)' % (local_filename, err))
 
     if copy_status:
-        msg += 'copy of frontend_script.sh was successfull!\n'
+        logger.debug("copy of frontend_script.sh was successful.")
+        msg += 'copy of frontend_script.sh was successful.\n'
     else:
-
-        # logger.info("copy of frontend_script.sh was successfull!")
-
-        msg += 'copy of frontend_script.sh was NOT successfull!\n'
-
-        # logger.error("copy of frontend_script.sh was NOT successfull!")
-
+        logger.error("copy of frontend_script.sh was NOT successful!")
+        msg += 'copy of frontend_script.sh was NOT successful!\n'
         return (False, msg)
 
     command = 'cd %s; chmod +x frontend_script.sh; ./frontend_script.sh'\
