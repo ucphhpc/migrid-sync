@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -96,15 +96,21 @@ ALLOW_UNSAFE = \
 # Allow these chars in addition to plain letters and digits
 # We explicitly allow email chars in CN to work around broken DNs
 
+#############################################################################
+# IMPORTANT: never allow '+' or '_' in name: reserved for path translation! #
+#############################################################################
+
 name_extras = ' -@.'
 
-############################################################################
-# IMPORTANT: never allow '+' and '_' in DN: reserved for path translation! #
-############################################################################
+#############################################################################
+# IMPORTANT: never allow '+' in DN: reserved for path translation!          #
+#############################################################################
 # We allow ':' in DN, however, as it is used by e.g. DanID:
 # /C=DK/O=Ingen organisatorisk tilknytning/CN=${NAME}/serialNumber=PID:${SERIAL}
+# Similarly we must allow '_' in DN since it is valid in emailAddress. We only
+# need to make sure it doesn't appear in name parts above.
 
-dn_extras = name_extras + '/=:'
+dn_extras = name_extras + '/=:_'
 
 # Allow explicit sign and exponential notation in integers and floats
 integer_extras = '+-eE'
