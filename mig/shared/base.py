@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - shared base helper functions
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,31 +34,40 @@ import os
 from shared.defaults import sandbox_names, _user_invisible_files, \
      _user_invisible_dirs
 
-id_dir_remap = {'/': '+', ' ': '_'}
-dir_id_remap = dict([(val, key) for (key, val) in id_dir_remap.items()])
+_id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
+_key_val_sep = '='
+_remap_fields = ['CN', 'O', 'OU']
 
-def client_id_dir(client_id, remap=id_dir_remap):
+def client_id_dir(client_id):
     """Map client ID to a valid directory name:
     client_id is a distinguished name on the form /X=ab/Y=cdef ghi/Z=klmn...
     so we just replace slashes with plus signs and space with underscore
-    in line with remap dictionary to avoid file system problems.
+    for the name fields. Please note that e.g. emailAddress may contain
+    underscore, which must be preserved.
     """
 
-    client_dir = client_id
-    for (key, val) in remap.items():
-        client_dir = client_dir.replace(key, val)
+    dir_parts = []
+    for entry in client_id.split(_id_sep):
+        if entry.split(_key_val_sep, 1)[0] in _remap_fields:
+            entry = entry.replace(_id_space,_dir_space)
+        dir_parts.append(entry)
+    client_dir = _dir_sep.join(dir_parts)
     return client_dir
 
-def client_dir_id(client_dir, remap=dir_id_remap):
+def client_dir_id(client_dir):
     """Map client directory name to valid client ID:
     client_dir is a distinguished name on the form +X=ab+Y=cdef_ghi+Z=klmn...
     so we just replace slashes with plus signs and space with underscore
-    in line with remap dictionary to avoid file system problems.
+    for the name fields. Please note that e.g. emailAddress may contain
+    underscore, which must be preserved.
     """
 
-    client_id = client_dir
-    for (key, val) in remap.items():
-        client_id = client_id.replace(key, val)
+    id_parts = []
+    for entry in client_dir.split(_dir_sep):
+        if entry.split(_key_val_sep, 1)[0] in _remap_fields:
+            entry = entry.replace(_dir_space, _id_space)
+        id_parts.append(entry)
+    client_id = _id_sep.join(id_parts)
     return client_id
 
 def client_alias(client_id):
