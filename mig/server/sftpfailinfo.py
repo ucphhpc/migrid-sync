@@ -175,6 +175,6 @@ if '__main__' == __name__:
             if total > offender_limit:
                 print " *  You may want to verify origin and block if fishy:"
                 print "\twhois %(source_ip)s|grep 'descr:'" % err_map
-                print "\tsudo iptables -A INPUT -s %(source_ip)s/32 -j DROP" \
+                print "\tsudo iptables -I INPUT -s %(source_ip)s/32 -j DROP" \
                       % err_map
             print ""
