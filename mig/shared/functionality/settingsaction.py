@@ -109,6 +109,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    output_status = returnvalues.OK
     topic = accepted['topic'][-1]
     topic_mrsl = ''
 
@@ -202,29 +203,20 @@ CSRF-filtered POST requests to prevent unintended updates'''
     except Exception, exc:
         pass  # probably deleted by parser!
 
-        # output_objects.append(
-        #    {"object_type":"error_text", "text":
-        #     "Could not remove temporary topic file %s, exception: %s" % \
-        #     (tmptopicfile, exc)})
-
     if not parse_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error parsing and saving %s settings: %s'
                                % (topic, parse_msg)})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-    elif parse_msg:
-        output_objects.append({'object_type': 'html_form', 'text': 
-                               '<span class="warningtext">%s</span>' % \
-                               parse_msg})
+        output_status = returnvalues.CLIENT_ERROR
+    else:
+        if parse_msg:
+            output_objects.append({'object_type': 'html_form', 'text': 
+                                   '<span class="warningtext">%s</span>' % \
+                                   parse_msg})
+        # print saved topic
 
-    # print saved topic
-
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Saved %s settings:' % topic})
-
-    # Enable next lines for debug
-    #for line in topic_mrsl.split('\n'):
-    #    output_objects.append({'object_type': 'text', 'text': line})
+        output_objects.append({'object_type': 'text', 'text'
+                               : 'Saved %s settings:' % topic})
 
     output_objects.append({'object_type': 'link',
                            'destination': 'settings.py?topic=%s' % topic,
@@ -232,6 +224,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
                            'title': 'Go back to %s settings' % topic,
                            'text': 'Back to %s settings' % topic})
 
-    return (output_objects, returnvalues.OK)
+    return (output_objects, output_status)
 
 
