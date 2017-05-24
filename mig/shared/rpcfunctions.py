@@ -33,11 +33,11 @@ import os
 import time
 
 import shared.returnvalues as returnvalues
+from shared.base import force_utf8_rec
 from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
 from shared.objecttypes import get_object_type_info
 from shared.output import validate
-
 
 def system_method_signature(method_name):
     """List method signatures"""
@@ -82,12 +82,14 @@ def stub(function, user_arguments_dict):
 
     environ = os.environ
     configuration = get_configuration_object()
+    _logger = configuration.logger
 
     # get ID of user currently logged in
 
     main = id
     client_id = extract_client_id(configuration, environ)
     output_objects = []
+    _logger.debug("import main for function: %s" % function)
     try:
         exec 'from %s import main' % function
     except Exception, err:
@@ -102,6 +104,12 @@ def stub(function, user_arguments_dict):
                               }])
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
+    ## NOTE: Force to UTF-8 - JSONRPC dict is unicode while XMLRPC is UTF-8
+    if user_arguments_dict and True in [isinstance(i, unicode) for i in \
+                                        user_arguments_dict.keys()]:
+        user_arguments_dict = force_utf8_rec(user_arguments_dict)
+
+    _logger.debug("run %s.main(%s)" % (function, user_arguments_dict))
     try:
 
         # TODO: add environ arg support to all main backends and use here
@@ -109,6 +117,9 @@ def stub(function, user_arguments_dict):
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
     except Exception, err:
+        _logger.error("%s main failed: %s" % (function, err))
+        import traceback
+        _logger.debug("%s main trace:" % traceback.format_exc())
         return ('Error calling function: %s' % err, returnvalues.ERROR)
 
     (val_ret, val_msg) = validate(output_objects)
@@ -118,11 +129,13 @@ def stub(function, user_arguments_dict):
         # remove previous output
         # output_objects = []
 
+        _logger.error("%s output validation failed: %s" % (function, val_msg))
         output_objects.extend([{'object_type': 'error_text', 'text'
                               : 'Validation error! %s' % val_msg},
                               {'object_type': 'title', 'text'
                               : 'Validation error!'}])
     after_time = time.time()
+    _logger.debug("finished %s.main" % function)
     output_objects.append({'object_type': 'timing_info', 'text':
                            "done in %.3fs" % (after_time - before_time)})
     return (output_objects, (ret_code, ret_msg))

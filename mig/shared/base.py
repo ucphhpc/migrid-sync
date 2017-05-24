@@ -160,6 +160,20 @@ def force_unicode(val):
         return val.decode("utf8")
     return val
 
+def force_utf8_rec(input_obj):
+    """Recursive object conversion from unicode to utf8: useful to convert e.g.
+    dictionaries with nested unicode strings to a pure utf8 version.
+    """
+    if isinstance(input_obj, dict):
+        return {force_utf8_rec(i): force_utf8_rec(j) for (i, j) in \
+                input_obj.items()}
+    elif isinstance(input_obj, list):
+        return [force_utf8_rec(i) for i in input_obj]
+    elif isinstance(input_obj, unicode):
+        return force_utf8(input_obj)
+    else:
+        return input_obj
+
 def generate_https_urls(configuration, url_template, helper_dict):
     """Generate a string with one or more URLS for enabled https login
     methods. The url_template is filled with helper_dict, the best available
