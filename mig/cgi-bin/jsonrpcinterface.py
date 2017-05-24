@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# xmlrpcinterface - Provides the entire XMLRPC interface over CGI
+# jsonrpcinterface - Provides the entire JSONRPC interface over CGI
 # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,12 +25,22 @@
 # -- END_HEADER ---
 #
 
-"""XMLRPC interface to expose all XGI methods through platform-independent
-XML Remote Procedure Calls.
+"""JSONRPC interface to expose all XGI methods through platform-independent
+JSON Remote Procedure Calls.
+
+Requires the jsonrpclib module from https://pypi.python.org/pypi/jsonrpclib
+to be installed. That is easily done with e.g.
+pip install jsonrpclib
+or
+apt install python-jsonrpclib
+or
+yum install python-jsonrpclib
+depending on the platform.
 """
 
 import os
 import time
+from jsonrpclib.SimpleJSONRPCServer import CGIJSONRPCRequestHandler
 from SimpleXMLRPCServer import CGIXMLRPCRequestHandler
 
 import shared.returnvalues as returnvalues
@@ -40,9 +50,14 @@ from shared.objecttypes import get_object_type_info
 from shared.output import validate
 
 
-class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
-    """Override default request handler to pull doc from our backend modules"""
+class MiGCGIJSONRPCRequestHandler(CGIJSONRPCRequestHandler,
+                                  CGIXMLRPCRequestHandler):
+    """Override default request handler to pull doc from our backend modules.
 
+    NOTE: Inherit first from JSONRPC and then from XMLRPC handler to get
+    otherwise missing handle_request method.
+    """
+    
     def system_methodSignature(self, method_name):
         """List method signatures"""
 
@@ -73,10 +88,9 @@ class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
         return help_string
 
 
-
 def serverMethodSignatures(server):
     """List all methods as well as signatures"""
-    methods = CGIXMLRPCRequestHandler.system_listMethods(server)
+    methods = CGIJSONRPCRequestHandler.system_listMethods(server)
     methods_and_signatures = [(method, server.system_methodSignature(method)) \
                               for method in methods]
     return methods_and_signatures
@@ -813,7 +827,7 @@ def signature(user_arguments_dict):
 
 
 if '__main__' == __name__:
-    server = MiGCGIXMLRPCRequestHandler()
+    server = MiGCGIJSONRPCRequestHandler()
 
     def AllMethodSignatures(): return serverMethodSignatures(server)
     server.register_function(AllMethodSignatures)
