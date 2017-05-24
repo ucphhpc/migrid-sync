@@ -43,6 +43,7 @@ import ssl
 import sys
 import time
 import jsonrpclib.jsonrpc as jsonrpc
+import jsonrpclib.history as rpchist
 from urlparse import urlparse
 
 def read_user_conf():
@@ -127,7 +128,7 @@ class SafeCertTransport(jsonrpc.SafeTransport):
         time.
         """
 
-        # issue XML-RPC request
+        # issue JSON-RPC request
 
         if not self.host:
             self.host = self.make_connection(host)
@@ -190,16 +191,20 @@ class SafeCertTransport(jsonrpc.SafeTransport):
 def jsonrpcgetserver(conf):
     cert_transport = SafeCertTransport(conf=conf)
     server = jsonrpc.ServerProxy('https://%(host)s:%(port)s%(script)s' % \
-                                 conf, transport=cert_transport)
+                                 conf, transport=cert_transport,
+                                 #encoding='utf-8',
+                                 #verbose=True
+                                 )
     return server
 
 
 if '__main__' == __name__:
+    path_list = ['welcome.txt']
     if len(sys.argv) > 1:
         job_id_list = sys.argv[1:]
     else:
         job_id_list = ['*']
-
+    
     conf = {'script': '/cgi-bin/jsonrpcinterface.py'}
     user_conf = read_user_conf()
     conf.update(user_conf)
@@ -222,7 +227,7 @@ if '__main__' == __name__:
     host_port[1] = int(host_port[1])
     conf['host'], conf['port'] = host_port
 
-    print '''Testing XMLRPC client against %(migserver)s with user certificate
+    print '''Testing JSONRPC client against %(migserver)s with user certificate
 from %(certfile)s , key from %(keyfile)s and
 CA certificate %(cacertfile)s . You may get prompted for your MiG
 key/certificate passphrase before you can continue.
@@ -277,7 +282,7 @@ key/certificate passphrase before you can continue.
 
     print
     print 'Listing contents of MiG home directory'
-    (inlist, retval) = server.ls({'path': '.', 'flags': 'v'})
+    (inlist, retval) = server.ls({'path': ['.'], 'flags': 'v'})
     (returnval, returnmsg) = retval
     if returnval != 0:
         print 'Error %s:%s ' % (returnval, returnmsg)
@@ -364,7 +369,7 @@ vgrid=Generic
 
 """
 
-    # (inlist, retval) = server.ls({"path":"%s" % sys.argv[1]})
+    # (inlist, retval) = server.ls({"path": job_id_list]})
     # print server.lsresowners({"unique_resource_name":["%s" % sys.argv[2]]})
     # print server.addresowner({"new_owner":["%s" % sys.argv[1]], "unique_resource_name":["%s" % sys.argv[2]]})
     # print server.lsresowners({"unique_resource_name":["%s" % sys.argv[2]]})
@@ -418,10 +423,10 @@ vgrid=Generic
 
     try:
         print "cat as binary file"
-        (inlist, retval) = server.cat({"path":["%s" % sys.argv[1]], "flags":"vb"})
+        (inlist, retval) = server.cat({"path": path_list, "flags":"vb"})
         for entry in inlist:
             if 'file_output' == entry['object_type']:
-                print ''.join([i.data for i in entry['lines']])
+                print ''.join([i for i in entry['lines']])
     except Exception, exc:
         print "Error: could not cat as binary file: %s" % exc
 
@@ -497,8 +502,8 @@ ANY
                 else:
                     time.sleep(2)
 
-    # (inlist, retval) = server.resubmit({"job_id":["%s" % sys.argv[1]]})
-    # (inlist, retval) = server.liveio({"action": "send", "job_id":["%s" % sys.argv[1]]})
+    # (inlist, retval) = server.resubmit({"job_id": job_id_list})
+    # (inlist, retval) = server.liveio({"action": "send", "job_id": job_id_list})
 
     # print inlist
 
