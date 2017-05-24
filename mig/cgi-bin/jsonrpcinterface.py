@@ -39,21 +39,31 @@ depending on the platform.
 """
 
 from jsonrpclib.SimpleJSONRPCServer import CGIJSONRPCRequestHandler
+# NOTE: See below for explanation of this XMLRPC dependency 
+from SimpleXMLRPCServer import CGIXMLRPCRequestHandler
 
-# NOTE: Pull as much as possible from xmlrpcinterface to avoid redundant code
-from xmlrpcinterface import MiGCGIXMLRPCRequestHandler, expose_functions
+from shared.rpcfunctions import expose_functions, system_method_signature, \
+       system_method_help
+
 
 
 class MiGCGIJSONRPCRequestHandler(CGIJSONRPCRequestHandler,
-                                  MiGCGIXMLRPCRequestHandler):
+                                  CGIXMLRPCRequestHandler):
     """Override default request handler to pull doc from our backend modules.
 
     NOTE: Inherit first from JSONRPC and then from XMLRPC handler to get
     otherwise missing handle_request method.
     """
 
-    system_methodSignature = MiGCGIXMLRPCRequestHandler.system_methodSignature
-    system_methodHelp = MiGCGIXMLRPCRequestHandler.system_methodHelp
+    def system_methodSignature(self, method_name):
+        """List method signatures"""
+
+        return system_method_signature(method_name)
+
+    def system_methodHelp(self, method_name):
+        """List method usage"""
+
+        return system_method_help(method_name)
 
 
 def serverMethodSignatures(server):

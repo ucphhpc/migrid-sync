@@ -77,11 +77,13 @@ def check_enable_csrf(configuration, accepted_dict, environ=None):
         _logger.debug("configuration enforces minimal CSRF protection")
         return False
     # Fall back to CSRF_MEDIUM - enforce CSRF checks except for legacy clients
-    # We look for curl and xmlrpc first in user agent to match e.g.
+    # We look for curl and xmlrpc/jsonrpc first in user agent to match e.g.
     # * curl/7.38.0
     # * xmlrpclib.py/1.0.1 (by www.pythonware.com)
+    # * jsonrpclib/0.1 (Python X.Y.Z)
     agent = environ.get('HTTP_USER_AGENT', 'UNKNOWN')
-    if agent.lower().startswith('curl') or agent.lower().startswith('xmlrpc'):
+    if agent.lower().startswith('curl') or agent.lower().startswith('xmlrpc') \
+           or agent.lower().startswith('jsonrpc'):
         # No csrf_field input results in the defaults allow_me string
         csrf_token = accepted_dict.get(csrf_field, ['allow_me'])[-1]
         if csrf_token and csrf_token != 'allow_me':
@@ -108,12 +110,12 @@ def safe_handler(configuration, method, operation, client_id, limit,
     # NOTE: CSRF checks are automatically disabled for e.g. cURL clients here
     elif not check_enable_csrf(configuration, accepted_dict, environ):
         return True
-    # TODO: integrate token in user scripts and in xmlrpc
+    # TODO: integrate token in user scripts and in xmlrpc/jsonrpc
     #       Remember that user scripts cannot hardcode token as long as it
     #       includes client_id (e.g. breaks deb package). Maybe add a get_token
     #       backend and use everywhere? or include a single shared token for
     #       scripts which is set/found in Settings and must be set copied to
-    #       miguser.conf / xmlrpc requests?
+    #       miguser.conf / Xrpc requests?
     csrf_token = accepted_dict.get(csrf_field, [''])[-1]
     # TODO: include any openid session ID headers from environ here?
     csrf_required = make_csrf_token(configuration, method, operation,
