@@ -32,12 +32,14 @@ tools and a Python interpreter with a few external modules.
 -OpenSSH clients (http://www.openssh.org/)
 -Python 2.6 or later but not 3.x (https://www.python.org/)
 
-Optional WSGI interface, OpenID login, instant messaging service,
-efficient file access services, event handler service, background data
-transfer service, spell checking, Wiki, SCM and tracker VGrid features
-require:
+Optional file synchronization, WSGI interface, OpenID login, instant
+messaging service, efficient file access services, event handler
+service, JSONRPC access, background data transfer service, spell
+checking, Wiki, SCM and tracker VGrid features rely on the following
+additional software:
+-Seafile server, community edition (https://www.seafile.com/en/download/)
+-Apache FCGI Proxy module (https://github.com/ceph/mod-proxy-fcgi)
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
--Apache proxy FCGI module (https://github.com/ceph/mod-proxy-fcgi)
 -Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
 -Python OpenID module (https://github.com/openid/python-openid)
 -Python irclib module (https://pypi.python.org/pypi/python-irclib/)
@@ -47,6 +49,7 @@ require:
 -Python WSGI WebDAV module (http://wsgidav.readthedocs.org)
 -Python watchdog module (https://pypi.python.org/pypi/watchdog)
 -Python scandir module (https://pypi.python.org/pypi/scandir)
+-Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
 -Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
@@ -61,8 +64,8 @@ sudo aptitude install apache2 openssh-client python python-pip \
 
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
-     python-irclib python-paramiko python-enchant mercurial trac \
-     trac-mercurial lftp rsync
+     python-irclib python-paramiko python-enchant python-jsonrpclib \
+     mercurial trac trac-mercurial lftp rsync
 
 Apache comes with a number of modules included, so it is usually not
 necessary to explicitly install e.g. mod-ssl, mod-proxy, mod-rewrite and

@@ -220,13 +220,25 @@ This software is mainly implemented in Python and extension modules:"""})
                            'text': 'Python (PSF license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'link', 
+                           'destination' : 'https://pypi.python.org/pypi/watchdog',
+                           'class': 'urllink iconspace',
+                           'title': 'Python Watchdog Module at Python Package Index',
+                           'text': 'Python Watchdog Module (Apache 2.0 license)'})
+    output_objects.append({'object_type': 'text', 'text' : ''})
+    output_objects.append({'object_type': 'link', 
+                           'destination' : 'https://pypi.python.org/pypi/scandir',
+                           'class': 'urllink iconspace',
+                           'title': 'Python scandir Module at Python Package Index',
+                           'text': 'Python scandir Module (New BSD license)'})
+    output_objects.append({'object_type': 'text', 'text' : ''})
+    output_objects.append({'object_type': 'link', 
                            'destination' : 'https://pypi.python.org/pypi/pyenchant',
                            'class': 'urllink iconspace',
                            'title': 'Python Enchant Module at Python Package Index',
                            'text': 'Python Enchant Module (LGPL license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'text', 'text' : """
-Web interfaces are served with the Apache web server:"""})
+Web interfaces are served with the Apache HTTP Server:"""})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://httpd.apache.org/',
                            'class': 'urllink iconspace',
@@ -297,10 +309,13 @@ Web interfaces are served with the Apache web server:"""})
                            'class': 'urllink iconspace',
                            'title': 'OpenSSH HomePage',
                            'text': 'OpenSSH secure remote shell and file '
-                           'transfer, BSD'})
+                           'transfer (BSD license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
 
     password_dep = False
+    openssl_dep = False
+    if configuration.site_enable_vmachines:
+        openssl_dep = True
     if configuration.site_enable_sftp:
         password_dep = True
         output_objects.append({'object_type': 'text', 'text' :
@@ -309,7 +324,7 @@ Web interfaces are served with the Apache web server:"""})
                                'destination' : 'https://pypi.python.org/pypi/paramiko',
                                'class': 'urllink iconspace',
                                'title': 'Paramiko at Python Package Index',
-                               'text': 'Paramiko SSH2 Module (LGPL)'})
+                               'text': 'Paramiko SSH2 Module (LGPL license)'})
     if configuration.site_enable_davs:
         password_dep = True
         output_objects.append({'object_type': 'text', 'text' :
@@ -319,15 +334,17 @@ Web interfaces are served with the Apache web server:"""})
                                'https://github.com/mar10/wsgidav',
                                'class': 'urllink iconspace',
                                'title': 'WsgiDAV Home Page',
-                               'text': 'WsgiDAV Server Module (MIT)'})
+                               'text': 'WsgiDAV Server Module (MIT license)'})
+        output_objects.append({'object_type': 'text', 'text' : ''})
         output_objects.append({'object_type': 'link', 
                                'destination' :
                                'https://code.google.com/p/pywebdav/',
                                'class': 'urllink iconspace',
                                'title': 'PyWebDAV Home Page',
-                               'text': 'PyWebDAV DAV(S) Server Module (GPL)'})
+                               'text': 'PyWebDAV DAV(S) Server Module (GPL license)'})
     if configuration.site_enable_ftps:
         password_dep = True
+        openssl_dep = True
         output_objects.append({'object_type': 'text', 'text' :
                                "FTPS access is delivered using pyftpdlib:"})
         output_objects.append({'object_type': 'link', 
@@ -335,7 +352,23 @@ Web interfaces are served with the Apache web server:"""})
                                'https://code.google.com/p/pyftpdlib/',
                                'class': 'urllink iconspace',
                                'title': 'pyftpdlib Home Page',
-                               'text': 'pyftpdlib FTP(S) Server Module (MIT)'})
+                               'text': 'pyftpdlib FTP(S) Server Module (MIT license)'})
+    if configuration.site_enable_seafile:
+        password_dep = True
+        output_objects.append({'object_type': 'text', 'text' :
+                               "File synchronization is delivered with Seafile:"})
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'https://www.seafile.com',
+                               'class': 'urllink iconspace',
+                               'title': 'Seafile Home Page',
+                               'text': 'Seafile Community Edition (various open source licenses)'})
+        output_objects.append({'object_type': 'text', 'text' :
+                               "Seafile web pages are exposed with:"})
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'https://github.com/ceph/mod-proxy-fcgi',
+                               'class': 'urllink iconspace',
+                               'title': 'Apache FCGI Proxy Module Home Page',
+                               'text': 'Apache FCGI Proxy Module (Apache 2.0 license)'})
     if configuration.site_enable_transfers:
         output_objects.append({'object_type': 'text', 'text' :
                                "Background data transfers use LFTP / RSync:"})
@@ -343,13 +376,14 @@ Web interfaces are served with the Apache web server:"""})
                                'destination': 'http://lftp.yar.ru/',
                                'class': 'urllink iconspace',
                                'title': 'LFTP Home Page',
-                               'text': 'LFTP file transfer program (GPL)'})
+                               'text': 'LFTP file transfer program (GPL license)'})
+        output_objects.append({'object_type': 'text', 'text' : ''})
         output_objects.append({'object_type': 'link', 
                                'destination': 'https://rsync.samba.org/',
                                'class': 'urllink iconspace',
                                'title': 'RSync Home Page',
                                'text':
-                               'RSync incremental file transfer client (GPL)'})
+                               'RSync incremental file transfer client (GPL license)'})
     if password_dep:
         output_objects.append({'object_type': 'text', 'text' : """
 The optional password authentication support in SFTP/DAVS/FTPS servers relies
@@ -359,7 +393,17 @@ on the PBKDF2 module (embedded) from:"""})
                                'https://pypi.python.org/pypi/pbkdf2',
                                'class': 'urllink iconspace',
                                'title': 'pbkdf2 at Python Package Index',
-                               'text': 'PBKDF2 Module (MIT)'})
+                               'text': 'PBKDF2 Module (MIT license)'})
+    if openssl_dep:
+        output_objects.append({'object_type': 'text', 'text' : """
+The OpenSSL crypto helpers in the optional FTPS/VMachines proxy servers rely
+on the PyOpenSSL module from:"""})
+        output_objects.append({'object_type': 'link', 
+                               'destination' :
+                               'https://pypi.python.org/pypi/pyOpenSSL',
+                               'class': 'urllink iconspace',
+                               'title': 'PyOpenSSL at Python Package Index',
+                               'text': 'PyOpenSSL Module (Apache 2.0 license)'})
     if [i for i in configuration.notify_protocols if not i == 'email']:
         output_objects.append({'object_type': 'text', 'text' : """
 The optional instant messaging support in the imnotify server relies
@@ -369,7 +413,7 @@ on the irclib module from:"""})
                                'https://pypi.python.org/pypi/python-irclib',
                                'class': 'urllink iconspace',
                                'title': 'Python irclib at Python Package Index',
-                               'text': 'Python irclib Module (LGPL)'})
+                               'text': 'Python irclib Module (LGPL license)'})
     if configuration.hg_path and configuration.hgweb_scripts:
         output_objects.append({'object_type': 'text', 'text' :
                                "SCM repositories are delivered with Mercurial:"
@@ -378,7 +422,7 @@ on the irclib module from:"""})
                                'destination' : 'http://mercurial.selenic.com/',
                                'class': 'urllink iconspace',
                                'title': 'Mercurial SCM Home Page',
-                               'text': 'Mercurial SCM (GPLv2)'})
+                               'text': 'Mercurial SCM (GPLv2 license)'})
     if configuration.trac_admin_path:
         output_objects.append({'object_type': 'text', 'text' :
                                """Trackers are delivered using Trac:"""})
@@ -386,7 +430,29 @@ on the irclib module from:"""})
                                'destination' : 'http://trac.edgewall.org/',
                                'class': 'urllink iconspace',
                                'title': 'Trac Project Tracker Home Page',
-                               'text': 'Trac Project Tracker (BSD)'})
+                               'text': 'Trac Project Tracker (BSD license)'})
+    if configuration.user_openid_address or configuration.user_openid_providers:
+        output_objects.append({'object_type': 'text', 'text' :
+                               """OpenID login/support is delivered with:"""})
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'https://github.com/openid/python-openid',
+                               'class': 'urllink iconspace',
+                               'title': 'Python OpenID Module at GitHub',
+                               'text': 'Python OpenID Module (Apache 2.0 license)'})
+        output_objects.append({'object_type': 'text', 'text' : ''})
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'http://findingscience.com/mod_auth_openid/',
+                               'class': 'urllink iconspace',
+                               'title': 'Apache OpenID Module Home Page',
+                               'text': 'Apache OpenID Module (MIT license)'})
+
+    output_objects.append({'object_type': 'text', 'text' : """The optional
+JSONRPC interface is delivered with the jsonrpclib module:"""})
+    output_objects.append({'object_type': 'link', 
+                           'destination' : 'https://pypi.python.org/pypi/jsonrpclib',
+                           'class': 'urllink iconspace',
+                           'title': 'Python JSONRPC Module at Python Package Index',
+                           'text': 'Python JSONRPClib Module (Apache 2.0 license)'})
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
