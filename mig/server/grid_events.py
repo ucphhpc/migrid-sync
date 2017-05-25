@@ -843,6 +843,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     settle_secs, time_stamp)
 
         # TODO: perhaps we should discriminate on files and dirs here?
+        # TODO: logger does not actually work here, only __workflow_X logs
 
         if rule['action'] in ['trigger-%s' % i for i in
                               valid_trigger_changes]:
@@ -957,6 +958,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 command_list.append(filled_argument)
             try:
                 run_command(command_list, target_path, rule, configuration)
+                logger.info('(%s) done running command for %s: %s' % \
+                            (pid, target_path, ' '.join(command_list)))
                 self.__workflow_info(configuration, rule['vgrid_name'],
                                      'ran command: %s'
                                      % ' '.join(command_list))

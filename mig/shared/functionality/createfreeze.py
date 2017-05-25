@@ -32,7 +32,8 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import max_freeze_files, csrf_field, freeze_flavors
+from shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
+     keyword_auto
 from shared.fileio import strip_dir
 from shared.freezefunctions import create_frozen_archive, published_url
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -205,7 +206,7 @@ Please contact the Grid admins %s if you think it should be enabled.
     freeze_department = accepted['freeze_department'][-1].strip()
     freeze_organization = accepted['freeze_organization'][-1].strip()
     freeze_publish = (accepted['freeze_publish'][-1].strip() != 'False')
-    if not freeze_name:
+    if not freeze_name or freeze_name == keyword_auto:
         if flavor == 'backup':
             freeze_name = 'backup-%s' % datetime.datetime.now()
         else:
