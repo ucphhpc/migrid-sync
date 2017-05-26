@@ -158,7 +158,7 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title') 
     label = "%s" % configuration.site_vgrid_label   
     title_entry['text'] = "Create Archive"
-    # NOTE: Delay header entry here to include vgrid_name
+    # NOTE: Delay header entry here to include freeze flavor
     # All non-file fields must be validated
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
                           (key, val) in defaults.items()])

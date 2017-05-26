@@ -322,7 +322,10 @@ Please select the files and folders to backup below.
 %(fancy_dialog)s
     """ % fill_helpers
 
-    target_op = 'createfreeze'
+    if flavor == 'backup':
+        target_op = 'createbackup'
+    else:
+        target_op = 'createfreeze'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})

@@ -57,7 +57,7 @@ def get_command_map(configuration):
         'liveio': ['action', 'src', 'dst', 'job_id'],
         'mqueue': ['queue', 'action', 'msg_id', 'msg'],
         'imagepreview': ['flags', 'action', 'path', 'extension'],
-        'createfreeze': ['flavor', 'freeze_name', 'freeze_copy_0'],
+        'createbackup': ['freeze_name', 'freeze_copy_0'],
         }
 
 def get_expand_map(trigger_path, rule, state_change):
