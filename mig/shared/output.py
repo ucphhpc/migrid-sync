@@ -174,6 +174,65 @@ ___%s___
                 lines += pprint_table(txt_table_if_have_keys(header,
                                   submitstatuslist, ['name', 'status',
                                                      'job_id', 'message']))
+        elif i['object_type'] == 'frozenarchives':
+            frozenarchives = i['frozenarchives']
+            header = [['ID', 'Name', 'Created', 'Flavor', 'Files']]
+            mangle_fields = ['created']
+            content_keys = ['id', 'name', 'created_mangled', 'flavor',
+                            'frozenfiles']
+            for single_archive in frozenarchives:
+                for key in mangle_fields:
+                    val = single_archive[key]
+                    key = "%s_mangled" % key
+                    if key.startswith('created_'):
+                        marker = '</div>'
+                        val = val[val.find(marker) + len(marker):]
+                    else:
+                        val = ','.join(val)
+                    single_archive[key] = val
+            lines += pprint_table(txt_table_if_have_keys(header,
+                                                         frozenarchives,
+                                                         content_keys))
+        elif i['object_type'] == 'frozenarchive':
+            frozenarchive = i
+            frozenfiles = frozenarchive['frozenfiles']
+            header = [['Name', 'Size in bytes', 'MD5 checksum']]
+            content_keys = ['name', 'size', 'md5sum']
+            lines += pprint_table(txt_table_if_have_keys(header,
+                                                         frozenfiles,
+                                                         content_keys))
+
+            flavor = i.get('flavor', 'freeze')
+            lines.append('\nFrozen archive details\n')
+            lines.append('ID: %(id)s\n' % frozenarchive)
+            if flavor in ('freeze', 'backup'):
+                lines.append('Name: %(name)s\n' % frozenarchive)
+            elif flavor == 'phd':
+                lines.append('Title: %(name)s\n' % frozenarchive)
+            lines.append('Flavor: %(flavor)s\n' % frozenarchive)
+            if flavor in ('freeze', 'phd'):
+                if i.get('author', '') not in ('', 'UNSET'):
+                    lines.append('Author: %(author)s\n' % frozenarchive)
+                if i.get('department', '') not in ('', 'UNSET'):
+                    lines.append('Department: %(department)s\n' % frozenarchive)
+                if i.get('organization', '') not in ('', 'UNSET'):
+                    lines.append('Organization: %(organization)s\n' % frozenarchive)
+                lines.append('Description: %(description)s\n' % frozenarchive)
+                if i.get('publish', False):
+                    published = 'Yes'
+                    publish_url = i.get('publish_url', '')
+                    published += ' (<a href="%s">%s</a>)' % (publish_url,
+                                                             publish_url)
+                else:
+                    published = 'No'
+                lines.append('Published: %s\n' % published)
+            lines.append('Creator: %(creator)s\n' % frozenarchive)
+            marker = '</div>'
+            val = frozenarchive['created']
+            val = val[val.find(marker) + len(marker):]
+            lines.append('Created: %s\n' % val)
+            for (location, store_date) in i.get('location', []):
+                lines.append('On %s: %s\n' % (location, store_date))
         elif i['object_type'] == 'datatransfers':
             datatransferslist = i['datatransfers']
             header = [['ID', 'Action', 'Protocol', 'Host', 'Port', 'Login',

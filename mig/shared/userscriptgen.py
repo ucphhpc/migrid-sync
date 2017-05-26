@@ -175,6 +175,25 @@ def createbackup_usage_function(lang, extension):
 
     return s
 
+
+def createfreeze_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    # TODO: support multi src here (cumbersome due to freeze_copy_N format)
+    usage_str = 'Usage: %s%s.%s [OPTIONS] FLAVOR NAME DSC AUTHOR DPT ORG SRC'\
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def datatransfer_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
     
@@ -193,6 +212,40 @@ def datatransfer_usage_function(lang, extension):
     return s
 
 
+def deletebackup_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] FREEZE_ID' \
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
+def deletefreeze_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] FLAVOR FREEZE_ID' \
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def doc_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
     
@@ -201,6 +254,23 @@ def doc_usage_function(lang, extension):
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] [TOPIC ...]' % (mig_prefix,
+            op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
+def freezedb_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS]' % (mig_prefix,
             op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
@@ -629,6 +699,38 @@ def sharelink_usage_function(lang, extension):
     return s
 
 
+def showbackup_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] FREEZE_ID' \
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+def showfreeze_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] FLAVOR FREEZE_ID' \
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
 def stat_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
     
@@ -1014,7 +1116,7 @@ def createbackup_function(configuration, lang, curl_cmd, curl_flags='--compresse
         return ''
 
     s = ''
-    s += begin_function(lang, 'createbackup_file', ['freeze_name', 'src'],
+    s += begin_function(lang, 'create_backup', ['freeze_name', 'src'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -1027,7 +1129,43 @@ def createbackup_function(configuration, lang, curl_cmd, curl_flags='--compresse
         curl_cmd,
         curl_flags,
         )
-    s += end_function(lang, 'createbackup_file')
+    s += end_function(lang, 'create_backup')
+    return s
+
+
+def createfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+    """Call the corresponding cgi script with flavor, freeze_name,
+    freeze_description, freeze_author, freeze_department, freeze_organization,
+    freeze_publish and src as arguments.
+    """
+
+    relative_url = '"%s/createfreeze.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args;flags=$server_flags"'
+        urlenc_data = '("flavor=$flavor" "freeze_name=$freeze_name" "freeze_description=$freeze_description" "freeze_author=$freeze_author" "freeze_department=$freeze_department" "freeze_organization=$freeze_organization" "freeze_publish=$freeze_publish" "freeze_copy_0=$src")'
+    elif lang == 'python':
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        urlenc_data = '["flavor=" + flavor, "freeze_name=" + freeze_name, "freeze_description=" + freeze_description, "freeze_author=" + freeze_author, "freeze_department=" + freeze_department, "freeze_organization=" + freeze_organization, "freeze_publish=" + freeze_publish, "freeze_copy_0=" + src]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'create_freeze', ['flavor', 'freeze_name', 'freeze_description', 'freeze_author', 'freeze_department', 'freeze_organization', 'freeze_publish', 'src'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'create_freeze')
     return s
 
 
@@ -1073,6 +1211,74 @@ def datatransfer_function(configuration, lang, curl_cmd, curl_flags='--compresse
         curl_flags,
         )
     s += end_function(lang, 'datatransfer')
+    return s
+
+
+def deletebackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+    """Call the corresponding cgi script with the freeze_id as argument.
+    """
+
+    relative_url = '"%s/deletebackup.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args;flags=$server_flags"'
+        urlenc_data = '("freeze_id=$freeze_id")'
+    elif lang == 'python':
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        urlenc_data = '["freeze_id=" + freeze_id]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'delete_backup', ['freeze_id'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'delete_backup')
+    return s
+
+
+def deletefreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+    """Call the corresponding cgi script with the freeze_id as argument.
+    """
+
+    relative_url = '"%s/deletefreeze.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args;flags=$server_flags"'
+        urlenc_data = '("flavor=$flavor" "freeze_id=$freeze_id")'
+    elif lang == 'python':
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        urlenc_data = '["flavor=" + flavor, "freeze_id=" + freeze_id]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'delete_freeze', ['flavor', 'freeze_id'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'delete_freeze')
     return s
 
 
@@ -1144,6 +1350,39 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
         )
     s += end_function(lang, 'expand_name')
+    return s
+
+
+def freezedb_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the 'job_list' as argument"""
+
+    relative_url = '"%s/freezedb.py"' % get_xgi_bin(configuration)
+    query = '""'
+    urlenc_data = '""'
+    # NOTE: we request non-AJAX version (showlist) below to get useful output
+    if lang == 'sh':
+        post_data = '"$default_args;operation=showlist;flags=$server_flags"'
+    elif lang == 'python':
+        post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'freeze_db', [],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'freeze_db')
     return s
 
 
@@ -1864,6 +2103,76 @@ def sharelink_function(configuration, lang, curl_cmd, curl_flags='--compressed')
     return s
 
 
+def showbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+    """Call the corresponding cgi script with the freeze_id as argument.
+    """
+
+    relative_url = '"%s/showbackup.py"' % get_xgi_bin(configuration)
+    query = '""'
+    # NOTE: we request non-AJAX version (showlist) below to get useful output
+    if lang == 'sh':
+        post_data = '"$default_args;operation=showlist;flags=$server_flags"'
+        urlenc_data = '("freeze_id=$freeze_id")'
+    elif lang == 'python':
+        post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
+        urlenc_data = '["freeze_id=" + freeze_id]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'show_backup', ['freeze_id'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'show_backup')
+    return s
+
+
+def showfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+    """Call the corresponding cgi script with the freeze_id as argument.
+    """
+
+    relative_url = '"%s/showfreeze.py"' % get_xgi_bin(configuration)
+    query = '""'
+    # NOTE: we request non-AJAX version (showlist) below to get useful output
+    if lang == 'sh':
+        post_data = '"$default_args;operation=showlist;flags=$server_flags"'
+        urlenc_data = '("flavor=$flavor" "freeze_id=$freeze_id")'
+    elif lang == 'python':
+        post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
+        urlenc_data = '["flavor=" + flavor, "freeze_id=" + freeze_id]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'show_freeze', ['flavor', 'freeze_id'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'show_freeze')
+    return s
+
+
 def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with path_list as argument"""
 
@@ -2077,13 +2386,14 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             ;;
         'createbackup')
             pre_cmds[1]=\"${put_cmd} '${txt_test}' .\"
-            cmd_args[1]=\"'AUTO' '${txt_test}'\"
-            # expose and use showfreeze + deletefreeze?
-            #verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            cmd_args[1]=\"'${test_prefix}' '${txt_test}'\"
             post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
             ;;
         'datatransfer')
             cmd_args[1]=\"show\"
+            ;;
+        'deletebackup')
+            cmd_args[1]=\"'${test_prefix}'\"
             ;;
         'doc')
             cmd_args[1]=''
@@ -2167,6 +2477,9 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             ;;
         'sharelink')
             cmd_args[1]=\"show\"
+            ;;
+        'showbackup')
+            cmd_args[1]=\"'${test_prefix}'\"
             ;;
         'status')
             cmd_args[1]=''
@@ -2307,12 +2620,12 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             post_cmds.append([rm_cmd, txt_test])
     elif op == 'createbackup':
             pre_cmds.append([put_cmd, txt_test, '.'])
-            cmd_args.append(['AUTO', txt_test])
-            # TODO: expose and use showfreeze and deletefreeze?
-            #verify_cmds.append([ls_cmd, '-l', txt_helper])
+            cmd_args.append([test_prefix, txt_test])
             post_cmds.append([rm_cmd, txt_test])
     elif op == 'datatransfer':
             cmd_args.append(['show'])
+    elif op == 'deletebackup':
+            cmd_args.append(['backup', test_prefix])
     elif op in ('doc', 'status'):
             cmd_args.append([''])
     elif op == 'get':
@@ -2382,6 +2695,8 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             post_cmds.append([rm_cmd, '-r', dir_test, '%s.zip' % dir_test])
     elif op == 'sharelink':
             cmd_args.append(['show'])
+    elif op == 'showbackup':
+            cmd_args.append([test_prefix])
     elif op == 'submit':
             cmd_args.append([mrsl_helper])
             cmd_args.append(['-l', mrsl_test])
@@ -3016,13 +3331,13 @@ def createbackup_main(lang):
         s += """
 freeze_name=$1
 src=$2
-createbackup_file \"$freeze_name\" \"$src\"
+create_backup \"$freeze_name\" \"$src\"
 """
     elif lang == 'python':
         s += """
 freeze_name = sys.argv[1]
 src = sys.argv[2]
-(status, out) = createbackup_file(freeze_name, src)
+(status, out) = create_backup(freeze_name, src)
 # Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
@@ -3031,6 +3346,53 @@ sys.exit(status)
         print 'Error: %s not supported!' % lang
 
     return s
+
+
+def createfreeze_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 8, 8)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+flavor=$1
+freeze_name=$2
+freeze_description=$3
+freeze_author=$4
+freeze_department=$5
+freeze_organization=$6
+freeze_publish=$7
+src=$8
+create_freeze \"$flavor\" \"$freeze_name\" \"$freeze_description\" \"$freeze_author\" \"$freeze_department\" \"$freeze_organization\" \"$freeze_publish\" \"$src\"
+"""
+    elif lang == 'python':
+        s += """
+flavor = sys.argv[1]
+freeze_name = sys.argv[2]
+freeze_description = sys.argv[3]
+freeze_author = sys.argv[4]
+freeze_department = sys.argv[5]
+freeze_organization = sys.argv[6]
+freeze_publish = sys.argv[7]
+src = sys.argv[8]
+(status, out) = create_freeze(flavor, freeze_name, freeze_description, freeze_author, freeze_department, freeze_organization, freeze_publish, src)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
 
 def datatransfer_main(lang):
     """
@@ -3096,6 +3458,72 @@ sys.exit(status)
     return s
 
 
+def deletebackup_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 1, 1)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+freeze_id=$1
+delete_backup \"$freeze_id\"
+"""
+    elif lang == 'python':
+        s += """
+freeze_id = sys.argv[1]
+(status, out) = delete_backup(freeze_id)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def deletefreeze_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, 2)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+flavor=$1
+freeze_id=$2
+delete_freeze \"$flavor\" \"$freeze_id\"
+"""
+    elif lang == 'python':
+        s += """
+flavor = sys.argv[1]
+freeze_id = sys.argv[2]
+(status, out) = delete_freeze(flavor, freeze_id)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
 def doc_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -3142,6 +3570,36 @@ for Search in SearchList:
 for Topic in TopicList:
     (status, topic_out) = show_doc("", Topic)
     out += topic_out
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def freezedb_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, None, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+freeze_db
+"""
+    elif lang == 'python':
+        s += """
+(status, out) = freeze_db()
 # Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
@@ -4030,6 +4488,70 @@ sys.exit(status)
     return s
 
 
+def showbackup_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 1, 1)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+freeze_id=$1
+show_backup \"$freeze_id\"
+"""
+    elif lang == 'python':
+        s += """
+freeze_id = sys.argv[1]
+(status, out) = show_backup(freeze_id)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+def showfreeze_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, 2)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+flavor=$1
+freeze_id=$2
+show_freeze \"$flavor\" \"$freeze_id\"
+"""
+    elif lang == 'python':
+        s += """
+flavor = sys.argv[1]
+freeze_id = sys.argv[2]
+(status, out) = show_freeze(flavor, freeze_id)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
 def stat_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -4891,6 +5413,34 @@ def generate_createbackup(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_createfreeze(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_datatransfer(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
@@ -4919,7 +5469,91 @@ def generate_datatransfer(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_deletebackup(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
+def generate_deletefreeze(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_doc(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
+def generate_freezedb(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
     # Extract op from function name
@@ -5513,6 +6147,62 @@ def generate_sharelink(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_showbackup(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
+def generate_showfreeze(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_stat(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
@@ -5867,16 +6557,16 @@ include_license = True
 
 # Supported MiG operations (don't add 'test' as it is optional)
 
-# TODO: add find, *freeze, *re, jobfeasible, jobschedule, mrslview
+# TODO: add find, *re, jobfeasible, jobschedule, mrslview, people,
 #           settings, vm*, 
 
 script_ops = [
     'cancel',
     'cat',
     'cp',
-    'createbackup',
     'datatransfer',
     'doc',
+    'freezedb',
     'imagepreview',
     'get',
     'grep',
@@ -5907,6 +6597,13 @@ script_ops = [
     'wc',
     'write',
     'zip',
+    # NOTE: test requires create, show, delete archive in that order
+    'createbackup',
+    'showbackup',
+    'deletebackup',
+    'createfreeze',
+    'showfreeze',
+    'deletefreeze',
     ]
 
 # Script prefix for all user scripts

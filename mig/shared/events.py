@@ -58,6 +58,7 @@ def get_command_map(configuration):
         'mqueue': ['queue', 'action', 'msg_id', 'msg'],
         'imagepreview': ['flags', 'action', 'path', 'extension'],
         'createbackup': ['freeze_name', 'freeze_copy_0'],
+        'deletebackup': ['freeze_id'],
         }
 
 def get_expand_map(trigger_path, rule, state_change):

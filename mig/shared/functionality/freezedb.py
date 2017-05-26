@@ -189,40 +189,60 @@ from the management.
     if operation in show_operations:
         output_objects.append({'object_type': 'sectionheader', 'text':
                                'Additional Frozen Archives'})
-        output_objects.append({'object_type': 'text', 'text': '''You can create
-frozen snapshots/archives of particular subsets of your data in order to make
-sure a verbatim copy is preserved. The freeze archive method includes support
-for persistent publishing, so that you can e.g. reference your data in
-publications. Backup archives can be used as a basic backup mechanism, so that
-you can manually recover from any erroneous file removals.'''})
-        if configuration.site_enable_seafile:
-            output_objects.append({'object_type': 'text', 'text': '''We
-recommend our Seafile sync solution for any small or medium sized data sets,
-for which you want automatic file versioning and roll-back support. For further
-details please refer to the '''})
-            output_objects.append({'object_type': 'link',
-                               'destination': 'settings.py?topic=seafile',
-                               'class': 'seafilelink iconspace',
-                               'title': 'Open Seafile settings', 
-                               'text': 'Seafile Settings'})
-            output_objects.append({'object_type': 'text', 'text':
-                                   ''' and the %s documentation.''' % \
-                                   configuration.short_title})
-        output_objects.append({'object_type': 'text', 'text': '''Choose one of
-the archive methods below to make a manual archive:'''})
+        output_objects.append({'object_type': 'text', 'text': """
+You can create frozen snapshots/archives of particular subsets of your data in
+order to make sure a verbatim copy is preserved. The freeze archive method
+includes support for persistent publishing, so that you can e.g. reference your
+data in publications. Backup archives can be used as a basic backup mechanism,
+so that you can manually recover from any erroneous file removals."""})
+
+        output_objects.append({'object_type': 'html_form', 'text': """<p>
+Choose one of the archive methods below to make a manual archive:
+</p>
+<p>"""})
         output_objects.append({'object_type': 'link',
                                'destination': 'adminfreeze.py?flavor=freeze',
                                'class': 'addlink iconspace',
                                'title': 'Make a new freeze archive of e.g. '
                                'research data to be published', 
                                'text': 'Create a new freeze archive'})
-        output_objects.append({'object_type': 'text', 'text': ''})
+        output_objects.append({'object_type': 'html_form', 'text': '</p><p>'})
         output_objects.append({'object_type': 'link',
                                'destination': 'adminfreeze.py?flavor=backup',
                                'class': 'addlink iconspace',
                                'title': 'Make a new backup archive of %s data' \
                                % configuration.short_title, 
                                'text': 'Create a new backup archive'})
+        output_objects.append({'object_type': 'html_form', 'text': "</p>"})
 
+        if configuration.site_enable_duplicati:
+            output_objects.append({'object_type': 'text', 'text': '''
+Alternatively you can use Duplicati for traditional incremental backup/restore
+with optional encryption of all your backup contents.'''})
+            output_objects.append({'object_type': 'html_form', 'text': """
+For further details please refer to the """})
+            output_objects.append({'object_type': 'link',
+                               'destination': 'settings.py?topic=duplicate',
+                               'class': 'duplicatilink iconspace',
+                               'title': 'Open Duplicati settings', 
+                               'text': 'Duplicati Settings'})
+            output_objects.append({'object_type': 'html_form', 'text':
+                                   """ and the %s documentation.""" % \
+                                   configuration.short_title})
+
+        if configuration.site_enable_seafile:
+            output_objects.append({'object_type': 'text', 'text': '''
+We recommend our Seafile sync solution for any small or medium sized data sets,
+for which you want automatic file versioning and easy roll-back support.'''})
+            output_objects.append({'object_type': 'html_form', 'text': """
+For further details please refer to the """})
+            output_objects.append({'object_type': 'link',
+                               'destination': 'settings.py?topic=seafile',
+                               'class': 'seafilelink iconspace',
+                               'title': 'Open Seafile settings', 
+                               'text': 'Seafile Settings'})
+            output_objects.append({'object_type': 'html_form', 'text':
+                                   """ and the %s documentation.""" % \
+                                   configuration.short_title})
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, returnvalues.OK)
