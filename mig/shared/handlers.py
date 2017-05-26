@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # handlers - back.end handler helpers
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -84,9 +84,9 @@ def check_enable_csrf(configuration, accepted_dict, environ=None):
     agent = environ.get('HTTP_USER_AGENT', 'UNKNOWN')
     if agent.lower().startswith('curl') or agent.lower().startswith('xmlrpc') \
            or agent.lower().startswith('jsonrpc'):
-        # No csrf_field input results in the defaults allow_me string
-        csrf_token = accepted_dict.get(csrf_field, ['allow_me'])[-1]
-        if csrf_token and csrf_token != 'allow_me':
+        # No csrf_field input results in the defaults AllowMe string
+        csrf_token = accepted_dict.get(csrf_field, ['AllowMe'])[-1]
+        if csrf_token and csrf_token != 'AllowMe':
             _logger.debug("enable CSRF check for modern script (%s)" % agent)
             return True
         else:

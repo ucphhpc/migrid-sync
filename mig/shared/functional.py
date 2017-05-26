@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # functional - functionality backend helpers
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -84,10 +84,11 @@ def validate_input(
 
     # always allow output_format, csrf_field and underscore cache-prevention
     # dummy - we don't want redundant lines in all scripts for that.
+    # NOTE: use AllowMe to avoid input validation errors from e.g. underscore
 
-    defaults['output_format'] = ['allow_me']
-    defaults[csrf_field] = ['allow_me']
-    defaults['_'] = ['allow_me']
+    defaults['output_format'] = ['AllowMe']
+    defaults[csrf_field] = ['AllowMe']
+    defaults['_'] = ['AllowMe']
     if prefilter_map:
         prefilter_input(user_arguments_dict, prefilter_map)
     (accepted, rejected) = validated_input(user_arguments_dict,

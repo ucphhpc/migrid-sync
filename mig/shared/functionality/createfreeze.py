@@ -163,7 +163,7 @@ def main(client_id, user_arguments_dict):
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
                           (key, val) in defaults.items()])
     # IMPORTANT: we must explicitly inlude CSRF token
-    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, ['allowme'])
+    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, ['AllowMe'])
     (validate_status, accepted) = validate_input_and_cert(
         validate_args,
         defaults,

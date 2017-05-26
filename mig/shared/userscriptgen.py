@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -157,6 +157,23 @@ def cp_usage_function(lang, extension):
 
     return s
 
+
+def createbackup_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    # TODO: support multi src here (cumbersome due to freeze_copy_N format)
+    usage_str = 'Usage: %s%s.%s [OPTIONS] NAME SRC'\
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
 
 def datatransfer_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
@@ -976,6 +993,41 @@ def cp_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
         )
     s += end_function(lang, 'cp_file')
+    return s
+
+
+def createbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+    """Call the corresponding cgi script with the freeze_name and src args as
+    arguments.
+    """
+
+    relative_url = '"%s/createbackup.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args;flags=$server_flags"'
+        urlenc_data = '("freeze_name=$freeze_name" "freeze_copy_0=$src")'
+    elif lang == 'python':
+        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        urlenc_data = '["freeze_name=" + freeze_name, "freeze_copy_0=" + src]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'createbackup_file', ['freeze_name', 'src'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'createbackup_file')
     return s
 
 
@@ -2023,6 +2075,13 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
             post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
             ;;
+        'createbackup')
+            pre_cmds[1]=\"${put_cmd} '${txt_test}' .\"
+            cmd_args[1]=\"'AUTO' '${txt_test}'\"
+            # expose and use showfreeze + deletefreeze?
+            #verify_cmds[1]=\"${ls_cmd} -l '${txt_test}'\"
+            post_cmds[1]=\"${rm_cmd} '${txt_test}'\"
+            ;;
         'datatransfer')
             cmd_args[1]=\"show\"
             ;;
@@ -2245,6 +2304,12 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
             pre_cmds.append([rm_cmd, txt_test, '.'])
             cmd_args.append([txt_helper, txt_test])
             verify_cmds.append([ls_cmd, '-l', txt_test])
+            post_cmds.append([rm_cmd, txt_test])
+    elif op == 'createbackup':
+            pre_cmds.append([put_cmd, txt_test, '.'])
+            cmd_args.append(['AUTO', txt_test])
+            # TODO: expose and use showfreeze and deletefreeze?
+            #verify_cmds.append([ls_cmd, '-l', txt_helper])
             post_cmds.append([rm_cmd, txt_test])
     elif op == 'datatransfer':
             cmd_args.append(['show'])
@@ -2933,6 +2998,39 @@ sys.exit(status)
 
     return s
 
+
+def createbackup_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, 2)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+freeze_name=$1
+src=$2
+createbackup_file \"$freeze_name\" \"$src\"
+"""
+    elif lang == 'python':
+        s += """
+freeze_name = sys.argv[1]
+src = sys.argv[2]
+(status, out) = createbackup_file(freeze_name, src)
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
 
 def datatransfer_main(lang):
     """
@@ -4765,6 +4863,34 @@ def generate_cp(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_createbackup(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+    
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_datatransfer(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
     
@@ -5748,6 +5874,7 @@ script_ops = [
     'cancel',
     'cat',
     'cp',
+    'createbackup',
     'datatransfer',
     'doc',
     'imagepreview',

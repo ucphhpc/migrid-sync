@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - combined text/mrsl writer and file upload
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -139,7 +139,7 @@ def main(client_id, user_arguments_dict):
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
                          (key, val) in defaults.items()])
     # IMPORTANT: we must explicitly inlude CSRF token
-    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, ['allowme'])
+    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, ['AllowMe'])
 
     (validate_status, accepted) = validate_input_and_cert(
         validate_args,
@@ -264,7 +264,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             if local_filename.upper().endswith('.MRSL')\
                  and submit_mrslfiles:
-                mrslfiles_to_parse.append[local_filename]
+                mrslfiles_to_parse.append(local_filename)
         elif file_type == 'fileupload':
 
             # An input type=file was found
