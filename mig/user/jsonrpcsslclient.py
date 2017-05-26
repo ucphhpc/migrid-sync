@@ -294,6 +294,16 @@ key/certificate passphrase before you can continue.
                     print '%s %s' % (el['type'], el['name'])
     print
 
+    print 'checking archives'
+    (inlist, retval) = server.freezedb({'operation': ['showlist']})
+    (returnval, returnmsg) = retval
+    if returnval != 0:
+        print 'Error %s:%s ' % (returnval, returnmsg)
+    for ele in inlist:
+        if ele['object_type'] == 'frozenarchives':
+            for ale in ele['frozenarchives']:
+                    print '%(id)s\t%(flavor)s\t%(name)s\t%(frozenfiles)s' % ale
+
     resconfig = \
         r"""::MIGUSER::
 karlsen
