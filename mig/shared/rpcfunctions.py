@@ -741,6 +741,24 @@ def adminre(user_arguments_dict):
     return stub('shared.functionality.adminre', user_arguments_dict)
 
 
+def createbackup(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.createbackup', user_arguments_dict)
+
+
+def deletebackup(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.deletebackup', user_arguments_dict)
+
+
+def showbackup(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.showbackup', user_arguments_dict)
+
+
 def createfreeze(user_arguments_dict):
     """Wrap backend of same name"""
 
@@ -914,6 +932,9 @@ expose_functions = [object_type_info,
                     showre,
                     redb,
                     adminre,
+                    createbackup,
+                    deletebackup,
+                    showbackup,
                     createfreeze,
                     deletefreeze,
                     adminfreeze,
