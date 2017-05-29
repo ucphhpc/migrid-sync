@@ -1157,7 +1157,8 @@ a:hover.genericbutton {
     border: 1px solid gold;
     border-radius: 4px;
     color: red;
-    font-size: 18px;
+    font-size: 14px;
+    font-weight: bold;
     background-color: gold;
     background-image: url('/images/icons/error.png');
     background-position: left center;
