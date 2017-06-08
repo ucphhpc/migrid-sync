@@ -81,6 +81,9 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
 
     if op_title:
         title_object = make_title_entry('%s' % op_name, skipmenu=(not op_menu))
+        # Make sure base_menu is always set for extract_menu
+        # Typicall overriden based on client_id cases below
+        title_object['base_menu'] = configuration.site_default_menu
         output_objects.append(title_object)
     if op_header:
         header_object = make_header_entry('%s' % op_name)
