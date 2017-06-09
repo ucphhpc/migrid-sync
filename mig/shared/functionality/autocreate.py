@@ -236,7 +236,8 @@ def main(client_id, user_arguments_dict, environ=None):
                                 if i])
         locality = accepted['openid.sreg.locality'][-1].strip()
         timezone = accepted['openid.sreg.timezone'][-1].strip()
-        email = accepted['openid.sreg.email'][-1].strip()
+        # We may encounter results without an email, fall back to uniq_id then
+        email = accepted['openid.sreg.email'][-1].strip() or uniq_id
 
     # Fix case of values:
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
