@@ -1515,7 +1515,6 @@ You can define the backup sets here and then afterwards just download and
 import the configuration file in your Duplicati client, to set up everything
 for %(site)s backup use.
 </td></tr>
-<tr><td>
 '''
 
         duplicati_entries = get_duplicati_specs()
@@ -1604,10 +1603,13 @@ for %(site)s backup use.
                              % (selected, choice, choice)
                     html += '</select><br />'
 
+            html += '''
+            </td></tr>
+        '''
         html += '''
         <tr><td>
         <input type="submit" value="Save Duplicati Settings" />
-</td></tr>
+        </td></tr>
 </table>
 </form>
 '''
@@ -1642,6 +1644,7 @@ After downloading you can import them directly in the most recent Duplicati
 client versions from the link above.<br/>
 </td></tr>
 </table>
+</div>
 '''
 
         fill_helpers.update({
