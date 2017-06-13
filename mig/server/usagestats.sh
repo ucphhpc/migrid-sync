@@ -60,5 +60,11 @@ echo "=== Frozen Archives ==="
 # TODO: update to fit only new client_id location when migrated
 find $STATEDIR/freeze_home -mindepth 2 -maxdepth 3 -type f -name meta.pck -ctime -7 | wc -l
 
-echo "== User distribution =="
+echo ""
+
+echo "== User Distribution =="
+echo "=== By Organisation ==="
 $SERVERDIR/searchusers.py -f distinguished_name | grep -v 'Matching users' | python countorg.py
+
+echo "=== By Email Domain ==="
+$SERVERDIR/searchusers.py -f email | grep -v 'Matching users' | python countemail.py

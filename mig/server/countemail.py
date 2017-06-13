@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# countorg - display count for each unique organizational prefix read on stdin
+# countemail - display count for each unique email domain read on stdin
 # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,22 +25,22 @@
 # -- END_HEADER ---
 #
 
-"""Show count for each unique DN organizational prefix given on stdin.
+"""Show count for each unique email domain given on stdin.
 
 Use e.g. as in
-./searchusers.py -f distinguished_name | grep -v 'Matching users' | python countorg.py
+./searchusers.py -f email | grep -v 'Matching users' | python countemail.py
 """
 
 import fileinput
 
 if __name__ == '__main__':
-    org_map = {}
+    domain_map = {}
     for line in fileinput.input():
-        org_prefix = line.split('/OU=', 1)[0]
-        if not org_map.has_key(org_prefix):
-            org_map[org_prefix] = 0
-        org_map[org_prefix] += 1
-    org_list = org_map.items()
-    org_list.sort()
-    for (org, cnt) in org_list:
-        print '%d\t%s' % (cnt, org)
+        domain_suffix = line.split('@', 1)[1].strip()
+        if not domain_map.has_key(domain_suffix):
+            domain_map[domain_suffix] = 0
+        domain_map[domain_suffix] += 1
+    domain_list = domain_map.items()
+    domain_list.sort()
+    for (domain, cnt) in domain_list:
+        print '%d\t%s' % (cnt, domain)
