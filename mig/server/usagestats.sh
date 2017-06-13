@@ -59,3 +59,6 @@ echo "=== Frozen Archives ==="
 # NOTE: meta.pck file never changes for archives
 # TODO: update to fit only new client_id location when migrated
 find $STATEDIR/freeze_home -mindepth 2 -maxdepth 3 -type f -name meta.pck -ctime -7 | wc -l
+
+echo "== User distribution =="
+$SERVERDIR/searchusers.py -f distinguished_name | grep -v 'Matching users' | python countorg.py
