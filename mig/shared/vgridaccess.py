@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridaccess - user access in VGrids
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -520,15 +520,16 @@ def get_user_map(configuration):
     modified_users, _ = check_users_modified(configuration)
     if modified_users:
         configuration.logger.info("refreshing user map (%s)" % modified_users)
-        map_stamp = time.time()
+        map_stamp = load_stamp = time.time()
         user_map = refresh_user_map(configuration)
         reset_users_modified(configuration)
     else:
         configuration.logger.debug("No changes - not refreshing")
+        load_stamp = time.time()
         user_map, map_stamp = load_user_map(configuration)
     last_map[USERS] = user_map
     last_refresh[USERS] = map_stamp
-    last_load[USERS] = map_stamp
+    last_load[USERS] = load_stamp
     return user_map
 
 def get_resource_map(configuration):
@@ -541,15 +542,16 @@ def get_resource_map(configuration):
     modified_resources, _ = check_resources_modified(configuration)
     if modified_resources:
         configuration.logger.info("refreshing resource map (%s)" % modified_resources)
-        map_stamp = time.time()
+        map_stamp = load_stamp = time.time()
         resource_map = refresh_resource_map(configuration)
         reset_resources_modified(configuration)
     else:
         configuration.logger.debug("No changes - not refreshing")
+        load_stamp = time.time()
         resource_map, map_stamp = load_resource_map(configuration)
     last_map[RESOURCES] = resource_map
     last_refresh[RESOURCES] = map_stamp
-    last_load[RESOURCES] = map_stamp
+    last_load[RESOURCES] = load_stamp
     return resource_map
 
 def vgrid_inherit_map(configuration, vgrid_map):
@@ -589,7 +591,6 @@ def get_vgrid_map(configuration, recursive=True):
     participation with inherited entities. The raw vgrid map only mirrors the
     direct participation.
     """
-    # TODO: is it correct that vgrid_map only contains direct participation?
     if last_load[VGRIDS] + MAP_CACHE_SECONDS > time.time():
         configuration.logger.debug("using cached vgrid map")
         vgrid_map = last_map[VGRIDS]
@@ -598,15 +599,16 @@ def get_vgrid_map(configuration, recursive=True):
         if modified_vgrids:
             configuration.logger.info("refreshing vgrid map (%s)" % \
                                       modified_vgrids)
-            map_stamp = time.time()
+            map_stamp = load_stamp = time.time()
             vgrid_map = refresh_vgrid_map(configuration)
             reset_vgrids_modified(configuration)
         else:
             configuration.logger.debug("No changes - not refreshing")
+            load_stamp = time.time()
             vgrid_map, map_stamp = load_vgrid_map(configuration)
         last_map[VGRIDS] = vgrid_map
         last_refresh[VGRIDS] = map_stamp
-        last_load[VGRIDS] = map_stamp
+        last_load[VGRIDS] = load_stamp
     if recursive:
         return vgrid_inherit_map(configuration, vgrid_map)
     else:
@@ -645,6 +647,21 @@ def user_vgrid_access(configuration, client_id, inherited=False,
                 vgrid_access += vgrid_list_parents(vgrid, configuration)
             vgrid_access.append(vgrid)
     return vgrid_access
+    
+def check_vgrid_access(configuration, client_id, vgrid_name, recursive=True):
+    """Inspect the vgrid map and check if client_id is either a member or
+    owner of vgrid_name.
+    The optional recursive argument is passed directly to the get_vgrid_map
+    call so please refer to the use there.
+    Thus this is basically the fast equivalent of vgrid_is_owner_or_member from
+    the vgrid module and should replace that one everywhere that only vgrid map
+    (cached) lookups are needed.
+    """
+    vgrid_access = [default_vgrid]
+    vgrid_map = get_vgrid_map(configuration, recursive)
+    vgrid_entry = vgrid_map[VGRIDS].get(vgrid_name, {OWNERS: [], MEMBERS: []})
+    return vgrid_allowed(client_id, vgrid_entry[OWNERS]) or \
+               vgrid_allowed(client_id, vgrid_entry[MEMBERS])
     
 def res_vgrid_access(configuration, client_id, recursive=True):
     """Extract a list of vgrids that resource is allowed to access.
