@@ -80,7 +80,8 @@ from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.job import fill_mrsl_template, new_job
 from shared.logger import daemon_logger, reopen_log
 from shared.serial import load
-from shared.vgrid import vgrid_is_owner_or_member, vgrid_valid_entities
+from shared.vgrid import vgrid_valid_entities
+from shared.vgridaccess import check_vgrid_access
 
 # Global trigger rule dictionaries with rules for all VGrids
 
@@ -1052,8 +1053,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         is_directory = event.is_directory
 
-        # logger.debug('(%s) got %s event for src_path: %s, directory: %s' % (pid, state,
-        #             src_path, is_directory))
+        logger.debug('(%s) got %s event for src_path: %s, directory: %s' % \
+                     (pid, state, src_path, is_directory))
         # logger.debug('(%s) filter %s against %s' % (pid,
         #             all_rules.keys(), src_path))
 
@@ -1078,8 +1079,12 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     # user may have been removed from vgrid - log and ignore
 
-                    if not vgrid_is_owner_or_member(rule['vgrid_name'],
-                            rule['run_as'], configuration):
+                    logger.debug('(%s) check valid user %s in %s for %s' % \
+                                 (pid, rule['run_as'], rule['vgrid_name'],
+                                  rule['rule_id']))
+
+                    if not check_vgrid_access(configuration, rule['run_as'],
+                                              rule['vgrid_name']):
                         logger.warning('(%s) no such user in vgrid: %s'
                                 % (pid, rule['run_as']))
                         continue
