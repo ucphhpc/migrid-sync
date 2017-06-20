@@ -1077,7 +1077,45 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                 for rule in rule_list:
 
-                    # user may have been removed from vgrid - log and ignore
+                    # Rules may listen for only file or dir events and with
+                    # recursive directory search
+
+                    if is_directory and not rule.get('match_dirs',
+                            False):
+
+                        logger.debug('(%s) skip event %s handling for dir: %s'
+                                     % (pid, rule['rule_id'], src_path))
+
+                        continue
+                    if not is_directory and not rule.get('match_files',
+                            True):
+
+                        logger.debug('(%s) skip %s event handling for file: %s'
+                                     % (pid, rule['rule_id'], src_path))
+
+                        continue
+                    if not direct_hit and not rule.get('match_recursive',
+                                                       False):
+
+                        logger.debug('(%s) skip %s recurse event handling for: %s'
+                                     % (pid, rule['rule_id'], src_path))
+
+                        continue
+                    if not state in rule['changes']:
+
+                        # logger.debug('(%s) skip %s %s event handling for: %s'
+                        #         % (pid, rule['rule_id'], state,
+                        #        src_path))
+
+                        continue
+
+                    # IMPORTANT: keep this vgrid access check last!
+                    # It is far more computationally expensive than the simple
+                    # checks above. We particularly want to filter the common
+                    # storm of events from the system_imagesettings_dir_deleted
+                    # trigger for '*' but only on dirs, before it gets here.
+                    
+                    # User may have been removed from vgrid - log and ignore
 
                     logger.debug('(%s) check valid user %s in %s for %s' % \
                                  (pid, rule['run_as'], rule['vgrid_name'],
@@ -1087,38 +1125,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                               rule['vgrid_name']):
                         logger.warning('(%s) no such user in vgrid: %s'
                                 % (pid, rule['run_as']))
-                        continue
-
-                    # Rules may listen for only file or dir events and with
-                    # recursive directory search
-
-                    if is_directory and not rule.get('match_dirs',
-                            False):
-
-                        # logger.debug('(%s) skip event %s handling for dir: %s'
-                        #         % (pid, rule['rule_id'], src_path))
-
-                        continue
-                    if not is_directory and not rule.get('match_files',
-                            True):
-
-                        # logger.debug('(%s) skip %s event handling for file: %s'
-                        #         % (pid, rule['rule_id'], src_path))
-
-                        continue
-                    if not direct_hit and not rule.get('match_recursive'
-                            , False):
-
-                        # logger.debug('(%s) skip %s recurse event handling for: %s'
-                        #         % (pid, rule['rule_id'], src_path))
-
-                        continue
-                    if not state in rule['changes']:
-
-                        # logger.debug('(%s) skip %s %s event handling for: %s'
-                        #         % (pid, rule['rule_id'], state,
-                        #        src_path))
-
                         continue
 
                     logger.info('(%s) trigger %s for src_path: %s -> %s'
