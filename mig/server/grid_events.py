@@ -89,6 +89,10 @@ all_rules = {}
 rule_hits = {}
 dir_cache = {}
 
+# Global miss cache to avoid wasting energy on repeated events without triggers
+
+miss_cache = {}
+
 # Global state helpers used in a number of functions and methods
 
 shared_state = {}
@@ -98,6 +102,14 @@ shared_state['file_inotify'] = None
 shared_state['file_handler'] = None
 shared_state['rule_handler'] = None
 shared_state['rule_inotify'] = None
+
+# Only cache rule misses for one minute at a time to catch rule updates.
+# Run complete expire cycle if miss cache exceeds expire size.
+
+_miss_cache_ttl = 60
+_cache_expire_size = 10000
+
+# Rate limit helpers
 
 (_rate_limit_field, _settle_time_field) = ('rate_limit', 'settle_time')
 _default_period = 'm'
@@ -1044,6 +1056,62 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             #    logger.debug('(%s) src_path: %s was deleted before current event: %s'
             #                  % (pid, src_path, state))
 
+    def _get_event_id(self, event):
+        """Build a simplified string form of event properties for use in the
+        trigger miss cache.
+        """
+        return "path=%s;state=%s;isdir=%s" % (event.src_path, event.event_type,
+                                              event.is_directory)
+
+    def _update_recent_miss(self, event, hit):
+        """Update the internal cache of recent events with no matching trigger
+        rules for given event and hit status. Clears miss cache for event on
+        a rule hit and adds the miss to the cache otherwise.
+        On miss it additionally checks if the cache size exceeds the limit and
+        if so expires all old misses.
+        """
+        pid = multiprocessing.current_process().pid
+
+        event_id = self._get_event_id(event)
+        if not hit:
+            logger.debug('(%s) update miss for %s: %s' % (pid, event_id,
+                                                          event.time_stamp))
+            miss_cache[event_id] = event.time_stamp
+        elif miss_cache.has_key(event_id):
+            logger.debug('(%s) delete miss cache for %s' % (pid, event_id))
+            del miss_cache[event_id]
+            return
+        else:
+            logger.debug('(%s) no miss cache change for %s' % (pid, event_id))
+            return
+
+        if len(miss_cache) < _cache_expire_size:
+            return
+        
+        logger.debug('(%s) expire all old entries in miss cache' % pid)
+        now = time.time()
+        for (event_id, time_stamp) in miss_cache.items():
+            if time_stamp + _miss_cache_ttl < now:
+                del miss_cache[event_id]
+        logger.debug('(%s) miss cache entries left after expire: %d' % \
+                     (pid, len(miss_cache)))
+        
+    def _recent_miss(self, event):
+        """Check if we recently dismissed this kind of event. We store a small
+        cache of recent events with no matching rules and check if given event
+        is identical except the timestamp.
+        """
+        pid = multiprocessing.current_process().pid
+        event_id = self._get_event_id(event)
+        recent = miss_cache.get(event_id, -1)
+        if recent + _miss_cache_ttl > time.time():
+            logger.debug('(%s) found recent miss for %s: %s' % (pid, event_id,
+                                                                recent))
+            return True
+        else:
+            logger.debug('(%s) no recent miss for %s' % (pid, event_id))
+            return False
+
     def run_handler(self, event):
         """Trigger any rule actions bound to file state change"""
 
@@ -1058,6 +1126,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # logger.debug('(%s) filter %s against %s' % (pid,
         #             all_rules.keys(), src_path))
 
+        if self._recent_miss(event):
+            logger.debug('(%s) skip cached miss %s event for src_path: %s' % \
+                         (pid, state, src_path))
+            return
+
+        rule_hit = False
+        
         # Each target_path pattern has one or more rules associated
 
         for (target_path, rule_list) in all_rules.items():
@@ -1130,6 +1205,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     logger.info('(%s) trigger %s for src_path: %s -> %s'
                                  % (pid, rule['action'], src_path,
                                 rule))
+                    
+                    rule_hit = True
 
                     # TODO: Replace try / catch with a 'event queue / thread pool' setup
 
@@ -1152,6 +1229,11 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             # else:
             #    logger.debug('(%s) skip %s with no matching rules'
             #                 % (pid, target_path))
+
+        # Finally update rule miss cache for this event
+
+        self._update_recent_miss(event, rule_hit)
+
 
     def handle_event(self, event):
         """Handle an event in the background so that it can block without
