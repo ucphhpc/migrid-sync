@@ -1074,27 +1074,27 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         event_id = self._get_event_id(event)
         if not hit:
-            logger.debug('(%s) update miss for %s: %s' % (pid, event_id,
-                                                          event.time_stamp))
+            # logger.debug('(%s) update miss for %s: %s' % (pid, event_id,
+            #                                               event.time_stamp))
             miss_cache[event_id] = event.time_stamp
         elif miss_cache.has_key(event_id):
-            logger.debug('(%s) delete miss cache for %s' % (pid, event_id))
+            # logger.debug('(%s) delete miss cache for %s' % (pid, event_id))
             del miss_cache[event_id]
             return
         else:
-            logger.debug('(%s) no miss cache change for %s' % (pid, event_id))
+            # logger.debug('(%s) no miss cache change for %s' % (pid, event_id))
             return
 
         if len(miss_cache) < _cache_expire_size:
             return
         
-        logger.debug('(%s) expire all old entries in miss cache' % pid)
+        logger.info('(%s) expire all old entries in miss cache' % pid)
         now = time.time()
         for (event_id, time_stamp) in miss_cache.items():
             if time_stamp + _miss_cache_ttl < now:
                 del miss_cache[event_id]
-        logger.debug('(%s) miss cache entries left after expire: %d' % \
-                     (pid, len(miss_cache)))
+        logger.info('(%s) miss cache entries left after expire: %d' % \
+                    (pid, len(miss_cache)))
         
     def _recent_miss(self, event):
         """Check if we recently dismissed this kind of event. We store a small
@@ -1105,11 +1105,11 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         event_id = self._get_event_id(event)
         recent = miss_cache.get(event_id, -1)
         if recent + _miss_cache_ttl > time.time():
-            logger.debug('(%s) found recent miss for %s: %s' % (pid, event_id,
-                                                                recent))
+            # logger.debug('(%s) found recent miss for %s: %s' % (pid, event_id,
+            #                                                     recent))
             return True
         else:
-            logger.debug('(%s) no recent miss for %s' % (pid, event_id))
+            # logger.debug('(%s) no recent miss for %s' % (pid, event_id))
             return False
 
     def run_handler(self, event):
@@ -1121,8 +1121,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         is_directory = event.is_directory
 
-        logger.debug('(%s) got %s event for src_path: %s, directory: %s' % \
-                     (pid, state, src_path, is_directory))
+        # logger.debug('(%s) got %s event for src_path: %s, directory: %s' % \
+        #             (pid, state, src_path, is_directory))
         # logger.debug('(%s) filter %s against %s' % (pid,
         #             all_rules.keys(), src_path))
 
@@ -1158,22 +1158,22 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     if is_directory and not rule.get('match_dirs',
                             False):
 
-                        logger.debug('(%s) skip event %s handling for dir: %s'
-                                     % (pid, rule['rule_id'], src_path))
+                        # logger.debug('(%s) skip event %s handling for dir: %s'
+                        #              % (pid, rule['rule_id'], src_path))
 
                         continue
                     if not is_directory and not rule.get('match_files',
                             True):
 
-                        logger.debug('(%s) skip %s event handling for file: %s'
-                                     % (pid, rule['rule_id'], src_path))
+                        # logger.debug('(%s) skip %s event handling for file: %s'
+                        #             % (pid, rule['rule_id'], src_path))
 
                         continue
                     if not direct_hit and not rule.get('match_recursive',
                                                        False):
 
-                        logger.debug('(%s) skip %s recurse event handling for: %s'
-                                     % (pid, rule['rule_id'], src_path))
+                        # logger.debug('(%s) skip %s recurse event handling for: %s'
+                        #              % (pid, rule['rule_id'], src_path))
 
                         continue
                     if not state in rule['changes']:
@@ -1192,9 +1192,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     
                     # User may have been removed from vgrid - log and ignore
 
-                    logger.debug('(%s) check valid user %s in %s for %s' % \
-                                 (pid, rule['run_as'], rule['vgrid_name'],
-                                  rule['rule_id']))
+                    # logger.debug('(%s) check valid user %s in %s for %s' % \
+                    #              (pid, rule['run_as'], rule['vgrid_name'],
+                    #               rule['rule_id']))
 
                     if not check_vgrid_access(configuration, rule['run_as'],
                                               rule['vgrid_name']):
