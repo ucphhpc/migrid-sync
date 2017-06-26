@@ -1049,9 +1049,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                      rmdir_link)
                         cols += 1
                         ls_url = ls_url_template % directory
+                        extra_class = directory.get('extra_class', '')
+                        special = directory.get('special', '')
                         open_link = '''
-                        <a class="leftpad directoryicon" title="open" href="%s">
-                        %s</a>''' % (ls_url, directory['name'])
+                        <a class="leftpad directoryicon %s" title="%s %s" href="%s">
+                        %s</a>''' % (extra_class, directory['name'], special,
+                                     ls_url, directory['name'])
                         lines.append('<td>%s</td>' % open_link)
                         cols += 1
                         lines.append('''<td class="empty_cell narrow" colspan="%d">
