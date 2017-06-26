@@ -362,7 +362,7 @@ comma-separated recipients.
                      : 'No path provided!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             # We refuse sharing of entire home for security reasons
-            elif not valid_user_path(abs_path, base_dir, allow_equal=False):
+            elif not valid_user_path(configuration, abs_path, base_dir, allow_equal=False):
                 logger.warning('%s tried to %s restricted path %s ! (%s)' % \
                                (client_id, action, abs_path, path))
                 output_objects.append(

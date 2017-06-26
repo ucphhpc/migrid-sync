@@ -127,7 +127,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
         rel_path = os.path.join(rel_dst_dir, filename)
         # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
-        if not valid_user_path(abs_path, dst_dir, True):
+        if not valid_user_path(configuration, abs_path, dst_dir, True):
             logger.error('%s tried to access restricted path %s ! (%s)'
                              % (user_id, abs_path, dst_dir))
             rejected.append("Invalid path (%s expands to an illegal path)" \
@@ -366,7 +366,7 @@ def main(client_id, user_arguments_dict):
             dest_dir = os.path.abspath(os.path.join(base_dir, current_dir))
             dest_path = os.path.join(dest_dir, os.path.basename(rel_path))
             rel_dst = dest_path.replace(base_dir, '')
-            if not valid_user_path(dest_path, base_dir, True):
+            if not valid_user_path(configuration, dest_path, base_dir, True):
                 logger.error('%s tried to %s move to restricted path %s ! (%s)'
                              % (user_id, op_name, dest_path, current_dir))
                 output_objects.append(

@@ -81,7 +81,8 @@ except ImportError:
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
-from shared.fileio import check_write_access
+from shared.defaults import keyword_auto
+from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_user_creds, refresh_job_creds, \
      refresh_share_creds, update_login_map, login_map_lookup, hit_rate_limit, \
@@ -146,8 +147,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.logger = logger
         self.transport = transport
         self.root = fs_root
+        self.chroot_exceptions = conf.get('chroot_exceptions', keyword_auto)
         self.chmod_exceptions = conf.get('chmod_exceptions', [])
-        self.chroot_exceptions = conf.get('chroot_exceptions', [])
         self.user_name = self.transport.get_username()
         # list of User login objects for user_name
 
@@ -163,7 +164,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def _get_fs_path(self, sftp_path):
         """Wrap helper"""
         #self.logger.debug("get_fs_path: %s" % sftp_path)
-        reply = get_fs_path(sftp_path, self.root, self.chroot_exceptions)
+        abs_path = os.path.abspath(os.path.join(self.root,
+                                                sftp_path.lstrip(os.sep)))
+        reply = get_fs_path(configuration, abs_path, self.root,
+                            self.chroot_exceptions)
         #self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
         #                                                     reply))
         return reply
@@ -171,7 +175,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def _strip_root(self, sftp_path):
         """Wrap helper"""
         #self.logger.debug("strip_root: %s" % sftp_path)
-        reply = strip_root(sftp_path, self.root, self.chroot_exceptions)
+        reply = strip_root(configuration, sftp_path, self.root,
+                           self.chroot_exceptions)
         #self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
         #                                                     reply))
         return reply
@@ -1009,20 +1014,9 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     except IOError:
         logger.info("No valid host key provided - using default")
         host_rsa_key = default_host_key
-    # Allow access to vgrid linked dirs and mounted storage resource dirs
-    chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
-                         os.path.abspath(configuration.vgrid_public_base),
-                         os.path.abspath(configuration.vgrid_files_home),
-                         os.path.abspath(configuration.resource_home),
-                         os.path.abspath(configuration.seafile_mount)]
-    if vgrid_restrict_write_support(configuration):
-        readonly_dir = configuration.vgrid_files_readonly
-        writable_dir = configuration.vgrid_files_writable
-        logger.debug("allow chroot in vgrid read-only dirs: %s %s" % \
-                     (readonly_dir, writable_dir))
-        chroot_exceptions.append(os.path.abspath(readonly_dir))
-        chroot_exceptions.append(os.path.abspath(writable_dir))
 
+    # Lookup chroot exceptions once and for all
+    chroot_exceptions = user_chroot_exceptions(configuration)
     # Any extra chmod exceptions here - we already cover invisible_path check
     # in acceptable_chmod helper.
     chmod_exceptions = []
@@ -1030,8 +1024,8 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'address': address,
         'port': port,
         'root_dir': os.path.abspath(configuration.user_home),
-        'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,
+        'chmod_exceptions': chmod_exceptions,
         'allow_password': 'password' in configuration.user_sftp_auth,
         'allow_digest': False,
         'allow_publickey': 'publickey' in configuration.user_sftp_auth,

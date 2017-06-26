@@ -272,7 +272,7 @@ a job description file path as argument.'''})
                 # IMPORTANT: path must be expanded to abs for proper chrooting
                 abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
                 try:
-                    if not valid_user_path(abs_path, base_dir, True):
+                    if not valid_user_path(configuration, abs_path, base_dir, True):
                         logger.warning('%s tried to %s restricted path %s ! (%s)'
                                        % (client_id, op_name, abs_path,
                                           rel_path))

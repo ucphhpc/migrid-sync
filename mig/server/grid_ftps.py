@@ -92,7 +92,7 @@ except ImportError:
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
-from shared.fileio import check_write_access
+from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, refresh_share_creds, update_login_map, \
      login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
@@ -255,12 +255,12 @@ class MiGRestrictedFilesystem(AbstractedFS):
         """
         daemon_conf = configuration.daemon_conf
         try:
-            get_fs_path(path, daemon_conf['root_dir'],
+            get_fs_path(configuration, path, self.root,
                         daemon_conf['chroot_exceptions'])
             #logger.debug("accepted access to %s" % path)
             return True
         except ValueError:
-            logger.warning("rejected access to %s" % path)
+            logger.warning("rejected illegal access to %s" % path)
             return False
 
     def chmod(self, path, mode):
@@ -407,18 +407,9 @@ unless it is available in mig/server/MiGserver.conf
     address = configuration.user_ftps_address
     ctrl_port = configuration.user_ftps_ctrl_port
     pasv_ports = configuration.user_ftps_pasv_ports
-    # Allow access to vgrid linked dirs and mounted storage resource dirs
-    chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
-                         os.path.abspath(configuration.vgrid_public_base),
-                         os.path.abspath(configuration.vgrid_files_home),
-                         os.path.abspath(configuration.resource_home),
-                         os.path.abspath(configuration.seafile_mount)]
-    if vgrid_restrict_write_support(configuration):
-        writable_dir = configuration.vgrid_files_writable
-        chroot_exceptions.append(os.path.abspath(writable_dir))
-        readonly_dir = configuration.vgrid_files_readonly
-        chroot_exceptions.append(os.path.abspath(readonly_dir))
 
+    # Lookup chroot exceptions once and for all
+    chroot_exceptions = user_chroot_exceptions(configuration)
     # Any extra chmod exceptions here - we already cover invisible_path check
     # in acceptable_chmod helper.
     chmod_exceptions = []

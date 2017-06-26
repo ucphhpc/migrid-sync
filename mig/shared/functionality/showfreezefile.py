@@ -91,7 +91,7 @@ def main(client_id, user_arguments_dict):
     rel_path = path.lstrip(os.sep)
     # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
-    if not valid_user_path(abs_path, base_dir, True):
+    if not valid_user_path(configuration, abs_path, base_dir, True):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''You are not allowed to use paths outside the
 archive dir.'''})

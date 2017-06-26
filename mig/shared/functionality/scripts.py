@@ -215,7 +215,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_dir = os.path.abspath(os.path.join(base_dir, script_dir))
-        if not valid_user_path(abs_dir, base_dir, True):
+        if not valid_user_path(configuration, abs_dir, base_dir, True):
 
             # out of bounds
 

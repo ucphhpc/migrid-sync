@@ -138,7 +138,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_dir = os.path.abspath(os.path.join(base_dir,
                                             current_dir.lstrip(os.sep)))
-    if not valid_user_path(abs_dir, base_dir, True):
+    if not valid_user_path(configuration, abs_dir, base_dir, True):
 
         # out of bounds
 
@@ -161,7 +161,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # fs layout.
 
     relative_dest = abs_dest.replace(base_dir, '')
-    if not valid_user_path(abs_dest, base_dir, True):
+    if not valid_user_path(configuration, abs_dest, base_dir, True):
 
         # out of bounds
 
@@ -203,7 +203,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.debug("%s: inspecting: %s" % (op_name, server_path))
             # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(server_path)
-            if not valid_user_path(abs_path, base_dir, True):
+            if not valid_user_path(configuration, abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:

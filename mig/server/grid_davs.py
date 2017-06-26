@@ -55,6 +55,7 @@ except ImportError:
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
+from shared.fileio import user_chroot_exceptions
 from shared.griddaemons import get_fs_path, strip_root, \
      acceptable_chmod, refresh_users, hit_rate_limit, update_rate_limit, \
      penalize_rate_limit, expire_rate_limit
@@ -142,14 +143,16 @@ class MiGFilesystemHandler(FilesystemHandler):
     def _get_fs_path(self, davs_path):
         """Wrap helper"""
         #logger.debug("get_fs_path: %s" % davs_path)
-        reply = get_fs_path(davs_path, self.root, self.chroot_exceptions)
+        reply = get_fs_path(configuration, davs_path, self.root,
+                            self.chroot_exceptions)
         logger.debug("get_fs_path returns: %s :: %s" % (davs_path, reply))
         return reply
 
     def _strip_root(self, davs_path):
         """Wrap helper"""
         #logger.debug("strip_root: %s" % davs_path)
-        reply = strip_root(davs_path, self.root, self.chroot_exceptions)
+        reply = strip_root(configuration, davs_path, self.root,
+                           self.chroot_exceptions)
         logger.debug("strip_root returns: %s :: %s" % (davs_path, reply))
         return reply
     
@@ -513,11 +516,8 @@ if __name__ == "__main__":
         print err_msg
         sys.exit(1)
 
-    chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
-                         os.path.abspath(configuration.vgrid_public_base),
-                         os.path.abspath(configuration.vgrid_files_home),
-                         os.path.abspath(configuration.resource_home),
-                         os.path.abspath(configuration.seafile_mount)]
+    # Lookup chroot exceptions once and for all
+    chroot_exceptions = user_chroot_exceptions(configuration)
     # Don't allow chmod in dirs with CGI access as it introduces arbitrary
     # code execution vulnerabilities
     chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),

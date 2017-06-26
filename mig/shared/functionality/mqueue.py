@@ -144,7 +144,7 @@ def main(client_id, user_arguments_dict):
 
     # IMPORTANT: path must be expanded to abs for proper chrooting
     queue_path = os.path.abspath(os.path.join(mqueue_base, queue))
-    if not valid_user_path(queue_path, mqueue_base):
+    if not valid_user_path(configuration, queue_path, mqueue_base):
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Invalid queue name: "%s"' % queue})
         output_objects.append(file_entry)

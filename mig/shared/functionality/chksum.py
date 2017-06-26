@@ -102,7 +102,7 @@ def main(client_id, user_arguments_dict):
     # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_dir = os.path.abspath(os.path.join(base_dir, 
                                            current_dir.lstrip(os.sep)))
-    if not valid_user_path(abs_dir, base_dir, True):
+    if not valid_user_path(configuration, abs_dir, base_dir, True):
         output_objects.append({'object_type': 'error_text', 'text'
                                : "You're not allowed to work in %s!"
                                % current_dir})
@@ -132,7 +132,7 @@ def main(client_id, user_arguments_dict):
         # fs layout.
 
         relative_dest = abs_dest.replace(base_dir, '')
-        if not valid_user_path(abs_dest, base_dir, True):
+        if not valid_user_path(configuration, abs_dest, base_dir, True):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : "Invalid path! (%s expands to an illegal path)" % dst})
@@ -161,7 +161,7 @@ def main(client_id, user_arguments_dict):
         for server_path in unfiltered_match:
             # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(server_path)
-            if not valid_user_path(abs_path, base_dir, True):
+            if not valid_user_path(configuration, abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:

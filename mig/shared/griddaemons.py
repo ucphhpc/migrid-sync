@@ -120,7 +120,7 @@ pubkey: %s''' % force_utf8(self.public_key.get_base64())
 last_update: %s''' % self.last_update
         return out
 
-def get_fs_path(user_path, root, chroot_exceptions):
+def get_fs_path(configuration, abs_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
     in mind. Also assures general path character restrictions are applied.
     Automatically expands to abs path to avoid traversal issues with e.g.
@@ -128,32 +128,16 @@ def get_fs_path(user_path, root, chroot_exceptions):
     in user home if left as is.
     """
     try:
-        valid_path(user_path)
+        valid_path(abs_path)
     except:
         raise ValueError("Invalid path characters")
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
 
-    base_dir = root + os.sep
-
-    # Make sure leading slashes in user_path don't throw away root
-    # IMPORTANT: path must be expanded to abs for proper chrooting
-    abs_path = os.path.abspath(os.path.join(root, user_path.lstrip(os.sep)))
-    if not valid_user_path(abs_path, base_dir, True):
+    if not valid_user_path(configuration, abs_path, root, True,
+                           chroot_exceptions):
         raise ValueError("Illegal path access attempt")
-    real_path = os.path.realpath(abs_path)
-    accept_roots = [root] + chroot_exceptions
-    accepted = False
-    for accept_path in accept_roots:
-        if real_path.startswith(accept_path):
-            # Found matching root - valid_user_path already checked visibility
-            accepted = True
-            break
-    if not accepted:
-        raise ValueError("Invalid path")
     return abs_path
 
-def strip_root(path, root, chroot_exceptions):
+def strip_root(configuration, path, root, chroot_exceptions):
     """Internal helper to strip root prefix for chrooted locations"""
     accept_roots = [root] + chroot_exceptions
     for root in accept_roots:

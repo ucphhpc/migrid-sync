@@ -260,7 +260,7 @@ jobs before and during execution.
         for server_path in unfiltered_match:
             # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(server_path)
-            if not valid_user_path(abs_path, base_dir, True):
+            if not valid_user_path(configuration, abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:

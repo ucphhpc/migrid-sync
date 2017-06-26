@@ -99,7 +99,7 @@ def is_valid_email_address(addr, logger):
     logger.info('%s is a valid email address' % addr)
     return count >= 1
 
-def valid_user_path(path, home_dir, allow_equal=False, configuration=None,
+def valid_user_path(configuration, path, home_dir, allow_equal=False,
                     chroot_exceptions=keyword_auto):
     """This is a convenience function for making sure that users do
     not access restricted files including files outside their own file
@@ -136,6 +136,14 @@ def valid_user_path(path, home_dir, allow_equal=False, configuration=None,
     extracted based on the configuration.
     """
 
+    # We allow None value to support the few call points without one
+    if configuration is None:
+        configuration = get_configuration_object()
+
+    _logger = configuration.logger
+
+    #_logger.debug("valid_user_path on %s %s" % (path, home_dir))
+
     # Make sure caller has explicitly forced abs path
     
     if path != os.path.abspath(path):
@@ -147,21 +155,18 @@ def valid_user_path(path, home_dir, allow_equal=False, configuration=None,
     abs_home = os.path.abspath(home_dir)
 
     if chroot_exceptions == keyword_auto:
-        if configuration is None:
-            configuration = get_configuration_object()
         chroot_exceptions = user_chroot_exceptions(configuration)
-
-    _logger = configuration.logger
 
     # IMPORTANT: verify proper chrooting inside home_dir or chroot_exceptions
 
     real_path = os.path.realpath(path)
     real_home = os.path.realpath(abs_home)
     accept_roots = [real_home] + chroot_exceptions
-    #_logger.debug("check that path %s is inside %s" % (path, accept_roots))
+    #_logger.debug("check that path %s (%s) is inside %s" % (path, real_path, accept_roots))
     accepted = False
     for accept_path in accept_roots:
-        if real_path.startswith(accept_path):
+        if real_path == accept_path or \
+               real_path.startswith(accept_path + os.sep):
             accepted = True
             break
     if not accepted:

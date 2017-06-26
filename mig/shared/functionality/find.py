@@ -99,7 +99,7 @@ def main(client_id, user_arguments_dict):
         for server_path in unfiltered_match:
             # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(server_path)
-            if not valid_user_path(abs_path, base_dir, True):
+            if not valid_user_path(configuration, abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:
@@ -135,7 +135,7 @@ def main(client_id, user_arguments_dict):
                         # IMPORTANT: this join always yields abs expanded path
                         abs_path = os.path.join(root, filename)
                         relative_path = abs_path.replace(base_dir, '')
-                        if not valid_user_path(abs_path, base_dir,
+                        if not valid_user_path(configuration, abs_path, base_dir,
                                 True):
                             continue
                         file_obj = {

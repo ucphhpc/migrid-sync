@@ -106,7 +106,7 @@ Please contact the Grid admins %s if you think they should be enabled.
 
         # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_path = os.path.abspath(os.path.join(base_dir, path))
-        if not valid_user_path(abs_path, base_dir, True):
+        if not valid_user_path(configuration, abs_path, base_dir, True):
             # out of bounds - save user warning for later to allow
             # partial match:
             # ../*/* is technically allowed to match own files.

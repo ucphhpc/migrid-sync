@@ -353,7 +353,7 @@ Working directory:
         for server_path in unfiltered_match:
             # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(server_path)
-            if not valid_user_path(abs_path, base_dir, True):
+            if not valid_user_path(configuration, abs_path, base_dir, True):
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
                                % (user_id, op_name, abs_path, pattern))
                 continue

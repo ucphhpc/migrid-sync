@@ -167,7 +167,7 @@ Please contact the Grid admins %s if you think they should be enabled.
     if os.path.isdir(real_path):
         real_path = os.path.join(real_path, os.path.basename(file_name))
 
-    if not valid_user_path(real_path, base_dir, True):
+    if not valid_user_path(configuration, real_path, base_dir, True):
         logger.warning('%s tried to %s restricted path %s ! (%s)'
                        % (client_id, op_name, real_path, path))
         output_objects.append(

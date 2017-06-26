@@ -62,7 +62,7 @@ except ImportError, ierr:
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id
-from shared.fileio import check_write_access
+from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
      refresh_user_creds, refresh_share_creds, update_login_map, \
      login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
@@ -540,7 +540,8 @@ class MiGFilesystemProvider(FilesystemProvider):
         pathInfoParts = path.strip(os.sep).split(os.sep)
         abs_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
         try:
-            abs_path = get_fs_path(path, user_chroot, self.chroot_exceptions)
+            abs_path = get_fs_path(configuration, abs_path, user_chroot,
+                                   self.chroot_exceptions)
         except ValueError, vae:
             raise RuntimeError("Access out of bounds: %s in %s : %s"
                                % (path, user_chroot, vae))
@@ -732,18 +733,8 @@ unless it is available in mig/server/MiGserver.conf
     address = configuration.user_davs_address
     port = configuration.user_davs_port
 
-    chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
-                         os.path.abspath(configuration.vgrid_public_base),
-                         os.path.abspath(configuration.vgrid_files_home),
-                         os.path.abspath(configuration.resource_home),
-                         os.path.abspath(configuration.seafile_mount)]
-    # TODO: improve handling of attempts to modify read-only locations
-    if vgrid_restrict_write_support(configuration):
-        writable_dir = configuration.vgrid_files_writable
-        chroot_exceptions.append(os.path.abspath(writable_dir))
-        readonly_dir = configuration.vgrid_files_readonly
-        chroot_exceptions.append(os.path.abspath(readonly_dir))
-
+    # Lookup chroot exceptions once and for all
+    chroot_exceptions = user_chroot_exceptions(configuration)
     # Any extra chmod exceptions here - we already cover invisible_path check
     # in acceptable_chmod helper.
     chmod_exceptions = []

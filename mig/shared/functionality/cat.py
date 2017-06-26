@@ -94,7 +94,7 @@ def main(client_id, user_arguments_dict):
         # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_dest = os.path.abspath(os.path.join(base_dir, dst))
         relative_dst = abs_dest.replace(base_dir, '')
-        if not valid_user_path(abs_dest, base_dir, True):
+        if not valid_user_path(configuration, abs_dest, base_dir, True):
             logger.warning('%s tried to %s into restricted path %s ! (%s)'
                            % (client_id, op_name, abs_dest, dst))
             output_objects.append({'object_type': 'error_text',
@@ -113,7 +113,7 @@ def main(client_id, user_arguments_dict):
         for server_path in unfiltered_match:
             # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(server_path)
-            if not valid_user_path(abs_path, base_dir, True):
+            if not valid_user_path(configuration, abs_path, base_dir, True):
 
                 # out of bounds - save user warning for later to allow
                 # partial match:

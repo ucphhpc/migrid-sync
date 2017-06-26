@@ -86,7 +86,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
             abs_path = os.path.abspath(
                 os.path.join(base_dir, source_path))
             # Prevent out-of-bounds, and restrict some greedy targets
-            if not valid_user_path(abs_path, base_dir, True):
+            if not valid_user_path(configuration, abs_path, base_dir, True):
                 _logger.error('found illegal directory traversal %s entry: %s' \
                               % (xfer, source_path))
                 rejected.append('invalid path: %s (%s)' % \
