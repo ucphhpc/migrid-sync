@@ -1570,6 +1570,8 @@ def __in_vgrid_special(configuration, path, vgrid_special_base, flat=False):
     #                           (real_path, vgrid_special_base))
     if real_path.startswith(vgrid_special_base):
         vgrid_path = real_path.replace(vgrid_special_base, '').lstrip(os.sep)
+        if vgrid_special_base == configuration.resource_home:
+            vgrid_home = vgrid_special_base
         if flat:
             vgrid_path = vgrid_path.replace(vgrid_nest_sep, '/')
         while vgrid_path != os.sep:
@@ -1618,6 +1620,13 @@ def in_vgrid_pub_web(configuration, path):
     """
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_public_base)
+
+def in_vgrid_store_res(configuration, path):
+    """Checks if path is inside a vgrid storage resource and returns the name
+    of the deepest such sub-vgrid it is inside if so.
+    """
+    return __in_vgrid_special(configuration, path,
+                              configuration.resource_home)
 
 def _shared_allow_adm(configuration, vgrid_name, client_id, target):
     """Check if client_id is allowed to edit target values for vgrid_name. This

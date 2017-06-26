@@ -557,6 +557,7 @@ UL.jqueryFileList A:hover {
 .vgridshared.readonly { background: url(/images/icons/other/folder_link-blue.png) left top no-repeat; }
 .vgridpublicweb { background: url(/images/icons/folder_table.png) left top no-repeat; }
 .vgridprivateweb { background: url(/images/icons/folder_key.png) left top no-repeat; }
+.vgridstoreres { background: url(/images/icons/computer_link.png) left top no-repeat; }
 .seafilereadonly { background: url(/images/icons/other/folder_database-blue.png) left top no-repeat; }
 .trashbin { background: url(/images/icons/bin_closed.png) left top no-repeat; }
 

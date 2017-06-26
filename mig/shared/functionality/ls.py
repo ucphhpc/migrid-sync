@@ -47,7 +47,7 @@ from shared.parseflags import all, long_list, recursive, file_info
 from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \
-     in_vgrid_readonly, in_vgrid_writable
+     in_vgrid_readonly, in_vgrid_writable, in_vgrid_store_res
 
 
 def signature():
@@ -239,6 +239,13 @@ def handle_dir(
                  dirname_with_dir[len('private_base/'):]:
             dir_type = 'private web page'
             extra_class = 'vgridprivateweb'
+        # NOTE: in_vgrid_X returns None on miss, so don't use replace directly
+        elif (in_vgrid_store_res(configuration, actual_dir) or '').replace(
+            os.sep, '_') == os.path.basename(dirname_with_dir):
+            configuration.logger.debug("found store res dir %s" % actual_dir)
+            dir_type = 'storage resource files'
+            if os.path.islink(actual_dir):
+                extra_class = 'vgridstoreres'
         elif real_dir.startswith(configuration.seafile_mount):
             access_type = 'read-only'
             dir_type = 'Seafile library access'
