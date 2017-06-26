@@ -575,3 +575,86 @@ def release_file_lock(lock_handle):
     """Uses fcntl to release the lock held in lock_handle."""
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
+def check_readable(configuration, path):
+    """Check and return boolean to indicate if path is a non-empty string and
+    a readable location.
+    """
+    _logger = configuration.logger
+    if not path:
+        return False
+    elif not check_read_access(path):
+        return False
+    return True
+
+def check_writable(configuration, path):
+    """Check and return boolean to indicate if path is a non-empty string and
+    a writable location.
+    """
+    if not path:
+        return False
+    elif not check_write_access(path):
+        return False
+    return True
+
+def check_readwritable(configuration, path):
+    """Check and return boolean to indicate if path set and read+writable"""
+    return check_readable(configuration, path) and \
+           check_writable(configuration, path)
+
+def check_readonly(configuration, path):
+    """Check and return boolean to indicate if path is set and readonly"""
+    return check_readable(configuration, path) and not \
+           check_writable(configuration, path)
+
+def untrusted_store_res_symlink(configuration, path):
+    """Check and return boolean to indicate if path is a symlink inside a
+    mounted storage resource folder. We cannot trust any such symlinks to be
+    safe as they may be fully user controlled and thus bypass all our symlink
+    restrictions. Thus we only allow symlinks there if they point to somewhere
+    inside the same storage resource folder.
+    """
+    # If path doesn't expand to a different location we are generally safe
+    real_path = os.path.realpath(path)
+    if path == real_path:
+        return False
+    real_res_home = os.path.realpath(configuration.resource_home)
+    # Lookup actual resource home dir and make sure path is somewhere inside
+    # NOTE: we traverse from root to avoid illegal access to other resources
+    path_parts = path.split(os.sep)
+    parent = os.sep
+    found_res_base = False
+    for sub in path_parts:
+        parent = os.path.join(parent, sub)
+        real_parent = os.path.realpath(parent)
+        if real_parent.startswith(real_res_home + os.sep):
+            res_base = parent
+            real_res_base = os.path.realpath(res_base)
+            found_res_base = True
+            break
+    if not found_res_base:
+        return False
+    #configuration.logger.debug("check real_path %s inside %s" % \
+    #                            (real_path, res_base))
+    return not real_path.startswith(real_res_base)
+
+def user_chroot_exceptions(configuration):
+    """Lookup a list of chroot exceptions for use in chrooting user
+    operations to the allowed subset of the file system. The allowed locations
+    include the ones that valid symlinks from user home may point into.
+    """
+    # Allow access to vgrid linked dirs and optionally write restricted ones
+    chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
+                         os.path.abspath(configuration.vgrid_public_base),
+                         os.path.abspath(configuration.vgrid_files_home)]
+    readonly_dir = configuration.vgrid_files_readonly
+    if check_readonly(configuration, readonly_dir):
+        chroot_exceptions.append(os.path.abspath(readonly_dir))
+    writable_dir = configuration.vgrid_files_writable
+    if check_writable(configuration, writable_dir):
+        chroot_exceptions.append(os.path.abspath(writable_dir))
+    # Allow access to mounted storage resource dirs and optional seafile mount
+    chroot_exceptions.append(os.path.abspath(configuration.resource_home))
+    if configuration.site_enable_seafile and configuration.seafile_mount:
+        chroot_exceptions.append(os.path.abspath(configuration.seafile_mount))
+    return chroot_exceptions
+

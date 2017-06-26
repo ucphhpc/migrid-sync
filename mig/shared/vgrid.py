@@ -31,10 +31,12 @@ import fnmatch
 import os
 import re
 
+from shared.base import valid_dir_input
 from shared.defaults import default_vgrid, keyword_owners, keyword_members, \
      keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
      csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
-from fileio import make_symlink, move, check_read_access, check_write_access
+from fileio import make_symlink, move, check_readonly, check_writable, \
+     check_write_access
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
@@ -43,7 +45,6 @@ from shared.modified import mark_vgrid_modified
 from shared.output import html_link
 from shared.serial import load, dump
 from shared.sharelinkkeywords import get_sharelink_keywords_dict
-from shared.validstring import valid_dir_input
 from shared.vgridkeywords import get_trigger_keywords_dict, \
      get_settings_keywords_dict
 
@@ -763,17 +764,10 @@ def vgrid_restrict_write_support(configuration):
     read+write access, respectively.
     """
     _logger = configuration.logger
-    if not configuration.vgrid_files_writable:
+    if not check_readonly(configuration, configuration.vgrid_files_readonly):
+        _logger.warning("vgrid_files_readonly is not readonly!")
         return False
-    elif not configuration.vgrid_files_readonly:
-        return False
-    elif not check_read_access(configuration.vgrid_files_readonly):
-        _logger.warning("vgrid_files_readonly is not readable!")
-        return False
-    elif check_write_access(configuration.vgrid_files_readonly):
-        _logger.warning("vgrid_files_readonly is writable!")
-        return False
-    elif not check_write_access(configuration.vgrid_files_writable):
+    elif not check_writable(configuration, configuration.vgrid_files_writable):
         _logger.warning("vgrid_files_writable is not writable!")
         return False
     # TODO: check that os.path.ismount on vgrid_files_writable or parent
@@ -1673,6 +1667,7 @@ def allow_members_adm(configuration, vgrid_name, client_id):
 def allow_resources_adm(configuration, vgrid_name, client_id):
     """Check if client_id is allowed to edit resources for vgrid"""
     return _shared_allow_adm(configuration, vgrid_name, client_id, 'resources')
+
 
 if __name__ == "__main__":
     from shared.conf import get_configuration_object

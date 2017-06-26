@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestnewjob - Request a new job to execute on resource
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ import fcntl
 import time
 
 import shared.returnvalues as returnvalues
+from shared.base import valid_dir_input
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.conf import get_resource_configuration
 from shared.fileio import send_message_to_grid_script
@@ -40,7 +41,6 @@ from shared.findtype import is_resource
 from shared.functional import validate_input, REJECT_UNSET
 from shared.httpsclient import check_source_ip
 from shared.init import initialize_main_variables
-from shared.validstring import valid_dir_input
 
 
 def signature():

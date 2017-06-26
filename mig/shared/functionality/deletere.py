@@ -5,7 +5,7 @@
 #
 
 # deletere - delete a runtime environment
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,12 +29,12 @@
 """Deletion of runtime environments"""
 
 import shared.returnvalues as returnvalues
+from shared.base import valid_dir_input
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import is_runtime_environment, \
      get_re_dict, delete_runtimeenv
-from shared.validstring import valid_dir_input
 from shared.vgridaccess import resources_using_re
 
 
@@ -92,16 +92,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                % re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
-    re_dict = get_re_dict(re_name, configuration)
-    if not re_dict[0]:
+    (re_dict, load_msg) = get_re_dict(re_name, configuration)
+    if not re_dict:
         output_objects.append(
             {'object_type': 'error_text',
-             'text': 'Could not read runtime environment details for %s'
-             % re_name})
+             'text': 'Could not read runtime environment details for %s: %s'
+             % (re_name, load_msg)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Make sure the runtime environment belongs to the user trying to delete it
-    if client_id != re_dict[0]['CREATOR']:
+    if client_id != re_dict['CREATOR']:
         output_objects.append({'object_type': 'error_text', 'text': \
         'You are not the owner of runtime environment "%s"' % re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)

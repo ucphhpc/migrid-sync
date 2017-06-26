@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestinteractivejob - handle interactive job requests from resources
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,13 +33,13 @@ import sys
 import fcntl
 import time
 
+from shared.base import valid_dir_input
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.conf import get_resource_configuration, get_resource_exe
 from shared.fileio import unpickle
 from shared.findtype import is_resource
 from shared.httpsclient import check_source_ip
 from shared.livedisplaysfunctions import get_users_display_number
-from shared.validstring import valid_dir_input
 from shared.ssh import execute_on_resource, copy_file_to_exe
 
 # ## Main ###

@@ -205,6 +205,27 @@ just use the one that looks most familiar or try them in turn)'''
     return url_str
 
 
+def valid_dir_input(base, variable):
+    """This function verifies that user supplied variable used as a directory
+    in file manipulation doesn't try to illegally access directories by
+    using e.g. '..'. The base argument is the directory that the user
+    should be bound to, and the variable is the variable to be checked.
+    The verification amounts to verifying that base/variable doesn't
+    expand to a path outside base or among the invisible paths.
+    """
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # dirs when variable is a prefix of another dir in base
+
+    path = os.path.abspath(base) + os.sep + variable
+    if os.path.abspath(path) != path or invisible_path(path):
+
+        # out of bounds
+
+        return False
+    return True
+
+
 if __name__ == '__main__':
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'
     client_dir = client_id_dir(orig_id)

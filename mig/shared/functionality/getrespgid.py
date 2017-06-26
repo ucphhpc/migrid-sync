@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # getrespgid - Get PGID of process on resource for kill in clean up
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,11 +31,11 @@ import os
 import fcntl
 
 import shared.returnvalues as returnvalues
+from shared.base import valid_dir_input
 from shared.findtype import is_owner
 from shared.functional import validate_input, REJECT_UNSET
 from shared.httpsclient import check_source_ip
 from shared.init import initialize_main_variables
-from shared.validstring import valid_dir_input
 
 
 def signature():

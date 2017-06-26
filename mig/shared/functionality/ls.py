@@ -220,8 +220,8 @@ def handle_dir(
     if real_dir != abs_dir:
         access_type = configuration.site_vgrid_label
         parent_dir = os.path.basename(os.path.dirname(actual_dir))
-        configuration.logger.debug("checking link %s type (%s)" % \
-                                   (dirname_with_dir, real_dir))
+        #configuration.logger.debug("checking link %s type (%s)" % \
+        #                           (dirname_with_dir, real_dir))
         # Separate vgrid special dirs from plain ones
         if dirname_with_dir in (in_vgrid_share(configuration, actual_dir),
                                 in_vgrid_writable(configuration, actual_dir)):
@@ -242,7 +242,6 @@ def handle_dir(
         # NOTE: in_vgrid_X returns None on miss, so don't use replace directly
         elif (in_vgrid_store_res(configuration, actual_dir) or '').replace(
             os.sep, '_') == os.path.basename(dirname_with_dir):
-            configuration.logger.debug("found store res dir %s" % actual_dir)
             dir_type = 'storage resource files'
             if os.path.islink(actual_dir):
                 extra_class = 'vgridstoreres'
@@ -257,8 +256,8 @@ def handle_dir(
         else:
             dir_type = 'sub'
         # TODO: improve this greedy matching here?
-        configuration.logger.debug("check real_dir %s vs %s" % (real_dir,
-                                                                trash_destdir))
+        #configuration.logger.debug("check real_dir %s vs %s" % (real_dir,
+        #                                                        trash_destdir))
         if real_dir.endswith(trash_destdir):
             dir_type = ''
             extra_class = 'trashbin'

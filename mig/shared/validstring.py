@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # validstring - string validators
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,9 @@
 import os.path
 
 from shared.base import invisible_path
+from shared.conf import get_configuration_object
+from shared.defaults import keyword_auto
+from shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
 
 def cert_name_format(input_string):
     """ Spaces in certificate names are replaced with underscore internally """
@@ -96,8 +99,8 @@ def is_valid_email_address(addr, logger):
     logger.info('%s is a valid email address' % addr)
     return count >= 1
 
-
-def valid_user_path(path, home_dir, allow_equal=False):
+def valid_user_path(path, home_dir, allow_equal=False, configuration=None,
+                    chroot_exceptions=keyword_auto):
     """This is a convenience function for making sure that users do
     not access restricted files including files outside their own file
     tree(s): Check that path is a valid path inside user home directory,
@@ -118,19 +121,63 @@ def valid_user_path(path, home_dir, allow_equal=False):
     certificate data.
     Thus this function should *only* be used in relation to
     checking user home related paths. Other paths should be
-    validated with the valid_dir_input function below.
-    It  does not follow e.g. symlinks into vgrid shared folders and verify
-    their validity. This is assumed based on the symlink availability.
+    validated with the valid_dir_input from shared.base instead.
+
+    IMPORTANT: additionally uses a chroot_exceptions list to follow symlinks
+    e.g. into vgrid shared folders and verify their validity. This should be
+    the case based on the symlink availability, but we check to avoid the
+    attack vector. Otherwise it would be possible for users to access out of
+    bounds data if they could somehow sneak in a symlink pointing to such
+    locations. In particular this may be possible for users setting up their
+    own storage resource where they have unrestricted symlink control. Thus,
+    we explicitly check any such links and refuse them if they point outside
+    the mount in question.
+    If left to keyword_auto the list of chroot_exceptions is automatically
+    extracted based on the configuration.
     """
 
-    # Make sure caller has explicitly forced abs path 
+    # Make sure caller has explicitly forced abs path
+    
     if path != os.path.abspath(path):
         return False
 
     if invisible_path(path):
         return False
-
+    
     abs_home = os.path.abspath(home_dir)
+
+    if chroot_exceptions == keyword_auto:
+        if configuration is None:
+            configuration = get_configuration_object()
+        chroot_exceptions = user_chroot_exceptions(configuration)
+
+    _logger = configuration.logger
+
+    # IMPORTANT: verify proper chrooting inside home_dir or chroot_exceptions
+
+    real_path = os.path.realpath(path)
+    real_home = os.path.realpath(abs_home)
+    accept_roots = [real_home] + chroot_exceptions
+    #_logger.debug("check that path %s is inside %s" % (path, accept_roots))
+    accepted = False
+    for accept_path in accept_roots:
+        if real_path.startswith(accept_path):
+            accepted = True
+            break
+    if not accepted:
+        _logger.error("%s is outside chroot boundaries!" % path)
+        return False
+
+    # IMPORTANT: make sure path is not a symlink on a storage res mount
+    # We cannot prevent users from creating arbitrary symlinks on resources
+    # they have direct access to, so *don't ever* trust such symlinks unless
+    # they point inside the storage resource mount itself.
+
+    #_logger.debug("check that path %s is not inside store res" % path)
+    if path != real_path and untrusted_store_res_symlink(configuration, path):
+        _logger.error("untrusted symlink on a storage resource: %s" % path)
+        return False
+
     inside = path.startswith(abs_home + os.sep)
     if not allow_equal:
 
@@ -149,26 +196,3 @@ def valid_user_path(path, home_dir, allow_equal=False):
 
             same = False
         return inside or same
-
-
-def valid_dir_input(base, variable):
-    """This function verifies that user supplied variable used as a directory
-    in file manipulation doesn't try to illegally access directories by
-    using e.g. '..'. The base argument is the directory that the user
-    should be bound to, and the variable is the variable to be checked.
-    The verification amounts to verifying that base/variable doesn't
-    expand to a path outside base or among the invisible paths.
-    """
-
-    # Please note that base_dir must end in slash to avoid access to other
-    # dirs when variable is a prefix of another dir in base
-
-    path = os.path.abspath(base) + os.sep + variable
-    if os.path.abspath(path) != path or invisible_path(path):
-
-        # out of bounds
-
-        return False
-    return True
-
-

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # testresupport - run test job to verify support for a runtime env
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,7 @@ import tempfile
 import os
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
+from shared.base import client_id_dir, valid_dir_input
 from shared.defaults import csrf_field
 from shared.fileio import unpickle, write_file
 from shared.findtype import is_owner, client_id_dir
@@ -41,7 +41,6 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.job import new_job
 from shared.refunctions import get_re_dict
-from shared.validstring import valid_dir_input
 from shared.vgridaccess import user_visible_res_confs
 
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showre - Display a runtime environment
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,12 +28,12 @@
 """Get info about a runtime environtment"""
 
 import shared.returnvalues as returnvalues
+from shared.base import valid_dir_input
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import is_runtime_environment, get_re_dict, \
      build_reitem_object
-from shared.validstring import valid_dir_input
 from shared.vgridaccess import resources_using_re
 
 
