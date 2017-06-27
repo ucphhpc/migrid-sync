@@ -100,7 +100,7 @@ def is_owner(
 
     # Automatic configuration extraction
     configuration = None
-    if not valid_user_path(configuration, configuration, config_path, config_home):
+    if not valid_user_path(configuration, config_path, config_home):
 
         # Extract caller information
 

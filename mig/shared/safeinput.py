@@ -616,7 +616,7 @@ def valid_user_path_name(
         msg = 'Invalid path! (%s: %s)' % (safe_path, iex)
     # Automatic configuration extraction
     configuration = None
-    if not valid_user_path(configuration, configuration, path, home_dir, allow_equal):
+    if not valid_user_path(configuration, path, home_dir, allow_equal):
         status = False
         msg = 'Invalid path! (%s expands to illegal path)' % safe_path
     return (status, html_escape(msg))
