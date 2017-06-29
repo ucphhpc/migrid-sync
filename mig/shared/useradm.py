@@ -348,7 +348,8 @@ certificate that is still valid."""
     openid_names = user.get('openid_names', [])
     short_id = user.get('short_id', '')
     # For cert users short_id is the full DN so we should ignore then
-    if short_id and short_id != client_id and not short_id in openid_names:
+    if short_id and short_id != client_id and short_id.find(' ') == -1 and \
+           not short_id in openid_names:
         openid_names.append(short_id)
     add_names = []
     if configuration.user_openid_providers and configuration.user_openid_alias:
@@ -415,6 +416,9 @@ certificate that is still valid."""
     # Always write/update any openid symlinks
 
     for name in user.get('openid_names', []):
+        # short_id is client_id for cert users - skip them
+        if name == client_id or name.find(' ') != -1:
+            continue
         create_alias_link(name, client_id, configuration.user_home)
     
     # Always write htaccess to catch any updates
@@ -634,6 +638,9 @@ def edit_user(
         remove_alias_link(name, configuration.user_home)
 
     for name in user_dict.get('openid_names', []):
+        # short_id is client_id for cert users - skip them
+        if name in (client_id, new_id) or name.find(' ') != -1:
+            continue
         create_alias_link(name, new_id, configuration.user_home)
         
     # Loop through resource map and update user resource ownership
