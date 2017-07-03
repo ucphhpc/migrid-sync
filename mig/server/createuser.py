@@ -66,6 +66,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
+   -o SHORT_ID         Add SHORT_ID as OpenID alias for user
    -r                  Renew user account with existing values
    -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
@@ -81,8 +82,9 @@ if '__main__' == __name__:
     default_renew = False
     user_file = None
     user_id = None
+    short_id = None
     user_dict = {}
-    opt_args = 'c:d:fhi:ru:v'
+    opt_args = 'c:d:fhi:o:ru:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -102,6 +104,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-i':
             user_id = val
+        elif opt == '-o':
+            short_id = val
         elif opt == '-r':
             default_renew = True
             ask_renew = False
@@ -171,6 +175,10 @@ if '__main__' == __name__:
         user_dict['email'] = raw_input('Email: ')
         user_dict['comment'] = raw_input('Comment: ')
         user_dict['password'] = getpass('Password: ')
+
+    # Pass optional short_id as well
+    if short_id:
+        user_dict['short_id'] = short_id
 
     # Encode password if not already encoded
 
