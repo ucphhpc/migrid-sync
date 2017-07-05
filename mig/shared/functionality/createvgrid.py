@@ -70,8 +70,11 @@ def create_scm(
     logger = configuration.logger
     kind = 'member'
     scm_alias = 'vgridscm'
-    # TODO: we only support scm cert access for now
-    server_url = configuration.migserver_https_cert_url
+    # TODO: we only really support scm cert access for now
+    # NOTE: we default to MiG cert and fallback to ext cert
+    server_url = configuration.migserver_https_mig_cert_url
+    if not server_url:
+        server_url = configuration.migserver_https_ext_cert_url
     if scm_dir.find('private') > -1:
         kind = 'owner'
         scm_alias = 'vgridownerscm'
@@ -236,8 +239,11 @@ def create_tracker(
     admin_user = distinguished_name_to_user(client_id)
     admin_email = admin_user.get('email', 'unknown@migrid.org')
     admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
-    # TODO: we only support tracker cert access for now
-    server_url = configuration.migserver_https_cert_url
+    # TODO: we only really support tracker cert access for now
+    # NOTE: we default to MiG cert and fallback to ext cert
+    server_url = configuration.migserver_https_mig_cert_url
+    if not server_url:
+        server_url = configuration.migserver_https_ext_cert_url
     if tracker_dir.find('private') > -1:
         kind = 'owner'
         tracker_alias = 'vgridownertracker'

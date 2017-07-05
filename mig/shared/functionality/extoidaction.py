@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extoidaction - handle sign up with external openid credentials
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -99,7 +99,7 @@ def main(client_id, user_arguments_dict):
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
 
     id_url = os.environ['REMOTE_USER'].strip()
-    openid_prefix = configuration.user_openid_providers[0].rstrip('/') + '/'
+    openid_prefix = configuration.user_ext_oid_provider.rstrip('/') + '/'
     raw_login = id_url.replace(openid_prefix, '')
     full_name = accepted['openid.sreg.full_name'][-1].strip().title()
     country = accepted['openid.sreg.country'][-1].strip().upper()
@@ -194,11 +194,10 @@ sudo su - mig-ca
     user_dict['command_cert_revoke'] = command_cert_revoke
     user_dict['site'] = configuration.short_title
     # NOTE: we only expect cert access for now
-    user_dict['https_default_url'] = configuration.migserver_https_cert_url
+    user_dict['https_default_url'] = configuration.migserver_https_mig_cert_url
     email_header = '%s account request for %s' % \
                    (configuration.short_title, full_name)
-    email_msg = \
-        """
+    email_msg = """
 Received an OpenID sign up with user data
  * Full Name: %(full_name)s
  * Organization: %(organization)s
@@ -235,8 +234,7 @@ Command to delete user again on %(site)s server:
 
 ---
 
-"""\
-         % user_dict
+""" % user_dict
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                  % (admin_email, email_header, email_msg, smtp_server))

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oiddiscover - discover valid openid relying party endpoints for this realm
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -85,34 +85,36 @@ def main(client_id, user_arguments_dict):
 '''
 
     if configuration.site_enable_openid:
-        # TMP! add own openid server realm as well
         sid_url = configuration.migserver_https_sid_url
-        oid_url = configuration.migserver_https_oid_url
+        migoid_url = configuration.migserver_https_mig_oid_url
+        extoid_url = configuration.migserver_https_ext_oid_url
         helper_urls = {
-            'migoid_entry_url': os.path.join(sid_url),
+            'migoid_entry_url': os.path.join(migoid_url),
             'migoid_signup_url': os.path.join(sid_url, 'cgi-sid', 'signup.py'),
             'migoid_login_url': os.path.join(sid_url, 'cgi-sid', 'login.py'),
-            'migoid_create_url': os.path.join(sid_url, 'wsgi-bin',
-                                              'autocreate.py'),
-            'migoid_dash_url': os.path.join(sid_url, 'wsgi-bin',
+            # NOTE: we reuse cert req to create account for now
+            'migoid_create_url': os.path.join(sid_url, 'cgi-sid',
+                                              'reqcert.py'),
+            'migoid_dash_url': os.path.join(migoid_url, 'wsgi-bin',
                                             'dashboard.py'),
-            'migoid_files_url': os.path.join(sid_url, 'wsgi-bin',
+            'migoid_files_url': os.path.join(migoid_url, 'wsgi-bin',
                                              'fileman.py'),
-            'kitoid_entry_url': os.path.join(oid_url),
-            'kitoid_signup_url': os.path.join(oid_url, 'cgi-sid', 'signup.py'),
-            'kitoid_login_url': os.path.join(oid_url, 'cgi-sid', 'login.py'),
-            'kitoid_create_url': os.path.join(oid_url, 'cgi-sid',
+            'extoid_entry_url': os.path.join(extoid_url),
+            'extoid_signup_url': os.path.join(sid_url, 'cgi-sid', 'signup.py'),
+            'extoid_login_url': os.path.join(sid_url, 'cgi-sid', 'login.py'),
+            # NOTE: autocreate with credentials from external OpenID provider
+            'extoid_create_url': os.path.join(extoid_url, 'wsgi-bin',
                                               'autocreate.py'),
-            'kitoid_dash_url': os.path.join(oid_url, 'wsgi-bin',
+            'extoid_dash_url': os.path.join(extoid_url, 'wsgi-bin',
                                             'dashboard.py'),
-            'kitoid_files_url': os.path.join(oid_url, 'wsgi-bin',
+            'extoid_files_url': os.path.join(extoid_url, 'wsgi-bin',
                                              'fileman.py')}
-        discovery_uris = '''<URI>%(kitoid_entry_url)s</URI>
-            <URI>%(kitoid_signup_url)s</URI>
-            <URI>%(kitoid_login_url)s</URI>
-            <URI>%(kitoid_create_url)s</URI>
-            <URI>%(kitoid_dash_url)s</URI>
-            <URI>%(kitoid_files_url)s</URI>
+        discovery_uris = '''<URI>%(extoid_entry_url)s</URI>
+            <URI>%(extoid_signup_url)s</URI>
+            <URI>%(extoid_login_url)s</URI>
+            <URI>%(extoid_create_url)s</URI>
+            <URI>%(extoid_dash_url)s</URI>
+            <URI>%(extoid_files_url)s</URI>
             <URI>%(migoid_entry_url)s</URI>
             <URI>%(migoid_signup_url)s</URI>
             <URI>%(migoid_login_url)s</URI>

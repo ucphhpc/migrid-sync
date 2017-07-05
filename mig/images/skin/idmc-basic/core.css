@@ -148,6 +148,18 @@ table {
 #logoimage {
   opacity: 0.7;
 }
+#logoimagecenter {
+  display: none;
+}
+#logoimagecenter.staticpage {
+  display: none;
+}
+#logoimageright {
+  display: none;
+}
+#logoimageright.staticpage {
+  display: none;
+}
 
 #bottomspace {
   display: none;

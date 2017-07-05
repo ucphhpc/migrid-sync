@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,6 +32,7 @@ import socket
 from urllib import urlencode
 from urlparse import parse_qsl
 
+from shared.defaults import auth_openid_mig_db, auth_openid_ext_db
 from shared.useradm import get_openid_user_dn
 
 # All HTTPS clients coming through apache will have their unique
@@ -95,17 +96,26 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
     If lookup_dn is set the resulting OpenID is translated to the corresponding
     local account if any.
     """
+    _logger = configuration.logger
+    oid_db = ""
 
     # We accept utf8 chars (e.g. '\xc3') in client_login_field but they get
     # auto backslash-escaped in environ so we need to unescape first
     
     login = unescape(environ.get(client_login_field, '')).strip()
     if not login:
-        return ""
+        return (oid_db, "")
+    if login.startswith(configuration.user_mig_oid_provider):
+        oid_db = auth_openid_mig_db
+    elif login.startswith(configuration.user_ext_oid_provider):
+        oid_db = auth_openid_ext_db
+    else:
+        _logger.warning("could not detect openid provider db for %s: %s" % \
+                       (login, environ))
     if lookup_dn:
         # Let backend do user_check
         login = get_openid_user_dn(configuration, login, user_check=False)
-    return login
+    return (oid_db, login)
 
 def extract_client_id(configuration, environ):
     """Extract unique user cert ID from HTTPS or fall back to try REMOTE_USER
@@ -119,7 +129,7 @@ def extract_client_id(configuration, environ):
                environ["REQUEST_URI"].find('autocreate.py') == -1:
             # Throw away any extra ID fields from environment
             pop_openid_query_fields(environ)
-        distinguished_name = extract_client_openid(configuration, environ)
+        (_, distinguished_name) = extract_client_openid(configuration, environ)
     return distinguished_name
 
 def check_source_ip(remote_ip, unique_resource_name, proxy_fqdn=None):

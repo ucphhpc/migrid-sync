@@ -43,7 +43,8 @@ import random
 import socket
 import sys
 
-from shared.defaults import default_http_port, default_https_port
+from shared.defaults import default_http_port, default_https_port, \
+     auth_openid_mig_db, auth_openid_ext_db
 from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 
 def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
@@ -84,8 +85,10 @@ def generate_confs(
     destination=os.path.dirname(sys.argv[0]),
     base_fqdn='localhost',
     public_fqdn='localhost',
-    cert_fqdn='localhost',
-    oid_fqdn='localhost',
+    mig_cert_fqdn='localhost',
+    ext_cert_fqdn='localhost',
+    mig_oid_fqdn='localhost',
+    ext_oid_fqdn='localhost',
     sid_fqdn='localhost',
     io_fqdn='localhost',
     user='mig',
@@ -116,7 +119,8 @@ def generate_confs(
     enable_imnotify='False',
     enable_dev_accounts='False',
     enable_openid='True',
-    openid_providers='',
+    mig_oid_provider='',
+    ext_oid_provider='',
     daemon_keycert='',
     daemon_pubkey='',
     daemon_show_address='',
@@ -128,9 +132,11 @@ def generate_confs(
     trac_admin_path='',
     trac_ini_path='',
     public_port=default_http_port,
-    cert_port=default_https_port,
-    oid_port=default_https_port+1,
-    sid_port=default_https_port+2,
+    mig_cert_port=default_https_port,
+    ext_cert_port=default_https_port+1,
+    mig_oid_port=default_https_port+3,
+    ext_oid_port=default_https_port+2,
+    sid_port=default_https_port+4,
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
@@ -149,15 +155,19 @@ def generate_confs(
     user_dict['__GENERATECONFS_COMMAND__'] = generateconfs_command
     user_dict['__BASE_FQDN__'] = base_fqdn
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
-    user_dict['__CERT_FQDN__'] = cert_fqdn
-    user_dict['__OID_FQDN__'] = oid_fqdn
+    user_dict['__MIG_CERT_FQDN__'] = mig_cert_fqdn
+    user_dict['__EXT_CERT_FQDN__'] = ext_cert_fqdn
+    user_dict['__MIG_OID_FQDN__'] = mig_oid_fqdn
+    user_dict['__EXT_OID_FQDN__'] = ext_oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
-    user_dict['__CERT_PORT__'] = str(cert_port)
-    user_dict['__OID_PORT__'] = str(oid_port)
+    user_dict['__MIG_CERT_PORT__'] = str(mig_cert_port)
+    user_dict['__EXT_CERT_PORT__'] = str(ext_cert_port)
+    user_dict['__MIG_OID_PORT__'] = str(mig_oid_port)
+    user_dict['__EXT_OID_PORT__'] = str(ext_oid_port)
     user_dict['__SID_PORT__'] = str(sid_port)
     user_dict['__MIG_BASE__'] = os.path.dirname(mig_code.rstrip(os.sep))
     user_dict['__MIG_CODE__'] = mig_code
@@ -186,11 +196,18 @@ def generate_confs(
     user_dict['__ENABLE_IMNOTIFY__'] = enable_imnotify
     user_dict['__ENABLE_DEV_ACCOUNTS__'] = enable_dev_accounts
     user_dict['__ENABLE_OPENID__'] = enable_openid
-    # Default to first OpenID provider
-    openid_provider_list = openid_providers.split() or ['']
-    user_dict['__OPENID_PROVIDER_BASE__'] = openid_provider_list[0]
-    user_dict['__OPENID_PROVIDER_ID__'] = openid_provider_list[0]
-    user_dict['__OPENID_ALL_PROVIDER_IDS__'] = openid_providers
+    user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
+    user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
+    user_dict['__MIG_OID_AUTH_DB__'] = auth_openid_mig_db
+    user_dict['__EXT_OID_PROVIDER_BASE__'] = ext_oid_provider
+    user_dict['__EXT_OID_PROVIDER_ID__'] = ext_oid_provider
+    user_dict['__EXT_OID_AUTH_DB__'] = auth_openid_ext_db
+    user_dict['__PUBLIC_URL__'] = ''
+    user_dict['__MIG_CERT_URL__'] = ''
+    user_dict['__EXT_CERT_URL__'] = ''
+    user_dict['__MIG_OID_URL__'] = ''
+    user_dict['__EXT_OID_URL__'] = ''
+    user_dict['__SID_URL__'] = ''
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
     user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
@@ -213,8 +230,10 @@ def generate_confs(
     user_dict['__SKIN__'] = skin
 
     # Apache fails on duplicate Listen directives so comment in that case
-    port_list = [cert_port, oid_port, sid_port]
-    fqdn_list = [cert_fqdn, oid_fqdn, sid_fqdn]
+    port_list = [mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port,
+                 sid_port]
+    fqdn_list = [mig_cert_fqdn, ext_cert_fqdn, mig_oid_fqdn, ext_oid_fqdn,
+                 sid_fqdn]
     same_port = (len(port_list) != len(dict(zip(port_list, port_list)).keys()))
     same_fqdn = (len(fqdn_list) != len(dict(zip(fqdn_list, fqdn_list)).keys()))
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
@@ -239,6 +258,31 @@ cert, oid and sid based https!
     else:
         user_dict['__APACHE_PRE2.4__'] = ''
         user_dict['__APACHE_RECENT__'] = '#'
+
+    # Define some FQDN helpers if set
+    user_dict['__IFDEF_PUBLIC_FQDN__'] = 'UnDefine'
+    if user_dict['__PUBLIC_FQDN__']:
+        user_dict['__IFDEF_PUBLIC_FQDN__'] = 'Define'
+
+    user_dict['__IFDEF_MIG_CERT_FQDN__'] = 'UnDefine'
+    if user_dict['__MIG_CERT_FQDN__']:
+        user_dict['__IFDEF_MIG_CERT_FQDN__'] = 'Define'
+
+    user_dict['__IFDEF_EXT_CERT_FQDN__'] = 'UnDefine'
+    if user_dict['__EXT_CERT_FQDN__']:
+        user_dict['__IFDEF_EXT_CERT_FQDN__'] = 'Define'
+
+    user_dict['__IFDEF_MIG_OID_FQDN__'] = 'UnDefine'
+    if user_dict['__MIG_OID_FQDN__']:
+        user_dict['__IFDEF_MIG_OID_FQDN__'] = 'Define'
+
+    user_dict['__IFDEF_EXT_OID_FQDN__'] = 'UnDefine'
+    if user_dict['__EXT_OID_FQDN__']:
+        user_dict['__IFDEF_EXT_OID_FQDN__'] = 'Define'
+
+    user_dict['__IFDEF_SID_FQDN__'] = 'UnDefine'
+    if user_dict['__SID_FQDN__']:    
+        user_dict['__IFDEF_SID_FQDN__'] = 'Define'
 
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
@@ -288,7 +332,8 @@ cert, oid and sid based https!
         user_dict['__APACHE_SUFFIX__'] = ""
 
     # Enable OpenID auth module only if openid_providers is given
-    if user_dict['__OPENID_PROVIDER_BASE__'].strip():
+    if user_dict['__EXT_OID_PROVIDER_BASE__'].strip() or \
+           user_dict['__MIG_OID_PROVIDER_BASE__'].strip():
         user_dict['__OPENID_COMMENTED__'] = ''
     else:
         user_dict['__OPENID_COMMENTED__'] = '#'
@@ -347,13 +392,18 @@ cert, oid and sid based https!
         user_dict['__APACHE_DAEMON__'] = 'httpd'
         
 
-    # Only set ID sub url if openid_providers is set - trailing slash matters
-    if user_dict['__OPENID_PROVIDER_BASE__']:
-        user_dict['__OPENID_PROVIDER_ID__'] = os.path.join(openid_providers[0],
-                                                           'id') + os.sep
-        user_dict['__OPENID_ALL_PROVIDER_IDS__'] = ' '.join(
-            [os.path.join(oid_provider, 'id') + os.sep for oid_provider in \
-             openid_providers.split()])
+    # Only set ID sub url if any openid provider(s) is set
+    # IMPORTANT: trailing slash matters!
+    all_oid_provider_ids = []
+    if user_dict['__MIG_OID_PROVIDER_BASE__']:
+        mig_oid_provider_id = os.path.join(mig_oid_provider, 'id') + os.sep
+        user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider_id
+        all_oid_provider_ids.append(mig_oid_provider_id)
+    if user_dict['__EXT_OID_PROVIDER_BASE__']:
+        ext_oid_provider_id = os.path.join(ext_oid_provider, 'id') + os.sep
+        user_dict['__EXT_OID_PROVIDER_ID__'] = ext_oid_provider_id
+        all_oid_provider_ids.append(ext_oid_provider_id)
+    user_dict['__ALL_OID_PROVIDER_IDS__'] = ' '.join(all_oid_provider_ids)
         
     try:
         os.makedirs(destination)
@@ -361,23 +411,42 @@ cert, oid and sid based https!
         pass
 
     # Implicit ports if they are standard: cleaner and removes double hg login
-    user_dict['__PUBLIC_URL__'] = 'http://%(__PUBLIC_FQDN__)s' % user_dict
-    if str(public_port) != str(default_http_port):
-        print "adding explicit public port (%s)" % [public_port,
-                                                    default_http_port]
-        user_dict['__PUBLIC_URL__'] += ':%(__PUBLIC_PORT__)s' % user_dict
-    user_dict['__CERT_URL__'] = 'https://%(__CERT_FQDN__)s' % user_dict
-    if str(cert_port) != str(default_https_port):
-        print "adding explicit cert port (%s)" % [cert_port, default_https_port]
-        user_dict['__CERT_URL__'] += ':%(__CERT_PORT__)s' % user_dict
-    user_dict['__OID_URL__'] = 'https://%(__OID_FQDN__)s' % user_dict
-    if str(oid_port) != str(default_https_port):
-        print "adding explicit oid port (%s)" % [oid_port, default_https_port]
-        user_dict['__OID_URL__'] += ':%(__OID_PORT__)s' % user_dict
-    user_dict['__SID_URL__'] = 'https://%(__SID_FQDN__)s' % user_dict
-    if str(sid_port) != str(default_https_port):
-        print "adding explicit sid port (%s)" % [sid_port, default_https_port]
-        user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
+    if public_fqdn:
+        user_dict['__PUBLIC_URL__'] = 'http://%(__PUBLIC_FQDN__)s' % user_dict
+        if str(public_port) != str(default_http_port):
+            print "adding explicit public port (%s)" % [public_port,
+                                                        default_http_port]
+            user_dict['__PUBLIC_URL__'] += ':%(__PUBLIC_PORT__)s' % user_dict
+    if mig_cert_fqdn:
+        user_dict['__MIG_CERT_URL__'] = 'https://%(__MIG_CERT_FQDN__)s' % user_dict
+        if str(mig_cert_port) != str(default_https_port):
+            print "adding explicit mig cert port (%s)" % [mig_cert_port,
+                                                          default_https_port]
+            user_dict['__MIG_CERT_URL__'] += ':%(__MIG_CERT_PORT__)s' % user_dict
+    if ext_cert_fqdn:
+        user_dict['__EXT_CERT_URL__'] = 'https://%(__EXT_CERT_FQDN__)s' % user_dict
+        if str(ext_cert_port) != str(default_https_port):
+            print "adding explicit ext cert port (%s)" % [ext_cert_port,
+                                                          default_https_port]
+            user_dict['__EXT_CERT_URL__'] += ':%(__EXT_CERT_PORT__)s' % user_dict
+    if mig_oid_fqdn:
+        user_dict['__MIG_OID_URL__'] = 'https://%(__MIG_OID_FQDN__)s' % user_dict
+        if str(mig_oid_port) != str(default_https_port):
+            print "adding explicit ext oid port (%s)" % [mig_oid_port,
+                                                         default_https_port]
+            user_dict['__MIG_OID_URL__'] += ':%(__MIG_OID_PORT__)s' % user_dict
+    if ext_oid_fqdn:
+        user_dict['__EXT_OID_URL__'] = 'https://%(__EXT_OID_FQDN__)s' % user_dict
+        if str(ext_oid_port) != str(default_https_port):
+            print "adding explicit org oid port (%s)" % [ext_oid_port,
+                                                         default_https_port]
+            user_dict['__EXT_OID_URL__'] += ':%(__EXT_OID_PORT__)s' % user_dict
+    if sid_fqdn:
+        user_dict['__SID_URL__'] = 'https://%(__SID_FQDN__)s' % user_dict
+        if str(sid_port) != str(default_https_port):
+            print "adding explicit sid port (%s)" % [sid_port,
+                                                     default_https_port]
+            user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
 
     # Generate random hex salt for scrambling saved digest credentials
     digest_salt = base64.b16encode(os.urandom(16))
@@ -441,17 +510,19 @@ def create_user(
     debug=False,
     base_fqdn=socket.getfqdn(),
     public_fqdn=socket.getfqdn(),
-    cert_fqdn=socket.getfqdn(),
-    oid_fqdn=socket.getfqdn(),    
+    mig_cert_fqdn=socket.getfqdn(),
+    ext_cert_fqdn=socket.getfqdn(),
+    mig_oid_fqdn=socket.getfqdn(),    
+    ext_oid_fqdn=socket.getfqdn(),    
     sid_fqdn=socket.getfqdn(),
     io_fqdn=socket.getfqdn(),
     ):
     """Create MiG unix user with supplied user and group name and show
     commands to make it a MiG developer account.
-    If oid_fqdn and sid_fqdn are set to a fqdn different from the default fqdn
-    of this host the apache web server configuration will use the same port for
-    cert, oid and sid https access but on diffrent IP adresses. Otherwise it
-    will use three different ports on the same address.
+    If X_fqdn values are all set to a fqdn different from the default fqdn of
+    this host the apache web server configuration will use the same port for
+    the individual https interfaces but on different IP adresses. Otherwise it
+    will use N different ports on the same address.
     """
 
     # make sure not to wreak havoc if no user supplied
@@ -532,8 +603,10 @@ def create_user(
 
     # print "uid: %d, gid: %d" % (uid, gid)
 
-    reserved_ports = range(4 * uid, 4 * uid + 4)
-    public_port, cert_port, oid_port, sid_port = reserved_ports[:4]
+    svc_ports = 6
+    reserved_ports = range(svc_ports * uid, svc_ports * uid + svc_ports)
+    public_port, mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port, sid_port = \
+                 reserved_ports[:svc_ports]
 
     mig_dir = os.path.join(home, 'mig')
     server_dir = os.path.join(mig_dir, 'server')
@@ -564,7 +637,8 @@ def create_user(
     enable_duplicati = 'False'
     enable_imnotify = 'False'
     enable_dev_accounts = 'False'
-    openid_providers = ''
+    mig_oid_provider = ''
+    ext_oid_provider = ''
     daemon_keycert = ''
     daemon_pubkey = ''
     daemon_show_address = ''
@@ -606,9 +680,15 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     dst = os.path.join(src, '%s-confs' % user)
 
     server_alias = '#ServerAlias'
-    if socket.gethostbyname(sid_fqdn) != socket.gethostbyname(oid_fqdn) != \
-           socket.gethostbyname(cert_fqdn):
-        sid_port = oid_port = cert_port
+    https_fqdns = [mig_cert_fqdn, ext_cert_fqdn, mig_oid_fqdn, ext_oid_fqdn,
+                   sid_fqdn]
+    https_resolved = [socket.gethostbyname(fqdn) for fqdn in https_fqdns]
+    uniq_resolved = []
+    for fqdn in https_resolved:
+        if fqdn not in uniq_resolved:
+            uniq_resolved.append(fqdn)
+    if len(uniq_resolved) == len(https_fqdns):
+        mig_cert_port = ext_cert_port = mig_oid_port = ext_oid_port = sid_port
         server_alias = 'ServerAlias'
     generate_confs(
         ' '.join(sys.argv),
@@ -616,8 +696,10 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         dst,
         base_fqdn,
         public_fqdn,
-        cert_fqdn,
-        oid_fqdn,
+        mig_cert_fqdn,
+        ext_cert_fqdn,
+        mig_oid_fqdn,
+        ext_oid_fqdn,
         sid_fqdn,
         io_fqdn,
         user,
@@ -648,7 +730,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_imnotify,
         enable_dev_accounts,
         enable_openid,
-        openid_providers,
+        mig_oid_provider,
+        ext_oid_provider,
         daemon_keycert,
         daemon_pubkey,
         daemon_show_address,
@@ -658,8 +741,10 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         trac_admin_path,
         trac_ini_path,
         public_port,
-        cert_port,
-        oid_port,
+        mig_cert_port,
+        ext_cert_port,
+        mig_oid_port,
+        ext_oid_port,
         sid_port,
         'User',
         'Group',
@@ -722,15 +807,18 @@ sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/
 %(sudo_cmd)s '%(server_dir)s/checkconf.py'
 """ % settings
 
-    used_ports = [public_port, cert_port, oid_port, sid_port]
+    used_ports = [public_port, mig_cert_port, ext_cert_port, mig_oid_port,
+                  ext_oid_port, sid_port]
     extra_ports = [port for port in reserved_ports if not port in used_ports]
     print """
 #############################################################
 Created %s in group %s with pw %s
 Reserved ports:
 HTTP:\t\t%d
-HTTPS certificate users:\t\t%d
-HTTPS openid users:\t\t%d
+HTTPS internal certificate users:\t\t%d
+HTTPS external certificate users:\t\t%d
+HTTPS Internal openid users:\t\t%d
+HTTPS external openid users:\t\t%d
 HTTPS resources:\t\t%d
 Extra ports:\t\t%s
 
@@ -744,8 +832,10 @@ sudo %s/%s start
         group,
         pw,
         public_port,
-        cert_port,
-        oid_port,
+        mig_cert_port,
+        ext_cert_port,
+        mig_oid_port,
+        ext_oid_port,
         sid_port,
         ', '.join(["%d" % port for port in extra_ports]),
         apache_dir,

@@ -936,9 +936,10 @@ def get_full_user_map(configuration):
         user_map[alias] = user_map.get(cert_id, {})
     return user_map
 
-def __oid_sessions_execute(configuration, query, query_vars, commit=False):
+def __oid_sessions_execute(configuration, db_name, query, query_vars,
+                           commit=False):
     """Execute query on Apache mod auth OpenID sessions DB from configuration
-    with sql query_vars inserted.
+    and db_name with sql query_vars inserted.
     Use the commit flag to specify if the query should be followed by a db
     commit to save any changes.
     """
@@ -948,8 +949,7 @@ def __oid_sessions_execute(configuration, query, query_vars, commit=False):
            not configuration.openid_store:
         logger.error("no openid configuration")
         return (False, sessions)
-    session_db_path = os.path.join(configuration.openid_store,
-                                   'mod_auth_openid-users.db')
+    session_db_path = os.path.join(configuration.openid_store, db_name)
     if not os.path.exists(session_db_path):
         logger.error("could not find openid session db: %s" % session_db_path)
         return (False, sessions)
@@ -970,21 +970,21 @@ def __oid_sessions_execute(configuration, query, query_vars, commit=False):
     logger.info("got openid sessions out for %s" % sessions)
     return (True, sessions)
 
-def find_oid_sessions(configuration, identity):
+def find_oid_sessions(configuration, db_name, identity):
     """Find active OpenID session(s) for user with OpenID identity. Queries the
     Apache mod auth openid sqlite database directly.
     """
     query = 'SELECT * FROM sessionmanager WHERE identity=?'
     args = (identity, )
-    return __oid_sessions_execute(configuration, query, args, False)
+    return __oid_sessions_execute(configuration, db_name, query, args, False)
 
-def expire_oid_sessions(configuration, identity):
+def expire_oid_sessions(configuration, db_name, identity):
     """Expire active OpenID session(s) for user with OpenID identity. Modifies
     the Apache mod auth openid sqlite database directly.
     """
     query = 'DELETE FROM sessionmanager WHERE identity=?'
     args = (identity, )
-    return __oid_sessions_execute(configuration, query, args, True)
+    return __oid_sessions_execute(configuration, db_name, query, args, True)
         
     
 def migrate_users(

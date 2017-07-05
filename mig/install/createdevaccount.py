@@ -58,8 +58,10 @@ IMPORTANT: needs to run with privileges to create system user!
 if __name__ == '__main__':
     settings = {
         'public_fqdn': socket.getfqdn(),
-        'cert_fqdn': socket.getfqdn(),
-        'oid_fqdn': socket.getfqdn(),
+        'mig_cert_fqdn': socket.getfqdn(),
+        'ext_cert_fqdn': socket.getfqdn(),
+        'mig_oid_fqdn': socket.getfqdn(),
+        'ext_oid_fqdn': socket.getfqdn(),
         'sid_fqdn': socket.getfqdn(),
         'debug_mode': True,
         }
@@ -99,8 +101,10 @@ if __name__ == '__main__':
         print '# Creating a unprivileged account for %s' % login
         create_user(login, login, debug=settings["debug_mode"],
                     public_fqdn=settings["public_fqdn"],
-                    cert_fqdn=settings["cert_fqdn"],
-                    oid_fqdn=settings["oid_fqdn"],
+                    mig_cert_fqdn=settings["mig_cert_fqdn"],
+                    ext_cert_fqdn=settings["ext_cert_fqdn"],
+                    mig_oid_fqdn=settings["mig_oid_fqdn"],
+                    ext_oid_fqdn=settings["ext_oid_fqdn"],
                     sid_fqdn=settings["sid_fqdn"])
 
     sys.exit(0)

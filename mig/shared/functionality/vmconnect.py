@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmconnect - connect to virtual machine
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -87,15 +87,21 @@ Please contact the Grid admins %s if you think they should be enabled.
     vnc_menu_height = 24
     vnc_display_height += vnc_menu_height
     password = vms.vnc_jobid(accepted['job_id'][0])
-    cert_base = configuration.migserver_https_cert_url
-    oid_base = configuration.migserver_https_oid_url
-    if os.environ['REQUEST_URI'].startswith(cert_base):
-        https_base = cert_base
-    elif os.environ['REQUEST_URI'].startswith(oid_base):
-        https_base = oid_base
+    mig_cert_base = configuration.migserver_https_mig_cert_url
+    ext_cert_base = configuration.migserver_https_ext_cert_url
+    mig_oid_base = configuration.migserver_https_mig_oid_url
+    ext_oid_base = configuration.migserver_https_ext_oid_url
+    if os.environ['REQUEST_URI'].startswith(mig_cert_base):
+        https_base = mig_cert_base
+    elif os.environ['REQUEST_URI'].startswith(ext_cert_base):
+        https_base = ext_cert_base
+    elif os.environ['REQUEST_URI'].startswith(mig_oid_base):
+        https_base = mig_oid_base
+    elif os.environ['REQUEST_URI'].startswith(ext_oid_base):
+        https_base = ext_oid_base
     else:
         logger.warning("unexpected REQUEST_URI: %(REQUEST_URI)s" % os.environ)
-        https_base = cert_base
+        https_base = mig_cert_base
         
     # Do an "intoN" then map to acsii
 

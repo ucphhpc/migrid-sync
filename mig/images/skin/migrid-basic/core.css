@@ -91,8 +91,22 @@ table {
 #logoimage {
   opacity: 1.0;
 }
+#logoimagecenter {
+  display: none;
+}
+#logoimagecenter.staticpage {
+  display: none;
+}
+#logoimageright {
+  display: none;
+}
+#logoimageright.staticpage {
+  display: none;
+}
 
-
+#bottomspace {
+  display: none;
+}
 #bottomlogo {
   background: url("/images/skin/migrid-basic/background.png") repeat scroll left center #eee;
   color: white;

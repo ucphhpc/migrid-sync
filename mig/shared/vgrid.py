@@ -112,7 +112,8 @@ def vgrid_add_remove_table(client_id,
         id_note_tr = """
       <tr>
       <td>
-Note: %ss are specified with %s the Distinguished Name (DN) of the user. If in
+Note: %ss are specified with %s the Distinguished Name (DN) of the user. In
+most cases it also works to just enter the email address of the user. If in
 doubt, just let the user request access and accept it with the
 <span class='addlink'></span>-icon in the Pending Requests table below.
       </td>

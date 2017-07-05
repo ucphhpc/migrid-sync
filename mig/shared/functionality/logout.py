@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # logout - force-expire local login session
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -67,7 +67,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'Logout'})
-    identity = extract_client_openid(configuration, environ, lookup_dn=False)
+    (oid_db, identity) = extract_client_openid(configuration, environ,
+                                               lookup_dn=False)
     logger.info("%s from %s with identity %s" % (op_name, client_id, identity))
     if client_id and client_id == identity:
         output_objects.append(
@@ -85,10 +86,11 @@ browser. Please refer to your browser and system documentation for details.
     # finish the local logout.
 
     if do_logout:
-        logger.info("expiring active sessions for %s" % identity)
-        (success, _) = expire_oid_sessions(configuration, identity)
+        logger.info("expiring active sessions for %s in %s" % (identity,
+                                                               oid_db))
+        (success, _) = expire_oid_sessions(configuration, oid_db, identity)
         logger.info("verifying no active sessions left for %s" % identity)
-        (found, remaining) = find_oid_sessions(configuration, identity)
+        (found, remaining) = find_oid_sessions(configuration, oid_db, identity)
         if success and found and not remaining:
             output_objects.append(
                 {'object_type': 'text', 'text': """You are now logged out of %s

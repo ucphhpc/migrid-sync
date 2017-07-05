@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - auto create user from signed certificate or openid login
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -168,13 +168,33 @@ def main(client_id, user_arguments_dict, environ=None):
     output_objects.append({'object_type': 'header', 'text'
                           : 'Automatic %s sign up' % \
                             configuration.short_title})
-    identity = extract_client_openid(configuration, environ, lookup_dn=False)
+    (_, identity) = extract_client_openid(configuration, environ,
+                                          lookup_dn=False)
+    req_url = environ['SCRIPT_URI']
     if client_id and client_id == identity:
         login_type = 'cert'
-        base_url = configuration.migserver_https_cert_url
+        if req_url.startswith(configuration.migserver_https_mig_cert_url):
+            base_url = configuration.migserver_https_mig_cert_url
+        elif req_url.startswith(configuration.migserver_https_ext_cert_url):
+            base_url = configuration.migserver_https_ext_cert_url
+        else:
+            logger.warning("no match for cert request URL: %s" % req_url)
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'No matching request URL: %s' % req_url})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
     elif identity:
         login_type = 'oid'
-        base_url = configuration.migserver_https_oid_url
+        if req_url.startswith(configuration.migserver_https_mig_oid_url):
+            base_url = configuration.migserver_https_mig_oid_url
+        elif req_url.startswith(configuration.migserver_https_ext_oid_url):
+            base_url = configuration.migserver_https_ext_oid_url
+        else:
+            logger.warning("no match for oid request URL: %s" % req_url)
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'No matching request URL: %s' % req_url})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
         for name in ('openid.sreg.cn', 'openid.sreg.fullname',
                      'openid.sreg.full_name'):
             prefilter_map[name] = filter_commonname

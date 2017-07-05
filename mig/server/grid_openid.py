@@ -87,7 +87,8 @@ from shared.griddaemons import hit_rate_limit, update_rate_limit, \
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.safeinput import valid_distinguished_name, valid_password, \
-     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url
+     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
+     InputException
 from shared.useradm import load_user_db, cert_field_map, \
      get_openid_user_dn
 
@@ -154,7 +155,7 @@ def lookup_full_user(username):
     # print "DEBUG: Loading user DB"
     id_map = load_user_db(db_path)
 
-    login_url = os.path.join(configuration.user_openid_providers[0], username)
+    login_url = os.path.join(configuration.user_mig_oid_provider, username)
     distinguished_name = get_openid_user_dn(configuration, login_url)
 
     # print "DEBUG: compare against %s" % full_id
@@ -246,8 +247,10 @@ class ServerHandler(BaseHTTPRequestHandler):
         'remember': valid_ascii,
         'cancel': valid_ascii,
         'submit': valid_distinguished_name,
+        'logout': valid_ascii,
         'success_to': valid_url,
         'fail_to': valid_url,
+        'return_to': valid_url,
         'openid.assoc_handle': valid_password,
         'openid.assoc_type': valid_password,
         'openid.dh_consumer_public': valid_session_hash,
@@ -269,6 +272,11 @@ class ServerHandler(BaseHTTPRequestHandler):
         }
 
     def __init__(self, *args, **kwargs):
+        if configuration.daemon_conf['session_ttl'] > 0:
+            self.session_ttl = configuration.daemon_conf['session_ttl']
+        else:
+            self.session_ttl = 48 * 3600
+
         self.clearUser()
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
@@ -278,9 +286,12 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.user_dn = None
         self.user_dn_dir = None
         self.password = None
+        self.login_expire = None
         
     def do_GET(self):
         """Handle all HTTP GET requests"""
+        # Make sure key is always available for exception handler
+        key = 'UNSET'
         try:
             self.parsed_uri = urlparse(self.path)
             self.query = {}
@@ -290,7 +301,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                 # Let validation errors pass to general exception handler below
                 validate_helper(val)
                 self.query[key] = val
-
+ 
             self.setUser()
 
             # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
@@ -312,6 +323,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                                    '/%s/' % self.server.server_base)
             elif path == '/loginsubmit':
                 self.doLogin()
+            elif path == '/logout':
+                self.doLogout()
             elif path.startswith('/id/'):
                 self.showIdPage(path)
             elif path.startswith('/yadis/'):
@@ -324,12 +337,23 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         except (KeyboardInterrupt, SystemExit):
             raise
+        except InputException, err:
+            logger.error(cgitb.text(sys.exc_info(), context=10))
+            print "ERROR: %s" % cgitb.text(sys.exc_info(), context=10)
+            err_msg = """<p class='leftpad'>
+Invalid '%s' input: %s
+</p>
+<p>
+<a href='javascript:history.back(-1);'>Back</a>
+</p>""" % (key, err)
+            self.showErrorPage(err_msg)
         except:
             self.send_response(500)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(cgitb.html(sys.exc_info(), context=10))
-            print "ERROR: %s" % cgitb.html(sys.exc_info(), context=10)
+            logger.error(cgitb.text(sys.exc_info(), context=10))
+            print "ERROR: %s" % cgitb.text(sys.exc_info(), context=10)
 
     def do_POST(self):
         """Handle all HTTP POST requests"""
@@ -367,12 +391,23 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         except (KeyboardInterrupt, SystemExit):
             raise
+        except InputException, err:
+            logger.error(cgitb.text(sys.exc_info(), context=10))
+            print "ERROR: %s" % cgitb.text(sys.exc_info(), context=10)
+            err_msg = """<p class='leftpad'>
+Invalid '%s' input: %s
+</p>
+<p>
+<a href='javascript:history.back(-1);'>Back</a>
+</p>""" % (key, err)
+            self.showErrorPage(err_msg)
         except:
             self.send_response(500)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(cgitb.html(sys.exc_info(), context=10))
-            print "ERROR: %s" % cgitb.html(sys.exc_info(), context=10)
+            logger.error(cgitb.text(sys.exc_info(), context=10))
+            print "ERROR: %s" % cgitb.text(sys.exc_info(), context=10)
 
     def handleAllow(self, query):
         """Handle requests to allow authentication:
@@ -381,8 +416,8 @@ class ServerHandler(BaseHTTPRequestHandler):
         """
         request = self.server.lastCheckIDRequest.get(self.user)
 
-        print "handleAllow with last request %s from user %s" % \
-              (request, self.user)
+        logger.debug("handleAllow with last request %s from user %s" % \
+                     (request, self.user))
         # print "DEBUG: full query %s" % query
 
         # Old IE 8 does not send contents of submit buttons thus only the
@@ -408,30 +443,31 @@ class ServerHandler(BaseHTTPRequestHandler):
             else:
                 identity = request.identity
 
-            print "handleAllow with identity %s" % identity
+            logger.debug("handleAllow with identity %s" % identity)
 
             if 'password' in self.query:
-                print "setting password"
+                logger.debug("setting password")
                 self.password = self.query['password']
             else:
-                print "no password in query"
+                logger.debug("no password in query")
                 self.password = None
 
             if not hit_rate_limit(configuration, "openid",
                                   self.client_address[0], self.user) and \
                                   self.checkLogin(self.user, self.password):
-                print "handleAllow validated login %s" % identity
+                logger.debug("handleAllow validated login %s" % identity)
                 trust_root = request.trust_root
                 if self.query.get('remember', 'no') == 'yes':
                     self.server.approved[(identity, trust_root)] = 'always'
-
-                print "handleAllow approving login %s" % identity
+                
+                self.login_expire = int(time.time() + self.session_ttl)
+                logger.debug("handleAllow approving login %s" % identity)
                 response = self.approved(request, identity)
                 update_rate_limit(configuration, "openid",
                                   self.client_address[0], self.user, True,
                                   self.password)
             else:
-                print "handleAllow rejected login %s" % identity
+                logger.debug("handleAllow rejected login %s" % identity)
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 response = self.rejected(request, identity)    
@@ -455,12 +491,24 @@ class ServerHandler(BaseHTTPRequestHandler):
     def setUser(self):
         """Read any saved user value from cookie"""
         cookies = self.headers.get('Cookie')
+        # print "found cookies: %s" % cookies
         if cookies:
             morsel = Cookie.BaseCookie(cookies).get('user')
             # Added morsel value check here since IE sends empty string from
             # cookie after initial user=;expire is sent. Others leave it out.
             if morsel and morsel.value != '':
                 self.user = morsel.value
+
+            expire = int(time.time() + self.session_ttl)
+            morsel = Cookie.BaseCookie(cookies).get('session_expire')
+            if morsel and morsel.value != '':
+                # print "found user session_expire value: %s" % morsel.value
+                if morsel.value.isdigit() and int(morsel.value) <= expire:
+                    # print "using saved session expire: %s" % morsel.value
+                    expire = int(morsel.value)
+                else:
+                    logger.warning("invalid session_expire %s" % morsel.value)
+            self.login_expire = expire
 
     def isAuthorized(self, identity_url, trust_root):
         """Check if user is authorized"""
@@ -501,7 +549,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         (username, user) = lookup_full_user(self.user)
 
         if not user:
-            print "WARNING: addSRegResponse user lookup failed!"
+            logger.warning("addSRegResponse user lookup failed!")
             return
         
         sreg_data = {}
@@ -539,7 +587,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def handleCheckIDRequest(self, request):
         """Check ID handler"""
-        print "handleCheckIDRequest with req %s" % request
+        logger.debug("handleCheckIDRequest with req %s" % request)
         is_authorized = self.isAuthorized(request.identity, request.trust_root)
         if is_authorized:
             response = self.approved(request)
@@ -577,22 +625,23 @@ class ServerHandler(BaseHTTPRequestHandler):
         # print "Loading user DB"
         id_map = load_user_db(db_path)
         # username may be None here
-        login_url = os.path.join(configuration.user_openid_providers[0],
+        login_url = os.path.join(configuration.user_mig_oid_provider,
                                  username or '')
         distinguished_name = get_openid_user_dn(configuration, login_url)
         if distinguished_name in id_map:
             user = id_map[distinguished_name]
-            print "looked up user %s in DB: %s" % (username, user)
+            logger.debug("looked up user %s in DB: %s" % (username, user))
             enc_pw = user.get('password', None)
             # print "DEBUG: Check password against enc %s" % enc_pw
             if password and base64.b64encode(password) == user['password']:
-                print "Correct password for user %s" % username
+                logger.info("Correct password for user %s" % username)
                 self.user_dn = distinguished_name
                 self.user_dn_dir = client_id_dir(distinguished_name)
+                self.login_expire = int(time.time() + self.session_ttl)
                 return True
             else:
-                print "Failed password check for user %s" % username
-        print "Invalid login for user %s" % username
+                logger.info("Failed password check for user %s" % username)
+        logger.error("Invalid login for user %s" % username)
         return False
                 
     def doLogin(self):
@@ -602,6 +651,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.user = self.query['user']
             else:
                 self.clearUser()
+                self.redirect(self.query['success_to'])
+                return
             if 'password' in self.query:
                 self.password = self.query['password']
             else:
@@ -611,18 +662,16 @@ class ServerHandler(BaseHTTPRequestHandler):
                                   self.checkLogin(self.user, self.password):
                 if not self.query['success_to']:
                     self.query['success_to'] = '%s/id/' % self.server.base_url
-                print "doLogin succeded: redirect to %s" % self.query['success_to']
-                self.redirect(self.query['success_to'])
                 update_rate_limit(configuration, "openid",
                                   self.client_address[0], self.user, True,
                                   self.password)
+                # print "doLogin succeded: redirect to %s" % self.query['success_to']
+                self.redirect(self.query['success_to'])
             else:
-                # TODO: Login failed - is this correct behaviour?
-                print "doLogin failed for %s!" % self.user
+                # print "doLogin failed for %s!" % self.user
                 # print "doLogin full query: %s" % self.query
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
-                self.redirect(self.query['success_to'])
                 failed_count = update_rate_limit(configuration, "openid",
                                                  self.client_address[0],
                                                  fail_user, False,
@@ -630,10 +679,20 @@ class ServerHandler(BaseHTTPRequestHandler):
                 penalize_rate_limit(configuration, "openid",
                                     self.client_address[0], fail_user,
                                     failed_count)
+                # TODO: Login failed - is this correct behaviour?
+                self.redirect(self.query['success_to'])
         elif 'cancel' in self.query:
             self.redirect(self.query['fail_to'])
         else:
             assert 0, 'strange login %r' % (self.query,)
+
+    def doLogout(self):
+        """Logout handler"""
+        logger.debug("logout clearing user %s" % self.user)
+        self.clearUser()
+        if 'return_to' in self.query:
+            # print "logout redirecting to %(return_to)s" % self.query
+            self.redirect(self.query['return_to'])
 
     def redirect(self, url):
         """Redirect helper"""
@@ -646,15 +705,27 @@ class ServerHandler(BaseHTTPRequestHandler):
     def writeUserHeader(self):
         """Response helper"""
         # NOTE: we added secure and httponly flags as suggested by OpenVAS
-        if self.user is None:
-            t1970 = time.gmtime(0)
-            expires = time.strftime(
-                'Expires=%a, %d-%b-%y %H:%M:%S GMT', t1970)
-            self.send_header('Set-Cookie', 'user=;%s;secure;httponly' % \
-                             expires)
+
+        # NOTE: we need to set expire for all cookies for logout to work
+        if self.user is None or self.login_expire is None:
+            session_expire = 0
         else:
-            self.send_header('Set-Cookie', 'user=%s;secure;httponly' % \
-                             self.user)
+            # print "found login_expire %s" % self.login_expire
+            session_expire = self.login_expire
+        expire = time.strftime(
+            'Expires=%a, %d-%b-%y %H:%M:%S GMT', time.gmtime(session_expire))
+        if self.user is None:
+            logger.debug("sending empty user cookie with expire %s" % expire)
+            self.send_header('Set-Cookie', 'user=;secure;httponly')
+            self.send_header('Set-Cookie', 'session_expire=%s;%s;secure;httponly' % \
+                             (session_expire, 'Expires=-1'))
+        else:
+            logger.debug("sending %s user cookie with expire %s" % (self.user,
+                                                                    expire))
+            self.send_header('Set-Cookie', 'user=%s;%s;secure;httponly' % \
+                             (self.user, expire))
+            self.send_header('Set-Cookie', 'session_expire=%s;%s;secure;httponly' % \
+                             (session_expire, expire))
 
     def showAboutPage(self):
         """About page provider"""
@@ -758,38 +829,41 @@ class ServerHandler(BaseHTTPRequestHandler):
             user_alias = configuration.user_openid_alias
 
             msg = '''\
-            <p>A site has asked for your identity. Please select your
-            ID in the list and enter your password to login.
-            </p>
-            '''
+            <h1>%(short_title)s OpenID Login</h1>
+            ''' % {'short_title': configuration.short_title}
             if user_alias:
-                alias_mark = '[...]'
+                alias_hint = ' (%s)' % user_alias
             else:
-                alias_mark = ''
+                alias_hint = ''
             fdata = {
                 'id_url_base': id_url_base,
                 'trust_root': request.trust_root,
                 'server_base': self.server.server_base,
-                'alias_mark': alias_mark,
+                'alias_hint': alias_hint,
                 }
             form = '''\
+            <div class="openidlogin">
             <form method="POST" action="/%(server_base)s/allow">
-            <table>
-              <tr><td>Identity:</td>
-                 <td>%(id_url_base)s%(alias_mark)s<input id="id_select"
-                     name="identifier" autofocus />
-              </td></tr>
-              <tr><td>Password:</td>
-                 <td><input type="password" name="password"></td></tr>
-              <tr><td>Trust Root:</td><td>%(trust_root)s</td></tr>
-            </table>
-            <p>Allow this authentication to proceed?</p>
-            <input type="checkbox" id="remember" name="remember" value="yes"
-                /><label for="remember">Remember this
-                decision</label><br />
-            <input type="submit" name="yes" value="yes" />
-            <input type="submit" name="no" value="no" />
+            <fieldset>
+            <label for="identifier">Username %(alias_hint)s:</label>
+            <input id="id_select" class="singlefield" name="identifier"
+                   autofocus />
+            <label for="password">Password:</label>
+            <input class="singlefield" type="password" name="password"
+                   />
+            <label for="remember">Remember Trust:</label><br />
+            <input class="" type="checkbox" id="remember"
+                   name="remember" value="yes" checked="checked" /><br />
+            <label for="yes">Proceed:</label>
+            <input class="" type="submit" name="yes" value="yes" />
+            <input class="" type="submit" name="no" value="no" />
+            </fieldset>
             </form>
+            </div>
+            <div class="openidlogin">
+            <p>The site %(trust_root)s has requested verification of your
+            OpenID.</p>
+            </div>
             '''
             form = form % fdata
         elif expected_user == self.user:
@@ -875,8 +949,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                           cgi.escape(trust_root)
                     approved_trust_roots.append(trs)
         else:
-            print "Not disclosing trust roots for %s (active login %s)" % \
-                  (ident_user, self.user)
+            logger.debug("Not disclosing trust roots for %s (active user %s)" \
+                         % (ident_user, self.user))
 
         if approved_trust_roots:
             prepend = '<p>Approved trust roots:</p>\n<ul>\n'
@@ -887,9 +961,10 @@ class ServerHandler(BaseHTTPRequestHandler):
             msg = ''
 
         self.showPage(200, 'An Identity Page', head_extras=disco_tags, msg='''\
-        <p>This is an identity page for %s.</p>
+        <p>This is a very basic identity page for %s.</p>
         %s
         ''' % (ident, msg))
+        
 
     def showYadis(self, user):
         """YADIS page provider"""
@@ -978,7 +1053,7 @@ class ServerHandler(BaseHTTPRequestHandler):
     def showLoginPage(self, success_to, fail_to):
         """Login page provider"""
         self.showPage(200, 'Login Page', form='''\
-        <h2>Login</h2>
+        <h2>OpenID Login</h2>
         <p>Please enter your %s username and password to prove your identify
         to this OpenID service.</p>
         <form method="GET" action="/%s/loginsubmit">
@@ -999,8 +1074,10 @@ class ServerHandler(BaseHTTPRequestHandler):
             user_link = '<a href="/%s/login">not logged in</a>.' % \
                         self.server.server_base
         else:
-            user_link = 'logged in as <a href="/%s/id/%s">%s</a>.<br /><a href="/%s/loginsubmit?submit=true&success_to=/%s/login">Log out</a>' % \
-                        (self.server.server_base, self.user, self.user, self.server.server_base, self.server.server_base)
+            user_link = '''logged in as <a href="/%s/id/%s">%s</a>.<br />
+<a href="/%s/logout?return_to=/%s/login">Log out</a>''' % \
+         (self.server.server_base, self.user, self.user,
+          self.server.server_base, self.server.server_base)
 
         body = ''
 
@@ -1027,8 +1104,12 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         default_css = os.path.join(configuration.migserver_https_sid_url,
                                    configuration.site_default_css.lstrip('/'))
+        static_css = os.path.join(configuration.migserver_https_sid_url,
+                                  configuration.site_static_css.lstrip('/'))
         custom_css = os.path.join(configuration.migserver_https_sid_url,
                                   configuration.site_custom_css.lstrip('/'))
+        skin_base = os.path.join(configuration.migserver_https_sid_url,
+                                 configuration.site_skin_base.lstrip('/'))
         fav_icon = os.path.join(configuration.migserver_https_sid_url,
                                 configuration.site_fav_icon.lstrip('/'))
         site_logo_left = os.path.join(configuration.migserver_https_sid_url,
@@ -1045,7 +1126,9 @@ class ServerHandler(BaseHTTPRequestHandler):
             'user_link': user_link,
             'root_url': '/%s/' % self.server.server_base,
             'site_default_css': default_css,
+            'site_static_css': static_css,
             'site_custom_css': custom_css,
+            'site_skin_base': skin_base,
             'site_fav_icon': fav_icon,
             'site_logo_left': site_logo_left,
             'site_logo_right': site_logo_right,
@@ -1064,39 +1147,55 @@ class ServerHandler(BaseHTTPRequestHandler):
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
     <title>%(title)s</title>
     %(head_extras)s
+
 <!-- site default style -->
 <link rel="stylesheet" type="text/css" href="%(site_default_css)s" media="screen"/>
+
+<!-- site basic skin style -->
+<link rel="stylesheet" type="text/css" href="%(site_static_css)s" media="screen"/>
+
 <!-- override with any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="%(site_custom_css)s" media="screen"/>
 
+<!-- site skin style -->
+<link rel="stylesheet" type="text/css" href="%(site_skin_base)s/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%(site_skin_base)s/ui-theme.custom.css" media="screen"/>
+
 <link rel="icon" type="image/vnd.microsoft.icon" href="%(site_fav_icon)s"/>
   </head>
-  <body>
+  <body class="staticpage openid">
 <div id="topspace">
 </div>
-<div id="toplogo">
-<div class="staticpage" id="toplogoleft">
+<div id="toplogo" class="staticpage">
+<div id="toplogoleft" class="staticpage">
 <a href="%(root_url)s"><img src="%(site_logo_left)s" id="logoimageleft"
     alt="site logo left"/>
 </a>
 </div>
-<div class="staticpage" id="toplogocenter">
-<span id="logotitle">
+<div id="toplogocenter" class="staticpage">
+<img src="%(site_skin_base)s/banner-logo.jpg" id="logoimagecenter"
+     class="staticpage" alt="site logo center"/>
+<span id="logotitle" class="staticpage">
 %(short_title)s OpenID Server
 </span>
 </div>
-<div class="staticpage" id="toplogoright">
+<div id="toplogoright" class="staticpage">
 <img src="%(site_logo_right)s" id="logoimageright" alt="site logo right"/>
 </div>
 </div>
 
-<div class="contentblock" id="nomenu">
+<div class="contentblock staticpage" id="nomenu">
+<div class="precontentwidgets">
+<!-- begin user supplied pre content widgets -->
+<!-- empty -->
+<!-- end user supplied pre content widgets -->
+</div>
 <div id="migheader">
 
 </div>
-    <div id="content">
-    <div class="banner">
-      <div class="container righttext">
+    <div id="content" class="staticpage">
+    <div class="banner staticpage">
+      <div class="container righttext staticpage">
           You are %(user_link)s
       </div>
     </div>
@@ -1245,6 +1344,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'address': address,
         'port': port,
         'session_store': os.path.abspath(configuration.openid_store),
+        'session_ttl': 24*3600,
         'allow_password': 'password' in configuration.user_openid_auth,
         'allow_publickey': 'publickey' in configuration.user_openid_auth,
         'user_alias': configuration.user_openid_alias,

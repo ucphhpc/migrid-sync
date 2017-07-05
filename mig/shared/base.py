@@ -185,14 +185,20 @@ def generate_https_urls(configuration, url_template, helper_dict):
     local_helper['auto_bin'] = 'cgi-bin'
     if configuration.site_enable_wsgi:
         local_helper['auto_bin'] = 'wsgi-bin'
-    cert_url = configuration.migserver_https_cert_url
-    oid_url = configuration.migserver_https_oid_url
+    mig_cert_url = configuration.migserver_https_mig_cert_url
+    ext_cert_url = configuration.migserver_https_ext_cert_url
+    mig_oid_url = configuration.migserver_https_mig_oid_url
+    ext_oid_url = configuration.migserver_https_ext_oid_url
     locations = []
     for i in configuration.site_login_methods:
-        if i.endswith('cert') and not cert_url in locations:
-            locations.append(cert_url)
-        elif i.endswith('oid') and not oid_url in locations:
-            locations.append(oid_url)
+        if i == 'migcert' and not mig_cert_url in locations:
+            locations.append(mig_cert_url)
+        elif i == 'extcert' and not ext_cert_url in locations:
+            locations.append(ext_cert_url)
+        elif i == 'migoid' and not mig_oid_url in locations:
+            locations.append(mig_oid_url)
+        elif i == 'extoid' and not ext_oid_url in locations:
+            locations.append(ext_oid_url)
     filled_list = []
     for https_base in locations:
         local_helper['auto_base'] = https_base

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - general login method selection backend
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,10 +37,10 @@ from shared.init import initialize_main_variables, find_entry
 def get_valid_topics(configuration):
     """Get a map of valid show topics and their associated helper URLs"""
     valid_topics = {
-        'kitoid': {'url': configuration.migserver_https_oid_url},
-        'migoid': {'url': configuration.migserver_https_oid_url},
-        'migcert': {'url': configuration.migserver_https_cert_url},
-        'extcert': {'url': configuration.migserver_https_cert_url},
+        'migcert': {'url': configuration.migserver_https_mig_cert_url},
+        'migoid': {'url': configuration.migserver_https_mig_oid_url},
+        'extcert': {'url': configuration.migserver_https_ext_cert_url},
+        'extoid': {'url': configuration.migserver_https_ext_oid_url},
         }
     return valid_topics
 
@@ -67,7 +67,8 @@ def main(client_id, user_arguments_dict):
     if keyword_all in accepted['show']:
         show = valid_show.keys()
     else:
-        show = [i.lower() for i in accepted['show'] if i.lower() in valid_show]
+        show = [i.lower() for i in accepted['show']]
+    show = [i for i in show if i in valid_show and valid_show[i]['url']]
     if not show:
         logger.info('%s showing default topics' % op_name)
         show = defaults['show']
@@ -83,18 +84,18 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript">
     $(document).ready(function() {
         var action = "login", oid_title, oid_url, tag_prefix;
-        oid_title = "KIT";
-        oid_url = "https://openid.ku.dk/id/";
-        tag_prefix = "kitoid_";
+        oid_title = "%s";
+        oid_url = "%s";
+        tag_prefix = "extoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
         oid_title = "%s";
-        var oid_url = "https://%s:%s/openid/id/";
+        var oid_url = "%s";
         tag_prefix = "migoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
     });
 </script>
-''' % (configuration.short_title, configuration.user_openid_show_address,
-       configuration.user_openid_show_port)
+''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider, 
+       configuration.user_mig_oid_title, configuration.user_mig_oid_provider)
     title_entry['skipmenu'] = True
     header_entry = {'object_type': 'header', 'text'
                     : 'Welcome to the %s login selector page' % \
@@ -128,34 +129,20 @@ Please report the problem to your OpenID identity provider.
 There are multiple login methods as described below.
 </p>
 """ % configuration.short_title
-    if configuration.user_openid_providers and 'kitoid' in show or \
-           'migoid' in show:
+    if configuration.user_openid_providers and 'extoid' in show or 'migoid' in show:
         html += """<h2>OpenID</h2>
+<p>
 The simplest login method is to use an existing OpenID login if you have one.
-"""
-        if 'kitoid' in show:
-            html += """
-<p>
-If you are a KU user, your usual login for KU Net and KU webmail works for
-OpenID as well.
 </p>
-<div id='kitoid_status'>
-<!-- OpenID status updated by AJAX call -->
-</div>
-<div id='kitoid_debug'>
-<!-- OpenID debug updated by AJAX call -->
-</div>
-<div class='form_container'>
-<form method='post' action='%(kitoid_url)s'>
-<input id='kitoid_button' type='submit' value='Login with KU OpenID' />
-</form>
-</div>
 """
-        if 'migoid' in show:
-            html += """
+            
+        for method in show:
+            if method == 'migoid':
+                html += """
 <p>
-If you already have a MiG OpenID account here you can login to the account
-using the local MiG OpenID server.
+%(migoid_title)s users can login to %(short_title)s using the associated
+OpenID server.
+</p>
 <div id='migoid_status'>
 <!-- OpenID status updated by AJAX call -->
 </div>
@@ -164,17 +151,34 @@ using the local MiG OpenID server.
 </div>
 <div class='form_container'>
 <form method='post' action='%(migoid_url)s'>
-<input id='migoid_button' type='submit' value='Login with MiG OpenID' />
+<input id='migoid_button' type='submit' value='%(migoid_title)s User OpenID Login' />
 </form>
+</div>
+"""
+            if method == 'extoid':
+                html += """
+<p>
+%(extoid_title)s users can login to %(short_title)s using the associated
+OpenID server.
 </p>
+<div id='extoid_status'>
+<!-- OpenID status updated by AJAX call -->
+</div>
+<div id='extoid_debug'>
+<!-- OpenID debug updated by AJAX call -->
+</div>
+<div class='form_container'>
+<form method='post' action='%(extoid_url)s'>
+<input id='extoid_button' type='submit' value='%(extoid_title)s User OpenID Login' />
+</form>
 </div>
 """
             
         html += """
 <p>
-When you click the Login with OpenID button you will be taken to a login
-page, where you need to provide your credentials and accept that your identity
-is used for login with this site.
+When you click the OpenID Login button you will be taken to a login page, where
+you need to provide your credentials and accept that your identity is used for
+login on %(short_title)s.
 </p>
 """
 
@@ -186,23 +190,43 @@ We provide high security access control with client certificates, like the ones
 you may know from digital signature providers.
 </p>
 """
-        html += """
-<p>
-If you have an x509 user certificate associated with your account you can login
-using it here.
-Depending on your certificate installation you may be prompted for a password.
+        for method in show:
+            if method == 'migcert':
+                html += """<p>
+%(migcert_title)s users with an associated x509 certificate can use it for
+login here.
+</p>
+<div class='form_container'>
+<form method='get' action='%(migcert_url)s'>
+<input id='reqcert_button' type='submit' value='%(migcert_title)s User Certificate Login' />
+</form>
+</div>
+"""
+            if method == 'extcert':
+                html += """<p>
+%(extcert_title)s users with an associated x509 certificate can use it for
+login here.
 </p>
 <div class='form_container'>
 <form method='get' action='%(extcert_url)s'>
-<input id='reqcert_button' type='submit' value='Login with Your User Certificate' />
+<input id='reqcert_button' type='submit' value='%(extcert_title)s User Certificate Login' />
 </form>
 </div>
 """
         html += """
+<p>
+Depending on your certificate installation you may be prompted for a password
+to use the certificate.
+</p>
 """
-    var_map = {'kitoid_url': valid_show['kitoid']['url'],
-               'migoid_url':valid_show['migoid']['url'],
+    var_map = {'migoid_url': valid_show['migoid']['url'],
+               'migoid_title': configuration.user_mig_oid_title,
+               'extoid_url': valid_show['extoid']['url'],
+               'extoid_title': configuration.user_ext_oid_title,
+               'migcert_url': valid_show['migcert']['url'],
+               'migcert_title': configuration.user_mig_cert_title,
                'extcert_url': valid_show['extcert']['url'],
-               }
+               'extcert_title': configuration.user_ext_cert_title,
+               'short_title': configuration.short_title}
     output_objects.append({'object_type': 'html_form', 'text': html % var_map})
     return (output_objects, returnvalues.OK)

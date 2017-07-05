@@ -157,11 +157,14 @@ suitable credentials and just need to sign up for a local %s account on:''' % \
 
             if extract_client_cert(configuration, environ) is None:
                 # Force logout/expire session cookie here to support signup
-                identity = extract_client_openid(configuration, environ,
-                                                 lookup_dn=False)
-                if identity:
-                    logger.info("expire openid user %s" % identity)
-                    (success, _) = expire_oid_sessions(configuration, identity)
+                (oid_db, identity) = extract_client_openid(configuration,
+                                                           environ,
+                                                           lookup_dn=False)
+                if oid_db and identity:
+                    logger.info("expire openid user %s in %s" % (identity,
+                                                                 oid_db))
+                    (success, _) = expire_oid_sessions(configuration, oid_db,
+                                                       identity)
                 else:
                     logger.info("no openid user logged in")
              

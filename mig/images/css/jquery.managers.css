@@ -831,26 +831,3 @@ background: url(/images/icons/code.png) left center no-repeat;
 #submit_button {
     width: auto;
 }
-
-fieldset label {
-    float: left;
-    width: 25%;
-    margin-right: 0.5em;
-    padding-top: 0.2em;
-    font-weight: bold;
-}
-fieldset label.halffield {
-    width: 50%;
-}
-fieldset label.widefield_center {
-    width: 70%;
-    text-align: center;
-}
-fieldset .singlefield {
-    width: 70%;
-    overflow: auto;
-}
-
-.leftpad { 
-    padding-left: 20px;
-}

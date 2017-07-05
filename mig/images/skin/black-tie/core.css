@@ -41,6 +41,25 @@ h1 {
   background: #666;
   color: white;
 }
+#logoimage {
+  opacity: 1.0;
+}
+#logoimagecenter {
+  display: none;
+}
+#logoimagecenter.staticpage {
+  display: none;
+}
+#logoimageright {
+  display: none;
+}
+#logoimageright.staticpage {
+  display: none;
+}
+
+#bottomspace {
+  display: none;
+}
 #bottomlogo {
   border: 0;
   background: #666;

@@ -779,7 +779,7 @@ input[type=checkbox], input[type=radio] {
     background-repeat: no-repeat;
     background-position: left center;
  }
-.iconleftpad {
+.iconleftpad, .leftpad {
   padding-left: 20px;
 }
 .error {
@@ -1123,6 +1123,26 @@ a:hover.genericbutton {
   width: -webkit-fill-available;
 }
 
+fieldset label {
+    float: left;
+    width: 25%;
+    margin-right: 0.5em;
+    padding-top: 0.2em;
+    font-weight: bold;
+}
+fieldset label.halffield {
+    width: 50%;
+}
+fieldset label.widefield_center {
+    width: 70%;
+    text-align: center;
+}
+fieldset .singlefield {
+    width: 70%;
+    overflow: auto;
+}
+
+
 /* hide complexity for sharelink ls page */
 #sharelink_ls #content {
   padding: 10px 100px;
@@ -1163,8 +1183,17 @@ a:hover.genericbutton {
     background-image: url('/images/icons/error.png');
     background-position: left center;
     background-repeat: no-repeat;
- }
 }
+
+/* Simple centered layout for grid_openid login page */
+div.openidlogin {
+    width: 600px;
+    margin-left: auto ;
+    margin-right: auto ;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
 
 /* 
 *************************************************************************

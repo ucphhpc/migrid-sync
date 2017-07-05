@@ -76,6 +76,9 @@ default_https_port = 443
 cert_valid_days = 365
 oid_valid_days = 365
 
+auth_openid_mig_db = 'mod_auth_openid-mig-users.db'
+auth_openid_ext_db = 'mod_auth_openid-ext-users.db'
+
 exe_leader_name = "execution-leader"
 
 htaccess_filename = '.htaccess'

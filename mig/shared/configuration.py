@@ -113,10 +113,6 @@ def fix_missing(config_file, verbose=True):
         'trac_ini_path': '~/mig/server/trac.ini',
         'trac_id_field': 'email',
         'migserver_http_url': 'http://%%(server_fqdn)s',
-        'backup_http_urls': '',
-        'backup_https_cert_urls': '',
-        'backup_https_oid_urls': '',
-        'backup_https_sid_urls': '',
         'myfiles_py_location': '',
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
@@ -162,7 +158,13 @@ def fix_missing(config_file, verbose=True):
         'user_openid_auth': ['password'],
         'user_openid_alias': '',
         'user_openid_log': 'openid.log',
+        'user_mig_oid_title': 'MiG',
+        'user_ext_oid_title': 'External',
+        'user_mig_oid_provider': '',
+        'user_ext_oid_provider': '',
         'user_openid_providers': [],
+        'user_mig_cert_title': 'MiG',
+        'user_ext_cert_title': 'External',
         'user_monitor_log': 'monitor.log',
         'user_sshmux_log': 'sshmux.log',
         'user_vmproxy_key': '~/certs/combined.pem',
@@ -351,7 +353,13 @@ class Configuration:
     user_openid_auth = ['password']
     user_openid_alias = ''
     user_openid_log = 'openid.log'
+    user_mig_oid_title = 'MiG'
+    user_ext_oid_title = 'External'
+    user_mig_oid_provider = ''
+    user_ext_oid_provider = ''
     user_openid_providers = []
+    user_mig_cert_title = 'MiG'
+    user_ext_cert_title = 'External'
     user_monitor_log = 'monitor.log'
     user_sshmux_log = 'sshmux.log'
     user_vmproxy_key = ''
@@ -371,13 +379,11 @@ class Configuration:
     mig_system_files = ''
     empty_job_name = ''
     migserver_http_url = ''
-    migserver_https_cert_url = ''
-    migserver_https_oid_url = ''
+    migserver_https_mig_cert_url = ''
+    migserver_https_ext_cert_url = ''
+    migserver_https_mig_oid_url = ''
+    migserver_https_ext_oid_url = ''
     migserver_https_sid_url = ''
-    backup_http_urls = ''
-    backup_https_cert_urls = ''
-    backup_https_oid_urls = ''
-    backup_https_sid_urls = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
     cputime_for_empty_jobs = 0
@@ -573,8 +579,6 @@ class Configuration:
             self.empty_job_name = config.get('GLOBAL', 'empty_job_name')
             self.migserver_http_url = config.get('GLOBAL',
                     'migserver_http_url')
-            self.backup_http_urls = config.get('GLOBAL',
-                                               'backup_http_urls')
             self.sleep_period_for_empty_jobs = config.get('GLOBAL',
                     'sleep_period_for_empty_jobs')
             self.min_seconds_between_live_update_requests = \
@@ -610,33 +614,21 @@ class Configuration:
             self.admin_email = config.get('GLOBAL', 'admin_email')
         else:
             self.admin_email = []
-        if config.has_option('GLOBAL', 'migserver_https_cert_url'):
-            self.migserver_https_cert_url = config.get('GLOBAL',
-                                                       'migserver_https_cert_url')
-        if config.has_option('GLOBAL', 'migserver_https_oid_url'):
-            self.migserver_https_oid_url = config.get('GLOBAL',
-                                                       'migserver_https_oid_url')
+        if config.has_option('GLOBAL', 'migserver_https_mig_cert_url'):
+            self.migserver_https_mig_cert_url = config.get('GLOBAL',
+                                                           'migserver_https_mig_cert_url')
+        if config.has_option('GLOBAL', 'migserver_https_ext_cert_url'):
+            self.migserver_https_ext_cert_url = config.get('GLOBAL',
+                                                           'migserver_https_ext_cert_url')
+        if config.has_option('GLOBAL', 'migserver_https_mig_oid_url'):
+            self.migserver_https_mig_oid_url = config.get('GLOBAL',
+                                                          'migserver_https_mig_oid_url')
+        if config.has_option('GLOBAL', 'migserver_https_ext_oid_url'):
+            self.migserver_https_ext_oid_url = config.get('GLOBAL',
+                                                          'migserver_https_ext_oid_url')
         if config.has_option('GLOBAL', 'migserver_https_sid_url'):
             self.migserver_https_sid_url = config.get('GLOBAL',
                                                        'migserver_https_sid_url')
-
-        if config.has_option('GLOBAL', 'backup_https_cert_urls'):
-            self.backup_https_cert_urls = config.get('GLOBAL',
-                                                     'backup_https_cert_urls')
-        if config.has_option('GLOBAL', 'backup_https_oid_urls'):
-            self.backup_https_oid_urls = config.get('GLOBAL',
-                                                    'backup_https_oid_urls', '')
-        if config.has_option('GLOBAL', 'backup_https_sid_urls'):
-            self.backup_https_sid_urls = config.get('GLOBAL',
-                                                    'backup_https_sid_urls', '')
-        self.failover_http_urls = [self.migserver_http_url]\
-                                  + self.backup_http_urls.split()
-        self.failover_https_cert_urls = [self.migserver_https_cert_url]\
-                                        + self.backup_https_cert_urls.split()
-        self.failover_https_oid_urls = [self.migserver_https_oid_url]\
-                                       + self.backup_https_oid_urls.split()
-        self.failover_https_sid_urls = [self.migserver_https_sid_url]\
-                                       + self.backup_https_sid_urls.split()
 
         if config.has_option('GLOBAL', 'rate_limit_db'):
             self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
@@ -855,9 +847,31 @@ class Configuration:
                                                  'user_openid_alias')
         if config.has_option('GLOBAL', 'user_openid_log'):
             self.user_openid_log = config.get('GLOBAL', 'user_openid_log')
+        if config.has_option('GLOBAL', 'user_mig_oid_title'):
+            self.user_mig_oid_title = config.get('GLOBAL', 
+                                                 'user_mig_oid_title')
+        if config.has_option('GLOBAL', 'user_mig_oid_provider'):
+            self.user_mig_oid_provider = config.get('GLOBAL', 
+                                                    'user_mig_oid_provider')
+        if config.has_option('GLOBAL', 'user_ext_oid_title'):
+            self.user_ext_oid_title = config.get('GLOBAL', 
+                                                 'user_ext_oid_title')
+        if config.has_option('GLOBAL', 'user_ext_oid_provider'):
+            self.user_ext_oid_provider = config.get('GLOBAL', 
+                                                    'user_ext_oid_provider')
         if config.has_option('GLOBAL', 'user_openid_providers'):
             self.user_openid_providers = config.get('GLOBAL', 
                                                    'user_openid_providers').split()
+        else:
+            providers = [i for i in [self.user_mig_oid_provider,
+                                     self.user_ext_oid_provider] if i]
+            self.user_openid_providers = providers
+        if config.has_option('GLOBAL', 'user_mig_cert_title'):
+            self.user_mig_cert_title = config.get('GLOBAL', 
+                                                 'user_mig_cert_title')
+        if config.has_option('GLOBAL', 'user_ext_cert_title'):
+            self.user_ext_cert_title = config.get('GLOBAL', 
+                                                 'user_ext_cert_title')
         if config.has_option('GLOBAL', 'user_monitor_log'):
             self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
         if config.has_option('GLOBAL', 'user_sshmux_log'):
@@ -1362,14 +1376,22 @@ class Configuration:
             if self.site_enable_wsgi:
                 web_bin = 'wsgi-bin'
             rel_url = os.path.join(web_bin, 'ls.py')
-            cert_url = os.path.join(self.migserver_https_cert_url, rel_url)
-            oid_url = os.path.join(self.migserver_https_oid_url, rel_url)
+            mig_cert_url = os.path.join(self.migserver_https_mig_cert_url, rel_url)
+            ext_cert_url = os.path.join(self.migserver_https_ext_cert_url, rel_url)
+            mig_oid_url = os.path.join(self.migserver_https_mig_oid_url,
+                                       rel_url)
+            ext_oid_url = os.path.join(self.migserver_https_ext_oid_url,
+                                       rel_url)
             locations = []
             for i in self.site_login_methods:
-                if i.endswith('cert') and not cert_url in locations:
-                    locations.append(cert_url)
-                elif i.endswith('oid') and not oid_url in locations:
-                    locations.append(oid_url)
+                if i == 'migcert' and not mig_cert_url in locations:
+                    locations.append(mig_cert_url)
+                elif i == 'extcert' and not ext_cert_url in locations:
+                    locations.append(ext_cert_url)
+                elif i == 'migoid' and not mig_oid_url in locations:
+                    locations.append(mig_oid_url)
+                elif i == 'extoid' and not ext_oid_url in locations:
+                    locations.append(ext_oid_url)
             self.myfiles_py_location = ' '.join(locations)
 
         # set test modes if requested
