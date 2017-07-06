@@ -461,13 +461,13 @@ Invalid '%s' input: %s
                     self.server.approved[(identity, trust_root)] = 'always'
                 
                 self.login_expire = int(time.time() + self.session_ttl)
-                logger.debug("handleAllow approving login %s" % identity)
+                logger.info("handleAllow approving login %s" % identity)
                 response = self.approved(request, identity)
                 update_rate_limit(configuration, "openid",
                                   self.client_address[0], self.user, True,
                                   self.password)
             else:
-                logger.debug("handleAllow rejected login %s" % identity)
+                logger.warning("handleAllow rejected login %s" % identity)
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 response = self.rejected(request, identity)    
@@ -640,7 +640,7 @@ Invalid '%s' input: %s
                 self.login_expire = int(time.time() + self.session_ttl)
                 return True
             else:
-                logger.info("Failed password check for user %s" % username)
+                logger.warning("Failed password check for user %s" % username)
         logger.error("Invalid login for user %s" % username)
         return False
                 
@@ -706,7 +706,7 @@ Invalid '%s' input: %s
         """Response helper"""
         # NOTE: we added secure and httponly flags as suggested by OpenVAS
 
-        # NOTE: we need to set expire for all cookies for logout to work
+        # NOTE: we need to set empty user cookie for logout to work
         if self.user is None or self.login_expire is None:
             session_expire = 0
         else:
@@ -715,16 +715,16 @@ Invalid '%s' input: %s
         expire = time.strftime(
             'Expires=%a, %d-%b-%y %H:%M:%S GMT', time.gmtime(session_expire))
         if self.user is None:
-            logger.debug("sending empty user cookie with expire %s" % expire)
+            logger.debug("setting empty user and session_expire cookie")
             self.send_header('Set-Cookie', 'user=;secure;httponly')
-            self.send_header('Set-Cookie', 'session_expire=%s;%s;secure;httponly' % \
-                             (session_expire, 'Expires=-1'))
+            self.send_header('Set-Cookie', 'session_expire=;secure;httponly')
         else:
             logger.debug("sending %s user cookie with expire %s" % (self.user,
                                                                     expire))
             self.send_header('Set-Cookie', 'user=%s;%s;secure;httponly' % \
                              (self.user, expire))
-            self.send_header('Set-Cookie', 'session_expire=%s;%s;secure;httponly' % \
+            self.send_header('Set-Cookie',
+                             'session_expire=%s;%s;secure;httponly' % \
                              (session_expire, expire))
 
     def showAboutPage(self):
