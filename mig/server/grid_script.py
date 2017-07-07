@@ -888,7 +888,7 @@ while True:
                 notify_user_thread(
                     expired,
                     generate_https_urls(configuration,
-                                        '%(auto_base)s/%(auto_bin)s/ls,py',
+                                        '%(auto_base)s/%(auto_bin)s/ls.py',
                                         {}),
                     'EXPIRED',
                     logger,

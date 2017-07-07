@@ -191,13 +191,13 @@ def generate_https_urls(configuration, url_template, helper_dict):
     ext_oid_url = configuration.migserver_https_ext_oid_url
     locations = []
     for i in configuration.site_login_methods:
-        if i == 'migcert' and not mig_cert_url in locations:
+        if i == 'migcert' and mig_cert_url and not mig_cert_url in locations:
             locations.append(mig_cert_url)
-        elif i == 'extcert' and not ext_cert_url in locations:
+        elif i == 'extcert' and ext_cert_url and not ext_cert_url in locations:
             locations.append(ext_cert_url)
-        elif i == 'migoid' and not mig_oid_url in locations:
+        elif i == 'migoid' and mig_oid_url and not mig_oid_url in locations:
             locations.append(mig_oid_url)
-        elif i == 'extoid' and not ext_oid_url in locations:
+        elif i == 'extoid' and ext_oid_url and not ext_oid_url in locations:
             locations.append(ext_oid_url)
     filled_list = []
     for https_base in locations:
