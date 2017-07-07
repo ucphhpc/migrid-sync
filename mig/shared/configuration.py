@@ -615,20 +615,20 @@ class Configuration:
         else:
             self.admin_email = []
         if config.has_option('GLOBAL', 'migserver_https_mig_cert_url'):
-            self.migserver_https_mig_cert_url = config.get('GLOBAL',
-                                                           'migserver_https_mig_cert_url')
+            self.migserver_https_mig_cert_url = config.get(
+                'GLOBAL', 'migserver_https_mig_cert_url')
         if config.has_option('GLOBAL', 'migserver_https_ext_cert_url'):
-            self.migserver_https_ext_cert_url = config.get('GLOBAL',
-                                                           'migserver_https_ext_cert_url')
+            self.migserver_https_ext_cert_url = config.get(
+                'GLOBAL', 'migserver_https_ext_cert_url')
         if config.has_option('GLOBAL', 'migserver_https_mig_oid_url'):
-            self.migserver_https_mig_oid_url = config.get('GLOBAL',
-                                                          'migserver_https_mig_oid_url')
+            self.migserver_https_mig_oid_url = config.get(
+                'GLOBAL', 'migserver_https_mig_oid_url')
         if config.has_option('GLOBAL', 'migserver_https_ext_oid_url'):
-            self.migserver_https_ext_oid_url = config.get('GLOBAL',
-                                                          'migserver_https_ext_oid_url')
+            self.migserver_https_ext_oid_url = config.get(
+                'GLOBAL', 'migserver_https_ext_oid_url')
         if config.has_option('GLOBAL', 'migserver_https_sid_url'):
-            self.migserver_https_sid_url = config.get('GLOBAL',
-                                                       'migserver_https_sid_url')
+            self.migserver_https_sid_url = config.get(
+                'GLOBAL', 'migserver_https_sid_url')
 
         if config.has_option('GLOBAL', 'rate_limit_db'):
             self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
@@ -1376,21 +1376,31 @@ class Configuration:
             if self.site_enable_wsgi:
                 web_bin = 'wsgi-bin'
             rel_url = os.path.join(web_bin, 'ls.py')
-            mig_cert_url = os.path.join(self.migserver_https_mig_cert_url, rel_url)
-            ext_cert_url = os.path.join(self.migserver_https_ext_cert_url, rel_url)
-            mig_oid_url = os.path.join(self.migserver_https_mig_oid_url,
-                                       rel_url)
-            ext_oid_url = os.path.join(self.migserver_https_ext_oid_url,
-                                       rel_url)
+            mig_cert_url = self.migserver_https_mig_cert_url
+            ext_cert_url = self.migserver_https_ext_cert_url
+            mig_oid_url = self.migserver_https_mig_oid_url
+            ext_oid_url = self.migserver_https_ext_oid_url
+            if mig_cert_url:
+                mig_cert_url = os.path.join(mig_cert_url, rel_url)
+            if ext_cert_url:
+                ext_cert_url = os.path.join(ext_cert_url, rel_url)
+            if mig_oid_url:
+                mig_oid_url = os.path.join(mig_oid_url, rel_url)
+            if ext_oid_url:
+                ext_oid_url = os.path.join(ext_oid_url, rel_url)
             locations = []
             for i in self.site_login_methods:
-                if i == 'migcert' and not mig_cert_url in locations:
+                if i == 'migcert' and mig_cert_url and \
+                       not mig_cert_url in locations:
                     locations.append(mig_cert_url)
-                elif i == 'extcert' and not ext_cert_url in locations:
+                elif i == 'extcert' and ext_cert_url and \
+                         not ext_cert_url in locations:
                     locations.append(ext_cert_url)
-                elif i == 'migoid' and not mig_oid_url in locations:
+                elif i == 'migoid' and mig_oid_url and \
+                         not mig_oid_url in locations:
                     locations.append(mig_oid_url)
-                elif i == 'extoid' and not ext_oid_url in locations:
+                elif i == 'extoid' and ext_oid_url and \
+                         not ext_oid_url in locations:
                     locations.append(ext_oid_url)
             self.myfiles_py_location = ' '.join(locations)
 
