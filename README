@@ -237,8 +237,10 @@ settings:
 --destination=DESTINATION
 --base_fqdn=BASE_FQDN
 --public_fqdn=PUBLIC_FQDN
---cert_fqdn=CERT_FQDN
---oid_fqdn=OID_FQDN
+--mig_cert_fqdn=MIG_CERT_FQDN
+--ext_cert_fqdn=EXT_CERT_FQDN
+--mig_oid_fqdn=MIG_OID_FQDN
+--ext_oid_fqdn=EXT_OID_FQDN
 --sid_fqdn=SID_FQDN
 --io_fqdn=IO_FQDN
 --user=USER
@@ -265,10 +267,12 @@ settings:
 --enable_hsts=ENABLE_HSTS
 --enable_vhost_certs=ENABLE_VHOST_CERTS
 --enable_seafile=ENABLE_SEAFILE
+--enable_duplicati=ENABLE_DUPLICATI
 --enable_imnotify=ENABLE_IMNOTIFY
 --enable_dev_accounts=ENABLE_DEV_ACCOUNTS
 --enable_openid=ENABLE_OPENID
---openid_providers=OPENID_PROVIDERS
+--mig_oid_provider=MIG_OID_PROVIDER
+--ext_oid_provider=EXT_OID_PROVIDER
 --daemon_keycert=DAEMON_KEYCERT
 --daemon_pubkey=DAEMON_PUBKEY
 --daemon_show_address=DAEMON_SHOW_ADDRESS
@@ -280,8 +284,10 @@ settings:
 --trac_admin_path=TRAC_ADMIN_PATH
 --trac_ini_path=TRAC_INI_PATH
 --public_port=PUBLIC_PORT
---cert_port=CERT_PORT
---oid_port=OID_PORT
+--mig_cert_port=MIG_CERT_PORT
+--ext_cert_port=EXT_CERT_PORT
+--mig_oid_port=MIG_OID_PORT
+--ext_oid_port=EXT_OID_PORT
 --sid_port=SID_PORT
 --user_clause=USER_CLAUSE
 --group_clause=GROUP_CLAUSE
@@ -296,7 +302,7 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
-                   --cert_fqdn=dk-cert.migrid.org \
+                   --mig_cert_fqdn=dk-cert.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-sid.migrid.org \
                    --user=mig --group=mig \
@@ -311,14 +317,14 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --cert_port=443 --sid_port=443 \
+                   --public_port=80 --mig_cert_port=443 --sid_port=443 \
                    --enable_openid=False --enable_wsgi=True --enable_sftp=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' \
                    --signup_methods="migcert" \
-                   --login_methods="migcert extcert" \
+                   --login_methods="migcert" \
                    --skin=migrid-basic \
                    --apache_version=2.4
 or the same with OpenID, HSTS, WSGI (default web), Seafile and
@@ -326,8 +332,10 @@ vhost-specific certificates:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
-                   --cert_fqdn=dk-cert.migrid.org \
-                   --oid_fqdn=dk-oid.migrid.org \
+                   --mig_cert_fqdn= \
+                   --ext_cert_fqdn=dk-cert.migrid.org \
+                   --mig_oid_fqdn=dk-ext.migrid.org \
+                   --ext_oid_fqdn=dk-oid.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-sid.migrid.org \
                    --user=mig --group=mig \
@@ -342,9 +350,11 @@ vhost-specific certificates:
                    --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --cert_port=443 --oid_port=443 --sid_port=443 \
+                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --ext_oid_port=443 --sid_port=443 \
                    --enable_openid=True \
-                   --openid_providers='https://openid.ku.dk/ https://dk-oid.migrid.org:8443/openid/' \
+                   --mig_oid_provider=https://dk-io.migrid.org:8443/openid/ \
+                   --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_wsgi=True --enable_sftp=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_sandboxes=True --enable_vmachines=True \
@@ -352,8 +362,8 @@ vhost-specific certificates:
                    --enable_hsts=True --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
-                   --signup_methods="kitoid migcert" \
-                   --login_methods="kitoid migoid migcert extcert" \
+                   --signup_methods="extoid migoid migcert" \
+                   --login_methods="extoid migoid migcert" \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
                    --landing_page='/wsgi-bin/dashboard.py' \
@@ -365,8 +375,10 @@ Seafile integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
-                   --cert_fqdn=cert.erda.dk \
-                   --oid_fqdn=erda.dk \
+                   --mig_cert_fqdn= \
+                   --ext_cert_fqdn=cert.erda.dk \
+                   --mig_oid_fqdn=ext.erda.dk \
+                   --ext_oid_fqdn=erda.dk \
                    --sid_fqdn=sid.erda.dk \
                    --io_fqdn=io.erda.dk \
                    --user=mig --group=mig \
@@ -380,8 +392,10 @@ Seafile integration and OpenID login:
                    --hg_path=/usr/bin/hg \
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --cert_port=443 --oid_port=443 --sid_port=443 \
-                   --openid_providers='https://openid.ku.dk/ https://openid.erda.dk/openid/' \
+                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --ext_oid_port=443 --sid_port=443 \
+                   --mig_oid_provider=https://io.erda.dk:8001/openid/ \
+                   --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=True --enable_wsgi=True --enable_sftp=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_duplicati=True --enable_hsts=True \
@@ -390,8 +404,8 @@ Seafile integration and OpenID login:
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' --serveralias_clause='#ServerAlias' \
                    --alias_field=email --daemon_keycert=~/certs/combined.pem \
-                   --signup_methods="kitoid extcert" \
-                   --login_methods="kitoid extcert" \
+                   --signup_methods="extoid migoid extcert" \
+                   --login_methods="extoid migoid extcert" \
                    --daemon_pubkey=~/certs/combined.pub \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=erda-ucph-science --wsgi_procs=25 \
