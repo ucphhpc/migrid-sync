@@ -34,7 +34,8 @@ import base64
 import re
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir, force_utf8, force_unicode
+from shared.base import client_id_dir, force_utf8, force_unicode, \
+     generate_https_urls
 from shared.defaults import cert_valid_days
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -258,8 +259,9 @@ sudo su - mig-ca
     user_dict['command_cert_create'] = command_cert_create
     user_dict['command_cert_revoke'] = command_cert_revoke
     user_dict['site'] = configuration.short_title
-    # NOTE: we only expect MiG cert access for now
-    user_dict['https_default_url'] = configuration.migserver_https_mig_cert_url
+    user_dict['vgrid_label'] = configuration.site_vgrid_label
+    user_dict['vgridman_links'] = generate_https_urls(
+        configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
     email_header = '%s certificate request for %s' % \
                    (configuration.short_title, cert_name)
     email_msg = \
@@ -281,14 +283,16 @@ Command to create certificate:
 
 Finally add the user
 %(distinguished_name)s
-to any relevant VGrids on:
-%(https_default_url)s/cgi-bin/vgridman.py
+to any relevant %(vgrid_label)ss using one of the management links:
+%(vgridman_links)s
 
 
 --- If user must be denied access or deleted at some point ---
 
-Remove the user from any relevant VGrids on:
-%(https_default_url)s/cgi-bin/vgridman.py
+Remove the user
+%(distinguished_name)s
+from any relevant %(vgrid_label)ss using one of the management links:
+%(vgridman_links)s
 
 Command to revoke user certificate:
 %(command_cert_revoke)s

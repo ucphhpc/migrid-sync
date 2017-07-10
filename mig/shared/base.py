@@ -49,7 +49,7 @@ def client_id_dir(client_id):
     dir_parts = []
     for entry in client_id.split(_id_sep):
         if entry.split(_key_val_sep, 1)[0] in _remap_fields:
-            entry = entry.replace(_id_space,_dir_space)
+            entry = entry.replace(_id_space, _dir_space)
         dir_parts.append(entry)
     client_dir = _dir_sep.join(dir_parts)
     return client_dir

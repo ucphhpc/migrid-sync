@@ -32,7 +32,7 @@ import time
 import tempfile
 
 import shared.returnvalues as returnvalues
-from shared.base import force_utf8, force_unicode
+from shared.base import force_utf8, force_unicode, generate_https_urls
 from shared.defaults import user_db_filename, cert_valid_days
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -236,8 +236,9 @@ cd ~/mig/server
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
     user_dict['site'] = configuration.short_title
-    # NOTE: we only expect MiG cert access for now
-    user_dict['https_default_url'] = configuration.migserver_https_mig_cert_url
+    user_dict['vgrid_label'] = configuration.site_vgrid_label
+    user_dict['vgridman_links'] = generate_https_urls(
+        configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
     email_header = '%s sign up request for %s' % \
                    (configuration.short_title, cert_id)
     email_msg = \
@@ -255,8 +256,10 @@ Received an existing certificate sign up request with certificate data
 Command to create user on %(site)s server:
 %(command_user_create)s
 
-Finally add the user to any relevant VGrids from:
-%(https_default_url)s/cgi-bin/vgridman.py
+Finally add the user
+%(distinguished_name)s
+to any relevant %(vgrid_label)ss using one of the management links:
+%(vgridman_links)s
 
 ---
 Command to delete user again on %(site)s server:
