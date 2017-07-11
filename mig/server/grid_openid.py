@@ -188,17 +188,23 @@ class OpenIDHTTPServer(HTTPServer):
     def __init__(self, *args, **kwargs):
         HTTPServer.__init__(self, *args, **kwargs)
 
+        fqdn = self.server_name
+        port = self.server_port
+        # Masquerading if needed
+        if configuration.daemon_conf['show_address']:
+            fqdn = configuration.daemon_conf['show_address']
+        if configuration.daemon_conf['show_port']:
+            port = configuration.daemon_conf['show_port']
         if configuration.daemon_conf['nossl']:
             proto = 'http'
             proto_port = 80
         else:
             proto = 'https'
             proto_port = 443
-        if self.server_port != proto_port:
-            self.base_url = ('%s://%s:%s/' %
-                             (proto, self.server_name, self.server_port))
+        if port != proto_port:
+            self.base_url = '%s://%s:%s/' % (proto, fqdn, port)
         else:
-            self.base_url = '%s://%s/' % (proto, self.server_name,)
+            self.base_url = '%s://%s/' % (proto, fqdn)
 
         # We serve from sub dir to ease targeted proxying
         self.server_base = 'openid'
@@ -1277,6 +1283,10 @@ if __name__ == '__main__':
     # Allow e.g. logrotate to force log re-open after rotates
     signal.signal(signal.SIGHUP, hangup_handler)
 
+    # For masquerading
+    show_address = configuration.user_openid_show_address
+    show_port = configuration.user_openid_show_port
+    
     # Allow configuration overrides on command line
     nossl = False
     expandusername = False
@@ -1353,7 +1363,9 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'time_stamp': 0,
         'logger': logger,
         'nossl': nossl,
-        'expandusername': expandusername
+        'expandusername': expandusername,
+        'show_address': show_address,
+        'show_port': show_port,
         }
     logger.info("Starting OpenID server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
