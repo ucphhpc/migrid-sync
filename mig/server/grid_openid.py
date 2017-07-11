@@ -1258,8 +1258,9 @@ def start_service(configuration):
         httpserver.socket = ssl_ctx.wrap_socket(httpserver.socket,
                                                 server_side=True)
         
-    print 'Server running at:'
-    print httpserver.base_url
+    serve_msg = 'Server running at: %s' % httpserver.base_url
+    logger.info(serve_msg)
+    print serve_msg
     min_expire_delay = 300
     last_expire = time.time()
     while True:
