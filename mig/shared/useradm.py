@@ -334,11 +334,12 @@ certificate that is still valid."""
                 # alone on cert re-signup after openid signup.
                 updated_user = user_db[client_id]
                 for (key, val) in user.items():
-                    if 'auth' == key and not isinstance(val, basestring) and \
+                    if key in ('auth', 'openid_names') and \
+                           not isinstance(val, basestring) and \
                            isinstance(val, list):
-                        auth_list = updated_user.get(key, [])
-                        auth_list += [i for i in val if not i in auth_list]
-                        updated_user[key] = auth_list
+                        val_list = updated_user.get(key, [])
+                        val_list += [i for i in val if not i in val_list]
+                        updated_user[key] = val_list
                     elif val:
                         updated_user[key] = val
                 user.clear()
