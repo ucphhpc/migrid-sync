@@ -294,12 +294,11 @@ class Configuration:
     # Allowed signup and login methods in prioritized order
     site_signup_methods = ['extcert']
     site_login_methods = ['extcert']
-    # TODO: switch to CSRF_MEDIUM and eventually CSRF_FULL when ready
-    # Default to transitional CSRF protection warnings only for now
-    site_csrf_protection = CSRF_WARN
-    # TODO: switch to POLICY_WEAK or POLICY_MEDIUM when ready
-    # Default to legacy POLICY_NONE for now
-    site_password_policy = POLICY_NONE
+    # TODO: switch to CSRF_FULL when rpc and scripts are ready?
+    # Default to medium CSRF protection for now to protect all web access
+    site_csrf_protection = CSRF_MEDIUM
+    # Default to POLICY_MEDIUM to avoid reduce risk of dictionary attacks etc.
+    site_password_policy = POLICY_MEDIUM
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
