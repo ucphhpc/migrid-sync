@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# extcert - External certificate sign up backend
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# extcert - External certificate account sign up backend
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,12 +25,12 @@
 # -- END_HEADER ---
 #
 
-"""Request sign up with external certificate back end"""
+"""Request account sign up with external certificate back end"""
 
 import os
 
 import shared.returnvalues as returnvalues
-from shared.certreq import valid_name_chars, dn_max_len, cert_js_helpers
+from shared.accountreq import valid_name_chars, dn_max_len, account_js_helpers
 from shared.defaults import csrf_field
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
@@ -65,12 +65,12 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s certificate sign up' % configuration.short_title
+    title_entry['text'] = '%s certificate account sign up' % configuration.short_title
     title_entry['skipmenu'] = True
     form_fields = ['cert_id', 'cert_name', 'organization', 'email', 'country', 'state',
                    'comment']
     title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = cert_js_helpers(form_fields)
+    title_entry['javascript'] = account_js_helpers(form_fields)
     output_objects.append({'object_type': 'html_form',
                            'text':'''
  <div id="contextual_help">
@@ -79,7 +79,7 @@ def main(client_id, user_arguments_dict):
  </div>
 '''                       })
     header_entry = {'object_type': 'header', 'text'
-                    : 'Welcome to the %s certificate sign up page' % \
+                    : 'Welcome to the %s certificate account sign up page' % \
                     configuration.short_title}
     output_objects.append(header_entry)
     
@@ -89,7 +89,7 @@ def main(client_id, user_arguments_dict):
     certreq_url = os.environ['REQUEST_URI'].replace('-bin', '-sid')
     certreq_url = os.path.join(os.path.dirname(certreq_url), 'reqcert.py')
     certreq_link = {'object_type': 'link', 'destination': certreq_url,
-                    'text': 'Request a new %s certificate' % \
+                    'text': 'Request a new %s certificate account' % \
                             configuration.short_title }
     new_user = distinguished_name_to_user(client_id)
 
@@ -116,6 +116,7 @@ def main(client_id, user_arguments_dict):
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+    fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
 
     output_objects.append({'object_type': 'html_form', 'text': """
 This page is used to sign up for %(site)s with an existing certificate from a Certificate Authority (CA) allowed for %(site)s.
@@ -123,8 +124,11 @@ You can use it if you already have a x509 certificate from another accepted CA. 
 <br />
 The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those.<br />
 Please enter any missing information below and press the Send button to submit the external certificate sign up request to the %(site)s administrators.
-<p class='criticaltext highlight_message'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
-That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your corresponding USER@ACRONYM.dk or USER@*.ku.dk address in the Email field.</p>
+<p class='criticaltext highlight_message'>
+IMPORTANT: Please help us verify your identity by providing Organization and
+Email data that we can easily validate!
+</p>
+%(site_signup_hint)s
 <hr />
 <div class=form_container>
 <!-- use post here to avoid field contents in URL -->

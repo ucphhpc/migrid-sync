@@ -294,6 +294,7 @@ class Configuration:
     # Allowed signup and login methods in prioritized order
     site_signup_methods = ['extcert']
     site_login_methods = ['extcert']
+    site_signup_hint = ""
     # TODO: switch to CSRF_FULL when rpc and scripts are ready?
     # Default to medium CSRF protection for now to protect all web access
     site_csrf_protection = CSRF_MEDIUM
@@ -460,7 +461,7 @@ class Configuration:
 
     # constructor
 
-    def __init__(self, config_file, verbose=True):
+    def __init__(self, config_file, verbose=False):
         self.config_file = config_file
         self.reload_config(verbose)
 
@@ -1172,6 +1173,8 @@ class Configuration:
                                                   'login_methods').split()
         else:
             self.site_login_methods = self.site_signup_methods
+        if config.has_option('SITE', 'signup_hint'):
+            self.site_signup_hint = config.get('SITE', 'signup_hint').strip()
         if config.has_option('SITE', 'csrf_protection'):
             csrf_protection = config.get('SITE', 'csrf_protection')
             if csrf_protection in (CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM,

@@ -1679,10 +1679,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 </tbody>
 </table>
 ''')
-        elif i['object_type'] == 'certreqs':
-            certreqs = i['certreqs']
+        elif i['object_type'] == 'accountreqs':
+            accountreqs = i['accountreqs']
             lines.append('''
-<table class="certreqs columnsort" id="certreqtable">
+<table class="accountreqs columnsort" id="accountreqtable">
 <thead class="title">
     <tr>
         <th>ID</th>
@@ -1694,18 +1694,19 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>Country</th>
         <th>State</th>
         <th>Comment</th>
+        <th>Auth Access</th>
         <th>Created</th>
     </tr>
 </thead>
 <tbody>
 '''
                          )
-            for single_certreq in certreqs:
-                addlink = single_certreq.get('addcertreqlink', '')
+            for single_accountreq in accountreqs:
+                addlink = single_accountreq.get('addaccountreqlink', '')
                 addlink_html = ''
                 if addlink:
                     addlink_html = '%s' % html_link(addlink)
-                dellink = single_certreq.get('delcertreqlink', '')
+                dellink = single_accountreq.get('delaccountreqlink', '')
                 dellink_html = ''
                 if dellink:
                     dellink_html = '%s' % html_link(dellink)
@@ -1713,11 +1714,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <tr>
 <td>%s</td><td class="centertext">%s</td><td class="centertext">%s</td>
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
-</tr>''' % (single_certreq['id'], addlink_html, dellink_html,
-            single_certreq['full_name'], single_certreq['email'],
-            single_certreq['organization'], single_certreq['country'],
-            single_certreq['state'], single_certreq['comment'],
-            single_certreq['created']))
+<td>%s</td>
+</tr>''' % (single_accountreq['id'], addlink_html, dellink_html,
+            single_accountreq['full_name'], single_accountreq['email'],
+            single_accountreq['organization'], single_accountreq['country'],
+            single_accountreq['state'], single_accountreq['comment'],
+            ', '.join(single_accountreq['auth']), single_accountreq['created']))
             
             lines.append('''
 </tbody>

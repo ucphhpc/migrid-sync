@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# certreq - helpers for certificate requests
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# accountreq - helpers for certificate/OpenID account requests
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,8 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""This module contains various helper contents for the certificate request
-handlers"""
+"""This module contains various helper contents for the certificate and OpenID
+account request handlers"""
 
 import os
 import time
@@ -39,8 +39,9 @@ from shared.safeinput import name_extras, password_extras, password_min_len, \
 from shared.serial import load, dump
 
 
-def cert_js_helpers(fields):
-    """Javascript to include in the cert/ext req page header"""
+def account_js_helpers(fields):
+    """Javascript to include in the cert/oid account req page header"""
+    # TODO: change remaining names and messages to fit generic auth account?
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
@@ -52,15 +53,15 @@ def cert_js_helpers(fields):
       return confirm(message + ': Proceed anyway? (If you read and followed the instructions!)');
   }
   
-  function check_cert_id() {
-      //alert('#cert_id_help');
+  function check_account_id() {
+      //alert('#account_id_help');
       if ($('#cert_id_field').val().indexOf('/') == -1) {
-          return rtfm_warn('Cert DN does not look like a proper DN');
+          return rtfm_warn('Account ID does not look like a proper x509 DN');
       }
       return true;
   }
-  function check_cert_name() {
-      //alert('#cert_name_help');
+  function check_account_name() {
+      //alert('#account_name_help');
       if ($('#cert_name_field').val().indexOf(' ') == -1) {
           return rtfm_warn('Full name does not look like a real name');
       }
@@ -186,29 +187,30 @@ def cert_js_helpers(fields):
 """
     return js
 
-def build_certreqitem_object(configuration, certreq_dict):
-    """Build a certreq object based on input certreq_dict"""
+def build_accountreqitem_object(configuration, accountreq_dict):
+    """Build a accountreq object based on input accountreq_dict"""
 
-    created_epoch = certreq_dict['created']
+    created_epoch = accountreq_dict['created']
     created_asctime = time.ctime(created_epoch)
-    certreq_obj = {
-        'object_type': 'certreq',
-        'id': certreq_dict['id'],
-        'full_name': certreq_dict['full_name'],
-        'email': certreq_dict['email'],
-        'organization': certreq_dict['organization'],
-        'country': certreq_dict['country'],
-        'state': certreq_dict['state'],
-        'comment': certreq_dict['comment'],
+    accountreq_obj = {
+        'object_type': 'accountreq',
+        'auth': accountreq_dict.get('auth', ['unknown']),
+        'id': accountreq_dict['id'],
+        'full_name': accountreq_dict['full_name'],
+        'email': accountreq_dict['email'],
+        'organization': accountreq_dict['organization'],
+        'country': accountreq_dict['country'],
+        'state': accountreq_dict['state'],
+        'comment': accountreq_dict['comment'],
         'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
                                                         created_asctime),
         }
-    return certreq_obj
+    return accountreq_obj
 
-def list_cert_reqs(configuration):
-    """Find all pending certificate requests"""
+def list_account_reqs(configuration):
+    """Find all pending certificate/OpenID accounts requests"""
     logger = configuration.logger
-    certreq_list = []
+    accountreq_list = []
     dir_content = []
 
     try:
@@ -219,9 +221,9 @@ def list_cert_reqs(configuration):
                 os.mkdir(configuration.user_pending)
             except Exception, err:
                 logger.error(
-                    'certreqfunctions.py: not able to create directory %s: %s'
-                    % (configuration.certreq_home, err))
-                return (False, "archive setup is broken")
+                    'accountreq.py: not able to create directory %s: %s' % \
+                    (configuration.accountreq_home, err))
+                return (False, "account request setup is broken")
             dir_content = []
 
     for entry in dir_content:
@@ -230,41 +232,43 @@ def list_cert_reqs(configuration):
 
         if entry.startswith('.'):
             continue
-        if is_cert_req(entry, configuration):
-            certreq_list.append(entry)
+        if is_account_req(entry, configuration):
+            accountreq_list.append(entry)
         else:
             logger.warning(
                 '%s in %s is not a file, move it?'
                 % (entry, configuration.user_pending))
-    return (True, certreq_list)
+    return (True, accountreq_list)
 
-def is_cert_req(req_id, configuration):
-    """Check that req_id is an existing certificate request"""
+def is_account_req(req_id, configuration):
+    """Check that req_id is an existing account request"""
     req_path = os.path.join(configuration.user_pending, req_id)
     if os.path.isfile(req_path):
         return True
     else:
         return False
 
-def get_cert_req(req_id, configuration):
-    """Helper to fetch dictionary for a pending certificate request"""
+def get_account_req(req_id, configuration):
+    """Helper to fetch dictionary for a pending account request"""
     req_path = os.path.join(configuration.user_pending, req_id)
     req_dict = load(req_path)
     if not req_dict:
-        return (False, 'Could not open certificate request %s' % req_id)
+        return (False, 'Could not open account request %s' % req_id)
     else:
         req_dict['id'] = req_id
         req_dict['created'] = os.path.getctime(req_path)
         return (True, req_dict)
 
-def accept_cert_req(req_id, configuration):
-    """Helper to accept a pending certificate request"""
+def accept_account_req(req_id, configuration):
+    """Helper to accept a pending account request"""
+    _logger = configuration.logger
     req_path = os.path.join(configuration.user_pending, req_id)
     # TODO: run createuser
+    _logger.warning('account creation from admin page not implemented yet')
     return False
 
-def delete_cert_req(req_id, configuration):
-    """Helper to delete a pending certificate request"""
+def delete_account_req(req_id, configuration):
+    """Helper to delete a pending account request"""
     req_path = os.path.join(configuration.user_pending, req_id)
     return delete_file(req_path, configuration.logger)
 

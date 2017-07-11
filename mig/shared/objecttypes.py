@@ -154,7 +154,7 @@ accessrequest = {
     'required': ['client_id', 'request_type', 'target'],
     'optional': [],
     }
-certreq = {'object_type': 'certreq', 'required': [
+accountreq = {'object_type': 'accountreq', 'required': [
     'id',
     'full_name',
     'email',
@@ -233,8 +233,8 @@ sharelinks = {'object_type': 'sharelinks',
 accessrequests = {'object_type': 'accessrequests',
                   'required_list': [('accessrequests', 'accessrequest'
                   )]}
-certreqs = {'object_type': 'certreqs', 'required_list': [('certreqs',
-            'certreq')]}
+accountreqs = {'object_type': 'accountreqs', 'required_list': [('accountreqs',
+            'accountreq')]}
 changedstatusjobs = {'object_type': 'changedstatusjobs',
                      'required_list': [('changedstatusjobs',
                      'changedstatusjob')]}
@@ -396,8 +396,8 @@ valid_types_list = [
     sharelinks,
     accessrequest,
     accessrequests,
-    certreq,
-    certreqs,
+    accountreq,
+    accountreqs,
     file_not_found,
     filewc,
     filewcs,

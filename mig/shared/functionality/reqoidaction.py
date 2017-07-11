@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcertaction - handle certificate account requests and send email to admins
+# reqcertaction - handle certificate requests and send email to admins
 # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request certificate account action back end"""
+"""Request certificate action back end"""
 
 # TODO: this backend is horribly KU/UCPH-specific, should move that to conf
 
@@ -120,10 +120,10 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s certificate account request' % configuration.short_title
+    title_entry['text'] = '%s certificate request' % configuration.short_title
     title_entry['skipmenu'] = True
     output_objects.append({'object_type': 'header', 'text'
-                          : '%s certificate account request' % \
+                          : '%s certificate request' % \
                             configuration.short_title 
                            })
 
@@ -195,7 +195,7 @@ resources anyway.
         'password': base64.b64encode(password),
         'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
         'openid_names': [],
-        'auth': ['migcert'],
+        'auth': ['migoid'],
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
@@ -269,7 +269,7 @@ sudo su - mig-ca
                    (configuration.short_title, cert_name)
     email_msg = \
         """
-Received a certificate account request with certificate data
+Received a certificate request with certificate data
  * Full Name: %(full_name)s
  * Organization: %(organization)s
  * State: %(state)s

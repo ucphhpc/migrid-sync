@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,8 +30,8 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.certreq import build_certreqitem_object, list_cert_reqs, \
-     get_cert_req, delete_cert_req, accept_cert_req
+from shared.accountreq import build_accountreqitem_object, list_account_reqs, \
+     get_account_req, delete_account_req, accept_account_req
 from shared.defaults import default_pager_entries, csrf_field
 from shared.fileio import send_message_to_grid_script, read_tail
 from shared.findtype import is_admin
@@ -51,7 +51,7 @@ grid_actions = {'reloadconfig': 'RELOADCONFIG',
                 'dropexecuting': 'DROPEXECUTING',
                 'dropdone': 'DROPDONE',
                 }
-certreq_actions = ['addcertreq', 'delcertreq']
+accountreq_actions = ['addaccountreq', 'delaccountreq']
 
 
 def signature():
@@ -91,7 +91,7 @@ def main(client_id, user_arguments_dict):
     # jquery support for tablesorter and confirmation on "remove"
     # table initially sorted by col. 9 (created)
     
-    table_spec = {'table_id': 'certreqtable', 'sort_order': '[[9,0]]'}
+    table_spec = {'table_id': 'accountreqtable', 'sort_order': '[[9,0]]'}
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
     title_entry['style'] = themed_styles(configuration)
@@ -107,7 +107,7 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     html = ''
-    if action and not action in grid_actions.keys() + certreq_actions:
+    if action and not action in grid_actions.keys() + accountreq_actions:
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Invalid action: %s' % action})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -122,28 +122,28 @@ def main(client_id, user_arguments_dict):
                  : '''Error sending %s message to grid_script.''' % action
                  })
             status = returnvalues.SYSTEM_ERROR
-    elif action in certreq_actions:
-        if action == "addcertreq":
+    elif action in accountreq_actions:
+        if action == "addaccountreq":
             for req_id in req_list:
-                if accept_cert_req(req_id, configuration):
+                if accept_account_req(req_id, configuration):
                     output_objects.append(
                         {'object_type': 'text', 'text':
-                         'Accepted certificate request %s' % req_id})
+                         'Accepted account request %s' % req_id})
                 else:
                     output_objects.append(
                         {'object_type': 'error_text', 'text':
-                         'Accept certificate request failed - details in log'
+                         'Accept account request failed - details in log'
                          })
-        elif action == "delcertreq":
+        elif action == "delaccountreq":
             for req_id in req_list:
-                if delete_cert_req(req_id, configuration):
+                if delete_account_req(req_id, configuration):
                     output_objects.append(
                         {'object_type': 'text', 'text':
-                         'Deleted certificate request %s' % req_id})
+                         'Deleted account request %s' % req_id})
                 else:
                     output_objects.append(
                         {'object_type': 'error_text', 'text':
-                         'Delete certificate request failed - details in log'
+                         'Delete account request failed - details in log'
                          })
 
     show, drop = '', ''
@@ -243,7 +243,7 @@ provide access to e.g. managing the grid job queues.
     output_objects.append({'object_type': 'header', 'text'
                           : 'Pending Certificate Requests'})
 
-    (list_status, ret) = list_cert_reqs(configuration)
+    (list_status, ret) = list_account_reqs(configuration)
     if not list_status:
         logger.error("%s: failed for '%s': %s" % (op_name,
                                                   client_id, ret))
@@ -256,9 +256,9 @@ provide access to e.g. managing the grid job queues.
     target_op = 'migadmin'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
-    certreqs = []
+    accountreqs = []
     for req_id in ret:
-        (load_status, req_dict) = get_cert_req(req_id, configuration)
+        (load_status, req_dict) = get_account_req(req_id, configuration)
         if not load_status:
             logger.error("%s: load failed for '%s': %s" % \
                          (op_name, req_id, req_dict))
@@ -266,35 +266,35 @@ provide access to e.g. managing the grid job queues.
                                    : 'Could not read details for "%s"' % \
                                    req_id})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        req_item = build_certreqitem_object(configuration, req_dict)
+        req_item = build_accountreqitem_object(configuration, req_dict)
         
         js_name = 'create%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
-                                  {'action': 'addcertreq', 'req_id': req_id,
+                                  {'action': 'addaccountreq', 'req_id': req_id,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
-        req_item['addcertreqlink'] = {
+        req_item['addaccountreqlink'] = {
             'object_type': 'link', 'destination':
             "javascript: confirmDialog(%s, '%s');" % \
             (js_name, 'Really accept %s?' % req_id),
             'class': 'addlink iconspace', 'title': 'Accept %s' % req_id, 'text': ''}
         js_name = 'delete%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
-                                  {'action': 'delcertreq', 'req_id': req_id,
+                                  {'action': 'delaccountreq', 'req_id': req_id,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
-        req_item['delcertreqlink'] = {
+        req_item['delaccountreqlink'] = {
             'object_type': 'link', 'destination':
             "javascript: confirmDialog(%s, '%s');" % \
             (js_name, 'Really remove %s?' % req_id),
             'class': 'removelink iconspace', 'title': 'Remove %s' % req_id, 'text': ''}
-        certreqs.append(req_item)
+        accountreqs.append(req_item)
 
     output_objects.append({'object_type': 'table_pager', 'entry_name':
-                           'pending certificate requests',
+                           'pending certificate/OpenID account requests',
                            'default_entries': default_pager_entries})
-    output_objects.append({'object_type': 'certreqs',
-                          'certreqs': certreqs})
+    output_objects.append({'object_type': 'accountreqs',
+                          'accountreqs': accountreqs})
 
     log_path_list = []
     if os.path.isabs(configuration.logfile):

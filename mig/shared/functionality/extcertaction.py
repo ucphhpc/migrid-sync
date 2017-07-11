@@ -27,6 +27,8 @@
 
 """External certificate sign up action back end"""
 
+# TODO: this backend is horribly KU/UCPH-specific, should move that to conf
+
 import os
 import time
 import tempfile
@@ -163,6 +165,7 @@ multiple "key=val" fields separated by "/".
         'comment': '%s: %s' % ('Existing certificate', comment),
         'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
         'openid_names': [],
+        'auth': ['extcert'],
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']

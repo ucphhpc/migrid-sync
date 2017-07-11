@@ -35,6 +35,8 @@
      - allows empty fields for things like country, email, and state
 """
 
+# TODO: this backend is horribly KU/UCPH-specific, should move that to conf
+
 import os
 import time
 
@@ -280,7 +282,7 @@ def main(client_id, user_arguments_dict, environ=None):
         # Additionally in the special case with unknown institute (ou=ukendt)
         # we force organization to KU to align with cert policies.
         # We do that to allow autocreate updating existing cert users.
-        
+
         if org_unit not in ('', 'NA'):
             org_unit = org_unit.upper()
             oid_extras['faculty'] = org
@@ -356,7 +358,9 @@ You probably have to reload this page after you explicitly '''})
                  })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    auth = 'unknown'
     if login_type == 'cert':
+        auth = 'extcert'
         user_dict['expire'] = int(time.time() + cert_valid_days * 24 * 60 * 60)
         try:
             distinguished_name_to_user(uniq_id)
@@ -369,9 +373,14 @@ multiple "key=val" fields separated by "/".
 '''})
             return (output_objects, returnvalues.CLIENT_ERROR)
     elif login_type == 'oid':
+        auth = 'extoid'
         user_dict['expire'] = int(time.time() + oid_valid_days * 24 * 60 * 60)
         fill_distinguished_name(user_dict)
         uniq_id = user_dict['distinguished_name']
+
+    # Save auth access method
+    
+    user_dict['auth'] = [auth]
 
     # If server allows automatic addition of users with a CA validated cert
     # we create the user immediately and skip mail
@@ -403,6 +412,7 @@ Please report this problem to the grid administrators (%s).''' % \
                  admin_email})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
+        logger.info('created user account for %s' % uniq_id)
         output_objects.append({'object_type': 'html_form', 'text'
                                    : '''Created the user account for you -
 please open <a href="%s">your personal page</a> to proceed using it.
@@ -414,4 +424,3 @@ please open <a href="%s">your personal page</a> to proceed using it.
 Please contact the Grid admins %s if you think it should be enabled.
 ''' % configuration.admin_email})        
         return (output_objects, returnvalues.ERROR)
-

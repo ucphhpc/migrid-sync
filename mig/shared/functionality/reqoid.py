@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcert - Certificate account request backend
+# reqoid - OpenID account request backend
 # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request certificate account back end"""
+"""Request OpenID account back end"""
 
 import os
 
@@ -61,7 +61,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s certificate account request' % configuration.short_title
+    title_entry['text'] = '%s OpenID account request' % configuration.short_title
     title_entry['skipmenu'] = True
     form_fields = ['full_name', 'organization', 'email', 'country', 'state',
                    'password', 'verifypassword', 'comment']
@@ -75,7 +75,7 @@ def main(client_id, user_arguments_dict):
  </div>
 '''                       })
     header_entry = {'object_type': 'header', 'text'
-                    : 'Welcome to the %s certificate account request page' % \
+                    : 'Welcome to the %s OpenID account request page' % \
                     configuration.short_title}
     output_objects.append(header_entry)
     
@@ -103,7 +103,7 @@ def main(client_id, user_arguments_dict):
                               })
         output_objects.append(extcert_link)
         output_objects.append({'object_type': 'warning', 'text'
-                              : 'However, if you want a dedicated %s certificate you can still request one below:' % \
+                              : 'However, if you want a dedicated %s OpenID you can still request one below:' % \
                                 configuration.short_title
                               })
     elif client_id:
@@ -111,12 +111,12 @@ def main(client_id, user_arguments_dict):
             entry['text'] = entry['text'].replace('request', 'request / renew')
         output_objects.append({'object_type': 'html_form', 'text'
                               : '''<p>
-Apparently you already have a valid %s certificate, but if it is about to
-expire you can renew it by posting the form below. Renewal with changed fields
-is <span class=mandatory>not</span> supported, so all fields including your
-original password must remain unchanged for renew to work. Otherwise it
-results in a request for a new account and certificate without access to your
-old files, jobs and privileges.</p>''' % \
+Apparently you already have a valid %s certificate, but if you want to add
+OpenID access to the same account you can do so by posting the form below.
+Changing fields is <span class=mandatory>not</span> supported, so all fields
+must remain unchanged for it to work.
+Otherwise it results in a request for a new account and OpenID without access
+to your old files, jobs and privileges.</p>''' % \
                                configuration.short_title})
         user_fields.update(distinguished_name_to_user(client_id))
 
@@ -131,16 +131,16 @@ old files, jobs and privileges.</p>''' % \
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers =  {'form_method': form_method, 'csrf_field': csrf_field,
                      'csrf_limit': csrf_limit}
-    target_op = 'reqcertaction'
+    target_op = 'reqoidaction'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-    fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
 
+    fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
     fill_helpers.update(user_fields)
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate account request to the %(site)s administrators.
+Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the OpenID account request to the %(site)s administrators.
 <p class='criticaltext highlight_message'>
 IMPORTANT: Please help us verify your identity by providing Organization and
 Email data that we can easily validate!

@@ -221,12 +221,12 @@ def create_seafile_mount_link(client_id, configuration):
     user_alias = configuration.user_seafile_alias
     short_id = extract_field(client_id, user_alias)
     seafile_home = os.path.join(configuration.seafile_mount, short_id)
-    logger = configuration.logger
+    _logger = configuration.logger
     if os.path.isdir(seafile_home) and not os.path.islink(mount_link):
         try:
             os.symlink(seafile_home, mount_link)
         except Exception, exc:
-            logger.error("failed to link seafile mount %s to %s: %s" \
+            _logger.error("failed to link seafile mount %s to %s: %s" \
                          % (seafile_home, mount_link, exc))
             raise
 
@@ -234,12 +234,12 @@ def remove_seafile_mount_link(client_id, configuration):
     """Remove link to fuse mounted seafile library for client_id"""
     client_dir = client_id_dir(client_id)
     mount_link = os.path.join(configuration.user_home, client_dir, seafile_ro_dirname)
-    logger = configuration.logger
+    _logger = configuration.logger
     if os.path.islink(mount_link):
         try:
             os.remove(mount_link)
         except Exception, exc:
-            logger.error("failed to unlink seafile mount from %s: %s" \
+            _logger.error("failed to unlink seafile mount from %s: %s" \
                          % (mount_link, exc))
             raise
 
@@ -264,6 +264,7 @@ def create_user(
     else:
         configuration = get_configuration_object()
 
+    _logger = configuration.logger
     fill_distinguished_name(user)
     client_id = user['distinguished_name']
     client_dir = client_id_dir(client_id)
@@ -333,7 +334,12 @@ certificate that is still valid."""
                 # alone on cert re-signup after openid signup.
                 updated_user = user_db[client_id]
                 for (key, val) in user.items():
-                    if val:
+                    if 'auth' == key and not isinstance(val, basestring) and \
+                           isinstance(val, list):
+                        auth_list = updated_user.get(key, [])
+                        auth_list += [i for i in val if not i in auth_list]
+                        updated_user[key] = auth_list
+                    elif val:
                         updated_user[key] = val
                 user.clear()
                 user.update(updated_user)
@@ -477,12 +483,13 @@ The %(short_title)s admins
 %(admin_email)s
 ''' % {'short_title': configuration.short_title,
        'admin_email': configuration.admin_email}
-    configuration.logger.info("write welcome msg in %s" % welcome_path)
+    _logger.info("write welcome msg in %s" % welcome_path)
     try:
         filehandle = open(welcome_path, 'w')
         filehandle.write(welcome_msg)
         filehandle.close()
     except:
+        _logger.error("could not write %s" % welcome_path)
         if not force:
             raise Exception('could not create welcome file: %s' % \
                             welcome_path)
@@ -500,6 +507,7 @@ The %(short_title)s admins
         settings_dict = update_settings(client_id, configuration,
                                         settings_dict, settings_defaults)
     except:
+        _logger.error("could not write %s" % settings_path)
         if not force:
             raise Exception('could not write settings file: %s' % \
                             settings_path)
@@ -513,6 +521,7 @@ The %(short_title)s admins
         profile_dict = update_profile(client_id, configuration, profile_dict,
                                       profile_defaults)
     except:
+        _logger.error("could not write %s" % profile_path)
         if not force:
             raise Exception('could not write profile file: %s' % \
                             profile_path)
@@ -526,6 +535,7 @@ The %(short_title)s admins
         widgets_dict = update_widgets(client_id, configuration, widgets_dict,
                                       widgets_defaults)
     except:
+        _logger.error("could not write %s" % widgets_path)
         if not force:
             raise Exception('could not create widgets file: %s' % \
                             widgets_path)
@@ -538,11 +548,12 @@ The %(short_title)s admins
             filehandle.write(get_default_css(css_path))
             filehandle.close()
         except:
-            
+            _logger.error("could not write %s" % css_path)
             if not force:
                 raise Exception('could not create custom css file: %s' % \
                                 css_path)
 
+    _logger.info("created/renewed user %s" % client_id)
     mark_user_modified(configuration, client_id)
     return user
 
@@ -561,6 +572,7 @@ def edit_user(
         configuration = Configuration(conf_path)
     else:
         configuration = get_configuration_object()
+    _logger = configuration.logger
 
     client_dir = client_id_dir(client_id)
 
@@ -594,7 +606,7 @@ def edit_user(
         new_id = user_dict["distinguished_name"]
         if user_db.has_key(new_id):
             raise Exception("Edit aborted: new user already exists!")
-        configuration.logger.info("Force old user renew to fix missing files")
+        _logger.info("Force old user renew to fix missing files")
         create_user(old_user, conf_path, db_path, force, verbose,
                     ask_renew=False, default_renew=True)
         del user_db[client_id]
@@ -735,17 +747,17 @@ def edit_user(
     # * mrsl files?
     # * user stats?
 
-    configuration.logger.info("Renamed user %s to %s" % (client_id, new_id))
+    _logger.info("Renamed user %s to %s" % (client_id, new_id))
     mark_user_modified(configuration, new_id)
-    configuration.logger.info("Force new user renew to fix access")
+    _logger.info("Force new user renew to fix access")
     create_user(user_dict, conf_path, db_path, force, verbose,
                 ask_renew=False, default_renew=True)
-    configuration.logger.info("Force access map updates to avoid web stall")
-    configuration.logger.info("Force update user map")
+    _logger.info("Force access map updates to avoid web stall")
+    _logger.info("Force update user map")
     refresh_user_map(configuration)
-    configuration.logger.info("Force update resource map")
+    _logger.info("Force update resource map")
     refresh_resource_map(configuration)
-    configuration.logger.info("Force update vgrid map")
+    _logger.info("Force update vgrid map")
     refresh_vgrid_map(configuration)
     return user_dict
 
@@ -875,8 +887,8 @@ def get_openid_user_dn(configuration, login_url, user_check=True):
     skipped resulting in the openid name being returned even for users not
     yet signed up.
     """
-    logger = configuration.logger
-    logger.info('extracting openid dn from %s' % login_url)
+    _logger = configuration.logger
+    _logger.info('extracting openid dn from %s' % login_url)
     found_openid_prefix = False
     for oid_provider in configuration.user_openid_providers:
         oid_prefix = oid_provider.rstrip('/') + '/'
@@ -884,17 +896,17 @@ def get_openid_user_dn(configuration, login_url, user_check=True):
             found_openid_prefix = oid_prefix
             break
     if not found_openid_prefix:
-        logger.error("openid login from invalid provider: %s" % login_url)
+        _logger.error("openid login from invalid provider: %s" % login_url)
         return ''
     raw_login = login_url.replace(found_openid_prefix, '')
-    logger.info("trying openid raw login: %s" % raw_login)
+    _logger.info("trying openid raw login: %s" % raw_login)
     # Lookup native user_home from openid user symlink
     link_path = os.path.join(configuration.user_home, raw_login)
     if os.path.islink(link_path):
         native_path = os.path.realpath(link_path)
         native_dir = os.path.basename(native_path)
         distinguished_name = client_dir_id(native_dir)
-        logger.info('found full ID %s from %s link' % \
+        _logger.info('found full ID %s from %s link' % \
                                   (distinguished_name, login_url))
         return distinguished_name
     elif configuration.user_openid_alias:
@@ -903,27 +915,27 @@ def get_openid_user_dn(configuration, login_url, user_check=True):
         user_alias = configuration.user_openid_alias
         for (distinguished_name, user) in user_map.items():
             if user[user_alias] in (raw_login, client_alias(raw_login)):
-                logger.info('found full ID %s from %s alias' % \
+                _logger.info('found full ID %s from %s alias' % \
                                           (distinguished_name, login_url))
                 return distinguished_name
 
     # Fall back to try direct DN (possibly on cert dir form)
-    logger.info('fall back to direct ID %s from %s' % \
+    _logger.info('fall back to direct ID %s from %s' % \
                               (raw_login, login_url))
     # Force to dir format and check if user home exists
     cert_dir = client_id_dir(raw_login)
     base_path = os.path.join(configuration.user_home, cert_dir)
     if os.path.isdir(base_path):
         distinguished_name = client_dir_id(cert_dir)
-        logger.info('accepting direct user %s from %s' % \
+        _logger.info('accepting direct user %s from %s' % \
                     (distinguished_name, login_url))
         return distinguished_name
     elif not user_check:
-        logger.info('accepting raw user %s from %s' % \
+        _logger.info('accepting raw user %s from %s' % \
                     (raw_login, login_url))
         return raw_login
     else:
-        logger.error('no such openid user %s: %s' % \
+        _logger.error('no such openid user %s: %s' % \
                      (cert_dir, login_url))
         return ''
 
@@ -943,20 +955,20 @@ def __oid_sessions_execute(configuration, db_name, query, query_vars,
     Use the commit flag to specify if the query should be followed by a db
     commit to save any changes.
     """
-    logger = configuration.logger
+    _logger = configuration.logger
     sessions = []
     if not configuration.user_openid_providers or \
            not configuration.openid_store:
-        logger.error("no openid configuration")
+        _logger.error("no openid configuration")
         return (False, sessions)
     session_db_path = os.path.join(configuration.openid_store, db_name)
     if not os.path.exists(session_db_path):
-        logger.error("could not find openid session db: %s" % session_db_path)
+        _logger.error("could not find openid session db: %s" % session_db_path)
         return (False, sessions)
     try:
         conn = sqlite3.connect(session_db_path)
         cur = conn.cursor()
-        logger.info("execute query %s with args %s on openid sessions" % \
+        _logger.info("execute query %s with args %s on openid sessions" % \
                     (query, query_vars))
         cur.execute(query, query_vars)
         sessions = cur.fetchall()
@@ -964,10 +976,10 @@ def __oid_sessions_execute(configuration, db_name, query, query_vars,
             conn.commit()
         conn.close()
     except Exception, exc:
-        logger.error("failed to execute query %s with args %s: %s" % \
+        _logger.error("failed to execute query %s with args %s: %s" % \
                      (query, query_vars, exc))
         return (False, sessions)
-    logger.info("got openid sessions out for %s" % sessions)
+    _logger.info("got openid sessions out for %s" % sessions)
     return (True, sessions)
 
 def find_oid_sessions(configuration, db_name, identity):

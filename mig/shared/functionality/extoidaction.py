@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# extoidaction - handle sign up with external openid credentials
+# extoidaction - handle account sign up with external OpenID credentials
 # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""OpenID sign up action back end"""
+"""OpenID account sign up action back end"""
 
 import os
 import time
@@ -85,10 +85,10 @@ def main(client_id, user_arguments_dict):
     #    return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s OpenID sign up' % configuration.short_title
+    title_entry['text'] = '%s OpenID account sign up' % configuration.short_title
     title_entry['skipmenu'] = True
     output_objects.append({'object_type': 'header', 'text'
-                          : '%s OpenID sign up' % \
+                          : '%s OpenID account sign up' % \
                             configuration.short_title 
                            })
 
@@ -134,6 +134,7 @@ def main(client_id, user_arguments_dict):
         'comment': comment,
         'expire': int(time.time() + oid_valid_days * 24 * 60 * 60),
         'openid_names': [raw_login],
+        'auth': ['extoid'],
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
@@ -147,14 +148,14 @@ def main(client_id, user_arguments_dict):
         os.write(os_fd, dumps(user_dict))
         os.close(os_fd)
     except Exception, err:
-        logger.error('Failed to write certificate request to %s: %s'
+        logger.error('Failed to write OpenID account request to %s: %s'
                       % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
                                % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    logger.info('Wrote certificate request to %s' % req_path)
+    logger.info('Wrote OpenID account request to %s' % req_path)
     tmp_id = req_path.replace(user_pending, '')
     user_dict['tmp_id'] = tmp_id
 
@@ -196,10 +197,10 @@ sudo su - mig-ca
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
-    email_header = '%s account request for %s' % \
+    email_header = '%s OpenID request for %s' % \
                    (configuration.short_title, full_name)
     email_msg = """
-Received an OpenID sign up with user data
+Received an OpenID account sign up with user data
  * Full Name: %(full_name)s
  * Organization: %(organization)s
  * State: %(state)s

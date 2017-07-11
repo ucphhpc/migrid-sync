@@ -38,10 +38,9 @@ def get_valid_topics(configuration):
     """Get a map of valid show topics and their associated helper URLs"""
     
     migoid_url, migcert_url, extoid_url, extcert_url = '', '', '', ''
-    # NOTE: migoid and migcert currently both use reqcert for signup
     if configuration.migserver_https_mig_oid_url:
         migoid_url = os.path.join(configuration.migserver_https_sid_url,
-                                  'cgi-sid', 'reqcert.py')
+                                  'cgi-sid', 'reqoid.py')
     if configuration.migserver_https_mig_cert_url:
         migcert_url = os.path.join(configuration.migserver_https_sid_url,
                                    'cgi-sid', 'reqcert.py')
