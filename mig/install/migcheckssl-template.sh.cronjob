@@ -14,7 +14,8 @@
 # This is a limitation on the run-parts wrapper used by cron
 # (see man run-parts for the rationale behind this).
 
-export PATH="${PATH}:/usr/local/sbin"
+# Look in getssl install dir first
+export PATH="/usr/local/sbin:${PATH}"
 
 domain="__BASE_FQDN__"
 cert_path="__MIG_CERTS__/letsencrypt"
@@ -30,6 +31,12 @@ getssl_tmp="/tmp/getssl"
 getssl_script="getssl"
 getssl_path=`which ${getssl_script} 2>/dev/null`
 apache_services="httpd apache2"
+mig_services="migrid"
+
+if [[ $(id -u) -ne 0 ]]; then
+   echo "Please run $0 as root"
+   exit 1
+fi
 
 # Check getssl script
 
@@ -47,17 +54,20 @@ fi
 
 # Generate getssl command with args
 
-if [ "$#" -eq 0 ]; then
+if [[ "$#" -eq 0 ]]; then
    getssl_cmd="${getssl_script} -q ${domain}"
 else
    getssl_cmd="${getssl_script} $@ ${domain}"
 fi
 
-if [[ ${getssl_cmd} =~ .*-q.* ]]; then
-   verbose=true
+# Run in verbose mode if run without -q arg
+if [[ ${getssl_cmd} =~ .*\ -q\ .* ]]; then
+   verbose=0
+else
+   verbose=1
 fi
 
-if [ -z ${verbose} ]; then
+if [[ ${verbose} -eq 1 ]]; then
    echo "getssl_cmd: ${getssl_cmd}"
    echo "cert_path: ${cert_path}"
    echo "domain_cert_path: ${domain_cert_path}"
@@ -86,7 +96,8 @@ fi
 if [ ! -f ${server_key_crt_ca_pem} ]; then
    org_mtime=(0)
 else
-   org_mtime=$(stat -c %Y ${server_key_crt_ca_pem})
+   # Avoid shell builtin stat as it may not have c option 
+   org_mtime=$(/usr/bin/stat -c %Y ${server_key_crt_ca_pem})
 fi
 
 # Check for new certificate
@@ -98,13 +109,14 @@ ${getssl_cmd}
 if [ ! -f ${server_key_crt_ca_pem} ]; then
    new_mtime=(0)
 else
-   new_mtime=$(stat -c %Y ${server_key_crt_ca_pem})
+   # Avoid shell builtin stat as it may not have c option 
+   new_mtime=$(/usr/bin/stat -c %Y ${server_key_crt_ca_pem})
 fi
 
 # Update MiG specific certificate paths if certificate is updated
 
-if [ ${org_mtime} -ne ${new_mtime} ]; then
-   if [ -z ${verbose} ]; then
+if [[ ${org_mtime} -ne ${new_mtime} ]]; then
+   if [[ ${verbose} -eq 1 ]]; then
       echo "--- LetsEncrypt certificates updated ---"
       echo "Setting permissions and creating: ${combined_pub}"
    fi
@@ -124,26 +136,19 @@ if [ ${org_mtime} -ne ${new_mtime} ]; then
    chown mig:mig ${combined_pem}
    chmod 400 ${domain_cert_path}/*.{key,pem}
 
-   # Generate combined.pub
+   # Generate openssh public key for combined.pem in combined.pub
 
    ssh-keygen -y -f ${combined_pem} > ${combined_pub}
 
-   # Restart migrid service
+   # Restart migrid and apache services if they exist
 
-   if [ -z ${verbose} ]; then
-      echo "--- Restarting MiG service ---"
-   fi
-   systemctl restart migrid
-
-   # Restart apache service if it exits
-
-   for apache_service in ${apache_services}; do
-      systemctl status ${apache_service} > /dev/null 2>&1
-      if [ $? -eq 0 ]; then
-         if [ -z ${verbose} ]; then
-            echo "--- Restarting apache service: ${apache_service} ---"
+   for svc in ${migrid_services} ${apache_services}; do
+      service ${svc} status > /dev/null 2>&1
+      if [[ $? -eq 0 ]]; then
+         if [[ ${verbose} -eq 1 ]]; then
+            echo "--- Restarting service: ${svc} ---"
          fi
-         systemctl restart ${apache_service}
+         service ${svc} restart
       fi
    done
    sha256_fingerprint=$(openssl x509 -noout -fingerprint -sha256 -in ${combined_pem})
