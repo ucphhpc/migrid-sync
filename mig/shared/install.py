@@ -273,8 +273,11 @@ cert, oid and sid based https!
         user_dict['__IFDEF_EXT_CERT_FQDN__'] = 'Define'
 
     user_dict['__IFDEF_MIG_OID_FQDN__'] = 'UnDefine'
+    user_dict['__MIG_OID_PROXY_COMMENTED__'] = '#'
     if user_dict['__MIG_OID_FQDN__']:
         user_dict['__IFDEF_MIG_OID_FQDN__'] = 'Define'
+        # Automatically enable proxy for MIG_OID_FQDN/openid/ to OpenID daemon
+        user_dict['__MIG_OID_PROXY_COMMENTED__'] = ''
 
     user_dict['__IFDEF_EXT_OID_FQDN__'] = 'UnDefine'
     if user_dict['__EXT_OID_FQDN__']:
