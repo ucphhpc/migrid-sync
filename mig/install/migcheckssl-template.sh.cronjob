@@ -31,7 +31,7 @@ getssl_tmp="/tmp/getssl"
 getssl_script="getssl"
 getssl_path=`which ${getssl_script} 2>/dev/null`
 apache_services="httpd apache2"
-mig_services="migrid"
+migrid_services="migrid"
 
 if [[ $(id -u) -ne 0 ]]; then
     echo "Please run $0 as root"
@@ -124,7 +124,7 @@ if [[ ${org_mtime} -ne ${new_mtime} ]]; then
 
     chown 0:0 ${domain_cert_path}/*.{key,pem}
 
-    if [ -ne ${migrid_services} ]; do
+    if [ -n "${migrid_services}" ]; then
         if [[ ${verbose} -eq 1 ]]; then
             echo "Creating ${combined_pem} and ${combined_pub}"
         fi
@@ -139,6 +139,7 @@ if [[ ${org_mtime} -ne ${new_mtime} ]]; then
         openssl rsa -in ${server_key} -text > ${server_pem}
         cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
         chown mig:mig ${combined_pem}
+        chmod 400 ${server_pem} ${combined_pem}
 
         # Generate openssh public key for combined.pem in combined.pub
 
@@ -160,7 +161,7 @@ if [[ ${org_mtime} -ne ${new_mtime} ]]; then
             service ${svc} restart
         fi
     done
-    if [ -ne ${migrid_services} ]; do
+    if [ -n "${migrid_services}" ]; then
         sha256_fingerprint=$(openssl x509 -noout -fingerprint -sha256 -in ${combined_pem})
         sha256_fingerprint=$(echo ${sha256_fingerprint} | sed 's/SHA256 Fingerprint=//g')
         echo "Please update ftps and davs sha256 fingerprint in MiGserver.conf to:"
