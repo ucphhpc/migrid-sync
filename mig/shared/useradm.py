@@ -457,7 +457,14 @@ certificate that is still valid."""
             for oid_provider in configuration.user_openid_providers:
                 oid_url = os.path.join(oid_provider, name)
                 access += 'require user %s\n' % oid_url
-        access += 'Satisfy any\n'
+        access += '''
+<IfVersion >= 2.4>
+    Require all granted 
+</IfVersion>
+<IfVersion < 2.4>
+    Satisfy any
+</IfVersion>
+'''
 
         filehandle.write(access % info)
         filehandle.close()
