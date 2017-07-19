@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcertaction - handle certificate requests and send email to admins
+# reqoidaction - handle OpenID account requests and send email to admins
 # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request certificate action back end"""
+"""Request OpenID account action back end"""
 
 # TODO: this backend is horribly KU/UCPH-specific, should move that to conf
 
@@ -120,10 +120,10 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s certificate request' % configuration.short_title
+    title_entry['text'] = '%s OpenID account request' % configuration.short_title
     title_entry['skipmenu'] = True
     output_objects.append({'object_type': 'header', 'text'
-                          : '%s certificate request' % \
+                          : '%s OpenID account request' % \
                             configuration.short_title 
                            })
 
@@ -179,7 +179,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               : '''Illegal email and organization combination:
 Please read and follow the instructions in red on the request page!
 If you are a student with only a @*.ku.dk address please just use KU as
-organization. As long as you state that you want the certificate for course
+organization. As long as you state that you want the account for course
 purposes in the comment field, you will be given access to the necessary
 resources anyway.
 '''})
@@ -203,7 +203,7 @@ resources anyway.
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
                                   [user_dict[configuration.user_openid_alias]]
-    logger.info('got reqcert request: %s' % user_dict)
+    logger.info('got account request from reqoid: %s' % user_dict)
 
     # For testing only
     
@@ -218,14 +218,14 @@ resources anyway.
         os.write(os_fd, dumps(user_dict))
         os.close(os_fd)
     except Exception, err:
-        logger.error('Failed to write certificate request to %s: %s'
+        logger.error('Failed to write OpenID account request to %s: %s'
                       % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
                                % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    logger.info('Wrote certificate request to %s' % req_path)
+    logger.info('Wrote OpenID account request to %s' % req_path)
     tmp_id = req_path.replace(user_pending, '')
     user_dict['tmp_id'] = tmp_id
 
@@ -265,11 +265,11 @@ sudo su - mig-ca
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
-    email_header = '%s certificate request for %s' % \
+    email_header = '%s OpenID request for %s' % \
                    (configuration.short_title, cert_name)
     email_msg = \
         """
-Received a certificate request with certificate data
+Received an OpenID request with account data
  * Full Name: %(full_name)s
  * Organization: %(organization)s
  * State: %(state)s
@@ -281,7 +281,7 @@ Received a certificate request with certificate data
 Command to create user on %(site)s server:
 %(command_user_create)s
 
-Command to create certificate:
+Optional command to create matching certificate:
 %(command_cert_create)s
 
 Finally add the user
@@ -297,7 +297,7 @@ Remove the user
 from any relevant %(vgrid_label)ss using one of the management links:
 %(vgridman_links)s
 
-Command to revoke user certificate:
+Optional command to revoke any matching user certificate:
 %(command_cert_revoke)s
 You need to copy the resulting signed certificate revocation list (crl.pem)
 to the web server(s) for the revocation to take effect.
@@ -315,13 +315,13 @@ Command to delete user again on %(site)s server:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'An error occured trying to send the email requesting the grid administrators to create a new certificate. Please email them (%s) manually and include the session ID: %s'
+                              : 'An error occured trying to send the email requesting the grid administrators to create a new OpenID and account. Please email them (%s) manually and include the session ID: %s'
                                % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
         {'object_type': 'text', 'text'
-         : """Request sent to grid administrators: Your certificate request
+         : """Request sent to grid administrators: Your OpenID account request
 will be verified and handled as soon as possible, so please be patient. Once
 handled an email will be sent to the account you have specified ('%s') with
 further information. In case of inquiries about this request, please email

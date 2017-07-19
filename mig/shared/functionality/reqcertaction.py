@@ -179,7 +179,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               : '''Illegal email and organization combination:
 Please read and follow the instructions in red on the request page!
 If you are a student with only a @*.ku.dk address please just use KU as
-organization. As long as you state that you want the certificate for course
+organization. As long as you state that you want the account for course
 purposes in the comment field, you will be given access to the necessary
 resources anyway.
 '''})
@@ -203,7 +203,7 @@ resources anyway.
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
                                   [user_dict[configuration.user_openid_alias]]
-    logger.info('got reqcert request: %s' % user_dict)
+    logger.info('got account request from reqcert: %s' % user_dict)
 
     # For testing only
     
@@ -218,14 +218,14 @@ resources anyway.
         os.write(os_fd, dumps(user_dict))
         os.close(os_fd)
     except Exception, err:
-        logger.error('Failed to write certificate request to %s: %s'
+        logger.error('Failed to write certificate account request to %s: %s'
                       % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
                                % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    logger.info('Wrote certificate request to %s' % req_path)
+    logger.info('Wrote certificate account request to %s' % req_path)
     tmp_id = req_path.replace(user_pending, '')
     user_dict['tmp_id'] = tmp_id
 
@@ -269,7 +269,7 @@ sudo su - mig-ca
                    (configuration.short_title, cert_name)
     email_msg = \
         """
-Received a certificate account request with certificate data
+Received a certificate request with account data
  * Full Name: %(full_name)s
  * Organization: %(organization)s
  * State: %(state)s
@@ -315,16 +315,16 @@ Command to delete user again on %(site)s server:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'An error occured trying to send the email requesting the grid administrators to create a new certificate. Please email them (%s) manually and include the session ID: %s'
+                              : 'An error occured trying to send the email requesting the grid administrators to create a new certificate and account. Please email them (%s) manually and include the session ID: %s'
                                % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
         {'object_type': 'text', 'text'
-         : """Request sent to grid administrators: Your certificate request
-will be verified and handled as soon as possible, so please be patient. Once
-handled an email will be sent to the account you have specified ('%s') with
-further information. In case of inquiries about this request, please email
+         : """Request sent to grid administrators: Your certificate account
+request will be verified and handled as soon as possible, so please be patient.
+Once handled an email will be sent to the account you have specified ('%s')
+with further information. In case of inquiries about this request, please email
 the grid administrators (%s) and include the session ID: %s"""
          % (email, configuration.admin_email, tmp_id)})
     return (output_objects, returnvalues.OK)
