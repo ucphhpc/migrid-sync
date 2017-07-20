@@ -263,14 +263,23 @@ cert, oid and sid based https!
     user_dict['__IFDEF_PUBLIC_FQDN__'] = 'UnDefine'
     if user_dict['__PUBLIC_FQDN__']:
         user_dict['__IFDEF_PUBLIC_FQDN__'] = 'Define'
+    user_dict['__IFDEF_PUBLIC_PORT__'] = 'UnDefine'
+    if user_dict['__PUBLIC_PORT__']:
+        user_dict['__IFDEF_PUBLIC_PORT__'] = 'Define'
 
     user_dict['__IFDEF_MIG_CERT_FQDN__'] = 'UnDefine'
     if user_dict['__MIG_CERT_FQDN__']:
         user_dict['__IFDEF_MIG_CERT_FQDN__'] = 'Define'
+    user_dict['__IFDEF_MIG_CERT_PORT__'] = 'UnDefine'
+    if user_dict['__MIG_CERT_PORT__']:
+        user_dict['__IFDEF_MIG_CERT_PORT__'] = 'Define'
 
     user_dict['__IFDEF_EXT_CERT_FQDN__'] = 'UnDefine'
     if user_dict['__EXT_CERT_FQDN__']:
         user_dict['__IFDEF_EXT_CERT_FQDN__'] = 'Define'
+    user_dict['__IFDEF_EXT_CERT_PORT__'] = 'UnDefine'
+    if user_dict['__EXT_CERT_PORT__']:
+        user_dict['__IFDEF_EXT_CERT_PORT__'] = 'Define'
 
     user_dict['__IFDEF_MIG_OID_FQDN__'] = 'UnDefine'
     user_dict['__MIG_OID_PROXY_COMMENTED__'] = '#'
@@ -278,14 +287,23 @@ cert, oid and sid based https!
         user_dict['__IFDEF_MIG_OID_FQDN__'] = 'Define'
         # Automatically enable proxy for MIG_OID_FQDN/openid/ to OpenID daemon
         user_dict['__MIG_OID_PROXY_COMMENTED__'] = ''
+    user_dict['__IFDEF_MIG_OID_PORT__'] = 'UnDefine'
+    if user_dict['__MIG_OID_PORT__']:
+        user_dict['__IFDEF_MIG_OID_PORT__'] = 'Define'
 
     user_dict['__IFDEF_EXT_OID_FQDN__'] = 'UnDefine'
     if user_dict['__EXT_OID_FQDN__']:
         user_dict['__IFDEF_EXT_OID_FQDN__'] = 'Define'
+    user_dict['__IFDEF_EXT_OID_PORT__'] = 'UnDefine'
+    if user_dict['__EXT_OID_PORT__']:
+        user_dict['__IFDEF_EXT_OID_PORT__'] = 'Define'
 
     user_dict['__IFDEF_SID_FQDN__'] = 'UnDefine'
     if user_dict['__SID_FQDN__']:    
         user_dict['__IFDEF_SID_FQDN__'] = 'Define'
+    user_dict['__IFDEF_SID_PORT__'] = 'UnDefine'
+    if user_dict['__SID_PORT__']:    
+        user_dict['__IFDEF_SID_PORT__'] = 'Define'
 
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
