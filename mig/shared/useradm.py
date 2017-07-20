@@ -440,8 +440,9 @@ certificate that is still valid."""
         # utf8 chars like the \xc3\xb8 are returned as \\xC3\\xB8 in Apache's
         # SSL_CLIENT_S_DN variable, thus we allow both direct dn and mangled
         # match in htaccess
-        
-        dn_enc = info['distinguished_name'].encode('string_escape')
+
+        dn_plain = info['distinguished_name']
+        dn_enc = dn_plain.encode('string_escape')
 
         def upper_repl(match):
             """Translate hex codes to upper case form"""
@@ -462,8 +463,11 @@ certificate that is still valid."""
 #SSLRequire (%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s" or %%{SSL_CLIENT_S_DN} eq "%(distinguished_name_enc)s" or (%%{SERVER_NAME} eq "${MIG_OID_FQDN}" and %%{SERVER_PORT} eq "${MIG_OID_PORT}") or (%%{SERVER_NAME} eq "${EXT_OID_FQDN}" and %%{SERVER_PORT} eq "${EXT_OID_PORT}"))
 
 require user "%(distinguished_name)s"
-require user "%(distinguished_name_enc)s"
 '''
+        if dn_enc != dn_plain:
+            access += '''require user "%(distinguished_name_enc)s"
+'''
+
         for name in user.get('openid_names', []):
             for oid_provider in configuration.user_openid_providers:
                 oid_url = os.path.join(oid_provider, name)
