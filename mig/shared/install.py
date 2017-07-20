@@ -114,6 +114,7 @@ def generate_confs(
     enable_preview='False',
     enable_hsts='',
     enable_vhost_certs='',
+    enable_verify_certs='',
     enable_seafile='False',
     enable_duplicati='False',
     enable_imnotify='False',
@@ -191,6 +192,7 @@ def generate_confs(
     user_dict['__ENABLE_PREVIEW__'] = enable_preview
     user_dict['__ENABLE_HSTS__'] = enable_hsts
     user_dict['__ENABLE_VHOST_CERTS__'] = enable_vhost_certs
+    user_dict['__ENABLE_VERIFY_CERTS__'] = enable_verify_certs
     user_dict['__ENABLE_SEAFILE__'] = enable_seafile
     user_dict['__ENABLE_DUPLICATI__'] = enable_duplicati
     user_dict['__ENABLE_IMNOTIFY__'] = enable_imnotify
@@ -260,6 +262,11 @@ cert, oid and sid based https!
         user_dict['__APACHE_RECENT__'] = '#'
 
     # Define some FQDN helpers if set
+    user_dict['__IFDEF_BASE_FQDN__'] = 'UnDefine'
+    if user_dict['__BASE_FQDN__']:
+        user_dict['__IFDEF_BASE_FQDN__'] = 'Define'
+    # No port for __BASE_FQDN__
+
     user_dict['__IFDEF_PUBLIC_FQDN__'] = 'UnDefine'
     if user_dict['__PUBLIC_FQDN__']:
         user_dict['__IFDEF_PUBLIC_FQDN__'] = 'Define'
@@ -305,6 +312,11 @@ cert, oid and sid based https!
     if user_dict['__SID_PORT__']:    
         user_dict['__IFDEF_SID_PORT__'] = 'Define'
 
+    user_dict['__IFDEF_IO_FQDN__'] = 'UnDefine'
+    if user_dict['__IO_FQDN__']:
+        user_dict['__IFDEF_IO_FQDN__'] = 'Define'
+    # No port for __IO_FQDN__
+
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
     if user_dict['__HG_PATH__']:
@@ -327,6 +339,14 @@ cert, oid and sid based https!
         user_dict['__VHOSTCERTS_COMMENTED__'] = ''
     else:
         user_dict['__VHOSTCERTS_COMMENTED__'] = '#'
+
+    # Enable certificate verification only if explicitly requested
+    if user_dict['__ENABLE_VERIFY_CERTS__'].lower() == 'true':
+        user_dict['__IS_VERIFYCERTS_COMMENTED__'] = ''
+        user_dict['__NOT_VERIFYCERTS_COMMENTED__'] = '#'
+    else:
+        user_dict['__IS_VERIFYCERTS_COMMENTED__'] = '#'
+        user_dict['__NOT_VERIFYCERTS_COMMENTED__'] = ''
 
     # Enable Seafile integration only if explicitly requested
     if user_dict['__ENABLE_SEAFILE__'].lower() == 'true':
@@ -746,6 +766,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_preview,
         enable_hsts,
         enable_vhost_certs,
+        enable_verify_certs,
         enable_seafile,
         enable_duplicati,
         enable_imnotify,

@@ -80,6 +80,7 @@ if '__main__' == __name__:
         'enable_preview',
         'enable_hsts',
         'enable_vhost_certs',
+        'enable_verify_certs',
         'enable_seafile',
         'enable_duplicati',
         'enable_imnotify',
