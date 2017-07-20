@@ -86,6 +86,10 @@ VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + CURRENCY + '?#*[]{}' + '"' + \
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
 VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
+# According to https://tools.ietf.org/html/rfc3986#section-2 URLs may contain
+# '%'-encoded chars, alphanum chars and query chars "-._~:/?#[]@!$&'()*+,;=`."
+VALID_COMPLEXURL_CHARACTERS = VALID_BASEURL_CHARACTERS + \
+                              "%-._~:/?#[]@!$&'()*+,;=`."
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
 VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@%'
 VALID_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ /'
@@ -436,6 +440,22 @@ def valid_url(
     """
 
     valid_chars = VALID_URL_CHARACTERS + extra_chars
+    __valid_contents(url, valid_chars, min_length, max_length)
+
+
+def valid_complex_url(
+    url,
+    min_length=1,
+    max_length=1024,
+    extra_chars='',
+    ):
+    """Verify that supplied url only contains
+    characters that we consider valid.
+    IMPORTANT: only use where URLs are not used carelessly in shell commands!
+               For almost all cases the valid_url function should do.
+    """
+
+    valid_chars = VALID_COMPLEXURL_CHARACTERS + extra_chars
     __valid_contents(url, valid_chars, min_length, max_length)
 
 

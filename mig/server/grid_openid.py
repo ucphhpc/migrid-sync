@@ -88,7 +88,7 @@ from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
-     InputException
+     valid_complex_url, InputException
 from shared.useradm import load_user_db, cert_field_map, \
      get_openid_user_dn
 
@@ -256,7 +256,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         'logout': valid_ascii,
         'success_to': valid_url,
         'fail_to': valid_url,
-        'return_to': valid_url,
+        'return_to': valid_complex_url,
         'openid.assoc_handle': valid_password,
         'openid.assoc_type': valid_password,
         'openid.dh_consumer_public': valid_session_hash,
@@ -269,7 +269,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         'openid.ns': valid_base_url,
         'openid.realm': valid_base_url,
         'openid.success_to': valid_url,
-        'openid.return_to': valid_url,
+        'openid.return_to': valid_complex_url,
         'openid.trust_root': valid_base_url,
         'openid.ns.sreg': valid_base_url,
         'openid.sreg.required': valid_cert_fields,
