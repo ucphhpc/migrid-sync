@@ -449,18 +449,30 @@ certificate that is still valid."""
         
         info['distinguished_name_enc'] = re.sub(r'\\x(..)', upper_repl, dn_enc)
 
-        access = 'SSLRequire ('
-        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s" or '
-        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name_enc)s"'
-        access += ')\n'
+        # TODO: remove the legacy SSLRequire noise
+
+        access = '''# Access control for directly served requests.
+# If user requests access through cert_redirect or explicit ID path we must
+# make sure that either of the following conditions hold:
+# a) access is through a cert address and user provided a matching certificate
+# b) access is through an OpenID address with a matching user alias
+
+# NOTE: disabled this complex check and switched to pure "require user ID"
+# checks which are available for all vhosts.
+#SSLRequire (%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s" or %%{SSL_CLIENT_S_DN} eq "%(distinguished_name_enc)s" or (%%{SERVER_NAME} eq "${MIG_OID_FQDN}" and %%{SERVER_PORT} eq "${MIG_OID_PORT}") or (%%{SERVER_NAME} eq "${EXT_OID_FQDN}" and %%{SERVER_PORT} eq "${EXT_OID_PORT}"))
+
+require user "%(distinguished_name)s"
+require user "%(distinguished_name_enc)s"
+'''
         for name in user.get('openid_names', []):
             for oid_provider in configuration.user_openid_providers:
                 oid_url = os.path.join(oid_provider, name)
-                access += 'require user %s\n' % oid_url
+                access += 'require user "%s"\n' % oid_url
         access += '''
-<IfVersion >= 2.4>
-    Require all granted 
-</IfVersion>
+# IMPORTANT: do NOT set "all granted" for 2.4 as it removes login requirements!
+# In apache 2.4 RequireAny is implicit for the above "require user" lines. I.e.
+# at least one of them must be fullfilled for access. With earlier versions we
+# need to  use "Satisfy any" to get the same default behaviour.
 <IfVersion < 2.4>
     Satisfy any
 </IfVersion>
