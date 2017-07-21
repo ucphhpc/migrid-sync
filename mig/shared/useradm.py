@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -68,6 +68,10 @@ davs_authdigests = os.path.join(davs_conf_dir, authdigests_filename)
 ftps_authkeys = os.path.join(ftps_conf_dir, authkeys_filename)
 ftps_authpasswords = os.path.join(ftps_conf_dir, authpasswords_filename)
 ftps_authdigests = os.path.join(ftps_conf_dir, authdigests_filename)
+# We lookup https/openid logins in users DB
+https_authkeys = ''
+https_authpasswords = user_db_filename
+https_authdigests = user_db_filename
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),

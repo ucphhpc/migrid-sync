@@ -60,7 +60,6 @@ from SocketServer import ThreadingMixIn
 from urlparse import urlparse
 
 import Cookie
-import base64
 import cgi
 import cgitb
 import os
@@ -82,15 +81,17 @@ from openid.consumer import discover
 
 from shared.base import client_id_dir
 from shared.conf import get_configuration_object
-from shared.griddaemons import hit_rate_limit, update_rate_limit, \
-     expire_rate_limit, penalize_rate_limit
-from shared.tlsserver import hardened_ssl_context
+from shared.defaults import user_db_filename
+from shared.griddaemons import refresh_user_creds, update_login_map, \
+     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+     penalize_rate_limit
 from shared.logger import daemon_logger, reopen_log
+from shared.pwhash import check_password
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
      valid_complex_url, InputException
-from shared.useradm import load_user_db, cert_field_map, \
-     get_openid_user_dn
+from shared.tlsserver import hardened_ssl_context
+from shared.useradm import cert_field_map, get_openid_user_dn
 
 configuration, logger = None, None
 
@@ -150,18 +151,15 @@ def lookup_full_user(username):
     """
     # print "DEBUG: lookup full user for %s" % username
     
-    db_path = os.path.join(configuration.mig_code_base, 'server', 
-                           'MiG-users.db')
-    # print "DEBUG: Loading user DB"
-    id_map = load_user_db(db_path)
-
     login_url = os.path.join(configuration.user_mig_oid_provider, username)
     distinguished_name = get_openid_user_dn(configuration, login_url)
 
     # print "DEBUG: compare against %s" % full_id
-    if distinguished_name in id_map:
-        url_friendly = client_id_dir(distinguished_name)
-        return (url_friendly, id_map[distinguished_name])
+    entries = login_map_lookup(configuration.daemon_conf, username)
+    for entry in entries:
+        if entry and entry.user_dict:
+            url_friendly = client_id_dir(distinguished_name)
+            return (url_friendly, entry.user_dict)
     return (username, {})
 
 def lookup_full_identity(username):
@@ -625,21 +623,26 @@ Invalid '%s' input: %s
             self.wfile.write(webresponse.body)
 
     def checkLogin(self, username, password):
-        """Check username and password in MiG user DB""" 
-        db_path = os.path.join(configuration.mig_code_base, 'server',
-                               'MiG-users.db')
-        # print "Loading user DB"
-        id_map = load_user_db(db_path)
+        """Check username and password stored in MiG user DB""" 
+
+        # Only need to update users here
+        daemon_conf, changed_users = refresh_user_creds(configuration,
+                                                        'openid',
+                                                        username)
+        update_login_map(daemon_conf, changed_users, [], [])
+
         # username may be None here
         login_url = os.path.join(configuration.user_mig_oid_provider,
                                  username or '')
         distinguished_name = get_openid_user_dn(configuration, login_url)
-        if distinguished_name in id_map:
-            user = id_map[distinguished_name]
-            logger.debug("looked up user %s in DB: %s" % (username, user))
-            enc_pw = user.get('password', None)
+        entries = login_map_lookup(daemon_conf, username)
+        for entry in entries:
+            enc_pw = entry.password
+            if enc_pw is None or not password:
+                continue            
             # print "DEBUG: Check password against enc %s" % enc_pw
-            if password and base64.b64encode(password) == user['password']:
+            if check_password(password, enc_pw,
+                              configuration.site_password_salt):
                 logger.info("Correct password for user %s" % username)
                 self.user_dn = distinguished_name
                 self.user_dn_dir = client_id_dir(distinguished_name)
@@ -1354,13 +1357,18 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     configuration.daemon_conf = {
         'address': address,
         'port': port,
+        'root_dir': os.path.abspath(configuration.user_home),
+        'db_path': os.path.abspath(os.path.join(configuration.mig_server_home,
+                                                user_db_filename)),
         'session_store': os.path.abspath(configuration.openid_store),
         'session_ttl': 24*3600,
         'allow_password': 'password' in configuration.user_openid_auth,
+        'allow_digest': 'digest' in configuration.user_openid_auth,
         'allow_publickey': 'publickey' in configuration.user_openid_auth,
         'user_alias': configuration.user_openid_alias,
         'host_rsa_key': host_rsa_key,
         'users': [],
+        'login_map': {},
         'time_stamp': 0,
         'logger': logger,
         'nossl': nossl,

@@ -149,11 +149,37 @@ def check_digest(realm, username, password, digest, salt, digest_cache=None):
            digest_cache.get(creds_hash, None) == digest:
         # print "found cached digest: %s" % digest_cache.get(creds_hash, None)
         return True
-    match = (make_digest(realm, username, password, salt) == digest) 
+    match = (make_digest(realm, username, password, salt) == digest)
     if isinstance(digest_cache, dict) and match:
         digest_cache[creds_hash] = digest
         # print "cached digest: %s" % digest_cache.get(creds_hash, None)
     return match 
+
+def scramble_password(salt, password):
+    """Scramble password for saving"""
+    b64_password = b64encode(password)
+    if not salt:
+        return b64_password
+    xor_int = int(salt, 64) ^ int(b64_password, 64)
+    # Python 2.6 fails to parse implicit positional args (-Jonas)
+    #return '{:X}'.format(xor_int)
+    return '{0:X}'.format(xor_int)
+
+def unscramble_password(salt, password):
+    """Unscramble loaded password"""
+    if salt:
+        xor_int = int(salt, 64) ^ int(password, 64)
+    # Python 2.6 fails to parse implicit positional args (-Jonas)
+    #b64_digest = '{:X}'.format(xor_int)
+    b64_password = '{0:X}'.format(xor_int)
+    return b64decode(b64_password)
+
+def check_password(password, scrambled, salt=None):
+    """Check provided password against an existing scrambled password"""
+    if isinstance(password, unicode):
+        password = password.encode('utf-8')
+    match = (scramble_password(salt, password) == scrambled)
+    return match
 
 def make_csrf_token(configuration, method, operation, client_id, limit=None):
     """Generate a Cross-Site Request Forgery (CSRF) token to help verify the

@@ -44,10 +44,11 @@ from shared.safeinput import valid_path, valid_email_address, valid_sid
 from shared.sharelinks import possible_sharelink_id, extract_mode_id
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
-    get_authkeys, ssh_authpasswords, ssh_authdigests, davs_authpasswords, \
-    davs_authdigests, ftps_authpasswords, ftps_authdigests, \
-    get_authpasswords, extract_field, generate_password_hash, \
-    generate_password_digest
+    https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
+    ftps_authpasswords, https_authpasswords, get_authpasswords, \
+    ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
+    extract_field, generate_password_hash, generate_password_digest, \
+    load_user_dict
 from shared.validstring import valid_user_path
 
 default_max_fails, default_fail_cache = 5, 120
@@ -86,13 +87,14 @@ class Login(object):
     IP address. This is particularly useful in relation to job sshfs mounts.
     """
     def __init__(self, username, home, password=None, digest=None,
-                 public_key=None, chroot=True, ip_addr=None):
+                 public_key=None, chroot=True, ip_addr=None, user_dict=None):
         self.username = username
         self.password = password
         self.digest = digest
         self.public_key = public_key
         self.chroot = chroot
         self.ip_addr = ip_addr
+        self.user_dict = user_dict
         self.last_update = time.time()        
         if type(public_key) in (str, unicode):
             # We already checked that key is valid if we got here
@@ -307,12 +309,13 @@ def get_share_changes(conf, username, sharelink_path):
     return changed_paths
 
 def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
-                    chroot=True):
+                    chroot=True, user_dict=None):
     """Add a single Login object to active user list"""
     logger = conf.get("logger", logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
     user = Login(username=login, home=home, password=password,
-                 digest=digest, public_key=pubkey, chroot=chroot)
+                 digest=digest, public_key=pubkey, chroot=chroot,
+                 user_dict=user_dict)
     logger.debug("Adding user login:\n%s" % user)
     if creds_lock:
         creds_lock.acquire()
@@ -349,21 +352,33 @@ def add_share_object(conf, login, home, password=None, digest=None,
         creds_lock.release()
 
 
-def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
+def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
+                        private_auth_file):
     """Update login objects for auth_file with path to conf users dict. Remove
     any old entries for user and add the current ones.
+    If private_auth_file is false we have to treat auth_file as a MiG user DB
+    rather than the private credential files in user homes.
     """
     logger = conf.get("logger", logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
     proto_authkeys, proto_authpasswords, proto_authdigests = auth_protos
     user_id, user_alias, user_dir, short_id, short_alias = user_vars
     user_logins = (user_alias, short_id, short_alias)
+    user_dict = None
 
     # Create user entry for each valid key and password 
     if creds_lock:
         creds_lock.acquire()
+    if not private_auth_file:
+        user_dict = load_user_dict(user_id, conf['db_path'])
     if auth_file == proto_authkeys:
-        all_keys = get_authkeys(path)
+        if private_auth_file:
+            all_keys = get_authkeys(path)
+        elif user_dict and user_dict.get('keys', ''):
+            # NOTE: already a list
+            all_keys = user_dict['keys']
+        else:
+            all_keys = []
         all_passwords = []
         all_digests = []
         # Clean up all old key entries for this user
@@ -372,7 +387,12 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
                          i.public_key is None]
     elif auth_file == proto_authpasswords:
         all_keys = []
-        all_passwords = get_authpasswords(path)
+        if private_auth_file:
+            all_passwords = get_authpasswords(path)
+        elif user_dict and user_dict.get('password', ''):
+            all_passwords = [user_dict['password']]
+        else:
+            all_passwords = []
         all_digests = []
         # Clean up all old password entries for this user
         conf['users'] = [i for i in conf['users'] \
@@ -381,7 +401,12 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
     else:
         all_keys = []
         all_passwords = []
-        all_digests = get_authpasswords(path)
+        if private_auth_file:
+            all_digests = get_authpasswords(path)
+        elif user_dict and user_dict.get('digest', ''):
+            all_digests =  [user_dict['digest']]
+        else:
+            all_digests = []
         # Clean up all old digest entries for this user
         conf['users'] = [i for i in conf['users'] \
                          if i.username not in user_logins or \
@@ -405,23 +430,30 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos):
         add_user_object(conf, user_alias, user_dir, pubkey=user_key)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            add_user_object(conf, short_id, user_dir, pubkey=user_key)
-            add_user_object(conf, short_alias, user_dir, pubkey=user_key)
+            add_user_object(conf, short_id, user_dir, pubkey=user_key,
+                            user_dict=user_dict)
+            add_user_object(conf, short_alias, user_dir, pubkey=user_key,
+                            user_dict=user_dict)
     for user_password in all_passwords:
         user_password = user_password.strip()
-        add_user_object(conf, user_alias, user_dir, password=user_password)
+        add_user_object(conf, user_alias, user_dir, password=user_password,
+                        user_dict=user_dict)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            add_user_object(conf, short_id, user_dir, password=user_password)
+            add_user_object(conf, short_id, user_dir, password=user_password,
+                            user_dict=user_dict)
             add_user_object(conf, short_alias, user_dir,
-                            password=user_password)
+                            password=user_password, user_dict=user_dict)
     for user_digest in all_digests:
         user_digest = user_digest.strip()
-        add_user_object(conf, user_alias, user_dir, digest=user_digest)
+        add_user_object(conf, user_alias, user_dir, digest=user_digest,
+                        user_dict=user_dict)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            add_user_object(conf, short_id, user_dir, digest=user_digest)
-            add_user_object(conf, short_alias, user_dir, digest=user_digest)
+            add_user_object(conf, short_id, user_dir, digest=user_digest,
+                            user_dict=user_dict)
+            add_user_object(conf, short_alias, user_dir, digest=user_digest,
+                            user_dict=user_dict)
     #logger.debug("after update users list is:\n%s" % \
     #             '\n'.join(["%s" % i for i in conf['users']]))
     
@@ -443,6 +475,7 @@ def refresh_user_creds(configuration, protocol, username):
     changed_users = []
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
+    private_auth_file = True
     if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
         proto_authkeys = ssh_authkeys
         proto_authpasswords = ssh_authpasswords
@@ -455,6 +488,11 @@ def refresh_user_creds(configuration, protocol, username):
         proto_authkeys = ftps_authkeys
         proto_authpasswords = ftps_authpasswords
         proto_authdigests = ftps_authdigests
+    elif protocol in ('https', 'openid'):
+        private_auth_file = False
+        proto_authkeys = https_authkeys
+        proto_authpasswords = https_authpasswords
+        proto_authdigests = https_authdigests
     else:
         logger.error("Invalid protocol: %s" % protocol)
         return (conf, changed_users)
@@ -463,14 +501,17 @@ def refresh_user_creds(configuration, protocol, username):
 
     # We support direct and symlinked usernames for now
     # NOTE: entries are gracefully removed if user no longer exists
-    authkeys_path = os.path.realpath(os.path.join(conf['root_dir'], username,
-                                                  proto_authkeys))
-    authpasswords_path = os.path.realpath(os.path.join(conf['root_dir'],
-                                                       username,
-                                                       proto_authpasswords))
-    authdigests_path = os.path.realpath(os.path.join(conf['root_dir'],
-                                                     username,
-                                                     proto_authdigests))
+    if private_auth_file:
+        authkeys_path = os.path.realpath(os.path.join(conf['root_dir'],
+                                                      username,
+                                                      proto_authkeys))
+        authpasswords_path = os.path.realpath(os.path.join(
+            conf['root_dir'], username, proto_authpasswords))
+        authdigests_path = os.path.realpath(os.path.join(conf['root_dir'],
+                                                         username,
+                                                         proto_authdigests))
+    else:
+        authkeys_path = authpasswords_path = authdigests_path = conf['db_path']
 
     logger.debug("Updating user creds for %s" % username)
 
@@ -497,8 +538,15 @@ def refresh_user_creds(configuration, protocol, username):
             logger.warning("Skipping non-existant home %s" % path)
             continue
         logger.debug("Checking %s" % path)
-        user_home = path.replace(os.sep + auth_file, '')
-        user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
+        if private_auth_file:
+            user_home = path.replace(os.sep + auth_file, '')
+            user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
+        else:
+            # Expand actual user home from alias
+            user_home = os.path.realpath(os.path.join(configuration.user_home,
+                                                      username))
+            user_dir = os.path.basename(user_home)
+            
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
         if conf['user_alias']:
@@ -507,7 +555,8 @@ def refresh_user_creds(configuration, protocol, username):
             logger.debug("find short_alias for %s" % short_alias)
             short_alias = client_alias(short_id)
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
-        update_user_objects(conf, auth_file, path, user_vars, auth_protos)
+        update_user_objects(conf, auth_file, path, user_vars, auth_protos,
+                            private_auth_file)
     if changed_paths:
         logger.info("Refreshed user %s from configuration: %s" % \
                     (username, changed_paths))
@@ -536,6 +585,7 @@ def refresh_users(configuration, protocol):
     if creds_lock:
         creds_lock.release()
     cur_usernames = []
+    private_auth_file = True
     if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
         proto_authkeys = ssh_authkeys
         proto_authpasswords = ssh_authpasswords
@@ -548,6 +598,11 @@ def refresh_users(configuration, protocol):
         proto_authkeys = ftps_authkeys
         proto_authpasswords = ftps_authpasswords
         proto_authdigests = ftps_authdigests
+    elif protocol in ('https', 'openid'):
+        private_auth_file = False
+        proto_authkeys = https_authkeys
+        proto_authpasswords = https_authpasswords
+        proto_authdigests = https_authdigests
     else:
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_users)
@@ -560,6 +615,7 @@ def refresh_users(configuration, protocol):
     authdigests_pattern = os.path.join(conf['root_dir'], '*',
                                        proto_authdigests)
     short_id, short_alias = None, None
+    # TODO: support private_auth_file == False here? 
     matches = []
     if conf['allow_publickey']:
         matches += [(proto_authkeys, i) for i in glob.glob(authkeys_pattern)]
@@ -590,7 +646,8 @@ def refresh_users(configuration, protocol):
         if last_update >= os.path.getmtime(path):
             continue
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
-        update_user_objects(conf, auth_file, path, user_vars, auth_protos)
+        update_user_objects(conf, auth_file, path, user_vars, auth_protos,
+                            private_auth_file)
         changed_users += [user_id, user_alias]
         if short_id is not None:
             changed_users += [short_id, short_alias]

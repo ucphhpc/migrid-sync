@@ -1309,6 +1309,18 @@ class Configuration:
                 self.site_digest_salt = salt
             except:
                 raise ValueError("Invalid digest_salt value: %s" % salt)
+        # TODO: use pwhash scramble/unscramble functions with salt everywhere
+        # Fall back to a static 'empty' salt string since that is the legacy
+        # behaviour and we need it to remain constant
+        self.site_password_salt = ''
+        if config.has_option('SITE', 'password_salt'):
+            # Salt must be upper case hex
+            salt = config.get('SITE', 'password_salt').upper()
+            try:
+                _ = base64.b16decode(salt)                
+                self.site_password_salt = salt
+            except:
+                raise ValueError("Invalid password_salt value: %s" % salt)
 
         if config.has_option('SITE', 'swrepo_url'):
             self.site_swrepo_url = config.get('SITE', 'swrepo_url')
