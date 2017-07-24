@@ -64,7 +64,7 @@ echo ""
 
 echo "== User Distribution =="
 echo "=== By Organisation ==="
-$SERVERDIR/searchusers.py -f distinguished_name | grep -v 'Matching users' | python countorg.py
+$SERVERDIR/searchusers.py -f distinguished_name | grep -v 'Matching users' | python $SERVERDIR/countorg.py
 
 echo "=== By Email Domain ==="
-$SERVERDIR/searchusers.py -f email | grep -v 'Matching users' | python countemail.py
+$SERVERDIR/searchusers.py -f email | grep -v 'Matching users' | python $SERVERDIR/countemail.py
