@@ -398,7 +398,7 @@ Seafile integration and OpenID login:
                    --trac_admin_path='' --trac_ini_path='' \
                    --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
-                   --mig_oid_provider=https://io.erda.dk:8001/openid/ \
+                   --mig_oid_provider=https://ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=True --enable_wsgi=True --enable_sftp=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
