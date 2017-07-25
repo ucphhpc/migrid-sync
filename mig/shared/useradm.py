@@ -27,7 +27,6 @@
 
 """User administration functions"""
 
-import base64
 import datetime
 import fnmatch
 import os
@@ -49,7 +48,8 @@ from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
      update_runtimeenv_owner
-from shared.pwhash import make_hash, check_hash, make_digest, check_digest
+from shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
+     make_scramble, check_scramble, unscramble_password, unscramble_digest
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
 from shared.settings import update_settings, update_profile, update_widgets
@@ -158,7 +158,7 @@ def load_user_db(db_path):
     return load(db_path)
 
 
-def load_user_dict(user_id, db_path, verbose=False):
+def load_user_dict(logger, user_id, db_path, verbose=False):
     """Load user dictionary from user DB"""
 
     try:
@@ -166,7 +166,10 @@ def load_user_dict(user_id, db_path, verbose=False):
         if verbose:
             print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
-        print 'Failed to load user DB: %s' % err
+        err_msg = 'Failed to load user DB: %s' % err
+        if verbose:
+            print err_msg
+        logger.error(err_msg)
         return None
     return user_db.get(user_id, None)
 
@@ -1314,13 +1317,17 @@ def search_users(search_filter, conf_path, db_path, verbose=False):
         configuration = Configuration(conf_path)
     else:
         configuration = get_configuration_object()
+    _logger = configuration.logger
 
     try:
         user_db = load_user_db(db_path)
         if verbose:
             print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
-        print 'Failed to load user DB: %s' % err
+        err_msg = 'Failed to load user DB: %s' % err
+        if verbose:
+            print err_msg
+        _logger.error(err_msg)
         return []
 
     hits = []
@@ -1348,38 +1355,43 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
                            verbose=False):
     """Find notification addresses for user_id and targets"""
 
-    errors = []
+    password, errors = '', []
     if conf_path:
         configuration = Configuration(conf_path)
     else:
         configuration = get_configuration_object()
+    _logger = configuration.logger
     try:
         user_db = load_user_db(db_path)
         if verbose:
             print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
-        print 'Failed to load user DB: %s' % err
+        err_msg = 'Failed to load user DB: %s' % err
+        if verbose:
+            print err_msg
+        _logger.error(err_msg)
         return []
 
     if not user_db.has_key(user_id):
         errors.append('No such user: %s' % user_id)
     else:
         password = user_db[user_id].get('password', '')
-        password = base64.b64decode(password)
-        addresses = dict(zip(configuration.notify_protocols,
-                             [[] for _ in configuration.notify_protocols]))
-        addresses['email'] = []
-        for (proto, address_list) in targets.items():
-            if not proto in configuration.notify_protocols + ['email']:
-                errors.append('unsupported protocol: %s' % proto)
-                continue
-            for address in address_list:
-                if proto == 'email' and address == keyword_auto:
-                    address = user_db[user_id].get('email', '')
-                    if not address:
-                        errors.append('missing email address in db!')
-                        continue
-                addresses[proto].append(address)
+        password = unscramble_password(configuration.site_password_salt,
+                                       password)
+    addresses = dict(zip(configuration.notify_protocols,
+                         [[] for _ in configuration.notify_protocols]))
+    addresses['email'] = []
+    for (proto, address_list) in targets.items():
+        if not proto in configuration.notify_protocols + ['email']:
+            errors.append('unsupported protocol: %s' % proto)
+            continue
+        for address in address_list:
+            if proto == 'email' and address == keyword_auto:
+                address = user_db[user_id].get('email', '')
+                if not address:
+                    errors.append('missing email address in db!')
+                    continue
+            addresses[proto].append(address)
     return (configuration, password, addresses, errors)
 
 
@@ -1466,19 +1478,21 @@ def get_authpasswords(authpasswords_path):
         authorized_passwords = []
     return authorized_passwords
 
-def generate_password_hash(password):
+def generate_password_hash(configuration, password):
     """Return a hash data string for saving provided password. We use PBKDF2 to
     help with the hash comparison later and store the data in a form close to
     the one recommended there:
     (algorithm$hashfunction$salt$costfactor$hash).
     """
+    _logger = configuration.logger
     try:
         return make_hash(password)
     except Exception, exc:
-        print "ERROR: in generate_password_hash: %s" % exc
+        _logger.warning("in generate_password_hash: %s" % exc)
         return password
 
-def check_password_hash(password, stored_hash, hash_cache=None):
+def check_password_hash(configuration, service, username, password,
+                        stored_hash, hash_cache=None):
     """Return a boolean indicating if offered password matches stored_hash
     information. We use PBKDF2 to help with the hash comparison and store the
     data in a form close to the one recommended there:
@@ -1490,31 +1504,65 @@ def check_password_hash(password, stored_hash, hash_cache=None):
     The optional hash_cache dictionary argument can be used to cache lookups
     and speed up repeated use.
     """
+    _logger = configuration.logger
     try:
-        return check_hash(password, stored_hash, hash_cache)
+        return check_hash(configuration, service, username, password,
+                          stored_hash, hash_cache)
     except Exception, exc:
-        print "ERROR: in check_password_hash: %s" % exc
+        _logger.warning("in check_password_hash: %s" % exc)
         return False
 
-def generate_password_digest(realm, username, password, salt):
+def generate_password_scramble(configuration, password, salt):
+    """Return a scrambled data string for saving provided password. We use a
+    simple salted encoding to avoid storing passwords in the clear when we
+    can't avoid saving the actual password instead of just a hash.
+    """
+    _logger = configuration.logger
+    try:
+        return make_scramble(password, salt)
+    except Exception, exc:
+        _logger.warning("in generate_password_scramble: %s" % exc)
+        return password
+
+def check_password_scramble(configuration, service, username, password,
+                            stored_scramble, salt, scramble_cache=None):
+    """Return a boolean indicating if offered password matches stored_scramble
+    information. We use a simple salted encoding to avoid storing passwords in
+    the clear when we can't avoid saving the actual password instead of just a
+    hash.
+    
+    The optional scramble_cache dictionary argument can be used to cache
+    lookups and speed up repeated use.
+    """
+    _logger = configuration.logger
+    try:
+        return check_scramble(configuration, service, username, password,
+                              stored_scramble, salt, scramble_cache)
+    except Exception, exc:
+        _logger.warning("in check_password_scramble: %s" % exc)
+        return False
+
+def generate_password_digest(configuration, realm, username, password, salt):
     """Return a digest data string for saving provided password"""
+    _logger = configuration.logger
     try:
         return make_digest(realm, username, password, salt)
     except Exception, exc:
-        print "ERROR: in generate_password_digest: %s" % exc
+        _logger.warning("in generate_password_digest: %s" % exc)
         return password
 
-def check_password_digest(realm, username, password, stored_digest, salt,
-                          digest_cache=None):
+def check_password_digest(configuration, service, realm, username, password,
+                          stored_digest, salt, digest_cache=None):
     """Return a boolean indicating if offered password matches stored_digest
     information.
 
     The optional digest_cache dictionary argument can be used to cache lookups
     and speed up repeated use.
     """
+    _logger = configuration.logger
     try:
-        return check_digest(realm, username, password, stored_digest, salt,
-                            digest_cache)
+        return check_digest(configuration, service, realm, username, password,
+                            stored_digest, salt, digest_cache)
     except Exception, exc:
-        print "ERROR: in check_password_digest: %s" % exc
+        _logger.warning("in check_password_digest: %s" % exc)
         return False

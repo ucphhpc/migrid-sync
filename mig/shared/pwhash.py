@@ -80,19 +80,31 @@ def make_hash(password):
         b64encode(pbkdf2_bin(password, salt, COST_FACTOR, KEY_LENGTH,
                              getattr(hashlib, HASH_FUNCTION))))
 
-def check_hash(password, hash_, hash_cache=None):
-    """Check a password against an existing hash. The optional hash_cache
+# TODO: switch to strict_policy by default
+def check_hash(configuration, service, username, password, hashed,
+               hash_cache=None, strict_policy=False):
+    """Check a password against an existing hash. First make sure the provided
+    password satisfies the local password policy. The optional hash_cache
     dictionary argument can be used to cache recent lookups to save time in
     e.g. webdav where each operation triggers hash check.
     """
+    _logger = configuration.logger
     if isinstance(password, unicode):
         password = password.encode('utf-8')
     pw_hash = hashlib.md5(password).hexdigest()
     if isinstance(hash_cache, dict) and \
-           hash_cache.get(pw_hash, None) == hash_:
+           hash_cache.get(pw_hash, None) == hashed:
         #print "found cached hash: %s" % hash_cache.get(pw_hash, None)
         return True
-    algorithm, hash_function, cost_factor, salt, hash_a = hash_.split('$')
+    # We check policy AFTER cache lookup since it is already verified for those
+    try:
+        assure_password_strength(configuration, password)
+    except Exception, exc:
+        _logger.warning("%s password for %s does not fit local policy: %s" \
+                        % (service, username, exc))
+        if strict_policy:
+            return False
+    algorithm, hash_function, cost_factor, salt, hash_a = hashed.split('$')
     assert algorithm == 'PBKDF2'
     hash_a = b64decode(hash_a)
     hash_b = pbkdf2_bin(password, salt, int(cost_factor), len(hash_a),
@@ -105,7 +117,7 @@ def check_hash(password, hash_, hash_cache=None):
         diff |= ord(char_a) ^ ord(char_b)
     match = (diff == 0)
     if isinstance(hash_cache, dict) and match:
-        hash_cache[pw_hash] = hash_
+        hash_cache[pw_hash] = hashed
         #print "cached hash: %s" % hash_cache.get(pw_hash, None)
     return match
 
@@ -132,11 +144,15 @@ def make_digest(realm, username, password, salt):
     digest = 'DIGEST$custom$CONFSALT$%s' % scramble_digest(salt, merged_creds)
     return digest
 
-def check_digest(realm, username, password, digest, salt, digest_cache=None):
-    """Check credentials against an existing digest. The optional digest_cache
-    dictionary argument can be used to cache recent lookups to save time in
-    e.g. webdav where each operation triggers digest check.
+# TODO: switch to strict_policy by default
+def check_digest(configuration, service, realm, username, password, digest,
+                 salt, digest_cache=None, strict_policy=False):
+    """Check credentials against an existing digest. First make sure the
+    provided password satisfies the local password policy. The optional
+    digest_cache dictionary argument can be used to cache recent lookups to
+    save time in e.g. webdav where each operation triggers digest check.
     """
+    _logger = configuration.logger
     if isinstance(realm, unicode):
         realm = realm.encode('utf-8')
     if isinstance(username, unicode):
@@ -149,6 +165,14 @@ def check_digest(realm, username, password, digest, salt, digest_cache=None):
            digest_cache.get(creds_hash, None) == digest:
         # print "found cached digest: %s" % digest_cache.get(creds_hash, None)
         return True
+    # We check policy AFTER cache lookup since it is already verified for those
+    try:
+        assure_password_strength(configuration, password)
+    except Exception, exc:
+        _logger.warning("%s password for %s does not fit local policy: %s" \
+                        % (service, username, exc))
+        if strict_policy:
+            return False
     match = (make_digest(realm, username, password, salt) == digest)
     if isinstance(digest_cache, dict) and match:
         digest_cache[creds_hash] = digest
@@ -169,16 +193,46 @@ def unscramble_password(salt, password):
     """Unscramble loaded password"""
     if salt:
         xor_int = int(salt, 64) ^ int(password, 64)
-    # Python 2.6 fails to parse implicit positional args (-Jonas)
-    #b64_digest = '{:X}'.format(xor_int)
-    b64_password = '{0:X}'.format(xor_int)
+        # Python 2.6 fails to parse implicit positional args (-Jonas)
+        #b64_digest = '{:X}'.format(xor_int)
+        b64_password = '{0:X}'.format(xor_int)
+    else:
+        b64_password = password
     return b64decode(b64_password)
 
-def check_password(password, scrambled, salt=None):
-    """Check provided password against an existing scrambled password"""
+def make_scramble(password, salt):
+    """Generate a scrambled password"""
+    return scramble_password(salt, password)
+
+def check_scramble(configuration, service, username, password, scrambled,
+                   salt=None, scramble_cache=None, strict_policy=True):
+    """Make sure provided password satisfies local password policy and check
+    match against existing scrambled password. The optional scramble_cache
+    dictionary argument can be used to cache recent lookups to save time in
+    e.g. openid where each operation triggers check.
+    
+    NOTE: we force strict password policy here since we expect weak legacy
+    passwords in the user DB and they would easily give full account access.
+    """
+    _logger = configuration.logger
     if isinstance(password, unicode):
         password = password.encode('utf-8')
-    match = (scramble_password(salt, password) == scrambled)
+    if isinstance(scramble_cache, dict) and \
+           scramble_cache.get(password, None) == scrambled:
+        # print "found cached scramble: %s" % scramble_cache.get(password, None)
+        return True
+    # We check policy AFTER cache lookup since it is already verified for those
+    try:
+        assure_password_strength(configuration, password)
+    except Exception, exc:
+        _logger.warning('%s password for %s does not satisfy local policy: %s' \
+                        % (service, username, exc))
+        if strict_policy:
+            return False
+    match = (make_scramble(password, salt) == scrambled)
+    if isinstance(scramble_cache, dict) and match:
+        scramble_cache[password] = scrambled
+        # print "cached digest: %s" % scramble_cache.get(password, None)
     return match
 
 def make_csrf_token(configuration, method, operation, client_id, limit=None):

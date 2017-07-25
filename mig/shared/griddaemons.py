@@ -370,7 +370,7 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
     if creds_lock:
         creds_lock.acquire()
     if not private_auth_file:
-        user_dict = load_user_dict(user_id, conf['db_path'])
+        user_dict = load_user_dict(logger, user_id, conf['db_path'])
     if auth_file == proto_authkeys:
         if private_auth_file:
             all_keys = get_authkeys(path)
@@ -898,9 +898,9 @@ def refresh_share_creds(configuration, protocol, username,
         #       Otherwise it would choke on shares with trailing slash in path.
         share_root = link_dest.replace(base_dir, '').strip(os.sep)
         # NOTE: just use share_id as password/digest for now
-        share_pw_hash = generate_password_hash(share_id)
+        share_pw_hash = generate_password_hash(configuration, share_id)
         share_pw_digest = generate_password_digest(
-            dav_domain, share_id, share_id,
+            configuration, dav_domain, share_id, share_id,
             configuration.site_digest_salt)
         # TODO: load pickle from user_settings of owner (from link_dest)?
         share_dict = {'share_id': share_id, 'share_root': share_root,
@@ -982,9 +982,9 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
             # NOTE: share link points inside user home of owner so extract here
             share_root = link_dest.replace(base_dir, '').lstrip(os.sep)
             # NOTE: just use share_id as password/digest for now
-            share_pw_hash = generate_password_hash(share_id)
+            share_pw_hash = generate_password_hash(configuration, share_id)
             share_pw_digest = generate_password_digest(
-                dav_domain, share_id, share_id,
+                configuration, dav_domain, share_id, share_id,
                 configuration.site_digest_salt)
             # TODO: load pickle from user_settings of owner (from link_dest)?
             share_dict = {'share_id': share_id, 'share_root': share_root,

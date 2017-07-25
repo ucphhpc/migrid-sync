@@ -178,8 +178,8 @@ src_dst_sep = " "
 # Seperator used in file expansion - must be easily parsable by user scripts
 file_dest_sep = "    ::    "
 
-# For webdavs rfc compliance testing with litmus
-litmus_id = 'litmus'
+# For webdavs rfc compliance testing with litmus - use expected email format
+litmus_id = 'litmus@nowhere.org'
 
 # VGrid and resource request file name helpers
 request_prefix = 'access-'

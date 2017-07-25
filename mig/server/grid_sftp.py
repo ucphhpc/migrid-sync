@@ -675,7 +675,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
                     allowed = entry.password
                     self.logger.debug("Password check for %s" % username)
-                    if check_password_hash(offered, allowed, hash_cache):
+                    if check_password_hash(configuration, 'sftp', username,
+                                           offered, allowed, hash_cache):
                         self.logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "sftp-pw",

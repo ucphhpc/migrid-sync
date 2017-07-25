@@ -86,12 +86,12 @@ from shared.griddaemons import refresh_user_creds, update_login_map, \
      login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
      penalize_rate_limit
 from shared.logger import daemon_logger, reopen_log
-from shared.pwhash import check_password
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
      valid_complex_url, InputException
 from shared.tlsserver import hardened_ssl_context
-from shared.useradm import cert_field_map, get_openid_user_dn
+from shared.useradm import cert_field_map, get_openid_user_dn, \
+     check_password_scramble
 
 configuration, logger = None, None
 
@@ -183,6 +183,13 @@ class OpenIDHTTPServer(HTTPServer):
     Extended to fork on requests to avoid one slow or broken login stalling
     the rest.
     """
+
+    min_expire_delay = 120
+    last_expire = time.time()
+    # NOTE: We do not enable scramble_cache here since it is hardly any gain
+    #       and it potentially introduces a race
+    scramble_cache = None
+
     def __init__(self, *args, **kwargs):
         HTTPServer.__init__(self, *args, **kwargs)
 
@@ -224,6 +231,15 @@ class OpenIDHTTPServer(HTTPServer):
                     cert_field_aliases[name].append(target) 
         # print "DEBUG: cert field aliases: %s" % cert_field_aliases
 
+    def expire_volatile(self):
+        """Expire old entries in the volatile helper dictionaries"""
+        if self.last_expire + self.min_expire_delay < time.time():
+            self.last_expire = time.time()
+            expire_rate_limit(configuration, "openid")
+            if self.scramble_cache:
+                self.scramble_cache.clear()
+            logger.debug("Expired old rate limits and scramble cache")
+            
     def setOpenIDServer(self, oidserver):
         """Override openid attribute"""
         self.openid = oidserver
@@ -274,7 +290,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         'openid.sreg.optional': valid_ascii,
         'openid.sreg.policy_url': valid_base_url,
         }
-
+    
     def __init__(self, *args, **kwargs):
         if configuration.daemon_conf['session_ttl'] > 0:
             self.session_ttl = configuration.daemon_conf['session_ttl']
@@ -291,7 +307,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.user_dn_dir = None
         self.password = None
         self.login_expire = None
-        
+
     def do_GET(self):
         """Handle all HTTP GET requests"""
         # Make sure key is always available for exception handler
@@ -637,12 +653,15 @@ Invalid '%s' input: %s
         distinguished_name = get_openid_user_dn(configuration, login_url)
         entries = login_map_lookup(daemon_conf, username)
         for entry in entries:
-            enc_pw = entry.password
-            if enc_pw is None or not password:
+            allowed = entry.password
+            if allowed is None or not password:
                 continue            
-            # print "DEBUG: Check password against enc %s" % enc_pw
-            if check_password(password, enc_pw,
-                              configuration.site_password_salt):
+            # print "DEBUG: Check password against allowed %s" % allowed
+            # NOTE: We refuse weak legacy passwords here
+            if check_password_scramble(configuration, 'openid', username,
+                                       password, allowed,
+                                       configuration.site_password_salt,
+                                       self.server.scramble_cache):
                 logger.info("Correct password for user %s" % username)
                 self.user_dn = distinguished_name
                 self.user_dn_dir = client_id_dir(distinguished_name)
@@ -1269,8 +1288,7 @@ def start_service(configuration):
     while True:
         httpserver.handle_request()
         if last_expire + min_expire_delay < time.time():
-            last_expire = time.time()
-            expire_rate_limit(configuration, "openid")
+            httpserver.expire_volatile()
             
 
 if __name__ == '__main__':

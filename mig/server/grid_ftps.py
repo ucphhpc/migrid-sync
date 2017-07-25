@@ -203,7 +203,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
                 if entry['pwd'] is not None:
                     allowed = entry['pwd']
                     logger.debug("Password check for %s" % username)
-                    if check_password_hash(offered, allowed, hash_cache):
+                    if check_password_hash(configuration, 'ftps', username,
+                                           offered, allowed, hash_cache):
                         logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "ftps",

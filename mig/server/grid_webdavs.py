@@ -69,9 +69,9 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
      penalize_rate_limit, add_user_object
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
-from shared.pwhash import unscramble_digest
+from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
-     generate_password_digest
+     check_password_digest, generate_password_digest
 from shared.vgrid import vgrid_restrict_write_support
 
 
@@ -272,7 +272,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             allowed = user_obj.password
             if allowed is not None:
                 #logger.debug("Password check for %s" % username)
-                if check_password_hash(offered, allowed, self.hash_cache):
+                if check_password_hash(configuration, 'webdavs', username,
+                                       offered, allowed, self.hash_cache):
                     return True
         return False
 
@@ -327,6 +328,11 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         Used for digest authentication and always called after isRealmUser
         so update creds is already applied. We just rate limit and check here.
         """
+
+        # TODO: consider digest caching here!
+        #       we should really use something like check_password_digest,
+        #       but we need to return password to caller here.
+        
         #print "DEBUG: env in getRealmUserPassword: %s" % environ
         addr = _get_addr(environ)
         offered = _get_digest(environ)
@@ -347,6 +353,11 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             # this one only means that user validation makes it to digest check
             logger.info("extracted digest for valid user %s from %s" % \
                         (username, addr))
+            try:
+                assure_password_strength(configuration, password)
+            except Exception, exc:
+                logger.warning('%s password for %s does not satisfy local policy: %s' \
+                        % ('webdavs', username, exc))
             success = True
         except Exception, exc:
             logger.error("failed to extract digest password: %s" % exc)
@@ -581,9 +592,8 @@ def update_users(configuration, user_map, username):
     daemon_conf, changed_shares = refresh_share_creds(configuration, 'davs',
                                                       username)
     # Add dummy user for litmus test if enabled in conf
-    litmus_pw = 'test'
-    if username == litmus_id and \
-           daemon_conf.get('enable_litmus', False) and \
+    litmus_pw = daemon_conf.get('litmus_password', None)
+    if username == litmus_id and litmus_pw and \
            not login_map_lookup(daemon_conf, litmus_id):
         litmus_home = os.path.join(configuration.user_home, litmus_id)
         try:
@@ -596,12 +606,12 @@ def update_users(configuration, user_map, username):
             logger.info("enabling litmus %s test accounts" % auth)
             changed_users.append(litmus_id)
             if auth == 'basic':
-                pw_hash = generate_password_hash(litmus_pw)
+                pw_hash = generate_password_hash(configuration, litmus_pw)
                 add_user_object(daemon_conf, litmus_id, litmus_home,
                                 password=pw_hash)
             else:
                 digest = generate_password_digest(
-                    dav_domain, litmus_id, litmus_pw,
+                    configuration, dav_domain, litmus_id, litmus_pw,
                     configuration.site_digest_salt)
                 add_user_object(daemon_conf, litmus_id, litmus_home,
                                 digest=digest)
@@ -695,7 +705,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGHUP, hangup_handler)
 
     # Allow configuration overrides on command line
-    litmus = False
+    litmus_password = None
     readonly = False
     nossl = False
     if sys.argv[2:]:
@@ -703,7 +713,7 @@ if __name__ == "__main__":
     if sys.argv[3:]:
         configuration.user_davs_port = int(sys.argv[3])
     if sys.argv[4:]:
-        litmus = (sys.argv[4].lower() in ('1', 'true', 'yes', 'on'))
+        litmus_password = sys.argv[4]
     if sys.argv[5:]:
         readonly = (sys.argv[5].lower() in ('1', 'true', 'yes', 'on'))
     if sys.argv[6:]:
@@ -762,8 +772,8 @@ unless it is available in mig/server/MiGserver.conf
         # ./litmus -k $HTTPS_URL litmus test
         # or
         # ./configure --with-ssl
-        # make URL=$HTTPS_URL CREDS="litmus test" check
-        'enable_litmus': litmus,
+        # make URL=$HTTPS_URL CREDS="%(litmus_id)s %(litmus_password)s" check
+        'litmus_password': litmus_password,
         'time_stamp': 0,
         'logger': logger,
         }

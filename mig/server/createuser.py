@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createuser - Create or renew a MiG user with all the necessary directories
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ import getopt
 import base64
 from getpass import getpass
 
+from shared.conf import get_configuration_object
 from shared.defaults import cert_valid_days
 from shared.serial import load
 from shared.useradm import init_user_adm, create_user, \
@@ -129,6 +130,9 @@ if '__main__' == __name__:
             if verbose:
                 print 'using configuration from MIG_CONF (or default)'
 
+    configuration = get_configuration_object()
+    logger = configuration.logger
+
     if user_file and args:
         print 'Error: Only one kind of user specification allowed at a time'
         usage()
@@ -156,7 +160,7 @@ if '__main__' == __name__:
             usage()
             sys.exit(1)
     elif default_renew and user_id:
-        saved = load_user_dict(user_id, db_path, verbose)
+        saved = load_user_dict(logger, user_id, db_path, verbose)
         if not saved:
             print 'Error: no such user in user db: %s' % user_id
             usage()

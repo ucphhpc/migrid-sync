@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_davs - secure DAV server providing access to MiG user homes
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -246,7 +246,8 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                 if entry.password is not None:
                     allowed = entry.password
                     logger.debug("Password check for %s" % username)
-                    if check_password_hash(offered, allowed):
+                    if check_password_hash(configuration, 'davs', username,
+                                           offered, allowed):
                         self.authenticated_user = username
                         update_rate_limit(configuration, "davs",
                                           self.client_address[0], username,
