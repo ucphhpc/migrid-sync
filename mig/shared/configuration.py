@@ -161,6 +161,7 @@ def fix_missing(config_file, verbose=True):
         'user_mig_oid_title': 'MiG',
         'user_ext_oid_title': 'External',
         'user_mig_oid_provider': '',
+        'user_mig_oid_provider_alias': '',
         'user_ext_oid_provider': '',
         'user_openid_providers': [],
         'user_mig_cert_title': 'MiG',
@@ -356,6 +357,7 @@ class Configuration:
     user_mig_oid_title = 'MiG'
     user_ext_oid_title = 'External'
     user_mig_oid_provider = ''
+    user_mig_oid_provider_alias = ''
     user_ext_oid_provider = ''
     user_openid_providers = []
     user_mig_cert_title = 'MiG'
@@ -853,6 +855,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_mig_oid_provider'):
             self.user_mig_oid_provider = config.get('GLOBAL', 
                                                     'user_mig_oid_provider')
+        if config.has_option('GLOBAL', 'user_mig_oid_provider_alias'):
+            self.user_mig_oid_provider_alias = config.get(
+                'GLOBAL', 'user_mig_oid_provider_alias')
         if config.has_option('GLOBAL', 'user_ext_oid_title'):
             self.user_ext_oid_title = config.get('GLOBAL', 
                                                  'user_ext_oid_title')
@@ -864,6 +869,7 @@ class Configuration:
                                                    'user_openid_providers').split()
         else:
             providers = [i for i in [self.user_mig_oid_provider,
+                                     self.user_mig_oid_provider_alias,
                                      self.user_ext_oid_provider] if i]
             self.user_openid_providers = providers
         if config.has_option('GLOBAL', 'user_mig_cert_title'):
