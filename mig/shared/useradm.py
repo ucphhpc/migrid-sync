@@ -1419,7 +1419,7 @@ def user_password_check(user_id, conf_path, db_path, verbose=False):
     if not user_db.has_key(user_id):
         errors.append('No such user: %s' % user_id)
     else:
-        password = user_db[user_id].get('password', '')
+        password = user_db[user_id].get('password', '') or ''
         password = unscramble_password(configuration.site_password_salt,
                                        password)
         try:
