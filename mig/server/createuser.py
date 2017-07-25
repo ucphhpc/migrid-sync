@@ -31,11 +31,11 @@ import sys
 import time
 import os
 import getopt
-import base64
 from getpass import getpass
 
 from shared.conf import get_configuration_object
 from shared.defaults import cert_valid_days
+from shared.pwhash import unscramble_password, scramble_password
 from shared.serial import load
 from shared.useradm import init_user_adm, create_user, \
     fill_distinguished_name, fill_user, load_user_dict
@@ -186,10 +186,11 @@ if '__main__' == __name__:
 
     # Encode password if not already encoded
 
+    salt = configuration.site_password_salt
     try:
-        base64.b64decode(user_dict['password'])
+        unscramble_password(salt, user_dict['password'])
     except TypeError:
-        user_dict['password'] = base64.b64encode(user_dict['password'])
+        user_dict['password'] = scramble_password(salt, user_dict['password'])
 
     # Default to one year of certificate validity (only used by CA scripts)
 

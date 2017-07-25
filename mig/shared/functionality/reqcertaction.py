@@ -32,7 +32,6 @@
 import os
 import time
 import tempfile
-import base64
 import re
 
 import shared.returnvalues as returnvalues
@@ -43,6 +42,7 @@ from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
+from shared.pwhash import scramble_password
 from shared.serial import dumps
 from shared.useradm import fill_distinguished_name
 
@@ -192,7 +192,8 @@ resources anyway.
         'country': country,
         'email': email,
         'comment': comment,
-        'password': base64.b64encode(password),
+        'password': scramble_password(configuration.site_password_salt,
+                                      password),
         'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
         'openid_names': [],
         'auth': ['migcert'],
