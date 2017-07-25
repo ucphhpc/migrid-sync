@@ -61,9 +61,13 @@ ERDA
         $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
             "https://sites.google.com/site/minimumintrusiongrid/" +
             "mig-in-danish/saadan-kommer-du-igang");
-        $("a.extsignup-link").attr("target", "_blank").attr("href", 
+        $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
+            "https://sid.erda.dk/cgi-sid/signup.py?show=migoid");
+        $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
+            "https://ext.erda.dk");
+        $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
             "https://sid.erda.dk/cgi-sid/signup.py?show=extcert");
-        $("a.extlogin-link").attr("target", "_blank").attr("href", 
+        $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
             "https://cert.erda.dk");
         /* Init FAQ as foldable but closed and with individual heights */
         $(".faq-accordion").accordion({
@@ -197,8 +201,8 @@ RAID technology. We do <em>not</em> currently guarantee automatic and
 complete backup of ordinary data in your ERDA home folder or in the
 Workgroup shares. That would simply not make sense for the biggest data
 sets there. So only files explicitly duplicated with the Archive feature
-get backed up to tape. Eventually this will include off-site tape backup
-for extra safety.
+get backed up to tape. This includes eventual remote tape backup for
+extra safety.
 We recommend our Seafile file synchronization service for any small to
 medium sized data sets, for which you want automatic file
 versioning. With that solution you generally have the ability to recover
@@ -211,7 +215,8 @@ use one of three overall methods.<br/>
 For permanent read-only publishing just create a new archive from your
 Archives page and make sure to mark it for public availability.<br/>
 For more dynamic data you can either share in a read-write manner using
-the Workgroup shares or do read-only sharing with the
+the Workgroup shares or make them read-only in the Workgroup
+administration. Similarly you can do read-only sharing and publishing through the
 Workgroup web pages. Both are built into the Workgroups and the web pages
 come in a public and in a group-wide flavor, where the publishing is done
 by Workgroup owners storing data in the public_base and private_base
@@ -226,7 +231,8 @@ synchronization service. Just use the <em>share by email</em> feature to
 similarly create upload or download shares with optional password and
 time limit. Both share link methods include the option to send out an
 invitation with the link directly on email, but they can of course also be
-manually distributed by other means.
+manually distributed by other means. Share links can also be accessed
+with SFTP, FTPS and WebDAVS as described in the user guide.
 </p>
 <h4 class="staticpage">How Are Workgroups Managed?</h4>
 <p>
@@ -234,10 +240,10 @@ Workgroups can be created by VIP and TAP employees and the creator of a
 workgroup automatically becomes owner. All user management is left to
 the owner(s) without interaction from the ERDA system
 administrators. Co-owners and members can be added either directly using
-the <em>Swedish numberplate</em> alias of the user, or indirectly if the
-user requests owner-/membership on the Workgroups page, and the owner(s)
-follow the instructions then sent on email about adding the user with
-the full user ID format.
+the <em>Swedish numberplate</em> or email alias of the user, or
+indirectly if the user requests owner-/membership on the Workgroups
+page, and the owner(s) follow the instructions then sent on email about
+adding the user with the full user ID format.
 </p>
 <h4 class="staticpage">New ERDA user: why do I get 'No such user' or 'No ID information received'?</h4>
 <p>
@@ -278,26 +284,48 @@ of allowing any additional characters that you may miss.
 </p>
 <h4 class="staticpage">Can I get an ERDA account without a UCPH account?</h4>
 <p>
-It is possible but more complex to set up access even if you do not have
-a general UCPH account (i.e. the <em>Swedish numberplate</em> login). Our
-general username+password access described in the user guide relies on
-the OpenID login from KU Koncern-IT and they strictly use the UCPH user
-database.
-<br />
-We do provide an alternative access method with user certificates. To
-proceed with that you need to request and install one of our grid
-certificates as described on the corresponding <a class="reqcert-en-link"> 
-getting started</a> page. As you can see in the user-cert-import guide there,
-the certificate install process takes quite a few steps, but then at
-least login gets simpler afterwards. After installing your certificate
-you can use it in the ERDA <a class="extsignup-link">sign up</a> and 
-<a class="extlogin-link">log in</a> with certificate.<br /> 
+Yes, as long as you need an ERDA account for a project collaboration
+with one or more employees at UCPH it is possible to get one, even if you
+don't have a general UCPH account. Likewise it is possible to preserve
+access to your ERDA account beyond your employment at UCPH in case you
+need it to keep collaborating with a remaining employee.
+<br/>
 <span class="warningtext">
-IMPORTANT: please note that UCPH management requires such users not employed
-at UCPH to explicitly register with their affiliation to a local
+IMPORTANT: please note that UCPH management requires all such users not
+employed at UCPH to explicitly register with their affiliation to a local
 user. So please include a reference to your associate/advisor at UCPH
-Science in the comment field when you fill in the certificate request.
-</span><br />
+Science in the comment field when you fill in the OpenID or certificate
+account request described below.
+</span>
+<br />
+Our general username+password access described in the user guide relies on
+the OpenID login from Koncern-IT / University IT and they strictly use
+the UCPH user database. So only users with an account there can use that login.
+<br />
+However, we provide two alternative access methods, namely a similar
+username+password login using our own separate OpenID login service, and
+another one relying on user certificates for added security. 
+<br/>
+You can sign up for an ERDA account with OpenID access with the
+<em>Other User OpenID Signup</em> button on the <a class="migoidsignup-link">sign
+  up</a> page. If you already have an ERDA account and just want to
+enable this OpenID login before your UCPH login expires you can use the
+same procedure, but then you need to make sure you enter the exact same account
+fields in the signup form. Please ask us if in doubt.
+<br/>
+After the ERDA admins accept your OpenID account/access request
+you can use your registered email address along with your chosen
+password for <a class="migoidlogin-link">log in</a>.
+<br/>
+In case you want the extra secure access instead you need to request and
+install one of our grid certificates as described on the
+corresponding <a class="reqcert-en-link">getting started</a> page. As
+you can see in the user-cert-import guide there, the certificate install
+process takes quite a few steps, but then at least login gets simpler
+afterwards. After installing your certificate you can use it first to
+<a class="extcertsignup-link">sign up</a> for your ERDA account and then
+afterwards to <a class="extcertlogin-link">log in</a>.  
+<br /> 
 </p>
 </div>
 <h2 class="staticpage">Questions and Support</h2>
@@ -394,8 +422,9 @@ RAID-teknologi. Vi garanterer <em>ikke</em> i øjeblikket automatisk og
 fuldstændig backup af almindelige data i din ERDA brugerfolder eller i
 Workgroup shares. For de største datasæt dér giver det simpelthen
 sjældent mening med sådan automatisk backup. Så kun filer som eksplicit
-er gemt som Archive bliver der gemt backup af på bånd. Med tiden vil det
-også inkludere bånd-backup på en fjernlokation for ekstra sikkerhed.
+er gemt som Archive bliver der gemt backup af. Det inkluderer også
+efterfølgende automatisk kopi til bånd på en fjernlokation for ekstra
+sikkerhed.
 Vi anbefaler vores Seafile filsynkroniserings-service til små og
 mellemstore datasæt, for hvilke man ønsker automatisk filversionering. I
 den løsning har man generelt mulighed for at kunne genskabe slettede
@@ -408,14 +437,15 @@ hvor dynamiske data er, og hvem du vil dele med.<br/>
 Permanent skrive-beskyttet publicering gøres bedst med Archives og
 markering af at data skal arkiveres offentligt.<br/>
 Når det drejer sig om dynamiske data er det muligt at dele med læse- og
-skrive-adgang via de almindelige Workgroup shares eller at lave
-skrivebeskyttet deling via de tilknyttede Workgroup web sider. Begge
-følger automatisk med alle Workgroups og sidstnævnte findes i en udgave
-med offentlig adgang og en kun for gruppens deltagere. Publicering den
-vej foregår ved at Workgroup ejere gemmer data i de tilhørende
-public_base hhv private_base workgroup undermapper på ERDA. På din
-Workgroups side finder du links til disse og til de resulterende
-web-sider.<br/>
+skrive-adgang via de almindelige Workgroup shares, samt at skifte
+sådanne shares til kun at give læse-adgang på administrationssiden. Det
+er også muligt at lave skrivebeskyttet deling og publicering via de
+tilknyttede Workgroup web sider. Begge følger automatisk med alle
+Workgroups og sidstnævnte findes i en udgave med offentlig adgang og en
+kun for gruppens deltagere. Publicering den vej foregår ved at Workgroup
+ejere gemmer data i de tilhørende public_base hhv private_base workgroup
+undermapper på ERDA. På din Workgroups side finder du links til disse og
+til de resulterende web-sider.<br/>
 Til hurtig udveksling af data med hvem som helst, herunder ikke mindst folk
 som <em>ikke</em> er på ERDA, kan vi anbefale Share Link metoden. Fra
 din Files side kan du oprette et share link og vælge hvilken kombination
@@ -433,10 +463,10 @@ VIP- og TAP-ansatte kan oprette workgroups og de bliver derved
 automatisk ejere af den nye workgroup. Al brugerstyring er ejernes
 ansvar og foregår uden indblanding fra systemadministratorerne på
 ERDA. Medejere og medlemmer kan enten tilføjes direkte ved at indtaste
-brugerens <em>svenske nummerplade</em> på Workgroup Management siden
-eller ved at brugere anmoder om owner-/membership på Workgroups-siden,
-og ejerne følger de derved emailede instruktioner om at tilføje brugeren
-vha det komplette bruger-ID.
+brugerens <em>svenske nummerplade</em> eller email på Workgroup
+Management siden eller ved at brugere anmoder om owner-/membership på
+Workgroups-siden, og ejerne følger de derved emailede instruktioner om
+at tilføje brugeren vha det komplette bruger-ID.
 </p>
 <h4 class="staticpage">Ny ERDA-bruger: hvorfor får jeg 'No such user' eller 'No ID information received'?</h4>
 <p>
@@ -476,29 +506,52 @@ skade brugergrænseflader eller bagvedliggende systemer. Du er
 naturligvis velkommen til at kontakte os angående at få yderligere tegn
 du måtte savne tilladt.
 </p>
-<h4 class="staticpage">Kan jeg oprette en ERDA-konto uden en KU-konto?</h4>
+<h4 class="staticpage">Kan jeg få en ERDA-konto uden en KU-konto?</h4>
 <p>
-Det er muligt men mere besværligt at opsætte adgang selv hvis ikke du
-har en generel KU-konto (d.v.s. login med <em>svensk nummerplade</em>).
+Ja, sålænge du har brug for en ERDA-konto til et projektsamarbejde med
+en eller flere ansatte på KU, er det muligt at få en sådan, også selv om
+du ikke har en generel KU-konto. Ligeledes er det muligt at beholde
+adgang til din ERDA-konto efter endt ansættelse, såfremt du har brug for
+den til samarbejde med en vedblivende ansat.
+<br/>
+<span class="warningtext">
+VIGTIGT: bemærk at KU-ledelsen har bedt om at sådanne brugere som ikke
+er ansat på KU registrerer sig med eksplicit tilknytning til en lokal
+bruger. Så henvis venligst til din samarbejdspartner/vejleder på KU Science i
+kommentarfeltet når du anmoder om OpenID- eller certifikat-adgang i
+formularen beskrevet nedenfor.
+</span>
+<br />
 Vores generelle adgangskontrol med brugernavn+kode, som beskrevet i
 brugervejledningen, benytter OpenID-login fra KU Koncern-IT og er dermed
-strengt knyttet til KUs brugerdatabase.
+strengt knyttet til KUs brugerdatabase. Den kan derfor kun benyttes af
+brugere med en KU-konto.
 <br />
-Vi tilbyder adgang med brugercertifikater som alternativ, og for at
-benytte den løsning skal du anmode om - og installere et af vores grid
-brugercertifikater, jvf den tilhørende <a class="reqcert-da-link">
-sådan kommer du igang</a> side. Som det fremgår af user-cert-import
-guiden dér, kræver certifikat-installationen en del trin, men i det
-mindste er login så efterfølgende simplere. Når du har installeret dit
-certifikat kan du bruge det i
-ERDAs <a class="extsignup-link">tilmelding</a> og 
-<a class="extlogin-link">log ind</a> med certifikat.<br/>
-<span class="warningtext">
-VIGTIGT: bemærk at KU-ledelsen har bedt om at sådanne brugere ikke ansat på
-KU registrerer sig med eksplicit tilknytning til en lokal bruger. Så
-henvis venligst til din samarbejdspartner/vejleder på KU Science i
-kommentarfeltet når du anmoder om certifikatet.
-</span><br />
+Vi tilbyder dog to alternativer for adgang uden en KU-konto. Den ene er
+ligeledes med brugernavn+kode via vores egen selvstændige OpenID-login
+service og den anden benytter brugercertifikater for ekstra høj sikkerhed.
+<br/>
+Du kan tilmelde dig ERDA og få OpenID-adgang til din konto vha 
+<em>Other User OpenID Signup</em>-knappen
+under <a class="migoidsignup-link">tilmelding</a>. 
+Såfremt du allerede har en ERDA-konto, som du blot gerne vil bevare
+OpenID-adgang til, kan du benytte selvsamme side. Blot skal du være
+opmærksom på at udfylde formularens felter, så de stemmer nøjagtig
+overens med din nuværende konto. Spørg endelig hvis du er i tvivl.
+<br/>
+Når systemadministratorerne på ERDA har godkendt din OpenID-konto/adgang, kan du
+bruge din registrerede emailadresse sammen med din selvvalgte kode
+til <a class="migoidlogin-link">log ind</a>.
+<br/>
+For den yderligere sikrede løsning skal du i stedet anmode om - og
+installere et af vores grid-brugercertifikater, jvf den
+tilhørende <a class="reqcert-da-link"> sådan kommer du igang</a>
+side. Som det fremgår af user-cert-import guiden dér, kræver
+certifikat-installationen en del trin, men i det mindste er login så
+efterfølgende simplere. Når du har installeret dit certifikat kan du
+bruge det først i ERDAs <a class="extcertsignup-link">tilmelding</a> og
+efterfølgende til <a class="extcertlogin-link">log ind</a>.
+<br/>
 </p>
 </div>
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
