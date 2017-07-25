@@ -49,7 +49,8 @@ from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
      update_runtimeenv_owner
 from shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
-     make_scramble, check_scramble, unscramble_password, unscramble_digest
+     make_scramble, check_scramble, unscramble_password, unscramble_digest, \
+     assure_password_strength
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
 from shared.settings import update_settings, update_profile, update_widgets
@@ -1393,6 +1394,40 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
                     continue
             addresses[proto].append(address)
     return (configuration, password, addresses, errors)
+
+
+def user_password_check(user_id, conf_path, db_path, verbose=False):
+    """Check password policy compliance for user_id"""
+
+    errors = []
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+    try:
+        user_db = load_user_db(db_path)
+        if verbose:
+            print 'Loaded existing user DB from: %s' % db_path
+    except Exception, err:
+        err_msg = 'Failed to load user DB: %s' % err
+        if verbose:
+            print err_msg
+        _logger.error(err_msg)
+        return []
+
+    if not user_db.has_key(user_id):
+        errors.append('No such user: %s' % user_id)
+    else:
+        password = user_db[user_id].get('password', '')
+        password = unscramble_password(configuration.site_password_salt,
+                                       password)
+        try:
+            assure_password_strength(configuration, password)
+        except Exception, exc:
+            errors.append('password for %s does not satisfy local policy: %s' \
+                          % (user_id, exc))
+    return (configuration, errors)
 
 
 def get_default_mrsl(template_path):
