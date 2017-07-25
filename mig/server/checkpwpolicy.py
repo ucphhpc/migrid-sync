@@ -46,6 +46,7 @@ Where CHECK_OPTIONS may be one or more of:
    -d DB_PATH          Use DB_PATH as user data base file path
    -h                  Show this help
    -I CERT_DN          Check only for user with ID (distinguished name)
+   -p POLICY           Check against POLICY instead of configured value
    -v                  Verbose output
 """ % {'name': name}
 
@@ -55,9 +56,10 @@ Where CHECK_OPTIONS may be one or more of:
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
+    policy = None
     verbose = False
     search_filter = default_search()
-    opt_args = 'c:d:hI:v'
+    opt_args = 'c:d:hI:p:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -75,6 +77,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-I':
             search_filter['distinguished_name'] = val
+        elif opt == '-p':
+            policy = val
         elif opt == '-v':
             verbose = True
         else:
@@ -93,8 +97,8 @@ if '__main__' == __name__:
     else:
         print "Password policy errors:"
     for (uid, user_dict) in hits:
-        (configuration, errors) = \
-                    user_password_check(uid, conf_path, db_path, verbose)
+        (configuration, errors) = user_password_check(uid, conf_path, db_path,
+                                                      verbose, policy)
         if errors:
             print '\n'.join(errors)
         elif verbose:

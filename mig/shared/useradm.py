@@ -1396,8 +1396,11 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
     return (configuration, password, addresses, errors)
 
 
-def user_password_check(user_id, conf_path, db_path, verbose=False):
-    """Check password policy compliance for user_id"""
+def user_password_check(user_id, conf_path, db_path, verbose=False,
+                        override_policy=None):
+    """Check password policy compliance for user_id. If the optional
+    is left unset the configuration policy value will be used otherwise the
+    given value is used"""
 
     errors = []
     if conf_path:
@@ -1418,15 +1421,23 @@ def user_password_check(user_id, conf_path, db_path, verbose=False):
 
     if not user_db.has_key(user_id):
         errors.append('No such user: %s' % user_id)
-    else:
-        password = user_db[user_id].get('password', '') or ''
-        password = unscramble_password(configuration.site_password_salt,
-                                       password)
-        try:
-            assure_password_strength(configuration, password)
-        except Exception, exc:
-            errors.append('password for %s does not satisfy local policy: %s' \
-                          % (user_id, exc))
+        return (configuration, errors)
+
+    if override_policy:
+        configuration.site_password_policy = override_policy
+
+    password = user_db[user_id].get('password', '') or ''
+    password = unscramble_password(configuration.site_password_salt,
+                                   password)
+    if not password:
+        errors.append('No password set for %s' % user_id)
+        return (configuration, errors)
+        
+    try:
+        assure_password_strength(configuration, password)
+    except Exception, exc:
+        errors.append('password for %s does not satisfy local policy: %s' \
+                      % (user_id, exc))
     return (configuration, errors)
 
 
