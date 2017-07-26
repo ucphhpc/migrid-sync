@@ -105,17 +105,23 @@ def main(client_id, user_arguments_dict):
     html = ""
     if openid_error:
         err_txt, report_txt = '', ''
+        report_fail = """, so you cannot currently use it for login to %s.
+<br />
+Please report the problem to your OpenID identity provider.
+""" % configuration.short_title
         if 'no_idp_found' in openid_error:
             err_txt += "OpenID server did not respond!"
             report_txt += """It appears the requested OpenID login service is
-offline"""
+offline""" + report_fail
+        elif 'canceled' in openid_error:
+            err_txt += "OpenID login canceled!"
+            report_txt += """You have to either enter your OpenID login and
+accept that it is used for %s login or choose another one of the login methods
+below.""" % configuration.short_title
         else:
             err_txt += "OpenID server error!"
             report_txt += """It appears there's a problem with the requested
-OpenID login service"""
-        report_txt += """, so you cannot currently use it for login to %s.<br />
-Please report the problem to your OpenID identity provider.
-""" % configuration.short_title
+OpenID login service""" + report_fail
         html += """<h2>OpenID Login to %s Failed!</h2>
 <div class='errortext'>
 %s (error code(s): %s)
