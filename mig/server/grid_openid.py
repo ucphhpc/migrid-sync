@@ -264,6 +264,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         'password': valid_password,
         'yes': valid_ascii,
         'no': valid_ascii,
+        'err': valid_ascii,
         'remember': valid_ascii,
         'cancel': valid_ascii,
         'submit': valid_distinguished_name,
@@ -340,7 +341,8 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             elif path == '/login':
                 self.showLoginPage('/%s/' % self.server.server_base,
-                                   '/%s/' % self.server.server_base)
+                                   '/%s/' % self.server.server_base,
+                                   query=self.query)
             elif path == '/loginsubmit':
                 self.doLogin()
             elif path == '/logout':
@@ -402,7 +404,6 @@ Invalid '%s' input: %s
 
             if path == '/openidserver':
                 self.serverEndPoint(self.query)
-
             elif path == '/allow':
                 self.handleAllow(self.query)
             else:
@@ -435,6 +436,9 @@ Invalid '%s' input: %s
         pair against user DB.
         """
         request = self.server.lastCheckIDRequest.get(self.user)
+        # NOTE: last request may be None here e.g. on back after illegal char!
+        if not request:
+            request = self.server.openid.decodeRequest(query)
 
         logger.debug("handleAllow with last request %s from user %s" % \
                      (request, self.user))
@@ -488,9 +492,10 @@ Invalid '%s' input: %s
                                   self.password)
             else:
                 logger.warning("handleAllow rejected login %s" % identity)
+                #logger.debug("full query: %s" % self.query)
+                #logger.debug("full headers: %s" % self.headers)
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
-                response = self.rejected(request, identity)    
                 failed_count = update_rate_limit(configuration, "openid",
                                                  self.client_address[0],
                                                  fail_user, False,
@@ -498,10 +503,18 @@ Invalid '%s' input: %s
                 penalize_rate_limit(configuration, "openid",
                                     self.client_address[0], fail_user,
                                     failed_count)
-
+                # Login failed - return to refering page to let user try again
+                retry_url = self.headers.get('Referer')
+                # Add error message to display 
+                if retry_url.find('?') == -1:
+                    retry_url += '?'
+                else:
+                    retry_url += '&'
+                retry_url += 'err=loginfail' 
+                self.redirect(retry_url)
+                return
         elif 'no' in query:
             response = request.answer(False)
-
         else:
             assert False, 'strange allow post.  %r' % (query,)
 
@@ -545,6 +558,8 @@ Invalid '%s' input: %s
         """End-point handler"""
         try:
             request = self.server.openid.decodeRequest(query)
+            # Pass any errors from previous login attempts on for display
+            request.error = query.get('err', '')
         except server.ProtocolError, why:
             self.displayResponse(why)
             return
@@ -696,8 +711,8 @@ Invalid '%s' input: %s
                 # print "doLogin succeded: redirect to %s" % self.query['success_to']
                 self.redirect(self.query['success_to'])
             else:
-                # print "doLogin failed for %s!" % self.user
-                # print "doLogin full query: %s" % self.query
+                logger.warning("login failed for %s" % self.user)
+                logger.debug("full query: %s" % self.query)
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 failed_count = update_rate_limit(configuration, "openid",
@@ -707,8 +722,16 @@ Invalid '%s' input: %s
                 penalize_rate_limit(configuration, "openid",
                                     self.client_address[0], fail_user,
                                     failed_count)
-                # TODO: Login failed - is this correct behaviour?
-                self.redirect(self.query['success_to'])
+                # Login failed - return to refering page to let user try again
+                retry_url = self.headers.get('Referer')
+                # Add error message to display 
+                if retry_url.find('?') == -1:
+                    retry_url += '?'
+                else:
+                    retry_url += '&'
+                retry_url += 'err=loginfail' 
+                self.redirect(retry_url)
+                return
         elif 'cancel' in self.query:
             self.redirect(self.query['fail_to'])
         else:
@@ -853,6 +876,13 @@ Invalid '%s' input: %s
                 request.idSelect()), repr((request.identity, id_url_base))
         expected_user = request.identity[len(id_url_base):]
 
+        if request.error == 'loginfail':
+            err_msg = '<p class="errortext">Authentication failed!</p>'
+        elif request.error:
+            err_msg = '<p class="errortext">Error: %s</p>' % request.error
+        else:
+            err_msg = ''
+
         if request.idSelect(): # We are being asked to select an ID
             user_alias = configuration.user_openid_alias
 
@@ -868,6 +898,7 @@ Invalid '%s' input: %s
                 'trust_root': request.trust_root,
                 'server_base': self.server.server_base,
                 'alias_hint': alias_hint,
+                'err_msg': err_msg,
                 }
             form = '''\
             <div class="openidlogin">
@@ -890,7 +921,9 @@ Invalid '%s' input: %s
             </div>
             <div class="openidlogin">
             <p>The site %(trust_root)s has requested verification of your
-            OpenID.</p>
+            OpenID.
+            </p>
+            %(err_msg)s
             </div>
             '''
             form = form % fdata
@@ -906,6 +939,7 @@ Invalid '%s' input: %s
                 'identity': request.identity,
                 'trust_root': request.trust_root,
                 'server_base': self.server.server_base,
+                'err_msg': err_msg,
                 }
             form = '''\
             <table>
@@ -920,11 +954,16 @@ Invalid '%s' input: %s
               Password: <input type="password" name="password" autofocus /><br />
               <input type="submit" name="yes" value="yes" />
               <input type="submit" name="no" value="no" />
-            </form>''' % fdata
+            </form>
+            <div class="openidlogin">
+            %(err_msg)s
+            </div>
+            ''' % fdata
         else:
             mdata = {
                 'expected_user': expected_user,
                 'user': self.user,
+                'err_msg': err_msg,
                 }
             msg = '''\
             <p>A site has asked for an identity belonging to
@@ -954,7 +993,11 @@ Invalid '%s' input: %s
               Password: <input type="password" name="password"><br />
               <input type="submit" name="yes" value="yes" />
               <input type="submit" name="no" value="no" />
-            </form>''' % fdata
+            </form>
+            <div class="openidlogin">
+            %(err_msg)s
+            </div>
+            ''' % fdata
 
         self.showPage(200, 'Approve OpenID request?', msg=msg, form=form)
 
@@ -1078,8 +1121,14 @@ Invalid '%s' input: %s
         <a href=%s><span class="verbatim">%s</span></a>.</p>
         ''' % (user_message, quoteattr(self.server.base_url), self.server.base_url))
 
-    def showLoginPage(self, success_to, fail_to):
+    def showLoginPage(self, success_to, fail_to, query):
         """Login page provider"""
+        if query.get('err', '') == 'loginfail':
+            err_msg = '<p class="errortext">Authentication failed!</p>'
+        elif query.get('err', ''):
+            err_msg = '<p class="errortext">Error: %(err)s</p>' % query
+        else:
+            err_msg = ''
         self.showPage(200, 'Login Page', form='''\
         <h2>OpenID Login</h2>
         <p>Please enter your %s username and password to prove your identify
@@ -1092,8 +1141,11 @@ Invalid '%s' input: %s
           <input type="submit" name="submit" value="Log In" />
           <input type="submit" name="cancel" value="Cancel" />
         </form>
+        <div class="openiderror">
+        %s
+        </div>
         ''' % (configuration.short_title, self.server.server_base,
-               success_to, fail_to))
+               success_to, fail_to, err_msg))
 
     def showPage(self, response_code, title,
                  head_extras='', msg=None, err=None, form=None):

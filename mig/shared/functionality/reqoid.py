@@ -187,5 +187,3 @@ Email data that we can easily validate!
 """ % fill_helpers})
 
     return (output_objects, returnvalues.OK)
-
-
