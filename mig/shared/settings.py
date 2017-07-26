@@ -153,8 +153,14 @@ def parse_and_save_duplicati(filename, client_id, configuration):
             return (False, 'could not load credentials for verification!')
         _logger.debug('found saved creds: %s' % saved_creds)
         if not saved_creds.get('authpassword', None):
-            warn = '''Warning: you need to enable password login on your %s 
-Settings page before you can use it with Duplicati.''' % saved_protocol
+            warn = '''Warning: you need to enable password login on your %s
+Settings page before you can use it directly with Duplicati.''' % saved_protocol
+            saved_keys = saved_creds.get('authkeys', [])
+            saved_keys = [i for i in saved_keys if i.strip()]
+            if saved_keys:
+                warn += ''' It <emph>does</emph> support ssh keys but for that
+you need to manually configure the key through the Advanced options on the
+Backup destination page during import.'''
             status = (status[0], status[1] + warn)
             _logger.warning('no saved %s creds for %s' % (saved_protocol,
                                                               client_id))
