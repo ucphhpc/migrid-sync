@@ -659,6 +659,10 @@ Action on paths selected below
                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
+        # Never show any ls output in write-only mode (css hide is not enough!)
+        if not read_mode:
+            continue
+        
         for abs_path in match:
             if abs_path + os.sep == base_dir:
                 relative_path = '.'
@@ -679,9 +683,16 @@ Action on paths selected below
     output_objects.append({'object_type': 'html_form', 'text'
                            : """<br/>
     <div class='files disable_read'>
-    <p class='info icon'>
-    This is a write-only share so you do not have access to see the files, only
-    upload data and create directories.
+    <p class='info icon'>"""})
+    # Shared message for text (e.g. user scripts) and html-format
+    if not read_mode:
+        # Please note that we use verbatim to get info icon right in html
+        output_objects.append({'object_type': 'verbatim', 'text': """
+This is a write-only share so you do not have access to see the files, only
+upload data and create directories.
+    """})
+    output_objects.append({'object_type': 'html_form', 'text':
+                            """
     </p>
     </div>
     <div class='files enable_read'>
