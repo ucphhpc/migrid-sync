@@ -458,7 +458,10 @@ certificate that is still valid."""
         
         info['distinguished_name_enc'] = re.sub(r'\\x(..)', upper_repl, dn_enc)
 
-        # TODO: remove the legacy SSLRequire noise
+        # TODO: find out a way to avoid the use of the legacy 'Satisfy any'
+        #       Attempts so far have either broken tracker access or opened up
+        #       for illegal access to various files. We would like to disable
+        #       the access_compat module it needs sometime in the future.
 
         access = '''# Access control for directly served requests.
 # If user requests access through cert_redirect or explicit ID path we must
@@ -466,10 +469,19 @@ certificate that is still valid."""
 # a) access is through a cert address and user provided a matching certificate
 # b) access is through an OpenID address with a matching user alias
 
-# NOTE: disabled this complex check and switched to pure "require user ID"
-# checks which are available for all vhosts.
-#SSLRequire (%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s" or %%{SSL_CLIENT_S_DN} eq "%(distinguished_name_enc)s" or (%%{SERVER_NAME} eq "${MIG_OID_FQDN}" and %%{SERVER_PORT} eq "${MIG_OID_PORT}") or (%%{SERVER_NAME} eq "${EXT_OID_FQDN}" and %%{SERVER_PORT} eq "${EXT_OID_PORT}"))
-
+# NOTE: this complex check and the Satisfy any clause is required along with
+# server enablement of the access_compat module!
+# We should eventually switch to pure "require user ID" and disable the use of
+# access_compat but so far it either breaks access or allows illegal access.
+SSLRequire (%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s")
+'''
+        if dn_enc != dn_plain:
+            access += '''
+SSLRequire (%%{SSL_CLIENT_S_DN} eq "%(distinguished_name_enc)s")
+'''
+        access += '''    
+# We prepare for future require user format with cert here in the hope that
+# we can eventually disable the above SSLRequire check and access_compat.
 require user "%(distinguished_name)s"
 '''
         if dn_enc != dn_plain:
@@ -481,13 +493,20 @@ require user "%(distinguished_name)s"
                 oid_url = os.path.join(oid_provider, name)
                 access += 'require user "%s"\n' % oid_url
         access += '''
-# IMPORTANT: do NOT set "all granted" for 2.4 as it removes login requirements!
-# In apache 2.4 RequireAny is implicit for the above "require user" lines. I.e.
+# IMPORTANT: do NOT set "all granted" for 2.3+ as it completely removes all
+# login requirements!
+# In apache 2.3+ RequireAny is implicit for the above "require user" lines. I.e.
 # at least one of them must be fullfilled for access. With earlier versions we
 # need to  use "Satisfy any" to get the same default behaviour.
-<IfVersion < 2.4>
+<IfVersion <= 2.2>
     Satisfy any
 </IfVersion>
+# Similarly use Satisfy any in newer versions with the access_compat module.
+<IfVersion > 2.2>
+    <IfModule mod_access_compat.c>
+        Satisfy any
+    </IfModule>
+</IfVersion>  
 '''
 
         filehandle.write(access % info)
