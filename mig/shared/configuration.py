@@ -152,6 +152,7 @@ def fix_missing(config_file, verbose=True):
         'user_imnotify_username': '',
         'user_imnotify_password': '',
         'user_imnotify_log': 'imnotify.log',
+        'user_chkchroot_log': 'chkchroot.log',
         'user_openid_address': fqdn,
         'user_openid_port': 8443,
         'user_openid_key': '~/certs/combined.pem',
@@ -375,6 +376,7 @@ class Configuration:
     user_imnotify_username = ''
     user_imnotify_password = ''
     user_imnotify_log = 'imnotify.log'
+    user_chkchroot_log = 'chkchroot.log'
     server_home = ''
     vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
@@ -819,6 +821,8 @@ class Configuration:
                                                      'user_imnotify_password')
         if config.has_option('GLOBAL', 'user_imnotify_log'):
             self.user_imnotify_log = config.get('GLOBAL', 'user_imnotify_log')
+        if config.has_option('GLOBAL', 'user_chkchroot_log'):
+            self.user_chkchroot_log = config.get('GLOBAL', 'user_chkchroot_log')
         if config.has_option('GLOBAL', 'user_openid_address'):
             self.user_openid_address = config.get('GLOBAL', 
                                                  'user_openid_address')
@@ -1476,7 +1480,7 @@ class Configuration:
                         'user_openid_log', 'user_monitor_log',
                         'user_sshmux_log', 'user_vmproxy_log',
                         'user_events_log', 'user_transfers_log',
-                        'user_imnotify_log', ):
+                        'user_imnotify_log', 'user_chkchroot_log', ):
             log_path = getattr(self, log_var)
             if not os.path.isabs(log_path):
                 setattr(self, log_var, os.path.join(self.log_dir, log_path))

@@ -32,7 +32,7 @@ import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from shared.defaults import sandbox_names, _user_invisible_files, \
-     _user_invisible_dirs
+     _user_invisible_dirs, _vgrid_xgi_scripts
 
 _id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
 _key_val_sep = '='
@@ -117,17 +117,32 @@ def invisible_dir(dir_path):
             return True
     return False
 
-def invisible_path(path):
+def invisible_path(path, allow_vgrid_scripts=False):
     """Returns boolean indicating if the file or directory with path is among
     restricted files or directories to completely hide. Such items can not
     safely be removed or modified by users and should only be changed through
     a few restricted interfaces.
     Provided path may be absolute or relative.
+    The optional allow_vgrid_scripts argument can be set to allow certain Xgi
+    script paths inside otherwise invisible directories. This is useful in
+    relation to specifically allowing access to vgrid collaboration component
+    Xgi scripts from apache.
+    Please note that users should NEVER be allowed write access to those, as it
+    would open up a major remote code execution security hole!
+    Thus, only use allow_vgrid_scripts when checking access to files in apache
+    chroot checks.
     """
     filename = os.path.basename(path)
     if invisible_file(filename):
         return True
     elif invisible_dir(path):
+        if allow_vgrid_scripts:
+            for i in _vgrid_xgi_scripts:
+                # NOTE: mercurial uses hgweb.cgi/BLA to pass args,
+                #       so path.endswith(i) is too narrow
+                if path.find(i) != -1:
+                    return False
+        # No valid exception
         return True
     return False
 

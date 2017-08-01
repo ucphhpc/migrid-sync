@@ -123,7 +123,12 @@ _protected_dirs = [trash_destdir]
 _user_invisible_dirs = _dot_vgrid + _protected_dirs
 _user_invisible_files = [htaccess_filename]
 _user_invisible_paths = _user_invisible_files + _user_invisible_dirs
-
+_vgrid_xgi_scripts = ['.vgridscm/cgi-bin/hgweb.cgi',
+                      '.vgridscm/wsgi-bin/hgweb.wsgi',
+                      '.vgridtracker/cgi-bin/trac.cgi',
+                      '.vgridtracker/wsgi-bin/trac.wsgi',
+                      '.vgridwiki/cgi-bin/moin.cgi',
+                      '.vgridwiki/wsgi-bin/moin.wsgi']
 
 profile_img_max_kb = 128
 profile_img_extensions = ['png', 'jpg']

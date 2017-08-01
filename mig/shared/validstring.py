@@ -100,7 +100,7 @@ def is_valid_email_address(addr, logger):
     return count >= 1
 
 def valid_user_path(configuration, path, home_dir, allow_equal=False,
-                    chroot_exceptions=keyword_auto):
+                    chroot_exceptions=keyword_auto, apache_scripts=False):
     """This is a convenience function for making sure that users do
     not access restricted files including files outside their own file
     tree(s): Check that path is a valid path inside user home directory,
@@ -134,6 +134,10 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     the mount in question.
     If left to keyword_auto the list of chroot_exceptions is automatically
     extracted based on the configuration.
+    The optional apache_scripts argument can be used to exclude the vgrid
+    collaboration scripts when checking for invisible files. In that way we
+    can allow the apache chroot checker exclusively to accept access to those
+    scripts as needed for Xgi execution of them.
     """
 
     # We allow None value to support the few call points without one
@@ -149,7 +153,7 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     if path != os.path.abspath(path):
         return False
 
-    if invisible_path(path):
+    if invisible_path(path, apache_scripts):
         return False
     
     abs_home = os.path.abspath(home_dir)
