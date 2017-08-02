@@ -97,13 +97,14 @@ private files dir.''' % label})
         private_fd = open(abs_path, 'rb')
         entry = {'object_type': 'binary',
                  'data': private_fd.read()}
-        # Cut away all the usual web page formatting to show only contents
-        output_objects = [{'object_type': 'start',
-                           'headers': [('Content-Disposition',
-                                        'attachment; filename="%s";' % \
-                                        os.path.basename(abs_path))]
-                           },
-                          entry,
+        # Serve web pages directly with default html content type but cut away
+        # all the usual web page formatting to show only contents otherwise
+        if abs_path.endswith('.html'):
+            headers = []
+        else:
+            headers = [('Content-Disposition', 'attachment; filename="%s";' % \
+                        os.path.basename(abs_path))]
+        output_objects = [{'object_type': 'start', 'headers': headers}, entry,
                           {'object_type': 'script_status'},
                           {'object_type': 'end'}]
         private_fd.close()
