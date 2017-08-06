@@ -103,9 +103,19 @@ unless it is available in mig/server/MiGserver.conf
                 continue
             # NOTE: extract home dir before ANY expansion to avoid escape
             #       with e.g. /PATH/TO/OWNUSER/../OTHERUSER/somefile.txt
-            # Build user_home base terminated with a single slash
-            root = configuration.user_home.rstrip(os.sep) + os.sep
-            # Extract name of user dir as first component after user_home base
+            # Where home may be plain user home, sharelink or session link.
+            root = None
+            for prefix in (configuration.user_home, configuration.sharelink_home,
+                         configuration.sessid_to_mrsl_link_home):
+                if path.startswith(prefix):
+                    # Build proper root base terminated with a single slash
+                    root = prefix.rstrip(os.sep) + os.sep
+                    break
+            if root is None:
+                logger.error("got path with invalid root: %s" % path)
+                print INVALID_MARKER
+                continue
+            # Extract name of home as first component after root base
             home_dir = path.replace(root, "").lstrip(os.sep)
             home_dir = home_dir.split(os.sep, 1)[0]
             logger.debug("found home dir: %s" % home_dir)
