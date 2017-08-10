@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# chkchroot - Simple Apache httpd chroot helper daemon
+# chksidroot - Simple Apache httpd SID chroot helper daemon
 # Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -28,10 +28,10 @@
 # NOTE: we request unbuffered I/O with the she-bang at the top in line with:
 #       http://httpd.apache.org/docs/current/rewrite/rewritemap.html#prg
 
-"""Simple chroot helper daemon to verify that paths are limited to valid chroot
-locations. Reads a path from stdin and prints either invalid marker or actual
-real path to stdout so that apache can use the daemon from RewriteMap and
-rewrite to fail or success depending on output.
+"""Simple SID chroot helper daemon to verify that paths are limited to valid
+chroot locations. Reads a path from stdin and prints either invalid marker or
+actual real path to stdout so that apache can use the daemon from RewriteMap
+and rewrite to fail or success depending on output.
 """
 
 import os
@@ -41,6 +41,7 @@ import time
 
 from shared.conf import get_configuration_object
 from shared.logger import daemon_logger, reopen_log
+from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 
 configuration, logger = None, None
@@ -68,7 +69,7 @@ if __name__ == '__main__':
         print os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn
 
     # Use separate logger
-    logger = daemon_logger("chkchroot", configuration.user_chkchroot_log,
+    logger = daemon_logger("chksidroot", configuration.user_chksidroot_log,
                            log_level)
     configuration.logger = logger
 
@@ -76,66 +77,74 @@ if __name__ == '__main__':
     signal.signal(signal.SIGHUP, hangup_handler)
 
     if verbose:
-        print '''This is simple chroot check helper daemon which just prints
-the real path for all allowed path requests and the invalid marker for illegal
-ones.
+        print '''This is simple SID chroot check helper daemon which just
+prints the real path for all allowed path requests and the invalid marker for
+illegal ones.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 '''
-        print 'Starting chkchroot helper daemon - Ctrl-C to quit'
+        print 'Starting chksidroot helper daemon - Ctrl-C to quit'
 
     # NOTE: we use sys stdin directly
     
-    chkchroot_stdin = sys.stdin
+    chksidroot_stdin = sys.stdin
 
     keep_running = True
     if verbose:
         print 'Reading commands from sys stdin'
     while keep_running:
         try:
-            line = chkchroot_stdin.readline()
+            line = chksidroot_stdin.readline()
             path = line.strip()
-            logger.info("chkchroot got path: %s" % path)
+            logger.info("chksidroot got path: %s" % path)
             if not os.path.isabs(path):
                 logger.error("not an absolute path: %s" % path)
                 print INVALID_MARKER
                 continue
-            # NOTE: extract home dir before ANY expansion to avoid escape
-            #       with e.g. /PATH/TO/OWNUSER/../OTHERUSER/somefile.txt
-            # Where home may be plain user home, sharelink or session link.
-            root = None
-            for prefix in (configuration.user_home, configuration.sharelink_home,
-                         configuration.sessid_to_mrsl_link_home):
-                if path.startswith(prefix):
-                    # Build proper root base terminated with a single slash
-                    root = prefix.rstrip(os.sep) + os.sep
-                    break
-            if root is None:
+            # NOTE: extract sid dir before ANY expansion to avoid escape
+            #       with e.g. /PATH/TO/OWNID/../OTHERID/somefile.txt
+            # Where sid may be share link or session link id.
+            doc_root = configuration.webserver_home
+            sharelink_prefix = os.path.join(doc_root, 'share_redirect')
+            session_prefix = os.path.join(doc_root, 'sid_redirect')
+            is_sharelink = False
+            # Make sure absolute but unexpanded path is inside sid dir
+            if path.startswith(sharelink_prefix):
+                # Build proper root base terminated with a single slash
+                root = sharelink_prefix.rstrip(os.sep) + os.sep
+                is_sharelink = True
+            elif path.startswith(session_prefix):
+                # Build proper root base terminated with a single slash
+                root = session_prefix.rstrip(os.sep) + os.sep
+            else:
                 logger.error("got path with invalid root: %s" % path)
                 print INVALID_MARKER
                 continue
-            # Extract name of home as first component after root base
-            home_dir = path.replace(root, "").lstrip(os.sep)
-            home_dir = home_dir.split(os.sep, 1)[0]
-            logger.debug("found home dir: %s" % home_dir)
-            # No need to expand home_path here - done in valid_user_path
-            home_path = os.path.join(root, home_dir) + os.sep
-            abs_path = os.path.abspath(path)
-            # Make sure absolute but unexpanded path is inside home_path
-            if not abs_path.startswith(root):
-                logger.error("got path outside user home: %s" % abs_path)
-                print INVALID_MARKER
-                continue
-            logger.debug("check path %s in home %s or chroot" % (abs_path,
-                                                                 home_path))
-            # Exact match to user home does not make sense as we expect a file
-            if not valid_user_path(configuration, abs_path, home_path,
+            # Extract sid as first component after root base
+            sid_dir = path.replace(root, "").lstrip(os.sep)
+            sid_dir = sid_dir.split(os.sep, 1)[0]
+            logger.debug("found sid dir: %s" % sid_dir)
+            if is_sharelink:
+                (access_dir, _) = extract_mode_id(configuration, sid_dir)
+                real_root = os.path.join(configuration.sharelink_home,
+                                    access_dir) + os.sep
+                path = path.replace(root, real_root, 1)
+            else:
+                real_root = root
+            # Expand sid_path to proper base dir here
+            sid_path = os.path.join(real_root, sid_dir)
+            sid_path = os.path.realpath(sid_path) + os.sep
+            abs_path = os.path.realpath(path)
+            logger.debug("check path %s in sid %s or chroot" % (abs_path,
+                                                                sid_path))
+            # Exact match to sid dir does not make sense as we expect a file
+            if not valid_user_path(configuration, abs_path, sid_path,
                                    allow_equal=False, apache_scripts=True):
-                logger.error("path outside chroot: %s" % abs_path)
+                logger.error("path outside sid chroot: %s" % abs_path)
                 print INVALID_MARKER
                 continue
-            logger.info("found valid chroot path: %s" % abs_path)
+            logger.info("found valid sid chroot path: %s" % abs_path)
             print abs_path
 
             # Throttle down a bit to yield
@@ -149,5 +158,5 @@ unless it is available in mig/server/MiGserver.conf
                 print 'Caught unexpected exception: %s' % exc
 
     if verbose:
-        print 'chkchroot helper daemon shutting down'
+        print 'chksidroot helper daemon shutting down'
     sys.exit(0)
