@@ -53,6 +53,11 @@ from shared.validstring import valid_user_path
 
 default_max_fails, default_fail_cache = 5, 120
 
+# NOTE: auth keys file may easily contain only blank lines, so we decide to
+#       consider any such file of less than a 100 bytes invalid.
+
+min_pub_key_bytes = 100
+
 _rate_limits = {}
 _rate_limits_lock = threading.Lock()
 _active_sessions = {}
@@ -212,6 +217,12 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
     old_key_users = [i for i in old_users if i.public_key]
     old_pw_users = [i for i in old_users if i.password]
     old_digest_users = [i for i in old_users if i.digest]
+    # We do not save user entry for key files without proper pub keys, so to
+    # avoid repeatedly refreshing keys for such users we check against any
+    # other last update marker in case of no matching key users.
+    any_last_update = -1
+    if old_users:
+        any_last_update = old_users[0].last_update
     changed_paths = []
     if conf["allow_publickey"]:
         if old_key_users:
@@ -222,7 +233,9 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
                 first.last_update = os.path.getmtime(authkeys_path)
                 changed_paths.append(authkeys_path)
         elif os.path.exists(authkeys_path) and \
-                 os.path.getsize(authkeys_path) > 0:
+                 os.path.getsize(authkeys_path) >= min_pub_key_bytes and \
+                 os.path.getmtime(authkeys_path) > any_last_update:
+            logger.debug("found changed pub keys for %s" % username)
             changed_paths.append(authkeys_path)
 
     if conf["allow_password"]:
