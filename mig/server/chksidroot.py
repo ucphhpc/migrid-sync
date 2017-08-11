@@ -126,12 +126,41 @@ unless it is available in mig/server/MiGserver.conf
             sid_dir = sid_dir.split(os.sep, 1)[0]
             logger.debug("found sid dir: %s" % sid_dir)
             if is_sharelink:
+                # Share links use Alias to map directly into sharelink_home
+                # and with first char mapping into access mode sub-dir there.
                 (access_dir, _) = extract_mode_id(configuration, sid_dir)
                 real_root = os.path.join(configuration.sharelink_home,
                                     access_dir) + os.sep
                 path = path.replace(root, real_root, 1)
             else:
-                real_root = root
+                # Session links are directly in webserver_home and they map
+                # either into mig_system_files for empty jobs or into specific
+                # user_home for real job input/output.
+                # First re-map X_redirect in path like apache Aliases do.
+                real_root = configuration.webserver_home.rstrip(os.sep) + \
+                            os.sep
+                path = path.replace(root, real_root, 1)
+
+                # Now lookup the helper dir using either sid_dir directly if it
+                # is a dir link or with extension stripped if it is a file link
+                # like e.g. SID.job or SID.sendoutputfiles .
+                # We manually expand sid base and thus reset sid_dir component.
+                helper_dir, _ = os.path.splitext(os.path.join(real_root,
+                                                              sid_dir))
+                real_helper = os.path.realpath(helper_dir)
+                sid_dir = ''
+                logger.debug("found real helper path: %s" % real_helper)
+                if os.path.dirname(path) == configuration.webserver_home.rstrip(os.sep):
+                    real_root = configuration.mig_system_files.rstrip(os.sep)
+                elif real_helper.startswith(configuration.user_home):
+                    user_dir = real_helper.replace(configuration.user_home, '')
+                    user_dir = user_dir.lstrip(os.sep).split(os.sep)[0]
+                    real_root = os.path.join(configuration.user_home, user_dir)
+                else:
+                    logger.error("got session path with invalid root: %s" % path)
+                    print INVALID_MARKER
+                    continue
+
             # Expand sid_path to proper base dir here
             sid_path = os.path.join(real_root, sid_dir)
             sid_path = os.path.realpath(sid_path) + os.sep
