@@ -67,6 +67,11 @@ echo "== $TARGET =="
 check_cert_invalid $TARGET
 
 echo ""
+TARGET="vgrid_shared/P-Cubed/.vgridscm/cgi-bin/hgweb.cgi"
+echo "== $TARGET =="
+check_cert_invalid $TARGET
+
+echo ""
 TARGET="vgrid_shared/P-Cubed/.vgridtracker/wsgi-bin/trac.wsgi"
 echo "== $TARGET =="
 check_cert_invalid $TARGET
@@ -78,6 +83,21 @@ check_cert_valid $TARGET | grep -q "MISSING ACCESS" || echo "ILLEGAL ACCESS TO $
 
 echo ""
 TARGET="../../mig/server/MiGserver.conf"
+echo "== $TARGET =="
+check_cert_valid $TARGET | grep -q "MISSING ACCESS" || echo "ILLEGAL ACCESS TO $TARGET"
+
+echo ""
+TARGET="server.conf"
+echo "== $TARGET =="
+check_cert_valid $TARGET | grep -q "MISSING ACCESS" || echo "ILLEGAL ACCESS TO $TARGET"
+
+echo ""
+TARGET="hosts"
+echo "== $TARGET =="
+check_cert_valid $TARGET | grep -q "MISSING ACCESS" || echo "ILLEGAL ACCESS TO $TARGET"
+
+echo ""
+TARGET="etc/hosts"
 echo "== $TARGET =="
 check_cert_valid $TARGET | grep -q "MISSING ACCESS" || echo "ILLEGAL ACCESS TO $TARGET"
 
@@ -96,6 +116,11 @@ check_cert_valid $TARGET
 
 echo ""
 TARGET="P-Cubed/README"
+echo "== $TARGET =="
+check_cert_valid $TARGET
+
+echo ""
+TARGET="vgrid_shared/P-Cubed/.vgridscm/cgi-bin/hgweb.cgi"
 echo "== $TARGET =="
 check_cert_valid $TARGET
 
