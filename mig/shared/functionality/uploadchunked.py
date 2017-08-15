@@ -214,6 +214,8 @@ def main(client_id, user_arguments_dict):
         redirect_path = redirect_name
         id_args = ''
         page_title = 'Upload to User Directory: %s' % action
+        userstyle = True
+        widgets = True
     elif share_id:
         (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
@@ -229,6 +231,8 @@ def main(client_id, user_arguments_dict):
         redirect_path = os.path.join(redirect_name, share_id)
         id_args = 'share_id=%s;' % share_id
         page_title = 'Upload to Shared Directory: %s' % action
+        userstyle = False
+        widgets = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
         output_objects.append({'object_type': 'error_text', 'text'
@@ -250,6 +254,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = header_item['text'] = page_title
+    title_entry['skipwidgets'] = not widgets
+    title_entry['skipuserstyle'] = not userstyle
 
     # Input validation assures target_dir can't escape base_dir
     if not os.path.isdir(base_dir):

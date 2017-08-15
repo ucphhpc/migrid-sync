@@ -1108,7 +1108,7 @@ class Configuration:
         if config.has_option('SITE', 'user_redirect'):
             self.site_user_redirect = config.get('SITE', 'user_redirect')
         else:
-            self.site_user_redirect = 'cert_redirect'
+            self.site_user_redirect = '/cert_redirect'
         if config.has_option('SITE', 'title'):
             self.site_title = config.get('SITE', 'title')
         else:

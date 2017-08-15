@@ -98,6 +98,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             rm_helper = delete_path
         else:
             rm_helper = remove_path
+        userstyle = True
+        widgets = True
     elif share_id:
         (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
@@ -113,12 +115,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
         id_query = '?share_id=%s' % share_id
         page_title = 'Remove Shared File'
         rm_helper = delete_path
+        userstyle = False
+        widgets = False
     elif iosessionid.strip() and iosessionid.isalnum():
         user_id = iosessionid
         base_dir = configuration.webserver_home
         target_dir = iosessionid
         page_title = 'Remove Session File'
         rm_helper = delete_path
+        userstyle = False
+        widgets = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
         output_objects.append({'object_type': 'error_text', 'text'
@@ -133,6 +139,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = page_title
+    title_entry['skipwidgets'] = not widgets
+    title_entry['skipuserstyle'] = not userstyle
     output_objects.append({'object_type': 'header', 'text': page_title})
 
     logger.debug("%s: with paths: %s" % (op_name, pattern_list))

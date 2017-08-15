@@ -419,6 +419,8 @@ def main(client_id, user_arguments_dict):
         root_link_name = 'USER HOME'
         main_id = "user_ls"
         page_title = 'User Files'
+        userstyle = True
+        widgets = True
         visibility_mods = '''
             #%(main_id)s .disable_read { display: none; }
             #%(main_id)s .disable_write { display: none; }
@@ -436,6 +438,8 @@ def main(client_id, user_arguments_dict):
         root_link_name = '%s' % share_id
         main_id = "sharelink_ls"
         page_title = 'Shared Files'
+        userstyle = False
+        widgets = False
         # default to include file info
         if flags == '':
             flags += 'f'
@@ -462,7 +466,7 @@ def main(client_id, user_arguments_dict):
                               : 'Authentication is missing!'
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
-        
+
     visibility_toggle = '''
         <style>
         %s
@@ -483,6 +487,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = page_title
+    title_entry['skipwidgets'] = not widgets
+    title_entry['skipuserstyle'] = not userstyle
 
     open_button_id = 'open_fancy_upload'
     form_method = 'post'

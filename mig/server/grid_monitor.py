@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -70,15 +70,9 @@ def create_monitor(vgrid_name):
         'short_title': configuration.short_title,
         }
 
-    html = get_cgi_html_header(
-        configuration,
-        '%(short_title)s Monitor, VGrid %(vgrid_name)s' % html_vars,
-        '',
-        True,
-        '''<meta http-equiv="refresh" content="%(sleep_secs)s" />
-        ''' % html_vars,
-        themed_styles(configuration),                       
-        '''
+    monitor_meta = '''<meta http-equiv="refresh" content="%(sleep_secs)s" />
+''' % html_vars
+    monitor_js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 
@@ -110,9 +104,20 @@ $(document).ready(function() {
      }
 );
 </script>
-        ''',
+'''
+    
+    html = get_cgi_html_header(
+        configuration,
+        '%(short_title)s Monitor, VGrid %(vgrid_name)s' % html_vars,
         '',
-        False,
+        html=True,
+        meta=monitor_meta,
+        base_styles=themed_styles(configuration),                       
+        scripts=monitor_js,
+        bodyfunctions='',
+        menu=False,
+        widgets=False,
+        userstyle=False,
         )
     html += \
         '''

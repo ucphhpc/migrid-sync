@@ -416,7 +416,8 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         # Use the default preamle to get style, skin and so on right
         
         contents = get_cgi_html_preamble(configuration, "Public Archive: %s" % \
-                                         published_id, "", widgets=False)
+                                         published_id, "", widgets=False,
+                                         userstyle=False)
 
         # Manually create modified page start like get_cgi_html_header but
         # using staticpage class for flexible skinning

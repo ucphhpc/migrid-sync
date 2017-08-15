@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -572,6 +572,7 @@ def get_cgi_html_preamble(
     skin_styles='',
     scripts='',
     widgets=True,
+    userstyle=True,
     user_widgets={},
     ):
     """Return the html tags to mark the beginning of a page."""
@@ -591,7 +592,14 @@ def get_cgi_html_preamble(
                     user_styles += '''
 <link rel="stylesheet" type="text/css" href="/images/css/%s" media="screen"/>
 ''' % dep
-        
+
+    style_overrides = ''
+    if userstyle:
+        style_overrides = '''
+<!-- finally override with user-specific styles -->
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+''' % configuration.site_user_css
+
     # Please note that we insert user widget styles after our own styles even
     # though it means that dependencies may override defaults (e.g. zss* and
     # jobman even/odd color. Such style clashes should be solved elsewhere.
@@ -623,8 +631,7 @@ def get_cgi_html_preamble(
 
 <!-- override with any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="%s" media="screen"/>
-<!-- finally override with user-specific styles -->
-<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+%s
 
 <link rel="icon" type="image/vnd.microsoft.icon" href="%s"/>
 
@@ -640,7 +647,7 @@ def get_cgi_html_preamble(
 </head>
 ''' % (meta, configuration.site_default_css, configuration.site_static_css,
        base_styles, advanced_styles, skin_styles, user_styles,
-       configuration.site_custom_css, configuration.site_user_css,
+       configuration.site_custom_css, style_overrides,
        configuration.site_fav_icon, scripts, user_scripts, title)
     return out
 
@@ -657,6 +664,7 @@ def get_cgi_html_header(
     bodyfunctions='',
     menu=True,
     widgets=True,
+    userstyle=True,
     base_menu=[],
     user_menu=[],
     user_widgets={},
@@ -698,6 +706,7 @@ def get_cgi_html_header(
                                 skin_styles,
                                 scripts,
                                 widgets,
+                                userstyle,
                                 user_widgets,
                                 )
     out += '''

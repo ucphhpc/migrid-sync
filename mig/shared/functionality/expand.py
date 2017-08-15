@@ -229,6 +229,8 @@ def main(client_id, user_arguments_dict):
         root_link_name = 'USER HOME'
         main_id = "user_expand"
         page_title = 'User Files - Path Expansion'
+        userstyle = True
+        widgets = True
     elif share_id:
         (share_mode, _) = extract_mode_id(configuration, share_id)
         # TODO: load and check sharelink pickle (currently requires client_id)
@@ -242,6 +244,8 @@ def main(client_id, user_arguments_dict):
         root_link_name = '%s' % share_id
         main_id = "sharelink_expand"
         page_title = 'Shared Files - Path Expansion'
+        userstyle = False
+        widgets = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
         output_objects.append({'object_type': 'error_text', 'text'
@@ -269,6 +273,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = page_title
+    title_entry['skipwidgets'] = not widgets
+    title_entry['skipuserstyle'] = not userstyle
 
     fill_helpers = {'dest_dir': current_dir + os.sep, 'share_id': share_id,
                    'flags': flags, 'tmp_flags': flags, 'long_set':

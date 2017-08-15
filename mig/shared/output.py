@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -667,6 +667,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             bodyfunctions = i.get('bodyfunctions', '')
             include_menu = not i.get('skipmenu', False)
             include_widgets = not i.get('skipwidgets', False)
+            include_userstyle = not i.get('skipuserstyle', False)
             base_menu = i.get('base_menu', configuration.site_default_menu)
             user_menu = i.get('user_menu', [])
             user_widgets = i.get('user_widgets', {})
@@ -690,6 +691,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 bodyfunctions,
                 include_menu,
                 include_widgets,
+                include_userstyle,
                 base_menu,
                 user_menu,
                 user_widgets
