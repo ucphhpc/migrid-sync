@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sandbox - shared sandbox helpers
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -97,7 +97,7 @@ def create_oneclick_resource(
     res_conf_string = \
         """\
 ::MIGUSER::
-N/A
+NA
 
 ::HOSTURL::
 oneclick
@@ -106,13 +106,13 @@ oneclick
 %s
 
 ::RESOURCEHOME::
-N/A
+NA
 
 ::SCRIPTLANGUAGE::
 java
 
 ::SSHPORT::
--1
+22
 
 ::MEMORY::
 128
@@ -139,29 +139,29 @@ ONE-CLICK
 1
 
 ::HOSTKEY::
-N/A
+
 
 ::FRONTENDNODE::
-N/A
+NA
 
 ::FRONTENDLOG::
-N/A
+NA
 
 ::EXECONFIG::
 name=%s
 nodecount=1
 cputime=%s
-execution_precondition=N/A
-prepend_execute=N/A
-exehostlog=N/A
-joblog=N/A
-execution_user=N/A
-execution_node=N/A
-execution_dir=N/A
-start_command=N/A
-status_command=N/A
-stop_command=N/A
-clean_command=N/A
+execution_precondition=
+prepend_execute=
+exehostlog=NA
+joblog=NA
+execution_user=NA
+execution_node=NA
+execution_dir=NA
+start_command=NA
+status_command=NA
+stop_command=NA
+clean_command=NA
 continuous=False
 shared_fs=False
 vgrid=%s
@@ -264,7 +264,7 @@ X86
 
 
 ::HOSTKEY::
-N/A
+
 
 ::FRONTENDNODE::
 localhost

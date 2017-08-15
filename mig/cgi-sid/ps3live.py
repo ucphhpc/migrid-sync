@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ps3live - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,7 +51,7 @@ def create_ps3_resource(sandboxkey):
     hosturl = 'ps3live'
     resource_home = '/opt/mig/data/MiG/mig_frontend/'
     script_language = 'sh'
-    ssh_port = -1
+    ssh_port = 22
     memory = 128
 
     # disk = 0.064
@@ -61,7 +61,7 @@ def create_ps3_resource(sandboxkey):
     sandbox = True
     arch = 'PS3'
     nodecount = 1
-    hostkey = 'N/A'
+    hostkey = ''
     frontend_node = 'localhost'
 
     frontend_log = '/dev/null'
@@ -87,9 +87,9 @@ def create_ps3_resource(sandboxkey):
     exe_execution_dir = '/opt/mig/data/MiG/mig_exe/'
     exe_start_command = \
         'cd /opt/mig/data/MiG/mig_exe/; chmod 700 master_node_script_ps3.sh; ./master_node_script_ps3.sh'
-    exe_status_command = 'N/A'
+    exe_status_command = 'NA'
     exe_stop_command = 'kill -9 -$mig_exe_pgid'
-    exe_clean_command = 'N/A'
+    exe_clean_command = 'NA'
     exe_continuous = False
     exe_shared_fs = True
     exe_vgrid = default_vgrid
