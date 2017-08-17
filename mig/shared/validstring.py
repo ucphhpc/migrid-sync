@@ -172,6 +172,7 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
         if real_path == accept_path or \
                real_path.startswith(accept_path + os.sep):
             accepted = True
+            #_logger.debug("path %s is inside chroot %s" % (real_path, accept_path))
             break
     if not accepted:
         _logger.error("%s is outside chroot boundaries!" % path)
@@ -187,7 +188,12 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
         _logger.error("untrusted symlink on a storage resource: %s" % path)
         return False
 
-    inside = path.startswith(abs_home + os.sep)
+    # NOTE: abs_home may be e.g. email alias for real home so we test that
+    # path either starts with abs_home or real_home to make sure it is really
+    # a path in user home in addition to being in home or (general) chroots.
+    inside = (path.startswith(abs_home + os.sep) or \
+              path.startswith(real_home + os.sep))
+    #_logger.debug("path %s is inside " % path)
     if not allow_equal:
 
         # path must be abs_home/X

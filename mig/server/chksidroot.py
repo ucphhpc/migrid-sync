@@ -96,7 +96,7 @@ unless it is available in mig/server/MiGserver.conf
     while keep_running:
         try:
             line = chksidroot_stdin.readline()
-            path = line.strip()
+            raw_path = path = line.strip()
             logger.info("chksidroot got path: %s" % path)
             if not os.path.isabs(path):
                 logger.error("not an absolute path: %s" % path)
@@ -121,17 +121,68 @@ unless it is available in mig/server/MiGserver.conf
                 logger.error("got path with invalid root: %s" % path)
                 print INVALID_MARKER
                 continue
-            # Extract sid as first component after root base
-            sid_dir = path.replace(root, "").lstrip(os.sep)
-            sid_dir = sid_dir.split(os.sep, 1)[0]
-            logger.debug("found sid dir: %s" % sid_dir)
+            # Extract sid name as first component after root base
+            sid_name = path.replace(root, "").lstrip(os.sep)
+            sid_name = sid_name.split(os.sep, 1)[0]
+            logger.debug("found sid dir: %s" % sid_name)
+            # Save full prefix of link path
+            full_prefix = os.path.join(root, sid_name)
+            # Make sure absolute/normalized but unexpanded path is inside base.
+            # Only prevents path itself outside base - not illegal linking
+            # outside base, which is checked later.
+            path = os.path.abspath(path)
+            if not path.startswith(full_prefix):
+                logger.error("got path outside sid base: %s" % path)
+                print INVALID_MARKER
+                continue
+            is_file = False
             if is_sharelink:
                 # Share links use Alias to map directly into sharelink_home
                 # and with first char mapping into access mode sub-dir there.
-                (access_dir, _) = extract_mode_id(configuration, sid_dir)
+                (access_dir, _) = extract_mode_id(configuration, sid_name)
                 real_root = os.path.join(configuration.sharelink_home,
                                     access_dir) + os.sep
-                path = path.replace(root, real_root, 1)
+                # Share links always point to a path in user home of owner.
+                # We expand with readlink to only follow link there and extract
+                # real user home for use as real root.
+                link_path = os.path.join(real_root, sid_name)
+                try:
+                    link_target = os.readlink(link_path).rstrip(os.sep)
+                    real_target = os.path.realpath(link_path)
+                except Exception, exc:
+                    link_target = None
+                    real_target = None
+                if link_target and os.path.exists(link_target) and \
+                       link_target.startswith(configuration.user_home):
+                    user_dir = link_target.replace(configuration.user_home, '')
+                    user_dir = user_dir.lstrip(os.sep).split(os.sep)[0]
+                    base_path = os.path.join(configuration.user_home, user_dir)
+                    # NOTE: we cannot completely trust linked path to be safe,
+                    # so we use user home and normpath as default to avoid user
+                    # escaping sharelink base with e.g. SHAREID/../bla . We
+                    # only expand to actual sharelink dir if it is inside user
+                    # home.
+                    if real_target and real_target.startswith(base_path):
+                        is_file = not os.path.isdir(real_target)
+                        base_path = real_target
+                else:
+                    logger.error("got invalid share link path: %s (%s)" % \
+                                 (path, link_target))
+                    print INVALID_MARKER
+                    continue
+
+                # We manually expand sid base.
+                logger.debug("found target %s for link %s" % (link_target,
+                                                              link_path))
+                # Single file sharelinks use direct link to file. If so we
+                # manually expand to direct target. Otherwise we only replace
+                # that prefix of path to translate it to a sharelink dir path.
+                if is_file:
+                    logger.debug("found single file sharelink: %s" % path)
+                    path = link_target
+                else:
+                    logger.debug("found directory sharelink: %s" % path)
+                    path = path.replace(full_prefix, link_target, 1)
             else:
                 # Session links are directly in webserver_home and they map
                 # either into mig_system_files for empty jobs or into specific
@@ -141,40 +192,37 @@ unless it is available in mig/server/MiGserver.conf
                             os.sep
                 path = path.replace(root, real_root, 1)
 
-                # Now lookup the helper dir using either sid_dir directly if it
+                # Now lookup the helper dir using either sid_name directly if it
                 # is a dir link or with extension stripped if it is a file link
                 # like e.g. SID.job or SID.sendoutputfiles .
-                # We manually expand sid base and thus reset sid_dir component.
+                # We manually expand sid base.
                 helper_dir, _ = os.path.splitext(os.path.join(real_root,
-                                                              sid_dir))
+                                                              sid_name))
                 real_helper = os.path.realpath(helper_dir)
-                sid_dir = ''
                 logger.debug("found real helper path: %s" % real_helper)
                 if os.path.dirname(path) == configuration.webserver_home.rstrip(os.sep):
-                    real_root = configuration.mig_system_files.rstrip(os.sep)
+                    base_path = configuration.mig_system_files.rstrip(os.sep)
                 elif real_helper.startswith(configuration.user_home):
                     user_dir = real_helper.replace(configuration.user_home, '')
                     user_dir = user_dir.lstrip(os.sep).split(os.sep)[0]
-                    real_root = os.path.join(configuration.user_home, user_dir)
+                    base_path = os.path.join(configuration.user_home, user_dir)
                 else:
                     logger.error("got session path with invalid root: %s" % path)
                     print INVALID_MARKER
                     continue
 
-            # Expand sid_path to proper base dir here
-            sid_path = os.path.join(real_root, sid_dir)
-            sid_path = os.path.realpath(sid_path) + os.sep
-            abs_path = os.path.realpath(path)
-            logger.debug("check path %s in sid %s or chroot" % (abs_path,
-                                                                sid_path))
+            real_path = os.path.realpath(path)
+            logger.debug("check path %s in base %s or chroot" % (path,
+                                                                base_path))
             # Exact match to sid dir does not make sense as we expect a file
-            if not valid_user_path(configuration, abs_path, sid_path,
-                                   allow_equal=False, apache_scripts=True):
-                logger.error("path outside sid chroot: %s" % abs_path)
+            # IMPORTANT: use path and not real_path here in order to test both
+            if not valid_user_path(configuration, path, base_path,
+                                   allow_equal=is_file, apache_scripts=True):
+                logger.error("real path outside sid chroot: %s" % real_path)
                 print INVALID_MARKER
                 continue
-            logger.info("found valid sid chroot path: %s" % abs_path)
-            print abs_path
+            logger.info("found valid sid chroot path: %s" % real_path)
+            print real_path
 
             # Throttle down a bit to yield
 
@@ -183,6 +231,7 @@ unless it is available in mig/server/MiGserver.conf
             keep_running = False
         except Exception, exc:
             logger.error("unexpected exception: %s" % exc)
+            print INVALID_MARKER
             if verbose:
                 print 'Caught unexpected exception: %s' % exc
 

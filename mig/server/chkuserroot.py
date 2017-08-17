@@ -95,7 +95,7 @@ unless it is available in mig/server/MiGserver.conf
     while keep_running:
         try:
             line = chkuserroot_stdin.readline()
-            path = line.strip()
+            raw_path = path = line.strip()
             logger.info("chkuserroot got path: %s" % path)
             if not os.path.isabs(path):
                 logger.error("not an absolute path: %s" % path)
@@ -114,22 +114,27 @@ unless it is available in mig/server/MiGserver.conf
             logger.debug("found home dir: %s" % home_dir)
             # No need to expand home_path here - done in valid_user_path
             home_path = os.path.join(root, home_dir) + os.sep
-            abs_path = os.path.abspath(path)
-            # Make sure absolute but unexpanded path is inside home_path
-            if not abs_path.startswith(root):
-                logger.error("got path outside user home: %s" % abs_path)
+            # Make sure absolute/normalized but unexpanded path is inside home.
+            # Only prevents path itself outside home - not illegal linking
+            # outside home, which is checked later.
+            path = os.path.abspath(path)
+            if not path.startswith(home_path):
+                logger.error("got path outside user home: %s" % raw_path)
                 print INVALID_MARKER
                 continue
-            logger.debug("check path %s in home %s or chroot" % (abs_path,
+
+            real_path = os.path.realpath(path)
+            logger.debug("check path %s in home %s or chroot" % (path,
                                                                  home_path))
             # Exact match to user home does not make sense as we expect a file
-            if not valid_user_path(configuration, abs_path, home_path,
+            # IMPORTANT: use path and not real_path here in order to test both
+            if not valid_user_path(configuration, path, home_path,
                                    allow_equal=False, apache_scripts=True):
-                logger.error("path outside user chroot: %s" % abs_path)
+                logger.error("real path outside user chroot: %s" % real_path)
                 print INVALID_MARKER
                 continue
-            logger.info("found valid user chroot path: %s" % abs_path)
-            print abs_path
+            logger.info("found valid user chroot path: %s" % real_path)
+            print real_path
 
             # Throttle down a bit to yield
 
@@ -138,6 +143,7 @@ unless it is available in mig/server/MiGserver.conf
             keep_running = False
         except Exception, exc:
             logger.error("unexpected exception: %s" % exc)
+            print INVALID_MARKER
             if verbose:
                 print 'Caught unexpected exception: %s' % exc
 
