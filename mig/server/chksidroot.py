@@ -218,7 +218,8 @@ unless it is available in mig/server/MiGserver.conf
             # IMPORTANT: use path and not real_path here in order to test both
             if not valid_user_path(configuration, path, base_path,
                                    allow_equal=is_file, apache_scripts=True):
-                logger.error("real path outside sid chroot: %s" % real_path)
+                logger.error("path %s (%s) outside sid chroot: %s" % \
+                             (raw_path, real_path, base_path))
                 print INVALID_MARKER
                 continue
             logger.info("found valid sid chroot path: %s" % real_path)

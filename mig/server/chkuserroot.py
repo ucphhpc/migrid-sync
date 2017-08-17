@@ -130,7 +130,8 @@ unless it is available in mig/server/MiGserver.conf
             # IMPORTANT: use path and not real_path here in order to test both
             if not valid_user_path(configuration, path, home_path,
                                    allow_equal=False, apache_scripts=True):
-                logger.error("real path outside user chroot: %s" % real_path)
+                logger.error("path %s (%s) outside user chroot %s" % \
+                             (raw_path, real_path, home_path))
                 print INVALID_MARKER
                 continue
             logger.info("found valid user chroot path: %s" % real_path)
