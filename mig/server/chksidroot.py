@@ -109,6 +109,7 @@ unless it is available in mig/server/MiGserver.conf
             sharelink_prefix = os.path.join(doc_root, 'share_redirect')
             session_prefix = os.path.join(doc_root, 'sid_redirect')
             is_sharelink = False
+            is_file = False
             # Make sure absolute but unexpanded path is inside sid dir
             if path.startswith(sharelink_prefix):
                 # Build proper root base terminated with a single slash
@@ -135,84 +136,77 @@ unless it is available in mig/server/MiGserver.conf
                 logger.error("got path outside sid base: %s" % path)
                 print INVALID_MARKER
                 continue
-            is_file = False
             if is_sharelink:
                 # Share links use Alias to map directly into sharelink_home
                 # and with first char mapping into access mode sub-dir there.
                 (access_dir, _) = extract_mode_id(configuration, sid_name)
                 real_root = os.path.join(configuration.sharelink_home,
                                     access_dir) + os.sep
-                # Share links always point to a path in user home of owner.
-                # We expand with readlink to only follow link there and extract
-                # real user home for use as real root.
-                link_path = os.path.join(real_root, sid_name)
-                try:
-                    link_target = os.readlink(link_path).rstrip(os.sep)
-                    real_target = os.path.realpath(link_path)
-                except Exception, exc:
-                    link_target = None
-                    real_target = None
-                if link_target and os.path.exists(link_target) and \
-                       link_target.startswith(configuration.user_home):
-                    user_dir = link_target.replace(configuration.user_home, '')
-                    user_dir = user_dir.lstrip(os.sep).split(os.sep)[0]
-                    base_path = os.path.join(configuration.user_home, user_dir)
-                    # NOTE: we cannot completely trust linked path to be safe,
-                    # so we use user home and normpath as default to avoid user
-                    # escaping sharelink base with e.g. SHAREID/../bla . We
-                    # only expand to actual sharelink dir if it is inside user
-                    # home.
-                    if real_target and real_target.startswith(base_path):
-                        is_file = not os.path.isdir(real_target)
-                        base_path = real_target
-                else:
-                    logger.error("got invalid share link path: %s (%s)" % \
-                                 (path, link_target))
-                    print INVALID_MARKER
-                    continue
-
-                # We manually expand sid base.
-                logger.debug("found target %s for link %s" % (link_target,
-                                                              link_path))
-                # Single file sharelinks use direct link to file. If so we
-                # manually expand to direct target. Otherwise we only replace
-                # that prefix of path to translate it to a sharelink dir path.
-                if is_file:
-                    logger.debug("found single file sharelink: %s" % path)
-                    path = link_target
-                else:
-                    logger.debug("found directory sharelink: %s" % path)
-                    path = path.replace(full_prefix, link_target, 1)
             else:
                 # Session links are directly in webserver_home and they map
                 # either into mig_system_files for empty jobs or into specific
                 # user_home for real job input/output.
-                # First re-map X_redirect in path like apache Aliases do.
                 real_root = configuration.webserver_home.rstrip(os.sep) + \
                             os.sep
-                path = path.replace(root, real_root, 1)
 
-                # Now lookup the helper dir using either sid_name directly if it
-                # is a dir link or with extension stripped if it is a file link
-                # like e.g. SID.job or SID.sendoutputfiles .
-                # We manually expand sid base.
-                helper_dir, _ = os.path.splitext(os.path.join(real_root,
-                                                              sid_name))
-                real_helper = os.path.realpath(helper_dir)
-                logger.debug("found real helper path: %s" % real_helper)
-                if os.path.dirname(path) == configuration.webserver_home.rstrip(os.sep):
-                    base_path = configuration.mig_system_files.rstrip(os.sep)
-                elif real_helper.startswith(configuration.user_home):
-                    user_dir = real_helper.replace(configuration.user_home, '')
-                    user_dir = user_dir.lstrip(os.sep).split(os.sep)[0]
-                    base_path = os.path.join(configuration.user_home, user_dir)
-                else:
-                    logger.error("got session path with invalid root: %s" % path)
-                    print INVALID_MARKER
-                    continue
+            # NOTE: we cannot completely trust linked path to be safe,
+            # so we first check full prefix on normalized path above to avoid
+            # user escaping link base with e.g. SHAREID/../bla . Next we
+            # carefully expand only the SID link part and update base safely.
+
+            # We expand with readlink to only follow initial link and extract
+            # real base for use as default root.
+            link_path = os.path.join(real_root, sid_name)
+            try:
+                link_target = os.readlink(link_path).rstrip(os.sep)
+                real_target = os.path.realpath(link_path)
+            except Exception, exc:
+                link_target = None
+                real_target = None
+            if not link_target or not os.path.exists(link_path):
+                logger.error("not a valid link for path %s: %s" % \
+                             (path, link_path))
+                print INVALID_MARKER
+                continue
+
+            # Find default wide base root depending on target
+            if link_target.startswith(configuration.user_home):
+                user_dir = link_target.replace(configuration.user_home, '')
+                user_dir = user_dir.lstrip(os.sep).split(os.sep)[0]
+                base_path = os.path.join(configuration.user_home, user_dir)
+            elif not is_sharelink and \
+                     link_target.startswith(configuration.mig_system_files):
+                base_path = configuration.mig_system_files.rstrip(os.sep)
+            else:
+                logger.error("unexpected link target %s for path %s" % \
+                             (link_target, path))
+                print INVALID_MARKER
+                continue
+                
+
+            # We only expand to actual root dir if it is inside wide base root
+            if real_target and real_target.startswith(base_path):
+                is_file = not os.path.isdir(real_target)
+                base_path = real_target
+            else:
+                logger.warning("could not narrow down base root link %s" % \
+                               link_target)
+
+            # We manually expand sid base.
+            logger.debug("found target %s for link %s" % (link_target,
+                                                          link_path))
+            # Single file sharelinks use direct link to file. If so we
+            # manually expand to direct target. Otherwise we only replace
+            # that prefix of path to translate it to a sharelink dir path.
+            if is_file:
+                logger.debug("found single file link: %s" % path)
+                path = link_target
+            else:
+                logger.debug("found directory link: %s" % path)
+                path = path.replace(full_prefix, link_target, 1)
 
             real_path = os.path.realpath(path)
-            logger.debug("check path %s in base %s or chroot" % (path,
+            logger.info("check path %s in base %s or chroot" % (path,
                                                                 base_path))
             # Exact match to sid dir does not make sense as we expect a file
             # IMPORTANT: use path and not real_path here in order to test both
