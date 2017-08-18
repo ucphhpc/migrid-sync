@@ -22,7 +22,7 @@ grep -H ERROR $LOGDIR/ftps.log
 grep -H ERROR $LOGDIR/sftp.log | \
 	grep -v "Password authentication failed for\|Socket exception: Connection reset by peer\|Error reading SSH protocol banner\|check_banner\|list_folder on missing path\|chmod \(292\|365\) rejected on path\|ERROR Exception: Incompatible ssh\|ERROR Exception: Incompatible version \|ERROR $"
 grep -H ERROR $LOGDIR/davs.log
-
+grep -H ERROR $LOGDIR/chkchroot.log
 grep -H ERROR $LOGDIR/mig.log | \
 	grep -v "problems importing arclib\|disabled in configuration\|\(settings\|userprofile\) could not be opened/unpickled\|load \(ssh\|ftps\|davs\|seafile\) publickeys failed\|is not a valid openid provider"
 grep -H "CSRF check failed" $LOGDIR/mig.log
