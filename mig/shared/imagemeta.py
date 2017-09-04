@@ -2233,7 +2233,7 @@ def get_setting(
             % (path, extension)
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
-        logger.error('%s' % ERROR_MSG)
+        logger.warning('%s' % ERROR_MSG)
 
     return status
 
@@ -2276,7 +2276,7 @@ def get(
                 % (image_meta['path'], image_meta['extension'])
             output_objects.append({'object_type': 'error_text',
                                   'text': ERROR_MSG})
-            logger.error(ERROR_MSG)
+            logger.warning(ERROR_MSG)
         else:
             output_objects.append(image_settings)
 
@@ -2311,7 +2311,7 @@ def get(
         ERROR_MSG = 'No meta information for file: %s' % path
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
-        logger.error('%s' % ERROR_MSG)
+        logger.warning('%s' % ERROR_MSG)
 
     return status
 
@@ -2373,7 +2373,7 @@ def refresh(
         ERROR_MSG = "No image settings found for path: '%s'" % path
         output_objects.append({'object_type': 'error_text',
                               'text': ERROR_MSG})
-        logger.error(ERROR_MSG)
+        logger.warning(ERROR_MSG)
 
     if status == returnvalues.OK:
 
