@@ -99,6 +99,10 @@ def validate_input(
             {'object_type': 'error_text', 'text'
              : 'Input arguments were rejected - not allowed for this script!'
              })
+        output_objects.append(
+            {'object_type': 'link', 'text': 'Go back to try again',
+             'destination': 'javascript:history.back();',
+             })
         return (False, output_objects)
     return (True, accepted)
 
