@@ -113,7 +113,8 @@ def handle_update(configuration, client_id, resource_id, user_vars,
 <hr />''' % (resource_name, msg)
     else:
         logger.info('Parsing conf %s for %s' % (pending_file, resource_id))
-        (run_status, msg) = confparser.run(pending_file, resource_id, '')
+        (run_status, msg) = confparser.run(configuration, pending_file,
+                                           resource_id, '')
         if not run_status:
             logger.error(msg)
             output_objects.append({'object_type': 'error_text', 'text':

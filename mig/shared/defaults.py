@@ -28,8 +28,10 @@
 
 """Default values for use in other modules"""
 
+from string import ascii_lowercase, ascii_uppercase, digits
 
-# IMPORTANT: do not import anything here - to avoid import loops
+# IMPORTANT: do NOT import anything except native python modules/functions here
+#            to avoid import loops
 
 user_db_filename = 'MiG-users.db'
 
@@ -77,6 +79,14 @@ mqueue_empty = 'NO MESSAGES'
 # We hexlify 32 random bytes to get 64 character string
 session_id_bytes = 32
 session_id_chars = session_id_bytes * 2
+
+# Sharelink format helpers
+# Let mode chars be aAbBcC ... xX (to make splitting evenly into 3 easy)
+share_mode_charset = ''.join(['%s%s' % pair for pair in zip(
+    ascii_lowercase[:-2], ascii_uppercase[:-2])])
+# Let ID chars be aAbBcC ... zZ01..9 (to always yield URL friendly IDs
+share_id_charset = ascii_lowercase + ascii_uppercase + digits
+
 
 default_pager_entries = 25
 

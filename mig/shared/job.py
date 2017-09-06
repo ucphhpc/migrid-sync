@@ -32,7 +32,6 @@ import os
 import time
 
 from shared.base import client_id_dir
-from shared.defaults import session_id_chars
 from shared.fileio import send_message_to_grid_script, unpickle
 from shared.mrslparser import parse
 
@@ -100,16 +99,6 @@ def get_job_id(configuration):
                  % ioe)
             return -1
     return val
-
-def possible_job_id(configuration, job_id):
-    """Check if job_id is a possible job ID based on knowledge about contents
-    and length. We use hexlify and a 32"""
-    if len(job_id) != session_id_chars:
-        return False
-    for i in job_id:
-        if not i in '0123456789abcdef':
-            return False
-    return True
 
 def fill_mrsl_template(
     job_template,

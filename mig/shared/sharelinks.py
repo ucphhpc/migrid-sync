@@ -31,44 +31,25 @@ import datetime
 import os
 import time
 from random import SystemRandom
-from string import ascii_lowercase, ascii_uppercase, digits
 
 from shared.base import client_id_dir, extract_field
-from shared.defaults import sharelinks_filename, csrf_field
+from shared.defaults import sharelinks_filename, csrf_field, \
+     share_mode_charset, share_id_charset
 from shared.fileio import makedirs_rec, make_symlink, delete_symlink
 from shared.serial import load, dump
-
-# Let mode chars be aAbBcC ... xX (to make splitting evenly into 3 easy)
-__mode_charset = ''.join(['%s%s' % pair for pair in zip(ascii_lowercase[:-2],
-                                                        ascii_uppercase[:-2])])
-# Let ID chars be aAbBcC ... zZ01..9 (to always yield URL friendly IDs
-__id_charset = ascii_lowercase + ascii_uppercase + digits
 
 # We split mode charset into ro, rw and rw substrings and pick one char at
 # random from the corresponding substring when generating a share ID. In that
 # way we keep the number of combinations high while preserving short IDs and
 # a simple mapping for the apache configuration.
-__mode_len = len(__mode_charset) / 3
-__ro_mode_chars = __mode_charset[:__mode_len]
-__rw_mode_chars = __mode_charset[__mode_len:2 * __mode_len]
-__wo_mode_chars = __mode_charset[2 * __mode_len:]
+__mode_len = len(share_mode_charset) / 3
+__ro_mode_chars = share_mode_charset[:__mode_len]
+__rw_mode_chars = share_mode_charset[__mode_len:2 * __mode_len]
+__wo_mode_chars = share_mode_charset[2 * __mode_len:]
 mode_chars_map = {'read-only': __ro_mode_chars, 'read-write': __rw_mode_chars,
                   'write-only': __wo_mode_chars}
 
 __bool_map = {True: 'Yes', False: 'No'}
-
-def possible_sharelink_id(configuration, share_id):
-    """Check if share_id is a possible sharelink ID based on contents and
-    length.
-    """
-    if len(share_id) != configuration.site_sharelink_length:
-        return False
-    if not share_id[0] in __mode_charset:
-        return False
-    for i in share_id[1:]:
-        if not i in __id_charset:
-            return False
-    return True
 
 def generate_sharelink_id(configuration, share_mode):
     """We use one random char from the substring matching share_mode and
@@ -78,7 +59,7 @@ def generate_sharelink_id(configuration, share_mode):
     guessing.
     """
     share_id = SystemRandom().choice(mode_chars_map[share_mode])
-    share_id += ''.join([SystemRandom().choice(__id_charset) for _ in \
+    share_id += ''.join([SystemRandom().choice(share_id_charset) for _ in \
                          range(configuration.site_sharelink_length-1)])
     return share_id
 

@@ -31,7 +31,8 @@ import os.path
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
-from shared.defaults import keyword_auto
+from shared.defaults import keyword_auto, session_id_chars, share_id_charset, \
+     share_mode_charset
 from shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
 
 def cert_name_format(input_string):
@@ -98,6 +99,29 @@ def is_valid_email_address(addr, logger):
         c += 1
     logger.info('%s is a valid email address' % addr)
     return count >= 1
+
+def possible_job_id(configuration, job_id):
+    """Check if job_id is a possible job ID based on knowledge about contents
+    and length. We use hexlify and a 32"""
+    if len(job_id) != session_id_chars:
+        return False
+    for i in job_id:
+        if not i in '0123456789abcdef':
+            return False
+    return True
+
+def possible_sharelink_id(configuration, share_id):
+    """Check if share_id is a possible sharelink ID based on contents and
+    length.
+    """
+    if len(share_id) != configuration.site_sharelink_length:
+        return False
+    if not share_id[0] in share_mode_charset:
+        return False
+    for i in share_id[1:]:
+        if not i in share_id_charset:
+            return False
+    return True
 
 def valid_user_path(configuration, path, home_dir, allow_equal=False,
                     chroot_exceptions=keyword_auto, apache_scripts=False):

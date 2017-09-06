@@ -29,6 +29,7 @@ import os
 import sys
 
 import shared.confparser as confparser
+from shared.conf import get_configuration_object
 
 if os.getenv('HTTP_METHOD'):
     print 'CGI access disabled because of security implications'
@@ -36,13 +37,15 @@ if os.getenv('HTTP_METHOD'):
 
 resource_home = '/home/mig/resource_home'
 
+configuration = get_configuration_object()
 for (root, dirs, files) in os.walk(resource_home):
     for file in files:
         if file.startswith('config.MiG'):
             unique_resource_name = root.replace(resource_home, '')
             print unique_resource_name
-            (status, msg) = confparser.run(root + '/' + file,
-                    unique_resource_name)
+            (status, msg) = confparser.run(configuration,
+                                           root + '/' + file,
+                                           unique_resource_name)
             print file
             print msg
             if status:

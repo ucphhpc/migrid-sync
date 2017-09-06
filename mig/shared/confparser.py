@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# confparser - [insert a few words of module description on this line]
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# confparser - parse resource configurations
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,8 @@
 # Henrik Hoey Karlsen
 # Martin Rehr
 
+"""parse resource configurations"""
+
 import shared.parser as parser
 import shared.refunctions as refunctions
 import shared.resconfkeywords as resconfkeywords
@@ -36,12 +38,13 @@ from shared.conf import get_configuration_object
 from shared.serial import dumps
 from shared.vgrid import vgrid_is_resource,vgrid_is_default
 
-configuration = get_configuration_object()
 
-
-def get_resource_config_dict(config_file):
+def get_resource_config_dict(configuration, config_file):
     """Find and return configuration dictionary in provided
     conf file"""
+
+    if not configuration:
+        configuration = get_configuration_object()
 
     result = parser.parse(config_file)
     external_dict = resconfkeywords.get_keywords_dict(configuration)
@@ -63,14 +66,18 @@ def get_resource_config_dict(config_file):
     return (status, msg, global_dict)
 
 
-def run(localfile_spaces, unique_resource_name, outfile='AUTOMATIC'
-        ):
+def run(configuration, localfile_spaces, unique_resource_name,
+        outfile='AUTOMATIC'):
     """Parse configuration in localfile_spaces and write results to outfile
     if non-empty. The keyword AUTOMATIC is replaced by the expected resource
     configuration path.
     """
 
-    (status, msg, conf) = get_resource_config_dict(localfile_spaces)
+    if not configuration:
+        configuration = get_configuration_object()
+
+    (status, msg, conf) = get_resource_config_dict(configuration,
+                                                   localfile_spaces)
 
     if not status:
         return (False, msg)

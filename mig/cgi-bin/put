@@ -431,7 +431,7 @@ elif is_user(client_id, configuration.mig_server_home):
         # o.internal("Validating file '" + pending_file + "'")
 
         (status, msg, config_dict) = \
-            confparser.get_resource_config_dict(pending_file)
+            confparser.get_resource_config_dict(configuration, pending_file)
 
         if not status:
             o.out('Failure: Invalid configuration file syntax.%s' % msg)
@@ -471,7 +471,8 @@ Please contact the server administrator.""")
                   config_dict['HOSTIDENTIFIER']))
             o.reply_and_exit(o.CLIENT_ERROR)
 
-        (status, msg) = confparser.run(pending_file, resource_hostname)
+        (status, msg) = confparser.run(configuration, pending_file,
+                                       resource_hostname)
         if status:
             accepted_path = configuration.resource_home + '/'\
                  + resource_hostname + '/config.MiG'

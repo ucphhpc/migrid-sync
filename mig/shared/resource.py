@@ -346,7 +346,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
                              'config.MiG')
     if not os.path.isfile(conf_file):
         return conf
-    (status, msg, conf) = get_resource_config_dict(conf_file)
+    (status, msg, conf) = get_resource_config_dict(configuration, conf_file)
     if not status:
         return conf
 
@@ -1024,7 +1024,8 @@ Failure:
              % pending_file
         return (False, msg)
 
-    (status, conf_msg, config_dict) = get_resource_config_dict(pending_file)
+    (status, conf_msg, config_dict) = get_resource_config_dict(configuration,
+                                                               pending_file)
     if not status:
         msg += '\n%s' % conf_msg
         return (False, msg)
@@ -1069,7 +1070,7 @@ Failure:
         return (False, msg)
 
     unique_resource_name = resource_name + '.' + str(resource_identifier)
-    (status, run_msg) = run(tmpfile, unique_resource_name)
+    (status, run_msg) = run(configuration, tmpfile, unique_resource_name)
     msg += '\n' + run_msg
     if not status:
         return (False, msg)

@@ -45,7 +45,7 @@ from shared.resadm import fill_frontend_script, \
 import shared.confparser as confparser
 
 
-def create_ps3_resource(sandboxkey):
+def create_ps3_resource(configuration, sandboxkey):
     resource_name = 'ps3live'
     mig_user = 'mig'
     hosturl = 'ps3live'
@@ -227,8 +227,8 @@ vgrid=%s"""\
 
     # parse and pickle the conf file
 
-    (status, msg) = confparser.run(conf_file_src, resource_name + '.'
-                                    + str(resource_identifier))
+    (status, msg) = confparser.run(configuration, conf_file_src, resource_name \
+                                   + '.' + str(resource_identifier))
     if not status:
         o.out(msg, conf_file_src)
         o.reply_and_exit(o.ERROR)
@@ -249,7 +249,7 @@ vgrid=%s"""\
     return resource_name + '.' + str(resource_identifier)
 
 
-def get_ps3_resource():
+def get_ps3_resource(configuration):
     log_msg = 'ps3live'
 
     # Identify sandboxkey
@@ -268,7 +268,7 @@ def get_ps3_resource():
 
         # Create resource
 
-        unique_resource_name = create_ps3_resource(sandboxkey)
+        unique_resource_name = create_ps3_resource(configuration, sandboxkey)
         log_msg = log_msg + ' Created resource: %s'\
              % unique_resource_name
 
@@ -333,15 +333,15 @@ if str(os.getenv('HTTPS')) != 'on':
 action = fieldstorage.getfirst('action', None)
 debug = fieldstorage.getfirst('debug', None)
 if action == 'get_frontend_script':
-    (status, msg) = get_ps3_resource()
+    (status, msg) = get_ps3_resource(configuration)
     if status:
         (status, msg) = get_frontend_script(msg, logger)
 elif action == 'get_master_node_script':
-    (status, msg) = get_ps3_resource()
+    (status, msg) = get_ps3_resource(configuration)
     if status:
         (status, msg) = get_master_node_script(msg, 'localhost', logger)
 elif action == 'get_resourcename':
-    (status, msg) = get_ps3_resource()
+    (status, msg) = get_ps3_resource(configuration)
 else:
     status = False
     msg = 'Unknown action: %s' % action
