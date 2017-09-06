@@ -43,6 +43,7 @@ import sys
 import time
 import traceback
 
+from shared.base import client_dir_id, client_id_dir
 from shared.conf import get_configuration_object
 from shared.defaults import datatransfers_filename, transfers_log_size, \
      transfers_log_cnt, user_keys_dir, _user_invisible_paths
@@ -55,7 +56,6 @@ from shared.transferfunctions import blind_pw, load_data_transfers, \
      update_data_transfer, get_status_dir, sub_pid_list, add_sub_pid, \
      del_sub_pid, kill_sub_pid, add_worker_transfer, del_worker_transfer, \
      all_worker_transfers, get_worker_transfer
-from shared.useradm import client_dir_id, client_id_dir
 from shared.validstring import valid_user_path
 
 # Global helper dictionaries with requests for all users
@@ -457,7 +457,7 @@ def run_transfer(configuration, client_id, transfer_dict):
                                 key_path.lstrip(os.sep))
         # IMPORTANT: path must be expanded to abs for proper chrooting
         key_path = os.path.abspath(key_path)
-        if not valid_user_path(key_path, settings_base_dir):
+        if not valid_user_path(configuration, key_path, settings_base_dir):
             logger.error('rejecting illegal directory traversal for %s (%s)' \
                          % (key_path, blind_pw(transfer_dict)))
             raise ValueError("user provided a key outside own settings!")
@@ -474,7 +474,7 @@ def run_transfer(configuration, client_id, transfer_dict):
             # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_dst = os.path.abspath(abs_dst)
             # Reject illegal directory traversal and hidden files
-            if not valid_user_path(abs_dst, base_dir, True):
+            if not valid_user_path(configuration, abs_dst, base_dir, True):
                 logger.error('rejecting illegal directory traversal for %s (%s)' \
                              % (abs_dst, blind_pw(transfer_dict)))
                 raise ValueError("user provided a destination outside home!")
@@ -496,7 +496,7 @@ def run_transfer(configuration, client_id, transfer_dict):
             # IMPORTANT: path must be expanded to abs for proper chrooting
             src_path = os.path.abspath(src_path)
             # Reject illegal directory traversal and hidden files
-            if not valid_user_path(src_path, base_dir, True):
+            if not valid_user_path(configuration, src_path, base_dir, True):
                 logger.error('rejecting illegal directory traversal for %s (%s)' \
                              % (src, blind_pw(transfer_dict)))
                 raise ValueError("user provided a source outside home!")
