@@ -36,7 +36,7 @@ import re
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, force_utf8, force_unicode, \
-     generate_https_urls
+     generate_https_urls, fill_distinguished_name
 from shared.defaults import cert_valid_days
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -44,7 +44,6 @@ from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
 from shared.pwhash import scramble_password
 from shared.serial import dumps
-from shared.useradm import fill_distinguished_name
 
 
 def signature():

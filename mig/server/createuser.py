@@ -33,12 +33,12 @@ import os
 import getopt
 from getpass import getpass
 
+from shared.base import fill_distinguished_name, fill_user
 from shared.conf import get_configuration_object
 from shared.defaults import cert_valid_days
 from shared.pwhash import unscramble_password, scramble_password
 from shared.serial import load
-from shared.useradm import init_user_adm, create_user, \
-    fill_distinguished_name, fill_user, load_user_dict
+from shared.useradm import init_user_adm, create_user, load_user_dict
 
 cert_warn = \
     """

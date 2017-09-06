@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelinks - share link helper functions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,10 +33,10 @@ import time
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
 
+from shared.base import client_id_dir, extract_field
 from shared.defaults import sharelinks_filename, csrf_field
 from shared.fileio import makedirs_rec, make_symlink, delete_symlink
 from shared.serial import load, dump
-from shared.useradm import client_id_dir, extract_field
 
 # Let mode chars be aAbBcC ... xX (to make splitting evenly into 3 easy)
 __mode_charset = ''.join(['%s%s' % pair for pair in zip(ascii_lowercase[:-2],

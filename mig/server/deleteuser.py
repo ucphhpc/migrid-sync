@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # deleteuser - Remove a MiG user
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,8 +31,9 @@ import os
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, delete_user, \
-    fill_distinguished_name, fill_user, distinguished_name_to_user
+from shared.base import fill_distinguished_name, fill_user, \
+     distinguished_name_to_user
+from shared.useradm import init_user_adm, delete_user
 
 
 def usage(name='deleteuser.py'):

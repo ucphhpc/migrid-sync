@@ -31,12 +31,12 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.accountreq import valid_name_chars, dn_max_len, account_js_helpers
+from shared.base import distinguished_name_to_user
 from shared.defaults import csrf_field
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
-from shared.useradm import distinguished_name_to_user
 
 
 def signature():

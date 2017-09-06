@@ -34,7 +34,8 @@ from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir, generate_https_urls, valid_dir_input
+from shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
+     distinguished_name_to_user
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
      keyword_owners, keyword_members, default_vgrid_settings_limit
 from shared.fileio import write_file, make_symlink, delete_file
@@ -43,7 +44,7 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.safeeval import subprocess_call, subprocess_popen, \
      subprocess_stdout, subprocess_pipe
-from shared.useradm import distinguished_name_to_user, get_full_user_map
+from shared.useradm import get_full_user_map
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
      vgrid_set_resources, vgrid_set_triggers, vgrid_set_settings, \
      vgrid_create_allowed, vgrid_restrict_write_support, vgrid_flat_name, \

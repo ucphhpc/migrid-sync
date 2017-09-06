@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # dashboard - Dashboard entry page backend
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,10 +33,10 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.base import extract_field
 from shared.functional import validate_input_and_cert
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
-from shared.useradm import extract_field
 
 
 def signature():

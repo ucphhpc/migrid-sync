@@ -31,7 +31,7 @@ import os
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
+from shared.base import client_id_dir, distinguished_name_to_user
 from shared.defaults import csrf_field, _dot_vgrid, keyword_members
 from shared.fileio import remove_rec, move_rec, delete_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -41,7 +41,6 @@ from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import force
 from shared.safeeval import subprocess_popen, subprocess_pipe, \
      subprocess_stdout
-from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
      vgrid_is_member, vgrid_owners, vgrid_members, vgrid_resources, \
      vgrid_list_subvgrids, vgrid_remove_owners, vgrid_list_parents, \

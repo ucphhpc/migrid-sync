@@ -36,7 +36,7 @@ import time
 import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
-    invisible_path, force_utf8
+    invisible_path, force_utf8, extract_field
 from shared.defaults import dav_domain
 from shared.fileio import unpickle
 from shared.job import possible_job_id
@@ -47,8 +47,7 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
-    extract_field, generate_password_hash, generate_password_digest, \
-    load_user_dict
+    generate_password_hash, generate_password_digest, load_user_dict
 from shared.validstring import valid_user_path
 
 default_max_fails, default_fail_cache = 5, 120

@@ -41,7 +41,8 @@ import os
 import time
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir, force_utf8, force_unicode
+from shared.base import client_id_dir, force_utf8, force_unicode, fill_user, \
+     distinguished_name_to_user, fill_distinguished_name
 from shared.defaults import user_db_filename, cert_valid_days, oid_valid_days
 from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
@@ -49,8 +50,7 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
 from shared.safeinput import filter_commonname
-from shared.useradm import distinguished_name_to_user, \
-     create_user, fill_user, fill_distinguished_name
+from shared.useradm import create_user
 try:
     import shared.arcwrapper as arc
 except Exception, exc:

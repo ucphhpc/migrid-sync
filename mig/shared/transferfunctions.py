@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # transferfunctions - data transfer helper functions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,12 +31,12 @@ import datetime
 import os
 import time
 
+from shared.base import client_id_dir
 from shared.defaults import datatransfers_filename, user_keys_dir, \
      transfer_output_dir
 from shared.fileio import makedirs_rec, delete_file
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.serial import load, dump
-from shared.useradm import client_id_dir
 
 default_key_type = 'rsa'
 default_key_bits = 2048

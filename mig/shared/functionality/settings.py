@@ -30,7 +30,7 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.base import client_alias, client_id_dir
+from shared.base import client_alias, client_id_dir, extract_field
 from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions, \
      seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
@@ -47,8 +47,7 @@ from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
-from shared.useradm import get_default_mrsl, get_default_css, extract_field, \
-     create_alias_link
+from shared.useradm import get_default_mrsl, get_default_css, create_alias_link
 from shared.vgridaccess import get_vgrid_map_vgrids
 
 try:

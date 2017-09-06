@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # importusers - Import users from XML file in provided URL
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,12 +34,13 @@ import urllib
 import re
 
 import shared.returnvalues as returnvalues
+from shared.base import fill_user, distinguished_name_to_user
 from shared.conf import get_configuration_object
 from shared.defaults import csrf_field
 from shared.functionality.sendrequestaction import main
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.useradm import init_user_adm, fill_user, default_search, \
-    distinguished_name_to_user, create_user, search_users
+from shared.useradm import init_user_adm, default_search, create_user, \
+     search_users
 
 
 def usage(name='importusers.py'):

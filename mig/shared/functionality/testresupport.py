@@ -35,7 +35,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, valid_dir_input
 from shared.defaults import csrf_field
 from shared.fileio import unpickle, write_file
-from shared.findtype import is_owner, client_id_dir
+from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry

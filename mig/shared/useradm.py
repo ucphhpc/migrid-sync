@@ -36,8 +36,7 @@ import sqlite3
 import sys
 
 from shared.base import client_id_dir, client_dir_id, client_alias, \
-     sandbox_resource, fill_user, fill_distinguished_name, extract_field, \
-     distinguished_name_to_user
+     sandbox_resource, fill_user, fill_distinguished_name, extract_field
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \

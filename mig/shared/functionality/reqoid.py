@@ -30,7 +30,7 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
+from shared.base import client_id_dir, distinguished_name_to_user
 from shared.accountreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, account_js_helpers
 from shared.defaults import csrf_field
@@ -38,7 +38,6 @@ from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
-from shared.useradm import distinguished_name_to_user
 from shared.safeinput import html_escape
 
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # missingusers - Search for missing users in MiG user database
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,9 +32,8 @@ import os
 import sys
 import getopt
 
-from shared.base import client_dir_id
-from shared.useradm import init_user_adm, search_users, default_search, \
-     distinguished_name_to_user
+from shared.base import client_dir_id, distinguished_name_to_user
+from shared.useradm import init_user_adm, search_users, default_search
 
 def usage(name='missingusers.py'):
     """Usage help"""

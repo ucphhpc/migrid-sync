@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fakecgi - fake a cgi request
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,11 +37,11 @@ to exist for actions to work.
 import os
 import sys
 
+from shared.base import distinguished_name_to_user
 from shared.conf import get_configuration_object
 from shared.defaults import csrf_field
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.safeeval import subprocess_call
-from shared.useradm import distinguished_name_to_user
 
 
 def usage():
