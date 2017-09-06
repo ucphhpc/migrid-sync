@@ -51,6 +51,16 @@ all_jobs = keyword_all
 any_protocol = keyword_any
 any_state = keyword_any
 
+cert_field_order = [
+    ('country', 'C'),
+    ('state', 'ST'),
+    ('locality', 'L'),
+    ('organization', 'O'),
+    ('organizational_unit', 'OU'),
+    ('full_name', 'CN'),
+    ('email', 'emailAddress'),
+    ]
+
 sandbox_names = ['sandbox', 'oneclick', 'ps3live']
 
 email_keyword_list = ['mail', 'email']

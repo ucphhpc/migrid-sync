@@ -32,11 +32,12 @@ import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from shared.defaults import sandbox_names, _user_invisible_files, \
-     _user_invisible_dirs, _vgrid_xgi_scripts
+     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order
 
 _id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
 _key_val_sep = '='
 _remap_fields = ['CN', 'O', 'OU']
+cert_field_map = dict(cert_field_order)
 
 def client_id_dir(client_id):
     """Map client ID to a valid directory name:
@@ -76,6 +77,64 @@ def client_alias(client_id):
     """
     # sftp and friends choke on potential '=' padding - replace by underscore
     return base64.urlsafe_b64encode(client_id).replace('=', '_')
+
+def fill_user(target):
+    """Fill target user dictionary with all expected fields"""
+
+    for (key, _) in cert_field_order:
+        target[key] = target.get(key, '')
+    return target
+
+
+def fill_distinguished_name(user):
+    """Fill distinguished_name field from other fields if not already set.
+
+    Please note that MiG certificates get empty fields set to NA, so this
+    is translated here, too.
+    """
+
+    if user.get('distinguished_name', ''):
+        return user
+    else:
+        user['distinguished_name'] = ''
+    for (key, val) in cert_field_order:
+        setting = user.get(key, '')
+        if not setting:
+            setting = 'NA'
+        user['distinguished_name'] += '/%s=%s' % (val, setting)
+    return user
+
+
+def distinguished_name_to_user(distinguished_name):
+    """Build user dictionary from distinguished_name string on the form:
+    /X=abc/Y=def/Z=ghi
+
+    Please note that MiG certificates get empty fields set to NA, so this
+    is translated back here, too.
+    """
+
+    user_dict = {'distinguished_name': distinguished_name}
+    parts = distinguished_name.split('/')
+    for field in parts:
+        if not field:
+            continue
+        (key, val) = field.split('=', 1)
+        if 'NA' == val:
+            val = ''
+        if not key in cert_field_map.values():
+            user_dict[key] = val
+        else:
+            for (name, short) in cert_field_order:
+                if key == short:
+                    user_dict[name] = val
+    return user_dict
+
+
+def extract_field(distinguished_name, field_name):
+    """Extract field_name value from client_id if included"""
+    user = distinguished_name_to_user(distinguished_name)
+    return user.get(field_name, None)
+
 
 # TODO: old_id_format should be eliminated after complete migration to full DN
 

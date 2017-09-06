@@ -36,14 +36,15 @@ import sqlite3
 import sys
 
 from shared.base import client_id_dir, client_dir_id, client_alias, \
-     sandbox_resource
+     sandbox_resource, fill_user, fill_distinguished_name, extract_field, \
+     distinguished_name_to_user
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
      davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
      settings_filename, profile_filename, default_css_filename, \
      widgets_filename, seafile_ro_dirname, authkeys_filename, \
-     authpasswords_filename, authdigests_filename
+     authpasswords_filename, authdigests_filename, cert_field_order
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
@@ -73,16 +74,6 @@ ftps_authdigests = os.path.join(ftps_conf_dir, authdigests_filename)
 https_authkeys = ''
 https_authpasswords = user_db_filename
 https_authdigests = user_db_filename
-cert_field_order = [
-    ('country', 'C'),
-    ('state', 'ST'),
-    ('locality', 'L'),
-    ('organization', 'O'),
-    ('organizational_unit', 'OU'),
-    ('full_name', 'CN'),
-    ('email', 'emailAddress'),
-    ]
-cert_field_map = dict(cert_field_order)
 
 def init_user_adm():
     """Shared init function for all user administration scripts"""
@@ -93,64 +84,6 @@ def init_user_adm():
         app_dir = '.'
     db_path = os.path.join(app_dir, user_db_filename)
     return (args, app_dir, db_path)
-
-
-def fill_user(target):
-    """Fill target user dictionary with all expected fields"""
-
-    for (key, _) in cert_field_order:
-        target[key] = target.get(key, '')
-    return target
-
-
-def fill_distinguished_name(user):
-    """Fill distinguished_name field from other fields if not already set.
-
-    Please note that MiG certificates get empty fields set to NA, so this
-    is translated here, too.
-    """
-
-    if user.get('distinguished_name', ''):
-        return user
-    else:
-        user['distinguished_name'] = ''
-    for (key, val) in cert_field_order:
-        setting = user.get(key, '')
-        if not setting:
-            setting = 'NA'
-        user['distinguished_name'] += '/%s=%s' % (val, setting)
-    return user
-
-
-def distinguished_name_to_user(distinguished_name):
-    """Build user dictionary from distinguished_name string on the form:
-    /X=abc/Y=def/Z=ghi
-
-    Please note that MiG certificates get empty fields set to NA, so this
-    is translated back here, too.
-    """
-
-    user_dict = {'distinguished_name': distinguished_name}
-    parts = distinguished_name.split('/')
-    for field in parts:
-        if not field:
-            continue
-        (key, val) = field.split('=', 1)
-        if 'NA' == val:
-            val = ''
-        if not key in cert_field_map.values():
-            user_dict[key] = val
-        else:
-            for (name, short) in cert_field_order:
-                if key == short:
-                    user_dict[name] = val
-    return user_dict
-
-
-def extract_field(distinguished_name, field_name):
-    """Extract field_name value from client_id if included"""
-    user = distinguished_name_to_user(distinguished_name)
-    return user.get(field_name, None)
 
 
 def load_user_db(db_path):
