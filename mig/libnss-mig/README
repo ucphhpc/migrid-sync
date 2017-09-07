@@ -1,0 +1,35 @@
+This folder contains a Name Server module for providing MiG users as virtual users in a system.
+
+To install the module, run `sudo make install`, which will build the binary and copy it into /lib, such that it can be used by nsswitch.
+
+The module needs to be registered in the nsswitch.conf file, and a special file needs to be created in:
+/etc/libss_mig.conf
+
+This file should contain exactly one line with an entry in the passwd format, describing the MiG system user that all MiG users are mapped to. Example:
+
+mig:x:501:501:MIG User:/restrictfs:/bin/bash
+
+This sets up all MiG virtual users to have UID and GID 501.
+
+The home folder should be set to the MiG user_home folder, usually found in the state folder.
+If restrictfs is used, it should be set to the restrictfs mount point, usually /restrictfs.
+
+The home folder is then suffixed with the username and expanded to provide an absolute path.
+
+
+The entry in /etc/nsswitch.conf looks like this before updating:
+passwd:         compat
+group:          compat
+shadow:         compat
+gshadow:        files
+
+It could could look like this after updating:
+
+passwd:         compat mig
+group:          compat
+shadow:         compat mig
+gshadow:        files
+
+
+
+NOTE: On 64 bit systems, the Makefile installs libraries in /lib, but they should be installed in /lib64

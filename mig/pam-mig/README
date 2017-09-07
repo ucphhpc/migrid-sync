@@ -1,0 +1,36 @@
+This folder contains a PAM module for login that uses the MiG password files, rather than the system shadow files.
+
+The module is intended to be used with libnss_mig in the nsswitch setup, such that the users home folder can contain the special MiG password files.
+
+The MiG password files are encrypted with standard PKBDF2-SHA256 hashing.
+
+The C implementation of pkbdf2 is taken from:
+https://github.com/kholia/PKCS5_PBKDF2/
+
+If you need to update the implementation, make sure you patch it by prefixing the sha2_* functions with the "static" keyword, so they are not exported and mess with OpenSSH.
+
+The C implementation of b64 is taken from:
+https://github.com/Comcast/trower-base64/
+
+The pam_mig module implements the full PAM stack and can thus be used exclusively.
+
+An example PAM config file for SSH should be placed in /etc/pam.d/sshd and could look like:
+
+#Un-comment this line if you want regular system users to log in with passwords as well (pubkeys are handled without PAM):
+#@include common-auth
+
+account  required /lib/libpam_mig.so
+auth     required /lib/libpam_mig.so
+password required /lib/libpam_mig.so
+session  required /lib/libpam_mig.so
+
+
+To support public key authentication with MiG, you need to add a section to the /etc/ssh/sshd_config file that matches the MiG group and redirects to their public keys, while also chrooting them:
+
+Match Group mig
+  AuthorizedKeysFile	%h/.ssh/authorized_keys
+  ChrootDirectory		%h
+  ForceCommand internal-sftp
+
+
+NOTE: On 64 bit systems, the Makefile installs libraries in /lib, but they should be installed in /lib64
