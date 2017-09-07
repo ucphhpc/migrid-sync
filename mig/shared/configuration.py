@@ -466,16 +466,15 @@ class Configuration:
 
     # constructor
 
-    def __init__(self, config_file, verbose=False):
+    def __init__(self, config_file, verbose=False, log_path=None):
         self.config_file = config_file
-        self.reload_config(verbose)
+        self.reload_config(verbose, log_path)
 
-    def reload_config(self, verbose):
+    def reload_config(self, verbose, log_path=None):
         """Re-read and parse configuration file"""
 
         try:
-            self.logger.info('reloading configuration and reopening log'
-                             )
+            self.logger.info('reloading configuration and reopening log')
         except:
             pass
 
@@ -510,9 +509,13 @@ class Configuration:
             self.log_dir = '.'
             self.logfile = 'mig.log'
             self.loglevel = 'info'
-            
-        self.log_path = os.path.join(self.log_dir, self.logfile)
-        
+
+        if log_path is None:
+            self.log_path = os.path.join(self.log_dir, self.logfile)
+        else:
+            self.log_dir, self.logfile = os.path.split(log_path)
+            self.log_path = log_path
+
         if verbose:
             print 'logging to:', self.log_path, '; level:', self.loglevel
 
@@ -598,13 +601,11 @@ class Configuration:
             self.language = config.get('SETTINGS', 'language').split()
             self.submitui = config.get('SETTINGS', 'submitui').split()
 
-        except Exception, err:
-
             # logger.info("done reading settings from config")
 
+        except Exception, err:
             try:
-                self.logger.error('Error in reloading configuration: %s'
-                                   % err)
+                self.logger.error('Error in reloading configuration: %s' % err)
             except:
                 pass
             raise Exception('Failed to parse configuration: %s' % err)

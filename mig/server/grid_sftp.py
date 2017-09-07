@@ -103,13 +103,19 @@ def hangup_handler(signal, frame):
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
+
+    # Init internal args so that they can be overriden on class before init
+
+    logger = None
+    sftpserver = None
+
     def __init__(self, flags=0, sftpserver=None):
         paramiko.SFTPHandle.__init__(self, flags)
-        self.sftpserver = None
         if sftpserver is not None:
             self.sftpserver = sftpserver
-            self.logger = logger
-            self.logger.debug("SFTPHandle init: %s" % repr(flags))
+        if self.logger is None:
+            self.logger = logger     
+        self.logger.debug("SFTPHandle init: %s" % repr(flags))
 
     def stat(self):
         """Handle operations of same name"""
@@ -140,16 +146,77 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     very important to conservatively catch and log all potential exceptions
     when debugging to avoid excessive loss of hair :-)
     """
-    def __init__(self, server, transport, fs_root, *largs, **kwargs):
+
+    # Init internal args so that they can be overriden on class before init
+    # when instantiation needs to be implicit.
+
+    configuration = None
+    conf = None
+    logger = None
+    transport = None
+    root = None
+
+    def __init__(self, server, *largs, **kwargs):
+        """Init"""
         paramiko.SFTPServerInterface.__init__(self, server)
-        conf = kwargs.get('conf', {})
-        self.conf = conf
-        self.logger = logger
-        self.transport = transport
-        self.root = fs_root
+        # From openssh subsys global configuration and logger may be missing
+        global configuration, logger
+        if self.configuration:
+            configuration = self.configuration
+        if self.logger is None:
+            logger = configuration.logger
+            self.logger = logger
+        else:
+            logger = self.logger
+
+        if self.conf is None:
+            conf = kwargs.get('conf', {})
+            # Fall back to daemon_conf from configuration
+            if not conf and configuration:
+                conf = configuration.daemon_conf
+            self.conf = conf
+        conf = self.conf
+        logger.debug('logger available in SimpleSftpServer init')
+        if self.transport is None:
+            self.transport = kwargs.get('transport', None)
+        logger.debug('using transport: %s' % self.transport)
+        if self.root is None:
+            self.root = kwargs.get('fs_root', None)
+            if not self.root:
+                self.root = conf.get('root_dir', None)
+        logger.debug('using root: %s' % self.root)
         self.chroot_exceptions = conf.get('chroot_exceptions', keyword_auto)
         self.chmod_exceptions = conf.get('chmod_exceptions', [])
-        self.user_name = self.transport.get_username()
+        # For stand-alone paramiko servers the active user is in transport,
+        # where as for paramiko subsys in openssh it is in USER env.
+        if self.transport:
+            logger.debug('extract active user from transport')
+            self.user_name = self.transport.get_username()
+        else:
+            #logger.debug('active env: %s' % os.environ)
+            username = os.environ.get('USER', 'INVALID')
+            # TODO: remove this remap to fake real auth once PAM is in place
+            if username.find('@') == -1:
+                username += '@nbi.ku.dk'
+
+            logger.debug('refresh user entry for %s' % username)
+            # TODO: should we select more specifically on refresh here?
+            #       ... it should be possible to detect kind.
+            # Either of user, job and share keys may have changed
+            daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
+                                                            username)
+            daemon_conf, changed_jobs = refresh_job_creds(configuration, 'sftp',
+                                                          username)
+            daemon_conf, changed_shares = refresh_share_creds(configuration,
+                                                              'sftp', username)
+            update_login_map(daemon_conf, changed_users, changed_jobs,
+                             changed_shares)
+            self.user_name = username
+
+        logger.debug('auth user is %s' % self.user_name)
+
+        logger.debug('update user chroot based on login map')
+
         # list of User login objects for user_name
 
         entries = login_map_lookup(conf, self.user_name)
@@ -158,6 +225,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 # IMPORTANT: Must be utf8 for 'ls' to work on user home!
                 self.root = force_utf8("%s/%s" % (self.root, entry.home))
                 break
+        logger.debug('auth user chroot is %s' % self.root)
 
     # Use shared daemon fs helper functions
     
@@ -621,9 +689,20 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
     NOTE: The username arguments are unicode so we need to force utf8.
     """
+
+    # Init internal args so that they can be overriden on class before init
+    # when instantiation needs to be implicit.
+
+    conf = None
+    logger = None
+    client_addr = None
+    
     def __init__(self, *largs, **kwargs):
-        conf = kwargs.get('conf', {})
         paramiko.ServerInterface.__init__(self)
+        conf = kwargs.get('conf', {})
+        if not conf:    
+            conf = configuration.daemon_conf
+        self.conf = conf
         self.logger = logger
         self.event = threading.Event()
         self.client_addr = kwargs.get('client_addr')

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # conf - Server configuration handling
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,7 @@ import sys
 from shared.fileio import unpickle
 
 
-def get_configuration_object():
+def get_configuration_object(log_path=None):
     from shared.configuration import Configuration
     if os.environ.get('MIG_CONF', None):
         config_file = os.environ['MIG_CONF']
@@ -44,7 +44,7 @@ def get_configuration_object():
         else:
             config_file = os.path.join(app_dir, '..', 'server',
                     'MiGserver.conf')
-    configuration = Configuration(config_file, False)
+    configuration = Configuration(config_file, False, log_path)
     return configuration
 
 
