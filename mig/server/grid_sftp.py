@@ -220,6 +220,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # list of User login objects for user_name
 
         entries = login_map_lookup(conf, self.user_name)
+        if not entries:
+            raise Exception("user not found in login map!")
         for entry in entries:
             if entry.chroot:
                 # IMPORTANT: Must be utf8 for 'ls' to work on user home!

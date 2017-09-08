@@ -33,4 +33,16 @@ Match Group mig
   ForceCommand internal-sftp
 
 
+For OpenSSH with paramiko subsystem the conf should be something like:
+
+Subsystem   sftp    /path/to/mig/server/sftp_subsys.py
+Match Group mig
+    AuthorizedKeysFile    %h/.ssh/authorized_keys
+    # We do not need ChrootDirectory here since subsystem handles it
+    ForceCommand           /path/to/mig/server/sftp_subsys.py
+    # Lock down any other uses to be on the safe side
+    AllowTcpForwarding no
+    PermitTTY no
+    X11Forwarding no
+
 NOTE: On 64 bit systems, the Makefile installs libraries in /lib, but they should be installed in /lib64

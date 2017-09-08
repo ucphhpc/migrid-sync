@@ -3,13 +3,16 @@ This folder contains a Name Server module for providing MiG users as virtual use
 To install the module, run `sudo make install`, which will build the binary and copy it into /lib, such that it can be used by nsswitch.
 
 The module needs to be registered in the nsswitch.conf file, and a special file needs to be created in:
-/etc/libss_mig.conf
+/etc/libnss_mig.conf
 
 This file should contain exactly one line with an entry in the passwd format, describing the MiG system user that all MiG users are mapped to. Example:
 
 mig:x:501:501:MIG User:/restrictfs:/bin/bash
 
 This sets up all MiG virtual users to have UID and GID 501.
+For OpenSSH with a external subsystem it is strictly required that shell
+is set to /bin/bash or similar, while restrictfs can use /bin/false or
+/sbin/nologin for added security.
 
 The home folder should be set to the MiG user_home folder, usually found in the state folder.
 If restrictfs is used, it should be set to the restrictfs mount point, usually /restrictfs.
