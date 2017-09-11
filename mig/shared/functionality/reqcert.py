@@ -105,6 +105,10 @@ def main(client_id, user_arguments_dict):
                               : 'However, if you want a dedicated %s certificate you can still request one below:' % \
                                 configuration.short_title
                               })
+    elif not configuration.ca_fqdn or not configuration.ca_user:
+        output_objects.append({'object_type': 'error_text', 'text': """
+User certificate requests are not supported on this site!"""})
+        return (output_objects, returnvalues.CLIENT_ERROR)
     elif client_id:
         for entry in (title_entry, header_entry):
             entry['text'] = entry['text'].replace('request', 'request / renew')

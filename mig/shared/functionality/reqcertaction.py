@@ -212,6 +212,11 @@ resources anyway.
                           : "Test request ignored!"})
         return (output_objects, returnvalues.OK)
 
+    if not configuration.ca_fqdn or not configuration.ca_user:
+        output_objects.append({'object_type': 'error_text', 'text': """
+User certificate requests are not supported on this site!"""})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
@@ -232,11 +237,12 @@ resources anyway.
     mig_user = os.environ.get('USER', 'mig')
     command_cert_create = \
         """
-on CA host (apu01.esci.nbi.dk):
-sudo su - mig-ca
+on CA host (%s):
+sudo su - %s
 rsync -aP %s@%s:mig/server/MiG-users.db ~/
 ./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'""" % \
-    (mig_user, configuration.server_fqdn, configuration.admin_email,
+    (configuration.ca_fqdn, configuration.ca_user, mig_user,
+     configuration.server_fqdn, configuration.admin_email,
      configuration.server_fqdn, user_id)
     command_user_create = \
         """
@@ -252,10 +258,11 @@ cd ~/mig/server
          % (mig_user, configuration.server_fqdn, user_id)
     command_cert_revoke = \
         """
-on CA host (apu01.esci.nbi.dk):
-sudo su - mig-ca
+on CA host (%s):
+sudo su - %s
 ./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'"""\
-         % (configuration.admin_email, user_id)
+         % (configuration.ca_fqdn, configuration.ca_user,
+            configuration.admin_email, user_id)
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete

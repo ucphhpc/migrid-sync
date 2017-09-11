@@ -230,13 +230,17 @@ resources anyway.
     user_dict['tmp_id'] = tmp_id
 
     mig_user = os.environ.get('USER', 'mig')
-    command_cert_create = \
+    if not configuration.ca_fqdn or not configuration.ca_user:
+        command_cert_create = '[Disabled On This Site]'
+    else:
+        command_cert_create = \
         """
-on CA host (apu01.esci.nbi.dk):
-sudo su - mig-ca
+on CA host (%s):
+sudo su - %s
 rsync -aP %s@%s:mig/server/MiG-users.db ~/
 ./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'""" % \
-    (mig_user, configuration.server_fqdn, configuration.admin_email,
+    (configuration.ca_fqdn, configuration.ca_user, mig_user,
+     configuration.server_fqdn, configuration.admin_email,
      configuration.server_fqdn, user_id)
     command_user_create = \
         """
@@ -250,12 +254,16 @@ As '%s' user on %s:
 cd ~/mig/server
 ./deleteuser.py -i '%s'"""\
          % (mig_user, configuration.server_fqdn, user_id)
-    command_cert_revoke = \
+    if not configuration.ca_fqdn or not configuration.ca_user:
+        command_cert_revoke = '[Disabled On This Site]'
+    else:
+        command_cert_revoke = \
         """
-on CA host (apu01.esci.nbi.dk):
-sudo su - mig-ca
+on CA host (%s):
+sudo su - %s
 ./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'"""\
-         % (configuration.admin_email, user_id)
+         % (configuration.ca_fqdn, configuration.ca_user,
+            configuration.admin_email, user_id)
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete

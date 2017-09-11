@@ -58,6 +58,8 @@ def fix_missing(config_file, verbose=True):
         'server_fqdn': fqdn,
         'admin_email': '%s@%s' % (user, fqdn),
         'admin_list': '',
+        'ca_fqdn': '',
+        'ca_user': 'mig-ca',
         'mrsl_files_dir': '~/state/mrsl_files/',
         're_files_dir': '~/state/re_files/',
         're_pending_dir': '~/state/re_pending/',
@@ -256,6 +258,8 @@ class Configuration:
     server_fqdn = ''
     admin_email = ''
     admin_list = ''
+    ca_fqdn = ''
+    ca_user = 'mig-ca'
     resource_home = ''
     vgrid_home = ''
     vgrid_public_base = ''
@@ -620,6 +624,10 @@ class Configuration:
             self.admin_email = config.get('GLOBAL', 'admin_email')
         else:
             self.admin_email = []
+        if config.has_option('GLOBAL', 'ca_fqdn'):
+            self.ca_fqdn = config.get('GLOBAL', 'ca_fqdn')
+        if config.has_option('GLOBAL', 'ca_user'):
+            self.ca_user = config.get('GLOBAL', 'ca_user')
         if config.has_option('GLOBAL', 'migserver_https_mig_cert_url'):
             self.migserver_https_mig_cert_url = config.get(
                 'GLOBAL', 'migserver_https_mig_cert_url')
