@@ -19,10 +19,10 @@ An example PAM config file for SSH should be placed in /etc/pam.d/sshd and could
 #Un-comment this line if you want regular system users to log in with passwords as well (pubkeys are handled without PAM):
 #@include common-auth
 
-account  required /lib/libpam_mig.so
-auth     required /lib/libpam_mig.so
-password required /lib/libpam_mig.so
-session  required /lib/libpam_mig.so
+account  required    pam_mig.so
+auth     required    pam_mig.so
+password required    pam_mig.so
+session  required    pam_mig.so
 
 
 To support public key authentication with MiG, you need to add a section to the /etc/ssh/sshd_config file that matches the MiG group and redirects to their public keys, while also chrooting them:
@@ -45,4 +45,9 @@ Match Group mig
     PermitTTY no
     X11Forwarding no
 
-NOTE: On 64 bit systems, the Makefile installs libraries in /lib, but they should be installed in /lib64
+NOTE: The architecture and distribution decides where PAM looks for
+modules. So please locate the lib security dir and call 'make install'
+with a custom securitydir if it does not fit the default /lib64/security
+used on 64 bit RHEL systems:
+securitydir=/path/to/security make -e install
+
