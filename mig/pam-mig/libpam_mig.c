@@ -25,6 +25,14 @@
 #define PAM_CHROOT_REQUEST ((void*)2)
 #define PAM_CHROOT_COMPLETED ((void*)3)
 
+/* For service to dot-dir lookup */
+#define SSHD_SERVICE "sshd"
+#define SSHD_AUTH_DIR "ssh"
+#define FTPD_SERVICE "ftpd"
+#define FTPD_AUTH_DIR "ftps"
+#define WEBDAVS_SERVICE "webdavs"
+#define WEBDAVS_AUTH_DIR "davs"
+
 /* For testing, the printf can be activated,
    but should never be enabled in non-debug mode */
 //#define DEBUG_PRINTF 1
@@ -74,6 +82,17 @@ static void writelogmessage(int priority, const char* msg, ...) {
 #include "pbkdf2-sha256.c"
 #include "b64-decode.c"
 #include "b64.c"
+
+static const char *get_service_dir(const char *service) {
+  if (strcmp(service, SSHD_SERVICE) == 0) 
+    return SSHD_AUTH_DIR;
+  else if (strcmp(service, FTPD_SERVICE) == 0)
+    return FTPD_AUTH_DIR;
+  else if (strcmp(service, WEBDAVS_SERVICE) == 0) 
+    return WEBDAVS_AUTH_DIR;
+  else
+    return service;
+}
 
 /* this function is ripped from pam_unix/support.c, it lets us do IO via PAM */
 static int converse( pam_handle_t *pamh, int nargs, struct pam_message **message, struct pam_response **response ) {
@@ -293,9 +312,9 @@ PAM_EXTERN int pam_sm_authenticate( pam_handle_t *pamh, int flags,int argc, cons
 	}
 
 	char auth_filename[MAX_PATH_LENGTH];
-	if (MAX_PATH_LENGTH == snprintf(auth_filename, MAX_PATH_LENGTH, "%s/.%s/%s", pw->pw_dir, pService, PASSWORD_FILENAME))
+	if (MAX_PATH_LENGTH == snprintf(auth_filename, MAX_PATH_LENGTH, "%s/.%s/%s", pw->pw_dir, get_service_dir(pService), PASSWORD_FILENAME))
 	{
-		writelogmessage(LOG_WARNING, "Path construction failed for: %s/.%s/%s\n", pw->pw_dir, pService, PASSWORD_FILENAME);
+          writelogmessage(LOG_WARNING, "Path construction failed for: %s/.%s/%s\n", pw->pw_dir, get_service_dir(pService), PASSWORD_FILENAME);
 		return PAM_AUTH_ERR;
 	}
 
