@@ -129,6 +129,7 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_auth': ['publickey', 'password'],
         'user_sftp_alias': '',
         'user_sftp_log': 'sftp.log',
+        'user_sftp_subsys_log': 'sftp-subsys.log',
         'user_davs_address': fqdn,
         'user_davs_port': 4443,
         'user_davs_key': '~/certs/combined.pem',
@@ -325,6 +326,7 @@ class Configuration:
     user_sftp_auth = ['publickey', 'password']
     user_sftp_alias = ''
     user_sftp_log = 'sftp.log'
+    user_sftp_subsys_log = 'sftp-subsys.log'
     user_sftp_window_size = 0
     user_sftp_max_packet_size = 0
     user_sftp_max_sessions = -1
@@ -470,22 +472,27 @@ class Configuration:
 
     # constructor
 
-    def __init__(self, config_file, verbose=False, log_path=None):
+    def __init__(self, config_file, verbose=False, skip_log=False):
         self.config_file = config_file
-        self.reload_config(verbose, log_path)
+        self.reload_config(verbose, skip_log)
 
-    def reload_config(self, verbose, log_path=None):
-        """Re-read and parse configuration file"""
+    def reload_config(self, verbose, skip_log=False):
+        """Re-read and parse configuration file. Optional skip_log
+        initializes default logger to use the NullHandler in order to avoid
+        uninitialized log while not really touching log files or causing stdio
+        output. 
+        """
 
         try:
-            self.logger.info('reloading configuration and reopening log')
+            if self.logger:
+                self.logger.info('reloading configuration and reopening log')
         except:
             pass
 
         if not os.path.isfile(self.config_file):
-            print 'Could not find your configuration file (', \
-                self.config_file, ').'
-            print 'Are you missing a symlink from server/MiGserver.conf pointing to server/MiGserver-{server}.conf?'
+            print """Could not find your configuration file (%s). You might
+need to point the MIG_CONF environment to your actual MiGserver.conf
+location.""" % self.config_file
             raise IOError
 
         config = ConfigParser()
@@ -514,14 +521,12 @@ class Configuration:
             self.logfile = 'mig.log'
             self.loglevel = 'info'
 
-        if log_path is None:
-            self.log_path = os.path.join(self.log_dir, self.logfile)
+        if skip_log:
+            self.log_path = False
         else:
-            self.log_dir, self.logfile = os.path.split(log_path)
-            self.log_path = log_path
-
-        if verbose:
-            print 'logging to:', self.log_path, '; level:', self.loglevel
+            self.log_path = os.path.join(self.log_dir, self.logfile)
+            if verbose:
+                print 'logging to:', self.log_path, '; level:', self.loglevel
 
         # reopen or initialize logger
 
@@ -702,6 +707,9 @@ class Configuration:
                                               'user_sftp_alias')
         if config.has_option('GLOBAL', 'user_sftp_log'):
             self.user_sftp_log = config.get('GLOBAL', 'user_sftp_log')
+        if config.has_option('GLOBAL', 'user_sftp_subsys_log'):
+            self.user_sftp_subsys_log = config.get('GLOBAL',
+                                                   'user_sftp_subsys_log')
         # Use any configured packet size values or fall back to emperically
         # decided values from a fast network.
         if config.has_option('GLOBAL', 'user_sftp_window_size'):
@@ -1489,15 +1497,16 @@ class Configuration:
                                  )
         # Force absolute log paths
 
-        for log_var in ('user_sftp_log', 'user_davs_log', 'user_ftps_log',
+        for _log_var in ('user_sftp_log', 'user_sftp_subsys_log',
+                        'user_davs_log', 'user_ftps_log',
                         'user_openid_log', 'user_monitor_log',
                         'user_sshmux_log', 'user_vmproxy_log',
                         'user_events_log', 'user_transfers_log',
                         'user_imnotify_log', 'user_chkuserroot_log',
                         'user_chksidroot_log', ):
-            log_path = getattr(self, log_var)
-            if not os.path.isabs(log_path):
-                setattr(self, log_var, os.path.join(self.log_dir, log_path))
+            _log_path = getattr(self, _log_var)
+            if not os.path.isabs(_log_path):
+                setattr(self, _log_var, os.path.join(self.log_dir, _log_path))
             
         # cert and key for generating a default proxy for nordugrid/ARC resources 
 

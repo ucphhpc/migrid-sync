@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify_stdout - Dummy IM daemon
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -44,7 +44,8 @@ def hangup_handler(signal, frame):
     logger.info("reopened log after hangup signal")
 
 if __name__ == '__main__':
-    configuration = get_configuration_object()
+    # Force no log init since we use separate logger
+    configuration = get_configuration_object(skip_log=True)
     print os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn
 
     log_level = configuration.loglevel

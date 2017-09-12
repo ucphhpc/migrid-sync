@@ -1651,8 +1651,8 @@ def monitor(configuration, vgrid_name):
 
 
 if __name__ == '__main__':
-
-    configuration = get_configuration_object()
+    # Force no log init since we use separate logger
+    configuration = get_configuration_object(skip_log=True)
 
     log_level = configuration.loglevel
     if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning',

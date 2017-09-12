@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_vmproxy - VM proxy wrapper daemon
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -49,7 +49,8 @@ def handle_stop(signum, stack):
     raise KeyboardInterrupt
 
 if __name__ == '__main__':
-    configuration = get_configuration_object()
+    # Force no log init since we use separate logger
+    configuration = get_configuration_object(skip_log=True)
 
     log_level = configuration.loglevel
     if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:

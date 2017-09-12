@@ -86,7 +86,13 @@ class Logger:
     def init_handler(self, stderr=False):
         """Init handler"""
         formatter = logging.Formatter(self.loggingformat)
-        if stderr:
+        if self.logfile == False:
+
+            # Add null handler to simply throw away all log messages
+            
+            self.hdlr = logging.NullHandler()
+            self.logger.addHandler(self.hdlr)  
+        elif stderr:
 
             # Add stderr handler
 

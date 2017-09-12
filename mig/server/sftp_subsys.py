@@ -101,16 +101,19 @@ class IOSocketAdapter(object):
 
 def start_server(params):
     """Run the subsystem"""
-    # TODO: switch to dedicated log from configuration?
-    #       NOT sftp log as it will cause access errors due to other sshd user
-    log_path = '/tmp/sftp-subsys.log'
-    log_level = 'debug'
+    # We need to manualy extract MiG conf path since running from openssh
     conf_path = os.path.join(os.path.dirname(__file__), 'MiGserver.conf')
     os.putenv('MIG_CONF', conf_path)
-    # Force different log to avoid errors opening mig.log
-    configuration = get_configuration_object(log_path)
-    # Use separate logger here
-    logger = daemon_logger("sftp-subsys", log_path, log_level)
+    # Force no log init since we use separate logger
+    configuration = get_configuration_object(skip_log=True)
+    # TODO: lower default log verbosity when ready for production use
+    #log_level = configuration.loglevel
+    log_level = 'debug'
+    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
+        log_level = sys.argv[1]
+    # Use separate logger
+    logger = daemon_logger('sftp-subsys', configuration.user_sftp_subsys_log,
+                           log_level)
     configuration.logger = logger
     logger.info('Basic sftp subsystem initialized')
     # Lookup chroot exceptions once and for all

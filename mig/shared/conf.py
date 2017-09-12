@@ -33,7 +33,10 @@ import sys
 from shared.fileio import unpickle
 
 
-def get_configuration_object(log_path=None):
+def get_configuration_object(skip_log=False):
+    """Simple helper to call the general configuration init. Optional skip_log
+    argument is passed on to allow skipping the default log initialization.
+    """
     from shared.configuration import Configuration
     if os.environ.get('MIG_CONF', None):
         config_file = os.environ['MIG_CONF']
@@ -44,13 +47,14 @@ def get_configuration_object(log_path=None):
         else:
             config_file = os.path.join(app_dir, '..', 'server',
                     'MiGserver.conf')
-    configuration = Configuration(config_file, False, log_path)
+    configuration = Configuration(config_file, False, skip_log)
     return configuration
 
 
 def get_resource_configuration(resource_home, unique_resource_name,
                                logger):
-
+    """Load a resource configuration from file"""
+    
     # open the configuration file
 
     resource_config_file = resource_home + '/' + unique_resource_name\
