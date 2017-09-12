@@ -76,9 +76,16 @@ mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
 
+# User ID is email or hexlified version of full cert DN.
+# Shortest email would have to be something like a@ku.dk 
+user_id_min_length = 7
+user_id_max_length = 256
+user_id_charset = ascii_uppercase + ascii_lowercase + digits + '_@.'
+
 # We hexlify 32 random bytes to get 64 character string
 session_id_bytes = 32
-session_id_chars = session_id_bytes * 2
+session_id_length = session_id_bytes * 2
+session_id_charset = digits + 'abcdef'
 
 # Sharelink format helpers
 # Let mode chars be aAbBcC ... xX (to make splitting evenly into 3 easy)

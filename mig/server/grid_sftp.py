@@ -90,6 +90,8 @@ from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      track_open_session, track_close_session, active_sessions
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
+from shared.validstring import possible_user_id, possible_job_id, \
+     possible_sharelink_id
 from shared.vgrid import vgrid_restrict_write_support
 
 configuration, logger = None, None
@@ -194,21 +196,22 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.user_name = self.transport.get_username()
         else:
             #logger.debug('active env: %s' % os.environ)
-            username = os.environ.get('USER', 'INVALID')
-            # TODO: remove this remap to fake real auth once PAM is in place
-            if username.find('@') == -1:
-                username += '@nbi.ku.dk'
-
+            username = os.environ.get('USER', 'INVALID')                
             logger.debug('refresh user entry for %s' % username)
-            # TODO: should we select more specifically on refresh here?
-            #       ... it should be possible to detect kind.
             # Either of user, job and share keys may have changed
-            daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
-                                                            username)
-            daemon_conf, changed_jobs = refresh_job_creds(configuration, 'sftp',
-                                                          username)
-            daemon_conf, changed_shares = refresh_share_creds(configuration,
-                                                              'sftp', username)
+            daemon_conf = self.conf
+            changed_users, changed_jobs, changed_shares = [], [], []
+            if possible_user_id(configuration, username):
+                daemon_conf, changed_users = refresh_user_creds(configuration,
+                                                                'sftp',
+                                                                username)
+            if possible_job_id(configuration, username):
+                daemon_conf, changed_jobs = refresh_job_creds(
+                    configuration, 'sftp', username)
+            if possible_sharelink_id(configuration, username):
+                daemon_conf, changed_shares = refresh_share_creds(
+                    configuration, 'sftp', username)
+            # Now update login map for any changed usernames
             update_login_map(daemon_conf, changed_users, changed_jobs,
                              changed_shares)
             self.user_name = username
@@ -729,11 +732,15 @@ class SimpleSSHServer(paramiko.ServerInterface):
         """
         username = force_utf8(username)
         # Only need to update users and shares here, since jobs only use keys
-        daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
-                                                        username)
-        changed_jobs = []
-        daemon_conf, changed_shares = refresh_share_creds(configuration,
-                                                          'sftp', username)
+        daemon_conf = self.conf
+        changed_users, changed_jobs, changed_shares = [], [], []
+        if possible_user_id(configuration, username):
+            daemon_conf, changed_users = refresh_user_creds(configuration,
+                                                            'sftp', username)
+        if possible_sharelink_id(configuration, username):
+            daemon_conf, changed_shares = refresh_share_creds(configuration,
+                                                              'sftp', username)
+        # Now update login map for any changed usernames
         update_login_map(daemon_conf, changed_users, changed_jobs,
                          changed_shares)
 
@@ -780,13 +787,19 @@ class SimpleSSHServer(paramiko.ServerInterface):
         key = key
         offered = None
 
-        # Both user and job keys may have changed here
-        daemon_conf, changed_users = refresh_user_creds(configuration, 'sftp',
-                                                        username)
-        daemon_conf, changed_jobs = refresh_job_creds(configuration, 'sftp',
-                                                      username)
-        daemon_conf, changed_shares = refresh_share_creds(configuration,
+        # Either of user, job and share keys may have changed
+        daemon_conf = self.conf
+        changed_users, changed_jobs, changed_shares = [], [], []
+        if possible_user_id(configuration, username):
+            daemon_conf, changed_users = refresh_user_creds(configuration,
+                                                            'sftp', username)
+        if possible_job_id(configuration, username):
+            daemon_conf, changed_jobs = refresh_job_creds(configuration,
                                                           'sftp', username)
+        if possible_sharelink_id(configuration, username):
+            daemon_conf, changed_shares = refresh_share_creds(configuration,
+                                                              'sftp', username)
+        # Now update login map for any changed usernames
         update_login_map(daemon_conf, changed_users, changed_jobs,
                          changed_shares)
 

@@ -31,8 +31,9 @@ import os.path
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
-from shared.defaults import keyword_auto, session_id_chars, share_id_charset, \
-     share_mode_charset
+from shared.defaults import keyword_auto, session_id_length, \
+     session_id_charset, share_id_charset, share_mode_charset, \
+     user_id_charset, user_id_min_length, user_id_max_length
 from shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
 
 def cert_name_format(input_string):
@@ -100,13 +101,25 @@ def is_valid_email_address(addr, logger):
     logger.info('%s is a valid email address' % addr)
     return count >= 1
 
+def possible_user_id(configuration, user_id):
+    """Check if user_id is a possible user ID based on knowledge about
+    contents. We always use email or hexlified version of cert DN.
+    """
+    if len(user_id) < user_id_min_length or len(user_id) > user_id_max_length:
+        return False
+    for i in user_id:
+        if not i in user_id_charset:
+            return False
+    return True
+
 def possible_job_id(configuration, job_id):
     """Check if job_id is a possible job ID based on knowledge about contents
-    and length. We use hexlify and a 32"""
-    if len(job_id) != session_id_chars:
+    and length. We use hexlify on a random string of session_id_bytes, which
+    results in session_id_length characters."""
+    if len(job_id) != session_id_length:
         return False
     for i in job_id:
-        if not i in '0123456789abcdef':
+        if not i in session_id_charset:
             return False
     return True
 
