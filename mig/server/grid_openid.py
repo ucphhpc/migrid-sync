@@ -79,7 +79,7 @@ from openid.server import server
 from openid.store.filestore import FileOpenIDStore
 from openid.consumer import discover
 
-from shared.base import client_id_dir
+from shared.base import client_id_dir, cert_field_map
 from shared.conf import get_configuration_object
 from shared.defaults import user_db_filename
 from shared.griddaemons import refresh_user_creds, update_login_map, \
@@ -90,8 +90,7 @@ from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
      valid_complex_url, InputException
 from shared.tlsserver import hardened_ssl_context
-from shared.useradm import cert_field_map, get_openid_user_dn, \
-     check_password_scramble
+from shared.useradm import get_openid_user_dn, check_password_scramble
 
 configuration, logger = None, None
 
