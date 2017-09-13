@@ -910,6 +910,26 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         logger.warning("No strong TLS digest algorithm available!")
         logger.info("You need paramiko 1.16 or later for best security")
 
+    # Default forces re-keying after every 512MB or same number of packets.
+    # We bump that to reduce the slowing effect of those: it's a security
+    # trade-off but OpenSSH does re-keying even less frequently.
+    # Please note that some weaker ciphers still cap re-key limit below the
+    # value we set here and in the client.
+    logger.debug("Double default re-keying sizes %d bytes / %d packets" % \
+                 (transport.packetizer.REKEY_BYTES,
+                  transport.packetizer.REKEY_PACKETS))
+    # Bump re-keying from 512MB to 2GB to reduce large transfer slow-downs
+    rekey_scale = 4
+    transport.packetizer.REKEY_BYTES *= rekey_scale
+    # Allow receiving this many bytes after a re-key request before terminating
+    transport.packetizer.REKEY_BYTES_OVERFLOW_MAX *= rekey_scale
+    # Bump re-keying packet counts too to make sure it doesn't override size
+    transport.packetizer.REKEY_PACKETS *= rekey_scale
+    transport.packetizer.REKEY_PACKETS_OVERFLOW_MAX *= rekey_scale
+    logger.info("Using re-keying sizes %d bytes / %d packets" % \
+                (transport.packetizer.REKEY_BYTES,
+                 transport.packetizer.REKEY_PACKETS))
+    
     transport.logger = logger
     transport.load_server_moduli()
     transport.add_server_key(host_key)
