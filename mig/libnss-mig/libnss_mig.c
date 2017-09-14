@@ -55,6 +55,7 @@
 #include <stdio.h>
 #include <wordexp.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <stdarg.h>
 #include <syslog.h>
@@ -64,6 +65,12 @@
 #define MIN_UID_NUMBER   500
 #define MIN_GID_NUMBER   500
 #define CONF_FILE "/etc/libnss_mig.conf"
+
+/* Various settings used by optional sharelink access */
+/* TODO: change these to compile-time options? */
+#define ENABLE_SHARELINK 1
+#define SHARELINK_HOME "/home/mig/state/sharelink_home/read-write"
+#define SHARELINK_LENGTH 10
 
 /* For statically allocated buffers */
 #define MAX_USERNAME_LENGTH (1024)
@@ -184,6 +191,34 @@ _nss_mig_getpwnam_r( const char *name,
 
     char pathbuf[PATH_BUF_LEN];
     size_t pathlen = strlen(conf->pw_dir);
+    int is_share = 0;
+
+#ifdef ENABLE_SHARELINK
+    /* Optional anonymous share link access:
+       - username must have fixed length (10 is default)
+       - SHARELINK_HOME/username must exist 
+       - username and password must be identical
+    */
+    writelogmessage(LOG_DEBUG, "Checking for sharelink: %s\n", name);
+    if (strlen(name) == SHARELINK_LENGTH) {
+      char share_path[PATH_BUF_LEN];
+      if (PATH_BUF_LEN == snprintf(share_path, PATH_BUF_LEN, "%s/%s", SHARELINK_HOME, name)) {
+        writelogmessage(LOG_WARNING, "Path construction failed for: %s/%s\n", SHARELINK_HOME, name);
+        return NSS_STATUS_NOTFOUND;
+      }
+      char* resolved_path = realpath(share_path, NULL);
+      writelogmessage(LOG_DEBUG, "Resolved sharelink %s to %s\n", share_path, resolved_path);
+      if (resolved_path != NULL) {
+        /* TODO: check prefix of resolved_path is user_home? */
+        free(resolved_path);
+        resolved_path = NULL;
+        /* Override home path with sharelink base */ 
+        pathlen = strlen(SHARELINK_HOME);
+        is_share = 1;
+      }
+    }
+    writelogmessage(LOG_DEBUG, "Detect sharelink: %d\n", is_share);
+#endif /* ENABLE_SHARELINK */
 
     /* Make sure we can fit the path into the buffer */
     if (pathlen + name_len + 2 > PATH_BUF_LEN) {
@@ -192,7 +227,11 @@ _nss_mig_getpwnam_r( const char *name,
     }
 
     /* Build the full path */
+    if (is_share == 0) {
 	strcpy(pathbuf, conf->pw_dir);
+    } else {
+	strcpy(pathbuf, SHARELINK_HOME);
+    }
 	if (pathbuf[pathlen] != '/')
 	{
 		pathbuf[pathlen] = '/';

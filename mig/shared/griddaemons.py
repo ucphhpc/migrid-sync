@@ -67,6 +67,7 @@ def accepting_username_validator(configuration, username):
     return True
 
 # TODO: include username check early in login phase too to drop dict attacks?
+# TODO: switch to possible_user_id and possible_job_id
 def default_username_validator(configuration, username):
     """The default username validator restricted to only accept usernames that
     are valid in grid daemons, namely a valid email, session or sharelink ID.

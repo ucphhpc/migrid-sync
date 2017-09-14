@@ -52,6 +52,12 @@
 /* Various settings used to communicate chrooting */
 //#define ENABLE_CHROOT 1
 
+/* Various settings used by optional sharelink access */
+/* TODO: change these to compile-time options? */
+#define ENABLE_SHARELINK 1
+#define SHARELINK_HOME "/home/mig/state/sharelink_home/read-write"
+#define SHARELINK_LENGTH 10
+
 /* Setup for communicating between layers */
 #define PAM_DATA_NAME "MIG_DO_CHROOT"
 #define PAM_CHROOT_AUTHENTICATED ((void*)1)
@@ -327,7 +333,7 @@ PAM_EXTERN int pam_sm_authenticate( pam_handle_t *pamh, int flags,int argc, cons
 				return PAM_AUTH_ERR;
 			}
 
-			writelogmessage(LOG_DEBUG, "Got user password, checking with stored file ...\n");
+			writelogmessage(LOG_DEBUG, "Got user password, checking correctness ...\n");
 			pPassword = resp[0].resp;
 			resp[0].resp = NULL;
 		} else {
@@ -343,6 +349,39 @@ PAM_EXTERN int pam_sm_authenticate( pam_handle_t *pamh, int flags,int argc, cons
 		writelogmessage(LOG_WARNING, "Failed to get service name\n");
 		return retval;
 	}
+
+#ifdef ENABLE_SHARELINK
+        /* Optional anonymous share link access:
+           - username must have fixed length (10 is default)
+           - SHARELINK_HOME/username must exist as a symlink
+           - username and password must be identical
+        */
+	if (strlen(pUsername) == SHARELINK_LENGTH) {
+            char share_path[MAX_PATH_LENGTH];
+	    if (MAX_PATH_LENGTH == snprintf(share_path, MAX_PATH_LENGTH, "%s/%s", SHARELINK_HOME, pUsername)) {
+                writelogmessage(LOG_WARNING, "Path construction failed for: %s/%s\n", SHARELINK_HOME, pUsername);
+		return PAM_AUTH_ERR;
+            }
+            char* resolved_path = realpath(share_path, NULL);
+            writelogmessage(LOG_DEBUG, "Resolved sharelink %s to %s\n", share_path, resolved_path);
+            if (resolved_path != NULL) {
+              /* TODO: check prefix of resolved_path is user_home? */
+              free(resolved_path);
+              resolved_path = NULL;
+              writelogmessage(LOG_DEBUG, "Checking sharelink id %s password\n", pUsername);
+              if (strcmp(pUsername, pPassword) == 0) {
+                writelogmessage(LOG_DEBUG, "Return sharelink success\n");
+                return PAM_SUCCESS;
+              } else {
+                writelogmessage(LOG_WARNING, "Username and password mismatch for sharelink: %s\n", pUsername);
+		return PAM_AUTH_ERR;
+              }
+            } else {
+              writelogmessage(LOG_DEBUG, "No matching sharelink: %s. Try user auth.\n", share_path);
+            }
+
+         }
+#endif /* ENABLE_SHARELINK */
 
 	char auth_filename[MAX_PATH_LENGTH];
 	if (MAX_PATH_LENGTH == snprintf(auth_filename, MAX_PATH_LENGTH, "%s/.%s/%s", pw->pw_dir, get_service_dir(pService), PASSWORD_FILENAME))
