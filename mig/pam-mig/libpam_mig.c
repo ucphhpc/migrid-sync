@@ -47,16 +47,30 @@
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 
+/* TODO: enable conf parsing with this:
+#include <ini_config.h>
+*/
+
 #define PASSWORD_FILENAME "authorized_passwords"
 
 /* Various settings used to communicate chrooting */
 //#define ENABLE_CHROOT 1
 
 /* Various settings used by optional sharelink access */
-/* TODO: change these to compile-time options? */
+/* Enable sharelinks unless explicitly disabled during compilation */
+#ifndef DISABLE_SHARELINK
 #define ENABLE_SHARELINK 1
-#define SHARELINK_HOME "/home/mig/state/sharelink_home/read-write"
-#define SHARELINK_LENGTH 10
+/* Default fall-back values used unless given */
+#ifndef SHARELINK_HOME
+#define SHARELINK_HOME "/tmp"
+#endif
+#ifndef SHARELINK_LENGTH
+#define SHARELINK_LENGTH 42
+#endif
+#ifndef SHARELINK_SUBDIR
+#define SHARELINK_SUBDIR "read-write"
+#endif
+#endif				/* !DISABLE_SHARELINK */
 
 /* Setup for communicating between layers */
 #define PAM_DATA_NAME "MIG_DO_CHROOT"
@@ -131,6 +145,66 @@ static const char *get_service_dir(const char *service)
 	return WEBDAVS_AUTH_DIR;
     else
 	return service;
+}
+
+/* We take first occurence of SHARELINK_HOME and SHARELINK_LENGTH from
+ * 1. SHARELINK_HOME and SHARELINK_LENGTH environment
+ * 2. sharelink_home and SITE->sharelink_length in (.ini) configuration file
+ * 3. SHARELINK_HOME and SHARELINK_LENGTH compile time values
+ * 4. hard-coded defaults here
+ */
+static const char *get_sharelink_home()
+{
+#ifdef _GNU_SOURCE
+    char *sharelink_home = secure_getenv("SHARELINK_HOME");
+#else
+    char *sharelink_home = getenv("SHARELINK_HOME");
+#endif
+    /* TODO: actually implement option (2):
+       if (sharelink_home == NULL) {
+       #ifdef _GNU_SOURCE
+       char *conf_path = secure_getenv("MIG_CONF");
+       #else
+       char *conf_path = getenv("MIG_CONF");
+       #endif
+
+       sharelink_home = conf->sharelink_home;
+       }
+     */
+    /* Fall back to defined value */
+    if (sharelink_home == NULL) {
+	sharelink_home = SHARELINK_HOME;
+    }
+    writelogmessage(LOG_DEBUG, "Found sharelink home %s\n",
+		    sharelink_home);
+    return sharelink_home;
+}
+
+static const int get_sharelink_length()
+{
+#ifdef _GNU_SOURCE
+    char *sharelink_length = secure_getenv("SHARELINK_LENGTH");
+#else
+    char *sharelink_length = getenv("SHARELINK_LENGTH");
+#endif
+    /* TODO: actually implement option (2):
+       if (sharelink_length == NULL) {
+       #ifdef _GNU_SOURCE
+       char *conf_path = secure_getenv("MIG_CONF");
+       #else
+       char *conf_path = getenv("MIG_CONF");
+       #endif
+       sharelink_length = conf->sharelink_length;
+       }
+     */
+    if (sharelink_length == NULL) {
+	writelogmessage(LOG_DEBUG, "Found sharelink length: %d\n",
+			SHARELINK_LENGTH);
+	return SHARELINK_LENGTH;
+    }
+    writelogmessage(LOG_DEBUG, "Found sharelink length %s\n",
+		    sharelink_length);
+    return atoi(sharelink_length);
 }
 
 /* this function is ripped from pam_unix/support.c, it lets us do IO via PAM */
@@ -386,27 +460,25 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
 #ifdef ENABLE_SHARELINK
     /* Optional anonymous share link access:
-       - username must have fixed length (10 is default)
-       - SHARELINK_HOME/username must exist as a symlink
+       - username must have fixed length matching get_sharelink_length()
+       - get_sharelink_home()/SHARELINK_SUBDIR/username must exist as a symlink
        - username and password must be identical
      */
-    if (strlen(pUsername) == SHARELINK_LENGTH) {
+    writelogmessage(LOG_DEBUG, "Checking for sharelink: %s\n", pUsername);
+    if (strlen(pUsername) == get_sharelink_length()) {
 	char share_path[MAX_PATH_LENGTH];
 	if (MAX_PATH_LENGTH ==
-	    snprintf(share_path, MAX_PATH_LENGTH, "%s/%s", SHARELINK_HOME,
-		     pUsername)) {
+	    snprintf(share_path, MAX_PATH_LENGTH, "%s/%s/%s",
+		     get_sharelink_home(), SHARELINK_SUBDIR, pUsername)) {
 	    writelogmessage(LOG_WARNING,
-			    "Path construction failed for: %s/%s\n",
-			    SHARELINK_HOME, pUsername);
+			    "Path construction failed for: %s/%s/%s\n",
+			    get_sharelink_home(), SHARELINK_SUBDIR,
+			    pUsername);
 	    return PAM_AUTH_ERR;
 	}
-	char *resolved_path = realpath(share_path, NULL);
-	writelogmessage(LOG_DEBUG, "Resolved sharelink %s to %s\n",
-			share_path, resolved_path);
-	if (resolved_path != NULL) {
-	    /* TODO: check prefix of resolved_path is user_home? */
-	    free(resolved_path);
-	    resolved_path = NULL;
+	/* NSS lookup assures sharelink target is valid and inside user home */
+	/* Just check simple access here to make sure it is a share link */
+	if (access(share_path, R_OK) == 0) {
 	    writelogmessage(LOG_DEBUG,
 			    "Checking sharelink id %s password\n",
 			    pUsername);
@@ -424,10 +496,15 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 			    "No matching sharelink: %s. Try user auth.\n",
 			    share_path);
 	}
-
+    } else {
+	writelogmessage(LOG_DEBUG,
+			"Not a sharelink username: %s. Try user auth.\n",
+			pUsername);
     }
 #endif				/* ENABLE_SHARELINK */
 
+    writelogmessage(LOG_DEBUG, "Checking for standard user/password: %s\n",
+		    pUsername);
     char auth_filename[MAX_PATH_LENGTH];
     if (MAX_PATH_LENGTH ==
 	snprintf(auth_filename, MAX_PATH_LENGTH, "%s/.%s/%s", pw->pw_dir,
@@ -476,6 +553,12 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	return PAM_AUTH_ERR;
     }
     fclose(fd);
+
+    //fread does not null terminate the string
+    pbkdf[st.st_size] = 0;
+
+    writelogmessage(LOG_DEBUG, "read %s (%d) from password file", pbkdf,
+		    strlen(pbkdf));
 
     if (strstr(pbkdf, "PBKDF2$") != pbkdf) {
 	writelogmessage(LOG_WARNING,

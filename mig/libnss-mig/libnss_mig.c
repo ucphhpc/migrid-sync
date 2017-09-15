@@ -60,6 +60,9 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <errno.h>
+/* TODO: enable conf parsing with this:
+#include <ini_config.h>
+*/
 
 /* for security reasons */
 #define MIN_UID_NUMBER   500
@@ -67,10 +70,20 @@
 #define CONF_FILE "/etc/libnss_mig.conf"
 
 /* Various settings used by optional sharelink access */
-/* TODO: change these to compile-time options? */
+/* Enable sharelinks unless explicitly disabled during compilation */
+#ifndef DISABLE_SHARELINK
 #define ENABLE_SHARELINK 1
-#define SHARELINK_HOME "/home/mig/state/sharelink_home/read-write"
-#define SHARELINK_LENGTH 10
+/* Default fall-back values used unless given */
+#ifndef SHARELINK_HOME
+#define SHARELINK_HOME "/tmp"
+#endif
+#ifndef SHARELINK_LENGTH
+#define SHARELINK_LENGTH 42
+#endif
+#ifndef SHARELINK_SUBDIR
+#define SHARELINK_SUBDIR "read-write"
+#endif
+#endif				/* !DISABLE_SHARELINK */
 
 /* For statically allocated buffers */
 #define MAX_USERNAME_LENGTH (1024)
@@ -139,6 +152,68 @@ static struct passwd *read_conf()
     return conf;
 }
 
+/* We take first occurence of sharelink_home and sharelink_length from
+ * 1. SHARELINK_HOME and SHARELINK_LENGTH environment
+ * 2. sharelink_home and SITE->sharelink_length in (.ini) configuration file
+ * 3. SHARELINK_HOME and SHARELINK_LENGTH compile time values
+ * 4. hard-coded defaults here
+ */
+static const char *get_sharelink_home()
+{
+#ifdef _GNU_SOURCE
+    char *sharelink_home = secure_getenv("SHARELINK_HOME");
+#else
+    char *sharelink_home = getenv("SHARELINK_HOME");
+#endif
+
+    /* TODO: actually implement option (2):
+       if (sharelink_home == NULL) {
+       #ifdef _GNU_SOURCE
+       char *conf_path = secure_getenv("MIG_CONF");
+       #else
+       char *conf_path = getenv("MIG_CONF");
+       #endif
+
+       sharelink_home = conf->sharelink_home;
+       }
+     */
+    /* Fall back to defined value */
+    if (sharelink_home == NULL) {
+	sharelink_home = SHARELINK_HOME;
+    }
+    writelogmessage(LOG_DEBUG, "Found sharelink home %s\n",
+		    sharelink_home);
+    return sharelink_home;
+}
+
+static const int get_sharelink_length()
+{
+#ifdef _GNU_SOURCE
+    char *sharelink_length = secure_getenv("SHARELINK_LENGTH");
+#else
+    char *sharelink_length = getenv("SHARELINK_LENGTH");
+#endif
+    /* TODO: actually implement option (2):
+       if (sharelink_length == NULL) {
+       #ifdef _GNU_SOURCE
+       char *conf_path = secure_getenv("MIG_CONF");
+       #else
+       char *conf_path = getenv("MIG_CONF");
+       #endif
+       sharelink_length = conf->sharelink_length;
+       }
+     */
+    if (sharelink_length == NULL) {
+	writelogmessage(LOG_DEBUG, "Found sharelink length: %d\n",
+			SHARELINK_LENGTH);
+	return SHARELINK_LENGTH;
+    }
+    writelogmessage(LOG_DEBUG, "Found sharelink length %s\n",
+		    sharelink_length);
+    return atoi(sharelink_length);
+}
+
+
 /* 
  * Allocate some space from the nss static buffer.  The buffer and buflen
  * are the pointers passed in by the C library to the _nss_ntdom_*
@@ -197,32 +272,48 @@ _nss_mig_getpwnam_r(const char *name,
 
 #ifdef ENABLE_SHARELINK
     /* Optional anonymous share link access:
-       - username must have fixed length (10 is default)
-       - SHARELINK_HOME/username must exist 
+       - username must have fixed length matching get_sharelink_length()
+       - get_sharelink_home()/SHARELINK_SUBDIR/username must exist as a symlink
        - username and password must be identical
      */
     writelogmessage(LOG_DEBUG, "Checking for sharelink: %s\n", name);
-    if (strlen(name) == SHARELINK_LENGTH) {
-	char share_path[PATH_BUF_LEN];
+    if (strlen(name) == get_sharelink_length()) {
 	if (PATH_BUF_LEN ==
-	    snprintf(share_path, PATH_BUF_LEN, "%s/%s", SHARELINK_HOME,
-		     name)) {
+	    snprintf(pathbuf, PATH_BUF_LEN, "%s/%s/%s",
+		     get_sharelink_home(), SHARELINK_SUBDIR, name)) {
 	    writelogmessage(LOG_WARNING,
-			    "Path construction failed for: %s/%s\n",
-			    SHARELINK_HOME, name);
+			    "Path construction failed for: %s/%s/%s\n",
+			    get_sharelink_home(), SHARELINK_SUBDIR, name);
 	    return NSS_STATUS_NOTFOUND;
 	}
-	char *resolved_path = realpath(share_path, NULL);
-	writelogmessage(LOG_DEBUG, "Resolved sharelink %s to %s\n",
-			share_path, resolved_path);
-	if (resolved_path != NULL) {
-	    /* TODO: check prefix of resolved_path is user_home? */
-	    free(resolved_path);
-	    resolved_path = NULL;
-	    /* Override home path with sharelink base */
-	    pathlen = strlen(SHARELINK_HOME);
-	    is_share = 1;
+	/* Make sure prefix of direct sharelink target is user home */
+	writelogmessage(LOG_DEBUG, "Checking prefix for sharelink: %s\n",
+			pathbuf);
+	char link_target[PATH_BUF_LEN];
+	if (PATH_BUF_LEN ==
+	    readlink(pathbuf, link_target, strlen(conf->pw_dir))) {
+	    writelogmessage(LOG_WARNING,
+			    "Link lookup failed for: %s\n", pathbuf);
+	    return NSS_STATUS_NOTFOUND;
 	}
+	/* Explicitly terminate string after target prefix */
+	link_target[strlen(conf->pw_dir)] = 0;
+	if (strcmp(conf->pw_dir, link_target) != 0) {
+	    writelogmessage(LOG_WARNING,
+			    "Invalid sharelink target prefix: %s\n",
+			    link_target);
+	    return NSS_STATUS_NOTFOUND;
+	}
+	if (access(link_target, R_OK) != 0) {
+	    writelogmessage(LOG_WARNING,
+			    "Read access to sharelink target %s denied: %s\n",
+			    link_target, strerror(errno));
+	    return NSS_STATUS_NOTFOUND;
+	}
+	/* Match - override home path with sharelink base */
+	is_share = 1;
+	pathlen = strlen(get_sharelink_home()) + strlen(SHARELINK_SUBDIR) +
+	    strlen(name) + 2;
     }
     writelogmessage(LOG_DEBUG, "Detect sharelink: %d\n", is_share);
 #endif				/* ENABLE_SHARELINK */
@@ -237,16 +328,13 @@ _nss_mig_getpwnam_r(const char *name,
     /* Build the full path */
     if (is_share == 0) {
 	strcpy(pathbuf, conf->pw_dir);
-    } else {
-	strcpy(pathbuf, SHARELINK_HOME);
+	if (pathbuf[pathlen] != '/') {
+	    pathbuf[pathlen] = '/';
+	    pathbuf[pathlen + 1] = 0;
+	    pathlen++;
+	}
+	strcpy(pathbuf + pathlen, name);
     }
-    if (pathbuf[pathlen] != '/') {
-	pathbuf[pathlen] = '/';
-	pathbuf[pathlen + 1] = 0;
-	pathlen++;
-    }
-
-    strcpy(pathbuf + pathlen, name);
 
     /* Do resolution to remove any weirdness and symlinks */
     char *resolved_path = realpath(pathbuf, NULL);
