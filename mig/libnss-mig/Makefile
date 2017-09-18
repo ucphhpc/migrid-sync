@@ -20,8 +20,8 @@ MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""'
 
 CC = gcc
 INSTALL = /usr/bin/install
-INSTALL_PROGRAM = ${INSTALL}
-INSTALL_DATA = ${INSTALL} -m 755
+INSTALL_PROGRAM = ${INSTALL} -m 755
+INSTALL_DATA = ${INSTALL} -m 644
 
 prefix = ""
 exec_prefix = ${prefix}
@@ -30,6 +30,13 @@ exec_prefix = ${prefix}
 bindir = ${exec_prefix}/bin
 binprefix =
 
+# Where the installed library goes.
+# On deb systems NSS modules are stored in /lib/x86_64-linux-gnu/
+# On rpm systems NSS modules go into /lib64/
+# If on other platforms override nsslibdir with:
+# nsslibdir=/path/to/dir/with/libnss_*.so make -e install
+nsslibdir := $(shell dirname $(firstword $(wildcard /lib*/libnss_*.so /lib/*-linux-gnu/libnss_*.so)))
+libdir = ${prefix}/${nsslibdir}
 sysconfdir = /etc
 
 # mandir = /usr/local/src/less-394/debian/less/usr/share/man
@@ -45,8 +52,8 @@ libnss_mig:	libnss_mig.c
 
 install:	libnss_mig.so.2
 	# remember  /lib64/libnss_mig.so.2 -> libnss_mig-2.3.6.so
-	${INSTALL_DATA} libnss_mig.so.2 ${prefix}/lib64/libnss_mig-2.3.6.so
-	cd ${prefix}/lib64 && ln -fs libnss_mig-2.3.6.so libnss_mig.so.2
+	${INSTALL_DATA} libnss_mig.so.2 ${libdir}/libnss_mig-2.3.6.so
+	cd ${libdir} && ln -fs libnss_mig-2.3.6.so libnss_mig.so.2
 
 clean:
 	rm -f libnss_mig.so.2

@@ -20,8 +20,8 @@ MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""'
 
 CC = gcc
 INSTALL = /usr/bin/install
-INSTALL_PROGRAM = ${INSTALL}
-INSTALL_DATA = ${INSTALL} -m 755
+INSTALL_PROGRAM = ${INSTALL} -m 755
+INSTALL_DATA = ${INSTALL} -m 644
 
 prefix = ""
 exec_prefix = ${prefix}
@@ -35,7 +35,7 @@ binprefix =
 # On rpm systems PAM modules go into /lib64/security/
 # If on other platforms override securitydir with:
 # securitydir=/path/to/security make -e install
-securitydir = /lib64/security
+securitydir := $(shell dirname $(firstword $(wildcard /lib*/security/pam_*.so /lib/*-linux-gnu/security/pam_*.so)))
 libdir = ${prefix}/${securitydir}
 libprefix =
 
