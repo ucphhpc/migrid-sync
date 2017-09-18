@@ -94,7 +94,7 @@ static struct passwd *read_conf()
     conf = fgetpwent(fd);
 
     if (conf == NULL) {
-	writelogmessage(LOG_ERR, "Failed to load file %s, error: %d\n",
+	writelogmessage(LOG_ERR, "Failed to parse file %s, error: %d\n",
 			CONF_FILE, errno);
 	fclose(fd);
 	return NULL;
@@ -154,11 +154,11 @@ _nss_mig_getpwnam_r(const char *name,
     size_t name_len = strlen(name);
 
     /* Since we rely on mapping the username to a path on disk,
-       make sure the name does not contain strange things */
+       double check that the name does not contain path traversal attempts
+       after basic input validation */
     if (validate_username(name) != 0 || strstr(name, "..") != NULL
 	|| strstr(name, "/") != NULL || strstr(name, ":") != NULL) {
-	writelogmessage(LOG_WARNING, "Invalid username (%d): %s\n",
-			name_len, name);
+	writelogmessage(LOG_INFO, "Invalid username: %s\n", name);
 	return NSS_STATUS_NOTFOUND;
     }
 
@@ -207,7 +207,7 @@ _nss_mig_getpwnam_r(const char *name,
 	    return NSS_STATUS_NOTFOUND;
 	}
 	if (access(link_target, R_OK) != 0) {
-	    writelogmessage(LOG_WARNING,
+	    writelogmessage(LOG_INFO,
 			    "Read access to sharelink target %s denied: %s\n",
 			    link_target, strerror(errno));
 	    return NSS_STATUS_NOTFOUND;
@@ -241,7 +241,7 @@ _nss_mig_getpwnam_r(const char *name,
     /* Do resolution to remove any weirdness and symlinks */
     char *resolved_path = realpath(pathbuf, NULL);
     if (resolved_path == NULL) {
-	writelogmessage(LOG_WARNING,
+	writelogmessage(LOG_INFO,
 			"Failed to resolve path to a real path: %s\n",
 			pathbuf);
 	return NSS_STATUS_NOTFOUND;
@@ -269,7 +269,7 @@ _nss_mig_getpwnam_r(const char *name,
 	free(resolved_path);
 	resolved_path = NULL;
     } else {
-	writelogmessage(LOG_WARNING,
+	writelogmessage(LOG_INFO,
 			"Resolved path is not a directory: %s\n",
 			resolved_path);
 	free(resolved_path);

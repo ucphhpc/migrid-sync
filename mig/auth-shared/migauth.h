@@ -50,11 +50,11 @@
 #ifndef USERNAME_REGEX
 /* Default fall-back value used unless given */
 /* NOTE: line anchors are mandatory to avoid false hits */
-#define USERNAME_REGEX "^[a-z][a-z0-9_-]{0,127}$"
+#define USERNAME_REGEX "^[a-z][a-z0-9_-]{1,127}$"
 #endif
 #ifndef USERNAME_MIN_LENGTH
 /* Default fall-back value used unless given */
-#define USERNAME_MIN_LENGTH 1
+#define USERNAME_MIN_LENGTH 2
 #endif
 #ifndef USERNAME_MAX_LENGTH
 /* Default fall-back value used unless given */
@@ -80,10 +80,8 @@
 /* For testing, the printf can be activated,
    but should never be enabled in non-debug mode */
 //#define DEBUG_PRINTF 0
-#ifndef DEBUG
-/* Print debug messages as well */
-#define DEBUG 1
-#endif
+/* Uncomment to enable debug messages as well */
+//#define DEBUG 0
 
 /* Helper function that writes messages to syslog */
 static void writelogmessage(int priority, const char *msg, ...)
@@ -207,8 +205,14 @@ static int validate_username(const char *username)
 {
     writelogmessage(LOG_DEBUG, "Validate username '%s'\n", username);
     if (strlen(username) < USERNAME_MIN_LENGTH) {
+	writelogmessage(LOG_DEBUG,
+			"Invalid username %s - too short (<%d)\n",
+			username, USERNAME_MIN_LENGTH);
 	return 1;
     } else if (strlen(username) > USERNAME_MAX_LENGTH) {
+	writelogmessage(LOG_DEBUG,
+			"Invalid username %s - too long (>%d)\n",
+			username, USERNAME_MAX_LENGTH);
 	return 2;
     }
 
@@ -237,7 +241,7 @@ static int validate_username(const char *username)
 			    strerror(ENOMEM));
 	    retval = 4;
 	} else {
-	    writelogmessage(LOG_WARNING,
+	    writelogmessage(LOG_ERR,
 			    "Syntax error in username_regex: %s\n",
 			    username_regex);
 	    retval = 5;
@@ -255,7 +259,7 @@ static int validate_username(const char *username)
 			username, username_regex);
 	retval = 0;
     } else if (regex_res == REG_NOMATCH) {
-	writelogmessage(LOG_WARNING,
+	writelogmessage(LOG_DEBUG,
 			"username %s did not match username_regex %s\n",
 			username, username_regex);
 	retval = 6;

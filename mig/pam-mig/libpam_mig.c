@@ -142,7 +142,7 @@ static int do_chroot(pam_handle_t * pamh)
        make sure the name does not contain strange things */
     if (strstr(pUsername, "..") != NULL || strstr(pUsername, "/") != NULL
 	|| strstr(pUsername, ":") != NULL) {
-	writelogmessage(LOG_WARNING,
+	writelogmessage(LOG_INFO,
 			"Username did not pass validation: %s\n",
 			pUsername);
 	return PAM_AUTH_ERR;
@@ -150,7 +150,7 @@ static int do_chroot(pam_handle_t * pamh)
 
     struct passwd *pw = getpwnam(pUsername);
     if (pw == NULL) {
-	writelogmessage(LOG_WARNING, "User not found: %s\n", pUsername);
+	writelogmessage(LOG_INFO, "User not found: %s\n", pUsername);
 	return PAM_AUTH_ERR;
     }
 
@@ -287,14 +287,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
 
     /* Since we rely on mapping the username to a path on disk,
-       make sure the name does not contain strange things */
+       double check that the name does not contain path traversal attempts
+       after basic input validation */
     if (validate_username(pUsername) != 0
 	|| strstr(pUsername, "..") != NULL
 	|| strstr(pUsername, "/") != NULL
 	|| strstr(pUsername, ":") != NULL) {
-	writelogmessage(LOG_WARNING,
-			"Username failed validation checks: %s\n",
-			pUsername);
+	writelogmessage(LOG_INFO, "Invalid username: %s\n", pUsername);
 	return PAM_AUTH_ERR;
     }
 
@@ -302,7 +301,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     struct passwd *pw = getpwnam(pUsername);
     if (pw == NULL) {
-	writelogmessage(LOG_WARNING, "User not found: %s\n", pUsername);
+	writelogmessage(LOG_INFO, "User not found: %s\n", pUsername);
 	return PAM_AUTH_ERR;
     }
 
@@ -325,7 +324,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
 	retval = converse(pamh, 1, pmsg, &resp);
 	if (retval != PAM_SUCCESS) {
-	    writelogmessage(LOG_INFO, "Failed to converse\n");
+	    writelogmessage(LOG_ERR, "Failed to converse\n");
 	    return retval;
 	}
 
@@ -342,7 +341,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	    pPassword = resp[0].resp;
 	    resp[0].resp = NULL;
 	} else {
-	    writelogmessage(LOG_INFO, "Failed to converse - 2\n");
+	    writelogmessage(LOG_ERR, "Failed to converse - 2\n");
 	    return PAM_CONV_ERR;
 	}
     }
@@ -351,7 +350,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     retval = pam_get_item(pamh, PAM_SERVICE, (const void **) &pService);
     if (retval != PAM_SUCCESS) {
-	writelogmessage(LOG_WARNING, "Failed to get service name\n");
+	writelogmessage(LOG_ERR, "Failed to get service name\n");
 	return retval;
     }
 #ifdef ENABLE_SHARELINK
@@ -382,7 +381,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		writelogmessage(LOG_DEBUG, "Return sharelink success\n");
 		return PAM_SUCCESS;
 	    } else {
-		writelogmessage(LOG_WARNING,
+		writelogmessage(LOG_INFO,
 				"Username and password mismatch for sharelink: %s\n",
 				pUsername);
 		return PAM_AUTH_ERR;
@@ -413,14 +412,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
 
     if (access(auth_filename, R_OK) != 0) {
-	writelogmessage(LOG_WARNING, "Read access to file %s denied: %s\n",
+	writelogmessage(LOG_INFO, "Read access to file %s denied: %s\n",
 			auth_filename, strerror(errno));
 	return PAM_AUTH_ERR;
     }
 
     struct stat st;
     if (stat(auth_filename, &st) != 0) {
-	writelogmessage(LOG_WARNING, "Failed to read file size: %s\n",
+	writelogmessage(LOG_INFO, "Failed to read file size: %s\n",
 			auth_filename);
 	return PAM_AUTH_ERR;
     }
