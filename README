@@ -29,14 +29,14 @@ tools and a Python interpreter with a few external modules.
 -Apache SSL module (http://httpd.apache.org/docs/current/mod/mod_ssl.html)
 -Apache proxy module (http://httpd.apache.org/docs/current/mod/mod_proxy.html)
 -Apache Rewrite module (http://httpd.apache.org/docs/current/mod/mod_rewrite.html)
--OpenSSH clients (http://www.openssh.org/)
+-OpenSSH clients (https://www.openssh.org/)
 -Python 2.6 or later but not 3.x (https://www.python.org/)
 
 Optional file synchronization, WSGI interface, OpenID login, instant
 messaging service, efficient file access services, event handler
-service, JSONRPC access, background data transfer service, spell
-checking, Wiki, SCM and tracker VGrid features rely on the following
-additional software:
+service, JSONRPC access, background data transfer service, efficient
+sftp, spell checking, Wiki, SCM and tracker VGrid features rely on the
+following additional software:
 -Seafile server, community edition (https://www.seafile.com/en/download/)
 -Apache FCGI Proxy module (https://github.com/ceph/mod-proxy-fcgi)
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
@@ -52,6 +52,8 @@ additional software:
 -Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
+-OpenSSH server (https://www.openssh.org/)
+-PAM: Pluggable Authentication Modules (http://www.linux-pam.org/)
 -Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
@@ -65,7 +67,8 @@ sudo aptitude install apache2 openssh-client python python-pip \
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      python-irclib python-paramiko python-enchant python-jsonrpclib \
-     mercurial trac trac-mercurial lftp rsync
+     openssh-server libpam0g-dev mercurial trac trac-mercurial lftp \
+     rsync
 
 Apache comes with a number of modules included, so it is usually not
 necessary to explicitly install e.g. mod-ssl, mod-proxy, mod-rewrite and
@@ -441,6 +444,12 @@ python-paramiko package provides all required components for it on
 recent Debian/Ubuntu. You want to use 1.15+ because it added significant
 performance improvements. Just pull it in from pip if your distribution
 only provides an older version.
+In case you want to run a high-performance SFTP frontend you can combine
+OpenSSH with the same paramiko SFTP backend through the use of the
+sftp_subsys.py module. You need to compile and configure the PAM and NSS
+modules in mig/pam-mig and mig/libnss-mig as described in the README
+files there. Benchmarks show that it performs and scales far better to
+multiple clients.
 Python FTP server library (pyftpdlib) in a recent version (1.x) is required
 for the optional grid_ftps daemon to work and the python-pyftpdlib
 package provides all required components for it on recent
