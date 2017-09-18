@@ -61,6 +61,11 @@
 #define USERNAME_MAX_LENGTH 128
 #endif
 
+/* Various settings used by ordinary user access */
+#ifndef USER_HOME
+#define USER_HOME "/home"
+#endif
+
 /* Various settings used by optional sharelink access */
 /* Enable sharelinks unless explicitly disabled during compilation */
 #ifndef DISABLE_SHARELINK
@@ -70,7 +75,7 @@
 #define SHARELINK_HOME "/tmp"
 #endif
 #ifndef SHARELINK_LENGTH
-#define SHARELINK_LENGTH 42
+#define SHARELINK_LENGTH "42"
 #endif
 #ifndef SHARELINK_SUBDIR
 #define SHARELINK_SUBDIR "read-write"
@@ -107,6 +112,37 @@ static void writelogmessage(int priority, const char *msg, ...)
 #endif				/* DEBUG */
 }
 
+/* General helper to extract variable value. Tries the environment, conf, 
+   compile-time definition and default definition in that order until one
+   is found */
+static const char *get_runtime_var(const char *env_name, const char *conf_name,
+                                   const char *define_val)
+{
+#ifdef _GNU_SOURCE
+    const char *var_val = secure_getenv(env_name);
+#else
+    const char *var_val = getenv(env_name);
+#endif
+    /* TODO: actually implement option (2):
+       if (var_val == NULL) {
+       #ifdef _GNU_SOURCE
+       char *conf_path = secure_getenv("MIG_CONF");
+       #else
+       char *conf_path = getenv("MIG_CONF");
+       #endif
+
+       var_val = conf->conf_name;
+       }
+     */
+    /* Fall back to defined value */
+    if (var_val == NULL) {
+	var_val = define_val;
+    }
+    writelogmessage(LOG_DEBUG, "Found runtime var value %s\n",
+		    var_val);
+    return var_val;
+}
+
 /* We take first occurence of USERNAME_REGEX from
  * 1. USERNAME_REGEX environment
  * 2. SITE->username_regex (.ini) configuration file
@@ -115,30 +151,21 @@ static void writelogmessage(int priority, const char *msg, ...)
  */
 static const char *get_username_regex()
 {
-#ifdef _GNU_SOURCE
-    char *username_regex = secure_getenv("USERNAME_REGEX");
-#else
-    char *username_regex = getenv("USERNAME_REGEX");
-#endif
-    /* TODO: actually implement option (2):
-       if (username_regex == NULL) {
-       #ifdef _GNU_SOURCE
-       char *conf_path = secure_getenv("MIG_CONF");
-       #else
-       char *conf_path = getenv("MIG_CONF");
-       #endif
-
-       username_regex = conf->username_regex;
-       }
-     */
-    /* Fall back to defined value */
-    if (username_regex == NULL) {
-	username_regex = USERNAME_REGEX;
-    }
-    writelogmessage(LOG_DEBUG, "Found username regex %s\n",
-		    username_regex);
-    return username_regex;
+    return get_runtime_var("USERNAME_REGEX", "username_regex", USERNAME_REGEX);
 }
+
+/* We take first occurence of USER_HOME from
+ * 1. USER_HOME environment
+ * 2. user_home in (.ini) configuration file
+ * 3. USER_HOME compile time values
+ * 4. hard-coded defaults here
+ */
+/* TODO: add support for using AUTO for home in nssswitch.conf
+static const char *get_user_home()
+{
+    return get_runtime_var("USER_HOME", "user_home", USER_HOME);
+}
+*/
 
 /* We take first occurence of SHARELINK_HOME and SHARELINK_LENGTH from
  * 1. SHARELINK_HOME and SHARELINK_LENGTH environment
@@ -148,56 +175,19 @@ static const char *get_username_regex()
  */
 static const char *get_sharelink_home()
 {
-#ifdef _GNU_SOURCE
-    char *sharelink_home = secure_getenv("SHARELINK_HOME");
-#else
-    char *sharelink_home = getenv("SHARELINK_HOME");
-#endif
-    /* TODO: actually implement option (2):
-       if (sharelink_home == NULL) {
-       #ifdef _GNU_SOURCE
-       char *conf_path = secure_getenv("MIG_CONF");
-       #else
-       char *conf_path = getenv("MIG_CONF");
-       #endif
-
-       sharelink_home = conf->sharelink_home;
-       }
-     */
-    /* Fall back to defined value */
-    if (sharelink_home == NULL) {
-	sharelink_home = SHARELINK_HOME;
-    }
-    writelogmessage(LOG_DEBUG, "Found sharelink home %s\n",
-		    sharelink_home);
-    return sharelink_home;
+    return get_runtime_var("SHARELINK_HOME", "sharelink_home", SHARELINK_HOME);
 }
 
-static const int get_sharelink_length()
+static int get_sharelink_length()
 {
-#ifdef _GNU_SOURCE
-    char *sharelink_length = secure_getenv("SHARELINK_LENGTH");
-#else
-    char *sharelink_length = getenv("SHARELINK_LENGTH");
-#endif
-    /* TODO: actually implement option (2):
-       if (sharelink_length == NULL) {
-       #ifdef _GNU_SOURCE
-       char *conf_path = secure_getenv("MIG_CONF");
-       #else
-       char *conf_path = getenv("MIG_CONF");
-       #endif
-       sharelink_length = conf->sharelink_length;
-       }
-     */
-    if (sharelink_length == NULL) {
-	writelogmessage(LOG_DEBUG, "Found sharelink length: %d\n",
-			SHARELINK_LENGTH);
-	return SHARELINK_LENGTH;
-    }
-    writelogmessage(LOG_DEBUG, "Found sharelink length %s\n",
-		    sharelink_length);
-    return atoi(sharelink_length);
+    /* NOTE: tedious but required juggling between string and integer */
+    char sharelink_length[4];
+    /* Convert SHARELINK_LENGTH to '\0'-terminated string */
+    snprintf(sharelink_length, 3, "%d", SHARELINK_LENGTH);
+    sharelink_length[3] = 0;
+    /* Convert lookup back to int */
+    return atoi(get_runtime_var("SHARELINK_LENGTH", "site->sharelink_length",
+                                sharelink_length));
 }
 
 /* username input validation using username_regex and length helpers */
