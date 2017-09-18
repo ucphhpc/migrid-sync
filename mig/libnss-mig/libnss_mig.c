@@ -60,6 +60,7 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <errno.h>
+#include <regex.h>
 /* TODO: enable conf parsing with this:
 #include <ini_config.h>
 */
@@ -68,6 +69,22 @@
 #define MIN_UID_NUMBER   500
 #define MIN_GID_NUMBER   500
 #define CONF_FILE "/etc/libnss_mig.conf"
+
+/* Various settings used for username input validation */
+/* Something similar to most UN*X account name restrictions */
+#ifndef USERNAME_REGEX
+/* Default fall-back value used unless given */
+/* NOTE: line anchors are mandatory to avoid false hits */
+#define USERNAME_REGEX "^[a-z][a-z0-9_-]{0,64}$"
+#endif
+#ifndef USERNAME_MIN_LENGTH
+/* Default fall-back value used unless given */
+#define USERNAME_MIN_LENGTH 1
+#endif
+#ifndef USERNAME_MAX_LENGTH
+/* Default fall-back value used unless given */
+#define USERNAME_MAX_LENGTH 128
+#endif
 
 /* Various settings used by optional sharelink access */
 /* Enable sharelinks unless explicitly disabled during compilation */
@@ -98,10 +115,11 @@ static void writelogmessage(int priority, const char *msg, ...)
     va_list args;
 
 #ifndef DEBUG
-    if (priority == LOG_DEBUG)
+    if (priority == LOG_DEBUG) {
 	return;
-#endif /*DEBUG*/
-	openlog("libnss_mig", LOG_PID, LOG_AUTHPRIV);
+    }
+#endif				/* DEBUG */
+    openlog("libnss_mig", LOG_PID, LOG_AUTHPRIV);
     va_start(args, msg);
     vsyslog(priority, msg, args);
     va_end(args);
@@ -150,6 +168,39 @@ static struct passwd *read_conf()
 
     fclose(fd);
     return conf;
+}
+
+/* We take first occurence of USERNAME_REGEX from
+ * 1. USERNAME_REGEX environment
+ * 2. SITE->username_regex (.ini) configuration file
+ * 3. USERNAME_REGEX compile time values
+ * 4. hard-coded defaults here
+ */
+static const char *get_username_regex()
+{
+#ifdef _GNU_SOURCE
+    char *username_regex = secure_getenv("USERNAME_REGEX");
+#else
+    char *username_regex = getenv("USERNAME_REGEX");
+#endif
+    /* TODO: actually implement option (2):
+       if (username_regex == NULL) {
+       #ifdef _GNU_SOURCE
+       char *conf_path = secure_getenv("MIG_CONF");
+       #else
+       char *conf_path = getenv("MIG_CONF");
+       #endif
+
+       username_regex = conf->username_regex;
+       }
+     */
+    /* Fall back to defined value */
+    if (username_regex == NULL) {
+	username_regex = USERNAME_REGEX;
+    }
+    writelogmessage(LOG_DEBUG, "Found username regex %s\n",
+		    username_regex);
+    return username_regex;
 }
 
 /* We take first occurence of sharelink_home and sharelink_length from
@@ -213,6 +264,74 @@ static const int get_sharelink_length()
     return atoi(sharelink_length);
 }
 
+/* username input validation using username_regex and length helpers */
+static int validate_username(const char *username)
+{
+    writelogmessage(LOG_DEBUG, "Validate username '%s'\n", username);
+    if (strlen(username) < USERNAME_MIN_LENGTH) {
+	return 1;
+    } else if (strlen(username) > USERNAME_MAX_LENGTH) {
+	return 2;
+    }
+
+    writelogmessage(LOG_DEBUG, "Validated length of username '%s'\n",
+		    username);
+    int retval;
+    regex_t validator;
+    int regex_res;
+    const char *username_regex = get_username_regex();
+    if (strlen(username_regex) < 2 || username_regex[0] != '^' ||
+	username_regex[strlen(username_regex) - 1] != '$') {
+	/* regex must have begin and end markers to avoid false hits */
+	writelogmessage(LOG_ERR,
+			"Invalid username regex %s - line anchors required\n",
+			username_regex);
+	return 3;
+
+    }
+
+    regex_res =
+	regcomp(&validator, username_regex, REG_EXTENDED | REG_NOSUB);
+    if (regex_res) {
+	if (regex_res == REG_ESPACE) {
+	    writelogmessage(LOG_ERR,
+			    "Memory error in username validation: %s\n",
+			    strerror(ENOMEM));
+	    retval = 4;
+	} else {
+	    writelogmessage(LOG_WARNING,
+			    "Syntax error in username_regex: %s\n",
+			    username_regex);
+	    retval = 5;
+	}
+	return retval;
+    }
+    writelogmessage(LOG_DEBUG, "Validate username '%s' vs regex '%s'\n",
+		    username, username_regex);
+    /* Do not try to do submatch on group (last three arguments) */
+    regex_res = regexec(&validator, username, 0, NULL, 0);
+    if (regex_res == 0) {
+	/* Success - username matches regex and length limits */
+	writelogmessage(LOG_DEBUG,
+			"Validated username '%s' vs regex '%s'\n",
+			username, username_regex);
+	retval = 0;
+    } else if (regex_res == REG_NOMATCH) {
+	writelogmessage(LOG_WARNING,
+			"username %s did not match username_regex %s\n",
+			username, username_regex);
+	retval = 6;
+    } else {
+	writelogmessage(LOG_ERR,
+			"Error in regexec: %s\n",
+			regerror(regex_res, &validator, NULL, 0));
+	retval = 7;
+    }
+    regfree(&validator);
+    writelogmessage(LOG_DEBUG, "Validate username %s returning %d\n",
+		    username, retval);
+    return retval;
+}
 
 /* 
  * Allocate some space from the nss static buffer.  The buffer and buflen
@@ -253,7 +372,7 @@ _nss_mig_getpwnam_r(const char *name,
 
     /* Since we rely on mapping the username to a path on disk,
        make sure the name does not contain strange things */
-    if (name_len > MAX_USERNAME_LENGTH || strstr(name, "..") != NULL
+    if (validate_username(name) != 0 || strstr(name, "..") != NULL
 	|| strstr(name, "/") != NULL || strstr(name, ":") != NULL) {
 	writelogmessage(LOG_WARNING, "Invalid username (%d): %s\n",
 			name_len, name);

@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <regex.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -55,6 +56,22 @@
 
 /* Various settings used to communicate chrooting */
 //#define ENABLE_CHROOT 1
+
+/* Various settings used for username input validation */
+/* Something similar to most UN*X account name restrictions */
+#ifndef USERNAME_REGEX
+/* Default fall-back value used unless given */
+/* NOTE: line anchors are mandatory to avoid false hits */
+#define USERNAME_REGEX "^[a-z][a-z0-9_-]{0,64}$"
+#endif
+#ifndef USERNAME_MIN_LENGTH
+/* Default fall-back value used unless given */
+#define USERNAME_MIN_LENGTH 1
+#endif
+#ifndef USERNAME_MAX_LENGTH
+/* Default fall-back value used unless given */
+#define USERNAME_MAX_LENGTH 128
+#endif
 
 /* Various settings used by optional sharelink access */
 /* Enable sharelinks unless explicitly disabled during compilation */
@@ -90,7 +107,7 @@
    but should never be enabled in non-debug mode */
 //#define DEBUG_PRINTF 1
 /* Print debug messages as well */
-//#define DEBUG 1
+#define DEBUG 1
 
 /* The sizes here are use to handle static
    allocations of buffers */
@@ -107,10 +124,11 @@ static void writelogmessage(int priority, const char *msg, ...)
     va_list args;
 
 #ifndef DEBUG
-    if (priority == LOG_DEBUG)
+    if (priority == LOG_DEBUG) {
 	return;
-#endif /*DEBUG*/
-	openlog("pam_mig", LOG_PID, LOG_AUTHPRIV);
+    }
+#endif				/* DEBUG */
+    openlog("pam_mig", LOG_PID, LOG_AUTHPRIV);
     va_start(args, msg);
     vsyslog(priority, msg, args);
     va_end(args);
@@ -121,7 +139,7 @@ static void writelogmessage(int priority, const char *msg, ...)
     vprintf(msg, args);
     va_end(args);
 #endif				/*DEBUG_PRINTF */
-#endif /*DEBUG*/
+#endif				/* DEBUG */
 }
 
 /* Dump the code we depend on here, to prevent linker/loader dependencies */
@@ -137,14 +155,48 @@ static void writelogmessage(int priority, const char *msg, ...)
 
 static const char *get_service_dir(const char *service)
 {
-    if (strcmp(service, SSHD_SERVICE) == 0)
+    if (strcmp(service, SSHD_SERVICE) == 0) {
 	return SSHD_AUTH_DIR;
-    else if (strcmp(service, FTPD_SERVICE) == 0)
+    } else if (strcmp(service, FTPD_SERVICE) == 0) {
 	return FTPD_AUTH_DIR;
-    else if (strcmp(service, WEBDAVS_SERVICE) == 0)
+    } else if (strcmp(service, WEBDAVS_SERVICE) == 0) {
 	return WEBDAVS_AUTH_DIR;
-    else
+    } else {
 	return service;
+    }
+}
+
+/* We take first occurence of USERNAME_REGEX from
+ * 1. USERNAME_REGEX environment
+ * 2. SITE->username_regex (.ini) configuration file
+ * 3. USERNAME_REGEX compile time values
+ * 4. hard-coded defaults here
+ */
+static const char *get_username_regex()
+{
+#ifdef _GNU_SOURCE
+    char *username_regex = secure_getenv("USERNAME_REGEX");
+#else
+    char *username_regex = getenv("USERNAME_REGEX");
+#endif
+    /* TODO: actually implement option (2):
+       if (username_regex == NULL) {
+       #ifdef _GNU_SOURCE
+       char *conf_path = secure_getenv("MIG_CONF");
+       #else
+       char *conf_path = getenv("MIG_CONF");
+       #endif
+
+       username_regex = conf->username_regex;
+       }
+     */
+    /* Fall back to defined value */
+    if (username_regex == NULL) {
+	username_regex = USERNAME_REGEX;
+    }
+    writelogmessage(LOG_DEBUG, "Found username regex %s\n",
+		    username_regex);
+    return username_regex;
 }
 
 /* We take first occurence of SHARELINK_HOME and SHARELINK_LENGTH from
@@ -207,6 +259,75 @@ static const int get_sharelink_length()
     return atoi(sharelink_length);
 }
 
+/* username input validation using username_regex and length helpers */
+static int validate_username(const char *username)
+{
+    writelogmessage(LOG_DEBUG, "Validate username '%s'\n", username);
+    if (strlen(username) < USERNAME_MIN_LENGTH) {
+	return 1;
+    } else if (strlen(username) > USERNAME_MAX_LENGTH) {
+	return 2;
+    }
+
+    writelogmessage(LOG_DEBUG, "Validated length of username '%s'\n",
+		    username);
+    int retval;
+    regex_t validator;
+    int regex_res;
+    const char *username_regex = get_username_regex();
+    if (strlen(username_regex) < 2 || username_regex[0] != '^' ||
+	username_regex[strlen(username_regex) - 1] != '$') {
+	/* regex must have begin and end markers to avoid false hits */
+	writelogmessage(LOG_ERR,
+			"Invalid username regex %s - line anchors required\n",
+			username_regex);
+	return 3;
+
+    }
+
+    regex_res =
+	regcomp(&validator, username_regex, REG_EXTENDED | REG_NOSUB);
+    if (regex_res) {
+	if (regex_res == REG_ESPACE) {
+	    writelogmessage(LOG_ERR,
+			    "Memory error in username validation: %s\n",
+			    strerror(ENOMEM));
+	    retval = 4;
+	} else {
+	    writelogmessage(LOG_WARNING,
+			    "Syntax error in username_regex: %s\n",
+			    username_regex);
+	    retval = 5;
+	}
+	return retval;
+    }
+    writelogmessage(LOG_DEBUG, "Validate username '%s' vs regex '%s'\n",
+		    username, username_regex);
+    /* Do not try to do submatch on group (last three arguments) */
+    regex_res = regexec(&validator, username, 0, NULL, 0);
+    if (regex_res == 0) {
+	/* Success - username matches regex and length limits */
+	writelogmessage(LOG_DEBUG,
+			"Validated username '%s' vs regex '%s'\n",
+			username, username_regex);
+	retval = 0;
+    } else if (regex_res == REG_NOMATCH) {
+	writelogmessage(LOG_WARNING,
+			"username %s did not match username_regex %s\n",
+			username, username_regex);
+	retval = 6;
+    } else {
+	writelogmessage(LOG_ERR,
+			"Error in regexec: %s\n",
+			regerror(regex_res, &validator, NULL, 0));
+	retval = 7;
+    }
+    regfree(&validator);
+    writelogmessage(LOG_DEBUG, "Validate username %s returning %d\n",
+		    username, retval);
+    return retval;
+}
+
 /* this function is ripped from pam_unix/support.c, it lets us do IO via PAM */
 static int converse(pam_handle_t * pamh, int nargs,
 		    struct pam_message **message,
@@ -249,7 +370,7 @@ static int do_chroot(pam_handle_t * pamh)
     if (strstr(pUsername, "..") != NULL || strstr(pUsername, "/") != NULL
 	|| strstr(pUsername, ":") != NULL) {
 	writelogmessage(LOG_WARNING,
-			"Username contained invalid chars: %s\n",
+			"Username did not pass validation: %s\n",
 			pUsername);
 	return PAM_AUTH_ERR;
     }
@@ -394,10 +515,12 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     /* Since we rely on mapping the username to a path on disk,
        make sure the name does not contain strange things */
-    if (strstr(pUsername, "..") != NULL || strstr(pUsername, "/") != NULL
+    if (validate_username(pUsername) != 0
+	|| strstr(pUsername, "..") != NULL
+	|| strstr(pUsername, "/") != NULL
 	|| strstr(pUsername, ":") != NULL) {
 	writelogmessage(LOG_WARNING,
-			"Username contained invalid chars: %s\n",
+			"Username failed validation checks: %s\n",
 			pUsername);
 	return PAM_AUTH_ERR;
     }
