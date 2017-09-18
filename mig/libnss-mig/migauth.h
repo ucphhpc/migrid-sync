@@ -1,0 +1,1 @@
+../auth-shared/migauth.h
