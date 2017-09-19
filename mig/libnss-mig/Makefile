@@ -13,9 +13,9 @@
 #MIG_DEFAULTS=
 # TODO: implement this conf lookup!!
 # Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
-MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""' 
-# ... or hard code to your site values like this 
-#MIG_DEFAULTS=-D'SHARELINK_HOME="/home/mig/state/sharelink_home"' -D'SHARELINK_LENGTH=10' -D'USERNAME_REGEX="^[a-zA-Z][a-zA-Z0-9\.@_-]{0,127}$"'
+#MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""' 
+# ... or hard code to your site values like this (NOTE: escaped dollar = '$$')
+MIG_DEFAULTS=-D'SHARELINK_HOME="/home/mig/state/sharelink_home"' -D'SHARELINK_LENGTH=10' -D'USERNAME_REGEX="^[a-zA-Z][a-zA-Z0-9.@_-]{0,127}$$"'
 
 ### End of MiG site variables
 
