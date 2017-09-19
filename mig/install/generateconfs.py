@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -68,6 +68,7 @@ if '__main__' == __name__:
         'mig_state',
         'mig_certs',
         'enable_sftp',
+        'enable_sftp_subsys',
         'enable_davs',
         'enable_ftps',
         'enable_wsgi',
@@ -188,6 +189,14 @@ sudo cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
 
 Please reload or restart your apache daemons afterwards to catch the
 configuration changes.
+
+If you enabled the MiG sftp subsystem for OpenSSH, you should setup PAM+NSS
+as described in the mig/pam-mig and mig/libnss-mig READMEs and copy the
+generated sshd_config-MiG-sftp-subsys to /etc/ssh/ for a parallel service:
+sudo cp %(destination)s/sshd_config-MiG-sftp-subsys /etc/ssh/
+sudo chown 0:0 /etc/ssh/sshd_config-MiG-sftp-subsys
+After making sure it fits your site you can start the openssh service with:
+sudo /usr/sbin/sshd -f /etc/ssh/sshd_config-paramiko
 
 The migrid-init.d-rh contains a standard SysV init style helper script to
 launch all MiG daemons. It was written for RHEL/CentOS but may work

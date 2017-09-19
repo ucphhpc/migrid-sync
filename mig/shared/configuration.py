@@ -129,6 +129,8 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_auth': ['publickey', 'password'],
         'user_sftp_alias': '',
         'user_sftp_log': 'sftp.log',
+        'user_sftp_subsys_address': fqdn,
+        'user_sftp_subsys_port': 22,
         'user_sftp_subsys_log': 'sftp-subsys.log',
         'user_davs_address': fqdn,
         'user_davs_port': 4443,
@@ -326,10 +328,12 @@ class Configuration:
     user_sftp_auth = ['publickey', 'password']
     user_sftp_alias = ''
     user_sftp_log = 'sftp.log'
-    user_sftp_subsys_log = 'sftp-subsys.log'
     user_sftp_window_size = 0
     user_sftp_max_packet_size = 0
     user_sftp_max_sessions = -1
+    user_sftp_subsys_address = ''
+    user_sftp_subsys_port = 22
+    user_sftp_subsys_log = 'sftp-subsys.log'
     user_davs_address = ''
     user_davs_port = 4443
     user_davs_show_address = ''
@@ -707,9 +711,6 @@ location.""" % self.config_file
                                               'user_sftp_alias')
         if config.has_option('GLOBAL', 'user_sftp_log'):
             self.user_sftp_log = config.get('GLOBAL', 'user_sftp_log')
-        if config.has_option('GLOBAL', 'user_sftp_subsys_log'):
-            self.user_sftp_subsys_log = config.get('GLOBAL',
-                                                   'user_sftp_subsys_log')
         # Use any configured packet size values or fall back to emperically
         # decided values from a fast network.
         if config.has_option('GLOBAL', 'user_sftp_window_size'):
@@ -727,6 +728,15 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_sftp_max_sessions'):
             self.user_sftp_max_sessions = config.getint(
                 'GLOBAL', 'user_sftp_max_sessions')
+        if config.has_option('GLOBAL', 'user_sftp_subsys_address'):
+            self.user_sftp_subsys_address = config.get(
+                'GLOBAL', 'user_sftp_subsys_address')
+        if config.has_option('GLOBAL', 'user_sftp_subsys_port'):
+            self.user_sftp_subsys_port = config.getint('GLOBAL',
+                                                       'user_sftp_subsys_port')
+        if config.has_option('GLOBAL', 'user_sftp_subsys_log'):
+            self.user_sftp_subsys_log = config.get('GLOBAL',
+                                                   'user_sftp_subsys_log')
         if config.has_option('GLOBAL', 'user_davs_address'):
             self.user_davs_address = config.get('GLOBAL', 
                                                 'user_davs_address')
@@ -1244,6 +1254,11 @@ location.""" % self.config_file
             self.site_enable_sftp = config.getboolean('SITE', 'enable_sftp')
         else:
             self.site_enable_sftp = False
+        if config.has_option('SITE', 'enable_sftp_subsys'):
+            self.site_enable_sftp_subsys = config.getboolean(
+                'SITE', 'enable_sftp_subsys')
+        else:
+            self.site_enable_sftp_subsys = False
         if config.has_option('SITE', 'enable_davs'):
             self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
         else:

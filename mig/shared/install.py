@@ -102,6 +102,7 @@ def generate_confs(
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
     enable_sftp='True',
+    enable_sftp_subsys='True',
     enable_davs='True',
     enable_ftps='True',
     enable_wsgi='True',
@@ -180,6 +181,7 @@ def generate_confs(
     user_dict['__APACHE_LOCK__'] = apache_lock
     user_dict['__APACHE_LOG__'] = apache_log
     user_dict['__ENABLE_SFTP__'] = enable_sftp
+    user_dict['__ENABLE_SFTP_SUBSYS__'] = enable_sftp_subsys
     user_dict['__ENABLE_DAVS__'] = enable_davs
     user_dict['__ENABLE_FTPS__'] = enable_ftps
     user_dict['__ENABLE_WSGI__'] = enable_wsgi
@@ -524,6 +526,7 @@ cert, oid and sid based https!
         ("MiGserver-template.conf", "MiGserver.conf"),
         ("static-skin-template.css", "static-skin.css"),
         ("index-template.html", "index.html"),
+        ("openssh-MiG-sftp-subsys-template.conf", "sshd_config-MiG-sftp-subsys"),
         # service script for MiG daemons
         ("migrid-init.d-rh-template", "migrid-init.d-rh"),
         ("migrid-init.d-deb-template", "migrid-init.d-deb"),
@@ -661,6 +664,7 @@ def create_user(
     cert_dir = '%s/MiG-certificates' % apache_dir
     # We don't necessarily have free ports for daemons
     enable_sftp = 'False'
+    enable_sftp_subsys = 'False'
     enable_davs = 'False'
     enable_ftps = 'False'
     enable_openid = 'False'
@@ -674,6 +678,7 @@ def create_user(
     enable_preview = 'False'
     enable_hsts = 'False'
     enable_vhost_certs = 'False'
+    enable_verify_certs = 'False'
     enable_seafile = 'False'
     enable_duplicati = 'False'
     enable_imnotify = 'False'
@@ -754,6 +759,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         state_dir,
         cert_dir,
         enable_sftp,
+        enable_sftp_subsys,
         enable_davs,
         enable_ftps,
         enable_wsgi,
