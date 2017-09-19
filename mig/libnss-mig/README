@@ -5,20 +5,29 @@ To install the module, run `sudo make install`, which will build the binary and 
 The module needs to be registered in the nsswitch.conf file, and a special file needs to be created in:
 /etc/libnss_mig.conf
 
-This file should contain exactly one line with an entry in the passwd format, describing the MiG system user that all MiG users are mapped to. Example:
+This file should contain exactly one line with an entry in the passwd
+format, describing the MiG system user that all MiG users are mapped
+to. Example for RestrictFS:
 
 mig:x:501:501:MIG User:/restrictfs:/bin/bash
 
 This sets up all MiG virtual users to have UID and GID 501.
-For OpenSSH with a external subsystem it is strictly required that shell
+
+For OpenSSH with an external subsystem it is strictly required that shell
 is set to /bin/bash or similar, while restrictfs can use /bin/false or
-/sbin/nologin for added security.
+/sbin/nologin for added security. 
+With the subsystem the home folder should be set to the MiG user_home
+folder, usually found in the state folder. 
+If restrictfs is used, it should be set to the restrictfs mount point,
+usually /restrictfs.
 
-The home folder should be set to the MiG user_home folder, usually found in the state folder.
-If restrictfs is used, it should be set to the restrictfs mount point, usually /restrictfs.
+In any case home folder is then suffixed with the username and expanded
+to provide an absolute path. 
 
-The home folder is then suffixed with the username and expanded to provide an absolute path.
+The OpenSSH setup using the paramiko handler from grid_sftp as subsystem
+would need a line something like this example with UID/GID 1001: 
 
+mig:x:1001:1001:MIG User:/home/mig/state/user_home:/bin/bash
 
 The entry in /etc/nsswitch.conf looks like this before updating:
 passwd:         compat
@@ -35,4 +44,8 @@ gshadow:        files
 
 
 
-NOTE: On 64 bit systems, the Makefile installs libraries in /lib, but they should be installed in /lib64
+NOTE: The install location depends on architecture and distro but the
+Makefile attempts to autodetect the proper location.
+You can always call 'make install' with a custom libdir if it does
+not fit any of the default /path/to/libnss_X.so ones auto-detected:
+libdir=/path/to/libnss_X.so make -e install

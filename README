@@ -257,6 +257,7 @@ settings:
 --mig_state=MIG_STATE
 --mig_certs=MIG_CERTS
 --enable_sftp=ENABLE_SFTP
+--enable_sftp_subsys=ENABLE_SFTP_SUBSYS
 --enable_davs=ENABLE_DAVS
 --enable_ftps=ENABLE_FTPS
 --enable_wsgi=ENABLE_WSGI
@@ -334,7 +335,7 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --login_methods="migcert" \
                    --skin=migrid-basic \
                    --apache_version=2.4
-or the same with OpenID, HSTS, WSGI (default web), Seafile and
+or the same with OpenID, HSTS, WSGI (default web), Seafile, optimized SFTP and
 vhost-specific certificates from LetsEncrypt:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
@@ -359,10 +360,10 @@ vhost-specific certificates from LetsEncrypt:
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
                    --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
-                   --enable_openid=True \
                    --mig_oid_provider=https://dk-io.migrid.org:8443/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_wsgi=True --enable_sftp=True \
+                   --enable_openid=True --enable_wsgi=True \
+                   --enable_sftp=True --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
@@ -378,7 +379,7 @@ vhost-specific certificates from LetsEncrypt:
                    --apache_version=2.4
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
-Seafile integration and OpenID login:
+optimized SFTP, Seafile integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
@@ -403,7 +404,8 @@ Seafile integration and OpenID login:
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=True --enable_wsgi=True --enable_sftp=True \
+                   --enable_openid=True --enable_wsgi=True \
+                   --enable_sftp=True --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_duplicati=True --enable_hsts=True \
                    --enable_sandboxes=False --enable_vmachines=False \

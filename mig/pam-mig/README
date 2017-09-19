@@ -45,9 +45,9 @@ Match Group mig
     PermitTTY no
     X11Forwarding no
 
-NOTE: The architecture and distribution decides where PAM looks for
-modules. So please locate the lib security dir and call 'make install'
-with a custom securitydir if it does not fit the default /lib64/security
-used on 64 bit RHEL systems:
+NOTE: The install location depends on architecture and distro but the
+Makefile attempts to autodetect the proper location.
+You can always call 'make install' with a custom securitydir if it does
+not fit any of the default /path/to/security ones auto-detected:
 securitydir=/path/to/security make -e install
 
