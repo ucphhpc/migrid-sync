@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <regex.h>
 #include <stdarg.h>
 #include <syslog.h>
@@ -75,7 +76,7 @@
 #define SHARELINK_HOME "/tmp"
 #endif
 #ifndef SHARELINK_LENGTH
-#define SHARELINK_LENGTH "42"
+#define SHARELINK_LENGTH 42
 #endif
 #ifndef SHARELINK_SUBDIR
 #define SHARELINK_SUBDIR "read-write"
@@ -115,8 +116,9 @@ static void writelogmessage(int priority, const char *msg, ...)
 /* General helper to extract variable value. Tries the environment, conf, 
    compile-time definition and default definition in that order until one
    is found */
-static const char *get_runtime_var(const char *env_name, const char *conf_name,
-                                   const char *define_val)
+static const char *get_runtime_var(const char *env_name,
+				   const char *conf_name,
+				   const char *define_val)
 {
 #ifdef _GNU_SOURCE
     const char *var_val = secure_getenv(env_name);
@@ -138,9 +140,23 @@ static const char *get_runtime_var(const char *env_name, const char *conf_name,
     if (var_val == NULL) {
 	var_val = define_val;
     }
-    writelogmessage(LOG_DEBUG, "Found runtime var value %s\n",
-		    var_val);
+    writelogmessage(LOG_DEBUG, "Found runtime var value %s\n", var_val);
     return var_val;
+}
+
+/* Similar to get_runtime_var but handling integer values */
+static const int get_runtime_var_int(const char *env_name,
+				     const char *conf_name,
+				     const int define_val)
+{
+    /* NOTE: tedious but required juggling between string and integer */
+    char val_str[4];
+    /* Convert define_val int to '\0'-terminated string */
+    snprintf(val_str, 3, "%d", define_val);
+    val_str[3] = 0;
+    /* Convert lookup back to int */
+    return atoi(get_runtime_var(env_name, conf_name, val_str));
+
 }
 
 /* We take first occurence of USERNAME_REGEX from
@@ -151,7 +167,8 @@ static const char *get_runtime_var(const char *env_name, const char *conf_name,
  */
 static const char *get_username_regex()
 {
-    return get_runtime_var("USERNAME_REGEX", "username_regex", USERNAME_REGEX);
+    return get_runtime_var("USERNAME_REGEX", "username_regex",
+			   USERNAME_REGEX);
 }
 
 /* We take first occurence of USER_HOME from
@@ -175,19 +192,14 @@ static const char *get_user_home()
  */
 static const char *get_sharelink_home()
 {
-    return get_runtime_var("SHARELINK_HOME", "sharelink_home", SHARELINK_HOME);
+    return get_runtime_var("SHARELINK_HOME", "sharelink_home",
+			   SHARELINK_HOME);
 }
 
 static int get_sharelink_length()
 {
-    /* NOTE: tedious but required juggling between string and integer */
-    char sharelink_length[4];
-    /* Convert SHARELINK_LENGTH to '\0'-terminated string */
-    snprintf(sharelink_length, 3, "%d", SHARELINK_LENGTH);
-    sharelink_length[3] = 0;
-    /* Convert lookup back to int */
-    return atoi(get_runtime_var("SHARELINK_LENGTH", "site->sharelink_length",
-                                sharelink_length));
+    return get_runtime_var_int("SHARELINK_LENGTH",
+			       "site->sharelink_length", SHARELINK_LENGTH);
 }
 
 /* username input validation using username_regex and length helpers */

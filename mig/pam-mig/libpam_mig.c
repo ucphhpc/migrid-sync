@@ -67,6 +67,20 @@
 #define WEBDAVS_SERVICE "webdavs"
 #define WEBDAVS_AUTH_DIR "davs"
 
+/* Various settings used for password input validation */
+#ifndef PASSWORD_MIN_LENGTH
+/* Default fall-back value used unless given */
+#define PASSWORD_MIN_LENGTH 6
+#endif
+#ifndef PASSWORD_MAX_LENGTH
+/* Default fall-back value used unless given */
+#define PASSWORD_MAX_LENGTH 128
+#endif
+#ifndef PASSWORD_MIN_CLASSES
+/* Default fall-back value used unless given */
+#define PASSWORD_MIN_CLASSES 2
+#endif
+
 /* The sizes here are use to handle static
    allocations of buffers */
 #define MAX_DIGEST_SIZE (2048)
@@ -99,6 +113,66 @@ static const char *get_service_dir(const char *service)
     } else {
 	return service;
     }
+}
+
+static int get_password_min_length()
+{
+    return get_runtime_var_int("PASSWORD_MIN_LENGTH",
+			       "site->password_min_length",
+			       PASSWORD_MIN_LENGTH);
+}
+
+static int get_password_min_classes()
+{
+    return get_runtime_var_int("PASSWORD_MIN_CLASSES",
+			       "site->password_min_classes",
+			       PASSWORD_MIN_CLASSES);
+}
+
+/* password input validation using char class and length helpers */
+static int validate_password(const char *password)
+{
+    /* NOTE: never log raw password */
+    writelogmessage(LOG_DEBUG, "Validate password\n");
+    if (strlen(password) < get_password_min_length()) {
+	writelogmessage(LOG_INFO,
+			"Invalid password - too short (%d < %d)\n",
+			strlen(password), get_password_min_length());
+	return 1;
+    } else if (strlen(password) > PASSWORD_MAX_LENGTH) {
+	writelogmessage(LOG_INFO,
+			"Invalid password - too long (%d > %d)\n",
+			strlen(password), PASSWORD_MAX_LENGTH);
+	return 2;
+    }
+
+    writelogmessage(LOG_DEBUG, "Validated length of password: %d\n",
+		    strlen(password));
+    int i;
+    int lower = 0, upper = 0, digit = 0, other = 0, classes = 0;
+    for (i = 0; i < strlen(password); i++) {
+	if (islower(password[i])) {
+	    lower++;
+	} else if (isupper(password[i])) {
+	    upper++;
+	} else if (isdigit(password[i])) {
+	    digit++;
+	} else {
+	    other++;
+	}
+    }
+    classes = (lower > 0) + (upper > 0) + (digit > 0) + (other > 0);
+    if (classes < get_password_min_classes()) {
+	writelogmessage(LOG_INFO,
+			"password has too few character classes (%d < %d)\n",
+			classes, get_password_min_classes());
+	return 1;
+    }
+    /* Success - password matches regex and length limits */
+    writelogmessage(LOG_DEBUG,
+		    "Validated password of length %d and %d char classes\n",
+		    strlen(password), classes);
+    return 0;
 }
 
 /* this function is ripped from pam_unix/support.c, it lets us do IO via PAM */
@@ -400,6 +474,15 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     writelogmessage(LOG_DEBUG, "Checking for standard user/password: %s\n",
 		    pUsername);
+
+    /* IMPORTANT: do NOT check password strength for sharelinks as they may
+     are not guaranteed to follow policy, like character classes required */
+    /* Assure password follows site policy for length and character classes */
+    if (validate_password(pPassword) != 0) {
+	writelogmessage(LOG_INFO, "Invalid password from %s\n", pUsername);
+	return PAM_AUTH_ERR;
+    }
+
     char auth_filename[MAX_PATH_LENGTH];
     if (MAX_PATH_LENGTH ==
 	snprintf(auth_filename, MAX_PATH_LENGTH, "%s/.%s/%s", pw->pw_dir,

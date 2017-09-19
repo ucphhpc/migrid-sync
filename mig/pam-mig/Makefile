@@ -9,10 +9,13 @@
 # environment variables when running sshd or whichever service you use the PAM
 # module in.
 
-# Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
-MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""' 
+# Leave like this to use module defaults - likely won't fit your installation!
+#MIG_DEFAULTS=
+# TODO: implement this conf lookup!!
+# Leave like this to lookup values in $MIG_CONF or default MiGserver.conf when i.
+MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""'
 # ... or hard code to your site values like this 
-#MIG_DEFAULTS=-D'SHARELINK_HOME="/home/mig/state/sharelink_home"' -D'SHARELINK_LENGTH=10' -D'USERNAME_REGEX="^[a-zA-Z][a-zA-Z0-9\.@_-]{0,127}$"'
+#MIG_DEFAULTS=-D'SHARELINK_HOME="/home/mig/state/sharelink_home"' -D'SHARELINK_LENGTH=10' -D'USERNAME_REGEX="^[a-zA-Z][a-zA-Z0-9\.@_-]{0,127}$"' -D'PASSWORD_MIN_LENGTH=8' -D'PASSWORD_MIN_CLASSES=3'
 
 ### End of MiG site variables
 
