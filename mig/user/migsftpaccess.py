@@ -109,6 +109,11 @@ def test_file_access(sftp, test_path, dummy_file):
         print "download %s succeeded!" % test_path
     except Exception, exc:
         print "download %s failed: %s" % (test_path, exc)
+    try:
+        sftp.symlink(test_path, 'illegal-symlink')
+        print "symlink %s succeeded!" % test_path
+    except Exception, exc:
+        print "symlink %s failed: %s" % (test_path, exc)
     trunc_len = 4
     try:        
         path_fd = sftp.file(test_path)
@@ -147,8 +152,13 @@ def test_dir_access(sftp, test_path, dummy_file):
         print "stat %s:\n%s" % (test_path, path_stat)
     except Exception, exc:
         print "stat on %s failed: %s" % (test_path, exc)
+    try:
+        sftp.symlink(test_path, 'illegal-symlink')
+        print "symlink %s succeeded!" % test_path
+    except Exception, exc:
+        print "symlink %s failed: %s" % (test_path, exc)
     try:        
-        sftp.put(dummy_file, test_path)
+        sftp.put(dummy_file, os.path.join(test_path, "dummy"))
         print "upload to %s succeeded!" % test_path
     except Exception, exc:
         print "upload to %s failed: %s" % (test_path, exc)
@@ -218,16 +228,16 @@ Please verify it on your MiG ssh Settings page in case of failure."""
 
     file_targets = ['.htaccess', '../../../mig/server/MiGserver.conf',
                     '../vinter@nbi.ku.dk/welcome.txt',
+                    'eScience/.vgridscm/cgi-bin/hgweb.cgi',
                     '../../vgrid_files_home/BINF/README', '/etc/hosts',
                     '../../../../../etc/hosts']
-    dir_targets = ['..', '/etc', '/home/mig/state/user_home',
-                   '../vinter@nbi.ku.dk', '../../vgrid_files_home/',
-                   '../../../../../etc']
+    dir_targets = ['../', '/etc/', '/home/mig/state/user_home/',
+                   '../vinter@nbi.ku.dk/', 'eScience/.vgridscm/cgi-bin/',
+                   '../../vgrid_files_home/', '../../../../../etc/']
 
-    # TMP!!
+    # Uncomment to limit targets while developing/debugging
     #file_targets = file_targets[:1]
     #dir_targets = dir_targets[:1]
-
 
     print "= Running access tests against %s:%s as %s =" % (server_fqdn,
                                                             server_port,
