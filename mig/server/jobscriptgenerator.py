@@ -857,9 +857,21 @@ def gen_job_script(
     # That is not needed with grid_sftp where we parse job for key.
     if configuration.site_enable_sftp_subsys and \
            job_dictionary['MOUNTSSHPUBLICKEY']:
-        # TODO: limit from value to resource/frontendproxy address?
-        jobsshpubkey_array.append('restrict %(MOUNTSSHPUBLICKEY)s\n' % \
-                                  job_dictionary)
+        # Restrict to access from frontend proxy / resource FQDN
+        res_fqdn = resource_config.get('FRONTENDPROXY', '')
+        if not res_fqdn:
+            res_fqdn = resource_config.get('HOSTURL', '')
+        allow_from = '%s' % res_fqdn
+        try:
+            user_ip = socket.gethostbyname_ex(res_fqdn)[2][0]
+            allow_from += ',%s' % user_ip
+        except Exception, exc:
+            user_ip = None
+            logger.warning("Skipping ip in 'from' on job mount key: %s" % exc)
+        # Always minimize key access with the restrict catch-all and source
+        restrictions = 'from="%s",restrict' % allow_from
+        pub_key = '%(MOUNTSSHPUBLICKEY)s' % job_dictionary
+        jobsshpubkey_array.append('%s %s\n' % (restrictions, pub_key))
     
     # clean up must be done with SSH (when the .status file
     # has been uploaded): Job script can't safely/reliably clean up
