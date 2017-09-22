@@ -344,6 +344,16 @@ def server_cleanup(
         logger.error('error removing %s %s' % (last_live_update_file,
                      err))
         success = False
+    try:
+        authorized_keys_file = os.path.join(configuration.mig_system_files,
+                                            'job_mount', sessionid + \
+                                            '.authorized_keys')
+        if os.path.isfile(authorized_keys_file):
+            os.remove(authorized_keys_file)
+    except Exception, err:
+        logger.error('error removing %s %s' % (authorized_keys_file,
+                     err))
+        success = False
 
     # Empty jobs should have all their status files deleted
     # Clean up may happen before any files are uploaded so ignore

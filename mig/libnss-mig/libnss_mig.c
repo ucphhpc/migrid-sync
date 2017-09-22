@@ -35,7 +35,7 @@
  * ---
  *
  * This MiG version was written by Kenneth Skovhede <skovhede@nbi.ku.dk>
- * and extended for sharelinks by Jonas Bardino <bardino@nb.ku.dk>.
+ * and extended for sharelinks+jobsidmount by Jonas Bardino <bardino@nb.ku.dk>.
  *
  */
 
@@ -170,7 +170,7 @@ _nss_mig_getpwnam_r(const char *name,
 
     char pathbuf[PATH_BUF_LEN];
     size_t pathlen = strlen(conf->pw_dir);
-    int is_share = 0;
+    int is_share = 0, is_job = 0;
 
 #ifdef ENABLE_SHARELINK
     /* Optional anonymous share link access:
@@ -220,6 +220,53 @@ _nss_mig_getpwnam_r(const char *name,
     writelogmessage(LOG_DEBUG, "Detect sharelink: %d\n", is_share);
 #endif				/* ENABLE_SHARELINK */
 
+#ifdef ENABLE_JOBSIDMOUNT
+    /* Optional job session mount access:
+       - username must have fixed length matching get_jobsidmount_length()
+       - get_jobsidmount_home()/username must exist as a symlink
+       - session ssh key must match for access
+     */
+    writelogmessage(LOG_DEBUG, "Checking for jobsidmount: %s\n", name);
+    if (strlen(name) == get_jobsidmount_length()) {
+	if (PATH_BUF_LEN ==
+	    snprintf(pathbuf, PATH_BUF_LEN, "%s/%s",
+		     get_jobsidmount_home(), name)) {
+	    writelogmessage(LOG_WARNING,
+			    "Path construction failed for: %s/%s\n",
+			    get_jobsidmount_home(), name);
+	    return NSS_STATUS_NOTFOUND;
+	}
+	/* Make sure prefix of direct jobsidmount target is user home */
+	writelogmessage(LOG_DEBUG, "Checking prefix for jobsidmount: %s\n",
+			pathbuf);
+	char link_target[PATH_BUF_LEN];
+	if (PATH_BUF_LEN ==
+	    readlink(pathbuf, link_target, strlen(conf->pw_dir))) {
+	    writelogmessage(LOG_WARNING,
+			    "Link lookup failed for: %s\n", pathbuf);
+	    return NSS_STATUS_NOTFOUND;
+	}
+	/* Explicitly terminate string after target prefix */
+	link_target[strlen(conf->pw_dir)] = 0;
+	if (strcmp(conf->pw_dir, link_target) != 0) {
+	    writelogmessage(LOG_WARNING,
+			    "Invalid jobsidmount target prefix: %s\n",
+			    link_target);
+	    return NSS_STATUS_NOTFOUND;
+	}
+	if (access(link_target, R_OK) != 0) {
+	    writelogmessage(LOG_INFO,
+			    "Read access to jobsidmount target %s denied: %s\n",
+			    link_target, strerror(errno));
+	    return NSS_STATUS_NOTFOUND;
+	}
+	/* Match - override home path with jobsidmount base */
+	is_job = 1;
+	pathlen = strlen(get_jobsidmount_home()) + strlen(name) + 1;
+    }
+    writelogmessage(LOG_DEBUG, "Detect jobsidmount: %d\n", is_job);
+#endif				/* ENABLE_JOBSIDMOUNT */
+
     /* Make sure we can fit the path into the buffer */
     if (pathlen + name_len + 2 > PATH_BUF_LEN) {
 	writelogmessage(LOG_WARNING, "Expanded path too long, %d vs %d\n",
@@ -228,7 +275,7 @@ _nss_mig_getpwnam_r(const char *name,
     }
 
     /* Build the full path */
-    if (is_share == 0) {
+    if (is_share == 0 && is_job == 0) {
 	strcpy(pathbuf, conf->pw_dir);
 	if (pathbuf[pathlen] != '/') {
 	    pathbuf[pathlen] = '/';

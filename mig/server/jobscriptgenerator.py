@@ -222,11 +222,17 @@ def create_job_script(
             logger.error(msg)
             return (None, msg)
 
+        # Select sftp subsys if enabled but fall back to basic sftp otherwise
         sftp_address = configuration.user_sftp_show_address
+        sftp_port = configuration.user_sftp_show_port
+        if configuration.site_enable_sftp_subsys:
+            if configuration.user_sftp_subsys_address:
+                sftp_address = configuration.user_sftp_subsys_address
+            if configuration.user_sftp_subsys_port:
+                sftp_port = configuration.user_sftp_subsys_port
+
         sftp_addresses = socket.gethostbyname_ex(sftp_address or \
                                                  socket.getfqdn())
-        sftp_port = configuration.user_sftp_show_port
-        
         mount_known_hosts = "%s,[%s]:%s" % (sftp_addresses[0],
                                             sftp_addresses[0], sftp_port)
         for list_idx in xrange(1, len(sftp_addresses)):
@@ -661,16 +667,6 @@ def gen_job_script(
     getinputfiles_array.append(generator.print_on_error(
         'generate_iosessionid_file', '0',
         'failed to generate iosessionid file!'))
-    getinputfiles_array.append(generator.generate_mountsshprivatekey_file(
-        'generate_mountsshprivatekey_file'))
-    getinputfiles_array.append(generator.print_on_error(
-        'generate_mountsshprivatekey_file', '0',
-        'failed to generate mountsshprivatekey file!'))
-    getinputfiles_array.append(generator.generate_mountsshknownhosts_file(
-        'generate_mountsshknownhosts_file'))
-    getinputfiles_array.append(generator.print_on_error(
-        'generate_mountsshknownhosts_file', '0',
-        'failed to generate mountsshknownhosts file!'))
     getinputfiles_array.append(generator.total_status(
         ['get_special_status', 'get_input_status', 'get_executables_status',
          'generate_output_filelists'], 'total_status'))
@@ -716,10 +712,27 @@ def gen_job_script(
     job_array.append(generator.comment('enforce some basic job limits'))
     job_array.append(generator.set_limits())
     if job_dictionary.get('MOUNT', []) != []:
+        job_array.append(generator.generate_mountsshprivatekey_file(
+            'generate_mountsshprivatekey_file'))
+        job_array.append(generator.print_on_error(
+            'generate_mountsshprivatekey_file', '0',
+            'failed to generate mountsshprivatekey file!'))
+        job_array.append(generator.generate_mountsshknownhosts_file(
+            'generate_mountsshknownhosts_file'))
+        job_array.append(generator.print_on_error(
+            'generate_mountsshknownhosts_file', '0',
+            'failed to generate mountsshknownhosts file!'))
         job_array.append(generator.comment('Mount job home'))
+        # Select sftp subsys if enabled but fall back to basic sftp otherwise
+        sfp_address = configuration.user_sftp_show_address
+        sftp_port = configuration.user_sftp_show_port
+        if configuration.site_enable_sftp_subsys:
+            if configuration.user_sftp_subsys_address:
+                sftp_address = configuration.user_sftp_subsys_address
+            if configuration.user_sftp_subsys_port:
+                sftp_port = configuration.user_sftp_subsys_port
         job_array.append(generator.mount(job_dictionary['SESSIONID'], 
-                                         configuration.user_sftp_show_address, 
-                                         configuration.user_sftp_show_port, 
+                                         sftp_address, sftp_port,
                                          'mount_status'))
         job_array.append(generator.print_on_error('mount_status', '0',
                                                   'failded to mount job home'))
@@ -839,6 +852,15 @@ def gen_job_script(
     sendupdatefiles_array.append(generator.exit_script('0',
                                                        'send update files'))
 
+    jobsshpubkey_array = []    
+    # Save session pub key in SESSIONID.authorized_keys for openssh+subsys use.
+    # That is not needed with grid_sftp where we parse job for key.
+    if configuration.site_enable_sftp_subsys and \
+           job_dictionary['MOUNTSSHPUBLICKEY']:
+        # TODO: limit from value to resource/frontendproxy address?
+        jobsshpubkey_array.append('restrict %(MOUNTSSHPUBLICKEY)s\n' % \
+                                  job_dictionary)
+    
     # clean up must be done with SSH (when the .status file
     # has been uploaded): Job script can't safely/reliably clean up
     # after itself because of possible user interference.
@@ -887,5 +909,12 @@ def gen_job_script(
     write_file('\n'.join(sendupdatefiles_array),
                configuration.mig_system_files + job_dictionary['JOB_ID']
                 + '.sendupdatefiles', logger)
+    # Save session pub key in SID.authorized_keys file for openssh+subsys use
+    if jobsshpubkey_array:
+        write_file('\n'.join(jobsshpubkey_array),
+                   os.path.join(configuration.mig_system_files,
+                                'job_mount', job_dictionary['SESSIONID']
+                                + '.authorized_keys'), logger, umask=027)
+        
    
     return True

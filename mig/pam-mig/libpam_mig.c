@@ -462,21 +462,57 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	    }
 	} else {
 	    writelogmessage(LOG_DEBUG,
-			    "No matching sharelink: %s. Try user auth.\n",
+			    "No matching sharelink: %s. Try next auth.\n",
 			    share_path);
 	}
     } else {
 	writelogmessage(LOG_DEBUG,
-			"Not a sharelink username: %s. Try user auth.\n",
+			"Not a sharelink username: %s. Try next auth.\n",
 			pUsername);
     }
 #endif				/* ENABLE_SHARELINK */
 
+#ifdef ENABLE_JOBSIDMOUNT
+    /* Optional anonymous share link access:
+       - username must have fixed length matching get_jobsidmount_length()
+       - get_jobsidmount_home()/username must exist as a symlink
+       - username and password must be identical
+     */
+    writelogmessage(LOG_DEBUG, "Checking for jobsidmount: %s\n", pUsername);
+    if (strlen(pUsername) == get_jobsidmount_length()) {
+	char share_path[MAX_PATH_LENGTH];
+	if (MAX_PATH_LENGTH ==
+	    snprintf(share_path, MAX_PATH_LENGTH, "%s/%s",
+		     get_jobsidmount_home(), pUsername)) {
+	    writelogmessage(LOG_WARNING,
+			    "Path construction failed for: %s/%s\n",
+			    get_jobsidmount_home(), pUsername);
+	    return PAM_AUTH_ERR;
+	}
+	/* NSS lookup assures jobsidmount target is valid and inside user home */
+	/* Just check simple access here to make sure it is a job session link */
+	if (access(share_path, R_OK) == 0) {
+          writelogmessage(LOG_DEBUG, "Return jobsidmount success\n");
+          return PAM_SUCCESS;
+	} else {
+	    writelogmessage(LOG_DEBUG,
+			    "No matching jobsidmount: %s. Try next auth.\n",
+			    share_path);
+	}
+    } else {
+	writelogmessage(LOG_DEBUG,
+			"Not a jobsidmount username: %s. Try next auth.\n",
+			pUsername);
+    }
+#endif				/* ENABLE_JOBSIDMOUNT */
+
     writelogmessage(LOG_DEBUG, "Checking for standard user/password: %s\n",
 		    pUsername);
 
-    /* IMPORTANT: do NOT check password strength for sharelinks as they may
-     are not guaranteed to follow policy, like character classes required */
+    /* IMPORTANT: do NOT check password strength for sharelinks/jobsidmount as
+       they are not guaranteed to follow policy, like character classes
+       required.
+    */
     /* Assure password follows site policy for length and character classes */
     if (validate_password(pPassword) != 0) {
 	writelogmessage(LOG_INFO, "Invalid password from %s\n", pUsername);

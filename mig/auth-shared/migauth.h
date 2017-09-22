@@ -51,7 +51,7 @@
 #ifndef USERNAME_REGEX
 /* Default fall-back value used unless given */
 /* NOTE: line anchors are mandatory to avoid false hits */
-#define USERNAME_REGEX "^[a-z][a-z0-9_-]{1,127}$"
+#define USERNAME_REGEX "^[a-z0-9][a-z0-9_-]{1,127}$"
 #endif
 #ifndef USERNAME_MIN_LENGTH
 /* Default fall-back value used unless given */
@@ -82,6 +82,19 @@
 #define SHARELINK_SUBDIR "read-write"
 #endif
 #endif				/* !DISABLE_SHARELINK */
+
+/* Various settings used by optional job session mount access */
+/* Enable job session mount unless explicitly disabled during compilation */
+#ifndef DISABLE_JOBSIDMOUNT
+#define ENABLE_JOBSIDMOUNT 1
+/* Default fall-back values used unless given */
+#ifndef JOBSIDMOUNT_HOME
+#define JOBSIDMOUNT_HOME "/tmp"
+#endif
+#ifndef JOBSIDMOUNT_LENGTH
+#define JOBSIDMOUNT_LENGTH 42
+#endif
+#endif				/* !DISABLE_JOBSIDMOUNT */
 
 /* For testing, the printf can be activated,
    but should never be enabled in non-debug mode */
@@ -200,6 +213,24 @@ static int get_sharelink_length()
 {
     return get_runtime_var_int("SHARELINK_LENGTH",
 			       "site->sharelink_length", SHARELINK_LENGTH);
+}
+
+/* We take first occurence of JOBSIDMOUNT_HOME and JOBSIDMOUNT_LENGTH from
+ * 1. JOBSIDMOUNT_HOME and JOBSIDMOUNT_LENGTH environment
+ * 2. jobsidmount_home and SITE->jobsidmount_length in (.ini) configuration file
+ * 3. JOBSIDMOUNT_HOME and JOBSIDMOUNT_LENGTH compile time values
+ * 4. hard-coded defaults here
+ */
+static const char *get_jobsidmount_home()
+{
+    return get_runtime_var("JOBSIDMOUNT_HOME", "jobsidmount_home",
+			   JOBSIDMOUNT_HOME);
+}
+
+static int get_jobsidmount_length()
+{
+    return get_runtime_var_int("JOBSIDMOUNT_LENGTH",
+			       "site->jobsidmount_length", JOBSIDMOUNT_LENGTH);
 }
 
 /* username input validation using username_regex and length helpers */

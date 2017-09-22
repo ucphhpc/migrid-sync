@@ -570,11 +570,7 @@ class GenJobScriptSh:
         cmd += \
             '&& echo -n "%s.system.outputfiles " >> %s.inputfiles\\\n'\
              % (self.localjobname, self.localjobname)
-        cmd += '&& echo -n "%s.job " >> %s.inputfiles\\\n'\
-             % (self.localjobname, self.localjobname)
-        cmd += '&& echo -n "%s.mount.key " >> %s.inputfiles\\\n'\
-             % (self.localjobname, self.localjobname)
-        cmd += '&& echo -n "%s.mount.known_hosts" >> %s.inputfiles\n'\
+        cmd += '&& echo -n "%s.job" >> %s.inputfiles\n'\
              % (self.localjobname, self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd
@@ -647,22 +643,29 @@ class GenJobScriptSh:
 
     def generate_mountsshprivatekey_file(self, 
                                     result='generate_mountsshprivatekey_file'):
-        """Generate file containing mount ssh private key."""
+        """Generate file containing mount ssh private key in private subdir."""
         cmd = '# Create private key file used when mounting job home\n'
         cmd += '%s=0\n' % result
-        cmd += 'echo -n "%s" > %s.mount.key\n'\
+        # OpenSSH is rather picky about permissions on key so we tighten them
+        cmd += 'mkdir -p .mount\n'
+        cmd += 'chmod 700 .mount\n'
+        cmd += 'echo -n "%s" > .mount/%s.key\n'\
              % (self.job_dict['MOUNTSSHPRIVATEKEY'], self.localjobname)
+        cmd += 'chmod 600 .mount/%s.key\n' % self.localjobname
         cmd += '%s=$?\n' % result
         return cmd         
 
     def generate_mountsshknownhosts_file(self,
                                     result='generate_mountsshknownhosts_file'):
-        """Generate file containing ssh mount known_hosts."""
+        """Generate file containing ssh mount known_hosts in private subdir."""
        
         cmd = '# Create known_hosts file used when mounting job home\n'
         cmd += '%s=0\n' % result
-        cmd += 'echo -n "%s" > %s.mount.known_hosts\n'\
+        cmd += 'mkdir -p .mount\n'
+        cmd += 'chmod 700 .mount\n'
+        cmd += 'echo -n "%s" > .mount/%s.known_hosts\n'\
              % (self.job_dict['MOUNTSSHKNOWNHOSTS'], self.localjobname)
+        cmd += 'chmod 600 .mount/%s.known_hosts\n' % self.localjobname
         cmd += '%s=$?\n' % result
         return cmd
 
@@ -826,7 +829,6 @@ class GenJobScriptSh:
          Continue on errors but return total status."""
 
         cmd = '%s=0\n' % result
-        cmd += 'chmod 600 %s.mount.key\n' % (self.localjobname)
         
         for mount in self.job_dict.get('MOUNT', []):
  
@@ -849,12 +851,12 @@ class GenJobScriptSh:
             cmd += 'mkdir -p %s\n' % (resource_mount_point)
             # Auto-reconnect and use big_writes for far better write performance
             cmd += '${SSHFS_MOUNT} -oPort=%s' % (port) + \
-                        ' -oIdentityFile=${PWD}/%s.mount.key' % \
+                        ' -oIdentityFile=${PWD}/.mount/%s.key' % \
                             (self.localjobname) + \
-                        ' -oUserKnownHostsFile=${PWD}/%s.mount.known_hosts' % \
-                            (self.localjobname) + \
+                        ' -oUserKnownHostsFile=${PWD}/.mount/%s.known_hosts' \
+                        % (self.localjobname) + \
                         ' %s@%s:%s %s ' % \
-                            (login, host, mig_home_path, resource_mount_point) + \
+                        (login, host, mig_home_path, resource_mount_point) + \
                         ' -o uid=$(id -u) -o gid=$(id -g) -o reconnect' + \
                         ' -o big_writes\n'
             cmd += 'last_mount_status=$?\n'

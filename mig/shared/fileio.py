@@ -82,13 +82,15 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
                      (path, offset, err))
         return False
 
-def write_file(content, path, logger, mode='w', make_parent=True):
+def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     """Wrapper to handle writing of contents to path"""
     logger.debug('writing file: %s' % path)
 
     # create dir if it does not exists
 
     (head, _) = os.path.split(path)
+    if umask is not None:
+        old_umask = os.umask(umask)
     if not os.path.isdir(head) and make_parent:
         try:
             logger.debug('making directory %s' % head)
@@ -99,11 +101,15 @@ def write_file(content, path, logger, mode='w', make_parent=True):
         filehandle = open(path, mode)
         filehandle.write(content)
         filehandle.close()
-        logger.debug('file written: %s' % path)
-        return True
+        msg = 'file written: %s' % path
+        retval = True
     except Exception, err:
-        logger.error('could not write %s %s' % (path, err))
-        return False
+        msg = 'could not write %s %s' % (path, err)
+        retval = False
+    if umask is not None:
+        os.umask(old_umask)
+    logger.debug(msg)
+    return retval
 
 def read_tail(path, lines, logger):
     """Read last lines from path"""
