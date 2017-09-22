@@ -868,8 +868,13 @@ def gen_job_script(
         except Exception, exc:
             user_ip = None
             logger.warning("Skipping ip in 'from' on job mount key: %s" % exc)
-        # Always minimize key access with the restrict catch-all and source
-        restrictions = 'from="%s",restrict' % allow_from
+        # Always minimize key access with all restrictions and source address
+        # NOTE: 'restrict' keyword is only available in new ssh installations
+        #       we manually build the corresponding string for now. 
+        #restrict_opts = 'restrict'
+        restrict_opts = 'no-agent-forwarding,no-port-forwarding,no-pty,'
+        restrict_opts += 'no-user-rc,no-X11-forwarding'
+        restrictions = 'from="%s",%s' % (allow_from, restrict_opts)
         pub_key = '%(MOUNTSSHPUBLICKEY)s' % job_dictionary
         jobsshpubkey_array.append('%s %s\n' % (restrictions, pub_key))
     
