@@ -112,6 +112,22 @@ def hangup_handler(signal, frame):
     logger.info("reopened log after hangup signal")
     
 
+class MiGTLSFTPHandler(TLS_FTPHandler):
+    """Hardened version of TLS_FTPHandler to fix
+    https://github.com/giampaolo/pyftpdlib/issues/315
+
+    Makes sure buffer gets reset after AUTH to avoid command injection.
+    """
+
+    def ftp_AUTH(self, line):
+        res = super(MiGTLSFTPHandler, self).ftp_AUTH(line)
+        # NOTE: fix for https://github.com/giampaolo/pyftpdlib/issues/315
+        print "DEBUG: reset in buffer on switch to secure channel"
+        print "I.e. truncate '%s'" % self.ac_in_buffer
+        self.ac_in_buffer = ''            
+        return res
+
+
 class MiGUserAuthorizer(DummyAuthorizer):
     """Authenticate/authorize against MiG users DB and user password files.
     Only instantiated once from central server thread so we don't need locking
@@ -337,7 +353,7 @@ def start_service(conf):
         return False
     else:
         logger.info("Using fully encrypted mode")
-        handler = TLS_FTPHandler
+        handler = MiGTLSFTPHandler
         # requires SSL for both control and data channel
         handler.tls_control_required = True
         handler.tls_data_required = True
