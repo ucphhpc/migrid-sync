@@ -787,6 +787,10 @@ Invalid '%s' input: %s
             self.send_header('Set-Cookie',
                              'session_expire=%s;%s;secure;httponly' % \
                              (session_expire, expire))
+        # Set Content-Security-Policy: frame-ancestors to prevent clickjacking
+        # as recommended by W3C and security scans.
+        logger.debug("setting CSP: frame-ancestors header")
+        self.send_header('Content-Security-Policy', "frame-ancestors 'self'")
 
     def showAboutPage(self):
         """About page provider"""
