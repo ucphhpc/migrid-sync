@@ -405,6 +405,10 @@ Invalid '%s' input: %s
                 self.serverEndPoint(self.query)
             elif path == '/allow':
                 self.handleAllow(self.query)
+            elif path == '/loginsubmit':
+                self.doLogin()
+            elif path == '/logout':
+                self.doLogout()
             else:
                 self.send_response(404)
                 self.end_headers()
@@ -722,7 +726,7 @@ Invalid '%s' input: %s
                                     self.client_address[0], fail_user,
                                     failed_count)
                 # Login failed - return to refering page to let user try again
-                retry_url = self.headers.get('Referer')
+                retry_url = self.headers.get('Referer', self.server.base_url)
                 # Add error message to display 
                 if retry_url.find('?') == -1:
                     retry_url += '?'
