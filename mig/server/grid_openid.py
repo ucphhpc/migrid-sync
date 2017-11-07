@@ -359,8 +359,9 @@ class ServerHandler(BaseHTTPRequestHandler):
         except (KeyboardInterrupt, SystemExit):
             raise
         except InputException, err:
-            logger.error(cgitb.text(sys.exc_info(), context=10))
-            print "ERROR: %s" % cgitb.text(sys.exc_info(), context=10)
+            logger.error("Input error:\n%s" % cgitb.text(sys.exc_info(),
+                                                         context=10))
+            print "ERROR:\n%s" % cgitb.text(sys.exc_info(), context=10)
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 </p>
@@ -368,13 +369,19 @@ Invalid '%s' input: %s
 <a href='javascript:history.back(-1);'>Back</a>
 </p>""" % (key, err)
             self.showErrorPage(err_msg)
-        except:
-            self.send_response(500)
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
-            self.wfile.write(cgitb.html(sys.exc_info(), context=10))
-            logger.error(cgitb.text(sys.exc_info(), context=10))
-            print "ERROR: %s" % cgitb.text(sys.exc_info(), context=10)
+        except Exception, err:
+            # Do not disclose internal details in production
+            logger.error("Internal error:\n%s" % cgitb.text(sys.exc_info(),
+                                                            context=10))
+            print "ERROR:\n%s" % cgitb.text(sys.exc_info(), context=10)
+            err_msg = """<p class='leftpad'>
+Internal error while handling your request - please contact the system owners
+if this persistently happens.
+</p>
+<p>
+<a href='javascript:history.back(-1);'>Back</a>
+</p>"""
+            self.showErrorPage(err_msg, error_code=500)
 
     def do_POST(self):
         """Handle all HTTP POST requests"""
@@ -833,9 +840,9 @@ Invalid '%s' input: %s
         %s
         ''' % (link(self.server.base_url), status,))
 
-    def showErrorPage(self, error_message):
+    def showErrorPage(self, error_message, error_code=400):
         """Error page provider"""
-        self.showPage(400, 'Error Processing Request', err='''\
+        self.showPage(error_code, 'Error Processing Request', err='''\
         <p>%s</p>
         <!--
 
