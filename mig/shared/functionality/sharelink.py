@@ -435,22 +435,26 @@ think you should be allowed to do that.
             share_dict.update(
                 {'path': relative_path, 'access': access_list, 'expire': expire,
                  'invites': invite_list, 'single_file': single_file})
+            attempts = 1
+            generate_share_id = False
             if not share_id:
-                # Make share with random ID and retry a few times on collision
-                for i in range(3):
+                attempts = 3
+                generate_share_id = True
+            for i in range(attempts):
+                if generate_share_id:
                     share_id = generate_sharelink_id(configuration, share_mode)
-                    share_dict['share_id']  = share_id
-                    (save_status, save_msg) = create_share_link(share_dict,
-                                                                client_id,
-                                                                configuration,
-                                                                share_map)
-                    if save_status:
-                        logger.info('created sharelink: %s' % share_dict)
-                        break
-                    else:
-                        # ID Collision?
-                        logger.warning('could not create sharelink: %s' % \
-                                       save_msg)
+                share_dict['share_id']  = share_id
+                (save_status, save_msg) = create_share_link(share_dict,
+                                                            client_id,
+                                                            configuration,
+                                                            share_map)
+                if save_status:
+                    logger.info('created sharelink: %s' % share_dict)
+                    break
+                else:
+                    # ID Collision?
+                    logger.warning('could not create sharelink: %s' % \
+                                   save_msg)
             if save_status and vgrid_name:
                 logger.debug("add vgrid sharelink pointer %s" % share_id)
                 (add_status, add_msg) = vgrid_add_sharelinks(configuration,
