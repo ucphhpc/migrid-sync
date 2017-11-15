@@ -69,6 +69,7 @@ Where OPTIONS may be one or more of:
    -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
    -o SHORT_ID         Add SHORT_ID as OpenID alias for user
    -r                  Renew user account with existing values
+   -R ROLES            Set user affiliation to ROLES
    -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
 """ % {'name': name, 'cert_warn': cert_warn}
@@ -84,8 +85,9 @@ if '__main__' == __name__:
     user_file = None
     user_id = None
     short_id = None
+    roles = None
     user_dict = {}
-    opt_args = 'c:d:fhi:o:ru:v'
+    opt_args = 'c:d:fhi:o:rR:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -110,6 +112,8 @@ if '__main__' == __name__:
         elif opt == '-r':
             default_renew = True
             ask_renew = False
+        elif opt == '-R':
+            roles = val
         elif opt == '-u':
             user_file = val
         elif opt == '-v':
@@ -183,6 +187,10 @@ if '__main__' == __name__:
     # Pass optional short_id as well
     if short_id:
         user_dict['short_id'] = short_id
+
+    # Pass optional roles as well
+    if roles:
+        user_dict['roles'] = roles
 
     # Encode password if not already encoded
 
