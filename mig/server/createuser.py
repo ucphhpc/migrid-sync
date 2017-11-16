@@ -85,7 +85,7 @@ if '__main__' == __name__:
     user_file = None
     user_id = None
     short_id = None
-    roles = None
+    role = None
     user_dict = {}
     opt_args = 'c:d:fhi:o:rR:u:v'
     try:
@@ -113,7 +113,7 @@ if '__main__' == __name__:
             default_renew = True
             ask_renew = False
         elif opt == '-R':
-            roles = val
+            role = val
         elif opt == '-u':
             user_file = val
         elif opt == '-v':
@@ -188,9 +188,9 @@ if '__main__' == __name__:
     if short_id:
         user_dict['short_id'] = short_id
 
-    # Pass optional roles as well
-    if roles:
-        user_dict['roles'] = roles
+    # Pass optional role as well
+    if role:
+        user_dict['role'] = role
 
     # Encode password if not already encoded
 
