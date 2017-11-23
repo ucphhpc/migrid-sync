@@ -372,17 +372,28 @@ CSRF-filtered POST requests to prevent unintended updates'''
             settings_dict = {}
         request_recipients = settings_dict.get('request_recipients',
                                                default_vgrid_settings_limit)
-        # We load inherited owners and reverse it to take direct owners first
-        (owners_status, owners_list) = vgrid_owners(vgrid_name, configuration,
-                                             recursive=True)
-        if not owners_status:
+        # We load and use direct owners first if any - otherwise inherited 
+        owners_list = []
+        for inherited in (False, True):
+            (owners_status, owners_list) = vgrid_owners(vgrid_name,
+                                                        configuration,
+                                                        recursive=inherited)
+            if not owners_status:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'Failed to lookup owners for %s %s - sure it exists?'
+                     % (vgrid_name, label)})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+            elif owners_list:
+                break
+        if not owners_list:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'Failed to lookup owners for %s %s - are you sure it exists?'
-                 % (vgrid_name, label)})
+                 'Failed to lookup owners for %s %s - sure it exists?'
+                     % (vgrid_name, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        prioritized_list = owners_list[::-1]
-        target_list = prioritized_list[:request_recipients]
+        # Now we have direct or inherited owners to notify 
+        target_list = owners_list[:request_recipients]
 
         request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
         access_request = {'request_type': request_type, 'entity': entity,
