@@ -724,7 +724,7 @@ def gen_job_script(
             'failed to generate mountsshknownhosts file!'))
         job_array.append(generator.comment('Mount job home'))
         # Select sftp subsys if enabled but fall back to basic sftp otherwise
-        sfp_address = configuration.user_sftp_show_address
+        sftp_address = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
         if configuration.site_enable_sftp_subsys:
             if configuration.user_sftp_subsys_address:
