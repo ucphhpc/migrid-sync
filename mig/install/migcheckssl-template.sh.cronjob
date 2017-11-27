@@ -44,11 +44,17 @@ if [ ! -x "${getssl_path}" ]; then
     echo "ERROR: Missing getssl script"
     exit 1
 else   
-    wget -O ${getssl_tmp} ${getssl_url} > /dev/null 2>&1
-    diff -u -w ${getssl_tmp} ${getssl_path} || { \
-        echo "--- Updated LetsEncrypt script available - please verify+update ---"
-        echo "${getssl_url}"
-    }
+    wget -q -O ${getssl_tmp} ${getssl_url}
+    if [ $? -eq 0 ]; then
+        if ! diff -q -w ${getssl_tmp} ${getssl_path} ; then
+            echo "--- Updated LetsEncrypt script available - please verify+update ---"
+            echo "${getssl_url}"
+            echo
+            echo "--- Detailed difference follows ---"
+            diff -u -w ${getssl_tmp} ${getssl_path} 
+            echo
+        fi
+    fi
     rm -f ${getssl_tmp}
 fi
 
