@@ -35,6 +35,7 @@ and rewrite to fail or success depending on output.
 """
 
 import os
+import re
 import signal
 import sys
 import time
@@ -90,16 +91,24 @@ unless it is available in mig/server/MiGserver.conf
     
     chksidroot_stdin = sys.stdin
 
+    addr_path_pattern = re.compile("^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})::(/.*)$")
     keep_running = True
     if verbose:
         print 'Reading commands from sys stdin'
     while keep_running:
         try:
+            client_ip = "UNKNOWN"
             line = chksidroot_stdin.readline()
-            raw_path = path = line.strip()
-            logger.info("chksidroot got path: %s" % path)
+            raw_line = raw_path = path = line.strip()
+            # New line format is ${CLIENT_IP}::${PATH}
+            # try to parse and update client_ip and path
+            match = addr_path_pattern.match(raw_line)
+            if match:
+                client_ip = match.group(1)
+                raw_path = path = match.group(2)
+            logger.info("chksidroot from %s got path: %s" % (client_ip, path))
             if not os.path.isabs(path):
-                logger.error("not an absolute path: %s" % path)
+                logger.error("not an absolute path from %s: %s" % (client_ip, path))
                 print INVALID_MARKER
                 continue
             # NOTE: extract sid dir before ANY expansion to avoid escape
@@ -119,7 +128,7 @@ unless it is available in mig/server/MiGserver.conf
                 # Build proper root base terminated with a single slash
                 root = session_prefix.rstrip(os.sep) + os.sep
             else:
-                logger.error("got path with invalid root: %s" % path)
+                logger.error("got path from %s with invalid root: %s" % (client_ip, path))
                 print INVALID_MARKER
                 continue
             # Extract sid name as first component after root base
@@ -133,7 +142,7 @@ unless it is available in mig/server/MiGserver.conf
             # outside base, which is checked later.
             path = os.path.abspath(path)
             if not path.startswith(full_prefix):
-                logger.error("got path outside sid base: %s" % path)
+                logger.error("got path from %s outside sid base: %s" % (client_ip, path))
                 print INVALID_MARKER
                 continue
             if is_sharelink:
@@ -164,8 +173,8 @@ unless it is available in mig/server/MiGserver.conf
                 link_target = None
                 real_target = None
             if not link_target or not os.path.exists(link_path):
-                logger.error("not a valid link for path %s: %s" % \
-                             (path, link_path))
+                logger.error("not a valid link from %s for path %s: %s" % \
+                             (client_ip, path, link_path))
                 print INVALID_MARKER
                 continue
 
@@ -178,8 +187,8 @@ unless it is available in mig/server/MiGserver.conf
                      link_target.startswith(configuration.mig_system_files):
                 base_path = configuration.mig_system_files.rstrip(os.sep)
             else:
-                logger.error("unexpected link target %s for path %s" % \
-                             (link_target, path))
+                logger.error("unexpected link target from %s for path %s: %s" \
+                             % (client_ip, path, link_target))
                 print INVALID_MARKER
                 continue
                 
@@ -189,8 +198,8 @@ unless it is available in mig/server/MiGserver.conf
                 is_file = not os.path.isdir(real_target)
                 base_path = real_target
             else:
-                logger.warning("could not narrow down base root link %s" % \
-                               link_target)
+                logger.warning("could not narrow down base root link from %s: %s" % \
+                               (client_ip, link_target))
 
             # We manually expand sid base.
             logger.debug("found target %s for link %s" % (link_target,
@@ -206,17 +215,17 @@ unless it is available in mig/server/MiGserver.conf
                 path = path.replace(full_prefix, link_target, 1)
 
             real_path = os.path.realpath(path)
-            logger.info("check path %s in base %s or chroot" % (path,
-                                                                base_path))
+            logger.info("check path from %s in base %s or chroot: %s" % \
+                        (client_ip, base_path, path))
             # Exact match to sid dir does not make sense as we expect a file
             # IMPORTANT: use path and not real_path here in order to test both
             if not valid_user_path(configuration, path, base_path,
                                    allow_equal=is_file, apache_scripts=True):
-                logger.error("path %s (%s) outside sid chroot: %s" % \
-                             (raw_path, real_path, base_path))
+                logger.error("request from %s is outside sid chroot %s: %s (%s)" % \
+                             (client_ip, base_path, raw_path, real_path))
                 print INVALID_MARKER
                 continue
-            logger.info("found valid sid chroot path: %s" % real_path)
+            logger.info("found valid sid chroot path from %s: %s" % (client_ip, real_path))
             print real_path
 
             # Throttle down a bit to yield

@@ -35,6 +35,7 @@ and rewrite to fail or success depending on output.
 """
 
 import os
+import re
 import signal
 import sys
 import time
@@ -89,23 +90,31 @@ unless it is available in mig/server/MiGserver.conf
     
     chkuserroot_stdin = sys.stdin
 
+    addr_path_pattern = re.compile("^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})::(/.*)$")
     keep_running = True
     if verbose:
         print 'Reading commands from sys stdin'
     while keep_running:
         try:
+            client_ip = "UNKNOWN"
             line = chkuserroot_stdin.readline()
-            raw_path = path = line.strip()
-            logger.info("chkuserroot got path: %s" % path)
+            raw_line = raw_path = path = line.strip()
+            # New line format is ${CLIENT_IP}::${PATH}
+            # try to parse and update client_ip and path
+            match = addr_path_pattern.match(raw_line)
+            if match:
+                client_ip = match.group(1)
+                raw_path = path = match.group(2)
+            logger.info("chkuserroot from %s got path: %s" % (client_ip, path))
             if not os.path.isabs(path):
-                logger.error("not an absolute path: %s" % path)
+                logger.error("not an absolute path from %s: %s" % (client_ip, path))
                 print INVALID_MARKER
                 continue
             # NOTE: extract home dir before ANY expansion to avoid escape
             #       with e.g. /PATH/TO/OWNUSER/../OTHERUSER/somefile.txt
             root = configuration.user_home.rstrip(os.sep) + os.sep
             if not path.startswith(root):
-                logger.error("got path with invalid root: %s" % path)
+                logger.error("got path from %s with invalid root: %s" % (client_ip, path))
                 print INVALID_MARKER
                 continue
             # Extract name of home as first component after root base
@@ -119,7 +128,7 @@ unless it is available in mig/server/MiGserver.conf
             # outside home, which is checked later.
             path = os.path.abspath(path)
             if not path.startswith(home_path):
-                logger.error("got path outside user home: %s" % raw_path)
+                logger.error("got path from %s outside user home: %s" % (client_ip, raw_path))
                 print INVALID_MARKER
                 continue
 
@@ -130,11 +139,11 @@ unless it is available in mig/server/MiGserver.conf
             # IMPORTANT: use path and not real_path here in order to test both
             if not valid_user_path(configuration, path, home_path,
                                    allow_equal=False, apache_scripts=True):
-                logger.error("path %s (%s) outside user chroot %s" % \
-                             (raw_path, real_path, home_path))
+                logger.error("path from %s outside user chroot %s: %s (%s)" % \
+                             (client_ip, home_path, raw_path, real_path))
                 print INVALID_MARKER
                 continue
-            logger.info("found valid user chroot path: %s" % real_path)
+            logger.info("found valid user chroot path from %s: %s" % (client_ip, real_path))
             print real_path
 
             # Throttle down a bit to yield
