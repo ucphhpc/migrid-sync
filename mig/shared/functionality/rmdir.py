@@ -196,6 +196,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     os.removedirs(abs_path)
                 else:
                     os.rmdir(abs_path)
+                logger.info('%s %s done' % (op_name, abs_path))
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s '%s' failed!" % (op_name,

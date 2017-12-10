@@ -204,6 +204,7 @@ move entire special folders like %s shared folders!""" % \
             
             try:
                 shutil.move(abs_path, abs_target)
+                logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,

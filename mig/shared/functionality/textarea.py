@@ -251,9 +251,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # A new filename was created, write content to file
 
             if not write_file(content, local_filename, logger):
+                logger.error("%s failed to write plain file %s" % \
+                             (op_name, local_filename))
                 output_objects.append({'object_type': 'error_text',
                         'text': 'Could not write: %s' % local_filename})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
+            logger.info("%s wrote plain file %s" % (op_name, local_filename))
             fileuploadobj['saved'] = True
 
             # msg += "%s created!" % local_filename
@@ -366,10 +369,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             if not write_file(data, local_filename,
                               configuration.logger):
+                logger.error("%s failed to write upload file %s" % \
+                             (op_name, local_filename))
                 output_objects.append(
                     {'object_type': 'error_text',
                      'text': 'Error writing file in memory to disk'})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
+            logger.info("%s wrote upload file %s" % (op_name, local_filename))
             fileuploadobj['saved'] = True
 
             # Tell the client about the current settings (extract and submit)

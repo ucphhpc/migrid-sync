@@ -163,6 +163,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         output_objects.append({'object_type': 'text', 'text'
                               : 'Saved changes to %s.' % path})
+        logger.info('saved changes to %s' % path)
         release_edit_lock(abs_path, client_id)
     except Exception, exc:
 

@@ -156,6 +156,7 @@ def main(client_id, user_arguments_dict):
                     out_fd = open(abs_dest, dst_mode)
                     out_fd.writelines(output_lines)
                     out_fd.close()
+                    logger.info('%s %s %s done' % (op_name, abs_path, abs_dest))
                 except Exception, exc:
                     output_objects.append({'object_type': 'error_text',
                                            'text': "write failed: '%s'" % exc})

@@ -144,6 +144,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 fd = open(abs_path, 'r+')
                 fd.truncate(size)
                 fd.close()
+                logger.info('%s %s %s done' % (op_name, abs_path, size))
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,

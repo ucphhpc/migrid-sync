@@ -140,6 +140,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 if not os.path.exists(abs_path):
                     os.close(os.open(abs_path, os.O_WRONLY|os.O_CREAT, 0666))
                 os.utime(abs_path, None)
+                logger.info('%s %s done' % (op_name, abs_path))
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,
