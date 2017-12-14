@@ -2825,7 +2825,8 @@ function mig_fancyuploadchunked_init(name, callback) {
                         console.debug("fix path and strip move info: " + file.name);
                         var purename = file.name.substring(file.name.lastIndexOf("/") + 1);
                         var baseurl = file.url.substring(0, file.url.length - file.name.length);
-                        file.name = file.moveDest + "/" + purename;
+                        // normalize to e.g. strip ./ and other redundant cruft
+                        file.name = $.fn.normalizePath(file.moveDest + "/" + purename);
                         file.url = baseurl + file.name;
                         delete file.moveType;
                         delete file.moveDest;

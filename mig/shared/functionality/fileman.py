@@ -560,6 +560,7 @@ csrf_map["%s"] = "%s";
 {% console.debug("... with download files: "+$.fn.dump(o)); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     {% var rel_path = $.fn.normalizePath("./"+file.name); %}
+    {% var plain_name = rel_path.substring(rel_path.lastIndexOf("/") + 1); %}
     {% console.debug("using download rel_path: "+rel_path); %}
     {% console.debug("original delete URL: "+file.deleteUrl); %}
     {% function encodeName(str, match) { return "filename="+encodeURIComponent(match)+";files"; }  %}
@@ -568,13 +569,13 @@ csrf_map["%s"] = "%s";
         <td>
             <span class="preview">
                 {% if (file.thumbnailUrl) { %}
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" data-gallery><img src="{%=file.thumbnailUrl%}"></a>
+                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=plain_name%}" data-gallery><img src="{%=file.thumbnailUrl%}"></a>
                 {% } %}
             </span>
         </td>
         <td>
             <p class="name">
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=rel_path%}</a>
+                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=plain_name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=rel_path%}</a>
             </p>
             {% if (file.error) { %}
                 <div><span class="error">Error</span> {%=file.error%}</div>

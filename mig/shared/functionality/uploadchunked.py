@@ -352,7 +352,11 @@ def main(client_id, user_arguments_dict):
             abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
             file_entry = {'object_type': 'uploadfile', 'name': rel_path}
             file_entry['size'] = get_file_size(abs_path, logger)
-            file_entry['url'] = "/%s/%s" % (redirect_path, rel_path)
+            # NOTE: normpath+lstrip to avoid leading // and thus no base URL
+            # NOTE: normpath to fix e.g. leading // which prevents base URL
+            file_entry['url'] = os.path.normpath("/%s/%s" % \
+                                                 (redirect_path.lstrip('/'),
+                                                  rel_path))
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % \
@@ -401,7 +405,10 @@ def main(client_id, user_arguments_dict):
             if moved:
                 file_entry['name'] = rel_dst
                 file_entry['size'] = get_file_size(dest_path, logger)
-                file_entry['url'] = "/%s/%s" % (redirect_path, rel_dst)
+                # NOTE: normpath+lstrip to avoid leading // and thus no base URL
+                file_entry['url'] = os.path.normpath("/%s/%s" % \
+                                                     (redirect_path.lstrip('/'),
+                                                      rel_dst))
             uploaded.append(file_entry)
         logger.info('move done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
@@ -435,7 +442,10 @@ def main(client_id, user_arguments_dict):
                                        (chunk_tuple[1:], offset)})
             logger.info('wrote %s chunk at %s' % (abs_path, chunk_tuple[1:]))
             file_entry["size"] = os.path.getsize(abs_path)
-            file_entry["url"] = "/%s/%s" % (redirect_path, rel_path)
+            # NOTE: normpath+lstrip to avoid leading // and thus no base URL
+            file_entry["url"] = os.path.normpath("/%s/%s" % \
+                                                 (redirect_path.lstrip('/'),
+                                                  rel_path))
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % \
