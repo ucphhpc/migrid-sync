@@ -87,8 +87,8 @@ if '__main__' == __name__:
             user_id = val
         elif opt == '-o':
             short_id = val
-         elif opt == '-R':
-             role = val
+        elif opt == '-R':
+            role = val
         elif opt == '-v':
             verbose = True
         else:

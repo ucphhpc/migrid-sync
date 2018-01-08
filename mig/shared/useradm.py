@@ -257,6 +257,8 @@ def create_user(
                     if authorized:
                         del user['authorized']
                         print "User authorized password update"
+                    elif not user['old_password']:
+                        print "User requested password - previously disabled"
                     else:
                         if verbose:
                             print """Renewal request supplied a different
