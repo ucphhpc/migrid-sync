@@ -1,4 +1,4 @@
-1;4601;0c#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
