@@ -813,9 +813,12 @@ Port %(sftp_port)s
 # Assuming you have your private key in ~/.mig/id_rsa
 IdentityFile ~/.mig/id_rsa
 </pre>
-From then on you can use sftp and sshfs to access your %(site)s home:
+From then on you can use sftp, lftp and sshfs to access your %(site)s home:
 <pre>
 sftp -B 258048 %(sftp_server)s
+</pre>
+<pre>
+lftp -e "set net:connection-limit %(max_sessions)d" -p %(sftp_port)s sftp://%(sftp_server)s
 </pre>
 <pre>
 mkdir -p remote-home 
@@ -893,6 +896,7 @@ value="%(default_authpassword)s" />
             'username': username,
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
+            'max_sessions': configuration.user_sftp_max_sessions,
             'fingerprint_info': fingerprint_info,
             'auth_methods': ' / '.join(configuration.user_sftp_auth).title(),
             })
@@ -1156,7 +1160,7 @@ password YOUR_PASSWORD_HERE
 </pre>
 From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:
 <pre>
-lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on" \\
+lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" \\
      -p %(ftps_ctrl_port)s %(ftps_server)s
 </pre>
 <pre>
@@ -1230,6 +1234,7 @@ value="%(default_authpassword)s" />
         'username': username,
         'ftps_server': ftps_server,
         'ftps_ctrl_port': ftps_ctrl_port,
+        'max_sessions': configuration.user_sftp_max_sessions,
         'fingerprint_info': fingerprint_info,
         'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
         })
