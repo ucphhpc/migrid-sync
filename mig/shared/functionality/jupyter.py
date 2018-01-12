@@ -42,30 +42,28 @@ server can be instantiated and mount the users linked homedrive with the passed
 keyset.
 """
 
-import glob
-import httplib
 import os
-import requests
 import socket
 import sys
 from binascii import hexlify
 
+import requests
+
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir, distinguished_name_to_user
+from shared.base import client_id_dir, extract_field
 from shared.functional import validate_input_and_cert
 from shared.defaults import session_id_bytes
 from shared.init import initialize_main_variables
 from shared.ssh import generate_ssh_rsa_key_pair
-from shared.httpsclient import extract_client_id
 from shared.fileio import make_symlink, pickle
 
 
-#def safeinput_encode(input_str):
+# def safeinput_encode(input_str):
 #    encoded_str = base64.b32encode(input_str)
 #    return encoded_str.replace('=', '')
 #
 #
-#def safeinput_decode(input_str):
+# def safeinput_decode(input_str):
 #    # Encoder removed "=" padding to satisfy validate_input
 #    # Pad with "="" according to:
 #    # https://tools.ietf.org/html/rfc3548 :
@@ -85,7 +83,7 @@ from shared.fileio import make_symlink, pickle
 
 def signature():
     """Signature of the main function"""
-    defaults = {'dir': ['']}
+    defaults = {}
     return ['', defaults]
 
 
@@ -104,14 +102,33 @@ def main(client_id, user_arguments_dict):
         configuration,
         allow_rejects=False,
     )
+
+    logger.debug("Jupyter entry")
+
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # TODO: also break if neither enable_sftp or enable_sftp_subsys are on?
-    
     if not configuration.site_enable_jupyter:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''The Jupyter service is not enabled'''})
+            '''The Jupyter service is not enabled on the system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # TODO: change to site_enable_sftp OR site_enable_sftp_subsys when ready
+    if not configuration.site_enable_sftp:
+        output_objects.append({'object_type': 'error_text', 'text':
+            '''The required sftp service is not enabled on the system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # Test target jupyter url
+    session = requests.session()
+    try:
+        session.get(configuration.jupyter_url)
+    except requests.ConnectionError as err:
+        logger.error("Failed to establish connection to %s error %s",
+                    configuration.jupyter_url, err)
+        output_objects.append(
+            {'object_type': 'error_text',
+             'text': '''Failed to establish connection to the Jupyter service'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     status = returnvalues.OK
@@ -133,15 +150,13 @@ def main(client_id, user_arguments_dict):
                                         sftp_addresses[0],
                                         configuration.user_sftp_show_port)
 
-    user = distinguished_name_to_user(client_id)
-
-    logger.info("Creating a new jupyter mount keyset: " + sessionid +
-                " private_key: " + mount_private_key + " public_key: " +
-                mount_public_key + " for user: " + user['email'])
+    email = extract_field(client_id, 'email')
+    logger.debug("Creating a new jupyter mount keyset: " + sessionid +
+                 " private_key: " + mount_private_key + " public_key: " +
+                 mount_public_key + " for user: " + client_id)
 
     jupyter_dict = {}
     jupyter_dict['USER_CERT'] = client_id
-    # Temp -> change to random sessionid
     jupyter_dict['SESSIONID'] = sessionid
     jupyter_dict['MOUNTSSHPUBLICKEY'] = mount_public_key
     jupyter_dict['MOUNTSSHPRIVATEKEY'] = mount_private_key
@@ -152,7 +167,7 @@ def main(client_id, user_arguments_dict):
     # Auth and pass a new set of valid mount keys
     url_mount = configuration.jupyter_url + configuration.jupyter_base_url + \
                 "/hub/mount"
-    auth_header = {'REMOTE_USER': str(user['email'])}
+    auth_header = {'REMOTE_USER': email}
     mount_header = {'Mig-Mount': str(jupyter_dict)}
 
     session = requests.session()
@@ -162,40 +177,39 @@ def main(client_id, user_arguments_dict):
     session.get(url_mount, headers=mount_header)
 
     # Create client dir that will store the active jupyter session file
-    if not os.path.exists(configuration.jupyter_mount_files_dir + client_dir):
-        os.makedirs(configuration.jupyter_mount_files_dir + client_dir)
+    mnt_path = os.path.join(configuration.jupyter_mount_files_dir, client_dir)
+    link_home = configuration.sessid_to_jupyter_mount_link_home
+    if not os.path.exists(mnt_path):
+        os.makedirs(mnt_path)
 
     # Cleanup any old .jupyter state files and symlinks from previous sessions
-    for filename in os.listdir(configuration.jupyter_mount_files_dir + \
-                               client_dir):
+    for filename in os.listdir(mnt_path):
         if filename.endswith(".jupyter_mount"):
             # Remove the old symlinks that target the old pickle state file
-            for link in os.listdir(
-                configuration.sessid_to_jupyter_mount_link_home):
+            for link in os.listdir(link_home):
                 if link in filename:
-                    os.remove(os.path.join(
-                        configuration.sessid_to_jupyter_mount_link_home, link))
+                    os.remove(os.path.join(link_home, link))
 
             # Remove old pickle state file
-            os.remove(os.path.join(configuration.jupyter_mount_files_dir + \
-                                   client_dir, filename))
+            os.remove(os.path.join(mnt_path, filename))
 
     # Update pickle with the new valid key
-    jupyter_mount_state_path = configuration.jupyter_mount_files_dir + \
-                               client_dir + "/" + sessionid + '.jupyter_mount'
+    jupyter_mount_state_path = os.path.join(mnt_path,
+                                            sessionid + '.jupyter_mount')
+
     pickle(jupyter_dict, jupyter_mount_state_path, logger)
 
     # Link jupyter pickle state file
-    linkdest_new_jupyter_mount = configuration.jupyter_mount_files_dir + \
-                                 client_dir + "/" + sessionid + '.jupyter_mount'
-    linkloc_new_jupyter_mount = configuration.sessid_to_jupyter_mount_link_home \
-                                + sessionid + '.jupyter_mount'
+    linkdest_new_jupyter_mount = os.path.join(mnt_path,
+                                              sessionid + '.jupyter_mount')
+
+    linkloc_new_jupyter_mount = os.path.join(link_home,
+                                             sessionid + '.jupyter_mount')
     make_symlink(linkdest_new_jupyter_mount, linkloc_new_jupyter_mount, logger)
 
     # Link userhome
-    linkdest_user_home = configuration.user_home + client_dir
-    linkloc_user_home = configuration.sessid_to_jupyter_mount_link_home + \
-                        sessionid
+    linkdest_user_home = os.path.join(configuration.user_home, client_dir)
+    linkloc_user_home = os.path.join(link_home, sessionid)
     make_symlink(linkdest_user_home, linkloc_user_home, logger)
 
     # Redirect client to jupyterhub
@@ -209,7 +223,7 @@ if __name__ == "__main__":
     if not os.environ.get('MIG_CONF', ''):
         conf_path = os.path.join(os.path.dirname(sys.argv[0]),
                                  '..', '..', 'server', 'MiGserver.conf')
-        os.environ['MIG_CONF'] =  conf_path
+        os.environ['MIG_CONF'] = conf_path
     request_uri = "/dag/user/rasmus.munk@nbi.ku.dk"
     if sys.argv[1:]:
         request_uri = sys.argv[1]
