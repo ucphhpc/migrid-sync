@@ -57,6 +57,8 @@ if '__main__' == __name__:
         'ext_oid_fqdn',
         'sid_fqdn',
         'io_fqdn',
+        'jupyter_fqdn',
+        'jupyter_base_url',
         'user',
         'group',
         'apache_version',
@@ -75,6 +77,7 @@ if '__main__' == __name__:
         'wsgi_procs',
         'enable_sandboxes',
         'enable_vmachines',
+        'enable_jupyter',
         'enable_sharelinks',
         'enable_transfers',
         'enable_freeze',
@@ -118,7 +121,7 @@ if '__main__' == __name__:
         settings[key] = 'DEFAULT'
 
     flag_str = 'h'
-    opts_str = ["%s=" % key for key in names] + ["help"]    
+    opts_str = ["%s=" % key for key in names] + ["help"]
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], flag_str, opts_str)
     except getopt.GetoptError, exc:
@@ -144,7 +147,7 @@ if '__main__' == __name__:
         sys.exit(1)
     print '# Creating confs with:'
     for (key, val) in settings.items():
-        print '%s: %s' % (key, val)    
+        print '%s: %s' % (key, val)
         # Remove default values to use generate_confs default values
         if val == 'DEFAULT':
             del settings[key]

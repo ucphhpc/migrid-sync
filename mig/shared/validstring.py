@@ -136,6 +136,17 @@ def possible_sharelink_id(configuration, share_id):
             return False
     return True
 
+
+def possible_jupyter_mount_id(configuration, jupyter_mount_id):
+    """Check if the jupyter_mount_id is a possible ID based on the contents and the length"""
+    if len(jupyter_mount_id) != session_id_length:
+        return False
+    for i in jupyter_mount_id:
+        if not i in share_id_charset:
+            return False
+    return True
+
+
 def valid_user_path(configuration, path, home_dir, allow_equal=False,
                     chroot_exceptions=keyword_auto, apache_scripts=False):
     """This is a convenience function for making sure that users do
@@ -207,7 +218,7 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     accepted = False
     for accept_path in accept_roots:
         if real_path == accept_path or \
-               real_path.startswith(accept_path + os.sep):
+                real_path.startswith(accept_path + os.sep):
             accepted = True
             #_logger.debug("path %s is inside chroot %s" % (real_path, accept_path))
             break

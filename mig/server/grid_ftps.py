@@ -100,6 +100,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
 from shared.tlsserver import hardened_openssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
+from shared.validstring import possible_user_id, possible_sharelink_id
 from shared.vgrid import vgrid_restrict_write_support
 
 
@@ -333,10 +334,14 @@ def update_users(configuration, login_map, username):
     aliases.
     """
     # Only need to update users and shares here, since jobs only use sftp
-    daemon_conf, changed_users = refresh_user_creds(configuration, 'ftps',
-                                                    username)
-    daemon_conf, changed_shares = refresh_share_creds(configuration, 'ftps',
-                                                      username)
+    changed_users, changed_shares = [], []
+    if possible_user_id(configuration, username):
+        daemon_conf, changed_users = refresh_user_creds(configuration, 'ftps',
+                                                        username)
+    if configuration.site_enable_sharelinks and \
+           possible_sharelink_id(configuration, username):
+        daemon_conf, changed_shares = refresh_share_creds(configuration,
+                                                          'ftps', username)
     update_login_map(daemon_conf, changed_users, changed_jobs=[],
                      changed_shares=changed_shares)
     return changed_users + changed_shares

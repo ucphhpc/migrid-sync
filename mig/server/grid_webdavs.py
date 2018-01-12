@@ -72,6 +72,7 @@ from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
      check_password_digest, generate_password_digest
+from shared.validstring import possible_user_id, possible_sharelink_id
 from shared.vgrid import vgrid_restrict_write_support
 
 
@@ -587,10 +588,14 @@ class MiGFilesystemProvider(FilesystemProvider):
 def update_users(configuration, user_map, username):
     """Update creds dict for username and aliases"""
     # Only need to update users and shares here, since jobs only use sftp
-    daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
-                                                    username)
-    daemon_conf, changed_shares = refresh_share_creds(configuration, 'davs',
-                                                      username)
+    changed_users, changed_shares = [], []
+    if possible_user_id(configuration, username):
+        daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
+                                                        username)
+    if configuration.site_enable_sharelinks and \
+           possible_sharelink_id(configuration, username):
+        daemon_conf, changed_shares = refresh_share_creds(configuration,
+                                                          'davs', username)
     # Add dummy user for litmus test if enabled in conf
     litmus_pw = daemon_conf.get('litmus_password', None)
     if username == litmus_id and litmus_pw and \

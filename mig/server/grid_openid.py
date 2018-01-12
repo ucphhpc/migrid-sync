@@ -91,6 +91,7 @@ from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_complex_url, InputException
 from shared.tlsserver import hardened_ssl_context
 from shared.useradm import get_openid_user_dn, check_password_scramble
+from shared.validstring import possible_user_id
 
 configuration, logger = None, None
 
@@ -667,9 +668,11 @@ Invalid '%s' input: %s
         """Check username and password stored in MiG user DB""" 
 
         # Only need to update users here
-        daemon_conf, changed_users = refresh_user_creds(configuration,
-                                                        'openid',
-                                                        username)
+        changed_users = []
+        if possible_user_id(configuration, username):
+            daemon_conf, changed_users = refresh_user_creds(configuration,
+                                                            'openid',
+                                                            username)
         update_login_map(daemon_conf, changed_users, [], [])
 
         # username may be None here

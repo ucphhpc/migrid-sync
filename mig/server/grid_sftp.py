@@ -85,23 +85,25 @@ from shared.defaults import keyword_auto
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_user_creds, refresh_job_creds, \
-     refresh_share_creds, update_login_map, login_map_lookup, hit_rate_limit, \
-     update_rate_limit, expire_rate_limit, penalize_rate_limit, \
-     track_open_session, track_close_session, active_sessions
+     refresh_share_creds, refresh_jupyter_creds, update_login_map, \
+     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+     penalize_rate_limit, track_open_session, track_close_session, \
+     active_sessions
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 from shared.validstring import possible_user_id, possible_job_id, \
-     possible_sharelink_id
+     possible_sharelink_id, possible_jupyter_mount_id
 from shared.vgrid import vgrid_restrict_write_support
 
 configuration, logger = None, None
+
 
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
     logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
     logger.info("reopened log after hangup signal")
-    
+
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
@@ -116,7 +118,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         if sftpserver is not None:
             self.sftpserver = sftpserver
         if self.logger is None:
-            self.logger = logger     
+            self.logger = logger
         #self.logger.debug("SFTPHandle init: %s" % repr(flags))
 
     def stat(self):
@@ -135,7 +137,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         #self.logger.debug("SFTPHandle chattr %s on path %s" % \
         #                  (repr(attr), path))
         return self.sftpserver._chattr(path, attr, self)
-        
+
 
 class SimpleSftpServer(paramiko.SFTPServerInterface):
     """Custom SFTP server with chroot and MiG access restrictions.
@@ -196,11 +198,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.user_name = self.transport.get_username()
         else:
             #logger.debug('active env: %s' % os.environ)
-            username = os.environ.get('USER', 'INVALID')                
+            username = os.environ.get('USER', 'INVALID')
             logger.debug('refresh user entry for %s' % username)
             # Either of user, job and share keys may have changed
             daemon_conf = self.conf
-            changed_users, changed_jobs, changed_shares = [], [], []
+            changed_users, changed_jobs = [], []
+            changed_shares , changed_jupyter_mounts = [], []
             if possible_user_id(configuration, username):
                 daemon_conf, changed_users = refresh_user_creds(configuration,
                                                                 'sftp',
@@ -208,12 +211,17 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             if possible_job_id(configuration, username):
                 daemon_conf, changed_jobs = refresh_job_creds(
                     configuration, 'sftp', username)
-            if possible_sharelink_id(configuration, username):
+            if configuration.site_enable_sharelinks and \
+                   possible_sharelink_id(configuration, username):
                 daemon_conf, changed_shares = refresh_share_creds(
+                    configuration, 'sftp', username)
+            if configuration.site_enable_jupyter and \
+                   possible_jupyter_mount_id(configuration, username):
+                daemon_conf, changed_jupyter_mounts = refresh_jupyter_creds(
                     configuration, 'sftp', username)
             # Now update login map for any changed usernames
             update_login_map(daemon_conf, changed_users, changed_jobs,
-                             changed_shares)
+                             changed_shares, changed_jupyter_mounts)
             self.user_name = username
 
         logger.debug('auth user is %s' % self.user_name)
@@ -233,7 +241,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         logger.debug('auth user chroot is %s' % self.root)
 
     # Use shared daemon fs helper functions
-    
+
     def _get_fs_path(self, sftp_path):
         """Wrap helper"""
         #self.logger.debug("get_fs_path: %s" % sftp_path)
@@ -253,7 +261,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
         #                                                     reply))
         return reply
-    
+
     def _acceptable_chmod(self, sftp_path, mode):
         """Wrap helper"""
         #self.logger.debug("acceptable_chmod: %s" % sftp_path)
@@ -286,7 +294,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             return paramiko.SFTP_PERMISSION_DENIED
         if sftphandle is not None:
             active = getattr(sftphandle, 'active')
-            file_obj = getattr(sftphandle, active)            
+            file_obj = getattr(sftphandle, active)
+
         # Prevent users from messing with most attributes as such.
         # We end here on chmod too, so pass any mode change requests there and
         # silently ignore them otherwise. It turns out to have caused problems
@@ -354,7 +363,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             return paramiko.SFTP_PERMISSION_DENIED
         if sftphandle is not None:
             active = getattr(sftphandle, 'active')
-            file_obj = getattr(sftphandle, active)     
+            file_obj = getattr(sftphandle, active)
+
         # Only allow change of mode on files and only outside chmod_exceptions
         if self._acceptable_chmod(real_path, mode):
             # Only allow permission changes that won't give excessive access
@@ -383,7 +393,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     # Public interface functions
 
     def open(self, path, flags, attr):
-        """Handle operations of same name"""        
+        """Handle operations of same name"""
         path = force_utf8(path)
         #self.logger.debug('open %s' % path)
         try:
@@ -397,7 +407,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("open existing file on missing path %s :: %s" % \
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        if (flags & (os.O_CREAT|os.O_RDWR|os.O_WRONLY|os.O_APPEND|os.O_TRUNC)) \
+        if (flags & (os.O_CREAT | os.O_RDWR | os.O_WRONLY | os.O_APPEND | os.O_TRUNC)) \
                and not check_write_access(real_path, parent_dir=True):
             self.logger.error("open for modify on read-only path %s :: %s" % \
                               (path, real_path))
@@ -441,7 +451,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except Exception, err:
             self.logger.error("open on %s :: %s (%s) failed: %s" % \
                               (path, real_path, mode, err))
-            return paramiko.SFTP_FAILURE          
+            return paramiko.SFTP_FAILURE
 
     def list_folder(self, path):
         """Handle operations of same name"""
@@ -463,7 +473,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except Exception, err:
             self.logger.error("list_folder on %s :: %s failed: %s" % \
                               (path, real_path, err))
-            return paramiko.SFTP_FAILURE          
+            return paramiko.SFTP_FAILURE
         for filename in files:
             if invisible_path(filename):
                 continue
@@ -499,7 +509,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except Exception, err:
             self.logger.error("stat on %s :: %s failed: %s" % \
                               (path, real_path, err))
-            return paramiko.SFTP_FAILURE            
+            return paramiko.SFTP_FAILURE
 
     def lstat(self, path):
         """Handle operations of same name"""
@@ -522,7 +532,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except Exception, err:
             self.logger.error("lstat on %s :: %s failed: %s" % \
                               (path, real_path, err))
-            return paramiko.SFTP_FAILURE            
+            return paramiko.SFTP_FAILURE
 
     def remove(self, path):
         """Handle operations of same name"""
@@ -554,7 +564,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except Exception, err:
             self.logger.error("remove on %s :: %s failed: %s" % \
                               (path, real_path, err))
-            return paramiko.SFTP_FAILURE            
+            return paramiko.SFTP_FAILURE
 
     def rename(self, oldpath, newpath):
         """Handle operations of same name"""
@@ -663,7 +673,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def chmod(self, path, mode):
         """Handle operations of same name"""
         return self._chmod(path, mode)
-         
+
     def readlink(self, path):
         """Handle operations of same name"""
         path = force_utf8(path)
@@ -707,11 +717,11 @@ class SimpleSSHServer(paramiko.ServerInterface):
     conf = None
     logger = None
     client_addr = None
-    
+
     def __init__(self, *largs, **kwargs):
         paramiko.ServerInterface.__init__(self)
         conf = kwargs.get('conf', {})
-        if not conf:    
+        if not conf:
             conf = configuration.daemon_conf
         self.conf = conf
         self.logger = logger
@@ -743,7 +753,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
         if possible_user_id(configuration, username):
             daemon_conf, changed_users = refresh_user_creds(configuration,
                                                             'sftp', username)
-        if possible_sharelink_id(configuration, username):
+        if configuration.site_enable_sharelinks and \
+               possible_sharelink_id(configuration, username):
             daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                               'sftp', username)
         # Now update login map for any changed usernames
@@ -795,19 +806,26 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
         # Either of user, job and share keys may have changed
         daemon_conf = self.conf
-        changed_users, changed_jobs, changed_shares = [], [], []
+        changed_users, changed_jobs = [], []
+        changed_shares, changed_jupyter_mounts = [], []
         if possible_user_id(configuration, username):
             daemon_conf, changed_users = refresh_user_creds(configuration,
                                                             'sftp', username)
         if possible_job_id(configuration, username):
             daemon_conf, changed_jobs = refresh_job_creds(configuration,
                                                           'sftp', username)
-        if possible_sharelink_id(configuration, username):
+        if configuration.site_enable_sharelinks and \
+               possible_sharelink_id(configuration, username):
             daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                               'sftp', username)
+        if configuration.site_enable_jupyter and \
+               possible_jupyter_mount_id(configuration, username):
+            daemon_conf, changed_jupyter_mounts = refresh_jupyter_creds(
+                configuration, 'sftp', username)
+
         # Now update login map for any changed usernames
         update_login_map(daemon_conf, changed_users, changed_jobs,
-                         changed_shares)
+                         changed_shares, changed_jupyter_mounts)
 
         offered = key.get_base64()
         if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
@@ -935,7 +953,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     logger.info("Using re-keying sizes %d bytes / %d packets" % \
                 (transport.packetizer.REKEY_BYTES,
                  transport.packetizer.REKEY_PACKETS))
-    
+
     transport.logger = logger
     transport.load_server_moduli()
     transport.add_server_key(host_key)
@@ -967,7 +985,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     except Exception, err:
         logger.warning('client negotiation errors for %s: %s' % \
                        (addr, err))
-    
+
     username = server.get_authenticated_user()
 
     # Throttle excessive concurrent active sessions from same user
@@ -1000,8 +1018,8 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     # NOTE: is_active check does not seem to always catch broken connections
     # http://stackoverflow.com/questions/20147902/how-to-know-if-a-paramiko-ssh-channel-is-disconnected
     #       We try to keep connections alive and force failure with timeout.
-    
-    while transport.is_active():        
+
+    while transport.is_active():
         if conf['stop_running'].is_set():
             transport.close()
         time.sleep(1)
@@ -1019,7 +1037,7 @@ def start_service(configuration):
     try:
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Allow reuse of socket to avoid TCP time outs
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind((daemon_conf['address'], daemon_conf['port']))
         server_socket.listen(10)
     except Exception, err:
@@ -1032,7 +1050,7 @@ def start_service(configuration):
 
     logger.info("accept connections: window_size %d / max_packet_size %d" % \
                 (window_size, max_packet_size))
-    
+
     min_expire_delay = 300
     last_expire = time.time()
     while True:
@@ -1062,7 +1080,7 @@ def start_service(configuration):
         worker.start()
         if last_expire + min_expire_delay < time.time():
             last_expire = time.time()
-            expire_rate_limit(configuration, "sftp-*")        
+            expire_rate_limit(configuration, "sftp-*")
 
 
 if __name__ == "__main__":
@@ -1158,6 +1176,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'users': [],
         'jobs': [],
         'shares': [],
+        'jupyter_mounts': [],
         'login_map': {},
         'hash_cache': {},
         'time_stamp': 0,

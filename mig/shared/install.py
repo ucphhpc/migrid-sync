@@ -91,6 +91,8 @@ def generate_confs(
     ext_oid_fqdn='localhost',
     sid_fqdn='localhost',
     io_fqdn='localhost',
+    jupyter_fqdn='',
+    jupyter_base_url='',
     user='mig',
     group='mig',
     apache_version='2.2',
@@ -109,6 +111,7 @@ def generate_confs(
     wsgi_procs='10',
     enable_sandboxes='True',
     enable_vmachines='True',
+    enable_jupyter='False',
     enable_sharelinks='True',
     enable_transfers='True',
     enable_freeze='True',
@@ -163,6 +166,8 @@ def generate_confs(
     user_dict['__EXT_OID_FQDN__'] = ext_oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
+    user_dict['__JUPYTER_FQDN__'] = jupyter_fqdn
+    user_dict['__JUPYTER_BASE_URL__'] = jupyter_base_url
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
@@ -188,6 +193,7 @@ def generate_confs(
     user_dict['__WSGI_PROCS__'] = wsgi_procs
     user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
     user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
+    user_dict['__ENABLE_JUPYTER__'] = enable_jupyter
     user_dict['__ENABLE_SHARELINKS__'] = enable_sharelinks
     user_dict['__ENABLE_TRANSFERS__'] = enable_transfers
     user_dict['__ENABLE_FREEZE__'] = enable_freeze
@@ -212,6 +218,7 @@ def generate_confs(
     user_dict['__MIG_OID_URL__'] = ''
     user_dict['__EXT_OID_URL__'] = ''
     user_dict['__SID_URL__'] = ''
+    user_dict['__JUPYTER_URL__'] = ''
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
     user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
@@ -249,6 +256,10 @@ def generate_confs(
 WARNING: you probably have to use either different fqdn or port settings for
 cert, oid and sid based https!
 """
+
+    # Define jupyter request url
+    if jupyter_fqdn:
+        user_dict['__JUPYTER_URL__'] = 'http://%(__JUPYTER_FQDN__)s' % user_dict
 
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
 
@@ -319,6 +330,16 @@ cert, oid and sid based https!
         user_dict['__IFDEF_IO_FQDN__'] = 'Define'
     # No port for __IO_FQDN__
 
+    user_dict['__IFDEF_JUPYTER_FQDN__'] = 'UnDefine'
+    if user_dict['__JUPYTER_FQDN__'] != '':
+        user_dict['__IFDEF_JUPYTER_FQDN__'] = 'Define'
+    user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'UnDefine'
+    if user_dict['__JUPYTER_BASE_URL__'] != '':
+        user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'Define'
+    user_dict['__IFDEF_JUPYTER_URL__'] = 'UnDefine'
+    if user_dict['__JUPYTER_URL__'] != '':
+        user_dict['__IFDEF_JUPYTER_URL__'] = 'Define'
+
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
     if user_dict['__HG_PATH__']:
@@ -355,6 +376,11 @@ cert, oid and sid based https!
         user_dict['__SEAFILE_COMMENTED__'] = ''
     else:
         user_dict['__SEAFILE_COMMENTED__'] = '#'
+
+    if user_dict['__ENABLE_JUPYTER__'].lower() == 'true':
+        user_dict['__JUPYTER_COMMENTED__'] = ''
+    else:
+        user_dict['__JUPYTER_COMMENTED__'] = '#'
 
     # Enable Duplicati integration only if explicitly requested
     if user_dict['__ENABLE_DUPLICATI__'].lower() == 'true':

@@ -61,6 +61,10 @@ menu_items['archives'] = {'class': 'archives', 'url': 'freezedb.py',
 menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
                           'title': 'Settings',
                            'hover': 'your personal settings for these pages'}
+menu_items['jupyter'] = {'class': 'jupyter', 'url':'jupyter.py',
+			'title': 'Jupyter',
+			'hover': 'Access the MiG Jupyter service'}
+
 menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell', 
                            'hover': 'a command line interface, based on javascript and xmlrpc'}
 menu_items['wshell'] = {'class': 'shell',

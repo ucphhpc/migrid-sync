@@ -330,6 +330,9 @@ table th.icon {
 .navmenu ul li.downloads a {
   background-image: url('/images/icons/download.png');
 }
+.navmenu ul li.jupyter a {
+  background-image: url('/images/icons/jupyter.png')
+}
 .navmenu ul li.runtimeenvs a {
   background-image: url('/images/icons/database.png');
 }

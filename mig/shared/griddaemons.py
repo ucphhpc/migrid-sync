@@ -48,7 +48,7 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
     generate_password_hash, generate_password_digest, load_user_dict
 from shared.validstring import valid_user_path, possible_sharelink_id, \
-     possible_job_id
+     possible_job_id, possible_jupyter_mount_id
 
 default_max_fails, default_fail_cache = 5, 120
 
@@ -364,6 +364,19 @@ def add_share_object(conf, login, home, password=None, digest=None,
     if creds_lock:
         creds_lock.release()
 
+def add_jupyter_object(conf, login, home, password=None, digest=None,
+                       pubkey=None, chroot=True, ip_addr=None):
+    """Add a single Login object to active jupyter mount list"""
+    logger = conf.get('logger', logging.getLogger())
+    creds_lock = conf.get('creds_lock', None)
+    jupyter_mount = Login(username=login, home=home, password=password, digest=digest,
+                  public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
+    logger.debug("Adding jupyter login:\n%s" % jupyter_mount)
+    if creds_lock:
+        creds_lock.acquire()
+    conf['jupyter_mounts'].append(jupyter_mount)
+    if creds_lock:
+        creds_lock.release()
 
 def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
                         private_auth_file):
@@ -1035,8 +1048,61 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
                 len(cur_usernames))
     return (conf, changed_shares)
 
+def refresh_jupyter_creds(configuration, protocol, username):
+    """Loads the active ssh keyset for username (SESSIONID).
+    The protocol argument specifies which auth files to use.
+    Returns a tuple with the updated daemon_conf and the list of changed
+    jupyter IDs.
+    """
+    active_jupyter_creds = []
+    conf = configuration.daemon_conf
+    logger = conf.get("logger", logging.getLogger())
+    if not protocol in ('sftp',):
+        logger.error("invalid protocol: %s" % protocol)
+        return (conf, active_jupyter_creds)
+    if not possible_jupyter_mount_id(configuration, username):
+        logger.debug("ruled out %s as a possible jupyter_mount ID" % username)
+        return (conf, active_jupyter_creds)
+
+    logger.info("Getting active jupuyter mount creds")
+    link_path = os.path.join(configuration.sessid_to_jupyter_mount_link_home, "%s" % username + ".jupyter_mount")
+    logger.debug("jupyter linkpath: " + str(os.path.islink(link_path)) + " jupyter path exists: " + str(os.path.exists(link_path)))
+    jupyter_dict = None
+    if os.path.islink(link_path) and os.path.exists(link_path):
+        sessionid = username
+        jupyter_dict = unpickle(link_path, logger)
+        logger.debug("loaded jupyter dict: " + str(jupyter_dict))
+
+    # We only allow connections from active jupyter credentials
+    if jupyter_dict is not None and type(jupyter_dict) == dict and \
+            jupyter_dict.has_key('SESSIONID') and \
+                    jupyter_dict['SESSIONID'] == sessionid and \
+            jupyter_dict.has_key('USER_CERT') and \
+            jupyter_dict.has_key('MOUNTSSHPUBLICKEY'):
+        user_alias = sessionid
+        user_dir = client_id_dir(jupyter_dict['USER_CERT'])
+        user_key = jupyter_dict['MOUNTSSHPUBLICKEY']
+
+        # Make sure pub key is valid
+        valid_pubkey = True
+        try:
+            _ = parse_pub_key(user_key)
+        except Exception, exc:
+            valid_pubkey = False
+            logger.warning("Skipping broken key '%s' for user %s (%s)" % \
+                           (user_key, user_alias, exc))
+
+        if valid_pubkey:
+            add_jupyter_object(conf, user_alias, user_dir, pubkey=user_key)
+            active_jupyter_creds.append(user_alias)
+
+    logger.debug("User: " + str(username) + " Active jupyter_creds: " + str(active_jupyter_creds))
+    logger.info("Refreshed active jupyter creds")
+    return (conf, active_jupyter_creds)
+
+
 def update_login_map(daemon_conf, changed_users, changed_jobs=[],
-                     changed_shares=[]):
+                     changed_shares=[], changed_jupyter=[]):
     """Update internal login_map from contents of 'users', 'jobs' and
     'shares' in daemon_conf. This is done considering Login objects matching
     changed_users, changed_jobs, and changed_shares.
@@ -1056,6 +1122,9 @@ def update_login_map(daemon_conf, changed_users, changed_jobs=[],
                                i.username]
     for username in changed_shares:
         login_map[username] = [i for i in daemon_conf['shares'] if username == \
+                               i.username]
+    for username in changed_jupyter:
+        login_map[username] = [i for i in daemon_conf['jupyter_mounts'] if username == \
                                i.username]
     if creds_lock:
         creds_lock.release()

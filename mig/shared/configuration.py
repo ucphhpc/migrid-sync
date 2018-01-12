@@ -60,6 +60,7 @@ def fix_missing(config_file, verbose=True):
         'admin_list': '',
         'ca_fqdn': '',
         'ca_user': 'mig-ca',
+        'jupyter_mount_files_dir': '~/state/jupyter_mount_files',
         'mrsl_files_dir': '~/state/mrsl_files/',
         're_files_dir': '~/state/re_files/',
         're_pending_dir': '~/state/re_pending/',
@@ -85,6 +86,7 @@ def fix_missing(config_file, verbose=True):
         'server_home': '~/state/server_home/',
         'webserver_home': '~/state/webserver_home/',
         'sessid_to_mrsl_link_home': '~/state/sessid_to_mrsl_link_home/',
+        'sessid_to_jupyter_mount_link_home': '~/state/sessid_to_jupyter_mount_link_home/',
         'mig_system_files': '~/state/mig_system_files/',
         'wwwpublic': '~/state/wwwpublic/',
         'vm_home': '~/state/vm_home',
@@ -390,7 +392,9 @@ class Configuration:
     user_chkuserroot_log = user_chksidroot_log = 'chkchroot.log'
     server_home = ''
     vms_builder_home = ''
+    jupyter_mount_files_dir = ''
     sessid_to_mrsl_link_home = ''
+    sessid_to_jupyter_mount_link_home = ''
     mig_system_files = ''
     empty_job_name = ''
     migserver_http_url = ''
@@ -399,6 +403,9 @@ class Configuration:
     migserver_https_mig_oid_url = ''
     migserver_https_ext_oid_url = ''
     migserver_https_sid_url = ''
+    jupyter_fqdn = ''
+    jupyter_base_url = ''
+    jupyter_url = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
     cputime_for_empty_jobs = 0
@@ -672,6 +679,18 @@ location.""" % self.config_file
             self.openid_store = config.get('GLOBAL', 'openid_store')
         if config.has_option('GLOBAL', 'paraview_home'):
             self.paraview_home = config.get('GLOBAL', 'paraview_home')
+        if config.has_option('GLOBAL', 'jupyter_mount_files_dir'):
+            self.jupyter_mount_files_dir = config.get('GLOBAL', 'jupyter_mount_files_dir')
+        if config.has_option('GLOBAL', 'sessid_to_jupyter_mount_link_home'):
+            self.sessid_to_jupyter_mount_link_home = config.get('GLOBAL',
+                    'sessid_to_jupyter_mount_link_home')
+        if config.has_option('GLOBAL', 'jupyter_fqdn'):
+            self.jupyter_fqdn = config.get('GLOBAL', 'jupyter_fqdn')
+        if config.has_option('GLOBAL', 'jupyter_base_url'):
+            self.jupyter_base_url = config.get('GLOBAL', 'jupyter_base_url')
+        if config.has_option('GLOBAL', 'jupyter_url'):
+            self.jupyter_url = config.get('GLOBAL', 'jupyter_url')
+
         if config.has_option('GLOBAL', 'user_sftp_address'):
             self.user_sftp_address = config.get('GLOBAL', 
                                                 'user_sftp_address')
@@ -1322,6 +1341,10 @@ location.""" % self.config_file
             self.site_sharelink_length = config.getint('SITE', 'sharelink_length')
         else:
             self.site_sharelink_length = 10
+        if config.has_option('SITE', 'enable_jupyter'):
+            self.site_enable_jupyter = config.getboolean('SITE', 'enable_jupyter')
+        else:
+            self.site_enable_jupyter = False
         if config.has_option('SITE', 'enable_transfers'):
             self.site_enable_transfers = config.getboolean('SITE',
                                                            'enable_transfers')
