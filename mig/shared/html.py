@@ -61,9 +61,12 @@ menu_items['archives'] = {'class': 'archives', 'url': 'freezedb.py',
 menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
                           'title': 'Settings',
                            'hover': 'your personal settings for these pages'}
+menu_items['seafile'] = {'class': 'seafile', 'url':'/seafile/',
+			'title': 'Seafile',
+			'hover': 'Access the associated Seafile service'}
 menu_items['jupyter'] = {'class': 'jupyter', 'url':'jupyter.py',
 			'title': 'Jupyter',
-			'hover': 'Access the MiG Jupyter service'}
+			'hover': 'Access the associated Jupyter service'}
 
 menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell', 
                            'hover': 'a command line interface, based on javascript and xmlrpc'}
@@ -86,7 +89,7 @@ menu_items['people'] = {'class': 'people', 'url': 'people.py',
                            'hover': 'view and communicate with other users'}
 menu_items['migadmin'] = {'class': 'migadmin', 'url': 'migadmin.py',
                            'title': 'Server Admin', 
-                           'hover': 'administrate this MiG server'}
+                           'hover': 'administrate this server'}
 menu_items['vmachines'] = {'class': 'vmachines', 'url': 'vmachines.py',
                            'title': 'Virtual Machines', 
                            'hover': 'Manage Virtual Machines'}
@@ -141,10 +144,12 @@ def render_menu(configuration, menu_class='navmenu',
     raw_order += base_menu
     raw_order += user_menu
     menu_order = []
-    # Remove duplicates
+    # Remove duplicates and force logout last
     for name in raw_order:
-        if not name in menu_order:
+        if not name in menu_order and name != 'logout':
             menu_order.append(name)
+    if 'logout' in raw_order:
+        menu_order.append('logout')
 
     menu_lines = '<div class="%s">\n' % menu_class
     menu_lines += ' <ul>\n'
