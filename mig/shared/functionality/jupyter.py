@@ -143,6 +143,10 @@ def main(client_id, user_arguments_dict):
     # Generate private/public keys
     (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair()
 
+    # TODO: we MUST write pub key to a plain file for sshd + paramiko subsys.
+    #       Please refer to how it's done for job SID mount and write them in
+    #       __MIG_STATE__/mig_system_files/jupyter_mount/%s.authorized_keys
+
     # Known hosts
     sftp_addresses = socket.gethostbyname_ex(
         configuration.user_sftp_show_address or socket.getfqdn())

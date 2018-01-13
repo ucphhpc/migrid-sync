@@ -1064,9 +1064,12 @@ def refresh_jupyter_creds(configuration, protocol, username):
         logger.debug("ruled out %s as a possible jupyter_mount ID" % username)
         return (conf, active_jupyter_creds)
 
-    logger.info("Getting active jupuyter mount creds")
-    link_path = os.path.join(configuration.sessid_to_jupyter_mount_link_home, "%s" % username + ".jupyter_mount")
-    logger.debug("jupyter linkpath: " + str(os.path.islink(link_path)) + " jupyter path exists: " + str(os.path.exists(link_path)))
+    logger.info("Getting active jupyter mount creds")
+    link_path = os.path.join(configuration.sessid_to_jupyter_mount_link_home,
+                             "%s.jupyter_mount" % username)
+    logger.debug("jupyter linkpath: " + str(os.path.islink(link_path))
+                 + " jupyter path exists: " + str(os.path.exists(link_path)))
+
     jupyter_dict = None
     if os.path.islink(link_path) and os.path.exists(link_path):
         sessionid = username
@@ -1076,7 +1079,7 @@ def refresh_jupyter_creds(configuration, protocol, username):
     # We only allow connections from active jupyter credentials
     if jupyter_dict is not None and type(jupyter_dict) == dict and \
             jupyter_dict.has_key('SESSIONID') and \
-                    jupyter_dict['SESSIONID'] == sessionid and \
+            jupyter_dict['SESSIONID'] == sessionid and \
             jupyter_dict.has_key('USER_CERT') and \
             jupyter_dict.has_key('MOUNTSSHPUBLICKEY'):
         user_alias = sessionid
@@ -1089,14 +1092,14 @@ def refresh_jupyter_creds(configuration, protocol, username):
             _ = parse_pub_key(user_key)
         except Exception, exc:
             valid_pubkey = False
-            logger.warning("Skipping broken key '%s' for user %s (%s)" % \
+            logger.warning("Skipping broken key '%s' for user %s (%s)" %
                            (user_key, user_alias, exc))
-
         if valid_pubkey:
             add_jupyter_object(conf, user_alias, user_dir, pubkey=user_key)
             active_jupyter_creds.append(user_alias)
 
-    logger.debug("User: " + str(username) + " Active jupyter_creds: " + str(active_jupyter_creds))
+    logger.debug("User: " + username + " Active jupyter creds: "
+                 + str(active_jupyter_creds))
     logger.info("Refreshed active jupyter creds")
     return (conf, active_jupyter_creds)
 
@@ -1124,8 +1127,8 @@ def update_login_map(daemon_conf, changed_users, changed_jobs=[],
         login_map[username] = [i for i in daemon_conf['shares'] if username == \
                                i.username]
     for username in changed_jupyter:
-        login_map[username] = [i for i in daemon_conf['jupyter_mounts'] if username == \
-                               i.username]
+        login_map[username] = [i for i in daemon_conf['jupyter_mounts']
+                               if username == i.username]
     if creds_lock:
         creds_lock.release()
 

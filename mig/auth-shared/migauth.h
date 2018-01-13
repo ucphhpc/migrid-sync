@@ -96,6 +96,22 @@
 #endif
 #endif				/* !DISABLE_JOBSIDMOUNT */
 
+/* Various settings used by optional jupyter session mount access */
+/* Enable jupyter session mount unless explicitly disabled during compilation */
+#ifndef DISABLE_JUPYTERSIDMOUNT
+#define ENABLE_JUPYTERSIDMOUNT 1
+/* Default fall-back values used unless given */
+#ifndef JUPYTERSIDMOUNT_HOME
+#define JUPYTERSIDMOUNT_HOME "/tmp"
+#endif
+#ifndef JUPYTERSIDMOUNT_LENGTH
+#define JUPYTERSIDMOUNT_LENGTH 42
+#endif
+#ifndef JUPYTERSIDMOUNT_SUFFIX
+#define JUPYTERSIDMOUNT_SUFFIX ".jupyter_mount"
+#endif
+#endif				/* !DISABLE_JUPYTERSIDMOUNT */
+
 /* For testing, the printf can be activated,
    but should never be enabled in non-debug mode */
 //#define DEBUG_PRINTF 0
@@ -197,6 +213,7 @@ static const char *get_user_home()
 }
 */
 
+#ifndef DISABLE_SHARELINK
 /* We take first occurence of SHARELINK_HOME and SHARELINK_LENGTH from
  * 1. SHARELINK_HOME and SHARELINK_LENGTH environment
  * 2. sharelink_home and SITE->sharelink_length in (.ini) configuration file
@@ -214,7 +231,9 @@ static int get_sharelink_length()
     return get_runtime_var_int("SHARELINK_LENGTH",
 			       "site->sharelink_length", SHARELINK_LENGTH);
 }
+#endif
 
+#ifndef DISABLE_JOBSIDMOUNT
 /* We take first occurence of JOBSIDMOUNT_HOME and JOBSIDMOUNT_LENGTH from
  * 1. JOBSIDMOUNT_HOME and JOBSIDMOUNT_LENGTH environment
  * 2. jobsidmount_home and SITE->jobsidmount_length in (.ini) configuration file
@@ -232,6 +251,27 @@ static int get_jobsidmount_length()
     return get_runtime_var_int("JOBSIDMOUNT_LENGTH",
 			       "site->jobsidmount_length", JOBSIDMOUNT_LENGTH);
 }
+#endif
+
+#ifndef DISABLE_JUPYTERSIDMOUNT
+/* We take first occurence of JUPYTERSIDMOUNT_HOME and JUPYTERSIDMOUNT_LENGTH from
+ * 1. JUPYTERSIDMOUNT_HOME and JUPYTERSIDMOUNT_LENGTH environment
+ * 2. jupytersidmount_home and SITE->jupytersidmount_length in (.ini) configuration file
+ * 3. JUPYTERSIDMOUNT_HOME and JUPYTERSIDMOUNT_LENGTH compile time values
+ * 4. hard-coded defaults here
+ */
+static const char *get_jupytersidmount_home()
+{
+    return get_runtime_var("JUPYTERSIDMOUNT_HOME", "jupytersidmount_home",
+			   JUPYTERSIDMOUNT_HOME);
+}
+
+static int get_jupytersidmount_length()
+{
+    return get_runtime_var_int("JUPYTERSIDMOUNT_LENGTH",
+			       "site->jupytersidmount_length", JUPYTERSIDMOUNT_LENGTH);
+}
+#endif
 
 /* username input validation using username_regex and length helpers */
 static int validate_username(const char *username)

@@ -27,7 +27,7 @@
  * mig-user UID and GID, but with a custom home folder.
  *
  * Written by Kenneth Skovhede <skovhede@nbi.ku.dk>
- * Extended for sharelinks by Jonas Bardino <bardino@nb.ku.dk>
+ * Extended for sharelinks/Xsidmount by Jonas Bardino <bardino@nb.ku.dk>
  *
  */
 
@@ -473,7 +473,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 #endif				/* ENABLE_SHARELINK */
 
 #ifdef ENABLE_JOBSIDMOUNT
-    /* Optional anonymous share link access:
+    /* Optional job interactive home access with SID:
        - username must have fixed length matching get_jobsidmount_length()
        - get_jobsidmount_home()/username must exist as a symlink
        - username and password must be identical
@@ -506,11 +506,45 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
 #endif				/* ENABLE_JOBSIDMOUNT */
 
+#ifdef ENABLE_JUPYTERSIDMOUNT
+    /* Optional jupyter interactive home access with SID:
+       - username must have fixed length matching get_jupytersidmount_length()
+       - get_jupytersidmount_home()/username${JUPYTERSIDMOUNT_SUFFIX} must exist as a symlink
+       - username and password must be identical
+     */
+    writelogmessage(LOG_DEBUG, "Checking for jupytersidmount: %s\n", pUsername);
+    if (strlen(pUsername) == get_jupytersidmount_length()) {
+	char share_path[MAX_PATH_LENGTH];
+	if (MAX_PATH_LENGTH ==
+	    snprintf(share_path, MAX_PATH_LENGTH, "%s/%s%s",
+		     get_jupytersidmount_home(), pUsername, JUPYTERSIDMOUNT_SUFFIX)) {
+	    writelogmessage(LOG_WARNING,
+			    "Path construction failed for: %s/%s%s\n",
+			    get_jupytersidmount_home(), pUsername, JUPYTERSIDMOUNT_SUFFIX);
+	    return PAM_AUTH_ERR;
+	}
+	/* NSS lookup assures jupytersidmount target is valid and inside user home */
+	/* Just check simple access here to make sure it is a jupyter session link */
+	if (access(share_path, R_OK) == 0) {
+          writelogmessage(LOG_DEBUG, "Return jupytersidmount success\n");
+          return PAM_SUCCESS;
+	} else {
+	    writelogmessage(LOG_DEBUG,
+			    "No matching jupytersidmount: %s. Try next auth.\n",
+			    share_path);
+	}
+    } else {
+	writelogmessage(LOG_DEBUG,
+			"Not a jupytersidmount username: %s. Try next auth.\n",
+			pUsername);
+    }
+#endif				/* ENABLE_JUPYTERSIDMOUNT */
+
     writelogmessage(LOG_DEBUG, "Checking for standard user/password: %s\n",
 		    pUsername);
 
-    /* IMPORTANT: do NOT check password strength for sharelinks/jobsidmount as
-       they are not guaranteed to follow policy, like character classes
+    /* IMPORTANT: do NOT check password strength for sharelinks/Xsidmount as
+       they are NOT guaranteed to follow policy, like character classes
        required.
     */
     /* Assure password follows site policy for length and character classes */
