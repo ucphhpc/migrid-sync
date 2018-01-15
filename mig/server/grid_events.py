@@ -1311,6 +1311,10 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
     pid = multiprocessing.current_process().pid
 
+    # Make sure we only have utf8 everywhere to avoid encoding issues
+    path = force_utf8(path)            
+
+    retval = True
     vgrid_dir_cache = dir_cache[vgrid_name]
     vgrid_files_path = os.path.join(configuration.vgrid_files_home,
                                     path)
@@ -1322,7 +1326,16 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
             vgrid_dir_cache[path] = {}
             vgrid_dir_cache[path]['mtime'] = 0
 
-        add_vgrid_file_monitor_watch(configuration, path)
+        try:
+            add_vgrid_file_monitor_watch(configuration, path)
+        except OSError, exc:
+            # If we get an OSError, src_path was most likely deleted
+            # after os.path.exists check or somehow not accessible
+
+            logger.warning('(%s) add_vgrid_file_monitor on %s: %s' % \
+                         (pid, path, exc))
+            del vgrid_dir_cache[path]
+            return False
 
         if vgrid_files_path_mtime != vgrid_dir_cache[path]['mtime']:
 
@@ -1330,14 +1343,16 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
             for ent in scandir(vgrid_files_path):
                 if ent.is_dir(follow_symlinks=True):
-                    vgrid_sub_path = ent.path[shared_state['base_dir_len']:]
+                    # Make sure we only have utf8 everywhere to avoid encoding issues
+                    vgrid_sub_path = force_utf8(ent.path[shared_state['base_dir_len']:])
+                    print "add_vgrid_file_monitor compare %s with cache" % [vgrid_sub_path]
                     if not vgrid_sub_path in vgrid_dir_cache.keys():
-                        add_vgrid_file_monitor(configuration,
+                        retval &= add_vgrid_file_monitor(configuration,
                                 vgrid_name, vgrid_sub_path)
 
             vgrid_dir_cache[path]['mtime'] = vgrid_files_path_mtime
 
-    return True
+    return retval
 
 
 def add_vgrid_file_monitors(configuration, vgrid_name):
@@ -1351,6 +1366,8 @@ def add_vgrid_file_monitors(configuration, vgrid_name):
 
     vgrid_dir_cache_keys = vgrid_dir_cache.keys()
     for path in vgrid_dir_cache_keys:
+        # Make sure we only have utf8 everywhere to avoid encoding issues
+        path = force_utf8(path)            
         vgrid_files_path = os.path.join(configuration.vgrid_files_home,
                 path)
         if os.path.exists(vgrid_files_path):
@@ -1454,6 +1471,16 @@ def load_dir_cache(configuration, vgrid_name):
             logger.error('(%s) Failed to load vgrid_dir_cache for: %s from file: %s'
                           % (pid, vgrid_name, vgrid_dir_cache_filepath))
         else:
+            # TODO: once all caches are migrated we can remove this loop again
+            # Make sure we only have utf8 everywhere to avoid encoding issues
+            for old_path in [i for i in loaded_dir_cache.keys() if \
+                             isinstance(i, unicode)]:
+                print "NOTE: forcing old cache entry %s to utf8" % [old_path]
+                new_path = force_utf8(old_path)
+                entry = loaded_dir_cache[old_path]
+                del loaded_dir_cache[old_path]
+                loaded_dir_cache[new_path] = entry
+                
             dir_cache[vgrid_name] = loaded_dir_cache
 
     return result
@@ -1621,6 +1648,7 @@ def monitor(configuration, vgrid_name):
         # Start paths in vgrid_dir_cache to monitor
 
         if load_status:
+            print '(%s) init trigger handling for: %s' % (pid, vgrid_name)
             add_monitor_t1 = time.time()
             add_vgrid_file_monitors(configuration, vgrid_name)
             add_monitor_t2 = time.time()
@@ -1641,8 +1669,12 @@ def monitor(configuration, vgrid_name):
 
             time.sleep(1)
         except KeyboardInterrupt:
+            print '(%s) caught interrupt' % pid
             stop_running.set()
-            save_dir_cache(vgrid_name)
+
+    print '(%s) Saving cache for vgrid: %s' % (pid, vgrid_name)
+    logger.info('(%s) Saving cache for vgrid: %s' % (pid, vgrid_name))
+    save_dir_cache(vgrid_name)
 
     print '(%s) Exiting monitor for vgrid: %s' % (pid, vgrid_name)
     logger.info('(%s) Exiting for vgrid: %s' % (pid, vgrid_name))
