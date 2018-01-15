@@ -1328,28 +1328,30 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
         try:
             add_vgrid_file_monitor_watch(configuration, path)
+
+            if vgrid_files_path_mtime != vgrid_dir_cache[path]['mtime']:
+
+                # Traverse dirs for subdirs created since last run
+
+                for ent in scandir(vgrid_files_path):
+                    if ent.is_dir(follow_symlinks=True):
+                        vgrid_sub_path = ent.path[shared_state['base_dir_len']:]
+                        # Force utf8 everywhere to avoid encoding issues
+                        vgrid_sub_path = force_utf8(vgrid_sub_path)
+                        if not vgrid_sub_path in vgrid_dir_cache.keys():
+                            retval &= add_vgrid_file_monitor(configuration,
+                                                             vgrid_name,
+                                                             vgrid_sub_path)
+
+                vgrid_dir_cache[path]['mtime'] = vgrid_files_path_mtime
         except OSError, exc:
             # If we get an OSError, src_path was most likely deleted
             # after os.path.exists check or somehow not accessible
-
-            logger.warning('(%s) add_vgrid_file_monitor on %s: %s' % \
-                         (pid, path, exc))
+            
+            logger.warning('(%s) add_vgrid_file_monitor failed on %s: %s' % \
+                           (pid, path, exc))
             del vgrid_dir_cache[path]
             return False
-
-        if vgrid_files_path_mtime != vgrid_dir_cache[path]['mtime']:
-
-            # Traverse dirs for subdirs created since last run
-
-            for ent in scandir(vgrid_files_path):
-                if ent.is_dir(follow_symlinks=True):
-                    # Make sure we only have utf8 everywhere to avoid encoding issues
-                    vgrid_sub_path = force_utf8(ent.path[shared_state['base_dir_len']:])
-                    if not vgrid_sub_path in vgrid_dir_cache.keys():
-                        retval &= add_vgrid_file_monitor(configuration,
-                                vgrid_name, vgrid_sub_path)
-
-            vgrid_dir_cache[path]['mtime'] = vgrid_files_path_mtime
 
     return retval
 
