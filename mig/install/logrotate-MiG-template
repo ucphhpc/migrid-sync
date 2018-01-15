@@ -1,4 +1,4 @@
-__MIG_STATE__/log/*.log __MIG_STATE__/log/*.out __MIG_STATE__/log/*.err {
+__MIG_STATE__/log/*.log __MIG_STATE__/log/*.out {
 	weekly
 	missingok
 	rotate 52
