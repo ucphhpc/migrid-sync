@@ -1345,7 +1345,6 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
                 if ent.is_dir(follow_symlinks=True):
                     # Make sure we only have utf8 everywhere to avoid encoding issues
                     vgrid_sub_path = force_utf8(ent.path[shared_state['base_dir_len']:])
-                    print "add_vgrid_file_monitor compare %s with cache" % [vgrid_sub_path]
                     if not vgrid_sub_path in vgrid_dir_cache.keys():
                         retval &= add_vgrid_file_monitor(configuration,
                                 vgrid_name, vgrid_sub_path)
