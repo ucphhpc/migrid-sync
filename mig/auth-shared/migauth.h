@@ -107,9 +107,6 @@
 #ifndef JUPYTERSIDMOUNT_LENGTH
 #define JUPYTERSIDMOUNT_LENGTH 42
 #endif
-#ifndef JUPYTERSIDMOUNT_SUFFIX
-#define JUPYTERSIDMOUNT_SUFFIX ".jupyter_mount"
-#endif
 #endif				/* !DISABLE_JUPYTERSIDMOUNT */
 
 /* For testing, the printf can be activated,

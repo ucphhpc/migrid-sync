@@ -509,18 +509,18 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 #ifdef ENABLE_JUPYTERSIDMOUNT
     /* Optional jupyter interactive home access with SID:
        - username must have fixed length matching get_jupytersidmount_length()
-       - get_jupytersidmount_home()/username${JUPYTERSIDMOUNT_SUFFIX} must exist as a symlink
+       - get_jupytersidmount_home()/username must exist as a symlink
        - username and password must be identical
      */
     writelogmessage(LOG_DEBUG, "Checking for jupytersidmount: %s\n", pUsername);
     if (strlen(pUsername) == get_jupytersidmount_length()) {
 	char share_path[MAX_PATH_LENGTH];
 	if (MAX_PATH_LENGTH ==
-	    snprintf(share_path, MAX_PATH_LENGTH, "%s/%s%s",
-		     get_jupytersidmount_home(), pUsername, JUPYTERSIDMOUNT_SUFFIX)) {
+	    snprintf(share_path, MAX_PATH_LENGTH, "%s/%s",
+		     get_jupytersidmount_home(), pUsername)) {
 	    writelogmessage(LOG_WARNING,
-			    "Path construction failed for: %s/%s%s\n",
-			    get_jupytersidmount_home(), pUsername, JUPYTERSIDMOUNT_SUFFIX);
+			    "Path construction failed for: %s/%s\n",
+			    get_jupytersidmount_home(), pUsername);
 	    return PAM_AUTH_ERR;
 	}
 	/* NSS lookup assures jupytersidmount target is valid and inside user home */

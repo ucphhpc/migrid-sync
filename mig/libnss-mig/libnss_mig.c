@@ -180,6 +180,7 @@ _nss_mig_getpwnam_r(const char *name,
      */
     writelogmessage(LOG_DEBUG, "Checking for sharelink: %s\n", name);
     if (strlen(name) == get_sharelink_length()) {
+	memset(pathbuf, 0, PATH_BUF_LEN);
 	if (PATH_BUF_LEN ==
 	    snprintf(pathbuf, PATH_BUF_LEN, "%s/%s/%s",
 		     get_sharelink_home(), SHARELINK_SUBDIR, name)) {
@@ -192,6 +193,7 @@ _nss_mig_getpwnam_r(const char *name,
 	writelogmessage(LOG_DEBUG, "Checking prefix for sharelink: %s\n",
 			pathbuf);
 	char link_target[PATH_BUF_LEN];
+	memset(link_target, 0, PATH_BUF_LEN);
 	if (PATH_BUF_LEN ==
 	    readlink(pathbuf, link_target, strlen(conf->pw_dir))) {
 	    writelogmessage(LOG_WARNING,
@@ -204,18 +206,17 @@ _nss_mig_getpwnam_r(const char *name,
 	    writelogmessage(LOG_WARNING,
 			    "Invalid sharelink target prefix: %s\n",
 			    link_target);
-	    return NSS_STATUS_NOTFOUND;
 	}
-	if (access(link_target, R_OK) != 0) {
+	else if (access(link_target, R_OK) != 0) {
 	    writelogmessage(LOG_INFO,
 			    "Read access to sharelink target %s denied: %s\n",
 			    link_target, strerror(errno));
-	    return NSS_STATUS_NOTFOUND;
-	}
-	/* Match - override home path with sharelink base */
-	is_share = 1;
-	pathlen = strlen(get_sharelink_home()) + strlen(SHARELINK_SUBDIR) +
+	} else {
+          /* Match - override home path with sharelink base */
+          is_share = 1;
+          pathlen = strlen(get_sharelink_home()) + strlen(SHARELINK_SUBDIR) +
 	    strlen(name) + 2;
+        }
     }
     writelogmessage(LOG_DEBUG, "Detect sharelink: %d\n", is_share);
 #endif				/* ENABLE_SHARELINK */
@@ -228,6 +229,7 @@ _nss_mig_getpwnam_r(const char *name,
      */
     writelogmessage(LOG_DEBUG, "Checking for jobsidmount: %s\n", name);
     if (strlen(name) == get_jobsidmount_length()) {
+	memset(pathbuf, 0, PATH_BUF_LEN);
 	if (PATH_BUF_LEN ==
 	    snprintf(pathbuf, PATH_BUF_LEN, "%s/%s",
 		     get_jobsidmount_home(), name)) {
@@ -238,8 +240,9 @@ _nss_mig_getpwnam_r(const char *name,
 	}
 	/* Make sure prefix of direct jobsidmount target is user home */
 	writelogmessage(LOG_DEBUG, "Checking prefix for jobsidmount: %s\n",
-			pathbuf);
+	                pathbuf);
 	char link_target[PATH_BUF_LEN];
+	memset(link_target, 0, PATH_BUF_LEN);
 	if (PATH_BUF_LEN ==
 	    readlink(pathbuf, link_target, strlen(conf->pw_dir))) {
 	    writelogmessage(LOG_WARNING,
@@ -252,17 +255,16 @@ _nss_mig_getpwnam_r(const char *name,
 	    writelogmessage(LOG_WARNING,
 			    "Invalid jobsidmount target prefix: %s\n",
 			    link_target);
-	    return NSS_STATUS_NOTFOUND;
-	}
-	if (access(link_target, R_OK) != 0) {
+	} 
+	else if (access(link_target, R_OK) != 0) {
 	    writelogmessage(LOG_INFO,
 			    "Read access to jobsidmount target %s denied: %s\n",
 			    link_target, strerror(errno));
-	    return NSS_STATUS_NOTFOUND;
-	}
-	/* Match - override home path with jobsidmount base */
-	is_job = 1;
-	pathlen = strlen(get_jobsidmount_home()) + strlen(name) + 1;
+	} else {
+          /* Match - override home path with jobsidmount base */
+          is_job = 1;
+          pathlen = strlen(get_jobsidmount_home()) + strlen(name) + 1;
+        }
     }
     writelogmessage(LOG_DEBUG, "Detect jobsidmount: %d\n", is_job);
 #endif				/* ENABLE_JOBSIDMOUNT */
@@ -270,23 +272,25 @@ _nss_mig_getpwnam_r(const char *name,
 #ifdef ENABLE_JUPYTERSIDMOUNT
     /* Optional jupyter session mount access:
        - username must have fixed length matching get_jupytersidmount_length()
-       - get_jupytersidmount_home()/username${JUPYTERSIDMOUNT_SUFFIX} must exist as a symlink
+       - get_jupytersidmount_home()/username must exist as a symlink
        - session ssh key must match for access
      */
     writelogmessage(LOG_DEBUG, "Checking for jupytersidmount: %s\n", name);
     if (strlen(name) == get_jupytersidmount_length()) {
+	memset(pathbuf, 0, PATH_BUF_LEN);
 	if (PATH_BUF_LEN ==
-	    snprintf(pathbuf, PATH_BUF_LEN, "%s/%s%s",
-		     get_jupytersidmount_home(), name, JUPYTERSIDMOUNT_SUFFIX)) {
+	    snprintf(pathbuf, PATH_BUF_LEN, "%s/%s",
+		     get_jupytersidmount_home(), name)) {
 	    writelogmessage(LOG_WARNING,
 			    "Path construction failed for: %s/%s%s\n",
-			    get_jupytersidmount_home(), name, JUPYTERSIDMOUNT_SUFFIX);
+			    get_jupytersidmount_home(), name);
 	    return NSS_STATUS_NOTFOUND;
 	}
 	/* Make sure prefix of direct jupytersidmount target is user home */
 	writelogmessage(LOG_DEBUG, "Checking prefix for jupytersidmount: %s\n",
 			pathbuf);
 	char link_target[PATH_BUF_LEN];
+	memset(link_target, 0, PATH_BUF_LEN);
 	if (PATH_BUF_LEN ==
 	    readlink(pathbuf, link_target, strlen(conf->pw_dir))) {
 	    writelogmessage(LOG_WARNING,
@@ -299,17 +303,16 @@ _nss_mig_getpwnam_r(const char *name,
 	    writelogmessage(LOG_WARNING,
 			    "Invalid jupytersidmount target prefix: %s\n",
 			    link_target);
-	    return NSS_STATUS_NOTFOUND;
 	}
-	if (access(link_target, R_OK) != 0) {
+	else if (access(link_target, R_OK) != 0) {
 	    writelogmessage(LOG_INFO,
 			    "Read access to jupytersidmount target %s denied: %s\n",
 			    link_target, strerror(errno));
-	    return NSS_STATUS_NOTFOUND;
-	}
-	/* Match - override home path with jupytersidmount base */
-	is_jupyter = 1;
-	pathlen = strlen(get_jupytersidmount_home()) + strlen(name) + strlen(JUPYTERSIDMOUNT_SUFFIX) + 1;
+	} else {
+          /* Match - override home path with jupytersidmount base */
+          is_jupyter = 1;
+          pathlen = strlen(get_jupytersidmount_home()) + strlen(name) + 1;
+        }
     }
     writelogmessage(LOG_DEBUG, "Detect jupytersidmount: %d\n", is_jupyter);
 #endif				/* ENABLE_JUPYTERSIDMOUNT */
