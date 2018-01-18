@@ -42,7 +42,7 @@ from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
-from shared.pwhash import scramble_password
+from shared.pwhash import scramble_password, assure_password_strength
 from shared.serial import dumps
 
 
@@ -170,7 +170,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               : 'Password and verify password are not identical!'
                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
-
+    
+    try:
+        assure_password_strength(configuration, password)
+    except Exception, exc:
+        logger.warning(
+            "Requested OpenID password for '%s' does not fit local policy: %s" \
+                        % (cert_name, configuration.site_password_policy))
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Password is too weak for site password policy!'
+                              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    
     # TODO: move this check to conf?
 
     if not forced_org_email_match(org, email, configuration):
