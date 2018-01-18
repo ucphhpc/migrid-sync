@@ -1393,6 +1393,43 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
                       % (user_id, exc))
     return (configuration, errors)
 
+def req_password_check(req_path, conf_path, db_path, verbose=False,
+                       override_policy=None):
+    """Check password policy compliance for request in req_path. If the optional
+    is left unset the configuration policy value will be used otherwise the
+    given value is used"""
+
+    errors = []
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+
+
+    try:
+        user_dict = load(req_path)
+        user_id = user_dict['distinguished_name']
+    except Exception, exc:
+        errors.append('could not load request from %s: %s' % (req_path, exc))
+        return (configuration, errors)
+
+    if override_policy:
+        configuration.site_password_policy = override_policy
+
+    password = user_dict.get('password', '') or ''
+    password = unscramble_password(configuration.site_password_salt,
+                                   password)
+    if not password:
+        errors.append('No password set for %s' % user_id)
+        return (configuration, errors)
+        
+    try:
+        assure_password_strength(configuration, password)
+    except Exception, exc:
+        errors.append('password for %s does not satisfy local policy: %s' \
+                      % (user_id, exc))
+    return (configuration, errors)
 
 def get_default_mrsl(template_path):
     """Return the default mRSL template from template_path"""

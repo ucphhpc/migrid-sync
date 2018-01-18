@@ -27,12 +27,14 @@
 
 """Check passwords in user database for compliance with site password policy"""
 
-import sys
 import getopt
+import pickle
+import sys
 
 from shared.defaults import keyword_auto
+from shared.pwhash import assure_password_strength, unscramble_password
 from shared.useradm import init_user_adm, search_users, default_search, \
-     user_password_check
+     user_password_check, req_password_check
 
 
 def usage(name='checkpwpolicy.py'):
@@ -47,6 +49,7 @@ Where CHECK_OPTIONS may be one or more of:
    -h                  Show this help
    -I CERT_DN          Check only for user with ID (distinguished name)
    -p POLICY           Check against POLICY instead of configured value
+   -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
 """ % {'name': name}
 
@@ -58,8 +61,9 @@ if '__main__' == __name__:
     conf_path = None
     policy = None
     verbose = False
+    user_file = None
     search_filter = default_search()
-    opt_args = 'c:d:hI:p:v'
+    opt_args = 'c:d:hI:p:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -79,6 +83,8 @@ if '__main__' == __name__:
             search_filter['distinguished_name'] = val
         elif opt == '-p':
             policy = val
+        elif opt == '-u':
+            user_file = val
         elif opt == '-v':
             verbose = True
         else:
@@ -91,15 +97,20 @@ if '__main__' == __name__:
         usage()
         sys.exit(1)
 
-    hits = search_users(search_filter, conf_path, db_path, verbose)
-    if not hits:
-        print "No matching users in user DB"
+    if user_file:
+        (configuration, errors) = req_password_check(user_file, conf_path,
+                                                     db_path, verbose, policy)
     else:
-        print "Password policy errors:"
-    for (uid, user_dict) in hits:
-        (configuration, errors) = user_password_check(uid, conf_path, db_path,
-                                                      verbose, policy)
-        if errors:
-            print '\n'.join(errors)
-        elif verbose:
-            print "%s: OK" % uid
+        hits = search_users(search_filter, conf_path, db_path, verbose)
+        if not hits:
+            print "No matching users in user DB"
+        else:
+            print "Password policy errors:"
+            for (uid, user_dict) in hits:
+                (configuration, errors) = user_password_check(uid, conf_path,
+                                                              db_path,
+                                                              verbose, policy)
+    if errors:
+        print '\n'.join(errors)
+    elif verbose:
+        print "%s: OK" % uid
