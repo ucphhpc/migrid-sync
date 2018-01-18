@@ -175,8 +175,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         assure_password_strength(configuration, password)
     except Exception, exc:
         logger.warning(
-            "Requested OpenID password for '%s' does not fit local policy: %s" \
-                        % (cert_name, configuration.site_password_policy))
+            "Requested OpenID password for '%s' does not fit local policy (%s): %s" \
+                        % (cert_name, configuration.site_password_policy, exc))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Password is too weak for site password policy!'
                               })
