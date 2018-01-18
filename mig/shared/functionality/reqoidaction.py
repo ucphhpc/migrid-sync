@@ -169,17 +169,24 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Password and verify password are not identical!'
                               })
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
     try:
         assure_password_strength(configuration, password)
     except Exception, exc:
         logger.warning(
-            "Requested OpenID password for '%s' does not fit local policy (%s): %s" \
-                        % (cert_name, configuration.site_password_policy, exc))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Password is too weak for site password policy!'
-                              })
+            "%s invalid password for '%s' (policy %s): %s" % \
+            (op_name, cert_name, configuration.site_password_policy, exc))
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid password requested: %s.' \
+                               % exc
+                               })
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
     # TODO: move this check to conf?
@@ -193,6 +200,9 @@ organization. As long as you state that you want the account for course
 purposes in the comment field, you will be given access to the necessary
 resources anyway.
 '''})
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     user_dict = {
