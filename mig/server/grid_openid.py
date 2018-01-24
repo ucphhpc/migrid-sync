@@ -449,7 +449,12 @@ Invalid '%s' input: %s
         request = self.server.lastCheckIDRequest.get(self.user)
         # NOTE: last request may be None here e.g. on back after illegal char!
         if not request:
-            request = self.server.openid.decodeRequest(query)
+            try:
+                request = self.server.openid.decodeRequest(query)
+            except server.ProtocolError, why:
+                logger.error("handleAllow got broken request: %s" % why)
+                self.displayResponse(why)
+                return
 
         logger.debug("handleAllow with last request %s from user %s" % \
                      (request, self.user))
@@ -467,6 +472,10 @@ Invalid '%s' input: %s
                 #print "handleAllow set user %s" % self.user
             elif 'identifier' in query:
                 self.user = self.query['identifier']
+            elif self.user is None:
+                # Later handling refuses None as user
+                logger.error("no user user in query")
+                self.user = ""
 
             if request.idSelect():
                 # Do any ID expansion to a specified format
