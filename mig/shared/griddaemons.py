@@ -561,7 +561,7 @@ def refresh_user_creds(configuration, protocol, username):
             continue
         # Missing alias symlink - should be fixed for user instead
         if not os.path.exists(path):
-            logger.warning("Skipping non-existant home %s" % path)
+            logger.warning("Skipping non-existant auth path %s" % path)
             continue
         logger.debug("Checking %s" % path)
         if private_auth_file:
@@ -572,6 +572,11 @@ def refresh_user_creds(configuration, protocol, username):
             user_home = os.path.realpath(os.path.join(configuration.user_home,
                                                       username))
             user_dir = os.path.basename(user_home)
+
+        # Check that user home exists
+        if not os.path.exists(user_home):
+            logger.warning("Skipping user without home %s" % user_home)
+            continue
             
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
