@@ -474,7 +474,7 @@ Invalid '%s' input: %s
                 self.user = self.query['identifier']
             elif self.user is None:
                 # Later handling refuses None as user
-                logger.error("no user user in query")
+                logger.error("no user in query")
                 self.user = ""
 
             if request.idSelect():
