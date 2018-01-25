@@ -445,6 +445,17 @@ on the irclib module from:"""})
                                'class': 'urllink iconspace',
                                'title': 'Apache OpenID Module Home Page',
                                'text': 'Apache OpenID Module (MIT license)'})
+    if configuration.site_enable_jupyter:
+        output_objects.append({'object_type': 'text', 'text' : """
+The optional intereractive computing integration through Jupyter relies on the
+Requests module from:"""})
+        output_objects.append({'object_type': 'link', 
+                               'destination' :
+                               'https://pypi.python.org/pypi/requests',
+                               'class': 'urllink iconspace',
+                               'title': 'Requests Python Package Index',
+                               'text': 'Python Requests Module (Apache 2.0 license)'})
+
 
     output_objects.append({'object_type': 'text', 'text' : """The optional
 JSONRPC interface is delivered with the jsonrpclib module:"""})
