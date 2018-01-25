@@ -35,8 +35,8 @@ tools and a Python interpreter with a few external modules.
 Optional file synchronization, WSGI interface, OpenID login, instant
 messaging service, efficient file access services, event handler
 service, JSONRPC access, background data transfer service, efficient
-sftp, spell checking, Wiki, SCM and tracker VGrid features rely on the
-following additional software:
+sftp, spell checking, interactive computing, Wiki, SCM and tracker VGrid
+features rely on the following additional software:
 -Seafile server, community edition (https://www.seafile.com/en/download/)
 -Apache FCGI Proxy module (https://github.com/ceph/mod-proxy-fcgi)
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
@@ -50,6 +50,7 @@ following additional software:
 -Python watchdog module (https://pypi.python.org/pypi/watchdog)
 -Python scandir module (https://pypi.python.org/pypi/scandir)
 -Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib)
+-Python requests module (https://pypi.python.org/pypi/requests)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
 -OpenSSH server (https://www.openssh.org/)
@@ -58,6 +59,8 @@ following additional software:
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
 -Trac plugins (e.g. http://trac-hacks.org/)
+-Jupyter (https://jupyter.org/)
+-Docker (https://www.docker.com/)
 
 On Debian/Ubuntu servers the corresponding basic packages can be
 installed with:
@@ -67,8 +70,8 @@ sudo aptitude install apache2 openssh-client python python-pip \
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      python-irclib python-paramiko python-enchant python-jsonrpclib \
-     openssh-server libpam0g-dev mercurial trac trac-mercurial lftp \
-     rsync
+     python-requests openssh-server libpam0g-dev mercurial trac \
+     trac-mercurial lftp rsync
 
 Apache comes with a number of modules included, so it is usually not
 necessary to explicitly install e.g. mod-ssl, mod-proxy, mod-rewrite and
@@ -161,6 +164,13 @@ sudo yum install http://lftp.yar.ru/ftp/binaries/lftp-4.6.5-1.x86_64.rpm
 The only downside is that it then requires manual updates until the
 distro catches up.
 
+The optional interactive computing environment relies on one or more
+separate Jupyter hosts. The easiest way of setting that up is to use the
+existing jupyter swarm-spawner with docker packs to launch all user 
+sessions in isolated containers. This part is still work-in-progress so
+please get in touch for details. Only the python-requests module is
+needed for the actual MiG server-side integration.
+
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
 MiG you should download and unpack the source code (including this
@@ -232,10 +242,6 @@ cd mig/install/
 If your setup uses custom paths or settings just provide them on the
 commandline like the command help indicates:
 ~/mig/install > ./generateconfs.py -h
-Usage:
-./generateconfs.py [OPTIONS]
-Where supported options include -h/--help for this help or the conf
-settings:
 --source=SOURCE
 --destination=DESTINATION
 --base_fqdn=BASE_FQDN
@@ -246,6 +252,8 @@ settings:
 --ext_oid_fqdn=EXT_OID_FQDN
 --sid_fqdn=SID_FQDN
 --io_fqdn=IO_FQDN
+--jupyter_fqdn=JUPYTER_FQDN
+--jupyter_base_url=JUPYTER_BASE_URL
 --user=USER
 --group=GROUP
 --apache_version=APACHE_VERSION
@@ -264,6 +272,7 @@ settings:
 --wsgi_procs=WSGI_PROCS
 --enable_sandboxes=ENABLE_SANDBOXES
 --enable_vmachines=ENABLE_VMACHINES
+--enable_jupyter=ENABLE_JUPYTER
 --enable_sharelinks=ENABLE_SHARELINKS
 --enable_transfers=ENABLE_TRANSFERS
 --enable_freeze=ENABLE_FREEZE
@@ -309,8 +318,8 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --public_fqdn=www.migrid.org \
                    --mig_cert_fqdn=dk-cert.migrid.org \
                    --ext_cert_fqdn= \
-                   --mig_oid_fqdn= \
-                   --ext_oid_fqdn= \
+                   --mig_oid_fqdn=dk-ext.migrid.org \
+                   --ext_oid_fqdn=dk-oid.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-io.migrid.org \
                    --user=mig --group=mig \
@@ -325,7 +334,8 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --mig_cert_port=443 --sid_port=443 \
+                   --public_port=80 --mig_cert_port=443 --mig_oid_port=443 \
+                   --ext_oid_port=443 --sid_port=443 \
                    --enable_openid=False --enable_wsgi=True --enable_sftp=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --user_clause=User --group_clause=Group \
@@ -419,6 +429,54 @@ optimized SFTP, Seafile integration and OpenID login:
                    --daemon_pubkey=~/certs/combined.pub \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=erda-ucph-science --wsgi_procs=25 \
+                   --apache_version=2.4
+
+Finally a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
+optimized SFTP, Jupyter integration and OpenID login:
+./generateconfs.py --source=. --destination=generated-confs \
+                   --base_fqdn=idmc.dk \
+                   --public_fqdn=www.idmc.dk \
+                   --mig_cert_fqdn= \
+                   --ext_cert_fqdn=cert.idmc.dk \
+                   --mig_oid_fqdn=ext.idmc.dk \
+                   --ext_oid_fqdn=oid.idmc.dk \
+                   --sid_fqdn=sid.idmc.dk \
+                   --io_fqdn=io.idmc.dk \
+                   --user=mig --group=mig \
+                   --apache_etc=/etc/httpd \
+                   --apache_run=/var/run/httpd \
+                   --apache_lock=/var/lock/subsys/httpd \
+                   --apache_log=/var/log/httpd \
+                   --mig_code=/home/mig/mig \
+                   --mig_state=/home/mig/state \
+                   --mig_certs=/etc/httpd/MiG-certificates \
+                   --hg_path=/usr/bin/hg \
+                   --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
+                   --trac_admin_path='' --trac_ini_path='' \
+                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --ext_oid_port=443 --sid_port=443 \
+                   --mig_oid_provider=https://ext.idmc.dk/openid/ \
+                   --ext_oid_provider=https://openid.ku.dk/ \
+                   --enable_openid=True --enable_wsgi=True \
+                   --enable_sftp=True --enable_sftp_subsys=True \
+                   --enable_davs=True --enable_ftps=True --enable_jupyter=True \
+                   --enable_sharelinks=True --enable_transfers=True \
+                   --enable_imnotify=False --enable_seafile=False \
+                   --enable_duplicati=False --enable_preview=True \
+                   --enable_sandboxes=False --enable_vmachines=False \
+                   --enable_freeze=False --enable_vhost_certs=True \
+                   --enable_verify_certs=True --enable_hsts=True \
+                   --jupyter_fqdn=dag000.science \
+                   --jupyter_base_url='/dag' \
+                   --user_clause=User --group_clause=Group \
+                   --listen_clause='#Listen' --serveralias_clause='#ServerAlias' \
+                   --alias_field=email --daemon_keycert=~/certs/combined.pem \
+                   --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_show_address=io.idmc.dk \
+                   --signup_methods="extoid migoid extcert" \
+                   --login_methods="extoid migoid extcert" \
+                   --distro=centos --landing_page='/wsgi-bin/fileman.py' \
+                   --skin=idmc-basic --wsgi_procs=25 \
                    --apache_version=2.4
 
 
