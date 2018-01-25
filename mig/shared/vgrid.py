@@ -370,9 +370,7 @@ doubt, just let the user request access and accept it with the
       <table>
       %(id_note_tr)s
       %(id_html_tr)s
-      <tr><td>
-      %(extra_fields)s<br />
-      </td></tr>
+      %(extra_fields)s
       <tr><td>
       <input type="submit" value="Add %(item)s" />
       </td></tr>
