@@ -30,8 +30,10 @@
 
 /* Get rid of eye-burning-green background for active elements */
 .ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active  {
-    border: 1px solid #77D5F7;
-    background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #147;
+    border: 1px solid #77d5f7;
+    background: #147 url("images/ui-bg_gloss-wave_50_147_500x100.png") 50% 50% repeat-x;
+    font-weight: normal;
+    color: #ffffff;
 }
 
 #fm_filemanager .ui-progressbar-value, #fm_filechooser .ui-progressbar-value {

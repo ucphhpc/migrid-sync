@@ -1218,10 +1218,8 @@ Invalid '%s' input: %s
                                  configuration.site_skin_base.lstrip('/'))
         fav_icon = os.path.join(configuration.migserver_https_sid_url,
                                 configuration.site_fav_icon.lstrip('/'))
-        site_logo_left = os.path.join(configuration.migserver_https_sid_url,
-                                      configuration.site_logo_left.lstrip('/'))
-        site_logo_right = os.path.join(configuration.migserver_https_sid_url,
-                                       configuration.site_logo_right.lstrip('/'))
+        logo_center = configuration.site_logo_center.strip()
+
         creds_logo = os.path.join(configuration.migserver_https_sid_url,
                                   configuration.site_credits_image.lstrip('/'))
         contents = {
@@ -1236,8 +1234,7 @@ Invalid '%s' input: %s
             'site_custom_css': custom_css,
             'site_skin_base': skin_base,
             'site_fav_icon': fav_icon,
-            'site_logo_left': site_logo_left,
-            'site_logo_right': site_logo_right,
+            'site_logo_center': logo_center,
             'credits_logo': creds_logo,
             'credits_text': configuration.site_credits_text,
             }
@@ -1268,15 +1265,12 @@ Invalid '%s' input: %s
 <link rel="stylesheet" type="text/css" href="%(site_skin_base)s/ui-theme.custom.css" media="screen"/>
 
 <link rel="icon" type="image/vnd.microsoft.icon" href="%(site_fav_icon)s"/>
-  </head>
-  <body class="staticpage openid">
+</head>
+<body class="staticpage openid">
 <div id="topspace">
 </div>
 <div id="toplogo" class="staticpage">
 <div id="toplogoleft" class="staticpage">
-<a href="%(root_url)s"><img src="%(site_logo_left)s" id="logoimageleft"
-    alt="site logo left"/>
-</a>
 </div>
 <div id="toplogocenter" class="staticpage">
 <img src="%(site_skin_base)s/banner-logo.jpg" id="logoimagecenter"
@@ -1286,10 +1280,8 @@ Invalid '%s' input: %s
 </span>
 </div>
 <div id="toplogoright" class="staticpage">
-<img src="%(site_logo_right)s" id="logoimageright" alt="site logo right"/>
 </div>
 </div>
-
 <div class="contentblock staticpage" id="nomenu">
 <div class="precontentwidgets">
 <!-- begin user supplied pre content widgets -->
@@ -1308,13 +1300,13 @@ Invalid '%s' input: %s
 %(body)s
   </div>
 </div>
-<div id="bottomlogo">
+<div id="bottomlogo" class="staticpage">
 <img src="%(credits_logo)s" id="creditsimage" alt=""/>
-<span id="credits">
+<span id="credits" class="staticpage">
 %(credits_text)s
 </span>
 </div>
-<div id="bottomspace">
+<div id="bottomspace" class="staticpage">
 </div>
 </body>
 </html>

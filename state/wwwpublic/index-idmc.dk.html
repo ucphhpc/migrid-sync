@@ -31,8 +31,48 @@ IDMC
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
 <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
-<script type="text/javascript" >
+<script type="text/javascript">
+    /* We assume UCPH users here and leave external users to FAQ entry */
+    function login(user) {
+        if (user == "extoid") {
+            window.open('https://oid.idmc.dk', '_blank');
+        } else if (user == "cert") {
+            window.open('https://cert.idmc.dk', '_blank');
+        } else if (user == "migoid") {
+            window.open('https://ext.idmc.dk', '_blank');
+        } else {
+            window.open('https://sid.idmc.dk/cgi-sid/login.py', '_blank');
+        }
+    }
+    function signup(user) {
+        if (user == "extoid") {
+            window.open('https://sid.idmc.dk/cgi-sid/signup.py?show=kitoid', 
+                        '_blank');
+        } else if (user == "cert") {
+            window.open('https://sid.idmc.dk/cgi-sid/signup.py?show=extcert',
+                        '_blank');
+        } else if (user == "migoid") {
+            window.open('https://sid.idmc.dk/cgi-sid/reqoid.py', '_blank');
+        } else {
+            window.open('https://sid.idmc.dk/cgi-sid/signup.py', '_blank');
+        }
+    }
     $(document).ready(function() {
+        /* Init links centrally */
+        $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
+            "https://sites.google.com/site/minimumintrusiongrid/" +
+            "getting-started/how-to-get-started");
+        $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
+            "https://sites.google.com/site/minimumintrusiongrid/" +
+            "mig-in-danish/saadan-kommer-du-igang");
+        $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
+            "https://sid.idmc.dk/cgi-sid/signup.py?show=migoid");
+        $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
+            "https://ext.idmc.dk");
+        $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
+            "https://sid.idmc.dk/cgi-sid/signup.py?show=extcert");
+        $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
+            "https://cert.idmc.dk");
         /* Init FAQ as foldable but closed and with individual heights */
         $(".faq-accordion").accordion({
                                        collapsible: true,
@@ -45,12 +85,24 @@ IDMC
                                           var lang = $(this).val();
                                           //alert("switch_language: "+lang);
                                           switch_language(lang);
+                                          /* init is broken until visible */
+                                          $("#quick-start-tabs-"+lang).tabs("refresh");
                                       }
                             );
         var default_lang = 'en';
         $("#langselect").val(default_lang);
         switch_language(default_lang);
 	$("#langselect").msDropdown();
+        /* Init Quick Start as tabs to avoid information overload and do
+           last for proper init. */
+        $("#quick-start-tabs-en").tabs({
+            collapsible: false,
+            active: false
+        });
+        $("#quick-start-tabs-da").tabs({
+            collapsible: false,
+            active: false
+        });
     });
 </script>
 
@@ -64,9 +116,7 @@ IDMC
 </div>
 <div id="toplogocenter" class="staticpage">
 <span id="logotitle" class="staticpage">
-<center>
 Imaging Data Management Center
-</center>
 </span>
 </div>
 <div id="toplogoright" class="staticpage">
@@ -92,6 +142,80 @@ Imaging Data Management Center
 <div class="english i18n" lang="en">
 <h1 class="staticpage">Welcome to IDMC</h1>
 
+<!-- Next div is used for site wide system maintenance warnings and such:
+First line is for highlighted notice in red and orange and second is for
+optional further explanation.
+Can just be disabled by putting it into an html comment when not in use.
+ -->
+<div class="staticpage systemmessages centertext">
+<!--
+<span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Thursday, January
+  12th from 17:00 to 18:00.</span><br/><br/>
+<span class='systemnote'>The work will mainly be on the UCPH login
+  service, so please beware that any such logins may fail in the given
+  time frame.</span>
+<span class='systemwarn'>IMPORTANT: upcoming system maintenance on May 31st at 10</span><br/><br/><span class='systemnote'>Short service outages may occur due to network reconfiguration, and it is expected complete before noon.</span>
+<span class='systemwarn'>IMPORTANT: we currently see limited data visibility/access</span><br/><br/><span class='systemnote'>We
+  have encountered a few such problems after the maintenance work
+  yesterday and are working on it.</span>
+<span class='systemwarn'>IMPORTANT: IDMC backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.</span>
+-->
+</div>
+
+<!--
+  I'm an employee or student at KU / UCPH with a general account there
+-->
+<!--
+I'm an external partner in a collaboration with 
+-->
+<!-- 
+<h2 class="staticpage">Quick Start</h2>
+-->
+<div class="staticpage quickstartfields">
+
+<div id="quick-start-tabs-en">
+<ul class="fillwidth padspace">
+<li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
+<li><a href="#external-user-tab-en">External Users</a></li>
+</ul>
+
+<div id="ucph-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to IDMC using your KU / UCPH account?</p>
+<form method='post' action='https://oid.idmc.dk/wsgi-bin/autocreate.py' target='_blank'>
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+<input class="signupbutton" type="submit" value="sign up" />
+</form>
+<p></p> 
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to IDMC with my KU / UCPH account!</p>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('extoid');" />
+<p></p>
+</div>
+</div>
+
+<div id="external-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to IDMC <em>without</em> a KU / UCPH account?</p>
+<input class="loginbutton" type="button" value="sign up"
+       onClick="signup('migoid');" />
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to IDMC <em>without</em> a KU / UCPH account!</p>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('migoid');" />
+<p></p>
+</div>
+</div>
+
+</div>
+</div>
+
 <h2 class="staticpage">About IDMC</h2>
 <p>
 Imaging Data Management Center (IDMC) is an image 
@@ -99,21 +223,6 @@ storage, sharing, previewing and processing facility provided by
 University of Copenhagen to employees, students and partners. 
 IDMC delivers centralized storage space for personal and shared image files in
 addition to previewing and processing image data.
-</p>
-<h2 class="staticpage">Sign up and use IDMC</h2>
-<p>
-If you haven't used IDMC before you first need to
-<input class="signupbutton" type="button" value="sign up"
-       onClick="window.open('https://sid.idmc.dk/cgi-sid/signup.py', '_blank')"
-/> to get a user account. You may also want to refer to the 
-<a href="https://erda.dk/public/ucph-erda-user-guide.pdf">
-IDMC / ERDA User Guide</a> for an introduction and help on how to get started and
-get the most out of your account.
-</p>
-<p>In case you already signed up for your account above, you can proceed with 
-<input class="loginbutton" type="button" value="log in"
-       onClick="window.open('https://sid.idmc.dk/cgi-sid/login.py', '_blank')"
-/> to your account.
 </p>
 <h2 class="staticpage">Frequently Asked Questions (FAQ)</h2>
 <div class="faq-accordion">
@@ -132,22 +241,39 @@ RAID technology. We do <em>not</em> currently guarantee automatic and
 complete backup of ordinary data in your IDMC home folder or in the
 Workgroup shares.
 </p>
-<h4 class="staticpage">Can I Publish and Share Data in e.g. a Read-only Fashion on IDMC?</h4>
+<h4 class="staticpage">How do I Transfer Entire Folders to/from IDMC?</h4>
+<p>
+In the IDMC web interface you can only upload/download individual files,
+so if you e.g. want to upload an entire folder structure there, first
+pack the folder(s) in a zip or tar file, upload it as usual and then
+use <em>unpack</em> from the right click menu on the uploaded file.<br/>
+Likewise you can use <em>pack</em> on a folder in IDMC, download and
+unpack it locally.<br/>
+Alternatively you can use the efficient file/folder handling described
+in the Advanced Data Access sections of the user guide. That makes IDMC
+appear like a network drive so that you can use your local file manager
+to copy entire folders to IDMC.
+</p>
+<h4 class="staticpage">Can I Share, Exchange and Publish Data in e.g. a Read-only Fashion on IDMC?</h4>
 <p>
 Yes, depending on the audience and dynamics of the data to share you can
-use one of three methods.<br/> 
-For permanent read-only publishing use the Archives and mark it for
-public availability. For more dynamic data you can either share in a
-read-write manner using the Workgroup shares or do read-only sharing
-with the associated web pages. The latter come in a public and in a
-group-wide flavor and the publishing is done by Workgroup owners storing
-data in the public_base and private_base workgroup subdirectories
-respectively on IDMC. Your Workgroups page includes links to those and
-to the resulting web pages.<br/>
-Any data stored in the optional Seafile file synchronization service
-additionally support a <em>share by email</em> feature. That method
-allows both download and upload shares with optional password and time
-limit.
+use one of two overall methods.<br/> 
+For dynamic data you can either share in a read-write manner using
+the Workgroup shares or make them read-only in the Workgroup
+administration. Similarly you can do read-only sharing and publishing through the
+Workgroup web pages. Both are built into the Workgroups and the web pages
+come in a public and in a group-wide flavor, where the publishing is done
+by Workgroup owners storing data in the public_base and private_base
+workgroup subdirectories respectively on IDMC. Your Workgroups page
+includes links to those and to the resulting web pages.<br/>
+For quick data exchange with anyone and particularly people <em>not</em> on
+IDMC, we recommend the Share Link feature. From your Files page you can
+create a share link for a file or folder and choose what kind of read
+and write access share link recipients should be granted. 
+The share link method include the option to send out an
+invitation with the link directly on email, but it can of course also be
+manually distributed by other means. Share links can also be accessed
+with SFTP, FTPS and WebDAVS as described in the user guide.
 </p>
 <h4 class="staticpage">How Are Workgroups Managed?</h4>
 <p>
@@ -176,44 +302,107 @@ exotic characters but always with focus on not breaking existing
 interfaces and backends. Feel free to contact us about the possibility
 of allowing any additional characters that you may miss.
 </p>
-<h4 class="staticpage">Can I get an IDMC account without a UCPH account?</h4>
+<h4 class="staticpage">Can I use a certifcate to access IDMC?</h4>
 <p>
-It is possible but more complex to set up access even if you do not have
-a general UCPH account (i.e. the <em>Swedish numberplate</em>). Our
-general username+password access described in the user guide relies on
-the OpenID login from KU Koncern-IT and they strictly use the UCPH user
-database.
-<br />
-We do provide an alternative access method with user certificates, so if
-you
-<a  class="urllink" 
- href="https://sites.google.com/site/minimumintrusiongrid/getting-started/how-to-get-started" 
- target="_blank">request a grid certificate</a> then you can reuse
-that for IDMC signup and access.<br />
-<span class="warningtext">
-IMPORTANT: please note that management requires such users not employed
-at UCPH to explicitly register with their affiliation to a local
-user. So please include a reference to your associate/advisor at UCPH
-Science in the comment field when you fill in the certificate request.
-</span><br />
-As you can see in the user-cert-import guide there, the certificate
-install process takes quite a few steps but then at least login is
-simpler afterwards.
+In case you want the extra secure access you need to request and
+install one of our grid certificates as described on the
+corresponding <a class="reqcert-en-link">getting started</a> page. As
+you can see in the user-cert-import guide there, the certificate install
+process takes quite a few steps, but then at least login gets simpler
+afterwards. After installing your certificate you can use it first to
+<a class="extcertsignup-link">sign up</a> for your IDMC account and then
+afterwards to <a class="extcertlogin-link">log in</a>.  
+<br /> 
 </p>
 </div>
 <h2 class="staticpage">Questions and Support</h2>
 <p>
-<a href="https://erda.dk/public/ucph-erda-user-guide.pdf">The user guide</a> 
+<a href="https://idmc.dk/public/ucph-erda-user-guide.pdf">The user guide</a> 
  provides basic information about using IDMC, but feel
 free to contact us using the email link at the bottom of the page in
 case you have any questions or comments (in English or Danish).
 <p class="warningtext">
 Be aware that the user guide is made for ERDA, the sister system of IDMC, but 
-all examples are valid with the replacement of erda.dk with idmc.dk.
+almost all examples are valid with the replacement of erda.dk with idmc.dk.
+</p>
+<h2 class="staticpage">Terms of Use</h2>
+<p>
+IDMC comes with only few restrictions and they should be in line with
+basic common sense.<br/>
+For the complete details please refer to the
+official <a href="terms.html">terms of use</a> always
+available from here.
 </p>
 </div>
 <div class="danish i18n" lang="da">
-<h1 class="staticpage">Velkommen til UCPH IDMC!</h1>
+<h1 class="staticpage">Velkommen til IDMC!</h1>
+
+<!-- Next div is used for site wide system maintenance warnings and such:
+First line is for highlighted notice in red and orange and second is for
+optional further explanation.
+Can just be disabled by putting it into an html comment when not in use.
+ -->
+<div class="staticpage systemmessages centertext">
+<!--
+<span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold torsdag den
+ 12. januar fra 17:00 til 18:00.</span><br/><br/>
+<span class='systemnote'>Arbejdet vil hovedsageligt omhandle KU-login
+  servicen, hvorfor disse logins til IDMC må forventes at kunne fejle i det givne tidsrum.</span>
+<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 31. maj
+  kl 10</span><br/><br/>
+<span class='systemnote'>Kortere udfald vil forekomme da arbejdet
+  omfatter netværksændringer, og det forventes afsluttet inden middag.</span>
+<span class='systemwarn'>VIGTIGT: vi oplever i øjeblikket delvis
+  synlighed/adgang til data</span><br/><br/>
+<span class='systemnote'>Vi har oplevet enkelte sådanne problemer siden
+  vedligeholdelsesarbejdet igår og arbejder på sagen.</span>
+<span class='systemwarn'>VIGTIGT: IDMCs backend-lager er delvist nede pga et strømudfald</span><br/><br/>
+<span class='systemnote'>Der foregår strøm- og kølearbejde i HPC centret, så teknikerne er allerede på sagen.</span>
+-->
+</div>
+
+<div class="staticpage quickstartfields">
+<div id="quick-start-tabs-da">
+<ul>
+<li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
+<li><a href="#external-user-tab-da">Eksterne brugere</a></li>
+</ul>
+<div id="ucph-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig IDMC med din KU-konto?</p>
+<form method='post' action='https://oid.idmc.dk/wsgi-bin/autocreate.py' target='_blank'>
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+<input class="signupbutton" type="submit" value="tilmelding" />
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt IDMC med min KU-konto!</p>
+<input class="loginbutton" type="button" value="log ind"
+       onClick="login('extoid');" />
+<p></p>
+</div>
+</div>
+
+<div id="external-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig IDMC <em>uden</em> en KU-konto?</p>
+<input class="loginbutton" type="button" value="tilmelding"
+       onClick="signup('migoid');" />
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt IDMC <em>uden</em> en KU-konto!</p>
+<input class="loginbutton" type="button" value="log ind"
+       onClick="login('migoid');" />
+<p></p>
+</div>
+</div>
+
+</div>
+</div>
 
 <h2 class="staticpage">Om IDMC</h2>
 <p>
@@ -221,22 +410,6 @@ Imaging Data Management Center (IDMC) er et billed lager-, delings-, preview-
 og processerings-system leveret af Københavns Universitet til ansatte, studerende og partnere. 
 IDMC leverer centraliseret lagerplads for personlige - og delte billedfiler samt faciliteter til 
 preview og processering af billeddata.
-</p>
-<h2 class="staticpage">Tilmelding og brug af IDMC</h2>
-<p>
-Hvis ikke du har brugt IDMC før, er det nødvendigt først at 
-<input class="signupbutton" type="button" value="tilmelde"
-       onClick="window.open('https://sid.idmc.dk/cgi-sid/signup.py', '_blank')"
-/> dig for at få en brugerkonto. Det kan i den sammenhæng også anbefales
-at se nærmere på
-<a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">
-IDMC / ERDA Brugervejledningen</a> med introduktion og hjælp til at komme igang
- og drage mest muligt nytte af kontoen.
-</p>
-<p>Hvis du allerede har tilmeldt dig IDMC ovenfor, kan du gå videre med at
-<input class="loginbutton" type="button" value="logge ind"
-       onClick="window.open('https://sid.idmc.dk/cgi-sid/login.py', '_blank')"
-/> på din brugerkonto.
 </p>
 <h2 class="staticpage">Ofte stillede spørgsmål (OSS)</h2>
 <div class="faq-accordion">
@@ -257,23 +430,40 @@ RAID-teknologi. Vi garanterer <em>ikke</em> i øjeblikket automatisk og
 fuldstændig backup af almindelige data i din IDMC brugerfolder eller i
 Workgroup shares.
 </p>
-<h4 class="staticpage">Kan jeg publicere og dele IDMC data f.eks. så der kun er læse-adgang?</h4>
+<h4 class="staticpage">Hvordan overfører jeg hele foldere til/fra IDMC?</h4>
 <p>
-Ja, der er lidt forskellige måder at gøre det på afhængigt af hvor dynamiske data
-er og hvem du vil dele med.<br/> 
-Permanent skrive-beskyttet publicering gøres bedst med Archives og
-markering af at der skal arkiveres offentligt.
+På dine IDMC websider kan du kun uploade/downloade enkeltfiler, så hvis
+du f.eks. vil uploade hele foldere den vej, må du først pakke dem i en
+zip- eller tar-fil, som du derefter uploader som vanligt og endelig
+udpakker med <em>unpack</em> fra højreklik-menuen på den uploadede
+fil.<br/>
+Tilsvarende kan du bruge <em>pack</em> på en IDMC folder, downloade den
+pakkede fil og udpakke lokalt.<br/>
+Alternativt kan du benytte den effektive fil/folder-håndtering som
+beskrevet i afsnittene om Avanceret datatilgang i brugervejledningen. På
+den måde kan IDMC tilgås som et netværksdrev så du kan benytte din
+almindelige filhåndtering til at kopiere hele foldere til og fra IDMC.
+</p>
+<h4 class="staticpage">Kan jeg dele, udveklse og publicere IDMC data f.eks. så der kun er læse-adgang?</h4>
+<p>
+Ja, der er overordnet to forskellige måder at gøre det på afhængigt af
+hvor dynamiske data er, og hvem du vil dele med.<br/> 
 Når det drejer sig om dynamiske data er det muligt at dele med læse- og
-skrive-adgang via de almindelige Workgroup shares eller at lave
-skrivebeskyttet deling via de tilknyttede Workgroup web sider. Sidstnævnte
-findes i en udgave med offentlig adgang og en kun for gruppens
-deltagere. Publicering den vej foregår ved at Workgroup ejere gemmer
-data i de tilhørende public_base hhv private_base workgroup undermapper
-på IDMC. På din Workgroups side finder du links til disse og til de
-resulterende web-sider.<br/>
-Data gemt i den ekstra Seafile filsynkroniserings-service tilbyder
-yderligere en <em>del via e-post</em> funktion. Den metode tillader både
-upload- og download-delinger med mulighed for kodeord og tidsbegrænsning.
+skrive-adgang via de almindelige Workgroup shares, samt at skifte
+sådanne shares til kun at give læse-adgang på administrationssiden. Det
+er også muligt at lave skrivebeskyttet deling og publicering via de
+tilknyttede Workgroup web sider. Begge følger automatisk med alle
+Workgroups og sidstnævnte findes i en udgave med offentlig adgang og en
+kun for gruppens deltagere. Publicering den vej foregår ved at Workgroup
+ejere gemmer data i de tilhørende public_base hhv private_base workgroup
+undermapper på IDMC. På din Workgroups side finder du links til disse og
+til de resulterende web-sider.<br/>
+Til hurtig udveksling af data med hvem som helst, herunder ikke mindst folk
+som <em>ikke</em> er på IDMC, kan vi anbefale Share Link metoden. Fra
+din Files side kan du oprette et share link og vælge hvilken kombination
+af læse- og skrive-adgang modtageren skal gives. 
+Share link metoden inkluderer muligheden for at udsende en invitation med link 
+direkte på email, men det kan naturligvis også gøres manuelt via andre kanaler.
 </p>
 <h4 class="staticpage">Hvordan styres Workgroups?</h4>
 <p>
@@ -303,44 +493,44 @@ skade brugergrænseflader eller bagvedliggende systemer. Du er
 naturligvis velkommen til at kontakte os angående at få yderligere tegn
 du måtte savne tilladt.
 </p>
-<h4 class="staticpage">Kan jeg oprette en IDMC-konto uden en KU-konto?</h4>
+<h4 class="staticpage">Kan jeg bruge et certifikat til min IDMC-konto?</h4>
 <p>
-Det er muligt men mere besværligt at opsætte adgang selv hvis ikke du
-har en generel KU-konto (d.v.s. den <em>svenske nummerplade</em>).
-Vores generelle adgangskontrol med brugernavn+kode, som beskrevet i
-brugervejledningen, benytter OpenID-login fra KU Koncern-IT og er dermed
-strengt knyttet til KUs brugerdatabase.<br />
-Vi tilbyder adgang med brugercertifikater som alternativ, så hvis du
-<a class="urllink" 
- href="https://sites.google.com/site/minimumintrusiongrid/mig-in-danish/saadan-kommer-du-igang" 
- target="_blank">anmoder om et grid-certifikat</a> kan du genbruge det
-til IDMC-tilmelding og -adgang.<br/> 
-<span class="warningtext">
-VIGTIGT: bemærk at ledelsen har bedt om at sådanne brugere ikke ansat på
-KU registrerer sig med eksplicit tilknytning til en lokal bruger. Så
-henvis venligst til din samarbejdspartner/vejleder på KU Science i
-kommentarfeltet når du anmoder om certifikatet.
-</span><br />  
-Som det fremgår af user-cert-import guiden der kræver
+For den yderligere sikrede certifikat løsning skal du anmode om - og
+installere et af vores grid-brugercertifikater, jvf den
+tilhørende <a class="reqcert-da-link"> sådan kommer du igang</a>
+side. Som det fremgår af user-cert-import guiden dér, kræver
 certifikat-installationen en del trin, men i det mindste er login så
-efterfølgende simplere. 
+efterfølgende simplere. Når du har installeret dit certifikat kan du
+bruge det først i IDMCs <a class="extcertsignup-link">tilmelding</a> og
+efterfølgende til <a class="extcertlogin-link">log ind</a>.
+<br/>
 </p>
 </div>
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
-<a href="https://erda.dk/public/ucph-erda-user-guide.pdf">Brugervejledningen</a> 
+<a href="https://idmc.dk/public/ucph-erda-user-guide.pdf">Brugervejledningen</a> 
 indeholder basal information om brugen af IDMC, men
 kontakt os gerne (på dansk eller engelsk) med spørgsmål og kommentarer
 v.h.a. email-linket nederst på siden.
 </p>
 <p class="warningtext">
+<!--
 Bemærk at IDMC siderne p.t. kun findes på engelsk. Den danske
 brugervejledning kan forhåbentlig afhjælpe eventuelle
 forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
 <br>
 <br>
 Bemærk desuden at brugervejledningen stammer fra ERDA, IDMCs søster-system, men
-alle eksempler kan benyttes ved at erstatte erda.dk med idmc.dk.
+-->
+Bemærk at brugervejledningen stammer fra ERDA, IDMCs søster-system, men
+næsten alle eksempler kan benyttes ved at erstatte erda.dk med idmc.dk.
+</p>
+<h2 class="staticpage">Brugerregler</h2>
+<p>
+IDMC er kun begrænset af få regler, og de skulle gerne være i tråd med
+almindelig sund fornuft.<br/>
+De fuldstændige detaljer vil altid være at finde i de
+officielle <a href="terms.html">terms of use</a> her fra siden.
 </p>
 </div>
 </div>

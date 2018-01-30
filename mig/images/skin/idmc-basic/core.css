@@ -77,7 +77,25 @@ h4.staticpage {
   padding: 2px;
 }
 
-
+div.quickstartfields {
+  color: #000;
+}
+div.loginfield, div.signupfield {
+  display: inline-block;
+  border: 2px solid #448dae;
+  color: #fff;
+  background-color: #0078ae;
+  margin: 0px 4px;
+  font-size: 12px;
+  width: 440px;
+  border-radius: 4px;
+}
+div.loginfield > h2, div.signupfield > h2 {
+  padding: 0px;
+}
+div.loginfield {
+    float: right;
+}
 
 table {
   background: #eef;
@@ -141,6 +159,7 @@ table {
 #toplogocenter.staticpage {
   float: none;
   margin: 0;
+  text-align: center;
 }
 #toplogoright.staticpage {
   display: none;
@@ -159,6 +178,13 @@ table {
 }
 #logoimageright.staticpage {
   display: none;
+}
+#logotitle {
+  vertical-align: top;
+}
+#logotitle.staticpage {
+  vertical-align: top;
+  text-align: center;
 }
 
 #bottomspace {
