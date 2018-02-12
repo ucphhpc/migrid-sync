@@ -97,10 +97,13 @@ def main(client_id, user_arguments_dict):
 archive dir.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
+    logger.debug('reading archive private file %s' % abs_path)
     try:
         private_fd = open(abs_path, 'rb')
         entry = {'object_type': 'binary',
                  'data': private_fd.read()}
+        logger.info('return %db from archive private file %s of size %db' % \
+                    (len(entry['data']), abs_path, os.path.getsize(abs_path)))
         # Cut away all the usual web page formatting to show only contents
         output_objects = [{'object_type': 'start',
                            'headers': [('Content-Disposition',
