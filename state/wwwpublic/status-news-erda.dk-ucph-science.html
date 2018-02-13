@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<title>
+ERDA Status
+</title>
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+<!-- site basic skin style -->
+<!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>
+
+<!-- country-dropdown -->
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+<!-- override with any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+      media="screen"/>
+
+<!-- site skin style -->
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
+
+<link rel="icon" type="image/vnd.microsoft.icon"
+      href="/images/skin/erda-ucph-science/favicon.ico"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        /* Init NEWS as foldable, with latest entry open and with individual heights */
+        $(".news-accordion").accordion({
+                                       collapsible: true,
+                                       //active: false,
+                                       heightStyle: "content"
+                                      });
+        /* fix and reduce accordion spacing */
+        $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+        $("#langselect").on('change', function() { 
+                                          var lang = $(this).val();
+                                          //alert("switch_language: "+lang);
+                                          switch_language(lang);
+                                      }
+                            );
+        var default_lang = 'en';
+        $("#langselect").val(default_lang);
+        switch_language(default_lang);
+	$("#langselect").msDropdown();
+    });
+</script>
+
+</head>
+<body class="staticpage">
+<div id="topspace">
+</div>
+<div id="toplogo" class="staticpage">
+<div id="toplogoleft" class="staticpage">
+</div>
+<div id="toplogocenter" class="staticpage">
+<img src="/images/skin/erda-ucph-science/banner-logo.jpg" id="logoimagecenter"
+     class="staticpage" alt="site logo center"/>
+<span id="logotitle" class="staticpage">
+University of Copenhagen - Electronic Research Data Archive
+</span>
+</div>
+<div id="toplogoright" class="staticpage">
+</div>
+</div>
+
+<div class="contentblock staticpage" id="nomenu">
+<div class="precontentwidgets">
+<!-- begin user supplied pre content widgets -->
+<!-- empty -->
+<!-- end user supplied pre content widgets -->
+</div>
+<div id="migheader">
+</div>
+<div class="staticpage" id="content">
+<div class="righttext langselect">
+<!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+<select name="languages" id="langselect">
+  <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+  <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
+</select>
+</div>
+<div class="english i18n" lang="en">
+<h1 class="staticpage">UCPH ERDA Status and News</h1>
+
+<h2 class="staticpage">Status</h2>
+<!-- Use one of these templates for brief status messages -->
+<p class="icon_online iconspace leftpad icontext">
+All systems and services are fully operational.
+</p>
+<!--
+<p class="icon_slack iconspace leftpad icontext">
+There's a problem with the backend storage - we're investigating.
+</p>
+<p class="icon_slack iconspace leftpad icontext">
+All services except Seafile are fully operational.
+</p>
+<p class="icon_offline iconspace leftpad icontext">
+All systems are down for maintenance - they will be back soon.
+</p>
+-->
+
+<p>
+Please use the link at the bottom to contact support in case you have
+questions or encounter any problems.
+</p>
+
+<h2 class="staticpage">Latest News</h2>
+<div class="news-accordion">
+<h4 class="staticpage">2018/02/13: High-performance SFTP Service in General Use</h4>
+<p>
+After some months in beta test at sftp.erda.dk we've enabled our new
+high-performance SFTP service on the standard io.erda.dk address. We've
+measured speedups ranging from 10 to 32 times for transfers on a fast
+network link to ERDA. Even on slower networks you are likely to see
+improvements.
+</p>
+<h4 class="staticpage">2018/02/12: Slow-down / Service Outages</h4>
+<p>
+All services were extremely slow this morning due to a disk issue on
+the frontend node. In some cases it resulted in connections timing
+out. The problem is solved and everything should be back to normal again.<br/>
+In the afternoon it turned out that Seafile did not like the
+aforementioned outage and needed a bit of additional cleaning up to run
+properly. It is back to normal now.
+</p>
+<h4 class="staticpage">2018/01/25: Maintenance and Brief Service Outage</h4>
+<p>
+All services were briefly down for scheduled software updates. These
+included a number of minor bugfixes plus optimizations in relation to
+not wasting resources on automated attacks from the Internet - such as
+password guessing attempts. Everything should be back to normal again. 
+</p>
+<h4 class="staticpage">2018/01/10: Important Security Upgrades</h4>
+<p>
+We finished applying a set of urgent security updates in relation to the
+<a href="https://meltdownattack.com/">Meltdown and Spectre</a> security
+issues. This involved a reboot for kernel updates and thus a resulting
+brief general outage for all services.
+</p>
+<h4 class="staticpage">2018/01/10: Partial data visibility</h4>
+<p>
+Our active frontend node lost sight of a number of files on the backend
+storage nodes. This in particular resulted in one or more workgroup folders
+not showing up in the user file space. No data was lost and a reload of
+the storage connection fixed the problem.
+</p>
+<h4 class="staticpage">2017/11/02: System Outage and Seafile Data Loss</h4>
+<p>
+We experienced a massive system outage due to a disk and a CPU failing
+hard in turn. This left part of our systems offline for most of a day
+until we had restored and migrated the tasks to another host. On the
+good side ordinary ERDA data was not permanently affected by the outage
+which can be seen as marker of the robustness of our general
+infrastructure. On the bad side we've received reports of some ERDA
+Seafile users getting one or more files rolled back to a previous
+version effectively overwriting any recent changes. We are of course
+sorry for any inconvenience this has caused and we have done our best to
+help trace down the underlying problem. 
+We would also like to emphasize that Seafile is a third party service we
+only host on ERDA due to popular demand. Thus, it follows the same backup
+policies, meaning that <em>you</em> as a user are responsible for explicitly
+making backups. You may use e.g. our Archive feature which copies data to
+off-site tape for strong protection against any such data loss.
+</p>
+<h4 class="staticpage">2017/09/21: High-performance SFTP Service in Beta</h4>
+<p>
+Our new high-performance SFTP service is now available on sftp.erda.dk
+with the same login procedure as the existing one on io.erda.dk. You can
+try it out as a drop-in replacement using the same procedure just
+replacing the address. We've measured speedups ranging from 10 to 32
+times for transfers on a fast network link to ERDA. Even on slower
+networks you are likely to see improvements.
+</p>
+<h4 class="staticpage">2017/07/25: OpenID Login for Users without a UCPH Account</h4>
+<p>
+We've added another access method to allow people without a general
+KU/UCPH account to use ERDA with simple username and password
+login. This new service makes it a lot simpler for e.g. external
+collaboration partners to sign up and use ERDA. Please refer to our <a href="/index.html">FAQ</a>
+entry on the subject for the details.
+</p>
+<h4 class="staticpage">2017/04/21: Write-restricted Workgroup Shared Folders</h4>
+<p>
+The workgroup infrastructure was changed to allow the associated shared
+folders to be write-protected by owners. In effect this allows easy
+sharing of data in a read-only fashion inside workgroups. All workgroups
+will still have their shared folder in read/write mode by default but owners
+can switch all new workgroups to read-only from the workgroup
+administration page. It should be noted that all workgroups created
+before this date will need to be migrated first if they are to provide the same
+feature. Please contact support about such inquiries.
+</p>
+</div>
+<p>
+<a href="http://www.erda.dk">Return to main page</a>
+</p>
+</div>
+<div class="danish i18n" lang="da">
+<h1 class="staticpage">UCPH ERDA status og nyheder</h1>
+
+<h2 class="staticpage">Status</h2>
+<!-- Use one of these templates for brief status messages -->
+<p class="icon_online iconspace leftpad icontext">
+Alle systemer og services kører planmæssigt.
+</p>
+<!--
+<p class="icon_slack iconspace leftpad icontext">
+Der er i øjeblikket delvise udfald i backend-lageret - vi undersøger sagen.
+</p>
+<p class="icon_slack iconspace leftpad icontext">
+Alle services undtagen Seafile kører planmæssigt.
+</p>
+<p class="icon_offline iconspace leftpad icontext">
+Alle systemer er i øjeblikket nede p.g.a. planlagt vedligehold.
+</p>
+-->
+
+<p>
+Benyt venligst linket nederst på siden til at kontakte support såfremt
+du har spørgsmål eller oplever problemer.
+</p>
+
+<h2 class="staticpage">Seneste nyt</h2>
+<div class="news-accordion">
+<h4 class="staticpage">13/02-2018: Optimeret SFTP i generel drift</h4>
+<p>
+Efter nogle måneder i beta-test på sftp.erda.dk har vi nu integreret den
+samme nye højtydende SFTP service på den almindelige io.erda.dk adresse. I
+vores egne tests har vi observeret 10 til 32 gange bedre hastighed over
+hurtige netværksforbindelser til ERDA. Selv på langsommere forbindelser
+skulle man dog også gerne opleve tydelige forbedringer.
+</p>
+<h4 class="staticpage">12/02-2018: Langsom adgang / nedetid</h4>
+<p>
+Alle services var ekstremt langsomme her til morgen pga et diskproblem
+på frontend-maskinen. I nogle tilfælde førte det til at forbindelser til
+ERDA fik time-out. Problemet er rettet og alt skulle være tilbage i
+normal drift igen.<br/>
+Seafile kunne tilsyneladende ikke lide førnævnte problem og
+krævede lidt ekstra oprydning. Den er ligeledes tilbage i almindelig
+drift nu.
+</p>
+<h4 class="staticpage">25/01-2018: Vedligehold og kort nedetid</h4>
+<p>
+Alle services var kortvarigt nede i forbindelse med en planlagt
+software-opdatering. Udover en række mindre fejlrettelser dækkede den
+hovedsageligt optimeringer i forhold til ikke at spilde unødige resurser
+på automatiserede angreb fra internettet - herunder især forsøg på at
+gætte kodeord. Alt skulle være tilbage i normal drift igen.
+</p>
+<h4 class="staticpage">10/01-2018: Vigtige sikkerhedsopdateringer</h4>
+<p>
+Vi færdiggjorde en stribe sikkerhedsopdateringer som følge af 
+<a href="https://meltdownattack.com/">Meltdown og Spectre</a>
+sikkerhedshullerne. Det var nødvendigt at genstarte systemer for at få
+tilhørende kerneopdateringer i drift, og vi havde derfor kortvarigt
+generel nedetid på alle services.
+</p>
+<h4 class="staticpage">10/01-2018: Delvis datasynlighed</h4>
+<p>
+Vores aktive frontend-maskine tabte adgang til et antal filer på
+backend-lageret. Som følge deraf blev en eller flere delte workgroup-mapper
+midlertidigt usynlige for deltagerne. Ingen data blev tabt og
+genetablering af forbindelsen til backend-lageret løste problemet.
+</p>
+<h4 class="staticpage">02/11-2017: Systemudfald og delvist datatab i Seafile</h4>
+<p>
+Vi oplevede et massivt systemudfald p.g.a. en diskfejl samtidig med at
+en CPU stod af. Resultatet var at store dele af vores systemer var
+offline det meste af dagen, indtil vi havde fået genetableret og migreret
+services til en anden maskine. Hvis man skal se noget positivt i det kan
+det noteres at al almindelig ERDA data overlevede, hvilket bekræfter os
+i robustheden af vores generelle infrastruktur og design. På den
+negative side må vi desværre sande at enkelte Seafile-brugere har
+oplevet at en eller flere af deres filer efter udfaldet automatisk er
+blevet rullet tilbage til en tidligere version og dermed har overskrevet
+senere ændringer. Vi er naturligvis meget kede af det gener det har
+medført, og vi har gjort vores bedste for at hjælpe med at finde frem
+til det bagvedliggende problem.
+Vi må understrege at Seafile er en tredjeparts-service, som vi kun
+tilbyder på ERDA p.g.a. særlig efterspørgsel. Derfor har vi ikke fuld
+kontrol eller kendskab til hvordan den fungerer internt. Den følger desuden
+samme backup-politik, d.v.s. <em>du</em> er som bruger selv ansvarlig for
+eksplicit at lave backup af kritiske data. Dertil kan du f.eks. benytte
+vores Archive funktion, som kopierer data til bånd på en fjernlokation
+med henblik på stærk sikring mod netop sådanne datatab. 
+</p>
+<h4 class="staticpage">21/09-2017: Optimeret SFTP i beta</h4>
+<p>
+Vores nye optimerede SFTP service er sat i beta-test på sftp.erda.dk med
+samme login-fremgangsmåde som den hidtidige på io.erda.dk. D.v.s. man kan
+afprøve den på helt samme måde som beskrevet i brugervejledningen, blot
+med skift af <em>io</em> til <em>sftp</em> i adressen. I vores
+egne tests har vi observeret 10 til 32 gange bedre hastighed over hurtige
+netværksforbindelser til ERDA. Selv på langsommere forbindelser skulle man
+dog også gerne opleve tydelige forbedringer.
+</p>
+<h4 class="staticpage">25/07-2017: Særskilt OpenID-login for brugere uden en KU konto </h4>
+<p>
+Vi har tilføjet endnu en adgangsløsning for at kunne give folk uden en
+almindelig KU-konto tilsvarende login til ERDA med brugernavn og
+kodeord. På den måde er det blevet markant nemmere at koble eksterne
+samarbejdspartnere på ERDA, sådan som det er beskrevet af det
+tilhørende punkt i vores <a href="/index.html">FAQ</a> på forsiden. 
+</p>
+<h4 class="staticpage">21/04-2017: Skrive-beskyttede delte workgroup-mapper</h4>
+<p>
+Infrastrukturen bag de delte workgroup-mapper er ændret så den tillader
+ejere at skrive-beskytte data. I praksis er det dermed muligt at dele
+data kun med læse-adgang i en workgroup. Som standard får alle
+workgroups stadig delte mapper med både læse- og skrive-adgang, men
+ejere kan slå skrive-adgang fra på administrationssiden for en
+workgroup. Bemærk at alle workgroups oprettet inden denne dato først
+skal migreres til den nye struktur for at få samme
+funktionalitet. Kontakt venligst support omkring sådanne forespørgsler.
+</p>
+</div>
+<p>
+<a href="http://www.erda.dk">Tilbage til forsiden</a>
+</p>
+</div>
+</div>
+
+<div id="bottomlogo">
+<div id="bottomlogoleft">
+<div id="support">
+<img src="/images/icons/help.png" id="supportimage" alt=""/>
+<div class="supporttext staticpage i18n" lang="en">
+<p class="supporttitle i18n" lang="en">Support</p>
+<p class="i18n" lang="en">
+<a href="https://erda.dk/public/ucph-erda-user-guide.pdf">ERDA
+User Guide</a><br />Questions about ERDA? <br />Please contact
+us at <a href="mailto:support@erda.dk">support@erda.dk</a></p>
+</div>
+<div class="supporttext staticpage i18n" lang="da">
+<p class="supporttitle i18n" lang="da">Vejledning</p>
+<p class="i18n" lang="da"><a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">ERDA 
+Brugervejledning</a><br />Spørgsmål om ERDA? <br />Skriv til os på 
+<a href="mailto:support@erda.dk">support@erda.dk</a></p>
+</div>
+</div>
+</div>
+<div id="bottomlogoright">
+<p><img src="/images/copyright.png" id="creditsimage" alt=""/>
+<span id="credits">
+2003-2017, <a href="http://www.migrid.org">The MiG Project</a>
+</span>
+</p>
+</div>
+</div>
+<div id="bottomspace">
+</div>
+
+</body>
+</html>
