@@ -105,9 +105,11 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
     login = unescape(environ.get(client_login_field, '')).strip()
     if not login:
         return (oid_db, "")
-    if login.startswith(configuration.user_mig_oid_provider):
+    if configuration.user_mig_oid_provider and \
+            login.startswith(configuration.user_mig_oid_provider):
         oid_db = auth_openid_mig_db
-    elif login.startswith(configuration.user_ext_oid_provider):
+    elif configuration.user_ext_oid_provider and \
+            login.startswith(configuration.user_ext_oid_provider):
         oid_db = auth_openid_ext_db
     else:
         _logger.warning("could not detect openid provider db for %s: %s" % \
