@@ -372,12 +372,16 @@ def main(client_id, user_arguments_dict, environ=None):
 
     if not uniq_id and not email:
         if accepted.get('openid.sreg.required', '') and identity:
+            output_objects.append({'object_type': 'html_form',
+                                   'text': '''<p class="spinner iconleftpad">
+Auto log out first to avoid sign up problems ...
+</p>'''})
             html = \
-                '''
+                """
             <a id='autologout' href='%s'></a>
             <script type='text/javascript'>
                 document.getElementById('autologout').click();
-            </script>''' \
+            </script>""" \
                 % openid_autologout_url(configuration, identity,
                     client_id, req_url, user_arguments_dict)
             output_objects.append({'object_type': 'html_form',

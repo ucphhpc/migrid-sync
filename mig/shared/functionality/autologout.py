@@ -87,6 +87,11 @@ def main(client_id, user_arguments_dict, environ=None):
                             % configuration.short_title})
         return (output_objects, status)
 
+    output_objects.append({'object_type': 'html_form',
+                           'text': '''<p class="spinner iconleftpad">
+Auto log out first to avoid sign up problems ...
+</p>'''})
+
     # OpenID requires logout on provider and in local mod-auth-openid database.
     # IMPORTANT: some browsers like Firefox may inadvertently renew the local
     # OpenID session while loading the resources for this page (in parallel).
