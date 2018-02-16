@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -83,6 +83,7 @@ def generate_confs(
     generateconfs_command=' '.join(sys.argv),
     source=os.path.dirname(sys.argv[0]),
     destination=os.path.dirname(sys.argv[0]),
+    destination_suffix="",
     base_fqdn='localhost',
     public_fqdn='localhost',
     mig_cert_fqdn='localhost',
@@ -473,9 +474,17 @@ cert, oid and sid based https!
         user_dict['__EXT_OID_PROVIDER_ID__'] = ext_oid_provider_id
         all_oid_provider_ids.append(ext_oid_provider_id)
     user_dict['__ALL_OID_PROVIDER_IDS__'] = ' '.join(all_oid_provider_ids)
-        
+
+    destination_path = "%s%s" % (destination, destination_suffix)
+    if not os.path.islink(destination) and os.path.isdir(destination):
+        print "ERROR: Legacy %s dir in the way - please remove first" % \
+              destination
+        sys.exit(1)
     try:
-        os.makedirs(destination)
+        os.makedirs(destination_path)
+        if os.path.exists(destination):
+            os.remove(destination)
+        os.symlink(destination_path, destination)
     except OSError:
         pass
 
@@ -564,13 +573,99 @@ cert, oid and sid based https!
         ]
     for (in_name, out_name) in replacement_list:
         in_path = os.path.join(source, in_name)
-        out_path = os.path.join(destination, out_name)
+        out_path = os.path.join(destination_path, out_name)
         if os.path.exists(in_path):
             fill_template(in_path, out_path, user_dict, strip_trailing_space)
             # Sync permissions
             os.chmod(out_path, os.stat(in_path).st_mode)
         else:
             print "Skipping missing template: %s" % in_path
+
+    instructions = '''Configurations for MiG and Apache were generated in
+%(destination)s%(destination_suffix)s/ and symlinked to %(destination)s .
+For a default setup you will probably want to copy the MiG daemon conf to the
+server code directory:
+cp %(destination)s%(destination_suffix)s/MiGserver.conf %(mig_code)s/server/
+the static skin stylesheet to the styling directory:
+cp %(destination)s/static-skin.css %(mig_code)s/images/
+and the default landing page to the user_home directory:
+cp %(destination)s/index.html %(mig_state)s/user_home/
+
+If you are running apache 2.x on Debian/Ubuntu you can use the sites-available
+and sites-enabled structure with:
+sudo cp %(destination)s/MiG.conf %(apache_etc)s/sites-available/
+sudo a2ensite MiG
+
+On other distro and apache combinations you will likely want to rely on the
+automatic inclusion of configurations in the conf.d directory instead:
+sudo cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
+and on Redhat based systems possibly mimic Debian with
+sudo cp %(destination)s/mimic-deb.conf %(apache_etc)s/conf/httpd.conf
+sudo cp %(destination)s/envvars /etc/sysconfig/httpd
+sudo cp %(destination)s/apache2.service /lib/systemd/system/httpd.service
+
+You may also want to consider copying the generated apache2.conf,
+httpd.conf, ports.conf and envvars to %(apache_etc)s/:
+sudo cp %(destination)s/apache2.conf %(apache_etc)s/
+sudo cp %(destination)s/httpd.conf %(apache_etc)s/
+sudo cp %(destination)s/ports.conf %(apache_etc)s/
+sudo cp %(destination)s/envvars %(apache_etc)s/
+
+and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
+cp %(destination)s/trac.ini %(mig_code)s/server/
+
+On a Debian/Ubuntu MiG developer server the dedicated apache init script is
+added with:
+sudo cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
+
+Please reload or restart your apache daemons afterwards to catch the
+configuration changes.
+
+If you enabled the MiG sftp subsystem for OpenSSH, you should setup PAM+NSS
+as described in the mig/pam-mig and mig/libnss-mig READMEs and copy the
+generated sshd_config-MiG-sftp-subsys to /etc/ssh/ for a parallel service:
+sudo cp %(destination)s/sshd_config-MiG-sftp-subsys /etc/ssh/
+sudo chown 0:0 /etc/ssh/sshd_config-MiG-sftp-subsys
+After making sure it fits your site you can start the openssh service with:
+sudo /usr/sbin/sshd -f /etc/ssh/sshd_config-paramiko
+
+The migrid-init.d-rh contains a standard SysV init style helper script to
+launch all MiG daemons. It was written for RHEL/CentOS but may work
+on other platforms, too.
+You can install it with:
+sudo cp %(destination)s/migrid-init.d-rh /etc/init.d/migrid
+
+The migrid-init.d-deb contains a standard SysV init style helper script to
+launch all MiG daemons. It was written for Debian/Ubuntu but may work
+on other platforms, too.
+You can install it with:
+sudo cp %(destination)s/migrid-init.d-deb /etc/init.d/migrid
+
+The logrotate-mig contains a logrotate configuration to automatically
+rotate and compress log files for all MiG daemons.
+You can install it with:
+sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
+
+The migstateclean and migerrors files are cron scripts to automatically
+clean up state files and grep for important errors in all MiG log files.
+You can install them with:
+chmod 755 %(destination)s/{migstateclean,migerrors}
+sudo cp %(destination)s/{migstateclean,migerrors} /etc/cron.daily/
+
+The migcheckssl file is cron scripts that automatically checks for 
+LetsEncrypt certificate renewal. 
+You can install it with:
+chmod 700 %(destination)s/{migcheckssl}
+sudo cp %(destination)s/{migcheckssl} /etc/cron.daily
+
+''' % expanded
+    instructions_path = "%s/instructions.txt" % destination
+    try:
+        filehandle = open(instructions_path, "w")
+        filehandle.write(instructions)
+        filehandle.close()
+    except Exception, err:
+        print "could not write %s %s" % (instructions_path, err)
     return expanded
 
 def create_user(
@@ -750,6 +845,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
 
     src = os.path.abspath(os.path.dirname(sys.argv[0]))
     dst = os.path.join(src, '%s-confs' % user)
+    dst_suffix = ""
 
     server_alias = '#ServerAlias'
     https_fqdns = [mig_cert_fqdn, ext_cert_fqdn, mig_oid_fqdn, ext_oid_fqdn,
@@ -766,6 +862,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         ' '.join(sys.argv),
         src,
         dst,
+        dst_suffix,
         base_fqdn,
         public_fqdn,
         mig_cert_fqdn,

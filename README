@@ -348,6 +348,7 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
 or the same with OpenID, HSTS, WSGI (default web), Seafile, optimized SFTP and
 vhost-specific certificates from LetsEncrypt:
 ./generateconfs.py --source=. --destination=generated-confs \
+                   --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
                    --mig_cert_fqdn=dk-cert.migrid.org \
@@ -391,6 +392,7 @@ vhost-specific certificates from LetsEncrypt:
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, Seafile integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
+                   --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
                    --mig_cert_fqdn= \
@@ -434,6 +436,7 @@ optimized SFTP, Seafile integration and OpenID login:
 Finally a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, Jupyter integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
+                   --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=idmc.dk \
                    --public_fqdn=www.idmc.dk \
                    --mig_cert_fqdn= \

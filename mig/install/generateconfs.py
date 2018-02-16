@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 Creates MiG server and Apache configurations to fit the provided settings.
 """
 
+import datetime
 import getopt
 import sys
 
@@ -49,6 +50,7 @@ if '__main__' == __name__:
     names = (
         'source',
         'destination',
+        'destination_suffix',
         'base_fqdn',
         'public_fqdn',
         'mig_cert_fqdn',
@@ -145,6 +147,9 @@ if '__main__' == __name__:
         print 'Error: non-option arguments are no longer supported!'
         usage(names)
         sys.exit(1)
+    if settings['destination_suffix'] == 'DEFAULT':
+        suffix = "-%s" % datetime.datetime.now().isoformat()
+        settings['destination_suffix'] = suffix
     print '# Creating confs with:'
     for (key, val) in settings.items():
         print '%s: %s' % (key, val)
@@ -153,83 +158,13 @@ if '__main__' == __name__:
             del settings[key]
     conf = generate_confs(**settings)
     #print "DEBUG: %s" % conf
-    print '''Configurations for MiG and Apache were generated in
-%(destination)s/
-For a default setup you will probably want to copy the MiG daemon conf to the
-server code directory:
-cp %(destination)s/MiGserver.conf %(mig_code)s/server/
-the static skin stylesheet to the styling directory:
-cp %(destination)s/static-skin.css %(mig_code)s/images/
-and the default landing page to the user_home directory:
-cp %(destination)s/index.html %(mig_state)s/user_home/
-
-If you are running apache 2.x on Debian/Ubuntu you can use the sites-available
-and sites-enabled structure with:
-sudo cp %(destination)s/MiG.conf %(apache_etc)s/sites-available/
-sudo a2ensite MiG
-
-On other distro and apache combinations you will likely want to rely on the
-automatic inclusion of configurations in the conf.d directory instead:
-sudo cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
-and on Redhat based systems possibly mimic Debian with
-sudo cp %(destination)s/mimic-deb.conf %(apache_etc)s/conf/httpd.conf
-sudo cp %(destination)s/envvars /etc/sysconfig/httpd
-sudo cp %(destination)s/apache2.service /lib/systemd/system/httpd.service
-
-You may also want to consider copying the generated apache2.conf,
-httpd.conf, ports.conf and envvars to %(apache_etc)s/:
-sudo cp %(destination)s/apache2.conf %(apache_etc)s/
-sudo cp %(destination)s/httpd.conf %(apache_etc)s/
-sudo cp %(destination)s/ports.conf %(apache_etc)s/
-sudo cp %(destination)s/envvars %(apache_etc)s/
-
-and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
-cp %(destination)s/trac.ini %(mig_code)s/server/
-
-On a Debian/Ubuntu MiG developer server the dedicated apache init script is
-added with:
-sudo cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
-
-Please reload or restart your apache daemons afterwards to catch the
-configuration changes.
-
-If you enabled the MiG sftp subsystem for OpenSSH, you should setup PAM+NSS
-as described in the mig/pam-mig and mig/libnss-mig READMEs and copy the
-generated sshd_config-MiG-sftp-subsys to /etc/ssh/ for a parallel service:
-sudo cp %(destination)s/sshd_config-MiG-sftp-subsys /etc/ssh/
-sudo chown 0:0 /etc/ssh/sshd_config-MiG-sftp-subsys
-After making sure it fits your site you can start the openssh service with:
-sudo /usr/sbin/sshd -f /etc/ssh/sshd_config-paramiko
-
-The migrid-init.d-rh contains a standard SysV init style helper script to
-launch all MiG daemons. It was written for RHEL/CentOS but may work
-on other platforms, too.
-You can install it with:
-sudo cp %(destination)s/migrid-init.d-rh /etc/init.d/migrid
-
-The migrid-init.d-deb contains a standard SysV init style helper script to
-launch all MiG daemons. It was written for Debian/Ubuntu but may work
-on other platforms, too.
-You can install it with:
-sudo cp %(destination)s/migrid-init.d-deb /etc/init.d/migrid
-
-The logrotate-mig contains a logrotate configuration to automatically
-rotate and compress log files for all MiG daemons.
-You can install it with:
-sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
-
-The migstateclean and migerrors files are cron scripts to automatically
-clean up state files and grep for important errors in all MiG log files.
-You can install them with:
-chmod 755 %(destination)s/{migstateclean,migerrors}
-sudo cp %(destination)s/{migstateclean,migerrors} /etc/cron.daily/
-
-The migcheckssl file is cron scripts that automatically checks for 
-Let's encrypt certificate renewal. 
-You can install it with:
-chmod 700 %(destination)s/{migcheckssl}
-sudo cp %(destination)s/{migcheckssl} /etc/cron.daily
-
-
-''' % conf
+    instructions_path = "%(destination)s/instructions.txt" % conf
+    try:
+        instructions_fd = open(instructions_path, "r")
+        instructions = instructions_fd.read()
+        instructions_fd.close()
+        print instructions
+    except Exception, exc:
+        print "ERROR: could not read generated instructions: %s" % exc
+        sys.exit(1)
     sys.exit(0)
