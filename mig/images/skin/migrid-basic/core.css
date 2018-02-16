@@ -30,7 +30,15 @@
 /* MiGrid Basic skin style sheet */
 
 body {
-  background: url("/images/skin/migrid-basic/pattern.png") repeat scroll left center transparent;
+  background: url("/images/skin/idmc-basic/pattern.png") repeat scroll left center transparent;
+}
+
+/* Fixed width layout in line with UCPH style guidelines */
+body.staticpage {
+  margin: 0 auto;
+  width: 984px;
+  border-right: 1px solid #CCC;
+  border-left: 1px solid #CCC;
 }
 
 a {
@@ -46,13 +54,66 @@ h1 {
   background: url("/images/skin/migrid-basic/background.png") repeat scroll left center #eee;
 }
 
+h1.staticpage {
+  border: 0;
+  margin: 12px 0;
+  color: #000;
+  background: none;
+  font-size: 18px;
+  padding: 4px;
+}
 
+h2.staticpage {
+  padding: 10px 2px 2px 2px;
+  border-bottom: 0;
+}
+
+h3.staticpage {
+  padding: 3px;
+}
+
+h4.staticpage {
+  /*border: 1px solid #fff;*/
+  padding: 2px;
+}
+
+div.quickstartfields {
+  color: #000;
+}
+div.loginfield, div.signupfield {
+  display: inline-block;
+  border: 2px solid #448dae;
+  color: #fff;
+  background-color: #0078ae;
+  margin: 0px 4px;
+  font-size: 12px;
+  width: 440px;
+  border-radius: 4px;
+}
+div.loginfield > h2, div.signupfield > h2 {
+  padding: 0px;
+}
+div.loginfield {
+    float: right;
+}
 
 table {
   background: #eef;
   color: #000;
 }
 
+#nomenu.staticpage {
+  margin: 0;
+}
+
+#content.staticpage {
+  border-radius: 0;
+}
+
+.contentblock.staticpage {
+  /* Make sure to have some gap between text and footer */
+  min-height: 600px;
+}
 
 /* Navigational menu... */
 .navmenu {
@@ -88,6 +149,21 @@ table {
   background: url("/images/skin/migrid-basic/background.png") repeat scroll left center #eee;
   color: white;
 }
+#toplogo.staticpage {
+  height: 36px;
+  font-size: 28px;
+}
+#toplogoleft.staticpage {
+  display: none;
+}
+#toplogocenter.staticpage {
+  float: none;
+  margin: 0;
+  text-align: center;
+}
+#toplogoright.staticpage {
+  display: none;
+}
 #logoimage {
   opacity: 1.0;
 }
@@ -103,6 +179,13 @@ table {
 #logoimageright.staticpage {
   display: none;
 }
+#logotitle {
+  vertical-align: top;
+}
+#logotitle.staticpage {
+  vertical-align: top;
+  text-align: center;
+}
 
 #bottomspace {
   display: none;
@@ -110,6 +193,18 @@ table {
 #bottomlogo {
   background: url("/images/skin/migrid-basic/background.png") repeat scroll left center #eee;
   color: white;
+}
+#bottomlogo.staticpage {
+  background: url("/images/skin/migrid-basic/background.png") repeat scroll left center #eee;
+  border: 0;
+  background: #eee;
+  padding: 10px 10px 2px 10px;
+  font-size: 10px;
+  font-weight: normal;
+  line-height: 1.35em;
+  color: #666;
+  
+  border-bottom: 1px solid #CCC;
 }
 #bottomlogoleft {
   background-color: white;

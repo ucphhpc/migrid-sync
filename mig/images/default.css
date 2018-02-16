@@ -652,6 +652,10 @@ input[type=checkbox], input[type=radio] {
   text-align: left;
 }
 
+.icontext{
+  font-size: 20px;
+  vertical-align: middle;
+}
 .smallcontent{
   font-size: 10px;
 }
@@ -715,6 +719,15 @@ input[type=checkbox], input[type=radio] {
 
 .status_offline {
   color: red;
+}
+.icon_online {
+  background: url('/images/status-icons/online.png') left center no-repeat;
+}
+.icon_slack {
+  background: url('/images/status-icons/slack.png') left center no-repeat;
+}
+.icon_offline {
+  background: url('/images/status-icons/offline.png') left center no-repeat;
 }
 
 .optional {

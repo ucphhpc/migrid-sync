@@ -115,7 +115,6 @@ table {
   min-height: 600px;
 }
 
-
 /* Navigational menu... */
 .navmenu {
   background: url("/images/skin/erda-basic/background_greypattern.png") repeat scroll left center #aaa;
@@ -188,6 +187,13 @@ table {
 #logoimageright.staticpage {
   display: none;
 }
+#logotitle {
+  vertical-align: top;
+}
+#logotitle.staticpage {
+  vertical-align: top;
+  text-align: center;
+}
 
 #bottomspace {
   display: none;
@@ -233,7 +239,6 @@ a:hover.settingsbutton {
   background-color: #eef;
   color: #147;
 }
-
 .activebutton {
   border: 2px solid #369;
   background-color: #acf;

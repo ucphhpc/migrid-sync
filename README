@@ -370,7 +370,7 @@ vhost-specific certificates from LetsEncrypt:
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
                    --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
-                   --mig_oid_provider=https://dk-io.migrid.org:8443/openid/ \
+                   --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=True --enable_wsgi=True \
                    --enable_sftp=True --enable_sftp_subsys=True \

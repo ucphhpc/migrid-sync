@@ -110,8 +110,7 @@ table {
 }
 
 .contentblock.staticpage {
-  /* Make sure to have some gap between text and footer */
-  min-height: 600px;
+  /* NOTE: spacing to footer now uses #content.staticpage instead */
 }
 
 
@@ -266,9 +265,9 @@ table {
 }
 #content.staticpage, .content.staticpage {
   padding: 8px;
+  /* Make sure to have some gap between content and footer */
+  min-height: 600px;
 }
-
-
 .even_row {
   background: #679c5b;
 }

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui-theme.custom - jquery ui theme overrides
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,12 +28,25 @@
 */
 
 
+/* TODO: try generating theme with a the settings below instead of
+         manually overriding the ugle green here */
 /* Get rid of eye-burning-green background for active elements */
 .ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active  {
-    border: 1px solid #77d5f7;
+    border: 1px solid #77D5F7;
+    /* NOTE: this background image is from a separate themeroller run:
+             use Start theme as default, then modify Clickable: active state
+             Background color & texture #147
+             Border #77d5f7
+             Icon #fff
+    */
     background: #147 url("images/ui-bg_gloss-wave_50_147_500x100.png") 50% 50% repeat-x;
     font-weight: normal;
     color: #ffffff;
+}
+
+/* Don't obfuscate links in accordion */
+.ui-widget-content a {
+	color: #165AAD;
 }
 
 #fm_filemanager .ui-progressbar-value, #fm_filechooser .ui-progressbar-value {
