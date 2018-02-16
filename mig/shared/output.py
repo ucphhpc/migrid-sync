@@ -1407,7 +1407,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 </table>''')
         elif i['object_type'] == 'frozenarchive':
 
+            lines.append('<div class="archive">')
             frozenfile_html = '''
+<div class="archive-files">
 <table class="frozenfiles columnsort" id="frozenfilestable">
 <thead class="title">
     <tr>
@@ -1432,9 +1434,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         </td><td class="hidden">%(sha1sum)s</td>
     </tr>
 ''' % frozenfile
-            frozenfile_html += '</tbody></table>'
+            frozenfile_html += '</tbody></table></div>'
             lines.append(frozenfile_html)
             flavor = i.get('flavor', 'freeze')
+            lines.append('<div class="archive-metadata">')
             lines.append('<table class="frozenarchivedetails">')
             lines.append('<tr><td class="title">ID</td><td>%s</td></tr>' % \
                          i['id'])
@@ -1456,9 +1459,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 if i.get('organization', '') not in ('', 'UNSET'):
                     lines.append('<tr><td class="title">Organization</td>'
                                  '<td>%s</td></tr>' % i['organization'])
-                lines.append('<tr><td class="title">Description</td>'
-                             '<td class="border">%s</td></tr>'
-                             % i['description'].replace('\n', '<br />'))
+                desc_html = '<tr><td class="title">Description</td><td>'
+                desc_html += '<pre class="archive-description">%s</pre>' % \
+                             i['description']
+                desc_html += '</td></tr>'
+                lines.append(desc_html)
                 if i.get('publish', False):
                     published = 'Yes'
                     publish_url = i.get('publish_url', '')
@@ -1476,6 +1481,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('<tr><td class="title">On %s</td><td>%s</td></tr>'
                           % (location, store_date))
             lines.append('</table>')
+            lines.append('</div>')
+            lines.append('</div>')
         elif i['object_type'] == 'datatransfers':
             datatransfers = i['datatransfers']
             lines.append('''

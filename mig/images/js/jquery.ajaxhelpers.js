@@ -305,7 +305,8 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
                       title_td("Name")+base_td(arch.name)+"</tr><tr>"+
                       title_td("Flavor")+base_td(arch.flavor)+"</tr>";
                   if (arch.flavor !== 'backup') {
-                      entry += "<tr>"+title_td("Description")+border_td(arch.description)+
+                      entry += "<tr>"+title_td("Description")+
+                      base_td("<pre class='archive-description'>"+arch.description+"</pre>")+
                       "</tr><tr>"+title_td("Published")+base_td(published)+"</tr>";
                   } else {
                       /* no op */
