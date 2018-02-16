@@ -60,27 +60,31 @@ h1 {
   padding: 2px 4px;
 }
 
+/* On static pages we leave out the colored box around all headers so we adjust
+   padding accordingly to not indent content at beginning of the line. 
+*/
 h1.staticpage {
   border: 0;
   margin: 12px 0;
   color: #000;
   background: none;
   font-size: 18px;
-  padding: 4px;
+  padding: 4px 0px;
 }
 
 h2.staticpage {
-  padding: 10px 2px 2px 2px;
+  padding: 10px 0px 2px 0px;
   border-bottom: 0;
 }
 
 h3.staticpage {
-  padding: 3px;
+  padding: 3px 0px;
 }
 
-h4.staticpage {
+/* Exclude JQuery UI accordions from padding tweaks */
+h4.staticpage:not(.ui-accordion-header) {
   /*border: 1px solid #fff;*/
-  padding: 2px;
+  padding: 2px 0px;
 }
 
 div.quickstartfields {

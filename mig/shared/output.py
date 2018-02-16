@@ -1526,8 +1526,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <td>%s</td><td class="centertext">%s</td><td>%s</td><td>%s</td><td>%s</td>
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>
 <!-- use nested table to distribute status and icons consistenly -->
-<table style="width: 100%%;"><tr><td style="min-width: 60%%;">%s</td>
-<td>%s</td><td>%s</td><td>%s</td></tr></table>
+<table class="datatransfers status" style="width: 100%%;"><tr>
+<td style="min-width: 60%%;">%s</td><td>%s</td><td>%s</td><td>%s</td>
+</tr></table>
 </tr>''' % (single_transfer['transfer_id'], dellink_html,
             single_transfer['action'], single_transfer['protocol'],
             single_transfer['fqdn'], single_transfer['port'], login,

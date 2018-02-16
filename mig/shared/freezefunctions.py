@@ -438,7 +438,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
 </div>
 </div>
 
-<div class='contentblock staticpage' id='nomenu'>
+<div class='contentblock staticpage archive' id='nomenu'>
 <div id='migheader'>
 </div>
 <div class='staticpage' id='content' lang='en'>
@@ -447,19 +447,25 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         # Then fill actual archive page
     
         contents += """
-<div>
+<div class='archive-header'>
 <h1 class='staticpage'>Public Archive</h1>
 This is the public archive with unique ID %s .<br/>
 The user-supplied meta data and files are available below.
+</div>
 
+<div class='archive-metadata'>
 <h2 class='staticpage'>Archive Meta Data</h2>
 """ % published_id
         for (meta_key, meta_label) in public_meta:
             meta_value = freeze_dict.get(meta_key, '')
             if meta_value:
-                contents += """%s: %s<br/>
-""" % (meta_label, meta_value)
-        contents += """
+                # Preserve any text formatting in e.g. description
+                contents +=  """<h4 class='staticpage'>%s</h4>
+<pre class='archive-%s'>%s</pre>
+""" % (meta_label, meta_label.lower(), meta_value)
+        contents += """</div>
+
+<div class='archive-files'>
 <h2 class='staticpage'>Archive Files</h2>
         """
         for rel_path in frozen_files:
@@ -467,8 +473,7 @@ The user-supplied meta data and files are available below.
             # and encode e.g. percent signs that would otherwise interfere
             contents += '''<a href="%s">%s</a><br/>
 ''' % (quote(rel_path), rel_path)
-        contents += """
-</div>
+        contents += """</div>
 %s
         """ % get_cgi_html_footer(configuration, widgets=False)
         if not make_symlink(frozen_dir, real_pub_dir, logger) or \

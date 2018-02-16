@@ -12,6 +12,9 @@ ERDA
 <!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
 <link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>
 
+<!-- base page styles -->
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
 <!-- country-dropdown -->
 <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
 <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
@@ -34,21 +37,25 @@ ERDA
 <script type="text/javascript">
     /* We assume UCPH users here and leave external users to FAQ entry */
     function login(user) {
-        if (user == "ucph") {
+        if (user == "extoid") {
             window.open('https://erda.dk', '_blank');
         } else if (user == "cert") {
             window.open('https://cert.erda.dk', '_blank');
+        } else if (user == "migoid") {
+            window.open('https://ext.erda.dk', '_blank');
         } else {
             window.open('https://sid.erda.dk/cgi-sid/login.py', '_blank');
         }
     }
     function signup(user) {
-        if (user == "ucph") {
+        if (user == "extoid") {
             window.open('https://sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
                         '_blank');
         } else if (user == "cert") {
             window.open('https://sid.erda.dk/cgi-sid/signup.py?show=extcert',
                         '_blank');
+        } else if (user == "migoid") {
+            window.open('https://sid.erda.dk/cgi-sid/reqoid.py', '_blank');
         } else {
             window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank');
         }
@@ -163,14 +170,14 @@ Can just be disabled by putting it into an html comment when not in use.
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="sign up" />
 </form>
-<p><!--to get a user account. --></p> 
+<p></p> 
 </div>
 <div class="staticpage centertext loginfield">
 <h2 class="staticpage">I'm already on ERDA!</h2>
 <p>In case you already signed up, you can proceed with</p>
 <input class="loginbutton" type="button" value="log in"
-       onClick="login('ucph');" />
-<p><!-- to your account. --></p>
+       onClick="login('extoid');" />
+<p></p>
 </div>
 </div>
 <p>
@@ -415,14 +422,14 @@ Can just be disabled by putting it into an html comment when not in use.
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="tilmelding" />
 </form>
-<p><!--  for at få en brugerkonto. --></p> 
+<p></p>
 </div>
 <div class="staticpage centertext loginfield">
 <h2 class="staticpage">Jeg er allerede på ERDA!</h2>
 <p>Hvis du allerede har tilmeldt dig ERDA, kan du gå direkte til</p>
 <input class="loginbutton" type="button" value="log ind"
-       onClick="login('ucph');" />
-<p><!-- på din brugerkonto. --></p>
+       onClick="login('extoid');" />
+<p></p>
 </div>
 </div>
 <p>Vi anbefaler at du også ser nærmere på

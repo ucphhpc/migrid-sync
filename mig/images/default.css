@@ -166,6 +166,11 @@ table.user td {
 }
 table.datatransfers {
 }
+/* avoid opaque background and border on nested datatransfer status table */
+table.datatransfers.status {
+    border: transparent;
+    background-color: transparent;
+}
 table.frozenarchives {
 }
 table.transferkeys {
@@ -434,6 +439,10 @@ input[type=checkbox], input[type=radio] {
   vertical-align: middle;
 }
 
+/* Prevent undersized number fields in e.g. submit job and datatransfer form */
+input[type=number] {
+  min-height: 32px;
+}
 .premenuwidgets {
   color: black;
 }
@@ -774,6 +783,13 @@ input[type=checkbox], input[type=radio] {
   overflow: auto;
   background: #fff;
   border: 1px inset grey;
+}
+
+/* Force wrapping of extremely long lines in otherwise verbatim freeze archive
+   descriptions.
+*/
+div.archive pre {
+    white-space: pre-wrap;
 }
 
 /* Job manager */
