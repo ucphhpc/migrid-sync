@@ -179,7 +179,10 @@ doubt, just let the user request access and accept it with the
                      % elem
             else:
                 # We can encounter empty string elements here, because creation
-                # of subvgrids have historically always set owners to [''] .
+                # of subvgrids have historically set owners to [''].
+                configuration.logger.warning(
+                    'unexpected elem %s in vgrid_add_remove_table extras %s' \
+                    % (elem, vgrid_name))
                 continue
         table += '''
         </tbody></table>
@@ -236,7 +239,10 @@ doubt, just let the user request access and accept it with the
                 extra_fields_html = ''
             else:
                 # We can encounter empty string elements here, because creation
-                # of subvgrids have historically always set owners to [''] .
+                # of subvgrids have historically set owners to [''] .
+                configuration.logger.warning(
+                    'unexpected elem %s in vgrid_add_remove_table %s direct' \
+                    % (elem, direct))
                 continue
 
             dyn_dict[id_field] = elem_id
@@ -948,11 +954,10 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
 
             # msg is a list
 
-            # We sometimes find singleton lists containing an empty
-            # string. Reason is historic python type confusion(tm),
-            # namely using the empty list as an error indicator, on
-            # the way down through listhandling, fileio, and serial.
-            # The empty lists are put in at createvgrid.py.
+            # We sometimes find singleton lists containing an empty string due
+            # to the way we worked around the former restriction that owner
+            # lists were not allowed to be empty. For sub-vgrid owners this is
+            # fully valid, so we no longer enforce that from createvgrid.py.
 
             if msg != ['']:
                 # We allow filtering e.g. system triggers here

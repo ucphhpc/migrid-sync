@@ -1030,18 +1030,20 @@ for job input and output.
                             output_objects):
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # Create owners list with client_id as owner only add user in owners list
+    # Create with client_id as owner but only add user in owners list
     # if new vgrid is a base vgrid (because symlinks to subdirs are not
     # necessary, and an owner is per definition owner of sub vgrids).
 
     owner_list = []
     if new_base_vgrid == True:
         owner_list.append(client_id)
+        allow_empty=False
     else:
-        owner_list.append('')
+        allow_empty=True
 
     (owner_status, owner_msg) = vgrid_set_owners(configuration, vgrid_name,
-                                                 owner_list)
+                                                 owner_list,
+                                                 allow_empty=allow_empty)
     if not owner_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not save owner list: %s' % owner_msg})
