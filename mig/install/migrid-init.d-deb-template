@@ -407,7 +407,7 @@ stop_vmproxy() {
 }
 stop_sftpsubsys() {
     test_sftpsubsys_enabled || return
-    DAEMON_PATH=${MIG_SFTP}
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     log_daemon_msg "Stopping MiG sftpsubsys" ${SHORT_NAME} || true
     pkill -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
@@ -567,7 +567,7 @@ reload_vmproxy() {
 }
 reload_sftpsubsys() {
     test_sftpsubsys_enabled || return
-    DAEMON_PATH=${MIG_SFTP}
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     log_daemon_msg "Reloading MiG sftpsubsys" ${SHORT_NAME} || true
     pkill -HUP -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
@@ -666,7 +666,7 @@ status_vmproxy() {
 }
 status_sftpsubsys() {
     test_sftpsubsys_enabled || return
-    DAEMON_PATH=${MIG_SFTP}
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
 }
