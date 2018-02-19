@@ -627,7 +627,7 @@ generated sshd_config-MiG-sftp-subsys to /etc/ssh/ for a parallel service:
 sudo cp %(destination)s/sshd_config-MiG-sftp-subsys /etc/ssh/
 sudo chown 0:0 /etc/ssh/sshd_config-MiG-sftp-subsys
 After making sure it fits your site you can start the openssh service with:
-sudo /usr/sbin/sshd -f /etc/ssh/sshd_config-paramiko
+sudo /usr/sbin/sshd -f /etc/ssh/sshd_config-MiG-sftp-subsys
 
 The migrid-init.d-rh contains a standard SysV init style helper script to
 launch all MiG daemons. It was written for RHEL/CentOS but may work
@@ -655,8 +655,8 @@ sudo cp %(destination)s/{migstateclean,migerrors} /etc/cron.daily/
 The migcheckssl file is cron scripts that automatically checks for 
 LetsEncrypt certificate renewal. 
 You can install it with:
-chmod 700 %(destination)s/{migcheckssl}
-sudo cp %(destination)s/{migcheckssl} /etc/cron.daily
+chmod 700 %(destination)s/migcheckssl
+sudo cp %(destination)s/migcheckssl /etc/cron.daily
 
 ''' % expanded
     instructions_path = "%s/instructions.txt" % destination

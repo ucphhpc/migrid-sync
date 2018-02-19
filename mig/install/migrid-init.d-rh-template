@@ -33,6 +33,7 @@
 # processname: grid_ftps.py
 # processname: grid_imnotify.py
 # processname: grid_vmproxy.py
+# processname: sshd
 # config: /etc/sysconfig/migrid
 # 
 
@@ -59,6 +60,9 @@ fi
 if [ -z "$MIG_CODE" ]; then 
     MIG_CODE=${MIG_PATH}/mig
 fi
+if [ -z "$MIG_SFTPSUBSYS_CONF" ]; then 
+    MIG_SFTPSUBSYS_CONF=/etc/ssh/sshd_config-MiG-sftp-subsys
+fi
 # you probably do not want to modify these...
 PID_DIR=${PID_DIR:-/var/run}
 MIG_LOG=${MIG_STATE}/log
@@ -69,6 +73,7 @@ MIG_EVENTS=${MIG_CODE}/server/grid_events.py
 MIG_TRANSFERS=${MIG_CODE}/server/grid_transfers.py
 MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
+MIG_SFTPSUBSYS=/sbin/sshd
 MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
 MIG_DAVS=${MIG_CODE}/server/grid_davs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
@@ -78,7 +83,16 @@ MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload} [daemon]"
     echo "where daemon is left empty for all or given as one of the following"
-    echo "(script|monitor|sshmux|events|transfers|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)"
+}
+
+test_sftpsubsys_enabled() {
+    su - ${MIG_USER} -c "cd ${MIG_CODE}/server && python -c 'from shared.conf import get_configuration_object; print get_configuration_object().site_enable_sftp_subsys' | grep -q True"
+    SFTPSUBSYS_ENABLED=$?
+    if [ $SFTPSUBSYS_ENABLED -ne 0 ]; then
+        echo "sftpsubsys not enabled in MiGserver conf - skipping"
+    fi
+    return $SFTPSUBSYS_ENABLED
 }
 
 start_script() {
@@ -242,6 +256,18 @@ start_vmproxy() {
     [ $RET2 ] || echo "Warning: vmproxy not started."
     echo
 }
+start_sftpsubsys() {
+    test_sftpsubsys_enabled || return
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Starting MiG sftpsubsys daemon: $SHORT_NAME"
+    ${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: sftpsubsys not started."
+    echo
+}
 
 start_all() {
     start_script
@@ -251,6 +277,7 @@ start_all() {
     start_transfers
     start_openid
     start_sftp
+    start_sftpsubsys
     # Use wsgidav implementation instead of outdated PyWebDav one
     start_webdavs
     #start_davs
@@ -373,6 +400,14 @@ stop_vmproxy() {
     killproc ${DAEMON_PATH}
     echo
 }
+stop_sftpsubsys() {
+    test_sftpsubsys_enabled || return
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Shutting down MiG sftpsubsys: $SHORT_NAME "
+    pkill -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    echo
+}
 
 stop_all() {
     # Stop script first to leave it some time to save state
@@ -383,6 +418,7 @@ stop_all() {
     stop_transfers
     stop_openid
     stop_sftp
+    stop_sftpsubsys
     # Use wsgidav implementation instead of outdated PyWebDav one
     stop_webdavs
     #stop_davs
@@ -487,6 +523,14 @@ reload_vmproxy() {
     killproc ${DAEMON_PATH} -HUP
     echo
 }
+reload_sftpsubsys() {
+    test_sftpsubsys_enabled || return
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Reloading MiG sftpsubsys: $SHORT_NAME "
+    pkill -HUP -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    echo
+}
 
 reload_all() {
     # Stop script first to leave it some time to save state
@@ -497,6 +541,7 @@ reload_all() {
     reload_transfers
     reload_openid
     reload_sftp
+    reload_sftpsubsys
     # Use wsgidav implementation instead of outdated PyWebDav one
     reload_webdavs
     #reload_davs
@@ -577,6 +622,12 @@ status_vmproxy() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH} 
 }
+status_sftpsubsys() {
+    test_sftpsubsys_enabled || return
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+}
 
 status_all() {
     status_script
@@ -586,6 +637,7 @@ status_all() {
     status_transfers
     status_openid
     status_sftp
+    status_sftpsubsys
     # Use wsgidav implementation instead of outdated PyWebDav one
     status_webdavs
     #status_davs
@@ -602,7 +654,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|transfers|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')
