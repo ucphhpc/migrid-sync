@@ -92,7 +92,7 @@ def generate_confs(
     ext_oid_fqdn='localhost',
     sid_fqdn='localhost',
     io_fqdn='localhost',
-    jupyter_fqdn='',
+    jupyter_url='',
     jupyter_base_url='',
     user='mig',
     group='mig',
@@ -167,7 +167,7 @@ def generate_confs(
     user_dict['__EXT_OID_FQDN__'] = ext_oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
-    user_dict['__JUPYTER_FQDN__'] = jupyter_fqdn
+    user_dict['__JUPYTER_URL__'] = jupyter_url
     user_dict['__JUPYTER_BASE_URL__'] = jupyter_base_url
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
@@ -219,7 +219,6 @@ def generate_confs(
     user_dict['__MIG_OID_URL__'] = ''
     user_dict['__EXT_OID_URL__'] = ''
     user_dict['__SID_URL__'] = ''
-    user_dict['__JUPYTER_URL__'] = ''
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
     user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
@@ -258,9 +257,9 @@ WARNING: you probably have to use either different fqdn or port settings for
 cert, oid and sid based https!
 """
 
-    # Define jupyter request url
-    if jupyter_fqdn:
-        user_dict['__JUPYTER_URL__'] = 'http://%(__JUPYTER_FQDN__)s' % user_dict
+    if jupyter_url:
+        user_dict['__JUPYTER_WEB_SOCKET__'] = jupyter_url.replace("https://","")\
+            .replace("http://","").replace("www.","")
 
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
 
@@ -331,15 +330,17 @@ cert, oid and sid based https!
         user_dict['__IFDEF_IO_FQDN__'] = 'Define'
     # No port for __IO_FQDN__
 
-    user_dict['__IFDEF_JUPYTER_FQDN__'] = 'UnDefine'
-    if user_dict['__JUPYTER_FQDN__'] != '':
-        user_dict['__IFDEF_JUPYTER_FQDN__'] = 'Define'
-    user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'UnDefine'
-    if user_dict['__JUPYTER_BASE_URL__'] != '':
-        user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'Define'
     user_dict['__IFDEF_JUPYTER_URL__'] = 'UnDefine'
     if user_dict['__JUPYTER_URL__'] != '':
         user_dict['__IFDEF_JUPYTER_URL__'] = 'Define'
+
+    user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'UnDefine'
+    if user_dict['__JUPYTER_BASE_URL__'] != '':
+        user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'Define'
+
+    user_dict['__IFDEF_JUPYTER_WEB_SOCKET__'] = 'UnDefine'
+    if user_dict['__JUPYTER_WEB_SOCKET__'] != '':
+        user_dict['__IFDEF_JUPYTER_WEB_SOCKET__'] = 'Define'
 
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'

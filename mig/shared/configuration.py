@@ -403,7 +403,7 @@ class Configuration:
     migserver_https_mig_oid_url = ''
     migserver_https_ext_oid_url = ''
     migserver_https_sid_url = ''
-    jupyter_fqdn = ''
+    jupyter_url = ''
     jupyter_base_url = ''
     jupyter_url = ''
     sleep_period_for_empty_jobs = ''
@@ -684,12 +684,10 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'sessid_to_jupyter_mount_link_home'):
             self.sessid_to_jupyter_mount_link_home = config.get('GLOBAL',
                     'sessid_to_jupyter_mount_link_home')
-        if config.has_option('GLOBAL', 'jupyter_fqdn'):
-            self.jupyter_fqdn = config.get('GLOBAL', 'jupyter_fqdn')
-        if config.has_option('GLOBAL', 'jupyter_base_url'):
-            self.jupyter_base_url = config.get('GLOBAL', 'jupyter_base_url')
         if config.has_option('GLOBAL', 'jupyter_url'):
             self.jupyter_url = config.get('GLOBAL', 'jupyter_url')
+        if config.has_option('GLOBAL', 'jupyter_base_url'):
+            self.jupyter_base_url = config.get('GLOBAL', 'jupyter_base_url')
 
         if config.has_option('GLOBAL', 'user_sftp_address'):
             self.user_sftp_address = config.get('GLOBAL', 

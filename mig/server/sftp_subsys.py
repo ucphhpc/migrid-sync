@@ -134,6 +134,7 @@ def start_server(params):
         'users': [],
         'jobs': [],
         'shares': [],
+        'jupyter_mounts': [],
         'login_map': {},
         'hash_cache': {},
         'time_stamp': 0,

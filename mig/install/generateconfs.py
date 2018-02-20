@@ -59,7 +59,7 @@ if '__main__' == __name__:
         'ext_oid_fqdn',
         'sid_fqdn',
         'io_fqdn',
-        'jupyter_fqdn',
+        'jupyter_url',
         'jupyter_base_url',
         'user',
         'group',
