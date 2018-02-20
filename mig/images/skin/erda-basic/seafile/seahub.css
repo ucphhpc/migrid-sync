@@ -233,7 +233,9 @@ a:hover {
 .nav-con-tabs-nav .ui-state-default a:hover {
     background:#369;
 }
-
+.sf-dropdown-menu a:hover {
+    background:#369;
+}    
 
 /* Hide signup link on login page to reduce unwanted direct signup attempts */
 /* There used to be no signup link id or class to target, so we relied on the

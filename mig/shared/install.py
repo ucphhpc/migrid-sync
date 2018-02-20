@@ -260,6 +260,8 @@ cert, oid and sid based https!
     if jupyter_url:
         user_dict['__JUPYTER_WEB_SOCKET__'] = jupyter_url.replace("https://","")\
             .replace("http://","").replace("www.","")
+    else:
+        user_dict['__JUPYTER_WEB_SOCKET__'] = ''
 
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
 
