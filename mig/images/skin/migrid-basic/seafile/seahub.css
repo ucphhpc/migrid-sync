@@ -40,6 +40,9 @@ a:hover {
     /* color: #ff9933; */
     color: #acf;
 }
+.repo-op a.op-link:hover {
+    color: #369;
+}
 
 .op-target {
     /* color:#ee8204; */
