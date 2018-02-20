@@ -210,60 +210,35 @@ a:hover {
     color:#369;
 }
 
-/* Replace orange icons otherwise hard-coded:
-   We use the hack from
-   https://css-tricks.com/replace-the-image-in-an-img-with-css/
-   to push the original icons out of view and insert our own custom colored
-   ones instead.
- */
-div.op-container img.repo-share-btn, div.displayed-op a.share img {
-    background: url('../custom/img/share-blue.png');
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    width: 16px; /* Width of new image */
-    height: 16px; /* Height of new image */
-    padding-left: 16px; /* Equal to width of new image */
+/* Replace orange color on mouse-over icons */
+.op-icon.sf2-x {
+    color:#147;
 }
-div.op-container img.repo-download-btn, div.displayed-op a.download img {
-    background: url('../custom/img/download-blue.png');
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    width: 16px; /* Width of new image */
-    height: 16px; /* Height of new image */
-    padding-left: 16px; /* Equal to width of new image */
+.op-icon.sf2-x:hover {
+    color:#369;
 }
-div.op-container img.repo-delete-btn, div.displayed-op a.delete img {
-    background: url('../custom/img/delete-blue.png');
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    width: 16px; /* Width of new image */
-    height: 16px; /* Height of new image */
-    padding-left: 16px; /* Equal to width of new image */
-}
-/* This is a multi-icon image with dynamic subsampling to get the normal and
- highlighted version of the icon */
-.repo-setting-icon,
-.repo-trash-icon,
-.repo-history-icon {
-    width:30px;
-    height:30px;
-    background-image: url('../custom/img/multi-repo-op.png');
-    background-repeat: no-repeat;
-    display:inline-block;
-    margin-right:10px;
-    outline:none; /* removing the dotted outline for FireFox */
-}
-
 
 /* Override some coloring from backbone.css as well */
 .hidden-op a:hover {
     background:#369;
 }
+/* Override some coloring from backbone.css as well */
+.login-panel button.submit {
+    background:#147;
+}
+.nav-con-tabs-nav .ui-state-active a,
+.nav-con-tabs-nav .ui-state-active a:hover {
+    background:#147;
+}
+.nav-con-tabs-nav .ui-state-default a:hover {
+    background:#369;
+}
+
 
 /* Hide signup link on login page to reduce unwanted direct signup attempts */
-/* There's no signup link id or class to target, so we rely on the link being
-   last in login form. */
-form.con a:last-child {
+/* There used to be no signup link id or class to target, so we relied on the
+   link being last in login form. No longer needed with 6.2+ */
+#sign-up, form.con a:last-child {
     display: none;
     /* These are additional disabling suggestions in case users get creative.
        They do not completely disable link use, but make it harder. */

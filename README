@@ -38,7 +38,6 @@ service, JSONRPC access, background data transfer service, efficient
 sftp, spell checking, interactive computing, Wiki, SCM and tracker VGrid
 features rely on the following additional software:
 -Seafile server, community edition (https://www.seafile.com/en/download/)
--Apache FCGI Proxy module (https://github.com/ceph/mod-proxy-fcgi)
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
 -Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
 -Python OpenID module (https://github.com/openid/python-openid)
@@ -74,8 +73,7 @@ sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      trac-mercurial lftp rsync
 
 Apache comes with a number of modules included, so it is usually not
-necessary to explicitly install e.g. mod-ssl, mod-proxy, mod-rewrite and
-mod-proxy-fcgi.
+necessary to explicitly install e.g. mod-ssl, mod-proxy and mod-rewrite.
 
 We highly recommend installing the optional python wsgidav and openid modules
 directly from upstream, because packaged versions are generally outdated
