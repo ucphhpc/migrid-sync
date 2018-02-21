@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # seahub - site style overrides for all seafile pages
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,7 @@
 a { 
     color:#147;
 }
-a:focus a:hover {
+a:focus, a:hover {
     color: #acf;
 }
 .strip-tip {
