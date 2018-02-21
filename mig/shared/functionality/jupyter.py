@@ -193,7 +193,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    logger.info("User: %s executing %s" % client_id, op_name)
+    logger.info("User: %s executing %s" % (client_id, op_name))
 
     if not configuration.site_enable_jupyter:
         output_objects.append({'object_type': 'error_text', 'text':
