@@ -30,92 +30,85 @@
 /* ERDA UCPH Science skin style sheet for Seafile pages */
 
 
-/* Replace the different orange colors in the original css specs */
+/* Replace the different orange colors in the original css specs. 
+   Keep rules in sync with styles from:
+   seafile-server-latest/seahub/media/css/seahub.css 
+   and use something like the following simplified mappings:
+   #eb8205 / #ee8204 / #f7941d / #de3f1c / #DD4B39 / #c77405 / #f59f00 / #e83 -> #147
+   #f93 / #feac74 / #fbcb09 / #a68558 -> #369
+   #fff1a8 / #f89a68 / #feefb8 / #fdf5ce / #fddaa4 / #f9edbe -> #acf
+*/
 
 a { 
-    /* color:#eb8205; */
     color:#147;
 }
-a:hover {
-    /* color: #ff9933; */
+a:focus a:hover {
     color: #acf;
 }
+.strip-tip {
+    background:#acf;
+}
+.top-bar {
+    background:#acf;
+}
 .repo-op a.op-link:hover {
-    color: #369;
+    color: #147;
 }
 
 .op-target {
-    /* color:#ee8204; */
     color:#147;
 }
 
 .left-right-tabs-nav a:hover {
-    /* background:#feefb8; */
-    color :#fff;
     background:#acf;
 }
 .left-right-tabs-nav .ui-state-active a,
 .left-right-tabs-nav .ui-state-active a:hover {
-    /*background:#feac74;*/
     background:#369;
 }
 
 .side-tabnav h3.hd,
 .side-tabnav .hd h3 {
-/*    color:#f7941d; */
     color:#147;
 }
 
 .side-tabnav-tabs .tab a:hover {
-    /* background-color:#feefb8;*/
     background-color:#acf;
 }
 
 .side-tabnav-tabs .tab-cur a,
 .side-tabnav-tabs .tab-cur a:hover {
-    /* background-color:#feac74; */
     background-color: #369;
 }
 
 .side-textnav-tabs .tab-cur a,
 .side-textnav-tabs .tab a:hover {
-    /* color:#de3f1c; */
     color:#147;
 }
 
 .messages .info {
-    /* background:#f9edbe; */
     background:#acf;
 }
 
 .new-narrow-panel .hd {
-    /* background:#feab79; */
     background:#369;
 }
 
 .tab-tabs-nav .ui-state-active .a {
-    /* color:#DD4B39;
-    border-bottom:2px solid #DD4B39; */
     color:#147;
     border-bottom:2px solid #147;
 }
 .tab-tabs-nav .tab .a:hover {
-    /* color:#DD4B39; */
     color:#147;
 }
 
 .tab-popup-tabs-nav .ui-state-active .a,
 .tab-popup-tabs-nav .tab .a:hover {
-    /* color:#eb8205;
-    border-bottom-color:#eb8205; */
     color:#147;
     border-bottom-color:#147;
 }
 
 .ui-menu .ui-menu-item a.ui-state-hover {
-    /* border-color:#fbcb09;
-    background: #fdf5ce;
-    color: #c77405; */
     border-color:#369;
     background:#acf;
     color: #147;
@@ -127,118 +120,141 @@ a:hover {
 .wiki-nav .link:hover,
 #right-panel .hd .ui-state-active .a,
 #right-panel .hd .a:hover {
-    /*color:#eb8205;
-    border-bottom-color: #eb8205; */
     color:#147;
     border-bottom-color: #147;
 }
 
 #info-bar {
-    color: #1f0600;
-    /* background: #fddaa4; */
     background: #acf;
 }
 
 #info-bar-info a {
-    /* color:#a68558; */
     color:#369;
 }
 
 #msg-count .num {
-    /* background:#feac74;
-    border:1px solid #cb8a5d; */
+    background:#369;
+    border:1px solid #147;
+}
+#notifications .num {
     background:#369;
     border:1px solid #147;
 }
 
 #notice-popup .unread {
-    /* border-left:2px solid #feac74; */
+    border-left:2px solid #369;
+}
+#notice-popover li.unread {
     border-left:2px solid #369;
 }
 
 #header .nav .a,
 #header .nav .a:visited {
-    /* color:#8A948F; */
     color:#acf;
 }
 
 #header .nav .a:hover {
-    /* color: #ff9933; */
     color:#369;
 }
 
 #ls-ch a {
-    /* color:#e83; */
     color: #147;
 }
 
 .template-upload .btn {
-    /* color: #e83; */
     color: #147;
 }
 
 .ui-progressbar-value,
 .progress .bar {
-    /* background:#e83; */
     background:#147;
 }
 
 .upload-progress-bar .ui-progressbar-value {/*for progress*/
-    /* background:#e83; */
     background:#147;
 }
 
 #plans th {
-    /* color:#eb8205; */
     color:#147;
 }
 
-.wiki-index a:hover {
-    /* color:#f93; */
+#wiki-index-con a:hover {
     color:#369;
 }
 
 .go-back:hover {
-    /* color:#f93; */
     color:#369;
 }
 
 #top-browser-tip {
-    /* background:#fff1a8; */
     background:#acf;
 }
 
 #guide-for-new .icon-lightbulb {
-    /* color:#feac74; */
     color:#369;
 }
 
-/* Replace orange color on mouse-over icons */
-.op-icon.sf2-x {
+/* mouse-over icons */
+.op-icon.sf2-x,
+.op-icon.sf2-x:hover {
+    color:#acf;
+}
+
+/**** btn with link styles ****/
+.sf-link-btn {
     color:#147;
 }
-.op-icon.sf2-x:hover {
-    color:#369;
+.sf-link-btn:focus,
+.sf-link-btn:hover {
+    color:#147;
+}
+
+@media (max-width:767px) {
+    .nav-con-tabs-nav a:hover,
+    .nav-con-tabs-nav .ui-state-active a,
+    .nav-con-tabs-nav .ui-state-active a:hover {
+        color:#147;
+        border-color:#147;
+    }
+}
+@media (min-width:768px) {
+    .nav-con-tabs-nav a:hover {
+        background:#acf;
+    }
+    .nav-con-tabs-nav .ui-state-active a,
+    .nav-con-tabs-nav .ui-state-active a:hover {
+        background:#369;
+    }
+}
+    
+/* Dropdown menu */
+.sf-dropdown-menu a:hover {
+    background:#369;
+}    
+
+.load-more-discussion {
+    color:#147;
 }
 
 /* Override some coloring from backbone.css as well */
 .hidden-op a:hover {
     background:#369;
 }
-/* Override some coloring from backbone.css as well */
-.login-panel button.submit {
+
+
+/* Login button on entry page */
+.login-panel .submit {
     background:#147;
 }
-.nav-con-tabs-nav .ui-state-active a,
-.nav-con-tabs-nav .ui-state-active a:hover {
-    background:#147;
+
+.fixed-upload-file-dialog .fileupload-buttonbar .cancel,
+.template-upload .btn {
+    color: #147;
 }
-.nav-con-tabs-nav .ui-state-default a:hover {
-    background:#369;
+
+.grid-item .text-link.hl {
+    color:#369;
 }
-.sf-dropdown-menu a:hover {
-    background:#369;
-}    
 
 /* Hide signup link on login page to reduce unwanted direct signup attempts */
 /* There used to be no signup link id or class to target, so we relied on the

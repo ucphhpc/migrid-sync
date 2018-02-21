@@ -30,94 +30,87 @@
 /* ERDA UCPH Science skin style sheet for Seafile pages */
 
 
-/* Replace the different orange colors in the original css specs */
+/* Replace the different orange colors in the original css specs. 
+   Keep rules in sync with styles from:
+   seafile-server-latest/seahub/media/css/seahub.css 
+   and use something like the following simplified mappings:
+   #eb8205 / #ee8204 / #f7941d / #de3f1c / #DD4B39 / #c77405 / #f59f00 / #e83 -> #46743c
+   #f93 / #ff9933 / #feac74 / #fbcb09 / #a68558 -> #679c5b
+   #fff1a8 / #f89a68 / #feefb8 / #fdf5ce / #fddaa4 / #f9edbe -> #8fd182
+*/
 
 a { 
-    /* color:#eb8205; */
     color:#46743c;
 }
-a:hover {
-    /* color: #ff9933; */
-    color: #8FD182;
+a:focus a:hover {
+    color: #679c5b;
+}
+.strip-tip {
+    background:#8fd182;
+}
+.top-bar {
+    background:#8fd182;
 }
 .repo-op a.op-link:hover {
-    color: #679c5b;
+    color: #46743c;
 }
 
 .op-target {
-    /* color:#ee8204; */
     color:#46743c;
 }
 
 .left-right-tabs-nav a:hover {
-    /* background:#feefb8; */
-    color :#fff;
-    background:#8FD182;
+    background:#8fd182;
 }
 .left-right-tabs-nav .ui-state-active a,
 .left-right-tabs-nav .ui-state-active a:hover {
-    /*background:#feac74;*/
     background:#679c5b;
 }
 
 .side-tabnav h3.hd,
 .side-tabnav .hd h3 {
-/*    color:#f7941d; */
     color:#46743c;
 }
 
 .side-tabnav-tabs .tab a:hover {
-    /* background-color:#feefb8;*/
-    background-color:#8FD182;
+    background-color:#8fd182;
 }
 
 .side-tabnav-tabs .tab-cur a,
 .side-tabnav-tabs .tab-cur a:hover {
-    /* background-color:#feac74; */
     background-color: #679c5b;
 }
 
 .side-textnav-tabs .tab-cur a,
 .side-textnav-tabs .tab a:hover {
-    /* color:#de3f1c; */
     color:#46743c;
 }
 
 .messages .info {
-    /* background:#f9edbe; */
     background:#8FD182;
 }
 
 .new-narrow-panel .hd {
-    /* background:#feab79; */
     background:#679c5b;
 }
 
 .tab-tabs-nav .ui-state-active .a {
-    /* color:#DD4B39;
-    border-bottom:2px solid #DD4B39; */
     color:#46743c;
     border-bottom:2px solid #46743c;
 }
 .tab-tabs-nav .tab .a:hover {
-    /* color:#DD4B39; */
     color:#46743c;
 }
 
 .tab-popup-tabs-nav .ui-state-active .a,
 .tab-popup-tabs-nav .tab .a:hover {
-    /* color:#eb8205;
-    border-bottom-color:#eb8205; */
     color:#46743c;
     border-bottom-color:#46743c;
 }
 
 .ui-menu .ui-menu-item a.ui-state-hover {
-    /* border-color:#fbcb09;
-    background: #fdf5ce;
-    color: #c77405; */
     border-color:#679c5b;
-    background:#8FD182;
+    background:#8fd182;
     color: #46743c;
 }
 
@@ -127,118 +120,141 @@ a:hover {
 .wiki-nav .link:hover,
 #right-panel .hd .ui-state-active .a,
 #right-panel .hd .a:hover {
-    /*color:#eb8205;
-    border-bottom-color: #eb8205; */
     color:#46743c;
     border-bottom-color: #46743c;
 }
 
 #info-bar {
-    color: #1f0600;
-    /* background: #fddaa4; */
-    background: #8FD182;
+    background: #8fd182;
 }
 
 #info-bar-info a {
-    /* color:#a68558; */
     color: #679c5b;
 }
 
 #msg-count .num {
-    /* background:#feac74;
-    border:1px solid #cb8a5d; */
+    background:#679c5b;
+    border:1px solid #46743c;
+}
+#notifications .num {
     background:#679c5b;
     border:1px solid #46743c;
 }
 
 #notice-popup .unread {
-    /* border-left:2px solid #feac74; */
+    border-left:2px solid #679c5b;
+}
+#notice-popover li.unread {
     border-left:2px solid #679c5b;
 }
 
 #header .nav .a,
 #header .nav .a:visited {
-    /* color:#8A948F; */
-    color:#8FD182;
+    color:#8fd182;
 }
 
 #header .nav .a:hover {
-    /* color: #ff9933; */
     color:#679c5b;
 }
 
 #ls-ch a {
-    /* color:#e83; */
     color: #46743c;
 }
 
 .template-upload .btn {
-    /* color:#e83; */
     color: #46743c;
 }
 
 .ui-progressbar-value,
 .progress .bar {
-    /* background:#e83; */
     background: #46743c;
 }
 
 .upload-progress-bar .ui-progressbar-value {/*for progress*/
-    /* background:#e83; */
     background:#46743c;
 }
 
 #plans th {
-    /* color:#eb8205; */
     color:#46743c;
 }
 
-.wiki-index a:hover {
-    /* color:#f93; */
+#wiki-index-con a:hover {
     color:#679c5b;
 }
 
 .go-back:hover {
-    /* color:#f93; */
     color:#679c5b;
 }
 
 #top-browser-tip {
-    /* background:#fff1a8; */
-    background:#8FD182;
+    background:#8fd182;
 }
 
 #guide-for-new .icon-lightbulb {
-    /* color:#feac74; */
     color:#679c5b;
 }
 
-/* Replace orange color on mouse-over icons */
-.op-icon.sf2-x {
+/* mouse-over icons */
+.op-icon.sf2-x,
+.op-icon.sf2-x:hover {
+    color:#8fd182;
+}
+
+/**** btn with link styles ****/
+.sf-link-btn {
     color:#46743c;
 }
-.op-icon.sf2-x:hover {
-    color:#679c5b;
+.sf-link-btn:focus,
+.sf-link-btn:hover {
+    color:#46743c;
+}
+
+@media (max-width:767px) {
+    .nav-con-tabs-nav a:hover,
+    .nav-con-tabs-nav .ui-state-active a,
+    .nav-con-tabs-nav .ui-state-active a:hover {
+        color:#46743c;
+        border-color:#46743c;
+    }
+}
+@media (min-width:768px) {
+    .nav-con-tabs-nav a:hover {
+        background:#8fd182;
+    }
+    .nav-con-tabs-nav .ui-state-active a,
+    .nav-con-tabs-nav .ui-state-active a:hover {
+        background:#679c5b;
+    }
+}
+    
+/* Dropdown menu */
+.sf-dropdown-menu a:hover {
+    background:#679c5b;
+}    
+
+.load-more-discussion {
+    color:#46743c;
 }
 
 /* Override some coloring from backbone.css as well */
 .hidden-op a:hover {
     background:#679c5b;
 }
-/* Override some coloring from backbone.css as well */
-.login-panel button.submit {
+
+
+/* Login button on entry page */
+.login-panel .submit {
     background:#46743c;
 }
-.nav-con-tabs-nav .ui-state-active a,
-.nav-con-tabs-nav .ui-state-active a:hover {
-    background:#46743c;
+
+.fixed-upload-file-dialog .fileupload-buttonbar .cancel,
+.template-upload .btn {
+    color: #46743c;
 }
-.nav-con-tabs-nav .ui-state-default a:hover {
-    background:#679c5b;
+
+.grid-item .text-link.hl {
+    color:#679c5b;
 }
-.sf-dropdown-menu a:hover {
-    background:#679c5b;
-}    
 
 /* Hide signup link on login page to reduce unwanted direct signup attempts */
 /* There used to be no signup link id or class to target, so we relied on the
