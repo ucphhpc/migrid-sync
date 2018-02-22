@@ -139,8 +139,7 @@ def jupyter_host(configuration, output_objects, user):
     :return: output_objects and a 200 OK status for the webserver to return
     to the client
     """
-    configuration.logger.info("User: %s finished, redirecting to the "
-                              "jupyter host" % user)
+    configuration.logger.info("User: %s finished, redirecting to the jupyter host" % user)
     status = returnvalues.OK
     home = configuration.jupyter_base_url
     headers = [('Location', home), ('Remote-User', user)]
