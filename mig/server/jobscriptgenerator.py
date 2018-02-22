@@ -222,15 +222,9 @@ def create_job_script(
             logger.error(msg)
             return (None, msg)
 
-        # Select sftp subsys if enabled but fall back to basic sftp otherwise
+        # Use best available sftp implementation - configuration picks it
         sftp_address = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
-        if configuration.site_enable_sftp_subsys:
-            if configuration.user_sftp_subsys_address:
-                sftp_address = configuration.user_sftp_subsys_address
-            if configuration.user_sftp_subsys_port:
-                sftp_port = configuration.user_sftp_subsys_port
-
         sftp_addresses = socket.gethostbyname_ex(sftp_address or \
                                                  socket.getfqdn())
         mount_known_hosts = "%s,[%s]:%s" % (sftp_addresses[0],
@@ -723,14 +717,9 @@ def gen_job_script(
             'generate_mountsshknownhosts_file', '0',
             'failed to generate mountsshknownhosts file!'))
         job_array.append(generator.comment('Mount job home'))
-        # Select sftp subsys if enabled but fall back to basic sftp otherwise
+        # Use best available sftp implementation - configuration picks it
         sftp_address = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
-        if configuration.site_enable_sftp_subsys:
-            if configuration.user_sftp_subsys_address:
-                sftp_address = configuration.user_sftp_subsys_address
-            if configuration.user_sftp_subsys_port:
-                sftp_port = configuration.user_sftp_subsys_port
         job_array.append(generator.mount(job_dictionary['SESSIONID'], 
                                          sftp_address, sftp_port,
                                          'mount_status'))
