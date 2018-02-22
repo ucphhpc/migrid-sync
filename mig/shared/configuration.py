@@ -689,6 +689,15 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'jupyter_base_url'):
             self.jupyter_base_url = config.get('GLOBAL', 'jupyter_base_url')
 
+        if config.has_option('SITE', 'enable_sftp'):
+            self.site_enable_sftp = config.getboolean('SITE', 'enable_sftp')
+        else:
+            self.site_enable_sftp = False
+        if config.has_option('SITE', 'enable_sftp_subsys'):
+            self.site_enable_sftp_subsys = config.getboolean(
+                'SITE', 'enable_sftp_subsys')
+        else:
+            self.site_enable_sftp_subsys = False
         if config.has_option('GLOBAL', 'user_sftp_address'):
             self.user_sftp_address = config.get('GLOBAL', 
                                                 'user_sftp_address')
@@ -698,7 +707,9 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_sftp_show_address'):
             self.user_sftp_show_address = config.get('GLOBAL', 
                                                 'user_sftp_show_address')
-        elif self.user_sftp_address:
+        elif self.site_enable_sftp_subsys and self.user_sftp_subsys_address:
+            self.user_sftp_show_address = self.user_sftp_subsys_address
+        elif self.site_enable_sftp and self.user_sftp_address:
             self.user_sftp_show_address = self.user_sftp_address
         else:
             # address may be empty to use all interfaces - then use FQDN
@@ -706,7 +717,9 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_sftp_show_port'):
             self.user_sftp_show_port = config.getint('GLOBAL', 
                                                 'user_sftp_show_port')
-        else:
+        elif self.site_enable_sftp_subsys and self.user_sftp_subsys_port:
+            self.user_sftp_show_port = self.user_sftp_subsys_port
+        elif self.site_enable_sftp and self.user_sftp_port:
             self.user_sftp_show_port = self.user_sftp_port
         if config.has_option('GLOBAL', 'user_sftp_key'):
             self.user_sftp_key = config.get('GLOBAL', 
@@ -754,6 +767,10 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_sftp_subsys_log'):
             self.user_sftp_subsys_log = config.get('GLOBAL',
                                                    'user_sftp_subsys_log')
+        if config.has_option('SITE', 'enable_davs'):
+            self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
+        else:
+            self.site_enable_davs = False
         if config.has_option('GLOBAL', 'user_davs_address'):
             self.user_davs_address = config.get('GLOBAL', 
                                                 'user_davs_address')
@@ -787,6 +804,10 @@ location.""" % self.config_file
                                               'user_davs_alias')
         if config.has_option('GLOBAL', 'user_davs_log'):
             self.user_davs_log = config.get('GLOBAL', 'user_davs_log')
+        if config.has_option('SITE', 'enable_ftps'):
+            self.site_enable_ftps = config.getboolean('SITE', 'enable_ftps')
+        else:
+            self.site_enable_ftps = False
         if config.has_option('GLOBAL', 'user_ftps_address'):
             self.user_ftps_address = config.get('GLOBAL', 
                                                 'user_ftps_address')
@@ -824,6 +845,10 @@ location.""" % self.config_file
                                               'user_ftps_alias')
         if config.has_option('GLOBAL', 'user_ftps_log'):
             self.user_ftps_log = config.get('GLOBAL', 'user_ftps_log')
+        if config.has_option('SITE', 'enable_seafile'):
+            self.site_enable_seafile = config.getboolean('SITE', 'enable_seafile')
+        else:
+            self.site_enable_seafile = False
         if config.has_option('GLOBAL', 'user_seahub_url'):
             self.user_seahub_url = config.get('GLOBAL', 
                                                'user_seahub_url')
@@ -844,11 +869,19 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_seafile_alias'):
             self.user_seafile_alias = config.get('GLOBAL', 
                                                  'user_seafile_alias')
+        if config.has_option('SITE', 'enable_duplicati'):
+            self.site_enable_duplicati = config.getboolean('SITE', 'enable_duplicati')
+        else:
+            self.site_enable_duplicati = False
         if config.has_option('GLOBAL', 'user_duplicati_protocols'):
             allowed_protos = [j for (i, j) in duplicati_protocol_choices]
             protos = config.get('GLOBAL', 'user_duplicati_protocols').split()
             valid_protos = [i for i in protos if i in allowed_protos]
             self.user_duplicati_protocols = valid_protos
+        if config.has_option('SITE', 'enable_imnotify'):
+            self.site_enable_imnotify = config.getboolean('SITE', 'enable_imnotify')
+        else:
+            self.site_enable_imnotify = False
         if config.has_option('GLOBAL', 'user_imnotify_address'):
             self.user_imnotify_address = config.get('GLOBAL', 
                                                     'user_imnotify_address')
@@ -871,6 +904,10 @@ location.""" % self.config_file
                                                    'user_chkuserroot_log')
         if config.has_option('GLOBAL', 'user_chksidroot_log'):
             self.user_chksidroot_log = config.get('GLOBAL', 'user_chksidroot_log')
+        if config.has_option('SITE', 'enable_openid'):
+            self.site_enable_openid = config.getboolean('SITE', 'enable_openid')
+        else:
+            self.site_enable_openid = False
         if config.has_option('GLOBAL', 'user_openid_address'):
             self.user_openid_address = config.get('GLOBAL', 
                                                  'user_openid_address')
@@ -1267,39 +1304,6 @@ location.""" % self.config_file
             self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
         else:
             self.site_enable_sandboxes = False
-        if config.has_option('SITE', 'enable_sftp'):
-            self.site_enable_sftp = config.getboolean('SITE', 'enable_sftp')
-        else:
-            self.site_enable_sftp = False
-        if config.has_option('SITE', 'enable_sftp_subsys'):
-            self.site_enable_sftp_subsys = config.getboolean(
-                'SITE', 'enable_sftp_subsys')
-        else:
-            self.site_enable_sftp_subsys = False
-        if config.has_option('SITE', 'enable_davs'):
-            self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
-        else:
-            self.site_enable_davs = False
-        if config.has_option('SITE', 'enable_ftps'):
-            self.site_enable_ftps = config.getboolean('SITE', 'enable_ftps')
-        else:
-            self.site_enable_ftps = False
-        if config.has_option('SITE', 'enable_seafile'):
-            self.site_enable_seafile = config.getboolean('SITE', 'enable_seafile')
-        else:
-            self.site_enable_seafile = False
-        if config.has_option('SITE', 'enable_duplicati'):
-            self.site_enable_duplicati = config.getboolean('SITE', 'enable_duplicati')
-        else:
-            self.site_enable_duplicati = False
-        if config.has_option('SITE', 'enable_imnotify'):
-            self.site_enable_imnotify = config.getboolean('SITE', 'enable_imnotify')
-        else:
-            self.site_enable_imnotify = False
-        if config.has_option('SITE', 'enable_openid'):
-            self.site_enable_openid = config.getboolean('SITE', 'enable_openid')
-        else:
-            self.site_enable_openid = False
         if config.has_option('SITE', 'enable_vmachines'):
             self.site_enable_vmachines = config.getboolean('SITE',
                                                            'enable_vmachines')
