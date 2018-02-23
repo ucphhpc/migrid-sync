@@ -492,8 +492,23 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	/* NSS lookup assures jobsidmount target is valid and inside user home */
 	/* Just check simple access here to make sure it is a job session link */
 	if (access(share_path, R_OK) == 0) {
-          writelogmessage(LOG_DEBUG, "Return jobsidmount success\n");
-          return PAM_SUCCESS;
+#ifdef DISABLE_JOBSIDMOUNT_WITH_PASSWORD
+            writelogmessage(LOG_INFO,
+	        	    "Password login not enabled for jobsidmount - use key!\n");
+	    return PAM_AUTH_ERR;
+#endif
+	    writelogmessage(LOG_DEBUG,
+			    "Checking jobsidmount %s password\n",
+			    pUsername);
+	    if (strcmp(pUsername, pPassword) == 0) {
+		writelogmessage(LOG_DEBUG, "Return jobsidmount success\n");
+		return PAM_SUCCESS;
+	    } else {
+		writelogmessage(LOG_INFO,
+				"Username and password mismatch for jobsidmount: %s\n",
+				pUsername);
+		return PAM_AUTH_ERR;
+	    }
 	} else {
 	    writelogmessage(LOG_DEBUG,
 			    "No matching jobsidmount: %s. Try next auth.\n",
@@ -526,8 +541,20 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	/* NSS lookup assures jupytersidmount target is valid and inside user home */
 	/* Just check simple access here to make sure it is a jupyter session link */
 	if (access(share_path, R_OK) == 0) {
-          writelogmessage(LOG_DEBUG, "Return jupytersidmount success\n");
-          return PAM_SUCCESS;
+#ifdef DISABLE_JUPYTERSIDMOUNT_WITH_PASSWORD
+            writelogmessage(LOG_INFO,
+	        	    "Password login not enabled for jupytersidmount - use key!\n");
+	    return PAM_AUTH_ERR;
+#endif
+	    if (strcmp(pUsername, pPassword) == 0) {
+		writelogmessage(LOG_DEBUG, "Return jupytersidmount success\n");
+		return PAM_SUCCESS;
+	    } else {
+		writelogmessage(LOG_INFO,
+				"Username and password mismatch for jupytersidmount: %s\n",
+				pUsername);
+		return PAM_AUTH_ERR;
+	    }
 	} else {
 	    writelogmessage(LOG_DEBUG,
 			    "No matching jupytersidmount: %s. Try next auth.\n",

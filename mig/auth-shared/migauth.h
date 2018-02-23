@@ -87,6 +87,11 @@
 /* Enable job session mount unless explicitly disabled during compilation */
 #ifndef DISABLE_JOBSIDMOUNT
 #define ENABLE_JOBSIDMOUNT 1
+/* Disable job session mount with same password as username unless explicitly
+   enabled during compilation */
+#ifndef ENABLE_JOBSIDMOUNT_WITH_PASSWORD
+#define DISABLE_JOBSIDMOUNT_WITH_PASSWORD
+#endif
 /* Default fall-back values used unless given */
 #ifndef JOBSIDMOUNT_HOME
 #define JOBSIDMOUNT_HOME "/tmp"
@@ -100,6 +105,11 @@
 /* Enable jupyter session mount unless explicitly disabled during compilation */
 #ifndef DISABLE_JUPYTERSIDMOUNT
 #define ENABLE_JUPYTERSIDMOUNT 1
+/* Disable jupyter session mount with same password as username unless
+   explicitly enabled during compilation */
+#ifndef ENABLE_JUPYTERSIDMOUNT_WITH_PASSWORD
+#define DISABLE_JUPYTERSIDMOUNT_WITH_PASSWORD
+#endif
 /* Default fall-back values used unless given */
 #ifndef JUPYTERSIDMOUNT_HOME
 #define JUPYTERSIDMOUNT_HOME "/tmp"
