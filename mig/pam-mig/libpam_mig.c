@@ -455,7 +455,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		writelogmessage(LOG_DEBUG, "Return sharelink success\n");
 		return PAM_SUCCESS;
 	    } else {
-		writelogmessage(LOG_INFO,
+		writelogmessage(LOG_WARNING,
 				"Username and password mismatch for sharelink: %s\n",
 				pUsername);
 		return PAM_AUTH_ERR;
@@ -504,7 +504,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		writelogmessage(LOG_DEBUG, "Return jobsidmount success\n");
 		return PAM_SUCCESS;
 	    } else {
-		writelogmessage(LOG_INFO,
+		writelogmessage(LOG_WARNING,
 				"Username and password mismatch for jobsidmount: %s\n",
 				pUsername);
 		return PAM_AUTH_ERR;
@@ -550,7 +550,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		writelogmessage(LOG_DEBUG, "Return jupytersidmount success\n");
 		return PAM_SUCCESS;
 	    } else {
-		writelogmessage(LOG_INFO,
+		writelogmessage(LOG_WARNING,
 				"Username and password mismatch for jupytersidmount: %s\n",
 				pUsername);
 		return PAM_AUTH_ERR;
