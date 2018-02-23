@@ -180,6 +180,7 @@ def fix_missing(config_file, verbose=True):
         'user_vmproxy_key': '~/certs/combined.pem',
         'user_vmproxy_log': 'vmproxy.log',
         'user_events_log': 'events.log',
+        'user_cron_log': 'cron.log',
         'user_transfers_log': 'transfers.log',
         'user_shared_dhparams': '~/certs/dhparams.pem',
         'logfile': 'server.log',
@@ -381,6 +382,7 @@ class Configuration:
     user_vmproxy_key = ''
     user_vmproxy_log = 'vmproxy.log'
     user_events_log = 'events.log'
+    user_cron_log = 'cron.log'
     user_transfers_log = 'transfers.log'
     user_shared_dhparams = ''
     user_imnotify_address = ''
@@ -978,6 +980,8 @@ location.""" % self.config_file
             self.user_vmproxy_log = config.get('GLOBAL', 'user_vmproxy_log')
         if config.has_option('GLOBAL', 'user_events_log'):
             self.user_events_log = config.get('GLOBAL', 'user_events_log')
+        if config.has_option('GLOBAL', 'user_cron_log'):
+            self.user_cron_log = config.get('GLOBAL', 'user_cron_log')
         if config.has_option('GLOBAL', 'user_transfers_log'):
             self.user_transfers_log = config.get('GLOBAL', 'user_transfers_log')
         if config.has_option('GLOBAL', 'user_shared_dhparams'):
@@ -1541,9 +1545,9 @@ location.""" % self.config_file
                         'user_davs_log', 'user_ftps_log',
                         'user_openid_log', 'user_monitor_log',
                         'user_sshmux_log', 'user_vmproxy_log',
-                        'user_events_log', 'user_transfers_log',
-                        'user_imnotify_log', 'user_chkuserroot_log',
-                        'user_chksidroot_log', ):
+                        'user_events_log', 'user_cron_log',
+                        'user_transfers_log', 'user_imnotify_log',
+                         'user_chkuserroot_log', 'user_chksidroot_log'):
             _log_path = getattr(self, _log_var)
             if not os.path.isabs(_log_path):
                 setattr(self, _log_var, os.path.join(self.log_dir, _log_path))

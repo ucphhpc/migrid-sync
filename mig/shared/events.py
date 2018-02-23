@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # events - shared event trigger helper functions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,7 +27,16 @@
 
 """Event trigger helper functions"""
 
+import fnmatch
 import os
+import re
+
+# Init global crontab regexp once and for all
+# Format: minute hour dayofmonth month dayofweek command
+crontab_pattern = "^(\*|[0-9]{1,2}) (\*|[0-9]{1,2}) (\*|[0-9]{1,2}) "
+crontab_pattern += "(\*|[0-9]{1,2}) (\*|[0-6]) (.*)$"
+crontab_expr = re.compile(crontab_pattern)
+
 
 def get_command_map(configuration):
     """Generate a dictionary with the supported commands and their expected
@@ -104,6 +113,48 @@ def map_args_to_vars(var_list, arg_list):
             del remain_vars[0]
     return args_dict
 
+def parse_crontab(configuration, owner, path):
+    """Parse owner crontab in path and return a list of crontab dictionary
+    entries.
+    """
+    _logger = configuration.logger
+    crontab_entries = []
+    try:
+        cron_fd = open(path, 'r')
+        crontab_lines = cron_fd.readlines()
+        cron_fd.close()
+    except Exception, exc:
+        _logger.error("Failed to read crontab in %s" % path)
+        crontab_lines = []
+    for line in crontab_lines:
+        hit = crontab_expr.match(line)
+        if not hit:
+            _logger.warning("Skip invalid crontab line in %s: %s" % (path,
+                                                                     line))
+            
+            continue
+        # Format: minute hour dayofmonth month dayofweek command
+        entry = {'minute': hit.group(1), 'hour': hit.group(2),
+                 'dayofmonth': hit.group(3), 'month': hit.group(4),
+                 'dayofweek': hit.group(5), 'command': hit.group(6).split(),
+                 'run_as': owner, 'timestamp': os.path.getmtime(path)}
+        crontab_entries.append(entry)
+        _logger.debug("added crontab entry from %s: %s" % (path, entry))
+    return crontab_entries
+
+def cron_match(configuration, cron_time, entry):
+    """Check if cron_time matches the time specs in crontab_entry"""
+    _logger = configuration.logger
+    time_vals = {'minute': cron_time.minute, 'hour': cron_time.hour,
+                 'month': cron_time.month, 'dayofmonth': cron_time.day,
+                 'dayofweek': cron_time.weekday()}
+    # TODO: extend to support e.g. */5 and the likes?
+    for name, val in time_vals.items():
+        if not fnmatch.fnmatch("%s" % val, entry[name]):
+            _logger.debug("cron_match failed on %s: %s vs %s" % \
+                          (name, val, entry[name]))
+            return False
+    return True
 
 if __name__ == '__main__':
     rule = {'templates': [], 'run_as': '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk', 'rate_limit': '', 'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False, 'match_files': True, 'arguments': ['+TRIGGERPATH+'], 'settle_time': '', 'path': '*.txt*', 'changes': ['modified'], 'action': 'trigger-created', 'match_recursive': True}

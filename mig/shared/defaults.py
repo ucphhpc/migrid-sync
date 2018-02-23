@@ -192,6 +192,12 @@ workflows_log_name = 'workflow.log'
 workflows_log_size = 67108864
 workflows_log_cnt = 2
 
+crontab_name = 'crontab'
+cron_log_name = 'cron.log'
+# 64M = 67108864
+cron_log_size = 67108864
+cron_log_cnt = 2
+
 # 64M = 67108864
 transfers_log_size = 67108864
 transfers_log_cnt = 2
