@@ -383,17 +383,17 @@ def __handle_cronjob(configuration, client_id, crontab_entry):
                     'expanded argument %s to %s' % \
                     (argument, filled_argument))
         command_list.append(filled_argument)
-        try:
-            run_command(command_list, client_id, crontab_entry, configuration)
-            logger.info('(%s) done running command for %s: %s' % \
-                        (pid, client_id, ' '.join(command_list)))
-            __cron_info(configuration, client_id,
-                        'ran command: %s' % ' '.join(command_list))
-        except Exception, exc:
-            command_str = ' '.join(command_list)
-            logger.error('(%s) failed to run command for %s: %s (%s)' % \
-                         (pid, client_id, command_str, exc))
-            __cron_err(configuration, client_id,
+    try:
+        run_command(command_list, client_id, crontab_entry, configuration)
+        logger.info('(%s) done running command for %s: %s' % \
+                    (pid, client_id, ' '.join(command_list)))
+        __cron_info(configuration, client_id,
+                    'ran command: %s' % ' '.join(command_list))
+    except Exception, exc:
+        command_str = ' '.join(command_list)
+        logger.error('(%s) failed to run command for %s: %s (%s)' % \
+                     (pid, client_id, command_str, exc))
+        __cron_err(configuration, client_id,
                        'failed to run command: %s (%s)' % (command_str, exc))
 
 
@@ -505,7 +505,6 @@ def monitor(configuration):
                     if cron_match(configuration, loop_start, entry):
                         logger.info('run matching cron entry: %s' % entry)
                         run_handler(configuration, client_id, entry)
-
         except KeyboardInterrupt:
             print '(%s) caught interrupt' % pid
             stop_running.set()
@@ -521,8 +520,12 @@ def monitor(configuration):
             logger.warning('(%s) loop did not finish before next tick: %s' % \
                            (os.getpid(), loop_time))
             loop_time = 59
-        sleep_time = max(60 - loop_time, 1)
+        # Target sleep until start of next minute
+        sleep_time = max(60 - (loop_time + loop_start.second), 1)
+        # TODO: this debug log never shows up - conflict with user info log?
+        #       at least it does if changed to info.
         logger.debug('main loop sleeping %ds' % sleep_time)
+        #print('main loop sleeping %ds' % sleep_time)
         time.sleep(sleep_time)
 
 

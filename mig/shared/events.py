@@ -127,11 +127,12 @@ def parse_crontab(configuration, owner, path):
         _logger.error("Failed to read crontab in %s" % path)
         crontab_lines = []
     for line in crontab_lines:
-        hit = crontab_expr.match(line)
+        # Skip comments
+        if line.startswith("#"):
+            continue
+        hit = crontab_expr.match(line.strip())
         if not hit:
-            _logger.warning("Skip invalid crontab line in %s: %s" % (path,
-                                                                     line))
-            
+            _logger.warning("Skip invalid %s line: %s" % (path, line))
             continue
         # Format: minute hour dayofmonth month dayofweek command
         entry = {'minute': hit.group(1), 'hour': hit.group(2),
@@ -150,7 +151,8 @@ def cron_match(configuration, cron_time, entry):
                  'dayofweek': cron_time.weekday()}
     # TODO: extend to support e.g. */5 and the likes?
     for name, val in time_vals.items():
-        if not fnmatch.fnmatch("%s" % val, entry[name]):
+        # Strip any leading zeros before integer match
+        if not fnmatch.fnmatch("%s" % val, entry[name].lstrip('0')):
             _logger.debug("cron_match failed on %s: %s vs %s" % \
                           (name, val, entry[name]))
             return False
