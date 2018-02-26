@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingsaction - handle user settings updates
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,8 @@ from shared.handlers import get_csrf_limit, safe_handler
 from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
      parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs, \
-     parse_and_save_ftps, parse_and_save_seafile, parse_and_save_duplicati
+     parse_and_save_ftps, parse_and_save_seafile, parse_and_save_duplicati, \
+     parse_and_save_crontab
 from shared.profilekeywords import get_keywords_dict as profile_keywords
 from shared.settingskeywords import get_keywords_dict as settings_keywords
 from shared.useradm import create_seafile_mount_link, remove_seafile_mount_link
@@ -65,6 +66,8 @@ def extend_defaults(defaults, user_args):
         keywords_dict = {'publickeys': '', 'password': ''}
     elif topic == 'seafile':
         keywords_dict = {'password': ''}
+    elif topic == 'crontab':
+        keywords_dict = {'crontab': ''}
     else:
         # should never get here
         keywords_dict = {}
@@ -121,7 +124,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         keywords_dict = profile_keywords()
     elif topic == 'duplicati':
         keywords_dict = duplicati_keywords()
-    elif topic in ('sftp', 'webdavs', 'ftps', 'seafile', ):
+    elif topic in ('sftp', 'webdavs', 'ftps', 'seafile', 'crontab', ):
         # We don't use mRSL parser here
         keywords_dict = {}
     else:
@@ -165,6 +168,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
         (parse_status, parse_msg) = \
                        parse_and_save_duplicati(tmptopicfile, client_id,
                                                 configuration)
+    elif topic == 'crontab':
+        # TODO: Switch to restricted input form with dropdowns?
+        crontab = '\n'.join(accepted.get('crontab', ['']))
+        (parse_status, parse_msg) = \
+                       parse_and_save_crontab(crontab, client_id,
+                                              configuration)
     elif topic == 'sftp':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))
         password = accepted.get('password', [''])[-1].strip()

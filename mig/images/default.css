@@ -977,6 +977,10 @@ div.archive pre {
   background: url('/images/icons/duplicati.png') no-repeat;;
   padding-left: 18px;
 }
+.crontablink {
+  background: url('/images/icons/hourglass_go.png') no-repeat;;
+  padding-left: 18px;
+}
 
 .settingsbutton {
   padding: 8px;
@@ -1041,6 +1045,10 @@ a:hover.settingsbutton {
 }
 .duplicatisettingslink {
   background-image: url('/images/icons/duplicati.png');
+  padding-left: 18px;
+}
+.crontabsettingslink {
+  background-image: url('/images/icons/hourglass_go.png');
   padding-left: 18px;
 }
 .arcsettingslink {

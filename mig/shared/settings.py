@@ -34,7 +34,7 @@ from shared.defaults import settings_filename, profile_filename, \
      widgets_filename, duplicati_filename, ssh_conf_dir, davs_conf_dir, \
      ftps_conf_dir, seafile_conf_dir, duplicati_conf_dir, authkeys_filename, \
      authpasswords_filename, authdigests_filename, keyword_unchanged, \
-     dav_domain
+     dav_domain, crontab_name
 from shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, \
      extract_duplicati_helper, duplicati_conf_templates
 from shared.fileio import pickle, unpickle
@@ -44,6 +44,7 @@ from shared.pwhash import make_hash, make_digest, assure_password_strength
 from shared.safeinput import valid_password
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.ssh import parse_pub_key
+from shared.events import parse_crontab_contents
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
@@ -191,6 +192,30 @@ Backup destination page during import.'''
             json_fd.close()
     return status
 
+def parse_and_save_crontab(crontab, client_id, configuration):
+    """Validate and write the crontab for client_id"""
+    client_dir = client_id_dir(client_id)
+    crontab_path = os.path.join(configuration.user_settings, client_dir,
+                                crontab_name)
+    # Create crontab dir for any old users
+    try:
+        os.mkdir(crontab_path)
+    except:
+        pass
+    status, msg = True, ''
+    crontab_entries = parse_crontab_contents(configuration, client_id,
+                                             crontab.splitlines())
+    try:
+        crontab_fd = open(crontab_path, "wb")
+        # TODO: filter out broken lines before write?
+        crontab_fd.write(crontab)
+        crontab_fd.close()
+        msg = "Found and saved %d valid crontab entries" % len(crontab_entries)
+    except Exception, exc:
+        status = False
+        msg = 'ERROR: writing %s crontab file: %s' % (client_id, exc)
+    return (status, msg)
+
 def parse_and_save_publickeys(keys_path, keys_content, client_id,
                               configuration):
     """Validate and write the contents to the keys_path"""
@@ -330,6 +355,7 @@ def parse_and_save_seafile(password, client_id, configuration):
                                         configuration, 'seafile',
                                         seafile_conf_dir)
 
+
 def load_section_helper(client_id, configuration, section_filename,
                         section_keys, include_meta=False, allow_missing=False):
     """Load settings section from pickled file. Optional include_meta
@@ -387,6 +413,21 @@ def load_duplicati(client_id, configuration, include_meta=False,
     return load_section_helper(client_id, configuration, duplicati_filename,
                                get_duplicati_fields().keys(), include_meta,
                                allow_missing)
+
+def load_crontab(client_id, configuration, allow_missing=True):
+    """Load entries from plain user crontab file"""
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    crontab_path = os.path.join(configuration.user_settings, client_dir,
+                                crontab_name)
+    try:
+        crontab_fd = open(crontab_path, "rb")
+        crontab_contents = crontab_fd.read()
+        crontab_fd.close()
+    except Exception, exc:
+        _logger.error('failed reading %s crontab file: %s' % (client_id, exc))
+        crontab_contents = ''
+    return crontab_contents
 
 def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir,
                        allow_missing=True):
@@ -522,4 +563,3 @@ def update_duplicati(client_id, configuration, changes, defaults,
 
     return update_section_helper(client_id, configuration, duplicati_filename,
                                  changes, defaults, create_missing)
-

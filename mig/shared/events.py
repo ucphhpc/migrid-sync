@@ -44,7 +44,7 @@ def get_command_map(configuration):
     
     # TODO: add all ops with effect here!
 
-    return {
+    cmd_map = {
         'pack': ['src', 'dst'],
         'unpack': ['src', 'dst'],
         'zip': ['src', 'dst'],
@@ -59,16 +59,34 @@ def get_command_map(configuration):
         'touch': ['path'],
         'mkdir': ['path'],
         'chksum': ['hash_algo', 'path', 'dst', 'max_chunks'],
-        'submit': ['path'],
-        'canceljob': ['job_id'],
-        'resubmit': ['job_id'],
-        'jobaction': ['job_id', 'action'],
-        'liveio': ['action', 'src', 'dst', 'job_id'],
         'mqueue': ['queue', 'action', 'msg_id', 'msg'],
-        'imagepreview': ['flags', 'action', 'path', 'extension'],
-        'createbackup': ['freeze_name', 'freeze_copy_0'],
-        'deletebackup': ['freeze_id'],
         }
+    if configuration.site_enable_jobs:
+        cmd_map.update({
+            'submit': ['path'],
+            'canceljob': ['job_id'],
+            'resubmit': ['job_id'],
+            'jobaction': ['job_id', 'action'],
+            'liveio': ['action', 'src', 'dst', 'job_id'],
+            })
+    #if configuration.site_enable_sharelinks:
+    #    cmd_map.update({
+    #        'sharelink': ['path', 'read_access', 'write_access', 'invite', 'msg'],
+    #        })
+    if configuration.site_enable_transfers:
+        cmd_map.update({
+            'datatransfer': ['transfer_id', 'action'],
+            })
+    if configuration.site_enable_preview:
+        cmd_map.update({
+            'imagepreview': ['flags', 'action', 'path', 'extension'],
+            })
+    if configuration.site_enable_freeze:
+        cmd_map.update({
+            'createbackup': ['freeze_name', 'freeze_copy_0'],
+            'deletebackup': ['freeze_id'],
+            })
+    return cmd_map
 
 def get_expand_map(trigger_path, rule, state_change):
     """Generate a dictionary with the supported variables to be expanded and
@@ -113,35 +131,42 @@ def map_args_to_vars(var_list, arg_list):
             del remain_vars[0]
     return args_dict
 
-def parse_crontab(configuration, owner, path):
-    """Parse owner crontab in path and return a list of crontab dictionary
+def parse_crontab_contents(configuration, client_id, crontab_lines):
+    """Parse raw crontab content lines and return a list of crontab dictionary
     entries.
     """
     _logger = configuration.logger
     crontab_entries = []
-    try:
-        cron_fd = open(path, 'r')
-        crontab_lines = cron_fd.readlines()
-        cron_fd.close()
-    except Exception, exc:
-        _logger.error("Failed to read crontab in %s" % path)
-        crontab_lines = []
     for line in crontab_lines:
         # Skip comments
         if line.startswith("#"):
             continue
         hit = crontab_expr.match(line.strip())
         if not hit:
-            _logger.warning("Skip invalid %s line: %s" % (path, line))
+            _logger.warning("Skip invalid crontab line for %s: %s" % \
+                            (client_id, line))
             continue
         # Format: minute hour dayofmonth month dayofweek command
         entry = {'minute': hit.group(1), 'hour': hit.group(2),
                  'dayofmonth': hit.group(3), 'month': hit.group(4),
                  'dayofweek': hit.group(5), 'command': hit.group(6).split(),
-                 'run_as': owner, 'timestamp': os.path.getmtime(path)}
+                 'run_as': client_id}
         crontab_entries.append(entry)
-        _logger.debug("added crontab entry from %s: %s" % (path, entry))
     return crontab_entries
+    
+def parse_crontab(configuration, client_id, path):
+    """Parse client_id crontab in path and return a list of crontab dictionary
+    entries.
+    """
+    _logger = configuration.logger
+    try:
+        cron_fd = open(path, 'r')
+        crontab_lines = cron_fd.readlines()
+        cron_fd.close()
+    except Exception, exc:
+        _logger.error("Failed to read crontab in %s" % path)
+        return []
+    return parse_crontab_contents(configuration, client_id, crontab_lines)
 
 def cron_match(configuration, cron_time, entry):
     """Check if cron_time matches the time specs in crontab_entry"""

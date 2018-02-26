@@ -90,6 +90,7 @@ if '__main__' == __name__:
         'enable_verify_certs',
         'enable_seafile',
         'enable_duplicati',
+        'enable_crontab',
         'enable_imnotify',
         'enable_dev_accounts',
         'enable_openid',

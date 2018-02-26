@@ -1210,6 +1210,7 @@ def guess_type(name):
             'prepend_execute',
             'minprice',
             'backups',
+            'crontab',
             ):
             __type_map[key] = valid_plain_text
         for key in (

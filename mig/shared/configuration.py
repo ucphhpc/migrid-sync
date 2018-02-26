@@ -884,6 +884,10 @@ location.""" % self.config_file
             protos = config.get('GLOBAL', 'user_duplicati_protocols').split()
             valid_protos = [i for i in protos if i in allowed_protos]
             self.user_duplicati_protocols = valid_protos
+        if config.has_option('SITE', 'enable_crontab'):
+            self.site_enable_crontab = config.getboolean('SITE', 'enable_crontab')
+        else:
+            self.site_enable_crontab = False
         if config.has_option('SITE', 'enable_imnotify'):
             self.site_enable_imnotify = config.getboolean('SITE', 'enable_imnotify')
         else:

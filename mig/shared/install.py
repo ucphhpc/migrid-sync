@@ -123,6 +123,7 @@ def generate_confs(
     enable_verify_certs='',
     enable_seafile='False',
     enable_duplicati='False',
+    enable_crontab='False',
     enable_imnotify='False',
     enable_dev_accounts='False',
     enable_openid='True',
@@ -206,6 +207,7 @@ def generate_confs(
     user_dict['__ENABLE_VERIFY_CERTS__'] = enable_verify_certs
     user_dict['__ENABLE_SEAFILE__'] = enable_seafile
     user_dict['__ENABLE_DUPLICATI__'] = enable_duplicati
+    user_dict['__ENABLE_CRONTAB__'] = enable_crontab
     user_dict['__ENABLE_IMNOTIFY__'] = enable_imnotify
     user_dict['__ENABLE_DEV_ACCOUNTS__'] = enable_dev_accounts
     user_dict['__ENABLE_OPENID__'] = enable_openid
@@ -808,6 +810,7 @@ def create_user(
     enable_verify_certs = 'False'
     enable_seafile = 'False'
     enable_duplicati = 'False'
+    enable_crontab = 'False'
     enable_imnotify = 'False'
     enable_dev_accounts = 'False'
     mig_oid_provider = ''
@@ -905,6 +908,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_verify_certs,
         enable_seafile,
         enable_duplicati,
+        enable_crontab,
         enable_imnotify,
         enable_dev_accounts,
         enable_openid,
