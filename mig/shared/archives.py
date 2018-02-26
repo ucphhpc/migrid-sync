@@ -296,7 +296,7 @@ def handle_package_upload(
     # html form.
 
     submitstatuslist = []
-    if submit_mrslfiles:
+    if configuration.site_enable_jobs and submit_mrslfiles:
 
         # Please note that base_dir must end in slash to avoid access to other
         # user dirs when own name is a prefix of another user name

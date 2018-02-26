@@ -86,6 +86,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    if not configuration.site_enable_jobs:
+        output_objects.append({'object_type': 'error_text', 'text':
+            '''Job execution is not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     external_dict = get_keywords_dict(configuration)
     mrsl = fields_to_mrsl(configuration, user_arguments_dict, external_dict)
 

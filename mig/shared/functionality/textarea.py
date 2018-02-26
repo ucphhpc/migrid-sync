@@ -153,7 +153,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'header', 'text'
-                          : '%s submit job/file' % configuration.short_title})
+                          : '%s file handling' % configuration.short_title})
     submitstatuslist = []
     fileuploadobjs = []
     filenumber = 0
@@ -203,7 +203,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         mrslfiles_to_parse = []
         submit_mrslfiles = False
         submitmrsl_key = 'submitmrsl_%s' % filenumber
-        if user_arguments_dict.has_key(submitmrsl_key):
+        if configuration.site_enable_jobs and \
+               user_arguments_dict.has_key(submitmrsl_key):
             val = str(user_arguments_dict[submitmrsl_key][0]).upper()
             if val == 'ON' or val == 'TRUE':
                 submit_mrslfiles = True
@@ -540,10 +541,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
                            : 'Uploaded/created files'})
     output_objects.append({'object_type': 'fileuploadobjs',
                            'fileuploadobjs': fileuploadobjs})
-    output_objects.append({'object_type': 'header', 'text'
-                           : 'Submitted jobs'})
-    output_objects.append({'object_type': 'submitstatuslist',
-                           'submitstatuslist': submitstatuslist})
+    if configuration.site_enable_jobs:
+        output_objects.append({'object_type': 'header', 'text'
+                               : 'Submitted jobs'})
+        output_objects.append({'object_type': 'submitstatuslist',
+                               'submitstatuslist': submitstatuslist})
 
     # output_objects.append({"object_type":"text", "text":
     #                        str(submitstatuslist) + " *** " + \

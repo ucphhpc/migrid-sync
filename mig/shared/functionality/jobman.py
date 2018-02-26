@@ -161,6 +161,11 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
   
+    if not configuration.site_enable_jobs:
+        output_objects.append({'object_type': 'error_text', 'text':
+            '''Job execution is not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     status = returnvalues.OK
   
     title_entry = find_entry(output_objects, 'title')

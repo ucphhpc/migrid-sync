@@ -106,6 +106,11 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                            : 'Request live communication with jobs'})
 
+    if not configuration.site_enable_jobs:
+        output_objects.append({'object_type': 'error_text', 'text':
+            '''Job execution is not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     if not action in valid_actions:
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Invalid action "%s" (supported: %s)' % \

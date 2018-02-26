@@ -124,7 +124,12 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
 
     # TODO: add environ arg support to all main backends and use here
 
-    (out_obj, (ret_code, ret_msg)) = main(client_id, user_arguments_dict)
+    try:
+        (out_obj, (ret_code, ret_msg)) = main(client_id, user_arguments_dict)
+    except:
+        import traceback
+        logger.error("script crashed:\n%s" % traceback.format_exc())
+        
     after_time = time.time()
     out_obj.append({'object_type': 'timing_info', 'text':
                     "done in %.3fs" % (after_time - before_time)})

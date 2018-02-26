@@ -77,6 +77,7 @@ if '__main__' == __name__:
         'enable_ftps',
         'enable_wsgi',
         'wsgi_procs',
+        'enable_jobs',
         'enable_sandboxes',
         'enable_vmachines',
         'enable_jupyter',

@@ -69,6 +69,11 @@ def main(client_id, user_arguments_dict):
     flags = accepted['flags']
     patterns = accepted['job_id']
 
+    if not configuration.site_enable_jobs:
+        output_objects.append({'object_type': 'error_text', 'text':
+            '''Job execution is not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 

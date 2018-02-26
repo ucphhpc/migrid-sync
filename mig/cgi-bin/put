@@ -585,6 +585,10 @@ Please contact the server administrator.""")
     elif content_type == 'extractpackage':
         extractpackage = True
 
+    if not configuration.site_enable_jobs and submitmrsl:
+        o.out('Error: job execution is not enabled on this site!')
+        o.reply_and_exit(o.ERROR)
+
     # handle file package
 
     if extractpackage and (filename.upper().endswith('.ZIP')

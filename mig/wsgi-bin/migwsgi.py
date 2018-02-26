@@ -45,6 +45,8 @@ def object_type_info(object_type):
 def stub(function, configuration, client_id, user_arguments_dict, environ):
     """Run backend function with supplied arguments"""
 
+    _logger = configuration.logger
+    
     before_time = time.time()
 
     # get ID of user currently logged in
@@ -55,6 +57,7 @@ def stub(function, configuration, client_id, user_arguments_dict, environ):
     try:
         exec 'from %s import main' % function
     except Exception, err:
+        _logger.error("could not import %s: %s" % (function, err))
         output_objects.extend([{'object_type': 'error_text', 'text'
                               : 'Could not import module! %s: %s'
                                % (function, err)}])
@@ -75,6 +78,8 @@ def stub(function, configuration, client_id, user_arguments_dict, environ):
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                 user_arguments_dict)
     except Exception, err:
+        import traceback
+        _logger.error("script crashed:\n%s" % traceback.format_exc())
         output_objects.extend([{'object_type': 'error_text', 'text'
                               : 'Error calling function: %s' % err}])
         return (output_objects, returnvalues.ERROR)

@@ -871,6 +871,10 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_seafile_alias'):
             self.user_seafile_alias = config.get('GLOBAL', 
                                                  'user_seafile_alias')
+        if config.has_option('SITE', 'enable_jobs'):
+            self.site_enable_jobs = config.getboolean('SITE', 'enable_jobs')
+        else:
+            self.site_enable_jobs = True
         if config.has_option('SITE', 'enable_duplicati'):
             self.site_enable_duplicati = config.getboolean('SITE', 'enable_duplicati')
         else:

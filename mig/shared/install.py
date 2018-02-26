@@ -110,6 +110,7 @@ def generate_confs(
     enable_ftps='True',
     enable_wsgi='True',
     wsgi_procs='10',
+    enable_jobs='True',
     enable_sandboxes='True',
     enable_vmachines='True',
     enable_jupyter='False',
@@ -192,6 +193,7 @@ def generate_confs(
     user_dict['__ENABLE_FTPS__'] = enable_ftps
     user_dict['__ENABLE_WSGI__'] = enable_wsgi
     user_dict['__WSGI_PROCS__'] = wsgi_procs
+    user_dict['__ENABLE_JOBS__'] = enable_jobs
     user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
     user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
     user_dict['__ENABLE_JUPYTER__'] = enable_jupyter
@@ -794,6 +796,7 @@ def create_user(
     enable_openid = 'False'
     enable_wsgi = 'True'
     wsgi_procs = '5'
+    enable_jobs = 'True'
     enable_sandboxes = 'True'
     enable_vmachines = 'True'
     enable_sharelinks = 'True'
@@ -890,6 +893,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_ftps,
         enable_wsgi,
         wsgi_procs,
+        enable_jobs,
         enable_sandboxes,
         enable_vmachines,
         enable_sharelinks,

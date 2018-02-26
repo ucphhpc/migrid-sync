@@ -406,7 +406,7 @@ Newline mode:
 <a class="infolink iconspace" href="http://en.wikipedia.org/wiki/Newline">help
 </a>
 '''
-    if 'submit' in includes:
+    if configuration.site_enable_jobs and 'submit' in includes:
         html += '''
 <br />
 Submit file as job after saving <input type=checkbox name="submitjob" />

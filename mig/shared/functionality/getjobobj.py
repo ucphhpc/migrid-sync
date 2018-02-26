@@ -74,6 +74,11 @@ def main(client_id, user_arguments_dict):
     job_id_list = accepted['job_id']
     external_dict = mrslkeywords.get_keywords_dict(configuration)
 
+    if not configuration.site_enable_jobs:
+        output_objects.append({'object_type': 'error_text', 'text':
+            '''Job execution is not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 

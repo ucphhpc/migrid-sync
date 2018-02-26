@@ -304,14 +304,14 @@ trigger target as shown in the following examples:<br/>
 <h4>Help on available trigger commands and arguments</h4>
 <p>
 It is possible to set up trigger rules that basically run any operation with a
-side effect you could manually do on the grid. I.e. like submitting/cancelling
+side effect you could manually do on %s. I.e. like submitting/cancelling
 a job, creating/moving/deleting a file or directory and so on. When you select
 'command' as the action for a trigger rule, you have the following commands at
 your disposal:<br/>
 %s
 </p>
 </div>
-""" % (label, vars_html, commands_html)
+""" % (label, vars_html, configuration.short_title, commands_html)
 
 
         # Make page with manage triggers tab and active jobs and log tab

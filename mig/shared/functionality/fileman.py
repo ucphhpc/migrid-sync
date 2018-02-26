@@ -50,7 +50,8 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
                     'default_max_chunks': default_max_chunks}
     fill_entries['sharelink_form'] = create_share_link_form(
         configuration, client_id, 'json', '', csrf_map.get('sharelink', ''))
-    if 'submitjob' in extract_menu(configuration, title_entry):
+    if configuration.site_enable_jobs and \
+           'submitjob' in extract_menu(configuration, title_entry):
         fill_entries["upload_submit_entry"] = '''
             <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
             <input id="submitmrsl_0" type="checkbox" checked="" name="submitmrsl_0"/>
@@ -673,7 +674,8 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'File Manager'
     title_entry['style'] = css_tmpl(configuration)
-    if 'submitjob' in extract_menu(configuration, title_entry):
+    if configuration.site_enable_jobs and \
+           'submitjob' in extract_menu(configuration, title_entry):
         enable_submit = 'true'
     else:
         enable_submit = 'false'
