@@ -116,7 +116,7 @@ def main(client_id, user_arguments_dict):
     if not configuration.site_enable_sharelinks:
         output_objects.append({'object_type': 'text', 'text': '''
 Share links are disabled on this site.
-Please contact the Grid admins %s if you think they should be enabled.
+Please contact the site admins %s if you think they should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 

@@ -145,7 +145,7 @@ $(document).ready(function() {
     if not configuration.site_enable_vmachines:
         output_objects.append({'object_type': 'text', 'text':
                                '''Virtual machines are disabled on this site.
-Please contact the Grid admins %s if you think they should be enabled.
+Please contact the site admins %s if you think they should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 

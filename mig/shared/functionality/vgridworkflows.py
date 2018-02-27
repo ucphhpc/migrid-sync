@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
-# vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# vgridworkflows - data-driven workflows for owners and members
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -70,7 +69,7 @@ def signature():
 
 
 def read_trigger_log(configuration, vgrid_name, flags):
-    """Read in saved trigger logs for vgrid workflows page. We read in all
+    """Read-in saved trigger logs for vgrid workflows page. We read in all
     rotated logs. If flags don't include verbose we try to filter out all
     system trigger lines.
     """
