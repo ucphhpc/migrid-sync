@@ -814,6 +814,12 @@ if __name__ == '__main__':
     # Allow e.g. logrotate to force log re-open after rotates
     signal.signal(signal.SIGHUP, hangup_handler)
 
+    if not configuration.site_enable_transfers:
+        err_msg = "Data transfers are disabled in configuration!"
+        logger.error(err_msg)
+        print err_msg
+        sys.exit(1)
+
     print '''This is the MiG data transfer handler daemon which runs requested
 data transfers in the background on behalf of the users. It monitors the saved
 data transfer files for changes and launches external client processes to take

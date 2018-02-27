@@ -557,6 +557,12 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, stop_handler)
 
+    if not configuration.site_enable_crontab:
+        err_msg = "Cron support is disabled in configuration!"
+        logger.error(err_msg)
+        print err_msg
+        sys.exit(1)
+
     print '''This is the MiG cron handler daemon which monitors user crontab
 files and reacts to any configured actions when time is up.
 
