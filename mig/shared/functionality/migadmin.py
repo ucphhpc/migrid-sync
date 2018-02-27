@@ -210,7 +210,8 @@ provide access to e.g. managing the grid job queues.
     daemon_names = ['grid_script.py', 'grid_monitor.py', 'grid_sshmux.py',
                     'grid_events.py']
     # No need to run im_notify unless any im notify protocols are enabled
-    if [i for i in configuration.notify_protocols if i != 'email']:
+    if configuration.site_enable_imnotify and \
+           [i for i in configuration.notify_protocols if i != 'email']:
         daemon_names.append('grid_imnotify.py')
     if configuration.site_enable_sftp:
         daemon_names.append('grid_sftp.py')
@@ -222,6 +223,10 @@ provide access to e.g. managing the grid job queues.
         daemon_names.append('grid_openid.py')
     if configuration.site_enable_transfers:
         daemon_names.append('grid_transfers.py')
+    if configuration.site_enable_crontab:
+        daemon_names.append('grid_cron.py')
+    if configuration.site_enable_sftp_subsys:
+        daemon_names.append('/sbin/sshd -f /etc/ssh/sshd_config-MiG-sftp-subsys')
     for proc in daemon_names:
         # NOTE: we use command list here to avoid shell requirement
         pgrep_proc = subprocess_popen(['pgrep', '-f', proc],

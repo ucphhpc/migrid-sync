@@ -41,7 +41,7 @@ import shared.returnvalues as returnvalues
 from shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
     workflows_log_cnt, pending_states, final_states, img_trigger_prefix
-from shared.events import get_expand_map, get_command_map
+from shared.events import get_path_expand_map, get_command_map
 from shared.fileio import unpickle, makedirs_rec, move_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import jquery_ui_js, man_base_js, man_base_html, themed_styles
@@ -283,7 +283,7 @@ access the workflows.'''
             vgrid_path = os.path.join(vgrid_name, path)
             vars_html += "<b>Expanded variables when %s is %s:</b><br/>" % \
                             (vgrid_path, change)
-            expanded = get_expand_map(vgrid_path, dummy_rule, change)
+            expanded = get_path_expand_map(vgrid_path, dummy_rule, change)
             for (key, val) in expanded.items():
                 vars_html += "    %s: %s<br/>" % (key, val)
         commands_html = ''

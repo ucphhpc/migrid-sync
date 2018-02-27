@@ -91,7 +91,7 @@ def get_command_map(configuration):
             })
     return cmd_map
 
-def get_expand_map(trigger_path, rule, state_change):
+def get_path_expand_map(trigger_path, rule, state_change):
     """Generate a dictionary with the supported variables to be expanded and
     the actual expanded values based on trigger_path and rule dictionary.
     """
@@ -116,6 +116,25 @@ def get_expand_map(trigger_path, rule, state_change):
 
     # TODO: provide exact expanded wildcards?
 
+    return expand_map
+
+def get_time_expand_map(timestamp, rule):
+    """Generate a dictionary with the supported variables to be expanded and
+    the actual expanded values based on datetime timestamp and crontab rule
+    dictionary.
+    """
+
+    # NOTE: we force two digits in the values where it can be one or two
+    expand_map = {
+        '+CRONSECOND+': "%.2d" % timestamp.second,
+        '+CRONMINUTE+': "%.2d" % timestamp.minute,
+        '+CRONHOUR+': "%.2d" % timestamp.hour,
+        '+CRONDAY+': "%.2d" % timestamp.day,
+        '+CRONMONTH+': "%.2d" % timestamp.month,
+        '+CRONYEAR+': "%d" % timestamp.year,
+        '+CRONDAYOFWEEK+': "%d" % timestamp.weekday(),
+        '+CRONRUNAS+': rule['run_as'],
+        }
     return expand_map
 
 def map_args_to_vars(var_list, arg_list):
@@ -226,12 +245,24 @@ def cron_match(configuration, cron_time, entry):
     return True
 
 if __name__ == '__main__':
-    rule = {'templates': [], 'run_as': '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk', 'rate_limit': '', 'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False, 'match_files': True, 'arguments': ['+TRIGGERPATH+'], 'settle_time': '', 'path': '*.txt*', 'changes': ['modified'], 'action': 'trigger-created', 'match_recursive': True}
-    samples = [('abc.txt', 'modified'), ('subdir/def.txt', 'modified')]
-    print "Test event map:"
-    for (path, change) in samples:
-        print "Expanded vars for %s %s:" % (path, change)
-        expanded = get_expand_map(path, rule, change)
+    trigger_rule = {'templates': [], 'run_as': '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk', 'rate_limit': '', 'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False, 'match_files': True, 'arguments': ['+TRIGGERPATH+'], 'settle_time': '', 'path': '*.txt*', 'changes': ['modified'], 'action': 'trigger-created', 'match_recursive': True}
+    trigger_samples = [('abc.txt', 'modified'), ('subdir/def.txt', 'modified')]
+    print "Test trigger event map:"
+    for (path, change) in trigger_samples:
+        print "Expanded path vars for %s %s:" % (path, change)
+        expanded = get_path_expand_map(path, trigger_rule, change)
+        for (key, val) in expanded.items():
+            print "    %s: %s" % (key, val)
+            
+    cron_rule = {'run_as': '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk', 'command': ['pack', 'myfiles' 'myfiles-+CRONYEAR+-+CRONMONTH+-+CRONDAY+.zip']}
+    import datetime
+    cron_times = [datetime.datetime.now(),
+                  datetime.datetime(2020, 12, 24, 12, 42, 56),
+                  datetime.datetime(2042, 1, 2, 9, 2, 6)]
+    print "Test cron event map:"
+    for timestamp in cron_times:
+        print "Expanded time vars for %s:" % timestamp
+        expanded = get_time_expand_map(timestamp, cron_rule)
         for (key, val) in expanded.items():
             print "    %s: %s" % (key, val)
         

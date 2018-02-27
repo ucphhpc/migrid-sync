@@ -73,7 +73,7 @@ from shared.base import force_utf8
 from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
     workflows_log_size, workflows_log_cnt, csrf_field
-from shared.events import get_expand_map, map_args_to_vars, \
+from shared.events import get_path_expand_map, map_args_to_vars, \
     get_command_map
 from shared.fileio import makedirs_rec, pickle, unpickle
 from shared.handlers import get_csrf_limit, make_csrf_token
@@ -864,7 +864,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
             # Expand dynamic variables in argument once and for all
 
-            expand_map = get_expand_map(rel_src, rule, state)
+            expand_map = get_path_expand_map(rel_src, rule, state)
             for argument in rule['arguments']:
                 filled_argument = argument
                 for (key, val) in expand_map.items():
@@ -910,7 +910,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
             # Expand dynamic variables in argument once and for all
 
-            expand_map = get_expand_map(rel_src, rule, state)
+            expand_map = get_path_expand_map(rel_src, rule, state)
             try:
                 for job_template in rule['templates']:
                     mrsl_fd.truncate(0)
@@ -959,7 +959,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
             # Expand dynamic variables in argument once and for all
 
-            expand_map = get_expand_map(rel_src, rule, state)
+            expand_map = get_path_expand_map(rel_src, rule, state)
             command_list = (rule['arguments'])[:1]
             for argument in (rule['arguments'])[1:]:
                 filled_argument = argument

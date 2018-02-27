@@ -30,6 +30,7 @@ do interactively. Restricted to the same backends that are otherwise exposed
 and basically just runs those on behalf of the user.
 """
 
+import datetime
 import os
 import re
 import time
@@ -39,7 +40,7 @@ from shared.defaults import crontab_name, cron_log_cnt, cron_log_name, \
      csrf_field
 import shared.returnvalues as returnvalues
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from shared.events import get_expand_map, get_command_map, load_crontab, \
+from shared.events import get_time_expand_map, get_command_map, load_crontab, \
      parse_and_save_crontab
 from shared.fileio import makedirs_rec
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -75,7 +76,7 @@ def read_cron_log(configuration, client_id, flags):
         log_name = cron_log_name
         if i > 0:
             log_name += '.%d' % i
-        # TODO: move logs to user_settings?
+        # TODO: move logs to user_settings or cron_output subdir?
         #log_path = os.path.join(configuration.user_settings, client_dir,
         log_path = os.path.join(configuration.user_home, client_dir,
                                 log_name)
@@ -264,6 +265,27 @@ and you can use View Logs above to inspect them.
 </form>
 '''
 
+            vars_html = ''
+            dummy_rule = {'run_as': client_id,
+                          'command': ['touch', 'crontest-+CRONYEAR+-+CRONMONTH+-+CRONDAY+.txt']}
+            cron_times = [datetime.datetime.now(),
+                          datetime.datetime(2020, 12, 24, 12, 42, 56),
+                          datetime.datetime(2042, 1, 6, 9, 2, 6)]
+            for timestamp in cron_times:
+                vars_html += "<b>Expanded variables at %s:</b><br/>" % \
+                             timestamp
+                expanded = get_time_expand_map(timestamp, dummy_rule)
+                for (key, val) in expanded.items():
+                    vars_html += "    %s: %s<br/>" % (key, val)
+                filled_command = dummy_rule['command'][:1]
+                for argument in dummy_rule['command'][1:]:
+                    filled_argument = argument
+                    for (key, val) in expanded.items():
+                        filled_argument = filled_argument.replace(key, val)
+                    filled_command.append(filled_argument)
+                vars_html += "Expanded command <tt>%s</tt> to: <tt>%s</tt>:<br/>" % \
+                             (' '.join(dummy_rule['command']),
+                              ' '.join(filled_command))
             commands_html = ''
             commands = get_command_map(configuration)
             for (cmd, cmd_args) in commands.items():
@@ -271,6 +293,13 @@ and you can use View Logs above to inspect them.
             html += """
 <br/>
 <div class='variables-accordion'>
+<h4>Help on available trigger variable names and values</h4>
+<p>
+Scheduled tasks can use a number of helper variables on the form +CRONXYZ+ to
+dynamically act on times. Most are automatically expanded for the particular
+cron timestamp as shown in the following examples:<br/>
+%s
+</p>
 <h4>Help on available commands and arguments</h4>
 <p>
 It is possible to schedule most operations you could manually do on %s.
@@ -279,7 +308,7 @@ and so on. You have the following commands at your disposal:<br/>
 %s
 </p>
 </div>
-""" % (configuration.short_title, commands_html)
+""" % (vars_html, configuration.short_title, commands_html)
 
             fill_helpers.update({
                 'current_crontab': crontab_contents,

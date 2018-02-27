@@ -73,7 +73,7 @@ from shared.base import force_utf8, client_dir_id, client_id_dir
 from shared.conf import get_configuration_object
 from shared.defaults import crontab_name, cron_log_name, \
     cron_log_size, cron_log_cnt, csrf_field
-from shared.events import get_expand_map, map_args_to_vars, \
+from shared.events import get_time_expand_map, map_args_to_vars, \
     get_command_map, parse_crontab, cron_match
 from shared.fileio import makedirs_rec
 from shared.handlers import get_csrf_limit, make_csrf_token
@@ -356,7 +356,7 @@ def __cron_info(configuration, client_id,  msg):
     __cron_log(configuration, client_id, msg, 'info')
 
 
-def __handle_cronjob(configuration, client_id, crontab_entry):
+def __handle_cronjob(configuration, client_id, timestamp, crontab_entry):
     """Actually handle valid crontab entry which is due"""
 
     pid = multiprocessing.current_process().pid
@@ -370,10 +370,9 @@ def __handle_cronjob(configuration, client_id, crontab_entry):
                      (pid, client_id, crontab_entry))
         return False
 
-    # TODO: anything to expand here - path wildcards?
-    # Expand dynamic variables in argument once and for all
+    # Expand dynamic time variables in argument once and for all
 
-    expand_map = {}
+    expand_map = get_time_expand_map(timestamp, crontab_entry)
     command_list = crontab_entry['command'][:1]
     for argument in crontab_entry['command'][1:]:
         filled_argument = argument
@@ -397,7 +396,7 @@ def __handle_cronjob(configuration, client_id, crontab_entry):
                        'failed to run command: %s (%s)' % (command_str, exc))
 
 
-def run_handler(configuration, client_id, crontab_entry):
+def run_handler(configuration, client_id, timestamp, crontab_entry):
     """Run crontab entry for client_id in a separate thread"""
 
     pid = multiprocessing.current_process().pid
@@ -410,7 +409,7 @@ def run_handler(configuration, client_id, crontab_entry):
             worker = \
                    threading.Thread(target=__handle_cronjob,
                                     args=(configuration, client_id,
-                                          crontab_entry))
+                                          timestamp, crontab_entry))
             worker.daemon = True
             worker.start()
             waiting_for_thread_resources = False
@@ -501,10 +500,10 @@ def monitor(configuration):
                 for entry in user_crontab:
                     logger.debug('inspect cron entry for %s: %s' % \
                                  (client_id, entry))
-                    # TODO: check time match and act!
                     if cron_match(configuration, loop_start, entry):
                         logger.info('run matching cron entry: %s' % entry)
-                        run_handler(configuration, client_id, entry)
+                        run_handler(configuration, client_id, loop_start,
+                                    entry)
         except KeyboardInterrupt:
             print '(%s) caught interrupt' % pid
             stop_running.set()
