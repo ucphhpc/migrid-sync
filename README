@@ -375,7 +375,7 @@ vhost-specific certificates from LetsEncrypt:
                    --enable_sftp=True --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_sandboxes=True --enable_vmachines=True \
-                   --enable_jobs=True \
+                   --enable_crontab=True --enable_jobs=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_hsts=True --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
@@ -420,7 +420,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_duplicati=True --enable_hsts=True \
                    --enable_sandboxes=False --enable_vmachines=False \
-                   --enable_jobs=False \
+                   --enable_crontab=True --enable_jobs=False \
                    --enable_freeze=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --user_clause=User --group_clause=Group \
@@ -467,7 +467,7 @@ optimized SFTP, job execution, Jupyter integration and OpenID login:
                    --enable_imnotify=False --enable_seafile=False \
                    --enable_duplicati=False --enable_preview=True \
                    --enable_sandboxes=False --enable_vmachines=False \
-                   --enable_jobs=True \
+                   --enable_crontab=True --enable_jobs=True \
                    --enable_freeze=False --enable_vhost_certs=True \
                    --enable_verify_certs=True --enable_hsts=True \
                    --jupyter_url=http://dag000.science \

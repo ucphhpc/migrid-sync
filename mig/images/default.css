@@ -335,6 +335,9 @@ table th.icon {
 .navmenu ul li.downloads a {
   background-image: url('/images/icons/download.png');
 }
+.navmenu ul li.crontab a {
+  background-image: url('/images/icons/hourglass_go.png')
+}
 .navmenu ul li.seafile a {
   background-image: url('/images/icons/seafile.png')
 }
@@ -1045,10 +1048,6 @@ a:hover.settingsbutton {
 }
 .duplicatisettingslink {
   background-image: url('/images/icons/duplicati.png');
-  padding-left: 18px;
-}
-.crontabsettingslink {
-  background-image: url('/images/icons/hourglass_go.png');
   padding-left: 18px;
 }
 .arcsettingslink {

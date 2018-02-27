@@ -196,6 +196,8 @@ trigger_job_list = {'object_type': 'trigger_job_list', 'required_list':
             )]}
 trigger_log = {'object_type': 'trigger_log', 'required':
                     ['log_content']}
+crontab_log = {'object_type': 'crontab_log', 'required':
+                    ['log_content']}
 filewcs = {'object_type': 'filewcs', 'required_list': [('filewcs',
            'filewc')]}
 filedus = {'object_type': 'filedus', 'required_list': [('filedus',
@@ -372,6 +374,7 @@ valid_types_list = [
     job_list,
     trigger_job_list,
     trigger_log,
+    crontab_log,
     direntry,
     file,
     progress,

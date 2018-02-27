@@ -35,61 +35,64 @@ from shared.defaults import default_pager_entries, trash_linkname, csrf_field
 menu_items = {}
 menu_items['dashboard'] = {'class': 'dashboard', 'url': 'dashboard.py',
                            'title': 'Dashboard', 
-                           'hover': 'this is the overview page to start with'}
+                           'hover': 'This is the overview page to start with'}
 menu_items['submitjob'] = {'class': 'submitjob', 'url': 'submitjob.py',
                            'title': 'Submit Job',
-                           'hover': 'submit a job for execution on a resource'}
+                           'hover': 'Submit a job for execution on a resource'}
 menu_items['files'] = {'class': 'files', 'url': 'fileman.py', 'title': 'Files',
-                           'hover': 'manage files and folders in your home directory'}
+                       'hover': 'manage files and folders in your home directory'}
 menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Jobs', 
-                           'hover': 'manage and monitor your grid jobs'}
+                      'hover': 'Manage and monitor your grid jobs'}
 menu_items['vgrids'] = {'class': 'vgrids', 'url': 'vgridman.py',
                         'title': 'VGrids',
-                           'hover': 'virtual organisations sharing some resources and files'}
+                        'hover': 'Virtual organisations sharing some resources and files'}
 menu_items['resources'] = {'class': 'resources', 'url': 'resman.py',
                            'title': 'Resources',
                            'hover': 'Resources available in the system'}
 menu_items['downloads'] = {'class': 'downloads', 'url': 'downloads.py',
                            'title': 'Downloads',
-                           'hover': 'download scripts to work directly from your local machine'}
+                           'hover': 'Download scripts to work directly from your local machine'}
 menu_items['runtimeenvs'] = {'class': 'runtimeenvs', 'url': 'redb.py',
                              'title': 'Runtime Envs', 
-                           'hover': 'runtime environments: software which can be made available'}
+                             'hover': 'Runtime environments: software which can be made available'}
 menu_items['archives'] = {'class': 'archives', 'url': 'freezedb.py',
-                             'title': 'Archives', 
-                           'hover': 'frozen archives: write-once file archives'}
+                          'title': 'Archives', 
+                          'hover': 'Frozen archives: write-once file archives'}
 menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
                           'title': 'Settings',
-                           'hover': 'your personal settings for these pages'}
+                          'hover': 'Your personal settings for these pages'}
+menu_items['crontab'] = {'class': 'crontab', 'url':'crontab.py',
+                         'title': 'Schedule Tasks',
+                         'hover': 'Your personal task scheduler'}
 menu_items['seafile'] = {'class': 'seafile', 'url':'/seafile/',
-			'title': 'Seafile',
-			'hover': 'Access the associated Seafile service'}
+                         'title': 'Seafile',
+                         'hover': 'Access the associated Seafile service'}
 menu_items['jupyter'] = {'class': 'jupyter', 'url':'jupyter.py',
-			'title': 'Jupyter',
-			'hover': 'Access the associated Jupyter service'}
+                         'title': 'Jupyter',
+                         'hover': 'Access the associated Jupyter service'}
 
 menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell', 
-                           'hover': 'a command line interface, based on javascript and xmlrpc'}
+                       'hover': 'A command line interface, based on javascript and xmlrpc'}
 menu_items['wshell'] = {'class': 'shell',
-    'url': 'javascript:\
+                        'url': 'javascript:\
              window.open(\'shell.py?menu=no\',\'shellwindow\',\
              \'dependent=yes,menubar=no,status=no,toolbar=no,\
                height=650px,width=800px\');\
              window.reload();',
-    'title': 'Shell',
-    'hover': 'a command line interface, based on javascript and xmlrpc. Opens in a new window'}
+                        'title': 'Shell',
+                        'hover': 'A command line interface, based on javascript and xmlrpc. Opens in a new window'}
 menu_items['statistics'] = {'class': 'statistics', 'url': 'showstats.py',
-                          'title': 'Statistics',
-                           'hover': 'usage overview for resources and users on this server'}
+                            'title': 'Statistics',
+                            'hover': 'Usage overview for resources and users on this server'}
 menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
-                          'title': 'Docs',
-                          'hover': 'some built-in documentation for reference'}
+                      'title': 'Docs',
+                      'hover': 'Some built-in documentation for reference'}
 menu_items['people'] = {'class': 'people', 'url': 'people.py',
-                           'title': 'People', 
-                           'hover': 'view and communicate with other users'}
+                        'title': 'People', 
+                        'hover': 'View and communicate with other users'}
 menu_items['migadmin'] = {'class': 'migadmin', 'url': 'migadmin.py',
-                           'title': 'Server Admin', 
-                           'hover': 'administrate this server'}
+                          'title': 'Server Admin', 
+                          'hover': 'Administrate this server'}
 menu_items['vmachines'] = {'class': 'vmachines', 'url': 'vmachines.py',
                            'title': 'Virtual Machines', 
                            'hover': 'Manage Virtual Machines'}
@@ -100,8 +103,8 @@ menu_items['vmconnect'] = {'class': 'vmconnect', 'url': 'vmconnect.py',
                            'title': 'Connect to Virtual Machine', 
                            'hover': 'Connect to Virtual Machine'}
 menu_items['logout'] = {'class': 'logout', 'url': 'logout.py',
-                           'title': 'Logout', 
-                           'hover': 'Logout'}
+                        'title': 'Logout', 
+                        'hover': 'Logout'}
 
 # Define all possible VGrid page columns
 vgrid_items = {}

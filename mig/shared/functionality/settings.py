@@ -34,7 +34,7 @@ from shared.base import client_alias, client_id_dir, extract_field
 from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions, \
      seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
-     duplicati_protocol_choices, duplicati_schedule_choices, crontab_name
+     duplicati_protocol_choices, duplicati_schedule_choices
 from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.events import get_command_map
@@ -43,7 +43,7 @@ from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, console_log_javascript
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
-     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, load_crontab
+     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati
 from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
@@ -71,8 +71,6 @@ profile_edit = cm_options.copy()
 profile_edit['mode'] = 'htmlmixed'
 duplicati_edit = cm_options.copy()
 duplicati_edit['mode'] = 'htmlmixed'
-crontab_edit = cm_options.copy()
-crontab_edit['mode'] = 'shell'
 
 def signature():
     """Signature of the main function"""
@@ -173,8 +171,6 @@ $(document).ready(function() {
         valid_topics.append('seafile')
     if configuration.site_enable_duplicati:
         valid_topics.append('duplicati')
-    if configuration.site_enable_crontab:
-        valid_topics.append('crontab')
     topics = accepted['topic']
     # Backwards compatibility
     if topics and topics[0] == 'ssh':
@@ -186,7 +182,7 @@ $(document).ready(function() {
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
                        ('ftps', 'FTPS'), ('seafile', 'Seafile'),
-                       ('duplicati', 'Duplicati'), ('crontab', 'Crontab')
+                       ('duplicati', 'Duplicati'),
                        ]:
         if key in valid_topics:
             topic_titles[key] = val
@@ -1673,102 +1669,6 @@ client versions from the link above.<br/>
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'crontab' in topics:
-
-        # load current crontab
-
-        current_crontab_entries = load_crontab(client_id, configuration)
-        if not current_crontab_entries:
-            
-            # no current crontab found
-            
-            current_crontab_entries = ''
-
-        target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                     client_id, csrf_limit)
-        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-        html = '''
-<div id="crontab">
-<form method="%(form_method)s" action="%(target_op)s.py">
-<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-<table class="crontabsettings fixedlayout">
-<tr class="title"><td class="centertext">
-Crontab - schedule actions for your %(site)s account
-</td></tr>
-<tr><td>
-</td></tr>
-<tr><td>
-You can schedule %(site)s commands to run at given times on behalf of you.<br/>
-In that way you can automate many of the routine tasks that you would be able
-to do manually, but which would be tedious and inconvenient to repeat every
-time. This might include tasks like backup or archiving, which typically makes
-most sense to run e.g. every night or once a week.
-</td></tr>
-<tr><td>
-<input type="hidden" name="topic" value="crontab" />
-'''
-        
-        html += '''
-</td></tr>
-<tr><td>
-<h3>Crontab Schedule</h3>
-Each line here follows the standard UN*X crontab format with five time fields
-specifying when to run command followed by the command to run.
-<p class="warningtext">Please note that for security reasons you can only run a
-limited set of commands, namely the ones you would be able to interactively
-run.</p>
-'''
-        commands_html = ''
-        commands = get_command_map(configuration)
-        for (cmd, cmd_args) in commands.items():
-            commands_html += "    %s %s<br/>" % (cmd, (' '.join(cmd_args)).upper())        
-        html += """
-<div class='variables-accordion'>
-<h4>Help on available commands and arguments</h4>
-<p>
-It is possible to schedule most operations you could manually do on %s.
-I.e. like packing files/folders, creating/moving/deleting a file or directory
-and so on. You have the following commands at your disposal:<br/>
-%s
-</p>
-</div>
-""" % (configuration.short_title, commands_html)
-
-        html += '''
-<p>Information about any cron actions you configure automatically gets logged
-in a <a href="/cert_redirect/cron.log">cron.log</a> file in your home folder.
-</p>
-'''
-
-        keyword_crontab = "crontabentries"
-        area = '''
-<textarea id="%(keyword_crontab)s" cols=82 rows=5
-          name="crontab">%(current_crontab)s</textarea>
-'''
-        html += wrap_edit_area(keyword_crontab, area, crontab_edit, 'BASIC')
-        html += '''
-(leave empty to disable crontab scheduled commands)
-</td></tr>
-'''
-            
-        html += '''
-<tr><td>
-<input type="submit" value="Save Crontab Settings" />
-</td></tr>
-'''
-
-        html += '''
-</table>
-</form>
-</div>
-'''
-        fill_helpers.update({
-        'current_crontab': current_crontab_entries,
-        'keyword_crontab': keyword_crontab,
-        })
-        output_objects.append({'object_type': 'html_form', 'text':
-                               html % fill_helpers})
 
     # if ARC-enabled server:
     if 'arc' in topics:

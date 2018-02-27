@@ -25,6 +25,7 @@
 # processname: grid_monitor.py
 # processname: grid_sshmux.py
 # processname: grid_events.py
+# processname: grid_cron.py
 # processname: grid_transfers.py
 # processname: grid_openid.py
 # processname: grid_sftp.py
@@ -70,6 +71,7 @@ MIG_SCRIPT=${MIG_CODE}/server/grid_script.py
 MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
 MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
 MIG_EVENTS=${MIG_CODE}/server/grid_events.py
+MIG_CRON=${MIG_CODE}/server/grid_cron.py
 MIG_TRANSFERS=${MIG_CODE}/server/grid_transfers.py
 MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
@@ -83,7 +85,7 @@ MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload} [daemon]"
     echo "where daemon is left empty for all or given as one of the following"
-    echo "(script|monitor|sshmux|events|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)"
 }
 
 test_sftpsubsys_enabled() {
@@ -150,6 +152,19 @@ start_events() {
     [ $RET2 ] && success
     echo
     [ $RET2 ] || echo "Warning: events not started."
+    echo
+}
+start_cron() {
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG cron daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/cron.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: cron not started."
     echo
 }
 start_transfers() {
@@ -274,6 +289,7 @@ start_all() {
     start_monitor
     start_sshmux
     start_events
+    start_cron
     start_transfers
     start_openid
     start_sftp
@@ -321,6 +337,20 @@ stop_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Shutting down MiG events: $SHORT_NAME "
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
+    echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
+}
+stop_cron() {
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG cron: $SHORT_NAME "
     # Try graceful shutdown so that state is properly saved
     killproc ${DAEMON_PATH} -INT
     for delay in 1 2 3; do
@@ -415,6 +445,7 @@ stop_all() {
     stop_monitor
     stop_sshmux
     stop_events
+    stop_cron
     stop_transfers
     stop_openid
     stop_sftp
@@ -456,6 +487,14 @@ reload_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Reloading MiG events: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_cron() {
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG cron: $SHORT_NAME "
     killproc ${DAEMON_PATH} -HUP
     echo
 }
@@ -538,6 +577,7 @@ reload_all() {
     reload_monitor
     reload_sshmux
     reload_events
+    reload_cron
     reload_transfers
     reload_openid
     reload_sftp
@@ -570,6 +610,12 @@ status_sshmux() {
 }
 status_events() {
     DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_cron() {
+    DAEMON_PATH=${MIG_CRON}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH}
@@ -634,6 +680,7 @@ status_all() {
     status_monitor
     status_sshmux
     status_events
+    status_cron
     status_transfers
     status_openid
     status_sftp
@@ -654,7 +701,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')

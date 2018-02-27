@@ -31,6 +31,9 @@ import fnmatch
 import os
 import re
 
+from shared.base import client_id_dir
+from shared.defaults import crontab_name
+
 # Init global crontab regexp once and for all
 # Format: minute hour dayofmonth month dayofweek command
 crontab_pattern = "^(\*|[0-9]{1,2}) (\*|[0-9]{1,2}) (\*|[0-9]{1,2}) "
@@ -131,6 +134,21 @@ def map_args_to_vars(var_list, arg_list):
             del remain_vars[0]
     return args_dict
 
+def load_crontab(client_id, configuration, allow_missing=True):
+    """Load entries from plain user crontab file"""
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    crontab_path = os.path.join(configuration.user_settings, client_dir,
+                                crontab_name)
+    try:
+        crontab_fd = open(crontab_path, "rb")
+        crontab_contents = crontab_fd.read()
+        crontab_fd.close()
+    except Exception, exc:
+        _logger.error('failed reading %s crontab file: %s' % (client_id, exc))
+        crontab_contents = ''
+    return crontab_contents
+
 def parse_crontab_contents(configuration, client_id, crontab_lines):
     """Parse raw crontab content lines and return a list of crontab dictionary
     entries.
@@ -167,6 +185,30 @@ def parse_crontab(configuration, client_id, path):
         _logger.error("Failed to read crontab in %s" % path)
         return []
     return parse_crontab_contents(configuration, client_id, crontab_lines)
+
+def parse_and_save_crontab(crontab, client_id, configuration):
+    """Validate and write the crontab for client_id"""
+    client_dir = client_id_dir(client_id)
+    crontab_path = os.path.join(configuration.user_settings, client_dir,
+                                crontab_name)
+    # Create crontab dir for any old users
+    try:
+        os.mkdir(crontab_path)
+    except:
+        pass
+    status, msg = True, ''
+    crontab_entries = parse_crontab_contents(configuration, client_id,
+                                             crontab.splitlines())
+    try:
+        crontab_fd = open(crontab_path, "wb")
+        # TODO: filter out broken lines before write?
+        crontab_fd.write(crontab)
+        crontab_fd.close()
+        msg = "Found and saved %d valid crontab entries" % len(crontab_entries)
+    except Exception, exc:
+        status = False
+        msg = 'ERROR: writing %s crontab file: %s' % (client_id, exc)
+    return (status, msg)
 
 def cron_match(configuration, cron_time, entry):
     """Check if cron_time matches the time specs in crontab_entry"""

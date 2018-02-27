@@ -788,6 +788,10 @@ background: url(/images/icons/code.png) left center no-repeat;
     /* needed to avoid tabs bar growing to entire menu height */
     overflow: auto;
 }
+.crontab-tabs { 
+    /* needed to avoid tabs bar growing to entire menu height */
+    overflow: auto;
+}
 
 #contextual_help { 
     position: absolute;

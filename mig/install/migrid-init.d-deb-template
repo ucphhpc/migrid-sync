@@ -44,6 +44,7 @@ MIG_SCRIPT=${MIG_CODE}/server/grid_script.py
 MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
 MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
 MIG_EVENTS=${MIG_CODE}/server/grid_events.py
+MIG_CRON=${MIG_CODE}/server/grid_cron.py
 MIG_TRANSFERS=${MIG_CODE}/server/grid_transfers.py
 MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
@@ -57,7 +58,7 @@ MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload} [daemon]"
     echo "where daemon is left empty for all or given as one of the following"
-    echo "(script|monitor|sshmux|events|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)"
 }
 
 test_sftpsubsys_enabled() {
@@ -112,6 +113,17 @@ start_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG events daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+start_cron() {
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG cron daemon" ${SHORT_NAME} || true
     if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
@@ -220,6 +232,7 @@ start_all() {
     start_monitor
     start_sshmux
     start_events
+    start_cron
     start_transfers
     start_openid
     start_sftp
@@ -284,6 +297,27 @@ stop_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG events" ${SHORT_NAME} || true
+    # Try graceful shutdown so that state is properly saved
+    start-stop-daemon --stop --signal INT --quiet --oknodo --pidfile ${PID_FILE}
+    for delay in 1 2 3; do
+	status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} || break
+	sleep $delay
+    done
+    # Force kill if still running
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && \
+	start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE}
+    if ! status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}; then
+	rm -f ${PID_FILE}
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+stop_cron() {
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG cron" ${SHORT_NAME} || true
     # Try graceful shutdown so that state is properly saved
     start-stop-daemon --stop --signal INT --quiet --oknodo --pidfile ${PID_FILE}
     for delay in 1 2 3; do
@@ -420,6 +454,7 @@ stop_all() {
     stop_monitor
     stop_sshmux
     stop_events
+    stop_cron
     stop_transfers
     stop_openid
     stop_sftp
@@ -471,6 +506,17 @@ reload_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Reloading MiG events" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+reload_cron() {
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG cron" ${SHORT_NAME} || true
     if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
 	log_end_msg 0 || true
     else
@@ -580,6 +626,7 @@ reload_all() {
     reload_monitor
     reload_sshmux
     reload_events
+    reload_cron
     reload_transfers
     reload_openid
     reload_sftp
@@ -612,6 +659,12 @@ status_sshmux() {
 }
 status_events() {
     DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
+}
+status_cron() {
+    DAEMON_PATH=${MIG_CRON}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
@@ -676,6 +729,7 @@ status_all() {
     status_monitor
     status_sshmux
     status_events
+    status_cron
     status_transfers
     status_openid
     status_sftp
@@ -696,7 +750,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')

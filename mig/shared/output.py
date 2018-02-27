@@ -843,7 +843,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     </tbody>
 </table>
 ''')
-        elif i['object_type'] == 'trigger_log':
+        elif i['object_type'] in ('trigger_log', 'crontab_log'):
             log_content = i['log_content']
             lines.append('''
  <div class="form_container">

@@ -162,6 +162,7 @@ access the workflows.'''
               /* fix and reduce accordion spacing */
               $(".ui-accordion-header").css("padding-top", 0)
                                        .css("padding-bottom", 0).css("margin", 0);
+              /* NOTE: requires managers CSS fix for proper tab bar height */      
               $(".workflow-tabs").tabs();
               $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
         '''
@@ -312,7 +313,6 @@ your disposal:<br/>
 </div>
 """ % (label, vars_html, configuration.short_title, commands_html)
 
-
         # Make page with manage triggers tab and active jobs and log tab
 
         output_objects.append({'object_type': 'html_form', 'text':  '''
@@ -334,6 +334,17 @@ your disposal:<br/>
         output_objects.extend(oobjs)
         output_objects.append({'object_type': 'html_form', 'text': helper_html})
 
+        if configuration.site_enable_crontab:
+            output_objects.append({'object_type': 'html_form', 'text':  '''
+<p>You can combine these workflows with the personal '''})
+            output_objects.append({'object_type': 'link',
+                                   'destination': 'crontab.py',
+                                   'class': 'crontablink iconspace',
+                                   'text': 'schedule task'})
+            output_objects.append({'object_type': 'html_form', 'text':  '''
+facilities in case you want to trigger flows at given times rather than only
+in reaction to file system events.</p>
+'''})
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})

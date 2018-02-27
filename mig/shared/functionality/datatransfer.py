@@ -251,6 +251,7 @@ def main(client_id, user_arguments_dict):
         enableLogin("%s");
         addSource();
         %s
+        /* NOTE: requires managers CSS fix for proper tab bar height */      
         $(".datatransfer-tabs").tabs();
         $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
     ''' % (init_login, add_ready)
