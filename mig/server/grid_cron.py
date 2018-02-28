@@ -71,7 +71,7 @@ except ImportError, exc:
 
 from shared.base import force_utf8, client_dir_id, client_id_dir
 from shared.conf import get_configuration_object
-from shared.defaults import crontab_name, cron_log_name, \
+from shared.defaults import crontab_name, cron_output_dir, cron_log_name, \
     cron_log_size, cron_log_cnt, csrf_field
 from shared.events import get_time_expand_map, map_args_to_vars, \
     get_command_map, parse_crontab, cron_match
@@ -319,15 +319,19 @@ def __cron_log(configuration, client_id, msg, level="info"):
         """Wrapper to send a single msg to user cron log file"""
 
         client_dir = client_id_dir(client_id)
-        log_path = os.path.join(configuration.user_home, client_dir,
-                                cron_log_name)
+        log_dir_path = os.path.join(configuration.user_home, client_dir,
+                                    cron_output_dir)
+        log_path = os.path.join(log_dir_path, cron_log_name)
+        if not os.path.exists(log_dir_path):
+            try:
+                os.makedirs(log_dir_path)
+            except:
+                pass
         cron_logger = logging.getLogger('cron')
         cron_logger.setLevel(logging.INFO)
-        handler = logging.handlers.RotatingFileHandler(log_path,
-                maxBytes=cron_log_size,
-                backupCount=cron_log_cnt - 1)
-        formatter = \
-            logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        handler = logging.handlers.RotatingFileHandler(
+            log_path, maxBytes=cron_log_size, backupCount=cron_log_cnt - 1)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         handler.setFormatter(formatter)
         cron_logger.addHandler(handler)
         if level == 'error':

@@ -36,8 +36,8 @@ import re
 import time
 
 from shared.base import client_id_dir
-from shared.defaults import crontab_name, cron_log_cnt, cron_log_name, \
-     csrf_field
+from shared.defaults import crontab_name, cron_log_cnt, cron_output_dir, \
+     cron_log_name, csrf_field
 import shared.returnvalues as returnvalues
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.events import get_time_expand_map, get_command_map, load_crontab, \
@@ -76,10 +76,8 @@ def read_cron_log(configuration, client_id, flags):
         log_name = cron_log_name
         if i > 0:
             log_name += '.%d' % i
-        # TODO: move logs to user_settings or cron_output subdir?
-        #log_path = os.path.join(configuration.user_settings, client_dir,
         log_path = os.path.join(configuration.user_home, client_dir,
-                                log_name)
+                                cron_output_dir, log_name)
         configuration.logger.debug('read from %s' % log_path)
         try:
             log_fd = open(log_path)
