@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreezefile - View own frozen archive files
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 client.
 """
 
+import mimetypes
 import os
 
 import shared.returnvalues as returnvalues
@@ -105,10 +106,19 @@ archive dir.'''})
         logger.info('return %db from archive private file %s of size %db' % \
                     (len(entry['data']), abs_path, os.path.getsize(abs_path)))
         # Cut away all the usual web page formatting to show only contents
+        # Insert explicit content type to make sure clients don't break download
+        # early because they think it is plain text and find a bogus EOF in
+        # binary data.
+        (content_type, content_encoding) = mimetypes.guess_type(abs_path)
+        if not content_type:
+            content_type = 'application/octet-stream'
         output_objects = [{'object_type': 'start',
-                           'headers': [('Content-Disposition',
-                                        'attachment; filename="%s";' % \
-                                        os.path.basename(abs_path))]
+                           'headers': [
+                               ('Content-Type', content_type),
+                               ('Content-Disposition',
+                                'attachment; filename="%s";' % \
+                                os.path.basename(abs_path))
+                               ]
                            },
                           entry,
                           {'object_type': 'script_status'},
