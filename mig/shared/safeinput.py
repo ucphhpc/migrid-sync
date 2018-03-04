@@ -1211,6 +1211,7 @@ def guess_type(name):
             'minprice',
             'backups',
             'crontab',
+            'atjobs',
             ):
             __type_map[key] = valid_plain_text
         for key in (

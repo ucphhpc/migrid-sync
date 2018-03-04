@@ -41,7 +41,7 @@ from shared.defaults import crontab_name, cron_log_cnt, cron_output_dir, \
 import shared.returnvalues as returnvalues
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.events import get_time_expand_map, get_command_map, load_crontab, \
-     parse_and_save_crontab
+     parse_and_save_crontab, load_atjobs, parse_and_save_atjobs
 from shared.fileio import makedirs_rec
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
@@ -57,12 +57,15 @@ enabled_strings = ('on', 'yes', 'true')
 
 crontab_edit = cm_options.copy()
 crontab_edit['mode'] = 'shell'
+atjobs_edit = cm_options.copy()
+atjobs_edit['mode'] = 'shell'
 
 def signature():
     """Signature of the main function"""
 
     defaults = {'action': ['show'],
                 'crontab': [''],
+                'atjobs': [''],
                 'flags': ['']}
     return ['html_form', defaults]
 
@@ -173,7 +176,7 @@ Please contact the site admins %s if you think they should be enabled.
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     crontab_contents = load_crontab(client_id, configuration)
-    help_txt = """### Crontab
+    crontab_help = """### Cron Jobs: Regularly Running Tasks
 # This is a standard crontab specification describing actions to run on your
 # behalf at given times. Lines starting with a '#' are comments, only used for
 # explaining things. All other lines represent a scheduled task.
@@ -194,7 +197,23 @@ Please contact the site admins %s if you think they should be enabled.
 # m h  dom mon dow   command
 """
     if not crontab_contents:
-        crontab_contents += help_txt
+        crontab_contents += crontab_help
+
+    atjobs_help = """### At Jobs: One-time Tasks
+# This is a basic at schedule file. It is similar to the crontab only with
+# time stamps leading the command line.
+#
+# It uses the ISO time format YYYY-MM-DD HH:MM:SS so to schedule a one-time
+# backup like the cron job example and make it run on the 14th of May 2019
+# 42 minutes past midnight one would enter something like:
+# 2019-05-14 00:42:00 pack Documents Documents-backup.zip
+# You can insert such commands below and just leave out the leading '#'.
+#
+# yyyy-mm-dd hh:mm:ss command
+"""
+    atjobs_contents = load_atjobs(client_id, configuration)
+    if not atjobs_contents:
+        atjobs_contents += atjobs_help
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
@@ -235,42 +254,64 @@ Please contact the site admins %s if you think they should be enabled.
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="action" value="save" />
 <p>
-You can schedule %(site)s commands to run at given times on your behalf. In
+You can schedule %(site)s commands to run on your behalf at given times. In
 that way you can automate many of the routine tasks that you would in practice
 be able to do manually, but which would be tedious and inconvenient to repeat
 every time. This includes tasks like regular backup or archiving, which
 typically makes most sense to run e.g. every night or once a week.
 </p>
-<h3>Crontab Schedule</h3>
+<p>Information about any scheduled actions you configure automatically gets
+logged and you can use View Logs above to inspect them.
+</p>
+<p class="warningtext">Please note that for security reasons you can ONLY
+schedule runs of a limited set of commands, namely a selection of the most
+useful actions you would be able to interactively run. 
+</p>
+<p>
+The fold-outs at the bottom contain additional help on the available commands
+and the format in use.
+</p>
+<h3>Cron Jobs: Repeating Command Schedule</h3>
 Each line here follows the standard UN*X crontab format with five time fields
 specifying when to run, followed by the command to run.
-<p class="warningtext">Please note that for security reasons you can ONLY run a
-limited set of commands, namely a selection of the most useful actions you
-would be able to interactively run.</p>
-<p>Information about any cron actions you configure automatically gets logged
-and you can use View Logs above to inspect them.
-</p>
 '''
 
             keyword_crontab = "crontabentries"
-            area = '''
+            crontab_area = '''
 <textarea id="%(keyword_crontab)s" cols=82 rows=5
           name="crontab">%(current_crontab)s</textarea>
 '''
-            html += wrap_edit_area(keyword_crontab, area, crontab_edit, 'BASIC')
+            html += wrap_edit_area(keyword_crontab, crontab_area, crontab_edit,
+                                   'BASIC')
+
+            html += '''
+            <h3>At Jobs: One-time Command Schedule</h3>
+For one-time commands you can use the following field instead. Each line
+consists of a time stamp in ISO format followed by the command to run at that
+particular time.
+'''
+            keyword_atjobs = "atjobsentries"
+            atjobs_area = '''
+<textarea id="%(keyword_atjobs)s" cols=82 rows=5
+          name="atjobs">%(current_atjobs)s</textarea>
+'''
+            html += wrap_edit_area(keyword_atjobs, atjobs_area, atjobs_edit,
+                                   'BASIC')
+            
             html += '''<br/>
-<input type="submit" value="Save Crontab Settings" />
+<input type="submit" value="Save Cron/At Jobs Settings" />
 </form>
 '''
 
             vars_html = ''
             dummy_rule = {'run_as': client_id,
-                          'command': ['touch', 'crontest-+CRONYEAR+-+CRONMONTH+-+CRONDAY+.txt']}
-            cron_times = [datetime.datetime.now(),
-                          datetime.datetime(2020, 12, 24, 12, 42, 56),
-                          datetime.datetime(2042, 1, 6, 9, 2, 6)]
+                          'command': ['touch', 'crontest-+SCHEDYEAR+-+SCHEDMONTH+-+SCHEDDAY+.txt']}
+            now = datetime.datetime.now()
+            now = now.replace(microsecond=0)
+            cron_times = [now, datetime.datetime(now.year+1, 12, 24, 12, 42),
+                          datetime.datetime(now.year+2, 1, 2, 9, 2, 42)]
             for timestamp in cron_times:
-                vars_html += "<b>Expanded variables at %s:</b><br/>" % \
+                vars_html += "<b>Expanded time %s variables:</b><br/>" % \
                              timestamp
                 expanded = get_time_expand_map(timestamp, dummy_rule)
                 for (key, val) in expanded.items():
@@ -291,9 +332,9 @@ and you can use View Logs above to inspect them.
             html += """
 <br/>
 <div class='variables-accordion'>
-<h4>Help on available trigger variable names and values</h4>
+<h4>Help on available cron/at variable names and values</h4>
 <p>
-Scheduled tasks can use a number of helper variables on the form +CRONXYZ+ to
+Scheduled tasks can use a number of helper variables on the form +SCHEDXYZ+ to
 dynamically act on times. Most are automatically expanded for the particular
 cron timestamp as shown in the following examples:<br/>
 %s
@@ -311,6 +352,8 @@ and so on. You have the following commands at your disposal:<br/>
             fill_helpers.update({
                 'current_crontab': crontab_contents,
                 'keyword_crontab': keyword_crontab,
+                'current_atjobs': atjobs_contents,
+                'keyword_atjobs': keyword_atjobs,
                 })
             output_objects.append({'object_type': 'html_form', 'text':
                                    html % fill_helpers})
@@ -353,7 +396,25 @@ and so on. You have the following commands at your disposal:<br/>
                                            parse_msg})
                 else:
                     output_objects.append({'object_type': 'text', 'text':
-                                           'Saved scheduled tasks'})
+                                           'Saved repeating task schedule'})
+
+            atjobs = '\n'.join(accepted.get('atjobs', ['']))
+            (parse_status, parse_msg) = \
+                           parse_and_save_atjobs(atjobs, client_id,
+                                                  configuration)
+            if not parse_status:
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       'Error parsing and saving atjobs: %s'
+                                       % parse_msg})
+                output_status = returnvalues.CLIENT_ERROR
+            else:
+                if parse_msg:
+                    output_objects.append({'object_type': 'html_form', 'text': 
+                                           '<p class="warningtext">%s</p>' % \
+                                           parse_msg})
+                else:
+                    output_objects.append({'object_type': 'text', 'text':
+                                           'Saved one-time task schedule'})
             output_objects.append({'object_type': 'link',
                                    'destination': 'crontab.py',
                                    'text': 'Return to schedule task overview'})

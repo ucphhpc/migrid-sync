@@ -388,6 +388,18 @@ def imagepreview(user_arguments_dict):
     return stub('shared.functionality.imagepreview', user_arguments_dict)
 
 
+def sharelink(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.sharelink', user_arguments_dict)
+
+
+def crontab(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.crontab', user_arguments_dict)
+
+
 def textarea(user_arguments_dict):
     """Wrap backend of same name"""
 
@@ -875,6 +887,8 @@ expose_functions = [object_type_info,
                     mqueue,
                     datatransfer,
                     imagepreview,
+                    sharelink,
+                    crontab,
                     textarea,
                     updateresconfig,
                     addresowner,

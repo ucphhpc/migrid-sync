@@ -193,6 +193,7 @@ workflows_log_name = 'workflow.log'
 workflows_log_size = 67108864
 workflows_log_cnt = 2
 
+atjobs_name = 'atjobs'
 crontab_name = 'crontab'
 cron_log_name = 'cron.log'
 # 64M = 67108864
