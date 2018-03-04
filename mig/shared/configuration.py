@@ -1220,10 +1220,10 @@ location.""" % self.config_file
             req = config.get('SITE', 'default_menu').split()
             self.site_default_menu = [i for i in req if menu_items.has_key(i)]
         else:
-            self.site_default_menu = ['dashboard', 'submitjob', 'files',
-                                      'jobs', 'vgrids', 'resources',
+            self.site_default_menu = ['dashboard', 'files', 'submitjob',
+                                      'jobs', 'resources', 'vgrids',
                                       'downloads', 'runtimeenvs', 'people',
-                                      'settings', 'docs', 'logout']
+                                      'settings', 'crontab', 'docs', 'logout']
         if config.has_option('SITE', 'simple_menu'):
             req = config.get('SITE', 'simple_menu').split()
             self.site_simple_menu = [i for i in req if menu_items.has_key(i)]
@@ -1235,10 +1235,10 @@ location.""" % self.config_file
             self.site_advanced_menu = [i for i in req if menu_items.has_key(i)]
         else:
             self.site_advanced_menu = ['dashboard', 'submitjob', 'files',
-                                      'jobs', 'vgrids', 'resources',
-                                      'downloads', 'runtimeenvs', 'people',
-                                      'settings', 'vmachines', 'shell', 'docs',
-                                       'logout']
+                                       'jobs', 'vgrids', 'resources',
+                                       'downloads', 'runtimeenvs', 'people',
+                                       'settings', 'crontab', 'vmachines',
+                                       'shell', 'docs', 'logout']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()
             self.site_user_menu = [i for i in req if menu_items.has_key(i)]
