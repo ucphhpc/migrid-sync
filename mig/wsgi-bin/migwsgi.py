@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -58,12 +58,13 @@ def stub(function, configuration, client_id, user_arguments_dict, environ):
         exec 'from %s import main' % function
     except Exception, err:
         _logger.error("could not import %s: %s" % (function, err))
-        output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'Could not import module! %s: %s'
-                               % (function, err)}])
+        output_objects.extend([{'object_type': 'error_text', 'text':
+                              'Could not load backend: %s' % function}])
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not isinstance(user_arguments_dict, dict):
+        _logger.error("invalid user args %s for %s" % (user_arguments_dict,
+                                                       function))
         output_objects.extend([{'object_type': 'error_text', 'text'
                               : 'user_arguments_dict is not a dictionary/struct type!'
                               }])
@@ -117,7 +118,8 @@ def application(environ, start_response):
 
     sys.stdout = sys.stderr
     configuration = get_configuration_object()
-
+    _logger = configuration.logger
+    
     # get and log ID of user currently logged in
 
     # We can't import helper before environ is ready because it indirectly
@@ -136,19 +138,23 @@ def application(environ, start_response):
     if user_arguments_dict.has_key('output_format'):
         output_format = user_arguments_dict['output_format'][0]
 
+    backend = "UNKNOWN"
     try:
         if not configuration.site_enable_wsgi:
-            raise Exception("WSGI interface not enabled for this grid")
+            _logger.error("WSGI interface is disabled in configuration")
+            raise Exception("WSGI interface not enabled for this site")
         
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to dashboard if all fails
         script_path = requested_page(environ, 'dashboard.py')
-        backend = os.path.basename(script_path).replace('.py' , '')
+        backend = os.path.basename(script_path).replace('.py', '')
         module_path = 'shared.functionality.%s' % backend
         (output_objs, ret_val) = stub(module_path, configuration,
                                       client_id, user_arguments_dict, environ)
         status = '200 OK'
     except Exception, exc:
+        _logger.error("handling of WSGI request for %s from %s failed: %s" % \
+                      (backend, client_id, exc))
         status = '500 ERROR'
         (output_objs, ret_val) = ([{'object_type': 'title', 'text'
                                     : 'Unsupported Interface'},
@@ -176,9 +182,11 @@ def application(environ, start_response):
         if entry['object_type'] == 'start':
             start_entry = entry
     if not start_entry:
+        _logger.info("WSGI adding explicit headers: %s" % default_headers)
         start_entry = {'object_type': 'start', 'headers': default_headers}
         output_objs = [start_entry] + output_objs
     elif not start_entry.get('headers', []):
+        _logger.info("WSGI adding missing headers: %s" % default_headers)
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
 
@@ -187,13 +195,16 @@ def application(environ, start_response):
     # Explicit None means error during output formatting - empty string is okay
 
     if output is None:
+        _logger.error("WSGI %s output formatting failed: %s" % (output_format,
+                                                                output_objs))
         output = 'Error: output could not be correctly delivered!'
 
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
-        response_headers.append(('Content-Length', str(len(output))))
-
+        content_length = len(output)
+        _logger.info("WSGI adding explicit content length %s" % content_length)
+        response_headers.append(('Content-Length', str(content_length)))
+    
     start_response(status, response_headers)
 
     return [output]
-
 
