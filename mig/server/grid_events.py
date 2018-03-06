@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_events - event handler to monitor files and trigger actions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1444,19 +1444,7 @@ def load_dir_cache(configuration, vgrid_name):
 
     # Load dir cache or generate new cache
 
-    if not os.path.exists(vgrid_dir_cache_filepath):
-
-        # cache_t1 = time.time()
-
-        dir_cache[vgrid_name] = {}
-        generate_vgrid_dir_cache(configuration, vgrid_name)
-
-        # cache_t2 = time.time()
-        # logger.debug('(%s) Generated new dir_cache for: %s in %s secs'
-        #             % (pid, vgrid_name, str(cache_t2 - cache_t1)))
-
-        save_dir_cache(vgrid_name)
-    else:
+    if os.path.exists(vgrid_dir_cache_filepath):
 
         # cache_t1 = time.time()
 
@@ -1468,10 +1456,11 @@ def load_dir_cache(configuration, vgrid_name):
         #             % (pid, vgrid_name, str(cache_t2 - cache_t1)))
 
         if loaded_dir_cache is False:
-            result = False
+            generate_cache = True
             logger.error('(%s) Failed to load vgrid_dir_cache for: %s from file: %s'
                           % (pid, vgrid_name, vgrid_dir_cache_filepath))
         else:
+            generate_cache = False
             # TODO: once all caches are migrated we can remove this loop again
             # Make sure we only have utf8 everywhere to avoid encoding issues
             for old_path in [i for i in loaded_dir_cache.keys() if \
@@ -1483,6 +1472,23 @@ def load_dir_cache(configuration, vgrid_name):
                 loaded_dir_cache[new_path] = entry
                 
             dir_cache[vgrid_name] = loaded_dir_cache
+    else:
+        generate_cache = True
+
+    if generate_cache:
+        logger.info('(%s) Force generation of vgrid_dir_cache for: %s' % \
+                    (pid, vgrid_name))
+        
+        # cache_t1 = time.time()
+
+        dir_cache[vgrid_name] = {}
+        generate_vgrid_dir_cache(configuration, vgrid_name)
+
+        # cache_t2 = time.time()
+        # logger.debug('(%s) Generated new dir_cache for: %s in %s secs'
+        #             % (pid, vgrid_name, str(cache_t2 - cache_t1)))
+
+        result = save_dir_cache(vgrid_name)
 
     return result
 
@@ -1659,7 +1665,7 @@ def monitor(configuration, vgrid_name):
                          % (pid, vgrid_name, add_monitor_t2
                         - add_monitor_t1))
         else:
-            logger.error('(%s) Failed to load_dir_cache for: %s'
+            logger.error('(%s) Failed to load / generate dir cache for: %s'
                          % (pid, vgrid_name))
             stop_running.set()
 
@@ -1671,6 +1677,7 @@ def monitor(configuration, vgrid_name):
             time.sleep(1)
         except KeyboardInterrupt:
             print '(%s) caught interrupt' % pid
+            logger.info('(%s) caught interrupt' % pid)
             stop_running.set()
 
     print '(%s) Saving cache for vgrid: %s' % (pid, vgrid_name)
