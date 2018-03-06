@@ -32,6 +32,7 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import requested_page
+from shared.defaults import download_block_size
 from shared.conf import get_configuration_object
 from shared.objecttypes import get_object_type_info
 from shared.output import validate, format_output
@@ -199,12 +200,29 @@ def application(environ, start_response):
                                                                 output_objs))
         output = 'Error: output could not be correctly delivered!'
 
+    content_length = len(output)
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
-        content_length = len(output)
         _logger.info("WSGI adding explicit content length %s" % content_length)
         response_headers.append(('Content-Length', str(content_length)))
     
     start_response(status, response_headers)
 
-    return [output]
-
+    # NOTE: we consistently hit download error for archive files reaching ~2GB
+    #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer
+    #       the problem for the exact same files. It seems wsgi has a limited
+    #       output buffer, so we explicitly force significantly smaller chunks
+    #       here as a workaround. 
+    chunk_parts = 1
+    if content_length > download_block_size:
+        chunk_parts = content_length / download_block_size + \
+                      (content_length % download_block_size != 0)
+    _logger.info("WSGI yielding %d output parts (%db)" % (chunk_parts,
+                                                          content_length))
+    for i in xrange(chunk_parts):
+        _logger.debug("WSGI yielding part %d / %d output parts" % \
+                     (i+1, chunk_parts))
+        # end index may be after end of content - but no problem
+        part = output[i*download_block_size:(i+1)*download_block_size]
+        yield part
+    _logger.info("WSGI finished yielding all %d output parts" % chunk_parts)
+    

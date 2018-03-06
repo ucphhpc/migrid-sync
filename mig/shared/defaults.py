@@ -174,6 +174,9 @@ default_max_chunks = 1024
 # 64M = 67108864
 upload_block_size = 67108864
 upload_tmp_dir = '.upload-cache'
+# Please read the chunk note in wsgi handler before tuning this value above 1G!
+# 256M = 268435456
+download_block_size = 268435456
 wwwpublic_alias = 'public'
 public_archive_dir = 'archives'
 public_archive_index = 'published-archive.html'
