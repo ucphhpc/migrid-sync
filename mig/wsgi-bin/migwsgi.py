@@ -183,11 +183,11 @@ def application(environ, start_response):
         if entry['object_type'] == 'start':
             start_entry = entry
     if not start_entry:
-        _logger.info("WSGI adding explicit headers: %s" % default_headers)
+        _logger.debug("WSGI adding explicit headers: %s" % default_headers)
         start_entry = {'object_type': 'start', 'headers': default_headers}
         output_objs = [start_entry] + output_objs
     elif not start_entry.get('headers', []):
-        _logger.info("WSGI adding missing headers: %s" % default_headers)
+        _logger.debug("WSGI adding missing headers: %s" % default_headers)
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
 
@@ -202,7 +202,7 @@ def application(environ, start_response):
 
     content_length = len(output)
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
-        _logger.info("WSGI adding explicit content length %s" % content_length)
+        _logger.debug("WSGI adding explicit content length %s" % content_length)
         response_headers.append(('Content-Length', str(content_length)))
     
     start_response(status, response_headers)
@@ -214,15 +214,18 @@ def application(environ, start_response):
     #       here as a workaround. 
     chunk_parts = 1
     if content_length > download_block_size:
-        chunk_parts = content_length / download_block_size + \
-                      (content_length % download_block_size != 0)
-    _logger.info("WSGI yielding %d output parts (%db)" % (chunk_parts,
-                                                          content_length))
+        chunk_parts = content_length / download_block_size
+        if content_length % download_block_size != 0:
+            chunk_parts += 1
+        _logger.info("WSGI %s yielding %d output parts (%db)" % \
+                     (backend, chunk_parts, content_length))
     for i in xrange(chunk_parts):
-        _logger.debug("WSGI yielding part %d / %d output parts" % \
-                     (i+1, chunk_parts))
+        _logger.debug("WSGI %s yielding part %d / %d output parts" % \
+                     (backend, i+1, chunk_parts))
         # end index may be after end of content - but no problem
         part = output[i*download_block_size:(i+1)*download_block_size]
         yield part
-    _logger.info("WSGI finished yielding all %d output parts" % chunk_parts)
+    if chunk_parts > 1:
+        _logger.info("WSGI %s finished yielding all %d output parts" % \
+                     (backend, chunk_parts))
     
