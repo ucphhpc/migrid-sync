@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jupyter - Launch an interactive Jupyter session
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -60,7 +60,7 @@ from shared.ssh import generate_ssh_rsa_key_pair
 from shared.fileio import make_symlink, pickle, unpickle, write_file
 
 
-# TODO -> Validate that this actually works
+# TODO: Validate that this actually works
 def is_active(pickle_state, timeout=7200):
     """
     :param pickle_state: expects a pickle object dictionary that
@@ -306,9 +306,6 @@ def main(client_id, user_arguments_dict):
 
     # Subsys sftp support
     if configuration.site_enable_sftp_subsys:
-        sftp_addresses = socket.gethostbyname_ex(
-            configuration.user_sftp_subsys_address or socket.getfqdn())
-
         # Restrict possible mount agent
         auth_content = []
         restrict_opts = 'no-agent-forwarding,no-port-forwarding,no-pty,'
