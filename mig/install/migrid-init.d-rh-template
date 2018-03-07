@@ -110,7 +110,7 @@ start_script() {
 	exit $RET
     else 
 	# some input to kick the server into gear if enabled ...
-	pgrep -q ${DAEMON_PATH} && echo "" >> ${MIG_CODE}/server/server.stdin
+	pgrep -f "${DAEMON_PATH}" > /dev/null && echo "" >> ${MIG_CODE}/server/server.stdin
 	success
     fi
     echo
@@ -675,7 +675,7 @@ status_sftpsubsys() {
     test_sftpsubsys_enabled || return
     DAEMON_PATH=${MIG_SFTP}
     SHORT_NAME=$(basename ${DAEMON_PATH})
-    pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}" > /dev/null
 }
 
 status_all() {

@@ -80,7 +80,7 @@ start_script() {
     log_daemon_msg "Starting MiG server daemon" ${SHORT_NAME} || true
     if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER}  --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	# some input to kick the server into gear if enabled ...
-	pgrep -q ${DAEMON_PATH} && echo "" >> ${MIG_CODE}/server/server.stdin
+	pgrep -f "${DAEMON_PATH}" > /dev/null && echo "" >> ${MIG_CODE}/server/server.stdin
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -724,7 +724,7 @@ status_sftpsubsys() {
     test_sftpsubsys_enabled || return
     DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
-    pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}" > /dev/null
 }
 
 status_all() {
