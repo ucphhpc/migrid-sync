@@ -1713,6 +1713,12 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, stop_handler)
 
+    if not configuration.site_enable_events:
+        err_msg = "Event trigger support is disabled in configuration!"
+        logger.error(err_msg)
+        print err_msg
+        sys.exit(1)
+    
     print '''This is the MiG event handler daemon which monitors VGrid files
 and triggers any configured events when target files are created, modifed or
 deleted. VGrid owners can configure rules to trigger such events based on file

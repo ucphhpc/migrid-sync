@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_vmproxy - VM proxy wrapper daemon
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

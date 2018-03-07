@@ -79,8 +79,8 @@ start_script() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG server daemon" ${SHORT_NAME} || true
     if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER}  --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
-	# some input to kick the server into gear ...
-	echo "" >> ${MIG_CODE}/server/server.stdin
+	# some input to kick the server into gear if enabled ...
+        pgrep -q ${DAEMON_PATH} && echo "" >> ${MIG_CODE}/server/server.stdin
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -243,6 +243,7 @@ start_all() {
     start_ftps
     start_imnotify
     start_vmproxy
+    return 0
 }
 
 # NOTE: We always manualy remove pid files as only the Debian start-stop-daemon
@@ -465,6 +466,7 @@ stop_all() {
     stop_ftps
     stop_imnotify
     stop_vmproxy
+    return 0
 }
 
 # NOTE: start-stop-daemon --stop --signal HUP BLA just means send HUP signal
@@ -637,6 +639,7 @@ reload_all() {
     reload_ftps
     reload_imnotify
     reload_vmproxy
+    return 0
 }
 
 status_script() {
@@ -740,6 +743,7 @@ status_all() {
     status_ftps
     status_imnotify
     status_vmproxy
+    return 0
 }
 
 

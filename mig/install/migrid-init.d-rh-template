@@ -102,6 +102,7 @@ start_script() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Starting MiG server daemon: $SHORT_NAME"
+    echo -n "Starting MiG server daemon: $SHORT_NAME" >> /tmp/migrid-init.log
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/mig.out 2>&1 &"
     RET=$?
@@ -109,8 +110,8 @@ start_script() {
 	failure
 	exit $RET
     else 
-	# some input to kick the server into gear ...
-	echo "" >> ${MIG_CODE}/server/server.stdin
+	# some input to kick the server into gear if enabled ...
+        pgrep -q ${DAEMON_PATH} && echo "" >> ${MIG_CODE}/server/server.stdin
 	success
     fi
     echo
@@ -300,6 +301,7 @@ start_all() {
     start_ftps
     start_imnotify
     start_vmproxy
+    return 0
 }
 
 stop_script() {
@@ -456,6 +458,7 @@ stop_all() {
     stop_ftps
     stop_imnotify
     stop_vmproxy
+    return 0
 }
 
 reload_script() {
@@ -588,6 +591,7 @@ reload_all() {
     reload_ftps
     reload_imnotify
     reload_vmproxy
+    return 0
 }
 
 status_script() {
@@ -691,6 +695,7 @@ status_all() {
     status_ftps
     status_imnotify
     status_vmproxy
+    return 0
 }
 
 

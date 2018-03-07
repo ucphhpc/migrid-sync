@@ -111,13 +111,14 @@ def generate_confs(
     enable_wsgi='True',
     wsgi_procs='10',
     enable_jobs='True',
-    enable_sandboxes='True',
-    enable_vmachines='True',
-    enable_jupyter='False',
+    enable_events='True',
     enable_sharelinks='True',
     enable_transfers='True',
     enable_freeze='True',
+    enable_sandboxes='False',
+    enable_vmachines='False',
     enable_preview='False',
+    enable_jupyter='False',
     enable_hsts='',
     enable_vhost_certs='',
     enable_verify_certs='',
@@ -126,7 +127,7 @@ def generate_confs(
     enable_crontab='False',
     enable_imnotify='False',
     enable_dev_accounts='False',
-    enable_openid='True',
+    enable_openid='False',
     mig_oid_provider='',
     ext_oid_provider='',
     daemon_keycert='',
@@ -195,13 +196,14 @@ def generate_confs(
     user_dict['__ENABLE_WSGI__'] = enable_wsgi
     user_dict['__WSGI_PROCS__'] = wsgi_procs
     user_dict['__ENABLE_JOBS__'] = enable_jobs
-    user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
-    user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
-    user_dict['__ENABLE_JUPYTER__'] = enable_jupyter
+    user_dict['__ENABLE_EVENTS__'] = enable_events
     user_dict['__ENABLE_SHARELINKS__'] = enable_sharelinks
     user_dict['__ENABLE_TRANSFERS__'] = enable_transfers
     user_dict['__ENABLE_FREEZE__'] = enable_freeze
+    user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
+    user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
     user_dict['__ENABLE_PREVIEW__'] = enable_preview
+    user_dict['__ENABLE_JUPYTER__'] = enable_jupyter
     user_dict['__ENABLE_HSTS__'] = enable_hsts
     user_dict['__ENABLE_VHOST_CERTS__'] = enable_vhost_certs
     user_dict['__ENABLE_VERIFY_CERTS__'] = enable_verify_certs
@@ -799,12 +801,14 @@ def create_user(
     enable_wsgi = 'True'
     wsgi_procs = '5'
     enable_jobs = 'True'
-    enable_sandboxes = 'True'
-    enable_vmachines = 'True'
+    enable_events = 'True'
     enable_sharelinks = 'True'
     enable_transfers = 'True'
-    enable_freeze = 'True'
+    enable_freeze = 'False'
+    enable_sandboxes = 'False'
+    enable_vmachines = 'False'
     enable_preview = 'False'
+    enable_jupyter = 'False'
     enable_hsts = 'False'
     enable_vhost_certs = 'False'
     enable_verify_certs = 'False'
@@ -897,12 +901,14 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_wsgi,
         wsgi_procs,
         enable_jobs,
-        enable_sandboxes,
-        enable_vmachines,
+        enable_events,
         enable_sharelinks,
         enable_transfers,
         enable_freeze,
+        enable_sandboxes,
+        enable_vmachines,
         enable_preview,
+        enable_jupyter,
         enable_hsts,
         enable_vhost_certs,
         enable_verify_certs,

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_script - the core job handling daemon on a MiG server
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -250,6 +250,15 @@ signal.signal(signal.SIGINT, clean_shutdown)
 # Allow e.g. logrotate to force log re-open after rotates
 signal.signal(signal.SIGHUP, hangup_handler)
 
+configuration = get_configuration_object()
+logger = configuration.logger
+
+if not configuration.site_enable_jobs:
+    err_msg = "Job support is disabled in configuration!"
+    logger.error(err_msg)
+    print err_msg
+    sys.exit(1)
+    
 print """
 Running main grid 'daemon'.
 
@@ -257,8 +266,6 @@ Set the MIG_CONF environment to the server configuration path
 unless it is available in the default path
 mig/server/MiGserver.conf
 """
-configuration = get_configuration_object()
-logger = configuration.logger
 logger.info('Starting MiG server')
 
 # Load queues from file dump if available

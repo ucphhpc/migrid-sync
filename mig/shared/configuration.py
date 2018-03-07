@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -557,6 +557,8 @@ location.""" % self.config_file
         # print "logger initialized (level " + logger_obj.loglevel() + ")"
         # logger.debug("logger initialized")
 
+        # Mandatory options first
+        
         try:
             self.mig_server_id = config.get('GLOBAL', 'mig_server_id')
             self.mrsl_files_dir = config.get('GLOBAL', 'mrsl_files_dir')
@@ -632,6 +634,9 @@ location.""" % self.config_file
                 pass
             raise Exception('Failed to parse configuration: %s' % err)
 
+        # Remaining options in order of importance - i.e. options needed for
+        # later parsing must be parsed and set first.
+
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
             admins = config.get('GLOBAL', 'admin_list')
@@ -662,19 +667,16 @@ location.""" % self.config_file
             self.migserver_https_sid_url = config.get(
                 'GLOBAL', 'migserver_https_sid_url')
 
-        if config.has_option('GLOBAL', 'rate_limit_db'):
-            self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
+        # More paths mainly for optional components
+
+        if config.has_option('GLOBAL', 'mig_code_base'):
+            self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
-            self.rate_limit_db = os.path.join(self.mig_system_files,
-                                              'daemon-rate-limit.db')
+            self.mig_code_base = os.path.dirname(self.mig_server_home.rstrip(os.sep))
         if config.has_option('GLOBAL', 'freeze_home'):
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
-        else:
-            self.freeze_home = ''
         if config.has_option('GLOBAL', 'sharelink_home'):
             self.sharelink_home = config.get('GLOBAL', 'sharelink_home')
-        else:
-            self.sharelink_home = ''
         if config.has_option('GLOBAL', 'seafile_mount'):
             self.seafile_mount = config.get('GLOBAL', 'seafile_mount')
         if config.has_option('GLOBAL', 'openid_store'):
@@ -686,11 +688,31 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'sessid_to_jupyter_mount_link_home'):
             self.sessid_to_jupyter_mount_link_home = config.get('GLOBAL',
                     'sessid_to_jupyter_mount_link_home')
-        if config.has_option('GLOBAL', 'jupyter_url'):
-            self.jupyter_url = config.get('GLOBAL', 'jupyter_url')
-        if config.has_option('GLOBAL', 'jupyter_base_url'):
-            self.jupyter_base_url = config.get('GLOBAL', 'jupyter_base_url')
+        if config.has_option('GLOBAL', 'vms_builder_home'):
+            self.vms_builder_home = config.get('GLOBAL', 'vms_builder_home')
+        else:
+            self.vms_builder_home = os.path.join(self.server_home, 'vms_builder')
 
+        if config.has_option('GLOBAL', 'rate_limit_db'):
+            self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
+        else:
+            self.rate_limit_db = os.path.join(self.mig_system_files,
+                                              'daemon-rate-limit.db')
+
+        # Component settings
+        
+        if config.has_option('SITE', 'enable_jobs'):
+            self.site_enable_jobs = config.getboolean('SITE', 'enable_jobs')
+        else:
+            self.site_enable_jobs = True
+        if config.has_option('GLOBAL', 'user_monitor_log'):
+            self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
+        if config.has_option('SITE', 'enable_events'):
+            self.site_enable_events = config.getboolean('SITE', 'enable_events')
+        else:
+            self.site_enable_events = True
+        if config.has_option('GLOBAL', 'user_events_log'):
+            self.user_events_log = config.get('GLOBAL', 'user_events_log')
         if config.has_option('SITE', 'enable_sftp'):
             self.site_enable_sftp = config.getboolean('SITE', 'enable_sftp')
         else:
@@ -871,10 +893,6 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_seafile_alias'):
             self.user_seafile_alias = config.get('GLOBAL', 
                                                  'user_seafile_alias')
-        if config.has_option('SITE', 'enable_jobs'):
-            self.site_enable_jobs = config.getboolean('SITE', 'enable_jobs')
-        else:
-            self.site_enable_jobs = True
         if config.has_option('SITE', 'enable_duplicati'):
             self.site_enable_duplicati = config.getboolean('SITE', 'enable_duplicati')
         else:
@@ -888,6 +906,8 @@ location.""" % self.config_file
             self.site_enable_crontab = config.getboolean('SITE', 'enable_crontab')
         else:
             self.site_enable_crontab = False
+        if config.has_option('GLOBAL', 'user_cron_log'):
+            self.user_cron_log = config.get('GLOBAL', 'user_cron_log')
         if config.has_option('SITE', 'enable_imnotify'):
             self.site_enable_imnotify = config.getboolean('SITE', 'enable_imnotify')
         else:
@@ -977,32 +997,40 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_ext_cert_title'):
             self.user_ext_cert_title = config.get('GLOBAL', 
                                                  'user_ext_cert_title')
-        if config.has_option('GLOBAL', 'user_monitor_log'):
-            self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
+        if config.has_option('SITE', 'enable_sshmux'):
+            self.site_enable_sshmux = config.getboolean('SITE', 'enable_sshmux')
+        else:
+            self.site_enable_sshmux = True
         if config.has_option('GLOBAL', 'user_sshmux_log'):
             self.user_sshmux_log = config.get('GLOBAL', 'user_sshmux_log')
+        if config.has_option('SITE', 'enable_vmachines'):
+            self.site_enable_vmachines = config.getboolean('SITE',
+                                                           'enable_vmachines')
+        else:
+            self.site_enable_vmachines = False
         if config.has_option('GLOBAL', 'user_vmproxy_key'):
             self.user_vmproxy_key = config.get('GLOBAL', 
                                                'user_vmproxy_key')
         if config.has_option('GLOBAL', 'user_vmproxy_log'):
             self.user_vmproxy_log = config.get('GLOBAL', 'user_vmproxy_log')
-        if config.has_option('GLOBAL', 'user_events_log'):
-            self.user_events_log = config.get('GLOBAL', 'user_events_log')
-        if config.has_option('GLOBAL', 'user_cron_log'):
-            self.user_cron_log = config.get('GLOBAL', 'user_cron_log')
-        if config.has_option('GLOBAL', 'user_transfers_log'):
-            self.user_transfers_log = config.get('GLOBAL', 'user_transfers_log')
+        if config.has_option('GLOBAL', 'vm_proxy_host'):
+            self.vm_proxy_host = config.get('GLOBAL', 'vm_proxy_host')
+        else:
+            self.vm_proxy_host = self.server_fqdn
+        if config.has_option('GLOBAL', 'vm_proxy_port'):
+            self.vm_proxy_port = config.getint('GLOBAL', 'vm_proxy_port')
+        if config.has_option('GLOBAL', 'vm_client_port'):
+            self.vm_client_port = config.getint('GLOBAL', 'vm_client_port')
+        if config.has_option('GLOBAL', 'vm_applet_port'):
+            self.vm_applet_port = config.getint('GLOBAL', 'vm_applet_port')
+        if config.has_option('GLOBAL', 'job_vnc_ports'):
+            text_range = config.get('GLOBAL', 'job_vnc_ports')
+            first, last = text_range.split(':')[:2]
+            self.job_vnc_ports = range(int(first), int(last))
+
         if config.has_option('GLOBAL', 'user_shared_dhparams'):
             self.user_shared_dhparams = config.get('GLOBAL', 
                                                    'user_shared_dhparams')
-        if config.has_option('GLOBAL', 'mig_code_base'):
-            self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
-        else:
-            self.mig_code_base = os.path.dirname(self.mig_server_home.rstrip(os.sep))
-        if config.has_option('GLOBAL', 'vms_builder_home'):
-            self.vms_builder_home = config.get('GLOBAL', 'vms_builder_home')
-        else:
-            self.vms_builder_home = os.path.join(self.server_home, 'vms_builder')
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):
@@ -1018,20 +1046,15 @@ location.""" % self.config_file
             self.notify_protocols = []
         if config.has_option('GLOBAL', 'storage_protocols'):
             self.storage_protocols = config.get('GLOBAL', 'storage_protocols').split()
-        if config.has_option('GLOBAL', 'vm_proxy_host'):
-            self.vm_proxy_host = config.get('GLOBAL', 'vm_proxy_host')
+        if config.has_option('SITE', 'enable_jupyter'):
+            self.site_enable_jupyter = config.getboolean('SITE', 'enable_jupyter')
         else:
-            self.vm_proxy_host = self.server_fqdn
-        if config.has_option('GLOBAL', 'vm_proxy_port'):
-            self.vm_proxy_port = config.getint('GLOBAL', 'vm_proxy_port')
-        if config.has_option('GLOBAL', 'vm_client_port'):
-            self.vm_client_port = config.getint('GLOBAL', 'vm_client_port')
-        if config.has_option('GLOBAL', 'vm_applet_port'):
-            self.vm_applet_port = config.getint('GLOBAL', 'vm_applet_port')
-        if config.has_option('GLOBAL', 'job_vnc_ports'):
-            text_range = config.get('GLOBAL', 'job_vnc_ports')
-            first, last = text_range.split(':')[:2]
-            self.job_vnc_ports = range(int(first), int(last))
+            self.site_enable_jupyter = False
+        if config.has_option('GLOBAL', 'jupyter_url'):
+            self.jupyter_url = config.get('GLOBAL', 'jupyter_url')
+            
+        if config.has_option('GLOBAL', 'jupyter_base_url'):
+            self.jupyter_base_url = config.get('GLOBAL', 'jupyter_base_url')
 
         if config.has_option('GLOBAL', 'vgrid_owners'): 
             self.vgrid_owners = config.get('GLOBAL', 'vgrid_owners')
@@ -1316,11 +1339,6 @@ location.""" % self.config_file
             self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
         else:
             self.site_enable_sandboxes = False
-        if config.has_option('SITE', 'enable_vmachines'):
-            self.site_enable_vmachines = config.getboolean('SITE',
-                                                           'enable_vmachines')
-        else:
-            self.site_enable_vmachines = False
         if config.has_option('SITE', 'enable_freeze'):
             self.site_enable_freeze = config.getboolean('SITE', 'enable_freeze')
         else:
@@ -1355,15 +1373,13 @@ location.""" % self.config_file
             self.site_sharelink_length = config.getint('SITE', 'sharelink_length')
         else:
             self.site_sharelink_length = 10
-        if config.has_option('SITE', 'enable_jupyter'):
-            self.site_enable_jupyter = config.getboolean('SITE', 'enable_jupyter')
-        else:
-            self.site_enable_jupyter = False
         if config.has_option('SITE', 'enable_transfers'):
             self.site_enable_transfers = config.getboolean('SITE',
                                                            'enable_transfers')
         else:
             self.site_enable_transfers = False
+        if config.has_option('GLOBAL', 'user_transfers_log'):
+            self.user_transfers_log = config.get('GLOBAL', 'user_transfers_log')
         if config.has_option('SITE', 'transfers_from'):
             transfers_from_str = config.get('SITE', 'transfers_from')
             unique_transfers_from = []
@@ -1550,11 +1566,11 @@ location.""" % self.config_file
         # Force absolute log paths
 
         for _log_var in ('user_sftp_log', 'user_sftp_subsys_log',
-                        'user_davs_log', 'user_ftps_log',
-                        'user_openid_log', 'user_monitor_log',
-                        'user_sshmux_log', 'user_vmproxy_log',
-                        'user_events_log', 'user_cron_log',
-                        'user_transfers_log', 'user_imnotify_log',
+                         'user_davs_log', 'user_ftps_log',
+                         'user_openid_log', 'user_monitor_log',
+                         'user_sshmux_log', 'user_vmproxy_log',
+                         'user_events_log', 'user_cron_log',
+                         'user_transfers_log', 'user_imnotify_log',
                          'user_chkuserroot_log', 'user_chksidroot_log'):
             _log_path = getattr(self, _log_var)
             if not os.path.isabs(_log_path):

@@ -207,8 +207,11 @@ provide access to e.g. managing the grid job queues.
     daemons = """
 <div id='daemonstatus'>
 """
-    daemon_names = ['grid_script.py', 'grid_monitor.py', 'grid_sshmux.py',
-                    'grid_events.py']
+    daemon_names = []
+    if configuration.site_enable_jobs:
+        daemon_names += ['grid_script.py', 'grid_monitor.py', 'grid_sshmux.py']
+    if configuration.site_enable_events:
+        daemon_names.append('grid_events.py')
     # No need to run im_notify unless any im notify protocols are enabled
     if configuration.site_enable_imnotify and \
            [i for i in configuration.notify_protocols if i != 'email']:
@@ -225,6 +228,11 @@ provide access to e.g. managing the grid job queues.
         daemon_names.append('grid_transfers.py')
     if configuration.site_enable_crontab:
         daemon_names.append('grid_cron.py')
+    if configuration.site_enable_seafile:
+        daemon_names += ['seafile-controller', 'seaf-server', 'ccnet-server',
+                         'seahub']
+        if configuration.seafile_mount:
+            daemon_names.append('seaf-fuse')
     if configuration.site_enable_sftp_subsys:
         daemon_names.append('/sbin/sshd -f /etc/ssh/sshd_config-MiG-sftp-subsys')
     for proc in daemon_names:

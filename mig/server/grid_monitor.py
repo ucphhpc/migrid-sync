@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -716,6 +716,12 @@ if __name__ == '__main__':
     # Allow e.g. logrotate to force log re-open after rotates
     signal.signal(signal.SIGHUP, hangup_handler)
 
+    if not configuration.site_enable_jobs:
+        err_msg = "Job support is disabled in configuration!"
+        logger.error(err_msg)
+        print err_msg
+        sys.exit(1)
+    
     print """
 Running grid monitor generator.
 
