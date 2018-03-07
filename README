@@ -376,6 +376,7 @@ vhost-specific certificates from LetsEncrypt:
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --enable_crontab=True --enable_jobs=True \
+                   --enable_events=True --enable_imnotify=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_hsts=True --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
