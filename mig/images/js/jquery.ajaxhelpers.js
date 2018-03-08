@@ -99,6 +99,25 @@ function makeSpareFields(target, name, min_spare) {
     }
 }
 
+function handle_ajax_error(jqXHR, textStatus, errorThrown, name, operation, statusElem) {
+    /* Shared helper to detect if session expired and react with complete page
+       reload, or display other errors in the statusElem. */
+    console.error(name+" "+operation+" failed: "+errorThrown);
+    $(statusElem).removeClass("spinner iconleftpad");
+    $(statusElem).empty();
+    if (jqXHR.state() == "rejected") {
+        console.error("fail looks like session time out - reload for login!");
+        $(statusElem).append("<span class=\'errortext\'>"+
+                             "Error: session expired - force re-login</span>");
+        /* Reload entire page for proper login and redirection */
+        location.reload();
+    } else {
+        /* Just display any other errors */
+        $(statusElem).append("<span class=\'errortext\'>"+
+                             "Error: "+errorThrown+"</span>");
+    }
+}
+
 function ajax_redb(_freeze) {
     console.debug("load runtime envs");
     var tbody_elem = $("#runtimeenvtable tbody");
@@ -166,11 +185,8 @@ function ajax_redb(_freeze) {
 
       },
       error: function(jqXHR, textStatus, errorThrown) {
-          console.error("list failed: "+errorThrown);
-          $("#ajax_status").removeClass("spinner iconleftpad");
-          $("#ajax_status").empty();
-          $("#ajax_status").append("<span class=\'errortext\'>"+
-                                   "Error: "+errorThrown+"</span>");
+          handle_ajax_error(jqXHR, textStatus, errorThrown, "redb", "list",
+                            "#ajax_status");
       }
   });
 }
@@ -247,11 +263,8 @@ function ajax_freezedb(permanent_freeze) {
 
       },
       error: function(jqXHR, textStatus, errorThrown) {
-          console.error("list failed: "+errorThrown);
-          $("#ajax_status").removeClass("spinner iconleftpad");
-          $("#ajax_status").empty();
-          $("#ajax_status").append("<span class=\'errortext\'>"+
-                                   "Error: "+errorThrown+"</span>");
+          handle_ajax_error(jqXHR, textStatus, errorThrown, "freezedb", "list",
+                            "#ajax_status");
       }
   });
 }
@@ -354,11 +367,8 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
           $("#frozenfilestable").trigger("update");
       },
       error: function(jqXHR, textStatus, errorThrown) {
-          console.error("list failed: "+errorThrown);
-          $("#ajax_status").removeClass("spinner iconleftpad");
-          $("#ajax_status").empty();
-          $("#ajax_status").append("<span class=\'errortext\'>"+
-                                   "Error: "+errorThrown+"</span>");
+          handle_ajax_error(jqXHR, textStatus, errorThrown, "showfreeze", "list",
+                            "#ajax_status");
       }
   });
 }
@@ -498,11 +508,8 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
 
       },
       error: function(jqXHR, textStatus, errorThrown) {
-          console.error("list failed: "+errorThrown);
-          $("#ajax_status").removeClass("spinner iconleftpad");
-          $("#ajax_status").empty();
-          $("#ajax_status").append("<span class=\'errortext\'>"+
-                                   "Error: "+errorThrown+"</span>");
+          handle_ajax_error(jqXHR, textStatus, errorThrown, "vgridman", "list",
+                            "#ajax_status");
       }
   });
 }
@@ -587,11 +594,8 @@ function ajax_resman() {
 
       },
       error: function(jqXHR, textStatus, errorThrown) {
-          console.error("list failed: "+errorThrown);
-          $("#ajax_status").removeClass("spinner iconleftpad");
-          $("#ajax_status").empty();
-          $("#ajax_status").append("<span class=\'errortext\'>"+
-                                   "Error: "+errorThrown+"</span>");
+          handle_ajax_error(jqXHR, textStatus, errorThrown, "resman", "list",
+                            "#ajax_status");
       }
   });
 }
@@ -665,11 +669,8 @@ function ajax_people(protocols) {
 
       },
       error: function(jqXHR, textStatus, errorThrown) {
-          console.error("list failed: "+errorThrown);
-          $("#ajax_status").removeClass("spinner iconleftpad");
-          $("#ajax_status").empty();
-          $("#ajax_status").append("<span class=\'errortext\'>"+
-                                   "Error: "+errorThrown+"</span>");
+          handle_ajax_error(jqXHR, textStatus, errorThrown, "people", "list",
+                            "#ajax_status");
       }
   });
 }
@@ -741,11 +742,8 @@ function ajax_workflowjobs(vgrid_name, flags) {
 
       },
       error: function(jqXHR, textStatus, errorThrown) {
-          console.error("list failed: "+errorThrown);
-          $("#ajax_status").removeClass("spinner iconleftpad");
-          $("#ajax_status").empty();
-          $("#ajax_status").append("<span class=\'errortext\'>"+
-                                   "Error: "+errorThrown+"</span>");
+          handle_ajax_error(jqXHR, textStatus, errorThrown, "workflowjobs", "list",
+                            "#ajax_status");
       }
   });
 }
