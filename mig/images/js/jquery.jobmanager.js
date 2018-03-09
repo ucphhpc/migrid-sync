@@ -142,11 +142,12 @@ if (jQuery) (function($){
             $.fn.extend(jsonSettings, jsonOptions);
     
             /* We used to use $.getJSON() here but now some back ends require POST */
-            $.post(
-                   url,
-                   jsonSettings,
-                   function(jsonRes, textStatus) {
-    
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: jsonSettings,
+                success: 
+                    function(jsonRes, textStatus) {
                        var errors = "";
                        var file_output = "";
                        var dir_listings = "";
@@ -290,7 +291,14 @@ if (jQuery) (function($){
         
                        }
                        $("#cmd_helper div[title='"+el_id+"']").css("height", "auto");
-                   }, "json");
+                   }, 
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error("jsonwrapper failed: "+errorThrown);
+                    handle_ajax_error(jqXHR, textStatus, errorThrown, "post", url,
+                                      "#cmd_helper div[title='"+el_id+"'] p");
+                },
+                dataType: "json"
+            });
       
         }
 
@@ -437,6 +445,25 @@ if (jQuery) (function($){
 
             }
 
+            function handle_ajax_error(jqXHR, textStatus, errorThrown, name, operation, statusElem) {
+                /* Shared helper to detect if session expired and react with complete page
+                   reload, or display other errors in the statusElem. */
+                console.error(name+" "+operation+" failed: "+errorThrown);
+                $(statusElem).removeClass("wait");
+                $(statusElem).empty();
+                if (jqXHR.state() == "rejected") {
+                    console.error("fail looks like session time out - reload for login!");
+                    $(statusElem).append("<tr><td colspan=4><span class=\'warningtext\'>"+
+                                         "Error: session expired - force re-login</span></td></tr>");
+                    /* Reload entire page for proper login and redirection */
+                    location.reload();
+                } else {
+                    /* Just display any other errors */
+                    $(statusElem).append("<tr><td colspan=4><span class=\'errortext\'>"+
+                                         "Error: "+errorThrown+"</span></td></tr>");
+                }
+            }
+
             console.debug("add tablesorter multiselect widget");
       
             $.tablesorter.addWidget({
@@ -562,6 +589,11 @@ if (jQuery) (function($){
                                     //    }
                                     doSort = false;
                                 }
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                console.error("list failed: "+errorThrown);
+                                handle_ajax_error(jqXHR, textStatus, errorThrown, "refresh", "list",
+                                                  "#jm_jobmanager tbody");
                             }
                         });
                 });
