@@ -97,6 +97,14 @@ test_sftpsubsys_enabled() {
     return $SFTPSUBSYS_ENABLED
 }
 
+kick_script() {
+    # send dummy event to kick the server into gear if enabled ...
+    DAEMON_PATH=${MIG_SCRIPT}
+    # Make sure daemon start had time to launch python and bail out if disabled
+    sleep 2 && pgrep -f "${DAEMON_PATH}" > /dev/null && \
+        echo "" >> ${MIG_CODE}/server/server.stdin 
+}
+
 start_script() {
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
@@ -108,9 +116,9 @@ start_script() {
     if [ $RET -ne 0 ]; then 
 	failure
 	exit $RET
-    else 
-	# some input to kick the server into gear if enabled ...
-	pgrep -f "${DAEMON_PATH}" > /dev/null && echo "" >> ${MIG_CODE}/server/server.stdin
+    else
+	# Force pipe cleaning in the background
+	kick_script &
 	success
     fi
     echo

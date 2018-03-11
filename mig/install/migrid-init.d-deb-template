@@ -70,6 +70,14 @@ test_sftpsubsys_enabled() {
     return $SFTPSUBSYS_ENABLED
 }
 
+kick_script() {
+    # send dummy event to kick the server into gear if enabled ...
+    DAEMON_PATH=${MIG_SCRIPT}
+    # Make sure daemon start had time to launch python and bail out if disabled
+    sleep 2 && pgrep -f "${DAEMON_PATH}" > /dev/null && \
+        echo "" >> ${MIG_CODE}/server/server.stdin 
+}
+
 # NOTE: we cannot easily pass daemon std output to a x.out log file on Debian
 #       and we do not need to explicitly forward MIG_CONF value.
 
@@ -79,8 +87,8 @@ start_script() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG server daemon" ${SHORT_NAME} || true
     if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER}  --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
-	# some input to kick the server into gear if enabled ...
-	pgrep -f "${DAEMON_PATH}" > /dev/null && echo "" >> ${MIG_CODE}/server/server.stdin
+	# Force pipe cleaning in the background
+	kick_script &
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
