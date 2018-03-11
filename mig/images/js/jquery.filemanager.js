@@ -141,7 +141,8 @@ if (jQuery) (function($){
         updateSorting();
     }
 
-    function handle_ajax_error(jqXHR, textStatus, errorThrown, name, operation, statusElem) {
+    /* TODO: move to global scope for use in non-core components, too? */
+    $.fn.handleAjaxError = function handle_ajax_error(jqXHR, textStatus, errorThrown, name, operation, statusElem) {
         /* Shared helper to detect if session expired and react with complete page
            reload, or display other errors in the statusElem. */
         console.error(name+" "+operation+" failed: "+errorThrown);
@@ -160,7 +161,7 @@ if (jQuery) (function($){
             $(statusElem).append("<span class=\'errortext\'>"+
                                  "Error: "+errorThrown+"</span>");
         }
-    }
+    };
 
     /* Use this helper whenever explicitly selecting a sub element of the
        current fileman container, which may be #fm_filemanager, 
@@ -1033,8 +1034,8 @@ if (jQuery) (function($){
                      */
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.error("editor load error: "+textStatus);
-                        handle_ajax_error(jqXHR, textStatus, errorThrown, "cat", "edit",
-                                          "#editor_output");                        
+                        $.fn.handleAjaxError(jqXHR, textStatus, errorThrown, "cat", "edit",
+                                             "#editor_output");                        
                     }
                 });
 
@@ -1111,8 +1112,8 @@ if (jQuery) (function($){
                      */
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.error("editor load error: "+textStatus);
-                        handle_ajax_error(jqXHR, textStatus, errorThrown, "cat", "create",
-                                          "#editor_output");
+                        $.fn.handleAjaxError(jqXHR, textStatus, errorThrown, "cat", "create",
+                                             "#editor_output");
                     }
                 });
             },
@@ -1962,8 +1963,8 @@ if (jQuery) (function($){
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.error("show branch load error: "+textStatus);
-                        handle_ajax_error(jqXHR, textStatus, errorThrown, "ls", "branch",
-                                          "#fm_statusinfo");
+                        $.fn.handleAjaxError(jqXHR, textStatus, errorThrown, "ls", "branch",
+                                             "#fm_statusinfo");
                     }
                 });
             }
@@ -2600,7 +2601,7 @@ $.fn.delete_upload = function(name, dest_dir, share_id, csrf_token) {
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.error("delete_upload error: "+textStatus);
-            /* TODO: add handle_ajax_error like fallback here? */
+            /* TODO: add $.fn.handleAjaxError fallback using #fancyuploadchunked_output here? */
         }
     });
     //console.debug("return deleted: "+deleted);
@@ -2647,7 +2648,7 @@ $.fn.move_upload = function(name, dest_dir, share_id, csrf_token) {
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.error("move_upload error: "+textStatus);
-            /* TODO: add handle_ajax_error like fallback here? */
+            /* TODO: add $.fn.handleAjaxError fallback using #fancyuploadchunked_output here? */
         }
     });
     //console.debug("return moved: "+moved);
@@ -3281,7 +3282,7 @@ function mig_imagesettings_init(name, path, options) {
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error("image settings -> show_list error: " + textStatus);
                 console.debug("image settings -> show_list error: " + errorThrown);
-                /* TODO: add handle_ajax_error like fallback here? */
+                /* TODO: add $.fn.handleAjaxError fallback using #imagesettings_output here? */
             }
         });
     }
@@ -3320,8 +3321,7 @@ function mig_imagesettings_init(name, path, options) {
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error("image settings -> remove_all error: " + textStatus);
                 console.debug("image settings -> remove_all error: " + errorThrown);
-                handle_ajax_error(jqXHR, textStatus, errorThrown, "imagesettings", 
-                                  "remove all", "#imagesettings_output");
+                /* TODO: add $.fn.handleAjaxError fallback using #imagesettings_output here? */
             }
         });
     }
@@ -3361,8 +3361,7 @@ function mig_imagesettings_init(name, path, options) {
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error("image settings -> remove error: " + textStatus);
                 console.debug("image settings -> remove error: " + errorThrown);
-                handle_ajax_error(jqXHR, textStatus, errorThrown, "imagesettings", 
-                                  "remove", "#imagesettings_output");
+                /* TODO: add $.fn.handleAjaxError fallback using #imagesettings_output here? */
             }
         });
     }
@@ -3436,8 +3435,7 @@ function mig_imagesettings_init(name, path, options) {
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.error("image settings edit-> remove error: " + textStatus);
                     console.debug("image settings edit-> remove error: " + errorThrown);
-                    handle_ajax_error(jqXHR, textStatus, errorThrown, "imagesettings", 
-                                      "edit", "#imagesettings_output");
+                    /* TODO: add $.fn.handleAjaxError fallback using #imagesettings_output here? */
                 }
             });
         }
