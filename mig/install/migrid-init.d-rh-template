@@ -102,7 +102,7 @@ kick_script() {
     DAEMON_PATH=${MIG_SCRIPT}
     # Make sure daemon start had time to launch python and bail out if disabled
     sleep 2 && pgrep -f "${DAEMON_PATH}" > /dev/null && \
-        echo "" >> ${MIG_CODE}/server/server.stdin 
+        echo "" >> ${MIG_CODE}/server/server.stdin
 }
 
 start_script() {

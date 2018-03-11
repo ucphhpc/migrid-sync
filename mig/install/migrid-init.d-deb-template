@@ -75,7 +75,7 @@ kick_script() {
     DAEMON_PATH=${MIG_SCRIPT}
     # Make sure daemon start had time to launch python and bail out if disabled
     sleep 2 && pgrep -f "${DAEMON_PATH}" > /dev/null && \
-        echo "" >> ${MIG_CODE}/server/server.stdin 
+        echo "" >> ${MIG_CODE}/server/server.stdin
 }
 
 # NOTE: we cannot easily pass daemon std output to a x.out log file on Debian
