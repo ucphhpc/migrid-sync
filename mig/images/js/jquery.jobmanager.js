@@ -451,12 +451,13 @@ if (jQuery) (function($){
                 console.error(name+" "+operation+" failed: "+errorThrown);
                 $(statusElem).removeClass("wait");
                 $(statusElem).empty();
-                if (jqXHR.state() == "rejected") {
+                /* NOTE: empty error and rejected state hints at expired session */
+                if (errorThrown === "" && jqXHR.state() == "rejected") {
                     console.error("fail looks like session time out - reload for login!");
                     $(statusElem).append("<tr><td colspan=4><span class=\'warningtext\'>"+
                                          "Error: session expired - force re-login</span></td></tr>");
                     /* Reload entire page for proper login and redirection */
-                    location.reload();
+                    setTimeout("location.reload()", 2000);
                 } else {
                     /* Just display any other errors */
                     $(statusElem).append("<tr><td colspan=4><span class=\'errortext\'>"+

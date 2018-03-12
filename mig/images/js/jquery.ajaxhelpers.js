@@ -106,12 +106,13 @@ function handle_ajax_error(jqXHR, textStatus, errorThrown, name, operation, stat
     $(statusElem).removeClass("spinner iconleftpad");
     $(statusElem).empty();
     /* TODO: narrow down by checking redirect url against openid servers? */
-    if (jqXHR.state() == "rejected") {
+    /* NOTE: empty error and rejected state hints at expired session */
+    if (errorThrown === "" && jqXHR.state() == "rejected") {
         console.error("fail looks like session time out - reload for login!");
         $(statusElem).append("<span class=\'warningtext\'>"+
                              "Error: session expired - force re-login</span>");
         /* Reload entire page for proper login and redirection */
-        location.reload();
+        setTimeout("location.reload()", 2000);
     } else {
         /* Just display any other errors */
         $(statusElem).append("<span class=\'errortext\'>"+
