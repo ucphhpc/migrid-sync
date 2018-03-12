@@ -79,6 +79,10 @@ div.container {
   margin: 1%;
 }
 
+.monospace {
+  font-family: monospace;
+}
+
 th {
 
 }

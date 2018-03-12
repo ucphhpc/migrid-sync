@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileio - wrappers to keep file I/O in a single replaceable module
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,6 +41,10 @@ from shared.serial import dump, load
 
 __valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
                       'sha512': sha512}
+
+def supported_hash_algos():
+    """A list of supported hash algorithm names"""
+    return __valid_hash_algos.keys()
 
 def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """Wrapper to handle writing of chunks with offset to path.
@@ -515,7 +519,7 @@ def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
     """Simple block hashing for checksumming of files inspired by  
     http://stackoverflow.com/questions/16799088/file-checksums-in-python
     Read at most max_chunks blocks of chunk_size (to avoid DoS) and checksum
-    using hash_algo (md5, sha1, ...).
+    using hash_algo (md5, sha1, sha256, sha512, ...).
     Any non-positive max_chunks value removes the size limit.  
     If max_chunks is positive the checksum will match that of the Xsum
     command for files smaller than max_chunks * chunk_size and for bigger

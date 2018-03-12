@@ -342,7 +342,10 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
                           name_link = file.name;
                       }
                       entry = "<tr>"+base_td(name_link)+center_td(file.size)+
-                          base_td(file.md5sum)+"</tr>";
+                          attr_td(file.md5sum, "class='md5sum monospace hidden'")+
+                          attr_td(file.sha1sum, "class='sha1sum monospace hidden'")+ 
+                          attr_td(file.sha256sum, "class='sha256sum monospace hidden'")+ 
+                          attr_td(file.sha512sum, "class='sha512sum monospace hidden'")+"</tr>";
                       //console.debug("append entry: "+entry);
                       table_entries += entry;
                       /* chunked updates - append after after every chunk_size entries */
@@ -365,6 +368,10 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
           if (error) {
               $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
+          }
+          /* Make sure requested checksum column is visible */
+          if (checksum) {
+              $("."+checksum+"sum").show();
           }
           $("#frozenfilestable").trigger("update");
       },

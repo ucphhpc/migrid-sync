@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, freeze_flavors
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
-     build_freezeitem_object
+     build_freezeitem_object, supported_hash_algos
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import jquery_ui_js, man_base_js, man_base_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
@@ -110,6 +110,11 @@ Please contact the site admins %s if you think it should be enabled.
                                                         [table_spec])
         if operation == "show":
             add_ready += '%s;' % refresh_call
+            # All checksums are included but hidden by default - show here
+            if checksum:
+                add_ready += """
+        $('.%ssum').show();
+""" % checksum
         title_entry['style'] = themed_styles(configuration)
         title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                                  add_init, add_ready)
@@ -161,23 +166,18 @@ Please contact the site admins %s if you think it should be enabled.
                                'description': 'loading ...',
                                'created': 'loading ...'})
     if operation in show_operations:
-        output_objects.append({'object_type': 'html_form', 'text': '<p>'})
-        output_objects.append({
+        sorted_algos = supported_hash_algos()
+        sorted_algos.sort()
+        for algo in sorted_algos:
+            output_objects.append({'object_type': 'html_form', 'text': '<p>'})
+            output_objects.append({
                 'object_type': 'link',
                 'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s" \
-            % (freeze_id, flavor, 'md5'),
+                % (freeze_id, flavor, algo),
                 'class': 'infolink iconspace', 
-                'title': 'View archive with MD5 sums', 
-                'text': 'Show with MD5 checksums - may take long'})
-        # TODO: we hide sha1 column and link for now
-        output_objects.append({'object_type': 'html_form', 'text': '</p><p class="hidden">'})
-        output_objects.append({
-                'object_type': 'link',
-                'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s" \
-            % (freeze_id, flavor, 'sha1'),
-                'class': 'infolink iconspace', 
-                'title': 'View archive with SHA1 sums', 
-                'text': 'Show with SHA1 checksums - may take long'})
-        output_objects.append({'object_type': 'html_form', 'text': '</p>'})
+                'title': 'View archive with %s sums' % algo.upper(), 
+                'text': 'Show with %s checksums - may take long' % algo.upper()
+                })
+            output_objects.append({'object_type': 'html_form', 'text': '</p>'})
 
     return (output_objects, returnvalues.OK) 

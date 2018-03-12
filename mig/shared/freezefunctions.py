@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezefunctions - freeze archive helper functions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -44,13 +44,14 @@ from urllib import quote
 from shared.base import client_id_dir
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
      public_archive_dir, public_archive_index, freeze_flavors
-from shared.fileio import md5sum_file, sha1sum_file, write_file, copy_file, \
-     copy_rec, move_file, move_rec, remove_rec, makedirs_rec, make_symlink, \
-     make_temp_dir
+from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
+     sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
+     move_file, move_rec, remove_rec, makedirs_rec, make_symlink, make_temp_dir
 from shared.html import get_cgi_html_preamble, get_cgi_html_footer
 from shared.serial import load, dump
 
 __cache_ext = ".cache"
+__chksum_unset = 'please request explicitly'
 
 def public_freeze_id(freeze_dict, configuration):
     """Translate internal freeze_id to a public identifier used when publishing
@@ -96,14 +97,18 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
                              (freeze_dict['ID'], quote(file_item['name'])),
                              'title': 'Show archive file %(name)s' % file_item,
                              'text': file_item['name']}
-            freeze_files.append({
+            entry = {
                 'object_type': 'frozenfile',
                 'name': file_item['name'],
                 'showfile_link': showfile_link,
                 'size': file_item['size'],
-                'md5sum': file_item['md5sum'],
-                'sha1sum': file_item['sha1sum'],
-                })
+                }
+            for algo in supported_hash_algos():
+                chksum_field = '%ssum' % algo
+                entry[chksum_field] = file_item.get(chksum_field,
+                                                    __chksum_unset)
+            freeze_files.append(entry)
+            
     created_timetuple = freeze_dict['CREATED_TIMESTAMP'].timetuple()
     created_asctime = time.asctime(created_timetuple)
     created_epoch = time.mktime(created_timetuple)
@@ -243,7 +248,6 @@ def get_frozen_files(client_id, freeze_id, configuration, checksum='md5'):
             break
     if not found:
         return (False, 'Could not open frozen archive %s' % freeze_id)
-    chksum_unset = 'please request explicitly'
     cache_path = "%s%s" % (frozen_dir, __cache_ext)
     file_map = {}
     try:
@@ -252,7 +256,7 @@ def get_frozen_files(client_id, freeze_id, configuration, checksum='md5'):
             cached = load(cache_path)
         if cached:
             if not checksum or cached[-1].get("%ssum" % checksum,
-                                              chksum_unset) != chksum_unset:
+                                              __chksum_unset) != __chksum_unset:
                 _logger.debug("using cached info for %s in %s" % (freeze_id,
                                                                   cache_path))
                 return (True, cached)
@@ -278,16 +282,24 @@ def get_frozen_files(client_id, freeze_id, configuration, checksum='md5'):
             if entry is None:
                 entry = {'name': rel_path,
                          'timestamp': os.path.getctime(frozen_path),
-                         'size': os.path.getsize(frozen_path),
-                         'md5sum': chksum_unset,
-                         'sha1sum': chksum_unset}
+                         'size': os.path.getsize(frozen_path)
+                         }
+            for algo in supported_hash_algos():
+                chksum_field = '%ssum' % algo
+                entry[chksum_field] = entry.get(chksum_field, __chksum_unset)
             # Update checksum if requested and not there already
-            if checksum == 'md5' and entry['md5sum'] == chksum_unset:
+            if checksum == 'md5' and entry['md5sum'] == __chksum_unset:
                 # Checksum first 32 MB of files
                 entry['md5sum'] = md5sum_file(frozen_path)
-            elif checksum == 'sha1':
+            elif checksum == 'sha1' and entry['sha1sum'] == __chksum_unset:
                 # Checksum first 32 MB of files
                 entry['sha1sum'] = sha1sum_file(frozen_path)
+            elif checksum == 'sha256' and entry['sha256sum'] == __chksum_unset:
+                # Checksum first 32 MB of files
+                entry['sha256sum'] = sha256sum_file(frozen_path)
+            elif checksum == 'sha512' and entry['sha512sum'] == __chksum_unset:
+                # Checksum first 32 MB of files
+                entry['sha512sum'] = sha512sum_file(frozen_path)
             files.append(entry)
     # Save updated cache
     try:
