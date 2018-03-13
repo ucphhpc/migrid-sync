@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # usercache - User state caching
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -70,25 +70,38 @@ def format_bytes(bytes, format):
     return 1.0 * bytes / pow(2, scaler*10)
 
 
-def contents_changed(root, files, ref_stamp):
+def contents_changed(configuration, root, files, ref_stamp):
     """Check if mtime of root dir or contents changed after ref_stamp"""
+    _logger = configuration.logger
     all_paths = [root]
     all_paths += [os.path.join(root, name) for name in files]
     for path in all_paths:
-        if os.path.getmtime(path) > ref_stamp:
+        try:
+            file_stamp = os.path.getmtime(path)
+        except Exception, exc:
+            _logger.warning("getmtime failed on %s: %s" % (path, exc))
+            file_stamp = -1
+        if file_stamp > ref_stamp:
             return True
     return False
 
     
-def update_disk_stats(stats, root, rel_root, dirs, files, total):
+def update_disk_stats(configuration, stats, root, rel_root, dirs, files,
+                      total):
     """Update disk stats for root"""
+
+    _logger = configuration.logger
 
     # Gather size of all entries in root
     
     size = 0 
     for name in files + dirs:
         path = os.path.join(root, name)
-        size += os.path.getsize(path)
+        # Ignore any access errors
+        try:
+            size += os.path.getsize(path)
+        except Exception, exc:
+            _logger.warning("getsize failed on %s: %s" % (path, exc))
 
     if not stats.has_key(rel_root):
         stats[rel_root] = {}
@@ -126,6 +139,7 @@ def update_job_stats(stats, job_id, job):
 
 def refresh_disk_stats(configuration, client_id):
     """Refresh disk use stats for specified user"""
+    _logger = configuration.logger
     dirty = False
     client_dir = client_id_dir(client_id)
     user_base = os.path.join(configuration.user_home, client_dir)
@@ -146,7 +160,7 @@ def refresh_disk_stats(configuration, client_id):
         stats = load(stats_path)
         stats_stamp = os.path.getmtime(stats_path)
     except IOError:
-        configuration.logger.warn("No disk stats to load - ok first time")
+        _logger.warning("No disk stats to load - ok first time")
         stats = {OWN: {FILES: 0, DIRECTORIES: 0, BYTES: 0},
                  VGRID: {FILES: 0, DIRECTORIES: 0, BYTES: 0}}
         stats_stamp = -1
@@ -173,12 +187,13 @@ def refresh_disk_stats(configuration, client_id):
         # Directory and contents unchanged - ignore
 
         if stats.has_key(rel_root) and \
-               not contents_changed(root, files, stats_stamp):
+               not contents_changed(configuration, root, files, stats_stamp):
             continue
 
         dirty = True
         
-        update_disk_stats(stats, root, rel_root, dirs, files, total)
+        update_disk_stats(configuration, stats, root, rel_root, dirs, files,
+                          total)
 
     # Now walk vgrid dir symlinks explicitly
     total = VGRID
@@ -191,12 +206,14 @@ def refresh_disk_stats(configuration, client_id):
             # Directory and contents unchanged - ignore
 
             if stats.has_key(rel_root) and \
-                   not contents_changed(root, files, stats_stamp):
+                   not contents_changed(configuration, root, files,
+                                        stats_stamp):
                 continue
 
             dirty = True
         
-            update_disk_stats(stats, root, rel_root, dirs, files, total)
+            update_disk_stats(configuration, stats, root, rel_root, dirs,
+                              files, total)
 
     # Update stats for any roots no longer there
 
@@ -204,10 +221,15 @@ def refresh_disk_stats(configuration, client_id):
         if rel_root in list(TOTALS) + cur_roots:
             continue
         root = os.path.join(user_base, rel_root)
-        total = stats[rel_root][KIND]
-        stats[total][FILES] -= stats[rel_root][FILES]
-        stats[total][DIRECTORIES] -= stats[rel_root][DIRECTORIES]
-        stats[total][BYTES] -= stats[rel_root][BYTES]
+        # NOTE: legacy stats may lack KIND field - just ignore and delete
+        total = stats[rel_root].get(KIND, None)
+        if total:
+            stats[total][FILES] -= stats[rel_root][FILES]
+            stats[total][DIRECTORIES] -= stats[rel_root][DIRECTORIES]
+            stats[total][BYTES] -= stats[rel_root][BYTES]
+        else:
+            _logger.warning("Ignoring outdated stat entry for %s: %s" % \
+                            (root, stats[rel_root]))
         del stats[rel_root]
         dirty = True
 
@@ -216,7 +238,7 @@ def refresh_disk_stats(configuration, client_id):
             dump(stats, stats_path)
             stats_stamp = os.path.getmtime(stats_path)
         except Exception, exc:
-            configuration.logger.error("Could not save stats cache: %s" % exc)
+            _logger.error("Could not save stats cache: %s" % exc)
 
     lock_handle.close()
 
@@ -225,6 +247,7 @@ def refresh_disk_stats(configuration, client_id):
 
 def refresh_job_stats(configuration, client_id):
     """Refresh job stats for specified user"""
+    _logger = configuration.logger
     dirty = False
     client_dir = client_id_dir(client_id)
     job_base = os.path.join(configuration.mrsl_files_dir, client_dir)
@@ -250,7 +273,7 @@ def refresh_job_stats(configuration, client_id):
         job_stats.update(stats[JOBS])
         stats[JOBS] = job_stats
     except IOError:
-        configuration.logger.warn("No job stats to load - ok first time")
+        _logger.warning("No job stats to load - ok first time")
         stats = {JOBS: job_stats}
         stats_stamp = -1
 
@@ -266,7 +289,11 @@ def refresh_job_stats(configuration, client_id):
             continue
 
         job_path = os.path.join(job_base, name)
-        job_stamp = os.path.getmtime(job_path)
+        try:
+            job_stamp = os.path.getmtime(job_path)
+        except Exception, exc:
+            _logger.warning("getmtime failed on %s: %s" % (job_path, exc))
+            job_stamp = -1
         
         if stats.has_key(name) and job_stamp < stats_stamp:
             continue
@@ -280,7 +307,7 @@ def refresh_job_stats(configuration, client_id):
             dump(stats, stats_path)
             stats_stamp = os.path.getmtime(stats_path)
         except Exception, exc:
-            configuration.logger.error("Could not save stats cache: %s" % exc)
+            _logger.error("Could not save stats cache: %s" % exc)
 
     lock_handle.close()
 
