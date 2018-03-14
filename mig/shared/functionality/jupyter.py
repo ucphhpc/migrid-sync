@@ -58,6 +58,7 @@ from shared.httpsclient import unescape
 from shared.init import initialize_main_variables
 from shared.ssh import generate_ssh_rsa_key_pair
 from shared.fileio import make_symlink, pickle, unpickle, write_file
+from shared.findtype import is_admin
 
 
 # TODO: Validate that this actually works
@@ -150,7 +151,6 @@ def jupyter_host(configuration, output_objects, user):
 def reset():
     """
     Helper function to clean up all jupyter directories and mounts
-    :return:
     """
     configuration = get_configuration_object()
     auth_path = os.path.join(configuration.mig_system_files,
@@ -217,7 +217,14 @@ def main(client_id, user_arguments_dict):
              'text': '''Failed to establish connection to the Jupyter service'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    remote_user = unescape(os.environ.get('REMOTE_USER', '')).strip()
+
+    username = unescape(os.environ.get('REMOTE_USER', '')).strip()
+    # TODO, activate admin info
+    #remote_user = {'USER': username, 'IS_ADMIN': is_admin(client_id,
+    #                                                      configuration,
+    # logger)}
+
+    remote_user = username
     if remote_user == '':
         logger.error("Can't connect to jupyter with an empty REMOTE_USER "
                      "environment variable")
@@ -225,6 +232,8 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'error_text',
              'text': '''Failed to establish connection to the Jupyter service'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
+    # Ensure the remote_user dict can be http posted
+    remote_user = str(remote_user)
 
     # Regular sftp path
     mnt_path = os.path.join(configuration.jupyter_mount_files_dir, client_dir)
