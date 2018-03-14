@@ -326,21 +326,29 @@ def main(client_id, user_arguments_dict):
                 mount_private_key, mount_public_key)
 
     jupyter_dict = {}
+    jupyter_dict['MOUNT_HOST'] = configuration.short_title
     jupyter_dict['SESSIONID'] = sessionid
     jupyter_dict['USER_CERT'] = client_id
     # don't need fraction precision, also not all systems provide fraction
     # precision.
     jupyter_dict['CREATED_TIMESTAMP'] = int(time.time())
-    jupyter_dict['MOUNTSSHPUBLICKEY'] = mount_public_key
     jupyter_dict['MOUNTSSHPRIVATEKEY'] = mount_private_key
+    jupyter_dict['MOUNTSSHPUBLICKEY'] = mount_public_key
     # Used by the jupyterhub to know which host to mount against
     jupyter_dict['TARGET_MOUNT_ADDR'] = "@" + sftp_addresses[0] + ":"
 
+    # Only post the required keys
+    transfer_dict = {key: jupyter_dict[key] for key in ('MOUNT_HOST',
+                                                       'SESSIONID',
+                                                       'MOUNTSSHPRIVATEKEY',
+                                                       'TARGET_MOUNT_ADDR')}
+
     logger.debug("User: %s Mig-Mount header: %s", client_id, jupyter_dict)
+
     # Auth and pass a new set of valid mount keys
     url_mount = configuration.jupyter_url + '/mount'
     auth_mount_header = {'Remote-User': remote_user,
-                         'Mig-Mount': str(jupyter_dict)}
+                         'Mig-Mount': str(transfer_dict)}
 
     # First login
     session = requests.session()
