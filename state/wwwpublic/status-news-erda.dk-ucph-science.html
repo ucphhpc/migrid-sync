@@ -101,6 +101,9 @@ All systems and services are fully operational.
 </p>
 <!--
 <p class="icon_slack iconspace leftpad icontext">
+We've experienced problems with the backend storage lately - access may be limited for now.
+</p>
+<p class="icon_slack iconspace leftpad icontext">
 There's a problem with the backend storage - we're investigating.
 </p>
 <p class="icon_slack iconspace leftpad icontext">
@@ -108,6 +111,9 @@ All services except Seafile are fully operational.
 </p>
 <p class="icon_offline iconspace leftpad icontext">
 All systems are down for maintenance - they will be back soon.
+</p>
+<p class="icon_offline iconspace leftpad icontext">
+There's a problem with the backend storage - we're investigating.
 </p>
 -->
 
@@ -118,14 +124,28 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage">2018/03/15: Temporarily Disabling Workgroup Workflows</h4>
+<p>
+We have a hunch that our Workgroup Workflows service had a negative
+impact on the problems we saw recently after the disk failure and
+replacement. Therefore we have chosen to temporarily disable it at
+ERDA. In case you were using it for automated backup as described in
+the user guide, you can either switch it over to the new Schedule Tasks
+service or contact us for a temporary replacement. Our plan is to enable
+workflows again once we have optimized the service to be significantly
+less resource intensive.
+</p>
 <h4 class="staticpage">2018/03/12: Partial Data Access and Login Problems</h4>
 <p>
 We had a disk crash last night and needed a physical replacement. As a
 result we only had partial data visibility, meaning that some files
 would appear missing even though they were actually intact. For some
 users this happened to be important login files, in effect preventing log
-in. Everything should be back online now and we're closely monitoring
-for any additional problems.
+in. We solved the disk problems but had a few hiccups with lost
+connections to the backend storage throughout the day. Each time the 
+result was similar partial visibility and login problems for some
+users.<br/>
+Everything is back online and we're closely monitoring the systems.<br/>
 </p>
 <h4 class="staticpage">2018/03/11: Data Access Problems</h4>
 <p>
@@ -255,13 +275,19 @@ Alle systemer og services kører planmæssigt.
 </p>
 <!--
 <p class="icon_slack iconspace leftpad icontext">
-Der er i øjeblikket delvise udfald i backend-lageret - vi undersøger sagen.
+Vi har på det sidste oplevet problemer med backend-lageret - begrænset adgang kan forekomme.
+</p>
+<p class="icon_slack iconspace leftpad icontext">
+Der er i øjeblikket udfald i backend-lageret - vi undersøger sagen.
 </p>
 <p class="icon_slack iconspace leftpad icontext">
 Alle services undtagen Seafile kører planmæssigt.
 </p>
 <p class="icon_offline iconspace leftpad icontext">
 Alle systemer er i øjeblikket nede p.g.a. planlagt vedligehold.
+</p>
+<p class="icon_offline iconspace leftpad icontext">
+Der er i øjeblikket udfald i backend-lageret - vi undersøger sagen.
 </p>
 -->
 
@@ -272,14 +298,28 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage">15/03-2018: Midlertidig nedtagning af workgroup workflows</h4>
+<p>
+Vi har en mistanke om at Workgroup Workflows servicen har haft en
+negativ indvirkning på de problemer vi oplevede efter diskskiftet
+forleden. Vi har derfor valgt midlertidigt at slå den fra på
+ERDA. Såfremt du er afhængig af den til automatisk backup jvf
+brugervejledningen, kan du enten skifte til den nye Planlagte Opgaver /
+Schedule Tasks service eller henvende dig til os for en midlertidig
+erstatning. Planen er at vi sætter workflows i drift igen når vi har
+fået servicens lagerovervågning optimeret til at være væsentlig mindre
+resurseintensiv.
+</p>
 <h4 class="staticpage">12/03-2018: Delvis dataadgang og loginproblemer</h4>
 <p>
 Vi havde et disk-crash i nat og det krævede et fysisk
-diskskift. Resultatet var delvis datasynlighed, så filer så ud til at
-mangle selv om de faktisk var intakte. For brugere hvor centrale
-loginfiler var ramt betød det at login blev afvist. Alting skulle være
-tilbage i drift nu og vi holder tæt øje med om der skulle opstå
-yderligere problemer.
+diskskift. Resultatet var delvis datasynlighed, så en stribe filer så ud
+til at mangle selv om de faktisk var intakte. For brugere hvor centrale
+loginfiler var ramt, betød det at login blev afvist. Efter at have løst
+diskproblemerne oplevede vi desværre af flere omgange mistet forbindelse
+til backend-lageret med samme effekt ift login og delvis dataadgang.<br/>
+Alt er tilbage i almindelig drift, men vi holder tæt øje med systemerne
+i tilfælde af at problemerne skulle komme tilbage.<br/>
 </p>
 <h4 class="staticpage">11/03-2018: Problemer med dataadgang</h4>
 <p>
