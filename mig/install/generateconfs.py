@@ -86,6 +86,7 @@ if '__main__' == __name__:
         'enable_vmachines',
         'enable_preview',
         'enable_jupyter',
+        'enable_gdp',
         'enable_hsts',
         'enable_vhost_certs',
         'enable_verify_certs',

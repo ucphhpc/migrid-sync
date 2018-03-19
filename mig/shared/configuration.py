@@ -103,6 +103,7 @@ def fix_missing(config_file, verbose=True):
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'events_home': '~/state/events_home/',
+        'gdp_home': '~/state/gdp_home/',
         'rate_limit_db': '~/mig/mig_system_files/daemon-rate-limit.db',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
@@ -293,6 +294,7 @@ class Configuration:
     sharelink_home = ''
     javabin_home = ''
     events_home = ''
+    gdp_home = ''
     seafile_mount = ''
     openid_store = ''
     paraview_home = ''
@@ -596,6 +598,7 @@ location.""" % self.config_file
             self.sandbox_home = config.get('GLOBAL', 'sandbox_home')
             self.javabin_home = config.get('GLOBAL', 'javabin_home')
             self.events_home = config.get('GLOBAL', 'events_home')
+            self.gdp_home = config.get('GLOBAL', 'gdp_home')
             self.smtp_server = config.get('GLOBAL', 'smtp_server')
             self.wwwpublic = config.get('GLOBAL', 'wwwpublic')
             self.vm_home = config.get('GLOBAL', 'vm_home')
@@ -1380,6 +1383,10 @@ location.""" % self.config_file
             self.site_enable_transfers = False
         if config.has_option('GLOBAL', 'user_transfers_log'):
             self.user_transfers_log = config.get('GLOBAL', 'user_transfers_log')
+        if config.has_option('SITE', 'enable_gdp'):
+            self.site_enable_gdp = config.getboolean('SITE', 'enable_gdp')
+        else:
+            self.site_enable_gdp = False
         if config.has_option('SITE', 'transfers_from'):
             transfers_from_str = config.get('SITE', 'transfers_from')
             unique_transfers_from = []

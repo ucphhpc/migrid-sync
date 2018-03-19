@@ -86,14 +86,11 @@ def base32urldecode(configuration, encoded_url,
     if encoded_url_len % 8 != 0:
         padlen = 8 - encoded_url_len % 8
         padding = ''.join('=' for i in xrange(padlen))
-
     decoded_url = base64.b32decode('%s%s' % (encoded_url, padding))
-
     if strip_query_arguments:
         result_url = decoded_url.split('?')[0]
     else:
         result_url = decoded_url
-
     query_dict = \
         dict(urlparse.parse_qsl(urlparse.urlsplit(decoded_url).query))
 
@@ -109,7 +106,7 @@ def base32urldecode(configuration, encoded_url,
     return (result_url, query_dict)
 
 
-def csrf_operation(configuration, url, query_dict):
+def csrf_operation(configuration, url, query_dict=None):
     """Generates a csrf operation from url and query_dict
     sorted by query_dict.keys"""
 
@@ -128,7 +125,7 @@ def openid_autologout_url(
     openid_identity,
     client_id,
     return_url,
-    return_query_dict,
+    return_query_dict=None,
     ):
     """Generates OpenID logout URL.
     OpenID logout consists of two steps:
@@ -138,15 +135,20 @@ def openid_autologout_url(
     to *return_url*.
     """
 
+    _logger = configuration.logger
+
     # Add CSRF token to query_dict, needed at autologut.py for URL validation
 
-    csrf_query_dict = return_query_dict.copy()
+    if return_query_dict is None:
+        csrf_query_dict = {}
+    else:
+        csrf_query_dict = return_query_dict.copy()
+
     csrf_op = csrf_operation(configuration, return_url, csrf_query_dict)
     csrf_limit = get_csrf_limit(configuration)
     csrf_token = make_csrf_token(configuration, 'get', csrf_op,
                                  client_id, csrf_limit)
     csrf_query_dict[csrf_field] = ['%s' % csrf_token]
-
     encoded_redirect_to = base32urlencode(configuration, return_url,
             csrf_query_dict)
 
@@ -161,3 +163,5 @@ def openid_autologout_url(
                      'logout?return_to=%s' % oid_return_to)
 
     return oid_logout_url
+
+

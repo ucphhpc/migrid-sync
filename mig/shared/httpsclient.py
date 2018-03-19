@@ -33,6 +33,7 @@ from urllib import urlencode
 from urlparse import parse_qsl
 
 from shared.defaults import auth_openid_mig_db, auth_openid_ext_db
+from shared.gdp import get_project_user_dn
 from shared.useradm import get_openid_user_dn
 
 # All HTTPS clients coming through apache will have their unique
@@ -101,8 +102,10 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
 
     # We accept utf8 chars (e.g. '\xc3') in client_login_field but they get
     # auto backslash-escaped in environ so we need to unescape first
-    
+    _logger.debug('client_login_field: %s' % client_login_field)
     login = unescape(environ.get(client_login_field, '')).strip()
+    _logger.debug('login: %s' % login)
+    _logger.debug('configuration.user_mig_oid_provider: %s' % len(configuration.user_mig_oid_provider))
     if not login:
         return (oid_db, "")
     if configuration.user_mig_oid_provider and \
@@ -114,9 +117,14 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
     else:
         _logger.warning("could not detect openid provider db for %s: %s" % \
                        (login, environ))
+    _logger.debug('oid_db: %s' % oid_db)
     if lookup_dn:
         # Let backend do user_check
         login = get_openid_user_dn(configuration, login, user_check=False)
+
+        if configuration.site_enable_gdp:
+            login = get_project_user_dn(configuration, environ["REQUEST_URI"], login)
+
     return (oid_db, login)
 
 def extract_client_id(configuration, environ):

@@ -39,6 +39,7 @@ from shared.defaults import trash_linkname
 from shared.fileio import check_write_access
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
+from shared.gdp import project_log
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose, recursive, force
 from shared.sharelinks import extract_mode_id
@@ -60,8 +61,11 @@ def signature():
     return ['', defaults]
 
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
+
+    if environ is None:
+        environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
@@ -279,6 +283,14 @@ You're not allowed to delete entire special folders like %s shares and %s
             logger.info("%s: successfully (re)moved %s" % (op_name, abs_path))
             output_objects.append({'object_type': 'text',
                         'text': "removed %s" % (relative_path)})
+            if configuration.site_enable_gdp:
+                if rm_helper == remove_path:
+                    msg = "'%s' to Trash" % relative_path
+                    project_log(configuration, client_id, 'moved',
+                                msg, client_ip=environ['REMOTE_ADDR'])
+                else:
+                    msg = "%s" % relative_path
+                    project_log(configuration, client_id, 'deleted', msg, client_ip=environ['REMOTE_ADDR'])
 
     output_objects.append({'object_type': 'link',
                            'destination': 'ls.py%s' % id_query,

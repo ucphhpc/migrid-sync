@@ -898,6 +898,7 @@ def get_openid_user_dn(configuration, login_url, user_check=True):
         db_path = os.path.join(configuration.mig_server_home, user_db_filename)
         user_map = load_user_db(db_path)
         user_alias = configuration.user_openid_alias
+        _logger.debug('user_map')
         for (distinguished_name, user) in user_map.items():
             if user[user_alias] in (raw_login, client_alias(raw_login)):
                 _logger.info('found full ID %s from %s alias' % \

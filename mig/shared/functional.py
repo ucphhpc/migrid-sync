@@ -136,44 +136,53 @@ def validate_input_and_cert(
                               : creds_error
                               })
 
-        # Redirect to sign-up cert page trying to guess relevant choices
-
-        signup_url = os.path.join(configuration.migserver_https_sid_url,
-                                  'cgi-sid', 'signup.py')
-        signup_query = ''
-
-        if not client_id:
+        if configuration.site_enable_gdp:
+            main_url = configuration.migserver_http_url
             output_objects.append(
-                {'object_type': 'text', 'text': '''Apparently you do not
-already have access to %s, but you can sign up:''' % configuration.short_title
-                 })
-            output_objects.append({'object_type': 'link', 'text': signup_url,
-                                   'destination': signup_url + signup_query})
-            output_objects.append(
-                {'object_type': 'text', 'text': '''If you already signed up and
-received a user certificate you probably just need to import it in your
-browser.'''})
+                    {'object_type': 'text', 'text': '''Apparently you do not
+                        have access to this page, please return to:'''})
+
+            output_objects.append({'object_type': 'link', 'text': main_url,
+                                       'destination': main_url})
         else:
-            output_objects.append(
-                {'object_type': 'text', 'text': '''Apparently you already have
-suitable credentials and just need to sign up for a local %s account on:''' % \
-                 configuration.short_title})
+            # Redirect to sign-up cert page trying to guess relevant choices
 
-            if extract_client_cert(configuration, environ) is None:
-                # Force logout/expire session cookie here to support signup
-                (oid_db, identity) = extract_client_openid(configuration,
-                                                           environ,
-                                                           lookup_dn=False)
-                if oid_db and identity:
-                    logger.info("expire openid user %s in %s" % (identity,
-                                                                 oid_db))
-                    (success, _) = expire_oid_sessions(configuration, oid_db,
-                                                       identity)
-                else:
-                    logger.info("no openid user logged in")
-             
-            output_objects.append({'object_type': 'link', 'text': signup_url,
-                                   'destination': signup_url + signup_query})
+            signup_url = os.path.join(configuration.migserver_https_sid_url,
+                                      'cgi-sid', 'signup.py')
+            signup_query = ''
+
+            if not client_id:
+                output_objects.append(
+                    {'object_type': 'text', 'text': '''Apparently you do not
+    already have access to %s, but you can sign up:''' % configuration.short_title
+                     })
+                output_objects.append({'object_type': 'link', 'text': signup_url,
+                                       'destination': signup_url + signup_query})
+                output_objects.append(
+                    {'object_type': 'text', 'text': '''If you already signed up and
+    received a user certificate you probably just need to import it in your
+    browser.'''})
+            else:
+                output_objects.append(
+                    {'object_type': 'text', 'text': '''Apparently you already have
+    suitable credentials and just need to sign up for a local %s account on:''' % \
+                     configuration.short_title})
+
+                if extract_client_cert(configuration, environ) is None:
+                    # Force logout/expire session cookie here to support signup
+                    (oid_db, identity) = extract_client_openid(configuration,
+                                                               environ,
+                                                               lookup_dn=False)
+                    if oid_db and identity:
+                        logger.info("expire openid user %s in %s" % (identity,
+                                                                     oid_db))
+                        (success, _) = expire_oid_sessions(configuration, oid_db,
+                                                           identity)
+                    else:
+                        logger.info("no openid user logged in")
+                 
+                output_objects.append({'object_type': 'link', 'text': signup_url,
+                                       'destination': signup_url + signup_query})
         return (False, output_objects)
 
     (status, retval) = validate_input(user_arguments_dict, defaults,

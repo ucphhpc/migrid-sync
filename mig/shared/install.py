@@ -110,6 +110,7 @@ def generate_confs(
     enable_ftps='True',
     enable_wsgi='True',
     wsgi_procs='10',
+    enable_gdp='False',
     enable_jobs='True',
     enable_events='True',
     enable_sharelinks='True',
@@ -195,6 +196,7 @@ def generate_confs(
     user_dict['__ENABLE_FTPS__'] = enable_ftps
     user_dict['__ENABLE_WSGI__'] = enable_wsgi
     user_dict['__WSGI_PROCS__'] = wsgi_procs
+    user_dict['__ENABLE_GDP__'] = enable_gdp
     user_dict['__ENABLE_JOBS__'] = enable_jobs
     user_dict['__ENABLE_EVENTS__'] = enable_events
     user_dict['__ENABLE_SHARELINKS__'] = enable_sharelinks

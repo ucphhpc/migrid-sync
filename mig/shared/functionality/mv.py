@@ -36,6 +36,7 @@ from shared.base import client_id_dir
 from shared.fileio import check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
+from shared.gdp import project_log
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose
 from shared.validstring import valid_user_path
@@ -48,8 +49,11 @@ def signature():
     return ['', defaults]
 
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
+
+    if environ is None:
+        environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
@@ -205,6 +209,10 @@ move entire special folders like %s shared folders!""" % \
             try:
                 shutil.move(abs_path, abs_target)
                 logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
+                if configuration.site_enable_gdp:
+                    msg = "'%s' -> '%s'" % (relative_path, relative_dest)
+                    project_log(configuration, client_id, 'moved',
+                                msg, client_ip=environ['REMOTE_ADDR'])
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,

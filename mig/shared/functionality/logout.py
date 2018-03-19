@@ -25,12 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Simple back end to force login session expiry"""
+"""Simple backend to force login session expiry"""
 
 import os
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
+from shared.gdp import project_logout
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
 from shared.useradm import expire_oid_sessions, find_oid_sessions
@@ -92,10 +93,19 @@ browser. Please refer to your browser and system documentation for details.
         logger.info("verifying no active sessions left for %s" % identity)
         (found, remaining) = find_oid_sessions(configuration, oid_db, identity)
         if success and found and not remaining:
-            output_objects.append(
-                {'object_type': 'text', 'text': """You are now logged out of %s
-locally - you may want to close your web browser to finish""" % \
-                 configuration.short_title})
+            if configuration.site_enable_gdp:
+                project_logout(configuration, environ['REMOTE_ADDR'], project_client_id=client_id)
+                html = '''
+                <a id='gdp_logout' href='%s'></a>
+                <script type='text/javascript'>
+                    document.getElementById('gdp_logout').click();
+                </script>''' % configuration.migserver_https_ext_oid_url
+                output_objects.append({'object_type': 'html_form', 'text' : html})
+            else:
+                output_objects.append(
+                    {'object_type': 'text', 'text': """You are now logged out of %s
+    locally - you may want to close your web browser to finish""" % \
+                     configuration.short_title})
         else:
             logger.error("remaining active sessions for %s: %s" % (identity,
                          remaining))

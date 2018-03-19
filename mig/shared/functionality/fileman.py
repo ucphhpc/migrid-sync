@@ -38,16 +38,18 @@ from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_css_deps, \
      advanced_editor_js_deps, lock_info, edit_file
 from shared.handlers import get_csrf_limit, make_csrf_token
+from shared.gdp import get_active_project
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.sharelinks import create_share_link_form
 
-def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
+def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     """HTML page base: some upload and menu entries depend on configuration"""
 
     edit_includes = ['switcher']
     fill_entries = {'vgrid_label': configuration.site_vgrid_label,
-                    'default_max_chunks': default_max_chunks}
+                    'default_max_chunks': default_max_chunks,
+                    'chroot': chroot}
     fill_entries['sharelink_form'] = create_share_link_form(
         configuration, client_id, 'json', '', csrf_map.get('sharelink', ''))
     if configuration.site_enable_jobs and \
@@ -129,9 +131,15 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
 
     <div id="upload_dialog" title="Upload File" style="display: none;">
       <div id="upload_tabs">
-        <ul>
-              <li><a href="#fancyuploadtab">Fancy Upload</a></li>
-              <li><a href="#legacyuploadtab">Legacy Upload</a></li>
+        <ul>'''
+    if configuration.site_enable_gdp:
+        html += '''
+            <li><a href="#fancyuploadtab">Upload</a></li>'''
+    else:
+        html += '''
+            <li><a href="#fancyuploadtab">Fancy Upload</a></li>
+            <li><a href="#legacyuploadtab">Legacy Upload</a></li>'''
+    html += '''
         </ul>
         <div id="fancyuploadtab">
             <!-- The file upload form used as target for the file upload widget -->
@@ -176,7 +184,9 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
             </form>
             <!-- For status and error output messages -->
             <div id="fancyuploadchunked_output"></div>
-        </div>
+        </div>'''
+    if not configuration.site_enable_gdp:
+        html += '''
         <div id="legacyuploadtab">
             <form id="upload_form" enctype="multipart/form-data" method="post" action="textarea.py">
                 <fieldset>
@@ -202,7 +212,8 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}):
             </form>
             <div id="upload_output"></div>
         </div>
-      </div>
+      </div>'''
+    html += '''
     </div>
     
     <div id="mkdir_dialog" title="Create New Folder" style="display: none;">
@@ -461,8 +472,21 @@ def css_tmpl(configuration):
     css['advanced'] += advanced_editor_css_deps()
     return css
 
-def js_tmpl(entry_path='/', enable_submit='true', preview='true', csrf_map={}):
+def js_tmpl(configuration, entry_path='/', enable_submit='true', preview='true', csrf_map={}, chroot=''):
     """Javascript to include in the page header"""
+
+    fill_entries = {
+                'chroot': chroot,
+                'default_max_chunks': default_max_chunks,
+                'trash_linkname': trash_linkname,
+                'csrf_field': csrf_field,
+                'enable_submit': enable_submit.lower(),
+                'entry_path': entry_path,
+                'preview' : preview.lower(),
+                'enable_sharelinks': ('%s' % configuration.site_enable_sharelinks).lower(),
+                'enable_datatransfers': ('%s' % configuration.site_enable_transfers).lower(),
+                'enable_gdp': ('%s' % configuration.site_enable_gdp).lower(),
+                }
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
@@ -470,11 +494,11 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true', csrf_map={}):
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript">
-var default_max_chunks = "%s";
-var trash_linkname = "%s";
-var csrf_field = "%s";
+var default_max_chunks = "%(default_max_chunks)s";
+var trash_linkname = "%(trash_linkname)s";
+var csrf_field = "%(csrf_field)s";
 var csrf_map = {};
-''' % (default_max_chunks, trash_linkname, csrf_field)
+''' % (fill_entries)
     for (target_op, token) in csrf_map.items():
         js += '''
 csrf_map["%s"] = "%s";
@@ -615,14 +639,18 @@ csrf_map["%s"] = "%s";
     
             $("#fm_filemanager").filemanager({
                                              root: "/",
+                                             chroot: "%(chroot)s",
                                              connector: "ls.py",
                                              params: "path",
                                              multiFolder: false,
                                              filespacer: true,
                                              uploadspace: true,
-                                             enableSubmit: %s,
-                                             subPath: "%s",
-                                             imagesettings: %s
+                                             enableSubmit: %(enable_submit)s,
+                                             subPath: "%(entry_path)s",
+                                             imagesettings: %(preview)s, 
+                                             sharelinksbutton: %(enable_sharelinks)s,
+                                             datatransfersbutton: %(enable_datatransfers)s,
+                                             enableGDP: %(enable_gdp)s,
                                              }
             );
 
@@ -639,7 +667,8 @@ csrf_map["%s"] = "%s";
         $(window).trigger("resize");
     });
 </script>
-    ''' % (enable_submit.lower(), entry_path, preview.lower())
+    ''' % fill_entries
+
     return js
         
 def signature():
@@ -669,6 +698,10 @@ def main(client_id, user_arguments_dict):
     
     status = returnvalues.OK
 
+    chroot = ''
+    if configuration.site_enable_gdp:
+        chroot = get_active_project(configuration, client_id)
+
     all_paths = accepted['path']
     entry_path = all_paths[-1]
     title_entry = find_entry(output_objects, 'title')
@@ -685,15 +718,15 @@ def main(client_id, user_arguments_dict):
     for target_op in csrf_backends:
         csrf_map[target_op] = make_csrf_token(configuration, method,
                                                  target_op, client_id, limit)
-    title_entry['javascript'] = js_tmpl(entry_path, enable_submit,
+    title_entry['javascript'] = js_tmpl(configuration, entry_path, enable_submit,
                                         str(configuration.site_enable_preview),
-                                        csrf_map)
+                                        csrf_map, chroot)
     
     output_objects.append({'object_type': 'header', 'class': 'fileman-title',
                            'text': 'File Manager' })
     output_objects.append({'object_type': 'html_form', 'text':
                            html_tmpl(configuration, client_id, title_entry,
-                                     csrf_map)})
+                                     csrf_map, chroot)})
 
     if len(all_paths) > 1:
         output_objects.append({'object_type': 'sectionheader', 'text':

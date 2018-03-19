@@ -44,6 +44,7 @@ from shared.fileio import strip_dir, write_chunk, delete_file, move, \
      get_file_size, makedirs_rec, check_write_access
 from shared.functional import validate_input
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from shared.gdp import project_log
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import in_place, verbose
 from shared.safeinput import valid_path
@@ -152,8 +153,11 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
             files.append((rel_path, (chunk, chunk_first, chunk_last)))
     return (files, rejected)
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
+
+    if environ is None:
+        environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
@@ -409,6 +413,12 @@ def main(client_id, user_arguments_dict):
                 file_entry['url'] = os.path.normpath("/%s/%s" % \
                                                      (redirect_path.lstrip('/'),
                                                       rel_dst))
+
+                if configuration.site_enable_gdp:
+                    msg = "'%s'" % rel_dst
+                    project_log(configuration, client_id, 'created',
+                                msg, client_ip=environ['REMOTE_ADDR'])
+
             uploaded.append(file_entry)
         logger.info('move done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)

@@ -54,10 +54,10 @@
 */
 
 /* Helpers for jshint to know about variables from dependency scripts:
-jquery.prettyprint.js, preview.js, editor.py 
+jquery.prettyprint.js, preview.js, editor.py
 */
 /* globals pp_bytes, pp_date, Preview, disable_editorarea_editor, csrf_map,
-   csrf_field, trash_linkname, enable_editorarea_editor, lastEdit, 
+   csrf_field, trash_linkname, enable_editorarea_editor, lastEdit,
    default_max_chunks */
 
 /* Enable strict mode to help catch tricky errors early */
@@ -151,7 +151,7 @@ if (jQuery) (function($){
         $(statusElem).show();
         /* TODO: narrow down by checking redirect url against openid servers? */
         /* NOTE: empty error and rejected state hints at expired session */
-        if (errorThrown === "" && jqXHR.state() == "rejected") {
+        if (errorThrown === "" && jqXHR.state() === "rejected") {
             console.error("fail looks like session time out - reload for login!");
             $(statusElem).append("<span class=\'warningtext\'>"+
                                  "Error: session expired - force re-login</span>");
@@ -165,8 +165,8 @@ if (jQuery) (function($){
     };
 
     /* Use this helper whenever explicitly selecting a sub element of the
-       current fileman container, which may be #fm_filemanager, 
-       #fm_filechooser or whatever depending on context. 
+       current fileman container, which may be #fm_filemanager,
+       #fm_filechooser or whatever depending on context.
        It works as long as the container has the common .fm_folders element.
     */
     $.fn.fmSelect = function(sub) {
@@ -436,7 +436,7 @@ if (jQuery) (function($){
             var buttonSpacing = 2;
             var buttonHeight = breadcrumbsHeight;
             var buttonWidth = buttonHeight;
-            var buttonLineHeight = buttonHeight
+            var buttonLineHeight = buttonHeight;
             // Update to reflect the enabled buttons
             var buttonCount = 2;
             if (options.sharelinksbutton) {
@@ -611,8 +611,15 @@ if (jQuery) (function($){
             return datum/1000;
         }
 
-        function copy(src, dst) {
+        function chroot(path, options) {
+            var return_path = (options.chroot !== '') ? 
+                options.chroot+'/'+path :
+                path;
 
+            return return_path;    
+        }
+
+        function copy(src, dst, options) {
             var flag = '';
 
             // Handle directory copy, set flag and alter destination path.
@@ -630,9 +637,10 @@ if (jQuery) (function($){
             $("#cmd_dialog").dialog('open');
             $("#cmd_dialog").html('<p class="spinner iconleftpad">Copying... "'+
                                   src+'" <br />To: "'+dst+'"</p>');
-
-            var jsonSettings = { src: src,
-                                 dst: dst,
+            var jsonSrc = chroot(src, options);
+            var jsonDst = chroot(dst, options);
+            var jsonSettings = { src: jsonSrc,
+                                 dst: jsonDst,
                                  output_format: 'json',
                                  flags: flag};
 
@@ -706,13 +714,19 @@ if (jQuery) (function($){
                   );
         }
 
-        function pack(current_dir, src, dst) {
+        function mkdir(current_dir, path, options) {
+
+        }
+
+        function pack(current_dir, src, dst, options) {
             $("#cmd_dialog").dialog(okDialog);
             $("#cmd_dialog").dialog('open');
             $("#cmd_dialog").html('<p class="spinner iconleftpad">Packing... "'+
                                   src+'" <br />in: "'+dst+'"</p>');
 
-            var jsonSettings = {current_dir: current_dir,
+            var jsonCurrentDir = chroot(current_dir, options);
+
+            var jsonSettings = {current_dir: jsonCurrentDir,
                                 src: src,
                                 dst: dst,
                                 output_format: 'json'};
@@ -743,14 +757,16 @@ if (jQuery) (function($){
 
         }
 
-        function unpack(src, dst) {
+        function unpack(src, dst, options) {
             $("#cmd_dialog").dialog(okDialog);
             $("#cmd_dialog").dialog('open');
-            $("#cmd_dialog").html('<p class="spinner iconleftpad">Unpacking... "'
-                                  +src+'" <br />in: "'+dst+'"</p>');
+            $("#cmd_dialog").html('<p class="spinner iconleftpad">Unpacking... "' +
+                                src+'" <br />in: "'+dst+'"</p>');
 
-            var jsonSettings = {src: src,
-                                dst: dst,
+            var jsonSrc = chroot(src, options);
+            var jsonDst = chroot(dst, options);
+            var jsonSettings = {src: jsonSrc,
+                                dst: jsonDst,
                                 output_format: 'json'};
 
             var target_op = 'unpack';
@@ -953,24 +969,43 @@ if (jQuery) (function($){
             },
             show:   function (action, el, pos) {
                 //console.debug("show "+action+" "+el+" "+pos);
-                var path_enc = encodeURI($(el).attr(pathAttribute));
-                window.open('/cert_redirect/'+path_enc);
+                var path = chroot($(el).attr(pathAttribute), options);
+                if (options.enableGDP) {
+                    /* Path may contain URL-unfriendly characters */
+                    document.location = 'cat.py?path=' +
+                        encodeURIComponent(path)+'&output_format=file';
+                }
+                else {
+                    var path_enc = encodeURI(path);
+                    window.open('/cert_redirect/'+path_enc);
+                }
             },
             download:   function (action, el, pos) {
                 /*
                   Use 'cat' to stream small files but raw request for big
                   files to avoid hogging memory. Take action based on file
                   size in bytes.
+
+                  NOTE: For GDP we always use 'cat' as we need to log file access
                 */
+                var max_stream_size;
+                if (options.enableGDP) {
+                    max_stream_size = Number.MAX_SAFE_INTEGER;
+                }
+                else {
+                    max_stream_size = 64*1024*1024;
+                }
                 var file_size = $("div.bytes", el).text();
-                var max_stream_size = 64*1024*1024;
+                
+                var path = chroot($(el).attr(pathAttribute), options);
+
                 if (file_size > max_stream_size) {
-                    var path_enc = encodeURI($(el).attr(pathAttribute));
+                    var path_enc = encodeURI(path);
                     window.open('/cert_redirect/'+path_enc);
                 } else {
                     /* Path may contain URL-unfriendly characters */
                     document.location = 'cat.py?path=' +
-                        encodeURIComponent($(el).attr(pathAttribute))+'&output_format=file';
+                        encodeURIComponent(path)+'&output_format=file';
                 }
             },
             edit:   function (action, el, pos) {
@@ -1190,7 +1225,7 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                             console.debug('pack '+src+" in "+dst);
                             startProgress("Packing "+dst+" ...");
-                            pack(current_dir, src, dst);
+                            pack(current_dir, src, dst, options);
                         },
                         Cancel: function() {
                             $(this).dialog('close');
@@ -1205,7 +1240,7 @@ if (jQuery) (function($){
                 /* unpack file to user specified directory */
                 var src = $(el).attr(pathAttribute);
                 var dst = $(".fm_addressbar input[name='fm_current_path']").val();
-                dst = dst.replace(/\/$/, '').replace(/^\//, '')
+                dst = dst.replace(/\/$/, '').replace(/^\//, '');
                 if (dst === '') {
                     dst = '.';
                 }
@@ -1223,7 +1258,7 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                             console.info('unpack '+src+" in "+dst);
                             startProgress("Unpacking "+src+" ...");
-                            unpack(src, dst);
+                            unpack(src, dst, options);
                         },
                         Cancel: function() {
                             $(this).dialog('close');
@@ -1266,11 +1301,12 @@ if (jQuery) (function($){
                 }
                 console.debug('copy '+clipboard['path']+":"+target_path);
                 startProgress("Copying...");
-                copy(clipboard['path'], target_path);
+                copy(clipboard['path'], target_path, options);
             },
             rm:     function (action, el, pos) {
                 var flags = '';
-                var target = $(el).attr(pathAttribute);
+                var path = $(el).attr(pathAttribute);
+                var target = chroot(path, options);
                 var dest_msg;
                 var choices = {};
                 if (target.lastIndexOf('/') === target.length-1) {
@@ -1278,7 +1314,7 @@ if (jQuery) (function($){
                 }
                 /* Default is move to trash with optional permanent delete. 
                    Use direct delete for items already in Trash. */
-                if (target.search(trash_linkname+'/') == -1) {
+                if (target.search(trash_linkname+'/') === -1) {
                     dest_msg = "moved to "+trash_linkname;
                     choices['Move To Trash'] = function() {
                         $(this).dialog('close');
@@ -1297,7 +1333,7 @@ if (jQuery) (function($){
                     $(this).dialog('close');
                 };
 
-                $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+target+'" will be '+dest_msg+'. Are you sure?</p></div>');
+                $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+path+'" will be '+dest_msg+'. Are you sure?</p></div>');
                 $("#cmd_dialog").dialog({
                     buttons: choices,
                     autoOpen: false, closeOnEscape: true, modal: true,
@@ -1306,7 +1342,7 @@ if (jQuery) (function($){
                 $("#cmd_dialog").dialog('open');
             },
             upload: function (action, el, pos) {
-                var open_dialog = mig_fancyuploadchunked_init("upload_dialog");
+                var open_dialog = mig_fancyuploadchunked_init("upload_dialog", options);
                 var remote_path = $.fn.targetDir(el);
                 $("#upload_form input[name='remotefilename_0']").val(remote_path);
                 $("#upload_form input[name='fileupload_0_0_0']").val('');
@@ -1314,12 +1350,15 @@ if (jQuery) (function($){
                 open_dialog("Upload Files",
                             function () {
                                 $(".fm_files").parent().reload('');
-                            }, remote_path, false, undefined, 
+                            }, 
+                            options.chroot, remote_path, false, undefined, 
                             csrf_map['uploadchunked']);
             },
+            
             mkdir:  function (action, el, pos) {
                 // Initialize the form
-                $("#mkdir_form input[name='current_dir']").val($(el).attr(pathAttribute));
+                var current_dir = chroot($(el).attr(pathAttribute), options);
+                $("#mkdir_form input[name='current_dir']").val(current_dir);
                 $("#mkdir_form input[name='path']").val('');
                 $("#mkdir_output").html('');
                 $("#mkdir_dialog").dialog({
@@ -1327,7 +1366,6 @@ if (jQuery) (function($){
                         Ok: function() {
                             startProgress("Creating folder...");
                             $("#mkdir_form").submit();
-                            $(".fm_files").parent().reload('');
                         },
                         Cancel: function() {
                             $(this).dialog('close');
@@ -1343,7 +1381,7 @@ if (jQuery) (function($){
             //       for folders to be moved so only renaming of files works.
             rename: function(action, el, pos) {
                 var path_name = '';
-                var target = $(el).attr(pathAttribute);
+                var target = chroot($(el).attr(pathAttribute), options);
                 var pathEl = target.split('/');
                 if (target.lastIndexOf('/') === target.length-1) {
                     path_name = pathEl[pathEl.length-2];
@@ -1446,6 +1484,7 @@ if (jQuery) (function($){
 
         var defaults = {
             root: '/',
+            chroot: '',
             connector: 'somewhere.py',
             param: 'path',
             folderEvent: 'click',
@@ -1465,7 +1504,8 @@ if (jQuery) (function($){
             refreshLayoutOnInit: false,
             enableSubmit: true,
             selectOnly: false,
-            imagesettings: false
+            imagesettings: false,
+            enableGDP: false,
         };
 
         var options = $.extend(defaults, user_options);
@@ -1550,12 +1590,20 @@ if (jQuery) (function($){
                 var a_class = '';
                 var li_class = 'class="current"';
                 var found_root = false;
+                var connector_url = options.connector;
+                if (options.chroot !== '') {
+                    connector_url += '?current_dir=' + encodeURIComponent(options.chroot);
+                }
+                console.debug('connector_url: ' + connector_url);
+                var rootname = (options.chroot !== '') ?
+                    options.chroot :
+                    '/';
 
                 // append current subdir parts to breadcrumbs (from right to left)
                 while (!found_root) {
                     if (subdir_path === '/') {
                         a_class = 'class="home"';
-                        subdir_name = '/';
+                        subdir_name = rootname;
                         found_root = true;
                     } else {
                         // remove trailing slash
@@ -1591,7 +1639,7 @@ if (jQuery) (function($){
                 startProgress('Loading directory entries...');
                 console.debug('refresh directory entries '+t);
                 $.ajax({
-                    url: options.connector,
+                    url: connector_url,
                     type: "GET",
                     dataType: "json",
                     data: { path: t, output_format: 'json', flags: 'fa' },
@@ -1619,7 +1667,7 @@ if (jQuery) (function($){
 
                         // Root node if not already created
                         if (t === '/' && $(".fm_folders li.userhome").length === 0) {
-                            folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="/" title="Home"><div>/</div>\n';
+                            folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="/" title="Home"><div>'+rootname+'</div>\n';
                         }
 
                         // Regular nodes from here on after
@@ -1817,8 +1865,8 @@ if (jQuery) (function($){
                                 rel_path = t;
                                 title_path = rel_path;
                             } else {
-                                rel_path = '.'
-                                title_path = 'Home'
+                                rel_path = '.';
+                                title_path = 'Home';
                             }
                             //console.debug("update filespacer with path: "+rel_path);
                             $(".fm_files div.filespacer").css("height", spacerHeight+"px")
@@ -1838,7 +1886,7 @@ if (jQuery) (function($){
                                 $(".fm_files").append('<div class="uploadspace centertext" style="height: '+spacerHeight+'px;" rel_path="" title=""><div class="uploadbutton"><span class="upload icon">Click to open upload helper</span></div></div>');
                                 $("div.uploadspace .uploadbutton").click(function () {
                                     //alert("upload here!");
-                                    var open_dialog = mig_fancyuploadchunked_init("upload_dialog");
+                                    var open_dialog = mig_fancyuploadchunked_init("upload_dialog", options);
                                     var remote_path = $.fn.targetDir($(".fm_files div.filespacer"));
                                     $("#upload_form input[name='remotefilename_0']").val(remote_path);
                                     $("#upload_form input[name='fileupload_0_0_0']").val('');
@@ -1846,7 +1894,8 @@ if (jQuery) (function($){
                                     open_dialog("Upload Files",
                                                 function () {
                                                     $(".fm_files").parent().reload('');
-                                                }, remote_path, false, undefined, 
+                                                }, 
+                                                options.chroot, remote_path, false, undefined, 
                                                 csrf_map['uploadchunked']);
                                     //alert("done upload!");
                                 });
@@ -1910,7 +1959,8 @@ if (jQuery) (function($){
                                                                   //console.debug("drop elem: "+clipboard['path']+" : "+clipboard['is_dir']);
                                                                   startProgress("Copying...");
                                                                   copy($(ui.helper).attr('rel_path'),
-                                                                       $(this).attr('rel_path'));
+                                                                       $(this).attr('rel_path'), 
+                                                                       options);
                                                               }
                                                             });
                                                     });
@@ -2081,6 +2131,39 @@ if (jQuery) (function($){
                         "select": {name: "Select", icon: "select"}
                     };
                 }
+
+                if (options['enableGDP']) {
+                    directory_menu = {
+                        "open": {name: "Open Folder", icon: "open"},
+                        "mkdir": {name: "Create Folder", icon: "mkdir"},    
+                        "sep1": "---------",
+                        "upload": {name: "Upload File", icon: "upload"},
+                        "sep2": "---------",
+                        "copy": {name: "Copy Folder", icon: "copy"},
+                        "paste": {name: "Paste", icon: "paste",
+                              disabled: function(key, opt) {
+                                  return (!clipboard['path']);
+                              }
+                        },   
+                        "sep3": "---------",
+                        "rm": {name: "Delete Folder", icon: "rmdir"},           
+                        "rename": {name: "Rename Folder", icon: "rename"},   
+                    };
+                    file_menu = {
+                        "download": {name: "Download", icon: "download"},
+                        "sep1": "---------",
+                        "copy": {name: "Copy", icon: "copy"},
+                        "paste": {name: "Paste", icon: "paste",
+                              disabled: function(key, opt) {
+                                  return (!clipboard['path']);
+                              }
+                        },
+                        "sep2": "---------",
+                        "rm": {name: "Delete", icon: "rm"},
+                        "rename": {name: "Rename", icon: "rename"},                        
+                    };
+                }
+
                 var bind_click = 'right';
                 if (touchscreenChecker()) {
                     bind_click = 'left';
@@ -2304,8 +2387,23 @@ if (jQuery) (function($){
                      } else {
                          $("#mkdir_dialog").dialog('close');
                      }
-                     /* always reload parent to reset progress, etc */
-                     $(".fm_files").parent().reload('');
+
+                     var reload_path = '';
+                     for (var i=0; i<(responseObject.length); i++) {
+                        if (responseObject[i]['object_type'] === 'directory') {
+                            var dir = responseObject[i];
+                            reload_path = dir.name.substring(0, dir.name.lastIndexOf("/")+1); 
+                            reload_path = (options.chroot !== '') ? 
+                                reload_path.substring(options.chroot.length+1, reload_path.length) :
+                                reload_path;
+                            reload_path = (reload_path === '') ?
+                                reload_path = '/' :
+                                reload_path;
+                        }
+                     }
+                    console.debug("mkdir post reload_path: '"+reload_path+"'");
+                    //reload_path = '';
+                     $(".fm_files").parent().reload(reload_path);
                  }
                 });
 
@@ -2489,6 +2587,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
 
     $("#" + name).filemanager(
         {root: "/",
+         chroot: "",
          connector: "ls.py", params: "path",
          multiFolder: false,
          subPath: (start_path || "/"),
@@ -2657,7 +2756,7 @@ $.fn.move_upload = function(name, dest_dir, share_id, csrf_token) {
 };
 
 /* Fancy chunked uploader dialog */
-function mig_fancyuploadchunked_init(name, callback) {
+function mig_fancyuploadchunked_init(name, options, callback) {
 
     /* TODO:
        move all these dialogs into if jquery section? (fails for some reason)
@@ -2763,9 +2862,8 @@ function mig_fancyuploadchunked_init(name, callback) {
         return data;
     }
 
-    var do_d = function(text, action, dest_dir, automatic_dest, share_id, csrf_token) {
-
-        //console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir+", "+share_id+", "+csrf_token);
+    var do_d = function(text, action, chroot, dest_dir, automatic_dest, share_id, csrf_token) {
+        //console.debug("mig_fancyupload_init do_d: "+text+", "+action+","+dest_dir+", "+share_id+", "+csrf_token);
 
         // save and restore original callback
         var c = callback;
@@ -2817,7 +2915,10 @@ function mig_fancyuploadchunked_init(name, callback) {
             add: function (e, data) {
                 console.debug("add file");
                 /* Add final destination for use in done */
-                var dest_dir = $("#fancyfileuploaddest").val();
+                var dest_dir = (chroot !== '') ? 
+                    chroot+'/'+$("#fancyfileuploaddest").val() :
+                    $("#fancyfileuploaddest").val();
+                
                 /* empty dest is not allowed */
                 dest_dir = "./" + $.fn.normalizePath(dest_dir);
                 data.formData = {current_dir: dest_dir};
@@ -2857,11 +2958,19 @@ function mig_fancyuploadchunked_init(name, callback) {
                     //console.debug("call move with: "+csrf_token);
                     if ($.fn.move_upload(file.name, file.moveDest, share_id, csrf_token)) {
                         console.debug("fix path and strip move info: " + file.name);
+                        var puredest = (options.chroot !== '') ? 
+                            file.moveDest.substring(chroot.length, file.moveDest.length) :
+                            file.moveDest;
                         var purename = file.name.substring(file.name.lastIndexOf("/") + 1);
                         var baseurl = file.url.substring(0, file.url.length - file.name.length);
-                        // normalize to e.g. strip ./ and other redundant cruft
-                        file.name = $.fn.normalizePath(file.moveDest + "/" + purename);
-                        file.url = baseurl + file.name;
+                        //console.debug('purename: ' + purename);
+                        //console.debug('baseurl: ' + baseurl);
+                        //console.debug('puredest: ' + puredest);
+                        file.name = puredest + "/" + purename;
+                        file.url = baseurl + file.moveDest + "/" + purename;
+                        if (options.enableGDP) {
+                            delete file.url;
+                        }
                         delete file.moveType;
                         delete file.moveDest;
                         delete file.moveUrl;

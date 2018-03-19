@@ -326,8 +326,12 @@ def main(client_id, user_arguments_dict, environ=None):
 
         # Stay on virtual host - extra useful while we test dual OpenID
 
-        base_url = environ.get('REQUEST_URI', base_url).split('?'
-                )[0].replace('autocreate', 'fileman')
+        if configuration.site_enable_gdp:
+            base_url = environ.get('REQUEST_URI', base_url).split('?'
+                    )[0].replace('autocreate', 'gdpman')
+        else:
+            base_url = environ.get('REQUEST_URI', base_url).split('?'
+                    )[0].replace('autocreate', 'fileman')
         raw_login = None
         for oid_provider in configuration.user_openid_providers:
             openid_prefix = oid_provider.rstrip('/') + '/'
