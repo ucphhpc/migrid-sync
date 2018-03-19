@@ -452,7 +452,7 @@ if (jQuery) (function($){
                 $(statusElem).removeClass("wait");
                 $(statusElem).empty();
                 /* NOTE: empty error and rejected state hints at expired session */
-                if (errorThrown === "" && jqXHR.state() == "rejected") {
+                if (errorThrown === "" && jqXHR.state() === "rejected") {
                     console.error("fail looks like session time out - reload for login!");
                     $(statusElem).append("<tr><td colspan=4><span class=\'warningtext\'>"+
                                          "Error: session expired - force re-login</span></td></tr>");
