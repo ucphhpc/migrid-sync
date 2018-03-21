@@ -544,6 +544,23 @@ def valid_job_name(
     __valid_contents(job_name, valid_chars, min_length, max_length)
 
 
+def valid_backup_names(
+    names,
+    min_length=0,
+    max_length=4096,
+    extra_chars='',
+    ):
+    """Verify that supplied names only contains characters that we consider
+    valid for multiline backup names. I.e. we reuse job_name but with with
+    addition of newlines and extended length. We do NOT allow slashes in names
+    as they would interfere with our json path handling and potentially lead
+    to illegal path traversal.
+    """
+    # Always allow newlines
+    extra_chars += '\r\n'
+    return valid_job_name(names, min_length, max_length, extra_chars)
+
+
 def valid_vgrid_name(
     vgrid_name,
     min_length=1,
@@ -1092,6 +1109,10 @@ def guess_type(name):
             ):
             __type_map[key] = valid_ascii
         for key in (
+            'backups',
+            ):
+            __type_map[key] = valid_backup_names
+        for key in (
             'max_jobs',
             'lines',
             'cputime',
@@ -1209,7 +1230,6 @@ def guess_type(name):
             'execution_precondition',
             'prepend_execute',
             'minprice',
-            'backups',
             'crontab',
             'atjobs',
             ):
