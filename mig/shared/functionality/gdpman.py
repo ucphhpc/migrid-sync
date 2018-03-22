@@ -107,7 +107,7 @@ def html_tmpl(
 
     # Show login projects selectbox
 
-    if accepted_projects is not None and len(accepted_projects) > 0:
+    if accepted_projects:
         html += \
             """
         <form id="gm_access_project_form" action="gdpman.py", method="post">
@@ -141,7 +141,7 @@ def html_tmpl(
 
     # Show project invitations selectbox
 
-    if invited_projects is not None and len(invited_projects) > 0:
+    if invited_projects:
         html += \
             """
         <form id="gm_accept_invite_project_form" action="gdpman.py", method="post">
@@ -175,7 +175,7 @@ def html_tmpl(
 
     # Show project invite selectbox
 
-    if invite_projects is not None and len(invite_projects) > 0:
+    if invite_projects:
         html += \
             """
         <form id="gm_invite_project_form" action="gdpman.py", method="post">
@@ -406,14 +406,14 @@ def main(client_id, user_arguments_dict, environ=None):
         return (accepted, returnvalues.CLIENT_ERROR)
     (_, identity) = extract_client_openid(configuration, environ,
             lookup_dn=False)
-    _csrf = ''.join(accepted.get('_csrf'))
-    action = ''.join(accepted.get('action'))
-    project_name = ''.join(accepted.get('vgrid_name'))
-    invite_client_id = ''.join(accepted.get('invite_client_id'))
+    _csrf = accepted['_csrf'][-1].strip()
+    action = accepted['action'][-1].strip()
+    project_name = accepted['vgrid_name'][-1].strip()
+    invite_client_id = accepted['invite_client_id'][-1].strip()
     if invite_client_id:
         (invite_client_id, _) = base32urldecode(configuration,
                 invite_client_id)
-    status_msg = ''.join(accepted.get('status_msg'))
+    status_msg = accepted['status_msg'][-1].strip()
     if status_msg:
         (status_msg, _) = base32urldecode(configuration, status_msg)
 
@@ -583,7 +583,7 @@ Please contact the Grid admins %s if you think it should be enabled.
         if action and action_msg:
             html = \
                 """
-            <form id='gdbman_status_form' method='post' action='%s'>""" \
+            <form id='gdpman_status_form' method='post' action='%s'>""" \
                 % req_url
             html += \
                 """
@@ -593,7 +593,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                 """
             </form>
             <script type='text/javascript'>
-                document.getElementById('gdbman_status_form').submit();
+                document.getElementById('gdpman_status_form').submit();
             </script>"""
             output_objects.append({'object_type': 'html_form',
                                   'text': html})
