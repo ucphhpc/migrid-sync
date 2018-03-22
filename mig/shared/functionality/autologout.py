@@ -71,7 +71,7 @@ def main(client_id, user_arguments_dict, environ=None):
     logger.debug('Accepted arguments: %s' % accepted)
 
     status = returnvalues.OK
-    redirect_to = ''.join(accepted['redirect_to'])
+    redirect_to = accepted['redirect_to'][-1].strip()
     output_objects.append({'object_type': 'header',
                           'text': 'Auto logout'})
     (oid_db, identity) = extract_client_openid(configuration, environ,

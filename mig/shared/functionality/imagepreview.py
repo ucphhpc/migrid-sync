@@ -118,7 +118,7 @@ def main(client_id, user_arguments_dict):
     action = accepted_joined_values['action']
     flags = accepted_joined_values['flags']
     path = accepted_joined_values['path']
-    extension = ''.join(accepted['extension'])
+    extension = accepted['extension'][-1].strip()
 
     logger.debug('%s from %s: %s' % (op_name, client_id, accepted))
 
