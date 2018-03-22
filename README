@@ -35,31 +35,35 @@ tools and a Python interpreter with a few external modules.
 Optional file synchronization, WSGI interface, OpenID login, instant
 messaging service, efficient file access services, event handler
 service, JSONRPC access, background data transfer service, efficient
-sftp, spell checking, interactive computing, Wiki, SCM and tracker VGrid
-features rely on the following additional software:
+sftp, spell checking, interactive computing, Wiki, SCM, tracker VGrid, 
+Jupyter and PDF generation features rely on the following additional software:
 -Seafile server, community edition (https://www.seafile.com/en/download/)
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
 -Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
--Python OpenID module (https://github.com/openid/python-openid)
+-Python OpenID module (https://github.com/openid/python-openid/)
 -Python irclib module (https://pypi.python.org/pypi/python-irclib/)
 -Python Paramiko module (https://pypi.python.org/pypi/paramiko/)
--Python FTPD library (https://pypi.python.org/pypi/pyftpdlib)
--Python OpenSSL module (https://pypi.python.org/pypi/pyOpenSSL)
--Python WSGI WebDAV module (http://wsgidav.readthedocs.org)
--Python watchdog module (https://pypi.python.org/pypi/watchdog)
--Python scandir module (https://pypi.python.org/pypi/scandir)
--Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib)
--Python requests module (https://pypi.python.org/pypi/requests)
+-Python FTPD library (https://pypi.python.org/pypi/pyftpdlib/)
+-Python OpenSSL module (https://pypi.python.org/pypi/pyOpenSSL/)
+-Python WSGI WebDAV module (http://wsgidav.readthedocs.org/)
+-Python watchdog module (https://pypi.python.org/pypi/watchdog/)
+-Python scandir module (https://pypi.python.org/pypi/scandir/)
+-Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib/)
+-Python requests module (https://pypi.python.org/pypi/requests/)
+-Python PDFKit module (https://pypi.python.org/pypi/pdfkit)/
+-Python xvfb module (https://pypi.python.org/pypi/xvfbwrapper/)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
 -OpenSSH server (https://www.openssh.org/)
 -PAM: Pluggable Authentication Modules (http://www.linux-pam.org/)
--Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
+-Python Enchant module (https://pypi.python.org/pypi/pyenchant/)
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
 -Trac plugins (e.g. http://trac-hacks.org/)
 -Jupyter (https://jupyter.org/)
 -Docker (https://www.docker.com/)
+-PDFKit (https://pdfkit.org/
+
 
 On Debian/Ubuntu servers the corresponding basic packages can be
 installed with:
@@ -168,6 +172,13 @@ existing jupyter swarm-spawner with docker packs to launch all user
 sessions in isolated containers. This part is still work-in-progress so
 please get in touch for details. Only the python-requests module is
 needed for the actual MiG server-side integration.
+
+The optional PDF generator environment relies on python PDFKit and 
+xvfbwrapper which may be installed with:
+sudo pip install xvfbwrapper
+sudo pip install pdfkit
+If the generated PDFs are jibberish then xorg-x11-fonts are most likely
+missing on the system.
 
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
@@ -321,6 +332,7 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-io.migrid.org \
                    --user=mig --group=mig \
+                   --apache_version=2.4 \
                    --apache_etc=/etc/apache2 \
                    --apache_run=/var/run/apache2 \
                    --apache_lock=/var/lock/apache2 \
@@ -341,8 +353,8 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --serveralias_clause='ServerAlias' \
                    --signup_methods="migcert" \
                    --login_methods="migcert" \
-                   --skin=migrid-basic \
-                   --apache_version=2.4
+                   --skin=migrid-basic
+
 or the same with OpenID, HSTS, WSGI (default web), Seafile, optimized SFTP and
 vhost-specific certificates from LetsEncrypt:
 ./generateconfs.py --source=. --destination=generated-confs \
@@ -356,6 +368,7 @@ vhost-specific certificates from LetsEncrypt:
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-io.migrid.org \
                    --user=mig --group=mig \
+                   --apache_version=2.4 \
                    --apache_etc=/etc/apache2 \
                    --apache_run=/var/run/apache2 \
                    --apache_lock=/var/lock/apache2 \
@@ -386,8 +399,7 @@ vhost-specific certificates from LetsEncrypt:
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
                    --landing_page='/wsgi-bin/dashboard.py' \
-                   --skin=migrid-basic --wsgi_procs=25 \
-                   --apache_version=2.4
+                   --skin=migrid-basic --wsgi_procs=25
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, Seafile integration and OpenID login:
@@ -402,6 +414,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --sid_fqdn=sid.erda.dk \
                    --io_fqdn=io.erda.dk \
                    --user=mig --group=mig \
+                   --apache_version=2.4 \
                    --apache_etc=/etc/httpd \
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
@@ -431,10 +444,9 @@ optimized SFTP, Seafile integration and OpenID login:
                    --login_methods="extoid migoid extcert" \
                    --daemon_pubkey=~/certs/combined.pub \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=erda-ucph-science --wsgi_procs=25 \
-                   --apache_version=2.4
-
-Finally a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
+                   --skin=erda-ucph-science --wsgi_procs=25 
+                   
+and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, job execution, Jupyter integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
@@ -447,6 +459,7 @@ optimized SFTP, job execution, Jupyter integration and OpenID login:
                    --sid_fqdn=sid.idmc.dk \
                    --io_fqdn=io.idmc.dk \
                    --user=mig --group=mig \
+                   --apache_version=2.4 \
                    --apache_etc=/etc/httpd \
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
@@ -482,9 +495,56 @@ optimized SFTP, job execution, Jupyter integration and OpenID login:
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=idmc-basic --wsgi_procs=25 \
-                   --apache_version=2.4
+                   --skin=idmc-basic --wsgi_procs=25
 
+Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
+optimized SFTP, strict access control and extensive logging to comply with the 
+General Data Protection Regulation (GDPR) imposed by EU:
+https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
+./generateconfs.py --source=. --destination=generated-confs \
+                   --destination_suffix="_svn$(svnversion -n ~/)" \
+                   --base_fqdn=sif.erda.dk \
+                   --public_fqdn=sif-www.erda.dk \
+                   --mig_cert_fqdn= \
+                   --ext_cert_fqdn= \
+                   --mig_oid_fqdn='' \
+                   --ext_oid_fqdn=sif.erda.dk \
+                   --sid_fqdn= \
+                   --io_fqdn=sif-io.erda.dk \
+                   --user=mig --group=mig \
+                   --apache_version=2.4 \
+                   --apache_etc=/etc/httpd \
+                   --apache_run=/var/run/httpd \
+                   --apache_lock=/var/lock/subsys/httpd \
+                   --apache_log=/var/log/httpd \
+                   --mig_code=/home/mig/mig \
+                   --mig_state=/home/mig/state \
+                   --mig_certs=/etc/httpd/MiG-certificates \
+                   --hg_path='' \
+                   --hgweb_scripts='' \
+                   --trac_admin_path='' --trac_ini_path='' \
+                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --ext_oid_port=443 --sid_port=443 \
+                   --mig_oid_provider='' \
+                   --ext_oid_provider=https://openid.ku.dk/ \
+                   --enable_gdp=True \
+                   --enable_openid=True --enable_wsgi=True \
+                   --enable_sftp=False --enable_sftp_subsys=False \
+                   --enable_davs=False --enable_ftps=False --enable_seafile=False \
+                   --enable_sharelinks=False --enable_transfers=False \
+                   --enable_duplicati=False --enable_hsts=True \
+                   --enable_sandboxes=False --enable_vmachines=False \
+                   --enable_crontab=False --enable_jobs=False \
+                   --enable_events=False --enable_freeze=False \
+                   --enable_vhost_certs=True --enable_verify_certs=True \
+                   --user_clause=User --group_clause=Group \
+                   --listen_clause='#Listen' --serveralias_clause='#ServerAlias' \
+                   --alias_field=email --daemon_keycert=~/certs/combined.pem \
+                   --signup_methods="extoid" --login_methods="extoid" \
+                   --daemon_pubkey=~/certs/combined.pub \
+                   --distro=centos --landing_page='/wsgi-bin/gdpman.py' \
+                   --skin=erda-ucph-science \
+                   --wsgi_procs=25
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and
