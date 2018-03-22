@@ -50,7 +50,7 @@ Jupyter and PDF generation features rely on the following additional software:
 -Python scandir module (https://pypi.python.org/pypi/scandir/)
 -Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib/)
 -Python requests module (https://pypi.python.org/pypi/requests/)
--Python PDFKit module (https://pypi.python.org/pypi/pdfkit)/
+-Python PDFKit module (https://github.com/Martin-Rehr/python-pdfkit/)
 -Python xvfb module (https://pypi.python.org/pypi/xvfbwrapper/)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
@@ -62,7 +62,6 @@ Jupyter and PDF generation features rely on the following additional software:
 -Trac plugins (e.g. http://trac-hacks.org/)
 -Jupyter (https://jupyter.org/)
 -Docker (https://www.docker.com/)
--PDFKit (https://pdfkit.org/
 
 
 On Debian/Ubuntu servers the corresponding basic packages can be
@@ -173,10 +172,12 @@ sessions in isolated containers. This part is still work-in-progress so
 please get in touch for details. Only the python-requests module is
 needed for the actual MiG server-side integration.
 
-The optional PDF generator environment relies on python PDFKit and 
+The optional PDF generator environment relies on python pdfkit and 
 xvfbwrapper which may be installed with:
 sudo pip install xvfbwrapper
-sudo pip install pdfkit
+sudo pip install pip install git+https://github.com/Martin-Rehr/python-pdfkit.git
+xvfbwrapper require xorg-x11-server-Xvfb and pdfkit require
+wkhtmltopdf.
 If the generated PDFs are gibberish then xorg-x11-fonts are most likely
 missing on the system.
 
