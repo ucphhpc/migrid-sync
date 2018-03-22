@@ -594,14 +594,8 @@ location.""" % self.config_file
             self.user_settings = config.get('GLOBAL', 'user_settings')
             self.user_cache = config.get('GLOBAL', 'user_cache')
             self.server_home = config.get('GLOBAL', 'server_home')
-            self.sss_home = config.get('GLOBAL', 'sss_home')
-            self.sandbox_home = config.get('GLOBAL', 'sandbox_home')
-            self.javabin_home = config.get('GLOBAL', 'javabin_home')
-            self.events_home = config.get('GLOBAL', 'events_home')
-            self.gdp_home = config.get('GLOBAL', 'gdp_home')
             self.smtp_server = config.get('GLOBAL', 'smtp_server')
             self.wwwpublic = config.get('GLOBAL', 'wwwpublic')
-            self.vm_home = config.get('GLOBAL', 'vm_home')
             self.architectures = config.get('GLOBAL', 'architectures').split()
             self.scriptlanguages = config.get('GLOBAL',
                                               'scriptlanguages').split()
@@ -676,6 +670,18 @@ location.""" % self.config_file
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
             self.mig_code_base = os.path.dirname(self.mig_server_home.rstrip(os.sep))
+        if config.has_option('GLOBAL', 'sss_home'):
+            self.sss_home = config.get('GLOBAL', 'sss_home')
+        if config.has_option('GLOBAL', 'sandbox_home'):
+            self.sandbox_home = config.get('GLOBAL', 'sandbox_home')
+        if config.has_option('GLOBAL', 'javabin_home'):
+            self.javabin_home = config.get('GLOBAL', 'javabin_home')
+        if config.has_option('GLOBAL', 'events_home'):
+            self.events_home = config.get('GLOBAL', 'events_home')
+        if config.has_option('GLOBAL', 'vm_home'):
+            self.vm_home = config.get('GLOBAL', 'vm_home')
+        if config.has_option('GLOBAL', 'gdp_home'):
+            self.gdp_home = config.get('GLOBAL', 'gdp_home')
         if config.has_option('GLOBAL', 'freeze_home'):
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
         if config.has_option('GLOBAL', 'sharelink_home'):
