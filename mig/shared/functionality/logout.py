@@ -94,12 +94,19 @@ browser. Please refer to your browser and system documentation for details.
         (found, remaining) = find_oid_sessions(configuration, oid_db, identity)
         if success and found and not remaining:
             if configuration.site_enable_gdp:
+                reentry_page = "https://%s" % configuration.server_fqdn
+                if configuration.user_mig_oid_provider and \
+                        identity.startswith(configuration.user_mig_oid_provider):
+                    reentry_page = configuration.migserver_https_mig_oid_url
+                elif configuration.user_ext_oid_provider and \
+                        identity.startswith(configuration.user_ext_oid_provider):
+                    reentry_page = configuration.migserver_https_ext_oid_url
                 project_logout(configuration, environ['REMOTE_ADDR'], project_client_id=client_id)
                 html = '''
                 <a id='gdp_logout' href='%s'></a>
                 <script type='text/javascript'>
                     document.getElementById('gdp_logout').click();
-                </script>''' % configuration.migserver_https_ext_oid_url
+                </script>''' % reentry_page
                 output_objects.append({'object_type': 'html_form', 'text' : html})
             else:
                 output_objects.append(
