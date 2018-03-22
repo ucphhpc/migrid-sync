@@ -35,7 +35,7 @@ tools and a Python interpreter with a few external modules.
 Optional file synchronization, WSGI interface, OpenID login, instant
 messaging service, efficient file access services, event handler
 service, JSONRPC access, background data transfer service, efficient
-sftp, spell checking, interactive computing, Wiki, SCM, tracker VGrid, 
+sftp, spell checking, interactive computing, VGrid Wiki / SCM / tracker, 
 Jupyter and PDF generation features rely on the following additional software:
 -Seafile server, community edition (https://www.seafile.com/en/download/)
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
@@ -177,7 +177,7 @@ The optional PDF generator environment relies on python PDFKit and
 xvfbwrapper which may be installed with:
 sudo pip install xvfbwrapper
 sudo pip install pdfkit
-If the generated PDFs are jibberish then xorg-x11-fonts are most likely
+If the generated PDFs are gibberish then xorg-x11-fonts are most likely
 missing on the system.
 
 = Installing MiG =
@@ -251,8 +251,13 @@ cd mig/install/
 If your setup uses custom paths or settings just provide them on the
 commandline like the command help indicates:
 ~/mig/install > ./generateconfs.py -h
+Usage:
+./generateconfs.py [OPTIONS]
+Where supported options include -h/--help for this help or the conf
+settings:
 --source=SOURCE
 --destination=DESTINATION
+--destination_suffix=DESTINATION_SUFFIX
 --base_fqdn=BASE_FQDN
 --public_fqdn=PUBLIC_FQDN
 --mig_cert_fqdn=MIG_CERT_FQDN
@@ -279,18 +284,22 @@ commandline like the command help indicates:
 --enable_ftps=ENABLE_FTPS
 --enable_wsgi=ENABLE_WSGI
 --wsgi_procs=WSGI_PROCS
---enable_sandboxes=ENABLE_SANDBOXES
---enable_vmachines=ENABLE_VMACHINES
---enable_jupyter=ENABLE_JUPYTER
+--enable_jobs=ENABLE_JOBS
+--enable_events=ENABLE_EVENTS
 --enable_sharelinks=ENABLE_SHARELINKS
 --enable_transfers=ENABLE_TRANSFERS
 --enable_freeze=ENABLE_FREEZE
+--enable_sandboxes=ENABLE_SANDBOXES
+--enable_vmachines=ENABLE_VMACHINES
 --enable_preview=ENABLE_PREVIEW
+--enable_jupyter=ENABLE_JUPYTER
+--enable_gdp=ENABLE_GDP
 --enable_hsts=ENABLE_HSTS
 --enable_vhost_certs=ENABLE_VHOST_CERTS
 --enable_verify_certs=ENABLE_VERIFY_CERTS
 --enable_seafile=ENABLE_SEAFILE
 --enable_duplicati=ENABLE_DUPLICATI
+--enable_crontab=ENABLE_CRONTAB
 --enable_imnotify=ENABLE_IMNOTIFY
 --enable_dev_accounts=ENABLE_DEV_ACCOUNTS
 --enable_openid=ENABLE_OPENID
@@ -528,7 +537,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --mig_oid_provider='' \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_gdp=True \
-                   --enable_openid=True --enable_wsgi=True \
+                   --enable_openid=False --enable_wsgi=True \
                    --enable_sftp=False --enable_sftp_subsys=False \
                    --enable_davs=False --enable_ftps=False --enable_seafile=False \
                    --enable_sharelinks=False --enable_transfers=False \
