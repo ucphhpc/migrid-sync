@@ -1,0 +1,5 @@
+<body>
+%(title)s: %(date)s<br>
+<br>
+The project: '%(project_name)s' was created by user: %(creator)s 
+</body>

@@ -33,13 +33,16 @@ import time
 import inspect
 import logging
 import logging.handlers
+import pdfkit
 from datetime import datetime
+from xvfbwrapper import Xvfb
 
 from shared.base import client_id_dir, valid_dir_input
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     user_db_filename as mig_user_db_filename
 from shared.fileio import touch, make_symlink, write_file, remove_rec, \
     acquire_file_lock, release_file_lock
+from shared.notification import send_email
 from shared.serial import load, dump
 from shared.useradm import get_full_user_map
 from shared.useradm import create_user, delete_user
@@ -49,6 +52,8 @@ from shared.vgrid import vgrid_is_owner, vgrid_set_owners, \
     vgrid_restrict_write_support, vgrid_flat_name
 from shared.vgridkeywords import get_settings_keywords_dict
 
+template_filename = 'notifycreate.txt'
+notify_filename = 'notifyemails.txt'
 user_db_filename = 'gdp-users.db'
 client_id_project_postfix = '/GDP='
 
@@ -360,6 +365,142 @@ def __save_user_db(configuration, user_db, locked=False):
         release_file_lock(flock)
 
 
+def __send_project_create_confirmation(configuration, login,
+        project_name):
+    """Send project create confirmation to *login* and GDP admins"""
+
+    _logger = configuration.logger
+    _logger.debug("login: '%s', project_name: '%s'" % (login,
+                  project_name))
+    status = True
+    template = None
+
+    # Load notification emails
+
+    notify_filepath = os.path.join(configuration.gdp_home,
+            notify_filename)
+    notify = []
+    if os.path.isfile(notify_filepath):
+        fh = open(notify_filepath)
+        notifyline = fh.readline()
+        while notifyline:
+            email_idx = notifyline.find('<')
+            entry = {'name': notifyline[:email_idx].strip(' \t\n\r'),
+                     'email': notifyline[email_idx:].strip(' \t\n\r')}
+            notify.append(entry)
+            notifyline = fh.readline()
+        fh.close()
+        if not notify:
+            status = False
+            _logger.error("GDP: No admins found in file: '%s'"
+                          % notify_filepath)
+    else:
+        status = False
+        _logger.error("GDP: Missing notify file: '%s'"
+                      % notify_filepath)
+
+    # Check for project home dir
+
+    project_home = os.path.join(configuration.gdp_home, project_name)
+    if status and not os.path.isdir(project_home):
+        status = False
+        _logger.error("GDP: Missing project home dir: '%s'"
+                      % project_home)
+
+    # Check for project create template
+
+    template_filepath = os.path.join(configuration.gdp_home,
+            template_filename)
+    if status:
+        if os.path.isfile(template_filepath):
+            fh = open(template_filepath)
+            template = fh.read()
+            fh.close()
+        else:
+            status = False
+            _logger.error("GDP: Missing project create template file: '%s'"
+                           % template_filepath)
+
+    # Generate project create PDF
+
+    if status:
+        pdf_filename = '%s.pdf' % project_name
+        pdf_filepath = os.path.join(project_home, pdf_filename)
+        pdf_options = {
+            'page-size': 'Letter',
+            'margin-top': '0.75in',
+            'margin-right': '0.75in',
+            'margin-bottom': '0.75in',
+            'margin-left': '0.75in',
+            'encoding': 'UTF-8',
+            }
+
+        timestamp = datetime.fromtimestamp(time.time())
+        date = timestamp.strftime('%d/%m/%Y %H:%M:%S')
+        fill_entries = {'title': configuration.short_title,
+                        'date': date, 
+                        'project_name': project_name,
+                        'creator': login}
+        template = template % fill_entries
+        template.encode('utf8')
+
+        vdisplay = None
+        try:
+            vdisplay = Xvfb()
+            vdisplay.start()
+        except Exception, exc:
+            status = False
+            vdisplay = None
+            _logger.error('GPD: failed to initialize vdisplay, error: %s'
+                           % exc)
+
+        if status:
+            try:
+                env = os.environ
+                env['DISPLAY'] = ':%s' % vdisplay.vdisplay_num
+                pdfkit_conf = pdfkit.configuration(environ=env)
+                pdfkit.from_string(template, pdf_filepath,
+                                   configuration=pdfkit_conf, 
+                                   options=pdf_options)
+            except Exception, exc:
+                status = False
+                _logger.error('GDP: pdfkit failed, error: %s' % exc)
+
+        if vdisplay is not None:
+            try:
+                vdisplay.stop()
+            except Exception, exc:
+                status = False
+                _logger.error('GPD: failed to stop vdisplay, error: %s'
+                              % exc)
+
+        if not status:
+            msg = 'GPD: failed generate project create PDF'
+            msg = "%s for: '%s' created by: '%s'" % (msg, project_name,
+                    login)
+            _logger.error(msg)
+
+    # Send project create mail
+
+    if status:
+        recipients = login
+        for admin in notify:
+            recipients = '%s, %s %s' % (recipients, admin['name'],
+                    admin['email'])
+        subject = "SIF project create: '%s'" % project_name
+        message = ''
+        status = send_email(
+            recipients,
+            subject,
+            message,
+            _logger,
+            configuration,
+            [pdf_filepath],
+            )
+
+    return status
+
+
 def get_active_project(configuration, project_client_id):
     """Returns project name from *project_client_id*"""
 
@@ -373,7 +514,7 @@ def project_log(
     action,
     details,
     project_name=None,
-    client_ip=None,
+    client_address=None,
     ):
     """Log project actions, each project has a distinct logfile"""
 
@@ -409,7 +550,7 @@ def project_log(
 
         log_name = '%s.log' % project_name
         log_path = os.path.join(configuration.gdp_home,
-                                os.path.join('log', log_name))
+                                os.path.join(project_name, log_name))
         header = False
         if not os.path.exists(log_path):
             header = True
@@ -423,8 +564,8 @@ def project_log(
             logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        if client_ip is None:
-            client_ip = 'UNKNOWN'
+        if client_address is None:
+            client_address = 'UNKNOWN'
 
         # Generate log message and log to project log
 
@@ -436,7 +577,7 @@ def project_log(
         login = __login_from_client_id(configuration, client_id)
         msg = ': %s : %s : %s : %s : %s : %s' % (
             project_name,
-            client_ip,
+            client_address,
             login,
             client_id,
             action,
@@ -462,7 +603,7 @@ def project_log(
     return status
 
 
-def validate_user(configuration, client_id, client_ip):
+def validate_user(configuration, client_id, client_address):
     """Validate user:
     Log every validation
     Validate user database format
@@ -472,8 +613,8 @@ def validate_user(configuration, client_id, client_ip):
     """
 
     _logger = configuration.logger
-    _logger.debug("client_ip: '%s', client_id: '%s'" % (client_ip,
-                  client_id))
+    _logger.debug("client_address: '%s', client_id: '%s'"
+                  % (client_address, client_id))
 
     timestamp = time.time()
     min_ip_change_time = 1000
@@ -505,25 +646,24 @@ def validate_user(configuration, client_id, client_ip):
             msg = \
                 'Account suspended, please contact the system administrators'
             _logger.info("User account: '%s' is suspended" % client_id)
-        elif user_last_ip is not None and user_last_ip != client_ip:
+        elif user_last_ip is not None and user_last_ip \
+            != client_address:
 
-        # Check if IP changed since last login
-        # TODO: Put GeoIP check here
+            # Check if IP changed since last login
+            # TODO: Put GeoIP check here
 
             _logger.info("User '%s' changed ip: %s -> %s" % (client_id,
-                         user_last_ip, client_ip))
+                         user_last_ip, client_address))
 
-            # Suspend account if IP changed within min_ip_change_time
+            # Reject login if IP changed within min_ip_change_time
 
             if user_last_timestamp is not None and timestamp \
                 - user_last_timestamp < min_ip_change_time:
                 status = False
                 msg = 'ip changed from %s to %s within %s seconds' \
-                    % (user_last_ip, client_ip, min_ip_change_time)
+                    % (user_last_ip, client_address, min_ip_change_time)
                 _logger.info("GDP: User '%s' %s" % (client_id, msg)
                              % (client_id, msg))
-                _logger.info("Suspending account: '%s'" % client_id)
-                account['state'] = 'suspended'
 
         # Generate last login message
 
@@ -538,17 +678,17 @@ def validate_user(configuration, client_id, client_ip):
         # Update last login info
 
         account_last_login['timestamp'] = timestamp
-        account_last_login['ip'] = client_ip
+        account_last_login['ip'] = client_address
         __save_user_db(configuration, user_db, locked=True)
 
     release_file_lock(flock)
 
     if status:
         _logger.info("Validated user: '%s' from ip: %s" % (client_id,
-                     client_ip))
+                     client_address))
     else:
         _logger.info("Rejected user: '%s' from ip: %s" % (client_id,
-                     client_ip))
+                     client_address))
 
     return (status, msg)
 
@@ -669,12 +809,12 @@ def get_project_user_dn(configuration, requested_script, client_id):
     return result
 
 
-def ensure_user(configuration, client_ip, client_id):
+def ensure_user(configuration, client_address, client_id):
     """Ensure GDP user db entry for *client_id*"""
 
     _logger = configuration.logger
-    _logger.debug("client_ip: '%s', client_id: '%s'" % (client_ip,
-                  client_id))
+    _logger.debug("client_address: '%s', client_id: '%s'"
+                  % (client_address, client_id))
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, locked=True)
@@ -691,17 +831,17 @@ def ensure_user(configuration, client_ip, client_id):
 
 def project_invite(
     configuration,
-    inviter_client_ip,
-    inviter_client_id,
+    inviting_client_address,
+    inviting_client_id,
     invited_client_id,
     project_name,
     ):
-    """User *inviter_client_ip* invites user *invited_client_id*
+    """User *inviting_client_address* invites user *invited_client_id*
     to *project_name"""
 
     _logger = configuration.logger
-    msg = "client_ip: '%s', inviter_client_id: '%s'" \
-        % (inviter_client_ip, inviter_client_id)
+    msg = "client_address: '%s', inviting_client_id: '%s'" \
+        % (inviting_client_address, inviting_client_id)
     msg = "%s, invited_client_id: '%s', project_name: '%s'" % (msg,
             invited_client_id, project_name)
     _logger.debug(msg)
@@ -733,7 +873,8 @@ def project_invite(
         _logger.error(msg)
     elif user_projects.get(project_name, None) is None:
 
-        # Create a project entry for *invited_client_id* and set state to 'invited'
+        # Create a project entry for *invited_client_id*
+        # and set state to 'invited'
 
         user_projects[project_name] = {'state': 'invited',
                 'client_id': get_project_client_id(invited_client_id,
@@ -745,11 +886,11 @@ def project_invite(
         log_msg = '%s' % invited_client_id
         project_log(
             configuration,
-            inviter_client_id,
+            inviting_client_id,
             'invite',
             log_msg,
             project_name=project_name,
-            client_ip=inviter_client_ip,
+            client_address=inviting_client_address,
             )
     else:
         status = False
@@ -765,15 +906,15 @@ def project_invite(
 def create_project_user(
     configuration,
     project,
-    client_ip,
+    client_address,
     client_id,
     project_name,
     ):
     """Create new project user"""
 
     _logger = configuration.logger
-    _logger.debug("client_ip: '%s', client_id: '%s', project_name: '%s'"
-                   % (client_ip, client_id, project_name))
+    _logger.debug("client_address: '%s', client_id: '%s', project_name: '%s'"
+                   % (client_address, client_id, project_name))
     status = True
     msg = ''
 
@@ -806,11 +947,10 @@ def create_project_user(
         create_user(mig_user_dict, configuration.config_file,
                     mig_user_db_path, ask_renew=False,
                     default_renew=True)
-    except Exception, err:
+    except Exception, exc:
         status = False
-        _logger.error("create failed for '%s': '%s'"
-                      % (project_client_id, err))
         msg = "Failed to create user: '%s'" % project_client_id
+        _logger.error('GDP: %s, error: %s' % (msg, exc))
 
     # Create symlink from project dir to newly created MiG user dir
 
@@ -830,15 +970,15 @@ def create_project_user(
 
 def project_accept(
     configuration,
-    client_ip,
+    client_address,
     client_id,
     project_name,
     ):
     """Accept project invitation"""
 
     _logger = configuration.logger
-    _logger.debug("client_ip: '%s', client_id: '%s', project_name: '%s'"
-                   % (client_ip, client_id, project_name))
+    _logger.debug("client_address: '%s', client_id: '%s', project_name: '%s'"
+                   % (client_address, client_id, project_name))
     status = True
 
     (_, db_lock_filepath) = __user_db_filepath(configuration)
@@ -886,7 +1026,7 @@ def project_accept(
 
     if status:
         (status, msg) = create_project_user(configuration, project,
-                client_ip, client_id, project_name)
+                client_address, client_id, project_name)
 
     # Mark project as accepted
 
@@ -905,7 +1045,7 @@ def project_accept(
             'accept_invite',
             log_msg,
             project_name=project_name,
-            client_ip=client_ip,
+            client_address=client_address,
             )
 
     release_file_lock(flock)
@@ -915,15 +1055,15 @@ def project_accept(
 
 def project_login(
     configuration,
-    client_ip,
+    client_address,
     client_id,
     project_name,
     ):
     """Log *client_id* into project_name"""
 
     _logger = configuration.logger
-    _logger.debug("client_ip: '%s', client_id: '%s', project_name: '%s'"
-                   % (client_ip, client_id, project_name))
+    _logger.debug("client_address: '%s', client_id: '%s', project_name: '%s'"
+                   % (client_address, client_id, project_name))
     result = None
     status = True
 
@@ -1003,7 +1143,7 @@ def project_login(
             'logged_in',
             log_msg,
             project_name=project_name,
-            client_ip=client_ip,
+            client_address=client_address,
             )
 
     return result
@@ -1011,7 +1151,7 @@ def project_login(
 
 def project_logout(
     configuration,
-    client_ip,
+    client_address,
     client_id=None,
     project_client_id=None,
     autologout=False,
@@ -1023,15 +1163,14 @@ def project_logout(
     """
 
     _logger = configuration.logger
-    _logger.debug("client_ip: '%s', client_id: '%s', project_client_id: '%s'"
-                   % (client_ip, client_id, project_client_id))
+    _logger.debug("client_address: '%s', client_id: '%s', project_client_id: '%s'"
+                   % (client_address, client_id, project_client_id))
     status = True
     result = False
     project_name = None
     role = None
 
     (_, db_lock_filepath) = __user_db_filepath(configuration)
-    _logger.debug('db_lock_filepath: %s' % db_lock_filepath)
     flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, locked=True)
 
@@ -1043,7 +1182,7 @@ def project_logout(
     if client_id is None:
         status = False
         msg = 'GDP: Logout failed to extract client_id'
-        msg = "%s from project_client_id: '%s'" % project_client_id
+        msg = "%s from project_client_id: '%s'" % (msg, project_client_id)
         _logger.error(msg)
 
     # Retrieve user
@@ -1092,7 +1231,7 @@ def project_logout(
             action,
             log_msg,
             project_name=project_name,
-            client_ip=client_ip,
+            client_address=client_address,
             )
 
     return result
@@ -1100,7 +1239,7 @@ def project_logout(
 
 def project_create(
     configuration,
-    client_ip,
+    client_address,
     client_id,
     project_name,
     ):
@@ -1109,6 +1248,7 @@ def project_create(
     _logger = configuration.logger
     _logger.debug("project_create: client_id: '%s', project_name: '%s'"
                   , client_id, project_name)
+
     status = True
     msg = ''
     project_client_id = None
@@ -1117,14 +1257,13 @@ def project_create(
     vgrid_label = '%s' % configuration.site_vgrid_label
 
     # Create vgrid
-    # This is done explisitly here as not all operations from
+    # This is done explicitly here as not all operations from
     # shared.functionality.createvgrid apply to GDP
     # TODO:
     # Move vgridcreate functions from shared.functionality.createvgrid
     # to a commen helper module
 
-    vgrid_name = project_name
-    if vgrid_name.find('/') != -1:
+    if project_name.find('/') != -1:
         status = False
         msg = "'/' _NOT_ allowed in project name'"
         _logger.error('GDP: %s' % msg)
@@ -1134,15 +1273,15 @@ def project_create(
 
     if status:
         reserved_names = (default_vgrid, any_vgrid, all_vgrids)
-        if vgrid_name in reserved_names \
+        if project_name in reserved_names \
             or not valid_dir_input(configuration.vgrid_home,
-                                   vgrid_name):
+                                   project_name):
             status = False
-            msg = "Illegal project_name: '%s'" % vgrid_name
+            msg = "Illegal project_name: '%s'" % project_name
             log_msg = \
                 'GDP: createvgrid possible illegal directory status'
             log_msg = "%s, attempt by '%s': vgrid_name '%s'" \
-                % (log_msg, client_id, vgrid_name)
+                % (log_msg, client_id, project_name)
             _logger.warning(msg)
 
     # Optional limitation of create vgrid permission
@@ -1159,19 +1298,19 @@ def project_create(
             _logger.warning("GDP: User '%s' is not allowed to create vgrids!"
                              % client_id)
 
-    # Please note that base_dir must end in slash to avoid status to other
+    # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     if status:
         vgrid_home_dir = \
             os.path.abspath(os.path.join(configuration.vgrid_home,
-                            vgrid_name)) + os.sep
+                            project_name)) + os.sep
         vgrid_files_dir = \
             os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                            vgrid_name)) + os.sep
+                            project_name)) + os.sep
 
         if vgrid_restrict_write_support(configuration):
-            flat_vgrid = vgrid_flat_name(vgrid_name, configuration)
+            flat_vgrid = vgrid_flat_name(project_name, configuration)
             vgrid_writable_dir = \
                 os.path.abspath(os.path.join(configuration.vgrid_files_writable,
                                 flat_vgrid)) + os.sep
@@ -1182,28 +1321,28 @@ def project_create(
             vgrid_writable_dir = None
             vgrid_readonly_dir = None
 
-        # does vgrid exist?
+        # Does vgrid exist?
 
         if os.path.exists(vgrid_home_dir):
             status = False
             msg = \
-                "%s: '%s' cannot be created because it already exists!" \
-                % (vgrid_label, vgrid_name)
+                "%s '%s' cannot be created because it already exists!" \
+                % (vgrid_label, project_name)
             _logger.error("GDP: user '%s' can't create vgrid '%s' - it exists!"
-                           % (client_id, vgrid_name))
+                           % (client_id, project_name))
 
-    # make sure all dirs can be created (that a file or directory with the same
+    # Make sure all dirs can be created (that a file or directory with the same
     # name do not exist prior to the vgrid creation)
 
     if status and os.path.exists(vgrid_files_dir):
         status = False
         msg = \
-            """'%s' cannot be created, a file or directory exists with the same
+            """%s '%s' cannot be created, a file or directory exists with the same
 name, please try again with a new name!""" \
-            % vgrid_label
+            % (vgrid_label, project_name)
         _logger.error('GDP: %s' % msg)
 
-    # create directory to store vgrid files
+    # Create directory to store vgrid files
 
     if status:
         try:
@@ -1211,11 +1350,11 @@ name, please try again with a new name!""" \
             rollback_dirs['vgrid_home_dir'] = vgrid_home_dir
         except Exception, exc:
             status = False
-            msg = 'Could not create %s directory' % vgrid_label
-            _logger.error("GDP: Could not create vgrid base directory: '%s'"
-                           % exc)
+            msg = 'Could not create %s base directory' % vgrid_label
+            msg = "for project: '%s'" % (msg, project_name)
+            _logger.error('GDP: %s, error: %s' % (msg, exc))
 
-    # create directory in vgrid_files_home or vgrid_files_writable to contain
+    # Create directory in vgrid_files_home or vgrid_files_writable to contain
     # shared files for the new vgrid.
 
     if status:
@@ -1227,19 +1366,19 @@ name, please try again with a new name!""" \
                 rollback_dirs['vgrid_writable_dir'] = vgrid_writable_dir
             else:
                 os.mkdir(vgrid_files_dir)
-            rollback_dirs['vgrid_files_dir'] = vgrid_writable_dir
+            rollback_dirs['vgrid_files_dir'] = vgrid_files_dir
             share_readme = os.path.join(vgrid_files_dir, 'README')
             if not os.path.exists(share_readme):
                 write_file("""= Private Share =
     This directory is used for hosting private files for the '%s' '%s'.
     """
-                           % (vgrid_label, vgrid_name), share_readme,
+                           % (vgrid_label, project_name), share_readme,
                            _logger, make_parent=False)
         except Exception, exc:
             status = False
-            msg = 'Could not create %s files directory.' % vgrid_label
-            _logger.error("Could not create vgrid files directory: '%s'"
-                           % exc)
+            msg = 'Could not create %s files directory' % vgrid_label
+            msg = "for project: '%s'" % (msg, project_name)
+            _logger.error('GDP: %s, error: %s' % (msg, exc))
 
     # Create owners list with client_id as owner
 
@@ -1247,26 +1386,27 @@ name, please try again with a new name!""" \
         owner_list = [client_id]
 
         (owner_status, owner_msg) = vgrid_set_owners(configuration,
-                vgrid_name, owner_list)
+                project_name, owner_list)
         if not owner_status:
             status = False
             msg = "Could not save owner list: '%s'" % owner_msg
             _logger.error('GDP: %s' % msg)
 
-    # create member list with project_client_id as member
+    # Create member list with project_client_id as member
 
     if status:
-        project_client_id = get_project_client_id(client_id, vgrid_name)
+        project_client_id = get_project_client_id(client_id,
+                project_name)
         member_list = [project_client_id]
 
         (member_status, member_msg) = vgrid_set_members(configuration,
-                vgrid_name, member_list)
+                project_name, member_list)
         if not member_status:
             status = False
             msg = "Could not save member list: '%s'" % member_msg
             _logger.error('GDP: %s' % msg)
 
-    # create default pickled settings list with only required values set to
+    # Create default pickled settings list with only required values set to
     # leave all other fields for inheritance by default.
 
     if status:
@@ -1275,59 +1415,116 @@ name, please try again with a new name!""" \
         for (key, spec) in settings_specs.items():
             if spec['Required']:
                 init_settings[key] = spec['Value']
-        init_settings['vgrid_name'] = vgrid_name
+        init_settings['vgrid_name'] = project_name
         (settings_status, settings_msg) = \
-            vgrid_set_settings(configuration, vgrid_name,
+            vgrid_set_settings(configuration, project_name,
                                init_settings.items())
         if not settings_status:
             status = False
             msg = "Could not save settings list: '%s'" % settings_msg
             _logger.error('GDP: %s' % msg)
 
+    # Create directory to store gdp project files
+
+    if status:
+        project_home = os.path.join(configuration.gdp_home,
+                                    project_name)
+        if not os.path.isdir(project_home):
+            try:
+                os.mkdir(project_home)
+            except Exception, exc:
+
+                # rollback_dirs['project_home'] = project_home
+
+                status = False
+                msg = 'Could not create home directory'
+                msg = "%s for project: '%s'" % (msg, project_name)
+                _logger.error('GDP: %s, error: %s' % (msg, exc))
+        else:
+            status = False
+            msg = "Home dir already exists for project: '%s'" \
+                % project_name
+            _logger.error("GDP: %s, '%s'" % (msg, project_home))
+
     # 'Invite' and 'accept' to enable owner login
 
-    if status and not project_invite(configuration, client_ip,
+    if status and not project_invite(configuration, client_address,
             client_id, client_id, project_name):
         status = False
-        msg = 'Project invite failed'
-        log_msg = 'GDP: Automatic project invite FAILED'
-        log_msg = "%s for: '%s', owner: '%s'" % (log_msg, project_name,
-                client_id)
-        _logger.error(log_msg)
+        msg = "Automatic invite failed for project: '%s'" % project_name
+        _logger.error("GDP: %s, owner '%s'" % (msg, client_id))
 
-    if status and not project_accept(configuration, client_ip,
+    if status and not project_accept(configuration, client_address,
             client_id, project_name):
         status = False
-        msg = 'Project accept failed'
-        log_msg = 'GDP: Automatic project accept FAILED'
-        log_msg = "%s for: '%s', owner: '%s'" % (log_msg, project_name,
-                client_id)
-        _logger.error(log_msg)
+        msg = "Automatic accept failed for project: '%s'" % project_name
+        _logger.error("GDP: %s, owner '%s'" % (msg, client_id))
+
+    # Send create info to GDP admin
+
+    if status:
+        login = __login_from_client_id(configuration, client_id)
+        status = __send_project_create_confirmation(configuration,
+                login, project_name)
+        if not status:
+            msg = 'Failed to send project create confirmation email'
+            msg = "%s for project: '%s'" % (msg, project_name)
+            _logger.error('GDP: %s' % msg)
 
     # Roll back if something went wrong
 
     if not status:
-        _logger.info("GDP: project_create for: '%s' failed, rolling back"
-                      % vgrid_name)
+        log_msg = 'GDP: project_create failed'
+        log_msg = "%s for project: '%s', rolling back" % (msg,
+                project_name)
+        _logger.info(log_msg)
+
+        # Remove project directories
+
         for (key, path) in rollback_dirs.iteritems():
-            log_msg = 'GDP: project_create'
+            log_msg = 'GDP: project_create : roll back'
             log_msg = "%s : Recursively removing : '%s' -> '%s'" \
                 % (log_msg, key, path)
             _logger.info(log_msg)
             remove_rec(path, configuration)
 
+        # Remove project mig user
+
         if project_client_id is not None:
-            _logger.info("GDP: project_create : Deleting user: '%s'"
-                         % project_client_id)
-            mig_user_db_path = os.path.join(configuration.mig_server_home,
-                                    mig_user_db_filename)
+            log_msg = 'GDP: project_create : roll back'
+            log_msg = "%s : Deleting mig user: '%s'" % (log_msg,
+                    project_client_id)
+            _logger.info(log_msg)
+            mig_user_db_path = \
+                os.path.join(configuration.mig_server_home,
+                             mig_user_db_filename)
             mig_user_map = get_full_user_map(configuration)
-            mig_mig_user_dict = mig_user_map.get(project_client_id, None)
-            delete_user(mig_mig_user_dict, configuration.config_file,
-                        mig_user_db_path, force=True)
+            mig_user_dict = mig_user_map.get(project_client_id, None)
+            if mig_user_dict is not None:
+                delete_user(mig_user_dict, configuration.config_file,
+                            mig_user_db_path, force=True)
+
+         # Remove project from user in gdp user database
+
+        log_msg = 'GDP: project_create : roll back'
+        log_msg = "%s : Deleting gdp user db project: '%s' -> '%s'" \
+            % (log_msg, client_id, project_name)
+        _logger.info(log_msg)
+        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        flock = acquire_file_lock(db_lock_filepath)
+        user_db = __load_user_db(configuration, locked=True)
+        try:
+            del user_db[client_id]['projects'][project_name]
+        except Exception, exc:
+            log_msg = 'GDP: project_create : roll back'
+            log_msg = "%s : failed for gdp user db: '%s' -> '%s'" \
+                % (msg, client_id, project_name)
+            _logger.error(log_msg)
+        __save_user_db(configuration, user_db, locked=True)
+        release_file_lock(flock)
 
         if not msg:
-            msg = "Failed to create project: '%s'" % vgrid_name
+            msg = "Failed to create project: '%s'" % project_name
 
     if status:
         msg = "Created project: '%s'" % project_name
@@ -1341,7 +1538,7 @@ name, please try again with a new name!""" \
             'created',
             log_msg,
             project_name=project_name,
-            client_ip=client_ip,
+            client_address=client_address,
             )
 
     return (status, msg)
