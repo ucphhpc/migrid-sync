@@ -30,7 +30,11 @@
 import os
 import smtplib
 import threading
+from email import Encoders
+from email.MIMEBase import MIMEBase
+from email.MIMEMultipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.Utils import formatdate
 from urllib import quote
 
 from shared.base import force_utf8, generate_https_urls
@@ -339,6 +343,7 @@ def send_email(
     message,
     logger,
     configuration,
+    files=[],
     ):
     """Send message to recipients by email:
     Force utf8 encoding to avoid accented characters appearing garbled
@@ -347,10 +352,21 @@ def send_email(
     recipients_list = recipients.split(', ')
 
     try:
-        mime_msg = MIMEText(force_utf8(message), "plain", "utf8")
-        mime_msg['Subject'] = subject
+        mime_msg = MIMEMultipart()
         mime_msg['From'] = configuration.smtp_sender
         mime_msg['To'] = recipients
+        mime_msg['Date'] = formatdate(localtime=True)
+        mime_msg['Subject'] = subject
+        mime_msg.attach(MIMEText(force_utf8(message), "plain", "utf8"))
+
+        for name in files:
+            part = MIMEBase('application', "octet-stream")
+            part.set_payload(open(name, "rb").read())
+            Encoders.encode_base64(part)
+            part.add_header('Content-Disposition',
+                            'attachment; filename="%s"' % \
+                            os.path.basename(name))
+            mime_msg.attach(part)
         logger.debug('sending email to %s:\n%s' % (recipients,
                                                    mime_msg.as_string()))
         server = smtplib.SMTP(configuration.smtp_server)
