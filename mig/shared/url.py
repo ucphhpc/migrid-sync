@@ -111,6 +111,9 @@ def csrf_operation(configuration, url, query_dict=None):
     sorted by query_dict.keys"""
 
     csrf_op = '%s' % url
+    if query_dict is None:
+        return csrf_op
+    
     for key in sorted(query_dict):
         if key != csrf_field:
             csrf_op = '%s_%s' % (csrf_op, key)
