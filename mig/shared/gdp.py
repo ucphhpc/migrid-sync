@@ -617,7 +617,7 @@ def validate_user(configuration, client_id, client_addr):
                   % (client_addr, client_id))
 
     timestamp = time.time()
-    min_ip_change_time = 1000
+    min_ip_change_time = 600
     user = None
     account = None
     account_state = None
@@ -652,34 +652,38 @@ def validate_user(configuration, client_id, client_addr):
             # Check if IP changed since last login
             # TODO: Put GeoIP check here
 
-            _logger.info("User '%s' changed ip: %s -> %s" % (client_id,
+            _logger.info("GDP: User '%s' changed ip: %s -> %s" % (client_id,
                          user_last_ip, client_addr))
 
             # Reject login if IP changed within min_ip_change_time
 
             if user_last_timestamp is not None and timestamp \
                 - user_last_timestamp < min_ip_change_time:
+                remaining_block = min_ip_change_time - (timestamp - user_last_timestamp)
                 status = False
-                msg = 'ip changed from %s to %s within %s seconds' \
-                    % (user_last_ip, client_addr, min_ip_change_time)
-                _logger.info("GDP: User '%s' %s" % (client_id, msg)
-                             % (client_id, msg))
+
+                msg = 'IP changed from %s to %s, try again in %0.f seconds' \
+                    % (user_last_ip, client_addr, remaining_block)
+                _logger.info("GDP: Login REJECTED, user '%s' : %s" % (client_id, msg))
 
         # Generate last login message
 
         if status and user_last_timestamp is not None and user_last_ip \
             is not None:
-            lastlogin = datetime.fromtimestamp(user_last_timestamp)
+            lastlogin = datetime.fromtimestamp(user_last_timestamp) 
             lastloginstr = lastlogin.strftime('%d/%m/%Y %H:%M:%S')
 
             msg = 'Last login: %s from %s' % (lastloginstr,
                     user_last_ip)
 
-        # Update last login info
+        if status:
 
-        account_last_login['timestamp'] = timestamp
-        account_last_login['ip'] = client_addr
-        __save_user_db(configuration, user_db, locked=True)
+            # Update last login info
+
+            account_last_login['ip'] = client_addr
+            account_last_login['timestamp'] = timestamp
+        
+            __save_user_db(configuration, user_db, locked=True)
 
     release_file_lock(flock)
 
@@ -797,8 +801,13 @@ def get_project_user_dn(configuration, requested_script, client_id):
         # Get active project for user client_id
 
         if not result:
-            result = user_db.get(client_id, {}).get('account',
+            role = user_db.get(client_id, {}).get('account',
                     {}).get('role', '')
+
+            # NOTE: Role can be None in user_db
+
+            if role is not None:
+                result = role
 
         if not result:
             msg = "GDP: REJECTED requested_script: '%s'" \
