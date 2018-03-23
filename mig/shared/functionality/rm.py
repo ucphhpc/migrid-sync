@@ -287,10 +287,11 @@ You're not allowed to delete entire special folders like %s shares and %s
                 if rm_helper == remove_path:
                     msg = "'%s' to Trash" % relative_path
                     project_log(configuration, client_id, 'moved',
-                                msg, client_ip=environ['REMOTE_ADDR'])
+                                msg, client_addr=environ['REMOTE_ADDR'])
                 else:
                     msg = "%s" % relative_path
-                    project_log(configuration, client_id, 'deleted', msg, client_ip=environ['REMOTE_ADDR'])
+                    project_log(configuration, client_id, 'deleted', 
+                                msg, client_addr=environ['REMOTE_ADDR'])
 
     output_objects.append({'object_type': 'link',
                            'destination': 'ls.py%s' % id_query,

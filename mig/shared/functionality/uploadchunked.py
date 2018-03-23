@@ -417,7 +417,7 @@ def main(client_id, user_arguments_dict, environ=None):
                 if configuration.site_enable_gdp:
                     msg = "'%s'" % rel_dst
                     project_log(configuration, client_id, 'created',
-                                msg, client_ip=environ['REMOTE_ADDR'])
+                                msg, client_addr=environ['REMOTE_ADDR'])
 
             uploaded.append(file_entry)
         logger.info('move done: %s' % ' '.join([i[0] for i in upload_files]))

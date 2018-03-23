@@ -206,7 +206,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 if configuration.site_enable_gdp:
                     msg = "'%s'" % relative_path
                     project_log(configuration, client_id, 'created', 
-                                msg, client_ip=environ['REMOTE_ADDR'])
+                                msg, client_addr=environ['REMOTE_ADDR'])
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s' failed!" % (op_name,

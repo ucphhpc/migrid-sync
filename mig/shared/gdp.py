@@ -514,7 +514,7 @@ def project_log(
     action,
     details,
     project_name=None,
-    client_address=None,
+    client_addr=None,
     ):
     """Log project actions, each project has a distinct logfile"""
 
@@ -564,8 +564,8 @@ def project_log(
             logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        if client_address is None:
-            client_address = 'UNKNOWN'
+        if client_addr is None:
+            client_addr = 'UNKNOWN'
 
         # Generate log message and log to project log
 
@@ -577,7 +577,7 @@ def project_log(
         login = __login_from_client_id(configuration, client_id)
         msg = ': %s : %s : %s : %s : %s : %s' % (
             project_name,
-            client_address,
+            client_addr,
             login,
             client_id,
             action,
@@ -603,7 +603,7 @@ def project_log(
     return status
 
 
-def validate_user(configuration, client_id, client_address):
+def validate_user(configuration, client_id, client_addr):
     """Validate user:
     Log every validation
     Validate user database format
@@ -613,8 +613,8 @@ def validate_user(configuration, client_id, client_address):
     """
 
     _logger = configuration.logger
-    _logger.debug("client_address: '%s', client_id: '%s'"
-                  % (client_address, client_id))
+    _logger.debug("client_addr: '%s', client_id: '%s'"
+                  % (client_addr, client_id))
 
     timestamp = time.time()
     min_ip_change_time = 1000
@@ -647,13 +647,13 @@ def validate_user(configuration, client_id, client_address):
                 'Account suspended, please contact the system administrators'
             _logger.info("User account: '%s' is suspended" % client_id)
         elif user_last_ip is not None and user_last_ip \
-            != client_address:
+            != client_addr:
 
             # Check if IP changed since last login
             # TODO: Put GeoIP check here
 
             _logger.info("User '%s' changed ip: %s -> %s" % (client_id,
-                         user_last_ip, client_address))
+                         user_last_ip, client_addr))
 
             # Reject login if IP changed within min_ip_change_time
 
@@ -661,7 +661,7 @@ def validate_user(configuration, client_id, client_address):
                 - user_last_timestamp < min_ip_change_time:
                 status = False
                 msg = 'ip changed from %s to %s within %s seconds' \
-                    % (user_last_ip, client_address, min_ip_change_time)
+                    % (user_last_ip, client_addr, min_ip_change_time)
                 _logger.info("GDP: User '%s' %s" % (client_id, msg)
                              % (client_id, msg))
 
@@ -678,17 +678,17 @@ def validate_user(configuration, client_id, client_address):
         # Update last login info
 
         account_last_login['timestamp'] = timestamp
-        account_last_login['ip'] = client_address
+        account_last_login['ip'] = client_addr
         __save_user_db(configuration, user_db, locked=True)
 
     release_file_lock(flock)
 
     if status:
         _logger.info("Validated user: '%s' from ip: %s" % (client_id,
-                     client_address))
+                     client_addr))
     else:
         _logger.info("Rejected user: '%s' from ip: %s" % (client_id,
-                     client_address))
+                     client_addr))
 
     return (status, msg)
 
@@ -809,12 +809,12 @@ def get_project_user_dn(configuration, requested_script, client_id):
     return result
 
 
-def ensure_user(configuration, client_address, client_id):
+def ensure_user(configuration, client_addr, client_id):
     """Ensure GDP user db entry for *client_id*"""
 
     _logger = configuration.logger
-    _logger.debug("client_address: '%s', client_id: '%s'"
-                  % (client_address, client_id))
+    _logger.debug("client_addr: '%s', client_id: '%s'"
+                  % (client_addr, client_id))
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, locked=True)
@@ -831,17 +831,17 @@ def ensure_user(configuration, client_address, client_id):
 
 def project_invite(
     configuration,
-    inviting_client_address,
+    inviting_client_addr,
     inviting_client_id,
     invited_client_id,
     project_name,
     ):
-    """User *inviting_client_address* invites user *invited_client_id*
+    """User *inviting_client_addr* invites user *invited_client_id*
     to *project_name"""
 
     _logger = configuration.logger
-    msg = "client_address: '%s', inviting_client_id: '%s'" \
-        % (inviting_client_address, inviting_client_id)
+    msg = "client_addr: '%s', inviting_client_id: '%s'" \
+        % (inviting_client_addr, inviting_client_id)
     msg = "%s, invited_client_id: '%s', project_name: '%s'" % (msg,
             invited_client_id, project_name)
     _logger.debug(msg)
@@ -890,7 +890,7 @@ def project_invite(
             'invite',
             log_msg,
             project_name=project_name,
-            client_address=inviting_client_address,
+            client_addr=inviting_client_addr,
             )
     else:
         status = False
@@ -906,15 +906,15 @@ def project_invite(
 def create_project_user(
     configuration,
     project,
-    client_address,
+    client_addr,
     client_id,
     project_name,
     ):
     """Create new project user"""
 
     _logger = configuration.logger
-    _logger.debug("client_address: '%s', client_id: '%s', project_name: '%s'"
-                   % (client_address, client_id, project_name))
+    _logger.debug("client_addr: '%s', client_id: '%s', project_name: '%s'"
+                   % (client_addr, client_id, project_name))
     status = True
     msg = ''
 
@@ -970,15 +970,15 @@ def create_project_user(
 
 def project_accept(
     configuration,
-    client_address,
+    client_addr,
     client_id,
     project_name,
     ):
     """Accept project invitation"""
 
     _logger = configuration.logger
-    _logger.debug("client_address: '%s', client_id: '%s', project_name: '%s'"
-                   % (client_address, client_id, project_name))
+    _logger.debug("client_addr: '%s', client_id: '%s', project_name: '%s'"
+                   % (client_addr, client_id, project_name))
     status = True
 
     (_, db_lock_filepath) = __user_db_filepath(configuration)
@@ -1026,7 +1026,7 @@ def project_accept(
 
     if status:
         (status, msg) = create_project_user(configuration, project,
-                client_address, client_id, project_name)
+                client_addr, client_id, project_name)
 
     # Mark project as accepted
 
@@ -1045,7 +1045,7 @@ def project_accept(
             'accept_invite',
             log_msg,
             project_name=project_name,
-            client_address=client_address,
+            client_addr=client_addr,
             )
 
     release_file_lock(flock)
@@ -1055,15 +1055,15 @@ def project_accept(
 
 def project_login(
     configuration,
-    client_address,
+    client_addr,
     client_id,
     project_name,
     ):
     """Log *client_id* into project_name"""
 
     _logger = configuration.logger
-    _logger.debug("client_address: '%s', client_id: '%s', project_name: '%s'"
-                   % (client_address, client_id, project_name))
+    _logger.debug("client_addr: '%s', client_id: '%s', project_name: '%s'"
+                   % (client_addr, client_id, project_name))
     result = None
     status = True
 
@@ -1143,7 +1143,7 @@ def project_login(
             'logged_in',
             log_msg,
             project_name=project_name,
-            client_address=client_address,
+            client_addr=client_addr,
             )
 
     return result
@@ -1151,7 +1151,7 @@ def project_login(
 
 def project_logout(
     configuration,
-    client_address,
+    client_addr,
     client_id=None,
     project_client_id=None,
     autologout=False,
@@ -1163,8 +1163,8 @@ def project_logout(
     """
 
     _logger = configuration.logger
-    _logger.debug("client_address: '%s', client_id: '%s', project_client_id: '%s'"
-                   % (client_address, client_id, project_client_id))
+    _logger.debug("client_addr: '%s', client_id: '%s', project_client_id: '%s'"
+                   % (client_addr, client_id, project_client_id))
     status = True
     result = False
     project_name = None
@@ -1231,7 +1231,7 @@ def project_logout(
             action,
             log_msg,
             project_name=project_name,
-            client_address=client_address,
+            client_addr=client_addr,
             )
 
     return result
@@ -1239,7 +1239,7 @@ def project_logout(
 
 def project_create(
     configuration,
-    client_address,
+    client_addr,
     client_id,
     project_name,
     ):
@@ -1448,13 +1448,13 @@ name, please try again with a new name!""" \
 
     # 'Invite' and 'accept' to enable owner login
 
-    if status and not project_invite(configuration, client_address,
+    if status and not project_invite(configuration, client_addr,
             client_id, client_id, project_name):
         status = False
         msg = "Automatic invite failed for project: '%s'" % project_name
         _logger.error("GDP: %s, owner '%s'" % (msg, client_id))
 
-    if status and not project_accept(configuration, client_address,
+    if status and not project_accept(configuration, client_addr,
             client_id, project_name):
         status = False
         msg = "Automatic accept failed for project: '%s'" % project_name
@@ -1538,7 +1538,7 @@ name, please try again with a new name!""" \
             'created',
             log_msg,
             project_name=project_name,
-            client_address=client_address,
+            client_addr=client_addr,
             )
 
     return (status, msg)

@@ -232,7 +232,7 @@ copy entire special folders like %s shared folders!""" % \
                 if configuration.site_enable_gdp:
                     msg = "'%s' -> '%s'" % (relative_path, relative_dest)
                     project_log(configuration, client_id, 'copied',
-                                msg, client_ip=environ['REMOTE_ADDR'])
+                                msg, client_addr=environ['REMOTE_ADDR'])
 
             except Exception, exc:
                 output_objects.append(

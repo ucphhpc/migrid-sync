@@ -387,7 +387,7 @@ def main(client_id, user_arguments_dict, environ=None):
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=False)
     _logger = configuration.logger
-    client_ip = environ.get('REMOTE_ADDR', None)
+    client_addr = environ.get('REMOTE_ADDR', None)
     base_url = configuration.migserver_https_ext_oid_url
     req_url = environ.get('SCRIPT_URI', None)
     csrf_limit = get_csrf_limit(configuration)
@@ -464,7 +464,7 @@ Please contact the Grid admins %s if you think it should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action and identity or action == 'logout':
-        autologout = project_logout(configuration, client_ip,
+        autologout = project_logout(configuration, client_addr,
                                     client_id, autologout=True)
 
         if autologout or action == 'logout':
@@ -487,9 +487,9 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     # Generate html
 
-    ensure_user(configuration, client_ip, client_id)
+    ensure_user(configuration, client_addr, client_id)
     (validate_status, validate_msg) = validate_user(configuration,
-            client_id, client_ip)
+            client_id, client_addr)
     if not validate_status:
         html = \
             """
@@ -525,7 +525,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         # Project login
 
-            project_client_id = project_login(configuration, client_ip,
+            project_client_id = project_login(configuration, client_addr,
                     client_id, project_name)
             if project_client_id:
                 dest_op_name = 'fileman'
@@ -547,7 +547,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         # Project accept invitation
 
-            (status, msg) = project_accept(configuration, client_ip,
+            (status, msg) = project_accept(configuration, client_addr,
                     client_id, project_name)
             if status:
                 action_msg = 'OK: %s' % msg
@@ -557,7 +557,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         # Project invitation
 
-            (status, msg) = project_invite(configuration, client_ip,
+            (status, msg) = project_invite(configuration, client_addr,
                     client_id, invite_client_id, project_name)
             if status:
                 action_msg = 'OK: %s' % msg
@@ -568,8 +568,8 @@ Please contact the Grid admins %s if you think it should be enabled.
         # Project create
 
             logger.debug(": %s : creating project: '%s' : from ip: %s'"
-                         % (client_id, project_name, client_ip))
-            (status, msg) = project_create(configuration, client_ip,
+                         % (client_id, project_name, client_addr))
+            (status, msg) = project_create(configuration, client_addr,
                     client_id, project_name)
             if status:
                 action_msg = 'OK: %s' % msg
