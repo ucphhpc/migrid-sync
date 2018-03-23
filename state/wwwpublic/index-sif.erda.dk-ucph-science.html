@@ -37,14 +37,27 @@ SIF
 <script type="text/javascript">
     /* We assume UCPH users here and leave external users to FAQ entry */
     function login(user) {
-        if (user == "ucph") {
+        if (user == "extoid") {
             window.open('https://sif.erda.dk', '_blank');
+        } else if (user == "cert") {
+            window.open('', '_blank');
+        } else if (user == "migoid") {
+            window.open('', '_blank');
+        } else {
+            window.open('https://sif.erda.dk/cgi-sid/login.py', '_blank');
         }
     }
     function signup(user) {
-        if (user == "ucph") {
+        if (user == "extoid") {
             window.open('https://sif.erda.dk/cgi-sid/signup.py?show=kitoid', 
                         '_blank');
+        } else if (user == "cert") {
+            window.open('',
+                        '_blank');
+        } else if (user == "migoid") {
+            window.open('', '_blank');
+        } else {
+            window.open('https://sif.erda.dk/cgi-sid/signup.py', '_blank');
         }
     }
 
@@ -154,7 +167,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <h2 class="staticpage">I'm already on SIF!</h2>
 <p>In case you already signed up, you can proceed with</p>
 <input class="loginbutton" type="button" value="log in"
-       onClick="login('ucph');" />
+       onClick="login('extoid');" />
 <p><!-- to your account. --></p>
 </div>
 </div>
@@ -175,7 +188,8 @@ addition to archiving of these. As a user of SIF you should be aware of the foll
 <li>Any access to data is logged along with your id, time of day and other relevant information</li>
 <li>Any access pattern that is considered “suspicious” will result in a suspension of your account</li>
 </ul>
-You are not, under any circumstances, allowed to share your account with anybody else. If other persons needs access their must use their own account.<br/>
+You are not, under any circumstances, allowed to share your account with anybody else. 
+If other persons need access they must use their own account.<br/>
 Examples of suspicious behaviour may include:
 <ul>
 <li>Login from different internet addresses within a short time frame</li>
@@ -301,7 +315,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <h2 class="staticpage">Jeg er allerede på SIF!</h2>
 <p>Hvis du allerede har tilmeldt dig SIF, kan du gå direkte til</p>  
 <input class="loginbutton" type="button" value="log ind"
-       onClick="login('ucph');" />
+       onClick="login('extoid');" />
 <p><!-- på din brugerkonto. --></p>
 </div>
 </div>
