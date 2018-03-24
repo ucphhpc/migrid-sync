@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdpman - Sensitive Information Facility management
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,6 +40,7 @@ from shared.gdp import ensure_user, get_projects, get_users, \
     project_accept, project_create, project_invite, project_login, \
     project_logout, validate_user
 from shared.handlers import safe_handler, get_csrf_limit
+from shared.html import themed_styles
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables, find_entry
 from shared.pwhash import make_csrf_token
@@ -133,7 +134,8 @@ def html_tmpl(
                 </select>
                 </div>
                 </td><td>
-                <a class='genericbutton' id='access' onclick=submitform('access');>Login</a>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='genericbutton' id='access' href='#' onclick='submitform(\"access\"); return false;'>Login</a>
             </td></tr>
         </tbody>
         </table>
@@ -167,7 +169,8 @@ def html_tmpl(
                 </select>
                 </div>
                 </td><td>
-                <a class='genericbutton' id='accept_invite' onclick=submitform('accept_invite')>Accept Invite</a>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='genericbutton' id='accept_invite' href='#' onclick='submitform(\"accept_invite\"); return false;'>Accept Invite</a>
             </td></tr>
         </tbody>
         </table>
@@ -216,7 +219,8 @@ def html_tmpl(
                 </select>
                 </div>
                 </td><td>
-                <a class='genericbutton' id='invite' onclick=submitform('invite')>Invite</a>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='genericbutton' id='invite' href='#' onclick='submitform(\"invite\"); return false;'>Invite</a>
             </td></tr>
         </tbody>
         </table>
@@ -241,7 +245,8 @@ def html_tmpl(
             <tr><td width="250px">
                 <input name="vgrid_name" type="text" size="30"/>
                 </td><td>
-                <a class='genericbutton' id='create' onclick=submitform('create')>Create</a>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='genericbutton' id='create' href='#' onclick='submitform(\"create\"); return false;'>Create</a>
             </td></tr>
         </tbody>
         </table>
@@ -271,7 +276,8 @@ def html_logout_tmpl(configuration, csrf_token):
     </thead>
     <tbody>
         <tr><td colspan="2">
-            <a class='genericbutton' id='access' onclick=submitform('logout')>Logout</a>
+            <!-- NOTE: must have href for correct cursor on mouse-over -->
+            <a class='genericbutton' id='access' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
         </td></tr>
     </tbody>
     </table>
@@ -285,7 +291,9 @@ def css_tmpl(configuration):
     Selectbox CSS from : https://codepen.io/ericrasch/pen/zjDBx
     TODO: Turn into MiG css ?"""
 
-    css = {}
+    css = themed_styles(configuration)
+
+    # TODO: move this custom css to style sheets where it belongs
 
     css['base'] = \
         """
