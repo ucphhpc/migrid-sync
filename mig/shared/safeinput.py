@@ -37,6 +37,7 @@ basis.
 """
 
 import cgi
+from email.utils import parseaddr, formataddr
 from string import letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
@@ -659,64 +660,36 @@ def valid_user_path_name(
     return (status, html_escape(msg))
 
 
-def valid_email_address(addr):
-    """Email check from
-    http://www.secureprogramming.com/?action=view&feature=recipes&recipeid=1
+def valid_email_address(addr, allow_real_name=True):
+    """Conservative email check using parseaddr and formataddr from email.utils
+    in the standard library to validate both characters and format.
+    We basically check that the address parses with parseaddr *and* that the
+    resulting real name and address parts result in the original address when
+    passed to formataddr. If not one or more illegal characters have been
+    filtered out or the address is incompliant in other ways.
+    NOTE: Extra spaces may yield false positives, but better safe than sorry!
+    We manualy check that address contains '@' since it is not strictly
+    required by parseaddr.
+    The optional allow_real_name option is used to extend the check to include
+    addresses on the full RFC format with a real name followed by the plain
+    address enclosed in less-than and greater-than sign like:
+    John Doe <john@doe.org>
     """
 
-    rfc822_specials = '()<>@,;:\\"[]'
+    (real_name, plain_addr) = name_address_pair = parseaddr(addr)
+    if real_name and not allow_real_name:
+        raise InputException("Only plain addresses without name allowed")
+    if not plain_addr or not '@' in plain_addr:
+        raise InputException("No actual email address included")
+    merged = formataddr(name_address_pair)
+    if merged != addr:
+        raise InputException("Invalid email format")
 
-    # First we validate the name portion (name@domain)
-
-    c = 0
-    while c < len(addr):
-        if addr[c] == '"' and (not c or addr[c - 1] == '.' or addr[c
-                               - 1] == '"'):
-            c += 1
-            while c < len(addr):
-                if addr[c] == '"':
-                    break
-                if addr[c] == '\\' and addr[c + 1] == ' ':
-                    c += 2
-                    continue
-                if ord(addr[c]) < 32 or ord(addr[c]) >= 127:
-                    return False
-                c += 1
-            else:
-                return False
-            if addr[c] == '@':
-                break
-            if addr[c] != '.':
-                return False
-            c += 1
-            continue
-        if addr[c] == '@':
-            break
-        if ord(addr[c]) <= 32 or ord(addr[c]) >= 127:
-            return False
-        if addr[c] in rfc822_specials:
-            return False
-        c += 1
-    if not c or addr[c - 1] == '.':
-        return False
-
-    # Next we validate the domain portion (name@domain)
-
-    domain = c = c + 1
-    if domain >= len(addr):
-        return False
-    count = 0
-    while c < len(addr):
-        if addr[c] == '.':
-            if c == domain or addr[c - 1] == '.':
-                return False
-            count += 1
-        if ord(addr[c]) <= 32 or ord(addr[c]) >= 127:
-            return False
-        if addr[c] in rfc822_specials:
-            return False
-        c += 1
-    return count >= 1
+def valid_simple_email_address(addr):
+    """Simple email address check only accepting plain address without real
+    name prefix or anything.
+    """
+    valid_email_address(address, False)
 
 
 def filter_ascii(contents):
@@ -1469,34 +1442,56 @@ if __name__ == '__main__':
             valid_path(test_path)
             print 'Accepted raw path!'
         except Exception, exc:
-            print 'Rejected raw path %s : %s' % (test_path, exc)            
+            print 'Rejected raw path %s : %s' % (test_path, exc)
+
+    for test_addr in ('', 'invalid', 'abc@dk', 'abc@def.org', 'abc@def.gh.org',
+                      'aBc@Def.org', '<invalid@def.org>',
+                      'Test <abc@def.org>', 'Test Æøå <æøå@abc.org>',
+                      'Test <abc.def@ghi.org>', 'Test <abc+def@ghi.org>',
+                      'A valid-name <abc@ghi.org>',
+                      ' false-positive@ghi.org',
+                      'False Positive  <abc@ghi.org>',
+                      ' Another False Positive  <abc@ghi.org>',
+                      'invalid <abc@ghi,org>', 'invalid <abc@',
+                      'invalid abc@def.org',
+                      'Test <abc@ghi.org>, twice <def@def.org>',
+                      'A !#¤%/) positive  <abc@ghi.org>',
+                      'a@b.c<script>alert("XSS vulnerable");</script>',
+                      '<script>alert("XSS vulnerable");</script>',
+                      '<script>alert("XSS vulnerable a@b.c");</script>'):
+        try:
+            print 'Testing valid_email_address: %s' % test_addr
+            valid_email_address(test_addr)
+            print 'Accepted raw address! %s' % [parseaddr(test_addr)]
+        except Exception, exc:
+            print 'Rejected raw address %s : %s' % (test_addr, exc)            
 
     autocreate_defaults = {
-                    'openid.ns.sreg': [''],
-            'openid.sreg.nickname': [''],
-            'openid.sreg.fullname': [''],
-            'openid.sreg.o': [''],
-            'openid.sreg.ou': [''],
-            'openid.sreg.timezone': [''],
-            'openid.sreg.short_id': [''],
-            'openid.sreg.full_name': [''],
-            'openid.sreg.organization': [''],
-            'openid.sreg.organizational_unit': [''],
-            'openid.sreg.email': [''],
-            'openid.sreg.country': ['DK'],
-            'openid.sreg.state': [''],
-            'openid.sreg.locality': [''],
-            'openid.sreg.role': [''],
-            'openid.sreg.association': [''],
-            # Please note that we only get sreg.required here if user is
-            # already logged in at OpenID provider when signing up so
-            # that we do not get the required attributes
-            'openid.sreg.required': [''],
-            'openid.ns': [''],
-            'password': [''],
-            'comment': ['(Created through autocreate)'],
-            'proxy_upload': [''],
-            'proxy_uploadfilename': [''],
+        'openid.ns.sreg': [''],
+        'openid.sreg.nickname': [''],
+        'openid.sreg.fullname': [''],
+        'openid.sreg.o': [''],
+        'openid.sreg.ou': [''],
+        'openid.sreg.timezone': [''],
+        'openid.sreg.short_id': [''],
+        'openid.sreg.full_name': [''],
+        'openid.sreg.organization': [''],
+        'openid.sreg.organizational_unit': [''],
+        'openid.sreg.email': [''],
+        'openid.sreg.country': ['DK'],
+        'openid.sreg.state': [''],
+        'openid.sreg.locality': [''],
+        'openid.sreg.role': [''],
+        'openid.sreg.association': [''],
+        # Please note that we only get sreg.required here if user is
+        # already logged in at OpenID provider when signing up so
+        # that we do not get the required attributes
+        'openid.sreg.required': [''],
+        'openid.ns': [''],
+        'password': [''],
+        'comment': ['(Created through autocreate)'],
+        'proxy_upload': [''],
+        'proxy_uploadfilename': [''],
         }
     user_arguments_dict = {'openid.ns.sreg': ['http://openid.net/extensions/sreg/1.1'], 'openid.sreg.ou': ['nbi'], 'openid.sreg.nickname': ['brs278@ku.dk'], 'openid.sreg.fullname': ['Jonas Bardino'], 'openid.sreg.role': ['tap'], 'openid.sreg.association': ['sci-nbi-tap'], 'openid.sreg.o': ['science'], 'openid.sreg.email': ['bardino@nbi.ku.dk']}
     (accepted, rejected) = validated_input(user_arguments_dict, autocreate_defaults)
