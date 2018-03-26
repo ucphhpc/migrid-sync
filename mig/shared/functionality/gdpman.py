@@ -34,6 +34,7 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.base import force_utf8
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.gdp import ensure_user, get_projects, get_users, \
@@ -44,6 +45,7 @@ from shared.html import themed_styles
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables, find_entry
 from shared.pwhash import make_csrf_token
+from shared.safeinput import filter_plain_text
 from shared.useradm import get_full_user_map
 from shared.url import base32urldecode, base32urlencode, \
     openid_autologout_url
@@ -122,7 +124,7 @@ def html_tmpl(
         </thead>
         <tbody>
             <tr><td width="250px">
-                <div class="styled-select gm_select_color semi-square">
+                <div class="styled-select gm_select semi-square">
                 <select name="vgrid_name">"""
         for project in accepted_projects:
             html += \
@@ -157,7 +159,7 @@ def html_tmpl(
         </thead>
         <tbody>
             <tr><td width="250px">
-                <div class="styled-select gm_select_color semi-square">
+                <div class="styled-select gm_select semi-square">
                 <select name="vgrid_name">"""
         for project in invited_projects:
             html += \
@@ -192,7 +194,7 @@ def html_tmpl(
         </thead>
         <tbody>
             <tr><td colspan="2">
-                <div class="styled-select gm_select_color semi-square">
+                <div class="styled-select gm_select semi-square">
                 <select name="invite_client_id">"""
         for user in gdp_users:
             if user != client_id:
@@ -207,7 +209,7 @@ def html_tmpl(
                 </div>
             </td></tr>
             <tr><td width="250px">
-                <div class="styled-select gm_select_color semi-square">
+                <div class="styled-select gm_select semi-square">
                 <select name="vgrid_name">"""
         for project in invite_projects:
             html += \
@@ -299,7 +301,6 @@ def css_tmpl(configuration):
         """
 <style>
     .gm_projects_table {
-        #border: solid green;
         padding-left: 25px;
         padding-top: 5px;
         padding-bottom: 5px;
@@ -308,9 +309,11 @@ def css_tmpl(configuration):
         padding-right: 50px;
         padding-top: 7px;
         padding-bottom: 7px;
+        text-align: left;
     }
     .gm_projects_table td {
         padding-left: 10px;
+        text-align: left;
     }
 
     /* -------------------- Select Box Styles: bavotasan.com Method (with special adaptations by ericrasch.com) */
@@ -343,9 +346,27 @@ def css_tmpl(configuration):
     }
 
     /* -------------------- Colors: Background */
-    .gm_select_color { background-color: #679c5b; }
+    .gm_select { 
+        background-color: #679c5b; 
+    }
+
     /* -------------------- Colors: Text */
-    .gm_select_color select   { color: #fff; }
+    .gm_select select { 
+        color: #fff; 
+    }
+
+    /* Set the desired color for the focus state */
+    .gm_select select:focus {
+        background-color: #679c5b;
+        color: #fff;
+    }
+
+    /* Make M$ IE and EDGE behave like other browsers */
+    .gm_select select:focus::-ms-value {
+        background: #679c5b;
+        color:  #fff;
+    }
+}
 
 </style>"""
 
@@ -424,6 +445,7 @@ def main(client_id, user_arguments_dict, environ=None):
     status_msg = accepted['status_msg'][-1].strip()
     if status_msg:
         (status_msg, _) = base32urldecode(configuration, status_msg)
+        status_msg = force_utf8(filter_plain_text(status_msg))
 
     # Generate header, title, css and js
 
