@@ -236,7 +236,7 @@ def html_tmpl(
             """
         <form id='gm_create_project_form' action='gdpman.py', method='post'>
         <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-        <input type='hidden' name='action' value='' />
+        <input type='hidden' name='action' value='create' />
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
