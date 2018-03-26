@@ -442,6 +442,7 @@ def main(client_id, user_arguments_dict, environ=None):
     if invite_client_id:
         (invite_client_id, _) = base32urldecode(configuration,
                 invite_client_id)
+        invite_client_id = force_utf8(filter_plain_text(invite_client_id))
     status_msg = accepted['status_msg'][-1].strip()
     if status_msg:
         (status_msg, _) = base32urldecode(configuration, status_msg)
