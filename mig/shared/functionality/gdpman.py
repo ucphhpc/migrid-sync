@@ -96,7 +96,7 @@ def html_tmpl(
     if len(status_msg) > 0:
         html += \
             """
-        <table class="gm_projects_table" style="border-spacing=0;">
+        <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
                 <th>Status:</th>
@@ -113,23 +113,23 @@ def html_tmpl(
     if accepted_projects:
         html += \
             """
-        <form id="gm_access_project_form" action="gdpman.py", method="post">
-        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-        <input type="hidden" name="action" value="" />
-        <table class="gm_projects_table" style="border-spacing=0;">
+        <form id='gm_access_project_form' action='gdpman.py', method='post'>
+        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+        <input type='hidden' name='action' value='' />
+        <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan="2">Access project:</th>
+                <th colspan='2'>Access project:</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td width="250px">
-                <div class="styled-select gm_select semi-square">
-                <select name="vgrid_name">"""
+            <tr><td width='250px'>
+                <div class='styled-select gm_select semi-square'>
+                <select name='vgrid_name'>"""
         for project in accepted_projects:
             html += \
                 """
-                <option value="%s">%s</option>""" \
+                <option value='%s'>%s</option>""" \
                 % (project, project)
         html += \
             """
@@ -148,23 +148,23 @@ def html_tmpl(
     if invited_projects:
         html += \
             """
-        <form id="gm_accept_invite_project_form" action="gdpman.py", method="post">
-        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-        <input type="hidden" name="action" value="" />
-        <table class="gm_projects_table" style="border-spacing=0;">
+        <form id='gm_accept_invite_project_form' action='gdpman.py', method='post'>
+        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+        <input type='hidden' name='action' value='' />
+        <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan="2">Accept invite to project:</th>
+                <th colspan='2'>Accept invite to project:</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td width="250px">
-                <div class="styled-select gm_select semi-square">
-                <select name="vgrid_name">"""
+            <tr><td width='250px'>
+                <div class='styled-select gm_select semi-square'>
+                <select name='vgrid_name'>"""
         for project in invited_projects:
             html += \
                 """
-                <option value="%s">%s</option>""" \
+                <option value='%s'>%s</option>""" \
                 % (project, project)
         html += \
             """
@@ -183,38 +183,38 @@ def html_tmpl(
     if invite_projects:
         html += \
             """
-        <form id="gm_invite_project_form" action="gdpman.py", method="post">
-        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-        <input type="hidden" name="action" value="" />
-        <table class="gm_projects_table" style="border-spacing=0;">
+        <form id='gm_invite_project_form' action='gdpman.py', method='post'>
+        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+        <input type='hidden' name='action' value='' />
+        <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan="2">Invite user to project:</th>
+                <th colspan='2'>Invite user to project:</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td colspan="2">
-                <div class="styled-select gm_select semi-square">
-                <select name="invite_client_id">"""
+            <tr><td colspan='2'>
+                <div class='styled-select gm_select semi-square'>
+                <select name='invite_client_id'>"""
         for user in gdp_users:
             if user != client_id:
                 login = user.split('emailAddress=')[1].split('/')[0]
                 html += \
                     """
-                    <option value="%s">%s</option>""" \
+                    <option value='%s'>%s</option>""" \
                     % (base32urlencode(configuration, user), login)
         html += \
             """
                 </select>
                 </div>
             </td></tr>
-            <tr><td width="250px">
-                <div class="styled-select gm_select semi-square">
-                <select name="vgrid_name">"""
+            <tr><td width='250px'>
+                <div class='styled-select gm_select semi-square'>
+                <select name='vgrid_name'>"""
         for project in invite_projects:
             html += \
                 """
-                <option value="%s">%s</option>""" \
+                <option value='%s'>%s</option>""" \
                 % (project, project)
         html += \
             """
@@ -234,18 +234,18 @@ def html_tmpl(
     if create_projects:
         html += \
             """
-        <form id="gm_create_project_form" action="gdpman.py", method="post">
-        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-        <input type="hidden" name="action" value="" />
-        <table class="gm_projects_table" style="border-spacing=0;">
+        <form id='gm_create_project_form' action='gdpman.py', method='post'>
+        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+        <input type='hidden' name='action' value='' />
+        <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan="2">Create new project:</th>
+                <th colspan='2'>Create new project:</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td width="250px">
-                <input name="vgrid_name" type="text" size="30"/>
+            <tr><td width='250px'>
+                <input name='vgrid_name' type='text' size='30'/>
                 </td><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='genericbutton' id='create' href='#' onclick='submitform(\"create\"); return false;'>Create</a>
@@ -267,17 +267,17 @@ def html_logout_tmpl(configuration, csrf_token):
 
     html = \
         """
-    <form id="gm_logout_form" action="gdpman.py", method="post">
-    <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-    <input type="hidden" name="action" value="" />
-    <table class="gm_projects_table" style="border-spacing=0;">
+    <form id='gm_logout_form' action='gdpman.py', method='post'>
+    <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+    <input type='hidden' name='action' value='' />
+    <table class='gm_projects_table' style='border-spacing=0;'>
     <thead>
         <tr>
-            <th colspan="2"></th>
+            <th colspan='2'></th>
         </tr>
     </thead>
     <tbody>
-        <tr><td colspan="2">
+        <tr><td colspan='2'>
             <!-- NOTE: must have href for correct cursor on mouse-over -->
             <a class='genericbutton' id='access' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
         </td></tr>
@@ -378,28 +378,28 @@ def js_tmpl():
 
     js = \
         """
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript">
+<script type='text/javascript' src='/images/js/jquery.js'></script>
+<script type='text/javascript'>
     function submitform(project_action) {
         if (project_action == 'access') {
-            $("#gm_access_project_form input[name=action]").val(project_action);
-            $("#gm_access_project_form").submit();
+            $('#gm_access_project_form input[name=action]').val(project_action);
+            $('#gm_access_project_form').submit();
         }
         else if (project_action == 'accept_invite') {
-            $("#gm_accept_invite_project_form input[name=action]").val(project_action);
-            $("#gm_accept_invite_project_form").submit();
+            $('#gm_accept_invite_project_form input[name=action]').val(project_action);
+            $('#gm_accept_invite_project_form').submit();
         }
         else if (project_action == 'invite') {
-            $("#gm_invite_project_form input[name=action]").val(project_action);
-            $("#gm_invite_project_form").submit();
+            $('#gm_invite_project_form input[name=action]').val(project_action);
+            $('#gm_invite_project_form').submit();
         }
         else if (project_action == 'create') {
-            $("#gm_create_project_form input[name=action]").val(project_action);
-            $("#gm_create_project_form").submit();
+            $('#gm_create_project_form input[name=action]').val(project_action);
+            $('#gm_create_project_form').submit();
         }
         else if (project_action == 'logout') {
-            $("#gm_logout_form input[name=action]").val(project_action);
-            $("#gm_logout_form").submit();
+            $('#gm_logout_form input[name=action]').val(project_action);
+            $('#gm_logout_form').submit();
         }
     }
 </script>"""
@@ -523,7 +523,7 @@ Please contact the Grid admins %s if you think it should be enabled.
     if not validate_status:
         html = \
             """
-            <table class="gm_projects_table" style="border-spacing=0;">
+            <table class='gm_projects_table' style='border-spacing=0;'>
             <thead>
                 <tr>
                     <th>Access Denied:</th>
