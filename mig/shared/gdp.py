@@ -33,9 +33,15 @@ import time
 import inspect
 import logging
 import logging.handlers
-import pdfkit
+try:
+    import pdfkit
+except:
+    pdfkit = None
 from datetime import datetime
-from xvfbwrapper import Xvfb
+try:
+    from xvfbwrapper import Xvfb
+except:
+    Xvfb = None
 
 from shared.base import client_id_dir, valid_dir_input
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
@@ -375,49 +381,63 @@ def __send_project_create_confirmation(configuration, login,
     status = True
     template = None
 
-    # Load notification emails
+    # Check for PDF generation packages
 
-    notify_filepath = os.path.join(configuration.gdp_home,
-            notify_filename)
-    notify = []
-    if os.path.isfile(notify_filepath):
-        fh = open(notify_filepath)
-        notifyline = fh.readline()
-        while notifyline:
-            email_idx = notifyline.find('<')
-            entry = {'name': notifyline[:email_idx].strip(' \t\n\r'),
-                     'email': notifyline[email_idx:].strip(' \t\n\r')}
-            notify.append(entry)
-            notifyline = fh.readline()
-        fh.close()
-        if not notify:
-            _logger.warning("GDP: No notify emails found in file: '%s'"
-                          % notify_filepath)
-    else:
-        _logger.warning("GDP: Missing notify emails file: '%s'"
-                      % notify_filepath)
-
-    # Check for project home dir
-
-    project_home = os.path.join(configuration.gdp_home, project_name)
-    if status and not os.path.isdir(project_home):
+    if pdfkit is None:
         status = False
-        _logger.error("GDP: Missing project home dir: '%s'"
-                      % project_home)
+        _logger.error("Missing python pdfkit package")
 
-    # Check for project create template
+    if Xvfb is None:
+        status = False
+        _logger.error("Missing python xvfbwrapper package")
 
-    template_filepath = os.path.join(configuration.gdp_home,
-            template_filename)
     if status:
-        if os.path.isfile(template_filepath):
-            fh = open(template_filepath)
-            template = fh.read()
+
+        # Load notification emails
+
+        notify_filepath = os.path.join(configuration.gdp_home,
+                notify_filename)
+        notify = []
+        if os.path.isfile(notify_filepath):
+            fh = open(notify_filepath)
+            notifyline = fh.readline()
+            while notifyline:
+                email_idx = notifyline.find('<')
+                entry = {'name': notifyline[:email_idx].strip(' \t\n\r'),
+                         'email': notifyline[email_idx:].strip(' \t\n\r')}
+                notify.append(entry)
+                notifyline = fh.readline()
             fh.close()
+            if not notify:
+                _logger.warning("GDP: No notify emails found in file: '%s'"
+                              % notify_filepath)
         else:
+            _logger.warning("GDP: Missing notify emails file: '%s'"
+                          % notify_filepath)
+
+    if status:
+
+        # Check for project home dir
+
+        project_home = os.path.join(configuration.gdp_home, project_name)
+        if status and not os.path.isdir(project_home):
             status = False
-            _logger.error("GDP: Missing project create template file: '%s'"
-                           % template_filepath)
+            _logger.error("GDP: Missing project home dir: '%s'"
+                          % project_home)
+
+        # Check for project create template
+
+        template_filepath = os.path.join(configuration.gdp_home,
+                template_filename)
+        if status:
+            if os.path.isfile(template_filepath):
+                fh = open(template_filepath)
+                template = fh.read()
+                fh.close()
+            else:
+                status = False
+                _logger.error("GDP: Missing project create template file: '%s'"
+                               % template_filepath)
 
     # Generate project create PDF
 
@@ -1439,10 +1459,8 @@ name, please try again with a new name!""" \
         if not os.path.isdir(project_home):
             try:
                 os.mkdir(project_home)
+                rollback_dirs['project_home'] = project_home
             except Exception, exc:
-
-                # rollback_dirs['project_home'] = project_home
-
                 status = False
                 msg = 'Could not create home directory'
                 msg = "%s for project: '%s'" % (msg, project_name)
