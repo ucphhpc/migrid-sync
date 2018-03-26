@@ -425,6 +425,8 @@ def __send_project_create_confirmation(configuration, login,
             _logger.error("GDP: Missing project home dir: '%s'"
                           % project_home)
 
+    if status:
+        
         # Check for project create template
 
         template_filepath = os.path.join(configuration.gdp_home,
