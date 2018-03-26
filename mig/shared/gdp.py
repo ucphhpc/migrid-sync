@@ -391,12 +391,10 @@ def __send_project_create_confirmation(configuration, login,
             notifyline = fh.readline()
         fh.close()
         if not notify:
-            status = False
-            _logger.error("GDP: No admins found in file: '%s'"
+            _logger.warning("GDP: No notify emails found in file: '%s'"
                           % notify_filepath)
     else:
-        status = False
-        _logger.error("GDP: Missing notify file: '%s'"
+        _logger.warning("GDP: Missing notify emails file: '%s'"
                       % notify_filepath)
 
     # Check for project home dir
