@@ -36,7 +36,7 @@ import urlparse
 
 from shared.defaults import csrf_field
 from shared.handlers import get_csrf_limit
-from shared.pwhash import make_csrf_token
+from shared.pwhash import make_csrf_token, make_csrf_trust_token
 
 
 def base32urlencode(
@@ -59,7 +59,7 @@ def base32urlencode(
         src_url = '%s?%s' % (src_url, urllib.urlencode(query_dict))
 
     # base32 encode and remove padding '='
-    # Reciever is expected to pad before decode
+    # Receiver is expected to pad before decode
 
     result = base64.b32encode(src_url)
 
@@ -105,24 +105,6 @@ def base32urldecode(configuration, encoded_url,
 
     return (result_url, query_dict)
 
-
-def csrf_operation(configuration, url, query_dict=None):
-    """Generates a csrf operation from url and query_dict
-    sorted by query_dict.keys"""
-
-    csrf_op = '%s' % url
-    if query_dict is None:
-        return csrf_op
-    
-    for key in sorted(query_dict):
-        if key != csrf_field:
-            csrf_op = '%s_%s' % (csrf_op, key)
-            for value in query_dict[key]:
-                csrf_op = '%s_%s' % (csrf_op, value)
-
-    return csrf_op
-
-
 def openid_autologout_url(
     configuration,
     openid_identity,
@@ -140,22 +122,24 @@ def openid_autologout_url(
 
     _logger = configuration.logger
 
-    # Add CSRF token to query_dict, needed at autologut.py for URL validation
+    # Add CSRF trust token to query_dict, needed at autologout.py for URL and
+    # query args validation
 
     if return_query_dict is None:
         csrf_query_dict = {}
     else:
         csrf_query_dict = return_query_dict.copy()
 
-    csrf_op = csrf_operation(configuration, return_url, csrf_query_dict)
     csrf_limit = get_csrf_limit(configuration)
-    csrf_token = make_csrf_token(configuration, 'get', csrf_op,
-                                 client_id, csrf_limit)
-    csrf_query_dict[csrf_field] = ['%s' % csrf_token]
+    trust_token = make_csrf_trust_token(configuration, 'get', return_url,
+                                        csrf_query_dict, client_id,
+                                        csrf_limit)
+    csrf_query_dict[csrf_field] = ['%s' % trust_token]
     encoded_redirect_to = base32urlencode(configuration, return_url,
-            csrf_query_dict)
+                                          csrf_query_dict)
 
-    # OpenID server always returns to autologout.py which then redirects to return_url
+    # OpenID server always returns to autologout.py which then redirects
+    # to return_url
 
     oid_return_to = '%s/%s?redirect_to=%s' \
         % (return_url[:return_url.rfind('/')], 'autologout.py',

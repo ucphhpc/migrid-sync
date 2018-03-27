@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # handlers - back.end handler helpers
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ from shared.base import client_id_dir
 from shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
      CSRF_FULL
 from shared.findtype import is_user, is_server
-from shared.pwhash import make_csrf_token
+from shared.pwhash import make_csrf_token, make_csrf_trust_token
 
 def correct_handler(name, environ=None):
     """Verify that the handler name matches handler method using the provided
@@ -134,6 +134,31 @@ def safe_handler(configuration, method, operation, client_id, limit,
         _logger.debug("CSRF check succeeded: %s vs %s" % (csrf_required,
                                                           csrf_token))
         return True
+
+
+def trust_handler(configuration, method, operation, unpacked_args, client_id,
+                  limit, environ=None):
+    """Stricter version of safe_handler to verify that trust token in
+    csrf_field matches all usual static parts in addition to unpacked_args.
+    Only used in the special cases where we need to submit a form with values
+    completely known up front, so that backend can verify that the values in
+    unpacked_args are passed without tampering.
+    """
+    _logger = configuration.logger
+    if not correct_handler(method, environ):
+        return False
+    csrf_token = unpacked_args.get(csrf_field, [''])[-1]
+    csrf_required = make_csrf_trust_token(configuration, method, operation,
+                                          unpacked_args, client_id, limit,
+                                          skip_fields=[csrf_field])
+    _logger.debug("CSRF trust check: %s vs %s" % (csrf_required, csrf_token))
+    if csrf_required != csrf_token:
+        _logger.error("CSRF trust check failed: %s vs %s" % (csrf_required,
+                                                             csrf_token))
+        return False
+    _logger.debug("CSRF trust check succeeded: %s vs %s" % (csrf_required,
+                                                            csrf_token))
+    return True
 
 
 def get_path():

@@ -6,7 +6,7 @@
 #
 #
 # pwhash - helpers for passwords and hashing
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -246,6 +246,31 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     xor_id = "%s" % (int(salt, 16) ^ int(b16encode(merged), 16))
     token = hashlib.sha256(xor_id).hexdigest()
     return token
+
+def make_csrf_trust_token(configuration, method, operation, args, client_id,
+                          limit=None, skip_fields=[]):
+    """A special version of the Cross-Site Request Forgery (CSRF) token used
+    for cases where we already know the complete query arguments and just need
+    to validate that they were passed untampered from us self.
+    Packs the query args into the operation in a deterministic order by
+    appending in sorted order from args.keys then just applies make_csrf_token.
+    The optional skip_fields list can be used to exclude args from the token.
+    That is mainly used to allow use for checking where the trust token is
+    already part of the args and therefore should not be considered.
+    """
+    csrf_op = '%s' % operation
+    if args:
+        sorted_keys = sorted(args.keys())
+    else:
+        sorted_keys = []
+    for key in sorted_keys:
+        if key in skip_fields:
+            continue
+        csrf_op += '_%s' % key
+        for val in args[key]:
+            csrf_op += '_%s' % val
+    configuration.logger.debug("made csrf_trust from url %s" % csrf_op)
+    return make_csrf_token(configuration, method, csrf_op, client_id, limit)
 
 def assure_password_strength(configuration, password):
     """Make sure password fits site password policy in terms of length and

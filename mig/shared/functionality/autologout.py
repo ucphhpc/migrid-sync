@@ -33,12 +33,12 @@ import os
 import shared.returnvalues as returnvalues
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
+from shared.handlers import trust_handler, get_csrf_limit
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
 from shared.pwhash import make_csrf_token
 from shared.useradm import expire_oid_sessions, find_oid_sessions
-from shared.url import base32urldecode, csrf_operation
+from shared.url import base32urldecode
 
 
 def signature():
@@ -71,7 +71,31 @@ def main(client_id, user_arguments_dict, environ=None):
     logger.debug('Accepted arguments: %s' % accepted)
 
     status = returnvalues.OK
-    redirect_to = accepted['redirect_to'][-1].strip()
+    packed_url = accepted['redirect_to'][-1].strip()
+    # IMPORTANT: further validate that packed redirect_to is signed and safe
+    try:
+        (unpacked_url, unpacked_query) = base32urldecode(configuration,
+                                                        packed_url)
+    except Exception, exc:
+        logger.error('base32urldecode failed: %s' % exc)
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''failed to unpack redirect_to value!'''
+                        })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+        
+    # Validate trust on unpacked url and query
+
+    if not trust_handler(configuration, 'get', unpacked_url, unpacked_query,
+                         client_id, get_csrf_limit(configuration), environ):
+        logger.error('validation of unpacked url %s and query %s failed!' % \
+                     (unpacked_url, unpacked_query))
+        output_objects.append({'object_type': 'error_text', 'text': '''Only
+accepting fully signed GET requests to prevent unintended redirects'''})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # NOTE: from this point its' safe to use unpacked_url and unpacked_query
+    redirect_url, redirect_query_dict = unpacked_url, unpacked_query
+
     output_objects.append({'object_type': 'header',
                           'text': 'Auto logout'})
     (oid_db, identity) = extract_client_openid(configuration, environ,
@@ -87,10 +111,13 @@ def main(client_id, user_arguments_dict, environ=None):
                             % configuration.short_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'html_form',
-                           'text': '''<p class="spinner iconleftpad">
-Auto log out first to avoid sign up problems ...
-</p>'''})
+    msg = 'Auto log out first to avoid '
+    if redirect_url.find('autocreate') != -1:
+        msg += 'sign up problems ...'
+    else:
+        msg += 'stale sessions ...'
+    output_objects.append({'object_type': 'html_form', 'text':
+                           '''<p class="spinner iconleftpad">%s</p>''' % msg})
 
     # OpenID requires logout on provider and in local mod-auth-openid database.
     # IMPORTANT: some browsers like Firefox may inadvertently renew the local
@@ -103,57 +130,30 @@ Auto log out first to avoid sign up problems ...
     (found, remaining) = find_oid_sessions(configuration, oid_db,
             identity)
     if success and found and not remaining:
-        try:
-            (redirect_url, redirect_query_dict) = \
-                base32urldecode(configuration, redirect_to)
-        except ValueError, exc:
-            status = returnvalues.CLIENT_ERROR
-            logger.error('base32urldecode failed: %s' % exc)
-        if status == returnvalues.OK:
+        # Generate HTML and submit redirect form
 
-            # Validate redirect_query_dict query
-
-            csrf_op = csrf_operation(configuration, redirect_url,
-                    redirect_query_dict)
-            if not safe_handler(
-                configuration,
-                'get',
-                csrf_op,
-                client_id,
-                get_csrf_limit(configuration),
-                redirect_query_dict,
-                ):
-                output_objects.append({'object_type': 'error_text',
-                        'text': '''Only accepting
-                        CSRF-filtered GET requests to prevent unintended redirects'''
-                        })
-                status = returnvalues.CLIENT_ERROR
-        if status == returnvalues.OK:
-
-            # Generate HTML and submit redirect form
-
-            csrf_limit = get_csrf_limit(configuration, environ)
-            csrf_token = make_csrf_token(configuration, 'post',
-                    op_name, client_id, csrf_limit)
-            html = \
-                """
-            <form id='return_to_form' method='post' action='%s'>
-                <input type='hidden' name='%s' value='%s'>""" % \
-            (redirect_url, csrf_field, csrf_token)
-            for key in redirect_query_dict.keys():
-                for value in redirect_query_dict[key]:
-                    html += \
-                        """
-                    <input type='hidden' name='%s' value='%s'>""" \
-                        % (key, value)
-            html += \
-                """
-            </form>
-            <script type='text/javascript'>
-                document.getElementById('return_to_form').submit();
-            </script>"""
-            output_objects.append({'object_type': 'html_form',
-                    'text': html})
+        csrf_limit = get_csrf_limit(configuration, environ)
+        csrf_token = make_csrf_token(configuration, 'post',
+                op_name, client_id, csrf_limit)
+        html = \
+            """
+        <form id='return_to_form' method='post' action='%s'>
+            <input type='hidden' name='%s' value='%s'>""" % \
+        (redirect_url, csrf_field, csrf_token)
+        for key in redirect_query_dict.keys():
+            for value in redirect_query_dict[key]:
+                html += \
+                    """
+                <input type='hidden' name='%s' value='%s'>""" \
+                    % (key, value)
+        html += \
+            """
+        </form>
+        <script type='text/javascript'>
+            document.getElementById('return_to_form').submit();
+        </script>"""
+        output_objects.append({'object_type': 'html_form',
+                'text': html})
     else:
         logger.error('remaining active sessions for %s: %s'
                      % (identity, remaining))
