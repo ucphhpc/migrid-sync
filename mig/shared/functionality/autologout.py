@@ -105,7 +105,7 @@ Auto log out first to avoid sign up problems ...
     if success and found and not remaining:
         if redirect_to:
             try:
-                (redircet_url, redirect_query_dict) = \
+                (redirect_url, redirect_query_dict) = \
                     base32urldecode(configuration, redirect_to)
             except ValueError, exc:
                 status = returnvalues.CLIENT_ERROR
@@ -114,7 +114,7 @@ Auto log out first to avoid sign up problems ...
 
                 # Validate redirect_query_dict query
 
-                csrf_op = csrf_operation(configuration, redircet_url,
+                csrf_op = csrf_operation(configuration, redirect_url,
                         redirect_query_dict)
                 if not safe_handler(
                     configuration,
@@ -137,25 +137,22 @@ Auto log out first to avoid sign up problems ...
                 csrf_token = make_csrf_token(configuration, 'post',
                         op_name, client_id, csrf_limit)
                 html = \
-                    '''
-                <form id='return_to_form' method='post' action='%s'>''' \
-                    % redircet_url
-                html += \
-                    '''
-                    <input type='hidden' name='%s' value='%s'>''' \
-                    % (csrf_field, csrf_token)
+                    """
+                <form id='return_to_form' method='post' action='%s'>
+                    <input type='hidden' name='%s' value='%s'>""" % \
+                (redirect_url, csrf_field, csrf_token)
                 for key in redirect_query_dict.keys():
                     for value in redirect_query_dict[key]:
                         html += \
-                            '''
-                        <input type='hidden' name='%s' value='%s'>''' \
+                            """
+                        <input type='hidden' name='%s' value='%s'>""" \
                             % (key, value)
                 html += \
-                    '''
+                    """
                 </form>
                 <script type='text/javascript'>
                     document.getElementById('return_to_form').submit();
-                </script>'''
+                </script>"""
                 output_objects.append({'object_type': 'html_form',
                         'text': html})
         else:
