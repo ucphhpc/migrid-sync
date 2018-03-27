@@ -1167,7 +1167,9 @@ def guess_type(name):
             'version',
             ):
             __type_map[key] = valid_commonname
-        for key in ('cert_id', 'run_as'):
+        for key in ('cert_id', 
+                    'run_as',
+                    'invite_client_id'):
             __type_map[key] = valid_distinguished_name
         for key in (
             'request_text',

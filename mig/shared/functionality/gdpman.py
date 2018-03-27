@@ -202,7 +202,7 @@ def html_tmpl(
                 html += \
                     """
                     <option value='%s'>%s</option>""" \
-                    % (base32urlencode(configuration, user), login)
+                    % (user, login)
         html += \
             """
                 </select>
@@ -439,10 +439,6 @@ def main(client_id, user_arguments_dict, environ=None):
     action = accepted['action'][-1].strip()
     project_name = accepted['vgrid_name'][-1].strip()
     invite_client_id = accepted['invite_client_id'][-1].strip()
-    if invite_client_id:
-        (invite_client_id, _) = base32urldecode(configuration,
-                invite_client_id)
-        invite_client_id = force_utf8(filter_plain_text(invite_client_id))
     status_msg = accepted['status_msg'][-1].strip()
     if status_msg:
         (status_msg, _) = base32urldecode(configuration, status_msg)
