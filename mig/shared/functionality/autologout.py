@@ -32,7 +32,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.defaults import csrf_field
-from shared.functional import validate_input_and_cert
+from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
@@ -44,7 +44,7 @@ from shared.url import base32urldecode, csrf_operation
 def signature():
     """Signature of the main function"""
 
-    defaults = {'redirect_to': ['']}
+    defaults = {'redirect_to': REJECT_UNSET}
     return ['text', defaults]
 
 
@@ -85,7 +85,7 @@ def main(client_id, user_arguments_dict, environ=None):
             end up at this auto logout page.
             Please refer to your browser and system documentation for details."""
                             % configuration.short_title})
-        return (output_objects, status)
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'html_form',
                            'text': '''<p class="spinner iconleftpad">
@@ -103,60 +103,57 @@ Auto log out first to avoid sign up problems ...
     (found, remaining) = find_oid_sessions(configuration, oid_db,
             identity)
     if success and found and not remaining:
-        if redirect_to:
-            try:
-                (redirect_url, redirect_query_dict) = \
-                    base32urldecode(configuration, redirect_to)
-            except ValueError, exc:
+        try:
+            (redirect_url, redirect_query_dict) = \
+                base32urldecode(configuration, redirect_to)
+        except ValueError, exc:
+            status = returnvalues.CLIENT_ERROR
+            logger.error('base32urldecode failed: %s' % exc)
+        if status == returnvalues.OK:
+
+            # Validate redirect_query_dict query
+
+            csrf_op = csrf_operation(configuration, redirect_url,
+                    redirect_query_dict)
+            if not safe_handler(
+                configuration,
+                'get',
+                csrf_op,
+                client_id,
+                get_csrf_limit(configuration),
+                redirect_query_dict,
+                ):
+                output_objects.append({'object_type': 'error_text',
+                        'text': '''Only accepting
+                        CSRF-filtered GET requests to prevent unintended redirects'''
+                        })
                 status = returnvalues.CLIENT_ERROR
-                logger.error('base32urldecode failed: %s' % exc)
-            if status == returnvalues.OK:
+        if status == returnvalues.OK:
 
-                # Validate redirect_query_dict query
+            # Generate HTML and submit redirect form
 
-                csrf_op = csrf_operation(configuration, redirect_url,
-                        redirect_query_dict)
-                if not safe_handler(
-                    configuration,
-                    'get',
-                    csrf_op,
-                    client_id,
-                    get_csrf_limit(configuration),
-                    redirect_query_dict,
-                    ):
-                    output_objects.append({'object_type': 'error_text',
-                            'text': '''Only accepting
-                            CSRF-filtered GET requests to prevent unintended redirects'''
-                            })
-                    status = returnvalues.CLIENT_ERROR
-            if status == returnvalues.OK:
-
-                # Generate HTML and submit redirect form
-
-                csrf_limit = get_csrf_limit(configuration, environ)
-                csrf_token = make_csrf_token(configuration, 'post',
-                        op_name, client_id, csrf_limit)
-                html = \
-                    """
-                <form id='return_to_form' method='post' action='%s'>
-                    <input type='hidden' name='%s' value='%s'>""" % \
-                (redirect_url, csrf_field, csrf_token)
-                for key in redirect_query_dict.keys():
-                    for value in redirect_query_dict[key]:
-                        html += \
-                            """
-                        <input type='hidden' name='%s' value='%s'>""" \
-                            % (key, value)
-                html += \
-                    """
-                </form>
-                <script type='text/javascript'>
-                    document.getElementById('return_to_form').submit();
-                </script>"""
-                output_objects.append({'object_type': 'html_form',
-                        'text': html})
-        else:
-            logger.error('redirect_to _NOT_ found')
+            csrf_limit = get_csrf_limit(configuration, environ)
+            csrf_token = make_csrf_token(configuration, 'post',
+                    op_name, client_id, csrf_limit)
+            html = \
+                """
+            <form id='return_to_form' method='post' action='%s'>
+                <input type='hidden' name='%s' value='%s'>""" % \
+            (redirect_url, csrf_field, csrf_token)
+            for key in redirect_query_dict.keys():
+                for value in redirect_query_dict[key]:
+                    html += \
+                        """
+                    <input type='hidden' name='%s' value='%s'>""" \
+                        % (key, value)
+            html += \
+                """
+            </form>
+            <script type='text/javascript'>
+                document.getElementById('return_to_form').submit();
+            </script>"""
+            output_objects.append({'object_type': 'html_form',
+                    'text': html})
     else:
         logger.error('remaining active sessions for %s: %s'
                      % (identity, remaining))
