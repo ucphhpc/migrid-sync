@@ -33,15 +33,7 @@ mig_login(driver, url, login, passwd)
 ...
 """
 
-import sys
-import time
-import traceback
-
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 def init_driver(browser):
     """Init the requested browser driver"""
@@ -61,16 +53,27 @@ def init_driver(browser):
         print "ERROR: Browser _NOT_ supported: %s" % browser
         driver = None
     return driver
-    
-def ucph_login(driver, url, login, passwd):
-    """Login through the UCPH OpenID web form"""
+
+def save_screen(driver, path):
+    """Save a screenshot of current page in path"""
+    driver.save_screenshot(path)
+
+def ucph_login(driver, url, login, passwd, callbacks={}):
+    """Login through the UCPH OpenID web form and optionally execute any
+    provided callbacks for ready and filled states. The callbacks dictionary
+    should contain state names bound to functions accepting driver and state
+    name like do_stuff(driver, state) .
+    """
     status = True
     do_login = False
     try:
         elem = driver.find_element_by_class_name('form-signin')
-        action = elem.get_property('action') 
+        action = elem.get_property('action')
         if action == "https://openid.ku.dk/processTrustResult":
             do_login = True
+            state = 'login-ready'
+            if callbacks.get(state, None):
+                callbacks[state](driver, state)
     except Exception, exc:
         print "ERROR: failed in UCPH login: %s" % exc
 
@@ -80,6 +83,9 @@ def ucph_login(driver, url, login, passwd):
         pass_elem = driver.find_element_by_name("pwd")
         login_elem.send_keys(login)
         pass_elem.send_keys(passwd)
+        state = 'login-filled'
+        if callbacks.get(state, None):
+            callbacks[state](driver, state)
         driver.find_element_by_name("allow").click()
     else:
         status = False
@@ -88,25 +94,35 @@ def ucph_login(driver, url, login, passwd):
     print "Starting UCPH OpenID login: %s" % status
     return status
 
-def mig_login(driver, url, login, passwd):
+def mig_login(driver, url, login, passwd, callbacks={}):
+    """Login through the MiG OpenID web form and optionally execute any
+    provided callbacks for ready and filled states. The callbacks dictionary
+    should contain state names bound to functions accepting driver and state
+    name like do_stuff(driver, state) .
+    """
     status = True
     do_login = False
     try:
         elem = driver.find_element_by_class_name('openidlogin')
         form = elem.find_element_by_xpath("//form")
-        action = form.get_property('action') 
+        action = form.get_property('action')
         if action == "%s/openid/allow" % url:
             do_login = True
+            state = 'login-ready'
+            if callbacks.get(state, None):
+                callbacks[state](driver, state)
     except Exception, exc:
         print "ERROR: failed in MiG login: %s" % exc
 
-    print "DEBUG: do login is %s" % do_login
     if do_login:
         print "Starting MiG OpenID login"
         login_elem = driver.find_element_by_name("identifier")
         pass_elem = driver.find_element_by_name("password")
         login_elem.send_keys(login)
         pass_elem.send_keys(passwd)
+        state = 'login-filled'
+        if callbacks.get(state, None):
+            callbacks[state](driver, state)
         driver.find_element_by_name("yes").click()
     else:
         status = False

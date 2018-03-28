@@ -35,6 +35,7 @@ import traceback
 from migcore import init_driver, ucph_login
 
 def main():
+    """Main"""
     argc = len(sys.argv)-1
     if argc < 3:
         print "USAGE: %s browser url login [password]" % sys.argv[0]
