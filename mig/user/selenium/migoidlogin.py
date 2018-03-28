@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ucphoidlogin - sample selenium-based web client for basic ucph openid login
+# migoidlogin - sample selenium-based web client for basic mig openid login
 # Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,14 +25,14 @@
 # -- END_HEADER ---
 #
 
-"""Example UCPH OpenID login using selenium and a webdriver of choice"""
+"""Example MiG OpenID login using selenium and a webdriver of choice"""
 
 import getpass
 import sys
 import time
 import traceback
 
-from migcore import init_driver, ucph_login
+from migcore import init_driver, mig_login
 
 def main():
     argc = len(sys.argv)-1
@@ -51,9 +51,9 @@ def main():
     driver = init_driver(browser)
     try:
         driver.get(url)
-        status = ucph_login(driver, url, login, passwd)
+        status = mig_login(driver, url, login, passwd)
         if not status:
-            print "UCPH OpenID login FAILED!"
+            print "MiG OpenID login FAILED!"
             return 1
 
         print "Now you can proceed using the browser or interrupt with Ctrl-C"

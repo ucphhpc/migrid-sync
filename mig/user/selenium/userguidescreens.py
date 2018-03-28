@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ucphoidlogin - sample selenium-based web client for basic ucph openid login
+# userguidescreens - selenium-based web client to grab user guide screenshots
 # Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,37 +25,48 @@
 # -- END_HEADER ---
 #
 
-"""Example UCPH OpenID login using selenium and a webdriver of choice"""
+"""Screen grabber using selenium and a webdriver of choice.
+
+Goes through a number of steps described in the user guide and grabs the
+corresponding screenshots.
+"""
 
 import getpass
 import sys
 import time
 import traceback
 
-from migcore import init_driver, ucph_login
+from migcore import init_driver, ucph_login, mig_login
 
 def main():
     argc = len(sys.argv)-1
-    if argc < 3:
-        print "USAGE: %s browser url login [password]" % sys.argv[0]
+    if argc < 4:
+        print "USAGE: %s browser url openid login [password]" % sys.argv[0]
         return 1
 
     browser = sys.argv[1]
     url = sys.argv[2]
-    login = sys.argv[3]
-    if argc > 3:
-        passwd = sys.argv[4]
+    openid = sys.argv[3]
+    login = sys.argv[4]
+    if argc > 4:
+        passwd = sys.argv[5]
     else:
         passwd = getpass.getpass()
 
     driver = init_driver(browser)
     try:
         driver.get(url)
-        status = ucph_login(driver, url, login, passwd)
+        if openid.lower() == 'ucph':
+            status = ucph_login(driver, url, login, passwd)
+        elif openid.lower() == 'mig':
+            status = mig_login(driver, url, login, passwd)
+        else:
+            print "No such OpenID handler: %s" % openid
+            status = False
         if not status:
-            print "UCPH OpenID login FAILED!"
+            print "%s OpenID login FAILED!" % openid
             return 1
-
+        
         print "Now you can proceed using the browser or interrupt with Ctrl-C"
         while True:
             time.sleep(1)
@@ -63,6 +74,7 @@ def main():
         print "User interrupt requested - shutting down"
     except Exception as exc:
         traceback.format_exc()
+
 
 if __name__ == "__main__":
     main()
