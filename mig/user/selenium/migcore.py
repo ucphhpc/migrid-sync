@@ -25,10 +25,12 @@
 # -- END_HEADER ---
 #
 
-"""A collection of functions using selenium and a webdriver of choice.
+"""A collection of functions using selenium and a webdriver of choice to remote
+control your browser through a number of web page interactions.
 
 Import and use for interactive purposes in stand-alone scripts something like:
 driver = init_driver(browser)
+driver.get(url)
 mig_login(driver, url, login, passwd)
 ...
 """

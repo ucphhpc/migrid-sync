@@ -69,9 +69,9 @@ def main():
         mig_calls[name] = lambda driver, name: save_screen(driver, mig_path % name)
         ucph_calls[name] = lambda driver, name: save_screen(driver, ucph_path % name)
 
-    print ucph_calls
-
     driver = init_driver(browser)
+    # Make sure the screenshots have a suitable size
+    driver.set_window_size(1400, 900)
     try:
         driver.get(url)
         if openid.lower() == 'ucph':
@@ -88,6 +88,7 @@ def main():
         print "Now you can proceed using the browser or interrupt with Ctrl-C"
         while True:
             time.sleep(1)
+            
     except KeyboardInterrupt:
         print "User interrupt requested - shutting down"
     except Exception as exc:
