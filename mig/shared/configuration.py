@@ -122,7 +122,8 @@ def fix_missing(config_file, verbose=True):
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
         'smtp_server': fqdn,
-        'smtp_sender': 'MiG Server <%s@%s>' % (user, fqdn),
+        'smtp_sender': '',
+        'smtp_reply_to': '',
         'user_sftp_address': fqdn,
         'user_sftp_port': 2222,
         'user_sftp_key': '~/certs/combined.pem',
@@ -168,14 +169,14 @@ def fix_missing(config_file, verbose=True):
         'user_openid_auth': ['password'],
         'user_openid_alias': '',
         'user_openid_log': 'openid.log',
-        'user_mig_oid_title': 'MiG',
-        'user_ext_oid_title': 'External',
+        'user_mig_oid_title': '',
+        'user_ext_oid_title': '',
         'user_mig_oid_provider': '',
         'user_mig_oid_provider_alias': '',
         'user_ext_oid_provider': '',
         'user_openid_providers': [],
-        'user_mig_cert_title': 'MiG',
-        'user_ext_cert_title': 'External',
+        'user_mig_cert_title': '',
+        'user_ext_cert_title': '',
         'user_monitor_log': 'monitor.log',
         'user_sshmux_log': 'sshmux.log',
         'user_vmproxy_key': '~/certs/combined.pem',
@@ -322,6 +323,7 @@ class Configuration:
     trac_id_field = ''
     smtp_server = ''
     smtp_sender = ''
+    smtp_reply_to = ''
     user_sftp_address = ''
     user_sftp_port = 2222
     user_sftp_show_address = ''
@@ -371,14 +373,14 @@ class Configuration:
     user_openid_auth = ['password']
     user_openid_alias = ''
     user_openid_log = 'openid.log'
-    user_mig_oid_title = 'MiG'
-    user_ext_oid_title = 'External'
+    user_mig_oid_title = ''
+    user_ext_oid_title = ''
     user_mig_oid_provider = ''
     user_mig_oid_provider_alias = ''
     user_ext_oid_provider = ''
     user_openid_providers = []
-    user_mig_cert_title = 'MiG'
-    user_ext_cert_title = 'External'
+    user_mig_cert_title = ''
+    user_ext_cert_title = ''
     user_monitor_log = 'monitor.log'
     user_sshmux_log = 'sshmux.log'
     user_vmproxy_key = ''
@@ -634,6 +636,14 @@ location.""" % self.config_file
         # Remaining options in order of importance - i.e. options needed for
         # later parsing must be parsed and set first.
 
+        if config.has_option('SITE', 'title'):
+            self.site_title = config.get('SITE', 'title')
+        else:
+            self.site_title = "Minimum intrusion Grid"
+        if config.has_option('SITE', 'short_title'):
+            self.short_title = config.get('SITE', 'short_title')
+        else:
+            self.short_title = "MiG"
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
             admins = config.get('GLOBAL', 'admin_list')
@@ -980,6 +990,8 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_mig_oid_title'):
             self.user_mig_oid_title = config.get('GLOBAL', 
                                                  'user_mig_oid_title')
+        else:
+            self.user_mig_oid_title = self.short_title
         if config.has_option('GLOBAL', 'user_mig_oid_provider'):
             self.user_mig_oid_provider = config.get('GLOBAL', 
                                                     'user_mig_oid_provider')
@@ -989,6 +1001,8 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_ext_oid_title'):
             self.user_ext_oid_title = config.get('GLOBAL', 
                                                  'user_ext_oid_title')
+        else:
+            self.user_ext_oid_title = 'External'            
         if config.has_option('GLOBAL', 'user_ext_oid_provider'):
             self.user_ext_oid_provider = config.get('GLOBAL', 
                                                     'user_ext_oid_provider')
@@ -1003,9 +1017,13 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_mig_cert_title'):
             self.user_mig_cert_title = config.get('GLOBAL', 
                                                  'user_mig_cert_title')
+        else:
+            self.user_mig_cert_title = self.short_title
         if config.has_option('GLOBAL', 'user_ext_cert_title'):
             self.user_ext_cert_title = config.get('GLOBAL', 
                                                  'user_ext_cert_title')
+        else:
+            self.user_ext_cert_title = 'External'            
         if config.has_option('SITE', 'enable_sshmux'):
             self.site_enable_sshmux = config.getboolean('SITE', 'enable_sshmux')
         else:
@@ -1045,10 +1063,15 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'smtp_sender'):
             self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
         else:
-            # TODO: switch to no-reply address as sender but make sure reqcert works!
-            #       mail server may reject mail if sender cannot be routed
-            self.smtp_sender = 'MiG Server <%s@%s>'\
-                 % (os.environ.get('USER', 'mig'), self.server_fqdn)
+            self.smtp_sender = '%s Server <%s@%s>' % \
+                               (self.short_title,
+                                os.environ.get('USER', 'mig'),
+                                self.server_fqdn)
+        if config.has_option('GLOBAL', 'smtp_reply_to'):
+            self.smtp_reply_to = config.get('GLOBAL', 'smtp_reply_to')
+        else:
+            self.smtp_reply_to = 'Do NOT reply <no-reply@%s>' % \
+                                 self.server_fqdn
         if config.has_option('GLOBAL', 'notify_protocols'):
             self.notify_protocols = config.get('GLOBAL', 'notify_protocols').split()
         else:
@@ -1234,14 +1257,6 @@ location.""" % self.config_file
             self.site_user_redirect = config.get('SITE', 'user_redirect')
         else:
             self.site_user_redirect = '/cert_redirect'
-        if config.has_option('SITE', 'title'):
-            self.site_title = config.get('SITE', 'title')
-        else:
-            self.site_title = "Minimum intrusion Grid"
-        if config.has_option('SITE', 'short_title'):
-            self.short_title = config.get('SITE', 'short_title')
-        else:
-            self.short_title = "MiG"
         if config.has_option('SITE', 'base_menu'):
             menus = ['default', 'simple', 'advanced']
             req = config.get('SITE', 'base_menu').split()

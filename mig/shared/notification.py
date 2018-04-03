@@ -257,7 +257,7 @@ The full status and output files are available at:
 %(msg)s
 
 ****************************************************************************
- Please send any replies explicitly to the person who invited you using the
+ Please send any replies EXPLICITLY to the person who invited you using the
  email address included above.
  Feel free to report any abuse of this service to the %(site)s admins
  (%(admins)s)
@@ -355,6 +355,7 @@ def send_email(
         mime_msg = MIMEMultipart()
         mime_msg['From'] = configuration.smtp_sender
         mime_msg['To'] = recipients
+        mime_msg['Reply-To'] = configuration.smtp_reply_to
         mime_msg['Date'] = formatdate(localtime=True)
         mime_msg['Subject'] = subject
         mime_msg.attach(MIMEText(force_utf8(message), "plain", "utf8"))
