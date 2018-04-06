@@ -1523,6 +1523,17 @@ def save_dir_cache(vgrid_name):
     return result
 
 
+def active_targets(configuration, vgrid_name, base_dir):
+    """Returns all active target paths for the vgrid with base_dir as
+    root directory based on global all_rules dictionary. Uses base_dir with
+    trailing slash to distinguish vgrids with shared prefix like Project and
+    Project-Management.
+    """
+    base_dir_slash = base_dir + os.sep
+    active = [i for i in all_rules.keys() if i.startswith(base_dir_slash)]
+    return active
+
+
 def monitor(configuration, vgrid_name):
     """Monitors the filesystem for changes and match/apply trigger rules.
     Each top vgrid gets its own process.
@@ -1652,24 +1663,43 @@ def monitor(configuration, vgrid_name):
         #             vgrid_name, str(load_dir_cache_t2
         #             - load_dir_cache_t1)))
 
-        # Start paths in vgrid_dir_cache to monitor
 
-        if load_status:
-            print '(%s) init trigger handling for: %s' % (pid, vgrid_name)
-            add_monitor_t1 = time.time()
-            add_vgrid_file_monitors(configuration, vgrid_name)
-            add_monitor_t2 = time.time()
-            print '(%s) ready to handle triggers for: %s in %s secs' \
-                % (pid, vgrid_name, add_monitor_t2 - add_monitor_t1)
-            logger.info('(%s) ready to handle triggers for: %s in %s secs'
-                         % (pid, vgrid_name, add_monitor_t2
-                        - add_monitor_t1))
-        else:
+        if not load_status:
             logger.error('(%s) Failed to load / generate dir cache for: %s'
                          % (pid, vgrid_name))
             stop_running.set()
 
+    activated = False
     while not stop_running.is_set():
+        
+        # NOTE: We delay launch of actual monitors until any rules are active,
+        #       in order to avoid excessive load from vgrids without triggers.
+        # TODO: consider making the detection and activation really dynamic.
+        #       I.e. only watch dirs that any rule can ever match. Not trivial
+        #       because it requires sync between rule and file monitors.
+
+        if not activated:
+            if active_targets(configuration, vgrid_name, file_monitor_home):
+                # Start paths in vgrid_dir_cache to monitor
+                print '(%s) init trigger handling for: %s' % (pid, vgrid_name)
+                add_monitor_t1 = time.time()
+                add_vgrid_file_monitors(configuration, vgrid_name)
+                add_monitor_t2 = time.time()
+                print '(%s) ready to handle triggers for: %s in %s secs' \
+                      % (pid, vgrid_name, add_monitor_t2 - add_monitor_t1)
+                logger.info('(%s) ready to handle triggers for: %s in %s secs'
+                            % (pid, vgrid_name, add_monitor_t2
+                               - add_monitor_t1))
+                activated = True
+            else:
+                # Variable per-process delay to avoid thrashing
+                delay = 60 + pid % 30
+                logger.debug('(%s) no matching triggers for %s - sleep %ds' % \
+                             (pid, vgrid_name, delay))
+                time.sleep(delay)
+
+        # Once past the activation we just sleep in a responsive loop
+        
         try:
 
             # Throttle down
@@ -1680,9 +1710,11 @@ def monitor(configuration, vgrid_name):
             logger.info('(%s) caught interrupt' % pid)
             stop_running.set()
 
-    print '(%s) Saving cache for vgrid: %s' % (pid, vgrid_name)
-    logger.info('(%s) Saving cache for vgrid: %s' % (pid, vgrid_name))
-    save_dir_cache(vgrid_name)
+    # Only save cache if rules were actually activated so dirs were monitored
+    if activated:
+        print '(%s) Saving cache for vgrid: %s' % (pid, vgrid_name)
+        logger.info('(%s) Saving cache for vgrid: %s' % (pid, vgrid_name))
+        save_dir_cache(vgrid_name)
 
     print '(%s) Exiting monitor for vgrid: %s' % (pid, vgrid_name)
     logger.info('(%s) Exiting for vgrid: %s' % (pid, vgrid_name))
