@@ -229,20 +229,12 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # Unfortunately OpenID redirect does not use POST
 
-    if login_type != 'oid':
-        if not safe_handler(
-            configuration,
-            'post',
-            op_name,
-            client_id,
-            get_csrf_limit(configuration),
-            accepted,
-            ):
-            output_objects.append({'object_type': 'error_text',
-                                  'text': '''Only accepting
-                CSRF-filtered POST requests to prevent unintended updates'''
-                                  })
-            return (output_objects, returnvalues.CLIENT_ERROR)
+    if login_type != 'oid' and not safe_handler(
+        configuration, 'post', op_name, client_id,
+        get_csrf_limit(configuration), accepted):
+        output_objects.append({'object_type': 'error_text', 'text': '''Only
+accepting CSRF-filtered POST requests to prevent unintended updates'''})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     admin_email = configuration.admin_email
     (openid_names, oid_extras) = ([], {})
