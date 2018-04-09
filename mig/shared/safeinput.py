@@ -42,8 +42,8 @@ from string import letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
 from shared.base import force_unicode, force_utf8
-from shared.defaults import src_dst_sep, session_id_length, user_id_charset, \
-     user_id_min_length, user_id_max_length, session_id_charset
+from shared.defaults import src_dst_sep, user_id_charset, user_id_max_length, \
+     session_id_charset, session_id_length
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -421,12 +421,13 @@ def valid_distinguished_name(
 
 def valid_username(
     username,
-    min_length=user_id_min_length,
+    min_length=1,
     max_length=user_id_max_length,
     extra_chars='',
     ):
     """Verify that supplied username only contains 
-    characters that we consider valid. 
+    characters that we consider valid.
+    NOTE: we use min_length 1 here since it also covers remote unix user names
     """
 
     valid_chars = VALID_USERNAME_CHARACTERS + extra_chars
