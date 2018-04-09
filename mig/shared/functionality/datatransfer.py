@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -509,8 +509,7 @@ login with key
 <label for="username">Username</label>
 <input id="username" type=text size=60 name=username value="%(username)s"
     pattern="[a-zA-Z0-9._-]*"
-    title="Optional username used to login on the remote site, if required"/>
-/>
+    title="Optional username used to login on the remote site, if required" />
 <br/>
 <span id="password_entry">
 <label for="transfer_pw">Password</label>

@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,8 @@ from string import letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
 from shared.base import force_unicode, force_utf8
-from shared.defaults import src_dst_sep, session_id_length, session_id_charset
+from shared.defaults import src_dst_sep, session_id_length, user_id_charset, \
+     user_id_min_length, user_id_max_length, session_id_charset
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -131,11 +132,13 @@ valid_float_chars = digits + float_extras
 valid_password_chars = letters + digits + password_extras
 valid_name_chars = letters + digits + name_extras
 valid_dn_chars = letters + digits + dn_extras
+valid_username_chars = user_id_charset
 VALID_INTEGER_CHARACTERS = valid_integer_chars
 VALID_FLOAT_CHARACTERS = valid_float_chars
 VALID_PASSWORD_CHARACTERS = valid_password_chars
 VALID_NAME_CHARACTERS = valid_name_chars
 VALID_DN_CHARACTERS = valid_dn_chars
+VALID_USERNAME_CHARACTERS = valid_username_chars
 
 # Helper functions and variables
 
@@ -416,6 +419,20 @@ def valid_distinguished_name(
                      max_length, COMMON_ACCENTED)
 
 
+def valid_username(
+    username,
+    min_length=user_id_min_length,
+    max_length=user_id_max_length,
+    extra_chars='',
+    ):
+    """Verify that supplied username only contains 
+    characters that we consider valid. 
+    """
+
+    valid_chars = VALID_USERNAME_CHARACTERS + extra_chars
+    __valid_contents(username, valid_chars, min_length, max_length)
+
+
 def valid_base_url(
     base_url,
     min_length=1,
@@ -689,7 +706,7 @@ def valid_simple_email_address(addr):
     """Simple email address check only accepting plain address without real
     name prefix or anything.
     """
-    valid_email_address(address, False)
+    valid_email_address(addr, False)
 
 
 def filter_ascii(contents):
@@ -1219,9 +1236,10 @@ def guess_type(name):
             'openid.sreg.email',
             'openid.sreg.mail',
             'adminemail',
-            'username',
             ):
             __type_map[key] = valid_email_address
+        for key in ('username', ):
+            __type_map[key] = valid_username
         for key in (
             'editarea',
             'execute',
