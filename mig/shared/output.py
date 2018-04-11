@@ -1415,7 +1415,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     <tr>
         <th>Name</th>
         <th>Size in bytes</th>
-        <th class="md5sum hidden">MD5 checksum</th>
+        <th class="md5sum">MD5 checksum</th>
         <th class="sha1sum hidden">SHA1 checksum</th>
         <th class="sha256sum hidden">SHA256 checksum</th>
         <th class="sha512sum hidden">SHA512 checksum</th>
@@ -1433,7 +1433,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 frozenfile_html += '''
     <tr>
         <td>%(show_file)s</td><td class="centertext">%(size)s</td>
-        <td class="md5sum monospace hidden">%(md5sum)s</td>
+        <td class="md5sum monospace">%(md5sum)s</td>
         <td class="sha1sum monospace hidden">%(sha1sum)s</td>
         <td class="sha256sum monospace hidden">%(sha256sum)s</td>
         <td class="sha512sum monospace hidden">%(sha512sum)s</td>
