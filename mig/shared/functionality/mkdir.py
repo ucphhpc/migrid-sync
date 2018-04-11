@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# mkdir - create directory in user hom
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# mkdir - create directory in user home
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -98,7 +98,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
         userstyle = True
         widgets = True
     elif share_id:
-        (share_mode, _) = extract_mode_id(configuration, share_id)
+        try:
+            (share_mode, _) = extract_mode_id(configuration, share_id)
+        except ValueError, err:
+            logger.error('%s called with invalid share_id %s: %s' % \
+                         (op_name, share_id, err))
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : 'Invalid sharelink ID: %s' % share_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         user_id = 'anonymous user through share ID %s' % share_id
         if share_mode == 'read-only':

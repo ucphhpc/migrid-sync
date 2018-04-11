@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -170,7 +170,7 @@ def render_menu(configuration, menu_class='navmenu',
             spec['title'] = title
             spec['hover'] = hover
         selected = ''
-        if spec['url'].find(current_element) > -1:
+        if os.path.splitext(spec['url'])[0] == current_element:
             selected = ' class="selected" '
         menu_lines += '   <li %s class="%s"><a href="%s" %s title="%s">%s</a></li>\n'\
              % (spec.get('attr', ''), spec['class'], spec['url'], selected,
@@ -744,7 +744,7 @@ def get_cgi_html_header(
     menu_lines = ''
     if menu:
         maximize = ''
-        current_page = os.path.basename(requested_page()).replace('.py', '')
+        current_page = os.path.splitext(os.path.basename(requested_page()))[0]
         menu_lines = render_menu(configuration, 'navmenu', current_page,
                                  base_menu, user_menu)
         out += '''

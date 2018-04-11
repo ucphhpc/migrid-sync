@@ -36,6 +36,7 @@ from shared.defaults import download_block_size
 from shared.conf import get_configuration_object
 from shared.objecttypes import get_object_type_info
 from shared.output import validate, format_output
+from shared.safeinput import valid_backend_name, html_escape
 from shared.scriptinput import fieldstorage_to_dict
 
 def object_type_info(object_type):
@@ -43,37 +44,62 @@ def object_type_info(object_type):
 
     return get_object_type_info(object_type)
 
-def stub(function, configuration, client_id, user_arguments_dict, environ):
-    """Run backend function with supplied arguments"""
+def dummy_main(client_id, user_arguments_dict):
+    """Dummy main-function to override with backend import"""
+    return ([
+        {'object_type': 'title', 'text': 'Internal Error'},
+        {'object_type': 'header', 'text': 'Internal Error'},
+        {'object_type': 'error_text', 'text':
+         "This backend should always be overriden!"}
+        ], returnvalues.SYSTEM_ERROR)
+
+def stub(configuration, client_id, import_path, backend, user_arguments_dict,
+         environ):
+    """Run backend on behalf of client_id with supplied user_arguments_dict.
+    I.e. import main from import_path and execute it with supplied arguments.
+    """
 
     _logger = configuration.logger
     
     before_time = time.time()
 
-    # get ID of user currently logged in
-
-    main = id
-    
     output_objects = []
+    main = dummy_main
+
+    # IMPORTANT: we cannot trust potentially user-provided backend value.
+    #            NEVER print/output it verbatim before it is validated below.
+
     try:
-        exec 'from %s import main' % function
+        valid_backend_name(backend)
+
+        # Import main from backend module
+
+        exec 'from %s import main' % import_path
     except Exception, err:
-        _logger.error("could not import %s: %s" % (function, err))
-        output_objects.extend([{'object_type': 'error_text', 'text':
-                              'Could not load backend: %s' % function}])
+        _logger.error("could not import %s: %s" % (import_path, err))
+        output_objects.extend([
+            {'object_type': 'title', 'text': 'Interface Error'},
+            {'object_type': 'header', 'text': 'Interface Error'},
+            {'object_type': 'error_text', 'text':
+             'Could not load backend: %s' % html_escape(backend)},
+            {'object_type': 'link', 'text': 'Go to default interface',
+             'destination': configuration.site_landing_page}
+            ])
         return (output_objects, returnvalues.SYSTEM_ERROR)
+    
+    # Now backend value is validated to be safe for output
 
     if not isinstance(user_arguments_dict, dict):
         _logger.error("invalid user args %s for %s" % (user_arguments_dict,
-                                                       function))
-        output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'user_arguments_dict is not a dictionary/struct type!'
-                              }])
+                                                       import_path))
+        output_objects.extend([
+            {'object_type': 'title', 'text': 'Input Error'},
+            {'object_type': 'error_text', 'text':
+             'User input is not on expected format!'}
+            ])
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
     try:
-
-        # return (user_arguments_dict)
 
         # TODO: add environ arg to all main backends and pass it here
         
@@ -82,21 +108,21 @@ def stub(function, configuration, client_id, user_arguments_dict, environ):
     except Exception, err:
         import traceback
         _logger.error("script crashed:\n%s" % traceback.format_exc())
-        output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'Error calling function: %s' % err}])
+        output_objects.extend([
+            {'object_type': 'title', 'text': 'Runtime Error'},
+            {'object_type': 'error_text', 'text':
+             'Internal error running backend: %s' % backend}
+            ])
         return (output_objects, returnvalues.ERROR)
 
     (val_ret, val_msg) = validate(output_objects)
     if not val_ret:
         (ret_code, ret_msg) = returnvalues.OUTPUT_VALIDATION_ERROR
-
-        # remove previous output
-        # output_objects = []
-
-        output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'Validation error! %s' % val_msg},
-                              {'object_type': 'title', 'text'
-                              : 'Validation error!'}])
+        output_objects.extend([
+            {'object_type': 'title', 'text': 'Validation Error'},
+            {'object_type': 'error_text', 'text':
+             'Output validation error! %s' % val_msg}
+            ])
     after_time = time.time()
     output_objects.append({'object_type': 'timing_info', 'text':
                            "done in %.3fs" % (after_time - before_time)})
@@ -147,28 +173,26 @@ def application(environ, start_response):
         
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to dashboard if all fails
-        script_path = requested_page(environ, 'dashboard.py')
-        backend = os.path.basename(script_path).replace('.py', '')
+        script_path = requested_page(environ, configuration.site_landing_page)
+        backend = os.path.splitext(os.path.basename(script_path))[0]
         module_path = 'shared.functionality.%s' % backend
-        (output_objs, ret_val) = stub(module_path, configuration,
-                                      client_id, user_arguments_dict, environ)
+        (output_objs, ret_val) = stub(configuration, client_id, module_path,
+                                      backend, user_arguments_dict, environ)
         status = '200 OK'
     except Exception, exc:
         _logger.error("handling of WSGI request for %s from %s failed: %s" % \
                       (backend, client_id, exc))
         status = '500 ERROR'
-        (output_objs, ret_val) = ([{'object_type': 'title', 'text'
-                                    : 'Unsupported Interface'},
-                                   {'object_type': 'error_text', 'text'
-                                    : str(exc)},
-                                   # Enable next two lines only for debugging
-                                   # {'object_type': 'text', 'text':
-                                   # str(environ)}
-                                   {'object_type': 'link', 'text':
-                                    'Go to default interface',
-                                    'destination': '/index.html'},
-                                   ],
-                                  returnvalues.SYSTEM_ERROR)
+        (output_objs, ret_val) = ([
+            {'object_type': 'title', 'text' : 'Internal Error'},
+            # Do not print potentially unsafe output here
+            {'object_type': 'error_text', 'text': "unexpected internal error"},
+            # Enable next two lines only for debugging
+            # {'object_type': 'text', 'text':
+            # str(environ)}
+            {'object_type': 'link', 'text': 'Go to default interface',
+             'destination': configuration.site_landing_page}
+            ], returnvalues.SYSTEM_ERROR)
 
     (ret_code, ret_msg) = ret_val
 

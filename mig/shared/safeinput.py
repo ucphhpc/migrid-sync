@@ -86,6 +86,7 @@ VALID_PATH_CHARACTERS = letters + digits + CURRENCY + "/.,_-+±×÷=½¾" + \
 VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + CURRENCY + '?#*[]{}' + '"' + \
                         "`|^" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
+VALID_BACKEND_NAME_CHARACTERS = letters + digits + '-_'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
 VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 # According to https://tools.ietf.org/html/rfc3986#section-2 URLs may contain
@@ -515,6 +516,21 @@ def valid_password(
     valid_chars = VALID_PASSWORD_CHARACTERS + extra_chars
     __valid_contents(password, valid_chars, min_length, max_length,
                      COMMON_ACCENTED)
+
+
+def valid_backend_name(
+    backend_name,
+    min_length=1,
+    max_length=64,
+    extra_chars='',
+    ):
+    """Verify that supplied backend name, only contains characters that we
+    consider valid. Backend names are (potentially) user provided names of
+    modules from the shared/functionality directory.
+    """
+
+    valid_chars = VALID_BACKEND_NAME_CHARACTERS + extra_chars
+    __valid_contents(backend_name, valid_chars, min_length, max_length)
 
 
 def valid_sid(

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # init - shared helpers to init functionality backends
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -78,7 +78,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
     output_objects = []
     start_entry = make_start_entry()
     output_objects.append(start_entry)
-    op_name = os.path.basename(requested_page()).replace('.py', '')
+    op_name = os.path.splitext(os.path.basename(requested_page()))[0]
 
     if op_title:
         title_object = make_title_entry('%s' % op_name, skipmenu=(not op_menu),

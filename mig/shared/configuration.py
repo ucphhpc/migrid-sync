@@ -300,7 +300,8 @@ class Configuration:
     openid_store = ''
     paraview_home = ''
     rate_limit_db = ''
-    site_skin = 'migrid-basic'
+    site_landing_page = ''
+    site_skin = ''
     site_collaboration_links = ''
     site_vgrid_links = []
     site_default_vgrid_links = []
@@ -1246,6 +1247,10 @@ location.""" % self.config_file
             self.site_styles = config.get('SITE', 'styles')
         else:
             self.site_styles = self.site_images
+        if config.has_option('SITE', 'landing_page'):
+            self.site_landing_page = config.get('SITE', 'landing_page')
+        else:
+            self.site_landing_page = '/cgi-bin/dashboard.py'
         if config.has_option('SITE', 'skin'):
             self.site_skin = config.get('SITE', 'skin')
         else:

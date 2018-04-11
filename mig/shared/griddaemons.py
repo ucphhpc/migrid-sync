@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # griddaemons - grid daemon helper functions
-# Copyright (C) 2010-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -897,7 +897,12 @@ def refresh_share_creds(configuration, protocol, username,
         logger.debug("ruled out %s as a possible sharelink ID" % username)
         return (conf, changed_shares)
 
-    (mode, _) = extract_mode_id(configuration, username)
+    try:
+        (mode, _) = extract_mode_id(configuration, username)
+    except ValueError, err:
+        logger.error('refresh share creds called with invalid username %s: %s' \
+                     % (username, err))
+        mode = 'INVALID-SHARELINK'
     if not mode in share_modes:
         logger.error("invalid share mode %s for %s" % (mode, username))
         return (conf, changed_shares)
