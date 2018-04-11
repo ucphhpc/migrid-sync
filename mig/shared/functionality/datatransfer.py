@@ -33,7 +33,7 @@ import os
 import datetime
 import socket
 import time
-from urllib import quote
+from urllib import quote, urlencode
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
@@ -53,6 +53,9 @@ from shared.transferfunctions import build_transferitem_object, \
      generate_user_key, delete_user_key
 
 
+# Fields to fill on edit - note password is skipped on purpose for security!
+edit_fields = ['transfer_id', 'protocol', 'fqdn', 'port', 'username',
+               'compress', 'notify']
 get_actions = ['show', 'fillimport', 'fillexport']
 transfer_actions = ['import', 'export', 'deltransfer', 'redotransfer']
 # TODO: add these internal data shuffling targets on a separate tab without
@@ -150,13 +153,20 @@ def main(client_id, user_arguments_dict):
     var fields = 0;
     var max_fields = 20;
     var src_input = "<label for=\'transfer_src\'>Source path(s)</label>";
-    src_input += "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'\' required title=\'relative source path: local for exports and remote for imports\' />";
+    src_input += "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'PATH\' required title=\'relative source path: local for exports and remote for imports\' />";
     src_input += "<input id=\'src_file_FIELD\' type=radio onclick=\'setSrcDir(FIELD, false);\' checked />Source file";
     src_input += "<input id=\'src_dir_FIELD\' type=radio onclick=\'setSrcDir(FIELD, true);\' />Source directory (recursive)";
     src_input += "<br />";
-    function addSource() {
+    function addSource(path, is_dir) {
+        if (path === undefined) {
+            path = "";
+        }
+        if (is_dir === undefined) {
+            is_dir = false;
+        }
         if (fields < max_fields) {
-            $("#srcfields").append(src_input.replace(/FIELD/g, fields));
+            $("#srcfields").append(src_input.replace(/FIELD/g, fields).replace(/PATH/g, path));
+            setSrcDir(fields, is_dir);
             fields += 1;
         } else {
             alert("Maximum " + max_fields + " source fields allowed!");
@@ -247,14 +257,20 @@ def main(client_id, user_arguments_dict):
     }
     '''
     # Mangle ready handling to begin with dynamic init and end with tab init
-    add_ready = '''
+    pre_ready = '''
         enableLogin("%s");
-        addSource();
+        ''' % init_login
+    for src in src_list or ['']:
+        pre_ready += '''
+        addSource("%s", %s);
+        ''' % (src, ("%s" % src.endswith('/')).lower())
+    add_ready = '''
+        %s
         %s
         /* NOTE: requires managers CSS fix for proper tab bar height */      
         $(".datatransfer-tabs").tabs();
         $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
-    ''' % (init_login, add_ready)
+    ''' % (pre_ready, add_ready)
     title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                              add_init, add_ready)
@@ -341,6 +357,22 @@ else, so the public key can be inserted in your authorized_keys file as:
                 saved_id,
                 'class': 'infolink iconspace', 
                 'title': 'View status files for %s' % saved_id,
+                'text': ''}
+            # Edit is just a call to self with fillimport set
+            args = [('action', 'fill%(action)s' % transfer_dict),
+                    ('key_id', '%(key)s' % transfer_dict),
+                    ('transfer_dst', '%(dst)s' % transfer_dict)]
+            for src in transfer_dict['src']:
+                args.append(('transfer_src', src))
+            for field in edit_fields:
+                val = transfer_dict.get(field, '')
+                args.append((field, val))
+            transfer_args = urlencode(args, True)
+            transfer_item['edittransferlink'] = {
+                'object_type': 'link',
+                'destination': "%s.py?%s" % (target_op, transfer_args),
+                'class': 'editlink iconspace', 
+                'title': 'Edit transfer %s' % saved_id,
                 'text': ''}
             js_name = 'delete%s' % hexlify(saved_id)
             helper = html_post_helper(js_name, '%s.py' % target_op,

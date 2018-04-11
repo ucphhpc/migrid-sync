@@ -1515,11 +1515,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                                            ''))
                 # optional links
                 datalink = single_transfer.get('viewdatalink', '')
+                editlink = single_transfer.get('edittransferlink', '')
                 dellink = single_transfer.get('deltransferlink', '')
                 redolink = single_transfer.get('redotransferlink', '')
                 datalink_html = ''
                 if datalink:
                     datalink_html = html_link(datalink)
+                editlink_html = ''
+                if editlink:
+                    editlink_html = html_link(editlink)
                 dellink_html = ''
                 if dellink:
                     dellink_html = html_link(dellink)
@@ -1535,13 +1539,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     login = 'anonymous'
                 lines.append('''
 <tr>
-<td>%s</td><td class="centertext">%s</td><td>%s</td><td>%s</td><td>%s</td>
+<td>%s</td><td class="centertext">%s %s</td><td>%s</td><td>%s</td><td>%s</td>
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>
 <!-- use nested table to distribute status and icons consistenly -->
 <table class="datatransfers status" style="width: 100%%;"><tr>
 <td style="min-width: 60%%;">%s</td><td>%s</td><td>%s</td><td>%s</td>
 </tr></table>
-</tr>''' % (single_transfer['transfer_id'], dellink_html,
+</tr>''' % (single_transfer['transfer_id'], editlink_html, dellink_html,
             single_transfer['action'], single_transfer['protocol'],
             single_transfer['fqdn'], single_transfer['port'], login,
             ', '.join(single_transfer['src']), single_transfer['dst'],
