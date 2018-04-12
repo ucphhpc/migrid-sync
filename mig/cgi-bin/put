@@ -353,7 +353,13 @@ elif not client_id and filename.startswith('/share_redirect/'):
         o.reply_and_exit(o.CLIENT_ERROR)
 
     # check that the share_id is ok (does symlink exist?)
-    (access_dir, _) = extract_mode_id(configuration, share_id)
+    try:
+        (access_dir, _) = extract_mode_id(configuration, share_id)
+    except ValueError, err:
+        logger.error('%s called with invalid share_id %s: %s' % \
+                         ('put', share_id, err))
+        o.out('INVALID SHARE ID! %s' % share_id)
+        o.reply_and_exit(o.ERROR)
     symlink_path = os.path.join(configuration.sharelink_home, access_dir,
                                 share_id)
     if not os.path.islink(symlink_path):
