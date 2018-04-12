@@ -80,7 +80,8 @@ lftp_buffer_bytes = 131072
 # e.g. something like "mirror: basic: file size decreased during transfer"
 # and the resulting file turning up corrupted.
 lftp_sftp_block_bytes = 65536
-
+# Special marker for rsync excludes on list form
+RSYNC_EXCLUDES_LIST = '__RSYNC_EXCLUDES_LIST__'
 
 def stop_handler(signal, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
@@ -205,23 +206,30 @@ def get_ssl_auth(pki_auth, transfer_dict=None):
         ssl_auth = ssl_auth % transfer_dict
     return ssl_auth
 
-def get_exclude_list(keyword, sep_char, to_string):
+def get_exclude_list(keyword, sep_char, to_string, user_excludes=[]):
     """Get an excludes helper for filtered transfers. The keyword argument is
-    inserted for each exclude entry. The sep_char argument is used to separate the
-    keyword and the value to be excluded. If to_string is set the result is a
-    string and otherwise the excludes are returned on list form.
+    inserted for each exclude entry. The sep_char argument is used to separate
+    the keyword and the value to be excluded. If to_string is set the result is
+    a string and otherwise the excludes are returned on list form.
+    The optional list of user_excludes is explicitly prepended to the system
+    default excludes so that they can't override or reset the latter.
+    NOTE: list is passed into subprocess without shell interpretation so
+    quoting is NOT needed, and in fact would break the excludes.
     """
     exc_pattern='%s%s%%s' % (keyword, sep_char)
+    all_excludes = user_excludes + _user_invisible_paths
     if to_string:
-        return ' '.join([exc_pattern % i for i in _user_invisible_paths])
+        return ' '.join([exc_pattern % i for i in all_excludes])
     else:
-        return [exc_pattern % i for i in _user_invisible_paths]
+        return [exc_pattern % i for i in all_excludes]
 
-def get_lftp_target(is_import, is_file):
+def get_lftp_target(is_import, is_file, user_excludes=[]):
     """Get a target helper for lftp-based transfers. The is_import argument is
     used to distinguish the direction and the is_file argument decides whether
     to use a plain get/put or a mirror command. We try to continue/resume
     transfers in any case.
+    The optional list of user_excludes is passed more or less verbatim to the
+    underlying command.
     Returns a 3-tuple of lists containing args, excludes and source+dst
     suitable for eventually plugging into the command list from command map.
     """
@@ -249,7 +257,11 @@ def get_lftp_target(is_import, is_file):
             lftp_args += ["put", "-c"]
     else:
         # NOTE: we actively filter illegal paths from these recursive transfers
-        exclude_list = get_exclude_list('--exclude', ' ', False)
+        # There's a slight difference in the handling of exclude in lftp and
+        # rsync with the former using regex and the latter using glob by
+        # default. It is not obvious to unify the format in either way.
+        exclude_list = get_exclude_list('--exclude', ' ', False,
+                                        user_excludes)
         # IMPORTANT: Use Resume, follow symlinks and keep all but suid perms.
         #            We DON'T preserve device files, owner/group and can't
         #            preserve timestamps.
@@ -261,12 +273,14 @@ def get_lftp_target(is_import, is_file):
             lftp_args += ["-R"]
     return (lftp_args, exclude_list, transfer_target)
 
-def get_rsync_target(is_import, is_file, compress=False):
+def get_rsync_target(is_import, is_file, user_excludes=[], compress=False):
     """Get target helpers for rsync-based transfers. The is_import argument is
     used to distinguish the direction and the is_file argument decides whether
     to use a plain or recursive transfer command. Basically we could always
     use recursive for rsync, but we explicitly set it for symmetry with the
     lftp commands.
+    The optional list of user_excludes is passed more or less verbatim to the
+    underlying command.
     The optional compress option specifies if the compression flag should be
     enabled.
     Returns a 3-tuple of lists containing flags, excludes and source+dst
@@ -281,7 +295,7 @@ def get_rsync_target(is_import, is_file, compress=False):
     if compress:
         rsync_args[0] += 'z'
     # NOTE: we actively filter illegal paths from all rsync transfers
-    exclude_list = get_exclude_list('--exclude', '=', False)
+    exclude_list = get_exclude_list('--exclude', '=', False, user_excludes)
     # Make sure to protect exotic chars from interpretation by remote shell
     if is_import:
         transfer_target = ["%(fqdn)s:'%(src)s'", "%(dst)s/"]
@@ -370,7 +384,7 @@ def get_cmd_map():
                                                '%(lftp_src)s', '%(lftp_dst)s'])
                                      ])],
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] + \
-                rsync_core_opts + ['%(rsync_args)s', '%(rsync_excludes)s',
+                rsync_core_opts + ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
                                    '%(rsync_src)s', '%(rsync_dst)s'],
                 },
                'export':
@@ -418,7 +432,7 @@ def get_cmd_map():
                                                '%(lftp_src)s', '%(lftp_dst)s'])
                                      ])],
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] + \
-                rsync_core_opts + ['%(rsync_args)s', '%(rsync_excludes)s',
+                rsync_core_opts + ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
                                    '%(rsync_src)s', '%(rsync_dst)s'],
                 }
                }
@@ -464,6 +478,7 @@ def run_transfer(configuration, client_id, transfer_dict):
     rel_src_list = transfer_dict['src']
     rel_dst = transfer_dict['dst']
     compress = transfer_dict.get("compress", False)
+    exclude = transfer_dict.get("exclude", [])
     if transfer_dict['action'] in ('import', ):
         logger.debug('setting abs dst for action %(action)s' % transfer_dict)
         src_path_list = transfer_dict['src']
@@ -479,12 +494,16 @@ def run_transfer(configuration, client_id, transfer_dict):
                              % (abs_dst, blind_pw(transfer_dict)))
                 raise ValueError("user provided a destination outside home!")
             if src.endswith(os.sep):
-                target_helper_list.append((get_lftp_target(True, False),
+                target_helper_list.append((get_lftp_target(True, False,
+                                                           exclude),
                                            get_rsync_target(True, False,
+                                                            exclude,
                                                             compress)))
             else:
-                target_helper_list.append((get_lftp_target(True, True),
+                target_helper_list.append((get_lftp_target(True, True,
+                                                           exclude),
                                            get_rsync_target(True, True,
+                                                            exclude,
                                                             compress)))
         makedirs_rec(dst_path, configuration)
     elif transfer_dict['action'] in ('export', ):
@@ -502,12 +521,16 @@ def run_transfer(configuration, client_id, transfer_dict):
                 raise ValueError("user provided a source outside home!")
             src_path_list.append(src_path)
             if src.endswith(os.sep) or os.path.isdir(src):
-                target_helper_list.append((get_lftp_target(False, False),
+                target_helper_list.append((get_lftp_target(False, False,
+                                                           exclude),
                                            get_rsync_target(False, False,
+                                                            exclude,
                                                             compress)))
             else:
-                target_helper_list.append((get_lftp_target(False, True),
+                target_helper_list.append((get_lftp_target(False, True,
+                                                           exclude),
                                           get_rsync_target(False, True,
+                                                           exclude,
                                                            compress)))
     else:
         raise ValueError('unsupported action for %(transfer_id)s: %(action)s' \
@@ -577,14 +600,23 @@ def run_transfer(configuration, client_id, transfer_dict):
         run_dict['lftp_src'] = lftp_target[2][0] % run_dict
         run_dict['lftp_dst'] = lftp_target[2][1] % run_dict
         run_dict['rsync_args'] = ' '.join(rsync_target[0]) % run_dict
-        run_dict['rsync_excludes'] = ' '.join(rsync_target[1])
+        # Preserve excludes on list form for rsync, where it matters
+        run_dict[RSYNC_EXCLUDES_LIST] = rsync_target[1]
         run_dict['rsync_src'] = rsync_target[2][0] % run_dict
         run_dict['rsync_dst'] = rsync_target[2][1] % run_dict
         blind_dict = blind_pw(run_dict)
         logger.debug('expanded vars to %s' % blind_dict)
-        command_list = [i % run_dict for i in command_pattern]
+        # NOTE: Make sure NOT to break rsync excludes on list form as they
+        # won't work if concatenated to a single string in command_list!
+        command_list, blind_list = [], []
+        for i in command_pattern:
+            if i == RSYNC_EXCLUDES_LIST:
+                command_list += run_dict[RSYNC_EXCLUDES_LIST]
+                blind_list += run_dict[RSYNC_EXCLUDES_LIST]
+            else:
+                command_list.append(i % run_dict)
+                blind_list.append(i % blind_dict)
         command_str = ' '.join(command_list)
-        blind_list = [i % blind_dict for i in command_pattern]
         blind_str = ' '.join(blind_list)
         logger.info('run %s on behalf of %s' % (blind_str, client_id))
         transfer_proc = subprocess_popen(command_list,

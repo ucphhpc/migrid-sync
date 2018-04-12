@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1503,6 +1503,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>Login</th>
         <th>Source(s)</th>
         <th>Destination</th>
+        <th>Exclude(s)</th>
         <th>Compress</th>
         <th>Updated</th>
         <th>Status</th>
@@ -1525,6 +1526,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 if editlink:
                     editlink_html = html_link(editlink)
                 dellink_html = ''
+                if editlink:
+                    editlink_html = html_link(editlink)
+                dellink_html = ''
                 if dellink:
                     dellink_html = html_link(dellink)
                 redolink_html = ''
@@ -1540,7 +1544,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('''
 <tr>
 <td>%s</td><td class="centertext">%s %s</td><td>%s</td><td>%s</td><td>%s</td>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>
 <!-- use nested table to distribute status and icons consistenly -->
 <table class="datatransfers status" style="width: 100%%;"><tr>
 <td style="min-width: 60%%;">%s</td><td>%s</td><td>%s</td><td>%s</td>
@@ -1549,6 +1553,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             single_transfer['action'], single_transfer['protocol'],
             single_transfer['fqdn'], single_transfer['port'], login,
             ', '.join(single_transfer['src']), single_transfer['dst'],
+            ', '.join(single_transfer.get('exclude', [])),
             single_transfer.get('compress', False), single_transfer['updated'],
             single_transfer['status'], outputlink, datalink_html,
             redolink_html))

@@ -85,8 +85,8 @@ def signature():
     defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
                 'fqdn':[''], 'port': [''], 'transfer_src': [''],
                 'transfer_dst': [''], 'username': [''], 'transfer_pw': [''],
-                'key_id': [''], 'compress': [''], 'notify': [''],
-                'flags': ['']}
+                'key_id': [''], 'exclude': [''], 'compress': [''],
+                'notify': [''], 'flags': ['']}
     return ['text', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -117,6 +117,7 @@ def main(client_id, user_arguments_dict):
     username = accepted['username'][-1]
     password = accepted['transfer_pw'][-1]
     key_id = accepted['key_id'][-1]
+    exclude_list = accepted['exclude']
     notify = accepted['notify'][-1]
     compress = accepted['compress'][-1]
     flags = accepted['flags']
@@ -153,10 +154,13 @@ def main(client_id, user_arguments_dict):
     var fields = 0;
     var max_fields = 20;
     var src_input = "<label for=\'transfer_src\'>Source path(s)</label>";
-    src_input += "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'PATH\' required title=\'relative source path: local for exports and remote for imports\' />";
+    src_input += "<input id=\'src_FIELD\' type=text size=60 name=transfer_src value=\'PATH\' title=\'relative source path: local for exports and remote for imports\' />";
     src_input += "<input id=\'src_file_FIELD\' type=radio onclick=\'setSrcDir(FIELD, false);\' checked />Source file";
     src_input += "<input id=\'src_dir_FIELD\' type=radio onclick=\'setSrcDir(FIELD, true);\' />Source directory (recursive)";
     src_input += "<br />";
+    var exclude_input = "<label for=\'exclude\'>Exclude path(s)</label>";
+    exclude_input += "<input type=text size=60 name=exclude value=\'PATH\' title=\'relative path or regular expression to exclude\' />";
+    exclude_input += "<br />";
     function addSource(path, is_dir) {
         if (path === undefined) {
             path = "";
@@ -171,6 +175,12 @@ def main(client_id, user_arguments_dict):
         } else {
             alert("Maximum " + max_fields + " source fields allowed!");
         }
+    }
+    function addExclude(path) {
+        if (path === undefined) {
+            path = "";
+        }
+        $("#excludefields").append(exclude_input.replace(/PATH/g, path));
     }
     function setDir(target, field_no, is_dir) {
         var id_prefix = "#"+target+"_";
@@ -264,6 +274,10 @@ def main(client_id, user_arguments_dict):
         pre_ready += '''
         addSource("%s", %s);
         ''' % (src, ("%s" % src.endswith('/')).lower())
+    for exclude in exclude_list or ['']:
+        pre_ready += '''
+        addExclude("%s");
+        ''' % exclude
     add_ready = '''
         %s
         %s
@@ -364,6 +378,8 @@ else, so the public key can be inserted in your authorized_keys file as:
                     ('transfer_dst', '%(dst)s' % transfer_dict)]
             for src in transfer_dict['src']:
                 args.append(('transfer_src', src))
+            for exclude in transfer_dict.get('exclude', []):
+                args.append(('exclude', exclude))
             for field in edit_fields:
                 val = transfer_dict.get(field, '')
                 args.append((field, val))
@@ -372,7 +388,7 @@ else, so the public key can be inserted in your authorized_keys file as:
                 'object_type': 'link',
                 'destination': "%s.py?%s" % (target_op, transfer_args),
                 'class': 'editlink iconspace', 
-                'title': 'Edit transfer %s' % saved_id,
+                'title': 'Edit or duplicate transfer %s' % saved_id,
                 'text': ''}
             js_name = 'delete%s' % hexlify(saved_id)
             helper = html_post_helper(js_name, '%s.py' % target_op,
@@ -434,8 +450,8 @@ transfers below.'''
                        'fqdn': fqdn, 'port': port, 'username': username,
                        'password': password, 'key_id': key_id, 
                        'transfer_src': src_list, 'transfer_dst': dst,
-                       'compress': use_compress, 'notify': notify,
-                       'scroll_to_create': scroll_to_create,
+                       'exclude': exclude_list, 'compress': use_compress,
+                       'notify': notify, 'scroll_to_create': scroll_to_create,
                        'form_method': form_method, 'csrf_field': csrf_field,
                        'csrf_limit': csrf_limit, 'target_op': target_op,
                        'csrf_token': csrf_token}
@@ -580,6 +596,13 @@ login with key
     title="relative destination path: local for imports and remote for exports" />
 <input id=\'dst_dir_0\' type=radio checked />Destination directory
 <input id=\'dst_file_0\' type=radio disabled />Destination file<br />
+</td></tr>
+<tr><td>
+<div id="excludefields">
+<!-- NOTE: automatically filled by addExclude function -->
+</div>
+<input id="addexcludebutton" type="button" onclick="addExclude(); return false;"
+    value="Add another exclude field" />
 </td></tr>
 <tr><td>
 <label for="compress">Enable compression (leave unset except for <em>slow</em> sites)</label>
@@ -753,7 +776,8 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                  'protocol': protocol, 'fqdn': fqdn, 'port': port, 
                  'username': username, 'password_digest': password_digest,
                  'key': key_id, 'src': src_list, 'dst': dst,
-                 'compress': use_compress, 'notify': notify, 'status': 'NEW'})
+                 'exclude': exclude_list, 'compress': use_compress,
+                 'notify': notify, 'status': 'NEW'})
             (save_status, _) = create_data_transfer(configuration, client_id,
                                                     transfer_dict,
                                                     transfer_map)

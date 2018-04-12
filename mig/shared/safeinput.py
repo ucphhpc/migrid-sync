@@ -1052,6 +1052,7 @@ def guess_type(name):
             'pattern',
             'arguments',
             'hostkey',
+            'exclude',
             ):
             __type_map[key] = valid_path_pattern
         for key in (
