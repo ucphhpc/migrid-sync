@@ -2804,7 +2804,7 @@ function mig_fancyuploadchunked_init(name, options, callback) {
         showMessage("Error: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
 
-    console.debug("mig_fancyuploadchunked_init: "+name);
+    console.debug("mig_fancyuploadchunked_init: "+name+", "+options+", "+callback);
     $.fn.fancyfileupload = $.fn.fileupload;
 
     $("#" + name).dialog(
@@ -2862,8 +2862,13 @@ function mig_fancyuploadchunked_init(name, options, callback) {
         return data;
     }
 
+    /* IMPORTANT: this function is the actual fancyupload instantiator.
+       It is used in filemanager, ls (rw sharelinks upload), adminfreeze and 
+       submitjob. Please be careful to always test all three upon any changes,
+       especially API ones.
+     */
     var do_d = function(text, action, chroot, dest_dir, automatic_dest, share_id, csrf_token) {
-        //console.debug("mig_fancyupload_init do_d: "+text+", "+action+","+dest_dir+", "+share_id+", "+csrf_token);
+        //console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+chroot+", "+dest_dir+", "+share_id+", "+csrf_token);
 
         // save and restore original callback
         var c = callback;

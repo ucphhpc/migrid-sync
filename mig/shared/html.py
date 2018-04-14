@@ -401,7 +401,8 @@ def man_base_html(configuration, overrides={}):
             confirm_overrides[name] = overrides[name]
     return confirm_html(configuration, **confirm_overrides)
 
-def fancy_upload_js(configuration, callback=None, share_id='', csrf_token=''):
+def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
+                    chroot=''):
     """Build standard fancy upload dependency imports, init and ready
     snippets.
     """
@@ -506,20 +507,56 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token=''):
     add_init = '''
     var trash_linkname = "%(trash_linkname)s";
     var csrf_field = "%(csrf_field)s";
+    /* Required options for internal use in fancy upload open_dialog handler */
+    var options = {
+            chroot: "%(chroot)s",
+            enableGDP: %(enable_gdp)s,
+        };
 
     /* Default fancy upload dest - optionally override before open_dialog call */
     var remote_path = ".";
     function setUploadDest(path) {
         remote_path = path;
     }
-    function openFancyUpload() {
-        var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
-        open_dialog("Upload Files", %(callback)s, remote_path, false, 
-                    "%(share_id)s", "%(csrf_token)s");
+    var open_dialog = null;
+    function initFancyUpload() {
+        open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog",
+                                                  options);
+    }
+    /* NOTE: all args are optional and will be set to default if not given */
+    function openFancyUpload(text, action, chroot, dest_dir, automatic_dest,
+                             share_id, csrf_token) {
+        if (open_dialog === null) {
+            initFancyUpload();
+        }
+        if (text === undefined) {
+            text = "Upload Files";
+        }
+        if (action === undefined) {
+            action = %(callback)s;
+        }
+        if (chroot === undefined) {
+            chroot = options.chroot;
+        }
+        if (dest_dir === undefined) {
+            dest_dir = remote_path;
+        }
+        if (automatic_dest === undefined) {
+            automatic_dest = false;
+        }
+        if (share_id === undefined) {
+            share_id = "%(share_id)s";
+        }
+        if (csrf_token === undefined) {
+            csrf_token = "%(csrf_token)s";
+        }
+        open_dialog(text, action, chroot, dest_dir, automatic_dest, share_id,
+                    csrf_token);
     }
     ''' % {"callback": callback, "share_id": share_id,
            "trash_linkname": trash_linkname, "csrf_field": csrf_field,
-           "csrf_token": csrf_token}
+           "csrf_token": csrf_token, "chroot": chroot,
+           "enable_gdp": ("%s" % configuration.site_enable_gdp).lower()}
     add_ready = ''
     return (add_import, add_init, add_ready)
 

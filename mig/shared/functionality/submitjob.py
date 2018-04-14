@@ -142,12 +142,12 @@ def main(client_id, user_arguments_dict):
     (add_import, add_init, add_ready) = fancy_upload_js(configuration,
                                                         csrf_token=csrf_token)
     add_init += '''
-    options = %s;
+    submit_options = %s;
 
     function setDisplay(this_id, new_d) {
         //console.log("setDisplay with: "+this_id);
         el = document.getElementById(this_id)
-        if ( el == undefined || el.style == undefined ) {
+        if (el == undefined || el.style == undefined) {
             console.log("failed to locate display element: "+this_id);
             return; // avoid js null ref errors
         }
@@ -156,19 +156,20 @@ def main(client_id, user_arguments_dict):
 
     function switchTo(name) {
         //console.log("switchTo: "+name);
-        for (o=0; o < options.length; o++) {
-            if (name == options[o]) {
-                setDisplay(options[o],"block");
+        for (o=0; o < submit_options.length; o++) {
+            if (name == submit_options[o]) {
+                setDisplay(submit_options[o],"block");
             } else {
-                setDisplay(options[o],"none");
+                setDisplay(submit_options[o],"none");
             }
         }
     }
     ''' % submit_options
     add_ready += '''
     switchTo("%s");
+    setUploadDest("%s");
     $("#%s").click(openFancyUpload);
-    ''' % (submit_style + "_form", open_button_id)
+    ''' % (submit_style + "_form", fill_helpers['dest_dir'], open_button_id)
     fancy_dialog = fancy_upload_html(configuration)
     title_entry['style'] = themed_styles(configuration,
                                          base=['jquery.fileupload.css',

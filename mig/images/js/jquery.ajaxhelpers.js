@@ -120,7 +120,7 @@ function handle_ajax_error(jqXHR, textStatus, errorThrown, name, operation, stat
     }
 }
 
-function ajax_redb(_freeze) {
+function ajax_redb() {
     console.debug("load runtime envs");
     var tbody_elem = $("#runtimeenvtable tbody");
     //console.debug("empty table");    

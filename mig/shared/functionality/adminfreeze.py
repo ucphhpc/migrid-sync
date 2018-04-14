@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -119,8 +119,13 @@ var open_upload_dialog;
 /* default upload destination */
 var remote_path = "%s";
 var trash_linkname = "%s";
+var copy_div_id = "copyfiles";
+var upload_div_id = "uploadfiles";
+/* for upload_callback */
+var field_id, field_name, wrap_id, upload_path, on_remove;
 
-function add_copy(div_id) {
+function add_copy() {
+    var div_id = copy_div_id;
     var field_id = "freeze_copy_"+copy_fields;
     var field_name = "freeze_copy_"+copy_fields;
     var wrap_id = field_id+"_wrap";
@@ -149,62 +154,69 @@ function add_copy(div_id) {
     copy_fields += 1;
 }
 
-function add_upload(div_id) {
-    var field_id, field_name, wrap_id, path, on_remove;
-    open_upload_dialog("Upload Files", function() {
-            console.log("in upload callback");
-            $(".uploadfileslist > tr > td > p.name > a").each(
-                function(index) {
-                    console.log("callback for upload item no. "+index);
-                    path = $(this).text();
-                    if ($(this).attr("href") == "") {
-                        console.log("skipping empty (error) upload: "+path);
-                        // Continue to next iteration on errors
-                        return true;
-                    }
-                    console.log("callback for upload path "+path);
-                    field_id = "freeze_move_"+upload_fields;
-                    field_name = "freeze_move_"+upload_fields;
-                    wrap_id = field_id+"_wrap";
-                    if ($("#"+div_id+" > span > input[value=\\""+path+"\\"]").length) {
-                        console.log("skipping duplicate path: "+path);
-                        // Continue to next iteration on errors
-                        return true;
-                    } else {
-                        console.log("adding new path: "+path);
-                    }
-                    on_remove = "";
-                    on_remove += "remove_field("+wrap_id+");";
-                    on_remove += "$.fn.delete_upload(\\""+path+"\\");";
-                    upload_entry = "<span id=\'"+wrap_id+"\'>";
-                    upload_entry += "<input type=\'button\' value=\'Remove\' ";
-                    upload_entry += " onClick=\'"+on_remove+"\'/>";
-                    upload_entry += "<input type=\'text\' id=\'"+field_id+"\' ";
-                    upload_entry += " name=\'" + field_name + "\' size=50 ";
-                    upload_entry += "value=\\""+path+"\\" /><br / >";
-                    upload_entry += "</span>";
-                    $("#"+div_id).append(upload_entry);
-                    console.log("callback added upload: "+upload_entry);
-                    upload_fields += 1;
-                });
-            console.log("callback done");
-        }, remote_path, true, "", "%s");
+function upload_callback() {
+    var div_id = upload_div_id;
+    console.log("in upload callback");
+    $(".uploadfileslist > tr > td > p.name > a").each(
+        function(index) {
+            console.log("callback for upload item no. "+index);
+            upload_path = $(this).text();
+            if ($(this).attr("href") == "") {
+                console.log("skipping empty (error) upload: "+upload_path);
+                // Continue to next iteration on errors
+                return true;
+            }
+            console.log("callback for upload path "+upload_path);
+            field_id = "freeze_move_"+upload_fields;
+            field_name = "freeze_move_"+upload_fields;
+            wrap_id = field_id+"_wrap";
+            if ($("#"+div_id+" > span > input[value=\\""+upload_path+"\\"]").length) {
+                console.log("skipping duplicate path: "+upload_path);
+                // Continue to next iteration on errors
+                return true;
+            } else {
+                console.log("adding new path: "+upload_path);
+            }
+            on_remove = "";
+            on_remove += "remove_field("+wrap_id+");";
+            on_remove += "$.fn.delete_upload(\\""+upload_path+"\\");";
+            upload_entry = "<span id=\'"+wrap_id+"\'>";
+            upload_entry += "<input type=\'button\' value=\'Remove\' ";
+            upload_entry += " onClick=\'"+on_remove+"\'/>";
+            upload_entry += "<input type=\'text\' id=\'"+field_id+"\' ";
+            upload_entry += " name=\'" + field_name + "\' size=50 ";
+            upload_entry += "value=\\""+upload_path+"\\" /><br / >";
+            upload_entry += "</span>";
+            $("#"+div_id).append(upload_entry);
+            console.log("callback added upload: "+upload_entry);
+            upload_fields += 1;
+        });
+    console.log("callback done");
+}
+        
+function add_upload() {
+    openFancyUpload("Upload Files", upload_callback, "", remote_path, true,
+                    "", "%s");
 }
 
 function remove_field(field_id) {
     $(field_id).remove();
 }
 
-// init file chooser dialogs with directory selction support
+// init file chooser dialogs with directory selection support
 function init_dialogs() {
     open_file_chooser = mig_filechooser_init("fm_filechooser",
         function(file) {
             return;
         }, false, "/");
-    open_upload_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
+    /* We reuse shared init function but use custom actual opener above
+    to mangle resulting files into archive form. */
+    initFancyUpload();
+    /* Alias open_dialog to open_upload_dialog for clarity */
+    open_upload_dialog = open_dialog;
 
-    $("#addfilebutton").click(function() { add_copy(\"copyfiles\"); });
-    $("#adduploadbutton").click(function() { add_upload(\"uploadfiles\"); });
+    $("#addfilebutton").click(function() { add_copy(); });
+    $("#adduploadbutton").click(function() { add_upload(); });
 }
 
 function init_page() {

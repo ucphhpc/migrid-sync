@@ -210,7 +210,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                         : relative_path})
 
             # Make it harder to accidentially delete too much - e.g. do not
-            # deleteVGrid files without explicit selection of subdir contents
+            # delete VGrid files without explicit selection of subdir contents
 
             if abs_path == os.path.abspath(base_dir):
                 logger.error("%s: refusing rm home dir: %s" % (op_name,
