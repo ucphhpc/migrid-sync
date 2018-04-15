@@ -168,7 +168,8 @@ def main(client_id, user_arguments_dict):
     add_ready += '''
     switchTo("%s");
     setUploadDest("%s");
-    $("#%s").click(openFancyUpload);
+    /* wrap openFancyUpload in function to avoid event data as argument */
+    $("#%s").click(function() { openFancyUpload(); });
     ''' % (submit_style + "_form", fill_helpers['dest_dir'], open_button_id)
     fancy_dialog = fancy_upload_html(configuration)
     title_entry['style'] = themed_styles(configuration,

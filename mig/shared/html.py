@@ -524,13 +524,13 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
                                                   options);
     }
     /* NOTE: all args are optional and will be set to default if not given */
-    function openFancyUpload(text, action, chroot, dest_dir, automatic_dest,
+    function openFancyUpload(title_text, action, chroot, dest_dir, automatic_dest,
                              share_id, csrf_token) {
         if (open_dialog === null) {
             initFancyUpload();
         }
-        if (text === undefined) {
-            text = "Upload Files";
+        if (title_text === undefined) {
+            title_text = "Upload Files";
         }
         if (action === undefined) {
             action = %(callback)s;
@@ -550,7 +550,7 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
         if (csrf_token === undefined) {
             csrf_token = "%(csrf_token)s";
         }
-        open_dialog(text, action, chroot, dest_dir, automatic_dest, share_id,
+        open_dialog(title_text, action, chroot, dest_dir, automatic_dest, share_id,
                     csrf_token);
     }
     ''' % {"callback": callback, "share_id": share_id,

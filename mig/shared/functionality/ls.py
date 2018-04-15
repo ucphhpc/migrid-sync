@@ -529,7 +529,8 @@ def main(client_id, user_arguments_dict):
     add_ready = '''
 %s
 %s
-    $("#%s").click(openFancyUpload);
+    /* wrap openFancyUpload in function to avoid event data as argument */
+    $("#%s").click(function() { openFancyUpload(); });
     $("#checkall_box").click(toggleChecked);
     ''' % (cf_ready, fu_ready, open_button_id)
     styles = themed_styles(configuration, base=['jquery.fileupload.css',
