@@ -917,13 +917,16 @@ Invalid '%s' input: %s
             ''' % {'short_title': configuration.short_title}
             if user_alias:
                 alias_hint = ' (%s)' % user_alias
+                forced_type = 'type=email'
             else:
                 alias_hint = ''
+                forced_type = ''
             fdata = {
                 'id_url_base': id_url_base,
                 'trust_root': request.trust_root,
                 'server_base': self.server.server_base,
                 'alias_hint': alias_hint,
+                'forced_type': forced_type,
                 'err_msg': err_msg,
                 }
             form = '''\
@@ -932,7 +935,7 @@ Invalid '%s' input: %s
             <fieldset>
             <label for="identifier">Username %(alias_hint)s:</label>
             <input id="id_select" class="singlefield" name="identifier"
-                   autofocus />
+                   %(forced_type)s autofocus />
             <label for="password">Password:</label>
             <input class="singlefield" type="password" name="password"
                    />

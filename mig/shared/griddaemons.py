@@ -47,8 +47,9 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
     generate_password_hash, generate_password_digest, load_user_dict
-from shared.validstring import valid_user_path, possible_sharelink_id, \
-     possible_job_id, possible_jupyter_mount_id
+from shared.validstring import possible_user_id, possible_sharelink_id, \
+     possible_job_id, possible_jupyter_mount_id, valid_user_path, \
+     is_valid_email_address
 
 default_max_fails, default_fail_cache = 5, 120
 
@@ -67,20 +68,26 @@ def accepting_username_validator(configuration, username):
     return True
 
 # TODO: include username check early in login phase too to drop dict attacks?
-# TODO: switch to possible_user_id and possible_job_id
-def default_username_validator(configuration, username):
+def default_username_validator(configuration, username, force_email=True):
     """The default username validator restricted to only accept usernames that
-    are valid in grid daemons, namely a valid email, session or sharelink ID.
+    are valid in grid daemons, namely a possible user, sharelink, job or
+    jupyter mount ID.
+    The optional and default enabled force_email option is used to further
+    limit user_id values to actual email addresses, as always required in grid
+    daemons.
     """
-    if valid_email_address(username):
-        return True
+    if possible_user_id(configuration, username):
+        if not force_email:
+            return True
+        elif is_valid_email_address(username, configuration.logger):
+            return True
     if possible_sharelink_id(configuration, username):
         return True
-    try:
-        valid_sid(username)
+    if possible_job_id(configuration, username):
         return True
-    except:
-        return False
+    if possible_jupyter_mount_id(configuration, username):
+        return True
+    return False
 
 
 class Login(object):
