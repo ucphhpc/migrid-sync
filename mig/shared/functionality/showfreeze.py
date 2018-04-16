@@ -109,7 +109,7 @@ Please contact the site admins %s if you think it should be enabled.
         return (output_objects, returnvalues.OK)
 
     # We don't generally know checksum and edit status until AJAX returns
-    hide_elems = {'edit': 'hidden'}
+    hide_elems = {'edit': 'hidden', 'register': 'hidden'}
     for algo in sorted_algos:
         hide_elems['%ssum' % algo] = 'hidden'
         
@@ -118,8 +118,9 @@ Please contact the site admins %s if you think it should be enabled.
         # jquery support for tablesorter and confirmation dialog
         # table initially sorted by col. 0 (filename)
 
-        refresh_call = 'ajax_showfreeze("%s", "%s", %s, "%s")' % \
-                       (freeze_id, flavor, checksum_list, keyword_final)
+        refresh_call = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s")' % \
+                       (freeze_id, flavor, checksum_list, keyword_final,
+                        configuration.site_freeze_doi_url)
         table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
                       'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
@@ -193,9 +194,13 @@ Please contact the site admins %s if you think it should be enabled.
                                                                   freeze_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
+        # Allow edit if not in final state and allow request DOI if finalized
+        # and not a backup archive.
         if freeze_dict.get('STATE', keyword_final) != keyword_final:
             hide_elems['edit'] = ''
-
+        elif flavor != 'backup' and configuration.site_freeze_doi_url:
+            hide_elems['register'] = ''
+    
         logger.debug("%s: build obj for '%s': %s" % \
                      (op_name, freeze_id, freeze_dict))
         output_objects.append(build_freezeitem_object(configuration, freeze_dict))
@@ -243,7 +248,7 @@ then finalize it for actual persistent freezing.
             'title': 'Further modify your pending %s archive' % flavor, 
             'text': 'Edit archive'
             })
-        output_objects.append({'object_type': 'html_form', 'text': '</p><p>'})
+        output_objects.append({'object_type': 'html_form', 'text': '</p>'})
         form_method = 'post'
         target_op = 'createfreeze'
         csrf_limit = get_csrf_limit(configuration)
@@ -264,7 +269,36 @@ then finalize it for actual persistent freezing.
             'text': 'Finalize archive',
             })
         output_objects.append({'object_type': 'html_form', 'text': """
+</div>
+<div class='registerarchive %(register)s'>
+<p>
+You can register a <a href='http://www.doi.org/index.html'>Digital Object
+Identifier (DOI)</a> for finalized archives. This may be useful in case you
+want to reference the contents in a publication.
 </p>
+""" % hide_elems})
+        form_method = 'post'
+        target_op = 'registerfreeze'
+        csrf_limit = get_csrf_limit(configuration)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        helper = html_post_helper('registerfreeze',
+                                  configuration.site_freeze_doi_url,
+                                  {'freeze_id': freeze_id,
+                                   'freeze_author': client_id,
+                                   'callback_url': "%s.py" % target_op,
+                                   csrf_field: csrf_token})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+        output_objects.append({
+            'object_type': 'link',
+            'destination':
+            "javascript: confirmDialog(%s, '%s');" % \
+            ('registerfreeze', 'Really request DOI for %s?' % freeze_id),
+            'class': 'registerarchivelink iconspace genericbutton',
+            'title': 'Register a DOI for %s archive %s' % (flavor, freeze_id),
+            'text': 'Request archive DOI',
+            })
+        output_objects.append({'object_type': 'html_form', 'text': """
 </div>"""})
 
     return (output_objects, returnvalues.OK) 

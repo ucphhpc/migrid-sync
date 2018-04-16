@@ -1389,6 +1389,10 @@ location.""" % self.config_file
             self.site_freeze_to_tape = config.get('SITE', 'freeze_to_tape')
         else:
             self.site_freeze_to_tape = ''
+        if config.has_option('SITE', 'freeze_doi_url'):
+            self.site_freeze_doi_url = config.get('SITE', 'freeze_doi_url')
+        else:
+            self.site_freeze_doi_url = ''
         if config.has_option('SITE', 'enable_preview'):
             self.site_enable_preview = config.getboolean('SITE', 'enable_preview')
         else:

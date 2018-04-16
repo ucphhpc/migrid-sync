@@ -276,7 +276,8 @@ function ajax_freezedb(permanent_freeze, keyword_final) {
   });
 }
 
-function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final) {
+function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final, 
+                         freeze_doi_url) {
     console.debug("load archive "+freeze_id+" of flavor "+flavor+" with "+
                   checksum_list.toString()+" checksums");
     var tbody_elem = $("#frozenfilestable tbody");
@@ -385,13 +386,19 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final) {
                                        "Error: "+error+"</span>");
           }
           /* Make sure requested checksum columns are visible */
-          console.info("show checksums");
+          console.debug("show checksums");
           for (var entry_no=0; entry_no < checksum_list.length; entry_no++) {
               $("."+checksum_list[entry_no]+"sum").show();
           }
-          console.info("show edit buttons");
+          console.debug("show hidden divs if relevant");
           if (arch.state !== keyword_final) {
+              console.debug("show edit and finalize buttons");
               $("div.editarchive").show();
+          } else if (arch.flavor !== 'backup' && freeze_doi_url) {
+              console.debug("show register DOI button");
+              $("div.registerarchive").show();
+          } else {
+              console.info("not showing edit or register DOI");
           }
           $("#frozenfilestable").trigger("update");
       },

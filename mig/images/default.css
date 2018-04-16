@@ -937,6 +937,11 @@ div.archive pre {
   background-repeat: no-repeat;
   padding-left: 18px;
 }
+.registerarchivelink {
+  background-image: url('/images/icons/book_link.png');
+  background-repeat: no-repeat;
+  padding-left: 18px;
+}
 .previewarchivelink {
   background-image: url('/images/icons/book_link.png');
   background-repeat: no-repeat;
