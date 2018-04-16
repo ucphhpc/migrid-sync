@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,6 +41,8 @@ keyword_auto = 'AUTO'
 keyword_never = 'NEVER'
 keyword_none = 'NONE'
 keyword_unchanged = 'UNCHANGED'
+keyword_final = 'FINAL'
+keyword_pending = 'PENDING'
 keyword_owners = 'OWNERS'
 keyword_members = 'MEMBERS'
 
@@ -244,19 +246,23 @@ csrf_backends = ["addresowner", "addvgridmember", "addvgridowner", "addvgridres"
                  ]
 
 # freeze archive flavor
+# NOTE: order in states list is used to set default state for new archives
 freeze_flavors = {
     'freeze': {'adminfreeze_title': 'Freeze Archive',
-               'createfreeze_title': 'Create Frozen Archive',
-               'showfreeze_title': 'Show Frozen Archive Details',
-               'deletefreeze_title': 'Delete Frozen Archive'},
+               'createfreeze_title': 'Create Freeze Archive',
+               'showfreeze_title': 'Show Freeze Archive Details',
+               'deletefreeze_title': 'Delete Freeze Archive',
+               'states': [keyword_pending, keyword_final]},
     'phd': {'adminfreeze_title': 'PhD Thesis Archival',
             'createfreeze_title': 'Create Thesis Archive',
-            'showfreeze_title': 'Show Archived Thesis Details',
-            'deletefreeze_title': 'Delete Archived Thesis'},
+            'showfreeze_title': 'Show Thesis Archive Details',
+            'deletefreeze_title': 'Delete Thesis Archive',
+            'states': [keyword_pending, keyword_final]},
     'backup': {'adminfreeze_title': 'Backup Archival',
-            'createfreeze_title': 'Create Backup Archive',
-            'showfreeze_title': 'Show Backup Archive Details',
-            'deletefreeze_title': 'Delete Backup Archive'}
+               'createfreeze_title': 'Create Backup Archive',
+               'showfreeze_title': 'Show Backup Archive Details',
+               'deletefreeze_title': 'Delete Backup Archive',
+               'states': [keyword_final]}
     }
 
 # Default value for ALL integer limits in vgrid settings

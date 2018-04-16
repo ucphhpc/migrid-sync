@@ -193,7 +193,7 @@ function ajax_redb() {
   });
 }
 
-function ajax_freezedb(permanent_freeze) {
+function ajax_freezedb(permanent_freeze, keyword_final) {
     console.debug("load archives");
     var tbody_elem = $("#frozenarchivetable tbody");
     //console.debug("empty table");
@@ -228,18 +228,23 @@ function ajax_freezedb(permanent_freeze) {
                       if (arch.viewfreezelink !== undefined) {
                           viewlink = format_link(arch.viewfreezelink);
                       }
+                      var editlink = "";
+                      if (arch.editfreezelink !== undefined) {
+                          editlink = format_link(arch.editfreezelink);
+                      }
                       var dellink = "";
                       var flavor = arch.flavor;
-                      if (permanent_freeze.indexOf(flavor) == -1) {
+                      if (arch.state != keyword_final || permanent_freeze.indexOf(flavor) == -1) {
                           if (arch.delfreezelink !== undefined) {
                               dellink = format_link(arch.delfreezelink);
                           }
                       }
                       entry = "<tr>"+base_td(arch.id)+center_td(viewlink+
+                                                                editlink+
                                                                 dellink)+
                           base_td(arch.name)+base_td(arch.created)+
-                          base_td(arch.flavor)+center_td(arch.frozenfiles)+
-                          "</tr>";
+                          base_td(arch.flavor)+base_td(arch.state)+
+                          center_td(arch.frozenfiles)+"</tr>";
                       //console.debug("append entry: "+entry);
                       table_entries += entry;
                       /* chunked updates - append after after every chunk_size entries */
@@ -271,8 +276,9 @@ function ajax_freezedb(permanent_freeze) {
   });
 }
 
-function ajax_showfreeze(freeze_id, flavor, checksum) {
-    console.debug("load archive "+freeze_id+" of flavor "+flavor+" with "+checksum+" checksum");
+function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final) {
+    console.debug("load archive "+freeze_id+" of flavor "+flavor+" with "+
+                  checksum_list.toString()+" checksums");
     var tbody_elem = $("#frozenfilestable tbody");
     var arch_tbody = $(".frozenarchivedetails tbody");
     //console.debug("empty table");
@@ -283,8 +289,8 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
     /* Request archive list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?freeze_id="+freeze_id+";flavor="+flavor+";checksum="+checksum+
-           ";output_format=json;operation=list",
+        url: "?freeze_id="+freeze_id+";flavor="+flavor+";checksum="+
+            checksum_list.join(";checksum=")+";output_format=json;operation=list",
       type: "GET",
       dataType: "json",
       cache: false,
@@ -326,22 +332,31 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
                   } else {
                       /* no op */
                   }
-                  entry += "<tr>"+title_td("Creator")+base_td(arch.creator)+
+                  entry += "<tr>"+title_td("State")+base_td(arch.state)+
+                      "</tr><tr>"+title_td("Creator")+base_td(arch.creator)+
                       "</tr><tr>"+title_td("Created")+base_td(arch.created)+
                       "</tr>"+location;
                   $(arch_tbody).append(entry);
                   var files = arch.frozenfiles;
-                  var name_link;
+                  var show_link, del_link;
                   for (j=0; j<files.length; j++) {
                       file = files[j];
                       //console.info("found file: "+file.name);
                       if (file.showfile_link !== undefined) {
-                          //console.info("found file link: "+file.showfile_link);
-                          name_link = format_link(file.showfile_link);
+                          //console.info("found showfile link: "+file.showfile_link);
+                          show_link = format_link(file.showfile_link);
                       } else {
-                          name_link = file.name;
+                          show_link = '';
                       }
-                      entry = "<tr>"+base_td(name_link)+center_td(file.size)+
+                      if (file.delfile_link !== undefined) {
+                          //console.info("found delfile link: "+file.delfile_link);
+                          del_link = format_link(file.delfile_link);
+                      } else {
+                          del_link = '';
+                      }
+                      entry = "<tr>"+base_td(file.name)+
+                          center_td(show_link+" "+del_link)+
+                          center_td(file.date)+center_td(file.size)+
                           attr_td(file.md5sum, "class='md5sum monospace hidden'")+
                           attr_td(file.sha1sum, "class='sha1sum monospace hidden'")+ 
                           attr_td(file.sha256sum, "class='sha256sum monospace hidden'")+ 
@@ -369,9 +384,14 @@ function ajax_showfreeze(freeze_id, flavor, checksum) {
               $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
           }
-          /* Make sure requested checksum column is visible */
-          if (checksum) {
-              $("."+checksum+"sum").show();
+          /* Make sure requested checksum columns are visible */
+          console.info("show checksums");
+          for (var entry_no=0; entry_no < checksum_list.length; entry_no++) {
+              $("."+checksum_list[entry_no]+"sum").show();
+          }
+          console.info("show edit buttons");
+          if (arch.state !== keyword_final) {
+              $("div.editarchive").show();
           }
           $("#frozenfilestable").trigger("update");
       },

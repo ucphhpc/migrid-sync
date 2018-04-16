@@ -4,8 +4,8 @@
 # --- BEGIN_HEADER ---
 #
 
-# deletefreeze - delete a frozen archive
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# deletefreeze - delete an entire frozen archive or files in one
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,22 +26,31 @@
 # -- END_HEADER ---
 #
 
-"""Deletion of frozen archives"""
+"""Delete archive or only individual files inside one. Requires freeze to be
+non-final.
+"""
+
+import os
 
 import shared.returnvalues as returnvalues
-from shared.defaults import freeze_flavors
+from shared.base import client_id_dir
+from shared.defaults import freeze_flavors, keyword_final, keyword_all
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
-     delete_frozen_archive
+     delete_frozen_archive, delete_archive_files, TARGET_ARCHIVE, TARGET_PATH
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
+from shared.validstring import valid_user_path
 
+valid_targets = [TARGET_ARCHIVE, TARGET_PATH]
 
 def signature():
     """Signature of the main function"""
 
     defaults = {'freeze_id': REJECT_UNSET,
-                'flavor': ['freeze']}
+                'flavor': ['freeze'],
+                'target': TARGET_ARCHIVE,
+                'path': ['']}
     return ['frozenarchive', defaults]
 
 
@@ -93,13 +102,12 @@ Please contact the site admins %s if you think it should be enabled.
         return (output_objects, returnvalues.OK)
 
     freeze_id = accepted['freeze_id'][-1]
+    target = accepted['target'][-1]
+    path_list = accepted['path']
 
-    # Prevent user-delete if the frozen archive if configuration forbids it
-    if flavor in configuration.site_permanent_freeze:
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             "Can't delete %s archives like '%s' yourself due to site policy"
-             % (flavor, freeze_id)})
+    if not target in valid_targets:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid delete freeze target: %s' % target})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # NB: the restrictions on freeze_id prevents illegal directory traversal
@@ -113,7 +121,8 @@ Please contact the site admins %s if you think it should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
     
     (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
-                                                    configuration)
+                                                    configuration,
+                                                    checksum_list=[])
     if not load_status:
         logger.error("%s: load failed for '%s': %s" % \
                      (op_name, freeze_id, freeze_dict))
@@ -139,31 +148,97 @@ Please contact the site admins %s if you think it should be enabled.
                                                               freeze_id)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # Delete the frozen archive
-    (del_status, msg) = delete_frozen_archive(client_id, freeze_id,
-                                              configuration)
-    
-    # If something goes wrong when trying to delete frozen archive
-    # freeze_id, an error is displayed.
-    if not del_status:
-        logger.error("%s: failed for '%s': %s" % (op_name,
-                                                  freeze_id, msg))
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Could not remove %s frozen archive: %s'
-                               % (freeze_id, msg)})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    # If deletion of frozen archive freeze_id is successful, we just
-    # return OK
-    else:
-        logger.info("%s: successful for '%s': %s" % (op_name,
-                                                      freeze_id, client_id))
+    # Prevent user-delete of the frozen archive if configuration forbids it.
+    # We exclude any archives in the pending intermediate freeze state.
+    if freeze_dict.get('STATE', keyword_final) == keyword_final and \
+           flavor in configuration.site_permanent_freeze:
         output_objects.append(
-            {'object_type': 'text', 'text'
-             : 'Successfully deleted frozen archive: "%s"' % freeze_id})
-        output_objects.append({'object_type': 'link', 'destination':
-                               'freezedb.py',
-                               'class': 'infolink iconspace',
-                               'title': 'Show frozen archives',
-                               'text': 'Show frozen archives'})
-        return (output_objects, returnvalues.OK) 
+            {'object_type': 'error_text', 'text':
+             "Can't change %s archives like '%s' yourself due to site policy"
+             % (flavor, freeze_id)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    client_dir = client_id_dir(client_id)
+    user_archives = os.path.join(configuration.freeze_home, client_dir)
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user archive dirs if own name is a prefix of another archive name
+
+    base_dir = os.path.abspath(os.path.join(user_archives, freeze_id)) + os.sep
+
+    if target == TARGET_ARCHIVE:
+        # Delete the entire freeze archive
+        (del_status, msg) = delete_frozen_archive(freeze_dict, client_id,
+                                                  configuration)
+    
+        # If something goes wrong when trying to delete freeze archive
+        # freeze_id, an error is displayed.
+        if not del_status:
+            logger.error("%s: failed for '%s': %s" % (op_name,
+                                                      freeze_id, msg))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Could not remove entire %s archive %s: %s' % \
+                 (flavor, freeze_id, msg)})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        # If deletion of frozen archive freeze_id is successful, we just
+        # return OK
+        else:
+            logger.info("%s: successful for '%s': %s" % (op_name,
+                                                         freeze_id, client_id))
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 'Successfully deleted %s archive: "%s"' % (flavor,
+                                                            freeze_id)})
+    elif target == TARGET_PATH:
+        # Delete individual files in non-final archive
+        del_paths = []
+        for path in path_list:
+            # IMPORTANT: path must be expanded to abs for proper chrooting
+            server_path = os.path.join(base_dir, path)
+            abs_path = os.path.abspath(server_path)
+            if not valid_user_path(configuration, abs_path, base_dir, False):
+
+                # Out of bounds!
+
+                logger.warning('%s tried to %s del restricted path %s ! ( %s)'
+                               % (client_id, op_name, abs_path, path))
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'Not allowed to delete %s - outside archive %s !' % \
+                     (path, freeze_id)})
+                continue
+            del_paths.append(path)
+            
+        (del_status, msg_list) = delete_archive_files(freeze_dict, client_id,
+                                                      del_paths, configuration)
+    
+        # If something goes wrong when trying to delete files from archive
+        # freeze_id, an error is displayed.
+        if not del_status:
+            logger.error("%s: delete archive file(s) failed for '%s':\n%s" % \
+                         (op_name, freeze_id, '\n'.join(msg_list)))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Could not remove file(s) from archive %s: %s'
+                                   % (freeze_id, '\n '.join(msg_list))})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        # If deletion of files from archive freeze_id is successful, we just
+        # return OK
+        else:
+            logger.info("%s: delete %d files successful for '%s': %s" % \
+                        (op_name, len(path_list), freeze_id, client_id))
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 'Successfully deleted %d file(s) from archive: "%s"' % \
+                 (len(path_list), freeze_id)})
+
+    # Success - show link to overview
+    output_objects.append({'object_type': 'link', 'destination':
+                                   'freezedb.py',
+                                   'class': 'infolink iconspace',
+                                   'title': 'Show archives',
+                                   'text': 'Show archives'})
+    return (output_objects, returnvalues.OK) 

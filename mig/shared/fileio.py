@@ -186,10 +186,11 @@ def make_symlink(dest, src, logger, force=False):
     return True
 
 
-def delete_symlink(path, logger):
+def delete_symlink(path, logger, allow_broken_symlink=True,
+                   allow_missing=False):
     """Wrapper to handle deletion of symlinks"""
     logger.debug('deleting symlinks: %s' % path)
-    return delete_file(path, logger, True)
+    return delete_file(path, logger, allow_broken_symlink, allow_missing)
 
 def filter_pickled_list(path, changes):
     """Filter pickled list on disk with provided changes where changes is a

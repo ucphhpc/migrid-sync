@@ -712,6 +712,10 @@ input[type=number] {
 .warningtext, .importanttext {
   color: orange;
 }
+.draft {
+  font-size: 16px;
+  font-weight: bold;
+}
 
 .even_row {
   background: #eee;
@@ -906,6 +910,36 @@ div.archive pre {
 }
 .sandboxlink {
   background: url('/images/icons/hourglass_go.png') no-repeat;
+  padding-left: 18px;
+}
+.createarchivelink {
+  background-image: url('/images/icons/book_add.png');
+  background-repeat: no-repeat;
+  padding-left: 18px;
+}
+.viewarchivelink {
+  background-image: url('/images/icons/book_open.png');
+  background-repeat: no-repeat;
+  padding-left: 18px;
+}
+.editarchivelink {
+  background-image: url('/images/icons/book_edit.png');
+  background-repeat: no-repeat;
+  padding-left: 18px;
+}
+.deletearchivelink {
+  background-image: url('/images/icons/book_delete.png');
+  background-repeat: no-repeat;
+  padding-left: 18px;
+}
+.finalizearchivelink {
+  background-image: url('/images/icons/book_key.png');
+  background-repeat: no-repeat;
+  padding-left: 18px;
+}
+.previewarchivelink {
+  background-image: url('/images/icons/book_link.png');
+  background-repeat: no-repeat;
   padding-left: 18px;
 }
 .danishlink {
@@ -1133,6 +1167,9 @@ a:hover.settingsbutton {
   background-position: 1px center;
   background-color: #eee;
 }
+.genericbutton.iconspace {
+  padding-left: 18px;
+}  
 a.genericbutton {
   text-decoration: none;
   font-weight: bold;

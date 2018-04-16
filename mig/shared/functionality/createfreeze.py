@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,11 +33,14 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
-     keyword_auto
+     keyword_auto, keyword_pending, keyword_final
 from shared.fileio import strip_dir
-from shared.freezefunctions import create_frozen_archive, published_url
+from shared.freezefunctions import create_frozen_archive, published_url, \
+     is_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+     html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.safeinput import valid_path
 from shared.validstring import valid_user_path
@@ -49,12 +52,14 @@ def signature():
 
     defaults = {
         'flavor': ['freeze'],
-        'freeze_name': REJECT_UNSET,
+        'freeze_id': [keyword_auto],
+        'freeze_name': [keyword_auto],
         'freeze_description': [''],
-        'freeze_publish': ['False'],
+        'freeze_publish': [''],
         'freeze_author': [''],
         'freeze_department': [''],
         'freeze_organization': [''],
+        'freeze_state': [keyword_auto],
         }
     return ['text', defaults]
 
@@ -176,6 +181,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     flavor = accepted['flavor'][-1].strip()
+    freeze_state = accepted['freeze_state'][-1].strip()
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -189,6 +195,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append({'object_type': 'error_text', 'text':
                            'Invalid freeze flavor: %s' % flavor})
         return (output_objects, returnvalues.CLIENT_ERROR)
+    if not freeze_state in freeze_flavors[flavor]['states'] + [keyword_auto]:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid freeze state: %s' % freeze_state})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     title = freeze_flavors[flavor]['createfreeze_title']
     output_objects.append({'object_type': 'header', 'text': title})
@@ -200,40 +210,74 @@ Please contact the site admins %s if you think it should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
+    # jquery support for confirmation on freeze
+    (add_import, add_init, add_ready) = man_base_js(configuration, [])
+    title_entry['style'] = themed_styles(configuration)
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
+    output_objects.append({'object_type': 'html_form',
+                           'text': man_base_html(configuration)})
+
+    freeze_id = accepted['freeze_id'][-1].strip()
     freeze_name = accepted['freeze_name'][-1].strip()
-    freeze_description = accepted['freeze_description'][-1].strip()
+    freeze_description = accepted['freeze_description'][-1]
     freeze_author = accepted['freeze_author'][-1].strip()
     freeze_department = accepted['freeze_department'][-1].strip()
     freeze_organization = accepted['freeze_organization'][-1].strip()
-    freeze_publish = (accepted['freeze_publish'][-1].strip() != 'False')
-    if not freeze_name or freeze_name == keyword_auto:
-        if flavor == 'backup':
-            freeze_name = 'backup-%s' % datetime.datetime.now()
-        else:
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 'You must provide a name for the archive!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-    if not freeze_description:
-        if flavor == 'backup':
-            freeze_description = 'manual backup archive created on %s' % \
-                                 datetime.datetime.now()
-        else:
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 'You must provide a description for the archive!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+    freeze_publish = accepted['freeze_publish'][-1].strip()
+    do_publish = (freeze_publish.lower() in ('on', 'true', 'yes', '1'))
 
-    freeze_meta = {'NAME': freeze_name, 'DESCRIPTION': freeze_description,
-                   'FLAVOR': flavor, 'AUTHOR': freeze_author, 'DEPARTMENT':
-                   freeze_department, 'ORGANIZATION': freeze_organization,
-                   'PUBLISH': freeze_publish}
+    # Share init of base meta with lookup of default state in freeze_flavors
+    if not freeze_state or freeze_state == keyword_auto:        
+        freeze_state = freeze_flavors[flavor]['states'][0]
+    freeze_meta = {'ID': freeze_id, 'STATE': freeze_state}
 
-    if flavor == 'phd' and (not freeze_author or not freeze_department):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'You must provide author and department for '
-                               'the thesis!'})
+    # New archives must have name and description set
+    if freeze_id == keyword_auto:
+        logger.debug("creating a new %s archive for %s" % (flavor, client_id))
+        if not freeze_name or freeze_name == keyword_auto:
+            freeze_name = '%s-%s' % (flavor, datetime.datetime.now())
+        if not freeze_description:
+            if flavor == 'backup':
+                freeze_description = 'manual backup archive created on %s' % \
+                                     datetime.datetime.now()
+            else:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'You must provide a description for the archive!'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+        if flavor == 'phd' and (not freeze_author or not freeze_department):
+            output_objects.append({'object_type': 'error_text', 'text': """
+You must provide author and department for the thesis!"""})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        freeze_meta.update(
+            { 'FLAVOR': flavor, 'NAME': freeze_name,
+              'DESCRIPTION': freeze_description,
+              'AUTHOR': freeze_author, 'DEPARTMENT': freeze_department,
+              'ORGANIZATION': freeze_organization, 'PUBLISH': do_publish})
+    elif is_frozen_archive(client_id, freeze_id, configuration):
+        logger.debug("updating existing %s archive for %s" % (flavor,
+                                                              client_id))
+        # Update any explicitly provided fields (may be left empty on finalize)
+        changes = {}
+        if freeze_name and freeze_name != keyword_auto:
+            changes['NAME'] = freeze_name
+        if freeze_description:
+              changes['DESCRIPTION'] = freeze_description
+        if freeze_publish:
+              changes['PUBLISH'] = do_publish
+        logger.debug("updating existing %s archive for %s with: %s" % \
+                     (flavor, client_id, changes))
+        logger.debug("publish is %s based on %s" % (do_publish, freeze_publish))
+        freeze_meta.update(changes)
+    else:
+        logger.error("no such %s archive for %s: %s" % (flavor, client_id,
+                                                        freeze_id))
+        output_objects.append({'object_type': 'error_text', 'text': """
+Invalid archive ID %s - you must either create a new archive or edit an
+existing archive of yours!""" % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
 
     # Now parse and validate files to archive
 
@@ -254,52 +298,96 @@ Please contact the site admins %s if you think it should be enabled.
                                '\n '.join(copy_rejected + move_rejected + \
                                           upload_rejected)})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    if not (copy_files + move_files + upload_files):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'No files included to freeze!'})
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
-    freeze_entries = len(copy_files + move_files + upload_files)
-    if freeze_entries > max_freeze_files:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many freeze files (%s), max %s'
-                               % (freeze_entries,
-                              max_freeze_files)})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
+    # NOTE: this may be a new or an existing pending archive
     (retval, retmsg) = create_frozen_archive(freeze_meta, copy_files,
                                              move_files, upload_files,
                                              client_id, configuration)
     if not retval:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error creating new frozen archive: %s'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error creating/updating archive: %s'
                                % retmsg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    freeze_id = freeze_meta['ID'] = retmsg
+    # Make sure we have freeze_id and other updated fields
+    freeze_meta.update(retmsg)
+    freeze_id = freeze_meta['ID']
     logger.info("%s: successful for '%s': %s" % (op_name,
                                                  freeze_id, client_id))
-    output_objects.append({'object_type': 'text', 'text'
-                           : 'Successfully created %s archive with ID %s .'
-                           % (flavor, freeze_id)})
+    publish_note = ''
+    if freeze_state == keyword_pending:
+        publish_hint = 'Preview published archive page in a new window/tab'
+        publish_text = 'Preview publishing'
+        output_objects.append({'object_type': 'text', 'text': """
+Saved *preliminary* %s archive with ID %s . You can continue inspecting and
+changing it until you're satisfied, then finalize it for actual persistent
+freezing.""" % (flavor, freeze_id)})
+    else:
+        publish_hint = 'View published archive page in a new window/tab'
+        publish_text = 'Open published archive'
+        output_objects.append({'object_type': 'text', 'text':
+                               'Successfully froze %s archive with ID %s .'
+                               % (flavor, freeze_id)})
+
+    if do_publish:
+        public_url = published_url(freeze_meta, configuration)
+        output_objects.append({'object_type': 'text', 'text': ''})
+        output_objects.append({
+            'object_type': 'link',
+            'destination': public_url,
+            'class': 'previewarchivelink iconspace genericbutton',
+            'title': publish_hint,
+            'text': publish_text,
+            'target': '_blank',
+        })
+        output_objects.append({'object_type': 'text', 'text': ''})
+
+    # Always allow show archive
     output_objects.append({
         'object_type': 'link',
         'destination': 'showfreeze.py?freeze_id=%s;flavor=%s' % (freeze_id,
                                                                  flavor),
-        'class': 'viewlink iconspace',
-        'title': 'View your %s archive' % flavor,
-        'text': 'View %s' % freeze_id,
+        'class': 'viewarchivelink iconspace genericbutton',
+        'title': 'View details about your %s archive' % flavor,
+        'text': 'View details',
         })
-    if freeze_publish:
-        public_url = published_url(freeze_meta, configuration)
-        output_objects.append({'object_type': 'text', 'text'
-                           : 'The archive is publicly available at:'})
+
+    if freeze_state == keyword_pending:
+        output_objects.append({'object_type': 'text', 'text': ''})
         output_objects.append({
             'object_type': 'link',
-            'destination': public_url,
-            'class': 'viewlink iconspace',
-            'title': 'View published archive',
-            'text': public_url,
-        })
+            'destination': 'adminfreeze.py?freeze_id=%s' % freeze_id,
+            'class': 'editarchivelink iconspace genericbutton',
+            'title': 'Further modify your pending %s archive' % flavor,
+            'text': 'Edit archive',
+            })
+        output_objects.append({'object_type': 'text', 'text': ''})
+        output_objects.append({'object_type': 'html_form', 'text': """
+<br/><hr/><br/>
+<p class='warn_message'>IMPORTANT: you still have to explicitly finalize your
+archive before you get the additional data integrity/persistance guarantees
+like tape archiving.
+</p>"""})
+        
+        form_method = 'post'
+        target_op = 'createfreeze'
+        csrf_limit = get_csrf_limit(configuration)
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        helper = html_post_helper('createfreeze', '%s.py' % target_op,
+                                  {'freeze_id': freeze_id,
+                                   'freeze_state': keyword_final,
+                                   csrf_field: csrf_token})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+
+        output_objects.append({
+            'object_type': 'link',
+            'destination':
+            "javascript: confirmDialog(%s, '%s');" % \
+            ('createfreeze', 'Really finalize %s?' % freeze_id),
+            'class': 'finalizearchivelink iconspace genericbutton',
+            'title': 'Finalize %s archive to prevent further changes' % flavor,
+            'text': 'Finalize archive',
+            })
 
     return (output_objects, returnvalues.OK)

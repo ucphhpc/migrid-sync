@@ -31,7 +31,9 @@ import datetime
 
 import shared.returnvalues as returnvalues
 from shared.defaults import upload_tmp_dir, trash_linkname, csrf_field, \
-     freeze_flavors
+     freeze_flavors, keyword_final, keyword_pending, keyword_auto, \
+     public_archive_index
+from shared.freezefunctions import get_frozen_archive
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
@@ -41,7 +43,8 @@ from shared.init import initialize_main_variables, find_entry
 def signature():
     """Signature of the main function"""
 
-    defaults = {'flavor': ['freeze']}
+    defaults = {'flavor': ['freeze'],
+                'freeze_id': [keyword_auto]}
     return ['html_form', defaults]
 
 
@@ -63,6 +66,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     flavor = accepted['flavor'][-1].strip()
+    freeze_id = accepted['freeze_id'][-1].strip()
 
     if not flavor in freeze_flavors.keys():
         output_objects.append({'object_type': 'error_text', 'text':
@@ -81,6 +85,33 @@ Please contact the site admins %s if you think it should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
+    # Load existing freeze for stepwise construction if requested
+    freeze_dict = {'ID': freeze_id, 'FLAVOR': flavor}
+    if freeze_id != keyword_auto:
+        (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
+                                                        configuration,
+                                                        checksum_list=[])
+        if not load_status:
+            logger.error("%s: load failed for '%s': %s" % \
+                         (op_name, freeze_id, freeze_dict))
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not read details for "%s"' % \
+                                   freeze_id})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        logger.debug("%s: loaded freeze: %s" % (op_name, freeze_dict))
+
+        # Preserve already saved flavor
+        flavor = freeze_dict.get('FLAVOR', 'freeze')
+
+        if freeze_dict.get('STATE', keyword_final) != keyword_pending:
+            logger.error("%s: frozen archive %s attempted edited by %s: %s" % \
+                         (op_name, freeze_id, client_id, freeze_dict))
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'You cannot edit frozen archive %s' % \
+                                   freeze_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers =  {'flavor': flavor, 'form_method': form_method,
@@ -89,6 +120,13 @@ Please contact the site admins %s if you think it should be enabled.
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})    
+    lookup_map = {'freeze_id': 'ID', 'freeze_name': 'NAME',
+                  'freeze_description': 'DESCRIPTION'}
+    for (key, val) in lookup_map.items():
+        fill_helpers[key] = freeze_dict.get(val, '')
+    fill_helpers['publish_value'] = 'no'
+    if freeze_dict.get('PUBLISH', False):
+        fill_helpers['publish_value'] = 'yes'
 
     # jquery fancy upload
 
@@ -239,33 +277,27 @@ function init_page() {
                                              add_init, add_ready)
 
     if flavor == 'freeze':
-        fill_helpers['freeze_name'] = ''
+        fill_helpers['freeze_name'] = fill_helpers.get('freeze_name', '')
         fill_helpers["archive_header"] = "Freeze Archive Files"
-        fill_helpers["button_label"] = "Create Archive"
+        fill_helpers["button_label"] = "Save and Preview"
         intro_text = """
 Please enter your archive details below and select any files to be included in
 the archive.
-<p class='warn_message'>Note that a frozen archive can not be changed after
-creation and it can only be manually removed by the management, so please be
-careful when filling in the details.
-</p>
 """
     elif flavor == 'phd':
-        fill_helpers['freeze_name'] = ''
+        fill_helpers['freeze_name'] = fill_helpers.get('freeze_name', '')
         fill_helpers["archive_header"] = \
                                        "Thesis and Associated Files to Archive"
-        fill_helpers["button_label"] = "Archive Thesis"
+        fill_helpers["button_label"] = "Save and Preview"
         intro_text = """
 Please enter your PhD details below and select any files associated with your
 thesis.
-<p class='warn_message'>Note that a thesis archive can not be changed after
-creation and it can only be manually removed by the management, so please be
-careful when filling in the details.
-</p>
 """
     elif flavor == 'backup':
-        now = datetime.datetime.now().isoformat().replace(':', '')
-        fill_helpers['freeze_name'] = 'backup-%s' % now
+        fill_helpers['freeze_name'] = fill_helpers.get('freeze_name', '')
+        if not fill_helpers['freeze_name']:
+            now = datetime.datetime.now().isoformat().replace(':', '')
+            fill_helpers['freeze_name'] = 'backup-%s' % now
         fill_helpers["archive_header"] = "Files and folders to Archive"
         fill_helpers["button_label"] = "Archive as Backup"
         intro_text = """
@@ -275,6 +307,16 @@ Please select the files and folders to backup below.
         output_objects.append({'object_type': 'error_text', 'text':
                                "unknown flavor: %s" % flavor})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # Only warn here if default state is final and persistent
+    if freeze_flavors[flavor]['states'][0] == keyword_final and \
+           flavor in configuration.site_permanent_freeze:
+        intro_text += """
+<p class='warn_message'>Note that frozen archives <em>cannot</em> be changed
+after final creation and then they can only be manually removed by management,
+so please be careful when filling in the details.
+</p>
+"""
 
     fill_helpers["fancy_dialog"] = fancy_upload_html(configuration)
 
@@ -347,23 +389,27 @@ Please select the files and folders to backup below.
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <b>Name:</b><br />
 <input type='hidden' name='flavor' value='%(flavor)s' />
+<input type='hidden' name='freeze_id' value='%(freeze_id)s' />
 <input class='fillwidth padspace' type='text' name='freeze_name'
     value='%(freeze_name)s' autofocus required pattern='[a-zA-Z0-9_.-]+'
     title='unique name for the freeze archive. I.e. letters and digits separated only by underscores, periods and hyphens' />
 """
     if flavor != 'backup':
+        # TODO: do these make sense to have here or just forced in backend?
         freeze_form += """
 <input type='hidden' name='freeze_author' value='' />
 <input type='hidden' name='freeze_department' value='' />
 <input type='hidden' name='freeze_organization' value='' />
 <br /><b>Description:</b><br />
-<textarea class='fillwidth padspace' rows='20' name='freeze_description'></textarea>
+<textarea class='fillwidth padspace' rows='20' name='freeze_description'>%(freeze_description)s</textarea>
 <br />
 """
     freeze_form += """    
 <br />
 <div id='freezefiles'>
-<b>%(archive_header)s:</b>
+<b>%(archive_header)s:</b><br/>
+"""
+    freeze_form += """    
 <input type='button' id='addfilebutton' value='Add file/directory' />
 """
     if flavor != 'backup':
@@ -388,8 +434,16 @@ Please select the files and folders to backup below.
     if flavor != 'backup':
         freeze_form += """
 <div id='freezepublish'>
-<input type='checkbox' name='freeze_publish' />
 <b>Make Dataset Publicly Available</b>
+"""
+        for val in ('yes', 'no'):
+            checked = ''
+            if fill_helpers['publish_value'] == val:
+                checked = 'checked="checked"'
+            freeze_form += """
+<input type='radio' name='freeze_publish' value='%s' %s />%s
+""" % (val, checked, val)
+        freeze_form += """
 </div>
 <br />
 """
@@ -397,8 +451,42 @@ Please select the files and folders to backup below.
 <input type='submit' value='%(button_label)s' />
 </form>
 """
+
+    # TODO: consider in-lining showfreeze file table for direct modify instead
+    #       probably requires more AJAX handling of actions.
+    
+    #for rel_path in frozen_files:
+    #    freeze_form += """%s<br/>""" % rel_path 
+
     output_objects.append({'object_type': 'html_form', 'text': intro_text})
     output_objects.append({'object_type': 'html_form', 'text': files_form})
     output_objects.append({'object_type': 'html_form', 'text': freeze_form % \
                            fill_helpers})
+
+    # Link to view if archive already exists
+    if freeze_id != keyword_auto:
+        frozen_files = [i['name'] for i in freeze_dict.get('FILES', []) \
+                        if i['name'] != public_archive_index]
+        # Info about contents and spacing before view button otherwise
+        if frozen_files:
+            output_objects.append(
+                {'object_type': 'html_form', 'text': """
+<h3>Previously Added Files</h3>
+<p>There are already %d file(s) saved in the archive and you can view and
+manage those through the link below e.g. in case you change your mind
+about including any of them.
+</p>""" % len(frozen_files)})
+        else:
+            output_objects.append({'object_type': 'text', 'text': ''})
+
+        output_objects.append({
+            'object_type': 'link',
+            'destination': 'showfreeze.py?freeze_id=%s;flavor=%s' % (freeze_id,
+                                                                     flavor),
+            'class': 'viewarchivelink iconspace genericbutton',
+            'title': 'View details about your %s archive' % flavor,
+            'text': 'View details',
+            'target': '_blank',
+            })
+
     return (output_objects, returnvalues.OK)

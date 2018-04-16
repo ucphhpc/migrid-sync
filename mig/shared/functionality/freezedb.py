@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezedb - manage frozen archives
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,9 +28,9 @@
 """Manage all owned frozen archives"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_pager_entries, csrf_field
+from shared.defaults import default_pager_entries, csrf_field, keyword_final
 from shared.freezefunctions import build_freezeitem_object, \
-     list_frozen_archives, get_frozen_meta, get_frozen_archive
+     list_frozen_archives, get_frozen_meta, get_frozen_archive, TARGET_ARCHIVE
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
@@ -85,12 +85,13 @@ Please contact the site admins %s if you think it should be enabled.
     if operation in show_operations:
 
         # jquery support for tablesorter and confirmation on delete
-        # table initially sorted by col. 3 (Created date) then 2 (name)
+        # table initially sorted by col. 5 (State), 3 (Created date), 2 (name)
 
-        refresh_call = 'ajax_freezedb(%s)' % \
-                       str(configuration.site_permanent_freeze)
+        refresh_call = 'ajax_freezedb(%s, "%s")' % \
+                       (str(configuration.site_permanent_freeze),
+                        keyword_final)
         table_spec = {'table_id': 'frozenarchivetable', 'sort_order':
-                      '[[3,1],[2,0]]', 'refresh_call': refresh_call}
+                      '[[5,1],[3,1],[2,0]]', 'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
         if operation == "show":
@@ -125,6 +126,7 @@ from the management.
         helper = html_post_helper('delfreeze', '%s.py' % target_op,
                                   {'freeze_id': '__DYNAMIC__',
                                    'flavor': '__DYNAMIC__',
+                                   'target': TARGET_ARCHIVE,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
 
@@ -150,7 +152,7 @@ from the management.
             (load_status, freeze_dict) = get_frozen_archive(client_id,
                                                             freeze_id,
                                                             configuration,
-                                                            checksum='')
+                                                            checksum_list=[])
             if not load_status:
                 logger.error("%s: load failed for '%s': %s" % \
                              (op_name, freeze_id, freeze_dict))
@@ -163,6 +165,12 @@ from the management.
             freeze_id = freeze_item['id']
             flavor = freeze_item.get('flavor', 'freeze')
 
+            if client_id != freeze_item['creator']:
+                logger.warning("skip archive %s with wrong owner: %s vs %s" % \
+                               (freeze_id, client_id, freeze_item['creator']))
+                continue
+
+            # Users may view all their archives
             freeze_item['viewfreezelink'] = {
                 'object_type': 'link',
                 'destination': "showfreeze.py?freeze_id=%s;flavor=%s" % \
@@ -170,7 +178,16 @@ from the management.
                 'class': 'infolink iconspace', 
                 'title': 'View frozen archive %s' % freeze_id, 
                 'text': ''}
-            if client_id == freeze_item['creator'] and \
+            # Users may edit pending archives
+            if freeze_item['state'] != keyword_final:
+                freeze_item['editfreezelink'] = {
+                    'object_type': 'link',
+                    'destination': "adminfreeze.py?freeze_id=%s" % freeze_id,
+                    'class': 'adminlink iconspace', 
+                    'title': 'Edit archive %s' % freeze_id, 
+                    'text': ''}
+            # Users may delete pending or non permanent archives
+            if freeze_item['state'] != keyword_final or \
                    flavor not in configuration.site_permanent_freeze:
                 freeze_item['delfreezelink'] = {
                     'object_type': 'link', 'destination':
@@ -179,6 +196,7 @@ from the management.
                      "{freeze_id: '%s', flavor: '%s'}" % (freeze_id, flavor)),
                     'class': 'removelink iconspace', 'title': 'Remove %s' % \
                     freeze_id, 'text': ''}
+    
             frozenarchives.append(freeze_item)
         logger.debug("%s %s: inserting list of %d archives" % \
                      (op_name, operation, len(frozenarchives)))
