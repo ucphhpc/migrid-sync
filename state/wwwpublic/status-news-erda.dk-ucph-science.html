@@ -112,11 +112,11 @@ All services except Seafile are fully operational.
 <p class="icon_offline iconspace leftpad icontext">
 All systems are down for maintenance - they will be back soon.
 </p>
+
 <p class="icon_offline iconspace leftpad icontext">
-There's a problem with the backend storage - we're investigating.
+There's a problem with access to the backend storage - we're investigating.
 </p>
 -->
-
 <p>
 Please use the link at the bottom to contact support in case you have
 questions or encounter any problems.
@@ -124,6 +124,25 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage">2018/04/17: Partial Data Access</h4>
+<p>
+We lost the connection to one or more backend storage servers and
+the result was limited data access in all services.<br/>
+Everything is back online and we're closely monitoring the systems.<br/>
+Additionally we're planning an upgrade to the glusterfs software
+providing the link to the backend storage. It should address a number of
+issues related to the problems we've seen lately with connection loss.
+</p>
+<h4 class="staticpage">2018/04/06: Enabling Workgroup Workflows again</h4>
+<p>
+We have optimized our Workgroup Workflows service to be far less taxing
+on the system and thus we have enabled it in production again.
+</p>
+<h4 class="staticpage">2018/03/16: Partial Data Access and Login Problems</h4>
+<p>
+We had a CPU-lockup on one of our backend storage servers.<br/>
+Everything is back online and we're closely monitoring the systems.<br/>
+</p>
 <h4 class="staticpage">2018/03/15: Temporarily Disabling Workgroup Workflows</h4>
 <p>
 We have a hunch that our Workgroup Workflows service had a negative
@@ -287,7 +306,7 @@ Alle services undtagen Seafile kører planmæssigt.
 Alle systemer er i øjeblikket nede p.g.a. planlagt vedligehold.
 </p>
 <p class="icon_offline iconspace leftpad icontext">
-Der er i øjeblikket udfald i backend-lageret - vi undersøger sagen.
+Der er i øjeblikket problemer med adgang til backend-lageret - vi undersøger sagen.
 </p>
 -->
 
@@ -298,6 +317,28 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage">17/04-2018: Delvis dataadgang</h4>
+<p>
+Vi mistede forbindelsen til en eller flere af vores backend servere, så
+dataadgangen faldt delvis ud.<br/>
+Alt er tilbage i almindelig drift, og vi overvåger for at fange evt
+yderligere problemer.<br/>
+Vi planlægger desuden en opgradering af glusterfs softwaren, som leverer
+forbindelsen til backend storage. Det skulle gerne hjælpe på de
+problemer vi har set på det seneste med udfald.
+</p>
+<h4 class="staticpage">06/04-2018: Genindførsel af workgroup workflows</h4>
+<p>
+Vi har optimeret Workgroup Workflows servicen så den nu er langt mindre
+belastende for systemet og har derfor sat den i drift igen. 
+</p>
+<h4 class="staticpage">16/03-2018: Delvis dataadgang og loginproblemer</h4>
+<p>
+Vi havde et CPU-lockup på en af vores backend servere.
+<br/>
+Alt er tilbage i almindelig drift, men vi holder tæt øje med systemerne
+i tilfælde af at problemerne skulle komme tilbage.<br/>
+</p>
 <h4 class="staticpage">15/03-2018: Midlertidig nedtagning af workgroup workflows</h4>
 <p>
 Vi har en mistanke om at Workgroup Workflows servicen har haft en
