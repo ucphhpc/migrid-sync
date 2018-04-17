@@ -466,7 +466,8 @@ def __send_project_create_confirmation(configuration, login,
 
         vdisplay = None
         try:
-            vdisplay = Xvfb()
+            # NOTE: we force disable network listen for security
+            vdisplay = Xvfb(nolisten='tcp')
             vdisplay.start()
         except Exception, exc:
             status = False
