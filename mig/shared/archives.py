@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # archives - zip/tar packing and unpacking helpers
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -95,9 +95,13 @@ def handle_package_upload(
 
             # write zip_entry to disk
 
+            # IMPORTANT: we must abs-expand for valid_user_path_name check
+            #            otherwise it will incorrectly fail on e.g. abc/
+            #            dir entry in archive
             local_zip_entry_name = os.path.join(real_dst, entry_filename)
             valid_status, valid_err = valid_user_path_name(
-                entry_filename, local_zip_entry_name, base_dir)
+                entry_filename, os.path.abspath(local_zip_entry_name),
+                base_dir)
             if not valid_status:
                 status = False
                 msg += "Filename validation error: %s! " % valid_err
@@ -118,7 +122,7 @@ def handle_package_upload(
                     continue
 
             if os.path.isdir(local_zip_entry_name):
-                logger.info("nothing more to do for dir entry: %s" % \
+                logger.debug("nothing more to do for dir entry: %s" % \
                             local_zip_entry_name)
                 continue
 
@@ -205,10 +209,13 @@ def handle_package_upload(
 
             # write tar_entry to disk
 
+            # IMPORTANT: we must abs-expand for valid_user_path_name check
+            #            otherwise it will incorrectly fail on e.g. abc/
+            #            dir entry in archive
             local_tar_entry_name = os.path.join(real_dst, entry_filename)
-
             valid_status, valid_err = valid_user_path_name(
-                entry_filename, local_tar_entry_name, base_dir)
+                entry_filename, os.path.abspath(local_tar_entry_name),
+                base_dir)
             if not valid_status:
                 status = False
                 msg += "Filename validation error: %s! " % valid_err
@@ -217,7 +224,7 @@ def handle_package_upload(
             # Found empty dir - make sure  dirname doesn't strip to parent
 
             if tar_entry.isdir():
-                logger.info("empty dir %s - include in parent creation" % \
+                logger.debug("empty dir %s - include in parent creation" % \
                             local_tar_entry_name)
                 local_tar_entry_name += os.sep
 
@@ -226,7 +233,7 @@ def handle_package_upload(
             tar_entry_dir = os.path.dirname(local_tar_entry_name)
 
             if not os.path.isdir(tar_entry_dir):
-                logger.info("make tar parent dir: %s" % tar_entry_dir)
+                logger.debug("make tar parent dir: %s" % tar_entry_dir)
                 msg += 'Creating dir %s . ' % entry_filename
                 try:
                     os.makedirs(tar_entry_dir, 0775)
@@ -388,7 +395,7 @@ def pack_archive(
 
     zip_entry_dir = os.path.dirname(real_dst)
     if not os.path.isdir(zip_entry_dir):
-        logger.info("make zip parent dir: %s" % zip_entry_dir)
+        logger.debug("make zip parent dir: %s" % zip_entry_dir)
         msg += 'Creating dir %s . ' % zip_entry_dir
         try:
             os.makedirs(zip_entry_dir, 0775)
@@ -432,7 +439,7 @@ def pack_archive(
                 elif real_dst == real_target:
                     msg += 'Skipping destination file %s . ' % dst
                     continue
-                logger.info("pack file %s" % relative_target)
+                logger.debug("pack file %s" % relative_target)
                 try:
                     pack_file.write(real_target, relative_target)
                 except Exception, exc:
@@ -443,7 +450,7 @@ def pack_archive(
                     continue
                     
             if not files and not invisible_path(relative_root):
-                logger.info("pack dir %s" % relative_root)
+                logger.debug("pack dir %s" % relative_root)
                 try:
                     dir_info = zipfile.ZipInfo(relative_root + os.sep)
                     pack_file.writestr(dir_info, '')
@@ -509,7 +516,7 @@ def pack_archive(
                 elif real_dst == real_target:
                     msg += 'Skipping destination file %s . ' % dst
                     continue
-                logger.info("pack file %s" % entry)
+                logger.debug("pack file %s" % entry)
                 try:
                     pack_file.add(real_target, relative_target, recursive=False)
                 except Exception, exc:
@@ -520,7 +527,7 @@ def pack_archive(
                     continue
                     
             if not files and not invisible_path(relative_root):
-                logger.info("pack dir %s" % relative_root)
+                logger.debug("pack dir %s" % relative_root)
                 try:
                     pack_file.add(root, relative_root, recursive=False)
                 except Exception, exc:
