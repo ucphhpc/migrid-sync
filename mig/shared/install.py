@@ -548,6 +548,20 @@ cert, oid and sid based https!
         if key.endswith('_COMMENTED__'):
             strip_trailing_space.append(key)
 
+    # Dynamically set ssh subsys auth key locations for enabled site features
+    # NOTE: some percent variables must be preserved, namely %h for user home
+    #       and %u for user id in ssh login.
+    auth_key_locations = ['%h/.ssh/authorized_keys']
+    if user_dict['__ENABLE_JOBS__'].lower() == 'true':
+        auth_key_locations.append(os.path.join(mig_state, 'mig_system_files',
+                                               'job_mount',
+                                               '%u.authorized_keys'))
+    if user_dict['__ENABLE_JUPYTER__'].lower() == 'true':
+        auth_key_locations.append(os.path.join(mig_state, 'mig_system_files',
+                                               'jupyter_mount',
+                                               '%u.authorized_keys'))
+    user_dict['__SSH_AUTH_KEY_LOCATIONS__'] = ' '.join(auth_key_locations)
+
     # Collect final variable values for log
     sorted_keys = user_dict.keys()
     sorted_keys.sort()
