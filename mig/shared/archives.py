@@ -81,7 +81,7 @@ def handle_package_upload(
 
         msg += "Received '%s' for unpacking. " % relative_src
         try:
-            zip_object = zipfile.ZipFile(real_src, 'r')
+            zip_object = zipfile.ZipFile(real_src, 'r', allowZip64=True)
         except Exception, exc:
             logger.error("open zip failed: %s" % exc)
             msg += 'Could not open zipfile: %s! ' % exc
@@ -126,6 +126,15 @@ def handle_package_upload(
                             local_zip_entry_name)
                 continue
 
+            try:
+                zip_data = zip_object.read(zip_entry.filename)
+            except Exception, exc:
+                logger.error("read data in %s failed: %s" % \
+                             (zip_entry.filename, exc))
+                msg += 'Error reading %s :: %s! ' % (zip_entry.filename, exc)
+                status = False
+                continue
+            
             # TODO: can we detect and ignore symlinks?
             # Zip format is horribly designed/documented:
             # http://www.pkware.com/documents/casestudies/APPNOTE.TXT
@@ -135,12 +144,11 @@ def handle_package_upload(
 
             # write file - symbolic links are written as files! (good for
             # security).
+
             # NB: Needs to use undecoded filename here
 
-            if not write_file(zip_object.read(zip_entry.filename),
-                              local_zip_entry_name,
-                              logger) and \
-                              not os.path.exists(local_zip_entry_name):
+            if not write_file(zip_data, local_zip_entry_name, logger) and \
+                   not os.path.exists(local_zip_entry_name):
                 msg += 'Error unpacking %s to disk! ' % entry_filename
                 status = False
                 continue
@@ -415,7 +423,7 @@ def pack_archive(
         try:
             # Force compression and allow files bigger than 2GB
             pack_file = zipfile.ZipFile(real_dst, open_mode,
-                                        zipfile.ZIP_DEFLATED, True)
+                                        zipfile.ZIP_DEFLATED, allowZip64=True)
         except Exception, exc:
             logger.error("create zip failed: %s" % exc)
             msg += 'Could not create zipfile: %s! ' % exc
@@ -465,7 +473,7 @@ def pack_archive(
         # Verify CRC
 
         try:
-            pack_file = zipfile.ZipFile(real_dst, 'r')
+            pack_file = zipfile.ZipFile(real_dst, 'r', allowZip64=True)
             pack_file.testzip()
             pack_file.close()
         except Exception, exc:
