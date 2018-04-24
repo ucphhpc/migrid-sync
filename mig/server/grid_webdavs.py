@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -138,11 +138,11 @@ def _find_authenticator(application):
 
 
 class HardenedSSLAdapter(BuiltinSSLAdapter):
-    """Hardened version of the BuiltinSSLAdapter. It takes optional custom
-    ssl_version, ciphers and options arguments for use in setting up the socket
-    security.
-    This is particularly important in relation to mitigating the series of
-    recent SSL attack vectors like POODLE and CRIME.
+    """Hardened version of the BuiltinSSLAdapter using a shared ssl context
+    initializer which defaults to hardened values for ssl_version, ciphers and
+    options arguments for use in setting up the socket security.
+    This is particularly important in relation to mitigating a number of
+    popular SSL attack vectors like POODLE and CRIME.
     The default is to try the most flexible security protocol negotiation, but
     with only the strong ciphers recommended by Mozilla:
     https://wiki.mozilla.org/Security/Server_Side_TLS#Apache
@@ -160,9 +160,15 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
     private_key = None
 
     def __init__(self, certificate, private_key, certificate_chain=None):
-        """Save ssl_version and ciphers for use in wrap method"""
+        """Initialize with parent constructor and set up a shared hardened SSL
+        context to use in all future connections in the wrap method.
+        """
         BuiltinSSLAdapter.__init__(self, certificate, private_key,
                                    certificate_chain)
+        # Set up hardened SSL context once and for all
+        dhparams = configuration.user_shared_dhparams
+        self.ssl_ctx = hardened_ssl_context(configuration, self.private_key,
+                                            self.certificate, dhparams)
 
     def __force_close(self, socket_list):
         """Force close each socket in socket_list ignoring any errors"""
@@ -176,18 +182,21 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         
     def wrap(self, sock):
         """Wrap and return the given socket, plus WSGI environ entries.
-        Extended to pass the provided ssl_version and ciphers arguments to the
-        wrap_socket call.
-        Limits protocols and disables compression for modern python versions.
+        Note the previously initialized SSL context is tuned to pass hardened
+        ssl_version and ciphers arguments to the wrap_socket call. It also
+        limits protocols, key reuse and disables compression for modern python
+        versions to avoid a set of popular attack vectors.
         """
         _socket_list = [sock]
         try:
             logger.debug("Wrapping socket in SSL/TLS")
-            dhparams = configuration.user_shared_dhparams
-            ssl_ctx = hardened_ssl_context(configuration, self.private_key,
-                                           self.certificate, dhparams)
-            ssl_sock = ssl_ctx.wrap_socket(sock, server_side=True)
+            logger.info("SSL/TLS session stats: %s" % \
+                        self.ssl_ctx.session_stats())
+            ssl_sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
             _socket_list.append(ssl_sock)
+            ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
+            logger.info("wrapped sock from %s with ciphers %s" % \
+                        (ssl_sock.getpeername(), ssl_sock.cipher()))
         except ssl.SSLError:
             exc = sys.exc_info()[1]
             if exc.errno == ssl.SSL_ERROR_EOF:
@@ -214,8 +223,6 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     self.__force_close(_socket_list)
             logger.error("unexpected SSL/TLS wrap failure: %s" % exc)
             raise exc
-        ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
-        logger.info("wrapped sock: %s" % ssl_sock)
         return ssl_sock, ssl_env
 
 
