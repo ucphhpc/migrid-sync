@@ -45,7 +45,7 @@ def cert_name_format(input_string):
 def is_valid_email_address(addr, logger):
     """From http://www.secureprogramming.com/?action=view&feature=recipes&recipeid=1"""
 
-    logger.info("verifying if '%s' is a valid email address" % addr)
+    logger.debug("verifying if '%s' is a valid email address" % addr)
     rfc822_specials = '()<>@,;:\\"[]'
 
     # First we validate the name portion (name@domain)
@@ -98,7 +98,7 @@ def is_valid_email_address(addr, logger):
         if addr[c] in rfc822_specials:
             return False
         c += 1
-    logger.info('%s is a valid email address' % addr)
+    logger.debug('%s is a valid email address' % addr)
     return count >= 1
 
 def possible_user_id(configuration, user_id):
