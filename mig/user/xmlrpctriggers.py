@@ -44,12 +44,12 @@ if '__main__' == __name__:
     print 'supported remote methods:\n%s' % '\n'.join(methods)
     print
     print 'submit() signature: %s'\
-         % server.system.methodSignature('submit')
+        % server.system.methodSignature('submit')
     print 'the signature is a tuple of output object type and a list of expected/default input values'
     print 'submit() help: %s' % server.system.methodHelp('submit')
     print 'please note that help is not yet available for all methods'
     print
-    
+
     print 'Testing some trigger methods:'
     print 'checking triggers for vgrid: %s' % vgrid_name
     (inlist, retval) = server.lsvgridtriggers({'vgrid_name': vgrid_name})
@@ -60,7 +60,7 @@ if '__main__' == __name__:
     for ele in inlist:
         if ele['object_type'] == 'list':
             for el in ele['list']:
-                print '%(rule_id)s\t%(path)s\t%(changes)s\t%(action)s\t%(arguments)s\t%(run_as)s\t%(rate_limit)s'% el
+                print '%(rule_id)s\t%(path)s\t%(changes)s\t%(action)s\t%(arguments)s\t%(run_as)s\t%(rate_limit)s' % el
 
     print 'adding dummy trigger for vgrid: %s' % vgrid_name
     (inlist, retval) = server.addvgridtrigger({'vgrid_name': vgrid_name,
@@ -82,7 +82,7 @@ if '__main__' == __name__:
 
     print 'removing dummy trigger for vgrid: %s' % vgrid_name
     (inlist, retval) = server.rmvgridtrigger({'vgrid_name': vgrid_name,
-                                               'rule_id': ['xmlrpcdummytrigger']})
+                                              'rule_id': ['xmlrpcdummytrigger']})
     (returnval, returnmsg) = retval
     if returnval != 0:
         print 'Error %s:%s' % (returnval, returnmsg)
@@ -92,4 +92,3 @@ if '__main__' == __name__:
             print "Success: %s" % ele['text']
         if ele['object_type'] == 'error_text':
             print "ERROR: %s" % ele['text']
-

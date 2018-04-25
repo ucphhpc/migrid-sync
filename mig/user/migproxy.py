@@ -32,35 +32,36 @@ import urlparse
 
 
 class MiGSSLSocket:
+
     """SSL socket wrapper to mimic plain socket API"""
     _sock = None
     _ssl_sock = None
-    
+
     def __init__(self, sock, keyfile=None, certfile=None):
         self._sock = sock
-	self._ssl_sock = socket.ssl(sock, keyfile=keyfile, certfile=certfile)
+        self._ssl_sock = socket.ssl(sock, keyfile=keyfile, certfile=certfile)
         self._closed = False
 
     def send(self, data, flags=None):
         print "DEBUG: in ssl_send"
-	return self._ssl_sock.write(data)
+        return self._ssl_sock.write(data)
 
     def recv(self, buffersize, flags=None):
         print "DEBUG: in ssl_recv"
-	return self._ssl_sock.read(buffersize)
+        return self._ssl_sock.read(buffersize)
 
     def fileno(self):
         print "DEBUG: in ssl_fileno"
-	return self._sock.fileno()
+        return self._sock.fileno()
 
     def close(self):
         print "DEBUG: in ssl_close"
         self._ssl_sock = None
         # Try to avoid low level double free error and crash by closing any
         # open file descriptors for the socket
-	os.close(self._sock.fileno())
+        os.close(self._sock.fileno())
         return self._sock.close()
-    
+
 
 class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
     __base = BaseHTTPServer.BaseHTTPRequestHandler
@@ -69,7 +70,7 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
     server_version = "MiGHTTPProxy/" + __version__
     rbufsize = 0                        # self.rfile Be unbuffered
     cert_port, sid_port = 443, 443
-    #key_path = os.path.expanduser('~/.mig/key.pem')
+    # key_path = os.path.expanduser('~/.mig/key.pem')
     # Path to key without passphrase
     # Use default .mig location with fallback to non-standard Android location
     key_path = os.path.expanduser('~/.mig/tmp.pem')
@@ -79,26 +80,26 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
     if not os.path.exists(cert_path):
         cert_path = os.path.expanduser('/sdcard/.mig/cert.pem')
     wrap_targets = {
-	'www.migrid.org': {
-	    'cert_port': cert_port,
+        'www.migrid.org': {
+            'cert_port': cert_port,
             'ssl_cert': cert_path,
             'ssl_key': key_path
-	    }, 
+        },
         'dk-cert.migrid.org': {
-	    'cert_port': cert_port,
+            'cert_port': cert_port,
             'ssl_cert': cert_path,
             'ssl_key': key_path
-	    },
+        },
         'dk-oid.migrid.org': {
-	    'cert_port': cert_port,
+            'cert_port': cert_port,
             'ssl_cert': cert_path,
             'ssl_key': key_path
-	    }, 
+        },
         'dk-sid.migrid.org': {
-	    'cert_port': cert_port,
+            'cert_port': cert_port,
             'ssl_cert': cert_path,
             'ssl_key': key_path
-	    }
+        }
     }
     wrap_ssl = False
     sock = None
@@ -106,35 +107,38 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
     cert = None
 
     def handle(self):
-        (ip, port) =  self.client_address
+        (ip, port) = self.client_address
         if hasattr(self, 'allowed_clients') and ip not in self.allowed_clients:
             self.raw_requestline = self.rfile.readline()
-            if self.parse_request(): self.send_error(403)
+            if self.parse_request():
+                self.send_error(403)
         else:
             self.__base_handle()
 
     def _connect_to(self, netloc):
         i = netloc.find(':')
         if i >= 0:
-            host_port = netloc[:i], int(netloc[i+1:])
+            host_port = netloc[:i], int(netloc[i + 1:])
         else:
             host_port = netloc, 80
-	if netloc in self.wrap_targets:
-	    print "\t" "wrapping connection to %s in ssl" % netloc
-	    host_port = host_port[0], self.wrap_targets[netloc]['cert_port']
-	    self.wrap_ssl = True
+        if netloc in self.wrap_targets:
+            print "\t" "wrapping connection to %s in ssl" % netloc
+            host_port = host_port[0], self.wrap_targets[netloc]['cert_port']
+            self.wrap_ssl = True
             self.key = self.wrap_targets[netloc]['ssl_key']
             self.cert = self.wrap_targets[netloc]['ssl_cert']
         print "\t" "connect to %s:%d" % host_port
-        try: 
-	    self.sock.connect(host_port)
-	    if self.wrap_ssl:
-		self.sock = MiGSSLSocket(self.sock, keyfile=self.key,
+        try:
+            self.sock.connect(host_port)
+            if self.wrap_ssl:
+                self.sock = MiGSSLSocket(self.sock, keyfile=self.key,
                                          certfile=self.cert)
         except socket.error, arg:
-	    print "\t" "socket error:" % arg
-            try: msg = arg[1]
-            except: msg = arg
+            print "\t" "socket error:" % arg
+            try:
+                msg = arg[1]
+            except:
+                msg = arg
             self.send_error(404, msg)
             return 0
         return 1
@@ -153,7 +157,7 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             print "\t" "bye"
             self.sock.close()
-	    self.sock = None
+            self.sock = None
             self.connection.close()
 
     def do_GET(self):
@@ -182,7 +186,7 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             print "\t" "bye"
             self.sock.close()
-	    self.sock = None
+            self.sock = None
             self.connection.close()
 
     def _read_write(self, max_idling=20):
@@ -192,7 +196,8 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
         while 1:
             count += 1
             (ins, _, exs) = select.select(iw, ow, iw, 3)
-            if exs: break
+            if exs:
+                break
             if ins:
                 for i in ins:
                     if i is self.sock:
@@ -205,36 +210,43 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
                         count = 0
             else:
                 print "\t" "idle", count
-            if count == max_idling: break
+            if count == max_idling:
+                break
 
     do_HEAD = do_GET
     do_POST = do_GET
-    do_PUT  = do_GET
-    do_DELETE=do_GET
+    do_PUT = do_GET
+    do_DELETE = do_GET
+
 
 class ThreadingHTTPServer (SocketServer.ThreadingMixIn,
-                           BaseHTTPServer.HTTPServer): pass
+                           BaseHTTPServer.HTTPServer):
+    pass
 
 
 class MiGProxy(ThreadingHTTPServer):
+
     """HTTP(S) Proxy listening only on local interface but forwarding
     connections on any available internet interface. Connections to a
-    set of configured MiG URLs are transparently wrapped in SSL with 
+    set of configured MiG URLs are transparently wrapped in SSL with
     client certificate while all other connections are left alone.
     """
+
     def __init__(self, server_address, handler):
         # Force access from local interface only using method from
         # http://code.activestate.com/recipes/439094/
         # to find and use only the IP address of the loopback device
-        import fcntl, struct
-        # We could support other device only by changing "lo" to 
+        import fcntl
+        import struct
+        # We could support other device only by changing "lo" to
         # another device name
         device_name = "lo"
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         listen_address = socket.inet_ntoa(fcntl.ioctl(
             s.fileno(), 0x8915,  # SIOCGIFADDR
             struct.pack('256s', device_name))[20:24])
-        ThreadingHTTPServer.__init__(self, (listen_address, server_address[1]), handler)
+        ThreadingHTTPServer.__init__(
+            self, (listen_address, server_address[1]), handler)
 
 
 if __name__ == '__main__':
@@ -252,5 +264,5 @@ if __name__ == '__main__':
             del argv[2:]
         else:
             print "Any clients will be served..."
-            
+
         BaseHTTPServer.test(ProxyHandler, MiGProxy)

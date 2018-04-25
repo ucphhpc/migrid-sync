@@ -57,14 +57,15 @@ import python_webdav.client
 from requests.exceptions import ConnectionError
 
 
-### Global configuration ###
+# Global configuration ###
 
 server_fqdn = 'dk-cert.migrid.org'
-#server_fqdn = 'localhost'
+# server_fqdn = 'localhost'
 server_port = 4443
 
 
 class MiGDAVClient(python_webdav.client.Client):
+
     """Extend basic client with a few methods we want for the testing"""
 
     def __init__(self, webdav_server_uri, webdav_path='.', port=80, realm='',
@@ -79,7 +80,7 @@ class MiGDAVClient(python_webdav.client.Client):
         something like os.stat .
         Reuse ls(path) code from python_webdav/client.py
         """
-        list_format=('F', 'C', 'M')
+        list_format = ('F', 'C', 'M')
         # Format Map
         format_map = {'T': 'resourcetype',
                       'D': 'creationdate',
@@ -88,7 +89,7 @@ class MiGDAVClient(python_webdav.client.Client):
                       'A': 'executable',
                       'E': 'getetag',
                       'C': 'getcontenttype'}
-    
+
         props = self.client.get_properties(self.connection, path)
         property_lists = []
         for prop in props:
@@ -117,7 +118,7 @@ class MiGDAVClient(python_webdav.client.Client):
             self.connection.path.rstrip('/'), src_path.lstrip('/'))
         resp, content = self.connection.send_get(resource_path)
         file_name = os.path.basename(src_path)
-        
+
         try:
             file_fd = open(dst_path, 'wb')
             file_fd.write(content)
@@ -131,7 +132,7 @@ class MiGDAVClient(python_webdav.client.Client):
     def put(self, src_path, dst_path):
         """Wrap upload_file to emulate sftp put"""
         # TODO: this should work without error but upload succeeds and throws
-        #    requests.exceptions.ConnectionError: 
+        #    requests.exceptions.ConnectionError:
         #    HTTPSConnectionPool(host='localhost', port=4443):
         #        Max retries exceeded with url: /this-is-a-migdavs-dummy-file.txt
         #          (Caused by <class 'socket.error'>: [Errno 32] Broken pipe)
@@ -139,9 +140,9 @@ class MiGDAVClient(python_webdav.client.Client):
             self.upload_file(src_path, dst_path)
         except ConnectionError:
             pass
- 
 
-### Initialize client session ###
+
+# Initialize client session ###
 
 if __name__ == "__main__":
     user_name, password = None, None
@@ -172,12 +173,11 @@ ssh settings page"""
 page"""
         password = getpass.getpass('Password: ')
 
-
     # grid_davs server does not support long usernames it seems - so please
     # enable email alias or similar and use it here
 #    if len(user_name) < 64:
 #        print """Warning: the supplied username is shorter than expected!
-#Please verify it on your MiG ssh Settings page in case of failure."""
+# Please verify it on your MiG ssh Settings page in case of failure."""
     if len(user_name) > 99:
         print """Warning: the supplied username is longer than expected!
 Please note that the long user names are not supported on the server and that
@@ -188,13 +188,13 @@ you should use the short alias found on your MiG ssh Settings page."""
     ignore_cert = True
     server_url = 'https://%s:%d' % (server_fqdn, server_port)
     print "connecting to %s" % server_url
-    
+
     client = MiGDAVClient(server_url, allow_bad_cert=ignore_cert)
 
     print "auth as user %s" % user_name
     client.set_connection(user_name, password)
 
-    ### Sample actions on your MiG home directory ###
+    # Sample actions on your MiG home directory ###
 
     # List and stat files in the remote .ssh dir which should always be there
 
@@ -208,7 +208,7 @@ you should use the short alias found on your MiG ssh Settings page."""
     for uri in hrefs:
         split_str = ':%d/%s/' % (server_port, base)
         pos = uri.find(split_str)
-        rel_path = uri[pos+len(split_str):]
+        rel_path = uri[pos + len(split_str):]
         files.append(rel_path)
     print "got files: %s" % files
     path_stat = client.stat(base)
@@ -270,13 +270,13 @@ you should use the short alias found on your MiG ssh Settings page."""
     print "delete remote dummy outside home - should fail"
     try:
         resp, contents = client.rm(illegal_dummy)
-        if resp.status_code in range (400, 410):
+        if resp.status_code in range(400, 410):
             raise Exception('delete failed with %s' % resp)
         else:
             print "copied to illegal destination %s" % illegal_dummy
     except Exception, exc:
         print "correctly rejected removal of illegal dummy: %s" % exc
 
-    ### Clean up before exit ###
+    # Clean up before exit ###
 
     del client

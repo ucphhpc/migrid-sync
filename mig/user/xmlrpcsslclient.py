@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # xmlrpcsslclient - XMLRPC client with HTTPS user certificate support
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ import time
 import xmlrpclib
 from urlparse import urlparse
 
+
 def read_user_conf():
     """Read and parse 'KEY VAL' formatted user conf file"""
     user_conf = {}
@@ -42,7 +43,7 @@ def read_user_conf():
                                    'miguser.conf'))
     if not os.path.exists(conf_path):
         print 'mig user configuration not found, %s does not exist'\
-             % conf_path
+            % conf_path
         sys.exit(1)
 
     needed_settings = ['migserver', 'certfile', 'keyfile']
@@ -75,7 +76,7 @@ def read_user_conf():
     for needed_key in needed_settings:
         if not user_conf.has_key(needed_key):
             print 'Needed setting %s not found in %s' % (needed_key,
-                    conf_path)
+                                                         conf_path)
             sys.exit(1)
     return user_conf
 
@@ -86,7 +87,7 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
 
     host = None
     conf = {}
-    
+
     def __init__(self, use_datetime=0, conf={}):
         """For backward compatibility with python < 2.7 . Call parent
         constructor and check if the new _connection attribute is set.
@@ -100,14 +101,8 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
             # print "DEBUG: switch to compat mode"
             self._connection = (None, None)
             self.request = self._compat_request
-            
-    def _compat_request(
-        self,
-        host,
-        handler,
-        request_body,
-        verbose=0,
-        ):
+
+    def _compat_request(self, host, handler, request_body, verbose=0):
         """For backward compatibility with < 2.7 : must override connection
         calls to fit older httplib API.
 
@@ -134,7 +129,7 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
 
         if errcode != 200:
             raise xmlrpclib.ProtocolError(host + handler, errcode,
-                    errmsg, headers)
+                                          errmsg, headers)
 
         self.verbose = verbose
 
@@ -150,7 +145,7 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
         is the python 2.7 version which changed internals and broke
         backward compatibility. We use the exact same structure and do the
         plumbing for backward compatibility in the constructor instead.
-        
+
         Reuses connections if possible to support HTTP/1.1 keep-alive.
 
         Finally allows non-interactive use with password from conf file.
@@ -162,7 +157,7 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
         except AttributeError:
             raise NotImplementedError(
                 "your version of httplib doesn't support HTTPS")
-        
+
         key_pw = self.conf.get('password', None)
         cacert = None
         if conf['cacertfile'] and conf['cacertfile'] != 'AUTO':
@@ -170,17 +165,17 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
         ssl_ctx = ssl.create_default_context(cafile=cacert)
         ssl_ctx.load_cert_chain(self.conf['certfile'],
                                 keyfile=self.conf['keyfile'], password=key_pw)
-        self._connection = host, HTTPS(self.conf['host'], 
+        self._connection = host, HTTPS(self.conf['host'],
                                        port=self.conf['port'], context=ssl_ctx)
         return self._connection[1]
 
 
 def xmlrpcgetserver(conf):
     cert_transport = SafeCertTransport(conf=conf)
-    server = xmlrpclib.ServerProxy('https://%(host)s:%(port)s%(script)s' % \
+    server = xmlrpclib.ServerProxy('https://%(host)s:%(port)s%(script)s' %
                                    conf, transport=cert_transport,
-                                   #encoding='utf-8',
-                                   #verbose=True
+                                   # encoding='utf-8',
+                                   # verbose=True
                                    )
     return server
 
@@ -207,7 +202,8 @@ if '__main__' == __name__:
         print 'specified CA cert file %(cacertfile)s not found!' % conf
         sys.exit(1)
     url_tuple = urlparse(conf['migserver'])
-    # second item in tuple is network location part with hostname and optional port
+    # second item in tuple is network location part with hostname and optional
+    # port
     host_port = url_tuple[1].split(':', 1)
     if len(host_port) < 2:
         host_port.append('443')
@@ -225,8 +221,9 @@ key/certificate passphrase before you can continue.
     print 'supported remote methods:\n%s' % '\n'.join(methods)
     print
     print 'submit() signature: %s'\
-         % server.system.methodSignature('submit')
-    print 'the signature is a tuple of output object type and a list of expected/default input values'
+        % server.system.methodSignature('submit')
+    print 'the signature is a tuple of output object type and a list of '
+    print 'expected/default input values'
     print 'submit() help: %s' % server.system.methodHelp('submit')
     print 'please note that help is not yet available for all methods'
     print
@@ -252,11 +249,11 @@ key/certificate passphrase before you can continue.
     for elem in inlist:
         if elem.has_key('text'):
             print elem['text']
-    
+
     print 'checking job status for job(s) with IDs: %s'\
-         % ' '.join(job_id_list)
-    (inlist, retval) = server.jobstatus({'job_id': job_id_list, 'flags'
-            : 'vs', 'max_jobs': '5'})
+        % ' '.join(job_id_list)
+    (inlist, retval) = server.jobstatus(
+        {'job_id': job_id_list, 'flags': 'vs', 'max_jobs': '5'})
     (returnval, returnmsg) = retval
     if returnval != 0:
         print 'Error %s:%s ' % (returnval, returnmsg)
@@ -265,7 +262,7 @@ key/certificate passphrase before you can continue.
         if ele['object_type'] == 'job_list':
             for el in ele['jobs']:
                 print 'The job with job_id %s: %s' % (el['job_id'],
-                        el['status'])
+                                                      el['status'])
 
     print
     print 'Listing contents of MiG home directory'
@@ -382,7 +379,8 @@ vgrid=Generic
     # print server.spell({"path":["%s" % sys.argv[1]]})
     # print server.redb({})
     # print server.scripts({})
-    # print server.wc({"path":["%s" % sys.argv[1], "TextAreaAt_6_7_2007__9_21_27.mRSL"], "flags":"v"})
+    # print server.wc({"path":["%s" % sys.argv[1],
+    # "TextAreaAt_6_7_2007__9_21_27.mRSL"], "flags":"v"})
 
     # print server.addvgridmember({"vgrid_name":["%s" % sys.argv[1]], "cert_id":["%s" % sys.argv[2]]})
     # print server.addvgridres({"vgrid_name":["%s" % sys.argv[1]], "unique_resource_name":["%s" % sys.argv[2]]})
@@ -413,14 +411,17 @@ vgrid=Generic
     # print  "%s : %s" % (retval, inlist)
 
     # (inlist, retval) = server.jobstatus({"job_id":["%s" % sys.argv[1]]})
-    # (inlist, retval) = server.textarea({"jobname_0_0_0":"abc", "fileupload_0_0_0filename":"nyfil.mrsl", "submitmrsl_0":["ON"], "fileupload_0_0_0":["%s" % mrsl]})
+    # (inlist, retval) = server.textarea({
+    #    "jobname_0_0_0":"abc", "fileupload_0_0_0filename":"nyfil.mrsl",
+    #    "submitmrsl_0":["ON"], "fileupload_0_0_0":["%s" % mrsl]
+    #    })
     # print  "%s : %s" % (retval, inlist)
     # (inlist, retval) = server.editfile({"path":["/m2"], "submitjob":["True"], "editarea":["%s" % mrsl]})
     # (inlist, retval) = server.canceljob({"job_id":["%s" % sys.argv[1]]})
 
     try:
         print "cat as binary file"
-        (inlist, retval) = server.cat({"path": path_list, "flags":"vb"})
+        (inlist, retval) = server.cat({"path": path_list, "flags": "vb"})
         for entry in inlist:
             if 'file_output' == entry['object_type']:
                 # NOTE: xmlrpc wraps in object with contents in data attribute
@@ -440,11 +441,14 @@ uname -a
 ANY
 """
     print 'writing job description to %s file on server' % mrsl_path
-    (inlist, retval) = server.editfile({'path': [mrsl_path], 'editarea'
-            : ['%s' % mrsl]})
+    (inlist, retval) = server.editfile(
+        {'path': [mrsl_path], 'editarea': ['%s' % mrsl]})
     print 'write status: %s' % retval
-    
-    (inlist, retval) = server.textarea({"jobname_0_0_0":"abc", "fileupload_0_0_0filename":"newfile.txt", "submitmrsl_0":["OFF"], "fileupload_0_0_0":["%s" % mrsl]})
+
+    (inlist, retval) = server.textarea({
+        "jobname_0_0_0": "abc", "fileupload_0_0_0filename": "newfile.txt",
+        "submitmrsl_0": ["OFF"], "fileupload_0_0_0": ["%s" % mrsl]
+    })
     print inlist
 
     # print "DEBUG: %s\n%s" % (inlist, retval)
@@ -457,9 +461,9 @@ ANY
     job_id = None
     for entry in inlist:
         if 'submitstatuslist' == entry['object_type']\
-             and entry.has_key('submitstatuslist'):
+                and entry.has_key('submitstatuslist'):
             submit_status = entry['submitstatuslist'][0].get('status',
-                    False)
+                                                             False)
             job_id = entry['submitstatuslist'][0].get('job_id', None)
             print 'submit status: %s' % submit_status
     while job_id:
@@ -470,27 +474,27 @@ ANY
 
         for entry in inlist:
             if 'job_list' == entry['object_type']\
-                 and entry.has_key('jobs'):
+                    and entry.has_key('jobs'):
                 job_status = entry['jobs'][0].get('status', 'UNKNOWN')
                 print 'job name:\t\t%s' % job_id
                 print 'job status:\t\t%s' % job_status
                 for name in ['queued', 'executing', 'finished']:
-                    print '%s date:\t\t%s' % (name, entry['jobs'
-                            ][0].get('%s_timestamp' % name, ''))
+                    print '%s date:\t\t%s' % (name, entry['jobs'][0].get(
+                        '%s_timestamp' % name, ''))
                 print
 
                 if 'FINISHED' == job_status:
                     print 'Read output of job %s' % job_id
                     for name in ['status', 'stdout', 'stderr']:
-                        (inlist, retval) = server.cat({'path'
-                                : ['job_output/%s/%s.%s' % (job_id,
-                                job_id, name)]})
+                        (inlist, retval) = server.cat({
+                            'path': ['job_output/%s/%s.%s' % (job_id,
+                                                              job_id, name)]})
 
                         # print "DEBUG: %s\n%s" % (inlist, retval)
 
                         for entry in inlist:
                             if 'file_output' == entry['object_type']\
-                                 and entry.has_key('lines'):
+                                    and entry.has_key('lines'):
                                 output_lines = entry['lines']
                                 print '''job %s contents:
 %s
@@ -504,4 +508,3 @@ ANY
     # (inlist, retval) = server.liveio({"action": "send", "job_id": job_id_list})
 
     # print inlist
-

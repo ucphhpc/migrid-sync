@@ -52,12 +52,13 @@ import sys
 import paramiko
 
 
-### Global configuration ###
+# Global configuration ###
 
 server_fqdn = 'dk-sid.migrid.org'
 server_port = 22
 # This is the current migrid.org key - but we default to auto for flexibility
-#server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSmsGNpTnmOhIhLk+RtOxE+YL+rP77mbJ7os0JZpiId1U2jHkNqNEBr8DpmtkAyWn8DvJf4GtLkykVxysnBqj0fnI4nTOJpYtNT/0cw2IKKf0j5zjRzTzB/Jh1rb5OQKad4U31P8Z4sEHFS3kk4r7Ls2C/Sm8adUMt1SDW4G7TqlSgsq97uWOlCYLb0x0BQNuvjurLZpQCCkz0GIFlGXOKkwEZrhcD8vmAzjRUEbv7YyEwNr442HOJ7DtG/3Q+Zwe0UPojOYackvCKX2itrBA5Ko5eENiOCYXxIXHoVRAbDgGwL8hHHGjpKvIA/yivSB0UP7uMKf4QWz3Ax9HQdQUR"
+# server_host_key = "ssh-rsa
+# AAAAB3NzaC1yc2EAAAADAQABAAABAQDSmsGNpTnmOhIhLk+RtOxE+YL+rP77mbJ7os0JZpiId1U2jHkNqNEBr8DpmtkAyWn8DvJf4GtLkykVxysnBqj0fnI4nTOJpYtNT/0cw2IKKf0j5zjRzTzB/Jh1rb5OQKad4U31P8Z4sEHFS3kk4r7Ls2C/Sm8adUMt1SDW4G7TqlSgsq97uWOlCYLb0x0BQNuvjurLZpQCCkz0GIFlGXOKkwEZrhcD8vmAzjRUEbv7YyEwNr442HOJ7DtG/3Q+Zwe0UPojOYackvCKX2itrBA5Ko5eENiOCYXxIXHoVRAbDgGwL8hHHGjpKvIA/yivSB0UP7uMKf4QWz3Ax9HQdQUR"
 server_host_key = 'AUTO'
 known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
 user_auth = 'password'
@@ -67,7 +68,7 @@ host_key_policy = paramiko.RejectPolicy()
 data_compression = True
 # Uncomment the next line if don't want compressed transfers. This is a trade
 # off between CPU usage and throughput
-#data_compression = False
+# data_compression = False
 
 
 def test_file_access(sftp, test_path, dummy_file):
@@ -89,7 +90,7 @@ def test_file_access(sftp, test_path, dummy_file):
         print "chown %s:\n%s" % (test_path, path_chown)
     except Exception, exc:
         print "chown on %s failed: %s" % (test_path, exc)
-    try:        
+    try:
         sftp.put(dummy_file, test_path)
         print "put dummy into %s succeeded!" % test_path
     except Exception, exc:
@@ -115,24 +116,25 @@ def test_file_access(sftp, test_path, dummy_file):
     except Exception, exc:
         print "symlink %s failed: %s" % (test_path, exc)
     trunc_len = 4
-    try:        
+    try:
         path_fd = sftp.file(test_path)
         path_fd.truncate(trunc_len)
         path_fd.close()
         print "open+truncate %s succeeded!" % test_path
     except Exception, exc:
         print "open+truncate %s failed: %s" % (test_path, exc)
-    try:        
+    try:
         sftp.truncate(test_path, trunc_len)
         print "direct truncate %s succeeded!" % test_path
     except Exception, exc:
         print "direct truncate %s failed: %s" % (test_path, exc)
-    try:        
+    try:
         sftp.remove(test_path)
         print "remove %s succeeded!" % test_path
     except Exception, exc:
         print "remove %s failed: %s" % (test_path, exc)
-    
+
+
 def test_dir_access(sftp, test_path, dummy_file):
     """Run remote sftp access tests on directory in test_path using local
     dummy_file as input where needed.
@@ -157,19 +159,19 @@ def test_dir_access(sftp, test_path, dummy_file):
         print "symlink %s succeeded!" % test_path
     except Exception, exc:
         print "symlink %s failed: %s" % (test_path, exc)
-    try:        
+    try:
         sftp.put(dummy_file, os.path.join(test_path, "dummy"))
         print "upload to %s succeeded!" % test_path
     except Exception, exc:
         print "upload to %s failed: %s" % (test_path, exc)
-    try:        
+    try:
         sftp.rmdir(test_path)
         print "rmdir %s succeeded!" % test_path
     except Exception, exc:
         print "rmdir %s failed: %s" % (test_path, exc)
 
 
-### Initialize client session ###
+# Initialize client session ###
 
 if __name__ == "__main__":
 
@@ -219,12 +221,10 @@ Please verify it on your MiG ssh Settings page in case of failure."""
                 compress=data_compression)
     sftp = ssh.open_sftp()
 
-
-    ### Run a series of possibly restricted operations in MiG home ###
+    # Run a series of possibly restricted operations in MiG home ###
 
     # List, stat, read and write files in the remote home
     # most of which should be chrooted out or at least forced in-bounds
-
 
     file_targets = ['.htaccess', '../../../mig/server/MiGserver.conf',
                     '../vinter@nbi.ku.dk/welcome.txt',
@@ -236,8 +236,8 @@ Please verify it on your MiG ssh Settings page in case of failure."""
                    '../../vgrid_files_home/', '../../../../../etc/']
 
     # Uncomment to limit targets while developing/debugging
-    #file_targets = file_targets[:1]
-    #dir_targets = dir_targets[:1]
+    # file_targets = file_targets[:1]
+    # dir_targets = dir_targets[:1]
 
     print "= Running access tests against %s:%s as %s =" % (server_fqdn,
                                                             server_port,
@@ -245,21 +245,21 @@ Please verify it on your MiG ssh Settings page in case of failure."""
 
     dummy_path = 'this-is-a-migsftp-dummy-file.txt'
     dummy_text = "sample file\ncontents from client\n"
-    #print "create local dummy file in %s" % dummy_path
+    # print "create local dummy file in %s" % dummy_path
     dummy_fd = open(dummy_path, "w")
     dummy_fd.write(dummy_text)
     dummy_fd.close()
-    #path_stat = os.stat(dummy_path)
-    #print "local stat %s:\n%s" % (dummy_path, path_stat)
+    # path_stat = os.stat(dummy_path)
+    # print "local stat %s:\n%s" % (dummy_path, path_stat)
 
     print "= Running file access tests ="
     for target in file_targets:
         test_file_access(sftp, target, dummy_path)
-        
+
     print "= Running directory access tests ="
     for target in dir_targets:
         test_dir_access(sftp, target, dummy_path)
-        
+
     print "= Clean up before exit ="
 
     os.remove(dummy_path)

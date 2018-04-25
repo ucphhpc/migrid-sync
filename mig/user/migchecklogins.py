@@ -46,6 +46,7 @@ import os
 import subprocess
 import sys
 
+
 def usage(name='migchecklogins.py'):
     """Usage help"""
 
@@ -124,16 +125,16 @@ if '__main__' == __name__:
         sftp_cmd.append('-oPubkeyAuthentication=yes')
     if user_key is not None:
         sftp_cmd.append('-oIdentityFile=%s' % user_key)
-        
+
     # Add host keys to tmp file without asking
     sftp_cmd.append('-oStrictHostKeyChecking=no')
     sftp_cmd.append('-oUserKnownHostsFile=/tmp/dummy-known_hosts')
-    
+
     sftp_cmd.append(server_fqdn)
     print "Running %s" % sftp_cmd
     sftp_proc = subprocess.Popen(sftp_cmd, shell=False,
-                            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
     if user_pw:
         print "sending password"
         sftp_proc.communicate(input='%s' % user_pw)

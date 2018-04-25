@@ -51,12 +51,13 @@ import sys
 import paramiko
 
 
-### Global configuration ###
+# Global configuration ###
 
 server_fqdn = 'dk-sid.migrid.org'
 server_port = 22
 # This is the current migrid.org key - but we default to auto for flexibility
-#server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSmsGNpTnmOhIhLk+RtOxE+YL+rP77mbJ7os0JZpiId1U2jHkNqNEBr8DpmtkAyWn8DvJf4GtLkykVxysnBqj0fnI4nTOJpYtNT/0cw2IKKf0j5zjRzTzB/Jh1rb5OQKad4U31P8Z4sEHFS3kk4r7Ls2C/Sm8adUMt1SDW4G7TqlSgsq97uWOlCYLb0x0BQNuvjurLZpQCCkz0GIFlGXOKkwEZrhcD8vmAzjRUEbv7YyEwNr442HOJ7DtG/3Q+Zwe0UPojOYackvCKX2itrBA5Ko5eENiOCYXxIXHoVRAbDgGwL8hHHGjpKvIA/yivSB0UP7uMKf4QWz3Ax9HQdQUR"
+# server_host_key = "ssh-rsa
+# AAAAB3NzaC1yc2EAAAADAQABAAABAQDSmsGNpTnmOhIhLk+RtOxE+YL+rP77mbJ7os0JZpiId1U2jHkNqNEBr8DpmtkAyWn8DvJf4GtLkykVxysnBqj0fnI4nTOJpYtNT/0cw2IKKf0j5zjRzTzB/Jh1rb5OQKad4U31P8Z4sEHFS3kk4r7Ls2C/Sm8adUMt1SDW4G7TqlSgsq97uWOlCYLb0x0BQNuvjurLZpQCCkz0GIFlGXOKkwEZrhcD8vmAzjRUEbv7YyEwNr442HOJ7DtG/3Q+Zwe0UPojOYackvCKX2itrBA5Ko5eENiOCYXxIXHoVRAbDgGwL8hHHGjpKvIA/yivSB0UP7uMKf4QWz3Ax9HQdQUR"
 server_host_key = 'AUTO'
 known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
 user_auth = 'password'
@@ -66,10 +67,10 @@ host_key_policy = paramiko.RejectPolicy()
 data_compression = True
 # Uncomment the next line if don't want compressed transfers. This is a trade
 # off between CPU usage and throughput
-#data_compression = False
+# data_compression = False
 
 
-### Initialize client session ###
+# Initialize client session ###
 
 if __name__ == "__main__":
 
@@ -119,8 +120,7 @@ Please verify it on your MiG ssh Settings page in case of failure."""
                 compress=data_compression)
     sftp = ssh.open_sftp()
 
-
-    ### Sample actions on your MiG home directory ###
+    # Sample actions on your MiG home directory ###
 
     # List and stat files in the remote .ssh dir which should always be there
 
@@ -167,7 +167,7 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     print "truncate handle %s to %db" % (dummy, trunc_len)
     attr = sftp.stat(dummy)
     print "current size is %db" % attr.st_size
-    dummy_fd = sftp.file(dummy, 'r+b')    
+    dummy_fd = sftp.file(dummy, 'r+b')
     dummy_fd.truncate(trunc_len)
     dummy_fd.close()
     attr = sftp.stat(dummy)
@@ -175,7 +175,7 @@ Please verify it on your MiG ssh Settings page in case of failure."""
                                              (attr.st_size == trunc_len))
     trunc_len = 4
     print "truncate path %s to %db" % (dummy, trunc_len)
-    attr = sftp.stat(dummy)    
+    attr = sftp.stat(dummy)
     print "current size is %db" % attr.st_size
     sftp.truncate(dummy, trunc_len)
     attr = sftp.stat(dummy)
@@ -184,7 +184,7 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     print "delete dummy in %s" % dummy
     os.remove(dummy)
 
-    ### Clean up before exit ###
+    # Clean up before exit ###
 
     sftp.close()
     ssh.close()
