@@ -265,6 +265,9 @@ WARNING: you probably have to use either different fqdn or port settings for
 cert, oid and sid based https!
 """
 
+    # Paraview and Jupyter require websockets proxy - enable conditionally
+    user_dict['__WEBSOCKETS_COMMENTED__'] = '#'
+
     if jupyter_url:
         user_dict['__JUPYTER_WEB_SOCKET__'] = jupyter_url.replace("https://","")\
             .replace("http://","").replace("www.","")
@@ -391,6 +394,8 @@ cert, oid and sid based https!
 
     if user_dict['__ENABLE_JUPYTER__'].lower() == 'true':
         user_dict['__JUPYTER_COMMENTED__'] = ''
+        # Jupyter requires websockets proxy
+        user_dict['__WEBSOCKETS_COMMENTED__'] = ''
     else:
         user_dict['__JUPYTER_COMMENTED__'] = '#'
 
@@ -403,6 +408,8 @@ cert, oid and sid based https!
     # Enable Paraview integration only if explicitly requested
     if user_dict['__ENABLE_PREVIEW__'].lower() == 'true':
         user_dict['__PREVIEW_COMMENTED__'] = ''
+        # Paraview requires websockets proxy
+        user_dict['__WEBSOCKETS_COMMENTED__'] = ''
     else:
         user_dict['__PREVIEW_COMMENTED__'] = '#'
 
