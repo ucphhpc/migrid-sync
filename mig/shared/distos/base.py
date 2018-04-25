@@ -248,7 +248,7 @@ def lstat(path):
     return stat(path, _flags='')
 
 
-def makedirs(path, mode=0777):
+def makedirs(path, mode=0775):
     """remote version of operation with same name"""
 
     # TODO: this trial and error is very suboptimal! move to server
@@ -297,7 +297,7 @@ def makedirs(path, mode=0777):
     mkdir(path, mode)
 
 
-def mkdir(path, mode=0777):
+def mkdir(path, mode=0775):
     """remote version of operation with same name"""
 
     errors = []

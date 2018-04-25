@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -334,7 +334,10 @@ certificate that is still valid."""
     css_path = os.path.join(home_dir, default_css_filename)
     required_dirs = (settings_dir, cache_dir, mrsl_dir, pending_dir, ssh_dir,
                      davs_dir, ftps_dir)
-            
+
+    # Make sure we set permissions tight enough for e.g. ssh auth keys to work
+    os.umask(022)
+    
     if not renew:
         if verbose:
             print 'Creating dirs and files for new user: %s' % client_id

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - combined text/mrsl writer and file upload
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -348,7 +348,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             if not os.path.isdir(os.path.dirname(local_filename)):
                 try:
-                    os.makedirs(os.path.dirname(local_filename), 0777)
+                    os.makedirs(os.path.dirname(local_filename), 0775)
                 except Exception:
                     fileuploadobj['message'] = \
                         {'object_type': 'error_text',

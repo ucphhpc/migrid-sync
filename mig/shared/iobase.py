@@ -229,7 +229,7 @@ def lstat(path, location=DISTRIBUTED):
     return os_lib.lstat(path)
 
 
-def mkdir(path, mode=0777, location=DISTRIBUTED):
+def mkdir(path, mode=0775, location=DISTRIBUTED):
     if DISTRIBUTED == location:
         os_lib = distos
     elif LOCAL == location:
@@ -239,7 +239,7 @@ def mkdir(path, mode=0777, location=DISTRIBUTED):
     return os_lib.mkdir(path, mode)
 
 
-def makedirs(path, mode=0777, location=DISTRIBUTED):
+def makedirs(path, mode=0775, location=DISTRIBUTED):
     if DISTRIBUTED == location:
         os_lib = distos
     elif LOCAL == location:
