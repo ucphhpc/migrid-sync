@@ -678,6 +678,7 @@ def valid_user_path_name(
     """Wrap valid_user_path and valid_path name checks in one to check both
     destination dir and filename characters. Returns error using safe_path if
     validation fails.
+    NOTE: path MUST already be abs-expanded for valid_user_path to succeed.
     """
 
     (status, msg) = (True, '')

@@ -46,6 +46,7 @@ from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
      html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
+from shared.parseflags import quiet
 from shared.pwhash import make_digest
 from shared.transferfunctions import build_transferitem_object, \
      build_keyitem_object, load_data_transfers, create_data_transfer, \
@@ -240,6 +241,9 @@ def main(client_id, user_arguments_dict):
         // Proceed with submit
         return true;
     }
+    function doSubmit() {
+        $("#submit-request-transfer").click();
+    }
     function enableLogin(method) {
         $("#anonymous_choice").removeAttr("checked");
         $("#userpassword_choice").removeAttr("checked");
@@ -428,8 +432,23 @@ else, so the public key can be inserted in your authorized_keys file as:
             key_note = '''No keys available - you can add a key for use in
 transfers below.'''
 
-        import_checked, export_checked, scroll_to_create = 'checked', '', ''
+        if action.endswith('import'):
+            transfer_action = 'import'
+        elif action.endswith('export'):
+            transfer_action = 'export'
+        else:
+            transfer_action = 'unknown'
+
+        import_checked, export_checked = 'checked', ''
+        toggle_quiet, scroll_to_create = '', ''
         if action in ['fillimport', 'fillexport']:
+            if quiet(flags):
+                toggle_quiet = '''
+<script>
+ $("#wrap-tabs").hide();
+ $("#quiet-mode-content").show();
+</script>
+'''
             scroll_to_create = '''
 <script>
  $("html, body").animate({
@@ -442,16 +461,19 @@ transfers below.'''
             elif action == 'fillexport':
                 export_checked = 'checked'
                 import_checked = ''
-                
+
         fill_helpers= {'import_checked': import_checked, 'export_checked':
                        export_checked, 'anon_checked': anon_checked,
                        'pw_checked': pw_checked, 'key_checked': key_checked,
                        'transfer_id': transfer_id, 'protocol': protocol,
                        'fqdn': fqdn, 'port': port, 'username': username,
                        'password': password, 'key_id': key_id, 
+                       'transfer_src_string': ', '.join(src_list),
                        'transfer_src': src_list, 'transfer_dst': dst,
                        'exclude': exclude_list, 'compress': use_compress,
-                       'notify': notify, 'scroll_to_create': scroll_to_create,
+                       'notify': notify, 'toggle_quiet': toggle_quiet,
+                       'scroll_to_create': scroll_to_create,
+                       'transfer_action': transfer_action,
                        'form_method': form_method, 'csrf_field': csrf_field,
                        'csrf_limit': csrf_limit, 'target_op': target_op,
                        'csrf_token': csrf_token}
@@ -459,12 +481,22 @@ transfers below.'''
         # Make page with manage transfers tab and manage keys tab
 
         output_objects.append({'object_type': 'html_form', 'text':  '''
+    <div id="quiet-mode-content" class="hidden">
+        <p>
+        Accept data %(transfer_action)s of %(transfer_src_string)s from
+        %(protocol)s://%(fqdn)s:%(port)s/ into %(transfer_dst)s ?
+        </p>
+        <p>
+            <input type=button onClick="doSubmit();"
+            value="Accept %(transfer_action)s" />
+        </p>
+    </div>
     <div id="wrap-tabs" class="datatransfer-tabs">
 <ul>
 <li><a href="#transfer-tab">Manage Data Transfers</a></li>
 <li><a href="#keys-tab">Manage Transfer Keys</a></li>
 </ul>
-'''})
+''' % fill_helpers})
 
         # Display external transfers, log and form to add new ones
     
@@ -614,7 +646,7 @@ login with key
 </td></tr>
 <tr><td>
 <span>
-<input type=submit value="Request transfer" />
+<input id="submit-request-transfer" type=submit value="Request transfer" />
 <input type=reset value="Clear" />
 </span>
 </td></tr>
@@ -624,6 +656,7 @@ login with key
 </td>
 </tr>
 </table>
+%(toggle_quiet)s
 %(scroll_to_create)s
 '''
         output_objects.append({'object_type': 'html_form', 'text'

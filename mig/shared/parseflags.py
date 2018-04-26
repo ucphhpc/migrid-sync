@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# parseflags - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# parseflags - helper to parse and interpret flags variable strings
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -78,6 +78,12 @@ def file_info(flags, letter='f'):
 
 def parents(flags, letter='p'):
     """Verify if flags contain the parents flag"""
+
+    return contains_letter(flags, letter)
+
+
+def quiet(flags, letter='q'):
+    """Verify if flags contain the quiet flag"""
 
     return contains_letter(flags, letter)
 
