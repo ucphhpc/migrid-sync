@@ -243,6 +243,8 @@ def main(client_id, user_arguments_dict):
     # sftp session path
     link_home = configuration.sessid_to_jupyter_mount_link_home
 
+    user_home_dir = os.path.join(configuration.user_home, client_dir)
+
     # Preparing prerequisites
     if not os.path.exists(mnt_path):
         os.makedirs(mnt_path)
@@ -253,6 +255,19 @@ def main(client_id, user_arguments_dict):
     if configuration.site_enable_sftp_subsys:
         if not os.path.exists(subsys_path):
             os.makedirs(subsys_path)
+
+    # Check for correct permissions, 0755
+    no_g_write_dirs = [os.path.dirname(os.path.dirname(configuration.user_home)),
+                     configuration.user_home, user_home_dir]
+    for u_dir in no_g_write_dirs:
+        # check group flag
+        if os.stat(u_dir).st_mode & 022:
+            old_perm = oct(os.stat(u_dir).st_mode & 0777)
+            logger.info("User: %s directory %s"
+                        " had invalid permissions %s,"
+                        " resetting to 755" % (
+                         client_id, u_dir, old_perm))
+            os.chmod(u_dir, 0755)
 
     url_mount = configuration.jupyter_url + '/mount'
 
@@ -379,9 +394,8 @@ def main(client_id, user_arguments_dict):
     make_symlink(linkdest_new_jupyter_mount, linkloc_new_jupyter_mount, logger)
 
     # Link userhome
-    linkdest_user_home = os.path.join(configuration.user_home, client_dir)
     linkloc_user_home = os.path.join(link_home, sessionid)
-    make_symlink(linkdest_user_home, linkloc_user_home, logger)
+    make_symlink(user_home_dir, linkloc_user_home, logger)
 
     return jupyter_host(configuration, output_objects, remote_user)
 

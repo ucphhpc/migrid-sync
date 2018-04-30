@@ -123,6 +123,9 @@ def main(client_id, user_arguments_dict):
     compress = accepted['compress'][-1]
     flags = accepted['flags']
 
+    logger.info('DEBUG: datatransfer %s from %s: %s' % (action, client_id,
+                                                        accepted))
+
     anon_checked, pw_checked, key_checked = '', '', ''
     if username:
         if key_id:
