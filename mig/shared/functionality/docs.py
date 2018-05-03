@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # docs - online documentation generator
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -316,10 +316,15 @@ Web interfaces are served with the Apache HTTP Server:"""})
     openssl_dep = False
     if configuration.site_enable_vmachines:
         openssl_dep = True
-    if configuration.site_enable_sftp:
+    if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
         password_dep = True
+        if configuration.site_enable_sftp_subsys:
+            sftp_provider = "OpenSSH and Paramiko"
+        else:
+            sftp_provider = "Paramiko"
         output_objects.append({'object_type': 'text', 'text' :
-                               "SFTP access is delivered using Paramiko:"})
+                               "SFTP access is delivered using %s:" % \
+                               sftp_provider})
         output_objects.append({'object_type': 'link', 
                                'destination' : 'https://pypi.python.org/pypi/paramiko',
                                'class': 'urllink iconspace',

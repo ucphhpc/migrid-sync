@@ -161,7 +161,7 @@ $(document).ready(function() {
         valid_topics.append('widgets')
     if configuration.arc_clusters:
         valid_topics.append('arc')
-    if configuration.site_enable_sftp:
+    if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
         valid_topics.append('sftp')
     if configuration.site_enable_davs:
         valid_topics.append('webdavs')
@@ -1489,7 +1489,8 @@ value="%(default_authpassword)s" />
 
         enabled_map = {
             'davs': configuration.site_enable_davs,
-            'sftp': configuration.site_enable_sftp,
+            'sftp': configuration.site_enable_sftp or \
+                    configuration.site_enable_sftp_subsys,
             'ftps': configuration.site_enable_ftps
             }
         username_map = {
