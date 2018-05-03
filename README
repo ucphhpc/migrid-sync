@@ -356,7 +356,8 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
                    --public_port=80 --mig_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
-                   --enable_openid=False --enable_wsgi=True --enable_sftp=True \
+                   --enable_openid=False --enable_wsgi=True \
+                   --enable_sftp=False --enable_sftp_subsys=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
@@ -395,7 +396,7 @@ vhost-specific certificates from LetsEncrypt:
                    --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=True --enable_wsgi=True \
-                   --enable_sftp=True --enable_sftp_subsys=True \
+                   --enable_sftp=False --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --enable_crontab=True --enable_jobs=True \
@@ -440,7 +441,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --mig_oid_provider=https://ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=True --enable_wsgi=True \
-                   --enable_sftp=True --enable_sftp_subsys=True \
+                   --enable_sftp=False --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_duplicati=True --enable_hsts=True \
                    --enable_sandboxes=False --enable_vmachines=False \
@@ -456,8 +457,55 @@ optimized SFTP, Seafile integration and OpenID login:
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=erda-ucph-science --wsgi_procs=25 
                    
+and the same with added Jupyter integration:
+./generateconfs.py --source=. --destination=generated-confs \
+                   --destination_suffix="_svn$(svnversion -n ~/)" \
+                   --base_fqdn=erda.dk \
+                   --public_fqdn=www.erda.dk \
+                   --mig_cert_fqdn= \
+                   --ext_cert_fqdn=cert.erda.dk \
+                   --mig_oid_fqdn=ext.erda.dk \
+                   --ext_oid_fqdn=erda.dk \
+                   --sid_fqdn=sid.erda.dk \
+                   --io_fqdn=io.erda.dk \
+                   --user=mig --group=mig \
+                   --apache_version=2.4 \
+                   --apache_etc=/etc/httpd \
+                   --apache_run=/var/run/httpd \
+                   --apache_lock=/var/lock/subsys/httpd \
+                   --apache_log=/var/log/httpd \
+                   --mig_code=/home/mig/mig \
+                   --mig_state=/home/mig/state \
+                   --mig_certs=/etc/httpd/MiG-certificates \
+                   --hg_path=/usr/bin/hg \
+                   --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
+                   --trac_admin_path='' --trac_ini_path='' \
+                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --ext_oid_port=443 --sid_port=443 \
+                   --mig_oid_provider=https://ext.erda.dk/openid/ \
+                   --ext_oid_provider=https://openid.ku.dk/ \
+                   --enable_openid=True --enable_wsgi=True \
+                   --enable_sftp=False --enable_sftp_subsys=True \
+                   --enable_davs=True --enable_ftps=True --enable_seafile=True \
+                   --enable_duplicati=True --enable_hsts=True \
+                   --enable_sandboxes=False --enable_vmachines=False \
+                   --enable_crontab=True --enable_jobs=False \
+                   --enable_events=True --enable_freeze=True \
+                   --enable_jupyter=True \
+                   --enable_vhost_certs=True --enable_verify_certs=True \
+                   --jupyter_url=http://dag001.science \
+                   --jupyter_base_url='/dag' \
+                   --user_clause=User --group_clause=Group \
+                   --listen_clause='#Listen' --serveralias_clause='#ServerAlias' \
+                   --alias_field=email --daemon_keycert=~/certs/combined.pem \
+                   --signup_methods="extoid migoid extcert" \
+                   --login_methods="extoid migoid extcert" \
+                   --daemon_pubkey=~/certs/combined.pub \
+                   --distro=centos --landing_page='/wsgi-bin/fileman.py' \
+                   --skin=erda-ucph-science --wsgi_procs=25 
+
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
-optimized SFTP, job execution, Jupyter integration and OpenID login:
+optimized SFTP, job execution, Jupyter integration, previews and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=idmc.dk \
@@ -485,7 +533,7 @@ optimized SFTP, job execution, Jupyter integration and OpenID login:
                    --mig_oid_provider=https://ext.idmc.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=True --enable_wsgi=True \
-                   --enable_sftp=True --enable_sftp_subsys=True \
+                   --enable_sftp=False --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True --enable_jupyter=True \
                    --enable_sharelinks=True --enable_transfers=True \
                    --enable_imnotify=False --enable_seafile=False \
@@ -495,7 +543,7 @@ optimized SFTP, job execution, Jupyter integration and OpenID login:
                    --enable_events=True --enable_freeze=False \
                    --enable_vhost_certs=True \
                    --enable_verify_certs=True --enable_hsts=True \
-                   --jupyter_url=http://dag000.science \
+                   --jupyter_url=http://dag001.science \
                    --jupyter_base_url='/dag' \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' --serveralias_clause='#ServerAlias' \
