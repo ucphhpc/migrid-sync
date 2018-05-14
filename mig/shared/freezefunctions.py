@@ -92,7 +92,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
     rather than the full dictionary of individual file details.
     """
     freeze_id = freeze_dict['ID']
-    flavor = freeze_dict['FLAVOR']
+    flavor = freeze_dict.get('FLAVOR', 'freeze')
     if summary:
         freeze_files = len(freeze_dict.get('FILES', []))
     else:
