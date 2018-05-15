@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # edituser - Edit a MiG user
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -136,10 +136,10 @@ if '__main__' == __name__:
 
     # Pass optional role as well
     if role:
-        user_dict['role'] = role        
+        user_dict['role'] = role
 
     # Remove empty value fields
-    
+
     for (key, val) in user_dict.items():
         if not val:
             del user_dict[key]

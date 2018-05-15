@@ -115,6 +115,15 @@
 		              interpreter-mode-alist))
 (autoload 'python-mode "python-mode" "Python editing mode." t)
 
+; Automatically beautify code on save with autopep8
+; Preparations are described at https://github.com/paetzke/py-autopep8.el
+;   pip install autopep8
+;   wget https://raw.githubusercontent.com/paetzke/py-autopep8.el/master/py-autopep8.el \
+;           -O ~/.emacs.d/site-lisp/py-autopep8.el
+;   
+(require 'py-autopep8)
+(add-hook 'python-mode-hook 'py-autopep8-enable-on-save)
+
 ;; Prefer espresso mode from  
 ;; http://download.savannah.gnu.org/releases-noredirect/espresso/espresso.el
 ;; but fall back to built-in generic-x mode if javascript mode is unavailable
