@@ -27,7 +27,6 @@
 
 """Common HTTPS client functions for e.g. access control"""
 
-import os
 import socket
 from urllib import urlencode
 from urlparse import parse_qsl
@@ -46,6 +45,7 @@ client_id_field = 'SSL_CLIENT_S_DN'
 # to native user
 
 client_login_field = 'REMOTE_USER'
+
 
 def pop_openid_query_fields(environ):
     """Extract and remove any additional ID fields from the HTTP query string
@@ -66,10 +66,11 @@ def pop_openid_query_fields(environ):
         else:
             mangled_vars.append((key, val))
     mangled_query = urlencode(mangled_vars)
-    mangled_request = original_request.replace(original_query, mangled_query) 
+    mangled_request = original_request.replace(original_query, mangled_query)
     environ['REQUEST_URI'] = mangled_request
     environ['QUERY_STRING'] = mangled_query
     return openid_vars
+
 
 def unescape(esc_str):
     """Remove backslash escapes from a string"""
@@ -77,6 +78,7 @@ def unescape(esc_str):
         return esc_str.decode('string_escape')
     except:
         return esc_str
+
 
 def extract_client_cert(configuration, environ):
     """Extract unique user cert ID from SSL cert value in environ.
@@ -86,11 +88,12 @@ def extract_client_cert(configuration, environ):
 
     # We accept utf8 chars (e.g. '\xc3') in client_id_field but they get
     # auto backslash-escaped in environ so we need to unescape first
-    
+
     return unescape(environ.get(client_id_field, '')).strip()
 
+
 def extract_client_openid(configuration, environ, lookup_dn=True):
-    """Extract unique user credentials from REMOTE_USER value in provided 
+    """Extract unique user credentials from REMOTE_USER value in provided
     environment.
     NOTE: We must provide the environment as os.environ may be from the time
     of load, which is not the right one for wsgi scripts.
@@ -105,7 +108,8 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
     _logger.debug('client_login_field: %s' % client_login_field)
     login = unescape(environ.get(client_login_field, '')).strip()
     _logger.debug('login: %s' % login)
-    _logger.debug('configuration.user_mig_oid_provider: %s' % len(configuration.user_mig_oid_provider))
+    _logger.debug('configuration.user_mig_oid_provider: %s'
+                  % len(configuration.user_mig_oid_provider))
     if not login:
         return (oid_db, "")
     if configuration.user_mig_oid_provider and \
@@ -115,17 +119,19 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
             login.startswith(configuration.user_ext_oid_provider):
         oid_db = auth_openid_ext_db
     else:
-        _logger.warning("could not detect openid provider db for %s: %s" % \
-                       (login, environ))
+        _logger.warning("could not detect openid provider db for %s: %s"
+                        % (login, environ))
     _logger.debug('oid_db: %s' % oid_db)
     if lookup_dn:
         # Let backend do user_check
         login = get_openid_user_dn(configuration, login, user_check=False)
 
         if configuration.site_enable_gdp:
-            login = get_project_user_dn(configuration, environ["REQUEST_URI"], login)
+            login = get_project_user_dn(
+                configuration, environ["REQUEST_URI"], login, 'https')
 
     return (oid_db, login)
+
 
 def extract_client_id(configuration, environ):
     """Extract unique user cert ID from HTTPS or fall back to try REMOTE_USER
@@ -136,11 +142,12 @@ def extract_client_id(configuration, environ):
     distinguished_name = extract_client_cert(configuration, environ)
     if configuration.user_openid_providers and not distinguished_name:
         if environ["REQUEST_URI"].find('oidaccountaction.py') == -1 and \
-               environ["REQUEST_URI"].find('autocreate.py') == -1:
+                environ["REQUEST_URI"].find('autocreate.py') == -1:
             # Throw away any extra ID fields from environment
             pop_openid_query_fields(environ)
         (_, distinguished_name) = extract_client_openid(configuration, environ)
     return distinguished_name
+
 
 def check_source_ip(remote_ip, unique_resource_name, proxy_fqdn=None):
     """Check if remote_ip matches any IP available for the FQDN from
@@ -161,5 +168,5 @@ def check_source_ip(remote_ip, unique_resource_name, proxy_fqdn=None):
             pass
 
     if not remote_ip in res_ip_list + proxy_ip_list:
-        raise ValueError("Source IP address %s not in resource alias IPs %s" \
+        raise ValueError("Source IP address %s not in resource alias IPs %s"
                          % (remote_ip, ', '.join(res_ip_list + proxy_ip_list)))

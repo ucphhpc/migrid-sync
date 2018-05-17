@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cp - copy file between user home locations
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -50,7 +50,7 @@ def signature():
         'src': REJECT_UNSET,
         'dst': REJECT_UNSET,
         'iosessionid': [''],
-        }
+    }
     return ['', defaults]
 
 
@@ -71,7 +71,7 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -92,11 +92,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     if not client_id:
         base_dir = os.path.realpath(configuration.webserver_home
-                                     + os.sep + iosessionid) + os.sep
+                                    + os.sep + iosessionid) + os.sep
 
     status = returnvalues.OK
 
@@ -137,12 +137,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
              : "Invalid destination (%s expands to an illegal path)" % dst})
         return (output_objects, returnvalues.CLIENT_ERROR)
     if not check_write_access(abs_dest, parent_dir=True):
-        logger.warning('%s called without write access: %s' % \
-                       (op_name, abs_dest))
+        logger.warning('%s called without write access: %s'
+                       % (op_name, abs_dest))
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'cannot copy to "%s": inside a read-only location!' % \
-             relative_dest})
+             'cannot copy to "%s": inside a read-only location!'
+              % relative_dest})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for pattern in src_list:
@@ -162,22 +162,22 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:
             relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
-                output_objects.append({'object_type': 'file', 'name'
-                        : relative_path})
+                output_objects.append(
+                    {'object_type': 'file', 'name': relative_path})
 
             # Prevent vgrid share copy which would create read-only dot dirs
 
             if os.path.islink(abs_path):
                 output_objects.append(
                     {'object_type': 'warning', 'text': """You're not allowed to
-copy entire special folders like %s shared folders!""" % \
-                     configuration.site_vgrid_label})
+copy entire special folders like %s shared folders!""" 
+                    % configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
@@ -197,24 +197,24 @@ copy entire special folders like %s shared folders!""" % \
                 output_objects.append({'object_type': 'warning', 'text'
                         : 'skipping directory src %s!' % relative_path})
                 continue
-            
+
             # If destination is a directory the src should be copied there
 
             abs_target = abs_dest
             if os.path.isdir(abs_target):
                 abs_target = os.path.join(abs_target,
-                                           os.path.basename(abs_path))
+                                          os.path.basename(abs_path))
 
             if os.path.abspath(abs_path) == os.path.abspath(abs_target):
-                logger.warning('%s tried to %s %s to itself! (%s)' % \
-                               (client_id, op_name, abs_path, pattern))
+                logger.warning('%s tried to %s %s to itself! (%s)'
+                               % (client_id, op_name, abs_path, pattern))
                 output_objects.append(
                     {'object_type': 'warning', 'text'
                      : "Cannot copy '%s' to self!" % relative_path})
                 status = returnvalues.CLIENT_ERROR
                 continue
             if os.path.isdir(abs_path) and \
-                   abs_target.startswith(abs_path + os.sep):
+                    abs_target.startswith(abs_path + os.sep):
                 logger.warning('%s tried to %s %s to itself! (%s)'
                                % (client_id, op_name, abs_path, pattern))
                 output_objects.append(
@@ -222,7 +222,7 @@ copy entire special folders like %s shared folders!""" % \
                      : "Cannot copy '%s' to (sub) self!" % relative_path})
                 status = returnvalues.CLIENT_ERROR
                 continue
-            
+
             try:
                 if os.path.isdir(abs_path):
                     shutil.copytree(abs_path, abs_target)
@@ -231,18 +231,16 @@ copy entire special folders like %s shared folders!""" % \
                 logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
                 if configuration.site_enable_gdp:
                     msg = "'%s' -> '%s'" % (relative_path, relative_dest)
-                    project_log(configuration, client_id, 'copied',
-                                msg, client_addr=environ['REMOTE_ADDR'])
+                    project_log(configuration, 'https', client_id, 'copied',
+                                msg, user_addr=environ['REMOTE_ADDR'])
 
             except Exception, exc:
                 output_objects.append(
                     {'object_type': 'error_text',
-                     'text': "%s: failed on '%s' to '%s'" \
+                     'text': "%s: failed on '%s' to '%s'"
                      % (op_name, relative_path, relative_dest)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR
 
     return (output_objects, status)
-
-

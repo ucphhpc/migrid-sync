@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cat - [insert a few words of module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -65,7 +65,7 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -77,20 +77,19 @@ def main(client_id, user_arguments_dict, environ=None):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
-
+            output_objects.append({'object_type': 'text',
+                                   'text': '%s using flag: %s'
+                                   % (op_name, flag)})
     if dst:
         if not safe_handler(configuration, 'post', op_name, client_id,
                             get_csrf_limit(configuration), accepted):
             output_objects.append(
                 {'object_type': 'error_text', 'text': '''Only accepting
-                CSRF-filtered POST requests to prevent unintended updates'''
+CSRF-filtered POST requests to prevent unintended updates'''
                  })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -102,10 +101,10 @@ def main(client_id, user_arguments_dict, environ=None):
             logger.warning('%s tried to %s into restricted path %s ! (%s)'
                            % (client_id, op_name, abs_dest, dst))
             output_objects.append({'object_type': 'error_text',
-                                   'text': "invalid destination: '%s'" % \
-                                   dst})
+                                   'text': "invalid destination: '%s'"
+                                   % dst})
             return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
     for pattern in patterns:
 
         # Check directory traversal attempts before actual handling to avoid
@@ -133,7 +132,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:
@@ -150,15 +149,16 @@ def main(client_id, user_arguments_dict, environ=None):
 
                 if configuration.site_enable_gdp:
                     msg = "'%s'" % relative_path
-                    project_log(configuration, client_id, 'accessed',
-                                msg, client_addr=environ['REMOTE_ADDR'])
+                    project_log(configuration, 'https', client_id, 'accessed',
+                                msg, user_addr=environ['REMOTE_ADDR'])
 
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, exc)})
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                       'text': "%s: '%s': %s"
+                                        % (op_name, relative_path, exc)})
+                logger.error("%s: failed on '%s': %s"
+                             % (op_name, relative_path, exc))
+
                 status = returnvalues.SYSTEM_ERROR
                 continue
             if dst:
@@ -166,17 +166,18 @@ def main(client_id, user_arguments_dict, environ=None):
                     out_fd = open(abs_dest, dst_mode)
                     out_fd.writelines(output_lines)
                     out_fd.close()
-                    logger.info('%s %s %s done' % (op_name, abs_path, abs_dest))
+                    logger.info('%s %s %s done'
+                                % (op_name, abs_path, abs_dest))
                 except Exception, exc:
                     output_objects.append({'object_type': 'error_text',
                                            'text': "write failed: '%s'" % exc})
-                    logger.error("%s: write failed on '%s': %s" % (op_name,
-                                                               abs_dest, exc))
+                    logger.error("%s: write failed on '%s': %s"
+                                 % (op_name, abs_dest, exc))
                     status = returnvalues.SYSTEM_ERROR
                     continue
                 output_objects.append({'object_type': 'text',
-                        'text': "wrote %s to %s" % (relative_path,
-                                                    relative_dst)})
+                                       'text': "wrote %s to %s"
+                                       % (relative_path, relative_dst)})
                 # Prevent truncate after first write
                 dst_mode = "ab+"
             else:
@@ -199,9 +200,7 @@ def main(client_id, user_arguments_dict, environ=None):
                         output_objects.append(
                             {'object_type': 'start', 'headers':
                              [('Content-Disposition',
-                               'attachment; filename="%s";' % \
-                               os.path.basename(abs_path))]})
-            
+                               'attachment; filename="%s";'
+                               % os.path.basename(abs_path))]})
+
     return (output_objects, status)
-
-

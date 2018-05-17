@@ -67,7 +67,7 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -87,7 +87,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     status = returnvalues.OK
 
@@ -98,8 +98,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # New destination?
 
         if not glob.glob(os.path.dirname(abs_dest)):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Illegal dst path provided!'})
+            output_objects.append(
+                {'object_type': 'error_text',
+                 'text': 'Illegal dst path provided!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
             dst_list = [abs_dest]
@@ -109,8 +110,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     dest = dst_list[-1]
     if len(dst_list) > 1:
         output_objects.append(
-            {'object_type': 'warning', 'text'
-             : 'dst (%s) matches multiple targets - using last: %s'
+            {'object_type': 'warning',
+             'text': 'dst (%s) matches multiple targets - using last: %s'
              % (dst, dest)})
 
     # IMPORTANT: path must be expanded to abs for proper chrooting
@@ -124,16 +125,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
         logger.warning('%s tried to %s to restricted path %s ! (%s)'
                        % (client_id, op_name, abs_dest, dst))
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : "Invalid path! (%s expands to an illegal path)" % dst})
+            {'object_type': 'error_text',
+             'text': "Invalid path! (%s expands to an illegal path)" % dst})
         return (output_objects, returnvalues.CLIENT_ERROR)
     if not check_write_access(abs_dest, parent_dir=True):
-        logger.warning('%s called without write access: %s' % \
-                       (op_name, abs_dest))
+        logger.warning('%s called without write access: %s'
+                       % (op_name, abs_dest))
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'cannot move to "%s": inside a read-only location!' % \
-             relative_dest})
+             'cannot move to "%s": inside a read-only location!'
+             % relative_dest})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for pattern in src_list:
@@ -152,22 +153,22 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # (allowed) match
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '%s: no such file or directory! %s'
+            output_objects.append({'object_type': 'error_text',
+                                   'text': '%s: no such file or directory! %s'
                                    % (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
 
         for abs_path in match:
             relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
-                output_objects.append({'object_type': 'file', 'name'
-                                       : relative_path})
+                output_objects.append(
+                    {'object_type': 'file', 'name': relative_path})
 
             if os.path.islink(abs_path):
                 output_objects.append(
                     {'object_type': 'warning', 'text': """You're not allowed to
-move entire special folders like %s shared folders!""" % \
-                     configuration.site_vgrid_label})
+move entire special folders like %s shared folders!"""
+                     % configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
@@ -179,14 +180,14 @@ move entire special folders like %s shared folders!""" % \
                      })
                 status = returnvalues.CLIENT_ERROR
                 continue
-            
+
             if not check_write_access(abs_path):
-                logger.warning('%s called without write access: %s' % \
-                               (op_name, abs_path))
+                logger.warning('%s called without write access: %s'
+                               % (op_name, abs_path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'cannot move "%s": inside a read-only location!' % \
-                     pattern})
+                     'cannot move "%s": inside a read-only location!'
+                     % pattern})
                 status = returnvalues.CLIENT_ERROR
                 continue
 
@@ -197,32 +198,30 @@ move entire special folders like %s shared folders!""" % \
             if os.path.isdir(abs_target):
                 if os.path.samefile(abs_target, abs_path):
                     output_objects.append(
-                        {'object_type': 'warning', 'text'
-                         : "Cannot move '%s' to a subdirectory of itself!" % \
-                         relative_path
+                        {'object_type': 'warning',
+                         'text': "Cannot move '%s' to a subdirectory of itself!"
+                         % relative_path
                          })
                     status = returnvalues.CLIENT_ERROR
                     continue
                 abs_target = os.path.join(abs_target,
-                                           os.path.basename(abs_path))
-            
+                                          os.path.basename(abs_path))
+
             try:
                 shutil.move(abs_path, abs_target)
                 logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
                 if configuration.site_enable_gdp:
                     msg = "'%s' -> '%s'" % (relative_path, relative_dest)
-                    project_log(configuration, client_id, 'moved',
-                                msg, client_addr=environ['REMOTE_ADDR'])
+                    project_log(configuration, 'https', client_id, 'moved',
+                                msg, user_addr=environ['REMOTE_ADDR'])
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, exc)})
+                                       'text': "%s: '%s': %s"
+                                       % (op_name, relative_path, exc)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
 
                 status = returnvalues.SYSTEM_ERROR
                 continue
 
     return (output_objects, status)
-
-

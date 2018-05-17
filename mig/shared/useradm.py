@@ -36,29 +36,29 @@ import sqlite3
 import sys
 
 from shared.base import client_id_dir, client_dir_id, client_alias, \
-     sandbox_resource, fill_user, fill_distinguished_name, extract_field
+    sandbox_resource, fill_user, fill_distinguished_name, extract_field
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
-     davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
-     settings_filename, profile_filename, default_css_filename, \
-     widgets_filename, seafile_ro_dirname, authkeys_filename, \
-     authpasswords_filename, authdigests_filename, cert_field_order
+    davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
+    settings_filename, profile_filename, default_css_filename, \
+    widgets_filename, seafile_ro_dirname, authkeys_filename, \
+    authpasswords_filename, authdigests_filename, cert_field_order
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
-     update_runtimeenv_owner
+    update_runtimeenv_owner
 from shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
-     make_scramble, check_scramble, unscramble_password, unscramble_digest, \
-     assure_password_strength
+    make_scramble, check_scramble, unscramble_password, unscramble_digest, \
+    assure_password_strength
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
 from shared.settings import update_settings, update_profile, update_widgets
 from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
-     vgrid_add_members, vgrid_remove_members
+    vgrid_add_members, vgrid_remove_members
 from shared.vgridaccess import get_resource_map, get_vgrid_map, \
-     refresh_user_map, refresh_resource_map, refresh_vgrid_map, VGRIDS, \
-     OWNERS, MEMBERS
+    refresh_user_map, refresh_resource_map, refresh_vgrid_map, VGRIDS, \
+    OWNERS, MEMBERS
 
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
@@ -73,6 +73,7 @@ ftps_authdigests = os.path.join(ftps_conf_dir, authdigests_filename)
 https_authkeys = ''
 https_authpasswords = user_db_filename
 https_authdigests = user_db_filename
+
 
 def init_user_adm():
     """Shared init function for all user administration scripts"""
@@ -122,12 +123,14 @@ def delete_dir(path, verbose=False):
         print 'removing: %s' % path
     shutil.rmtree(path)
 
+
 def rename_dir(src, dst, verbose=False):
     """Rename src to dst"""
 
     if verbose:
         print 'renaming: %s -> %s ' % (src, dst)
     shutil.move(src, dst)
+
 
 def remove_alias_link(username, user_home):
     """Remove user alias if it exists"""
@@ -140,6 +143,7 @@ def remove_alias_link(username, user_home):
         raise Exception('could not remove symlink: %s' % link_path)
     return True
 
+
 def create_alias_link(username, client_id, user_home):
     """Create alias link if missing"""
     client_dir = client_id_dir(client_id)
@@ -151,13 +155,14 @@ def create_alias_link(username, client_id, user_home):
         os.symlink(client_dir, link_path)
     except Exception, err:
         raise Exception('could not symlink alias %s : %s' % (link_path, err))
-    return True    
+    return True
 
 
 def create_seafile_mount_link(client_id, configuration):
     """Create link to fuse mounted seafile library for client_id"""
     client_dir = client_id_dir(client_id)
-    mount_link = os.path.join(configuration.user_home, client_dir, seafile_ro_dirname)
+    mount_link = os.path.join(configuration.user_home,
+                              client_dir, seafile_ro_dirname)
     user_alias = configuration.user_seafile_alias
     short_id = extract_field(client_id, user_alias)
     seafile_home = os.path.join(configuration.seafile_mount, short_id)
@@ -166,24 +171,26 @@ def create_seafile_mount_link(client_id, configuration):
         try:
             os.symlink(seafile_home, mount_link)
         except Exception, exc:
-            _logger.error("failed to link seafile mount %s to %s: %s" \
-                         % (seafile_home, mount_link, exc))
+            _logger.error("failed to link seafile mount %s to %s: %s"
+                          % (seafile_home, mount_link, exc))
             raise
+
 
 def remove_seafile_mount_link(client_id, configuration):
     """Remove link to fuse mounted seafile library for client_id"""
     client_dir = client_id_dir(client_id)
-    mount_link = os.path.join(configuration.user_home, client_dir, seafile_ro_dirname)
+    mount_link = os.path.join(configuration.user_home,
+                              client_dir, seafile_ro_dirname)
     _logger = configuration.logger
     if os.path.islink(mount_link):
         try:
             os.remove(mount_link)
         except Exception, exc:
-            _logger.error("failed to unlink seafile mount from %s: %s" \
-                         % (mount_link, exc))
+            _logger.error("failed to unlink seafile mount from %s: %s"
+                          % (mount_link, exc))
             raise
 
-    
+
 def create_user(
     user,
     conf_path,
@@ -192,7 +199,7 @@ def create_user(
     verbose=False,
     ask_renew=True,
     default_renew=False
-    ):
+):
     """Add user"""
 
     user_db = {}
@@ -227,16 +234,22 @@ def create_user(
 
         # Prevent alias clashes by preventing addition of new users with same
         # alias. We only allow renew of existing user.
-        if configuration.user_openid_providers and \
-               configuration.user_openid_alias:
-            user_aliases = dict([(key, val[configuration.user_openid_alias]) \
+
+        # TODO: If check is required for GDP then use get_short_id instead of
+        #       user[configuration.user_openid_alias]
+        #       val[configuration.user_openid_alias]
+
+        if not configuration.site_enable_gdp and \
+                configuration.user_openid_providers and \
+                configuration.user_openid_alias:
+            user_aliases = dict([(key, val[configuration.user_openid_alias])
                                  for (key, val) in user_db.items()])
             alias = user[configuration.user_openid_alias]
             if alias in user_aliases.values() and \
-                   user_aliases.get(client_id, None) != alias:
+                    user_aliases.get(client_id, None) != alias:
                 if verbose:
-                    print 'Attempting create_user with conflicting alias %s' % \
-                          alias
+                    print 'Attempting create_user with conflicting alias %s' \
+                          % alias
                 raise Exception(
                     'A conflicting user with alias %s already exists' % alias)
 
@@ -277,8 +290,8 @@ certificate that is still valid."""
                 updated_user = user_db[client_id]
                 for (key, val) in user.items():
                     if key in ('auth', 'openid_names') and \
-                           not isinstance(val, basestring) and \
-                           isinstance(val, list):
+                            not isinstance(val, basestring) and \
+                            isinstance(val, list):
                         val_list = updated_user.get(key, [])
                         val_list += [i for i in val if not i in val_list]
                         updated_user[key] = val_list
@@ -289,8 +302,8 @@ certificate that is still valid."""
             elif not force:
                 if verbose:
                     print 'Nothing more to do for existing user %s' % client_id
-                raise Exception('Nothing more to do for existing user %s' % \
-                                client_id)
+                raise Exception('Nothing more to do for existing user %s'
+                                % client_id)
 
     # Add optional OpenID usernames to user (pickle may include some already)
 
@@ -298,14 +311,20 @@ certificate that is still valid."""
     short_id = user.get('short_id', '')
     # For cert users short_id is the full DN so we should ignore then
     if short_id and short_id != client_id and short_id.find(' ') == -1 and \
-           not short_id in openid_names:
+            not short_id in openid_names:
         openid_names.append(short_id)
     add_names = []
-    if configuration.user_openid_providers and configuration.user_openid_alias:
+
+    # TODO: If implicit append of GDP openid alias' are required then use
+    #       get_short_id instead of user[configuration.user_openid_alias]
+
+    if not configuration.site_enable_gdp and \
+            configuration.user_openid_providers and \
+            configuration.user_openid_alias:
         add_names.append(user[configuration.user_openid_alias])
-    user['openid_names'] = dict([(name, 0) for name in add_names + \
+    user['openid_names'] = dict([(name, 0) for name in add_names +
                                  openid_names]).keys()
-    
+
     try:
         user_db[client_id] = user
         dump(user_db, db_path)
@@ -314,8 +333,8 @@ certificate that is still valid."""
                   % client_id
     except Exception, err:
         if not force:
-            raise Exception('Failed to add %s to user DB: %s' % \
-                            (client_id, err))
+            raise Exception('Failed to add %s to user DB: %s'
+                            % (client_id, err))
 
     home_dir = os.path.join(configuration.user_home, client_dir)
     settings_dir = os.path.join(configuration.user_settings, client_dir)
@@ -337,7 +356,7 @@ certificate that is still valid."""
 
     # Make sure we set permissions tight enough for e.g. ssh auth keys to work
     os.umask(022)
-    
+
     if not renew:
         if verbose:
             print 'Creating dirs and files for new user: %s' % client_id
@@ -345,15 +364,15 @@ certificate that is still valid."""
             os.mkdir(home_dir)
         except:
             if not force:
-                raise Exception('could not create home dir: %s' % \
-                                home_dir)
+                raise Exception('could not create home dir: %s'
+                                % home_dir)
         for dir_path in required_dirs:
             try:
                 os.mkdir(dir_path)
             except:
                 if not force:
-                    raise Exception('could not create required dir: %s' % \
-                                    dir_path)
+                    raise Exception('could not create required dir: %s'
+                                    % dir_path)
 
     else:
         if os.path.exists(htaccess_path):
@@ -364,7 +383,7 @@ certificate that is still valid."""
                 os.makedirs(dir_path)
             except Exception, exc:
                 pass
-            
+
     # Always write/update any openid symlinks
 
     for name in user.get('openid_names', []):
@@ -372,7 +391,7 @@ certificate that is still valid."""
         if name == client_id or name.find(' ') != -1:
             continue
         create_alias_link(name, client_id, configuration.user_home)
-    
+
     # Always write htaccess to catch any updates
 
     try:
@@ -392,7 +411,7 @@ certificate that is still valid."""
         def upper_repl(match):
             """Translate hex codes to upper case form"""
             return '\\\\x' + match.group(1).upper()
-        
+
         info['distinguished_name_enc'] = re.sub(r'\\x(..)', upper_repl, dn_enc)
 
         # TODO: find out a way to avoid the use of the legacy 'Satisfy any'
@@ -454,8 +473,8 @@ require user "%(distinguished_name)s"
         os.chmod(htaccess_path, 0444)
     except:
         if not force:
-            raise Exception('could not create htaccess file: %s' % \
-                            htaccess_path)
+            raise Exception('could not create htaccess file: %s'
+                            % htaccess_path)
 
     # Always write welcome message to catch any updates
 
@@ -479,8 +498,8 @@ The %(short_title)s admins
     except:
         _logger.error("could not write %s" % welcome_path)
         if not force:
-            raise Exception('could not create welcome file: %s' % \
-                            welcome_path)
+            raise Exception('could not create welcome file: %s'
+                            % welcome_path)
 
     # Always write/update basic settings with email to support various mail
     # requests and to avoid log errors.
@@ -497,9 +516,9 @@ The %(short_title)s admins
     except:
         _logger.error("could not write %s" % settings_path)
         if not force:
-            raise Exception('could not write settings file: %s' % \
-                            settings_path)
-        
+            raise Exception('could not write settings file: %s'
+                            % settings_path)
+
     # Always write default profile to avoid error log entries
 
     profile_dict, profile_defaults = {}, {}
@@ -511,8 +530,8 @@ The %(short_title)s admins
     except:
         _logger.error("could not write %s" % profile_path)
         if not force:
-            raise Exception('could not write profile file: %s' % \
-                            profile_path)
+            raise Exception('could not write profile file: %s'
+                            % profile_path)
 
     # Always write default widgets to avoid error log entries
 
@@ -525,9 +544,9 @@ The %(short_title)s admins
     except:
         _logger.error("could not write %s" % widgets_path)
         if not force:
-            raise Exception('could not create widgets file: %s' % \
-                            widgets_path)
-        
+            raise Exception('could not create widgets file: %s'
+                            % widgets_path)
+
     # Write missing default css to avoid apache error log entries
 
     if not os.path.exists(css_path):
@@ -538,12 +557,13 @@ The %(short_title)s admins
         except:
             _logger.error("could not write %s" % css_path)
             if not force:
-                raise Exception('could not create custom css file: %s' % \
-                                css_path)
+                raise Exception('could not create custom css file: %s'
+                                % css_path)
 
     _logger.info("created/renewed user %s" % client_id)
     mark_user_modified(configuration, client_id)
     return user
+
 
 def edit_user(
     client_id,
@@ -552,7 +572,7 @@ def edit_user(
     db_path,
     force=False,
     verbose=False,
-    ):
+):
     """Edit user"""
 
     user_db = {}
@@ -578,8 +598,8 @@ def edit_user(
 
         if not user_db.has_key(client_id):
             if not force:
-                raise Exception("User DB entry '%s' doesn't exist!" % \
-                                client_id)
+                raise Exception("User DB entry '%s' doesn't exist!"
+                                % client_id)
 
     user_dict = {}
     new_id = ''
@@ -607,11 +627,11 @@ def edit_user(
         import traceback
         print traceback.format_exc()
         if not force:
-            raise Exception('Failed to edit %s with %s in user DB: %s'\
+            raise Exception('Failed to edit %s with %s in user DB: %s'
                             % (client_id, changes, err))
 
     new_client_dir = client_id_dir(new_id)
-    
+
     # Rename user dirs recursively
 
     for base_dir in (configuration.user_home,
@@ -626,11 +646,11 @@ def edit_user(
             rename_dir(old_path, new_path)
         except Exception, exc:
             if not force:
-                raise Exception('could not rename %s to %s: %s' % \
-                                (old_path, new_path, exc))
+                raise Exception('could not rename %s to %s: %s'
+                                % (old_path, new_path, exc))
     if verbose:
         print 'User dirs for %s was successfully renamed!'\
-                  % client_id
+            % client_id
 
     # Update any OpenID symlinks
 
@@ -642,9 +662,9 @@ def edit_user(
         if name in (client_id, new_id) or name.find(' ') != -1:
             continue
         create_alias_link(name, new_id, configuration.user_home)
-        
+
     # Loop through resource map and update user resource ownership
-    
+
     res_map = get_resource_map(configuration)
     for (res_id, res) in res_map.items():
         if client_id in res[OWNERS]:
@@ -681,7 +701,7 @@ def edit_user(
                           % (new_id, vgrid_name, err)
                 continue
             (del_status, err) = vgrid_remove_owners(configuration, vgrid_name,
-                                                       [client_id])
+                                                    [client_id])
             if not del_status:
                 if verbose:
                     print 'Could not remove old %s owner of %s: %s' \
@@ -717,7 +737,7 @@ def edit_user(
     if re_status:
         for re_name in re_list:
             (re_status, err) = update_runtimeenv_owner(re_name, client_id,
-                                                     new_id, configuration)
+                                                       new_id, configuration)
             if verbose:
                 if re_status:
                     print 'Updated %s owner from %s to %s' % (re_name,
@@ -756,7 +776,7 @@ def delete_user(
     db_path,
     force=False,
     verbose=False,
-    ):
+):
     """Delete user"""
 
     user_db = {}
@@ -783,10 +803,9 @@ def delete_user(
 
         if not user_db.has_key(client_id):
             if not force:
-                raise Exception("User DB entry '%s' doesn't exist!" % \
-                                client_id)
+                raise Exception("User DB entry '%s' doesn't exist!"
+                                % client_id)
 
-    
     try:
         user_dict = user_db.get(client_id, user)
         del user_db[client_id]
@@ -796,7 +815,7 @@ def delete_user(
                   % client_id
     except Exception, err:
         if not force:
-            raise Exception('Failed to remove %s from user DB: %s'\
+            raise Exception('Failed to remove %s from user DB: %s'
                             % (client_id, err))
 
     # Remove any OpenID symlinks
@@ -817,11 +836,11 @@ def delete_user(
             delete_dir(user_path)
         except Exception, exc:
             if not force:
-                raise Exception('could not remove %s: %s' % \
-                                (user_path, exc))
+                raise Exception('could not remove %s: %s'
+                                % (user_path, exc))
     if verbose:
         print 'User dirs for %s was successfully removed!'\
-                  % client_id
+            % client_id
     mark_user_modified(configuration, client_id)
 
 
@@ -835,6 +854,7 @@ def expand_openid_alias(alias_id, configuration):
     else:
         client_id = alias_id
     return client_id
+
 
 def get_openid_user_map(configuration):
     """Translate user DB to OpenID mapping between a verified login URL and a
@@ -858,7 +878,8 @@ def get_openid_user_map(configuration):
                 id_map[raw] = cert_id
                 id_map[enc] = cert_id
     return id_map
-    
+
+
 def get_openid_user_dn(configuration, login_url, user_check=True):
     """Translate OpenID user identified by login_url into a distinguished_name
     on the cert format.
@@ -894,8 +915,8 @@ def get_openid_user_dn(configuration, login_url, user_check=True):
         native_path = os.path.realpath(link_path)
         native_dir = os.path.basename(native_path)
         distinguished_name = client_dir_id(native_dir)
-        _logger.info('found full ID %s from %s link' % \
-                                  (distinguished_name, login_url))
+        _logger.info('found full ID %s from %s link'
+                     % (distinguished_name, login_url))
         return distinguished_name
     elif configuration.user_openid_alias:
         db_path = os.path.join(configuration.mig_server_home, user_db_filename)
@@ -904,29 +925,30 @@ def get_openid_user_dn(configuration, login_url, user_check=True):
         _logger.debug('user_map')
         for (distinguished_name, user) in user_map.items():
             if user[user_alias] in (raw_login, client_alias(raw_login)):
-                _logger.info('found full ID %s from %s alias' % \
-                                          (distinguished_name, login_url))
+                _logger.info('found full ID %s from %s alias'
+                             % (distinguished_name, login_url))
                 return distinguished_name
 
     # Fall back to try direct DN (possibly on cert dir form)
-    _logger.info('fall back to direct ID %s from %s' % \
-                              (raw_login, login_url))
+    _logger.info('fall back to direct ID %s from %s'
+                 % (raw_login, login_url))
     # Force to dir format and check if user home exists
     cert_dir = client_id_dir(raw_login)
     base_path = os.path.join(configuration.user_home, cert_dir)
     if os.path.isdir(base_path):
         distinguished_name = client_dir_id(cert_dir)
-        _logger.info('accepting direct user %s from %s' % \
-                    (distinguished_name, login_url))
+        _logger.info('accepting direct user %s from %s'
+                     % (distinguished_name, login_url))
         return distinguished_name
     elif not user_check:
-        _logger.info('accepting raw user %s from %s' % \
-                    (raw_login, login_url))
+        _logger.info('accepting raw user %s from %s'
+                     % (raw_login, login_url))
         return raw_login
     else:
-        _logger.error('no such openid user %s: %s' % \
-                     (cert_dir, login_url))
+        _logger.error('no such openid user %s: %s'
+                      % (cert_dir, login_url))
         return ''
+
 
 def get_full_user_map(configuration):
     """Load complete user map including any OpenID aliases"""
@@ -936,6 +958,7 @@ def get_full_user_map(configuration):
     for (alias, cert_id) in oid_aliases.items():
         user_map[alias] = user_map.get(cert_id, {})
     return user_map
+
 
 def __oid_sessions_execute(configuration, db_name, query, query_vars,
                            commit=False):
@@ -947,7 +970,7 @@ def __oid_sessions_execute(configuration, db_name, query, query_vars,
     _logger = configuration.logger
     sessions = []
     if not configuration.user_openid_providers or \
-           not configuration.openid_store:
+            not configuration.openid_store:
         _logger.error("no openid configuration")
         return (False, sessions)
     session_db_path = os.path.join(configuration.openid_store, db_name)
@@ -957,19 +980,20 @@ def __oid_sessions_execute(configuration, db_name, query, query_vars,
     try:
         conn = sqlite3.connect(session_db_path)
         cur = conn.cursor()
-        _logger.info("execute query %s with args %s on openid sessions" % \
-                    (query, query_vars))
+        _logger.info("execute query %s with args %s on openid sessions"
+                     % (query, query_vars))
         cur.execute(query, query_vars)
         sessions = cur.fetchall()
         if commit:
             conn.commit()
         conn.close()
     except Exception, exc:
-        _logger.error("failed to execute query %s with args %s: %s" % \
-                     (query, query_vars, exc))
+        _logger.error("failed to execute query %s with args %s: %s"
+                      % (query, query_vars, exc))
         return (False, sessions)
     _logger.info("got openid sessions out for %s" % sessions)
     return (True, sessions)
+
 
 def find_oid_sessions(configuration, db_name, identity):
     """Find active OpenID session(s) for user with OpenID identity. Queries the
@@ -979,6 +1003,7 @@ def find_oid_sessions(configuration, db_name, identity):
     args = (identity, )
     return __oid_sessions_execute(configuration, db_name, query, args, False)
 
+
 def expire_oid_sessions(configuration, db_name, identity):
     """Expire active OpenID session(s) for user with OpenID identity. Modifies
     the Apache mod auth openid sqlite database directly.
@@ -986,15 +1011,15 @@ def expire_oid_sessions(configuration, db_name, identity):
     query = 'DELETE FROM sessionmanager WHERE identity=?'
     args = (identity, )
     return __oid_sessions_execute(configuration, db_name, query, args, True)
-        
-    
+
+
 def migrate_users(
     conf_path,
     db_path,
     force=False,
     verbose=False,
     prune_dupes=False,
-    ):
+):
     """Migrate all user data for possibly old format users to new format:
 
     update entry in user DB
@@ -1039,22 +1064,22 @@ def migrate_users(
     latest = {}
     for (client_id, user) in targets.items():
         old_id = user['full_name'].replace(' ', '_')
-        new_id = user['distinguished_name']        
+        new_id = user['distinguished_name']
         if new_id in user_db.keys():
             if not prune_dupes:
                 if not force:
-                    raise Exception('new ID %s already exists in user DB!' % \
-                                    new_id)
+                    raise Exception('new ID %s already exists in user DB!'
+                                    % new_id)
             else:
                 if verbose:
-                    print 'Pruning old duplicate user %s from user DB' % \
-                          client_id
+                    print 'Pruning old duplicate user %s from user DB' \
+                          % client_id
                 del user_db[client_id]
         elif old_id in latest.keys():
             if not prune_dupes:
                 if not force:
-                    raise Exception('old ID %s is not unique in user DB!' % \
-                                    old_id)
+                    raise Exception('old ID %s is not unique in user DB!'
+                                    % old_id)
             else:
                 (latest_id, latest_user) = latest[old_id]
                 # expire may be int, unset or None: try with fall back
@@ -1081,10 +1106,10 @@ def migrate_users(
     # Now update the remaining users, i.e. those in latest
     for (client_id, user) in latest.values():
         old_id = user['full_name'].replace(' ', '_')
-        new_id = user['distinguished_name']        
+        new_id = user['distinguished_name']
         if verbose:
-            print 'updating user %s on old format %s to new format %s' % \
-                  (client_id, old_id, new_id)
+            print 'updating user %s on old format %s to new format %s' \
+                  % (client_id, old_id, new_id)
 
         old_name = client_id_dir(old_id)
         new_name = client_id_dir(new_id)
@@ -1104,8 +1129,8 @@ def migrate_users(
                 # os.symlink(new_path, old_path)
 
                 if not force:
-                    raise Exception('could not move %s to %s: %s' % \
-                                    (old_path, new_path, exc))
+                    raise Exception('could not move %s to %s: %s'
+                                    % (old_path, new_path, exc))
 
         mrsl_base = os.path.join(configuration.mrsl_files_dir, new_name)
         for mrsl_name in os.listdir(mrsl_base):
@@ -1116,7 +1141,7 @@ def migrate_users(
                 filter_pickled_dict(mrsl_path, {old_id: new_id})
             except Exception, exc:
                 if not force:
-                    raise Exception('could not update saved mrsl in %s: %s' \
+                    raise Exception('could not update saved mrsl in %s: %s'
                                     % (mrsl_path, exc))
 
         re_base = configuration.re_home
@@ -1128,7 +1153,7 @@ def migrate_users(
                 filter_pickled_dict(re_path, {old_id: new_id})
             except Exception, exc:
                 if not force:
-                    raise Exception('could not update RE user in %s: %s' \
+                    raise Exception('could not update RE user in %s: %s'
                                     % (re_path, exc))
 
         for base_dir in (configuration.resource_home,
@@ -1142,7 +1167,7 @@ def migrate_users(
                         filter_pickled_list(kind_path, {old_id: new_id})
                     except Exception, exc:
                         if not force:
-                            raise Exception('could not update %s in %s: %s' \
+                            raise Exception('could not update %s in %s: %s'
                                             % (kind, kind_path, exc))
 
         # Finally update user DB now that file system was updated
@@ -1156,8 +1181,8 @@ def migrate_users(
                       % client_id
         except Exception, err:
             if not force:
-                raise Exception('Failed to update %s in user DB: %s' % \
-                                (client_id, err))
+                raise Exception('Failed to update %s in user DB: %s'
+                                % (client_id, err))
 
 
 def fix_entities(
@@ -1165,7 +1190,7 @@ def fix_entities(
     db_path,
     force=False,
     verbose=False,
-    ):
+):
     """Update owners/members for all resources and vgrids to use new format IDs
     where possible"""
 
@@ -1187,10 +1212,10 @@ def fix_entities(
     for (client_id, user) in user_db.items():
         fill_distinguished_name(user)
         old_id = user['full_name'].replace(' ', '_')
-        new_id = user['distinguished_name']        
+        new_id = user['distinguished_name']
         if verbose:
-            print 'updating user %s on old format %s to new format %s' % \
-                  (client_id, old_id, new_id)
+            print 'updating user %s on old format %s to new format %s' \
+                  % (client_id, old_id, new_id)
 
         for base_dir in (configuration.resource_home,
                          configuration.vgrid_home):
@@ -1207,8 +1232,8 @@ def fix_entities(
                         filter_pickled_list(kind_path, {old_id: new_id})
                     except Exception, exc:
                         if not force:
-                            raise Exception('could not update %s in %s: %s' % \
-                                            (kind, kind_path, exc))
+                            raise Exception('could not update %s in %s: %s'
+                                            % (kind, kind_path, exc))
 
 
 def fix_userdb_keys(
@@ -1216,7 +1241,7 @@ def fix_userdb_keys(
     db_path,
     force=False,
     verbose=False,
-    ):
+):
     """Fix any old leftover colon separated keys in user DB by replacing them
     with the new DN form from the associated user dict.
     """
@@ -1239,12 +1264,12 @@ def fix_userdb_keys(
     for (client_id, user) in user_db.items():
         fill_distinguished_name(user)
         old_id = client_id
-        new_id = user['distinguished_name']        
+        new_id = user['distinguished_name']
         if old_id == new_id:
             continue
         if verbose:
-            print 'updating user on old format %s to new format %s' % \
-                  (old_id, new_id)
+            print 'updating user on old format %s to new format %s' \
+                  % (old_id, new_id)
 
         try:
             del user_db[client_id]
@@ -1255,8 +1280,8 @@ def fix_userdb_keys(
                       % client_id
         except Exception, err:
             if not force:
-                raise Exception('Failed to update %s in user DB: %s' % \
-                                (client_id, err))
+                raise Exception('Failed to update %s in user DB: %s'
+                                % (client_id, err))
 
 
 def default_search():
@@ -1389,13 +1414,14 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
     if not password:
         errors.append('No password set for %s' % user_id)
         return (configuration, errors)
-        
+
     try:
         assure_password_strength(configuration, password)
     except Exception, exc:
-        errors.append('password for %s does not satisfy local policy: %s' \
+        errors.append('password for %s does not satisfy local policy: %s'
                       % (user_id, exc))
     return (configuration, errors)
+
 
 def req_password_check(req_path, conf_path, db_path, verbose=False,
                        override_policy=None):
@@ -1409,7 +1435,6 @@ def req_password_check(req_path, conf_path, db_path, verbose=False,
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
-
 
     try:
         user_dict = load(req_path)
@@ -1427,13 +1452,14 @@ def req_password_check(req_path, conf_path, db_path, verbose=False,
     if not password:
         errors.append('No password set for %s' % user_id)
         return (configuration, errors)
-        
+
     try:
         assure_password_strength(configuration, password)
     except Exception, exc:
-        errors.append('password for %s does not satisfy local policy: %s' \
+        errors.append('password for %s does not satisfy local policy: %s'
                       % (user_id, exc))
     return (configuration, errors)
+
 
 def get_default_mrsl(template_path):
     """Return the default mRSL template from template_path"""
@@ -1491,6 +1517,7 @@ def get_default_css(template_path):
 
     return default_css
 
+
 def get_authkeys(authkeys_path):
     """Return the authorized keys from authkeys_path"""
 
@@ -1504,6 +1531,7 @@ def get_authkeys(authkeys_path):
         authorized_keys = []
     return authorized_keys
 
+
 def get_authpasswords(authpasswords_path):
     """Return the non-empty authorized passwords from authpasswords_path"""
 
@@ -1512,11 +1540,12 @@ def get_authpasswords(authpasswords_path):
         authorized_passwords = authpasswords_fd.readlines()
         authpasswords_fd.close()
         # Remove extra space and skip blank lines
-        authorized_passwords = [i.strip() for i in authorized_passwords \
+        authorized_passwords = [i.strip() for i in authorized_passwords
                                 if i.strip()]
     except:
         authorized_passwords = []
     return authorized_passwords
+
 
 def generate_password_hash(configuration, password):
     """Return a hash data string for saving provided password. We use PBKDF2 to
@@ -1531,13 +1560,14 @@ def generate_password_hash(configuration, password):
         _logger.warning("in generate_password_hash: %s" % exc)
         return password
 
+
 def check_password_hash(configuration, service, username, password,
                         stored_hash, hash_cache=None):
     """Return a boolean indicating if offered password matches stored_hash
     information. We use PBKDF2 to help with the hash comparison and store the
     data in a form close to the one recommended there:
     (algorithm$hashfunction$salt$costfactor$hash).
-    
+
     More information about sane password handling is available at:
     https://exyr.org/2011/hashing-passwords/
 
@@ -1552,6 +1582,7 @@ def check_password_hash(configuration, service, username, password,
         _logger.warning("in check_password_hash: %s" % exc)
         return False
 
+
 def generate_password_scramble(configuration, password, salt):
     """Return a scrambled data string for saving provided password. We use a
     simple salted encoding to avoid storing passwords in the clear when we
@@ -1564,13 +1595,14 @@ def generate_password_scramble(configuration, password, salt):
         _logger.warning("in generate_password_scramble: %s" % exc)
         return password
 
+
 def check_password_scramble(configuration, service, username, password,
                             stored_scramble, salt, scramble_cache=None):
     """Return a boolean indicating if offered password matches stored_scramble
     information. We use a simple salted encoding to avoid storing passwords in
     the clear when we can't avoid saving the actual password instead of just a
     hash.
-    
+
     The optional scramble_cache dictionary argument can be used to cache
     lookups and speed up repeated use.
     """
@@ -1582,6 +1614,7 @@ def check_password_scramble(configuration, service, username, password,
         _logger.warning("in check_password_scramble: %s" % exc)
         return False
 
+
 def generate_password_digest(configuration, realm, username, password, salt):
     """Return a digest data string for saving provided password"""
     _logger = configuration.logger
@@ -1590,6 +1623,7 @@ def generate_password_digest(configuration, realm, username, password, salt):
     except Exception, exc:
         _logger.warning("in generate_password_digest: %s" % exc)
         return password
+
 
 def check_password_digest(configuration, service, realm, username, password,
                           stored_digest, salt, digest_cache=None):
@@ -1606,3 +1640,18 @@ def check_password_digest(configuration, service, realm, username, password,
     except Exception, exc:
         _logger.warning("in check_password_digest: %s" % exc)
         return False
+
+
+def get_short_id(configuration, user_id, user_alias):
+    """Internal helper to translate user_id and user_alias to short_id"""
+    short_id = extract_field(user_id, user_alias)
+
+    if configuration.site_enable_gdp:
+
+        # TODO add 'user_gdp_alias' to configuration ?
+
+        gdp_id = extract_field(user_id, "GDP")
+        if gdp_id is not None:
+            short_id = "%s@%s" % (short_id, gdp_id)
+
+    return short_id

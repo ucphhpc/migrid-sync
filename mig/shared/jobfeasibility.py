@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobfeasibility - capability of the submitted job to be executed
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,12 +42,12 @@ from shared.base import client_id_dir
 from shared.defaults import default_vgrid, keyword_all
 from shared.mrslkeywords import get_keywords_dict
 from shared.resource import anon_resource_id, list_resources, \
-     anon_to_real_res_map
+    anon_to_real_res_map
 from shared.resconfkeywords import get_resource_keywords
-from shared.validstring import is_valid_email_address
+from shared.safeinput import is_valid_simple_email
 from shared.vgrid import vgrid_resources
 from shared.vgridaccess import get_vgrid_map, get_resource_map, \
-     real_to_anon_res_map, user_vgrid_access, CONF, RESOURCES, ALLOW
+    real_to_anon_res_map, user_vgrid_access, CONF, RESOURCES, ALLOW
 
 # Condition colors in descending order (order is essential!)
 
@@ -76,8 +76,8 @@ def job_feasibility(configuration, job):
         configuration, job)
 
     if configuration.enable_suggest and \
-           threshold_color_to_value(job_cond['JOB_COND']) < \
-           threshold_color_to_value(configuration.suggest_threshold):
+            threshold_color_to_value(job_cond['JOB_COND']) < \
+            threshold_color_to_value(configuration.suggest_threshold):
         suggestion = suggestion_envelope(configuration, job, job_cond, errors,
                                          vgrid_resource_dict)
 
@@ -135,13 +135,13 @@ def suggestion_envelope(configuration, job, job_cond, errors,
     suggestion = 'Suggesting in effect. '
 
     if threshold_color_to_value(job_cond['JOB_COND']) < \
-           threshold_color_to_value(suggest_job_cond['JOB_COND']) and \
-           (suggest_job_cond.get('vgrid_suggested', False) or \
+        threshold_color_to_value(suggest_job_cond['JOB_COND']) and \
+        (suggest_job_cond.get('vgrid_suggested', False) or
             suggest_job_cond.get('resource_suggested', False)):
         suggestion += assemble_suggest_msg(job_cond)
     else:
         suggestion += \
-        'Suggestion ignored as the resulting feasibility was worse.'
+            'Suggestion ignored as the resulting feasibility was worse.'
 
     return suggestion
 
@@ -191,7 +191,7 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
     other_errors = {}
 
     # Avoid repeated get_resource_map calls for every single resource
-    
+
     resource_map = get_resource_map(configuration)
     for (vgrid, resources) in vgrid_resource_map.items():
 
@@ -200,10 +200,11 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
 
         for resource_id in resources:
 
-            resource = get_resource_configuration(configuration, resource_id, resource_map)
+            resource = get_resource_configuration(
+                configuration, resource_id, resource_map)
 
             # vgrid_resource_map may contain e.g. deleted resources
-            
+
             if not resource:
                 continue
 
@@ -213,8 +214,8 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
                                                             resource, errors,
                                                             resource_id)
             job_cond['SEEN_WITHIN_X'] = \
-            validate_resource_seen_within_x_hours(configuration, resource,
-                                                  errors, resource_id)
+                validate_resource_seen_within_x_hours(configuration, resource,
+                                                      errors, resource_id)
 
             # Check mRSL requested specs
 
@@ -250,7 +251,7 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
             set_pass_level(configuration, job_cond)
 
             if threshold_color_to_value(job_cond['JOB_COND']) >= \
-                   threshold_color_to_value(best_job_cond['JOB_COND']):
+                    threshold_color_to_value(best_job_cond['JOB_COND']):
                 if not found_best or (len(errors) <= len(best_errors)):
                     found_best = True
                     best_job_cond = job_cond.copy()
@@ -341,9 +342,9 @@ def validate_jobtype(configuration, job, resource, errors):
     # 2nd conjunction is due to 'batch' being a subset of 'bulk'
     # 3rd term is the general case
 
-    if not ((job_value == keyword_all) or \
-    (job_value == 'batch' and res_value == 'bulk') or \
-    (job_value == res_value)):
+    if not ((job_value == keyword_all) or
+            (job_value == 'batch' and res_value == 'bulk') or
+            (job_value == res_value)):
         errors['JOBTYPE'] = std_err_desc(job_value, res_value)
 
     return not errors.has_key('JOBTYPE')
@@ -403,8 +404,8 @@ def validate_notify(configuration, job, errors):
             continue
 
         elif notify_line_first_part in email_keyword_list:
-            recipients = notify_line.replace('%s: ' % \
-                                             notify_line_first_part,
+            recipients = notify_line.replace('%s: '
+                                             % notify_line_first_part,
                                              '').strip()
 
             if recipients.strip().upper() in ['SETTINGS', '']:
@@ -415,9 +416,7 @@ def validate_notify(configuration, job, errors):
                         errors['NOTIFY'] = std_err_desc(job_value)
                         break
                     else:
-                        syntax_is_valid = \
-                        is_valid_email_address(recipient,
-                                               configuration.logger)
+                        syntax_is_valid = is_valid_simple_email(recipient)
 
         else:
             syntax_is_valid = False
@@ -449,13 +448,11 @@ def validate_resource(configuration, job, vgrid, errors):
             vgrid_res = []
         allowed_resources = set(vgrid_res)
 
-
     if skip_validation(configuration, job, 'RESOURCE'):
 
         # all allowed, possibly empty
 
         return list(allowed_resources)
-
 
     specified_resources = anon_to_real_resources(configuration,
                                                  job['RESOURCE'])
@@ -464,9 +461,8 @@ def validate_resource(configuration, job, vgrid, errors):
     if not_allowed:
         anon_not_allowed = real_to_anon_resources(configuration, not_allowed)
         errors['RESOURCE'] = \
-        'The following resources are illegal for VGrid %s:, %s' \
-        % (vgrid, list(anon_not_allowed))
-
+            'The following resources are illegal for VGrid %s:, %s' \
+            % (vgrid, list(anon_not_allowed))
 
     if not allowed_resources.intersection(specified_resources):
 
@@ -475,7 +471,7 @@ def validate_resource(configuration, job, vgrid, errors):
         return list(allowed_resources)
     else:
 
-        #validated specifed and allowed
+        # validated specifed and allowed
 
         return list(allowed_resources.intersection(specified_resources))
 
@@ -491,7 +487,7 @@ def validate_retries(configuration, job, errors):
 
     if job_value < 0 or not job_value <= scheduler_value:
         errors['RETRIES'] = 'Job/Scheduler values: %s / %s' \
-        % (job_value, scheduler_value)
+            % (job_value, scheduler_value)
 
     return not errors.has_key('RETRIES')
 
@@ -519,8 +515,8 @@ def validate_runtimeenvironment(configuration, job, resource, errors):
 
         if not found:
             res_envs = [env[0] for env in resource['RUNTIMEENVIRONMENT']]
-            runtime_env_errors.append('Job/Resource values: %s / %s' % \
-                                      (job_runtimeenv, 
+            runtime_env_errors.append('Job/Resource values: %s / %s'
+                                      % (job_runtimeenv,
                                        ' '.join(res_envs)))
 
     if runtime_env_errors:
@@ -551,8 +547,9 @@ def validate_vgrid(configuration, job, errors):
     not_allowed = specified_vgrids.difference(vgrid_access)
     if not_allowed:
         errors['VGRID'] = \
-        'The following VGrids are not allowed for the current user:, %s' % \
-        (not_allowed)
+            'The following VGrids are not allowed' \
+            + ' for the current user:, %s' \
+            % (not_allowed)
 
     if not vgrid_access.intersection(specified_vgrids):
 
@@ -561,7 +558,7 @@ def validate_vgrid(configuration, job, errors):
         return list(vgrid_access)
     else:
 
-        #validated specifed and allowed
+        # validated specifed and allowed
 
         return list(vgrid_access.intersection(specified_vgrids))
 
@@ -590,18 +587,16 @@ def validate_resource_seen(configuration, resource, errors, resource_id):
     if in_skip_list(configuration, 'REGISTERED'):
         return True
 
-
     # use if/when LAST_SEEN and FIRST_SEEN are moved to shared/scheduling.py
 
 #    elif resource.has_key('FIRST_SEEN') and bool(resource['FIRST_SEEN']):
 #        resource_seen = now - resource['FIRST_SEEN']
 
-
     all_valid_resources = list_resources(configuration.resource_home, True)
 
     if not resource_id in all_valid_resources:
-        errors['REGISTERED'] = 'The resource %s is not available' % \
-        (resource_id)
+        errors['REGISTERED'] = 'The resource %s is not available' \
+            % (resource_id)
 
     return not errors.has_key('REGISTERED')
 
@@ -613,7 +608,6 @@ def validate_resource_seen_within_x_hours(configuration, resource, errors,
     if in_skip_list(configuration, 'SEEN_WITHIN_X'):
         return True
 
-
     # use if/when LAST_SEEN and FIRST_SEEN are moved to shared/scheduling.py
 
 #    if resource.has_key('LAST_SEEN') and bool(resource['LAST_SEEN']):
@@ -621,14 +615,13 @@ def validate_resource_seen_within_x_hours(configuration, resource, errors,
 #    elif resource.has_key('FIRST_SEEN') and bool(resource['FIRST_SEEN']):
 #        resource_seen = now - resource['FIRST_SEEN']
 
-
     resource_seen = time() - exe_last_seen(configuration, resource_id)[1]
     hours = int(configuration.resource_seen_within_hours)
 
     if errors.has_key('REGISTERED') or (hours * 3600 <= resource_seen):
         errors['SEEN_WITHIN_X'] = \
-        'The resource %s has not been seen within the last %i hour(s).' \
-        % (resource_id, hours)
+            'The resource %s has not been seen within the last %i hour(s).' \
+            % (resource_id, hours)
 
     return not errors.has_key('SEEN_WITHIN_X')
 
@@ -654,11 +647,11 @@ def validate_files(configuration, job, errors, mrsl_attribute,
     for filename in src_files:
 
         configuration.logger.info('checking filename %s' % filename)
-        
+
         # Extra check for VERIFYFILES to match status extension
 
-        if verify_file and not True in [filename.endswith(i) for i in \
-               ['status', 'stdout', 'stderr']]:
+        if verify_file and not True in [filename.endswith(i) for i in
+                                        ['status', 'stdout', 'stderr']]:
             invalid_verify.append(filename)
             continue
 
@@ -694,28 +687,29 @@ def validate_files(configuration, job, errors, mrsl_attribute,
                 curl_result = curl.getinfo(pycurl.RESPONSE_CODE)
                 curl.close()
             except Exception, exc:
-                configuration.logger.error('failed to curl check %s : %s' % \
-                                           (filename, exc))
+                configuration.logger.error('failed to curl check %s : %s'
+                                           % (filename, exc))
                 curl_result = -1
             configuration.logger.debug('got curl result %d' % curl_result)
             if 200 <= curl_result and curl_result < 300:
-                configuration.logger.debug('curl success result %d' % \
-                                           curl_result)
+                configuration.logger.debug('curl success result %d'
+                                           % curl_result)
             else:
-                configuration.logger.warning('curl error result %d' % \
-                                             curl_result)
+                configuration.logger.warning('curl error result %d'
+                                             % curl_result)
                 missing_files.append(filename)
 
     if missing_files:
         file_cnt = len(src_files)
         missing_file_cnt = len(missing_files)
         errors[mrsl_attribute] = \
-        'The following (%d of %d) files are missing: %s' \
-        % (missing_file_cnt, file_cnt, ', '.join(missing_files))
+            'The following (%d of %d) files are missing: %s' \
+            % (missing_file_cnt, file_cnt, ', '.join(missing_files))
     if verify_file and invalid_verify:
         errors[mrsl_attribute] = \
-        'The following verify files are invalid (must match status ext): %s' \
-        % ', '.join(invalid_verify)
+            'The following verify files are invalid' \
+            + ' (must match status ext): %s' \
+            % ', '.join(invalid_verify)
 
     return not errors.has_key(mrsl_attribute)
 
@@ -735,7 +729,6 @@ def validate_str_case(configuration, job, resource, errors, mrsl_attribute,
     else:
         resource_keywords = get_resource_keywords(configuration)
         res_value = resource_keywords[mrsl_attribute]['Value'].upper()
-
 
     if empty_str:
         if not job_value == '' and not job_value == res_value:
@@ -784,11 +777,9 @@ def validate_int_case(configuration, job, resource, errors, mrsl_attribute,
     return not errors.has_key(mrsl_attribute)
 
 
-
 #
 # ## Utility functions ##
 #
-
 
 
 def set_pass_level(configuration, job_cond):
@@ -804,7 +795,7 @@ def set_pass_level(configuration, job_cond):
         else:
             break
     job_cond['JOB_COND'] = job_color
-    
+
 
 def pass_job_cond(configuration, job_cond, job_cond_color):
     """Validates whether the constructed job_cond dictionary passes
@@ -826,10 +817,10 @@ def pass_job_cond(configuration, job_cond, job_cond_color):
             job_cond_config = configuration.job_cond_green
 
         try:
-            return reduce(lambda x, y: x and y, \
-                          [val for (key, val) in job_cond.items() \
-                          for test in job_cond_config \
-                          if key.upper() == test.upper() and not val])
+            return reduce(lambda x, y: x and y,
+                          [val for (key, val) in job_cond.items()
+                           for test in job_cond_config
+                           if key.upper() == test.upper() and not val])
 
         # reduction of empty list
 
@@ -846,8 +837,8 @@ def none_available(job_cond, errors, mrsl_attribute, suggest=False,
     job_cond['JOB_COND'] = RED
 
     if suggest:
-        err_msg = 'There are no valid/allowed %ss available to suggest.' % \
-        (mrsl_attribute.lower())
+        err_msg = 'There are no valid/allowed %ss available to suggest.' \
+            % (mrsl_attribute.lower())
 
         if mrsl_attribute == 'VGRID':
             job_cond['vgrid_suggested'] = False
@@ -860,7 +851,8 @@ def none_available(job_cond, errors, mrsl_attribute, suggest=False,
     else:
         job_cond[mrsl_attribute] = False
         errors[mrsl_attribute] = \
-        'There are no valid/allowed %ss available.' % (mrsl_attribute.lower())
+            'There are no valid/allowed %ss available.' \
+            % mrsl_attribute.lower()
 
     if fake_dict:
         return (job_cond, errors, {})
@@ -940,15 +932,15 @@ def skip_validation(configuration, job, mrsl_attribute, *args):
         job_has_key = job.has_key(mrsl_attribute)
         if job_has_key:
             it_has_default_value = has_default_value(configuration,
-                                                   mrsl_attribute, 
-                                                   job[mrsl_attribute])
+                                                     mrsl_attribute,
+                                                     job[mrsl_attribute])
         if args and len(args) == 1:
             args_present = True
             args_has_key = args[0].has_key(mrsl_attribute)
 
     if args_present:
         return is_in_skip_list or (not job_has_key) or it_has_default_value \
-               or (not args_has_key)
+            or (not args_has_key)
     else:
         return is_in_skip_list or (not job_has_key) or it_has_default_value
 
@@ -977,9 +969,9 @@ def anon_to_real_resources(configuration, anon_resources):
     anon_to_real_map = anon_to_real_res_map(configuration.resource_home)
     specified_resources = set()
 
-    [specified_resources.add(anon_to_real_map[aasr]) \
-                       for aasr in alt_anon_specified_resources \
-                       if anon_to_real_map.has_key(aasr)]
+    [specified_resources.add(anon_to_real_map[aasr])
+     for aasr in alt_anon_specified_resources
+     if anon_to_real_map.has_key(aasr)]
 
     return specified_resources
 
@@ -989,9 +981,9 @@ def real_to_anon_resources(configuration, real_resources):
 
     real_to_anon_map = real_to_anon_res_map(configuration.resource_home)
     anon_not_allowed = set()
-    [anon_not_allowed.add(real_to_anon_map[rr]) \
-                   for rr in real_resources \
-                   if real_to_anon_map.has_key(rr)]
+    [anon_not_allowed.add(real_to_anon_map[rr])
+     for rr in real_resources
+     if real_to_anon_map.has_key(rr)]
 
     return anon_not_allowed
 
@@ -1002,8 +994,8 @@ def std_err_desc(job_value, *args):
     """
 
     if args and len(args) == 1:
-        return 'Job/Resource values: %s / %s' % \
-        (job_value, args[0])
+        return 'Job/Resource values: %s / %s' \
+            % (job_value, args[0])
     else:
         return 'Job value: %s' % (job_value)
 
@@ -1016,9 +1008,9 @@ def assemble_errors(job_cond, errors):
     if errors == {}:
         return []
 
-    return dict([(key.upper(), val_) for (key, val) in job_cond.items() \
-                    for (key_, val_) in errors.items() \
-                    if key.upper() == key_.upper() and not val])
+    return dict([(key.upper(), val_) for (key, val) in job_cond.items()
+                 for (key_, val_) in errors.items()
+                 if key.upper() == key_.upper() and not val])
 
 
 def get_job_cond_color_icon(job_cond):
@@ -1043,7 +1035,7 @@ def threshold_color_to_value(job_cond_color):
     """Returns the index of job_cond_color in list of all colors"""
 
     # tuple does not support index() before python-2.6
-    
+
     return list(job_cond_colors).index(job_cond_color.upper())
 
 
@@ -1057,8 +1049,8 @@ def assemble_suggest_msg(job_cond):
     if job_cond.get('vgrid_suggested', False):
         suggestion += 'Utilizing VGrid \'%s\'' % (job_cond['suggested_vgrid'])
         if job_cond.get('resource_suggested', False):
-            suggestion += ' and resource \'%s\'' % \
-            (job_cond['suggested_resource'])
+            suggestion += ' and resource \'%s\'' \
+                % (job_cond['suggested_resource'])
         else:
             suggestion += ' (however, no applicable resource was found)'
         suggestion += ' the feasibility achieved is:'
@@ -1077,7 +1069,7 @@ def exe_last_seen(configuration, resource_id):
     latest_exe = None
     dirname = os.path.join(configuration.resource_home, resource_id)
 
-    for lrf in [filename for filename in os.listdir(dirname) \
+    for lrf in [filename for filename in os.listdir(dirname)
                 if filename.startswith('last_request.')]:
         exe_stamp = os.path.getmtime(os.path.join(dirname, lrf))
         if exe_stamp > latest_stamp:

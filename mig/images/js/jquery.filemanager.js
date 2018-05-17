@@ -999,7 +999,7 @@ if (jQuery) (function($){
                 
                 var path = chroot($(el).attr(pathAttribute), options);
 
-                if (file_size > max_stream_size) {
+                if (!options.enableGDP && file_size > max_stream_size) {
                     var path_enc = encodeURI(path);
                     window.open('/cert_redirect/'+path_enc);
                 } else {

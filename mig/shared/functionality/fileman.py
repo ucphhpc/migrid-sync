@@ -4,8 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-#
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,15 +32,16 @@ their home directories.
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import trash_linkname, csrf_backends, csrf_field, \
-     default_max_chunks
+    default_max_chunks
 from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_css_deps, \
-     advanced_editor_js_deps, lock_info, edit_file
+    advanced_editor_js_deps, lock_info, edit_file
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.gdp import get_active_project
+from shared.gdp import get_project_from_client_id
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.sharelinks import create_share_link_form
+
 
 def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     """HTML page base: some upload and menu entries depend on configuration"""
@@ -53,7 +53,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     fill_entries['sharelink_form'] = create_share_link_form(
         configuration, client_id, 'json', '', csrf_map.get('sharelink', ''))
     if configuration.site_enable_jobs and \
-           'submitjob' in extract_menu(configuration, title_entry):
+            'submitjob' in extract_menu(configuration, title_entry):
         fill_entries["upload_submit_entry"] = '''
             <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
             <input id="submitmrsl_0" type="checkbox" checked="" name="submitmrsl_0"/>
@@ -454,6 +454,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     '''
     return html
 
+
 def css_tmpl(configuration):
     """Stylesheets to include in the page header"""
     css = themed_styles(configuration, base=['jquery.contextmenu.css',
@@ -472,21 +473,30 @@ def css_tmpl(configuration):
     css['advanced'] += advanced_editor_css_deps()
     return css
 
-def js_tmpl(configuration, entry_path='/', enable_submit='true', preview='true', csrf_map={}, chroot=''):
+
+def js_tmpl(configuration,
+            entry_path='/',
+            enable_submit='true',
+            preview='true',
+            csrf_map={},
+            chroot=''):
     """Javascript to include in the page header"""
 
     fill_entries = {
-                'chroot': chroot,
-                'default_max_chunks': default_max_chunks,
-                'trash_linkname': trash_linkname,
-                'csrf_field': csrf_field,
-                'enable_submit': enable_submit.lower(),
-                'entry_path': entry_path,
-                'preview' : preview.lower(),
-                'enable_sharelinks': ('%s' % configuration.site_enable_sharelinks).lower(),
-                'enable_datatransfers': ('%s' % configuration.site_enable_transfers).lower(),
-                'enable_gdp': ('%s' % configuration.site_enable_gdp).lower(),
-                }
+        'chroot': chroot,
+        'default_max_chunks': default_max_chunks,
+        'trash_linkname': trash_linkname,
+        'csrf_field': csrf_field,
+        'enable_submit': enable_submit.lower(),
+        'entry_path': entry_path,
+        'preview': preview.lower(),
+        'enable_sharelinks':
+            ('%s' % configuration.site_enable_sharelinks).lower(),
+        'enable_datatransfers':
+            ('%s' % configuration.site_enable_transfers).lower(),
+        'enable_gdp':
+            ('%s' % configuration.site_enable_gdp).lower(),
+    }
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
@@ -616,7 +626,7 @@ csrf_map["%s"] = "%s";
     </tr>
 {% } %}
 </script>
-''' 
+'''
     js += advanced_editor_js_deps(include_jquery=False)
     js += lock_info('this file', -1)
     js += '''
@@ -670,37 +680,39 @@ csrf_map["%s"] = "%s";
     ''' % fill_entries
 
     return js
-        
+
+
 def signature():
     """Signature of the main function"""
 
-    defaults = {'path' : ['']}
+    defaults = {'path': ['']}
     return ['', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-            initialize_main_variables(client_id, op_header=False)
+        initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
-      user_arguments_dict,
-      defaults,
-      output_objects,
-      client_id,
-      configuration,
-      allow_rejects=False,
-      )
-    
+        user_arguments_dict,
+        defaults,
+        output_objects,
+        client_id,
+        configuration,
+        allow_rejects=False,
+    )
+
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    
+
     status = returnvalues.OK
 
     chroot = ''
     if configuration.site_enable_gdp:
-        chroot = get_active_project(configuration, client_id)
+        chroot = get_project_from_client_id(configuration, client_id)
 
     all_paths = accepted['path']
     entry_path = all_paths[-1]
@@ -708,7 +720,7 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'File Manager'
     title_entry['style'] = css_tmpl(configuration)
     if configuration.site_enable_jobs and \
-           'submitjob' in extract_menu(configuration, title_entry):
+            'submitjob' in extract_menu(configuration, title_entry):
         enable_submit = 'true'
     else:
         enable_submit = 'false'
@@ -717,13 +729,14 @@ def main(client_id, user_arguments_dict):
     limit = get_csrf_limit(configuration)
     for target_op in csrf_backends:
         csrf_map[target_op] = make_csrf_token(configuration, method,
-                                                 target_op, client_id, limit)
-    title_entry['javascript'] = js_tmpl(configuration, entry_path, enable_submit,
-                                        str(configuration.site_enable_preview),
-                                        csrf_map, chroot)
-    
+                                              target_op, client_id, limit)
+    title_entry['javascript'] = js_tmpl(
+        configuration, entry_path, enable_submit,
+        str(configuration.site_enable_preview),
+        csrf_map, chroot)
+
     output_objects.append({'object_type': 'header', 'class': 'fileman-title',
-                           'text': 'File Manager' })
+                           'text': 'File Manager'})
     output_objects.append({'object_type': 'html_form', 'text':
                            html_tmpl(configuration, client_id, title_entry,
                                      csrf_map, chroot)})

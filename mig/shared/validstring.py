@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # validstring - string validators
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,9 +32,10 @@ import os.path
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.defaults import keyword_auto, session_id_length, \
-     session_id_charset, share_id_charset, share_mode_charset, \
-     user_id_charset, user_id_min_length, user_id_max_length
+    session_id_charset, share_id_charset, share_mode_charset, \
+    user_id_charset, user_id_min_length, user_id_max_length
 from shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
+
 
 def cert_name_format(input_string):
     """ Spaces in certificate names are replaced with underscore internally """
@@ -52,8 +53,8 @@ def is_valid_email_address(addr, logger):
 
     c = 0
     while c < len(addr):
-        if addr[c] == '"' and (not c or addr[c - 1] == '.' or addr[c
-                                - 1] == '"'):
+        if addr[c] == '"' and (not c or addr[c - 1] == '.' or
+                               addr[c - 1] == '"'):
             c += 1
             while c < len(addr):
                 if addr[c] == '"':
@@ -101,6 +102,7 @@ def is_valid_email_address(addr, logger):
     logger.debug('%s is a valid email address' % addr)
     return count >= 1
 
+
 def possible_user_id(configuration, user_id):
     """Check if user_id is a possible user ID based on knowledge about
     contents. We always use email or hexlified version of cert DN.
@@ -112,6 +114,7 @@ def possible_user_id(configuration, user_id):
             return False
     return True
 
+
 def possible_job_id(configuration, job_id):
     """Check if job_id is a possible job ID based on knowledge about contents
     and length. We use hexlify on a random string of session_id_bytes, which
@@ -122,6 +125,7 @@ def possible_job_id(configuration, job_id):
         if not i in session_id_charset:
             return False
     return True
+
 
 def possible_sharelink_id(configuration, share_id):
     """Check if share_id is a possible sharelink ID based on contents and
@@ -197,13 +201,13 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     #_logger.debug("valid_user_path on %s %s" % (path, home_dir))
 
     # Make sure caller has explicitly forced abs path
-    
+
     if path != os.path.abspath(path):
         return False
 
     if invisible_path(path, apache_scripts):
         return False
-    
+
     abs_home = os.path.abspath(home_dir)
 
     if chroot_exceptions == keyword_auto:
@@ -239,7 +243,7 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     # NOTE: abs_home may be e.g. email alias for real home so we test that
     # path either starts with abs_home or real_home to make sure it is really
     # a path in user home in addition to being in home or (general) chroots.
-    inside = (path.startswith(abs_home + os.sep) or \
+    inside = (path.startswith(abs_home + os.sep) or
               path.startswith(real_home + os.sep))
     #_logger.debug("path %s is inside " % path)
     if not allow_equal:

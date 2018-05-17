@@ -50,7 +50,7 @@ def signature():
         'flags': [''],
         'mkdirbutton': [''],
         'share_id': [''],
-        }
+    }
     return ['', defaults]
 
 
@@ -71,7 +71,7 @@ def main(client_id, user_arguments_dict, environ=None):
         defaults,
         output_objects,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -109,10 +109,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # TODO: load and check sharelink pickle (currently requires client_id)
         user_id = 'anonymous user through share ID %s' % share_id
         if share_mode == 'read-only':
-            logger.error('%s called without write access: %s' % \
-                         (op_name, accepted))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'No write access!'})
+            logger.error('%s called without write access: %s'
+                         % (op_name, accepted))
+            output_objects.append(
+                {'object_type': 'error_text', 'text': 'No write access!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_dir = os.path.join(share_mode, share_id)
         base_dir = configuration.sharelink_home
@@ -122,9 +122,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         widgets = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Authentication is missing!'
-                              })
+        output_objects.append({'object_type': 'error_text',
+                               'text': 'Authentication is missing!'
+                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -140,15 +140,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     # Input validation assures target_dir can't escape base_dir
     if not os.path.isdir(base_dir):
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid client/sharelink id!'})
+        output_objects.append(
+            {'object_type': 'error_text',
+             'text': 'Invalid client/sharelink id!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text',
+                                   'text': '%s using flag: %s'
+                                   % (op_name, flag)})
 
     for pattern in patterns:
 
@@ -158,7 +159,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # NB: Globbing disabled on purpose here
 
         unfiltered_match = [base_dir + os.sep + current_dir + os.sep
-                             + pattern]
+                            + pattern]
         match = []
         for server_path in unfiltered_match:
             # IMPORTANT: path must be expanded to abs for proper chrooting
@@ -179,28 +180,28 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "%s: cannot create directory '%s': Permission denied"
+                {'object_type': 'error_text',
+                 'text': "%s: cannot create directory '%s': Permission denied"
                  % (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
 
         for abs_path in match:
             relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
-                output_objects.append({'object_type': 'file', 'name'
-                        : relative_path})
+                output_objects.append(
+                    {'object_type': 'file', 'name': relative_path})
             if not parents(flags) and os.path.exists(abs_path):
                 output_objects.append({'object_type': 'error_text',
-                        'text': '%s: path exist!' % pattern})
+                                       'text': '%s: path exist!' % pattern})
                 status = returnvalues.CLIENT_ERROR
                 continue
             if not check_write_access(abs_path, parent_dir=True):
-                logger.warning('%s called without write access: %s' % \
-                               (op_name, abs_path))
+                logger.warning('%s called without write access: %s'
+                               % (op_name, abs_path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'cannot create "%s": inside a read-only location!' % \
-                     pattern})
+                     'cannot create "%s": inside a read-only location!'
+                     % pattern})
                 status = returnvalues.CLIENT_ERROR
                 continue
             try:
@@ -212,25 +213,24 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 logger.info('%s %s done' % (op_name, abs_path))
                 if configuration.site_enable_gdp:
                     msg = "'%s'" % relative_path
-                    project_log(configuration, client_id, 'created', 
-                                msg, client_addr=environ['REMOTE_ADDR'])
+                    project_log(configuration, 'https', client_id, 'created',
+                                msg, user_addr=environ['REMOTE_ADDR'])
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s' failed!" % (op_name,
-                        relative_path)})
+                                       'text': "%s: '%s' failed!"
+                                       % (op_name, relative_path)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
 
                 status = returnvalues.SYSTEM_ERROR
                 continue
             output_objects.append({'object_type': 'text',
-                        'text': "created directory %s" % (relative_path)})
+                                   'text': "created directory %s"
+                                   % (relative_path)})
             output_objects.append({'object_type': 'directory',
-                        'name': relative_path})
+                                   'name': relative_path})
 
     output_objects.append({'object_type': 'link',
                            'destination': 'ls.py%s' % id_query,
                            'text': 'Return to files overview'})
     return (output_objects, status)
-
-

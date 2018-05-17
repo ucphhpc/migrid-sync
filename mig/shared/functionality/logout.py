@@ -61,13 +61,12 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     do_logout = accepted['logout'][-1].lower() in ('true', '1')
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Logout'})
+    output_objects.append({'object_type': 'header', 'text': 'Logout'})
     (oid_db, identity) = extract_client_openid(configuration, environ,
                                                lookup_dn=False)
     logger.info("%s from %s with identity %s" % (op_name, client_id, identity))
@@ -96,29 +95,33 @@ browser. Please refer to your browser and system documentation for details.
             if configuration.site_enable_gdp:
                 reentry_page = "https://%s" % configuration.server_fqdn
                 if configuration.user_mig_oid_provider and \
-                        identity.startswith(configuration.user_mig_oid_provider):
+                        identity.startswith(
+                            configuration.user_mig_oid_provider):
                     reentry_page = configuration.migserver_https_mig_oid_url
                 elif configuration.user_ext_oid_provider and \
-                        identity.startswith(configuration.user_ext_oid_provider):
+                        identity.startswith(
+                            configuration.user_ext_oid_provider):
                     reentry_page = configuration.migserver_https_ext_oid_url
-                project_logout(configuration, environ['REMOTE_ADDR'], project_client_id=client_id)
+                project_logout(
+                    configuration, environ['REMOTE_ADDR'], 'https', client_id)
                 html = '''
                 <a id='gdp_logout' href='%s'></a>
                 <script type='text/javascript'>
                     document.getElementById('gdp_logout').click();
                 </script>''' % reentry_page
-                output_objects.append({'object_type': 'html_form', 'text' : html})
+                output_objects.append(
+                    {'object_type': 'html_form', 'text': html})
             else:
                 output_objects.append(
                     {'object_type': 'text', 'text': """You are now logged out of %s
-    locally - you may want to close your web browser to finish""" % \
-                     configuration.short_title})
+    locally - you may want to close your web browser to finish"""
+                     % configuration.short_title})
         else:
             logger.error("remaining active sessions for %s: %s" % (identity,
-                         remaining))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : "Could not log you out of %s!" % \
-                                   configuration.short_title})
+                                                                   remaining))
+            output_objects.append({'object_type': 'error_text',
+                                   'text': "Could not log you out of %s!"
+                                   % configuration.short_title})
             status = returnvalues.CLIENT_ERROR
     else:
         local_logout = '?logout=true'
@@ -132,6 +135,7 @@ log out of %s?""" % configuration.short_title})
             {'object_type': 'link', 'destination': oid_logout,
              'class': 'genericbutton', 'text': "Yes"})
         output_objects.append(
-            {'object_type': 'link', 'destination': 'javascript:history.back();',
+            {'object_type': 'link',
+             'destination': 'javascript:history.back();',
              'class': 'genericbutton', 'text': "No, go back"})
     return (output_objects, status)

@@ -31,24 +31,26 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_alias, client_id_dir, extract_field
-from shared.defaults import any_vgrid, default_mrsl_filename, \
-     default_css_filename, profile_img_max_kb, profile_img_extensions, \
-     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
-     duplicati_protocol_choices, duplicati_schedule_choices
+from shared.defaults import default_mrsl_filename, \
+    default_css_filename, profile_img_max_kb, profile_img_extensions, \
+    seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
+    duplicati_protocol_choices, duplicati_schedule_choices
 from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from shared.events import get_command_map
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, console_log_javascript
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
-     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati
+    load_ssh, load_davs, load_ftps, load_seafile, load_duplicati
 from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
-from shared.useradm import get_default_mrsl, get_default_css, create_alias_link
+from shared.useradm import create_alias_link, get_default_mrsl, \
+    get_default_css, get_short_id
+
+
 from shared.vgridaccess import get_vgrid_map_vgrids
 
 try:
@@ -72,6 +74,7 @@ profile_edit['mode'] = 'htmlmixed'
 duplicati_edit = cm_options.copy()
 duplicati_edit['mode'] = 'htmlmixed'
 
+
 def signature():
     """Signature of the main function"""
 
@@ -93,7 +96,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -101,11 +104,11 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Settings'
-    
+
     # prepare support for toggling the views (by css/jquery)
 
     title_entry['style'] = themed_styles(configuration)
@@ -186,20 +189,19 @@ $(document).ready(function() {
                        ]:
         if key in valid_topics:
             topic_titles[key] = val
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Settings'})
+    output_objects.append({'object_type': 'header', 'text': 'Settings'})
 
     links = []
     for name in valid_topics:
         active_menu = ''
         if topics[0] == name:
             active_menu = 'activebutton'
-        links.append({'object_type': 'link', 
+        links.append({'object_type': 'link',
                       'destination': "settings.py?topic=%s" % name,
-                      'class': '%ssettingslink settingsbutton %s' % \
-                      (name, active_menu),
+                      'class': '%ssettingslink settingsbutton %s'
+                      % (name, active_menu),
                       'title': 'Switch to %s settings' % topic_titles[name],
-                      'text' : '%s' % topic_titles[name],
+                      'text': '%s' % topic_titles[name],
                       })
 
     output_objects.append({'object_type': 'multilinkline', 'links': links,
@@ -231,7 +233,7 @@ $(document).ready(function() {
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = \
-             '''
+            '''
         <div id="settings">
         <form method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -252,11 +254,11 @@ $(document).ready(function() {
         '''
         settings_entries = get_settings_specs()
         for (keyword, val) in settings_entries:
-            if 'SUBMITUI' == keyword and \
-                   'job' not in valid_topics:
+            if keyword == 'SUBMITUI' and \
+                    'job' not in valid_topics:
                 continue
-            if 'notify' == val['Context'] and \
-                   keyword.lower() not in configuration.notify_protocols:
+            if val['Context'] == 'notify' and \
+                    keyword.lower() not in configuration.notify_protocols:
                 continue
             entry = \
                 """
@@ -279,15 +281,15 @@ $(document).ready(function() {
                     if current_settings_dict.has_key(keyword):
                         current_choice = current_settings_dict[keyword]
 
-                    if len(valid_choices) > 0:
+                    if valid_choices:
                         entry += '<div class="scrollselect">'
                         for choice in valid_choices:
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
                             entry += '''
-                <input type="checkbox" name="%s" %s value="%s">%s<br />''' % \
-                            (keyword, selected, choice, choice)
+                <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
+                                % (keyword, selected, choice, choice)
                         entry += '</div>'
                     else:
                         entry += ''
@@ -295,8 +297,8 @@ $(document).ready(function() {
                     # failed on evaluating configuration.%s
 
                     area = '''
-                <textarea id="%s" cols=40 rows=1 name="%s">''' % \
-                    (keyword, keyword)
+                <textarea id="%s" cols=40 rows=1 name="%s">''' \
+                        % (keyword, keyword)
                     if current_settings_dict.has_key(keyword):
                         area += '\n'.join(current_settings_dict[keyword])
                     area += '</textarea>'
@@ -312,14 +314,14 @@ $(document).ready(function() {
                 if current_settings_dict.has_key(keyword):
                     current_choice = current_settings_dict[keyword]
 
-                if len(valid_choices) > 0:
+                if valid_choices:
                     entry += '<select name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
                             selected = 'selected'
                         entry += '<option %s value="%s">%s</option>'\
-                             % (selected, choice, choice)
+                            % (selected, choice, choice)
                     entry += '</select><br />'
                 else:
                     entry += ''
@@ -386,7 +388,7 @@ your submit job page.
 </textarea>
 '''
         html += wrap_edit_area(keyword, area, cm_options, 'BASIC')
-        
+
         html += '''
 </td></tr>
 <tr><td>
@@ -400,7 +402,7 @@ your submit job page.
             'default_mrsl': default_mrsl,
             'mrsl_template': default_mrsl_filename,
             'keyword': keyword
-            })
+        })
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
@@ -412,7 +414,7 @@ your submit job page.
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = \
-             '''
+            '''
 <div id="defaultcss">
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -466,7 +468,7 @@ here.
             'default_css': default_css,
             'css_template': default_css_filename,
             'keyword': keyword
-            })
+        })
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
@@ -476,9 +478,9 @@ here.
 
         current_widgets_dict = load_widgets(client_id, configuration)
         if not current_widgets_dict:
-            
+
             # no current widgets found
-            
+
             current_widgets_dict = {}
 
         show_widgets = current_settings_dict.get('ENABLE_WIDGETS', True)
@@ -523,7 +525,7 @@ disabling of widgets while experimenting here.</div>
 </td></tr>
 <tr><td>
 '''
-            
+
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -543,7 +545,7 @@ If you want to customize the look and feel of the %(site)s web interfaces you
 can add your own widgets here. If you leave the widgets blank you will just
 get the default empty widget spaces.<br />
 '''
-        
+
         widgets_entries = get_widgets_specs()
         widgets_html = ''
         for (keyword, val) in widgets_entries:
@@ -568,7 +570,7 @@ get the default empty widget spaces.<br />
                     if current_widgets_dict.has_key(keyword):
                         current_choice = current_widgets_dict[keyword]
 
-                    if len(valid_choices) > 0:
+                    if valid_choices:
                         widgets_html += '<div class="scrollselect">'
                         for choice in valid_choices:
                             selected = ''
@@ -580,8 +582,8 @@ get the default empty widget spaces.<br />
                         widgets_html += '</div>'
                 except:
                     area = \
-                         """<textarea id='%s' cols=78 rows=10 name='%s'>""" % \
-                         (keyword, keyword)
+                        """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
+                        % (keyword, keyword)
                     if current_widgets_dict.has_key(keyword):
                         area += '\n'.join(current_widgets_dict[keyword])
                     area += '</textarea>'
@@ -601,7 +603,7 @@ get the default empty widget spaces.<br />
 Widgets are disabled on your <em>General</em> settings page. Please enable
 them there first if you want to customize your grid pages.
 </div>
-'''            
+'''
         html += '''
 %s
 </table>
@@ -617,9 +619,9 @@ them there first if you want to customize your grid pages.
 
         current_profile_dict = load_profile(client_id, configuration)
         if not current_profile_dict:
-            
+
             # no current profile found
-            
+
             current_profile_dict = {}
 
         all_vgrids = get_vgrid_map_vgrids(configuration)
@@ -629,7 +631,7 @@ them there first if you want to customize your grid pages.
         for path in os.listdir(base_dir):
             real_path = os.path.join(base_dir, path)
             if os.path.splitext(path)[1].strip('.') in profile_img_extensions \
-                   and os.path.getsize(real_path) < profile_img_max_kb*1024:
+                    and os.path.getsize(real_path) < profile_img_max_kb*1024:
                 images.append(path)
         configuration.public_image = images
         target_op = 'settingsaction'
@@ -690,20 +692,20 @@ so you may have to avoid blank lines in your text below.
                     if current_profile_dict.has_key(keyword):
                         current_choice = current_profile_dict[keyword]
 
-                    if len(valid_choices) > 0:
+                    if valid_choices:
                         html += '<div class="scrollselect">'
                         for choice in valid_choices:
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
                             html += '''
-                <input type="checkbox" name="%s" %s value="%s">%s<br />''' % \
-                            (keyword, selected, choice, choice)
+                <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
+                                % (keyword, selected, choice, choice)
                         html += '</div>'
                 except:
                     area = \
-                         """<textarea id='%s' cols=78 rows=10 name='%s'>""" % \
-                         (keyword, keyword)
+                        """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
+                        % (keyword, keyword)
                     if current_profile_dict.has_key(keyword):
                         area += '\n'.join(current_profile_dict[keyword])
                     area += '</textarea>'
@@ -714,14 +716,14 @@ so you may have to avoid blank lines in your text below.
                 if current_profile_dict.has_key(keyword):
                     current_choice = current_profile_dict[keyword]
 
-                if len(valid_choices) > 0:
+                if valid_choices:
                     html += '<select name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
                             selected = 'selected'
                         html += '<option %s value="%s">%s</option>'\
-                             % (selected, choice, choice)
+                            % (selected, choice, choice)
                     html += '</select><br />'
 
         html += '''
@@ -741,9 +743,9 @@ so you may have to avoid blank lines in your text below.
 
         current_ssh_dict = load_ssh(client_id, configuration)
         if not current_ssh_dict:
-            
+
             # no current ssh found
-            
+
             current_ssh_dict = {}
 
         default_authkeys = current_ssh_dict.get('authkeys', '')
@@ -847,7 +849,7 @@ to your /etc/fstab .
     </a>
 </div>
 '''
-        
+
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_sftp_auth:
             html += '''
@@ -871,7 +873,7 @@ with username and key as described in the Login Details.
 (leave empty to disable sftp access with public keys)
 </td></tr>
 '''
-            
+
         keyword_password = "authpassword"
         if 'password' in configuration.user_sftp_auth:
 
@@ -887,13 +889,13 @@ value="%(default_authpassword)s" />
 (leave empty to disable sftp access with password)
 </td></tr>
 '''
-        
+
         html += '''
 <tr><td>
 <input type="submit" value="Save SFTP Settings" />
 </td></tr>
 '''
-        
+
         html += '''
 </table>
 </form>
@@ -910,7 +912,7 @@ value="%(default_authpassword)s" />
             'max_sessions': configuration.user_sftp_max_sessions,
             'fingerprint_info': fingerprint_info,
             'auth_methods': ' / '.join(configuration.user_sftp_auth).title(),
-            })
+        })
 
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
@@ -921,16 +923,17 @@ value="%(default_authpassword)s" />
 
         current_davs_dict = load_davs(client_id, configuration)
         if not current_davs_dict:
-            
+
             # no current davs found
-            
+
             current_davs_dict = {}
 
         default_authkeys = current_davs_dict.get('authkeys', '')
         default_authpassword = current_davs_dict.get('authpassword', '')
         username = client_alias(client_id)
         if configuration.user_davs_alias:
-            username = extract_field(client_id, configuration.user_davs_alias)
+            username = get_short_id(configuration, client_id,
+                                    configuration.user_davs_alias)
             create_alias_link(username, client_id, configuration.user_home)
         davs_server = configuration.user_davs_show_address
         davs_port = configuration.user_davs_show_port
@@ -1013,7 +1016,7 @@ fusedav https://%(davs_server)s:%(davs_port)s remote-home -o uid=$(id -u) -o gid
     Show more WebDAVS client details...</a>
 </div>
 '''
-        
+
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_davs_auth:
             html += '''
@@ -1036,7 +1039,7 @@ with username and key as described in the Login Details.
 (leave empty to disable davs access with public keys)
 </td></tr>
 '''
-            
+
         keyword_password = "authpassword"
         if 'password' in configuration.user_davs_auth:
             # We only want a single password and a masked input field
@@ -1051,13 +1054,13 @@ value="%(default_authpassword)s" />
 (leave empty to disable davs access with password)
 </td></tr>
 '''
-        
+
         html += '''
 <tr><td>
 <input type="submit" value="Save WebDAVS Settings" />
 </td></tr>
 '''
-        
+
         html += '''
 </table>
 </form>
@@ -1073,7 +1076,7 @@ value="%(default_authpassword)s" />
             'davs_port': davs_port,
             'fingerprint_info': fingerprint_info,
             'auth_methods': ' / '.join(configuration.user_davs_auth).title(),
-            })
+        })
 
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
@@ -1084,9 +1087,9 @@ value="%(default_authpassword)s" />
 
         current_ftps_dict = load_ftps(client_id, configuration)
         if not current_ftps_dict:
-            
+
             # no current ftps found
-            
+
             current_ftps_dict = {}
 
         default_authkeys = current_ftps_dict.get('authkeys', '')
@@ -1185,7 +1188,7 @@ curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home \\
 </a>
 </div>
 '''
-        
+
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_ftps_auth:
             html += '''
@@ -1209,7 +1212,7 @@ with username and key as described in the Login Details.
 (leave empty to disable ftps access with public keys)
 </td></tr>
 '''
-            
+
         keyword_password = "authpassword"
         if 'password' in configuration.user_ftps_auth:
 
@@ -1225,29 +1228,29 @@ value="%(default_authpassword)s" />
 (leave empty to disable ftps access with password)
 </td></tr>
 '''
-        
+
         html += '''
 <tr><td>
 <input type="submit" value="Save FTPS Settings" />
 </td></tr>
 '''
-        
+
         html += '''
 </table>
 </form>
 </div>
 '''
         fill_helpers.update({
-        'default_authkeys': default_authkeys,
-        'default_authpassword': default_authpassword,
-        'keyword_keys': keyword_keys,
-        'keyword_password': keyword_password,
-        'username': username,
-        'ftps_server': ftps_server,
-        'ftps_ctrl_port': ftps_ctrl_port,
-        'max_sessions': configuration.user_sftp_max_sessions,
-        'fingerprint_info': fingerprint_info,
-        'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
+            'default_authkeys': default_authkeys,
+            'default_authpassword': default_authpassword,
+            'keyword_keys': keyword_keys,
+            'keyword_password': keyword_password,
+            'username': username,
+            'ftps_server': ftps_server,
+            'ftps_ctrl_port': ftps_ctrl_port,
+            'max_sessions': configuration.user_sftp_max_sessions,
+            'fingerprint_info': fingerprint_info,
+            'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
         })
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
@@ -1258,18 +1261,19 @@ value="%(default_authpassword)s" />
 
         current_seafile_dict = load_seafile(client_id, configuration)
         if not current_seafile_dict:
-            
+
             # no current seafile found
-            
+
             current_seafile_dict = {}
 
         keyword_password = "authpassword"
         default_authpassword = current_seafile_dict.get('authpassword', '')
         username = client_alias(client_id)
         if configuration.user_seafile_alias:
-            username = extract_field(client_id, configuration.user_seafile_alias)
+            username = extract_field(
+                client_id, configuration.user_seafile_alias)
             create_alias_link(username, client_id, configuration.user_home)
-        
+
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -1433,7 +1437,7 @@ below, to enable the read-only Seafile integration in your user home.
 value="%(default_authpassword)s" />
 (leave empty to disable seafile integration)
 <br/>'''
-        
+
         html += '''
 <input id="seafilesavebutton" type="submit" value="Save Seafile Password" />
 </fieldset>
@@ -1458,13 +1462,13 @@ value="%(default_authpassword)s" />
             'seahub_url': configuration.user_seahub_url,
             'seareg_url': configuration.user_seareg_url,
             'seafile_url': configuration.user_seafile_url,
-            'auth_methods': ' / '.join(configuration.user_seafile_auth).title(),
+            'auth_methods':
+                ' / '.join(configuration.user_seafile_auth).title(),
             'ro': 'readonly=readonly',
             'size': 'size=50',
-            })
+        })
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
-
 
     if 'duplicati' in topics:
 
@@ -1472,11 +1476,11 @@ value="%(default_authpassword)s" />
 
         current_duplicati_dict = load_duplicati(client_id, configuration)
         if not current_duplicati_dict:
-            
+
             # no current duplicati found
-            
+
             current_duplicati_dict = {}
-                
+
         configuration.protocol, configuration.username = [], []
         configuration.schedule = [i for (i, j) in duplicati_schedule_choices]
         # We save the pretty names in pickle but use internal ones here
@@ -1484,20 +1488,20 @@ value="%(default_authpassword)s" />
             protocol_order = configuration.user_duplicati_protocols
         else:
             protocol_order = [j for (i, j) in duplicati_protocol_choices]
-        reverse_proto_map = dict([(j, i) for (i, j) in \
-                                duplicati_protocol_choices])
+        reverse_proto_map = dict([(j, i) for (i, j) in
+                                  duplicati_protocol_choices])
 
         enabled_map = {
             'davs': configuration.site_enable_davs,
             'sftp': configuration.site_enable_sftp or \
                     configuration.site_enable_sftp_subsys,
             'ftps': configuration.site_enable_ftps
-            }
+        }
         username_map = {
             'davs': extract_field(client_id, configuration.user_davs_alias),
             'sftp': extract_field(client_id, configuration.user_sftp_alias),
             'ftps': extract_field(client_id, configuration.user_ftps_alias)
-            }
+        }
         for proto in protocol_order:
             pretty_proto = reverse_proto_map[proto]
             if not enabled_map[proto]:
@@ -1506,7 +1510,7 @@ value="%(default_authpassword)s" />
                 configuration.protocol.append(pretty_proto)
             if not username_map[proto] in configuration.username:
                 configuration.username.append(username_map[proto])
-        
+
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -1557,20 +1561,20 @@ for %(site)s backup use.
                     if current_duplicati_dict.has_key(keyword):
                         current_choice = current_duplicati_dict[keyword]
 
-                    if len(valid_choices) > 0:
+                    if valid_choices:
                         html += '<div class="scrollselect">'
                         for choice in valid_choices:
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
                             html += '''
-                <input type="checkbox" name="%s" %s value="%s">%s<br />''' % \
-                            (keyword, selected, choice, choice)
+                <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
+                                % (keyword, selected, choice, choice)
                         html += '</div>'
                 except:
                     area = \
-                         """<textarea id='%s' cols=78 rows=10 name='%s'>""" % \
-                         (keyword, keyword)
+                        """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
+                        % (keyword, keyword)
                     if current_duplicati_dict.has_key(keyword):
                         area += '\n'.join(current_duplicati_dict[keyword])
                     area += '</textarea>'
@@ -1585,23 +1589,23 @@ for %(site)s backup use.
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
 
-                    if len(valid_choices) > 0:
+                    if valid_choices:
                         html += '<select name="%s">' % keyword
                         for choice in valid_choices:
                             selected = ''
                             if choice == current_choice:
                                 selected = 'selected'
                             html += '<option %s value="%s">%s</option>'\
-                                 % (selected, choice, choice)
+                                % (selected, choice, choice)
                         html += '</select>'
                     else:
                         html += ''
                 elif val['Editor'] == 'password':
-                    html += '<input type="password" name="%s" value="%s"/>' % \
-                        (keyword, current_choice)
+                    html += '<input type="password" name="%s" value="%s"/>' \
+                        % (keyword, current_choice)
                 else:
-                    html += '<input type="text" name="%s" value="%s"/>' % \
-                        (keyword, current_choice)
+                    html += '<input type="text" name="%s" value="%s"/>' \
+                        % (keyword, current_choice)
                 html += '<br />'
             elif val['Type'] == 'boolean':
                 valid_choices = [True, False]
@@ -1609,14 +1613,14 @@ for %(site)s backup use.
                 if current_duplicati_dict.has_key(keyword):
                     current_choice = current_duplicati_dict[keyword]
 
-                if len(valid_choices) > 0:
+                if valid_choices:
                     html += '<select name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
                             selected = 'selected'
                         html += '<option %s value="%s">%s</option>'\
-                             % (selected, choice, choice)
+                            % (selected, choice, choice)
                     html += '</select><br />'
 
             html += '''
@@ -1647,13 +1651,14 @@ Your saved %(site)s Duplicati backup settings are available for download below:
             # Check existance of conf_file
             conf_path = os.path.join(duplicati_confs_path, conf_file)
             if not os.path.isfile(conf_path):
-                logger.warning("saved duplicati conf %s is missing" % conf_path)
+                logger.warning(
+                    "saved duplicati conf %s is missing" % conf_path)
                 continue
-            html += '<a href="/cert_redirect/%s/%s">%s</a><br/>' % \
-            (duplicati_conf_dir, conf_file, conf_file)
+            html += '<a href="/cert_redirect/%s/%s">%s</a><br/>' \
+                % (duplicati_conf_dir, conf_file, conf_file)
         if not duplicati_confs:
             html += '<em>No backup sets configured</em>'
-        
+
         html += '''
 </p>
 After downloading you can import them directly in the most recent Duplicati
@@ -1666,10 +1671,9 @@ client versions from the link above.<br/>
         fill_helpers.update({
             'client_id': client_id,
             'size': 'size=50',
-            })
+        })
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
-
 
     # if ARC-enabled server:
     if 'arc' in topics:
@@ -1680,24 +1684,23 @@ client versions from the link above.<br/>
             proxy = session_Ui.getProxy()
             if proxy.IsExpired():
                 # can rarely happen, constructor will throw exception
-                output_objects.append({'object_type': 'text', 
-                                       'text': 'Proxy certificate is expired.'})
+                output_objects.append({'object_type': 'text',
+                                       'text':
+                                       'Proxy certificate is expired.'})
             else:
-                output_objects.append({'object_type': 'text', 
-                                       'text': 'Proxy for %s' \
+                output_objects.append({'object_type': 'text',
+                                       'text': 'Proxy for %s'
                                        % proxy.GetIdentitySN()})
                 output_objects.append(
-                    {'object_type': 'text', 
+                    {'object_type': 'text',
                      'text': 'Proxy certificate will expire on %s (in %s sec.)'
                      % (proxy.Expires(), proxy.getTimeleft())
                      })
         except arc.NoProxyError, err:
-            output_objects.append({'object_type':'warning',
-                                   'text': 'No proxy certificate to load: %s' \
+            output_objects.append({'object_type': 'warning',
+                                   'text': 'No proxy certificate to load: %s'
                                    % err.what()})
-    
+
         output_objects = output_objects + arc.askProxy()
-    
+
     return (output_objects, returnvalues.OK)
-
-

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
@@ -60,7 +59,7 @@ def signature():
         'vgrid_name': [''],
         'invite_client_id': [''],
         'status_msg': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -68,8 +67,7 @@ def html_tmpl(
     configuration,
     client_id,
     csrf_token,
-    status_msg,
-    ):
+    status_msg):
     """HTML main template for GDP manager"""
 
     fill_entries = {}
@@ -82,10 +80,10 @@ def html_tmpl(
 
     create_projects = True
     if not user_dict or not vgrid_create_allowed(configuration,
-            user_dict):
+                                                 user_dict):
         create_projects = False
     accepted_projects = get_projects(configuration, client_id,
-            'accepted')
+                                     'accepted')
     invited_projects = get_projects(configuration, client_id, 'invited')
     invite_projects = get_projects(configuration, client_id, 'invite')
     gdp_users = get_users(configuration)
@@ -93,7 +91,7 @@ def html_tmpl(
     # Generate html
 
     html = ''
-    if len(status_msg) > 0:
+    if status_msg:
         html += \
             """
         <table class='gm_projects_table' style='border-spacing=0;'>
@@ -346,13 +344,13 @@ def css_tmpl(configuration):
     }
 
     /* -------------------- Colors: Background */
-    .gm_select { 
-        background-color: #679c5b; 
+    .gm_select {
+        background-color: #679c5b;
     }
 
     /* -------------------- Colors: Text */
-    .gm_select select { 
-        color: #fff; 
+    .gm_select select {
+        color: #fff;
     }
 
     /* Set the desired color for the focus state */
@@ -430,11 +428,11 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     (_, identity) = extract_client_openid(configuration, environ,
-            lookup_dn=False)
+                                          lookup_dn=False)
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
     project_name = accepted['vgrid_name'][-1].strip()
@@ -453,25 +451,25 @@ def main(client_id, user_arguments_dict, environ=None):
     title_entry['javascript'] = js_tmpl()
 
     output_objects.append({'object_type': 'header',
-                          'class': 'gdpman-title', 'text': title_text})
+                           'class': 'gdpman-title', 'text': title_text})
 
     # Validate Access
 
     if not configuration.site_enable_gdp:
         output_objects.append({'object_type': 'error_text',
-                              'text': """SIF disabled on this site.
+                               'text': """SIF disabled on this site.
 Please contact the Grid admins %s if you think it should be enabled.
 """
-                              % configuration.admin_email})
+                               % configuration.admin_email})
         return (output_objects, returnvalues.ERROR)
     if client_id and client_id == identity:
         output_objects.append({'object_type': 'error_text',
-                              'text': 'CERT user credentials _NOT_ supported by this site.'
-                              })
+                               'text':
+            'CERT user credentials _NOT_ supported by this site.'})
         return (output_objects, returnvalues.ERROR)
     elif not identity:
         output_objects.append({'object_type': 'error_text',
-                              'text': 'Missing user credentials'})
+                               'text': 'Missing user credentials'})
         return (output_objects, returnvalues.ERROR)
 
     if action and not safe_handler(
@@ -481,17 +479,19 @@ Please contact the Grid admins %s if you think it should be enabled.
         client_id,
         get_csrf_limit(configuration),
         accepted,
-        ):
+    ):
         output_objects.append({'object_type': 'error_text',
-                              'text': 'action: %s' % action})
+                               'text': 'action: %s' % action})
         output_objects.append({'object_type': 'error_text',
-                              'text': """Only accepting
+                               'text': """Only accepting
             CSRF-filtered POST accept_invites to prevent unintended updates"""
-                              })
+                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    _logger.debug("checkpount: %s" % identity)
     if not action and identity or action == 'logout':
-        autologout = project_logout(configuration, client_addr,
+        _logger.debug("checkpount2: %s" % client_id)
+        autologout = project_logout(configuration, client_addr, 'https',
                                     client_id, autologout=True)
 
         if autologout or action == 'logout':
@@ -508,15 +508,17 @@ Please contact the Grid admins %s if you think it should be enabled.
                 document.getElementById('autologout').click();
             </script>""" \
                 % openid_autologout_url(configuration, identity,
-                    client_id, return_url, return_query_dict)
+                                        client_id, return_url, return_query_dict)
             output_objects.append({'object_type': 'html_form',
-                                  'text': html})
+                                   'text': html})
 
     # Generate html
 
     ensure_user(configuration, client_addr, client_id)
     (validate_status, validate_msg) = validate_user(configuration,
-            client_id, client_addr)
+                                                    client_id,
+                                                    client_addr,
+                                                    'https')
     if not validate_status:
         html = \
             """
@@ -534,7 +536,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             % validate_msg
         html += html_logout_tmpl(configuration, csrf_token)
         output_objects.append({'object_type': 'html_form',
-                              'text': html})
+                               'text': html})
     else:
 
         # Entry page
@@ -547,17 +549,18 @@ Please contact the Grid admins %s if you think it should be enabled.
                              status_msg)
             html += html_logout_tmpl(configuration, csrf_token)
             output_objects.append({'object_type': 'html_form',
-                                  'text': html})
+                                   'text': html})
         elif action == 'access':
 
-        # Project login
+            # Project login
 
             project_client_id = project_login(configuration, client_addr,
-                    client_id, project_name)
+                                              'https', client_id, project_name)
             if project_client_id:
                 dest_op_name = 'fileman'
-                base_url = environ.get('REQUEST_URI', '').split('?'
-                        )[0].replace(op_name, dest_op_name)
+                base_url = environ.get('REQUEST_URI',
+                                       '').split('?')[0].replace(op_name,
+                                            dest_op_name)
                 html = \
                     """
                 <a id='gdp_login' href='%s'></a>
@@ -566,38 +569,41 @@ Please contact the Grid admins %s if you think it should be enabled.
                 </script>""" \
                     % base_url
                 output_objects.append({'object_type': 'html_form',
-                        'text': html})
+                                       'text': html})
             else:
                 action_msg = 'ERROR: Login to project: %s failed' \
                     % project_name
         elif action == 'accept_invite':
 
-        # Project accept invitation
+            # Project accept invitation
 
             (status, msg) = project_accept(configuration, client_addr,
-                    client_id, project_name)
+                                           client_id, project_name)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
                 action_msg = 'ERROR: %s' % msg
         elif action == 'invite':
 
-        # Project invitation
+            # Project invitation
 
-            (status, msg) = project_invite(configuration, client_addr,
-                    client_id, invite_client_id, project_name)
+            (status, msg) = project_invite(configuration,
+                                           client_addr,
+                                           client_id,
+                                           invite_client_id,
+                                           project_name)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
                 action_msg = 'ERROR: %s' % msg
         elif action == 'create':
 
-        # Project create
+            # Project create
 
             logger.debug(": %s : creating project: '%s' : from ip: %s'"
                          % (client_id, project_name, client_addr))
             (status, msg) = project_create(configuration, client_addr,
-                    client_id, project_name)
+                                           client_id, project_name)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
@@ -623,8 +629,6 @@ Please contact the Grid admins %s if you think it should be enabled.
                 document.getElementById('gdpman_status_form').submit();
             </script>"""
             output_objects.append({'object_type': 'html_form',
-                                  'text': html})
+                                   'text': html})
 
     return (output_objects, returnvalues.OK)
-
-

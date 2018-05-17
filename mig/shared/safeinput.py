@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
@@ -43,7 +42,7 @@ from unicodedata import category, normalize, name as unicode_name
 
 from shared.base import force_unicode, force_utf8
 from shared.defaults import src_dst_sep, user_id_charset, user_id_max_length, \
-     session_id_charset, session_id_length
+    session_id_charset, session_id_length
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -60,8 +59,8 @@ NO_ACCENTED, COMMON_ACCENTED, ANY_ACCENTED = range(3)
 #_ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', 'Lm', 'Lo', ))
 _ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', ))
 
-### Use utf8 byte string representation here ("something" and not u"something")
-### We explicitly translate to the unicode representation in the functions
+# Use utf8 byte string representation here ("something" and not u"something")
+# We explicitly translate to the unicode representation in the functions
 
 # These are the ascii plus most common accented letters in utf8 for names:
 # http://practicaltypography.com/common-accented-characters.html
@@ -79,12 +78,12 @@ CURRENCY = '¤$€£¢¥₣₤'
 
 VALID_SAFE_PATH_CHARACTERS = letters + digits + "/.,_-+="
 VALID_PATH_CHARACTERS = letters + digits + CURRENCY + "/.,_-+±×÷=½¾" + \
-                        " " + "'" + ":;@§%‰()~!&¶"
+    " " + "'" + ":;@§%‰()~!&¶"
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
 VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + CURRENCY + '?#*[]{}' + '"' + \
-                        "`|^" + '\\' + '\n\r\t'
+    "`|^" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_BACKEND_NAME_CHARACTERS = letters + digits + '-_'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
@@ -92,7 +91,7 @@ VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 # According to https://tools.ietf.org/html/rfc3986#section-2 URLs may contain
 # '%'-encoded chars, alphanum chars and query chars "-._~:/?#[]@!$&'()*+,;=`."
 VALID_COMPLEXURL_CHARACTERS = VALID_BASEURL_CHARACTERS + \
-                              "%-._~:/?#[]@!$&'()*+,;=`."
+    "%-._~:/?#[]@!$&'()*+,;=`."
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
 VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@%'
 VALID_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ /'
@@ -165,7 +164,7 @@ def __valid_contents(
     max_length=-1,
     include_accented=NO_ACCENTED,
     unicode_normalize=False,
-    ):
+):
     """This is a general function to verify that the supplied contents string
     only contains characters from the supplied valid_chars string. Both input
     strings are on byte string format but we explicitly convert to unicode
@@ -203,8 +202,8 @@ def __valid_contents(
            include_accented == COMMON_ACCENTED and char in accented_chars or \
            include_accented == ANY_ACCENTED and category(char) in _ACCENT_CATS:
             continue
-        raise InputException("found invalid character: '%s' (allowed: %s)" % \
-                             (char, valid_chars))
+        raise InputException("found invalid character: '%s' (allowed: %s)"
+                             % (char, valid_chars))
 
 
 def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED,
@@ -299,7 +298,7 @@ def valid_plain_text(
     min_length=-1,
     max_length=-1,
     extra_chars='',
-    ):
+):
     """Verify that supplied text only contains characters that we consider
     valid"""
 
@@ -313,7 +312,7 @@ def valid_label_text(
     min_length=-1,
     max_length=-1,
     extra_chars='',
-    ):
+):
     """Verify that supplied text only contains characters that we consider
     valid"""
 
@@ -327,7 +326,7 @@ def valid_free_text(
     min_length=-1,
     max_length=-1,
     extra_chars='',
-    ):
+):
     """Verify that supplied text only contains characters that we consider
     valid"""
 
@@ -339,7 +338,7 @@ def valid_path(
     min_length=1,
     max_length=4096,
     extra_chars='',
-    ):
+):
     """Verify that supplied path only contains characters that we consider
     valid"""
 
@@ -353,7 +352,7 @@ def valid_safe_path(
     min_length=1,
     max_length=1024,
     extra_chars='',
-    ):
+):
     """Verify that supplied path only contains characters that we consider
     valid and shell safe"""
 
@@ -366,7 +365,7 @@ def valid_path_src_dst_lines(
     min_length=0,
     max_length=4096,
     extra_chars='',
-    ):
+):
     """Verify that supplied path only contains characters that we consider
     valid for the src or src dst format used in job descriptions.
     """
@@ -380,7 +379,7 @@ def valid_fqdn(
     min_length=1,
     max_length=255,
     extra_chars='',
-    ):
+):
     """Verify that supplied fully qualified domain name only contains
     characters that we consider valid. This check also succeeds for
     the special case where fqdn is really a hostname without domain.
@@ -395,9 +394,9 @@ def valid_commonname(
     min_length=1,
     max_length=255,
     extra_chars='',
-    ):
+):
     """Verify that supplied commonname only contains
-    characters that we consider valid. 
+    characters that we consider valid.
     """
 
     valid_chars = VALID_NAME_CHARACTERS + extra_chars
@@ -410,9 +409,9 @@ def valid_distinguished_name(
     min_length=1,
     max_length=255,
     extra_chars='',
-    ):
+):
     """Verify that supplied distinguished_name only contains
-    characters that we consider valid. 
+    characters that we consider valid.
     """
 
     valid_chars = VALID_DN_CHARACTERS + extra_chars
@@ -425,8 +424,8 @@ def valid_username(
     min_length=1,
     max_length=user_id_max_length,
     extra_chars='',
-    ):
-    """Verify that supplied username only contains 
+):
+    """Verify that supplied username only contains
     characters that we consider valid.
     NOTE: we use min_length 1 here since it also covers remote unix user names
     """
@@ -440,9 +439,9 @@ def valid_base_url(
     min_length=1,
     max_length=255,
     extra_chars='',
-    ):
+):
     """Verify that supplied base_url only contains
-    characters that we consider valid. 
+    characters that we consider valid.
     """
 
     valid_chars = VALID_BASEURL_CHARACTERS + extra_chars
@@ -454,9 +453,9 @@ def valid_url(
     min_length=1,
     max_length=1024,
     extra_chars='',
-    ):
+):
     """Verify that supplied url only contains
-    characters that we consider valid. 
+    characters that we consider valid.
     """
 
     valid_chars = VALID_URL_CHARACTERS + extra_chars
@@ -468,7 +467,7 @@ def valid_complex_url(
     min_length=1,
     max_length=1024,
     extra_chars='',
-    ):
+):
     """Verify that supplied url only contains
     characters that we consider valid.
     IMPORTANT: only use where URLs are not used carelessly in shell commands!
@@ -484,7 +483,7 @@ def valid_integer(
     min_length=0,
     max_length=-1,
     extra_chars='',
-    ):
+):
     """Verify that supplied integer only contain valid characters"""
 
     valid_chars = VALID_INTEGER_CHARACTERS + extra_chars
@@ -496,7 +495,7 @@ def valid_float(
     min_length=0,
     max_length=-1,
     extra_chars='',
-    ):
+):
     """Verify that supplied contents only contain float characters"""
 
     valid_chars = VALID_FLOAT_CHARACTERS + extra_chars
@@ -508,9 +507,9 @@ def valid_password(
     min_length=password_min_len,
     max_length=password_max_len,
     extra_chars='',
-    ):
+):
     """Verify that supplied password only contains
-    characters that we consider valid. 
+    characters that we consider valid.
     """
 
     valid_chars = VALID_PASSWORD_CHARACTERS + extra_chars
@@ -523,7 +522,7 @@ def valid_backend_name(
     min_length=1,
     max_length=64,
     extra_chars='',
-    ):
+):
     """Verify that supplied backend name, only contains characters that we
     consider valid. Backend names are (potentially) user provided names of
     modules from the shared/functionality directory.
@@ -538,7 +537,7 @@ def valid_sid(
     min_length=session_id_length,
     max_length=session_id_length,
     extra_chars='',
-    ):
+):
     """Verify that supplied session ID, sid, is expected length and only
     contains characters that we consider valid. Session IDs are generated
     using hexlify() on a random string, so it only contains valid hexadecimal
@@ -554,7 +553,7 @@ def valid_job_id(
     min_length=1,
     max_length=255,
     extra_chars='',
-    ):
+):
     """Verify that supplied job ID, only contains characters that we
     consider valid. Job IDs are generated using time and fqdn of server,
     so it only contains FQDN chars and underscores.
@@ -569,7 +568,7 @@ def valid_job_name(
     min_length=0,
     max_length=255,
     extra_chars='',
-    ):
+):
     """Verify that supplied job name, only contains characters that we
     consider valid. Job names are user provided names possibly with common
     special characters.
@@ -584,7 +583,7 @@ def valid_backup_names(
     min_length=0,
     max_length=4096,
     extra_chars='',
-    ):
+):
     """Verify that supplied names only contains characters that we consider
     valid for multiline backup names. I.e. we reuse job_name but with with
     addition of newlines and extended length. We do NOT allow slashes in names
@@ -601,7 +600,7 @@ def valid_vgrid_name(
     min_length=1,
     max_length=255,
     extra_chars='',
-    ):
+):
     """Verify that supplied VGrid name, only contains characters that we
     consider valid. VGrid names are user provided names possibly with common
     special characters.
@@ -616,7 +615,7 @@ def valid_path_pattern(
     min_length=1,
     max_length=4096,
     extra_chars='.*?',
-    ):
+):
     """Verify that supplied pattern only contains characters that
     we consider valid in paths. Valid wild card characters are added
     by default.
@@ -630,7 +629,7 @@ def valid_path_patterns(
     min_length=1,
     max_length=4096,
     extra_chars='.*?',
-    ):
+):
     """Verify that supplied pattern_list only contains characters that
     we consider valid in paths. Valid wild card characters are added
     by default.
@@ -645,7 +644,7 @@ def valid_job_id_pattern(
     min_length=1,
     max_length=255,
     extra_chars='.*?',
-    ):
+):
     """Verify that supplied pattern only contains characters that
     we consider valid in paths. Valid wild card characters are added
     by default.
@@ -659,7 +658,7 @@ def valid_job_id_patterns(
     min_length=1,
     max_length=255,
     extra_chars='.*?',
-    ):
+):
     """Verify that supplied pattern_list only contains characters that
     we consider valid in paths. Valid wild card characters are added
     by default.
@@ -674,7 +673,7 @@ def valid_user_path_name(
     path,
     home_dir,
     allow_equal=False,
-    ):
+):
     """Wrap valid_user_path and valid_path name checks in one to check both
     destination dir and filename characters. Returns error using safe_path if
     validation fails.
@@ -720,11 +719,21 @@ def valid_email_address(addr, allow_real_name=True):
     if merged != addr:
         raise InputException("Invalid email format")
 
+
 def valid_simple_email_address(addr):
     """Simple email address check only accepting plain address without real
     name prefix or anything.
     """
     valid_email_address(addr, False)
+
+
+def is_valid_simple_email(addr):
+    """Helper for quick testing of plain email address validity"""
+    try:
+        valid_simple_email_address(addr)
+        return True
+    except InputException:
+        return False
 
 
 def filter_ascii(contents):
@@ -1054,20 +1063,20 @@ def guess_type(name):
             'arguments',
             'hostkey',
             'exclude',
-            ):
+        ):
             __type_map[key] = valid_path_pattern
         for key in (
             'fileupload',
             'public_image',
             'script_dir',
-            ):
+        ):
             __type_map[key] = valid_path
         for key in (
             'executables',
             'inputfiles',
             'outputfiles',
             'verifyfiles',
-            ):
+        ):
             __type_map[key] = valid_path_src_dst_lines
         # NOTE: verifies that resource conf values and datatransfer paths are
         #       safe for ssh/lftp/rsync calls
@@ -1081,7 +1090,7 @@ def guess_type(name):
             'storage_dir',
             'cmd',
             'site_script_deps',
-            ):
+        ):
             __type_map[key] = valid_safe_path
         # We include vgrid_name and a few more here to enforce sane name policy
         for key in ('vgrid_name', 'rate_limit', 'vgrids_allow_im',
@@ -1105,7 +1114,7 @@ def guess_type(name):
             'key_id',
             'share_id',
             'miguser',
-            ):
+        ):
             __type_map[key] = valid_job_id
         for key in (
             'flags',
@@ -1115,11 +1124,11 @@ def guess_type(name):
             'menu',
             'group_in_time',
             'display',
-            ):
+        ):
             __type_map[key] = valid_ascii
         for key in (
             'backups',
-            ):
+        ):
             __type_map[key] = valid_backup_names
         for key in (
             'max_jobs',
@@ -1146,7 +1155,7 @@ def guess_type(name):
             'maxuploadbandwidth',
             'storage_disk',
             'storage_port',
-            ):
+        ):
             __type_map[key] = valid_numeric
         for key in ('offset', ):
             __type_map[key] = valid_integer
@@ -1168,13 +1177,14 @@ def guess_type(name):
             'platform',
             'architecture',
             'localjobname',
-            ):
+        ):
             __type_map[key] = valid_fqdn
         # NOTE: we need to allow some empty STORECONFIG and EXECONFIG fields,
         #       underscore in RTE environment name and space in RTE software
         #       name
         for key in ('name', ):
-            __type_map[key] = lambda x: valid_fqdn(x, min_length=0, extra_chars='_ ')
+            __type_map[key] = lambda x: valid_fqdn(
+                x, min_length=0, extra_chars='_ ')
         for key in ('execution_node', 'storage_node', ):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
         for key in ('execution_user', 'storage_user'):
@@ -1201,9 +1211,9 @@ def guess_type(name):
             'openid.sreg.association',
             'changes',
             'version',
-            ):
+        ):
             __type_map[key] = valid_commonname
-        for key in ('cert_id', 
+        for key in ('cert_id',
                     'run_as',
                     'invite_client_id'):
             __type_map[key] = valid_distinguished_name
@@ -1243,7 +1253,7 @@ def guess_type(name):
             'minprice',
             'crontab',
             'atjobs',
-            ):
+        ):
             __type_map[key] = valid_plain_text
         for key in (
             'aol',
@@ -1255,7 +1265,7 @@ def guess_type(name):
             'openid.sreg.email',
             'openid.sreg.mail',
             'adminemail',
-            ):
+        ):
             __type_map[key] = valid_email_address
         for key in ('username', ):
             __type_map[key] = valid_username
@@ -1272,7 +1282,7 @@ def guess_type(name):
             # because the sub level variables are parsed individually
             'execonfig',
             'storeconfig',
-            ):
+        ):
             __type_map[key] = valid_free_text
         for key in ('show', 'modauthopenid.error'):
             __type_map[key] = valid_label_text
@@ -1333,7 +1343,7 @@ def validated_input(
     defaults,
     type_override={},
     value_override={},
-    ):
+):
     """Intelligent input validation with fall back default values.
     Specifying a default value of REJECT_UNSET, results in the
     variable being rejected if no value is found.
@@ -1352,7 +1362,7 @@ def validated_input(
         else:
             value_checks[name] = guess_value(name)
     (accepted, rejected) = validate_helper(input_dict, defaults.keys(),
-            type_checks, value_checks)
+                                           type_checks, value_checks)
 
     # Fall back to defaults when allowed and reject if required and unset
 
@@ -1372,7 +1382,7 @@ def validate_helper(
     fields,
     type_checks,
     value_checks,
-    ):
+):
     """This function takes a dictionary of user input as returned by
     fieldstorage_to_dict and validates all fields according to
     type_checks and value_checks.
@@ -1380,7 +1390,7 @@ def validate_helper(
     supplied value doesn't fit with the expected type.
     Value checks are functions that must throw an exception if the
     supplied value is not within valid 'range'.
-    
+
     The return value is a tuple containing:
     - a dictionary of accepted fields and their value list
     - a dictionary of rejected fields and their (value, error)-list
@@ -1398,7 +1408,7 @@ def validate_helper(
             if not key in fields:
                 err = 'unexpected field: %s' % key
                 bad_values.append((html_escape(entry),
-                                  html_escape(str(err))))
+                                   html_escape(str(err))))
                 continue
             if not type_checks.has_key(key):
 
@@ -1412,7 +1422,7 @@ def validate_helper(
                 # Probably illegal type hint
 
                 bad_values.append((html_escape(entry),
-                                  html_escape(str(err))))
+                                   html_escape(str(err))))
                 continue
             if not value_checks.has_key(key):
 
@@ -1426,7 +1436,7 @@ def validate_helper(
                 # Value check failed
 
                 bad_values.append((html_escape(entry),
-                                  html_escape(str(err))))
+                                   html_escape(str(err))))
                 continue
             ok_values.append(entry)
         if ok_values:
@@ -1459,7 +1469,7 @@ if __name__ == '__main__':
         try:
             print 'Testing valid_commonname: %s' % test_cn
             print 'Filtered commonname: %s' % filter_commonname(test_cn)
-            #print 'DEBUG %s only in %s' % ([test_cn],
+            # print 'DEBUG %s only in %s' % ([test_cn],
             #        [VALID_NAME_CHARACTERS])
             valid_commonname(test_cn)
             print 'Accepted raw commonname!'
@@ -1467,7 +1477,7 @@ if __name__ == '__main__':
             print 'Rejected raw commonname %s : %s' % (test_cn, exc)
 
     for test_path in ('test.txt', 'Test Æøå', 'Test Überh4x0r',
-                      'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ', 
+                      'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ',
                       'Test valid special%&()!$¶â€', 'Test look-alike-å å',
                       'Test exotic لرحيم',
                       'Test Invalid ?', 'Test Invalid `',
@@ -1476,7 +1486,7 @@ if __name__ == '__main__':
         try:
             print 'Testing valid_path: %s' % test_path
             print 'Filtered path: %s' % filter_path(test_path)
-            #print 'DEBUG %s only in %s' % ([test_path],
+            # print 'DEBUG %s only in %s' % ([test_path],
             #                               [VALID_PATH_CHARACTERS])
             valid_path(test_path)
             print 'Accepted raw path!'
@@ -1503,7 +1513,7 @@ if __name__ == '__main__':
             valid_email_address(test_addr)
             print 'Accepted raw address! %s' % [parseaddr(test_addr)]
         except Exception, exc:
-            print 'Rejected raw address %s : %s' % (test_addr, exc)            
+            print 'Rejected raw address %s : %s' % (test_addr, exc)
 
     autocreate_defaults = {
         'openid.ns.sreg': [''],
@@ -1531,17 +1541,28 @@ if __name__ == '__main__':
         'comment': ['(Created through autocreate)'],
         'proxy_upload': [''],
         'proxy_uploadfilename': [''],
-        }
-    user_arguments_dict = {'openid.ns.sreg': ['http://openid.net/extensions/sreg/1.1'], 'openid.sreg.ou': ['nbi'], 'openid.sreg.nickname': ['brs278@ku.dk'], 'openid.sreg.fullname': ['Jonas Bardino'], 'openid.sreg.role': ['tap'], 'openid.sreg.association': ['sci-nbi-tap'], 'openid.sreg.o': ['science'], 'openid.sreg.email': ['bardino@nbi.ku.dk']}
-    (accepted, rejected) = validated_input(user_arguments_dict, autocreate_defaults)
+    }
+    user_arguments_dict = {'openid.ns.sreg':
+                           ['http://openid.net/extensions/sreg/1.1'],
+                           'openid.sreg.ou': ['nbi'],
+                           'openid.sreg.nickname': ['brs278@ku.dk'],
+                           'openid.sreg.fullname': ['Jonas Bardino'],
+                           'openid.sreg.role': ['tap'],
+                           'openid.sreg.association': ['sci-nbi-tap'],
+                           'openid.sreg.o': ['science'],
+                           'openid.sreg.email': ['bardino@nbi.ku.dk']}
+    (accepted, rejected) = validated_input(
+        user_arguments_dict, autocreate_defaults)
     print "Accepted:"
     for (key, val) in accepted.items():
         print "\t%s: %s" % (key, val)
     print "Rejected:"
     for (key, val) in rejected.items():
         print "\t%s: %s" % (key, val)
-    user_arguments_dict['openid.sreg.fullname'] = [force_unicode('Jonas Æøå Bardino')]
-    (accepted, rejected) = validated_input(user_arguments_dict, autocreate_defaults)
+    user_arguments_dict['openid.sreg.fullname'] = [
+        force_unicode('Jonas Æøå Bardino')]
+    (accepted, rejected) = validated_input(
+        user_arguments_dict, autocreate_defaults)
     print "Accepted:"
     for (key, val) in accepted.items():
         print "\t%s: %s" % (key, val)

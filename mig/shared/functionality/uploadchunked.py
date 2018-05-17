@@ -38,10 +38,9 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import max_upload_files, max_upload_chunks, \
-     upload_block_size, upload_tmp_dir, csrf_field
+from shared.defaults import upload_block_size, upload_tmp_dir, csrf_field
 from shared.fileio import strip_dir, write_chunk, delete_file, move, \
-     get_file_size, makedirs_rec, check_write_access
+    get_file_size, makedirs_rec, check_write_access
 from shared.functional import validate_input
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.gdp import project_log
@@ -58,12 +57,14 @@ filename_field = '%sfilename' % files_field
 dest_field = 'current_dir'
 manual_validation = [files_field, filename_field]
 
+
 def signature():
     """Signature of the main function"""
 
     defaults = {'action': ['status'], 'current_dir': [upload_tmp_dir],
                 'flags': [''], 'share_id': ['']}
     return ['html_form', defaults]
+
 
 def extract_chunk_region(configuration):
     """Read chunk range from HTTP headers in os.environ.
@@ -85,6 +86,7 @@ def extract_chunk_region(configuration):
         chunk_first, chunk_last = 0, -1
     return (chunk_first, chunk_last)
 
+
 def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
                       reject_write=False):
     """Parse upload file and chunk entries from user_args. Chunk limits are
@@ -99,7 +101,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
     rel_dst_dir = dst_dir.replace(base_dir, '')
 
     # TODO: we only support single filename and chunk for now; extend?
-    #for name_index in xrange(max_upload_files):
+    # for name_index in xrange(max_upload_files):
     #    if user_args.has_key(filename_field) and \
     #           len(user_args[filename_field]) > name_index:
     for name_index in [0]:
@@ -122,20 +124,20 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
             valid_path(filename)
         except Exception, exc:
             logger.error('invalid filename: %s' % filename)
-            rejected.append((filename, 'invalid filename: %s (%s)' % \
-                             (filename, exc)))
+            rejected.append((filename, 'invalid filename: %s (%s)'
+                             % (filename, exc)))
             continue
         rel_path = os.path.join(rel_dst_dir, filename)
         # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
         if not valid_user_path(configuration, abs_path, dst_dir, True):
             logger.error('%s tried to access restricted path %s ! (%s)'
-                             % (user_id, abs_path, dst_dir))
-            rejected.append("Invalid path (%s expands to an illegal path)" \
+                         % (user_id, abs_path, dst_dir))
+            rejected.append("Invalid path (%s expands to an illegal path)"
                             % filename)
             continue
 
-        #for chunk_index in xrange(max_upload_chunks):
+        # for chunk_index in xrange(max_upload_chunks):
         #    if user_args.has_key(files_field) and \
         #           len(user_args[files_field]) > chunk_index:
         for chunk_index in [0]:
@@ -153,6 +155,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
             files.append((rel_path, (chunk, chunk_first, chunk_last)))
     return (files, rejected)
 
+
 def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
 
@@ -164,13 +167,13 @@ def main(client_id, user_arguments_dict, environ=None):
     logger.info('Extracting input in %s' % op_name)
     status = returnvalues.OK
     defaults = signature()[1]
-    
+
     logger.info('Extracted input in %s: %s' % (op_name,
                                                user_arguments_dict.keys()))
 
     # All non-file fields must be validated
-    validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
-                         (key, val) in user_arguments_dict.items() if not key \
+    validate_args = dict([(key, user_arguments_dict.get(key, val)) for
+                          (key, val) in user_arguments_dict.items() if not key
                           in manual_validation])
     # IMPORTANT: we must explicitly inlude CSRF token
     validate_args[csrf_field] = user_arguments_dict.get(csrf_field, [''])
@@ -179,10 +182,10 @@ def main(client_id, user_arguments_dict, environ=None):
         defaults,
         output_objects,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
-        logger.error('%s validation failed: %s (%s)' % \
-                     (op_name, validate_status, accepted))
+        logger.error('%s validation failed: %s (%s)'
+                     % (op_name, validate_status, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     logger.info('validated input in %s: %s' % (op_name, validate_args.keys()))
@@ -233,8 +236,8 @@ def main(client_id, user_arguments_dict, environ=None):
         user_id = 'anonymous user through share ID %s' % share_id
         # NOTE: we must return uploaded reply so we delay read-only failure
         if share_mode == 'read-only':
-            logger.error('%s called without write access: %s' % \
-                         (op_name, accepted))
+            logger.error('%s called without write access: %s'
+                         % (op_name, accepted))
             reject_write = True
         target_dir = os.path.join(share_mode, share_id)
         base_dir = configuration.sharelink_home
@@ -246,9 +249,9 @@ def main(client_id, user_arguments_dict, environ=None):
         widgets = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Authentication is missing!'
-                              })
+        output_objects.append({'object_type': 'error_text',
+                               'text': 'Authentication is missing!'
+                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -270,15 +273,16 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # Input validation assures target_dir can't escape base_dir
     if not os.path.isdir(base_dir):
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid client/sharelink id!'})
+        output_objects.append(
+            {'object_type': 'error_text',
+             'text': 'Invalid client/sharelink id!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text',
+                                   'text': '%s using flag: %s'
+                                   % (op_name, flag)})
 
     logger.info('parsing upload form in %s' % op_name)
 
@@ -299,10 +303,10 @@ def main(client_id, user_arguments_dict, environ=None):
 
     if upload_rejected:
         logger.error('Rejecting upload with: %s' % upload_rejected)
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Errors parsing upload files: %s' % \
-                               '\n '.join(["%s %s" % pair for pair in \
-                                           upload_rejected])})
+        output_objects.append({'object_type': 'error_text',
+                               'text': 'Errors parsing upload files: %s'
+                               % '\n '.join(["%s %s" % pair for pair in
+                                             upload_rejected])})
         for (rel_path, err) in upload_rejected:
             uploaded.append(
                 {'object_type': 'uploadfile', 'name': rel_path, 'size': -1,
@@ -311,31 +315,34 @@ def main(client_id, user_arguments_dict, environ=None):
 
     if not makedirs_rec(cache_dir, configuration):
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : "Problem creating temporary upload dir"})
+            {'object_type': 'error_text',
+             'text': "Problem creating temporary upload dir"})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if action == "status" and not upload_files:
         # Default to entire cache dir
-        upload_files = [(os.path.join(upload_tmp_dir, i), '') for i in \
+        upload_files = [(os.path.join(upload_tmp_dir, i), '') for i in
                         os.listdir(cache_dir)]
     elif not upload_files:
         logger.error('Rejecting upload with: %s' % upload_files)
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'No files included to upload!'})
+        output_objects.append(
+            {'object_type': 'error_text',
+             'text': 'No files included to upload!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     logger.info('Filtered input validated with result: %s' % accepted)
 
     if verbose(flags):
-        output_objects.append({'object_type': 'text', 'text'
-                               : 'Uploading file chunk(s)'})
+        output_objects.append(
+            {'object_type': 'text', 'text': 'Uploading file chunk(s)'})
 
-    logger.info('Looping through files: %s' % \
-                ' '.join([i[0] for i in upload_files]))
+    logger.info('Looping through files: %s'
+                % ' '.join([i[0] for i in upload_files]))
 
-    del_url = "uploadchunked.py?%soutput_format=%s;action=delete;%s=%s;%s=%s;%s=%s"
-    move_url = "uploadchunked.py?%soutput_format=%s;action=move;%s=%s;%s=%s;%s=%s;%s=%s"
+    del_url = "uploadchunked.py?%soutput_format=%s;action=delete;" \
+        + "%s=%s;%s=%s;%s=%s"
+    move_url = "uploadchunked.py?%soutput_format=%s;action=move;" \
+        + "%s=%s;%s=%s;%s=%s;%s=%s"
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
@@ -345,7 +352,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # Please refer to https://github.com/blueimp/jQuery-File-Upload/wiki/Setup
     # for details about the status reply format in the uploadfile output object
-    
+
     # All actions automatically take place relative to dst_dir. We only use
     # current_dir in move operation where it is the destination.
     if action == 'delete':
@@ -365,17 +372,17 @@ def main(client_id, user_arguments_dict, environ=None):
             file_entry['size'] = get_file_size(abs_path, logger)
             # NOTE: normpath+lstrip to avoid leading // and thus no base URL
             # NOTE: normpath to fix e.g. leading // which prevents base URL
-            file_entry['url'] = os.path.normpath("/%s/%s" % \
-                                                 (redirect_path.lstrip('/'),
+            file_entry['url'] = os.path.normpath("/%s/%s"
+                                                 % (redirect_path.lstrip('/'),
                                                   rel_path))
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % \
-                                          (id_args, output_format,
-                                           filename_field,
-                                           os.path.basename(rel_path),
-                                           files_field, "dummy", csrf_field,
-                                           csrf_token)
+                    (id_args, output_format,
+                     filename_field,
+                     os.path.basename(rel_path),
+                     files_field, "dummy", csrf_field,
+                     csrf_token)
             uploaded.append(file_entry)
         logger.info('status done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
@@ -391,17 +398,18 @@ def main(client_id, user_arguments_dict, environ=None):
                 logger.error('%s tried to %s move to restricted path %s ! (%s)'
                              % (user_id, op_name, dest_path, current_dir))
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : "Invalid destination (%s expands to an illegal path)" \
+                    {'object_type': 'error_text',
+                     'text': "Invalid destination "
+                     "(%s expands to an illegal path)"
                      % current_dir})
                 moved = False
             elif not check_write_access(dest_path, parent_dir=True):
-                logger.warning('%s called without write access: %s' % \
-                               (op_name, dest_path))
+                logger.warning('%s called without write access: %s'
+                               % (op_name, dest_path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'cannot move "%s": inside a read-only location!' % \
-                     rel_dst})
+                     'cannot move "%s": inside a read-only location!'
+                     % rel_dst})
                 moved = False
             else:
                 try:
@@ -409,33 +417,34 @@ def main(client_id, user_arguments_dict, environ=None):
                     move(abs_src_path, dest_path)
                     moved = True
                 except Exception, exc:
-                    logger.error('could not move %s to %s: %s' % \
-                                 (abs_src_path, dest_path, exc))
+                    logger.error('could not move %s to %s: %s'
+                                 % (abs_src_path, dest_path, exc))
                     moved = False
             file_entry = {'object_type': 'uploadfile', rel_path: moved}
             if moved:
                 file_entry['name'] = rel_dst
                 file_entry['size'] = get_file_size(dest_path, logger)
                 # NOTE: normpath+lstrip to avoid leading // and thus no base URL
-                file_entry['url'] = os.path.normpath("/%s/%s" % \
-                                                     (redirect_path.lstrip('/'),
+                file_entry['url'] = os.path.normpath("/%s/%s"
+                                                     % (redirect_path.lstrip('/'),
                                                       rel_dst))
 
                 if configuration.site_enable_gdp:
                     msg = "'%s'" % rel_dst
-                    project_log(configuration, client_id, 'created',
-                                msg, client_addr=environ['REMOTE_ADDR'])
+                    project_log(configuration, 'https', client_id, 'created',
+                                msg, user_addr=environ['REMOTE_ADDR'])
 
             uploaded.append(file_entry)
         logger.info('move done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action != 'put':
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Invalid action: %s!' % action})
+        output_objects.append(
+            {'object_type': 'error_text',
+             'text': 'Invalid action: %s!' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Handle actual uploads (action == 'put')
-        
+
     # Put automatically takes place relative to dst_dir
     for (rel_path, chunk_tuple) in upload_files:
         logger.info('handling %s chunk %s' % (rel_path, chunk_tuple[1:]))
@@ -444,51 +453,51 @@ def main(client_id, user_arguments_dict, environ=None):
         range_size = 1 + chunk_last - offset
         abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
         if not os.path.isdir(os.path.dirname(abs_path)):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : "cannot write: no such file or directory:"
+            output_objects.append({'object_type': 'error_text',
+                                   'text': "cannot write: no such file or directory:"
                                    " %s)" % rel_path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         file_entry = {'object_type': 'uploadfile', 'name': rel_path}
         logger.debug('write %s chunk of size %d' % (rel_path, chunk_size))
         if chunk_size == range_size and \
-               write_chunk(abs_path, chunk, offset, logger, 'r+b'):
+                write_chunk(abs_path, chunk, offset, logger, 'r+b'):
             if verbose(flags):
-                output_objects.append({'object_type': 'text', 'text'
-                                       : 'wrote chunk %s at %d' % \
-                                       (chunk_tuple[1:], offset)})
+                output_objects.append({'object_type': 'text',
+                                       'text': 'wrote chunk %s at %d'
+                                       % (chunk_tuple[1:], offset)})
             logger.info('wrote %s chunk at %s' % (abs_path, chunk_tuple[1:]))
             file_entry["size"] = os.path.getsize(abs_path)
             # NOTE: normpath+lstrip to avoid leading // and thus no base URL
-            file_entry["url"] = os.path.normpath("/%s/%s" % \
-                                                 (redirect_path.lstrip('/'),
+            file_entry["url"] = os.path.normpath("/%s/%s"
+                                                 % (redirect_path.lstrip('/'),
                                                   rel_path))
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % \
-                                          (id_args, output_format,
-                                           filename_field,
-                                           os.path.basename(rel_path),
-                                           files_field, "dummy", csrf_field,
-                                           csrf_token)
+                    (id_args, output_format,
+                     filename_field,
+                     os.path.basename(rel_path),
+                     files_field, "dummy", csrf_field,
+                     csrf_token)
             else:
                 file_entry["moveType"] = "POST"
                 file_entry["moveDest"] = current_dir
                 file_entry["moveUrl"] = move_url % \
-                                        (id_args, output_format,
-                                         filename_field,
-                                         os.path.basename(rel_path),
-                                         files_field, "dummy", dest_field,
-                                         current_dir, csrf_field,
-                                         csrf_token)
+                    (id_args, output_format,
+                     filename_field,
+                     os.path.basename(rel_path),
+                     files_field, "dummy", dest_field,
+                     current_dir, csrf_field,
+                     csrf_token)
         else:
-            logger.error('could not write %s chunk %s (%d vs %d)' % \
-                         (abs_path, chunk_tuple[1:], chunk_size, range_size))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'failed to write chunk %s at %d' % \
-                                   (chunk_tuple[1:], offset)})
-            file_entry["error"] = "failed to write chunk %s - try again" % \
-                                  (chunk_tuple[1:], )
+            logger.error('could not write %s chunk %s (%d vs %d)'
+                         % (abs_path, chunk_tuple[1:], chunk_size, range_size))
+            output_objects.append({'object_type': 'error_text',
+                                   'text': 'failed to write chunk %s at %d'
+                                   % (chunk_tuple[1:], offset)})
+            file_entry["error"] = "failed to write chunk %s - try again" \
+                                  % (chunk_tuple[1:], )
 
         uploaded.append(file_entry)
 
