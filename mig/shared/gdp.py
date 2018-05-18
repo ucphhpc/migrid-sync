@@ -57,8 +57,6 @@ from shared.vgrid import vgrid_is_owner, vgrid_set_owners, \
     vgrid_restrict_write_support, vgrid_flat_name
 from shared.vgridkeywords import get_settings_keywords_dict
 
-template_filename = 'notifycreate.txt'
-notify_filename = 'notifyemails.txt'
 user_db_filename = 'gdp-users.db'
 client_id_project_postfix = '/GDP='
 
@@ -497,14 +495,22 @@ def __save_user_db(configuration, user_db, locked=False):
 
 def __send_project_create_confirmation(configuration,
                                        login,
-                                       project_name):
+                                       project_name,
+                                       journal_number):
     """Send project create confirmation to *login* and GDP admins"""
 
     _logger = configuration.logger
     _logger.debug("login: '%s', project_name: '%s'" % (login,
                                                        project_name))
+
     status = True
     template = None
+    notify = []
+    notify_filename = 'notifyemails.txt'
+    if journal_number:
+        template_filename = 'notifycreate_journal.txt'
+    else:
+        template_filename = 'notifycreate_general.txt'
 
     # Check for PDF generation packages
 
@@ -516,13 +522,16 @@ def __send_project_create_confirmation(configuration,
         status = False
         _logger.error("Missing python xvfbwrapper package")
 
-    if status:
+    # NON-registratant notifications
+    # are only sent for projects with a journal_number
+
+    if status and journal_number:
 
         # Load notification emails
 
         notify_filepath = os.path.join(configuration.gdp_home,
                                        notify_filename)
-        notify = []
+
         if os.path.isfile(notify_filepath):
             fh = open(notify_filepath)
             notifyline = fh.readline()
@@ -580,12 +589,17 @@ def __send_project_create_confirmation(configuration,
             'encoding': 'UTF-8',
         }
 
+        if journal_number:
+            journal_desc = journal_number
+        else:
+            journal_desc = "General personalized data"
+
         timestamp = datetime.fromtimestamp(time.time())
         date = timestamp.strftime('%d/%m/%Y %H:%M:%S')
-        fill_entries = {'title': configuration.short_title,
-                        'date': date,
+        fill_entries = {'date': date,
                         'project_name': project_name,
-                        'creator': login}
+                        'registrant': login,
+                        'journal_number': journal_desc}
         template = template % fill_entries
         template.encode('utf8')
 
@@ -1548,7 +1562,8 @@ def project_create(
         configuration,
         client_addr,
         client_id,
-        project_name):
+        project_name,
+        journal_number):
     """Create new project with *project_name* and owner *client_id*"""
 
     _logger = configuration.logger
@@ -1770,7 +1785,9 @@ This directory is used for hosting private files for the '%s' '%s'.
     if status:
         login = __short_id_from_client_id(configuration, client_id)
         status = __send_project_create_confirmation(configuration,
-                                                    login, project_name)
+                                                    login,
+                                                    project_name,
+                                                    journal_number)
         if not status:
             msg = "Failed to send project create confirmation email" \
                 + " for project: '%s'" % project_name
@@ -1830,17 +1847,21 @@ This directory is used for hosting private files for the '%s' '%s'.
             msg = "Failed to create project: '%s'" % project_name
 
     if status:
-        msg = "Created project: '%s'" % project_name
-
         # Update log for project
 
-        log_msg = "Project: '%s'" % project_name
+        msg = "Created project for"
+
+        if journal_number:
+            msg += " journal number: '%s'" % journal_number
+        else:
+            msg += " general personalized data"
+
         project_log(
             configuration,
             'https',
             client_id,
             'created',
-            log_msg,
+            msg,
             project_name=project_name,
             user_addr=client_addr,
         )

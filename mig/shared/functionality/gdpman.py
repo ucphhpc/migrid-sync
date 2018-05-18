@@ -56,7 +56,8 @@ def signature():
 
     defaults = {
         'action': [''],
-        'vgrid_name': [''],
+        'project_name': [''],
+        'project_journal_number': [''],
         'invite_client_id': [''],
         'status_msg': [''],
     }
@@ -64,10 +65,10 @@ def signature():
 
 
 def html_tmpl(
-    configuration,
-    client_id,
-    csrf_token,
-    status_msg):
+        configuration,
+        client_id,
+        csrf_token,
+        status_msg):
     """HTML main template for GDP manager"""
 
     fill_entries = {}
@@ -123,7 +124,7 @@ def html_tmpl(
         <tbody>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='vgrid_name'>"""
+                <select name='project_name'>"""
         for project in accepted_projects:
             html += \
                 """
@@ -158,7 +159,7 @@ def html_tmpl(
         <tbody>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='vgrid_name'>"""
+                <select name='project_name'>"""
         for project in invited_projects:
             html += \
                 """
@@ -208,7 +209,7 @@ def html_tmpl(
             </td></tr>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='vgrid_name'>"""
+                <select name='project_name'>"""
         for project in invite_projects:
             html += \
                 """
@@ -242,12 +243,29 @@ def html_tmpl(
             </tr>
         </thead>
         <tbody>
-            <tr><td width='250px'>
-                <input name='vgrid_name' type='text' size='30'/>
+            <tr>
+                <td colspan='2'>
+                Journal number:
+                </td>
+            </tr>
+            <tr>
+                <td colspan='2' width='250px'>
+                <input name='project_journal_number' type='text' size='30'/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan='2'>
+                Name:
+                </td>
+            </tr>
+            <tr>
+                <td width='250px'>
+                <input name='project_name' type='text' size='30'/>
                 </td><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='genericbutton' id='create' href='#' onclick='submitform(\"create\"); return false;'>Create</a>
-            </td></tr>
+                </td>
+            </tr>
         </tbody>
         </table>
         </form>
@@ -435,7 +453,8 @@ def main(client_id, user_arguments_dict, environ=None):
                                           lookup_dn=False)
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
-    project_name = accepted['vgrid_name'][-1].strip()
+    project_name = accepted['project_name'][-1].strip()
+    project_journal_number = accepted['project_journal_number'][-1].strip()
     invite_client_id = accepted['invite_client_id'][-1].strip()
     status_msg = accepted['status_msg'][-1].strip()
     if status_msg:
@@ -488,9 +507,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                                })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    _logger.debug("checkpount: %s" % identity)
     if not action and identity or action == 'logout':
-        _logger.debug("checkpount2: %s" % client_id)
         autologout = project_logout(configuration, client_addr, 'https',
                                     client_id, autologout=True)
 
@@ -507,8 +524,11 @@ Please contact the Grid admins %s if you think it should be enabled.
             <script type='text/javascript'>
                 document.getElementById('autologout').click();
             </script>""" \
-                % openid_autologout_url(configuration, identity,
-                                        client_id, return_url, return_query_dict)
+                % openid_autologout_url(configuration,
+                                        identity,
+                                        client_id,
+                                        return_url,
+                                        return_query_dict)
             output_objects.append({'object_type': 'html_form',
                                    'text': html})
 
@@ -541,6 +561,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         # Entry page
 
+        status = True
         action_msg = ''
         if not action:
             if not status_msg:
@@ -560,7 +581,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                 dest_op_name = 'fileman'
                 base_url = environ.get('REQUEST_URI',
                                        '').split('?')[0].replace(op_name,
-                                            dest_op_name)
+                                                                 dest_op_name)
                 html = \
                     """
                 <a id='gdp_login' href='%s'></a>
@@ -600,10 +621,28 @@ Please contact the Grid admins %s if you think it should be enabled.
 
             # Project create
 
-            logger.debug(": %s : creating project: '%s' : from ip: %s'"
-                         % (client_id, project_name, client_addr))
-            (status, msg) = project_create(configuration, client_addr,
-                                           client_id, project_name)
+            logger.debug(": %s : creating project: '%s' : %s : from ip: %s'"
+                         % (client_id,
+                            project_name,
+                            project_journal_number,
+                            client_addr))
+
+            # Check project_journal_number
+
+            journal_number = ''
+            if not project_journal_number:
+                status = False
+                msg = "missing journal number"
+
+            elif project_journal_number != '000000':
+                journal_number = project_journal_number
+
+            if status:
+                (status, msg) = project_create(configuration,
+                                               client_addr,
+                                               client_id,
+                                               project_name,
+                                               journal_number)
             if status:
                 action_msg = 'OK: %s' % msg
             else:

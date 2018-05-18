@@ -286,7 +286,7 @@ user scripts tutorial online.
         url = args_list[2]
         header = "New post in %s %s forum on %s server" \
                  % (vgrid_name, configuration.site_vgrid_label,
-                  configuration.short_title)
+                    configuration.short_title)
         txt += """This is an automated notification message from the %s server
 
 User %s
@@ -353,7 +353,10 @@ def send_email(
     Force utf8 encoding to avoid accented characters appearing garbled
     """
 
-    recipients_list = recipients.split(', ')
+    if recipients.find(', ') > -1:
+        recipients_list = recipients.split(', ')
+    else:
+        recipients_list = [recipients]
 
     try:
         mime_msg = MIMEMultipart()
@@ -478,9 +481,9 @@ def notify_user(
                     logger,
                     configuration,
                 ):
-                    logger.info('Instant message sent to %s'
+                    logger.info('Instant message sent to %s' % single_dest
                                 + ' protocol: %s telling that %s %s'
-                                % (single_dest, protocol, jobid,
+                                % (protocol, jobid,
                                     status))
                 else:
                     logger.error('Instant message NOT sent to %s protocol %s jobid: %s'
@@ -494,7 +497,7 @@ def notify_user(
                             + "found in email_keyword_list"
                             % notify_line_first_part)
                 recipients = notify_line.replace('%s:'
-                                        % notify_line_first_part, '').strip()
+                                                 % notify_line_first_part, '').strip()
                 if recipients.strip().upper() in ['SETTINGS', '']:
 
                     # read from personal settings
