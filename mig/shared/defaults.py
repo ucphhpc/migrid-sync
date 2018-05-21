@@ -82,7 +82,7 @@ mqueue_empty = 'NO MESSAGES'
 # Shortest email would have to be something like a@ku.dk 
 user_id_min_length = 7
 user_id_max_length = 256
-user_id_charset = ascii_uppercase + ascii_lowercase + digits + '_@.'
+user_id_charset = ascii_uppercase + ascii_lowercase + digits + '_-@.'
 
 # We hexlify 32 random bytes to get 64 character string
 session_id_bytes = 32

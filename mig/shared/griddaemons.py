@@ -1401,7 +1401,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     conf.logger = logging
-    test_proto, test_address, test_id = 'DUMMY', '127.0.0.42', 'user@some.org'
+    test_proto, test_address, test_id = 'DUMMY', '127.0.0.42', 'user@some-domain.org'
     test_pw = "T3stp4ss"
     invalid_id = 'root'
     print "Running unit test on rate limit functions"
