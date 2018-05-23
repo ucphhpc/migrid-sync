@@ -14,12 +14,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
@@ -54,7 +54,7 @@ from string import lowercase, uppercase, digits
 from pbkdf2 import pbkdf2_bin
 
 from shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
-     POLICY_HIGH
+    POLICY_HIGH
 
 # Parameters to PBKDF2. Only affect new passwords.
 SALT_LENGTH = 12
@@ -72,7 +72,7 @@ def make_hash(password):
         password = password.encode('utf-8')
     salt = b64encode(urandom(SALT_LENGTH))
     # Python 2.6 fails to parse implicit positional args (-Jonas)
-    #return 'PBKDF2${}${}${}${}'.format(
+    # return 'PBKDF2${}${}${}${}'.format(
     return 'PBKDF2${0}${1}${2}${3}'.format(
         HASH_FUNCTION,
         COST_FACTOR,
@@ -81,6 +81,8 @@ def make_hash(password):
                              getattr(hashlib, HASH_FUNCTION))))
 
 # TODO: switch to strict_policy by default
+
+
 def check_hash(configuration, service, username, password, hashed,
                hash_cache=None, strict_policy=False):
     """Check a password against an existing hash. First make sure the provided
@@ -93,14 +95,14 @@ def check_hash(configuration, service, username, password, hashed,
         password = password.encode('utf-8')
     pw_hash = hashlib.md5(password).hexdigest()
     if isinstance(hash_cache, dict) and \
-           hash_cache.get(pw_hash, None) == hashed:
+            hash_cache.get(pw_hash, None) == hashed:
         #print "found cached hash: %s" % hash_cache.get(pw_hash, None)
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
         assure_password_strength(configuration, password)
     except Exception, exc:
-        _logger.warning("%s password for %s does not fit local policy: %s" \
+        _logger.warning("%s password for %s does not fit local policy: %s"
                         % (service, username, exc))
         if strict_policy:
             return False
@@ -121,13 +123,15 @@ def check_hash(configuration, service, username, password, hashed,
         #print "cached hash: %s" % hash_cache.get(pw_hash, None)
     return match
 
+
 def scramble_digest(salt, digest):
     """Scramble digest for saving"""
     b16_digest = b16encode(digest)
     xor_int = int(salt, 16) ^ int(b16_digest, 16)
     # Python 2.6 fails to parse implicit positional args (-Jonas)
-    #return '{:X}'.format(xor_int)
+    # return '{:X}'.format(xor_int)
     return '{0:X}'.format(xor_int)
+
 
 def unscramble_digest(salt, digest):
     """Unscramble loaded digest"""
@@ -137,6 +141,7 @@ def unscramble_digest(salt, digest):
     b16_digest = '{0:X}'.format(xor_int)
     return b16decode(b16_digest)
 
+
 def make_digest(realm, username, password, salt):
     """Generate a digest for the credentials"""
     merged_creds = ':'.join([realm, username, password])
@@ -145,6 +150,8 @@ def make_digest(realm, username, password, salt):
     return digest
 
 # TODO: switch to strict_policy by default
+
+
 def check_digest(configuration, service, realm, username, password, digest,
                  salt, digest_cache=None, strict_policy=False):
     """Check credentials against an existing digest. First make sure the
@@ -162,14 +169,14 @@ def check_digest(configuration, service, realm, username, password, digest,
     merged_creds = ':'.join([realm, username, password])
     creds_hash = hashlib.md5(merged_creds).hexdigest()
     if isinstance(digest_cache, dict) and \
-           digest_cache.get(creds_hash, None) == digest:
+            digest_cache.get(creds_hash, None) == digest:
         # print "found cached digest: %s" % digest_cache.get(creds_hash, None)
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
         assure_password_strength(configuration, password)
     except Exception, exc:
-        _logger.warning("%s password for %s does not fit local policy: %s" \
+        _logger.warning("%s password for %s does not fit local policy: %s"
                         % (service, username, exc))
         if strict_policy:
             return False
@@ -177,7 +184,8 @@ def check_digest(configuration, service, realm, username, password, digest,
     if isinstance(digest_cache, dict) and match:
         digest_cache[creds_hash] = digest
         # print "cached digest: %s" % digest_cache.get(creds_hash, None)
-    return match 
+    return match
+
 
 def scramble_password(salt, password):
     """Scramble password for saving"""
@@ -186,8 +194,9 @@ def scramble_password(salt, password):
         return b64_password
     xor_int = int(salt, 64) ^ int(b64_password, 64)
     # Python 2.6 fails to parse implicit positional args (-Jonas)
-    #return '{:X}'.format(xor_int)
+    # return '{:X}'.format(xor_int)
     return '{0:X}'.format(xor_int)
+
 
 def unscramble_password(salt, password):
     """Unscramble loaded password"""
@@ -200,9 +209,11 @@ def unscramble_password(salt, password):
         b64_password = password
     return b64decode(b64_password)
 
+
 def make_scramble(password, salt):
     """Generate a scrambled password"""
     return scramble_password(salt, password)
+
 
 def check_scramble(configuration, service, username, password, scrambled,
                    salt=None, scramble_cache=None, strict_policy=True):
@@ -210,7 +221,7 @@ def check_scramble(configuration, service, username, password, scrambled,
     match against existing scrambled password. The optional scramble_cache
     dictionary argument can be used to cache recent lookups to save time in
     e.g. openid where each operation triggers check.
-    
+
     NOTE: we force strict password policy here since we expect weak legacy
     passwords in the user DB and they would easily give full account access.
     """
@@ -218,14 +229,14 @@ def check_scramble(configuration, service, username, password, scrambled,
     if isinstance(password, unicode):
         password = password.encode('utf-8')
     if isinstance(scramble_cache, dict) and \
-           scramble_cache.get(password, None) == scrambled:
+            scramble_cache.get(password, None) == scrambled:
         # print "found cached scramble: %s" % scramble_cache.get(password, None)
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
         assure_password_strength(configuration, password)
     except Exception, exc:
-        _logger.warning('%s password for %s does not satisfy local policy: %s' \
+        _logger.warning('%s password for %s does not satisfy local policy: %s'
                         % (service, username, exc))
         if strict_policy:
             return False
@@ -234,6 +245,7 @@ def check_scramble(configuration, service, username, password, scrambled,
         scramble_cache[password] = scrambled
         # print "cached digest: %s" % scramble_cache.get(password, None)
     return match
+
 
 def make_csrf_token(configuration, method, operation, client_id, limit=None):
     """Generate a Cross-Site Request Forgery (CSRF) token to help verify the
@@ -246,6 +258,7 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     xor_id = "%s" % (int(salt, 16) ^ int(b16encode(merged), 16))
     token = hashlib.sha256(xor_id).hexdigest()
     return token
+
 
 def make_csrf_trust_token(configuration, method, operation, args, client_id,
                           limit=None, skip_fields=[]):
@@ -271,6 +284,7 @@ def make_csrf_trust_token(configuration, method, operation, args, client_id,
             csrf_op += '_%s' % val
     configuration.logger.debug("made csrf_trust from url %s" % csrf_op)
     return make_csrf_token(configuration, method, csrf_op, client_id, limit)
+
 
 def assure_password_strength(configuration, password):
     """Make sure password fits site password policy in terms of length and
@@ -312,6 +326,21 @@ def assure_password_strength(configuration, password):
                   (policy_fail_msg, min_classes)
         logger.warning(err_msg)
         raise ValueError(err_msg)
-    logger.debug('password compliant with site password policy (%s)' % \
+    logger.debug('password compliant with site password policy (%s)' %
                  site_policy)
     return True
+
+
+def make_path_hash(configuration, path):
+    """Generate a 128-bit md5 hash for path and return the 32 char hexdigest.
+    Used to compress long paths into a fixed length string ID without
+    introducing serious collision risks, under the assumption that the
+    total number of path hashes is say in the millions or less. Please refer
+    to the collision risk calculations at e.g
+    http://preshing.com/20110504/hash-collision-probabilities/
+    https://en.wikipedia.org/wiki/Birthday_attack
+    for the details.
+    """
+    configuration.logger.debug("make path hash for %s" % path)
+    hexdigest = hashlib.md5(path).hexdigest()
+    return hexdigest

@@ -277,7 +277,7 @@ function ajax_freezedb(permanent_freeze, keyword_final) {
 }
 
 function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final, 
-                         freeze_doi_url) {
+                         freeze_doi_url, freeze_doi_url_field) {
     console.debug("load archive "+freeze_id+" of flavor "+flavor+" with "+
                   checksum_list.toString()+" checksums");
     var tbody_elem = $("#frozenfilestable tbody");
@@ -300,7 +300,7 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final,
           var chunk_size = 200;
           var table_entries = "", error = "";
           var i, j;
-          var arch, file, entry;
+          var arch, file, entry, publish_url = "";
           /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
@@ -313,7 +313,8 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final,
                   //console.debug("append details");
                   var published = "No";
                   if (arch.publish) {
-                      published = "Yes ("+format_url(arch.publish_url)+")";
+                      publish_url = arch.publish_url;
+                      published = "Yes ("+format_url(publish_url)+")";
                   }
                   var location = "";
                   if (arch.location !== undefined) {
@@ -394,9 +395,17 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final,
           if (arch.state !== keyword_final) {
               console.debug("show edit and finalize buttons");
               $("div.editarchive").show();
-          } else if (arch.flavor !== 'backup' && freeze_doi_url) {
+          } else if (arch.flavor !== 'backup' && freeze_doi_url && publish_url) {
               console.debug("show register DOI button");
               $("div.registerarchive").show();
+              /* NOTE: we add the landing page URL both in the form field and
+                 append it directly in the query string.
+              */
+              console.debug("changing publish_url from "+$("#registerfreeze"+freeze_doi_url_field+"field").val()+" to "+publish_url);
+              $("#registerfreeze"+freeze_doi_url_field+"field").val(publish_url);
+              console.debug("changed publish_url to "+$("#registerfreeze"+freeze_doi_url_field+"field").val());
+              $("#registerfreezeform").attr('action', $("#registerfreezeform").attr('action')+'&'+freeze_doi_url_field+"="+publish_url);
+              console.debug("changed action to "+$("#registerfreezeform").attr('action'));
           } else {
               console.info("not showing edit or register DOI");
           }

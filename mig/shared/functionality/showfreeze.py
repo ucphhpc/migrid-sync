@@ -31,18 +31,19 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, freeze_flavors, \
-     csrf_field, keyword_final
+    csrf_field, keyword_final
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
-     build_freezeitem_object, supported_hash_algos, TARGET_PATH
+    build_freezeitem_object, supported_hash_algos, TARGET_PATH
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+    html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
 allowed_operations = list(set(list_operations + show_operations))
+
 
 def signature():
     """Signature of the main function"""
@@ -53,6 +54,7 @@ def signature():
         'checksum': [''],
         'operation': ['show']}
     return ['html_form', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -69,7 +71,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -104,7 +106,7 @@ Please contact the site admins %s if you think it should be enabled.
 
     if not operation in allowed_operations:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Operation must be one of %s.''' % \
+                               '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})
         return (output_objects, returnvalues.OK)
 
@@ -112,15 +114,16 @@ Please contact the site admins %s if you think it should be enabled.
     hide_elems = {'edit': 'hidden', 'register': 'hidden'}
     for algo in sorted_algos:
         hide_elems['%ssum' % algo] = 'hidden'
-        
+
     if operation in show_operations:
 
         # jquery support for tablesorter and confirmation dialog
         # table initially sorted by col. 0 (filename)
 
-        refresh_call = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s")' % \
+        refresh_call = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s", "%s")' % \
                        (freeze_id, flavor, checksum_list, keyword_final,
-                        configuration.site_freeze_doi_url)
+                        configuration.site_freeze_doi_url,
+                        configuration.site_freeze_doi_url_field)
         table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
                       'refresh_call': refresh_call}
         (add_import, add_init, add_ready) = man_base_js(configuration,
@@ -164,46 +167,47 @@ Please contact the site admins %s if you think it should be enabled.
         output_objects.append({'object_type': 'html_form', 'text': helper})
 
     # NB: the restrictions on freeze_id prevents illegal directory traversal
-    
+
     if not is_frozen_archive(client_id, freeze_id, configuration):
         logger.error("%s: invalid freeze '%s': %s" % (op_name,
                                                       client_id, freeze_id))
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : "'%s' is not an existing frozen archive!"
-                               % freeze_id})
+        output_objects.append(
+            {'object_type': 'error_text',
+             'text': "'%s' is not an existing frozen archive!" % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
 
     if operation in list_operations:
         (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
                                                         configuration,
                                                         checksum_list)
         if not load_status:
-            logger.error("%s: load failed for '%s': %s" % \
+            logger.error("%s: load failed for '%s': %s" %
                          (op_name, freeze_id, freeze_dict))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not read details for "%s"' % \
-                                   freeze_id})
+            output_objects.append(
+                {'object_type': 'error_text',
+                 'text': 'Could not read details for "%s"' % freeze_id})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         if freeze_dict.get('FLAVOR', 'freeze') != flavor:
-            logger.error("%s: flavor mismatch for '%s': %s vs %s" % \
+            logger.error("%s: flavor mismatch for '%s': %s vs %s" %
                          (op_name, freeze_id, flavor, freeze_dict))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'No such %s archive "%s"' % (flavor,
-                                                                  freeze_id)})
+            output_objects.append(
+                {'object_type': 'error_text',
+                 'text': 'No such %s archive "%s"' % (flavor, freeze_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # Allow edit if not in final state and allow request DOI if finalized
         # and not a backup archive.
         if freeze_dict.get('STATE', keyword_final) != keyword_final:
             hide_elems['edit'] = ''
-        elif flavor != 'backup' and configuration.site_freeze_doi_url:
+        elif flavor != 'backup' and configuration.site_freeze_doi_url and \
+                freeze_dict.get('PUBLISH_URL', ''):
             hide_elems['register'] = ''
-    
-        logger.debug("%s: build obj for '%s': %s" % \
+
+        logger.debug("%s: build obj for '%s': %s" %
                      (op_name, freeze_id, freeze_dict))
-        output_objects.append(build_freezeitem_object(configuration, freeze_dict))
+        output_objects.append(
+            build_freezeitem_object(configuration, freeze_dict))
 
     if operation == "show":
         # insert dummy placeholder to build table
@@ -222,14 +226,13 @@ Show archive with file checksums - might take quite a while to calculate:
             output_objects.append({'object_type': 'html_form', 'text': '<p>'})
             output_objects.append({
                 'object_type': 'link',
-                'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s" \
+                'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s"
                 % (freeze_id, flavor, algo),
-                'class': 'infolink iconspace genericbutton', 
-                'title': 'View archive with %s checksums' % algo.upper(), 
+                'class': 'infolink iconspace genericbutton',
+                'title': 'View archive with %s checksums' % algo.upper(),
                 'text': 'Show with %s checksums' % algo.upper()
-                })
+            })
             output_objects.append({'object_type': 'html_form', 'text': '</p>'})
-
 
         # We don't know state of archive in this case until AJAX returns
         # so we hide the section and let AJAX show it if relevant
@@ -242,12 +245,12 @@ then finalize it for actual persistent freezing.
 <p>""" % hide_elems})
         output_objects.append({
             'object_type': 'link',
-            'destination': "adminfreeze.py?freeze_id=%s;flavor=%s" % \
+            'destination': "adminfreeze.py?freeze_id=%s;flavor=%s" %
             (freeze_id, flavor),
             'class': 'editarchivelink iconspace genericbutton',
-            'title': 'Further modify your pending %s archive' % flavor, 
+            'title': 'Further modify your pending %s archive' % flavor,
             'text': 'Edit archive'
-            })
+        })
         output_objects.append({'object_type': 'html_form', 'text': '</p>'})
         form_method = 'post'
         target_op = 'createfreeze'
@@ -262,12 +265,12 @@ then finalize it for actual persistent freezing.
         output_objects.append({
             'object_type': 'link',
             'destination':
-            "javascript: confirmDialog(%s, '%s');" % \
+            "javascript: confirmDialog(%s, '%s');" %
             ('createfreeze', 'Really finalize %s?' % freeze_id),
             'class': 'finalizearchivelink iconspace genericbutton',
             'title': 'Finalize %s archive to prevent further changes' % flavor,
             'text': 'Finalize archive',
-            })
+        })
         output_objects.append({'object_type': 'html_form', 'text': """
 </div>
 <div class='registerarchive %(register)s'>
@@ -286,19 +289,21 @@ want to reference the contents in a publication.
                                   configuration.site_freeze_doi_url,
                                   {'freeze_id': freeze_id,
                                    'freeze_author': client_id,
+                                   configuration.site_freeze_doi_url_field:
+                                   '__DYNAMIC__',
                                    'callback_url': "%s.py" % target_op,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
         output_objects.append({
             'object_type': 'link',
             'destination':
-            "javascript: confirmDialog(%s, '%s');" % \
+            "javascript: confirmDialog(%s, '%s');" %
             ('registerfreeze', 'Really request DOI for %s?' % freeze_id),
             'class': 'registerarchivelink iconspace genericbutton',
             'title': 'Register a DOI for %s archive %s' % (flavor, freeze_id),
             'text': 'Request archive DOI',
-            })
+        })
         output_objects.append({'object_type': 'html_form', 'text': """
 </div>"""})
 
-    return (output_objects, returnvalues.OK) 
+    return (output_objects, returnvalues.OK)

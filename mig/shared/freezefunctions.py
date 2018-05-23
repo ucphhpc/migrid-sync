@@ -43,13 +43,14 @@ from urllib import quote
 
 from shared.base import client_id_dir
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
-     public_archive_dir, public_archive_index, freeze_flavors, keyword_final, \
-     keyword_pending, keyword_auto, max_freeze_files
+    public_archive_dir, public_archive_index, freeze_flavors, keyword_final, \
+    keyword_pending, keyword_auto, max_freeze_files
 from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
-     sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
-     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
-     makedirs_rec, make_symlink, make_temp_dir
+    sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
+    move_file, move_rec, remove_rec, delete_file, delete_symlink, \
+    makedirs_rec, make_symlink, make_temp_dir
 from shared.html import get_cgi_html_preamble, get_cgi_html_footer
+from shared.pwhash import make_path_hash
 from shared.serial import load, dump
 
 TARGET_ARCHIVE = 'ARCHIVE'
@@ -57,34 +58,57 @@ TARGET_PATH = 'PATH'
 __cache_ext = ".cache"
 __chksum_unset = 'please request explicitly'
 
+
 def public_freeze_id(freeze_dict, configuration):
-    """Translate internal freeze_id to a public identifier used when publishing
-    frozen archives. I.e. map to new client_id sub-dir for recent archives or
-    fall back to the legacy location directly in freeze_home.
-    In the future we may want to map to a global DOI but we
-    just map to to url safe base64 version of the freeze ID for now.
+    """Translate internal freeze_id to a public identifier used in the URL when
+    publishing frozen archives. I.e. map to new client_id sub-dir for recent
+    archives or fall back to the legacy location directly in freeze_home.
+    For legacy archives we used url safe base64 encoding and for recent
+    archives we've switched to a 128-bit hash of the unique archive path to
+    avoid URL collisions.
     """
     _logger = configuration.logger
-    # TODO: remove legacy look-up directly in freeze_home when migrated
-    if freeze_dict.get('PERSONAL', False):
-        location = freeze_dict['ID']
-    else:
-        _logger.debug("lookup public id for %s" % freeze_dict)
-        client_dir = client_id_dir(freeze_dict['CREATOR'])
-        location = os.path.join(client_dir, freeze_dict['ID'])
-    return base64.urlsafe_b64encode(freeze_dict['ID'])
+    _logger.debug("lookup public id for %s" % freeze_dict)
+
+    # NOTE: We used to store all archives in a single shared folder for the
+    #       original 1st format. This prevented collisions but had the drawback
+    #       that lookup grew extremely slow with many archives.
+    #       Then we decided to split up archive storage into user-specific
+    #       subdirs in the 2nd format and explicitly added a PERSONAL=True
+    #       field to be able to distinguish. Due to a bug the public_freeze_id
+    #       was not in effect modified to take the user-specific subdir into
+    #       account in this 2nd format, which potentially could result in ID
+    #       collisions. We fixed the bug and introduced the 3rd format where
+    #       user subdir and freeze ID is used as a identifier and marked all
+    #       newer archives fixed with a FORMAT=2 field in order to handle
+    #       them properly without breaking backward compatibility.
+
+    # TODO: remove broken FORMAT < 2 with potential collisions when possible!
+    if not freeze_dict.get('PERSONAL', False) or \
+            freeze_dict.get('FORMAT', 1) < 2:
+        return base64.urlsafe_b64encode(freeze_dict['ID'])
+    # For all current archives we use unique client_id/freeze_id as ID and hash
+    # it to a shorter fixed-size but safe version in line with doc string.
+    client_dir = client_id_dir(freeze_dict['CREATOR'])
+    location = os.path.join(client_dir, freeze_dict['ID'])
+    return make_path_hash(configuration, location)
+
 
 def published_dir(freeze_dict, configuration):
     """Translate internal freeze_id to a published archive dir"""
     return os.path.join(configuration.wwwpublic, public_archive_dir,
                         public_freeze_id(freeze_dict, configuration))
 
+
 def published_url(freeze_dict, configuration):
     """Translate internal freeze_id to a published archive URL"""
-    return os.path.join(configuration.migserver_http_url, 'public',
-                        public_archive_dir, public_freeze_id(freeze_dict,
-                                                             configuration),
+    base_url = configuration.migserver_http_url
+    if configuration.migserver_https_sid_url:
+        base_url = configuration.migserver_https_sid_url
+    return os.path.join(base_url, 'public', public_archive_dir,
+                        public_freeze_id(freeze_dict, configuration),
                         public_archive_index)
+
 
 def build_freezeitem_object(configuration, freeze_dict, summary=False):
     """Build a frozen archive object based on input freeze_dict.
@@ -101,7 +125,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
             quoted_name = quote(file_item['name'])
             showfile_link = {
                 'object_type': 'link',
-                'destination': 'showfreezefile.py?freeze_id=%s;path=%s' % \
+                'destination': 'showfreezefile.py?freeze_id=%s;path=%s' %
                 (freeze_dict['ID'], quoted_name),
                 'class': 'viewlink iconspace',
                 'title': 'Show archive file %(name)s' % file_item,
@@ -118,28 +142,28 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
                 'timestamp': int_timestamp,
                 'date': str_timestamp,
                 'size': file_item['size'],
-                }
+            }
             # Users may delete pending or non permanent archives
             if freeze_dict.get('STATE', keyword_final) != keyword_final or \
-                   flavor not in configuration.site_permanent_freeze:
+                    flavor not in configuration.site_permanent_freeze:
                 delfile_link = {
                     'object_type': 'link', 'destination':
-                    "javascript: confirmDialog(%s, '%s', %s, %s);" % \
-                    ('delfreeze', 'Really remove %s from %s?' % \
+                    "javascript: confirmDialog(%s, '%s', %s, %s);" %
+                    ('delfreeze', 'Really remove %s from %s?' %
                      (quoted_name, freeze_id), 'undefined',
-                     "{freeze_id: '%s', flavor: '%s', 'path': '%s'}" % \
+                     "{freeze_id: '%s', flavor: '%s', 'path': '%s'}" %
                      (freeze_id, flavor, quoted_name)),
                     'class': 'removelink iconspace', 'title':
                     'Remove %s from %s' % (quoted_name, freeze_id),
                     'text': ''
-                    }
+                }
                 entry['delfile_link'] = delfile_link
             for algo in supported_hash_algos():
                 chksum_field = '%ssum' % algo
                 entry[chksum_field] = file_item.get(chksum_field,
                                                     __chksum_unset)
             freeze_files.append(entry)
-            
+
     created_timetuple = freeze_dict['CREATED_TIMESTAMP'].timetuple()
     created_asctime = time.asctime(created_timetuple)
     created_epoch = time.mktime(created_timetuple)
@@ -153,8 +177,8 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
                                                         created_asctime),
         'state': freeze_dict.get('STATE', keyword_final),
         'frozenfiles': freeze_files,
-        }
-    
+    }
+
     for field in ('author', 'department', 'organization', 'publish',
                   'publish_url', 'flavor'):
         if not freeze_dict.get(field.upper(), None) is None:
@@ -162,8 +186,10 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
     # NOTE: datetime is not json-serializable so we force to string
     for field in ('location', ):
         if not freeze_dict.get(field.upper(), None) is None:
-            freeze_obj[field] = [(i, str(j)) for (i, j) in freeze_dict[field.upper()]]
+            freeze_obj[field] = [(i, str(j))
+                                 for (i, j) in freeze_dict[field.upper()]]
     return freeze_obj
+
 
 def parse_time_delta(str_value):
     """Translate a time string into a datetime.timedelta object. If the
@@ -184,8 +210,9 @@ def parse_time_delta(str_value):
         multiplier = 24*60
     elif unit == 'w':
         multiplier = 7*24*60
-    minutes =  multiplier * count
+    minutes = multiplier * count
     return datetime.timedelta(minutes=minutes)
+
 
 def list_frozen_archives(configuration, client_id):
     """Find all frozen_archives owned by user. We used to store all archives
@@ -229,6 +256,7 @@ def list_frozen_archives(configuration, client_id):
                 % (entry, configuration.freeze_home))
     return (True, frozen_list)
 
+
 def is_frozen_archive(client_id, freeze_id, configuration):
     """Check that freeze_id is an existing frozen archive. I.e. that it is
     available either in the new client_id sub-dir or directly in the legacy
@@ -240,9 +268,10 @@ def is_frozen_archive(client_id, freeze_id, configuration):
     for archive_home in (user_archives, configuration.freeze_home):
         freeze_path = os.path.join(archive_home, freeze_id)
         if os.path.isdir(freeze_path) and \
-               os.path.isfile(os.path.join(freeze_path, freeze_meta_filename)):
+                os.path.isfile(os.path.join(freeze_path, freeze_meta_filename)):
             return True
     return False
+
 
 def get_frozen_meta(client_id, freeze_id, configuration):
     """Helper to fetch dictionary of metadata for a frozen archive. I.e. load
@@ -260,8 +289,9 @@ def get_frozen_meta(client_id, freeze_id, configuration):
         freeze_dict = load(frozen_path)
         if freeze_dict:
             return (True, freeze_dict)
-    return (False, 'Could not open metadata for frozen archive %s' % \
+    return (False, 'Could not open metadata for frozen archive %s' %
             freeze_id)
+
 
 def get_frozen_files(client_id, freeze_id, configuration,
                      checksum_list=['md5']):
@@ -295,9 +325,9 @@ def get_frozen_files(client_id, freeze_id, configuration,
                 needs_update = True
             elif checksum_list:
                 for checksum in checksum_list:
-                    if [entry['name'] for entry in cached if \
-                        entry.get("%ssum" % checksum, __chksum_unset) \
-                               == __chksum_unset]:
+                    if [entry['name'] for entry in cached if
+                        entry.get("%ssum" % checksum, __chksum_unset)
+                            == __chksum_unset]:
                         needs_update = True
                         break
 
@@ -305,13 +335,13 @@ def get_frozen_files(client_id, freeze_id, configuration,
                 _logger.debug("using cached info for %s in %s" % (freeze_id,
                                                                   cache_path))
                 return (True, cached)
-            _logger.info("insufficient cached info for %s in %s" % \
+            _logger.info("insufficient cached info for %s in %s" %
                          (freeze_id, cache_path))
             file_map = dict([(entry['name'], entry) for entry in cached])
         else:
             _logger.debug("no cached files info in %s" % cache_path)
     except Exception, err:
-        _logger.warning("failed to load files cache in %s: %s" % \
+        _logger.warning("failed to load files cache in %s: %s" %
                         (cache_path, err))
     # Walk archive and fill file data using any cached fields for speed
     # TODO: switch to combined list and stat with scandir instead of walk?
@@ -341,17 +371,17 @@ def get_frozen_files(client_id, freeze_id, configuration,
                 entry['md5sum'] = md5sum_file(frozen_path)
                 updates += 1
             elif 'sha1' in checksum_list and \
-                     entry['sha1sum'] == __chksum_unset:
+                    entry['sha1sum'] == __chksum_unset:
                 # Checksum first 32 MB of files
                 entry['sha1sum'] = sha1sum_file(frozen_path)
                 updates += 1
             elif 'sha256' in checksum_list and \
-                     entry['sha256sum'] == __chksum_unset:
+                    entry['sha256sum'] == __chksum_unset:
                 # Checksum first 32 MB of files
                 entry['sha256sum'] = sha256sum_file(frozen_path)
                 updates += 1
             elif 'sha512' in checksum_list and \
-                     entry['sha512sum'] == __chksum_unset:
+                    entry['sha512sum'] == __chksum_unset:
                 # Checksum first 32 MB of files
                 entry['sha512sum'] = sha512sum_file(frozen_path)
                 updates += 1
@@ -362,9 +392,10 @@ def get_frozen_files(client_id, freeze_id, configuration,
             dump(files, cache_path)
             _logger.info("saved files cache in %s" % cache_path)
         except Exception, err:
-            _logger.warning("failed to save files cache in %s: %s" % \
+            _logger.warning("failed to save files cache in %s: %s" %
                             (cache_path, err))
     return (True, files)
+
 
 def get_frozen_archive(client_id, freeze_id, configuration,
                        checksum_list=['md5']):
@@ -392,6 +423,7 @@ def get_frozen_archive(client_id, freeze_id, configuration,
     freeze_dict['FILES'] = files_out
     return (True, freeze_dict)
 
+
 def get_frozen_root(client_id, freeze_id, configuration):
     """Lookup the directory root of freeze_id of client_id"""
     client_dir = client_id_dir(client_id)
@@ -399,7 +431,8 @@ def get_frozen_root(client_id, freeze_id, configuration):
     if freeze_id:
         archive_path = os.path.join(archive_path, freeze_id)
     return archive_path
-        
+
+
 def init_frozen_archive(freeze_meta, client_id, configuration):
     """Helper to create a basic archive dir for a new archive from client_id.
     Creates a suitable random tempdir and saves a pickle with meta data there.
@@ -409,19 +442,20 @@ def init_frozen_archive(freeze_meta, client_id, configuration):
     user_archives = get_frozen_root(client_id, '', configuration)
     try:
         arch_dir = make_temp_dir(prefix='archive-',
-                                   dir=user_archives)
+                                 dir=user_archives)
     except Exception, err:
         _logger.error("create dir for %s from %s failed: %s" % (freeze_meta,
-                                                               client_id, err))
+                                                                client_id, err))
         return (False, 'Error preparing new frozen archive: %s' % err)
 
-    freeze_id = os.path.basename(arch_dir)    
+    freeze_id = os.path.basename(arch_dir)
     _logger.debug("created archive dir for %s" % freeze_id)
     freeze_dict = {
         'CREATED_TIMESTAMP': datetime.datetime.now(),
         'CREATOR': client_id,
         'PERSONAL': True,
-        }
+        'FORMAT': 2,
+    }
     freeze_dict.update(freeze_meta)
     freeze_dict.update({'ID': freeze_id,
                         'STATE': freeze_dict.get('STATE', keyword_pending)})
@@ -436,6 +470,7 @@ def init_frozen_archive(freeze_meta, client_id, configuration):
         return (False, 'Error in init frozen archive info: %s' % err)
     return (True, freeze_dict)
 
+
 def copy_frozen_files(freeze_id, arch_dir, freeze_copy, configuration):
     """Copy user files into archive"""
     _logger = configuration.logger
@@ -448,16 +483,17 @@ def copy_frozen_files(freeze_id, arch_dir, freeze_copy, configuration):
         if os.path.isdir(real_source):
             (status, msg) = copy_rec(real_source, freeze_path, configuration)
             if not status:
-                _logger.error("copy %s recursively to %s: %s" % \
-                             (real_source, freeze_path, msg))
+                _logger.error("copy %s recursively to %s: %s" %
+                              (real_source, freeze_path, msg))
                 return (False, 'Error copying files to archive')
         else:
             (status, msg) = copy_file(real_source, freeze_path, configuration)
             if not status:
-                _logger.error("copy %s to %s: %s" % \
-                             (real_source, freeze_path, msg))
+                _logger.error("copy %s to %s: %s" %
+                              (real_source, freeze_path, msg))
                 return (False, 'Error copying file to archive')
     return (True, copied_files)
+
 
 def move_frozen_files(freeze_id, arch_dir, freeze_move, configuration):
     """Move uploaded files into archive"""
@@ -472,16 +508,17 @@ def move_frozen_files(freeze_id, arch_dir, freeze_move, configuration):
         if os.path.isdir(real_source):
             (status, msg) = move_rec(real_source, freeze_path, configuration)
             if not status:
-                _logger.error("move %s recursively to %s: %s" % \
-                             (real_source, freeze_path, msg))
+                _logger.error("move %s recursively to %s: %s" %
+                              (real_source, freeze_path, msg))
                 return (False, 'Error moving files into archive')
         else:
             (status, msg) = move_file(real_source, freeze_path, configuration)
             if not status:
-                _logger.error("move %s to %s: %s" % \
-                             (real_source, freeze_path, msg))
+                _logger.error("move %s to %s: %s" %
+                              (real_source, freeze_path, msg))
                 return (False, 'Error moving file into archive')
     return (True, moved_files)
+
 
 def upload_frozen_files(freeze_id, arch_dir, freeze_upload, configuration):
     """Save uploaded files into archive"""
@@ -496,6 +533,7 @@ def upload_frozen_files(freeze_id, arch_dir, freeze_upload, configuration):
             _logger.error("write upload %s to %s" % (filename, freeze_path))
             return (False, 'Error saving uploaded files in archive')
     return (True, uploaded_files)
+
 
 def handle_frozen_files(freeze_id, arch_dir, freeze_copy, freeze_move,
                         freeze_upload, configuration):
@@ -514,6 +552,7 @@ def handle_frozen_files(freeze_id, arch_dir, freeze_copy, freeze_move,
     if not upload_status:
         return (upload_status, upload_res)
     return (True, copy_res + move_res + upload_res)
+
 
 def write_landing_page(freeze_dict, arch_dir, frozen_files, configuration):
     """Write a landing page for archive publishing. Depending on archive state
@@ -541,7 +580,7 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
         publish_title = "Public Archive Preview: %s" % published_id
 
     # Use the default preamble to get style, skin and so on right
-        
+
     contents = get_cgi_html_preamble(configuration, publish_title, "",
                                      widgets=False, userstyle=False)
 
@@ -569,9 +608,9 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
 </div>
 <div class='staticpage' id='content' lang='en'>
 """ % configuration.site_skin_base
-        
+
     # Then fill actual archive page
-    
+
     contents += """
 %s
 <div class='archive-header'>
@@ -587,7 +626,7 @@ The user-supplied meta data and files are available below.
         meta_value = freeze_dict.get(meta_key, '')
         if meta_value:
             # Preserve any text formatting in e.g. description
-            contents +=  """<h4 class='staticpage'>%s</h4>
+            contents += """<h4 class='staticpage'>%s</h4>
 <pre class='archive-%s'>%s</pre>
 """ % (meta_label, meta_label.lower(), meta_value)
     contents += """</div>
@@ -604,9 +643,10 @@ The user-supplied meta data and files are available below.
 %s
         """ % get_cgi_html_footer(configuration, widgets=False)
     if not make_symlink(arch_dir, real_pub_dir, _logger, force=True) or \
-        not write_file(contents, real_pub_index, _logger):
+            not write_file(contents, real_pub_index, _logger):
         return (False, 'Error making landing page for archive publishing')
     return (True, freeze_dict)
+
 
 def remove_landing_page(freeze_dict, arch_dir, configuration,
                         allow_missing=False):
@@ -621,9 +661,10 @@ def remove_landing_page(freeze_dict, arch_dir, configuration,
         del freeze_dict['PUBLISH_URL']
     _logger.debug("remove landing page for %s" % freeze_id)
     if not delete_symlink(real_pub_dir, _logger, allow_missing=allow_missing) or \
-           not delete_file(real_pub_index, _logger, allow_missing=allow_missing):
+            not delete_file(real_pub_index, _logger, allow_missing=allow_missing):
         return (False, 'Error removing published landing page for archive')
     return (True, freeze_dict)
+
 
 def commit_frozen_archive(freeze_dict, arch_dir, configuration):
     """Commit after update to archive"""
@@ -636,10 +677,10 @@ def commit_frozen_archive(freeze_dict, arch_dir, configuration):
     on_disk_date = datetime.datetime.now().replace(microsecond=0)
     archive_locations = [('disk', on_disk_date)]
     if freeze_dict.get('STATE', keyword_final) == keyword_final and \
-           configuration.site_freeze_to_tape:
+            configuration.site_freeze_to_tape:
         delay = parse_time_delta(configuration.site_freeze_to_tape)
         on_tape_date = on_disk_date + delay
-        archive_locations.append( ('tape', on_tape_date))
+        archive_locations.append(('tape', on_tape_date))
     freeze_dict['LOCATION'] = archive_locations
     _logger.info("update meta for %s" % freeze_id)
     try:
@@ -648,7 +689,8 @@ def commit_frozen_archive(freeze_dict, arch_dir, configuration):
         _logger.error("update meta failed: %s" % err)
         return (False, 'Error updating frozen archive info: %s' % err)
     return (True, freeze_dict)
-    
+
+
 def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                           freeze_upload, client_id, configuration):
     """Create or update existing non-persistant archive with provided meta data
@@ -670,7 +712,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                                                      configuration,
                                                      checksum_list=[])
 
-    # Shared handling of above init/load status 
+    # Shared handling of above init/load status
     if not init_status:
         _logger.error(init_res)
         return (init_status, init_res)
@@ -688,9 +730,9 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     _logger.debug("create/update archive with dict: %s" % freeze_dict)
 
     # Bail out if user attempts to edit already persistant archive
-    if existing_archive and state  == keyword_final:
-        _logger.error("access to persistant archive %s for %s refused" % \
-            (freeze_id, client_id))
+    if existing_archive and state == keyword_final:
+        _logger.error("access to persistant archive %s for %s refused" %
+                      (freeze_id, client_id))
         return (False, "Error: persistant archives cannot be edited")
 
     arch_dir = get_frozen_root(client_id, freeze_id, configuration)
@@ -703,20 +745,20 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         _logger.error(files_res)
         return (files_status, files_res)
     # Merge list of existing files from loaded archive with new ones
-    frozen_files = [i['name'] for i in freeze_dict.get('FILES', []) \
+    frozen_files = [i['name'] for i in freeze_dict.get('FILES', [])
                     if i['name'] != public_archive_index]
     frozen_files += files_res
     _logger.debug("proceed with frozen_files: %s" % frozen_files)
 
     freeze_entries = len(frozen_files)
     if freeze_entries > max_freeze_files:
-        _logger.error("Max file count exceeded in %s for %s: %s" % \
+        _logger.error("Max file count exceeded in %s for %s: %s" %
                       (freeze_id, client_id, freeze_entries))
-        return (False, "Error: Too many archive files (%s), max %s" % \
+        return (False, "Error: Too many archive files (%s), max %s" %
                 (freeze_entries, max_freeze_files))
 
     if state == keyword_final and freeze_entries < 1:
-        _logger.error("No files included in %s for %s: %s" % \
+        _logger.error("No files included in %s for %s: %s" %
                       (freeze_id, client_id, freeze_entries))
         return (False, "Error: final archives must have one or more files")
 
@@ -729,7 +771,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                                                     allow_missing=True)
     else:
         (web_status, web_res) = True, {}
-    
+
     # Shared handling of above publish status
     if not web_status:
         _logger.error(web_res)
@@ -749,6 +791,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     freeze_dict = commit_res
     return (True, freeze_dict)
 
+
 def delete_archive_files(freeze_dict, client_id, path_list, configuration):
     """Delete one or more files specified in path_list from an existing archive
     at the low level. Assumes previous checking of proper ownership and
@@ -761,17 +804,17 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
     for path in path_list:
         arch_path = os.path.join(arch_dir, path)
         if os.path.isdir(arch_path) and not remove_rec(arch_path, configuration):
-            _logger.error("could not remove archive dir %s for %s" % \
+            _logger.error("could not remove archive dir %s for %s" %
                           (arch_path, freeze_id))
             status = False
-            msg_list.append('Error deleting archive %s folder %s' % \
+            msg_list.append('Error deleting archive %s folder %s' %
                             (freeze_id, path))
             continue
         elif os.path.isfile(arch_path) and not delete_file(arch_path, _logger):
-            _logger.error("could not remove archive file %s (%s) for %s" % \
+            _logger.error("could not remove archive file %s (%s) for %s" %
                           (arch_path, path, freeze_id))
             status = False
-            msg_list.append('Error deleting archive %s file %s' % \
+            msg_list.append('Error deleting archive %s file %s' %
                             (freeze_id, path))
             continue
         deleted.append(path)
@@ -780,8 +823,8 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
         return (status, msg_list)
 
     # Files deleted - remove paths from archive FILES list and update cache
-    
-    freeze_dict['FILES'] = [i for i in freeze_dict.get('FILES', []) if \
+
+    freeze_dict['FILES'] = [i for i in freeze_dict.get('FILES', []) if
                             i['name'] not in deleted]
 
     cache_path = "%s%s" % (arch_dir, __cache_ext)
@@ -798,11 +841,11 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
             _logger.info("saved %d cache entries in %s" % (len(cached),
                                                            cache_path))
         except Exception, err:
-            _logger.warning("failed to save pruned cache in %s: %s" % \
+            _logger.warning("failed to save pruned cache in %s: %s" %
                             (cache_path, err))
 
     if freeze_dict['PUBLISH']:
-        frozen_files = [i['name'] for i in freeze_dict.get('FILES', []) \
+        frozen_files = [i['name'] for i in freeze_dict.get('FILES', [])
                         if i['name'] != public_archive_index]
         (web_status, web_res) = write_landing_page(freeze_dict, arch_dir,
                                                    frozen_files, configuration)
@@ -817,6 +860,7 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
         return (False, commit_res)
 
     return (status, msg_list)
+
 
 def delete_frozen_archive(freeze_dict, client_id, configuration):
     """Delete an existing frozen archive at the low level. Assumes previous
@@ -834,7 +878,7 @@ def delete_frozen_archive(freeze_dict, client_id, configuration):
             return (False, web_res)
 
     if not delete_file(arch_dir+__cache_ext, _logger, allow_missing=True) \
-           or not remove_rec(arch_dir, configuration):
+            or not remove_rec(arch_dir, configuration):
         _logger.error("could not remove archive dir for %s" % freeze_dict)
         return (False, 'Error deleting frozen archive %s' % freeze_id)
     return (True, '')
