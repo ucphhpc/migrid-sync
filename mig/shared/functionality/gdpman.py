@@ -57,7 +57,7 @@ def signature():
     defaults = {
         'action': [''],
         'project_name': [''],
-        'project_journal_number': [''],
+        'project_workzone_number': [''],
         'invite_client_id': [''],
         'status_msg': [''],
     }
@@ -245,12 +245,12 @@ def html_tmpl(
         <tbody>
             <tr>
                 <td colspan='2'>
-                Journal number:
+                Workzone number:
                 </td>
             </tr>
             <tr>
                 <td colspan='2' width='250px'>
-                <input name='project_journal_number' type='text' size='30'/>
+                <input name='project_workzone_number' type='text' size='30'/>
                 </td>
             </tr>
             <tr>
@@ -454,7 +454,7 @@ def main(client_id, user_arguments_dict, environ=None):
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
     project_name = accepted['project_name'][-1].strip()
-    project_journal_number = accepted['project_journal_number'][-1].strip()
+    project_workzone_number = accepted['project_workzone_number'][-1].strip()
     invite_client_id = accepted['invite_client_id'][-1].strip()
     status_msg = accepted['status_msg'][-1].strip()
     if status_msg:
@@ -624,25 +624,25 @@ Please contact the Grid admins %s if you think it should be enabled.
             logger.debug(": %s : creating project: '%s' : %s : from ip: %s'"
                          % (client_id,
                             project_name,
-                            project_journal_number,
+                            project_workzone_number,
                             client_addr))
 
-            # Check project_journal_number
+            # Check project_workzone_number
 
-            journal_number = ''
-            if not project_journal_number:
+            workzone_number = ''
+            if not project_workzone_number:
                 status = False
-                msg = "missing journal number"
+                msg = "missing workzone number"
 
-            elif project_journal_number != '000000':
-                journal_number = project_journal_number
+            elif project_workzone_number != '000000':
+                workzone_number = project_workzone_number
 
             if status:
                 (status, msg) = project_create(configuration,
                                                client_addr,
                                                client_id,
                                                project_name,
-                                               journal_number)
+                                               workzone_number)
             if status:
                 action_msg = 'OK: %s' % msg
             else:

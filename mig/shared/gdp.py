@@ -496,7 +496,7 @@ def __save_user_db(configuration, user_db, locked=False):
 def __send_project_create_confirmation(configuration,
                                        login,
                                        project_name,
-                                       journal_number):
+                                       workzone_number):
     """Send project create confirmation to *login* and GDP admins"""
 
     _logger = configuration.logger
@@ -507,8 +507,8 @@ def __send_project_create_confirmation(configuration,
     template = None
     notify = []
     notify_filename = 'notifyemails.txt'
-    if journal_number:
-        template_filename = 'notifycreate_journal.txt'
+    if workzone_number:
+        template_filename = 'notifycreate_workzone.txt'
     else:
         template_filename = 'notifycreate_general.txt'
 
@@ -523,9 +523,9 @@ def __send_project_create_confirmation(configuration,
         _logger.error("Missing python xvfbwrapper package")
 
     # NON-registratant notifications
-    # are only sent for projects with a journal_number
+    # are only sent for projects with a workzone_number
 
-    if status and journal_number:
+    if status and workzone_number:
 
         # Load notification emails
 
@@ -589,17 +589,17 @@ def __send_project_create_confirmation(configuration,
             'encoding': 'UTF-8',
         }
 
-        if journal_number:
-            journal_desc = journal_number
+        if workzone_number:
+            workzone_desc = workzone_number
         else:
-            journal_desc = "General personalized data"
+            workzone_desc = "General personalized data"
 
         timestamp = datetime.fromtimestamp(time.time())
         date = timestamp.strftime('%d/%m/%Y %H:%M:%S')
         fill_entries = {'date': date,
                         'project_name': project_name,
                         'registrant': login,
-                        'journal_number': journal_desc}
+                        'workzone_number': workzone_desc}
         template = template % fill_entries
         template.encode('utf8')
 
@@ -1563,7 +1563,7 @@ def project_create(
         client_addr,
         client_id,
         project_name,
-        journal_number):
+        workzone_number):
     """Create new project with *project_name* and owner *client_id*"""
 
     _logger = configuration.logger
@@ -1787,7 +1787,7 @@ This directory is used for hosting private files for the '%s' '%s'.
         status = __send_project_create_confirmation(configuration,
                                                     login,
                                                     project_name,
-                                                    journal_number)
+                                                    workzone_number)
         if not status:
             msg = "Failed to send project create confirmation email" \
                 + " for project: '%s'" % project_name
@@ -1851,8 +1851,8 @@ This directory is used for hosting private files for the '%s' '%s'.
 
         msg = "Created project for"
 
-        if journal_number:
-            msg += " journal number: '%s'" % journal_number
+        if workzone_number:
+            msg += " workzone number: '%s'" % workzone_number
         else:
             msg += " general personalized data"
 
