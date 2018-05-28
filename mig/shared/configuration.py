@@ -1398,6 +1398,11 @@ location.""" % self.config_file
                                                         'freeze_doi_url_field')
         else:
             self.site_freeze_doi_url_field = 'landingpage'
+        if config.has_option('SITE', 'freeze_doi_text'):
+            self.site_freeze_doi_text = config.get('SITE',
+                                                   'freeze_doi_text')
+        else:
+            self.site_freeze_doi_text = ''
         if config.has_option('SITE', 'enable_preview'):
             self.site_enable_preview = config.getboolean('SITE', 'enable_preview')
         else:

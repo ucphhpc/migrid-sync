@@ -294,6 +294,8 @@ want to reference the contents in a publication.
                                    'callback_url': "%s.py" % target_op,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
+        output_objects.append({'object_type': 'html_form', 'text':
+                               configuration.site_freeze_doi_text})
         output_objects.append({
             'object_type': 'link',
             'destination':
