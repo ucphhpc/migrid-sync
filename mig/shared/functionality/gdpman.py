@@ -74,6 +74,8 @@ def html_tmpl(
     fill_entries = {}
     fill_entries['csrf_field'] = csrf_field
     fill_entries['csrf_token'] = csrf_token
+    fill_entries['workzone_help_icon'] = "%s/icons/help.png" % configuration.site_images
+    fill_entries['workzone_help_txt'] = "Use 000000 as the workzone number if your project does not require a workzone registration."
     user_map = get_full_user_map(configuration)
     user_dict = user_map.get(client_id, None)
 
@@ -87,7 +89,6 @@ def html_tmpl(
                                      'accepted')
     invited_projects = get_projects(configuration, client_id, 'invited')
     invite_projects = get_projects(configuration, client_id, 'invite')
-    gdp_users = get_users(configuration)
 
     # Generate html
 
@@ -124,14 +125,17 @@ def html_tmpl(
         <tbody>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='project_name'>"""
-        for project in accepted_projects:
+                <select name='project_name'>
+                <option value=''>Choose project</option>
+                <option value=''>───────</option>"""
+        for project in sorted(accepted_projects):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
                 % (project, project)
         html += \
             """
+                <option value=''>───────</option>
                 </select>
                 </div>
                 </td><td>
@@ -153,20 +157,23 @@ def html_tmpl(
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan='2'>Accept invite to project:</th>
+                <th colspan='2'>Accept invite:</th>
             </tr>
         </thead>
         <tbody>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='project_name'>"""
-        for project in invited_projects:
+                <select name='project_name'>
+                <option value=''>Choose project</option>
+                <option value=''>───────</option>"""
+        for project in sorted(invited_projects):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
                 % (project, project)
         html += \
             """
+                <option value=''>───────</option>
                 </select>
                 </div>
                 </td><td>
@@ -188,37 +195,33 @@ def html_tmpl(
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan='2'>Invite user to project:</th>
+                <th colspan='2'>Invite project participant:</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td colspan='2'>
-                <div class='styled-select gm_select semi-square'>
-                <select name='invite_client_id'>"""
-        for user in gdp_users:
-            if user != client_id:
-                login = user.split('emailAddress=')[1].split('/')[0]
-                html += \
-                    """
-                    <option value='%s'>%s</option>""" \
-                    % (user, login)
-        html += \
-            """
-                </select>
-                </div>
-            </td></tr>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='project_name'>"""
-        for project in invite_projects:
+                <select name='project_name'>
+                <option value=''>Choose project</option>
+                <option value=''>───────</option>"""
+        for project in sorted(invite_projects):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
                 % (project, project)
         html += \
             """
+                <option value=''>───────</option>
                 </select>
                 </div>
+                </td></tr>
+            <tr>
+                <td colspan='2'>
+                User id:
+                </td>
+            </tr><tr>
+                <td colspan='2' width='250px'>
+                <input name='invite_client_id' type='text' size='30'/>
                 </td><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='genericbutton' id='invite' href='#' onclick='submitform(\"invite\"); return false;'>Invite</a>
@@ -245,7 +248,7 @@ def html_tmpl(
         <tbody>
             <tr>
                 <td colspan='2'>
-                Workzone number:
+                Workzone number: <a title='%(workzone_help_txt)s' href='#' onclick='return false;'><img align='top' src='%(workzone_help_icon)s' /></a>
                 </td>
             </tr>
             <tr>
@@ -398,20 +401,30 @@ def js_tmpl():
 <script type='text/javascript'>
     function submitform(project_action) {
         if (project_action == 'access') {
-            $('#gm_access_project_form input[name=action]').val(project_action);
-            $('#gm_access_project_form').submit();
+            if ($('#gm_access_project_form select[name=project_name]').val() !== '') {
+                $('#gm_access_project_form input[name=action]').val(project_action);
+                $('#gm_access_project_form').submit();
+            }
         }
         else if (project_action == 'accept_invite') {
-            $('#gm_accept_invite_project_form input[name=action]').val(project_action);
-            $('#gm_accept_invite_project_form').submit();
+            if ($('#gm_accept_invite_project_form select[name=project_name]').val() !== '') {
+                $('#gm_accept_invite_project_form input[name=action]').val(project_action);
+                $('#gm_accept_invite_project_form').submit();
+            }
         }
         else if (project_action == 'invite') {
-            $('#gm_invite_project_form input[name=action]').val(project_action);
-            $('#gm_invite_project_form').submit();
+            if ($('#gm_invite_project_form select[name=project_name]').val() !== '' &&
+                    $('#gm_invite_project_form input[name=invite_client_id]').val() !== '') {
+                $('#gm_invite_project_form input[name=action]').val(project_action);
+                $('#gm_invite_project_form').submit();
+            }
         }
         else if (project_action == 'create') {
-            $('#gm_create_project_form input[name=action]').val(project_action);
-            $('#gm_create_project_form').submit();
+            if ($('#gm_create_project_form input[name=project_name]').val() !== '' &&
+                    $('#gm_create_project_form input[name=project_workzone_number]').val() !== '') {
+                $('#gm_create_project_form input[name=action]').val(project_action);
+                $('#gm_create_project_form').submit();
+            }
         }
         else if (project_action == 'logout') {
             $('#gm_logout_form input[name=action]').val(project_action);
@@ -606,13 +619,20 @@ Please contact the Grid admins %s if you think it should be enabled.
                 action_msg = 'ERROR: %s' % msg
         elif action == 'invite':
 
-            # Project invitation
+            gdp_users = get_users(configuration)
+            if not invite_client_id in gdp_users:
+                status = False
+                msg = "'%s' is _NOT_ a valid user id" % invite_client_id
 
-            (status, msg) = project_invite(configuration,
-                                           client_addr,
-                                           client_id,
-                                           invite_client_id,
-                                           project_name)
+            if status:
+
+                # Project invitation
+
+                (status, msg) = project_invite(configuration,
+                                               client_addr,
+                                               client_id,
+                                               invite_client_id,
+                                               project_name)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
