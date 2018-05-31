@@ -961,12 +961,19 @@ def validate_user(configuration, user_id, user_addr, protocol):
 
 
 def get_users(configuration, locked=False):
-    """Return list of GDP users"""
+    """Returns a dict of GDP users on the form:
+    {short_id: client_id}"""
 
     _logger = configuration.logger
     user_db = __load_user_db(configuration, locked)
 
-    return user_db.keys()
+    result = {}
+    for client_id in user_db.keys():
+        short_id = __short_id_from_client_id(configuration,
+                                             client_id)
+        result[short_id] = client_id
+
+    return result
 
 
 def get_projects(configuration, client_id, state):

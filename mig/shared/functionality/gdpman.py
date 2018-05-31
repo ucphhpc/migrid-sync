@@ -58,7 +58,7 @@ def signature():
         'action': [''],
         'project_name': [''],
         'project_workzone_number': [''],
-        'invite_client_id': [''],
+        'invite_user_id': [''],
         'status_msg': [''],
     }
     return ['text', defaults]
@@ -221,7 +221,7 @@ def html_tmpl(
                 </td>
             </tr><tr>
                 <td colspan='2' width='250px'>
-                <input name='invite_client_id' type='text' size='30'/>
+                <input name='invite_user_id' type='text' size='30'/>
                 </td><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='genericbutton' id='invite' href='#' onclick='submitform(\"invite\"); return false;'>Invite</a>
@@ -414,7 +414,7 @@ def js_tmpl():
         }
         else if (project_action == 'invite') {
             if ($('#gm_invite_project_form select[name=project_name]').val() !== '' &&
-                    $('#gm_invite_project_form input[name=invite_client_id]').val() !== '') {
+                    $('#gm_invite_project_form input[name=invite_user_id]').val() !== '') {
                 $('#gm_invite_project_form input[name=action]').val(project_action);
                 $('#gm_invite_project_form').submit();
             }
@@ -468,7 +468,7 @@ def main(client_id, user_arguments_dict, environ=None):
     action = accepted['action'][-1].strip()
     project_name = accepted['project_name'][-1].strip()
     project_workzone_number = accepted['project_workzone_number'][-1].strip()
-    invite_client_id = accepted['invite_client_id'][-1].strip()
+    invite_user_id = accepted['invite_user_id'][-1].strip()
     status_msg = accepted['status_msg'][-1].strip()
     if status_msg:
         (status_msg, _) = base32urldecode(configuration, status_msg)
@@ -617,17 +617,19 @@ Please contact the Grid admins %s if you think it should be enabled.
                 action_msg = 'OK: %s' % msg
             else:
                 action_msg = 'ERROR: %s' % msg
-        elif action == 'invite':
 
+        elif action == 'invite':
             gdp_users = get_users(configuration)
-            if not invite_client_id in gdp_users:
+
+            if not invite_user_id in gdp_users.keys():
                 status = False
-                msg = "'%s' is _NOT_ a valid user id" % invite_client_id
+                msg = "'%s' is _NOT_ a valid user id" % invite_user_id
 
             if status:
 
                 # Project invitation
 
+                invite_client_id = gdp_users[invite_user_id]
                 (status, msg) = project_invite(configuration,
                                                client_addr,
                                                client_id,

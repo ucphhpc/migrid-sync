@@ -1214,8 +1214,7 @@ def guess_type(name):
         ):
             __type_map[key] = valid_commonname
         for key in ('cert_id',
-                    'run_as',
-                    'invite_client_id'):
+                    'run_as',):
             __type_map[key] = valid_distinguished_name
         for key in (
             'request_text',
@@ -1265,6 +1264,7 @@ def guess_type(name):
             'openid.sreg.email',
             'openid.sreg.mail',
             'adminemail',
+            'invite_user_id',
         ):
             __type_map[key] = valid_email_address
         for key in ('username', ):
