@@ -94,7 +94,8 @@ VALID_COMPLEXURL_CHARACTERS = VALID_BASEURL_CHARACTERS + \
     "%-._~:/?#[]@!$&'()*+,;=`."
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
 VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@%'
-VALID_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ /'
+VALID_BASE_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
+VALID_VGRID_NAME_CHARACTERS = VALID_BASE_VGRID_NAME_CHARACTERS + '/'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
     'THIS INPUT IS NOT VERIFIED: DO NOT EVER PRINT IT UNESCAPED! '
@@ -595,6 +596,21 @@ def valid_backup_names(
     return valid_job_name(names, min_length, max_length, extra_chars)
 
 
+def valid_base_vgrid_name(
+    vgrid_name,
+    min_length=1,
+    max_length=255,
+    extra_chars='',
+):
+    """Verify that supplied root VGrid name, only contains characters that we
+    consider valid. Root VGrid names are user provided names possibly with common
+    special characters.
+    """
+
+    valid_chars = VALID_BASE_VGRID_NAME_CHARACTERS + extra_chars
+    __valid_contents(vgrid_name, valid_chars, min_length, max_length)
+
+
 def valid_vgrid_name(
     vgrid_name,
     min_length=1,
@@ -1092,6 +1108,9 @@ def guess_type(name):
             'site_script_deps',
         ):
             __type_map[key] = valid_safe_path
+        # We include vgrid_name and a few more here to enforce sane name policy
+        for key in ('base_vgrid_name', ):
+            __type_map[key] = valid_base_vgrid_name
         # We include vgrid_name and a few more here to enforce sane name policy
         for key in ('vgrid_name', 'rate_limit', 'vgrids_allow_im',
                     'vgrids_allow_email', 'enforcelimits', ):
