@@ -1856,12 +1856,12 @@ This directory is used for hosting private files for the '%s' '%s'.
     if status:
         # Update log for project
 
-        msg = "Created project for"
+        msg = "Created project '%s'" % project_name
 
         if workzone_number:
-            msg += " workzone number: '%s'" % workzone_number
+            msg += " with workzone number: '%s'" % workzone_number
         else:
-            msg += " general personalized data"
+            msg += " for general personalized data"
 
         project_log(
             configuration,
