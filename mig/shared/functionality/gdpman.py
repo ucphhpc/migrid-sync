@@ -56,7 +56,7 @@ def signature():
 
     defaults = {
         'action': [''],
-        'project_name': [''],
+        'base_vgrid_name': [''],
         'project_workzone_number': [''],
         'invite_user_id': [''],
         'status_msg': [''],
@@ -125,7 +125,7 @@ def html_tmpl(
         <tbody>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='project_name'>
+                <select name='base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
         for project in sorted(accepted_projects):
@@ -163,7 +163,7 @@ def html_tmpl(
         <tbody>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='project_name'>
+                <select name='base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
         for project in sorted(invited_projects):
@@ -201,7 +201,7 @@ def html_tmpl(
         <tbody>
             <tr><td width='250px'>
                 <div class='styled-select gm_select semi-square'>
-                <select name='project_name'>
+                <select name='base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
         for project in sorted(invite_projects):
@@ -263,7 +263,7 @@ def html_tmpl(
             </tr>
             <tr>
                 <td width='250px'>
-                <input name='project_name' type='text' size='30'/>
+                <input name='base_vgrid_name' type='text' size='30'/>
                 </td><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='genericbutton' id='create' href='#' onclick='submitform(\"create\"); return false;'>Create</a>
@@ -401,26 +401,26 @@ def js_tmpl():
 <script type='text/javascript'>
     function submitform(project_action) {
         if (project_action == 'access') {
-            if ($('#gm_access_project_form select[name=project_name]').val() !== '') {
+            if ($('#gm_access_project_form select[name=base_vgrid_name]').val() !== '') {
                 $('#gm_access_project_form input[name=action]').val(project_action);
                 $('#gm_access_project_form').submit();
             }
         }
         else if (project_action == 'accept_invite') {
-            if ($('#gm_accept_invite_project_form select[name=project_name]').val() !== '') {
+            if ($('#gm_accept_invite_project_form select[name=base_vgrid_name]').val() !== '') {
                 $('#gm_accept_invite_project_form input[name=action]').val(project_action);
                 $('#gm_accept_invite_project_form').submit();
             }
         }
         else if (project_action == 'invite') {
-            if ($('#gm_invite_project_form select[name=project_name]').val() !== '' &&
+            if ($('#gm_invite_project_form select[name=base_vgrid_name]').val() !== '' &&
                     $('#gm_invite_project_form input[name=invite_user_id]').val() !== '') {
                 $('#gm_invite_project_form input[name=action]').val(project_action);
                 $('#gm_invite_project_form').submit();
             }
         }
         else if (project_action == 'create') {
-            if ($('#gm_create_project_form input[name=project_name]').val() !== '' &&
+            if ($('#gm_create_project_form input[name=base_vgrid_name]').val() !== '' &&
                     $('#gm_create_project_form input[name=project_workzone_number]').val() !== '') {
                 $('#gm_create_project_form input[name=action]').val(project_action);
                 $('#gm_create_project_form').submit();
@@ -466,7 +466,7 @@ def main(client_id, user_arguments_dict, environ=None):
                                           lookup_dn=False)
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
-    project_name = accepted['project_name'][-1].strip()
+    base_vgrid_name = accepted['base_vgrid_name'][-1].strip()
     project_workzone_number = accepted['project_workzone_number'][-1].strip()
     invite_user_id = accepted['invite_user_id'][-1].strip()
     status_msg = accepted['status_msg'][-1].strip()
@@ -589,7 +589,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             # Project login
 
             project_client_id = project_login(configuration, client_addr,
-                                              'https', client_id, project_name)
+                                              'https', client_id, base_vgrid_name)
             if project_client_id:
                 dest_op_name = 'fileman'
                 base_url = environ.get('REQUEST_URI',
@@ -606,13 +606,13 @@ Please contact the Grid admins %s if you think it should be enabled.
                                        'text': html})
             else:
                 action_msg = 'ERROR: Login to project: %s failed' \
-                    % project_name
+                    % base_vgrid_name
         elif action == 'accept_invite':
 
             # Project accept invitation
 
             (status, msg) = project_accept(configuration, client_addr,
-                                           client_id, project_name)
+                                           client_id, base_vgrid_name)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
@@ -634,7 +634,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                                                client_addr,
                                                client_id,
                                                invite_client_id,
-                                               project_name)
+                                               base_vgrid_name)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
@@ -645,7 +645,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 
             logger.debug(": %s : creating project: '%s' : %s : from ip: %s'"
                          % (client_id,
-                            project_name,
+                            base_vgrid_name,
                             project_workzone_number,
                             client_addr))
 
@@ -663,7 +663,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                 (status, msg) = project_create(configuration,
                                                client_addr,
                                                client_id,
-                                               project_name,
+                                               base_vgrid_name,
                                                workzone_number)
             if status:
                 action_msg = 'OK: %s' % msg
