@@ -496,7 +496,7 @@ def __save_user_db(configuration, user_db, locked=False):
 def __send_project_create_confirmation(configuration,
                                        login,
                                        project_name,
-                                       workzone_number):
+                                       workzone_id):
     """Send project create confirmation to *login* and GDP admins"""
 
     _logger = configuration.logger
@@ -507,7 +507,7 @@ def __send_project_create_confirmation(configuration,
     template = None
     notify = []
     notify_filename = 'notifyemails.txt'
-    if workzone_number:
+    if workzone_id:
         template_filename = 'notifycreate_workzone.txt'
     else:
         template_filename = 'notifycreate_general.txt'
@@ -523,9 +523,9 @@ def __send_project_create_confirmation(configuration,
         _logger.error("Missing python xvfbwrapper package")
 
     # NON-registratant notifications
-    # are only sent for projects with a workzone_number
+    # are only sent for projects with a workzone_id
 
-    if status and workzone_number:
+    if status and workzone_id:
 
         # Load notification emails
 
@@ -589,8 +589,8 @@ def __send_project_create_confirmation(configuration,
             'encoding': 'UTF-8',
         }
 
-        if workzone_number:
-            workzone_desc = workzone_number
+        if workzone_id:
+            workzone_desc = workzone_id
         else:
             workzone_desc = "General personalized data"
 
@@ -599,7 +599,7 @@ def __send_project_create_confirmation(configuration,
         fill_entries = {'date': date,
                         'project_name': project_name,
                         'registrant': login,
-                        'workzone_number': workzone_desc}
+                        'workzone_id': workzone_desc}
         template = template % fill_entries
         template.encode('utf8')
 
@@ -1570,7 +1570,7 @@ def project_create(
         client_addr,
         client_id,
         project_name,
-        workzone_number):
+        workzone_id):
     """Create new project with *project_name* and owner *client_id*"""
 
     _logger = configuration.logger
@@ -1794,7 +1794,7 @@ This directory is used for hosting private files for the '%s' '%s'.
         status = __send_project_create_confirmation(configuration,
                                                     login,
                                                     project_name,
-                                                    workzone_number)
+                                                    workzone_id)
         if not status:
             msg = "Failed to send project create confirmation email" \
                 + " for project: '%s'" % project_name
@@ -1858,8 +1858,8 @@ This directory is used for hosting private files for the '%s' '%s'.
 
         msg = "Created project '%s'" % project_name
 
-        if workzone_number:
-            msg += " with workzone number: '%s'" % workzone_number
+        if workzone_id:
+            msg += " with workzone number: '%s'" % workzone_id
         else:
             msg += " for general personalized data"
 

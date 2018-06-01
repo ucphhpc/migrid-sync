@@ -751,6 +751,11 @@ def is_valid_simple_email(addr):
     except InputException:
         return False
 
+def valid_gdp_workzone_id(workzone_id):
+    """Verify that supplied workzone_id only contains characters that
+    we consider valid in workzone id's.
+    """
+    __valid_contents(workzone_id, digits + '-/')
 
 def filter_ascii(contents):
     """Filter supplied contents to only contain ascii characters"""
@@ -1337,6 +1342,11 @@ def guess_type(name):
 
         for key in ('volume_slice_filepattern', ):
             __type_map[key] = valid_path_pattern
+
+        # GDP 
+
+        for key in ('gdp_workzone_id', ):
+            __type_map[key] = valid_gdp_workzone_id
 
     # Return type checker from __type_map with fall back to alphanumeric
 

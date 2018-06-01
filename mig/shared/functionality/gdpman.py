@@ -57,7 +57,7 @@ def signature():
     defaults = {
         'action': [''],
         'base_vgrid_name': [''],
-        'project_workzone_number': [''],
+        'gdp_workzone_id': [''],
         'invite_user_id': [''],
         'status_msg': [''],
     }
@@ -75,7 +75,10 @@ def html_tmpl(
     fill_entries['csrf_field'] = csrf_field
     fill_entries['csrf_token'] = csrf_token
     fill_entries['workzone_help_icon'] = "%s/icons/help.png" % configuration.site_images
-    fill_entries['workzone_help_txt'] = "Use 000000 as the workzone number if your project does not require a workzone registration."
+    fill_entries['workzone_help_txt'] = \
+        "The workzone nummer is the Journal number from the acceptance of processing personal data." \
+        + " Use 000000 as the workzone number if your project does not require a workzone registration."
+
     user_map = get_full_user_map(configuration)
     user_dict = user_map.get(client_id, None)
 
@@ -253,7 +256,7 @@ def html_tmpl(
             </tr>
             <tr>
                 <td colspan='2' width='250px'>
-                <input name='project_workzone_number' type='text' size='30'/>
+                <input name='gdp_workzone_id' type='text' size='30'/>
                 </td>
             </tr>
             <tr>
@@ -421,7 +424,7 @@ def js_tmpl():
         }
         else if (project_action == 'create') {
             if ($('#gm_create_project_form input[name=base_vgrid_name]').val() !== '' &&
-                    $('#gm_create_project_form input[name=project_workzone_number]').val() !== '') {
+                    $('#gm_create_project_form input[name=gdp_workzone_id]').val() !== '') {
                 $('#gm_create_project_form input[name=action]').val(project_action);
                 $('#gm_create_project_form').submit();
             }
@@ -467,7 +470,7 @@ def main(client_id, user_arguments_dict, environ=None):
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
     base_vgrid_name = accepted['base_vgrid_name'][-1].strip()
-    project_workzone_number = accepted['project_workzone_number'][-1].strip()
+    project_workzone_id = accepted['gdp_workzone_id'][-1].strip()
     invite_user_id = accepted['invite_user_id'][-1].strip()
     status_msg = accepted['status_msg'][-1].strip()
     if status_msg:
@@ -646,25 +649,25 @@ Please contact the Grid admins %s if you think it should be enabled.
             logger.debug(": %s : creating project: '%s' : %s : from ip: %s'"
                          % (client_id,
                             base_vgrid_name,
-                            project_workzone_number,
+                            project_workzone_id,
                             client_addr))
 
-            # Check project_workzone_number
+            # Check project_workzone_id
 
-            workzone_number = ''
-            if not project_workzone_number:
+            workzone_id = ''
+            if not project_workzone_id:
                 status = False
                 msg = "missing workzone number"
 
-            elif project_workzone_number != '000000':
-                workzone_number = project_workzone_number
+            elif project_workzone_id != '000000':
+                workzone_id = project_workzone_id
 
             if status:
                 (status, msg) = project_create(configuration,
                                                client_addr,
                                                client_id,
                                                base_vgrid_name,
-                                               workzone_number)
+                                               workzone_id)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
