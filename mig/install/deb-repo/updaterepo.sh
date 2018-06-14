@@ -28,4 +28,4 @@ echo ''
 echo '= Signing repo index with MiG signing key ='
 echo '... the passphrase is included in the MiG developers VGrid SCM'
 echo ''
-EMAIL='MiG signing key <mig@www.migrid.org>' gpg -abs -o ${DIST}/Release.gpg ${DIST}/Release
+EMAIL='Minimun intrusion Grid <mig@migrid.org>' gpg -abs -o ${DIST}/Release.gpg ${DIST}/Release
