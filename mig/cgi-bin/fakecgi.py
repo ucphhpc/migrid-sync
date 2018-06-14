@@ -45,7 +45,7 @@ from shared.safeeval import subprocess_call
 
 
 def usage():
-    print 'Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] [AUTO_CSRF]' % sys.argv[0]
+    print 'Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] [REMOTE_USER] [REMOTE_ADDR] [AUTO_CSRF]' % sys.argv[0]
 
 
 if len(sys.argv) < 2:
@@ -57,6 +57,8 @@ query = ''
 method = 'GET'
 run_as_dn = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Test User/emailAddress=nosuch@bogusdomain.net'
 auto_csrf = False
+remote_user = ''
+remote_addr = ''
 print sys.argv
 if sys.argv[2:]:
     method = sys.argv[2]
@@ -65,7 +67,11 @@ if sys.argv[3:]:
 if sys.argv[4:]:
     run_as_dn = sys.argv[4]
 if sys.argv[5:]:
-    auto_csrf = (sys.argv[5].lower() in ('yes', 'true'))
+    remote_user = sys.argv[5]
+if sys.argv[6:]:
+    remote_addr = sys.argv[6]
+if sys.argv[7:]:
+    auto_csrf = (sys.argv[7].lower() in ('yes', 'true')) 
 
 run_as_user = distinguished_name_to_user(run_as_dn)
 
@@ -106,6 +112,12 @@ extra_environment['SCRIPT_URL'] = script
 extra_environment['SCRIPT_NAME'] = script
 extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s'\
      % script
+
+if remote_user:
+    extra_environment['REMOTE_USER'] = remote_user
+
+if remote_addr:
+    extra_environment['REMOTE_ADDR'] = remote_addr
 
 os.environ.update(extra_environment)
 
