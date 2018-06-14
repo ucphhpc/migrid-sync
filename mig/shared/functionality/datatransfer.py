@@ -118,7 +118,8 @@ def main(client_id, user_arguments_dict):
     username = accepted['username'][-1]
     password = accepted['transfer_pw'][-1]
     key_id = accepted['key_id'][-1]
-    exclude_list = accepted['exclude']
+    # Skip empty exclude entries as they break backend calls
+    exclude_list = [i for i in accepted['exclude'] if i]
     notify = accepted['notify'][-1]
     compress = accepted['compress'][-1]
     flags = accepted['flags']
