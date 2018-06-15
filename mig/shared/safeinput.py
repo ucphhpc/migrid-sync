@@ -1288,7 +1288,6 @@ def guess_type(name):
             'openid.sreg.email',
             'openid.sreg.mail',
             'adminemail',
-            'invite_user_id',
         ):
             __type_map[key] = valid_email_address
         for key in ('username', ):

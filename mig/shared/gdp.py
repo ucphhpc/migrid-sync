@@ -52,9 +52,9 @@ from shared.notification import send_email
 from shared.serial import load, dump
 from shared.useradm import create_user, delete_user, expand_openid_alias, \
     get_full_user_map, get_short_id
-from shared.vgrid import vgrid_is_owner, vgrid_set_owners, \
-    vgrid_set_members, vgrid_set_settings, vgrid_create_allowed, \
-    vgrid_restrict_write_support, vgrid_flat_name
+from shared.vgrid import vgrid_flat_name, vgrid_is_owner, vgrid_set_owners, \
+    vgrid_add_members, vgrid_set_settings, vgrid_create_allowed, \
+    vgrid_remove_members, vgrid_restrict_write_support
 from shared.vgridkeywords import get_settings_keywords_dict
 
 user_db_filename = 'gdp-users.db'
@@ -88,6 +88,10 @@ valid_scripts = [
     'uploadchunked.py',
 ]
 
+# DEBUG
+valid_scripts.append('adminvgrid.py')
+
+
 valid_log_actions = [
     'accessed',
     'accept_invite',
@@ -95,13 +99,14 @@ valid_log_actions = [
     'copied',
     'created',
     'deleted',
-    'invite',
+    'invited_user',
+    'removed_user',
     'logged_in',
     'logged_out',
     'moved',
 ]
 
-valid_project_states = ['invite', 'invited', 'accepted']
+valid_project_states = ['invite', 'invited', 'accepted', 'removed']
 
 valid_account_states = ['active', 'suspended', 'removed']
 
@@ -976,7 +981,7 @@ def get_users(configuration, locked=False):
     return result
 
 
-def get_projects(configuration, client_id, state):
+def get_projects(configuration, client_id, state, owner_only=False):
     """Return list of GDP projects for user *client_id* with *state*"""
 
     _logger = configuration.logger
@@ -1016,13 +1021,13 @@ def get_projects(configuration, client_id, state):
         result = []
         for (key, value) in user_projects.iteritems():
             project_state = value.get('state', '')
-            if state == project_state or state == 'invite' \
-                and project_state == 'accepted' \
-                and vgrid_is_owner(key,
+            if state == project_state:
+                if not owner_only or owner_only and \
+                    vgrid_is_owner(key,
                                    client_id,
                                    configuration,
                                    recursive=False):
-                result.append(key)
+                    result.append(key)
 
     return result
 
@@ -1106,76 +1111,205 @@ def ensure_user(configuration, client_addr, client_id):
     return True
 
 
-def project_invite(
+def project_remove_user(
         configuration,
-        inviting_client_addr,
-        inviting_client_id,
-        invited_client_id,
+        owner_client_addr,
+        owner_client_id,
+        client_id,
         project_name):
-    """User *inviting_client_id* invites user *invited_client_id*
-    to *project_name"""
+    """User *owner_client_addr* removed user *client_id*
+    from *project_name"""
 
     _logger = configuration.logger
     _logger.debug(
-        "inviting_client_addr: '%s', inviting_client_id: '%s'"
-        % (inviting_client_addr, inviting_client_id)
-        + ", invited_client_id: '%s', project_name: '%s'"
-        % (invited_client_id, project_name))
+        "owner_client_addr: '%s', owner_client_id: '%s'"
+        % (owner_client_addr, owner_client_id)
+        + ", client_id: '%s', project_name: '%s'"
+        % (client_id, project_name))
 
     status = True
 
     # Get login handle (email) from client_id
 
-    invited_login = __short_id_from_client_id(configuration,
-                                              invited_client_id)
-    msg = "User '%s' invited to project '%s'" % (invited_login,
+    login = __short_id_from_client_id(configuration,
+                                      client_id)
+
+    project_client_id = get_project_client_id(
+        client_id,
+        project_name)
+
+    msg = "User '%s' removed from project '%s'" % (login,
+                                                   project_name)
+    if not vgrid_is_owner(project_name,
+                          owner_client_id,
+                          configuration,
+                          recursive=False):
+        status = False
+        msg = "You are _NOT_ the owner of project: '%s'" % project_name
+        log_msg = "GDP: User: '%s' doesn't own project: '%s'" % (
+            owner_client_id, project_name)
+        _logger.error(log_msg)
+
+    if vgrid_is_owner(project_name,
+                      client_id,
+                      configuration,
+                      recursive=False):
+        status = False
+        msg = "Project owner '%s' can't be removed from project: '%s'" % (
+            login, project_name)
+        log_msg = "GDP: Project owner: '%s'" % client_id
+        log_msg += " can't be removed from project: '%s'" % project_name
+
+        _logger.error(log_msg)
+
+    if status:
+        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        flock = acquire_file_lock(db_lock_filepath)
+
+        # Retrieve user and project info
+
+        user_db = __load_user_db(configuration, locked=True)
+        project = user_db.get(client_id, {}).get(
+            'projects', {}).get(
+            project_name, {})
+
+        if not project:
+            status = False
+            msg = "User: '%s'" % login
+            msg += " is _NOT_ registred with project: '%s'" % project_name
+            log_msg = "User: '%s'" % client_id
+            log_msg += " is _NOT_ registred with project: '%s'" % project_name
+            _logger.error('GDP: %s' % log_msg)
+        elif project.get('state', '') == 'removed':
+            status = False
+            msg = "User: '%s'" % login
+            msg += " is already removed from project: '%s'" % project_name
+            log_msg = "User: '%s'" % client_id
+            log_msg += " is already removed from project: '%s'" % project_name
+            _logger.error('GDP: %s' % log_msg)
+        else:
+            _logger.debug("Removing member: '%s' from vgrid: '%s'" %
+                          (project_client_id, project_name))
+            (status, vgrid_msg) = vgrid_remove_members(configuration,
+                                                       project_name,
+                                                       [project_client_id],
+                                                       allow_empty=False)
+            if not status:
+                _logger.error("GDP: %s" % vgrid_msg)
+            else:
+                mig_user_db_path = \
+                    os.path.join(configuration.mig_server_home,
+                                 mig_user_db_filename)
+                mig_user_map = get_full_user_map(configuration)
+                mig_user_dict = mig_user_map.get(project_client_id, None)
+                if mig_user_dict is not None:
+                    try:
+                        _logger.debug("Deleting MiG user: '%s'" %
+                                      project_client_id)
+                        delete_user(mig_user_dict, configuration.config_file,
+                                    mig_user_db_path, force=True)
+                    except Exception, exc:
+                        status = False
+                        msg = "Failed to remove user: '%s'" % login
+                        msg += " from project: '%s'" % project_name
+                        log_msg = "GDP: Failed to remove user: '%s'" \
+                            % project_client_id
+                        log_msg += " from project: '%s'" % project_name
+                        _logger.error(log_msg)
+
+            if status:
+                project['state'] = 'removed'
+                __save_user_db(configuration, user_db, locked=True)
+
+                project_log_msg = "User id: %s" % hashlib.sha256(
+                    client_id).hexdigest()
+                project_log(
+                    configuration,
+                    'https',
+                    owner_client_id,
+                    'removed_user',
+                    project_log_msg,
+                    project_name=project_name,
+                    user_addr=owner_client_addr,
+                )
+
+        release_file_lock(flock)
+
+    if status:
+        _logger.info("GDP: %s" % msg)
+
+    return (status, msg)
+
+
+def project_invite(
+        configuration,
+        owner_client_addr,
+        owner_client_id,
+        client_id,
+        project_name):
+    """User *owner_client_id* invites user *client_id*
+    to *project_name"""
+
+    _logger = configuration.logger
+    _logger.debug(
+        "owner_client_addr: '%s', owner_client_id: '%s'"
+        % (owner_client_addr, owner_client_id)
+        + ", client_id: '%s', project_name: '%s'"
+        % (client_id, project_name))
+
+    status = True
+
+    # Get login handle (email) from client_id
+
+    login = __short_id_from_client_id(configuration,
+                                      client_id)
+    project_client_id = get_project_client_id(
+        client_id,
+        project_name)
+
+    msg = "User '%s' invited to project '%s'" % (login,
                                                  project_name)
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
 
-    # Retrieve user and project info
+    # Retrieve project info
 
     user_db = __load_user_db(configuration, locked=True)
-    user = user_db.get(invited_client_id, None)
-    user_projects = user_db.get(invited_client_id, {}).get('projects',
-                                                           None)
-    if user is None:
-        status = False
-        msg = "Missing GDP user for client_id: '%s'" % invited_client_id
-        _logger.error(msg)
-    elif user_projects is None:
-        status = False
-        msg = "Missing GDP user projects for client_id: '%s'" \
-            % invited_client_id
-        _logger.error(msg)
-    elif user_projects.get(project_name, None) is None:
+    projects = user_db.get(
+        client_id, {}).get(
+            'projects', {})
+    project = projects.get(
+        project_name,
+        {'state': '',
+         'client_id': project_client_id,
+         })
+    project_state = project.get('state', '')
 
-        # Create a project entry for *invited_client_id*
-        # and set state to 'invited'
+    if not project_state or project_state == 'removed':
+        project['state'] = 'invited'
+        projects[project_name] = project
 
-        user_projects[project_name] = {'state': 'invited',
-                                       'client_id': get_project_client_id(
-                                           invited_client_id,
-                                           project_name)}
         __save_user_db(configuration, user_db, locked=True)
 
         # Log invitation details to project log
 
-        log_msg = "User id: %s" % hashlib.sha256(invited_client_id).hexdigest()
+        log_msg = "User id: %s" % hashlib.sha256(client_id).hexdigest()
         project_log(
             configuration,
             'https',
-            inviting_client_id,
-            'invite',
+            owner_client_id,
+            'invited_user',
             log_msg,
             project_name=project_name,
-            user_addr=inviting_client_addr,
+            user_addr=owner_client_addr,
         )
     else:
         status = False
-        msg = "User: '%s' already registred with project: '%s'" \
-            % (invited_login, project_name)
-        _logger.info('GDP: %s' % msg)
+        msg = "User: '%s'" % login
+        msg += " already registred with project: '%s'" % project_name
+        log_msg = "User: '%s'" % client_id
+        log_msg += " already registred with project: '%s'" % project_name
+        _logger.info('GDP: %s' % log_msg)
 
     release_file_lock(flock)
 
@@ -1198,14 +1332,13 @@ def create_project_user(
 
     # Get vgrid_files_home dir for project
 
-    project_files_dir = \
-        os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                                     project_name)) + os.sep
+    project_files_dir = os.path.abspath(os.path.join(
+        configuration.vgrid_files_home, project_name)) + os.sep
 
     # Create project client id
 
-    project_client_id = project['client_id'] = \
-        get_project_client_id(client_id, project_name)
+    project_client_id = project['client_id'] = get_project_client_id(
+        client_id, project_name)
 
     # Create aliases for supported services (openid, davs and sftp)
 
@@ -1317,10 +1450,25 @@ def project_accept(
                                             project_name,
                                             project)
 
+     # Add new project user to vgrid member list
+
+    if status:
+        project_client_id = get_project_client_id(client_id,
+                                                  project_name)
+        member_list = [project_client_id]
+
+        (member_status, member_msg) = vgrid_add_members(configuration,
+                                                        project_name,
+                                                        member_list)
+        if not member_status:
+            status = False
+            msg = "Could not save member list: '%s'" % member_msg
+            _logger.error('GDP: %s' % msg)
+
     # Mark project as accepted
 
     if status:
-        msg = "Accepted invitation to project %s" % project_name
+        msg = "Accepted invitation to project: '%s'" % project_name
 
         project['state'] = 'accepted'
         __save_user_db(configuration, user_db, locked=True)
@@ -1425,9 +1573,8 @@ def project_login(
                                 {}).get('role', '')
         if role:
             status = False
-            project_name = \
-                __project_name_from_project_client_id(configuration,
-                                                      role)
+            project_name = __project_name_from_project_client_id(configuration,
+                                                                 role)
             _logger.error(
                 "GDP: User: '%s', protocol: '%s'" % (client_id, protocol)
                 + " is already logged into project: '%s'" % project_name)
@@ -1435,8 +1582,7 @@ def project_login(
     # Get project client id and mark it as active
 
     if status:
-        project_client_id = \
-            user_account[protocol]['role'] = \
+        project_client_id = user_account[protocol]['role'] = \
             user_project['client_id'] = get_project_client_id(client_id,
                                                               project_name)
         __save_user_db(configuration, user_db, locked=True)
@@ -1530,9 +1676,9 @@ def project_logout(
                 + " with protocol: '%s'" % protocol
                 + ", trying to log out of project: '%s'" % project_client_id)
         else:
-            project_name = \
-                __project_name_from_project_client_id(configuration,
-                                                      project_client_id)
+            project_name = __project_name_from_project_client_id(
+                configuration,
+                project_client_id)
             user_account[protocol]['role'] = ''
 
             __save_user_db(configuration, user_db, locked=True)
@@ -1610,7 +1756,7 @@ def project_create(
             _logger.warning(
                 "GDP: createvgrid possible illegal directory status"
                 + ", attempt by '%s': vgrid_name '%s'"
-                % client_id, project_name)
+                % (client_id, project_name))
 
     # Optional limitation of create vgrid permission
 
@@ -1630,23 +1776,21 @@ def project_create(
     # user dirs when own name is a prefix of another user name
 
     if status:
-        vgrid_home_dir = \
-            os.path.abspath(os.path.join(configuration.vgrid_home,
-                                         project_name)) + os.sep
-        vgrid_files_dir = \
-            os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                                         project_name)) + os.sep
+        vgrid_home_dir = os.path.abspath(os.path.join(
+            configuration.vgrid_home,
+            project_name)) + os.sep
+        vgrid_files_dir = os.path.abspath(os.path.join(
+            configuration.vgrid_files_home,
+            project_name)) + os.sep
 
         if vgrid_restrict_write_support(configuration):
             flat_vgrid = vgrid_flat_name(project_name, configuration)
-            vgrid_writable_dir = \
-                os.path.abspath(os.path.join(
-                    configuration.vgrid_files_writable,
-                    flat_vgrid)) + os.sep
-            vgrid_readonly_dir = \
-                os.path.abspath(os.path.join(
-                    configuration.vgrid_files_readonly,
-                    flat_vgrid)) + os.sep
+            vgrid_writable_dir = os.path.abspath(os.path.join(
+                configuration.vgrid_files_writable,
+                flat_vgrid)) + os.sep
+            vgrid_readonly_dir = os.path.abspath(os.path.join(
+                configuration.vgrid_files_readonly,
+                flat_vgrid)) + os.sep
         else:
             vgrid_writable_dir = None
             vgrid_readonly_dir = None
@@ -1655,8 +1799,7 @@ def project_create(
 
         if os.path.exists(vgrid_home_dir):
             status = False
-            msg = \
-                "%s '%s' cannot be created because it already exists!" \
+            msg = "%s '%s' cannot be created because it already exists!" \
                 % (vgrid_label, project_name)
             _logger.error("GDP: user '%s' can't create vgrid '%s' - it exists!"
                           % (client_id, project_name))
@@ -1666,8 +1809,7 @@ def project_create(
 
     if status and os.path.exists(vgrid_files_dir):
         status = False
-        msg = \
-            """%s '%s' cannot be created, a file or directory exists with the same
+        msg = """%s '%s' cannot be created, a file or directory exists with the same
 name, please try again with a new name!""" \
             % (vgrid_label, project_name)
         _logger.error('GDP: %s' % msg)
@@ -1720,21 +1862,6 @@ This directory is used for hosting private files for the '%s' '%s'.
             msg = "Could not save owner list: '%s'" % owner_msg
             _logger.error('GDP: %s' % msg)
 
-    # Create member list with project_client_id as member
-
-    if status:
-        project_client_id = get_project_client_id(client_id,
-                                                  project_name)
-        member_list = [project_client_id]
-
-        (member_status, member_msg) = vgrid_set_members(configuration,
-                                                        project_name,
-                                                        member_list)
-        if not member_status:
-            status = False
-            msg = "Could not save member list: '%s'" % member_msg
-            _logger.error('GDP: %s' % msg)
-
     # Create default pickled settings list with only required values set to
     # leave all other fields for inheritance by default.
 
@@ -1745,9 +1872,9 @@ This directory is used for hosting private files for the '%s' '%s'.
             if spec['Required']:
                 init_settings[key] = spec['Value']
         init_settings['vgrid_name'] = project_name
-        (settings_status, settings_msg) = \
-            vgrid_set_settings(configuration, project_name,
-                               init_settings.items())
+        (settings_status, settings_msg) = vgrid_set_settings(
+            configuration, project_name,
+            init_settings.items())
         if not settings_status:
             status = False
             msg = "Could not save settings list: '%s'" % settings_msg
@@ -1821,9 +1948,8 @@ This directory is used for hosting private files for the '%s' '%s'.
             _logger.info(
                 "GDP: project_create : roll back :"
                 + " Deleting mig user: '%s'" % project_client_id)
-            mig_user_db_path = \
-                os.path.join(configuration.mig_server_home,
-                             mig_user_db_filename)
+            mig_user_db_path = os.path.join(configuration.mig_server_home,
+                                            mig_user_db_filename)
             mig_user_map = get_full_user_map(configuration)
             mig_user_dict = mig_user_map.get(project_client_id, None)
             if mig_user_dict is not None:

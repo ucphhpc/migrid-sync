@@ -33,21 +33,18 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.base import force_utf8
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.gdp import ensure_user, get_projects, get_users, \
     project_accept, project_create, project_invite, project_login, \
-    project_logout, validate_user
+    project_logout, project_remove_user, validate_user
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.html import themed_styles
+from shared.html import themed_styles, jquery_ui_js
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables, find_entry
 from shared.pwhash import make_csrf_token
-from shared.safeinput import filter_plain_text
 from shared.useradm import get_full_user_map
-from shared.url import base32urldecode, base32urlencode, \
-    openid_autologout_url
+from shared.url import openid_autologout_url
 from shared.vgrid import vgrid_create_allowed
 
 
@@ -58,7 +55,7 @@ def signature():
         'action': [''],
         'base_vgrid_name': [''],
         'gdp_workzone_id': [''],
-        'invite_user_id': [''],
+        'username': [''],
         'status_msg': [''],
     }
     return ['text', defaults]
@@ -66,6 +63,7 @@ def signature():
 
 def html_tmpl(
         configuration,
+        action,
         client_id,
         csrf_token,
         status_msg):
@@ -74,7 +72,8 @@ def html_tmpl(
     fill_entries = {}
     fill_entries['csrf_field'] = csrf_field
     fill_entries['csrf_token'] = csrf_token
-    fill_entries['workzone_help_icon'] = "%s/icons/help.png" % configuration.site_images
+    fill_entries['workzone_help_icon'] = "%s/icons/help.png" \
+        % configuration.site_images
     fill_entries['workzone_help_txt'] = \
         "The workzone nummer is the Journal number from the acceptance of processing personal data." \
         + " Use 000000 as the workzone number if your project does not require a workzone registration."
@@ -91,13 +90,65 @@ def html_tmpl(
     accepted_projects = get_projects(configuration, client_id,
                                      'accepted')
     invited_projects = get_projects(configuration, client_id, 'invited')
-    invite_projects = get_projects(configuration, client_id, 'invite')
+    invite_projects = get_projects(
+        configuration, client_id, 'accepted', owner_only=True)
+    remove_projects = get_projects(
+        configuration, client_id, 'accepted', owner_only=True)
 
     # Generate html
 
-    html = ''
+    html = \
+        """
+        <form id='gm_project_submit_form' action='gdpman.py', method='post'>
+        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+        <input type='hidden' name='action' value='' />
+        <input type='hidden' name='base_vgrid_name' value='' />
+        <input type='hidden' name='username' value='' />
+        <input type='hidden' name='gdp_workzone_id' value='' />
+        </form>
+        <form id='gm_project_form'>
+        """
+
+    # Show project tabs
+
+    tab_count = 0
+    preselected_tab = 0
+
+    html += \
+        """
+        <div id="project-tabs">
+        <ul class="fillwidth padspace">"""
+    if accepted_projects:
+        html += """<li><a href="#access">Access project</a></li>"""
+        tab_count += 1
+    if create_projects:
+        html += """<li><a href="#create">Create project</a></li>"""
+        if action == 'create':
+            preselected_tab = tab_count
+        tab_count += 1
+    if invite_projects:
+        html += """<li><a href="#invite">Invite participant</a></li>"""
+        if action == 'invite':
+            preselected_tab = tab_count
+        tab_count += 1
+    if invited_projects:
+        html += """<li><a href="#accept">Accept invitation</a></li>"""
+        if action == 'accept_invite':
+            preselected_tab = tab_count
+        tab_count += 1
+    if remove_projects:
+        html += """<li><a href="#remove">Remove participant</a></li>"""
+        if action == 'remove':
+            preselected_tab = tab_count
+        tab_count += 1
+    html += """</ul>"""
+    html += """
+        <script type='text/javascript'>
+            var preselected_tab = %s;
+        </script>""" % preselected_tab
+
     if status_msg:
-        html += \
+        status_html = \
             """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
@@ -106,7 +157,7 @@ def html_tmpl(
             </tr>
         </thead>
         <tbody>
-        <tr><td>%s</td></tr>
+        <tr><td id='status_msg'>%s</td></tr>
         </tbody>
         </table>""" \
             % status_msg
@@ -116,19 +167,20 @@ def html_tmpl(
     if accepted_projects:
         html += \
             """
-        <form id='gm_access_project_form' action='gdpman.py', method='post'>
-        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-        <input type='hidden' name='action' value='' />
+        <div id="access">"""
+        html += status_html
+        html +=  \
+            """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan='2'>Access project:</th>
+                <th>Access project:</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td width='250px'>
+            <tr><td>
                 <div class='styled-select gm_select semi-square'>
-                <select name='base_vgrid_name'>
+                <select name='access_base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
         for project in sorted(accepted_projects):
@@ -141,32 +193,45 @@ def html_tmpl(
                 <option value=''>───────</option>
                 </select>
                 </div>
-                </td><td>
-                <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='genericbutton' id='access' href='#' onclick='submitform(\"access\"); return false;'>Login</a>
             </td></tr>
         </tbody>
         </table>
-        </form>"""
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='ui-button' id='access' href='#' onclick='submitform(\"access\"); return false;'>Login</a>
+                <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
+            </td></tr>
+        </tbody>
+        </table>
+        </form>
+        </div>"""
 
     # Show project invitations selectbox
 
     if invited_projects:
         html += \
             """
-        <form id='gm_accept_invite_project_form' action='gdpman.py', method='post'>
-        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-        <input type='hidden' name='action' value='' />
+        <div id="accept">"""
+        html += status_html
+        html +=  \
+            """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan='2'>Accept invite:</th>
+                <th>Accept invite:</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td width='250px'>
+            <tr><td>
                 <div class='styled-select gm_select semi-square'>
-                <select name='base_vgrid_name'>
+                <select name='accept_invite_base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
         for project in sorted(invited_projects):
@@ -179,32 +244,45 @@ def html_tmpl(
                 <option value=''>───────</option>
                 </select>
                 </div>
-                </td><td>
-                <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='genericbutton' id='accept_invite' href='#' onclick='submitform(\"accept_invite\"); return false;'>Accept Invite</a>
             </td></tr>
         </tbody>
         </table>
-        </form>"""
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='ui-button' id='accept_invite' href='#' onclick='submitform(\"accept_invite\"); return false;'>Accept</a>
+                <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
+            </td></tr>
+        </tbody>
+        </table>
+        </form>
+        </div>"""
 
     # Show project invite selectbox
 
     if invite_projects:
         html += \
             """
-        <form id='gm_invite_project_form' action='gdpman.py', method='post'>
-        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-        <input type='hidden' name='action' value='' />
+        <div id="invite">"""
+        html += status_html
+        html +=  \
+            """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan='2'>Invite project participant:</th>
+                <th>Invite project participant:</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td width='250px'>
+            <tr><td>
                 <div class='styled-select gm_select semi-square'>
-                <select name='base_vgrid_name'>
+                <select name='invite_base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
         for project in sorted(invite_projects):
@@ -219,19 +297,91 @@ def html_tmpl(
                 </div>
                 </td></tr>
             <tr>
-                <td colspan='2'>
+                <td>
                 User id:
                 </td>
             </tr><tr>
-                <td colspan='2' width='250px'>
+                <td>
                 <input name='invite_user_id' type='text' size='30'/>
-                </td><td>
+            </td></tr>
+        </tbody>
+        </table>
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='genericbutton' id='invite' href='#' onclick='submitform(\"invite\"); return false;'>Invite</a>
+                <a class='ui-button' id='invite' href='#' onclick='submitform(\"invite\"); return false;'>Invite</a>
+                <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
         </table>
         </form>
+        </div>
+        """
+
+    # Show project remove selectbox
+
+    if remove_projects:
+        html += \
+            """
+        <div id="remove">"""
+        html += status_html
+        html +=  \
+            """
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th>Remove project participant:</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+                <div class='styled-select gm_select semi-square'>
+                <select name='remove_base_vgrid_name'>
+                <option value=''>Choose project</option>
+                <option value=''>───────</option>"""
+        for project in sorted(remove_projects):
+            html += \
+                """
+                <option value='%s'>%s</option>""" \
+                % (project, project)
+        html += \
+            """
+                <option value=''>───────</option>
+                </select>
+                </div>
+                </td></tr>
+            <tr>
+                <td>
+                User id:
+                </td>
+            </tr><tr>
+                <td>
+                <input name='remove_user_id' type='text' size='30'/>
+            </td></tr>
+        </tbody>
+        </table>
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='ui-button' id='remove' href='#' onclick='submitform(\"remove\"); return false;'>Remove</a>
+                <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
+            </td></tr>
+        </tbody>
+        </table>
+        </form>
+        </div>
         """
 
     # Show project create selectbox
@@ -239,44 +389,71 @@ def html_tmpl(
     if create_projects:
         html += \
             """
-        <form id='gm_create_project_form' action='gdpman.py', method='post'>
-        <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-        <input type='hidden' name='action' value='create' />
+        <div id="create">"""
+        html += status_html
+        html +=  \
+            """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th colspan='2'>Create new project:</th>
+                <th>Create new project:</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td colspan='2'>
+                <td>
                 Workzone number: <a title='%(workzone_help_txt)s' href='#' onclick='return false;'><img align='top' src='%(workzone_help_icon)s' /></a>
                 </td>
             </tr>
             <tr>
-                <td colspan='2' width='250px'>
-                <input name='gdp_workzone_id' type='text' size='30'/>
+                <td>
+                <input name='create_workzone_id' type='text' size='30'/>
                 </td>
             </tr>
             <tr>
-                <td colspan='2'>
+                <td>
                 Name:
                 </td>
             </tr>
             <tr>
-                <td width='250px'>
-                <input name='base_vgrid_name' type='text' size='30'/>
-                </td><td>
-                <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='genericbutton' id='create' href='#' onclick='submitform(\"create\"); return false;'>Create</a>
-                </td>
+                <td>
+                <input name='create_base_vgrid_name' type='text' size='30'/>
+            </td></tr>
+        </tbody>
+        </table>
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th></th>
             </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='ui-button' id='create' href='#' onclick='submitform(\"create\"); return false;'>Create</a>
+                <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
+            </td></tr>
         </tbody>
         </table>
         </form>
+        </div>
         """
+
+    # Tabs and form close tags
+
+    html += \
+        """
+        </div>
+        </form>"""
     html = html % fill_entries
+
+    if preselected_tab > 0:
+        html += \
+            """
+            <script type='text/javascript'>
+                $(selector).tabs('option', 'active', %s);
+            </script>
+            """ % preselected_tab
     return html
 
 
@@ -295,11 +472,11 @@ def html_logout_tmpl(configuration, csrf_token):
     <table class='gm_projects_table' style='border-spacing=0;'>
     <thead>
         <tr>
-            <th colspan='2'></th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
-        <tr><td colspan='2'>
+        <tr><td>
             <!-- NOTE: must have href for correct cursor on mouse-over -->
             <a class='genericbutton' id='access' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
         </td></tr>
@@ -319,7 +496,7 @@ def css_tmpl(configuration):
 
     # TODO: move this custom css to style sheets where it belongs
 
-    css['base'] = \
+    css['base'] += \
         """
 <style>
     .gm_projects_table {
@@ -395,48 +572,75 @@ def css_tmpl(configuration):
     return css
 
 
-def js_tmpl():
+def js_tmpl(configuration):
     """Javascript to include in the page header"""
 
-    js = \
-        """
-<script type='text/javascript' src='/images/js/jquery.js'></script>
-<script type='text/javascript'>
+    js_import = ''
+    js_init = """
     function submitform(project_action) {
         if (project_action == 'access') {
-            if ($('#gm_access_project_form select[name=base_vgrid_name]').val() !== '') {
-                $('#gm_access_project_form input[name=action]').val(project_action);
-                $('#gm_access_project_form').submit();
+            if ($('#gm_project_form select[name=access_base_vgrid_name]').val() !== '') {
+                $('#gm_project_submit_form input[name=action]').val(project_action);
+                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
+                    $('#gm_project_form select[name=access_base_vgrid_name]').val());
+                $('#gm_project_submit_form').submit();
             }
         }
         else if (project_action == 'accept_invite') {
-            if ($('#gm_accept_invite_project_form select[name=base_vgrid_name]').val() !== '') {
-                $('#gm_accept_invite_project_form input[name=action]').val(project_action);
-                $('#gm_accept_invite_project_form').submit();
+            if ($('#gm_project_form select[name=accept_invite_base_vgrid_name]').val() !== '') {
+                $('#gm_project_submit_form input[name=action]').val(project_action);
+                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
+                    $('#gm_project_form select[name=accept_invite_base_vgrid_name]').val());
+                $('#gm_project_submit_form').submit();
             }
         }
         else if (project_action == 'invite') {
-            if ($('#gm_invite_project_form select[name=base_vgrid_name]').val() !== '' &&
-                    $('#gm_invite_project_form input[name=invite_user_id]').val() !== '') {
-                $('#gm_invite_project_form input[name=action]').val(project_action);
-                $('#gm_invite_project_form').submit();
+            if ($('#gm_project_form select[name=base_vgrid_name]').val() !== '' &&
+                    $('#gm_project_form input[name=invite_user_id]').val() !== '') {
+                $('#gm_project_submit_form input[name=action]').val(project_action);
+                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
+                    $('#gm_project_form select[name=invite_base_vgrid_name]').val());
+                $('#gm_project_submit_form input[name=username]').val(
+                    $('#gm_project_form input[name=invite_user_id]').val());
+                $('#gm_project_submit_form').submit();
+            }
+        }
+        else if (project_action == 'remove') {
+            if ($('#gm_project_form select[name=remove_base_vgrid_name]').val() !== '' &&
+                    $('#gm_project_form input[name=remove_user_id]').val() !== '') {
+                $('#gm_project_submit_form input[name=action]').val(project_action);
+                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
+                    $('#gm_project_form select[name=remove_base_vgrid_name]').val());
+                $('#gm_project_submit_form input[name=username]').val(
+                    $('#gm_project_form input[name=remove_user_id]').val());
+                $('#gm_project_submit_form').submit();
             }
         }
         else if (project_action == 'create') {
-            if ($('#gm_create_project_form input[name=base_vgrid_name]').val() !== '' &&
-                    $('#gm_create_project_form input[name=gdp_workzone_id]').val() !== '') {
-                $('#gm_create_project_form input[name=action]').val(project_action);
-                $('#gm_create_project_form').submit();
+            if ($('#gm_project_form input[name=create_base_vgrid_name]').val() !== '' &&
+                    $('#gm_project_form input[name=create_workzone_id]').val() !== '') {
+                $('#gm_project_submit_form input[name=action]').val(project_action);
+                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
+                    $('#gm_project_form input[name=create_base_vgrid_name]').val());
+                $('#gm_project_submit_form input[name=gdp_workzone_id]').val(
+                    $('#gm_project_form input[name=create_workzone_id]').val());
+                $('#gm_project_submit_form').submit();
             }
         }
         else if (project_action == 'logout') {
-            $('#gm_logout_form input[name=action]').val(project_action);
-            $('#gm_logout_form').submit();
+            $('#gm_project_submit_form input[name=action]').val(project_action);
+            $('#gm_project_submit_form').submit();
         }
-    }
-</script>"""
+    }"""
+    js_ready = """
+    $(document).ready(function() {
+        $("#project-tabs").tabs({
+            collapsible: false,
+            active: preselected_tab
+        });
+    });"""
 
-    return js
+    return jquery_ui_js(configuration, js_import, js_init, js_ready)
 
 
 def main(client_id, user_arguments_dict, environ=None):
@@ -470,12 +674,8 @@ def main(client_id, user_arguments_dict, environ=None):
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
     base_vgrid_name = accepted['base_vgrid_name'][-1].strip()
-    project_workzone_id = accepted['gdp_workzone_id'][-1].strip()
-    invite_user_id = accepted['invite_user_id'][-1].strip()
-    status_msg = accepted['status_msg'][-1].strip()
-    if status_msg:
-        (status_msg, _) = base32urldecode(configuration, status_msg)
-        status_msg = force_utf8(filter_plain_text(status_msg))
+    workzone_id = accepted['gdp_workzone_id'][-1].strip()
+    username = accepted['username'][-1].strip()
 
     # Generate header, title, css and js
 
@@ -483,7 +683,7 @@ def main(client_id, user_arguments_dict, environ=None):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = title_text
     title_entry['style'] = css_tmpl(configuration)
-    title_entry['javascript'] = js_tmpl()
+    title_entry['javascript'] = js_tmpl(configuration, )
 
     output_objects.append({'object_type': 'header',
                            'class': 'gdpman-title', 'text': title_text})
@@ -500,7 +700,7 @@ Please contact the Grid admins %s if you think it should be enabled.
     if client_id and client_id == identity:
         output_objects.append({'object_type': 'error_text',
                                'text':
-            'CERT user credentials _NOT_ supported by this site.'})
+                               'CERT user credentials _NOT_ supported by this site.'})
         return (output_objects, returnvalues.ERROR)
     elif not identity:
         output_objects.append({'object_type': 'error_text',
@@ -579,20 +779,12 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         status = True
         action_msg = ''
-        if not action:
-            if not status_msg:
-                status_msg = validate_msg
-            html = html_tmpl(configuration, client_id, csrf_token,
-                             status_msg)
-            html += html_logout_tmpl(configuration, csrf_token)
-            output_objects.append({'object_type': 'html_form',
-                                   'text': html})
-        elif action == 'access':
+        if action == 'access':
 
             # Project login
 
             project_client_id = project_login(configuration, client_addr,
-                                              'https', client_id, base_vgrid_name)
+                                        'https', client_id, base_vgrid_name)
             if project_client_id:
                 dest_op_name = 'fileman'
                 base_url = environ.get('REQUEST_URI',
@@ -608,7 +800,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                 output_objects.append({'object_type': 'html_form',
                                        'text': html})
             else:
-                action_msg = 'ERROR: Login to project: %s failed' \
+                action_msg = "ERROR: Login to project: '%s' failed" \
                     % base_vgrid_name
         elif action == 'accept_invite':
 
@@ -624,15 +816,16 @@ Please contact the Grid admins %s if you think it should be enabled.
         elif action == 'invite':
             gdp_users = get_users(configuration)
 
-            if not invite_user_id in gdp_users.keys():
+            if not username in gdp_users.keys():
                 status = False
-                msg = "'%s' is _NOT_ a valid user id" % invite_user_id
+                msg = "'%s' is _NOT_ a valid user id" % username
+                _logger.error("gdpman: Invite user: %s" % msg)
 
             if status:
 
                 # Project invitation
 
-                invite_client_id = gdp_users[invite_user_id]
+                invite_client_id = gdp_users[username]
                 (status, msg) = project_invite(configuration,
                                                client_addr,
                                                client_id,
@@ -642,6 +835,30 @@ Please contact the Grid admins %s if you think it should be enabled.
                 action_msg = 'OK: %s' % msg
             else:
                 action_msg = 'ERROR: %s' % msg
+
+        elif action == 'remove':
+            gdp_users = get_users(configuration)
+
+            if not username in gdp_users.keys():
+                status = False
+                msg = "'%s' is _NOT_ a valid user id" % username
+                _logger.error("gdpman: Remove user: %s" % msg)
+
+            if status:
+
+                # Project invitation
+
+                remove_client_id = gdp_users[username]
+                (status, msg) = project_remove_user(configuration,
+                                                    client_addr,
+                                                    client_id,
+                                                    remove_client_id,
+                                                    base_vgrid_name)
+            if status:
+                action_msg = 'OK: %s' % msg
+            else:
+                action_msg = 'ERROR: %s' % msg
+
         elif action == 'create':
 
             # Project create
@@ -649,50 +866,38 @@ Please contact the Grid admins %s if you think it should be enabled.
             logger.debug(": %s : creating project: '%s' : %s : from ip: %s'"
                          % (client_id,
                             base_vgrid_name,
-                            project_workzone_id,
+                            workzone_id,
                             client_addr))
 
-            # Check project_workzone_id
+            # Check workzone_id
 
-            workzone_id = ''
-            if not project_workzone_id:
+            create_workzone_id = ''
+            if not workzone_id:
                 status = False
                 msg = "missing workzone number"
 
-            elif project_workzone_id != '000000':
-                workzone_id = project_workzone_id
+            elif workzone_id != '000000':
+                workzone_id = create_workzone_id
 
             if status:
                 (status, msg) = project_create(configuration,
                                                client_addr,
                                                client_id,
                                                base_vgrid_name,
-                                               workzone_id)
+                                               create_workzone_id)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
                 action_msg = 'ERROR: %s' % msg
-        else:
+        elif action:
             action_msg = 'ERROR: Unknown action: %s' % action
 
-        # Go to entry page and show status message
-
-        if action and action_msg:
-            html = \
-                """
-            <form id='gdpman_status_form' method='post' action='%s'>""" \
-                % req_url
-            html += \
-                """
-                <input type='hidden' name='status_msg' value='%s'>""" \
-                % base32urlencode(configuration, action_msg)
-            html += \
-                """
-            </form>
-            <script type='text/javascript'>
-                document.getElementById('gdpman_status_form').submit();
-            </script>"""
-            output_objects.append({'object_type': 'html_form',
-                                   'text': html})
+        if not action_msg:
+            action_msg = validate_msg
+        html = html_tmpl(configuration, action, client_id, csrf_token,
+                         action_msg)
+        #html += html_logout_tmpl(configuration, csrf_token)
+        output_objects.append({'object_type': 'html_form',
+                               'text': html})
 
     return (output_objects, returnvalues.OK)
