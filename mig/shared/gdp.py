@@ -87,11 +87,7 @@ valid_scripts = [
     'settingsaction.py',
     'uploadchunked.py',
 ]
-
-# DEBUG
-valid_scripts.append('adminvgrid.py')
-
-
+    
 valid_log_actions = [
     'accessed',
     'accept_invite',
