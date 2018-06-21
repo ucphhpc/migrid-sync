@@ -37,6 +37,7 @@ mig_login(driver, url, login, passwd)
 
 from selenium import webdriver
 
+
 def init_driver(browser):
     """Init the requested browser driver"""
     if browser.lower() == 'chrome':
@@ -56,9 +57,11 @@ def init_driver(browser):
         driver = None
     return driver
 
+
 def save_screen(driver, path):
     """Save a screenshot of current page in path"""
     driver.save_screenshot(path)
+
 
 def ucph_login(driver, url, login, passwd, callbacks={}):
     """Login through the UCPH OpenID web form and optionally execute any
@@ -96,6 +99,7 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
     print "Starting UCPH OpenID login: %s" % status
     return status
 
+
 def mig_login(driver, url, login, passwd, callbacks={}):
     """Login through the MiG OpenID web form and optionally execute any
     provided callbacks for ready and filled states. The callbacks dictionary
@@ -131,4 +135,45 @@ def mig_login(driver, url, login, passwd, callbacks={}):
         print "MiG OpenID login _NOT_ found"
 
     print "Starting MiG OpenID login: %s" % status
+    return status
+
+
+def shared_logout(driver, url, callbacks={}):
+    """Logout through the shared logout navmenu entry and confirm. Optionally
+    execute any provided callbacks for confirm states. The callbacks dictionary
+    should contain state names bound to functions accepting driver and state
+    name like do_stuff(driver, state) .
+    """
+    status = True
+    do_logout = False
+    print "DEBUG: run logout: %s" % url
+    try:
+        link = driver.find_element_by_link_text('Logout')
+        print "DEBUG: found link: %s" % link
+        if link:
+            print "DEBUG: use link: %s" % link
+            do_logout = True
+            state = 'logout-ready'
+            if callbacks.get(state, None):
+                print "DEBUG: callback for: %s" % state
+                callbacks[state](driver, state)
+            print "DEBUG: click link: %s" % link
+            link.click()
+    except Exception, exc:
+        print "ERROR: failed in logout: %s" % exc
+
+    if do_logout:
+        print "Confirm logout"
+        confirm_elem = driver.find_element_by_link_text("Yes")
+        print "DEBUG: found confirm elem: %s" % confirm_elem
+        state = 'logout-confirm'
+        if callbacks.get(state, None):
+            callbacks[state](driver, state)
+        print "DEBUG: click confirm elem: %s" % confirm_elem
+        confirm_elem.click()
+    else:
+        status = False
+        print "Confirm login _NOT_ found"
+
+    print "Finished logout: %s" % status
     return status
