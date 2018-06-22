@@ -38,72 +38,88 @@ import time
 import traceback
 
 from migcore import init_driver, ucph_login, mig_login, shared_logout, \
-    save_screen
+    save_screen, scroll_to_elem, doubleclick_elem
 
 
-def user_actions(driver, url, callbacks={}):
-    """Actually run the actions documented in the user guide and create
-    screenshots accordingly. Optionally execute any provided callbacks for
-    ready and filled states. The callbacks dictionary should contain state
-    names bound to functions accepting driver and state name like
-    do_stuff(driver, state) .
-    """
-    status = True
-    print "DEBUG: run user actions with url: %s" % url
-    try:
-        driver.get(url)
-
-        navmenu = driver.find_element_by_class_name('navmenu')
-        print "DEBUG: found navmenu: %s" % navmenu
-
-        # TODO: Files
-
-        # TODO: Workgroups
-
-        # Archives
-        link = navmenu.find_element_by_link_text('Archives')
-        print "DEBUG: found archives link: %s" % link
-        state = 'archives-button'
-        if callbacks.get(state, None):
-            print "DEBUG: callback for: %s" % state
-            callbacks[state](driver, state)
-        print "DEBUG: click link: %s" % link
-        state = 'open-archives'
-        if callbacks.get(state, None):
-            print "DEBUG: callback for: %s" % state
-            callbacks[state](driver, state)
-        link.click()
-        ajax_status = driver.find_element_by_id('ajax_status')
-        print "DEBUG: found ajax_status: %s" % ajax_status
-        # Wait for ajax to start and finish - spinner must come and go
-        ajax_started, ajax_done = False, False
-        while not ajax_done:
-            try:
-                driver.find_element_by_class_name('spinner')
-                print "DEBUG: detected ajax started"
+def ajax_wait(driver, name, class_name="spinner"):
+    """Wait for AJAX request to finish"""
+    # Wait for ajax to start and finish - spinner must come and go
+    ajax_started, ajax_done = False, False
+    while not ajax_done:
+        try:
+            driver.find_element_by_class_name(class_name)
+            if not ajax_started:
+                #print "DEBUG: detected ajax started"
                 ajax_started = True
-            except Exception, exc:
-                print "DEBUG: exception during ajax wait: %s" % exc
-                if ajax_started:
-                    print "DEBUG: detected ajax done"
-                    ajax_done = True
-            print "DEBUG: waiting for ajax to finish: %s" % ajax_status
-            time.sleep(1)
-        state = 'archives-ready'
-        if callbacks.get(state, None):
-            print "DEBUG: callback for: %s" % state
-            callbacks[state](driver, state)
+                continue
+        except Exception, exc:
+            if ajax_started:
+                #print "DEBUG: detected ajax done"
+                break
+            else:
+                print "Warning: exception during ajax wait: %s" % exc
+        print "DEBUG: waiting for ajax to finish: %s" % name
+        time.sleep(1)
+    return True
 
-        create_link = driver.find_element_by_link_text(
-            'Create a new freeze archive')
-        print "DEBUG: found create archives link: %s" % create_link
-        create_link.click()
 
-        name_field = driver.find_element_by_name("freeze_name")
-        name_field.send_keys("my-sample-archive")
+def files_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Files"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    #print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    ajax_wait(driver, nav_name, "ui-progressbar")
+    state = 'files-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
 
-        meta_field = driver.find_element_by_name("freeze_description")
-        meta_field.send_keys("""Sample Archive
+
+def workgroups_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Workgroups"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    #print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    ajax_wait(driver, nav_name)
+    state = 'workgroups-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+
+def archives_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Archives"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    #print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    ajax_wait(driver, nav_name)
+    state = 'archives-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+    create_link = driver.find_element_by_link_text(
+        'Create a new freeze archive')
+    #print "DEBUG: found create archives link: %s" % create_link
+    create_link.click()
+
+    state = 'archive-empty'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+    archive_name = "sample_archive-%s" % time.time()
+    name_field = driver.find_element_by_name("freeze_name")
+    name_field.send_keys(archive_name)
+
+    meta_field = driver.find_element_by_name("freeze_description")
+    meta_field.send_keys("""Sample Archive
 
 This is my sample freeze archive with some metadata describing the archive
 contents and some files inserted.
@@ -111,19 +127,229 @@ contents and some files inserted.
 Apart from this free text description archives also get a few fields like date
 and owner automatically assigned.
 """)
-        state = 'create-archive'
-        if callbacks.get(state, None):
-            print "DEBUG: callback for: %s" % state
-            callbacks[state](driver, state)
 
-        # TODO: Settings
+    # Open fileman popup
+    add_button = driver.find_element_by_id("addfilebutton")
+    add_button.click()
+    # Wait for fileman popup to accept click handlers
+    ajax_wait(driver, nav_name + " file select", "ui-progressbar")
+    state = 'archive-fileman'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
 
-        # TODO: Schedule Tasks
+    # Select first txt file (at least welcome.txt is always there)
+    files_area = driver.find_element_by_class_name("fm_files")
+    select_file = files_area.find_element_by_class_name("ext_txt")
+    #print "DEBUG: scroll to file elem: %s" % select_file
+    scroll_to_elem(driver, select_file)
 
+    # TODO: figure out how to get this dclick working
+    # NOTE: dclick on same target hits a dir here after scroll!?
+    # select_file = files_area.find_element_by_class_name("ext_txt")
+    # print "DEBUG: double click file elem: %s" % select_file
+    # doubleclick_elem(driver, select_file)
+
+    # NOTE: as a workaround we save path, cancel and manually fill for now
+    file_path = select_file.text
+    print "DEBUG: found file path: %s" % file_path
+    dialog_buttons = driver.find_element_by_class_name("ui-dialog-buttonset")
+    action_buttons = driver.find_elements_by_class_name("ui-button")
+    for button in action_buttons:
+        if button.text == 'Cancel':
+            button.click()
+        # else:
+        #    print "DEBUG: ignore action button: %s" % button.text
+    add_field = driver.find_element_by_id("freeze_copy_0")
+    add_field.send_keys(file_path)
+
+    # Choose publish
+    publish_yes = driver.find_element_by_name("freeze_publish")
+    publish_yes.click()
+
+    time.sleep(1)
+
+    state = 'archive-filled'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+    submit_button = driver.find_element_by_xpath(
+        "//input[@type='submit' and @value='Save and Preview']")
+    print "DEBUG: click submit: %s" % submit_button
+    submit_button.click()
+
+    state = 'archive-submitted'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+    # TODO: open preview (in new tab) like this
+    # preview_button = driver.find_element_by_class_name("previewarchivelink")
+    # print "DEBUG: found preview button: %s" % preview_button
+    # preview_button.click()
+
+    finalize_button = driver.find_element_by_class_name(
+        "finalizearchivelink")
+    print "DEBUG: click finalize button: %s" % finalize_button
+    finalize_button.click()
+
+    dialog_buttons = driver.find_element_by_class_name("ui-dialog-buttonset")
+    confirm_buttons = driver.find_elements_by_class_name("ui-button")
+    for button in confirm_buttons:
+        if button.text == 'Yes':
+            button.click()
+        # else:
+        #    print "DEBUG: ignore confirm button: %s" % button.text
+
+    state = 'archive-finalized'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+    view_button = driver.find_element_by_class_name(
+        "viewarchivelink")
+    print "DEBUG: click view button: %s" % view_button
+    view_button.click()
+    ajax_wait(driver, nav_name)
+    state = 'archive-view'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+    register_button = driver.find_element_by_class_name(
+        "registerarchivelink")
+    print "DEBUG: click register button: %s" % register_button
+    register_button.click()
+
+    dialog_buttons = driver.find_element_by_class_name("ui-dialog-buttonset")
+    confirm_buttons = driver.find_elements_by_class_name("ui-button")
+    for button in confirm_buttons:
+        if button.text == 'Yes':
+            button.click()
+        # else:
+        #    print "DEBUG: ignore confirm button: %s" % button.text
+
+    # Redirecting to KU-IT DOI service where login may be required
+    login_done, popup_found, popup_done = False, False, False
+    while True:
+
+        # Maybe need KU-IT DOI service login if requested
+        try:
+            logon_button = driver.find_element_by_id("cmdLogon")
+            print "DEBUG: click logon: %s" % logon_button
+            logon_button.click()
+        except Exception, exc:
+            pass
+
+        try:
+            user_field = driver.find_element_by_id("userNameInput")
+            user_field.send_keys(login)
+            password_field = driver.find_element_by_id("passwordInput")
+            password_field.send_keys(passwd)
+            submit_button = driver.find_element_by_id("submitButton")
+            print "DEBUG: click submit: %s" % submit_button
+            time.sleep(1)
+            submit_button.click()
+            login_done = True
+        except Exception, exc:
+            if not login_done:
+                print "Warning: no login form found: %s" % exc
+
+        time.sleep(1)
+
+        # Then detect and confirm DOI usage dialog
+        try:
+            popup_dialog = driver.find_element_by_class_name("popupcontent")
+            #print "DEBUG: found popup dialog: %s" % popup_dialog
+            # Wait for display popup
+            for _ in range(10):
+                if not popup_dialog.is_displayed():
+                    #print "DEBUG: waiting for popup dialog: %s" % popup_dialog
+                    time.sleep(1)
+                else:
+                    # If still not shown we consider it done
+                    popup_done = True
+                    break
+            # Then find and click accept button
+            if popup_dialog.is_displayed():
+                print "DEBUG: found visible popup dialog"
+                popup_found = True
+                popup_buttons = popup_dialog.find_elements_by_class_name("btn")
+                for button in popup_buttons:
+                    #print "DEBUG: inspect popup button: %s" % button.text
+                    if button.text.upper() == 'UNDERSTOOD':
+                        button.click()
+                        popup_done = True
+                    # else:
+                    #    print "DEBUG: ignore button: %s" % button.text
+            # else:
+            #    print "DEBUG: popup dialog invisible"
+            if popup_found and not popup_done:
+                raise Exception("Warning: no UNDERSTOOD button")
+        except Exception, exc:
+            #print "DEBUG: popup accept dialog: %s" % exc
+            if popup_found:
+                print "ERROR: popup accept dialog failed: %s" % exc
+                # Try again since popup WAS found
+                time.sleep(1)
+                continue
+
+        # Check if DOI form is there and ready
+        try:
+            doi_idenfier = driver.find_element_by_id("IdentifierType")
+            #print "DEBUG: found DOI identifier: %s" % doi_idenfier
+            break
+        except Exception, exc:
+            print "DEBUG: DOI page not ready: %s" % exc
+
+        # Keep trying until we get through login and usage accept
+        print "INFO: waiting for access to DOI service"
+        time.sleep(1)
+
+    time.sleep(1)
+
+    state = 'archive-register'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+    time.sleep(1)
+    # Return to our own main page to continue
+    driver.get(url)
+
+
+def settings_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Settings"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    #print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    # ajax_wait(driver, nav_name)
+    state = 'settings-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+
+def user_actions(driver, url, login, passwd, sections, callbacks={}):
+    """Actually run the actions documented in the user guide and create
+    screenshots accordingly. Optionally execute any provided callbacks for
+    ready and filled states. The callbacks dictionary should contain state
+    names bound to functions accepting driver and state name like
+    do_stuff(driver, state) .
+    """
+    status = True
+    print "INFO: run user actions with url: %s" % url
+    try:
+        for name, actions in sections:
+            actions(driver, url, login, passwd, callbacks)
     except Exception, exc:
         print "ERROR: failed in user actions: %s" % exc
+        status = False
 
-    print "DEBUG: return: %s" % status
+    #print "DEBUG: return: %s" % status
     return status
 
 
@@ -154,7 +380,7 @@ def main():
         active_path = mig_path
     else:
         print "No such OpenID handler: %s" % openid
-        syst.exit(1)
+        sys.exit(1)
 
     try:
         os.makedirs(base_path)
@@ -167,7 +393,10 @@ def main():
         ucph_calls[name] = lambda driver, name: save_screen(
             driver, active_path % name)
 
-    for name in ('archives-ready', 'create-archive', 'view-archive'):
+    for name in ('files-ready', 'workgroups-ready', 'archives-ready',
+                 'archive-empty', 'archive-fileman', 'archive-filled',
+                 'archive-submitted', 'archive-finalized', 'archive-view',
+                 'archive-register', 'settings-ready'):
         action_calls[name] = lambda driver, name: save_screen(
             driver, active_path % name)
 
@@ -192,8 +421,19 @@ def main():
             return 1
 
         # Now proceed with actual actions to document in turn
-        print "Run user guide actions"
-        status = user_actions(driver, url, action_calls)
+
+        # TODO: add Schedule Tasks, Jupyter, ... ?
+
+        all_sections = [
+            ('Files', files_actions),
+            ('Workgroups', workgroups_actions),
+            ('Archives', archives_actions),
+            ('Settings', settings_actions)
+        ]
+        section_names = [name for (name, _) in all_sections]
+        print "Run user guide actions for: %s" % ', '.join(section_names)
+        status = user_actions(driver, url, login, passwd,
+                              all_sections, action_calls)
         print "Finished user guide actions"
 
         print "Proceed as you wish while logged in or request stop in console"
@@ -201,7 +441,7 @@ def main():
             time.sleep(1)
 
         print "Log out before exit"
-        status = shared_logout(driver, url, logout_calls)
+        status = shared_logout(driver, url, login, passwd, logout_calls)
 
         print "Now you can proceed using the browser or interrupt with Ctrl-C"
         while True:

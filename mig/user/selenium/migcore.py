@@ -36,6 +36,8 @@ mig_login(driver, url, login, passwd)
 """
 
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 
 def init_driver(browser):
@@ -56,6 +58,20 @@ def init_driver(browser):
         print "ERROR: Browser _NOT_ supported: %s" % browser
         driver = None
     return driver
+
+
+def scroll_to_elem(driver, elem):
+    """Scroll elem into view"""
+    action_chains = ActionChains(driver)
+    # NOTE: move_to_element fails if outside viewport - try this workaround
+    # action_chains.move_to_element(elem).perform()
+    elem.send_keys(Keys.ARROW_DOWN)
+
+
+def doubleclick_elem(driver, elem):
+    """Trigger a double-click on elem"""
+    action_chains = ActionChains(driver)
+    action_chains.double_click(elem).perform()
 
 
 def save_screen(driver, path):
@@ -138,7 +154,7 @@ def mig_login(driver, url, login, passwd, callbacks={}):
     return status
 
 
-def shared_logout(driver, url, callbacks={}):
+def shared_logout(driver, url, login, passwd, callbacks={}):
     """Logout through the shared logout navmenu entry and confirm. Optionally
     execute any provided callbacks for confirm states. The callbacks dictionary
     should contain state names bound to functions accepting driver and state
