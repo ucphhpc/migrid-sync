@@ -37,10 +37,11 @@ import time
 from ConfigParser import ConfigParser
 
 from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
-     POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, freeze_flavors, \
-     duplicati_protocol_choices
+    POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, freeze_flavors, \
+    duplicati_protocol_choices
 from shared.logger import Logger
 from shared.html import menu_items, vgrid_items
+
 
 def fix_missing(config_file, verbose=True):
     """Add missing configuration options - used by checkconf script"""
@@ -112,6 +113,7 @@ def fix_missing(config_file, verbose=True):
         'site_login_methods': '',
         'site_csrf_protection': '',
         'site_password_policy': '',
+        'site_password_cracklib': '',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -139,7 +141,7 @@ def fix_missing(config_file, verbose=True):
         'user_davs_address': fqdn,
         'user_davs_port': 4443,
         'user_davs_key': '~/certs/combined.pem',
-        'user_davs_key_sha256': '',        
+        'user_davs_key_sha256': '',
         'user_davs_auth': ['password'],
         'user_davs_alias': '',
         'user_davs_log': 'davs.log',
@@ -194,7 +196,7 @@ def fix_missing(config_file, verbose=True):
         'scriptlanguages': 'sh python java',
         'jobtypes': 'batch interactive bulk all',
         'lrmstypes': 'Native Native-execution-leader Batch Batch-execution-leader',
-        }
+    }
     scheduler_section = {'algorithm': 'FairFit',
                          'expire_after': '99999999999',
                          'job_retries': '4'}
@@ -202,18 +204,18 @@ def fix_missing(config_file, verbose=True):
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
     settings_section = {'language': 'English', 'submitui': ['fields',
-                        'textarea', 'files']}
+                                                            'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
-                          'skip_validation': '',
-                          'job_cond_green': 'ARCHITECTURE PLATFORM \
+                           'skip_validation': '',
+                           'job_cond_green': 'ARCHITECTURE PLATFORM \
                           RUNTIMEENVIRONMENT VERIFYFILES VGRID SANDBOX',
-                          'job_cond_yellow': 'DISK MEMORY CPUTIME',
-                          'job_cond_orange': 'CPUCOUNT NODECOUNT',
-                          'job_cond_red': 'EXECUTABLES INPUTFILES REGISTERED \
+                           'job_cond_yellow': 'DISK MEMORY CPUTIME',
+                           'job_cond_orange': 'CPUCOUNT NODECOUNT',
+                           'job_cond_red': 'EXECUTABLES INPUTFILES REGISTERED \
                           SEEN_WITHIN_X',
-                          'enable_suggest': 'False',
-                          'suggest_threshold': 'GREEN',
-                          }
+                           'enable_suggest': 'False',
+                           'suggest_threshold': 'GREEN',
+                           }
 
     defaults = {
         'GLOBAL': global_section,
@@ -221,7 +223,7 @@ def fix_missing(config_file, verbose=True):
         'MONITOR': monitor_section,
         'SETTINGS': settings_section,
         'FEASIBILITY': feasibility_section,
-        }
+    }
     for section in defaults.keys():
         if not section in config.sections():
             config.add_section(section)
@@ -232,13 +234,13 @@ def fix_missing(config_file, verbose=True):
             if not config.has_option(section, option):
                 if verbose:
                     print 'setting %s->%s to %s' % (section, option,
-                            value)
+                                                    value)
                 config.set(section, option, value)
                 modified = True
     if modified:
         backup_path = '%s.%d' % (config_file, time.time())
         print 'Backing up existing configuration to %s as update removes all comments'\
-             % backup_path
+            % backup_path
         fd = open(config_file, 'r')
         backup_fd = open(backup_path, 'w')
         backup_fd.writelines(fd.readlines())
@@ -251,7 +253,7 @@ def fix_missing(config_file, verbose=True):
 
 class Configuration:
     """Server configuration in parsed form"""
-    
+
     mig_server_id = None
     mrsl_files_dir = ''
     re_files_dir = ''
@@ -317,6 +319,7 @@ class Configuration:
     site_csrf_protection = CSRF_MEDIUM
     # Default to POLICY_MEDIUM to avoid reduce risk of dictionary attacks etc.
     site_password_policy = POLICY_MEDIUM
+    site_password_cracklib = False
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
@@ -481,11 +484,11 @@ class Configuration:
     auto_add_resource = False
 
     # ARC resource configuration (list)
-    # wired-in shorthands in arcwrapper: 
+    # wired-in shorthands in arcwrapper:
     # fyrgrid, benedict. Otherwise, ldap://bla.bla:2135/...
-    
-    arc_clusters = [] 
-    
+
+    arc_clusters = []
+
     config_file = None
 
     # constructor
@@ -563,7 +566,7 @@ location.""" % self.config_file
         # logger.debug("logger initialized")
 
         # Mandatory options first
-        
+
         try:
             self.mig_server_id = config.get('GLOBAL', 'mig_server_id')
             self.mrsl_files_dir = config.get('GLOBAL', 'mrsl_files_dir')
@@ -572,11 +575,11 @@ location.""" % self.config_file
             self.re_home = config.get('GLOBAL', 're_home')
             self.grid_stdin = config.get('GLOBAL', 'grid_stdin')
             self.im_notify_stdin = config.get('GLOBAL',
-                    'im_notify_stdin')
+                                              'im_notify_stdin')
             self.gridstat_files_dir = config.get('GLOBAL',
-                    'gridstat_files_dir')
+                                                 'gridstat_files_dir')
             self.mig_server_home = config.get('GLOBAL',
-                    'mig_server_home')
+                                              'mig_server_home')
 
             # logger.info("grid_stdin = " + self.grid_stdin)
 
@@ -584,13 +587,13 @@ location.""" % self.config_file
             self.resource_home = config.get('GLOBAL', 'resource_home')
             self.vgrid_home = config.get('GLOBAL', 'vgrid_home')
             self.vgrid_private_base = config.get('GLOBAL',
-                    'vgrid_private_base')
+                                                 'vgrid_private_base')
             self.vgrid_public_base = config.get('GLOBAL',
-                    'vgrid_public_base')
+                                                'vgrid_public_base')
             self.vgrid_files_home = config.get('GLOBAL',
-                    'vgrid_files_home')
+                                               'vgrid_files_home')
             self.resource_pending = config.get('GLOBAL',
-                    'resource_pending')
+                                               'resource_pending')
             self.user_pending = config.get('GLOBAL', 'user_pending')
             self.webserver_home = config.get('GLOBAL', 'webserver_home')
             self.user_home = config.get('GLOBAL', 'user_home')
@@ -605,22 +608,22 @@ location.""" % self.config_file
             self.jobtypes = config.get('GLOBAL', 'jobtypes').split()
             self.lrmstypes = config.get('GLOBAL', 'lrmstypes').split()
             self.sessid_to_mrsl_link_home = config.get('GLOBAL',
-                    'sessid_to_mrsl_link_home')
+                                                       'sessid_to_mrsl_link_home')
             self.mig_system_files = config.get('GLOBAL',
-                    'mig_system_files')
+                                               'mig_system_files')
             self.empty_job_name = config.get('GLOBAL', 'empty_job_name')
             self.migserver_http_url = config.get('GLOBAL',
-                    'migserver_http_url')
-            self.sleep_period_for_empty_jobs = config.get('GLOBAL',
-                    'sleep_period_for_empty_jobs')
+                                                 'migserver_http_url')
+            self.sleep_period_for_empty_jobs = config.get(
+                'GLOBAL', 'sleep_period_for_empty_jobs')
             self.min_seconds_between_live_update_requests = \
                 config.get('GLOBAL',
                            'min_seconds_between_live_update_requests')
             self.cputime_for_empty_jobs = config.get('GLOBAL',
-                    'cputime_for_empty_jobs')
+                                                     'cputime_for_empty_jobs')
             self.sleep_secs = config.get('MONITOR', 'sleep_secs')
             self.sleep_update_totals = config.get('MONITOR',
-                    'sleep_update_totals')
+                                                  'sleep_update_totals')
             self.slackperiod = config.get('MONITOR', 'slackperiod')
             self.language = config.get('SETTINGS', 'language').split()
             self.submitui = config.get('SETTINGS', 'submitui').split()
@@ -680,7 +683,8 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
-            self.mig_code_base = os.path.dirname(self.mig_server_home.rstrip(os.sep))
+            self.mig_code_base = os.path.dirname(
+                self.mig_server_home.rstrip(os.sep))
         if config.has_option('GLOBAL', 'sss_home'):
             self.sss_home = config.get('GLOBAL', 'sss_home')
         if config.has_option('GLOBAL', 'sandbox_home'):
@@ -704,14 +708,16 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'paraview_home'):
             self.paraview_home = config.get('GLOBAL', 'paraview_home')
         if config.has_option('GLOBAL', 'jupyter_mount_files_dir'):
-            self.jupyter_mount_files_dir = config.get('GLOBAL', 'jupyter_mount_files_dir')
+            self.jupyter_mount_files_dir = config.get(
+                'GLOBAL', 'jupyter_mount_files_dir')
         if config.has_option('GLOBAL', 'sessid_to_jupyter_mount_link_home'):
-            self.sessid_to_jupyter_mount_link_home = config.get('GLOBAL',
-                    'sessid_to_jupyter_mount_link_home')
+            self.sessid_to_jupyter_mount_link_home = config.get(
+                'GLOBAL', 'sessid_to_jupyter_mount_link_home')
         if config.has_option('GLOBAL', 'vms_builder_home'):
             self.vms_builder_home = config.get('GLOBAL', 'vms_builder_home')
         else:
-            self.vms_builder_home = os.path.join(self.server_home, 'vms_builder')
+            self.vms_builder_home = os.path.join(
+                self.server_home, 'vms_builder')
 
         if config.has_option('GLOBAL', 'rate_limit_db'):
             self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
@@ -720,7 +726,7 @@ location.""" % self.config_file
                                               'daemon-rate-limit.db')
 
         # Component settings
-        
+
         if config.has_option('SITE', 'enable_jobs'):
             self.site_enable_jobs = config.getboolean('SITE', 'enable_jobs')
         else:
@@ -728,7 +734,8 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_monitor_log'):
             self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
         if config.has_option('SITE', 'enable_events'):
-            self.site_enable_events = config.getboolean('SITE', 'enable_events')
+            self.site_enable_events = config.getboolean(
+                'SITE', 'enable_events')
         else:
             self.site_enable_events = True
         if config.has_option('GLOBAL', 'user_events_log'):
@@ -743,14 +750,14 @@ location.""" % self.config_file
         else:
             self.site_enable_sftp_subsys = False
         if config.has_option('GLOBAL', 'user_sftp_address'):
-            self.user_sftp_address = config.get('GLOBAL', 
+            self.user_sftp_address = config.get('GLOBAL',
                                                 'user_sftp_address')
         if config.has_option('GLOBAL', 'user_sftp_port'):
-            self.user_sftp_port = config.getint('GLOBAL', 
+            self.user_sftp_port = config.getint('GLOBAL',
                                                 'user_sftp_port')
         if config.has_option('GLOBAL', 'user_sftp_show_address'):
-            self.user_sftp_show_address = config.get('GLOBAL', 
-                                                'user_sftp_show_address')
+            self.user_sftp_show_address = config.get('GLOBAL',
+                                                     'user_sftp_show_address')
         elif self.site_enable_sftp_subsys and self.user_sftp_subsys_address:
             self.user_sftp_show_address = self.user_sftp_subsys_address
         elif self.site_enable_sftp and self.user_sftp_address:
@@ -759,18 +766,18 @@ location.""" % self.config_file
             # address may be empty to use all interfaces - then use FQDN
             self.user_sftp_show_address = self.server_fqdn
         if config.has_option('GLOBAL', 'user_sftp_show_port'):
-            self.user_sftp_show_port = config.getint('GLOBAL', 
-                                                'user_sftp_show_port')
+            self.user_sftp_show_port = config.getint('GLOBAL',
+                                                     'user_sftp_show_port')
         elif self.site_enable_sftp_subsys and self.user_sftp_subsys_port:
             self.user_sftp_show_port = self.user_sftp_subsys_port
         elif self.site_enable_sftp and self.user_sftp_port:
             self.user_sftp_show_port = self.user_sftp_port
         if config.has_option('GLOBAL', 'user_sftp_key'):
-            self.user_sftp_key = config.get('GLOBAL', 
+            self.user_sftp_key = config.get('GLOBAL',
                                             'user_sftp_key')
         if config.has_option('GLOBAL', 'user_sftp_key_pub'):
-            self.user_sftp_key_pub = config.get('GLOBAL', 
-                                            'user_sftp_key_pub')
+            self.user_sftp_key_pub = config.get('GLOBAL',
+                                                'user_sftp_key_pub')
         if config.has_option('GLOBAL', 'user_sftp_key_md5'):
             fingerprint = config.get('GLOBAL', 'user_sftp_key_md5')
             self.user_sftp_key_md5 = fingerprint
@@ -778,10 +785,10 @@ location.""" % self.config_file
             fingerprint = config.get('GLOBAL', 'user_sftp_key_sha256')
             self.user_sftp_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_sftp_auth'):
-            self.user_sftp_auth = config.get('GLOBAL', 
+            self.user_sftp_auth = config.get('GLOBAL',
                                              'user_sftp_auth').split()
         if config.has_option('GLOBAL', 'user_sftp_alias'):
-            self.user_sftp_alias = config.get('GLOBAL', 
+            self.user_sftp_alias = config.get('GLOBAL',
                                               'user_sftp_alias')
         if config.has_option('GLOBAL', 'user_sftp_log'):
             self.user_sftp_log = config.get('GLOBAL', 'user_sftp_log')
@@ -816,35 +823,35 @@ location.""" % self.config_file
         else:
             self.site_enable_davs = False
         if config.has_option('GLOBAL', 'user_davs_address'):
-            self.user_davs_address = config.get('GLOBAL', 
+            self.user_davs_address = config.get('GLOBAL',
                                                 'user_davs_address')
         if config.has_option('GLOBAL', 'user_davs_port'):
-            self.user_davs_port = config.getint('GLOBAL', 
+            self.user_davs_port = config.getint('GLOBAL',
                                                 'user_davs_port')
         if config.has_option('GLOBAL', 'user_davs_show_address'):
-            self.user_davs_show_address = config.get('GLOBAL', 
-                                                'user_davs_show_address')
+            self.user_davs_show_address = config.get('GLOBAL',
+                                                     'user_davs_show_address')
         elif self.user_davs_address:
             self.user_davs_show_address = self.user_davs_address
         else:
             # address may be empty to use all interfaces - then use FQDN
             self.user_davs_show_address = self.server_fqdn
         if config.has_option('GLOBAL', 'user_davs_show_port'):
-            self.user_davs_show_port = config.getint('GLOBAL', 
-                                                'user_davs_show_port')
+            self.user_davs_show_port = config.getint('GLOBAL',
+                                                     'user_davs_show_port')
         else:
             self.user_davs_show_port = self.user_davs_port
         if config.has_option('GLOBAL', 'user_davs_key'):
-            self.user_davs_key = config.get('GLOBAL', 
+            self.user_davs_key = config.get('GLOBAL',
                                             'user_davs_key')
         if config.has_option('GLOBAL', 'user_davs_key_sha256'):
             fingerprint = config.get('GLOBAL', 'user_davs_key_sha256')
             self.user_davs_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_davs_auth'):
-            self.user_davs_auth = config.get('GLOBAL', 
+            self.user_davs_auth = config.get('GLOBAL',
                                              'user_davs_auth').split()
         if config.has_option('GLOBAL', 'user_davs_alias'):
-            self.user_davs_alias = config.get('GLOBAL', 
+            self.user_davs_alias = config.get('GLOBAL',
                                               'user_davs_alias')
         if config.has_option('GLOBAL', 'user_davs_log'):
             self.user_davs_log = config.get('GLOBAL', 'user_davs_log')
@@ -853,68 +860,70 @@ location.""" % self.config_file
         else:
             self.site_enable_ftps = False
         if config.has_option('GLOBAL', 'user_ftps_address'):
-            self.user_ftps_address = config.get('GLOBAL', 
+            self.user_ftps_address = config.get('GLOBAL',
                                                 'user_ftps_address')
         if config.has_option('GLOBAL', 'user_ftps_ctrl_port'):
-            self.user_ftps_ctrl_port = config.getint('GLOBAL', 
+            self.user_ftps_ctrl_port = config.getint('GLOBAL',
                                                      'user_ftps_ctrl_port')
         if config.has_option('GLOBAL', 'user_ftps_pasv_ports'):
             text_range = config.get('GLOBAL', 'user_ftps_pasv_ports')
             first, last = text_range.split(':')[:2]
             self.user_ftps_pasv_ports = range(int(first), int(last))
         if config.has_option('GLOBAL', 'user_ftps_show_address'):
-            self.user_ftps_show_address = config.get('GLOBAL', 
-                                                'user_ftps_show_address')
+            self.user_ftps_show_address = config.get('GLOBAL',
+                                                     'user_ftps_show_address')
         elif self.user_ftps_address:
             self.user_ftps_show_address = self.user_ftps_address
         else:
             # address may be empty to use all interfaces - then use FQDN
             self.user_ftps_show_address = self.server_fqdn
         if config.has_option('GLOBAL', 'user_ftps_show_ctrl_port'):
-            self.user_ftps_show_ctrl_port = config.getint('GLOBAL', 
-                                                'user_ftps_show_ctrl_port')
+            self.user_ftps_show_ctrl_port = config.getint(
+                'GLOBAL', 'user_ftps_show_ctrl_port')
         else:
             self.user_ftps_show_ctrl_port = self.user_ftps_ctrl_port
         if config.has_option('GLOBAL', 'user_ftps_key'):
-            self.user_ftps_key = config.get('GLOBAL', 
+            self.user_ftps_key = config.get('GLOBAL',
                                             'user_ftps_key')
         if config.has_option('GLOBAL', 'user_ftps_key_sha256'):
             fingerprint = config.get('GLOBAL', 'user_ftps_key_sha256')
             self.user_ftps_key_sha256 = fingerprint
         if config.has_option('GLOBAL', 'user_ftps_auth'):
-            self.user_ftps_auth = config.get('GLOBAL', 
+            self.user_ftps_auth = config.get('GLOBAL',
                                              'user_ftps_auth').split()
         if config.has_option('GLOBAL', 'user_ftps_alias'):
-            self.user_ftps_alias = config.get('GLOBAL', 
+            self.user_ftps_alias = config.get('GLOBAL',
                                               'user_ftps_alias')
         if config.has_option('GLOBAL', 'user_ftps_log'):
             self.user_ftps_log = config.get('GLOBAL', 'user_ftps_log')
         if config.has_option('SITE', 'enable_seafile'):
-            self.site_enable_seafile = config.getboolean('SITE', 'enable_seafile')
+            self.site_enable_seafile = config.getboolean(
+                'SITE', 'enable_seafile')
         else:
             self.site_enable_seafile = False
         if config.has_option('GLOBAL', 'user_seahub_url'):
-            self.user_seahub_url = config.get('GLOBAL', 
-                                               'user_seahub_url')
+            self.user_seahub_url = config.get('GLOBAL',
+                                              'user_seahub_url')
         else:
             # Default to /seafile on same https base address
             self.user_seahub_url = '/seafile'
         self.user_seareg_url = os.path.join(self.user_seahub_url, 'accounts',
                                             'register', '')
         if config.has_option('GLOBAL', 'user_seafile_url'):
-            self.user_seafile_url = config.get('GLOBAL', 
+            self.user_seafile_url = config.get('GLOBAL',
                                                'user_seafile_url')
         else:
             self.user_seafile_url = os.path.join(self.migserver_https_sid_url,
                                                  'seafile')
         if config.has_option('GLOBAL', 'user_seafile_auth'):
-            self.user_seafile_auth = config.get('GLOBAL', 
+            self.user_seafile_auth = config.get('GLOBAL',
                                                 'user_seafile_auth').split()
         if config.has_option('GLOBAL', 'user_seafile_alias'):
-            self.user_seafile_alias = config.get('GLOBAL', 
+            self.user_seafile_alias = config.get('GLOBAL',
                                                  'user_seafile_alias')
         if config.has_option('SITE', 'enable_duplicati'):
-            self.site_enable_duplicati = config.getboolean('SITE', 'enable_duplicati')
+            self.site_enable_duplicati = config.getboolean(
+                'SITE', 'enable_duplicati')
         else:
             self.site_enable_duplicati = False
         if config.has_option('GLOBAL', 'user_duplicati_protocols'):
@@ -923,29 +932,31 @@ location.""" % self.config_file
             valid_protos = [i for i in protos if i in allowed_protos]
             self.user_duplicati_protocols = valid_protos
         if config.has_option('SITE', 'enable_crontab'):
-            self.site_enable_crontab = config.getboolean('SITE', 'enable_crontab')
+            self.site_enable_crontab = config.getboolean(
+                'SITE', 'enable_crontab')
         else:
             self.site_enable_crontab = False
         if config.has_option('GLOBAL', 'user_cron_log'):
             self.user_cron_log = config.get('GLOBAL', 'user_cron_log')
         if config.has_option('SITE', 'enable_imnotify'):
-            self.site_enable_imnotify = config.getboolean('SITE', 'enable_imnotify')
+            self.site_enable_imnotify = config.getboolean(
+                'SITE', 'enable_imnotify')
         else:
             self.site_enable_imnotify = False
         if config.has_option('GLOBAL', 'user_imnotify_address'):
-            self.user_imnotify_address = config.get('GLOBAL', 
+            self.user_imnotify_address = config.get('GLOBAL',
                                                     'user_imnotify_address')
         if config.has_option('GLOBAL', 'user_imnotify_port'):
-            self.user_imnotify_port = config.getint('GLOBAL', 
+            self.user_imnotify_port = config.getint('GLOBAL',
                                                     'user_imnotify_port')
         if config.has_option('GLOBAL', 'user_imnotify_channel'):
-            self.user_imnotify_channel = config.get('GLOBAL', 
+            self.user_imnotify_channel = config.get('GLOBAL',
                                                     'user_imnotify_channel')
         if config.has_option('GLOBAL', 'user_imnotify_username'):
-            self.user_imnotify_username = config.get('GLOBAL', 
+            self.user_imnotify_username = config.get('GLOBAL',
                                                      'user_imnotify_username')
         if config.has_option('GLOBAL', 'user_imnotify_password'):
-            self.user_imnotify_password = config.get('GLOBAL', 
+            self.user_imnotify_password = config.get('GLOBAL',
                                                      'user_imnotify_password')
         if config.has_option('GLOBAL', 'user_imnotify_log'):
             self.user_imnotify_log = config.get('GLOBAL', 'user_imnotify_log')
@@ -953,80 +964,83 @@ location.""" % self.config_file
             self.user_chkuserroot_log = config.get('GLOBAL',
                                                    'user_chkuserroot_log')
         if config.has_option('GLOBAL', 'user_chksidroot_log'):
-            self.user_chksidroot_log = config.get('GLOBAL', 'user_chksidroot_log')
+            self.user_chksidroot_log = config.get(
+                'GLOBAL', 'user_chksidroot_log')
         if config.has_option('SITE', 'enable_openid'):
-            self.site_enable_openid = config.getboolean('SITE', 'enable_openid')
+            self.site_enable_openid = config.getboolean(
+                'SITE', 'enable_openid')
         else:
             self.site_enable_openid = False
         if config.has_option('GLOBAL', 'user_openid_address'):
-            self.user_openid_address = config.get('GLOBAL', 
-                                                 'user_openid_address')
+            self.user_openid_address = config.get('GLOBAL',
+                                                  'user_openid_address')
         if config.has_option('GLOBAL', 'user_openid_port'):
-            self.user_openid_port = config.getint('GLOBAL', 
-                                                 'user_openid_port')
+            self.user_openid_port = config.getint('GLOBAL',
+                                                  'user_openid_port')
         if config.has_option('GLOBAL', 'user_openid_show_address'):
-            self.user_openid_show_address = config.get('GLOBAL', 
-                                                'user_openid_show_address')
+            self.user_openid_show_address = config.get(
+                'GLOBAL', 'user_openid_show_address')
         elif self.user_openid_address:
             self.user_openid_show_address = self.user_openid_address
         else:
             # address may be empty to use all interfaces - then use FQDN
             self.user_openid_show_address = self.server_fqdn
         if config.has_option('GLOBAL', 'user_openid_show_port'):
-            self.user_openid_show_port = config.getint('GLOBAL', 
-                                                'user_openid_show_port')
+            self.user_openid_show_port = config.getint('GLOBAL',
+                                                       'user_openid_show_port')
         else:
             self.user_openid_show_port = self.user_openid_port
         if config.has_option('GLOBAL', 'user_openid_key'):
-            self.user_openid_key = config.get('GLOBAL', 
-                                                 'user_openid_key')
+            self.user_openid_key = config.get('GLOBAL',
+                                              'user_openid_key')
         if config.has_option('GLOBAL', 'user_openid_auth'):
-            self.user_openid_auth = config.get('GLOBAL', 
-                                                 'user_openid_auth').split()
+            self.user_openid_auth = config.get('GLOBAL',
+                                               'user_openid_auth').split()
         if config.has_option('GLOBAL', 'user_openid_alias'):
-            self.user_openid_alias = config.get('GLOBAL', 
-                                                 'user_openid_alias')
+            self.user_openid_alias = config.get('GLOBAL',
+                                                'user_openid_alias')
         if config.has_option('GLOBAL', 'user_openid_log'):
             self.user_openid_log = config.get('GLOBAL', 'user_openid_log')
         if config.has_option('GLOBAL', 'user_mig_oid_title'):
-            self.user_mig_oid_title = config.get('GLOBAL', 
+            self.user_mig_oid_title = config.get('GLOBAL',
                                                  'user_mig_oid_title')
         else:
             self.user_mig_oid_title = self.short_title
         if config.has_option('GLOBAL', 'user_mig_oid_provider'):
-            self.user_mig_oid_provider = config.get('GLOBAL', 
+            self.user_mig_oid_provider = config.get('GLOBAL',
                                                     'user_mig_oid_provider')
         if config.has_option('GLOBAL', 'user_mig_oid_provider_alias'):
             self.user_mig_oid_provider_alias = config.get(
                 'GLOBAL', 'user_mig_oid_provider_alias')
         if config.has_option('GLOBAL', 'user_ext_oid_title'):
-            self.user_ext_oid_title = config.get('GLOBAL', 
+            self.user_ext_oid_title = config.get('GLOBAL',
                                                  'user_ext_oid_title')
         else:
-            self.user_ext_oid_title = 'External'            
+            self.user_ext_oid_title = 'External'
         if config.has_option('GLOBAL', 'user_ext_oid_provider'):
-            self.user_ext_oid_provider = config.get('GLOBAL', 
+            self.user_ext_oid_provider = config.get('GLOBAL',
                                                     'user_ext_oid_provider')
         if config.has_option('GLOBAL', 'user_openid_providers'):
-            self.user_openid_providers = config.get('GLOBAL', 
-                                                   'user_openid_providers').split()
+            self.user_openid_providers = config.get('GLOBAL',
+                                                    'user_openid_providers').split()
         else:
             providers = [i for i in [self.user_mig_oid_provider,
                                      self.user_mig_oid_provider_alias,
                                      self.user_ext_oid_provider] if i]
             self.user_openid_providers = providers
         if config.has_option('GLOBAL', 'user_mig_cert_title'):
-            self.user_mig_cert_title = config.get('GLOBAL', 
-                                                 'user_mig_cert_title')
+            self.user_mig_cert_title = config.get('GLOBAL',
+                                                  'user_mig_cert_title')
         else:
             self.user_mig_cert_title = self.short_title
         if config.has_option('GLOBAL', 'user_ext_cert_title'):
-            self.user_ext_cert_title = config.get('GLOBAL', 
-                                                 'user_ext_cert_title')
+            self.user_ext_cert_title = config.get('GLOBAL',
+                                                  'user_ext_cert_title')
         else:
-            self.user_ext_cert_title = 'External'            
+            self.user_ext_cert_title = 'External'
         if config.has_option('SITE', 'enable_sshmux'):
-            self.site_enable_sshmux = config.getboolean('SITE', 'enable_sshmux')
+            self.site_enable_sshmux = config.getboolean(
+                'SITE', 'enable_sshmux')
         else:
             self.site_enable_sshmux = True
         if config.has_option('GLOBAL', 'user_sshmux_log'):
@@ -1037,7 +1051,7 @@ location.""" % self.config_file
         else:
             self.site_enable_vmachines = False
         if config.has_option('GLOBAL', 'user_vmproxy_key'):
-            self.user_vmproxy_key = config.get('GLOBAL', 
+            self.user_vmproxy_key = config.get('GLOBAL',
                                                'user_vmproxy_key')
         if config.has_option('GLOBAL', 'user_vmproxy_log'):
             self.user_vmproxy_log = config.get('GLOBAL', 'user_vmproxy_log')
@@ -1057,7 +1071,7 @@ location.""" % self.config_file
             self.job_vnc_ports = range(int(first), int(last))
 
         if config.has_option('GLOBAL', 'user_shared_dhparams'):
-            self.user_shared_dhparams = config.get('GLOBAL', 
+            self.user_shared_dhparams = config.get('GLOBAL',
                                                    'user_shared_dhparams')
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
@@ -1074,22 +1088,25 @@ location.""" % self.config_file
             self.smtp_reply_to = 'Do NOT reply <no-reply@%s>' % \
                                  self.server_fqdn
         if config.has_option('GLOBAL', 'notify_protocols'):
-            self.notify_protocols = config.get('GLOBAL', 'notify_protocols').split()
+            self.notify_protocols = config.get(
+                'GLOBAL', 'notify_protocols').split()
         else:
             self.notify_protocols = []
         if config.has_option('GLOBAL', 'storage_protocols'):
-            self.storage_protocols = config.get('GLOBAL', 'storage_protocols').split()
+            self.storage_protocols = config.get(
+                'GLOBAL', 'storage_protocols').split()
         if config.has_option('SITE', 'enable_jupyter'):
-            self.site_enable_jupyter = config.getboolean('SITE', 'enable_jupyter')
+            self.site_enable_jupyter = config.getboolean(
+                'SITE', 'enable_jupyter')
         else:
             self.site_enable_jupyter = False
         if config.has_option('GLOBAL', 'jupyter_url'):
             self.jupyter_url = config.get('GLOBAL', 'jupyter_url')
-            
+
         if config.has_option('GLOBAL', 'jupyter_base_url'):
             self.jupyter_base_url = config.get('GLOBAL', 'jupyter_base_url')
 
-        if config.has_option('GLOBAL', 'vgrid_owners'): 
+        if config.has_option('GLOBAL', 'vgrid_owners'):
             self.vgrid_owners = config.get('GLOBAL', 'vgrid_owners')
         if config.has_option('GLOBAL', 'vgrid_members'):
             self.vgrid_members = config.get('GLOBAL', 'vgrid_members')
@@ -1102,15 +1119,18 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'vgrid_sharelinks'):
             self.vgrid_sharelinks = config.get('GLOBAL', 'vgrid_sharelinks')
         if config.has_option('GLOBAL', 'vgrid_imagesettings'):
-            self.vgrid_imagesettings = config.get('GLOBAL', 'vgrid_imagesettings')
+            self.vgrid_imagesettings = config.get(
+                'GLOBAL', 'vgrid_imagesettings')
         if config.has_option('GLOBAL', 'vgrid_monitor'):
             self.vgrid_monitor = config.get('GLOBAL', 'vgrid_monitor')
 
         # Needed for read-only vgrids, but optional
-        if config.has_option('GLOBAL', 'vgrid_files_readonly'): 
-            self.vgrid_files_readonly = config.get('GLOBAL', 'vgrid_files_readonly')
-        if config.has_option('GLOBAL', 'vgrid_files_writable'): 
-            self.vgrid_files_writable = config.get('GLOBAL', 'vgrid_files_writable')
+        if config.has_option('GLOBAL', 'vgrid_files_readonly'):
+            self.vgrid_files_readonly = config.get(
+                'GLOBAL', 'vgrid_files_readonly')
+        if config.has_option('GLOBAL', 'vgrid_files_writable'):
+            self.vgrid_files_writable = config.get(
+                'GLOBAL', 'vgrid_files_writable')
 
         # vm_agent_port is just an alias for vm_proxy_port
 
@@ -1124,7 +1144,7 @@ location.""" % self.config_file
             self.sched_alg = 'FirstFit'
         if config.has_option('SCHEDULER', 'expire_after'):
             self.expire_after = config.getint('SCHEDULER',
-                    'expire_after')
+                                              'expire_after')
 
         if config.has_option('SCHEDULER', 'job_retries'):
             self.job_retries = config.getint('SCHEDULER', 'job_retries')
@@ -1139,20 +1159,20 @@ location.""" % self.config_file
             self.enable_suggest = config.getboolean('FEASIBILITY',
                                                     'enable_suggest')
         if config.has_option('FEASIBILITY', 'suggest_threshold'):
-            self.suggest_threshold = config.get('FEASIBILITY', 
+            self.suggest_threshold = config.get('FEASIBILITY',
                                                 'suggest_threshold')
         if config.has_option('FEASIBILITY', 'job_cond_green'):
-            self.job_cond_green = config.get('FEASIBILITY', 
-                                                   'job_cond_green').split()
+            self.job_cond_green = config.get('FEASIBILITY',
+                                             'job_cond_green').split()
         if config.has_option('FEASIBILITY', 'job_cond_yellow'):
-            self.job_cond_yellow = config.get('FEASIBILITY', 
-                                                   'job_cond_yellow').split()
+            self.job_cond_yellow = config.get('FEASIBILITY',
+                                              'job_cond_yellow').split()
         if config.has_option('FEASIBILITY', 'job_cond_orange'):
-            self.job_cond_orange = config.get('FEASIBILITY', 
-                                                   'job_cond_orange').split()
+            self.job_cond_orange = config.get('FEASIBILITY',
+                                              'job_cond_orange').split()
         if config.has_option('FEASIBILITY', 'job_cond_red'):
-            self.job_cond_red = config.get('FEASIBILITY', 
-                                                   'job_cond_red').split()
+            self.job_cond_red = config.get('FEASIBILITY',
+                                           'job_cond_red').split()
         if config.has_option('SCM', 'hg_path'):
             self.hg_path = config.get('SCM', 'hg_path')
         else:
@@ -1178,7 +1198,8 @@ location.""" % self.config_file
         else:
             self.trac_id_field = 'email'
         if config.has_option('RESOURCES', 'default_mount_re'):
-            self.res_default_mount_re = config.get('RESOURCES', 'default_mount_re')
+            self.res_default_mount_re = config.get(
+                'RESOURCES', 'default_mount_re')
         else:
             self.res_default_mount_re = 'SSHFS-2.X-1'
         if config.has_option('VMACHINES', 'default_os'):
@@ -1329,7 +1350,7 @@ location.""" % self.config_file
                                                   'signup_methods').split()
         if config.has_option('SITE', 'login_methods'):
             self.site_login_methods = config.get('SITE',
-                                                  'login_methods').split()
+                                                 'login_methods').split()
         else:
             self.site_login_methods = self.site_signup_methods
         if config.has_option('SITE', 'signup_hint'):
@@ -1348,6 +1369,11 @@ location.""" % self.config_file
                 self.site_password_policy = password_policy
         else:
             self.site_password_policy = POLICY_NONE
+        if config.has_option('SITE', 'password_cracklib'):
+            self.site_password_cracklib = config.getboolean(
+                'SITE', 'password_cracklib')
+        else:
+            self.site_password_cracklib = False
         if config.has_option('SITE', 'script_deps'):
             self.site_script_deps = config.get('SITE', 'script_deps').split()
         else:
@@ -1361,15 +1387,18 @@ location.""" % self.config_file
         else:
             self.site_enable_wsgi = False
         if config.has_option('SITE', 'enable_griddk'):
-            self.site_enable_griddk = config.getboolean('SITE', 'enable_griddk')
+            self.site_enable_griddk = config.getboolean(
+                'SITE', 'enable_griddk')
         else:
             self.site_enable_griddk = False
         if config.has_option('SITE', 'enable_sandboxes'):
-            self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
+            self.site_enable_sandboxes = config.getboolean(
+                'SITE', 'enable_sandboxes')
         else:
             self.site_enable_sandboxes = False
         if config.has_option('SITE', 'enable_freeze'):
-            self.site_enable_freeze = config.getboolean('SITE', 'enable_freeze')
+            self.site_enable_freeze = config.getboolean(
+                'SITE', 'enable_freeze')
         else:
             self.site_enable_freeze = False
         if config.has_option('SITE', 'permanent_freeze'):
@@ -1404,16 +1433,18 @@ location.""" % self.config_file
         else:
             self.site_freeze_doi_text = ''
         if config.has_option('SITE', 'enable_preview'):
-            self.site_enable_preview = config.getboolean('SITE', 'enable_preview')
+            self.site_enable_preview = config.getboolean(
+                'SITE', 'enable_preview')
         else:
             self.site_enable_preview = False
         if config.has_option('SITE', 'enable_sharelinks'):
             self.site_enable_sharelinks = config.getboolean('SITE',
-                                                           'enable_sharelinks')
+                                                            'enable_sharelinks')
         else:
             self.site_enable_sharelinks = False
         if config.has_option('SITE', 'sharelink_length'):
-            self.site_sharelink_length = config.getint('SITE', 'sharelink_length')
+            self.site_sharelink_length = config.getint(
+                'SITE', 'sharelink_length')
         else:
             self.site_sharelink_length = 10
         if config.has_option('SITE', 'enable_transfers'):
@@ -1422,7 +1453,8 @@ location.""" % self.config_file
         else:
             self.site_enable_transfers = False
         if config.has_option('GLOBAL', 'user_transfers_log'):
-            self.user_transfers_log = config.get('GLOBAL', 'user_transfers_log')
+            self.user_transfers_log = config.get(
+                'GLOBAL', 'user_transfers_log')
         if config.has_option('SITE', 'enable_gdp'):
             self.site_enable_gdp = config.getboolean('SITE', 'enable_gdp')
         else:
@@ -1451,7 +1483,7 @@ location.""" % self.config_file
             # Salt must be upper case hex
             salt = config.get('SITE', 'digest_salt').upper()
             try:
-                _ = base64.b16decode(salt)                
+                _ = base64.b16decode(salt)
                 self.site_digest_salt = salt
             except:
                 raise ValueError("Invalid digest_salt value: %s" % salt)
@@ -1463,7 +1495,7 @@ location.""" % self.config_file
             # Salt must be upper case hex
             salt = config.get('SITE', 'password_salt').upper()
             try:
-                _ = base64.b16decode(salt)                
+                _ = base64.b16decode(salt)
                 self.site_password_salt = salt
             except:
                 raise ValueError("Invalid password_salt value: %s" % salt)
@@ -1530,7 +1562,7 @@ location.""" % self.config_file
 
         if config.has_option('SITE', 'myfiles_py_location'):
             self.myfiles_py_location = config.get('GLOBAL',
-                    'myfiles_py_location')
+                                                  'myfiles_py_location')
         else:
             web_bin = 'cgi-bin'
             if self.site_enable_wsgi:
@@ -1551,16 +1583,16 @@ location.""" % self.config_file
             locations = []
             for i in self.site_login_methods:
                 if i == 'migcert' and mig_cert_url and \
-                       not mig_cert_url in locations:
+                        not mig_cert_url in locations:
                     locations.append(mig_cert_url)
                 elif i == 'extcert' and ext_cert_url and \
-                         not ext_cert_url in locations:
+                        not ext_cert_url in locations:
                     locations.append(ext_cert_url)
                 elif i == 'migoid' and mig_oid_url and \
-                         not mig_oid_url in locations:
+                        not mig_oid_url in locations:
                     locations.append(mig_oid_url)
                 elif i == 'extoid' and ext_oid_url and \
-                         not ext_oid_url in locations:
+                        not ext_oid_url in locations:
                     locations.append(ext_oid_url)
             self.myfiles_py_location = ' '.join(locations)
 
@@ -1569,7 +1601,7 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'enable_server_dist'):
             try:
                 self.enable_server_dist = config.getboolean('GLOBAL',
-                        'enable_server_dist')
+                                                            'enable_server_dist')
             except:
                 logger.error('enable_server_dist: expected True or False!'
                              )
@@ -1585,11 +1617,11 @@ location.""" % self.config_file
 
             if config.has_option('GLOBAL', 'migrate_limit'):
                 self.migrate_limit = config.get('GLOBAL',
-                        'migrate_limit')
+                                                'migrate_limit')
 
             if config.has_option('GLOBAL', 'expire_peer'):
                 self.expire_peer = config.getint('GLOBAL', 'expire_peer'
-                        )
+                                                 )
 
             # configure certs and keys
 
@@ -1599,7 +1631,7 @@ location.""" % self.config_file
                 self.server_key = config.get('GLOBAL', 'server_key')
             if config.has_option('GLOBAL', 'passphrase_file'):
                 self.passphrase_file = config.get('GLOBAL',
-                        'passphrase_file')
+                                                  'passphrase_file')
             ca_path = ''
             if config.has_option('GLOBAL', 'ca_path'):
                 ca_path = config.get('GLOBAL', 'ca_path')
@@ -1622,8 +1654,8 @@ location.""" % self.config_file
             _log_path = getattr(self, _log_var)
             if not os.path.isabs(_log_path):
                 setattr(self, _log_var, os.path.join(self.log_dir, _log_path))
-            
-        # cert and key for generating a default proxy for nordugrid/ARC resources 
+
+        # cert and key for generating a default proxy for nordugrid/ARC resources
 
         if config.has_option('GLOBAL', 'nordugrid_cert'):
             self.nordugrid_cert = config.get('GLOBAL', 'nordugrid_cert')
@@ -1632,30 +1664,29 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'nordugrid_proxy'):
             self.nordugrid_proxy = config.get('GLOBAL', 'nordugrid_proxy')
 
-
         # if usage record dir is configured, generate them:
 
         if config.has_option('GLOBAL', 'usage_record_dir'):
             self.usage_record_dir = config.get('GLOBAL',
-                    'usage_record_dir')
+                                               'usage_record_dir')
 
         # Automatic creation of users with a valid certificate
 
         if config.has_option('GLOBAL', 'auto_add_cert_user'):
             self.auto_add_cert_user = config.getboolean('GLOBAL',
-                    'auto_add_cert_user')
+                                                        'auto_add_cert_user')
         if config.has_option('GLOBAL', 'auto_add_oid_user'):
             self.auto_add_oid_user = config.getboolean('GLOBAL',
-                    'auto_add_oid_user')
+                                                       'auto_add_oid_user')
         if config.has_option('GLOBAL', 'auto_add_resource'):
             self.auto_add_resource = config.getboolean('GLOBAL',
-                    'auto_add_resource')
+                                                       'auto_add_resource')
 
         # if arc cluster URLs configured, read them in:
 
         if config.has_option('ARC', 'arc_clusters'):
             self.arc_clusters = config.get('ARC',
-                    'arc_clusters').split()
+                                           'arc_clusters').split()
 
     def parse_peers(self, peerfile):
 
@@ -1677,7 +1708,7 @@ location.""" % self.config_file
                     'port': '443',
                     'migrate_cost': '1.0',
                     'rel_path': 'status',
-                    }
+                }
                 for (key, val) in peer_conf.items(section):
                     peer[key] = val
 
@@ -1699,4 +1730,4 @@ location.""" % self.config_file
 if '__main__' == __name__:
     conf = \
         Configuration(os.path.expanduser('~/mig/server/MiGserver.conf'
-                      ), True)
+                                         ), True)

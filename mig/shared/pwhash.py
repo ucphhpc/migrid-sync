@@ -53,6 +53,12 @@ from string import lowercase, uppercase, digits
 # From https://github.com/mitsuhiko/python-pbkdf2
 from pbkdf2 import pbkdf2_bin
 
+try:
+    import cracklib
+except ImportError:
+    # Optional cracklib not available - fail gracefully and check before use
+    cracklib = None
+
 from shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
     POLICY_HIGH
 
@@ -326,6 +332,16 @@ def assure_password_strength(configuration, password):
                   (policy_fail_msg, min_classes)
         logger.warning(err_msg)
         raise ValueError(err_msg)
+    if configuration.site_password_cracklib:
+        if cracklib:
+            # NOTE: min_len does not exactly match cracklib.MIN_LENGTH meaning
+            #       but we just make sure cracklib does not directly increase
+            #       policy requirements.
+            cracklib.MIN_LENGTH = min_len + min_classes
+            # NOTE: this raises ValueError if password is too simple
+            cracklib.VeryFascistCheck(password)
+        else:
+            logger.warning('cracklib requested in conf but not available')
     logger.debug('password compliant with site password policy (%s)' %
                  site_policy)
     return True
