@@ -49,7 +49,7 @@ try:
     from cherrypy import wsgiserver
     from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter, ssl
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
-         FilesystemProvider
+        FilesystemProvider
     from wsgidav.domain_controller import WsgiDAVDomainController
     from wsgidav.http_authenticator import HTTPAuthenticator
     from wsgidav.dav_error import DAVError, HTTP_FORBIDDEN
@@ -58,20 +58,20 @@ except ImportError, ierr:
     print "You may need to install cherrypy if your wsgidav does not bundle it"
     sys.exit(1)
 
-                        
+
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
-     refresh_user_creds, refresh_share_creds, update_login_map, \
-     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-     penalize_rate_limit, add_user_object
+    refresh_user_creds, refresh_share_creds, update_login_map, \
+    login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+    penalize_rate_limit, add_user_object
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
-     check_password_digest, generate_password_digest
+    check_password_digest, generate_password_digest
 from shared.validstring import possible_user_id, possible_sharelink_id
 from shared.vgrid import vgrid_restrict_write_support
 
@@ -81,16 +81,18 @@ configuration, logger = None, None
 # TODO: can we enforce connection reuse?
 #       dav clients currently hammer the login functions for every operation
 
+
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
     logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
     logger.info("reopened log after hangup signal")
-    
+
+
 def _handle_allowed(request, abs_path):
     """Helper to make sure ordinary handle of a COPY, MOVE or DELETE
     request is allowed on abs_path.
-        
+
     As noted in dav_handler.py doc strings raising a DAVError here prevents all
     further handling of the request with an error to the client.
 
@@ -107,6 +109,7 @@ def _handle_allowed(request, abs_path):
         logger.warning("refused %s read-only path: %s" % (request, abs_path))
         raise DAVError(HTTP_FORBIDDEN)
 
+
 def _username_from_env(environ):
     """Extract authenticated user credentials from environ dicionary"""
     username = environ.get("http_authenticator.username", None)
@@ -114,13 +117,16 @@ def _username_from_env(environ):
         raise Exception("No authenticated username!")
     return username
 
+
 def _get_addr(environ):
     """Extract client address from environ dict"""
     return environ['REMOTE_ADDR']
 
+
 def _get_digest(environ):
     """Extract client digest response from environ dict"""
     return environ.get('RESPONSE', 'UNKNOWN')
+
 
 def _find_authenticator(application):
     """Find and return handle to HTTPAuthenticator in application stack.
@@ -179,7 +185,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 clean_sock.close()
             except Exception, exc:
                 pass
-        
+
     def wrap(self, sock):
         """Wrap and return the given socket, plus WSGI environ entries.
         Note the previously initialized SSL context is tuned to pass hardened
@@ -190,12 +196,12 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         _socket_list = [sock]
         try:
             logger.debug("Wrapping socket in SSL/TLS")
-            logger.info("SSL/TLS session stats: %s" % \
+            logger.info("SSL/TLS session stats: %s" %
                         self.ssl_ctx.session_stats())
             ssl_sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
             _socket_list.append(ssl_sock)
             ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
-            logger.info("wrapped sock from %s with ciphers %s" % \
+            logger.info("wrapped sock from %s with ciphers %s" %
                         (ssl_sock.getpeername(), ssl_sock.cipher()))
         except ssl.SSLError:
             exc = sys.exc_info()[1]
@@ -213,9 +219,9 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     # Drop clients speaking some non-HTTP protocol.
                     return None, {}
                 elif exc.args[1].find('wrong version number') != -1 or \
-                         exc.args[1].find('no shared cipher') != -1 or \
-                         exc.args[1].find('inappropriate fallback') != -1 or \
-                         exc.args[1].find('ccs received early') != -1:
+                        exc.args[1].find('no shared cipher') != -1 or \
+                        exc.args[1].find('inappropriate fallback') != -1 or \
+                        exc.args[1].find('ccs received early') != -1:
                     # Drop clients trying banned protocol, cipher or operation
                     return None, {}
                 else:
@@ -229,7 +235,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     """Override auth database lookups to use username and password hash for
     basic auth and digest otherwise.
-    
+
     NOTE: The username arguments are already on utf8 here so no need to force.
     """
 
@@ -241,7 +247,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         # Alias to CamelCase version userMap required internally
         self.user_map = self.userMap = userMap
         self.last_expire = time.time()
-        self.min_expire_delay = 300        
+        self.min_expire_delay = 300
         self.hash_cache = {}
         self.digest_cache = {}
 
@@ -250,13 +256,13 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
             expire_rate_limit(configuration, "davs")
-        
+
     def _expire_caches(self):
         """Expire old entries in the hash and digest caches"""
         self.hash_cache.clear()
         self.digest_cache.clear()
         logger.debug("Expired hash and digest caches")
-        
+
     def _expire_volatile(self):
         """Expire old entries in the volatile helper dictionaries"""
         if self.last_expire + self.min_expire_delay < time.time():
@@ -274,6 +280,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     def _check_auth_password(self, address, realm, username, password):
         """Verify supplied username and password against user DB"""
         user_list = self.user_map[realm].get(username, [])
+        # Only sharelinks should be excluded from strict password policy
+        if configuration.site_enable_sharelinks and \
+                possible_sharelink_id(configuration, username):
+            strict_policy = False
+        else:
+            strict_policy = True
         for user_obj in user_list:
             # list of User login objects for username
             offered = password
@@ -281,14 +293,15 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             if allowed is not None:
                 #logger.debug("Password check for %s" % username)
                 if check_password_hash(configuration, 'webdavs', username,
-                                       offered, allowed, self.hash_cache):
+                                       offered, allowed, self.hash_cache,
+                                       strict_policy):
                     return True
         return False
 
     def authDomainUser(self, realmname, username, password, environ):
         """Returns True if this username/password pair is valid for the realm,
         False otherwise. Used for basic authentication.
-        
+
         We explicitly compare against saved hash rather than password value.
         """
         #print "DEBUG: env in authDomainUser: %s" % environ
@@ -329,10 +342,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         else:
             logger.warning("invalid digest user %s from %s" % (username, addr))
             return False
-    
+
     def getRealmUserPassword(self, realmname, username, environ):
         """Return the password for the given username for the realm.
-        
+
         Used for digest authentication and always called after isRealmUser
         so update creds is already applied. We just rate limit and check here.
         """
@@ -340,10 +353,16 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         # TODO: consider digest caching here!
         #       we should really use something like check_password_digest,
         #       but we need to return password to caller here.
-        
+
         #print "DEBUG: env in getRealmUserPassword: %s" % environ
         addr = _get_addr(environ)
         offered = _get_digest(environ)
+        # Only sharelinks should be excluded from strict password policy
+        if configuration.site_enable_sharelinks and \
+                possible_sharelink_id(configuration, username):
+            strict_policy = False
+        else:
+            strict_policy = True
         self._expire_rate_limit()
         #logger.info("in getRealmUserPassword from %s" % addr)
         digest_users = self._get_user_digests(addr, realmname, username)
@@ -359,14 +378,17 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             #logger.info("found password")
             # TODO: we don't have a hook to log accepted digest logins
             # this one only means that user validation makes it to digest check
-            logger.info("extracted digest for valid user %s from %s" % \
+            logger.info("extracted digest for valid user %s from %s" %
                         (username, addr))
+            # Mimic password policy compliance from check_password_digest here
+            success = True
             try:
                 assure_password_strength(configuration, password)
             except Exception, exc:
-                logger.warning('%s password for %s does not satisfy local policy: %s' \
-                        % ('webdavs', username, exc))
-            success = True
+                if strict_policy:
+                    logger.warning('%s password for %s does not satisfy local policy: %s'
+                                   % ('webdavs', username, exc))
+                    success = False
         except Exception, exc:
             logger.error("failed to extract digest password: %s" % exc)
             success = False
@@ -379,13 +401,14 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                             failed_count)
         return password
 
-    
+
 class MiGFileResource(FileResource):
     """Hide invisible files from all access.
     All file access starts with object init so it is enough to make sure we
     refuse any hidden files in the constructor.
     Parent constructor saves environ as self.environ for later use in chroot.
     """
+
     def __init__(self, path, environ, filePath):
         FileResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
@@ -395,17 +418,17 @@ class MiGFileResource(FileResource):
         """Handle a COPY request natively, but with our restrictions"""
         _handle_allowed("copy", self._filePath)
         return super(MiGFileResource, self).handleCopy(destPath, depthInfinity)
-        
+
     def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
         _handle_allowed("move", self._filePath)
         return super(MiGFileResource, self).handleMove(destPath)
-        
+
     def handleDelete(self):
         """Handle a DELETE request natively, but with our restrictions"""
         _handle_allowed("delete", self._filePath)
         return super(MiGFileResource, self).handleDelete()
-                    
+
 
 class MiGFolderResource(FolderResource):
     """Hide invisible files from all access.
@@ -415,6 +438,7 @@ class MiGFolderResource(FolderResource):
     directory listings.
     Parent constructor saves environ as self.environ for later use in chroot.
     """
+
     def __init__(self, path, environ, filePath):
         FolderResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
@@ -424,30 +448,30 @@ class MiGFolderResource(FolderResource):
         """Handle a COPY request natively, but with our restrictions"""
         _handle_allowed("copy", self._filePath)
         return super(MiGFolderResource, self).handleCopy(destPath, depthInfinity)
-        
+
     def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
         _handle_allowed("move", self._filePath)
         return super(MiGFolderResource, self).handleMove(destPath)
-        
+
     def handleDelete(self):
         """Handle a DELETE request natively, but with our restrictions"""
         _handle_allowed("delete", self._filePath)
         return super(MiGFolderResource, self).handleDelete()
-                    
+
     def getMemberNames(self):
         """Return list of direct collection member names (utf-8 encoded).
-        
+
         See DAVCollection.getMemberNames()
 
         Use parent version and filter out any invisible file names.
         """
-        return [i for i in super(MiGFolderResource, self).getMemberNames() if \
+        return [i for i in super(MiGFolderResource, self).getMemberNames() if
                 not invisible_path(i)]
 
     def getMember(self, name):
         """Return direct collection member (DAVResource or derived).
-        
+
         See DAVCollection.getMember()
 
         The inherited getMemberList and getDescendants methods implicitly call
@@ -474,11 +498,11 @@ class MiGFolderResource(FolderResource):
                        depthFirst=False, depth="infinity", addSelf=False):
         """Return a list _DAVResource objects of a collection (children,
         grand-children, ...).
-        
+
         This default implementation calls self.getMemberList() recursively.
-        
+
         This function may also be called for non-collections (with addSelf=True).
-        
+
         :Parameters:
         depthFirst : bool
         use <False>, to list containers before content.
@@ -489,13 +513,13 @@ class MiGFolderResource(FolderResource):
         '0' | '1' | 'infinity'
 
         Call parent version just with debug logging added.
-        """                
+        """
         #logger.debug("in getDescendantsWrap for %s" % self)
         res = FolderResource.getDescendants(self, collections, resources,
                                             depthFirst, depth, addSelf)
         #logger.debug("getDescendants wrap returning %s" % res)
         return res
-    
+
 
 class MiGFilesystemProvider(FilesystemProvider):
     """
@@ -512,15 +536,15 @@ class MiGFilesystemProvider(FilesystemProvider):
         self.readonly = self.daemon_conf['read_only']
 
     # Use shared daemon fs helper functions
-    
+
     def _acceptable_chmod(self, davs_path, mode):
         """Wrap helper"""
         #logger.debug("acceptable_chmod: %s" % davs_path)
         reply = acceptable_chmod(davs_path, mode, self.chmod_exceptions)
         if not reply:
-            logger.warning("acceptable_chmod failed: %s %s %s" % \
+            logger.warning("acceptable_chmod failed: %s %s %s" %
                            (davs_path, mode, self.chmod_exceptions))
-        #logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path,
+        # logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path,
         #                                                     reply))
         return reply
 
@@ -564,7 +588,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         except ValueError, vae:
             raise RuntimeError("Access out of bounds: %s in %s : %s"
                                % (path, user_chroot, vae))
-        abs_path = force_unicode(abs_path)           
+        abs_path = force_unicode(abs_path)
         #logger.debug("_locToFilePath on %s: %s" % (path, abs_path))
         return abs_path
 
@@ -583,14 +607,14 @@ class MiGFilesystemProvider(FilesystemProvider):
         except RuntimeError, rte:
             logger.warning("getResourceInst: %s : %s" % (path, rte))
             raise DAVError(HTTP_FORBIDDEN)
-            
+
         if not os.path.exists(abs_path):
             return None
-        
+
         if os.path.isdir(abs_path):
             return MiGFolderResource(path, environ, abs_path)
         return MiGFileResource(path, environ, abs_path)
-                                                            
+
 
 def update_users(configuration, user_map, username):
     """Update creds dict for username and aliases"""
@@ -600,17 +624,17 @@ def update_users(configuration, user_map, username):
         daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
                                                         username)
     if configuration.site_enable_sharelinks and \
-           possible_sharelink_id(configuration, username):
+            possible_sharelink_id(configuration, username):
         daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                           'davs', username)
     # Add dummy user for litmus test if enabled in conf
     litmus_pw = daemon_conf.get('litmus_password', None)
     if username == litmus_id and litmus_pw and \
-           not login_map_lookup(daemon_conf, litmus_id):
+            not login_map_lookup(daemon_conf, litmus_id):
         litmus_home = os.path.join(configuration.user_home, litmus_id)
         try:
             os.makedirs(litmus_home)
-        except: 
+        except:
             pass
         for auth in ('basic', 'digest'):
             if not daemon_conf.get('accept%s' % auth, False):
@@ -646,16 +670,16 @@ def run(configuration):
             dav_domain: MiGFilesystemProvider(daemon_conf['root_dir'],
                                               configuration,
                                               dav_conf)
-            },
+        },
         "user_mapping": user_map,
         # Use these to tweak logging target and verbosity. E.g. increase
         # verbose value to 2 to get more debug info like full XML messages.
-        #"verbose": 2,
-        #"enable_loggers": ["lock_manager", "property_manager", "http_authenticator", ...]
-        #"debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE", "OPTIONS", "PROPFIND", "PROPPATCH", "PUT", "UNLOCK"],
-        #"verbose": 2,
-        #"enable_loggers": ["http_authenticator"],
-        #"debug_methods": ["PROPFIND", "PUT"],
+        # "verbose": 2,
+        # "enable_loggers": ["lock_manager", "property_manager", "http_authenticator", ...]
+        # "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE", "OPTIONS", "PROPFIND", "PROPPATCH", "PUT", "UNLOCK"],
+        # "verbose": 2,
+        # "enable_loggers": ["http_authenticator"],
+        # "debug_methods": ["PROPFIND", "PUT"],
         "verbose": 1,
         "enable_loggers": [],
         "debug_methods": [],
@@ -664,8 +688,8 @@ def run(configuration):
         # Allow last modified timestamp updates from client to support rsync -a
         "mutable_live_props": ["{DAV:}getlastmodified"],
         "domaincontroller": MiGWsgiDAVDomainController(user_map),
-        })
-    
+    })
+
     # NOTE: Briefly insert dummy user to avoid bogus warning about anon access
     #       We dynamically add users as they connect so it isn't empty.
     fake_user = 'nosuchuser-%s' % time.time()
@@ -675,7 +699,7 @@ def run(configuration):
     #print('User list: %s' % config['user_mapping'])
 
     # Find and mangle HTTPAuthenticator in application stack
-    
+
     #app_authenticator = _find_authenticator(app)
 
     #print('Config: %s' % config)
@@ -686,7 +710,8 @@ def run(configuration):
         key = config['ssl_private_key'] = configuration.user_davs_key
         chain = config['ssl_certificate_chain'] = ''
         #wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(cert, key, chain)
-        wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(cert, key, chain)
+        wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(
+            cert, key, chain)
 
     # Use bundled CherryPy WSGI Server to support SSL
     version = "%s WebDAV" % configuration.short_title
@@ -701,6 +726,7 @@ def run(configuration):
         server.stop()
         # forward KeyboardInterrupt to main thread
         raise
+
 
 if __name__ == "__main__":
     # Force no log init since we use separate logger
@@ -731,7 +757,7 @@ if __name__ == "__main__":
         readonly = (sys.argv[5].lower() in ('1', 'true', 'yes', 'on'))
     if sys.argv[6:]:
         nossl = (sys.argv[6].lower() in ('1', 'true', 'yes', 'on'))
-        
+
     # Web server doesn't allow empty string alias for all interfaces
     if configuration.user_davs_address == '':
         configuration.user_davs_address = '0.0.0.0'
@@ -739,7 +765,7 @@ if __name__ == "__main__":
     configuration.dav_cfg = {
         'nossl': nossl,
         'verbose': 1,
-        }
+    }
 
     if not configuration.site_enable_davs:
         err_msg = "WebDAVS access to user homes is disabled in configuration!"
@@ -789,7 +815,7 @@ unless it is available in mig/server/MiGserver.conf
         'litmus_password': litmus_password,
         'time_stamp': 0,
         'logger': logger,
-        }
+    }
     daemon_conf = configuration.daemon_conf
     daemon_conf['acceptbasic'] = daemon_conf['allow_password']
     daemon_conf['acceptdigest'] = daemon_conf['allow_digest']

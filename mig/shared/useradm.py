@@ -1562,7 +1562,7 @@ def generate_password_hash(configuration, password):
 
 
 def check_password_hash(configuration, service, username, password,
-                        stored_hash, hash_cache=None):
+                        stored_hash, hash_cache=None, strict_policy=True):
     """Return a boolean indicating if offered password matches stored_hash
     information. We use PBKDF2 to help with the hash comparison and store the
     data in a form close to the one recommended there:
@@ -1573,11 +1573,14 @@ def check_password_hash(configuration, service, username, password,
 
     The optional hash_cache dictionary argument can be used to cache lookups
     and speed up repeated use.
+    The optional boolean strict_policy argument switches warnings about
+    password policy incompliance to fatal errors. Should only be disabled for
+    sharelinks.
     """
     _logger = configuration.logger
     try:
         return check_hash(configuration, service, username, password,
-                          stored_hash, hash_cache)
+                          stored_hash, hash_cache, strict_policy)
     except Exception, exc:
         _logger.warning("in check_password_hash: %s" % exc)
         return False
@@ -1597,7 +1600,8 @@ def generate_password_scramble(configuration, password, salt):
 
 
 def check_password_scramble(configuration, service, username, password,
-                            stored_scramble, salt, scramble_cache=None):
+                            stored_scramble, salt, scramble_cache=None,
+                            strict_policy=True):
     """Return a boolean indicating if offered password matches stored_scramble
     information. We use a simple salted encoding to avoid storing passwords in
     the clear when we can't avoid saving the actual password instead of just a
@@ -1605,11 +1609,15 @@ def check_password_scramble(configuration, service, username, password,
 
     The optional scramble_cache dictionary argument can be used to cache
     lookups and speed up repeated use.
+    The optional boolean strict_policy argument switches warnings about
+    password policy incompliance to fatal errors. Always enabled here since it
+    is only used for real user logins, and never sharelinks.
     """
     _logger = configuration.logger
     try:
         return check_scramble(configuration, service, username, password,
-                              stored_scramble, salt, scramble_cache)
+                              stored_scramble, salt, scramble_cache,
+                              strict_policy)
     except Exception, exc:
         _logger.warning("in check_password_scramble: %s" % exc)
         return False
@@ -1626,17 +1634,21 @@ def generate_password_digest(configuration, realm, username, password, salt):
 
 
 def check_password_digest(configuration, service, realm, username, password,
-                          stored_digest, salt, digest_cache=None):
+                          stored_digest, salt, digest_cache=None,
+                          strict_policy=True):
     """Return a boolean indicating if offered password matches stored_digest
     information.
 
     The optional digest_cache dictionary argument can be used to cache lookups
     and speed up repeated use.
+    The optional boolean strict_policy argument switches warnings about
+    password policy incompliance to fatal errors. Should only be disabled for
+    sharelinks.
     """
     _logger = configuration.logger
     try:
         return check_digest(configuration, service, realm, username, password,
-                            stored_digest, salt, digest_cache)
+                            stored_digest, salt, digest_cache, strict_policy)
     except Exception, exc:
         _logger.warning("in check_password_digest: %s" % exc)
         return False

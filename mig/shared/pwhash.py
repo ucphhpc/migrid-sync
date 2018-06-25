@@ -90,11 +90,13 @@ def make_hash(password):
 
 
 def check_hash(configuration, service, username, password, hashed,
-               hash_cache=None, strict_policy=False):
+               hash_cache=None, strict_policy=True):
     """Check a password against an existing hash. First make sure the provided
     password satisfies the local password policy. The optional hash_cache
     dictionary argument can be used to cache recent lookups to save time in
     e.g. webdav where each operation triggers hash check.
+    The optional boolean strict_policy argument changes warnings about password
+    policy incompliance to unconditional rejects.
     """
     _logger = configuration.logger
     if isinstance(password, unicode):
@@ -159,11 +161,13 @@ def make_digest(realm, username, password, salt):
 
 
 def check_digest(configuration, service, realm, username, password, digest,
-                 salt, digest_cache=None, strict_policy=False):
+                 salt, digest_cache=None, strict_policy=True):
     """Check credentials against an existing digest. First make sure the
     provided password satisfies the local password policy. The optional
     digest_cache dictionary argument can be used to cache recent lookups to
     save time in e.g. webdav where each operation triggers digest check.
+    The optional boolean strict_policy argument changes warnings about password
+    policy incompliance to unconditional rejects.
     """
     _logger = configuration.logger
     if isinstance(realm, unicode):

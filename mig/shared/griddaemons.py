@@ -48,8 +48,8 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
     generate_password_hash, generate_password_digest, load_user_dict
 from shared.validstring import possible_user_id, possible_sharelink_id, \
-     possible_job_id, possible_jupyter_mount_id, valid_user_path, \
-     is_valid_email_address
+    possible_job_id, possible_jupyter_mount_id, valid_user_path, \
+    is_valid_email_address
 
 default_max_fails, default_fail_cache = 5, 120
 
@@ -63,11 +63,12 @@ _rate_limits_lock = threading.Lock()
 _active_sessions = {}
 _sessions_lock = threading.Lock()
 
+
 def accepting_username_validator(configuration, username):
     """A simple username validator which accepts everything"""
     return True
 
-# TODO: include username check early in login phase too to drop dict attacks?
+
 def default_username_validator(configuration, username, force_email=True):
     """The default username validator restricted to only accept usernames that
     are valid in grid daemons, namely a possible user, sharelink, job or
@@ -98,6 +99,7 @@ class Login(object):
     The optional ip_addr argument can be used to limit login source to a single
     IP address. This is particularly useful in relation to job sshfs mounts.
     """
+
     def __init__(self, username, home, password=None, digest=None,
                  public_key=None, chroot=True, ip_addr=None, user_dict=None):
         self.username = username
@@ -134,6 +136,7 @@ pubkey: %s''' % force_utf8(self.public_key.get_base64())
 last_update: %s''' % self.last_update
         return out
 
+
 def get_fs_path(configuration, abs_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
     in mind. Also assures general path character restrictions are applied.
@@ -151,6 +154,7 @@ def get_fs_path(configuration, abs_path, root, chroot_exceptions):
         raise ValueError("Illegal path access attempt")
     return abs_path
 
+
 def strip_root(configuration, path, root, chroot_exceptions):
     """Internal helper to strip root prefix for chrooted locations"""
     accept_roots = [root] + chroot_exceptions
@@ -158,6 +162,7 @@ def strip_root(configuration, path, root, chroot_exceptions):
         if path.startswith(root):
             return path.replace(root, '')
     return path
+
 
 def flags_to_mode(flags):
     """Internal helper to convert bitmask of os.O_* flags to open-mode.
@@ -183,6 +188,7 @@ def flags_to_mode(flags):
         mode = mode.replace('w', 'r+', 1)
     return mode
 
+
 def acceptable_chmod(path, mode, chmod_exceptions):
     """Internal helper to check that a chmod request is safe. That is, it
     only changes permissions that does not lock out user. Furthermore anything
@@ -195,8 +201,8 @@ def acceptable_chmod(path, mode, chmod_exceptions):
     """
 
     if invisible_path(path) or \
-           True in [os.path.realpath(path).startswith(i) for i in \
-                    chmod_exceptions]:
+        True in [os.path.realpath(path).startswith(i) for i in
+                 chmod_exceptions]:
         return False
     # Never touch special leading bits (suid, sgid, etc.)
     if mode & 07000 != 00000:
@@ -207,6 +213,7 @@ def acceptable_chmod(path, mode, chmod_exceptions):
         return True
     else:
         return False
+
 
 def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
                       authdigests_path):
@@ -240,8 +247,8 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
                 first.last_update = os.path.getmtime(authkeys_path)
                 changed_paths.append(authkeys_path)
         elif os.path.exists(authkeys_path) and \
-                 os.path.getsize(authkeys_path) >= min_pub_key_bytes and \
-                 os.path.getmtime(authkeys_path) > any_last_update:
+                os.path.getsize(authkeys_path) >= min_pub_key_bytes and \
+                os.path.getmtime(authkeys_path) > any_last_update:
             logger.debug("found changed pub keys for %s" % username)
             changed_paths.append(authkeys_path)
 
@@ -254,7 +261,7 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
                 first.last_update = os.path.getmtime(authpasswords_path)
                 changed_paths.append(authpasswords_path)
         elif os.path.exists(authpasswords_path) and \
-                 os.path.getsize(authpasswords_path) > 0:
+                os.path.getsize(authpasswords_path) > 0:
             changed_paths.append(authpasswords_path)
 
     if conf["allow_digest"]:
@@ -264,18 +271,19 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
                 logger.info("no authdigests_path %s" % authdigests_path)
                 changed_paths.append(authdigests_path)
             elif os.path.getmtime(authdigests_path) > first.last_update:
-                logger.info("outdated authdigests_path %s (%s)" % \
+                logger.info("outdated authdigests_path %s (%s)" %
                             (authdigests_path, first.last_update))
                 first.last_update = os.path.getmtime(authdigests_path)
                 changed_paths.append(authdigests_path)
         elif os.path.exists(authdigests_path) and \
-                 os.path.getsize(authdigests_path) > 0:
-            logger.info("no old digest users and found authdigests_path %s" % \
+                os.path.getsize(authdigests_path) > 0:
+            logger.info("no old digest users and found authdigests_path %s" %
                         authdigests_path)
-            logger.info("old users: %s" % ["%s" %i for i in old_users])
+            logger.info("old users: %s" % ["%s" % i for i in old_users])
             changed_paths.append(authdigests_path)
 
     return changed_paths
+
 
 def get_job_changes(conf, username, mrsl_path):
     """Check if job mount changed for username using the provided mrsl_path
@@ -298,9 +306,10 @@ def get_job_changes(conf, username, mrsl_path):
             first.last_update = os.path.getmtime(mrsl_path)
             changed_paths.append(mrsl_path)
     elif os.path.exists(mrsl_path) and \
-             os.path.getsize(mrsl_path) > 0:
+            os.path.getsize(mrsl_path) > 0:
         changed_paths.append(mrsl_path)
     return changed_paths
+
 
 def get_share_changes(conf, username, sharelink_path):
     """Check if sharelink changed for username using the provided
@@ -324,9 +333,10 @@ def get_share_changes(conf, username, sharelink_path):
             first.last_update = os.path.getmtime(sharelink_path)
             changed_paths.append(sharelink_path)
     elif os.path.exists(sharelink_path) and \
-             os.path.isdir(sharelink_path):
+            os.path.isdir(sharelink_path):
         changed_paths.append(sharelink_path)
     return changed_paths
+
 
 def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
                     chroot=True, user_dict=None):
@@ -343,6 +353,7 @@ def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
     if creds_lock:
         creds_lock.release()
 
+
 def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
                    chroot=True, ip_addr=None):
     """Add a single Login object to active jobs list"""
@@ -356,6 +367,7 @@ def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
     conf['jobs'].append(job)
     if creds_lock:
         creds_lock.release()
+
 
 def add_share_object(conf, login, home, password=None, digest=None,
                      pubkey=None, chroot=True, ip_addr=None):
@@ -371,19 +383,21 @@ def add_share_object(conf, login, home, password=None, digest=None,
     if creds_lock:
         creds_lock.release()
 
+
 def add_jupyter_object(conf, login, home, password=None, digest=None,
                        pubkey=None, chroot=True, ip_addr=None):
     """Add a single Login object to active jupyter mount list"""
     logger = conf.get('logger', logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
     jupyter_mount = Login(username=login, home=home, password=password, digest=digest,
-                  public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
+                          public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
     logger.debug("Adding jupyter login:\n%s" % jupyter_mount)
     if creds_lock:
         creds_lock.acquire()
     conf['jupyter_mounts'].append(jupyter_mount)
     if creds_lock:
         creds_lock.release()
+
 
 def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
                         private_auth_file):
@@ -399,7 +413,7 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
     user_logins = (user_alias, short_id, short_alias)
     user_dict = None
 
-    # Create user entry for each valid key and password 
+    # Create user entry for each valid key and password
     if creds_lock:
         creds_lock.acquire()
     if not private_auth_file:
@@ -415,8 +429,8 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
         all_passwords = []
         all_digests = []
         # Clean up all old key entries for this user
-        conf['users'] = [i for i in conf['users'] \
-                         if i.username not in user_logins or \
+        conf['users'] = [i for i in conf['users']
+                         if i.username not in user_logins or
                          i.public_key is None]
     elif auth_file == proto_authpasswords:
         all_keys = []
@@ -428,8 +442,8 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
             all_passwords = []
         all_digests = []
         # Clean up all old password entries for this user
-        conf['users'] = [i for i in conf['users'] \
-                         if i.username not in user_logins or \
+        conf['users'] = [i for i in conf['users']
+                         if i.username not in user_logins or
                          i.password is None]
     else:
         all_keys = []
@@ -437,14 +451,14 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
         if private_auth_file:
             all_digests = get_authpasswords(path)
         elif user_dict and user_dict.get('digest', ''):
-            all_digests =  [user_dict['digest']]
+            all_digests = [user_dict['digest']]
         else:
             all_digests = []
         # Clean up all old digest entries for this user
-        conf['users'] = [i for i in conf['users'] \
-                         if i.username not in user_logins or \
+        conf['users'] = [i for i in conf['users']
+                         if i.username not in user_logins or
                          i.digest is None]
-    #logger.debug("after clean up old users list is:\n%s" % \
+    # logger.debug("after clean up old users list is:\n%s" % \
     #             '\n'.join(["%s" % i for i in conf['users']]))
     if creds_lock:
         creds_lock.release()
@@ -457,7 +471,7 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
         try:
             _ = parse_pub_key(user_key)
         except Exception, exc:
-            logger.warning("Skipping broken key %s for user %s (%s)" % \
+            logger.warning("Skipping broken key %s for user %s (%s)" %
                            (user_key, user_id, exc))
             continue
         add_user_object(conf, user_alias, user_dir, pubkey=user_key)
@@ -487,7 +501,7 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
                             user_dict=user_dict)
             add_user_object(conf, short_alias, user_dir, digest=user_digest,
                             user_dict=user_dict)
-    #logger.debug("after update users list is:\n%s" % \
+    # logger.debug("after update users list is:\n%s" % \
     #             '\n'.join(["%s" % i for i in conf['users']]))
 
 
@@ -584,19 +598,19 @@ def refresh_user_creds(configuration, protocol, username):
         if not os.path.exists(user_home):
             logger.warning("Skipping user without home %s" % user_home)
             continue
-            
+
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
         if conf['user_alias']:
             short_id = extract_field(user_id, conf['user_alias'])
-            # Allow both raw alias field value and asciified alias            
+            # Allow both raw alias field value and asciified alias
             logger.debug("find short_alias for %s" % short_alias)
             short_alias = client_alias(short_id)
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
         update_user_objects(conf, auth_file, path, user_vars, auth_protos,
                             private_auth_file)
     if changed_paths:
-        logger.info("Refreshed user %s from configuration: %s" % \
+        logger.info("Refreshed user %s from configuration: %s" %
                     (username, changed_paths))
         changed_users.append(username)
     return (conf, changed_users)
@@ -653,15 +667,15 @@ def refresh_users(configuration, protocol):
     authdigests_pattern = os.path.join(conf['root_dir'], '*',
                                        proto_authdigests)
     short_id, short_alias = None, None
-    # TODO: support private_auth_file == False here? 
+    # TODO: support private_auth_file == False here?
     matches = []
     if conf['allow_publickey']:
         matches += [(proto_authkeys, i) for i in glob.glob(authkeys_pattern)]
     if conf['allow_password']:
-        matches += [(proto_authpasswords, i) \
+        matches += [(proto_authpasswords, i)
                     for i in glob.glob(authpasswords_pattern)]
     if conf['allow_digest']:
-        matches += [(proto_authdigests, i) \
+        matches += [(proto_authdigests, i)
                     for i in glob.glob(authdigests_pattern)]
     for (auth_file, path) in matches:
         logger.debug("Checking %s" % path)
@@ -676,7 +690,7 @@ def refresh_users(configuration, protocol):
         cur_usernames.append(user_alias)
         if conf['user_alias']:
             short_id = extract_field(user_id, conf['user_alias'])
-            # Allow both raw alias field value and asciified alias            
+            # Allow both raw alias field value and asciified alias
             cur_usernames.append(short_id)
             logger.debug("find short_alias for %s" % short_alias)
             short_alias = client_alias(short_id)
@@ -698,7 +712,7 @@ def refresh_users(configuration, protocol):
         if creds_lock:
             creds_lock.release()
         changed_users += removed
-    logger.info("Refreshed users from configuration (%d users)" % \
+    logger.info("Refreshed users from configuration (%d users)" %
                 len(cur_usernames))
     conf['time_stamp'] = time.time()
     return (conf, changed_users)
@@ -726,7 +740,7 @@ def refresh_job_creds(configuration, protocol, username):
         return (conf, changed_jobs)
 
     link_path = os.path.join(configuration.sessid_to_mrsl_link_home,
-                            "%s.mRSL" % username)
+                             "%s.mRSL" % username)
     logger.debug("Updating job creds for %s" % username)
     changed_paths = get_job_changes(conf, username, link_path)
     if not changed_paths:
@@ -735,20 +749,20 @@ def refresh_job_creds(configuration, protocol, username):
 
     job_dict = None
     if os.path.islink(link_path) and os.path.exists(link_path) and \
-           last_update < os.path.getmtime(link_path):
+            last_update < os.path.getmtime(link_path):
         sessionid = username
         job_dict = unpickle(link_path, logger)
 
     # We only allow connections from executing jobs that
     # has a public key
     if not job_dict is None and type(job_dict) == dict and \
-           job_dict.has_key('STATUS') and \
-           job_dict['STATUS'] == 'EXECUTING' and \
-           job_dict.has_key('SESSIONID') and \
-           job_dict['SESSIONID'] == sessionid and \
-           job_dict.has_key('USER_CERT') and \
-           job_dict.has_key('MOUNT') and \
-           job_dict.has_key('MOUNTSSHPUBLICKEY'):
+            job_dict.has_key('STATUS') and \
+            job_dict['STATUS'] == 'EXECUTING' and \
+            job_dict.has_key('SESSIONID') and \
+            job_dict['SESSIONID'] == sessionid and \
+            job_dict.has_key('USER_CERT') and \
+            job_dict.has_key('MOUNT') and \
+            job_dict.has_key('MOUNTSSHPUBLICKEY'):
         user_alias = sessionid
         user_dir = client_id_dir(job_dict['USER_CERT'])
         user_key = job_dict['MOUNTSSHPUBLICKEY']
@@ -762,8 +776,8 @@ def refresh_job_creds(configuration, protocol, username):
             user_ip = socket.gethostbyname_ex(user_url)[2][0]
         except Exception, exc:
             user_ip = None
-            logger.warning("Skipping key, unresolvable ip for user %s (%s)" % \
-                (user_alias, exc))
+            logger.warning("Skipping key, unresolvable ip for user %s (%s)" %
+                           (user_alias, exc))
 
         # Make sure pub key is valid
         valid_pubkey = True
@@ -771,7 +785,7 @@ def refresh_job_creds(configuration, protocol, username):
             _ = parse_pub_key(user_key)
         except Exception, exc:
             valid_pubkey = False
-            logger.warning("Skipping broken key '%s' for user %s (%s)" % \
+            logger.warning("Skipping broken key '%s' for user %s (%s)" %
                            (user_key, user_alias, exc))
 
         if user_ip is not None and valid_pubkey:
@@ -790,6 +804,7 @@ def refresh_job_creds(configuration, protocol, username):
         changed_jobs.append(username)
     logger.info("Refreshed jobs from configuration")
     return (conf, changed_jobs)
+
 
 def refresh_jobs(configuration, protocol):
     """Refresh job keys based on the job state.
@@ -817,20 +832,20 @@ def refresh_jobs(configuration, protocol):
 
         job_dict = None
         if os.path.islink(link_path) and link_path.endswith('.mRSL') and \
-               os.path.exists(link_path):
+                os.path.exists(link_path):
             sessionid = link_name[:-5]
             job_dict = unpickle(link_path, logger)
 
         # We only allow connections from executing jobs that
         # has a public key
         if not job_dict is None and type(job_dict) == dict and \
-               job_dict.has_key('STATUS') and \
-               job_dict['STATUS'] == 'EXECUTING' and \
-               job_dict.has_key('SESSIONID') and \
-               job_dict['SESSIONID'] == sessionid and \
-               job_dict.has_key('USER_CERT') and \
-               job_dict.has_key('MOUNT') and \
-               job_dict.has_key('MOUNTSSHPUBLICKEY'):
+                job_dict.has_key('STATUS') and \
+                job_dict['STATUS'] == 'EXECUTING' and \
+                job_dict.has_key('SESSIONID') and \
+                job_dict['SESSIONID'] == sessionid and \
+                job_dict.has_key('USER_CERT') and \
+                job_dict.has_key('MOUNT') and \
+                job_dict.has_key('MOUNTSSHPUBLICKEY'):
             user_alias = sessionid
             user_dir = client_id_dir(job_dict['USER_CERT'])
             user_key = job_dict['MOUNTSSHPUBLICKEY']
@@ -844,7 +859,8 @@ def refresh_jobs(configuration, protocol):
                 user_ip = socket.gethostbyname_ex(user_url)[2][0]
             except Exception, exc:
                 user_ip = None
-                logger.warning("Skipping key due to unresolvable ip for user %s (%s)" % (user_alias, exc))
+                logger.warning(
+                    "Skipping key due to unresolvable ip for user %s (%s)" % (user_alias, exc))
 
             # Make sure pub key is valid
             valid_pubkey = True
@@ -852,7 +868,7 @@ def refresh_jobs(configuration, protocol):
                 _ = parse_pub_key(user_key)
             except Exception, exc:
                 valid_pubkey = False
-                logger.warning("Skipping broken key '%s' for user %s (%s)" % \
+                logger.warning("Skipping broken key '%s' for user %s (%s)" %
                                (user_key, user_alias, exc))
 
             if user_ip is not None and valid_pubkey:
@@ -870,9 +886,10 @@ def refresh_jobs(configuration, protocol):
         if creds_lock:
             creds_lock.release()
         changed_jobs += removed
-    logger.info("Refreshed jobs from configuration (%d jobs)" % \
+    logger.info("Refreshed jobs from configuration (%d jobs)" %
                 len(cur_usernames))
     return (conf, changed_jobs)
+
 
 def refresh_share_creds(configuration, protocol, username,
                         share_modes=['read-write']):
@@ -907,7 +924,7 @@ def refresh_share_creds(configuration, protocol, username,
     try:
         (mode, _) = extract_mode_id(configuration, username)
     except ValueError, err:
-        logger.error('refresh share creds called with invalid username %s: %s' \
+        logger.error('refresh share creds called with invalid username %s: %s'
                      % (username, err))
         mode = 'INVALID-SHARELINK'
     if not mode in share_modes:
@@ -934,7 +951,7 @@ def refresh_share_creds(configuration, protocol, username,
 
     share_dict = None
     if os.path.islink(link_path) and link_dest and \
-           last_update < os.path.getmtime(link_path):
+            last_update < os.path.getmtime(link_path):
         share_id = username
         # NOTE: share link points inside user home of owner so we extract here.
         #       We strip leading AND trailing slashes to make get_fs_path work.
@@ -952,10 +969,10 @@ def refresh_share_creds(configuration, protocol, username,
 
     # We only allow access to active shares
     if not share_dict is None and type(share_dict) == dict and \
-           share_dict.has_key('share_id') and \
-           share_dict.has_key('share_root') and \
-           share_dict.has_key('share_pw_hash') and \
-           share_dict.has_key('share_pw_digest'):
+            share_dict.has_key('share_id') and \
+            share_dict.has_key('share_root') and \
+            share_dict.has_key('share_pw_hash') and \
+            share_dict.has_key('share_pw_digest'):
         user_alias = share_dict['share_id']
         user_dir = share_dict['share_root']
         user_password = share_dict['share_pw_hash']
@@ -976,6 +993,7 @@ def refresh_share_creds(configuration, protocol, username,
         changed_shares.append(username)
     logger.info("Refreshed shares from configuration")
     return (conf, changed_shares)
+
 
 def refresh_shares(configuration, protocol, share_modes=['read-write']):
     """Refresh shares keys based on the sharelink state.
@@ -1036,7 +1054,7 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
 
         # We only allow access to active shares
         if not share_dict is None and type(share_dict) == dict and \
-               share_dict.has_key('share_id') and \
+            share_dict.has_key('share_id') and \
                 share_dict.has_key('share_root') and \
                 share_dict.has_key('share_pw_hash') and \
                 share_dict.has_key('share_pw_digest'):
@@ -1056,12 +1074,12 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
         logger.info("Removing login for %d inactive shares" % len(removed))
         if creds_lock:
             creds_lock.acquire()
-        conf['shares'] = [i for i in conf['shares'] if not i.username in \
+        conf['shares'] = [i for i in conf['shares'] if not i.username in
                           removed]
         if creds_lock:
             creds_lock.release()
         changed_shares += removed
-    logger.info("Refreshed shares from configuration (%d shares)" % \
+    logger.info("Refreshed shares from configuration (%d shares)" %
                 len(cur_usernames))
     return (conf, changed_shares)
 
@@ -1130,7 +1148,7 @@ def refresh_jupyter_creds(configuration, protocol, username):
     if creds_lock:
         creds_lock.acquire()
     logger.info("Active jupyter_mounts: " +
-                 str([(i.username, i.home) for i in
+                str([(i.username, i.home) for i in
                      conf['jupyter_mounts']]))
     if creds_lock:
         creds_lock.release()
@@ -1152,19 +1170,20 @@ def update_login_map(daemon_conf, changed_users, changed_jobs=[],
     if creds_lock:
         creds_lock.acquire()
     for username in changed_users:
-        login_map[username] = [i for i in daemon_conf['users'] if username == \
+        login_map[username] = [i for i in daemon_conf['users'] if username ==
                                i.username]
     for username in changed_jobs:
-        login_map[username] = [i for i in daemon_conf['jobs'] if username == \
+        login_map[username] = [i for i in daemon_conf['jobs'] if username ==
                                i.username]
     for username in changed_shares:
-        login_map[username] = [i for i in daemon_conf['shares'] if username == \
+        login_map[username] = [i for i in daemon_conf['shares'] if username ==
                                i.username]
     for username in changed_jupyter:
         login_map[username] = [i for i in daemon_conf['jupyter_mounts']
                                if username == i.username]
     if creds_lock:
         creds_lock.release()
+
 
 def login_map_lookup(daemon_conf, username):
     """Get creds associated with username in login_map in a thread-safe
@@ -1179,6 +1198,7 @@ def login_map_lookup(daemon_conf, username):
     if creds_lock:
         creds_lock.release()
     return creds
+
 
 def hit_rate_limit(configuration, proto, client_address, client_id,
                    max_fails=default_max_fails,
@@ -1208,7 +1228,7 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
 
     # Early refuse on invalid username: eases filter of 'root', 'admin', etc.
     if not username_validator(configuration, client_id):
-        logger.warning("hit rate limit on invalid username %s from %s" % \
+        logger.warning("hit rate limit on invalid username %s from %s" %
                        (client_id, client_address))
         return True
 
@@ -1233,9 +1253,10 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
     _rate_limits_lock.release()
 
     if all_hits > 0:
-        logger.info("%s hit rate limit got %d of %d hit(s) for %s from %s" % \
+        logger.info("%s hit rate limit got %d of %d hit(s) for %s from %s" %
                     (proto, client_hits, all_hits, client_id, client_address))
     return refuse
+
 
 def update_rate_limit(configuration, proto, client_address, client_id,
                       login_success, secret=None):
@@ -1284,11 +1305,12 @@ def update_rate_limit(configuration, proto, client_address, client_id,
     _rate_limits_lock.release()
 
     if failed_count != cache_fails:
-        logger.info("update %s rate limit %s for %s from %d to %d hits" % \
+        logger.info("update %s rate limit %s for %s from %d to %d hits" %
                     (proto, status[login_success], client_address, cache_fails,
                      failed_count))
-        logger.debug("update %s rate limit to %s" % (proto,_failed))
+        logger.debug("update %s rate limit to %s" % (proto, _failed))
     return failed_count
+
 
 def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     """Remove rate limit database entries older than fail_cache seconds. Only
@@ -1331,6 +1353,7 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
 
     return expired
 
+
 def penalize_rate_limit(configuration, proto, client_address, client_id, hits,
                         max_fails=default_max_fails):
     """Stall client for a while based on the number of rate limit failures to
@@ -1341,10 +1364,11 @@ def penalize_rate_limit(configuration, proto, client_address, client_id, hits,
     logger = configuration.logger
     sleep_secs = 3 * (hits - max_fails)
     if sleep_secs > 0:
-        logger.info("stall %s rate limited user %s from %s for %ds" % \
+        logger.info("stall %s rate limited user %s from %s for %ds" %
                     (proto, client_id, client_address, sleep_secs))
         time.sleep(sleep_secs)
     return sleep_secs
+
 
 def track_open_session(configuration, proto, client_id, client_address):
     """Track that client_id opened a new session from client_address"""
@@ -1364,6 +1388,7 @@ def track_open_session(configuration, proto, client_id, client_address):
         logger.error("track open session failed: %s" % exc)
     _sessions_lock.release()
 
+
 def track_close_session(configuration, proto, client_id, client_address):
     """Track that client_id opened a new session from client_address"""
     logger = configuration.logger
@@ -1378,6 +1403,7 @@ def track_close_session(configuration, proto, client_id, client_address):
     except Exception, exc:
         logger.error("track close session failed: %s" % exc)
     _sessions_lock.release()
+
 
 def active_sessions(configuration, proto, client_id):
     """Look up how many active proto sessions client_id has running"""
@@ -1471,20 +1497,20 @@ if __name__ == "__main__":
 
     print "Test active session counting"
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" %  active_count
+    print "Open sessions: %d" % active_count
     print "Track open session"
     track_open_session(conf, test_proto, test_id, test_address)
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" %  active_count
+    print "Open sessions: %d" % active_count
     print "Track open session"
     track_open_session(conf, test_proto, test_id, test_address)
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" %  active_count
+    print "Open sessions: %d" % active_count
     print "Track close session"
     track_close_session(conf, test_proto, test_id, test_address)
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" %  active_count
+    print "Open sessions: %d" % active_count
     print "Track close session"
     track_close_session(conf, test_proto, test_id, test_address)
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" %  active_count
+    print "Open sessions: %d" % active_count

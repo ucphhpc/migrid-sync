@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -84,15 +84,15 @@ from shared.conf import get_configuration_object
 from shared.defaults import keyword_auto
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
-     acceptable_chmod, refresh_user_creds, refresh_job_creds, \
-     refresh_share_creds, refresh_jupyter_creds, update_login_map, \
-     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-     penalize_rate_limit, track_open_session, track_close_session, \
-     active_sessions
+    acceptable_chmod, refresh_user_creds, refresh_job_creds, \
+    refresh_share_creds, refresh_jupyter_creds, update_login_map, \
+    login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+    penalize_rate_limit, track_open_session, track_close_session, \
+    active_sessions
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 from shared.validstring import possible_user_id, possible_job_id, \
-     possible_sharelink_id, possible_jupyter_mount_id
+    possible_sharelink_id, possible_jupyter_mount_id
 from shared.vgrid import vgrid_restrict_write_support
 
 configuration, logger = None, None
@@ -123,7 +123,7 @@ class SFTPHandle(paramiko.SFTPHandle):
 
     def stat(self):
         """Handle operations of same name"""
-        #self.logger.debug("SFTPHandle stat on %s" % getattr(self, "path",
+        # self.logger.debug("SFTPHandle stat on %s" % getattr(self, "path",
         #                                                    "unknown"))
         active = getattr(self, 'active')
         file_obj = getattr(self, active)
@@ -134,7 +134,7 @@ class SFTPHandle(paramiko.SFTPHandle):
     def chattr(self, attr):
         """Handle operations of same name"""
         path = getattr(self, "path", "unknown")
-        #self.logger.debug("SFTPHandle chattr %s on path %s" % \
+        # self.logger.debug("SFTPHandle chattr %s on path %s" % \
         #                  (repr(attr), path))
         return self.sftpserver._chattr(path, attr, self)
 
@@ -203,7 +203,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # Either of user, job and share keys may have changed
             daemon_conf = self.conf
             changed_users, changed_jobs = [], []
-            changed_shares , changed_jupyter_mounts = [], []
+            changed_shares, changed_jupyter_mounts = [], []
             if possible_user_id(configuration, username):
                 daemon_conf, changed_users = refresh_user_creds(configuration,
                                                                 'sftp',
@@ -212,11 +212,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 daemon_conf, changed_jobs = refresh_job_creds(
                     configuration, 'sftp', username)
             if configuration.site_enable_sharelinks and \
-                   possible_sharelink_id(configuration, username):
+                    possible_sharelink_id(configuration, username):
                 daemon_conf, changed_shares = refresh_share_creds(
                     configuration, 'sftp', username)
             if configuration.site_enable_jupyter and \
-                   possible_jupyter_mount_id(configuration, username):
+                    possible_jupyter_mount_id(configuration, username):
                 daemon_conf, changed_jupyter_mounts = refresh_jupyter_creds(
                     configuration, 'sftp', username)
             # Now update login map for any changed usernames
@@ -249,7 +249,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                                 sftp_path.lstrip(os.sep)))
         reply = get_fs_path(configuration, abs_path, self.root,
                             self.chroot_exceptions)
-        #self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
+        # self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
         #                                                     reply))
         return reply
 
@@ -258,7 +258,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("strip_root: %s" % sftp_path)
         reply = strip_root(configuration, sftp_path, self.root,
                            self.chroot_exceptions)
-        #self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
+        # self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
         #                                                     reply))
         return reply
 
@@ -267,9 +267,9 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("acceptable_chmod: %s" % sftp_path)
         reply = acceptable_chmod(sftp_path, mode, self.chmod_exceptions)
         if not reply:
-            self.logger.warning("acceptable_chmod failed: %s %s %s" % \
+            self.logger.warning("acceptable_chmod failed: %s %s %s" %
                                 (sftp_path, mode, self.chmod_exceptions))
-        #self.logger.debug("acceptable_chmod returns: %s :: %s" % \
+        # self.logger.debug("acceptable_chmod returns: %s :: %s" % \
         #                      (sftp_path, reply))
         return reply
 
@@ -284,12 +284,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('chattr %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
-            self.logger.warning("chattr on missing path %s :: %s" % \
+            self.logger.warning("chattr on missing path %s :: %s" %
                                 (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         # TODO: let non-modifying requests through here?
         if not check_write_access(real_path):
-            self.logger.warning('chattr on read-only path %s :: %s' % \
+            self.logger.warning('chattr on read-only path %s :: %s' %
                                 (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         if sftphandle is not None:
@@ -301,27 +301,27 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # silently ignore them otherwise. It turns out to have caused problems
         # if we rejected those other attribute changes in the past but it may
         # not be a problem anymore. If it ain't broken...
-        self.logger.info("chattr %s for path %s :: %s" % \
-                                (repr(attr), path, real_path))
+        self.logger.info("chattr %s for path %s :: %s" %
+                         (repr(attr), path, real_path))
         ignored = True
         if getattr(attr, 'st_mode', None) is not None and attr.st_mode > 0:
             #self.logger.debug('_chattr st_mode: %s' % attr.st_mode)
             ignored = False
-            #self.logger.debug("chattr %s forwarding for path %s :: %s" % \
+            # self.logger.debug("chattr %s forwarding for path %s :: %s" % \
             #                    (repr(attr), path, real_path))
             return self._chmod(path, attr.st_mode, sftphandle)
         if getattr(attr, 'st_atime', None) is not None or \
-                 getattr(attr, 'st_mtime', None) is not None:
+                getattr(attr, 'st_mtime', None) is not None:
             ignored = False
             change_atime = getattr(attr, 'st_atime',
                                    os.path.getatime(real_path))
             change_mtime = getattr(attr, 'st_mtime',
                                    os.path.getmtime(real_path))
-            #self.logger.debug('_chattr st_atime: %s, st_mtime: %s' % \
+            # self.logger.debug('_chattr st_atime: %s, st_mtime: %s' % \
             #                    (change_atime, change_mtime))
             os.utime(real_path, (change_atime, change_mtime))
-            self.logger.info("changed times %s %s for path %s :: %s" % \
-                                (change_atime, change_mtime, path, real_path))
+            self.logger.info("changed times %s %s for path %s :: %s" %
+                             (change_atime, change_mtime, path, real_path))
         if getattr(attr, 'st_size', None) is not None:
             #self.logger.debug('_chattr st_size: %s' % str(attr.st_size))
             ignored = False
@@ -332,14 +332,14 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                     os.ftruncate(tmp_fd.fileno(), attr.st_size)
                     tmp_fd.close()
                 except Exception, exc:
-                    self.logger.error("truncate %s to %s failed: %s" % \
+                    self.logger.error("truncate %s to %s failed: %s" %
                                       (real_path, attr.st_size, exc))
             else:
                 os.ftruncate(file_obj.fileno(), attr.st_size)
-            self.logger.info("truncated file: %s to size: %s" % \
+            self.logger.info("truncated file: %s to size: %s" %
                              (real_path, attr.st_size))
         if ignored:
-            self.logger.warning("chattr %s ignored on path %s :: %s" % \
+            self.logger.warning("chattr %s ignored on path %s :: %s" %
                                 (repr(attr), path, real_path))
         return paramiko.SFTP_OK
 
@@ -358,7 +358,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                                                   real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         if not check_write_access(real_path):
-            self.logger.warning('chmod on read-only path %s :: %s' % \
+            self.logger.warning('chmod on read-only path %s :: %s' %
                                 (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         if sftphandle is not None:
@@ -373,7 +373,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 new_mode = (mode & 0775) | 0750
             else:
                 new_mode = (mode & 0775) | 0640
-            self.logger.debug("chmod %s (%s) without damage on %s :: %s" % \
+            self.logger.debug("chmod %s (%s) without damage on %s :: %s" %
                               (new_mode, mode, path, real_path))
             try:
                 if file_obj is None:
@@ -381,7 +381,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 else:
                     os.fchmod(file_obj.fileno(), new_mode)
             except Exception, err:
-                self.logger.error("chmod %s (%s) failed on path %s :: %s %s" % \
+                self.logger.error("chmod %s (%s) failed on path %s :: %s %s" %
                                   (new_mode, mode, path, real_path, err))
                 return paramiko.SFTP_PERMISSION_DENIED
             return paramiko.SFTP_OK
@@ -401,15 +401,15 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except ValueError, err:
             self.logger.warning('open %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
-        #self.logger.debug("open on %s :: %s (%s %s)" % \
+        # self.logger.debug("open on %s :: %s (%s %s)" % \
         #                  (path, real_path, repr(flags), repr(attr)))
         if not (flags & os.O_CREAT) and not os.path.exists(real_path):
-            self.logger.error("open existing file on missing path %s :: %s" % \
+            self.logger.error("open existing file on missing path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         if (flags & (os.O_CREAT | os.O_RDWR | os.O_WRONLY | os.O_APPEND | os.O_TRUNC)) \
-               and not check_write_access(real_path, parent_dir=True):
-            self.logger.error("open for modify on read-only path %s :: %s" % \
+                and not check_write_access(real_path, parent_dir=True):
+            self.logger.error("open for modify on read-only path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         handle = SFTPHandle(flags, sftpserver=self)
@@ -422,10 +422,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             fake = os.open(real_path, flags, 0644)
             os.close(fake)
             # Now fake our own chattr to set any requested mode and times
-            self.logger.debug("fake chattr on %s :: %s (%s %s)" % \
+            self.logger.debug("fake chattr on %s :: %s (%s %s)" %
                               (path, real_path, repr(flags), repr(attr)))
             self.chattr(path, attr)
-            #self.logger.debug("chattr done on %s :: %s (%s %s)" % \
+            # self.logger.debug("chattr done on %s :: %s (%s %s)" % \
             #                  (path, real_path, repr(flags), repr(attr)))
             mode = flags_to_mode(flags)
             if flags == os.O_RDONLY:
@@ -445,11 +445,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             setattr(handle, 'readfile', readfile)
             setattr(handle, 'writefile', writefile)
             setattr(handle, 'active', active)
-            #self.logger.debug("open done %s :: %s (%s %s)" % \
+            # self.logger.debug("open done %s :: %s (%s %s)" % \
             #                  (path, real_path, str(handle), mode))
             return handle
         except Exception, err:
-            self.logger.error("open on %s :: %s (%s) failed: %s" % \
+            self.logger.error("open on %s :: %s (%s) failed: %s" %
                               (path, real_path, mode, err))
             return paramiko.SFTP_FAILURE
 
@@ -465,13 +465,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("list_folder %s :: %s" % (path, real_path))
         reply = []
         if not os.path.exists(real_path):
-            self.logger.warning("list_folder on missing path %s :: %s" % \
+            self.logger.warning("list_folder on missing path %s :: %s" %
                                 (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
             files = os.listdir(real_path)
         except Exception, err:
-            self.logger.error("list_folder on %s :: %s failed: %s" % \
+            self.logger.error("list_folder on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
         for filename in files:
@@ -483,7 +483,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 reply.append(paramiko.SFTPAttributes.from_stat(
                     os.stat(full_name), self._strip_root(filename)))
             except Exception, err:
-                self.logger.warning("list_folder %s: stat on %s failed: %s" % \
+                self.logger.warning("list_folder %s: stat on %s failed: %s" %
                                     (path, full_name, err))
         #self.logger.debug("list_folder %s reply %s" % (path, reply))
         return reply
@@ -501,13 +501,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # for consistency with lstat
         if not os.path.exists(real_path):
             # It's common to check file existence with stat so don't warn
-            self.logger.debug("stat on missing path %s :: %s" % \
+            self.logger.debug("stat on missing path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
             return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
         except Exception, err:
-            self.logger.error("stat on %s :: %s failed: %s" % \
+            self.logger.error("stat on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
 
@@ -523,14 +523,14 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("lstat %s :: %s" % (path, real_path))
         if not os.path.lexists(real_path):
             # It's common to check file existence with stat so no warning here
-            self.logger.debug("lstat on missing path %s :: %s" % \
+            self.logger.debug("lstat on missing path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         #self.logger.debug('return lstat %s' % path)
         try:
             return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
         except Exception, err:
-            self.logger.error("lstat on %s :: %s failed: %s" % \
+            self.logger.error("lstat on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
 
@@ -544,14 +544,14 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('remove %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not check_write_access(real_path):
-            self.logger.warning('remove on read-only path %s :: %s' % \
+            self.logger.warning('remove on read-only path %s :: %s' %
                                 (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         #self.logger.debug("remove %s :: %s" % (path, real_path))
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
-            self.logger.error("remove rejected on link path %s :: %s" % \
-                            (path, real_path))
+            self.logger.error("remove rejected on link path %s :: %s" %
+                              (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.error("remove on missing path %s :: %s" % (path,
@@ -562,7 +562,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.info("removed %s :: %s" % (path, real_path))
             return paramiko.SFTP_OK
         except Exception, err:
-            self.logger.error("remove on %s :: %s failed: %s" % \
+            self.logger.error("remove on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
 
@@ -579,19 +579,19 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_oldpath):
             self.logger.error("rename on link src %s :: %s" % (oldpath,
-                                                        real_oldpath))
+                                                               real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_oldpath):
-            self.logger.error("rename on missing path %s :: %s" % \
+            self.logger.error("rename on missing path %s :: %s" %
                               (oldpath, real_oldpath))
             return paramiko.SFTP_NO_SUCH_FILE
         if not check_write_access(real_oldpath):
-            self.logger.warning('move on read-only old path %s :: %s' % \
+            self.logger.warning('move on read-only old path %s :: %s' %
                                 (oldpath, real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
         real_newpath = self._get_fs_path(newpath)
         if not check_write_access(real_newpath, parent_dir=True):
-            self.logger.warning('move on read-only new path %s :: %s' % \
+            self.logger.warning('move on read-only new path %s :: %s' %
                                 (newpath, real_newpath))
             return paramiko.SFTP_PERMISSION_DENIED
         try:
@@ -603,7 +603,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                                                real_newpath))
             return paramiko.SFTP_OK
         except Exception, err:
-            self.logger.error("rename on %s :: %s failed: %s" % \
+            self.logger.error("rename on %s :: %s failed: %s" %
                               (real_oldpath, real_newpath, err))
             return paramiko.SFTP_FAILURE
 
@@ -617,11 +617,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('mkdir %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if os.path.isdir(real_path):
-            self.logger.warning("mkdir on existing directory %s :: %s" % \
+            self.logger.warning("mkdir on existing directory %s :: %s" %
                                 (path, real_path))
             return paramiko.SFTP_FAILURE
         if not check_write_access(real_path, parent_dir=True):
-            self.logger.warning('mkdir on read-only path %s :: %s' % \
+            self.logger.warning('mkdir on read-only path %s :: %s' %
                                 (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         try:
@@ -630,7 +630,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.info("made dir %s :: %s" % (path, real_path))
             return paramiko.SFTP_OK
         except Exception, err:
-            self.logger.error("mkdir on %s :: %s failed: %s" % \
+            self.logger.error("mkdir on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
 
@@ -645,15 +645,15 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             return paramiko.SFTP_PERMISSION_DENIED
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
-            self.logger.error("rmdir rejected on link path %s :: %s" % \
-                            (path, real_path))
+            self.logger.error("rmdir rejected on link path %s :: %s" %
+                              (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.warning("rmdir on missing path %s :: %s" % (path,
                                                                     real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         if not check_write_access(real_path):
-            self.logger.warning('rmdir on read-only path %s :: %s' % \
+            self.logger.warning('rmdir on read-only path %s :: %s' %
                                 (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         #self.logger.debug("rmdir on path %s :: %s" % (path, real_path))
@@ -662,7 +662,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.info("removed dir %s :: %s" % (path, real_path))
             return paramiko.SFTP_OK
         except Exception, err:
-            self.logger.error("rmdir on %s :: %s failed: %s" % \
+            self.logger.error("rmdir on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
 
@@ -684,14 +684,14 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('readlink %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
-            self.logger.error("readlink on missing path %s :: %s" % \
+            self.logger.error("readlink on missing path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
             return self._strip_root(os.readlink(path))
         except Exception, err:
-            self.logger.warning("readlink on %s :: %s failed: %s" % \
-                              (path, real_path, err))
+            self.logger.warning("readlink on %s :: %s failed: %s" %
+                                (path, real_path, err))
             return paramiko.SFTP_FAILURE
 
     def symlink(self, target_path, path):
@@ -754,7 +754,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
             daemon_conf, changed_users = refresh_user_creds(configuration,
                                                             'sftp', username)
         if configuration.site_enable_sharelinks and \
-               possible_sharelink_id(configuration, username):
+                possible_sharelink_id(configuration, username):
             daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                               'sftp', username)
         # Now update login map for any changed usernames
@@ -763,6 +763,12 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
         hash_cache = daemon_conf['hash_cache']
         offered = password
+        # Only sharelinks should be excluded from strict password policy
+        if configuration.site_enable_sharelinks and \
+                possible_sharelink_id(configuration, username):
+            strict_policy = False
+        else:
+            strict_policy = True
         if hit_rate_limit(configuration, "sftp-pw", self.client_addr[0],
                           username):
             logger.warning("Rate limiting login from %s" % self.client_addr[0])
@@ -774,14 +780,15 @@ class SimpleSSHServer(paramiko.ServerInterface):
                     if entry.ip_addr is not None and \
                        entry.ip_addr != self.client_addr[0]:
                         self.logger.warning(
-                            "ignore login as %s with wrong IP: %s vs %s" % \
+                            "ignore login as %s with wrong IP: %s vs %s" %
                             (username, entry.ip_addr, self.client_addr[0]))
                         continue
 
                     allowed = entry.password
                     #self.logger.debug("Password check for %s" % username)
                     if check_password_hash(configuration, 'sftp', username,
-                                           offered, allowed, hash_cache):
+                                           offered, allowed, hash_cache,
+                                           strict_policy):
                         self.logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "sftp-pw",
@@ -815,11 +822,11 @@ class SimpleSSHServer(paramiko.ServerInterface):
             daemon_conf, changed_jobs = refresh_job_creds(configuration,
                                                           'sftp', username)
         if configuration.site_enable_sharelinks and \
-               possible_sharelink_id(configuration, username):
+                possible_sharelink_id(configuration, username):
             daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                               'sftp', username)
         if configuration.site_enable_jupyter and \
-               possible_jupyter_mount_id(configuration, username):
+                possible_jupyter_mount_id(configuration, username):
             daemon_conf, changed_jupyter_mounts = refresh_jupyter_creds(
                 configuration, 'sftp', username)
 
@@ -837,9 +844,9 @@ class SimpleSSHServer(paramiko.ServerInterface):
             for entry in entries:
                 if entry.public_key is not None:
                     if entry.ip_addr is not None and \
-                           entry.ip_addr != self.client_addr[0]:
+                            entry.ip_addr != self.client_addr[0]:
                         self.logger.warning(
-                            "ignore login as %s with wrong IP: %s vs %s" % \
+                            "ignore login as %s with wrong IP: %s vs %s" %
                             (username, entry.ip_addr, self.client_addr[0]))
                         continue
 
@@ -939,7 +946,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     # trade-off but OpenSSH does re-keying even less frequently.
     # Please note that some weaker ciphers still cap re-key limit below the
     # value we set here and in the client.
-    logger.debug("Double default re-keying sizes %d bytes / %d packets" % \
+    logger.debug("Double default re-keying sizes %d bytes / %d packets" %
                  (transport.packetizer.REKEY_BYTES,
                   transport.packetizer.REKEY_PACKETS))
     # Bump re-keying from 512MB to 2GB to reduce large transfer slow-downs
@@ -950,7 +957,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     # Bump re-keying packet counts too to make sure it doesn't override size
     transport.packetizer.REKEY_PACKETS *= rekey_scale
     transport.packetizer.REKEY_PACKETS_OVERFLOW_MAX *= rekey_scale
-    logger.info("Using re-keying sizes %d bytes / %d packets" % \
+    logger.info("Using re-keying sizes %d bytes / %d packets" %
                 (transport.packetizer.REKEY_BYTES,
                  transport.packetizer.REKEY_PACKETS))
 
@@ -983,7 +990,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         transport.start_server(server=server)
         channel = transport.accept(conf['auth_timeout'])
     except Exception, err:
-        logger.warning('client negotiation errors for %s: %s' % \
+        logger.warning('client negotiation errors for %s: %s' %
                        (addr, err))
 
     username = server.get_authenticated_user()
@@ -991,16 +998,16 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     # Throttle excessive concurrent active sessions from same user
     active_count = active_sessions(configuration, 'sftp', username)
     if max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
-        logger.warning("Refusing additional open sessions for %s (%d)" % \
+        logger.warning("Refusing additional open sessions for %s (%d)" %
                        (username, active_count))
         print "Too many open sessions for %s - refusing" % username
-        # Try to throttle attempts from misbehaving client 
-        logger.info("throttling on refused login for %s (%d)" % \
+        # Try to throttle attempts from misbehaving client
+        logger.info("throttling on refused login for %s (%d)" %
                     (username, active_count))
         time.sleep(active_count * 5 + 60)
         username = None
     else:
-        logger.info("Proceed with login for %s with %d active sessions" % \
+        logger.info("Proceed with login for %s with %d active sessions" %
                     (username, active_count))
 
     if username is None:
@@ -1032,7 +1039,8 @@ def start_service(configuration):
     """Service daemon"""
     daemon_conf = configuration.daemon_conf
     window_size = daemon_conf.get('window_size', DEFAULT_WINDOW_SIZE)
-    max_packet_size = daemon_conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
+    max_packet_size = daemon_conf.get(
+        'max_packet_size', DEFAULT_MAX_PACKET_SIZE)
     server_socket = None
     try:
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1048,7 +1056,7 @@ def start_service(configuration):
             server_socket.close()
         sys.exit(1)
 
-    logger.info("accept connections: window_size %d / max_packet_size %d" % \
+    logger.info("accept connections: window_size %d / max_packet_size %d" %
                 (window_size, max_packet_size))
 
     min_expire_delay = 300
@@ -1056,7 +1064,7 @@ def start_service(configuration):
     while True:
         client_tuple = None
         try:
-            logger.debug('accept with %d active sessions' % \
+            logger.debug('accept with %d active sessions' %
                          threading.active_count())
             client_tuple = server_socket.accept()
             # accept may return None or tuple with None part in corner cases
@@ -1068,10 +1076,10 @@ def start_service(configuration):
             server_socket.close()
             raise
         except Exception, err:
-            logger.warning('ignoring failed client connection for %s: %s' % \
+            logger.warning('ignoring failed client connection for %s: %s' %
                            (client_tuple, err))
             continue
-        logger.info("Handling new session from %s %s (%d active sessions)" % \
+        logger.info("Handling new session from %s %s (%d active sessions)" %
                     (client, addr, threading.active_count()))
         worker = threading.Thread(target=accept_client,
                                   args=[client, addr, daemon_conf['root_dir'],
@@ -1186,7 +1194,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'window_size': configuration.user_sftp_window_size,
         'max_packet_size': configuration.user_sftp_max_packet_size,
         'max_sftp_sessions': configuration.user_sftp_max_sessions,
-        }
+    }
     logger.info("Starting SFTP server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)

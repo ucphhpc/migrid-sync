@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -83,12 +83,12 @@ from shared.base import client_id_dir, cert_field_map
 from shared.conf import get_configuration_object
 from shared.defaults import user_db_filename
 from shared.griddaemons import refresh_user_creds, update_login_map, \
-     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-     penalize_rate_limit
+    login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+    penalize_rate_limit
 from shared.logger import daemon_logger, reopen_log
 from shared.safeinput import valid_distinguished_name, valid_password, \
-     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
-     valid_complex_url, InputException
+    valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
+    valid_complex_url, InputException
 from shared.tlsserver import hardened_ssl_context
 from shared.useradm import get_openid_user_dn, check_password_scramble
 from shared.validstring import possible_user_id
@@ -102,24 +102,29 @@ cert_field_names = cert_field_map.keys()
 cert_field_values = cert_field_map.values()
 cert_field_aliases = {}
 
+
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
     logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
     logger.info("reopened log after hangup signal")
-    
+
+
 def quoteattr(val):
     """Escape string for safe printing"""
     esc = cgi.escape(val, 1)
     return '"%s"' % (esc,)
 
+
 def valid_mode_name(arg):
     """Make sure only valid mode names are allowed"""
     valid_job_id(arg)
 
+
 def valid_cert_dir(arg):
     """Make sure only valid cert dir names are allowed"""
     valid_distinguished_name(arg, extra_chars='+_')
+
 
 def valid_cert_fields(arg):
     """Make sure only valid cert field names are allowed"""
@@ -127,17 +132,21 @@ def valid_cert_fields(arg):
     if [i for i in arg.split(',') if not i in cert_field_names]:
         invalid_argument(arg)
 
+
 def valid_identity_url(arg):
     """Make sure only valid url followed by cert dir names are allowed"""
     valid_distinguished_name(arg, extra_chars=':+_')
+
 
 def valid_session_hash(arg):
     """Make sure only valid session hashes are allowed"""
     valid_password(arg, extra_chars='=', max_length=512)
 
+
 def invalid_argument(arg):
     """Always raise exception to mark argument invalid"""
     raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
+
 
 def lookup_full_user(username):
     """Look up the full user identity for username consisting of e.g. just an
@@ -150,7 +159,7 @@ def lookup_full_user(username):
     is returned.
     """
     # print "DEBUG: lookup full user for %s" % username
-    
+
     login_url = os.path.join(configuration.user_mig_oid_provider, username)
     distinguished_name = get_openid_user_dn(configuration, login_url)
 
@@ -162,6 +171,7 @@ def lookup_full_user(username):
             return (url_friendly, entry.user_dict)
     return (username, {})
 
+
 def lookup_full_identity(username):
     """Look up the full identity for username consisting of e.g. just an email
     address.
@@ -172,7 +182,7 @@ def lookup_full_identity(username):
     original username is returned in unchanged form.
     """
     # print "DEBUG: lookup full ID for %s" % username
-    
+
     return lookup_full_user(username)[0]
 
 
@@ -228,7 +238,7 @@ class OpenIDHTTPServer(HTTPServer):
             cert_field_aliases[name] = []
             for target in [i for i in cert_field_names if name != i]:
                 if cert_field_map[name] == cert_field_map[target]:
-                    cert_field_aliases[name].append(target) 
+                    cert_field_aliases[name].append(target)
         # print "DEBUG: cert field aliases: %s" % cert_field_aliases
 
     def expire_volatile(self):
@@ -239,7 +249,7 @@ class OpenIDHTTPServer(HTTPServer):
             if self.scramble_cache:
                 self.scramble_cache.clear()
             logger.debug("Expired old rate limits and scramble cache")
-            
+
     def setOpenIDServer(self, oidserver):
         """Override openid attribute"""
         self.openid = oidserver
@@ -290,8 +300,8 @@ class ServerHandler(BaseHTTPRequestHandler):
         'openid.sreg.required': valid_cert_fields,
         'openid.sreg.optional': valid_ascii,
         'openid.sreg.policy_url': valid_base_url,
-        }
-    
+    }
+
     def __init__(self, *args, **kwargs):
         if configuration.daemon_conf['session_ttl'] > 0:
             self.session_ttl = configuration.daemon_conf['session_ttl']
@@ -322,7 +332,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                 # Let validation errors pass to general exception handler below
                 validate_helper(val)
                 self.query[key] = val
- 
+
             self.setUser()
 
             # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
@@ -456,7 +466,7 @@ Invalid '%s' input: %s
                 self.displayResponse(why)
                 return
 
-        logger.debug("handleAllow with last request %s from user %s" % \
+        logger.debug("handleAllow with last request %s from user %s" %
                      (request, self.user))
         # print "DEBUG: full query %s" % query
 
@@ -465,7 +475,7 @@ Invalid '%s' input: %s
         # manually add a yes here if so to avoid the else case.
         if not 'yes' in query and not 'no' in query:
             query['yes'] = 'yes'
-        
+
         if 'yes' in query:
             if 'login_as' in query:
                 self.user = self.query['login_as']
@@ -498,12 +508,12 @@ Invalid '%s' input: %s
 
             if not hit_rate_limit(configuration, "openid",
                                   self.client_address[0], self.user) and \
-                                  self.checkLogin(self.user, self.password):
+                    self.checkLogin(self.user, self.password):
                 logger.debug("handleAllow validated login %s" % identity)
                 trust_root = request.trust_root
                 if self.query.get('remember', 'no') == 'yes':
                     self.server.approved[(identity, trust_root)] = 'always'
-                
+
                 self.login_expire = int(time.time() + self.session_ttl)
                 logger.info("handleAllow approving login %s" % identity)
                 response = self.approved(request, identity)
@@ -525,12 +535,12 @@ Invalid '%s' input: %s
                                     failed_count)
                 # Login failed - return to refering page to let user try again
                 retry_url = self.headers.get('Referer')
-                # Add error message to display 
+                # Add error message to display
                 if retry_url.find('?') == -1:
                     retry_url += '?'
                 else:
                     retry_url += '&'
-                retry_url += 'err=loginfail' 
+                retry_url += 'err=loginfail'
                 self.redirect(retry_url)
                 return
         elif 'no' in query:
@@ -539,7 +549,6 @@ Invalid '%s' input: %s
             assert False, 'strange allow post.  %r' % (query,)
 
         self.displayResponse(response)
-
 
     def setUser(self):
         """Read any saved user value from cookie"""
@@ -598,7 +607,7 @@ Invalid '%s' input: %s
     def addSRegResponse(self, request, response):
         """SReg extended attributes handler"""
         if not self.user:
-            return 
+            return
         sreg_req = sreg.SRegRequest.fromOpenIDRequest(request)
 
         (username, user) = lookup_full_user(self.user)
@@ -606,13 +615,13 @@ Invalid '%s' input: %s
         if not user:
             logger.warning("addSRegResponse user lookup failed!")
             return
-        
+
         sreg_data = {}
         for field in cert_field_names:
             # Skip fields already set by alias
             if sreg_data.has_key(field):
                 continue
-            # Backends choke on empty fields 
+            # Backends choke on empty fields
             found = user.get(field, None)
             if found:
                 val = found
@@ -674,7 +683,7 @@ Invalid '%s' input: %s
             self.wfile.write(webresponse.body)
 
     def checkLogin(self, username, password):
-        """Check username and password stored in MiG user DB""" 
+        """Check username and password stored in MiG user DB"""
 
         # Only need to update users here
         changed_users = []
@@ -692,13 +701,14 @@ Invalid '%s' input: %s
         for entry in entries:
             allowed = entry.password
             if allowed is None or not password:
-                continue            
+                continue
             # print "DEBUG: Check password against allowed %s" % allowed
-            # NOTE: We refuse weak legacy passwords here
+            # NOTE: We always enforce password policy here to refuse weak
+            #       legacy passwords.
             if check_password_scramble(configuration, 'openid', username,
                                        password, allowed,
                                        configuration.site_password_salt,
-                                       self.server.scramble_cache):
+                                       self.server.scramble_cache, True):
                 logger.info("Correct password for user %s" % username)
                 self.user_dn = distinguished_name
                 self.user_dn_dir = client_id_dir(distinguished_name)
@@ -708,7 +718,7 @@ Invalid '%s' input: %s
                 logger.warning("Failed password check for user %s" % username)
         logger.error("Invalid login for user %s" % username)
         return False
-                
+
     def doLogin(self):
         """Login handler"""
         if 'submit' in self.query:
@@ -724,7 +734,7 @@ Invalid '%s' input: %s
                 self.password = None
             if not hit_rate_limit(configuration, "openid",
                                   self.client_address[0], self.user) and \
-                                  self.checkLogin(self.user, self.password):
+                    self.checkLogin(self.user, self.password):
                 if not self.query['success_to']:
                     self.query['success_to'] = '%s/id/' % self.server.base_url
                 update_rate_limit(configuration, "openid",
@@ -746,12 +756,12 @@ Invalid '%s' input: %s
                                     failed_count)
                 # Login failed - return to refering page to let user try again
                 retry_url = self.headers.get('Referer', self.server.base_url)
-                # Add error message to display 
+                # Add error message to display
                 if retry_url.find('?') == -1:
                     retry_url += '?'
                 else:
                     retry_url += '&'
-                retry_url += 'err=loginfail' 
+                retry_url += 'err=loginfail'
                 self.redirect(retry_url)
                 return
         elif 'cancel' in self.query:
@@ -794,10 +804,10 @@ Invalid '%s' input: %s
         else:
             logger.debug("sending %s user cookie with expire %s" % (self.user,
                                                                     expire))
-            self.send_header('Set-Cookie', 'user=%s;%s;secure;httponly' % \
+            self.send_header('Set-Cookie', 'user=%s;%s;secure;httponly' %
                              (self.user, expire))
             self.send_header('Set-Cookie',
-                             'session_expire=%s;%s;secure;httponly' % \
+                             'session_expire=%s;%s;secure;httponly' %
                              (session_expire, expire))
         # Set Content-Security-Policy: frame-ancestors to prevent clickjacking
         # as recommended by W3C and security scans.
@@ -821,7 +831,7 @@ Invalid '%s' input: %s
             ('http://www.openidenabled.com/',
              'An OpenID community Web site, home of this library'),
             ('http://www.openid.net/', 'the official OpenID Web site'),
-            ]
+        ]
 
         resource_markup = ''.join([term(url, text) for url, text in resources])
 
@@ -898,7 +908,7 @@ Invalid '%s' input: %s
         id_url_base = self.server.base_url+'id/'
         # XXX: This may break if there are any synonyms for id_url_base,
         # such as referring to it by IP address or a CNAME.
-        assert (request.identity.startswith(id_url_base) or 
+        assert (request.identity.startswith(id_url_base) or
                 request.idSelect()), repr((request.identity, id_url_base))
         expected_user = request.identity[len(id_url_base):]
 
@@ -909,7 +919,7 @@ Invalid '%s' input: %s
         else:
             err_msg = ''
 
-        if request.idSelect(): # We are being asked to select an ID
+        if request.idSelect():  # We are being asked to select an ID
             user_alias = configuration.user_openid_alias
 
             msg = '''\
@@ -928,7 +938,7 @@ Invalid '%s' input: %s
                 'alias_hint': alias_hint,
                 'forced_type': forced_type,
                 'err_msg': err_msg,
-                }
+            }
             form = '''\
             <div class="openidlogin">
             <form method="POST" action="/%(server_base)s/allow">
@@ -969,7 +979,7 @@ Invalid '%s' input: %s
                 'trust_root': request.trust_root,
                 'server_base': self.server.server_base,
                 'err_msg': err_msg,
-                }
+            }
             form = '''\
             <table>
               <tr><td>Identity:</td><td>%(identity)s</td></tr>
@@ -993,7 +1003,7 @@ Invalid '%s' input: %s
                 'expected_user': expected_user,
                 'user': self.user,
                 'err_msg': err_msg,
-                }
+            }
             msg = '''\
             <p>A site has asked for an identity belonging to
             %(expected_user)s, but you are logged in as %(user)s.  To
@@ -1006,7 +1016,7 @@ Invalid '%s' input: %s
                 'trust_root': request.trust_root,
                 'expected_user': expected_user,
                 'server_base': self.server.server_base,
-                }
+            }
             form = '''\
             <table>
               <tr><td>Identity:</td><td>%(identity)s</td></tr>
@@ -1033,7 +1043,7 @@ Invalid '%s' input: %s
     def showIdPage(self, path):
         """User info page provider"""
         link_tag = '<link rel="openid.server" href="%sopenidserver">' % \
-              self.server.base_url
+            self.server.base_url
         yadis_loc_tag = '<meta http-equiv="x-xrds-location" content="%s"/>' % \
             (self.server.base_url+'yadis/'+path[4:])
         disco_tags = link_tag + yadis_loc_tag
@@ -1049,7 +1059,7 @@ Invalid '%s' input: %s
                           cgi.escape(trust_root)
                     approved_trust_roots.append(trs)
         else:
-            logger.debug("Not disclosing trust roots for %s (active user %s)" \
+            logger.debug("Not disclosing trust roots for %s (active user %s)"
                          % (ident_user, self.user))
 
         if approved_trust_roots:
@@ -1064,7 +1074,6 @@ Invalid '%s' input: %s
         <p>This is a very basic identity page for %s.</p>
         %s
         ''' % (ident, msg))
-        
 
     def showYadis(self, user):
         """YADIS page provider"""
@@ -1090,8 +1099,8 @@ Invalid '%s' input: %s
 
   </XRD>
 </xrds:XRDS>
-"""%(discover.OPENID_2_0_TYPE, discover.OPENID_1_0_TYPE,
-     endpoint_url, user_url))
+""" % (discover.OPENID_2_0_TYPE, discover.OPENID_1_0_TYPE,
+            endpoint_url, user_url))
 
     def showServerYadis(self):
         """Server YADIS page provider"""
@@ -1114,7 +1123,7 @@ Invalid '%s' input: %s
 
   </XRD>
 </xrds:XRDS>
-"""%(discover.OPENID_IDP_2_0_TYPE, endpoint_url,))
+""" % (discover.OPENID_IDP_2_0_TYPE, endpoint_url,))
 
     def showMainPage(self):
         """Main page provider"""
@@ -1132,9 +1141,9 @@ Invalid '%s' input: %s
             <p>This server uses a cookie to remember who you are in
             order to simulate a standard Web user experience. You are
             not <a href='/%s/login'>logged in</a>.</p>""" % \
-            self.server.server_base
+                self.server.server_base
 
-        self.showPage(200, 'Main Page', head_extras = yadis_tag, msg=''' \
+        self.showPage(200, 'Main Page', head_extras=yadis_tag, msg=''' \
         <p>This is a simple OpenID server implemented using the <a
         href="http://openid.schtuff.com/">Python OpenID
         library</a>.</p>
@@ -1185,13 +1194,13 @@ Invalid '%s' input: %s
         else:
             user_link = '''logged in as <a href="/%s/id/%s">%s</a>.<br />
 <a href="/%s/logout?return_to=/%s/login">Log out</a>''' % \
-         (self.server.server_base, self.user, self.user,
-          self.server.server_base, self.server.server_base)
+                (self.server.server_base, self.user, self.user,
+                 self.server.server_base, self.server.server_base)
 
         body = ''
 
         if err is not None:
-            body +=  '''\
+            body += '''\
             <div class="error">
               %s
             </div>
@@ -1240,7 +1249,7 @@ Invalid '%s' input: %s
             'site_logo_center': logo_center,
             'credits_logo': creds_logo,
             'credits_text': configuration.site_credits_text,
-            }
+        }
 
         self.send_response(response_code)
         self.writeUserHeader()
@@ -1352,7 +1361,7 @@ def start_service(configuration):
                                        dhparams_path)
         httpserver.socket = ssl_ctx.wrap_socket(httpserver.socket,
                                                 server_side=True)
-        
+
     serve_msg = 'Server running at: %s' % httpserver.base_url
     logger.info(serve_msg)
     print serve_msg
@@ -1362,7 +1371,7 @@ def start_service(configuration):
         httpserver.handle_request()
         if last_expire + min_expire_delay < time.time():
             httpserver.expire_volatile()
-            
+
 
 if __name__ == '__main__':
     # Force no log init since we use separate logger
@@ -1382,7 +1391,7 @@ if __name__ == '__main__':
     # For masquerading
     show_address = configuration.user_openid_show_address
     show_port = configuration.user_openid_show_port
-    
+
     # Allow configuration overrides on command line
     nossl = False
     expandusername = False
@@ -1467,7 +1476,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'expandusername': expandusername,
         'show_address': show_address,
         'show_port': show_port,
-        }
+    }
     logger.info("Starting OpenID server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)

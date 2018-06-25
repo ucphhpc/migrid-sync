@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -94,9 +94,9 @@ from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
-     refresh_user_creds, refresh_share_creds, update_login_map, \
-     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-     penalize_rate_limit
+    refresh_user_creds, refresh_share_creds, update_login_map, \
+    login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
+    penalize_rate_limit
 from shared.tlsserver import hardened_openssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
@@ -106,12 +106,13 @@ from shared.vgrid import vgrid_restrict_write_support
 
 configuration, logger = None, None
 
+
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
     logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
     logger.info("reopened log after hangup signal")
-    
+
 
 class MiGTLSFTPHandler(TLS_FTPHandler):
     """Hardened version of TLS_FTPHandler to fix
@@ -125,7 +126,7 @@ class MiGTLSFTPHandler(TLS_FTPHandler):
         # NOTE: fix for https://github.com/giampaolo/pyftpdlib/issues/315
         print "DEBUG: reset in buffer on switch to secure channel"
         print "I.e. truncate '%s'" % self.ac_in_buffer
-        self.ac_in_buffer = ''            
+        self.ac_in_buffer = ''
         return res
 
 
@@ -138,7 +139,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
     """
 
     authenticated_user = None
-    
+
     min_expire_delay = 120
     last_expire = time.time()
 
@@ -168,7 +169,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
                 continue
             # We prefer last entry with password but fall back to any entry
             # to assure at least a hit
-            user_obj = (user_obj_list + [i for i in user_obj_list \
+            user_obj = (user_obj_list + [i for i in user_obj_list
                                          if i.password is not None])[-1]
             home_path = os.path.join(daemon_conf['root_dir'], user_obj.home)
             # Expand symlinked homes for aliases
@@ -199,21 +200,27 @@ class MiGUserAuthorizer(DummyAuthorizer):
         logger.debug("Authenticating %s" % username)
 
         # We don't have a handle_request for server so expire here instead
-        
+
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
             expire_rate_limit(configuration, "ftps")
 
         logger.info("refresh user %s" % username)
         self._update_logins(configuration, username)
-        
+
         daemon_conf = configuration.daemon_conf
         hash_cache = daemon_conf['hash_cache']
         offered = password
+        # Only sharelinks should be excluded from strict password policy
+        if configuration.site_enable_sharelinks and \
+                possible_sharelink_id(configuration, username):
+            strict_policy = False
+        else:
+            strict_policy = True
         if hit_rate_limit(configuration, "ftps", handler.remote_ip, username):
             logger.warning("Rate limiting login from %s" % handler.remote_ip)
         elif 'password' in configuration.user_ftps_auth and \
-               self.has_user(username):
+                self.has_user(username):
             # list of User login objects for username
             entries = [self.user_table[username]]
             for entry in entries:
@@ -221,7 +228,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
                     allowed = entry['pwd']
                     logger.debug("Password check for %s" % username)
                     if check_password_hash(configuration, 'ftps', username,
-                                           offered, allowed, hash_cache):
+                                           offered, allowed, hash_cache,
+                                           strict_policy):
                         logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         update_rate_limit(configuration, "ftps",
@@ -230,7 +238,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
                         return True
         else:
             logger.warning("no such user %s" % username)
-                        
+
         err_msg = "Password authentication failed for %s" % username
         logger.error(err_msg)
         print err_msg
@@ -251,17 +259,17 @@ class MiGRestrictedFilesystem(AbstractedFS):
     """
 
     chmod_exceptions = None
-    
+
     # Use shared daemon fs helper functions
-    
+
     def _acceptable_chmod(self, ftps_path, mode):
         """Wrap helper"""
         #logger.debug("acceptable_chmod: %s" % ftps_path)
         reply = acceptable_chmod(ftps_path, mode, self.chmod_exceptions)
         if not reply:
-            logger.warning("acceptable_chmod failed: %s %s %s" % \
-                                (ftps_path, mode, self.chmod_exceptions))
-        #logger.debug("acceptable_chmod returns: %s :: %s" % \
+            logger.warning("acceptable_chmod failed: %s %s %s" %
+                           (ftps_path, mode, self.chmod_exceptions))
+        # logger.debug("acceptable_chmod returns: %s :: %s" % \
         #                      (ftps_path, reply))
         return reply
 
@@ -299,20 +307,20 @@ class MiGRestrictedFilesystem(AbstractedFS):
             new_mode = (mode & 0775) | 0750
         else:
             new_mode = (mode & 0775) | 0640
-        logger.info("chmod %s (%s) without damage on %s :: %s" % \
+        logger.info("chmod %s (%s) without damage on %s :: %s" %
                     (new_mode, mode, path, real_path))
         return AbstractedFS.chmod(self, path, new_mode)
 
     def listdir(self, path):
         """List the content of a directory with MiG restrictions"""
-        return [i for i in AbstractedFS.listdir(self, path) if not \
+        return [i for i in AbstractedFS.listdir(self, path) if not
                 invisible_path(i)]
 
     ### Force symlinks to look like real dirs to avoid client confusion ###
     def lstat(self, path):
         """Modified to always return real stat to hide symlinks"""
         return self.stat(path)
-        
+
     def readlink(self, path):
         """Modified to always return just path to hide symlinks"""
         return path
@@ -329,6 +337,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
         except:
             return False
 
+
 def update_users(configuration, login_map, username):
     """Update login_map with username/password pairs for username and any
     aliases.
@@ -339,12 +348,13 @@ def update_users(configuration, login_map, username):
         daemon_conf, changed_users = refresh_user_creds(configuration, 'ftps',
                                                         username)
     if configuration.site_enable_sharelinks and \
-           possible_sharelink_id(configuration, username):
+            possible_sharelink_id(configuration, username):
         daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                           'ftps', username)
     update_login_map(daemon_conf, changed_users, changed_jobs=[],
                      changed_shares=changed_shares)
     return changed_users + changed_shares
+
 
 def start_service(conf):
     """Main server"""
@@ -373,15 +383,16 @@ def start_service(conf):
             handler.ssl_context = ssl_ctx
         else:
             logger.warning("Unable to enforce explicit strong TLS connections")
-            logger.warning("Upgrade to a recent pyftpdlib for maximum security")
-            
+            logger.warning(
+                "Upgrade to a recent pyftpdlib for maximum security")
+
     # NOTE: We use the threaded FTP server to prevent slow requests from
     # blocking the flow of all other clients. Auth still takes place in main
     # process thread so we don't need locking on user creds refresh.
     handler.authorizer = authorizer
     handler.abstracted_fs = MiGRestrictedFilesystem
     # TODO: masqueraded ftps fails from fireftp - maybe this would help?
-    #if configuration.user_ftps_show_address != configuration.user_ftps_address:
+    # if configuration.user_ftps_show_address != configuration.user_ftps_address:
     #    handler.masquerade_address = socket.gethostbyname(
     #        configuration.user_ftps_show_address)
     handler.passive_ports = conf.user_ftps_pasv_ports
@@ -389,7 +400,7 @@ def start_service(conf):
                                 conf.user_ftps_ctrl_port),
                                handler)
     server.serve_forever()
-        
+
 
 if __name__ == '__main__':
     # Force no log init since we use separate logger
@@ -456,7 +467,7 @@ unless it is available in mig/server/MiGserver.conf
         'time_stamp': 0,
         'logger': logger,
         'nossl': nossl,
-        }
+    }
     logger.info("Starting FTPS server")
     info_msg = "Listening on address '%s' and port %d" % (address, ctrl_port)
     logger.info(info_msg)
