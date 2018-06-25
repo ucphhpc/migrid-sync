@@ -36,7 +36,8 @@ Optional file synchronization, WSGI interface, OpenID login, instant
 messaging service, efficient file access services, event handler
 service, JSONRPC access, background data transfer service, efficient
 sftp, spell checking, interactive computing, VGrid Wiki / SCM / tracker, 
-Jupyter and PDF generation features rely on the following additional software:
+Jupyter, password strength testing and PDF generation features rely on
+the following additional software:
 -Seafile server, community edition (https://www.seafile.com/en/download/)
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
 -Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
@@ -50,6 +51,7 @@ Jupyter and PDF generation features rely on the following additional software:
 -Python scandir module (https://pypi.python.org/pypi/scandir/)
 -Python jsonrpclib module (https://pypi.python.org/pypi/jsonrpclib/)
 -Python requests module (https://pypi.python.org/pypi/requests/)
+-Python cracklib module (https://pypi.org/project/cracklib/)
 -Python PDFKit module (https://github.com/Martin-Rehr/python-pdfkit/)
 -Python xvfb module (https://pypi.python.org/pypi/xvfbwrapper/)
 -LFTP (http://lftp.yar.ru/)
@@ -72,8 +74,8 @@ sudo aptitude install apache2 openssh-client python python-pip \
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      python-irclib python-paramiko python-enchant python-jsonrpclib \
-     python-requests openssh-server libpam0g-dev mercurial trac \
-     trac-mercurial lftp rsync
+     python-requests python-cracklib openssh-server libpam0g-dev mercurial \
+     trac trac-mercurial lftp rsync
 
 Apache comes with a number of modules included, so it is usually not
 necessary to explicitly install e.g. mod-ssl, mod-proxy and mod-rewrite.
