@@ -124,6 +124,30 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage">2018/06/25: Password tightening on WebDAVS/SFTP/FTPS</h4>
+<p>
+Due to a rise in the number of automated password guessing attempts
+we've chosen to strengthen the password requirements for our services
+with password-login. This means that since yesterday we enforce not only
+the standard UCPH password requirements of eight characters from at least
+three character classes but also a number of additional checks for
+dictionary words and simple patterns.<br/>
+The rules were immediately enforced when setting or changing password
+and will also be enforced for existing passwords after the planned
+service restart this afternoon.<br/>
+In case you can no longer access ERDA through WebDAVS/SFTP/FTPS, please
+go to your ERDA Settings page and try to set the password again for the
+particular service. If it is refused you need to come up with a new
+stronger password.
+</p> 
+<h4 class="staticpage">2018/06/21: Rate limit SFTP logins</h4>
+<p>
+Due to a rise in the number of automated password guessing attempts
+we've implemented further rate limits on apparent attackers at our
+SFTP service. This means that too many failed login attempts result in
+automatic temporary banning of the IP address for a while. Please
+contact us if you run into problems with your connections and transfers.
+</p> 
 <h4 class="staticpage">2018/06/20: Planned Maintenance - Expected Downtime</h4>
 <p>
 We've upgraded the backend storage software to a more recent version in
@@ -347,6 +371,28 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage">25/06-2018: Strengere password-krav på WebDAVS/SFTP/FTPS</h4>
+<p>
+I lyset af det stigende antal angreb som forsøger at knække passwords til
+vores WebDAVS/SFTP/FTSP-services, har vi yderligere strammet kravene til
+styrken af passwords. Udover de almindelige KU-krav om otte tegn fra
+mindst tre tegn-klasser har vi således indført hindring af passwords med
+almindelige ord eller simple fortløbende tegnsekvenser og møsntre.<br/>
+Stramningerne trådte i kraft med det samme for password-opsætning og
+-skift. De vil desuden blive håndhævet for eksisterende passwords efter
+den planlagte service-genstart i eftermiddag.<br/>
+Såfremt du ikke længere kan logge på de pågældende services kan du gå
+ind på din ERDA Settings side og prøve at sætte kodeordet igen. Hvis det
+afvises er du nødt til at finde på et nyt og stærkere kodeord.
+</p> 
+<h4 class="staticpage">21/06-2018: SFTP rate-limit</h4>
+<p>
+Vi har indført ydeligere automatiske værn mod det stigende antal
+automatiske forsøg på at gætte SFTP passwords. Det betyder i praksis at
+vi automatisk midlertidigt lukker for adgang fra IPer der udviser tegn
+på sådanne angreb. Kontakt os venligst hvis du oplever problemer med
+login eller overførsler på SFTP-servicen.
+</p> 
 <h4 class="staticpage">20/06-2018: Vedligehold og planlagt nedetid</h4>
 <p>
 Vi har opgraderet backend-lageret til en nyere version med en stribe
