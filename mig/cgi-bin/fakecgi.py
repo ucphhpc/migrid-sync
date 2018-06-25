@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fakecgi - fake a cgi request
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -71,7 +71,7 @@ if sys.argv[5:]:
 if sys.argv[6:]:
     remote_addr = sys.argv[6]
 if sys.argv[7:]:
-    auto_csrf = (sys.argv[7].lower() in ('yes', 'true')) 
+    auto_csrf = (sys.argv[7].lower() in ('yes', 'true'))
 
 run_as_user = distinguished_name_to_user(run_as_dn)
 
@@ -103,7 +103,7 @@ extra_environment = {
     'SSL_CLIENT_I_DN_O': 'IMADA',
     'SSL_CLIENT_I_DN_OU': 'MiGCA',
     'SSL_CLIENT_I_DN_CN': 'MiGCA',
-    }
+}
 
 extra_environment['SCRIPT_FILENAME'] = script
 extra_environment['QUERY_STRING'] = query
@@ -111,7 +111,7 @@ extra_environment['REQUEST_URI'] = '%s%s' % (script, query)
 extra_environment['SCRIPT_URL'] = script
 extra_environment['SCRIPT_NAME'] = script
 extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s'\
-     % script
+    % script
 
 if remote_user:
     extra_environment['REMOTE_USER'] = remote_user

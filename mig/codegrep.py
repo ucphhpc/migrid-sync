@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codegrep - a simple helper to locate strings in the project code.
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -48,9 +48,9 @@ py_code_files = [
     'vm-proxy/%s' % plain,
     'webserver/%s' % plain,
     'wsgi-bin/%s' % plain,
-    ]
+]
 py_code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
-               'putrespgid']]
+                                                   'putrespgid']]
 
 py_code_files += ['cgi-bin/%s' % name for name in [
     'listdir',
@@ -62,13 +62,13 @@ py_code_files += ['cgi-bin/%s' % name for name in [
     'stat',
     'walk',
     'getrespgid',
-    ]]
+]]
 sh_code_files = [
     'resource/frontend_script.sh',
     'resource/master_node_script.sh',
     'resource/leader_node_script.sh',
     'resource/dummy_node_script.sh',
-    ]
+]
 js_code_files = [
     'images/js/jquery.ajaxhelpers.js',
     'images/js/jquery.confirm.js',
@@ -79,7 +79,7 @@ js_code_files = [
     'images/js/preview-caman.js',
     'images/js/preview.js',
     'images/js/preview-paraview.js',
-    ]
+]
 code_files = py_code_files + sh_code_files + js_code_files
 
 if '__main__' == __name__:
@@ -87,7 +87,7 @@ if '__main__' == __name__:
         print 'Usage: %s PATTERN' % sys.argv[0]
         print 'Grep for PATTERN in all code files'
         sys.exit(1)
-    
+
     pattern = sys.argv[1]
     expanded_paths = []
     for code_path in code_files:

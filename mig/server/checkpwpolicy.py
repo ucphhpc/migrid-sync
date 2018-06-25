@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # checkpwpolicy - Check user database for password compliance with site policy
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,7 @@ import sys
 from shared.defaults import keyword_auto
 from shared.pwhash import assure_password_strength, unscramble_password
 from shared.useradm import init_user_adm, search_users, default_search, \
-     user_password_check, req_password_check
+    user_password_check, req_password_check
 
 
 def usage(name='checkpwpolicy.py'):
@@ -108,9 +108,12 @@ if '__main__' == __name__:
         else:
             print "Password policy errors:"
             for (uid, user_dict) in hits:
-                (configuration, errors) = user_password_check(uid, conf_path,
-                                                              db_path,
-                                                              verbose, policy)
+                if verbose:
+                    print "Checking %s" % uid
+                (configuration, err) = user_password_check(uid, conf_path,
+                                                           db_path, verbose,
+                                                           policy)
+                errors += err
     if errors:
         print '\n'.join(errors)
     elif verbose:
