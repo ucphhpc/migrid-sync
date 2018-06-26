@@ -31,14 +31,15 @@ import datetime
 
 import shared.returnvalues as returnvalues
 from shared.defaults import upload_tmp_dir, trash_linkname, csrf_field, \
-     freeze_flavors, keyword_final, keyword_pending, keyword_auto, \
-     public_archive_index
+    freeze_flavors, keyword_final, keyword_pending, keyword_auto, \
+    public_archive_index
 from shared.freezefunctions import get_frozen_archive
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     fancy_upload_js, fancy_upload_html, themed_styles
+    fancy_upload_js, fancy_upload_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
+
 
 def signature():
     """Signature of the main function"""
@@ -61,7 +62,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -70,7 +71,7 @@ def main(client_id, user_arguments_dict):
 
     if not flavor in freeze_flavors.keys():
         output_objects.append({'object_type': 'error_text', 'text':
-                           'Invalid freeze flavor: %s' % flavor})
+                               'Invalid freeze flavor: %s' % flavor})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     title = freeze_flavors[flavor]['adminfreeze_title']
@@ -92,10 +93,10 @@ Please contact the site admins %s if you think it should be enabled.
                                                         configuration,
                                                         checksum_list=[])
         if not load_status:
-            logger.error("%s: load failed for '%s': %s" % \
+            logger.error("%s: load failed for '%s': %s" %
                          (op_name, freeze_id, freeze_dict))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not read details for "%s"' % \
+                                   'Could not read details for "%s"' %
                                    freeze_id})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -105,21 +106,21 @@ Please contact the site admins %s if you think it should be enabled.
         flavor = freeze_dict.get('FLAVOR', 'freeze')
 
         if freeze_dict.get('STATE', keyword_final) != keyword_pending:
-            logger.error("%s: frozen archive %s attempted edited by %s: %s" % \
+            logger.error("%s: frozen archive %s attempted edited by %s: %s" %
                          (op_name, freeze_id, client_id, freeze_dict))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'You cannot edit frozen archive %s' % \
+                                   'You cannot edit frozen archive %s' %
                                    freeze_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        
+
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'flavor': flavor, 'form_method': form_method,
-                     'csrf_field': csrf_field, 'csrf_limit': csrf_limit}
+    fill_helpers = {'flavor': flavor, 'form_method': form_method,
+                    'csrf_field': csrf_field, 'csrf_limit': csrf_limit}
     target_op = 'uploadchunked'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
-    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})    
+    fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     lookup_map = {'freeze_id': 'ID', 'freeze_name': 'NAME',
                   'freeze_description': 'DESCRIPTION'}
     for (key, val) in lookup_map.items():
@@ -134,7 +135,7 @@ Please contact the site admins %s if you think it should be enabled.
                                                         csrf_token=csrf_token)
 
     # We need filechooser deps and dynamic addition of copy/upload fields
-    
+
     add_import += '''
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
@@ -287,7 +288,7 @@ the archive.
     elif flavor == 'phd':
         fill_helpers['freeze_name'] = fill_helpers.get('freeze_name', '')
         fill_helpers["archive_header"] = \
-                                       "Thesis and Associated Files to Archive"
+            "Thesis and Associated Files to Archive"
         fill_helpers["button_label"] = "Save and Preview"
         intro_text = """
 Please enter your PhD details below and select any files associated with your
@@ -310,7 +311,7 @@ Please select the files and folders to backup below.
 
     # Only warn here if default state is final and persistent
     if freeze_flavors[flavor]['states'][0] == keyword_final and \
-           flavor in configuration.site_permanent_freeze:
+            flavor in configuration.site_permanent_freeze:
         intro_text += """
 <p class='warn_message'>Note that frozen archives <em>cannot</em> be changed
 after final creation and then they can only be manually removed by management,
@@ -391,7 +392,7 @@ so please be careful when filling in the details.
 <input type='hidden' name='flavor' value='%(flavor)s' />
 <input type='hidden' name='freeze_id' value='%(freeze_id)s' />
 <input class='fillwidth padspace' type='text' name='freeze_name'
-    value='%(freeze_name)s' autofocus required pattern='[a-zA-Z0-9_.-]+'
+    value='%(freeze_name)s' autofocus required pattern='[a-zA-Z0-9_. -]+'
     title='unique name for the freeze archive. I.e. letters and digits separated only by underscores, periods and hyphens' />
 """
     if flavor != 'backup':
@@ -454,18 +455,18 @@ so please be careful when filling in the details.
 
     # TODO: consider in-lining showfreeze file table for direct modify instead
     #       probably requires more AJAX handling of actions.
-    
-    #for rel_path in frozen_files:
-    #    freeze_form += """%s<br/>""" % rel_path 
+
+    # for rel_path in frozen_files:
+    #    freeze_form += """%s<br/>""" % rel_path
 
     output_objects.append({'object_type': 'html_form', 'text': intro_text})
     output_objects.append({'object_type': 'html_form', 'text': files_form})
-    output_objects.append({'object_type': 'html_form', 'text': freeze_form % \
+    output_objects.append({'object_type': 'html_form', 'text': freeze_form %
                            fill_helpers})
 
     # Link to view if archive already exists
     if freeze_id != keyword_auto:
-        frozen_files = [i['name'] for i in freeze_dict.get('FILES', []) \
+        frozen_files = [i['name'] for i in freeze_dict.get('FILES', [])
                         if i['name'] != public_archive_index]
         # Info about contents and spacing before view button otherwise
         if frozen_files:
@@ -487,6 +488,6 @@ about including any of them.
             'title': 'View details about your %s archive' % flavor,
             'text': 'View details',
             'target': '_blank',
-            })
+        })
 
     return (output_objects, returnvalues.OK)

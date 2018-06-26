@@ -96,6 +96,7 @@ VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
 VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@%'
 VALID_BASE_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
 VALID_VGRID_NAME_CHARACTERS = VALID_BASE_VGRID_NAME_CHARACTERS + '/'
+VALID_ARCHIVE_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
     'THIS INPUT IS NOT VERIFIED: DO NOT EVER PRINT IT UNESCAPED! '
@@ -626,6 +627,21 @@ def valid_vgrid_name(
     __valid_contents(vgrid_name, valid_chars, min_length, max_length)
 
 
+def valid_archive_name(
+    archive_name,
+    min_length=1,
+    max_length=255,
+    extra_chars='',
+):
+    """Verify that supplied archive name, only contains characters that we
+    consider valid. Archive names are user provided names possibly with common
+    special characters.
+    """
+
+    valid_chars = VALID_ARCHIVE_NAME_CHARACTERS + extra_chars
+    __valid_contents(archive_name, valid_chars, min_length, max_length)
+
+
 def valid_path_pattern(
     pattern,
     min_length=1,
@@ -751,11 +767,13 @@ def is_valid_simple_email(addr):
     except InputException:
         return False
 
+
 def valid_gdp_workzone_id(workzone_id):
     """Verify that supplied workzone_id only contains characters that
     we consider valid in workzone id's.
     """
     __valid_contents(workzone_id, digits + '-/')
+
 
 def filter_ascii(contents):
     """Filter supplied contents to only contain ascii characters"""
@@ -1120,6 +1138,8 @@ def guess_type(name):
         for key in ('vgrid_name', 'rate_limit', 'vgrids_allow_im',
                     'vgrids_allow_email', 'enforcelimits', ):
             __type_map[key] = valid_vgrid_name
+        for key in ('freeze_name', ):
+            __type_map[key] = valid_archive_name
         for key in ('jobname', ):
             __type_map[key] = valid_job_name
         for key in ('job_id', 'req_id', 'resource', 'search', ):
@@ -1132,7 +1152,6 @@ def guess_type(name):
             'lang',
             'machine_name',
             'freeze_id',
-            'freeze_name',
             'rule_id',
             'transfer_id',
             'key_id',
@@ -1342,7 +1361,7 @@ def guess_type(name):
         for key in ('volume_slice_filepattern', ):
             __type_map[key] = valid_path_pattern
 
-        # GDP 
+        # GDP
 
         for key in ('gdp_workzone_id', ):
             __type_map[key] = valid_gdp_workzone_id
