@@ -114,15 +114,15 @@ def archives_actions(driver, url, login, passwd, callbacks):
         print "INFO: callback for: %s" % state
         callbacks[state](driver, state)
 
-    archive_name = "sample_archive-%s" % time.time()
+    archive_name = "Article Data %s" % time.ctime().replace(':', '.')
     name_field = driver.find_element_by_name("freeze_name")
     name_field.send_keys(archive_name)
 
     meta_field = driver.find_element_by_name("freeze_description")
-    meta_field.send_keys("""Sample Archive
+    meta_field.send_keys("""Article Data Archive
 
 This is my sample freeze archive with some metadata describing the archive
-contents and some files inserted.
+contents and a file inserted from my ERDA home.
 
 Apart from this free text description archives also get a few fields like date
 and owner automatically assigned.
