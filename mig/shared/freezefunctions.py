@@ -720,7 +720,8 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     freeze_dict = init_res
     freeze_id = freeze_dict['ID']
     if existing_archive:
-        published = freeze_dict['PUBLISH']
+        # Legacy archives may not have all fields set
+        published = freeze_dict.get('PUBLISH', False)
         state = freeze_dict.get('STATE', keyword_final)
         freeze_dict.update(freeze_meta)
     else:
@@ -762,7 +763,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                       (freeze_id, client_id, freeze_entries))
         return (False, "Error: final archives must have one or more files")
 
-    if freeze_dict['PUBLISH']:
+    if published:
         (web_status, web_res) = write_landing_page(freeze_dict, arch_dir,
                                                    frozen_files, configuration)
     elif published:
@@ -844,7 +845,7 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
             _logger.warning("failed to save pruned cache in %s: %s" %
                             (cache_path, err))
 
-    if freeze_dict['PUBLISH']:
+    if freeze_dict.get('PUBLISH', False):
         frozen_files = [i['name'] for i in freeze_dict.get('FILES', [])
                         if i['name'] != public_archive_index]
         (web_status, web_res) = write_landing_page(freeze_dict, arch_dir,
@@ -869,7 +870,7 @@ def delete_frozen_archive(freeze_dict, client_id, configuration):
     _logger = configuration.logger
     freeze_id = freeze_dict['ID']
     arch_dir = get_frozen_root(client_id, freeze_id, configuration)
-    if freeze_dict['PUBLISH']:
+    if freeze_dict.get('PUBLISH', False):
         (web_status, web_res) = remove_landing_page(freeze_dict, arch_dir,
                                                     configuration,
                                                     allow_missing=True)

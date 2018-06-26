@@ -1414,6 +1414,12 @@ location.""" % self.config_file
             self.site_permanent_freeze = permanent_freeze
         else:
             self.site_permanent_freeze = freeze_flavors.keys()
+        if config.has_option('SITE', 'freeze_admins'):
+            admins = config.get('SITE', 'freeze_admins')
+            self.site_freeze_admins = [admin.strip()
+                                       for admin in admins.split(',')]
+        else:
+            self.site_freeze_admins = []
         if config.has_option('SITE', 'freeze_to_tape'):
             self.site_freeze_to_tape = config.get('SITE', 'freeze_to_tape')
         else:
