@@ -40,6 +40,7 @@ import signal
 import sys
 import threading
 import time
+import binascii
 
 try:
     from wsgidav.wsgidav_app import DEFAULT_CONFIG, WsgiDAVApp
@@ -48,6 +49,7 @@ try:
     sys.path.append(os.path.dirname(server_init_path))
     from cherrypy import wsgiserver
     from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter, ssl
+    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
         FilesystemProvider
     from wsgidav.domain_controller import WsgiDAVDomainController
@@ -58,6 +60,12 @@ except ImportError, ierr:
     print "You may need to install cherrypy if your wsgidav does not bundle it"
     sys.exit(1)
 
+# PyOpenSSL is required for strong encryption
+try:
+    import OpenSSL
+except ImportError:
+    print "ERROR: the python OpenSSL module is required for DAVS"
+    sys.exit(1)
 
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
@@ -66,20 +74,20 @@ from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-    penalize_rate_limit, add_user_object
-from shared.tlsserver import hardened_ssl_context
+    penalize_rate_limit, add_user_object, track_open_session, \
+    track_close_sessions, get_open_sessions
+from shared.tlsserver import hardened_ssl_context, hardened_openssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
     check_password_digest, generate_password_digest
 from shared.validstring import possible_user_id, possible_sharelink_id
-from shared.vgrid import vgrid_restrict_write_support
 
 
 configuration, logger = None, None
 
-# TODO: can we enforce connection reuse?
-#       dav clients currently hammer the login functions for every operation
+# Session timeout in seconds
+_session_timeout = 60
 
 
 def hangup_handler(signal, frame):
@@ -123,6 +131,11 @@ def _get_addr(environ):
     return environ['REMOTE_ADDR']
 
 
+def _get_port(environ):
+    """Extract client port from environ dict"""
+    return environ['REMOTE_PORT']
+
+
 def _get_digest(environ):
     """Extract client digest response from environ dict"""
     return environ.get('RESPONSE', 'UNKNOWN')
@@ -141,6 +154,60 @@ def _find_authenticator(application):
         return application
     else:
         return _find_authenticator(application._application)
+
+
+class HardenedPyOpenSSLAdapter(pyOpenSSLAdapter):
+    """Hardened version of the pyOpenSSLAdapter using a shared ssl context
+    initializer which defaults to hardened values for ssl_version, ciphers and
+    options arguments for use in setting up the socket security.
+    This is particularly important in relation to mitigating a number of
+    popular SSL attack vectors like POODLE and CRIME.
+    The default is to try the most flexible security protocol negotiation, but
+    with only the strong ciphers recommended by Mozilla:
+    https://wiki.mozilla.org/Security/Server_Side_TLS#Apache
+    just like we do in the apache conf.
+    Similarly the insecure protocols, compression and client-side cipher
+    degradation is disabled if possible (python 2.7.9+).
+
+    Legacy versions of python (<2.7) support neither ciphers nor options tuning,
+    so for those versions a warning is issued and unless a custom ssl_version
+    is supplied the result is basically the original PyOpenSSLAdapter.
+    """
+    _active_sockets = {}
+
+    def __init__(self, certificate, private_key, certificate_chain=None):
+        pyOpenSSLAdapter.__init__(
+            self, certificate, private_key, certificate_chain)
+
+        # Set up hardened SSL context once and for all
+        dhparams = configuration.user_shared_dhparams
+
+        self.context = hardened_openssl_context(configuration,
+                                                OpenSSL,
+                                                self.private_key,
+                                                self.certificate,
+                                                dhparams)
+
+    def wrap(self, sock):
+        """Wrap and return the given socket.
+        Note the previously initialized SSL context is tuned to pass hardened
+        ssl_version and ciphers arguments to the wrap_socket call. It also
+        limits protocols, key reuse and disables compression for modern python
+        versions to avoid a set of popular attack vectors.
+        """
+
+        (client_addr, client_port) = sock.getpeername()
+        socket_id = "%s.%s" % (client_addr, client_port)
+        # logger.debug("Wrapping ssl_socket: %s : %s : %s" %
+        #              (sock, socket_id, sock.get_state_string()))
+        self._active_sockets[socket_id] = sock
+
+        return pyOpenSSLAdapter.wrap(self, sock)
+
+    def get_active_sockets(self):
+        """Return active sockets"""
+
+        return self._active_sockets
 
 
 class HardenedSSLAdapter(BuiltinSSLAdapter):
@@ -195,7 +262,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         """
         _socket_list = [sock]
         try:
-            logger.debug("Wrapping socket in SSL/TLS")
+            # logger.debug("Wrapping socket in SSL/TLS: 0x%x : %s" %
+            #             (id(sock), sock.getpeername()))
             logger.info("SSL/TLS session stats: %s" %
                         self.ssl_ctx.session_stats())
             ssl_sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
@@ -225,7 +293,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     # Drop clients trying banned protocol, cipher or operation
                     return None, {}
                 else:
-                    # Make sure we clean up before we forward unexpected SSL errors
+                    # Make sure we clean up before we forward
+                    # unexpected SSL errors
                     self.__force_close(_socket_list)
             logger.error("unexpected SSL/TLS wrap failure: %s" % exc)
             raise exc
@@ -261,7 +330,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """Expire old entries in the hash and digest caches"""
         self.hash_cache.clear()
         self.digest_cache.clear()
-        logger.debug("Expired hash and digest caches")
+        # logger.debug("Expired hash and digest caches")
 
     def _expire_volatile(self):
         """Expire old entries in the volatile helper dictionaries"""
@@ -281,8 +350,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """Verify supplied username and password against user DB"""
         user_list = self.user_map[realm].get(username, [])
         # Only sharelinks should be excluded from strict password policy
-        if configuration.site_enable_sharelinks and \
-                possible_sharelink_id(configuration, username):
+        if possible_sharelink_id(configuration, username):
             strict_policy = False
         else:
             strict_policy = True
@@ -291,57 +359,141 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             offered = password
             allowed = user_obj.password
             if allowed is not None:
-                #logger.debug("Password check for %s" % username)
+                # logger.debug("Password check for %s" % username)
                 if check_password_hash(configuration, 'webdavs', username,
                                        offered, allowed, self.hash_cache,
                                        strict_policy):
                     return True
         return False
 
-    def authDomainUser(self, realmname, username, password, environ):
-        """Returns True if this username/password pair is valid for the realm,
-        False otherwise. Used for basic authentication.
+    def _get_ssl_session_id(self, ip_addr, tcp_port):
+        """Returns ssl session id"""
+        socket_id = "%s.%s" % (ip_addr, tcp_port)
+        session_id = None
+        try:
+            active_sockets = \
+                wsgiserver.CherryPyWSGIServer.ssl_adapter.get_active_sockets()
+            active_socket = active_sockets[socket_id]
+            session_id = binascii.hexlify(active_socket.master_key())
+        except Exception as exc:
+            session_id = None
 
-        We explicitly compare against saved hash rather than password value.
-        """
-        #print "DEBUG: env in authDomainUser: %s" % environ
-        addr = _get_addr(environ)
-        self._expire_rate_limit()
-        #logger.info("refresh user %s" % username)
-        update_users(configuration, self.user_map, username)
-        #logger.info("in authDomainUser from %s" % addr)
-        success = False
-        offered = password
-        if hit_rate_limit(configuration, "davs", addr, username):
-            logger.warning("Rate limiting login from %s" % addr)
-        elif self._check_auth_password(addr, realmname, username, password):
-            logger.info("Accepted login for %s from %s" % (username, addr))
+        return session_id
+
+    def _get_ssl_session_state_str(self, ip_addr, tcp_port):
+        """Returns ssl session state string"""
+        socket_id = "%s.%s" % (ip_addr, tcp_port)
+        state_str = None
+        try:
+            active_sockets = \
+                wsgiserver.CherryPyWSGIServer.ssl_adapter.get_active_sockets()
+            active_socket = active_sockets[socket_id]
+            state_str = active_socket.get_state_string()
+        except Exception as exc:
+            state_str = None
+
+        return state_str
+
+    def authDomainUser(self, realmname, username, password, environ):
+        """Returns True if session is already authorized or
+        the username / password pair is valid,
+        False otherwise."""
+        ip_addr = _get_addr(environ)
+        tcp_port = _get_port(environ)
+        socket_id = "%s.%s" % (ip_addr, tcp_port)
+        session_id = self._get_ssl_session_id(ip_addr, tcp_port)
+        open_sessions = get_open_sessions(configuration, 'davs', username)
+        authorized = is_authorized_session(
+            configuration, session_id, open_sessions)
+        if authorized:
             success = True
+            #session_state = self._get_ssl_session_state_str(ip_addr, tcp_port)
+            # logger.debug("Using cached ssl session: %s : %s" %
+            #             (session_state, session_id))
+            # msg = "user %s already authorized with session_id: %s" \
+            #     % (username, session_id) \
+            #     + "in authDomainUser from %s:%s" % (ip_addr, tcp_port)
+            # logger.debug(msg)
         else:
-            logger.warning("Invalid login for %s from %s" % (username, addr))
-        failed_count = update_rate_limit(configuration, "davs", addr, username,
-                                         success, offered)
-        penalize_rate_limit(configuration, "davs", addr, username,
-                            failed_count)
+            success = False
+            logger.info("refresh user %s" % username)
+            update_users(configuration, self.user_map, username)
+            logger.info("in authDomainUser from %s:%s" % (ip_addr, tcp_port))
+            offered = password
+            if hit_rate_limit(configuration, "davs", ip_addr, username):
+                logger.warning("Rate limiting login from %s" % ip_addr)
+            elif self._check_auth_password(ip_addr,
+                                           realmname,
+                                           username,
+                                           password):
+                logger.info("Accepted login for %s from %s" %
+                            (username, ip_addr))
+                success = True
+            else:
+                logger.warning("Invalid login for %s from %s" %
+                               (username, ip_addr))
+            failed_count = update_rate_limit(configuration,
+                                             "davs",
+                                             ip_addr,
+                                             username,
+                                             success,
+                                             offered)
+            penalize_rate_limit(configuration, "davs", ip_addr, username,
+                                failed_count)
+        update_sessions(configuration,
+                        open_sessions,
+                        session_id,
+                        success,
+                        username,
+                        ip_addr,
+                        tcp_port,
+                        )
+
         return success
 
     def isRealmUser(self, realmname, username, environ):
-        """Returns True if this username is valid for the realm, False
-        otherwise.
+        """Returns True if session is already authorized or
+        this username is valid for the realm, False
+        otherwise."""
 
-        Please note that this is always called for digest auth so we use it to
-        update creds and reject users without digest password set.
-        """
-        #logger.info("refresh user %s" % username)
-        addr = _get_addr(environ)
-        update_users(configuration, self.user_map, username)
-        #logger.info("in isRealmUser from %s" % addr)
-        if self._get_user_digests(addr, realmname, username):
-            logger.debug("valid digest user %s from %s" % (username, addr))
-            return True
+        ip_addr = _get_addr(environ)
+        tcp_port = _get_port(environ)
+        session_id = self._get_ssl_session_id(ip_addr, tcp_port)
+
+        open_sessions = get_open_sessions(configuration, 'davs', username)
+        authorized = is_authorized_session(
+            configuration, session_id, open_sessions)
+
+        if authorized:
+            success = True
+            # session_state = self._get_ssl_session_state_str(ip_addr, tcp_port)
+            # logger.debug("Using cached ssl session: %s : %s" %
+            #              (session_state, session_id))
+            # msg = "user %s already authorized with session_id: %s" \
+            #     % (username, session_id) \
+            #     + "in isRealmUser from %s:%s" % (ip_addr, tcp_port)
+            # logger.info(msg)
         else:
-            logger.warning("invalid digest user %s from %s" % (username, addr))
-            return False
+            update_users(configuration, self.user_map, username)
+
+            if self._get_user_digests(ip_addr, realmname, username):
+                # logger.debug("valid digest user %s from %s:%s" %
+                #              (username, ip_addr, tcp_port))
+                success = True
+            else:
+                logger.warning("invalid digest user %s from %s:%s" %
+                               (username, ip_addr, tcp_port))
+                success = False
+        update_sessions(configuration,
+                        open_sessions,
+                        session_id,
+                        success,
+                        username,
+                        ip_addr,
+                        tcp_port,
+                        )
+
+        return success
 
     def getRealmUserPassword(self, realmname, username, environ):
         """Return the password for the given username for the realm.
@@ -354,28 +506,27 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         #       we should really use something like check_password_digest,
         #       but we need to return password to caller here.
 
-        #print "DEBUG: env in getRealmUserPassword: %s" % environ
+        # print "DEBUG: env in getRealmUserPassword: %s" % environ
         addr = _get_addr(environ)
         offered = _get_digest(environ)
         # Only sharelinks should be excluded from strict password policy
-        if configuration.site_enable_sharelinks and \
-                possible_sharelink_id(configuration, username):
+        if possible_sharelink_id(configuration, username):
             strict_policy = False
         else:
             strict_policy = True
         self._expire_rate_limit()
-        #logger.info("in getRealmUserPassword from %s" % addr)
+        # logger.info("in getRealmUserPassword from %s" % addr)
         digest_users = self._get_user_digests(addr, realmname, username)
-        #logger.info("found digest_users %s" % digest_users)
+        # logger.info("found digest_users %s" % digest_users)
         try:
             # We expect only one - pick last
             digest = digest_users[-1].digest
             _, _, _, payload = digest.split("$")
-            #logger.info("found payload %s" % payload)
+            # logger.info("found payload %s" % payload)
             unscrambled = unscramble_digest(configuration.site_digest_salt,
                                             payload)
             _, _, password = unscrambled.split(":")
-            #logger.info("found password")
+            # logger.info("found password")
             # TODO: we don't have a hook to log accepted digest logins
             # this one only means that user validation makes it to digest check
             logger.info("extracted digest for valid user %s from %s" %
@@ -386,8 +537,9 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 assure_password_strength(configuration, password)
             except Exception, exc:
                 if strict_policy:
-                    logger.warning('%s password for %s does not satisfy local policy: %s'
-                                   % ('webdavs', username, exc))
+                    msg = "%s password for %s" % ('webdavs', username) \
+                        + "does not satisfy local policy: %s" % exc
+                    logger.warning(msg)
                     success = False
         except Exception, exc:
             logger.error("failed to extract digest password: %s" % exc)
@@ -447,7 +599,8 @@ class MiGFolderResource(FolderResource):
     def handleCopy(self, destPath, depthInfinity):
         """Handle a COPY request natively, but with our restrictions"""
         _handle_allowed("copy", self._filePath)
-        return super(MiGFolderResource, self).handleCopy(destPath, depthInfinity)
+        return super(MiGFolderResource, self).handleCopy(destPath,
+                                                         depthInfinity)
 
     def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
@@ -482,16 +635,18 @@ class MiGFolderResource(FolderResource):
         MiGFileResource and MiGFolderResource objects.
         """
 
-        #logger.debug("in getMember")
+        # logger.debug("in getMember")
         res = FolderResource.getMember(self, name)
         if invisible_path(res.name):
             res = None
-        #logger.debug("getMember found %s" % res)
-        if res and not res.isCollection and not isinstance(res, MiGFileResource):
+        # logger.debug("getMember found %s" % res)
+        if res and not res.isCollection and \
+                not isinstance(res, MiGFileResource):
             res = MiGFileResource(res.path, self.environ, res._filePath)
-        elif res and res.isCollection and not isinstance(res, MiGFolderResource):
+        elif res and res.isCollection and \
+                not isinstance(res, MiGFolderResource):
             res = MiGFolderResource(res.path, self.environ, res._filePath)
-        #logger.debug("getMember returning %s" % res)
+        # logger.debug("getMember returning %s" % res)
         return res
 
     def getDescendants(self, collections=True, resources=True,
@@ -514,10 +669,10 @@ class MiGFolderResource(FolderResource):
 
         Call parent version just with debug logging added.
         """
-        #logger.debug("in getDescendantsWrap for %s" % self)
+        # logger.debug("in getDescendantsWrap for %s" % self)
         res = FolderResource.getDescendants(self, collections, resources,
                                             depthFirst, depth, addSelf)
-        #logger.debug("getDescendants wrap returning %s" % res)
+        # logger.debug("getDescendants wrap returning %s" % res)
         return res
 
 
@@ -539,7 +694,7 @@ class MiGFilesystemProvider(FilesystemProvider):
 
     def _acceptable_chmod(self, davs_path, mode):
         """Wrap helper"""
-        #logger.debug("acceptable_chmod: %s" % davs_path)
+        # logger.debug("acceptable_chmod: %s" % davs_path)
         reply = acceptable_chmod(davs_path, mode, self.chmod_exceptions)
         if not reply:
             logger.warning("acceptable_chmod failed: %s %s %s" %
@@ -564,9 +719,9 @@ class MiGFilesystemProvider(FilesystemProvider):
         """
         if environ is None:
             raise RuntimeError("A recent/patched wsgidav is needed, see code")
-        #logger.debug("_locToFilePath: %s" % path)
+        # logger.debug("_locToFilePath: %s" % path)
         username = _username_from_env(environ)
-        #logger.debug("_locToFilePath %s: find chroot for %s" % (path, username))
+        # logger.debug("_locToFilePath %s: find chroot for %s" % (path, username))
         entries = login_map_lookup(self.daemon_conf, username)
         for entry in entries:
             if entry.chroot:
@@ -589,7 +744,7 @@ class MiGFilesystemProvider(FilesystemProvider):
             raise RuntimeError("Access out of bounds: %s in %s : %s"
                                % (path, user_chroot, vae))
         abs_path = force_unicode(abs_path)
-        #logger.debug("_locToFilePath on %s: %s" % (path, abs_path))
+        # logger.debug("_locToFilePath on %s: %s" % (path, abs_path))
         return abs_path
 
     def getResourceInst(self, path, environ):
@@ -600,7 +755,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         Override to chroot and filter MiG invisible paths from content.
         """
 
-        #logger.debug("getResourceInst: %s" % path)
+        # logger.debug("getResourceInst: %s" % path)
         self._count_getResourceInst += 1
         try:
             abs_path = self._locToFilePath(path, environ)
@@ -616,6 +771,78 @@ class MiGFilesystemProvider(FilesystemProvider):
         return MiGFileResource(path, environ, abs_path)
 
 
+def update_sessions(configuration,
+                    open_sessions,
+                    session_id,
+                    authorized,
+                    username,
+                    ip_addr,
+                    tcp_port,
+                    ):
+    """Track user sessions (open / close)"""
+
+    # msg = "open_sessions: %s" % open_sessions \
+    #    + "\nsession_id: %s" % session_id \
+    #    + "\nauthorized: %s" % authorized \
+    #    + "\nusername: %s" % username \
+    #    + "\nip_addr: %s" % ip_addr \
+    #    + "\ntcp_port: %s" % tcp_port
+    # logger.debug(msg)
+    # msg = "update_sessions for %s from %s:%s" % (username, ip_addr, tcp_port) \
+    #     + " with session_id: %s, authorized: %s" % (session_id, authorized)
+    # logger.debug(msg)
+
+    # Update current active session
+
+    track_open_session(configuration,
+                       'davs',
+                       username,
+                       ip_addr,
+                       tcp_port,
+                       session_id=session_id,
+                       authorized=authorized)
+
+    # Remove old sessions
+
+    current_timestamp = time.time()
+    # logger.debug("current_timestamp: %s" % (current_timestamp))
+    remove_sessions = []
+    for key, value in open_sessions.iteritems():
+        timestamp = value.get('timestamp', 0)
+        # logger.debug("%s -> %s" % (key, value))
+        # logger.debug("current_timestamp - timestamp: %s" %
+        #             (current_timestamp - timestamp))
+        if current_timestamp - timestamp > _session_timeout:
+            remove_sessions.append(key)
+    # logger.debug("remove_sessions: %s" % remove_sessions)
+    if remove_sessions:
+        track_close_sessions(configuration,
+                             'davs',
+                             username,
+                             ip_addr,
+                             tcp_port,
+                             session_ids=remove_sessions)
+
+
+def is_authorized_session(configuration, session_id, user_sessions):
+    """Returns true if user session is open
+    and authorized and within expire timestamp"""
+
+    # logger.debug("session_id: %s, user_sessions: %s" %
+    #             (session_id, user_sessions))
+    result = False
+    _active = user_sessions.get(session_id, {})
+    if _active:
+        authorized = _active.get('authorized', False)
+        timestamp = _active.get('timestamp', 0)
+        current_timestamp = time.time()
+        if authorized \
+                and current_timestamp - timestamp < _session_timeout:
+            result = True
+
+    return result
+
+
 def update_users(configuration, user_map, username):
     """Update creds dict for username and aliases"""
     # Only need to update users and shares here, since jobs only use sftp
@@ -623,8 +850,7 @@ def update_users(configuration, user_map, username):
     if possible_user_id(configuration, username):
         daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
                                                         username)
-    if configuration.site_enable_sharelinks and \
-            possible_sharelink_id(configuration, username):
+    if possible_sharelink_id(configuration, username):
         daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                           'davs', username)
     # Add dummy user for litmus test if enabled in conf
@@ -696,21 +922,24 @@ def run(configuration):
     config['user_mapping'][dav_domain][fake_user] = None
     app = WsgiDAVApp(config)
     del config['user_mapping'][dav_domain][fake_user]
-    #print('User list: %s' % config['user_mapping'])
+    # print('User list: %s' % config['user_mapping'])
 
     # Find and mangle HTTPAuthenticator in application stack
 
-    #app_authenticator = _find_authenticator(app)
+    # app_authenticator = _find_authenticator(app)
 
-    #print('Config: %s' % config)
-    #print('app auth: %s' % app_authenticator)
+    # print('Config: %s' % config)
+    # print('app auth: %s' % app_authenticator)
 
     if not config.get('nossl', False):
         cert = config['ssl_certificate'] = configuration.user_davs_key
         key = config['ssl_private_key'] = configuration.user_davs_key
         chain = config['ssl_certificate_chain'] = ''
-        #wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(cert, key, chain)
-        wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(
+        # wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(
+        #     cert, key, chain)
+        # wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(
+        #     cert, key, chain)
+        wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedPyOpenSSLAdapter(
             cert, key, chain)
 
     # Use bundled CherryPy WSGI Server to support SSL

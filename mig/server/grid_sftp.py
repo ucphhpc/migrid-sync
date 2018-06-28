@@ -87,12 +87,12 @@ from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
     acceptable_chmod, refresh_user_creds, refresh_job_creds, \
     refresh_share_creds, refresh_jupyter_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-    penalize_rate_limit, track_open_session, track_close_session, \
+    penalize_rate_limit, track_open_session, track_close_sessions, \
     active_sessions
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
-from shared.validstring import possible_user_id, possible_job_id, \
-    possible_sharelink_id, possible_jupyter_mount_id
+from shared.validstring import possible_user_id, possible_gdp_user_id, \
+    possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
 from shared.vgrid import vgrid_restrict_write_support
 
 configuration, logger = None, None
@@ -211,12 +211,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             if possible_job_id(configuration, username):
                 daemon_conf, changed_jobs = refresh_job_creds(
                     configuration, 'sftp', username)
-            if configuration.site_enable_sharelinks and \
-                    possible_sharelink_id(configuration, username):
+            if possible_sharelink_id(configuration, username):
                 daemon_conf, changed_shares = refresh_share_creds(
                     configuration, 'sftp', username)
-            if configuration.site_enable_jupyter and \
-                    possible_jupyter_mount_id(configuration, username):
+            if possible_jupyter_mount_id(configuration, username):
                 daemon_conf, changed_jupyter_mounts = refresh_jupyter_creds(
                     configuration, 'sftp', username)
             # Now update login map for any changed usernames
@@ -407,7 +405,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("open existing file on missing path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        if (flags & (os.O_CREAT | os.O_RDWR | os.O_WRONLY | os.O_APPEND | os.O_TRUNC)) \
+        if (flags & (os.O_CREAT |
+                     os.O_RDWR |
+                     os.O_WRONLY |
+                     os.O_APPEND |
+                     os.O_TRUNC)) \
                 and not check_write_access(real_path, parent_dir=True):
             self.logger.error("open for modify on read-only path %s :: %s" %
                               (path, real_path))
@@ -598,9 +600,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # Use shutil move to allow move to other file system like external
             # storage mounted file systems
             shutil.move(real_oldpath, real_newpath)
-            self.logger.info("renamed %s to %s :: %s to %s" % (oldpath, newpath,
-                                                               real_oldpath,
-                                                               real_newpath))
+            self.logger.info("renamed %s to %s :: %s to %s"
+                             % (oldpath, newpath, real_oldpath, real_newpath))
             return paramiko.SFTP_OK
         except Exception, err:
             self.logger.error("rename on %s :: %s failed: %s" %
@@ -750,11 +751,13 @@ class SimpleSSHServer(paramiko.ServerInterface):
         # Only need to update users and shares here, since jobs only use keys
         daemon_conf = self.conf
         changed_users, changed_jobs, changed_shares = [], [], []
+        if possible_gdp_user_id(configuration, username):
+            daemon_conf, changed_users = refresh_user_creds(configuration,
+                                                            'sftp', username)
         if possible_user_id(configuration, username):
             daemon_conf, changed_users = refresh_user_creds(configuration,
                                                             'sftp', username)
-        if configuration.site_enable_sharelinks and \
-                possible_sharelink_id(configuration, username):
+        if possible_sharelink_id(configuration, username):
             daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                               'sftp', username)
         # Now update login map for any changed usernames
@@ -764,8 +767,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         hash_cache = daemon_conf['hash_cache']
         offered = password
         # Only sharelinks should be excluded from strict password policy
-        if configuration.site_enable_sharelinks and \
-                possible_sharelink_id(configuration, username):
+        if possible_sharelink_id(configuration, username):
             strict_policy = False
         else:
             strict_policy = True
@@ -821,12 +823,10 @@ class SimpleSSHServer(paramiko.ServerInterface):
         if possible_job_id(configuration, username):
             daemon_conf, changed_jobs = refresh_job_creds(configuration,
                                                           'sftp', username)
-        if configuration.site_enable_sharelinks and \
-                possible_sharelink_id(configuration, username):
+        if possible_sharelink_id(configuration, username):
             daemon_conf, changed_shares = refresh_share_creds(configuration,
                                                               'sftp', username)
-        if configuration.site_enable_jupyter and \
-                possible_jupyter_mount_id(configuration, username):
+        if possible_jupyter_mount_id(configuration, username):
             daemon_conf, changed_jupyter_mounts = refresh_jupyter_creds(
                 configuration, 'sftp', username)
 
@@ -1017,7 +1017,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     else:
         logger.info("Login for %s from %s" % (username, addr, ))
         print "Login for %s from %s" % (username, addr, )
-        track_open_session(configuration, 'sftp', username, addr)
+        track_open_session(configuration, 'sftp', username, addr[0], addr[1])
 
     # Ignore user connection here as we only care about sftp.
     # Keep the connection alive until user disconnects or server is halted.
@@ -1032,7 +1032,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         time.sleep(1)
 
     if username is not None:
-        track_close_session(configuration, 'sftp', username, addr)
+        track_close_sessions(configuration, 'sftp', username, addr[0], addr[1])
 
 
 def start_service(configuration):

@@ -114,6 +114,19 @@ def possible_user_id(configuration, user_id):
             return False
     return True
 
+def possible_gdp_user_id(configuration, gdp_user_id):
+    """Check if gdp_user_id is a possible user ID based on knowledge about
+    contents. We always use the format email@project
+    """
+    if not configuration.site_enable_gdp:
+        return False
+    userarr = gdp_user_id.split('@')
+    if len(userarr) != 3:
+        return False
+    plain_id = "@".join(userarr[:-1])
+    if not possible_user_id(configuration, plain_id):
+        return False
+    return True
 
 def possible_job_id(configuration, job_id):
     """Check if job_id is a possible job ID based on knowledge about contents
@@ -131,6 +144,8 @@ def possible_sharelink_id(configuration, share_id):
     """Check if share_id is a possible sharelink ID based on contents and
     length.
     """
+    if not configuration.site_enable_sharelinks:
+        return False
     if len(share_id) != configuration.site_sharelink_length:
         return False
     if not share_id[0] in share_mode_charset:
@@ -143,6 +158,8 @@ def possible_sharelink_id(configuration, share_id):
 
 def possible_jupyter_mount_id(configuration, jupyter_mount_id):
     """Check if the jupyter_mount_id is a possible ID based on the contents and the length"""
+    if not configuration.site_enable_jupyter:
+        return False
     if len(jupyter_mount_id) != session_id_length:
         return False
     for i in jupyter_mount_id:

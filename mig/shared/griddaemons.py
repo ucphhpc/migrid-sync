@@ -36,20 +36,21 @@ import time
 import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
-    invisible_path, force_utf8, extract_field
+    invisible_path, force_utf8
 from shared.defaults import dav_domain
 from shared.fileio import unpickle
-from shared.safeinput import valid_path, valid_email_address, valid_sid
+from shared.safeinput import valid_path
 from shared.sharelinks import extract_mode_id
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
-    generate_password_hash, generate_password_digest, load_user_dict
-from shared.validstring import possible_user_id, possible_sharelink_id, \
-    possible_job_id, possible_jupyter_mount_id, valid_user_path, \
-    is_valid_email_address
+    generate_password_hash, generate_password_digest, \
+    load_user_dict, get_short_id
+from shared.validstring import possible_user_id, possible_gdp_user_id, \
+    possible_sharelink_id, possible_job_id, possible_jupyter_mount_id, \
+    valid_user_path, is_valid_email_address
 
 default_max_fails, default_fail_cache = 5, 120
 
@@ -77,6 +78,11 @@ def default_username_validator(configuration, username, force_email=True):
     limit user_id values to actual email addresses, as always required in grid
     daemons.
     """
+    logger = configuration.logger
+    # logger.debug("username: %s, force_email: %s" % (username, force_email))
+
+    if possible_gdp_user_id(configuration, username):
+        return True
     if possible_user_id(configuration, username):
         if not force_email:
             return True
@@ -85,6 +91,8 @@ def default_username_validator(configuration, username, force_email=True):
     if possible_sharelink_id(configuration, username):
         return True
     if possible_job_id(configuration, username):
+        return True
+    if possible_sharelink_id(configuration, username):
         return True
     if possible_jupyter_mount_id(configuration, username):
         return True
@@ -249,7 +257,7 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
         elif os.path.exists(authkeys_path) and \
                 os.path.getsize(authkeys_path) >= min_pub_key_bytes and \
                 os.path.getmtime(authkeys_path) > any_last_update:
-            logger.debug("found changed pub keys for %s" % username)
+            # logger.debug("found changed pub keys for %s" % username)
             changed_paths.append(authkeys_path)
 
     if conf["allow_password"]:
@@ -346,7 +354,7 @@ def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
     user = Login(username=login, home=home, password=password,
                  digest=digest, public_key=pubkey, chroot=chroot,
                  user_dict=user_dict)
-    logger.debug("Adding user login:\n%s" % user)
+    # logger.debug("Adding user login:\n%s" % user)
     if creds_lock:
         creds_lock.acquire()
     conf['users'].append(user)
@@ -361,7 +369,7 @@ def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
     creds_lock = conf.get('creds_lock', None)
     job = Login(username=login, home=home, password=password, digest=digest,
                 public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
-    logger.debug("Adding job login:\n%s" % job)
+    # logger.debug("Adding job login:\n%s" % job)
     if creds_lock:
         creds_lock.acquire()
     conf['jobs'].append(job)
@@ -376,7 +384,7 @@ def add_share_object(conf, login, home, password=None, digest=None,
     creds_lock = conf.get('creds_lock', None)
     share = Login(username=login, home=home, password=password, digest=digest,
                   public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
-    logger.debug("Adding share login:\n%s" % share)
+    # logger.debug("Adding share login:\n%s" % share)
     if creds_lock:
         creds_lock.acquire()
     conf['shares'].append(share)
@@ -389,9 +397,14 @@ def add_jupyter_object(conf, login, home, password=None, digest=None,
     """Add a single Login object to active jupyter mount list"""
     logger = conf.get('logger', logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
-    jupyter_mount = Login(username=login, home=home, password=password, digest=digest,
-                          public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
-    logger.debug("Adding jupyter login:\n%s" % jupyter_mount)
+    jupyter_mount = Login(username=login,
+                          home=home,
+                          password=password,
+                          digest=digest,
+                          public_key=pubkey,
+                          chroot=chroot,
+                          ip_addr=ip_addr)
+    # logger.debug("Adding jupyter login:\n%s" % jupyter_mount)
     if creds_lock:
         creds_lock.acquire()
     conf['jupyter_mounts'].append(jupyter_mount)
@@ -430,7 +443,7 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
         all_digests = []
         # Clean up all old key entries for this user
         conf['users'] = [i for i in conf['users']
-                         if i.username not in user_logins or
+                         if not i.username in user_logins or
                          i.public_key is None]
     elif auth_file == proto_authpasswords:
         all_keys = []
@@ -443,7 +456,7 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
         all_digests = []
         # Clean up all old password entries for this user
         conf['users'] = [i for i in conf['users']
-                         if i.username not in user_logins or
+                         if not i.username in user_logins or
                          i.password is None]
     else:
         all_keys = []
@@ -456,7 +469,7 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
             all_digests = []
         # Clean up all old digest entries for this user
         conf['users'] = [i for i in conf['users']
-                         if i.username not in user_logins or
+                         if not i.username in user_logins or
                          i.digest is None]
     # logger.debug("after clean up old users list is:\n%s" % \
     #             '\n'.join(["%s" % i for i in conf['users']]))
@@ -560,12 +573,12 @@ def refresh_user_creds(configuration, protocol, username):
     else:
         authkeys_path = authpasswords_path = authdigests_path = conf['db_path']
 
-    logger.debug("Updating user creds for %s" % username)
+    # logger.debug("Updating user creds for %s" % username)
 
     changed_paths = get_creds_changes(conf, username, authkeys_path,
                                       authpasswords_path, authdigests_path)
     if not changed_paths:
-        logger.debug("No user creds changes for %s" % username)
+        # logger.debug("No user creds changes for %s" % username)
         return (conf, changed_users)
 
     short_id, short_alias = None, None
@@ -577,14 +590,14 @@ def refresh_user_creds(configuration, protocol, username):
     if conf['allow_digest']:
         matches += [(proto_authdigests, authdigests_path)]
     for (auth_file, path) in matches:
-        if path not in changed_paths:
-            logger.debug("Skipping %s without changes" % path)
+        if not path in changed_paths:
+            # logger.debug("Skipping %s without changes" % path)
             continue
         # Missing alias symlink - should be fixed for user instead
         if not os.path.exists(path):
             logger.warning("Skipping non-existant auth path %s" % path)
             continue
-        logger.debug("Checking %s" % path)
+        # logger.debug("Checking %s" % path)
         if private_auth_file:
             user_home = path.replace(os.sep + auth_file, '')
             user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
@@ -602,9 +615,9 @@ def refresh_user_creds(configuration, protocol, username):
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
         if conf['user_alias']:
-            short_id = extract_field(user_id, conf['user_alias'])
+            short_id = get_short_id(configuration, user_id, conf['user_alias'])
             # Allow both raw alias field value and asciified alias
-            logger.debug("find short_alias for %s" % short_alias)
+            # logger.debug("find short_alias for %s" % short_id)
             short_alias = client_alias(short_id)
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
         update_user_objects(conf, auth_file, path, user_vars, auth_protos,
@@ -617,7 +630,7 @@ def refresh_user_creds(configuration, protocol, username):
 
 
 def refresh_users(configuration, protocol):
-    """Reload users from auth confs if they changed on disk. Add user entries
+    """Reload all users from auth confs if they changed on disk. Add user entries
     to configuration.daemon_conf['users'] for all active keys and passwords
     enabled in configuration. Optionally add short ID username alias entries
     for all users if that is enabled in the configuration.
@@ -625,6 +638,7 @@ def refresh_users(configuration, protocol):
     The protocol argument specifies which auth files to use.
     Returns a tuple with the updated daemon_conf and the list of changed user
     IDs.
+    NOTE: Deprecated due to severe system load, use refresh_user_creds instead
     """
     changed_users = []
     conf = configuration.daemon_conf
@@ -678,7 +692,6 @@ def refresh_users(configuration, protocol):
         matches += [(proto_authdigests, i)
                     for i in glob.glob(authdigests_pattern)]
     for (auth_file, path) in matches:
-        logger.debug("Checking %s" % path)
         user_home = path.replace(os.sep + auth_file, '')
         # Skip OpenID alias symlinks
         if os.path.islink(user_home):
@@ -689,10 +702,10 @@ def refresh_users(configuration, protocol):
         # we always accept asciified distinguished name
         cur_usernames.append(user_alias)
         if conf['user_alias']:
-            short_id = extract_field(user_id, conf['user_alias'])
+            short_id = get_short_id(configuration, user_id, conf['user_alias'])
             # Allow both raw alias field value and asciified alias
             cur_usernames.append(short_id)
-            logger.debug("find short_alias for %s" % short_alias)
+            # logger.debug("find short_alias for %s" % short_id)
             short_alias = client_alias(short_id)
             cur_usernames.append(short_alias)
         if last_update >= os.path.getmtime(path):
@@ -736,15 +749,15 @@ def refresh_job_creds(configuration, protocol, username):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_jobs)
     if not possible_job_id(configuration, username):
-        logger.debug("ruled out %s as a possible job ID" % username)
+        # logger.debug("ruled out %s as a possible job ID" % username)
         return (conf, changed_jobs)
 
     link_path = os.path.join(configuration.sessid_to_mrsl_link_home,
                              "%s.mRSL" % username)
-    logger.debug("Updating job creds for %s" % username)
+    # logger.debug("Updating job creds for %s" % username)
     changed_paths = get_job_changes(conf, username, link_path)
     if not changed_paths:
-        logger.debug("No job creds changes for %s" % username)
+        # logger.debug("No job creds changes for %s" % username)
         return (conf, changed_jobs)
 
     job_dict = None
@@ -755,7 +768,7 @@ def refresh_job_creds(configuration, protocol, username):
 
     # We only allow connections from executing jobs that
     # has a public key
-    if not job_dict is None and type(job_dict) == dict and \
+    if job_dict is not None and isinstance(job_dict, dict) and \
             job_dict.has_key('STATUS') and \
             job_dict['STATUS'] == 'EXECUTING' and \
             job_dict.has_key('SESSIONID') and \
@@ -808,9 +821,10 @@ def refresh_job_creds(configuration, protocol, username):
 
 def refresh_jobs(configuration, protocol):
     """Refresh job keys based on the job state.
-    Add user entries for all active job keys. 
+    Add user entries for all active job keys.
     Removes all the user entries for jobs no longer active.
     Returns a tuple with the daemon_conf and the list of changed job IDs.
+    NOTE: Deprecated due to severe system load, use refresh_job_creds instead
     """
     changed_jobs = []
     conf = configuration.daemon_conf
@@ -838,7 +852,7 @@ def refresh_jobs(configuration, protocol):
 
         # We only allow connections from executing jobs that
         # has a public key
-        if not job_dict is None and type(job_dict) == dict and \
+        if job_dict is not None and isinstance(job_dict, dict) and \
                 job_dict.has_key('STATUS') and \
                 job_dict['STATUS'] == 'EXECUTING' and \
                 job_dict.has_key('SESSIONID') and \
@@ -851,7 +865,8 @@ def refresh_jobs(configuration, protocol):
             user_key = job_dict['MOUNTSSHPUBLICKEY']
             user_ip = None
 
-            # Use frontend proxy if available otherwise use hosturl to resolve IP
+            # Use frontend proxy if available
+            # otherwise use hosturl to resolve IP
             user_url = job_dict['RESOURCE_CONFIG'].get('FRONTENDPROXY', '')
             if len(user_url) == 0:
                 user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
@@ -859,8 +874,9 @@ def refresh_jobs(configuration, protocol):
                 user_ip = socket.gethostbyname_ex(user_url)[2][0]
             except Exception, exc:
                 user_ip = None
-                logger.warning(
-                    "Skipping key due to unresolvable ip for user %s (%s)" % (user_alias, exc))
+                msg = "Skipping key due to unresolvable ip" \
+                    + " for user %s (%s)" % (user_alias, exc)
+                logger.warning(msg)
 
             # Make sure pub key is valid
             valid_pubkey = True
@@ -918,7 +934,7 @@ def refresh_share_creds(configuration, protocol, username,
         logger.error("invalid share_modes: %s" % share_modes)
         return (conf, changed_shares)
     if not possible_sharelink_id(configuration, username):
-        logger.debug("ruled out %s as a possible sharelink ID" % username)
+        # logger.debug("ruled out %s as a possible sharelink ID" % username)
         return (conf, changed_shares)
 
     try:
@@ -931,11 +947,11 @@ def refresh_share_creds(configuration, protocol, username,
         logger.error("invalid share mode %s for %s" % (mode, username))
         return (conf, changed_shares)
 
-    logger.debug("Updating share creds for %s" % username)
+    # logger.debug("Updating share creds for %s" % username)
     link_path = os.path.join(configuration.sharelink_home, mode, username)
     changed_paths = get_share_changes(conf, username, link_path)
     if not changed_paths:
-        logger.debug("No share creds changes for %s" % username)
+        # logger.debug("No share creds changes for %s" % username)
         return (conf, changed_shares)
 
     try:
@@ -968,7 +984,7 @@ def refresh_share_creds(configuration, protocol, username,
                       'share_pw_digest': share_pw_digest}
 
     # We only allow access to active shares
-    if not share_dict is None and type(share_dict) == dict and \
+    if share_dict is not None and isinstance(share_dict, dict) and \
             share_dict.has_key('share_id') and \
             share_dict.has_key('share_root') and \
             share_dict.has_key('share_pw_hash') and \
@@ -997,12 +1013,13 @@ def refresh_share_creds(configuration, protocol, username,
 
 def refresh_shares(configuration, protocol, share_modes=['read-write']):
     """Refresh shares keys based on the sharelink state.
-    Add user entries for all active sharelinks. 
+    Add user entries for all active sharelinks.
     Removes all the user entries for sharelinks no longer active.
     Returns a tuple with the daemon_conf and the list of changed sharelink IDs.
     NOTE: we limit share_modes to read-write sharelinks for now since we don't
     have guards in place to support read-only or write-only mode in daemons.
     NOTE: we further limit to directory sharelinks for chroot'ing.
+    NOTE: Deprecated due to severe system load, use refresh_share_creds instead
     """
     # Must end in sep
     base_dir = configuration.user_home.rstrip(os.sep) + os.sep
@@ -1053,7 +1070,7 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
                           'share_pw_digest': share_pw_digest}
 
         # We only allow access to active shares
-        if not share_dict is None and type(share_dict) == dict and \
+        if share_dict is not None and isinstance(share_dict, dict) and \
             share_dict.has_key('share_id') and \
                 share_dict.has_key('share_root') and \
                 share_dict.has_key('share_pw_hash') and \
@@ -1098,23 +1115,23 @@ def refresh_jupyter_creds(configuration, protocol, username):
         logger.error("invalid protocol: %s" % protocol)
         return (conf, active_jupyter_creds)
     if not possible_jupyter_mount_id(configuration, username):
-        logger.debug("ruled out %s as a possible jupyter_mount ID" % username)
+        # logger.debug("ruled out %s as a possible jupyter_mount ID" % username)
         return (conf, active_jupyter_creds)
 
     logger.info("Getting active jupuyter mount creds")
     link_path = os.path.join(configuration.sessid_to_jupyter_mount_link_home,
                              "%s" % username + ".jupyter_mount")
-    logger.debug("jupyter linkpath: " + str(os.path.islink(link_path))
-                 + " jupyter path exists: " + str(os.path.exists(link_path)))
+    # logger.debug("jupyter linkpath: " + str(os.path.islink(link_path))
+    #              + " jupyter path exists: " + str(os.path.exists(link_path)))
 
     jupyter_dict = None
     if os.path.islink(link_path) and os.path.exists(link_path):
         sessionid = username
         jupyter_dict = unpickle(link_path, logger)
-        logger.debug("loaded jupyter dict: " + str(jupyter_dict))
+        # logger.debug("loaded jupyter dict: " + str(jupyter_dict))
 
     # We only allow connections from active jupyter credentials
-    if jupyter_dict is not None and type(jupyter_dict) == dict and \
+    if jupyter_dict is not None and isinstance(jupyter_dict, dict) and \
             jupyter_dict.has_key('SESSIONID') and \
             jupyter_dict['SESSIONID'] == sessionid and \
             jupyter_dict.has_key('USER_CERT') and \
@@ -1281,7 +1298,7 @@ def update_rate_limit(configuration, proto, client_address, client_id,
 
     _rate_limits_lock.acquire()
     try:
-        #logger.debug("update rate limit db: %s" % _rate_limits)
+        # logger.debug("update rate limit db: %s" % _rate_limits)
         _cached = _rate_limits.get(client_address, {})
         cur.update(_cached)
         _failed = _cached.get(proto, [])
@@ -1308,7 +1325,7 @@ def update_rate_limit(configuration, proto, client_address, client_id,
         logger.info("update %s rate limit %s for %s from %d to %d hits" %
                     (proto, status[login_success], client_address, cache_fails,
                      failed_count))
-        logger.debug("update %s rate limit to %s" % (proto, _failed))
+        # logger.debug("update %s rate limit to %s" % (proto, _failed))
     return failed_count
 
 
@@ -1321,7 +1338,7 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     now = time.time()
     expired = []
 
-    #logger.debug("expire entries older than %ds at %s" % (fail_cache, now))
+    # logger.debug("expire entries older than %ds at %s" % (fail_cache, now))
 
     _rate_limits_lock.acquire()
 
@@ -1349,7 +1366,7 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     if expired:
         logger.info("expire %s rate limit expired %d items" % (proto,
                                                                len(expired)))
-        logger.debug("expire %s rate limit expired %s" % (proto, expired))
+        # logger.debug("expire %s rate limit expired %s" % (proto, expired))
 
     return expired
 
@@ -1370,38 +1387,83 @@ def penalize_rate_limit(configuration, proto, client_address, client_id, hits,
     return sleep_secs
 
 
-def track_open_session(configuration, proto, client_id, client_address):
-    """Track that client_id opened a new session from client_address"""
+def track_open_session(configuration,
+                       proto,
+                       client_id,
+                       client_address,
+                       client_port,
+                       session_id=None,
+                       authorized=None):
+    """Track that client_id opened a new session from
+    client_address and client_port.
+    If session_id is _NOT_ set the client_ip.client_port
+    is used as session_id.
+    """
     logger = configuration.logger
-    logger.info("track open session for %s from %s" % (client_id,
-                                                       client_address))
+    # msg = "track open session for %s" % client_id \
+    #     + " from %s:%s with session_id: %s" % \
+    #     (client_address, client_port, session_id)
+    # logger.debug(msg)
+
+    if session_id is None:
+        session_id = "%s.%s" % (client_address, client_port)
     _sessions_lock.acquire()
     try:
         _cached = _active_sessions.get(client_id, {})
         if not _cached:
             _active_sessions[client_id] = _cached
-        _active = _cached.get(proto, [])
+        _active = _cached.get(proto, {})
         if not _active:
             _cached[proto] = _active
-        _active.append(client_address)
+        _active = _cached[proto].get(session_id, {})
+        if not _active:
+            _cached[proto][session_id] = _active
+        _active['ip_addr'] = client_address
+        _active['tcp_port'] = client_port
+        _active['authorized'] = authorized
+        _active['timestamp'] = time.time()
     except Exception, exc:
         logger.error("track open session failed: %s" % exc)
     _sessions_lock.release()
 
 
-def track_close_session(configuration, proto, client_id, client_address):
-    """Track that client_id opened a new session from client_address"""
+def get_open_sessions(configuration, proto, client_id):
+    """Return active proto sessions for client_id"""
     logger = configuration.logger
-    logger.info("track close session for %s from %s" % (client_id,
-                                                        client_address))
+    # logger.debug("proto: %s, client_id: %s" % (proto, client_id))
+
     _sessions_lock.acquire()
-    try:
-        _cached = _active_sessions.get(client_id, {})
-        _active = _cached.get(proto, [])
-        first_match = _active.index(client_address)
-        del _active[first_match]
-    except Exception, exc:
-        logger.error("track close session failed: %s" % exc)
+    result = _active_sessions.get(client_id, {}).get(
+        proto, {})
+    _sessions_lock.release()
+
+    return result
+
+
+def track_close_sessions(configuration,
+                         proto,
+                         client_id,
+                         client_address,
+                         client_port,
+                         session_ids=None):
+    """Track that client_id closed one or more proto sessions"""
+    logger = configuration.logger
+    # msg = "track close session for %s" % client_id \
+    #     + " from %s:%s with session_ids: %s" % \
+    #     (client_address, client_port, session_ids)
+    # logger.debug(msg)
+
+    if session_ids is None:
+        session_ids = ["%s.%s" % (client_address, client_port)]
+
+    _sessions_lock.acquire()
+    _cached = _active_sessions.get(client_id, {})
+    _active = _cached.get(proto, {})
+    for session_id in session_ids:
+        try:
+            del _active[session_id]
+        except Exception, exc:
+            logger.error("track close session failed: %s" % exc)
     _sessions_lock.release()
 
 
@@ -1411,13 +1473,13 @@ def active_sessions(configuration, proto, client_id):
     active_count = 0
     _sessions_lock.acquire()
     try:
-        logger.debug("active sessions: %s" % _active_sessions)
         _cached = _active_sessions.get(client_id, {})
-        _active = _cached.get(proto, [])
-        active_count = len(_active)
+        _active = _cached.get(proto, {})
+        active_count = len(_active.keys())
     except Exception, exc:
         logger.error("active sessions failed: %s" % exc)
     _sessions_lock.release()
+
     return active_count
 
 
@@ -1427,7 +1489,8 @@ if __name__ == "__main__":
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     conf.logger = logging
-    test_proto, test_address, test_id = 'DUMMY', '127.0.0.42', 'user@some-domain.org'
+    test_proto, test_address, test_port, test_id = \
+        'DUMMY', '127.0.0.42', 42000, 'user@some-domain.org'
     test_pw = "T3stp4ss"
     invalid_id = 'root'
     print "Running unit test on rate limit functions"
@@ -1499,18 +1562,18 @@ if __name__ == "__main__":
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
     print "Track open session"
-    track_open_session(conf, test_proto, test_id, test_address)
+    track_open_session(conf, test_proto, test_id, test_address, test_port)
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
     print "Track open session"
-    track_open_session(conf, test_proto, test_id, test_address)
+    track_open_session(conf, test_proto, test_id, test_address, test_port+1)
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
     print "Track close session"
-    track_close_session(conf, test_proto, test_id, test_address)
+    track_close_sessions(conf, test_proto, test_id, test_address, test_port)
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
     print "Track close session"
-    track_close_session(conf, test_proto, test_id, test_address)
+    track_close_sessions(conf, test_proto, test_id, test_address, test_port+1)
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
