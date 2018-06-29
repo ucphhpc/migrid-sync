@@ -37,8 +37,10 @@ import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path, force_utf8
-from shared.defaults import dav_domain
+from shared.defaults import dav_domain, io_session_timeout
 from shared.fileio import unpickle
+from shared.gdp import project_login, project_logout, \
+    get_active_project_short_id, validate_user
 from shared.safeinput import valid_path
 from shared.sharelinks import extract_mode_id
 from shared.ssh import parse_pub_key
@@ -46,8 +48,8 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
-    generate_password_hash, generate_password_digest, \
-    load_user_dict, get_short_id
+    generate_password_hash, generate_password_digest, load_user_dict, \
+    get_short_id
 from shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_sharelink_id, possible_job_id, possible_jupyter_mount_id, \
     valid_user_path, is_valid_email_address
@@ -63,6 +65,106 @@ _rate_limits = {}
 _rate_limits_lock = threading.Lock()
 _active_sessions = {}
 _sessions_lock = threading.Lock()
+
+
+def __vaidate_gdp_session(configuration,
+                          proto,
+                          client_id,
+                          client_address,
+                          client_port):
+    """Returns True if GDP user session is valid.
+    GDP only allow one session per user"""
+    logger = configuration.logger
+    # msg = "proto: %s, client_id: %s" % (proto, client_id) \
+    #     + " client_address: %s, client_port: %s" \
+    #    % (client_address, client_port)
+    # logger.debug(msg)
+    result = True
+    (status, msg) = validate_user(
+        configuration, client_id, client_address, proto)
+    if not status:
+        logger.info(msg)
+    else:
+        active_user_id = get_active_project_short_id(configuration,
+                                                     client_id,
+                                                     proto)
+    # If no active user then session is valid
+
+    if status and active_user_id is not None:
+        _sessions_lock.acquire()
+
+        # NOTE: If daemon is killed without a proper session cleanup by
+        # track_close_session calls then GDP active project is not reset
+
+        open_sessions = get_open_sessions(
+            configuration, proto, active_user_id, locked=True)
+        active_sessions = {session_id: session for (session_id, session)
+                           in open_sessions.iteritems()
+                           if session.get('authorized', False == True)}
+        nr_active_sessions = len(active_sessions.keys())
+        if nr_active_sessions == 0:
+            # logger.debug(" validate_session project_logout: %s" \
+            #     % active_user_id)
+            project_logout(
+                configuration,
+                client_address,
+                proto,
+                active_user_id,
+                autologout=True)
+        elif client_id == active_user_id:
+
+            # Close all active sessions from client_id
+            # before accepting new sessions
+
+            # logger.debug("closing %s sessions for client_id: %s" \
+            #     % (nr_active_sessions, client_id))
+            for session_id in active_sessions.keys():
+                track_close_session(configuration,
+                                    proto,
+                                    active_user_id,
+                                    client_address,
+                                    client_port,
+                                    session_id=session_id,
+                                    locked=True)
+        else:
+
+            # Close expired sessions at
+            # get remaining active session count
+
+            track_close_expired_sessions(
+                configuration,
+                proto,
+                active_user_id,
+                client_address,
+                client_port,
+                locked=True)
+
+        # Sessions have possible been closed
+
+        if nr_active_sessions > 0:
+            open_sessions = get_open_sessions(
+                configuration, proto, active_user_id, locked=True)
+            active_sessions = {session_id: session for (session_id, session)
+                               in open_sessions.iteritems()
+                               if session.get('authorized', False == True)}
+            nr_active_sessions = len(active_sessions.keys())
+
+        _sessions_lock.release()
+        # logger.debug("client_id: %s" % client_id)
+        # logger.debug("active_user_id: %s" % active_user_id)
+        # logger.debug("nr_active_sessions: %s" % nr_active_sessions)
+        if nr_active_sessions > 0:
+            status = False
+            msg = "GDP: Rejecting user: %s, due to active role: %s" \
+                % (client_id, active_user_id) \
+                + " with %s active session(s)" % nr_active_sessions
+            logger.info(msg)
+            logger.info("Wait %s seconds for sessions to timeout"
+                        % io_session_timeout.get(proto))
+    if not status:
+        result = False
+
+    return result
 
 
 def accepting_username_validator(configuration, username):
@@ -83,7 +185,7 @@ def default_username_validator(configuration, username, force_email=True):
 
     if possible_gdp_user_id(configuration, username):
         return True
-    if possible_user_id(configuration, username):
+    elif possible_user_id(configuration, username):
         if not force_email:
             return True
         elif is_valid_email_address(username, configuration.logger):
@@ -91,8 +193,6 @@ def default_username_validator(configuration, username, force_email=True):
     if possible_sharelink_id(configuration, username):
         return True
     if possible_job_id(configuration, username):
-        return True
-    if possible_sharelink_id(configuration, username):
         return True
     if possible_jupyter_mount_id(configuration, username):
         return True
@@ -1405,66 +1505,159 @@ def track_open_session(configuration,
     #     (client_address, client_port, session_id)
     # logger.debug(msg)
 
+    status = False
+    prev_authorized = False
     if session_id is None:
-        session_id = "%s.%s" % (client_address, client_port)
+        session_id = "%s:%s" % (client_address, client_port)
     _sessions_lock.acquire()
     try:
+        status = True
         _cached = _active_sessions.get(client_id, {})
         if not _cached:
             _active_sessions[client_id] = _cached
-        _active = _cached.get(proto, {})
-        if not _active:
-            _cached[proto] = _active
-        _active = _cached[proto].get(session_id, {})
-        if not _active:
-            _cached[proto][session_id] = _active
-        _active['ip_addr'] = client_address
-        _active['tcp_port'] = client_port
-        _active['authorized'] = authorized
-        _active['timestamp'] = time.time()
+        _proto = _cached.get(proto, {})
+        if not _proto:
+            _cached[proto] = _proto
+        _session = _cached[proto].get(session_id, {})
+        if not _session:
+            _cached[proto][session_id] = _session
+        prev_authorized = _session.get('authorized', False)
+        _session['ip_addr'] = client_address
+        _session['tcp_port'] = client_port
+        _session['authorized'] = authorized
+        _session['timestamp'] = time.time()
     except Exception, exc:
+        status = False
+        session_id = None
         logger.error("track open session failed: %s" % exc)
     _sessions_lock.release()
 
+    # If GDP and changed from NOT authorized to authorized
+    # perform GDP project login
 
-def get_open_sessions(configuration, proto, client_id):
+    if configuration.site_enable_gdp \
+            and status and authorized and not prev_authorized:
+        project_login(
+            configuration,
+            client_address,
+            proto,
+            client_id)
+
+    return session_id
+
+
+def get_open_sessions(configuration, proto, client_id=None, locked=False):
     """Return active proto sessions for client_id"""
     logger = configuration.logger
-    # logger.debug("proto: %s, client_id: %s" % (proto, client_id))
-
-    _sessions_lock.acquire()
-    result = _active_sessions.get(client_id, {}).get(
-        proto, {})
-    _sessions_lock.release()
+    # logger.debug("proto: %s, client_id: %s, locked: %s" \
+    #     % (proto, client_id, locked))
+    if not locked:
+        _sessions_lock.acquire()
+    if client_id is None:
+        result = {key: val for (key, val) in _active_sessions.iteritems()
+                  if val.get('proto', '') == proto}
+    else:
+        result = _active_sessions.get(client_id, {}).get(
+            proto, {})
+    if not locked:
+        _sessions_lock.release()
 
     return result
 
 
-def track_close_sessions(configuration,
-                         proto,
-                         client_id,
-                         client_address,
-                         client_port,
-                         session_ids=None):
+def track_close_session(configuration,
+                        proto,
+                        client_id,
+                        client_address,
+                        client_port,
+                        session_id=None,
+                        locked=False):
     """Track that client_id closed one or more proto sessions"""
     logger = configuration.logger
     # msg = "track close session for %s" % client_id \
     #     + " from %s:%s with session_ids: %s" % \
     #     (client_address, client_port, session_ids)
     # logger.debug(msg)
+    status = True
+    deleted_session = None
 
-    if session_ids is None:
-        session_ids = ["%s.%s" % (client_address, client_port)]
-
-    _sessions_lock.acquire()
-    _cached = _active_sessions.get(client_id, {})
-    _active = _cached.get(proto, {})
-    for session_id in session_ids:
+    if session_id is None:
+        session_id = "%s:%s" % (client_address, client_port)
+    if not locked:
+        _sessions_lock.acquire()
+    _session = _active_sessions.get(client_id, {}).get(
+        proto, {})
+    if _session and _session.has_key(session_id):
         try:
-            del _active[session_id]
+            deleted_session = _session[session_id]
+            del _session[session_id]
         except Exception, exc:
-            logger.error("track close session failed: %s" % exc)
-    _sessions_lock.release()
+            status = False
+            msg = "track close session failed for: %s, %s" % (session_id, exc)
+            logger.error(msg)
+    else:
+        status = False
+        logger.warning("track close session: %s _NOT_ found" % session_id)
+
+    if status and configuration.site_enable_gdp \
+            and deleted_session.get('authorized', False):
+        # logger.debug("track_close_project_logout: %s, %s" \
+        #              % (client_id, _session.keys()))
+        project_logout(
+            configuration,
+            client_address,
+            proto,
+            client_id,
+            autologout=True)
+    if not locked:
+        _sessions_lock.release()
+
+    return status
+
+
+def track_close_expired_sessions(
+        configuration,
+        proto,
+        client_id,
+        client_address,
+        client_port,
+        locked=False):
+    """Track expired sessions and close them"""
+    logger = configuration.logger
+    result = True
+    status = True
+    session_timeout = io_session_timeout.get(proto, None)
+
+    if session_timeout is not None:
+        if not locked:
+            _sessions_lock.acquire()
+        open_sessions = get_open_sessions(
+            configuration, proto, client_id, locked=True)
+        current_timestamp = time.time()
+        remove_sessions = []
+        # logger.debug("current_timestamp: %s" % (current_timestamp))
+        for session_id, session in open_sessions.iteritems():
+            timestamp = session.get('timestamp', 0)
+            # logger.debug("%s -> %s" % (session_id, session))
+            # logger.debug("current_timestamp - timestamp: %s" %
+            #              (current_timestamp - timestamp))
+            if current_timestamp - timestamp > session_timeout:
+                remove_sessions.append(session_id)
+        # logger.debug("remove_sessions: %s" % remove_sessions)
+        for session_id in remove_sessions:
+            status = track_close_session(configuration,
+                                         proto,
+                                         client_id,
+                                         client_address,
+                                         client_port,
+                                         session_id=session_id,
+                                         locked=locked)
+            if not status:
+                result = False
+        if not locked:
+            _sessions_lock.release()
+
+    return result
 
 
 def active_sessions(configuration, proto, client_id):
@@ -1483,14 +1676,35 @@ def active_sessions(configuration, proto, client_id):
     return active_count
 
 
+def validate_session(configuration,
+                     proto,
+                     client_id,
+                     client_address,
+                     client_port):
+    """Returns True if user session is valid."""
+    logger = configuration.logger
+    # msg = "proto: %s, client_id: %s" % (proto, client_id) \
+    #     + " client_address: %s, client_port: %s" \
+    #    % (client_address, client_port)
+    # logger.debug(msg)
+    result = True
+    if configuration.site_enable_gdp:
+        result = __vaidate_gdp_session(configuration,
+                                       proto,
+                                       client_id,
+                                       client_address,
+                                       client_port)
+
+    return result
+
+
 if __name__ == "__main__":
     from shared.conf import get_configuration_object
     conf = get_configuration_object()
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     conf.logger = logging
-    test_proto, test_address, test_port, test_id = \
-        'DUMMY', '127.0.0.42', 42000, 'user@some-domain.org'
+    test_proto, test_address, test_port, test_id = 'DUMMY', '127.0.0.42', 42000, 'user@some-domain.org'
     test_pw = "T3stp4ss"
     invalid_id = 'root'
     print "Running unit test on rate limit functions"
@@ -1570,10 +1784,10 @@ if __name__ == "__main__":
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
     print "Track close session"
-    track_close_sessions(conf, test_proto, test_id, test_address, test_port)
+    track_close_session(conf, test_proto, test_id, test_address, test_port)
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
     print "Track close session"
-    track_close_sessions(conf, test_proto, test_id, test_address, test_port+1)
+    track_close_session(conf, test_proto, test_id, test_address, test_port+1)
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count

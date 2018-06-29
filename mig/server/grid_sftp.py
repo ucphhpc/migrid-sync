@@ -87,7 +87,7 @@ from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
     acceptable_chmod, refresh_user_creds, refresh_job_creds, \
     refresh_share_creds, refresh_jupyter_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-    penalize_rate_limit, track_open_session, track_close_sessions, \
+    penalize_rate_limit, track_open_session, track_close_session, \
     active_sessions
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
@@ -1032,7 +1032,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         time.sleep(1)
 
     if username is not None:
-        track_close_sessions(configuration, 'sftp', username, addr[0], addr[1])
+        track_close_session(configuration, 'sftp', username, addr[0], addr[1])
 
 
 def start_service(configuration):

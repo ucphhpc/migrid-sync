@@ -730,6 +730,17 @@ def get_active_project_short_id(configuration, user_id, protocol):
     return result
 
 
+def get_short_id_from_user_id(configuration, user_id):
+    """Extract project short id (email) from *user_id*.
+    *user_id* is either a client_id, project_client_id, short_id
+    or project_user_id"""
+
+    client_id = __client_id_from_user_id(configuration, user_id)
+    result = __short_id_from_client_id(configuration, client_id)
+                                             
+    return result
+
+
 def project_log(
         configuration,
         protocol,

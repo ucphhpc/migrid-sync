@@ -285,3 +285,6 @@ duplicati_protocol_choices = [('WebDAVS', 'davs'), ('SFTP', 'sftp'),
 # Prioritized schedule backup frequency choices and json values
 duplicati_schedule_choices = [('Daily', '1D'), ('Weekly', '1W'),
                               ('Monthly', '1M'), ('Never', '')]
+
+# Session timeout in seconds for IO services,
+io_session_timeout= {'davs': 60}

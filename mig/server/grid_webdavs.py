@@ -49,7 +49,7 @@ try:
     sys.path.append(os.path.dirname(server_init_path))
     from cherrypy import wsgiserver
     from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter, ssl
-    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
+    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter, SSL, crypto
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
         FilesystemProvider
     from wsgidav.domain_controller import WsgiDAVDomainController
@@ -60,22 +60,16 @@ except ImportError, ierr:
     print "You may need to install cherrypy if your wsgidav does not bundle it"
     sys.exit(1)
 
-# PyOpenSSL is required for strong encryption
-try:
-    import OpenSSL
-except ImportError:
-    print "ERROR: the python OpenSSL module is required for DAVS"
-    sys.exit(1)
-
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
-from shared.defaults import dav_domain, litmus_id
+from shared.defaults import dav_domain, litmus_id, io_session_timeout
 from shared.fileio import check_write_access, user_chroot_exceptions
+from shared.gdp import get_active_project_short_id, project_logout
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
-    track_close_sessions, get_open_sessions
+    track_close_expired_sessions, get_open_sessions, validate_session
 from shared.tlsserver import hardened_ssl_context, hardened_openssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength
@@ -85,9 +79,6 @@ from shared.validstring import possible_user_id, possible_sharelink_id
 
 
 configuration, logger = None, None
-
-# Session timeout in seconds
-_session_timeout = 60
 
 
 def hangup_handler(signal, frame):
@@ -181,6 +172,12 @@ class HardenedPyOpenSSLAdapter(pyOpenSSLAdapter):
 
         # Set up hardened SSL context once and for all
         dhparams = configuration.user_shared_dhparams
+
+        # Wrap SSL and crypto in an OpenSSL object as expected by
+        # hardened_openssl_context
+        def OpenSSL(): return None
+        OpenSSL.SSL = SSL
+        OpenSSL.crypto = crypto
 
         self.context = hardened_openssl_context(configuration,
                                                 OpenSSL,
@@ -396,16 +393,18 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 
     def authDomainUser(self, realmname, username, password, environ):
         """Returns True if session is already authorized or
-        the username / password pair is valid,
-        False otherwise."""
+        the username / password pair is valid for the realm,
+        False otherwise. Used for basic authentication.
+
+        We explicitly compare against saved hash rather than password
+
+        """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
         socket_id = "%s.%s" % (ip_addr, tcp_port)
         session_id = self._get_ssl_session_id(ip_addr, tcp_port)
-        open_sessions = get_open_sessions(configuration, 'davs', username)
-        authorized = is_authorized_session(
-            configuration, session_id, open_sessions)
-        if authorized:
+        success = False
+        if is_authorized_session(configuration, username, session_id):
             success = True
             #session_state = self._get_ssl_session_state_str(ip_addr, tcp_port)
             # logger.debug("Using cached ssl session: %s : %s" %
@@ -414,8 +413,11 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             #     % (username, session_id) \
             #     + "in authDomainUser from %s:%s" % (ip_addr, tcp_port)
             # logger.debug(msg)
-        else:
-            success = False
+        elif validate_session(configuration,
+                              'davs',
+                              username,
+                              ip_addr,
+                              tcp_port):
             logger.info("refresh user %s" % username)
             update_users(configuration, self.user_map, username)
             logger.info("in authDomainUser from %s:%s" % (ip_addr, tcp_port))
@@ -440,31 +442,29 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                              offered)
             penalize_rate_limit(configuration, "davs", ip_addr, username,
                                 failed_count)
-        update_sessions(configuration,
-                        open_sessions,
-                        session_id,
-                        success,
-                        username,
-                        ip_addr,
-                        tcp_port,
-                        )
+        track_sessions(configuration,
+                       session_id,
+                       success,
+                       username,
+                       ip_addr,
+                       tcp_port,
+                       )
 
         return success
 
     def isRealmUser(self, realmname, username, environ):
         """Returns True if session is already authorized or
-        this username is valid for the realm, False
-        otherwise."""
+        this username is valid for the realm, False otherwise.
+        Used for basic authentication.
 
+        Please note that this is always called for digest auth so we use it to
+        update creds and reject users without digest password set.
+        """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
         session_id = self._get_ssl_session_id(ip_addr, tcp_port)
-
-        open_sessions = get_open_sessions(configuration, 'davs', username)
-        authorized = is_authorized_session(
-            configuration, session_id, open_sessions)
-
-        if authorized:
+        success = False
+        if is_authorized_session(configuration, username, session_id):
             success = True
             # session_state = self._get_ssl_session_state_str(ip_addr, tcp_port)
             # logger.debug("Using cached ssl session: %s : %s" %
@@ -473,7 +473,11 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             #     % (username, session_id) \
             #     + "in isRealmUser from %s:%s" % (ip_addr, tcp_port)
             # logger.info(msg)
-        else:
+        elif validate_session(configuration,
+                              'davs',
+                              username,
+                              ip_addr,
+                              tcp_port):
             update_users(configuration, self.user_map, username)
 
             if self._get_user_digests(ip_addr, realmname, username):
@@ -483,15 +487,13 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             else:
                 logger.warning("invalid digest user %s from %s:%s" %
                                (username, ip_addr, tcp_port))
-                success = False
-        update_sessions(configuration,
-                        open_sessions,
-                        session_id,
-                        success,
-                        username,
-                        ip_addr,
-                        tcp_port,
-                        )
+        track_sessions(configuration,
+                       session_id,
+                       success,
+                       username,
+                       ip_addr,
+                       tcp_port,
+                       )
 
         return success
 
@@ -771,28 +773,30 @@ class MiGFilesystemProvider(FilesystemProvider):
         return MiGFileResource(path, environ, abs_path)
 
 
-def update_sessions(configuration,
-                    open_sessions,
-                    session_id,
-                    authorized,
-                    username,
-                    ip_addr,
-                    tcp_port,
-                    ):
+def track_sessions(configuration,
+                   session_id,
+                   authorized,
+                   username,
+                   ip_addr,
+                   tcp_port,
+                   ):
     """Track user sessions (open / close)"""
 
-    # msg = "open_sessions: %s" % open_sessions \
-    #    + "\nsession_id: %s" % session_id \
+    # msg = "\nsession_id: %s" % session_id \
     #    + "\nauthorized: %s" % authorized \
     #    + "\nusername: %s" % username \
     #    + "\nip_addr: %s" % ip_addr \
     #    + "\ntcp_port: %s" % tcp_port
     # logger.debug(msg)
-    # msg = "update_sessions for %s from %s:%s" % (username, ip_addr, tcp_port) \
+    # msg = "track_sessions for %s from %s:%s" % (username, ip_addr, tcp_port) \
     #     + " with session_id: %s, authorized: %s" % (session_id, authorized)
     # logger.debug(msg)
 
-    # Update current active session
+    track_close_expired_sessions(configuration,
+                                 'davs',
+                                 username,
+                                 ip_addr,
+                                 tcp_port)
 
     track_open_session(configuration,
                        'davs',
@@ -802,42 +806,24 @@ def update_sessions(configuration,
                        session_id=session_id,
                        authorized=authorized)
 
-    # Remove old sessions
 
-    current_timestamp = time.time()
-    # logger.debug("current_timestamp: %s" % (current_timestamp))
-    remove_sessions = []
-    for key, value in open_sessions.iteritems():
-        timestamp = value.get('timestamp', 0)
-        # logger.debug("%s -> %s" % (key, value))
-        # logger.debug("current_timestamp - timestamp: %s" %
-        #             (current_timestamp - timestamp))
-        if current_timestamp - timestamp > _session_timeout:
-            remove_sessions.append(key)
-    # logger.debug("remove_sessions: %s" % remove_sessions)
-    if remove_sessions:
-        track_close_sessions(configuration,
-                             'davs',
-                             username,
-                             ip_addr,
-                             tcp_port,
-                             session_ids=remove_sessions)
-
-
-def is_authorized_session(configuration, session_id, user_sessions):
-    """Returns true if user session is open
+def is_authorized_session(configuration, username, session_id):
+    """Returns True if user session is open
     and authorized and within expire timestamp"""
 
     # logger.debug("session_id: %s, user_sessions: %s" %
     #             (session_id, user_sessions))
     result = False
-    _active = user_sessions.get(session_id, {})
-    if _active:
-        authorized = _active.get('authorized', False)
-        timestamp = _active.get('timestamp', 0)
+    sessions = get_open_sessions(configuration, 'davs', username)
+    session = sessions.get(session_id, '')
+    if session:
+        session_timeout = io_session_timeout.get('davs', 0)
+        authorized = session.get('authorized', False)
+        timestamp = session.get('timestamp', 0)
         current_timestamp = time.time()
         if authorized \
-                and current_timestamp - timestamp < _session_timeout:
+                and current_timestamp - timestamp \
+                < io_session_timeout.get('davs', 0):
             result = True
 
     return result
@@ -883,7 +869,6 @@ def update_users(configuration, user_map, username):
 
 def run(configuration):
     """SSL wrapped HTTP server for secure WebDAV access"""
-
     dav_conf = configuration.dav_cfg
     daemon_conf = configuration.daemon_conf
     # We just wrap login_map in domain user map as needed here
