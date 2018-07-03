@@ -60,7 +60,8 @@ def html_tmpl(configuration):
     apache_2fa example but with a few custumizations to include our own logo
     and force input focus on load.
     """
-    html = '''<!DOCTYPE html>
+    html = '''<!-- make sure content div covers any background pattern -->
+<div class="twofactorbg">
 <div id="twofactorbox" class="staticpage">
 <img class="sitelogo" src="%(skin_base)s/logo-left.png"><br/>
 <img class="authlogo" src="https://lh3.googleusercontent.com/HPc5gptPzRw3wFhJE1ZCnTqlvEvuVFBAsV9etfouOhdRbkp-zNtYTzKUmUVPERSZ_lAL=w300"><br/>
@@ -69,6 +70,7 @@ def html_tmpl(configuration):
         placeholder="Authentication Token" autofocus><br/>
     <input class="submit" type="submit" value="Submit">
   </form>
+</div>
 </div>
 ''' % {'skin_base': configuration.site_skin_base}
     return html
@@ -98,7 +100,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-                                                 defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -168,7 +171,8 @@ def main(client_id, user_arguments_dict, environ=None):
                 # TODO: proper rate limit source / user here?
                 time.sleep(3)
             output_objects.append(
-                {'object_type': 'title', 'text': '2FA', 'skipmenu': True})
+                {'object_type': 'title', 'text': '2-Factor Authentication',
+                 'skipmenu': True})
             output_objects.append({'object_type': 'html_form', 'text':
                                    html_tmpl(configuration)})
             #output_objects.append({'object_type': 'script_status'})

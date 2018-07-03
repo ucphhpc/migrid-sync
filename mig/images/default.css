@@ -1287,9 +1287,12 @@ div.openidlogin {
 }
 
 /* Layout for 2FA token entry page */
+#content div.twofactorbg {
+    min-height: 600px;
+}
 #twofactorbox input[type=text], #twofactorbox select {
     width: 200px;
-    padding: 12px 20px;
+    padding: 12px 16px;
     margin: 8px 0;
     display: inline-block;
     border: 1px solid #ccc;
