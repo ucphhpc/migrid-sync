@@ -42,9 +42,11 @@ from shared.serial import dump, load
 __valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
                       'sha512': sha512}
 
+
 def supported_hash_algos():
     """A list of supported hash algorithm names"""
     return __valid_hash_algos.keys()
+
 
 def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """Wrapper to handle writing of chunks with offset to path.
@@ -75,16 +77,17 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
             file_size = filehandle.tell()
             for _ in xrange(offset - file_size):
                 filehandle.write('\0')
-        logger.info('write %s chunk of size %d at position %d' % \
-                     (path, len(chunk), filehandle.tell()))
+        logger.info('write %s chunk of size %d at position %d' %
+                    (path, len(chunk), filehandle.tell()))
         filehandle.write(chunk)
         filehandle.close()
         logger.debug('file chunk written: %s' % path)
         return True
     except Exception, err:
-        logger.error('could not write %s chunk at %d: %s' % \
+        logger.error('could not write %s chunk at %d: %s' %
                      (path, offset, err))
         return False
+
 
 def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     """Wrapper to handle writing of contents to path"""
@@ -115,6 +118,21 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     logger.debug(msg)
     return retval
 
+
+def read_file(path, logger):
+    """Wrapper to handle reading of contents from path"""
+    logger.debug('reading file: %s' % path)
+    content = None
+    try:
+        filehandle = open(path)
+        content = filehandle.read()
+        filehandle.close()
+        logger.debug('read %db from: %s' % (len(content), path))
+    except Exception, err:
+        logger.error('could not read %s: %s' % (path, err))
+    return content
+
+
 def read_tail(path, lines, logger):
     """Read last lines from path"""
     out_lines = []
@@ -127,7 +145,7 @@ def read_tail(path, lines, logger):
         size = tail_fd.tell()
         pos = tail_fd.tell()
         step_size = 100
-        # locate last X lines 
+        # locate last X lines
         while pos > 0 and len(out_lines) < lines:
             offset = min(lines * step_size, size)
             logger.debug("seek to offset %d from end of %s" % (offset, path))
@@ -140,6 +158,7 @@ def read_tail(path, lines, logger):
     except Exception, exc:
         logger.error("reading %d lines from %s: %s" % (lines, path, exc))
     return out_lines[-lines:]
+
 
 def get_file_size(path, logger):
     """Wrapper to handle getsize of path"""
@@ -171,6 +190,7 @@ def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
 
     return result
 
+
 def make_symlink(dest, src, logger, force=False):
     """Wrapper to make src a symlink to dest path"""
 
@@ -191,6 +211,7 @@ def delete_symlink(path, logger, allow_broken_symlink=True,
     """Wrapper to handle deletion of symlinks"""
     logger.debug('deleting symlinks: %s' % path)
     return delete_file(path, logger, allow_broken_symlink, allow_missing)
+
 
 def filter_pickled_list(path, changes):
     """Filter pickled list on disk with provided changes where changes is a
@@ -235,11 +256,11 @@ def unpickle_and_change_status(path, newstatus, logger):
     try:
         job_dict = update_pickled_dict(path, changes)
         logger.info('job status changed to %s: %s' % (newstatus,
-                    path))
+                                                      path))
         return job_dict
     except Exception, err:
         logger.error('could not change job status to %s: %s %s'
-                      % (newstatus, path, err))
+                     % (newstatus, path, err))
         return False
 
 
@@ -277,8 +298,8 @@ def send_message_to_grid_script(message, logger, configuration):
         return True
     except Exception, err:
         print 'could not get exclusive access or write to grid_stdin!'
-        logger.error('could not write "%s" to grid_stdin: %s' % \
-                     (message, err))                     
+        logger.error('could not write "%s" to grid_stdin: %s' %
+                     (message, err))
         return False
 
 
@@ -330,11 +351,12 @@ def remove_rec(dir_path, configuration):
         shutil.rmtree(dir_path)
 
     except Exception, err:
-        configuration.logger.error("Could not remove_rec %s: %s" % \
+        configuration.logger.error("Could not remove_rec %s: %s" %
                                    (dir_path, err))
         return False
 
     return True
+
 
 def remove_dir(dir_path, configuration):
     """
@@ -343,19 +365,21 @@ def remove_dir(dir_path, configuration):
     Returns Boolean to indicate success, writes messages to log.
     """
     try:
-       os.rmdir(dir_path)
+        os.rmdir(dir_path)
     except Exception, err:
-       configuration.logger.error("Could not remove_dir %s: %s" % \
-                                  (dir_path, err))
-       return False
+        configuration.logger.error("Could not remove_dir %s: %s" %
+                                   (dir_path, err))
+        return False
 
     return True
+
 
 def move(src, dst):
     """Recursively move a file or directory from src to dst. This version works
     even in cases rename does not - e.g. for src and dst on different devices.
     """
     return shutil.move(src, dst)
+
 
 def listdirs_rec(dir_path, topdown=True, onerror=None, followlinks=False):
     """Recursively iterate over all sub directories in dir_path"""
@@ -374,11 +398,12 @@ def makedirs_rec(dir_path, configuration, accept_existing=True):
         os.makedirs(dir_path)
     except OSError, err:
         if not accept_existing or err.errno != errno.EEXIST:
-            configuration.logger.error("Could not makedirs_rec %s: %s" % \
+            configuration.logger.error("Could not makedirs_rec %s: %s" %
                                        (dir_path, err))
             return False
     return True
-    
+
+
 def _move_helper(src, dst, configuration, recursive):
     """Move a file/dir to dst where dst must be a new file/dir path and the
     parent dir is created if necessary. The recursive flag is used to enable
@@ -393,17 +418,20 @@ def _move_helper(src, dst, configuration, recursive):
         return (False, "move failed: %s" % exc)
     return (True, "")
 
+
 def move_file(src, dst, configuration):
     """Move a file from src to dst where dst must be a new file path and
     the parent dir is created if necessary.
     """
     return _move_helper(src, dst, configuration, False)
 
+
 def move_rec(src, dst, configuration):
     """Move a dir recursively to dst where dst must be a new dir path and the
     parent dir is created if necessary.
     """
     return _move_helper(src, dst, configuration, True)
+
 
 def _copy_helper(src, dst, configuration, recursive):
     """Copy a file or directory from src to dst where dst must be a new
@@ -421,9 +449,11 @@ def _copy_helper(src, dst, configuration, recursive):
         return (False, "copy failed: %s" % exc)
     return (True, "")
 
+
 def copy(src, dst):
     """Copy a file from src to dst where dst my be a directory"""
     return shutil.copy(src, dst)
+
 
 def copy_file(src, dst, configuration):
     """Copy a file from src to dst where dst must be a new file path and
@@ -431,11 +461,13 @@ def copy_file(src, dst, configuration):
     """
     return _copy_helper(src, dst, configuration, False)
 
+
 def copy_rec(src, dst, configuration):
     """Copy a dir recursively to dst where dst must be a new dir path and the
     parent dir is created if necessary.
     """
     return _copy_helper(src, dst, configuration, True)
+
 
 def write_zipfile(zip_path, paths, archive_base=''):
     """Write each of the files/dirs in paths to a zip file with zip_path.
@@ -451,15 +483,16 @@ def write_zipfile(zip_path, paths, archive_base=''):
             # Replace real directory path with archive_base if specified
 
             if archive_base:
-                archive_path = '%s/%s' % (archive_base, 
-                        os.path.basename(script))
+                archive_path = '%s/%s' % (archive_base,
+                                          os.path.basename(script))
             else:
                 archive_path = script
             zip_file.write(script, archive_path)
         zip_file.close()
-        return (True, '')        
+        return (True, '')
     except Exception, err:
         return (False, err)
+
 
 def strip_dir(path):
     """Strip directory part of path for all known path formats. We can
@@ -477,6 +510,7 @@ def strip_dir(path):
         name = os.path.basename(path)
     return name
 
+
 def _check_access(path, mode, parent_dir, follow_symlink):
     """Internal helper to check for mode access on path. If parent_dir is set
     the check is applied to the directory part of path. With follow_symlink set
@@ -489,6 +523,7 @@ def _check_access(path, mode, parent_dir, follow_symlink):
         path = os.path.dirname(path.rstrip(os.sep))
     return os.access(path, mode)
 
+
 def check_read_access(path, parent_dir=False, follow_symlink=True):
     """Check if path is readable or if the optional parent_dir is set check if
     the directory part of path is readable. The optional follow_symlink
@@ -496,6 +531,7 @@ def check_read_access(path, parent_dir=False, follow_symlink=True):
     and it is on by default.
     """
     return _check_access(path, os.O_RDONLY, parent_dir, follow_symlink)
+
 
 def check_write_access(path, parent_dir=False, follow_symlink=True):
     """Check if path is writable or if the optional parent_dir is set check if
@@ -506,14 +542,17 @@ def check_write_access(path, parent_dir=False, follow_symlink=True):
     """
     # IMPORTANT: we need to use RDWR rather than WRONLY here.
     return _check_access(path, os.O_RDWR, parent_dir, follow_symlink)
-    
+
+
 def make_temp_file(suffix='', prefix='tmp', dir=None, text=False):
     """Expose tempfile.mkstemp functionality"""
     return tempfile.mkstemp(suffix, prefix, dir, text)
 
+
 def make_temp_dir(suffix='', prefix='tmp', dir=None):
     """Expose tempfile.mkdtemp functionality"""
     return tempfile.mkdtemp(suffix, prefix, dir)
+
 
 def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
                     max_chunks=default_max_chunks):
@@ -544,25 +583,30 @@ def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
     except Exception, exc:
         return "checksum failed: %s" % exc
 
+
 def md5sum_file(path, chunk_size=default_chunk_size,
                 max_chunks=default_max_chunks):
     """Simple md5 hashing for checksumming of files"""
     return __checksum_file(path, "md5", chunk_size, max_chunks)
+
 
 def sha1sum_file(path, chunk_size=default_chunk_size,
                  max_chunks=default_max_chunks):
     """Simple sha1 hashing for checksumming of files"""
     return __checksum_file(path, "sha1", chunk_size, max_chunks)
 
+
 def sha256sum_file(path, chunk_size=default_chunk_size,
                    max_chunks=default_max_chunks):
     """Simple sha256 hashing for checksumming of files"""
     return __checksum_file(path, "sha256", chunk_size, max_chunks)
 
+
 def sha512sum_file(path, chunk_size=default_chunk_size,
                    max_chunks=default_max_chunks):
     """Simple sha512 hashing for checksumming of files"""
     return __checksum_file(path, "sha512", chunk_size, max_chunks)
+
 
 def acquire_file_lock(lock_path, exclusive=True):
     """Uses fcntl to acquire the lock in lock_path in exclusive mode unless
@@ -582,9 +626,11 @@ def acquire_file_lock(lock_path, exclusive=True):
     fcntl.flock(lock_handle.fileno(), lock_mode)
     return lock_handle
 
+
 def release_file_lock(lock_handle):
     """Uses fcntl to release the lock held in lock_handle."""
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+
 
 def check_readable(configuration, path):
     """Check and return boolean to indicate if path is a non-empty string and
@@ -597,6 +643,7 @@ def check_readable(configuration, path):
         return False
     return True
 
+
 def check_writable(configuration, path):
     """Check and return boolean to indicate if path is a non-empty string and
     a writable location.
@@ -607,15 +654,18 @@ def check_writable(configuration, path):
         return False
     return True
 
+
 def check_readwritable(configuration, path):
     """Check and return boolean to indicate if path set and read+writable"""
     return check_readable(configuration, path) and \
-           check_writable(configuration, path)
+        check_writable(configuration, path)
+
 
 def check_readonly(configuration, path):
     """Check and return boolean to indicate if path is set and readonly"""
     return check_readable(configuration, path) and not \
-           check_writable(configuration, path)
+        check_writable(configuration, path)
+
 
 def untrusted_store_res_symlink(configuration, path):
     """Check and return boolean to indicate if path is a symlink inside a
@@ -644,9 +694,10 @@ def untrusted_store_res_symlink(configuration, path):
             break
     if not found_res_base:
         return False
-    #configuration.logger.debug("check real_path %s inside %s" % \
+    # configuration.logger.debug("check real_path %s inside %s" % \
     #                            (real_path, res_base))
     return not real_path.startswith(real_res_base)
+
 
 def user_chroot_exceptions(configuration):
     """Lookup a list of chroot exceptions for use in chrooting user
@@ -668,4 +719,3 @@ def user_chroot_exceptions(configuration):
     if configuration.site_enable_seafile and configuration.seafile_mount:
         chroot_exceptions.append(os.path.abspath(configuration.seafile_mount))
     return chroot_exceptions
-

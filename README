@@ -54,6 +54,7 @@ the following additional software:
 -Python cracklib module (https://pypi.org/project/cracklib/)
 -Python PDFKit module (https://github.com/Martin-Rehr/python-pdfkit/)
 -Python xvfb module (https://pypi.python.org/pypi/xvfbwrapper/)
+-Python OTP (https://pypi.org/project/pyotp/)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
 -OpenSSH server (https://www.openssh.org/)
@@ -74,8 +75,8 @@ sudo aptitude install apache2 openssh-client python python-pip \
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      python-irclib python-paramiko python-enchant python-jsonrpclib \
-     python-requests python-cracklib openssh-server libpam0g-dev mercurial \
-     trac trac-mercurial lftp rsync
+     python-requests python-cracklib python-pyotp openssh-server \
+     libpam0g-dev mercurial trac trac-mercurial lftp rsync
 
 Apache comes with a number of modules included, so it is usually not
 necessary to explicitly install e.g. mod-ssl, mod-proxy and mod-rewrite.
@@ -182,6 +183,10 @@ xvfbwrapper require xorg-x11-server-Xvfb and pdfkit require
 wkhtmltopdf.
 If the generated PDFs are gibberish then xorg-x11-fonts are most likely
 missing on the system.
+
+The optional PyOTP module used for 2-factor authentication is not
+necessarily recent in distributions but then readily available with pip:
+sudo pip install pyotp
 
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop

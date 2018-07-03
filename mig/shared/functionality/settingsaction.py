@@ -36,15 +36,17 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, safe_handler
 from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
-     parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs, \
-     parse_and_save_ftps, parse_and_save_seafile, parse_and_save_duplicati
+    parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs, \
+    parse_and_save_ftps, parse_and_save_seafile, parse_and_save_duplicati, \
+    parse_and_save_webaccess
 from shared.profilekeywords import get_keywords_dict as profile_keywords
 from shared.settingskeywords import get_keywords_dict as settings_keywords
 from shared.useradm import create_seafile_mount_link, remove_seafile_mount_link
+from shared.webaccesskeywords import get_keywords_dict as webaccess_keywords
 from shared.widgetskeywords import get_keywords_dict as widgets_keywords
 
 
-def extend_defaults(defaults, user_args):
+def extend_defaults(configuration, defaults, user_args):
     """Extract topic from untrusted user_args dictionary and safely extend
     defaults with topic-specific defaults before validation.
     """
@@ -57,6 +59,8 @@ def extend_defaults(defaults, user_args):
         keywords_dict = profile_keywords()
     elif topic == 'duplicati':
         keywords_dict = duplicati_keywords()
+    elif topic == 'webaccess':
+        keywords_dict = webaccess_keywords(configuration)
     elif topic == 'sftp':
         keywords_dict = {'publickeys': '', 'password': ''}
     elif topic == 'webdavs':
@@ -72,6 +76,7 @@ def extend_defaults(defaults, user_args):
         defaults[keyword] = ['']
     return defaults
 
+
 def signature():
     """Signature of the main function"""
 
@@ -84,11 +89,11 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s settings' % configuration.short_title })
+    output_objects.append(
+        {'object_type': 'header', 'text': '%s settings' % configuration.short_title})
 
     defaults = signature()[1]
-    extend_defaults(defaults, user_arguments_dict)
+    extend_defaults(configuration, defaults, user_arguments_dict)
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -96,7 +101,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         logger.debug("failed validation: %s %s" % (accepted, defaults))
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -121,6 +126,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         keywords_dict = profile_keywords()
     elif topic == 'duplicati':
         keywords_dict = duplicati_keywords()
+    elif topic == 'webaccess':
+        keywords_dict = webaccess_keywords(configuration)
     elif topic in ('sftp', 'webdavs', 'ftps', 'seafile', ):
         # We don't use mRSL parser here
         keywords_dict = {}
@@ -151,72 +158,76 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if topic == 'general':
         (parse_status, parse_msg) = \
-                       parse_and_save_settings(tmptopicfile, client_id,
-                                               configuration)
+            parse_and_save_settings(tmptopicfile, client_id,
+                                    configuration)
     elif topic == 'widgets':
         (parse_status, parse_msg) = \
-                       parse_and_save_widgets(tmptopicfile, client_id,
-                                              configuration)
+            parse_and_save_widgets(tmptopicfile, client_id,
+                                   configuration)
     elif topic == 'profile':
         (parse_status, parse_msg) = \
-                       parse_and_save_profile(tmptopicfile, client_id,
-                                              configuration)
+            parse_and_save_profile(tmptopicfile, client_id,
+                                   configuration)
     elif topic == 'duplicati':
         (parse_status, parse_msg) = \
-                       parse_and_save_duplicati(tmptopicfile, client_id,
-                                                configuration)
+            parse_and_save_duplicati(tmptopicfile, client_id,
+                                     configuration)
+    elif topic == 'webaccess':
+        (parse_status, parse_msg) = \
+            parse_and_save_webaccess(tmptopicfile, client_id,
+                                     configuration)
     elif topic == 'sftp':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))
         password = accepted.get('password', [''])[-1].strip()
         (parse_status, parse_msg) = \
-                       parse_and_save_ssh(publickeys, password, client_id,
-                                          configuration)
+            parse_and_save_ssh(publickeys, password, client_id,
+                               configuration)
     elif topic == 'webdavs':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))
         password = accepted.get('password', [''])[-1].strip()
         (parse_status, parse_msg) = \
-                       parse_and_save_davs(publickeys, password, client_id,
-                                           configuration)
+            parse_and_save_davs(publickeys, password, client_id,
+                                configuration)
     elif topic == 'ftps':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))
         password = accepted.get('password', [''])[-1].strip()
         (parse_status, parse_msg) = \
-                       parse_and_save_ftps(publickeys, password, client_id,
-                                           configuration)
+            parse_and_save_ftps(publickeys, password, client_id,
+                                configuration)
     elif topic == 'seafile':
         password = accepted.get('password', [''])[-1].strip()
         (parse_status, parse_msg) = \
-                       parse_and_save_seafile(password, client_id,
-                                              configuration)
+            parse_and_save_seafile(password, client_id,
+                                   configuration)
         if password:
             create_seafile_mount_link(client_id, configuration)
         else:
             remove_seafile_mount_link(client_id, configuration)
     else:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'No such settings topic: %s' % topic
-                              })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'No such settings topic: %s' % topic
+                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
-        
+
     try:
         os.remove(tmptopicfile)
     except Exception, exc:
         pass  # probably deleted by parser!
 
     if not parse_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error parsing and saving %s settings: %s'
-                               % (topic, parse_msg)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error parsing and saving %s settings: %s' %
+                               (topic, parse_msg)})
         output_status = returnvalues.CLIENT_ERROR
     else:
         if parse_msg:
-            output_objects.append({'object_type': 'html_form', 'text': 
-                                   '<span class="warningtext">%s</span>' % \
+            output_objects.append({'object_type': 'html_form', 'text':
+                                   '<span class="warningtext">%s</span>' %
                                    parse_msg})
         # print saved topic
 
-        output_objects.append({'object_type': 'text', 'text'
-                               : 'Saved %s settings:' % topic})
+        output_objects.append(
+            {'object_type': 'text', 'text': 'Saved %s settings:' % topic})
 
     output_objects.append({'object_type': 'link',
                            'destination': 'settings.py?topic=%s' % topic,
@@ -225,5 +236,3 @@ CSRF-filtered POST requests to prevent unintended updates'''
                            'text': 'Back to %s settings' % topic})
 
     return (output_objects, output_status)
-
-

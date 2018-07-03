@@ -1344,6 +1344,7 @@ def guess_type(name):
         for key in ('modauthopenid.referrer',
                     'transfer_src',
                     'transfer_dst',
+                    'redirect_url',
                     ):
             __type_map[key] = valid_url
 

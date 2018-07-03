@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# logout - force-expire local login session
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# logout - force-expire local login session(s)
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.auth import expire_twofactor_session
 from shared.functional import validate_input_and_cert
 from shared.gdp import project_logout
 from shared.httpsclient import extract_client_openid
@@ -86,6 +87,10 @@ browser. Please refer to your browser and system documentation for details.
     # finish the local logout.
 
     if do_logout:
+        if configuration.site_enable_twofactor:
+            if not expire_twofactor_session(configuration, client_id, environ):
+                logger.warning("expire twofactor session failed for %s" %
+                               client_id)
         logger.info("expiring active sessions for %s in %s" % (identity,
                                                                oid_db))
         (success, _) = expire_oid_sessions(configuration, oid_db, identity)

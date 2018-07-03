@@ -434,6 +434,25 @@ on the irclib module from:"""})
                                'class': 'urllink iconspace',
                                'title': 'Python irclib at Python Package Index',
                                'text': 'Python irclib Module (LGPL license)'})
+    if configuration.site_enable_twofactor:
+        output_objects.append({'object_type': 'text', 'text': """
+The optional 2-factor authentication in logins relies on the PyOTP module
+from:"""})
+        output_objects.append({'object_type': 'link',
+                               'destination':
+                               'https://pypi.org/project/pyotp/',
+                               'class': 'urllink iconspace',
+                               'title': 'pyotp at Python Package Index',
+                               'text': 'PyOTP Module (BSD license)'})
+        output_objects.append({'object_type': 'text', 'text': """
+The associated QR codes are rendered locally in the browser with the QRious
+JavaScript library from:"""})
+        output_objects.append({'object_type': 'link',
+                               'destination':
+                               'https://neocotic.com/qrious/',
+                               'class': 'urllink iconspace',
+                               'title': 'QRious library home page',
+                               'text': 'QRious JavaScript Library (GPLv3 license)'})
     if configuration.hg_path and configuration.hgweb_scripts:
         output_objects.append({'object_type': 'text', 'text':
                                "SCM repositories are delivered with Mercurial:"

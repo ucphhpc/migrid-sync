@@ -318,6 +318,15 @@ a:hover.genericbutton {
   color: #fff; 
 }
 
+/* Override colors on 2FA dialog */
+#twofactorbox input[type=submit] {
+    background-color: #679c5b;
+}
+#twofactorbox input[type=submit]:hover {
+    background-color: #46743c;
+}
+
+
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {
   border: 1px solid gold;

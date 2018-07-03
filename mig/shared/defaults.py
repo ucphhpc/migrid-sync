@@ -63,7 +63,7 @@ cert_field_order = [
     ('organizational_unit', 'OU'),
     ('full_name', 'CN'),
     ('email', 'emailAddress'),
-    ]
+]
 
 sandbox_names = ['sandbox', 'oneclick', 'ps3live']
 
@@ -79,7 +79,7 @@ default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
 
 # User ID is email or hexlified version of full cert DN.
-# Shortest email would have to be something like a@ku.dk 
+# Shortest email would have to be something like a@ku.dk
 user_id_min_length = 7
 user_id_max_length = 256
 user_id_charset = ascii_uppercase + ascii_lowercase + digits + '_-@.'
@@ -88,6 +88,12 @@ user_id_charset = ascii_uppercase + ascii_lowercase + digits + '_-@.'
 session_id_bytes = 32
 session_id_length = session_id_bytes * 2
 session_id_charset = digits + 'abcdef'
+
+# 2FA secret tokens are 32 chars (implicitly from base32 charset)
+twofactor_key_bytes = 32
+# Size of random key generated in 2FA cookies and session life time
+twofactor_cookie_bytes = 80
+twofactor_cookie_ttl = 24 * 60 * 60
 
 # Sharelink format helpers
 # Let mode chars be aAbBcC ... xX (to make splitting evenly into 3 easy)
@@ -129,13 +135,15 @@ authdigests_filename = 'authorized_digests'
 settings_filename = 'settings'
 widgets_filename = 'widgets'
 profile_filename = 'userprofile'
+webaccess_filename = 'webaccess'
 duplicati_filename = 'duplicati'
 freeze_meta_filename = 'meta.pck'
 datatransfers_filename = 'transfers'
 user_keys_dir = 'keys'
 sharelinks_filename = 'sharelinks'
 seafile_ro_dirname = 'seafile_readonly'
-# Trash really goes to this location but only accessible through link 
+twofactor_key_name = 'twofactor_key'
+# Trash really goes to this location but only accessible through link
 trash_destdir = '.trash'
 trash_linkname = 'Trash'
 
@@ -189,7 +197,7 @@ edit_lock_timeout = 600
 # Valid trigger actions - with the first one as default action
 
 valid_trigger_changes = ['created', 'modified', 'deleted']
-valid_trigger_actions = ['submit', 'command'] + ['trigger-%s' % i for i in \
+valid_trigger_actions = ['submit', 'command'] + ['trigger-%s' % i for i in
                                                  valid_trigger_changes]
 img_trigger_prefix = 'system_imagesettings'
 
@@ -263,7 +271,7 @@ freeze_flavors = {
                'showfreeze_title': 'Show Backup Archive Details',
                'deletefreeze_title': 'Delete Backup Archive',
                'states': [keyword_final]}
-    }
+}
 
 # Default value for ALL integer limits in vgrid settings
 # NOTE: spamming more than 10 owners about reqs is rarely popular, but
@@ -287,4 +295,4 @@ duplicati_schedule_choices = [('Daily', '1D'), ('Weekly', '1W'),
                               ('Monthly', '1M'), ('Never', '')]
 
 # Session timeout in seconds for IO services,
-io_session_timeout= {'davs': 60}
+io_session_timeout = {'davs': 60}

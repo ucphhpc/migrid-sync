@@ -27,10 +27,15 @@
 
 """Provide all the settings subpages"""
 
+import base64
 import os
+import urllib
+
+import pyotp
 
 import shared.returnvalues as returnvalues
-from shared.base import client_alias, client_id_dir, extract_field
+from shared.auth import load_twofactor_key, reset_twofactor_key
+from shared.base import client_alias, client_id_dir, extract_field, force_utf8
 from shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
@@ -42,10 +47,12 @@ from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, console_log_javascript
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
-    load_ssh, load_davs, load_ftps, load_seafile, load_duplicati
+    load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, \
+    load_webaccess
 from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
+from shared.webaccesskeywords import get_webaccess_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import create_alias_link, get_default_mrsl, \
     get_default_css, get_short_id
@@ -120,6 +127,9 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
 
+<!-- for 2FA QR codes -->
+<script type="text/javascript" src="/images/js/qrious.js"></script>
+
 %s
 
 %s
@@ -134,8 +144,18 @@ def main(client_id, user_arguments_dict):
     }
 
     var toggleHidden = function(classname) {
-        // classname supposed to have a leading dot 
+        // classname supposed to have a leading dot
         $(classname).toggleClass("hidden");
+    }
+
+
+    function showQR(elem_id, otp_uri) {
+        /* Init QR code for 2FA */
+        var qr = new QRious({
+                             element: document.getElementById(elem_id),
+                             value: otp_uri,
+                             size: 200
+                            });
     }
 
 $(document).ready(function() {
@@ -149,8 +169,7 @@ $(document).ready(function() {
               /* fix and reduce accordion spacing */
               $(".ui-accordion-header").css("padding-top", 0)
                                        .css("padding-bottom", 0).css("margin", 0);
-     }
-);
+});
 </script>
 ''' % (cm_javascript, console_log_javascript())
 
@@ -174,6 +193,8 @@ $(document).ready(function() {
         valid_topics.append('seafile')
     if configuration.site_enable_duplicati:
         valid_topics.append('duplicati')
+    if configuration.site_enable_twofactor:
+        valid_topics.append('webaccess')
     topics = accepted['topic']
     # Backwards compatibility
     if topics and topics[0] == 'ssh':
@@ -185,7 +206,7 @@ $(document).ready(function() {
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
                        ('ftps', 'FTPS'), ('seafile', 'Seafile'),
-                       ('duplicati', 'Duplicati'),
+                       ('duplicati', 'Duplicati'), ('webaccess', 'Web Access'),
                        ]:
         if key in valid_topics:
             topic_titles[key] = val
@@ -326,6 +347,10 @@ $(document).ready(function() {
                 else:
                     entry += ''
             elif val['Type'] == 'boolean':
+
+                # get valid choice order from spec
+
+                valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
                 if current_settings_dict.has_key(keyword):
                     current_choice = current_settings_dict[keyword]
@@ -518,7 +543,7 @@ widget file links below if you want to reuse existing widgets.<br />
 so you may have to avoid blank lines in your widget code below. Additionally
 any errors in your widgets code may cause severe corruption in your pages, so
 it may be a good idea to keep another browser tab/window ready for emergency
-disabling of widgets while experimenting here.</div> 
+disabling of widgets while experimenting here.</div>
 </td></tr>
 <tr><td>
 <input type="hidden" name="topic" value="widgets" />
@@ -656,7 +681,7 @@ information.<br />
 <tr><td>
 <div class="warningtext">Please note that the profile parser is rather grumpy
 so you may have to avoid blank lines in your text below.
-</div> 
+</div>
 </td></tr>
 <tr><td>
 <input type="hidden" name="topic" value="profile" />
@@ -711,7 +736,10 @@ so you may have to avoid blank lines in your text below.
                     area += '</textarea>'
                     html += wrap_edit_area(keyword, area, profile_edit)
             elif val['Type'] == 'boolean':
-                valid_choices = [True, False]
+
+                # get valid choice order from spec
+
+                valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
                 if current_profile_dict.has_key(keyword):
                     current_choice = current_profile_dict[keyword]
@@ -834,7 +862,7 @@ sftp -B 258048 %(sftp_server)s
 lftp -e "set net:connection-limit %(max_sessions)d" -p %(sftp_port)s sftp://%(sftp_server)s
 </pre>
 <pre>
-mkdir -p remote-home 
+mkdir -p remote-home
 sshfs %(sftp_server)s: remote-home -o idmap=user -o big_writes -o reconnect
 </pre>
 You can also integrate with ordinary mounts by adding a line like:
@@ -939,7 +967,7 @@ value="%(default_authpassword)s" />
         davs_port = configuration.user_davs_show_port
         fingerprint_info = ''
         # We do not support pretty outdated SHA1 in conf
-        #davs_sha1 = configuration.user_davs_key_sha1
+        # davs_sha1 = configuration.user_davs_key_sha1
         davs_sha1 = ''
         davs_sha256 = configuration.user_davs_key_sha256
         fingerprints = []
@@ -1102,7 +1130,7 @@ value="%(default_authpassword)s" />
         ftps_ctrl_port = configuration.user_ftps_show_ctrl_port
         fingerprint_info = ''
         # We do not support pretty outdated SHA1 in conf
-        #ftps_sha1 = configuration.user_ftps_key_sha1
+        # ftps_sha1 = configuration.user_ftps_key_sha1
         ftps_sha1 = ''
         ftps_sha256 = configuration.user_ftps_key_sha256
         fingerprints = []
@@ -1399,13 +1427,13 @@ client(s) you installed in the previous step.
 <input id="id_password" type=text value="...the Seafile password you chose..."
 %(size)s %(ro)s/><br/>
 <br/>
-You can always 
+You can always
 <input id="seafilepreviousbutton" type="submit"
     value="go back"
     onClick="select_seafile_section(\'seafilereg\'); return false" />
 to that registration and install step if you skipped a part of it or just want
 to install more clients.<br/>
-You can also directly open your  
+You can also directly open your
 <input id="seafileloginbutton" type="submit" value="Seafile account"
 onClick="open_login_window(\'%(seahub_url)s\', \'%(username)s\'); return false"
 /> web page.<br/>
@@ -1493,8 +1521,8 @@ value="%(default_authpassword)s" />
 
         enabled_map = {
             'davs': configuration.site_enable_davs,
-            'sftp': configuration.site_enable_sftp or \
-                    configuration.site_enable_sftp_subsys,
+            'sftp': configuration.site_enable_sftp or
+            configuration.site_enable_sftp_subsys,
             'ftps': configuration.site_enable_ftps
         }
         username_map = {
@@ -1608,7 +1636,10 @@ for %(site)s backup use.
                         % (keyword, current_choice)
                 html += '<br />'
             elif val['Type'] == 'boolean':
-                valid_choices = [True, False]
+
+                # get valid choice order from spec
+
+                valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
                 if current_duplicati_dict.has_key(keyword):
                     current_choice = current_duplicati_dict[keyword]
@@ -1672,6 +1703,227 @@ client versions from the link above.<br/>
             'client_id': client_id,
             'size': 'size=50',
         })
+        output_objects.append({'object_type': 'html_form', 'text':
+                               html % fill_helpers})
+
+    if 'webaccess' in topics:
+
+        # load current webaccess
+
+        current_webaccess_dict = load_webaccess(client_id, configuration)
+        if not current_webaccess_dict:
+
+            # no current webaccess found
+
+            current_webaccess_dict = {}
+
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
+<div id="webaccess">
+<form method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+<table class="webaccess fixedlayout">
+<tr class="title"><td class="centertext">
+Web Access
+</td></tr>
+<tr><td>
+It is possible to tweak some of the web access methods here.
+</td></tr>
+'''
+        if configuration.site_enable_twofactor:
+            html += """
+<tr><td>
+<h3>2-Factor Authentication</h3>
+</td></tr>
+<tr><td>
+We allow 2-factor authentication for greater password login security. You first
+need to download an TOTP authenticator client like
+<a href='https://en.wikipedia.org/wiki/Google_Authenticator'>
+Google Authenticator</a>.<br/>
+Then scan your personal QR code here to let the app generate auth tokens to
+enter along with your logins.<br/>
+Please only actually enable 2-factor auth below after you've verified that your
+authenticator app displays new tokens every once in a while, to avoid locking
+yourself out.<br/>
+Once ready you can simply logout and login again to verify that a token is
+requested right after your usual %(site)s login.
+</td></tr>
+<tr><td>
+""" % {'site': configuration.short_title}
+
+            # load current webaccess
+
+            current_webaccess_dict = load_webaccess(client_id, configuration)
+            if not current_webaccess_dict:
+
+                # no current webaccess found
+
+                current_webaccess_dict = {}
+
+            # Make sure secret key is available in user settings but do not
+            # require 2FA access tokens before user saves with 2FA enabled.
+            # We limit key exposure by not showing it in clear and keeping it
+            # out of backend dictionary with indirect generation only.
+
+            # TODO: we might want to protect QR code with repeat basic login
+            #       or a simple timeout since last login (cookie age).
+
+            # NOTE: 2FA secret key is a standalone file in user settings dir
+            #       Try to load existing and generate new one if not there.
+            #       We need the base32-encoded form as returned here.
+            b32_key = load_twofactor_key(client_id, configuration)
+            if not b32_key:
+                b32_key = reset_twofactor_key(client_id, configuration)
+
+            # URI-format for otp auth is
+            # otpauth://<otptype>/(<issuer>:)<accountnospaces>?
+            #         secret=<secret>(&issuer=<issuer>)(&image=<imageuri>)
+            # which we pull out of pyotp directly.
+            # We could display with Google Charts helper like this example
+            # https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&
+            #       chl=otpauth://totp/Example:alice@google.com?
+            #       secret=JBSWY3DPEHPK3PXP&issuer=Example
+            # but we prefer to use the QRious JS library to keep it local.
+            if configuration.user_openid_alias:
+                username = extract_field(
+                    client_id, configuration.user_openid_alias)
+            else:
+                username = client_id
+            otp_uri = pyotp.totp.TOTP(b32_key).provisioning_uri(
+                username, issuer_name=configuration.short_title)
+            # IMPORTANT: pyotp unicode breaks wsgi when inserted - force utf8!
+            otp_uri = force_utf8(otp_uri)
+
+            # Google img examle
+            # img_url = 'https://www.google.com/chart?'
+            # img_url += urllib.urlencode([('cht', 'qr'), ('chld', 'M|0'),
+            #                             ('chs', '200x200'), ('chl', otp_uri)])
+            # otp_img = '<img src="%s" />' % img_url
+
+            html += '''<tr><td>
+Your 2-factor auth code can be imported by scanning this QR code in your
+authenticator app:<br/>
+<canvas id="otp-qr"><!-- filled by script --></canvas>
+<script>
+    showQR("otp-qr", "%(otp_uri)s");
+</script>
+</td></tr>
+<tr><td>
+<span class="warningtext">Please immediately contact the %(site)s admins to
+reset your underlying personal 2-factor secret if you ever loose a device with
+it installed or otherwise suspect someone may have gained access to it.
+</span>
+</td></tr>
+'''
+            fill_helpers.update({'otp_uri': otp_uri})
+
+        html += '''
+        <input type="hidden" name="topic" value="webaccess" />
+        </td></tr>
+        <tr><td>
+        </td></tr>
+        '''
+        webaccess_entries = get_webaccess_specs(configuration)
+        for (keyword, val) in webaccess_entries:
+            if val.get('Editor', None) == 'hidden':
+                continue
+            entry = """
+            <tr class='title'><td>
+            %(Title)s
+            </td></tr>
+            <tr><td>
+            %(Description)s
+            </td></tr>
+            <tr><td>
+            """ % val
+            if val['Type'] == 'multiplestrings':
+                try:
+
+                    # get valid choices from conf. multiple selections
+
+                    valid_choices = eval('configuration.%s' % keyword.lower())
+                    current_choice = []
+                    if current_webaccess_dict.has_key(keyword):
+                        current_choice = current_webaccess_dict[keyword]
+
+                    if valid_choices:
+                        entry += '<div class="scrollselect">'
+                        for choice in valid_choices:
+                            selected = ''
+                            if choice in current_choice:
+                                selected = 'checked'
+                            entry += '''
+                <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
+                                % (keyword, selected, choice, choice)
+                        entry += '</div>'
+                    else:
+                        entry += ''
+                except:
+                    # failed on evaluating configuration.%s
+
+                    area = '''
+                <textarea id="%s" cols=40 rows=1 name="%s">''' \
+                        % (keyword, keyword)
+                    if current_webaccess_dict.has_key(keyword):
+                        area += '\n'.join(current_webaccess_dict[keyword])
+                    area += '</textarea>'
+                    entry += wrap_edit_area(keyword, area, general_edit,
+                                            'BASIC')
+
+            elif val['Type'] == 'string':
+
+                # get valid choices from conf
+
+                valid_choices = eval('configuration.%s' % keyword.lower())
+                current_choice = ''
+                if current_webaccess_dict.has_key(keyword):
+                    current_choice = current_webaccess_dict[keyword]
+
+                if valid_choices:
+                    entry += '<select name="%s">' % keyword
+                    for choice in valid_choices:
+                        selected = ''
+                        if choice == current_choice:
+                            selected = 'selected'
+                        entry += '<option %s value="%s">%s</option>'\
+                            % (selected, choice, choice)
+                    entry += '</select><br />'
+                else:
+                    entry += ''
+            elif val['Type'] == 'boolean':
+
+                # get valid choice order from spec
+
+                valid_choices = [val['Value'], not val['Value']]
+                current_choice = ''
+                if current_webaccess_dict.has_key(keyword):
+                    current_choice = current_webaccess_dict[keyword]
+                entry += '<select name="%s">' % keyword
+                for choice in valid_choices:
+                    selected = ''
+                    if choice == current_choice:
+                        selected = 'selected'
+                    entry += '<option %s value="%s">%s</option>'\
+                             % (selected, choice, choice)
+                entry += '</select><br />'
+            html += """%s
+            </td></tr>
+            """ % entry
+
+        html += '''<tr><td>
+        <input type="submit" value="Save Web Access Settings" />
+</td></tr>
+</table>
+</form>
+</div>
+'''
+        fill_helpers.update({
+            'client_id': client_id,
+        })
+
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 

@@ -44,8 +44,9 @@ import socket
 import sys
 
 from shared.defaults import default_http_port, default_https_port, \
-     auth_openid_mig_db, auth_openid_ext_db
+    auth_openid_mig_db, auth_openid_ext_db
 from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
+
 
 def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
     """Fill a configuration template using provided settings dictionary"""
@@ -55,7 +56,7 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
         template.close()
     except Exception, err:
         print 'Error: reading template file %s: %s' % (template_file,
-                err)
+                                                       err)
         return False
 
     # print "template read:\n", output
@@ -78,6 +79,7 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
         print 'Error: writing output file %s: %s' % (output_file, err)
         return False
     return True
+
 
 def generate_confs(
     generateconfs_command=' '.join(sys.argv),
@@ -128,6 +130,7 @@ def generate_confs(
     enable_crontab='False',
     enable_imnotify='False',
     enable_dev_accounts='False',
+    enable_twofactor='False',
     enable_openid='False',
     mig_oid_provider='',
     ext_oid_provider='',
@@ -154,11 +157,11 @@ def generate_confs(
     distro='Debian',
     landing_page='/cgi-bin/dashboard.py',
     skin='migrid-basic',
-    ):
+):
     """Generate Apache and MiG server confs with specified variables"""
 
     # Read out dictionary of args with defaults and overrides
-    
+
     expanded = locals()
 
     user_dict = {}
@@ -214,6 +217,7 @@ def generate_confs(
     user_dict['__ENABLE_CRONTAB__'] = enable_crontab
     user_dict['__ENABLE_IMNOTIFY__'] = enable_imnotify
     user_dict['__ENABLE_DEV_ACCOUNTS__'] = enable_dev_accounts
+    user_dict['__ENABLE_TWOFACTOR__'] = enable_twofactor
     user_dict['__ENABLE_OPENID__'] = enable_openid
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
@@ -269,8 +273,8 @@ cert, oid and sid based https!
     user_dict['__WEBSOCKETS_COMMENTED__'] = '#'
 
     if jupyter_url:
-        user_dict['__JUPYTER_WEB_SOCKET__'] = jupyter_url.replace("https://","")\
-            .replace("http://","").replace("www.","")
+        user_dict['__JUPYTER_WEB_SOCKET__'] = jupyter_url.replace("https://", "")\
+            .replace("http://", "").replace("www.", "")
     else:
         user_dict['__JUPYTER_WEB_SOCKET__'] = ''
 
@@ -332,10 +336,10 @@ cert, oid and sid based https!
         user_dict['__IFDEF_EXT_OID_PORT__'] = 'Define'
 
     user_dict['__IFDEF_SID_FQDN__'] = 'UnDefine'
-    if user_dict['__SID_FQDN__']:    
+    if user_dict['__SID_FQDN__']:
         user_dict['__IFDEF_SID_FQDN__'] = 'Define'
     user_dict['__IFDEF_SID_PORT__'] = 'UnDefine'
-    if user_dict['__SID_PORT__']:    
+    if user_dict['__SID_PORT__']:
         user_dict['__IFDEF_SID_PORT__'] = 'Define'
 
     user_dict['__IFDEF_IO_FQDN__'] = 'UnDefine'
@@ -419,9 +423,15 @@ cert, oid and sid based https!
     else:
         user_dict['__APACHE_SUFFIX__'] = ""
 
+    # Enable 2FA only if explicitly requested
+    if user_dict['__ENABLE_TWOFACTOR__'].lower() == 'true':
+        user_dict['__TWOFACTOR_COMMENTED__'] = ''
+    else:
+        user_dict['__TWOFACTOR_COMMENTED__'] = '#'
+
     # Enable OpenID auth module only if openid_providers is given
     if user_dict['__EXT_OID_PROVIDER_BASE__'].strip() or \
-           user_dict['__MIG_OID_PROVIDER_BASE__'].strip():
+            user_dict['__MIG_OID_PROVIDER_BASE__'].strip():
         user_dict['__OPENID_COMMENTED__'] = ''
     else:
         user_dict['__OPENID_COMMENTED__'] = '#'
@@ -438,7 +448,8 @@ cert, oid and sid based https!
         openssl_cmd = ["openssl", "x509", "-noout", "-fingerprint", "-sha256",
                        "-in", key_path]
         try:
-            openssl_proc = subprocess_popen(openssl_cmd, stdout=subprocess_pipe)
+            openssl_proc = subprocess_popen(
+                openssl_cmd, stdout=subprocess_pipe)
             raw_sha256 = openssl_proc.stdout.read().strip()
             daemon_keycert_sha256 = raw_sha256.replace("SHA256 Fingerprint=",
                                                        "")
@@ -454,9 +465,10 @@ cert, oid and sid based https!
             pubkey_fd.close()
         except Exception, exc:
             print "Failed to read provided daemon key: %s" % exc
-        # The desired values are hashes of the base64 encoded actual key 
+        # The desired values are hashes of the base64 encoded actual key
         try:
-            b64_key = base64.b64decode(pubkey.strip().split()[1].encode('ascii'))
+            b64_key = base64.b64decode(
+                pubkey.strip().split()[1].encode('ascii'))
             raw_md5 = hashlib.md5(b64_key).hexdigest()
             # reformat into colon-spearated octets
             daemon_pubkey_md5 = ':'.join(a+b for a, b in zip(raw_md5[::2],
@@ -468,7 +480,7 @@ cert, oid and sid based https!
                   (pubkey_path, exc)
         user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
         user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
-        
+
     # Enable Debian/Ubuntu specific lines only there
     if user_dict['__DISTRO__'].lower() in ('ubuntu', 'debian'):
         user_dict['__NOT_DEB_COMMENTED__'] = ''
@@ -478,7 +490,6 @@ cert, oid and sid based https!
         user_dict['__NOT_DEB_COMMENTED__'] = '#'
         user_dict['__IS_DEB_COMMENTED__'] = ''
         user_dict['__APACHE_DAEMON__'] = 'httpd'
-        
 
     # Only set ID sub url if any openid provider(s) is set
     # IMPORTANT: trailing slash matters!
@@ -572,11 +583,11 @@ cert, oid and sid based https!
     # Collect final variable values for log
     sorted_keys = user_dict.keys()
     sorted_keys.sort()
-    variable_lines = '\n'.join(["%s : %s" % (i.strip('_'), user_dict[i]) \
+    variable_lines = '\n'.join(["%s : %s" % (i.strip('_'), user_dict[i])
                                 for i in sorted_keys])
     user_dict['__GENERATECONFS_VARIABLES__'] = variable_lines
-        
-    # modify this list when adding/removing template->target  
+
+    # modify this list when adding/removing template->target
     replacement_list = [
         ("generateconfs-template.log", "generateconfs.log"),
         ("apache-envs-template.conf", "envvars"),
@@ -602,7 +613,7 @@ cert, oid and sid based https!
         ("migsftpmon-template.sh.cronjob", "migsftpmon"),
         ("migstateclean-template.sh.cronjob", "migstateclean"),
         ("migcheckssl-template.sh.cronjob", "migcheckssl"),
-        ]
+    ]
     for (in_name, out_name) in replacement_list:
         in_path = os.path.join(source, in_name)
         out_path = os.path.join(destination_path, out_name)
@@ -700,6 +711,7 @@ sudo cp %(destination)s/migcheckssl /etc/cron.daily
         print "could not write %s %s" % (instructions_path, err)
     return expanded
 
+
 def create_user(
     user,
     group,
@@ -709,11 +721,11 @@ def create_user(
     public_fqdn=socket.getfqdn(),
     mig_cert_fqdn=socket.getfqdn(),
     ext_cert_fqdn=socket.getfqdn(),
-    mig_oid_fqdn=socket.getfqdn(),    
-    ext_oid_fqdn=socket.getfqdn(),    
+    mig_oid_fqdn=socket.getfqdn(),
+    ext_oid_fqdn=socket.getfqdn(),
     sid_fqdn=socket.getfqdn(),
     io_fqdn=socket.getfqdn(),
-    ):
+):
     """Create MiG unix user with supplied user and group name and show
     commands to make it a MiG developer account.
     If X_fqdn values are all set to a fqdn different from the default fqdn of
@@ -738,7 +750,7 @@ def create_user(
     # Don't use 'o'/'0' and 'l'/'1' since they may confuse users
 
     valid_chars = 'abcdefghijkmnpqrstuvwxyz'\
-         + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789'
+        + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789'
     pwlen = 8
     pw = ''
     for _ in range(pwlen):
@@ -749,7 +761,7 @@ def create_user(
 
     shell = '/bin/bash'
     enc_pw = crypt.crypt(pw, random.choice(valid_chars)
-                          + random.choice(valid_chars))
+                         + random.choice(valid_chars))
     useradd_cmd = ['useradd', '-m', '-s %s' % shell, '-p %s' % enc_pw,
                    '-g %s' % group, user]
     print useradd_cmd
@@ -803,7 +815,7 @@ def create_user(
     svc_ports = 6
     reserved_ports = range(svc_ports * uid, svc_ports * uid + svc_ports)
     public_port, mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port, sid_port = \
-                 reserved_ports[:svc_ports]
+        reserved_ports[:svc_ports]
 
     mig_dir = os.path.join(home, 'mig')
     server_dir = os.path.join(mig_dir, 'server')
@@ -820,6 +832,7 @@ def create_user(
     enable_sftp_subsys = 'False'
     enable_davs = 'False'
     enable_ftps = 'False'
+    enable_twofactor = 'False'
     enable_openid = 'False'
     enable_wsgi = 'True'
     wsgi_procs = '5'
@@ -853,9 +866,9 @@ def create_user(
 
     firewall_script = '/root/scripts/firewall'
     print '# Add the next line to %s and run the script:'\
-         % firewall_script
+        % firewall_script
     print 'iptables -A INPUT -p tcp --dport %d:%d -j ACCEPT # webserver: %s'\
-         % (reserved_ports[0], reserved_ports[-1], user)
+        % (reserved_ports[0], reserved_ports[-1], user)
 
     sshd_conf = '/etc/ssh/sshd_config'
     print """# Unless 'AllowGroups %s' is already included, append %s
@@ -940,6 +953,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_crontab,
         enable_imnotify,
         enable_dev_accounts,
+        enable_twofactor,
         enable_openid,
         mig_oid_provider,
         ext_oid_provider,
@@ -961,7 +975,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         'Group',
         '#Listen',
         server_alias,
-        )
+    )
     apache_envs_conf = os.path.join(dst, 'envvars')
     apache_apache2_conf = os.path.join(dst, 'apache2.conf')
     apache_httpd_conf = os.path.join(dst, 'httpd.conf')
@@ -977,7 +991,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     settings['sudo_cmd'] = 'sudo su - %(user)s -c' % settings
 
     print '# Clone %s to %s and put config files there:' % (apache_etc,
-            apache_dir)
+                                                            apache_dir)
     print 'sudo cp -r -u -d -x %s %s' % (apache_etc, apache_dir)
     print 'sudo rm -f %s/envvars' % apache_dir
     print 'sudo rm -f %s/apache2.conf' % apache_dir
@@ -1009,7 +1023,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
 sudo chown %(user)s:%(group)s %(server_conf)s %(trac_ini)s
 sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/
 """ % settings
-        
+
     # Only add non-directory paths manually and leave the rest to
     # checkconf.py below
 
@@ -1051,5 +1065,5 @@ sudo %s/%s start
         ', '.join(["%d" % port for port in extra_ports]),
         apache_dir,
         os.path.basename(apache_initd_script),
-        )
+    )
     return True

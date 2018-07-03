@@ -1,0 +1,1 @@
+qrious-current.min.js

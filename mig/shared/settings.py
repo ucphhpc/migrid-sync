@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - helpers for handling user settings
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,18 +25,19 @@
 # -- END_HEADER ---
 #
 
-import os
 import datetime
+import os
+from binascii import hexlify
 
 import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
-     widgets_filename, duplicati_filename, ssh_conf_dir, davs_conf_dir, \
-     ftps_conf_dir, seafile_conf_dir, duplicati_conf_dir, authkeys_filename, \
-     authpasswords_filename, authdigests_filename, keyword_unchanged, \
-     dav_domain
+    widgets_filename, webaccess_filename, duplicati_filename, ssh_conf_dir, \
+    davs_conf_dir, ftps_conf_dir, seafile_conf_dir, duplicati_conf_dir, \
+    authkeys_filename, authpasswords_filename, authdigests_filename, \
+    keyword_unchanged, dav_domain
 from shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, \
-     extract_duplicati_helper, duplicati_conf_templates
+    extract_duplicati_helper, duplicati_conf_templates
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
@@ -44,6 +45,7 @@ from shared.pwhash import make_hash, make_digest, assure_password_strength
 from shared.safeinput import valid_password
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.ssh import parse_pub_key
+from shared.webaccesskeywords import get_keywords_dict as get_webaccess_fields
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
@@ -56,13 +58,13 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
     result = parser.parse(source, strip_space, strip_comments)
 
     (status, parsemsg) = parser.check_types(result, keywords,
-            configuration)
+                                            configuration)
 
     try:
         os.remove(source)
     except Exception, err:
         msg = 'Exception removing temporary file %s, %s'\
-             % (source, err)
+            % (source, err)
 
         # should we exit because of this? o.reply_and_exit(o.ERROR)
 
@@ -86,7 +88,7 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
         os.mkdir(settings_dir)
     except:
         pass
-                                    
+
     pickle_filename = os.path.join(configuration.user_settings, client_dir,
                                    destination)
 
@@ -98,6 +100,7 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
 
     return (True, '')
 
+
 def parse_and_save_settings(filename, client_id, configuration):
     """Validate and write settings entries from filename"""
     status = parse_and_save_pickle(filename, settings_filename,
@@ -107,11 +110,13 @@ def parse_and_save_settings(filename, client_id, configuration):
         mark_user_modified(configuration, client_id)
     return status
 
+
 def parse_and_save_widgets(filename, client_id, configuration):
     """Validate and write widget entries from filename"""
     return parse_and_save_pickle(filename, widgets_filename,
                                  get_widgets_fields(), client_id,
                                  configuration, False, False)
+
 
 def parse_and_save_profile(filename, client_id, configuration):
     """Validate and write profile entries from filename"""
@@ -121,6 +126,7 @@ def parse_and_save_profile(filename, client_id, configuration):
     if status[0]:
         mark_user_modified(configuration, client_id)
     return status
+
 
 def parse_and_save_duplicati(filename, client_id, configuration):
     """Validate and write duplicati entries from filename. Generate JSON conf
@@ -134,7 +140,7 @@ def parse_and_save_duplicati(filename, client_id, configuration):
         mark_user_modified(configuration, client_id)
         saved_values = load_duplicati(client_id, configuration)
         if not saved_values:
-            _logger.error('loading just saved %s duplicati settings failed!' \
+            _logger.error('loading just saved %s duplicati settings failed!'
                           % client_id)
             return (False, 'could not load saved Duplicati settings!')
         fill_helper = extract_duplicati_helper(configuration, client_id,
@@ -163,8 +169,8 @@ you need to manually configure the key through the Advanced options on the
 Backup destination page during import.'''
             status = (status[0], status[1] + warn)
             _logger.warning('no saved %s creds for %s' % (saved_protocol,
-                                                              client_id))
-            
+                                                          client_id))
+
         for backup_name in saved_values['BACKUPS']:
             fill_helper['backup_name'] = backup_name
             fill_helper['backup_dir'] = os.path.join(duplicati_conf_dir,
@@ -173,9 +179,9 @@ Backup destination page during import.'''
             for (section_name, section) in duplicati_conf_templates.items():
                 # Skip schedule section if disabled
                 if section_name == 'schedule' and \
-                       not fill_helper['schedule_freq']:
+                        not fill_helper['schedule_freq']:
                     continue
-                inner_json.append(duplicati_conf_templates[section_name] % \
+                inner_json.append(duplicati_conf_templates[section_name] %
                                   fill_helper)
             filled_json = '{\n%s\n}' % ',\n'.join(inner_json)
             backup_dst = os.path.join(duplicati_dir, backup_name)
@@ -190,6 +196,16 @@ Backup destination page during import.'''
             json_fd.write(filled_json)
             json_fd.close()
     return status
+
+
+def parse_and_save_webaccess(filename, client_id, configuration):
+    """Validate and write webaccess entries from filename. The 2FA user key
+    and any required auth files need to be handled separately.
+    """
+    return parse_and_save_pickle(filename, webaccess_filename,
+                                 get_webaccess_fields(configuration),
+                                 client_id, configuration, False, False)
+
 
 def parse_and_save_publickeys(keys_path, keys_content, client_id,
                               configuration):
@@ -212,6 +228,7 @@ def parse_and_save_publickeys(keys_path, keys_content, client_id,
         status = False
         msg = 'ERROR: writing %s publickey file: %s' % (client_id, exc)
     return (status, msg)
+
 
 def parse_and_save_passwords(passwords_path, passwords_content, client_id,
                              configuration, check_valid=True):
@@ -243,6 +260,7 @@ def parse_and_save_passwords(passwords_path, passwords_content, client_id,
         status = False
         msg = 'ERROR: writing %s passwords file: %s' % (client_id, exc)
     return (status, msg)
+
 
 def parse_and_save_digests(digests_path, passwords_content, client_id,
                            configuration, check_valid=True):
@@ -277,6 +295,7 @@ def parse_and_save_digests(digests_path, passwords_content, client_id,
         msg = 'ERROR: writing %s digests file: %s' % (client_id, exc)
     return (status, msg)
 
+
 def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                  configuration, proto, proto_conf_dir):
     """Validate and write publickey and password settings for proto
@@ -284,7 +303,7 @@ def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
     """
     client_dir = client_id_dir(client_id)
     proto_conf_path = os.path.join(configuration.user_home, client_dir,
-                                 proto_conf_dir)
+                                   proto_conf_dir)
     # Create proto conf dir for any old users
     try:
         os.mkdir(proto_conf_path)
@@ -309,20 +328,24 @@ def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
         mark_user_modified(configuration, client_id)
     return status
 
+
 def parse_and_save_ssh(publickeys, password, client_id, configuration):
     """Validate and write ssh entries"""
     return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                         configuration, 'ssh', ssh_conf_dir)
+
 
 def parse_and_save_davs(publickeys, password, client_id, configuration):
     """Validate and write davs entries"""
     return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                         configuration, 'davs', davs_conf_dir)
 
+
 def parse_and_save_ftps(publickeys, password, client_id, configuration):
     """Validate and write ftps entries"""
     return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                         configuration, 'ftps', ftps_conf_dir)
+
 
 def parse_and_save_seafile(password, client_id, configuration):
     """Validate and write seafile entries"""
@@ -359,8 +382,9 @@ def load_settings(client_id, configuration, include_meta=False):
     return load_section_helper(client_id, configuration, settings_filename,
                                get_settings_fields().keys(), include_meta)
 
+
 def load_widgets(client_id, configuration, include_meta=False,
-                   allow_missing=True):
+                 allow_missing=True):
     """Load widgets from pickled widgets file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
@@ -369,8 +393,9 @@ def load_widgets(client_id, configuration, include_meta=False,
                                get_widgets_fields().keys(), include_meta,
                                allow_missing)
 
+
 def load_profile(client_id, configuration, include_meta=False,
-                   allow_missing=True):
+                 allow_missing=True):
     """Load profile from pickled profile file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
@@ -378,6 +403,18 @@ def load_profile(client_id, configuration, include_meta=False,
     return load_section_helper(client_id, configuration, profile_filename,
                                get_profile_fields().keys(), include_meta,
                                allow_missing)
+
+
+def load_webaccess(client_id, configuration, include_meta=False,
+                   allow_missing=True):
+    """Load webaccess from pickled webaccess file. Optional include_meta
+    controls the inclusion of meta data like creator and creation time.
+    """
+
+    return load_section_helper(client_id, configuration, webaccess_filename,
+                               get_webaccess_fields(configuration).keys(),
+                               include_meta, allow_missing)
+
 
 def load_duplicati(client_id, configuration, include_meta=False,
                    allow_missing=True):
@@ -388,6 +425,7 @@ def load_duplicati(client_id, configuration, include_meta=False,
     return load_section_helper(client_id, configuration, duplicati_filename,
                                get_duplicati_fields().keys(), include_meta,
                                allow_missing)
+
 
 def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir,
                        allow_missing=True):
@@ -402,14 +440,14 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir,
     pw_path = os.path.join(configuration.user_home, client_dir,
                            proto_conf_dir, authpasswords_filename)
     digest_path = os.path.join(configuration.user_home, client_dir,
-                           proto_conf_dir, authdigests_filename)
+                               proto_conf_dir, authdigests_filename)
     try:
         keys_fd = open(keys_path)
         section_dict['authkeys'] = keys_fd.read()
         keys_fd.close()
     except Exception, exc:
         if not allow_missing:
-            configuration.logger.error("load %s publickeys failed: %s" % \
+            configuration.logger.error("load %s publickeys failed: %s" %
                                        (proto, exc))
     try:
         password = ''
@@ -422,7 +460,7 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir,
         section_dict['authpassword'] = password
     except Exception, exc:
         if not allow_missing:
-            configuration.logger.error("load %s password failed: %s" % \
+            configuration.logger.error("load %s password failed: %s" %
                                        (proto, exc))
     try:
         digest = ''
@@ -435,25 +473,30 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir,
         section_dict['authdigests'] = digest
     except Exception, exc:
         if not allow_missing:
-            configuration.logger.error("load %s digest failed: %s" % \
+            configuration.logger.error("load %s digest failed: %s" %
                                        (proto, exc))
     return section_dict
+
 
 def load_ssh(client_id, configuration):
     """Load ssh keys and password from user ssh_conf_dir"""
     return _load_auth_pw_keys(client_id, configuration, 'ssh', ssh_conf_dir)
 
+
 def load_davs(client_id, configuration):
     """Load davs keys and password from user davs_conf_dir"""
     return _load_auth_pw_keys(client_id, configuration, 'davs', davs_conf_dir)
+
 
 def load_ftps(client_id, configuration):
     """Load ftps keys and password from user ftps_conf_dir"""
     return _load_auth_pw_keys(client_id, configuration, 'ftps', ftps_conf_dir)
 
+
 def load_seafile(client_id, configuration):
     """Load seafile keys and password from user seafile_conf_dir"""
     return _load_auth_pw_keys(client_id, configuration, 'seafile', seafile_conf_dir)
+
 
 def update_section_helper(client_id, configuration, section_filename, changes,
                           defaults, create_missing=True):
@@ -465,7 +508,7 @@ def update_section_helper(client_id, configuration, section_filename, changes,
 
     client_dir = client_id_dir(client_id)
     section_path = os.path.join(configuration.user_settings, client_dir,
-                                 section_filename)
+                                section_filename)
     if not os.path.exists(section_path):
         if create_missing:
             section_dict = {}
@@ -480,6 +523,7 @@ def update_section_helper(client_id, configuration, section_filename, changes,
         raise Exception('could not save updated %s file!' % section_filename)
     return section_dict
 
+
 def update_settings(client_id, configuration, changes, defaults,
                     create_missing=True):
     """Update settings in pickled settings file with values from changes
@@ -490,6 +534,7 @@ def update_settings(client_id, configuration, changes, defaults,
 
     return update_section_helper(client_id, configuration, settings_filename,
                                  changes, defaults, create_missing)
+
 
 def update_widgets(client_id, configuration, changes, defaults,
                    create_missing=True):
@@ -502,6 +547,7 @@ def update_widgets(client_id, configuration, changes, defaults,
     return update_section_helper(client_id, configuration, widgets_filename,
                                  changes, defaults, create_missing)
 
+
 def update_profile(client_id, configuration, changes, defaults,
                    create_missing=True):
     """Update profile in pickled profile file with values from changes
@@ -513,6 +559,7 @@ def update_profile(client_id, configuration, changes, defaults,
     return update_section_helper(client_id, configuration, profile_filename,
                                  changes, defaults, create_missing)
 
+
 def update_duplicati(client_id, configuration, changes, defaults,
                      create_missing=True):
     """Update backup sets in pickled duplicati file with values from changes
@@ -522,4 +569,16 @@ def update_duplicati(client_id, configuration, changes, defaults,
     """
 
     return update_section_helper(client_id, configuration, duplicati_filename,
+                                 changes, defaults, create_missing)
+
+
+def update_webaccess(client_id, configuration, changes, defaults,
+                     create_missing=True):
+    """Update webaccess in pickled webaccess file with values from changes
+    dictionary. Optional create_missing can be used if the webaccess pickle
+    should be created if not already there.
+    The defaults dictionary is used to set any missing values.
+    """
+
+    return update_section_helper(client_id, configuration, webaccess_filename,
                                  changes, defaults, create_missing)

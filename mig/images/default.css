@@ -1069,6 +1069,10 @@ a:hover.settingsbutton {
   background-image: url('/images/icons/user.png');
   padding-left: 18px;
 }
+.webaccesssettingslink {
+  background-image: url('/images/icons/computer_key.png');
+  padding-left: 18px;
+}
 .widgetssettingslink {
   background-image: url('/images/icons/application.png');
   padding-left: 18px;
@@ -1280,6 +1284,49 @@ div.openidlogin {
     margin-right: auto ;
     margin-top: 40px;
     margin-bottom: 40px;
+}
+
+/* Layout for 2FA token entry page */
+#twofactorbox input[type=text], #twofactorbox select {
+    width: 200px;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+#twofactorbox input[type=submit] {
+    width: 100px;
+    background-color: #ccc;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+#twofactorbox input[type=submit]:hover {
+    background-color: #999;
+}
+#twofactorbox {
+    position: absolute;
+    width: 300px;
+    height: 260px;
+    left: 50%;
+    /* Footer has static position based on min-height: adjust */ 
+    /* top: 50%; */
+    top: 300px;
+    margin-top: -150px;
+    margin-left: -150px;
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding: 20px;
+    text-align: center;
+}
+#twofactorbox img.authlogo {
+    width: 120px;
+    height: 120px;
 }
 
 

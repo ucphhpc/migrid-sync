@@ -104,6 +104,7 @@ def fix_missing(config_file, verbose=True):
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'events_home': '~/state/events_home/',
+        'twofactor_home': '~/state/twofactor_home/',
         'gdp_home': '~/state/gdp_home/',
         'rate_limit_db': '~/mig/mig_system_files/daemon-rate-limit.db',
         'site_vgrid_links': 'files web tracker workflows monitor',
@@ -297,6 +298,7 @@ class Configuration:
     sharelink_home = ''
     javabin_home = ''
     events_home = ''
+    twofactor_home = ''
     gdp_home = ''
     seafile_mount = ''
     openid_store = ''
@@ -693,6 +695,8 @@ location.""" % self.config_file
             self.javabin_home = config.get('GLOBAL', 'javabin_home')
         if config.has_option('GLOBAL', 'events_home'):
             self.events_home = config.get('GLOBAL', 'events_home')
+        if config.has_option('GLOBAL', 'twofactor_home'):
+            self.twofactor_home = config.get('GLOBAL', 'twofactor_home')
         if config.has_option('GLOBAL', 'vm_home'):
             self.vm_home = config.get('GLOBAL', 'vm_home')
         if config.has_option('GLOBAL', 'gdp_home'):
@@ -931,6 +935,11 @@ location.""" % self.config_file
             protos = config.get('GLOBAL', 'user_duplicati_protocols').split()
             valid_protos = [i for i in protos if i in allowed_protos]
             self.user_duplicati_protocols = valid_protos
+        if config.has_option('SITE', 'enable_twofactor'):
+            self.site_enable_twofactor = config.getboolean(
+                'SITE', 'enable_twofactor')
+        else:
+            self.site_enable_twofactor = False
         if config.has_option('SITE', 'enable_crontab'):
             self.site_enable_crontab = config.getboolean(
                 'SITE', 'enable_crontab')

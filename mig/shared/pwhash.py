@@ -49,6 +49,7 @@ import hashlib
 from os import urandom
 from base64 import b64encode, b64decode, b16encode, b16decode
 from itertools import izip
+from random import SystemRandom
 from string import lowercase, uppercase, digits
 # From https://github.com/mitsuhiko/python-pbkdf2
 from pbkdf2 import pbkdf2_bin
@@ -364,3 +365,8 @@ def make_path_hash(configuration, path):
     configuration.logger.debug("make path hash for %s" % path)
     hexdigest = hashlib.md5(path).hexdigest()
     return hexdigest
+
+
+def generate_random_ascii(count, charset):
+    """Generate a string of count random characters from given charset"""
+    return ''.join(SystemRandom().choice(charset) for _ in range(count))

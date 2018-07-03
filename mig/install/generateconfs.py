@@ -35,6 +35,7 @@ import sys
 
 from shared.install import generate_confs
 
+
 def usage(options):
     """Usage help"""
     lines = ["--%s=%s" % pair for pair in zip(options,
@@ -95,6 +96,7 @@ if '__main__' == __name__:
         'enable_crontab',
         'enable_imnotify',
         'enable_dev_accounts',
+        'enable_twofactor',
         'enable_openid',
         'mig_oid_provider',
         'ext_oid_provider',
@@ -121,7 +123,7 @@ if '__main__' == __name__:
         'distro',
         'landing_page',
         'skin',
-        )
+    )
     settings = {}
     for key in names:
         settings[key] = 'DEFAULT'
