@@ -101,10 +101,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
         except ValueError, err:
-            logger.error('%s called with invalid share_id %s: %s' % \
+            logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Invalid sharelink ID: %s' % share_id})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Invalid sharelink ID: %s' % share_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         user_id = 'anonymous user through share ID %s' % share_id
@@ -227,8 +228,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append({'object_type': 'text',
                                    'text': "created directory %s"
                                    % (relative_path)})
-            output_objects.append({'object_type': 'directory',
-                                   'name': relative_path})
+            if id_query:
+                open_query = "%s;current_dir=%s" % (id_query, relative_path)
+            else:
+                open_query = "?current_dir=%s" % relative_path
+            output_objects.append({'object_type': 'link',
+                                   'destination': 'ls.py%s' % open_query,
+                                   'text': 'Open %s' % relative_path})
+            output_objects.append({'object_type': 'text', 'text': ''})
 
     output_objects.append({'object_type': 'link',
                            'destination': 'ls.py%s' % id_query,

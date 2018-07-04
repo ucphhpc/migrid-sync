@@ -40,7 +40,7 @@ def get_webaccess_specs(configuration):
             'Title': 'Enable 2-FA for %s OpenID login' %
             configuration.user_mig_oid_title,
             'Description': '''Add an extra layer of security to your %s OpenID
-logins with a personal auth token generator on your phone or tablet.
+logins through a personal auth token generator on your phone or tablet.
 ''' % configuration.user_mig_oid_title,
             'Example': 'True',
             'Type': 'boolean',
@@ -55,7 +55,7 @@ logins with a personal auth token generator on your phone or tablet.
             'Title': 'Enable 2-FA for %s OpenID login' %
             configuration.user_ext_oid_title,
             'Description': '''Add an extra layer of security to your %s OpenID
-logins with a personal auth token generator on your phone or tablet.
+logins through a personal auth token generator on your phone or tablet.
 ''' % configuration.user_mig_oid_title,
             'Example': 'True',
             'Type': 'boolean',

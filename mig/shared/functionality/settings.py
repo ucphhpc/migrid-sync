@@ -1739,14 +1739,18 @@ It is possible to tweak some of the web access methods here.
 <h3>2-Factor Authentication</h3>
 </td></tr>
 <tr><td>
-We allow 2-factor authentication for greater password login security. You first
-need to download an TOTP authenticator client like
+We allow 2-factor authentication for greater password login security. In short
+it means that you get and enter a single-use <em>token</em> from e.g. your
+phone or tablet along with your usual login. This combination makes account
+abuse <b>much</b> harder even if your password gets stolen.<br/>
+You first need to install a TOTP authenticator client like
 <a href='https://en.wikipedia.org/wiki/Google_Authenticator'>
-Google Authenticator</a>.<br/>
-Then scan your personal QR code here to let the app generate auth tokens to
-enter along with your logins.<br/>
+Google Authenticator</a>, <a href='https://freeotp.github.io/'>FreeOTP</a> or
+<a href='https://authy.com/download/'>Authy</a> on your phone or tablet. Then
+open it and scan your personal QR code below to let it generate the auth tokens
+for you to enter along with your logins.<br/>
 Please only actually enable 2-factor auth below after you've verified that your
-authenticator app displays new tokens every once in a while, to avoid locking
+authenticator app displays new tokens every 30 seconds, to avoid locking
 yourself out.<br/>
 Once ready you can simply logout and login again to verify that a token is
 requested right after your usual %(site)s login.
@@ -1804,8 +1808,8 @@ requested right after your usual %(site)s login.
             # otp_img = '<img src="%s" />' % img_url
 
             html += '''<tr><td>
-Your 2-factor auth code can be imported by scanning this QR code in your
-authenticator app:<br/>
+Your secret 2-factor authentication key can be imported by scanning this QR
+code from your authenticator app:<br/>
 <canvas id="otp-qr"><!-- filled by script --></canvas>
 <script>
     showQR("otp-qr", "%(otp_uri)s");
@@ -1813,7 +1817,7 @@ authenticator app:<br/>
 </td></tr>
 <tr><td>
 <span class="warningtext">Please immediately contact the %(site)s admins to
-reset your underlying personal 2-factor secret if you ever loose a device with
+reset your secret 2-factor authentication key if you ever loose a device with
 it installed or otherwise suspect someone may have gained access to it.
 </span>
 </td></tr>
