@@ -80,7 +80,7 @@ def load_twofactor_key(client_id, configuration, allow_missing=True):
     return b32_key
 
 
-def expire_twofactor_session(configuration, client_id, environ):
+def expire_twofactor_session(configuration, client_id, environ, allow_missing=False):
     """Expire active twofactor session for user with identity. Looks up any
     corresponding session cookies and extracts the session_id. In case a
     matching session_id state file exists it is deleted after checking that it
@@ -89,18 +89,27 @@ def expire_twofactor_session(configuration, client_id, environ):
     _logger = configuration.logger
     session_cookie = Cookie.SimpleCookie()
     session_cookie.load(environ.get('HTTP_COOKIE', None))
-    session_id = session_cookie.get('2FA_Auth', None).value
+    session_cookie = session_cookie.get('2FA_Auth', None)
+    if session_cookie is None:
+        _logger.warning("no session cookie found for %s" % client_id)
+        if allow_missing:
+            return True
+        return False
+    session_id = session_cookie.value
     session_path = os.path.join(configuration.twofactor_home, session_id)
     session_data = read_file(session_path, _logger)
     if session_data is None:
-        _logger.error("no such twofactor session to expire: %s" % session_id)
+        if allow_missing:
+            _logger.info("twofactor session empty: %s" % session_path)
+            return True
+        _logger.error("no such twofactor session to expire: %s" % session_path)
         expired = False
     elif session_data.find(client_id) == -1:
-        _logger.error("session %s does not belong to %s - ignonring!" %
-                      (session_id, client_id))
+        _logger.error("session %s does not belong to %s - ignoring! (%s)" %
+                      (session_id, client_id, session_data))
         expired = False
     else:
-        if delete_file(session_path, _logger):
+        if delete_file(session_path, _logger, allow_missing=allow_missing):
             _logger.info("expired session %s for %s" % (session_id, client_id))
             expired = True
         else:

@@ -207,6 +207,7 @@ def main(client_id, user_arguments_dict, environ=None):
             {'object_type': 'error_text', 'text':
              "Internal error: could not create 2FA session!"})
         return (output_objects, returnvalues.ERROR)
+    logger.info("saved session for %s in %s" % (client_id, session_path))
     if redirect_url:
         headers.append(tuple(str(cookie).split(': ', 1)))
         output_objects.append({'object_type': 'start', 'headers': headers})

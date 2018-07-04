@@ -88,9 +88,17 @@ browser. Please refer to your browser and system documentation for details.
 
     if do_logout:
         if configuration.site_enable_twofactor:
-            if not expire_twofactor_session(configuration, client_id, environ):
+            if not expire_twofactor_session(configuration, client_id, environ,
+                                            allow_missing=True):
                 logger.warning("expire twofactor session failed for %s" %
                                client_id)
+                output_objects.append(
+                    {'object_type': 'html_form', 'text':
+                     """<p class='warningtext'>
+There was a potential problem with 2-factor session termination. Please contact
+the %s Admins if it happens repeatedly.
+</p>""" % configuration.short_title
+                     })
         logger.info("expiring active sessions for %s in %s" % (identity,
                                                                oid_db))
         (success, _) = expire_oid_sessions(configuration, oid_db, identity)
