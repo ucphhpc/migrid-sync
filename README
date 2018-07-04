@@ -512,7 +512,8 @@ and the same with added Jupyter integration:
                    --skin=erda-ucph-science --wsgi_procs=25 
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
-optimized SFTP, job execution, Jupyter integration, previews and OpenID login:
+optimized SFTP, job execution, Jupyter integration, previews and OpenID login
+with 2-FA support:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=idmc.dk \
@@ -548,7 +549,7 @@ optimized SFTP, job execution, Jupyter integration, previews and OpenID login:
                    --enable_sandboxes=False --enable_vmachines=False \
                    --enable_crontab=True --enable_jobs=True \
                    --enable_events=True --enable_freeze=False \
-                   --enable_vhost_certs=True \
+                   --enable_twofactor=True --enable_vhost_certs=True \
                    --enable_verify_certs=True --enable_hsts=True \
                    --jupyter_url=http://dag001.science \
                    --jupyter_base_url='/dag' \

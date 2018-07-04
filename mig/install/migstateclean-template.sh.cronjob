@@ -29,4 +29,11 @@ for name in $STATEDIR/user_home/no_grid_jobs_in_grid_scheduler; do
 	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 rm -f " 
 done
 
+# 2-factor session files expire within a day and can safely be removed within a week
+max_days=7
+for name in $STATEDIR/twofactor_home; do
+	echo "Deleting files older than $max_days days from $name"
+	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 rm -f " 
+done
+
 exit 0
