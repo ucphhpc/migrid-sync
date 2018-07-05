@@ -31,7 +31,11 @@ import base64
 import os
 import urllib
 
-import pyotp
+# Only needed for 2FA so ignore import error and only fail on use
+try:
+    import pyotp
+except ImportError:
+    pyotp = None
 
 import shared.returnvalues as returnvalues
 from shared.auth import load_twofactor_key, reset_twofactor_key
@@ -43,6 +47,7 @@ from shared.defaults import default_mrsl_filename, \
 from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
+from shared.gdp import get_client_id_from_project_client_id
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, console_log_javascript
 from shared.init import initialize_main_variables, find_entry, extract_menu
@@ -194,7 +199,10 @@ $(document).ready(function() {
     if configuration.site_enable_duplicati:
         valid_topics.append('duplicati')
     if configuration.site_enable_twofactor:
-        valid_topics.append('webaccess')
+        if pyotp is None:
+            logger.error("The pyotp module is missing and required for 2FA")
+        else:
+            valid_topics.append('webaccess')
     topics = accepted['topic']
     # Backwards compatibility
     if topics and topics[0] == 'ssh':
@@ -1708,9 +1716,14 @@ client versions from the link above.<br/>
 
     if 'webaccess' in topics:
 
+        # GDP shares webaccess for all projects of user
+        real_user = client_id
+        if configuration.site_enable_gdp:
+            real_user = get_client_id_from_project_client_id(configuration,
+                                                             client_id)
         # load current webaccess
 
-        current_webaccess_dict = load_webaccess(client_id, configuration)
+        current_webaccess_dict = load_webaccess(real_user, configuration)
         if not current_webaccess_dict:
 
             # no current webaccess found
@@ -1733,6 +1746,7 @@ Web Access
 It is possible to tweak some of the web access methods here.
 </td></tr>
 '''
+
         if configuration.site_enable_twofactor:
             html += """
 <tr><td>
@@ -1758,15 +1772,6 @@ requested right after your usual %(site)s login.
 <tr><td>
 """ % {'site': configuration.short_title}
 
-            # load current webaccess
-
-            current_webaccess_dict = load_webaccess(client_id, configuration)
-            if not current_webaccess_dict:
-
-                # no current webaccess found
-
-                current_webaccess_dict = {}
-
             # Make sure secret key is available in user settings but do not
             # require 2FA access tokens before user saves with 2FA enabled.
             # We limit key exposure by not showing it in clear and keeping it
@@ -1778,9 +1783,9 @@ requested right after your usual %(site)s login.
             # NOTE: 2FA secret key is a standalone file in user settings dir
             #       Try to load existing and generate new one if not there.
             #       We need the base32-encoded form as returned here.
-            b32_key = load_twofactor_key(client_id, configuration)
+            b32_key = load_twofactor_key(real_user, configuration)
             if not b32_key:
-                b32_key = reset_twofactor_key(client_id, configuration)
+                b32_key = reset_twofactor_key(real_user, configuration)
 
             # URI-format for otp auth is
             # otpauth://<otptype>/(<issuer>:)<accountnospaces>?
@@ -1793,9 +1798,9 @@ requested right after your usual %(site)s login.
             # but we prefer to use the QRious JS library to keep it local.
             if configuration.user_openid_alias:
                 username = extract_field(
-                    client_id, configuration.user_openid_alias)
+                    real_user, configuration.user_openid_alias)
             else:
-                username = client_id
+                username = real_user
             otp_uri = pyotp.totp.TOTP(b32_key).provisioning_uri(
                 username, issuer_name=configuration.short_title)
             # IMPORTANT: pyotp unicode breaks wsgi when inserted - force utf8!

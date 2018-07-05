@@ -32,7 +32,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.auth import expire_twofactor_session
 from shared.functional import validate_input_and_cert
-from shared.gdp import project_logout
+from shared.gdp import project_logout, get_client_id_from_project_client_id
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
 from shared.useradm import expire_oid_sessions, find_oid_sessions
@@ -88,8 +88,15 @@ browser. Please refer to your browser and system documentation for details.
 
     if do_logout:
         if configuration.site_enable_twofactor:
-            if not expire_twofactor_session(configuration, client_id, environ,
-                                            allow_missing=True):
+            real_user = client_id
+            # GDP logout is for project user so we strip project to force
+            # repeat 2FA login on project logout / switch
+            if configuration.site_enable_gdp:
+                real_user = get_client_id_from_project_client_id(configuration,
+                                                                 client_id)
+            if real_user and not expire_twofactor_session(configuration,
+                                                          real_user, environ,
+                                                          allow_missing=True):
                 logger.warning("expire twofactor session failed for %s" %
                                client_id)
                 output_objects.append(

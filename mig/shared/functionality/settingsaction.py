@@ -33,6 +33,7 @@ import tempfile
 import shared.returnvalues as returnvalues
 from shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from shared.functional import validate_input_and_cert
+from shared.gdp import get_client_id_from_project_client_id
 from shared.handlers import get_csrf_limit, safe_handler
 from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
@@ -173,8 +174,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
             parse_and_save_duplicati(tmptopicfile, client_id,
                                      configuration)
     elif topic == 'webaccess':
+        # GDP shares webaccess for all projects of user
+        real_user = client_id
+        if configuration.site_enable_gdp:
+            real_user = get_client_id_from_project_client_id(configuration,
+                                                             client_id)
         (parse_status, parse_msg) = \
-            parse_and_save_webaccess(tmptopicfile, client_id,
+            parse_and_save_webaccess(tmptopicfile, real_user,
                                      configuration)
     elif topic == 'sftp':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))

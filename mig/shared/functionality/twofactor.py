@@ -41,7 +41,11 @@ import sys
 import time
 import urllib
 
-import pyotp
+# Only needed for 2FA so ignore import error and only fail on use
+try:
+    import pyotp
+except ImportError:
+    pyotp = None
 
 import shared.returnvalues as returnvalues
 from shared.auth import load_twofactor_key
@@ -139,13 +143,19 @@ def main(client_id, user_arguments_dict, environ=None):
 
     logger.debug("found request url %s and user id %s" % (request_url,
                                                           user_id))
+    # NOTE: webaccess_defaults field availability depends on configuration
     if user_id.startswith(configuration.user_mig_oid_provider) and \
-            webaccess_dict['MIG_OID_TWOFACTOR']:
+            webaccess_dict.get('MIG_OID_TWOFACTOR', False):
         require_twofactor = True
     elif user_id.startswith(configuration.user_ext_oid_provider) \
-            and webaccess_dict['EXT_OID_TWOFACTOR']:
+            and webaccess_dict.get('EXT_OID_TWOFACTOR', False):
         require_twofactor = True
     else:
+        require_twofactor = False
+
+    # Fail gently if pyotp dependency is unavailable
+    if require_twofactor and pyotp is None:
+        logger.error("The pyotp module is missing and required for 2FA")
         require_twofactor = False
 
     if require_twofactor:
@@ -166,8 +176,8 @@ def main(client_id, user_arguments_dict, environ=None):
             logger.info('Accepted valid auth token from %s' % client_id)
         else:
             if token:
-                logger.info('Invalid token for %s (%s) - try again' %
-                            (client_id, token))
+                logger.info('Invalid token for %s (%s vs %s) - try again' %
+                            (client_id, token, pyotp.TOTP(b32_secret).now()))
                 # TODO: proper rate limit source / user here?
                 time.sleep(3)
             output_objects.append(

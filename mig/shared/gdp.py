@@ -87,7 +87,7 @@ valid_scripts = [
     'settingsaction.py',
     'uploadchunked.py',
 ]
-    
+
 valid_log_actions = [
     'accessed',
     'accept_invite',
@@ -661,6 +661,12 @@ def __send_project_create_confirmation(configuration,
     return status
 
 
+def get_client_id_from_project_client_id(configuration, project_client_id):
+    """Returns base client_id from *project_client_id*"""
+
+    return __client_id_from_project_client_id(configuration, project_client_id)
+
+
 def get_project_from_client_id(configuration, project_client_id):
     """Returns project name from *project_client_id*"""
 
@@ -737,7 +743,7 @@ def get_short_id_from_user_id(configuration, user_id):
 
     client_id = __client_id_from_user_id(configuration, user_id)
     result = __short_id_from_client_id(configuration, client_id)
-                                             
+
     return result
 
 

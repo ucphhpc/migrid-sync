@@ -30,7 +30,11 @@
 import Cookie
 import os
 
-import pyotp
+# Only needed for 2FA so ignore import error and only fail on use
+try:
+    import pyotp
+except ImportError:
+    pyotp = None
 
 from shared.base import client_id_dir
 from shared.defaults import twofactor_key_name, twofactor_key_bytes
@@ -47,6 +51,8 @@ def reset_twofactor_key(client_id, configuration):
     key_path = os.path.join(configuration.user_settings, client_dir,
                             twofactor_key_name)
     try:
+        if pyotp is None:
+            raise Exception("The pyotp module is missing and required for 2FA")
         b32_key = pyotp.random_base32(length=twofactor_key_bytes)
         scrambled = scramble_password(configuration.site_password_salt,
                                       b32_key)
