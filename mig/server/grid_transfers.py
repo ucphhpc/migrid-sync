@@ -46,16 +46,16 @@ import traceback
 from shared.base import client_dir_id, client_id_dir
 from shared.conf import get_configuration_object
 from shared.defaults import datatransfers_filename, transfers_log_size, \
-     transfers_log_cnt, user_keys_dir, _user_invisible_paths
+    transfers_log_cnt, user_keys_dir, _user_invisible_paths
 from shared.fileio import makedirs_rec, pickle
 from shared.logger import daemon_logger, reopen_log
 from shared.notification import notify_user_thread
 from shared.pwhash import unscramble_digest
 from shared.safeeval import subprocess_popen, subprocess_pipe
 from shared.transferfunctions import blind_pw, load_data_transfers, \
-     update_data_transfer, get_status_dir, sub_pid_list, add_sub_pid, \
-     del_sub_pid, kill_sub_pid, add_worker_transfer, del_worker_transfer, \
-     all_worker_transfers, get_worker_transfer
+    update_data_transfer, get_status_dir, sub_pid_list, add_sub_pid, \
+    del_sub_pid, kill_sub_pid, add_worker_transfer, del_worker_transfer, \
+    all_worker_transfers, get_worker_transfer
 from shared.validstring import valid_user_path
 
 # Global helper dictionaries with requests for all users
@@ -83,18 +83,21 @@ lftp_sftp_block_bytes = 65536
 # Special marker for rsync excludes on list form
 RSYNC_EXCLUDES_LIST = '__RSYNC_EXCLUDES_LIST__'
 
+
 def stop_handler(signal, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
     # Print blank line to avoid mix with Ctrl-C line
     print ''
     stop_running.set()
 
+
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
     logger.info("reopening log in reaction to hangup signal")
     reopen_log(configuration)
     logger.info("reopened log after hangup signal")
-    
+
+
 def __transfer_log(configuration, client_id, msg, level='info'):
     """Wrapper to send a single msg to transfer log file of client_id"""
     status_dir = get_status_dir(configuration, client_id)
@@ -117,17 +120,21 @@ def __transfer_log(configuration, client_id, msg, level='info'):
     handler.close()
     transfers_logger.removeHandler(handler)
 
+
 def transfer_error(configuration, client_id, msg):
     """Wrapper to send a single error msg to transfer log of client_id"""
     __transfer_log(configuration, client_id, msg, 'error')
+
 
 def transfer_warn(configuration, client_id, msg):
     """Wrapper to send a single warn msg to transfer log of client_id"""
     __transfer_log(configuration, client_id, msg, 'warning')
 
+
 def transfer_info(configuration, client_id, msg):
     """Wrapper to send a single info msg to transfer log of client_id"""
     __transfer_log(configuration, client_id, msg, 'info')
+
 
 def transfer_result(configuration, client_id, transfer_dict, exit_code,
                     out_msg, err_msg):
@@ -148,7 +155,7 @@ def transfer_result(configuration, client_id, transfer_dict, exit_code,
     err_msg = '%s:\n%s\n' % (time_stamp, err_msg)
     status = True
     for (ext, msg) in [("status", status_msg), ("stdout", out_msg),
-                          ("stderr", err_msg)]:
+                       ("stderr", err_msg)]:
         path = os.path.join(res_dir, "%s.%s" % (transfer_id, ext))
         try:
             if os.path.exists(path):
@@ -157,11 +164,12 @@ def transfer_result(configuration, client_id, transfer_dict, exit_code,
                 status_fd = open(path, "w")
             status_fd.write(msg)
             status_fd.close()
-        except Exception, exc :
-            logger.error("writing status file %s for %s failed: %s" % \
+        except Exception, exc:
+            logger.error("writing status file %s for %s failed: %s" %
                          (path, blind_pw(transfer_dict), exc))
             status = False
     return status
+
 
 def get_ssh_auth(pubkey_auth, transfer_dict=None):
     """Generate robust command line options for ssh-based transfers.
@@ -171,7 +179,7 @@ def get_ssh_auth(pubkey_auth, transfer_dict=None):
     authentication are returned.
     If transfer_dict is set it will be used to expand the variables in the
     resulting string.
-    
+
     Make sure we don't get bitten by any restrictive system-wide or
     account-specific ssh settings. Also use a known_hosts file for client_id
     to avoid polluting the known hosts file of the UNIX account user, while
@@ -190,6 +198,7 @@ def get_ssh_auth(pubkey_auth, transfer_dict=None):
         ssh_auth = ssh_auth % transfer_dict
     return ssh_auth
 
+
 def get_ssl_auth(pki_auth, transfer_dict=None):
     """Generate robust command line options for ssl-based transfers.
 
@@ -206,6 +215,7 @@ def get_ssl_auth(pki_auth, transfer_dict=None):
         ssl_auth = ssl_auth % transfer_dict
     return ssl_auth
 
+
 def get_exclude_list(keyword, sep_char, to_string, user_excludes=[]):
     """Get an excludes helper for filtered transfers. The keyword argument is
     inserted for each exclude entry. The sep_char argument is used to separate
@@ -216,12 +226,13 @@ def get_exclude_list(keyword, sep_char, to_string, user_excludes=[]):
     NOTE: list is passed into subprocess without shell interpretation so
     quoting is NOT needed, and in fact would break the excludes.
     """
-    exc_pattern='%s%s%%s' % (keyword, sep_char)
+    exc_pattern = '%s%s%%s' % (keyword, sep_char)
     all_excludes = user_excludes + _user_invisible_paths
     if to_string:
         return ' '.join([exc_pattern % i for i in all_excludes])
     else:
         return [exc_pattern % i for i in all_excludes]
+
 
 def get_lftp_target(is_import, is_file, user_excludes=[]):
     """Get a target helper for lftp-based transfers. The is_import argument is
@@ -243,7 +254,7 @@ def get_lftp_target(is_import, is_file, user_excludes=[]):
         src = remote + src
     else:
         dst = remote + dst
-        
+
     if is_file:
         # NOTE: no exclude list for single file, but we already filter illegal
         #       paths in main import/export loop, so we only need to worry
@@ -272,6 +283,7 @@ def get_lftp_target(is_import, is_file, user_excludes=[]):
         if not is_import:
             lftp_args += ["-R"]
     return (lftp_args, exclude_list, transfer_target)
+
 
 def get_rsync_target(is_import, is_file, user_excludes=[], compress=False):
     """Get target helpers for rsync-based transfers. The is_import argument is
@@ -302,7 +314,8 @@ def get_rsync_target(is_import, is_file, user_excludes=[], compress=False):
     else:
         transfer_target = ["%(src)s", "%(fqdn)s:'%(dst)s/'"]
     return (rsync_args, exclude_list, transfer_target)
-    
+
+
 def get_cmd_map():
     """Get a lookup map of commands for the transfers"""
     # Helpers for lftp and rsync
@@ -377,13 +390,13 @@ def get_cmd_map():
                                                '%(lftp_src)s', '%(lftp_dst)s'])
                                      ])],
                 'webdavs': ['lftp', '-c',
-                           ';'.join([lftp_core_opts, webdav_tweak_str,
-                                     base_ssl_str,
-                                     ' '.join(['%(lftp_args)s',
-                                               '%(lftp_excludes)s',
-                                               '%(lftp_src)s', '%(lftp_dst)s'])
-                                     ])],
-                'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] + \
+                            ';'.join([lftp_core_opts, webdav_tweak_str,
+                                      base_ssl_str,
+                                      ' '.join(['%(lftp_args)s',
+                                                '%(lftp_excludes)s',
+                                                '%(lftp_src)s', '%(lftp_dst)s'])
+                                      ])],
+                'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] +
                 rsync_core_opts + ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
                                    '%(rsync_src)s', '%(rsync_dst)s'],
                 },
@@ -425,18 +438,19 @@ def get_cmd_map():
                                                '%(lftp_src)s', '%(lftp_dst)s'])
                                      ])],
                 'webdavs': ['lftp', '-c',
-                           ';'.join([lftp_core_opts, webdav_tweak_str,
-                                     base_ssl_str,
-                                     ' '.join(['%(lftp_args)s',
-                                               '%(lftp_excludes)s',
-                                               '%(lftp_src)s', '%(lftp_dst)s'])
-                                     ])],
-                'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] + \
+                            ';'.join([lftp_core_opts, webdav_tweak_str,
+                                      base_ssl_str,
+                                      ' '.join(['%(lftp_args)s',
+                                                '%(lftp_excludes)s',
+                                                '%(lftp_src)s', '%(lftp_dst)s'])
+                                      ])],
+                'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] +
                 rsync_core_opts + ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
                                    '%(rsync_src)s', '%(rsync_dst)s'],
                 }
                }
     return cmd_map
+
 
 def run_transfer(configuration, client_id, transfer_dict):
     """Actual data transfer built from transfer_dict on behalf of client_id"""
@@ -453,12 +467,12 @@ def run_transfer(configuration, client_id, transfer_dict):
 
     client_dir = client_id_dir(client_id)
     makedirs_rec(status_dir, configuration)
-    
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
     # TODO: we should refactor to move command extraction into one function
     command_pattern = cmd_map[action][protocol]
     target_helper_list = []
@@ -472,7 +486,7 @@ def run_transfer(configuration, client_id, transfer_dict):
         # IMPORTANT: path must be expanded to abs for proper chrooting
         key_path = os.path.abspath(key_path)
         if not valid_user_path(configuration, key_path, settings_base_dir):
-            logger.error('rejecting illegal directory traversal for %s (%s)' \
+            logger.error('rejecting illegal directory traversal for %s (%s)'
                          % (key_path, blind_pw(transfer_dict)))
             raise ValueError("user provided a key outside own settings!")
     rel_src_list = transfer_dict['src']
@@ -490,7 +504,7 @@ def run_transfer(configuration, client_id, transfer_dict):
             abs_dst = os.path.abspath(abs_dst)
             # Reject illegal directory traversal and hidden files
             if not valid_user_path(configuration, abs_dst, base_dir, True):
-                logger.error('rejecting illegal directory traversal for %s (%s)' \
+                logger.error('rejecting illegal directory traversal for %s (%s)'
                              % (abs_dst, blind_pw(transfer_dict)))
                 raise ValueError("user provided a destination outside home!")
             if src.endswith(os.sep):
@@ -516,7 +530,7 @@ def run_transfer(configuration, client_id, transfer_dict):
             src_path = os.path.abspath(src_path)
             # Reject illegal directory traversal and hidden files
             if not valid_user_path(configuration, src_path, base_dir, True):
-                logger.error('rejecting illegal directory traversal for %s (%s)' \
+                logger.error('rejecting illegal directory traversal for %s (%s)'
                              % (src, blind_pw(transfer_dict)))
                 raise ValueError("user provided a source outside home!")
             src_path_list.append(src_path)
@@ -529,16 +543,19 @@ def run_transfer(configuration, client_id, transfer_dict):
             else:
                 target_helper_list.append((get_lftp_target(False, True,
                                                            exclude),
-                                          get_rsync_target(False, True,
-                                                           exclude,
-                                                           compress)))
+                                           get_rsync_target(False, True,
+                                                            exclude,
+                                                            compress)))
     else:
-        raise ValueError('unsupported action for %(transfer_id)s: %(action)s' \
+        raise ValueError('unsupported action for %(transfer_id)s: %(action)s'
                          % transfer_dict)
     run_dict = transfer_dict.copy()
     run_dict['log_path'] = os.path.join(status_dir, 'transfer.log')
     # Use private known hosts file for ssh transfers as explained above
-    run_dict['known_hosts'] = os.path.join(base_dir, '.ssh', 'known_hosts')
+    # NOTE: known_hosts containing '=' silently leads to rest getting ignored!
+    #       use /dev/null to skip host key verification completely for now.
+    #run_dict['known_hosts'] = os.path.join(base_dir, '.ssh', 'known_hosts')
+    run_dict['known_hosts'] = '/dev/null'
     # Make sure password is set to empty string as default
     run_dict['password'] = run_dict.get('password', '')
     # TODO: this is a bogus cert path for now - we don't support ssl certs
@@ -549,12 +566,12 @@ def run_transfer(configuration, client_id, transfer_dict):
     if run_dict['protocol'] == 'ftps':
         run_dict['orig_proto'] = run_dict['protocol']
         run_dict['protocol'] = 'ftp'
-        logger.info('force %(orig_proto)s to %(protocol)s for %(transfer_id)s' \
+        logger.info('force %(orig_proto)s to %(protocol)s for %(transfer_id)s'
                     % run_dict)
     elif run_dict['protocol'].startswith('webdav'):
         run_dict['orig_proto'] = run_dict['protocol']
         run_dict['protocol'] = run_dict['protocol'].replace('webdav', 'http')
-        logger.info('force %(orig_proto)s to %(protocol)s for %(transfer_id)s' \
+        logger.info('force %(orig_proto)s to %(protocol)s for %(transfer_id)s'
                     % run_dict)
     if key_path:
         rel_key = run_dict['key']
@@ -584,9 +601,9 @@ def run_transfer(configuration, client_id, transfer_dict):
     for (src, rel_src, target_helper) in zip(src_path_list, rel_src_list,
                                              target_helper_list):
         (lftp_target, rsync_target) = target_helper
-        logger.debug('setting up %(action)s for %(src)s' % run_dict)            
+        logger.debug('setting up %(action)s for %(src)s' % run_dict)
         if run_dict['protocol'] == 'sftp' and not os.path.isabs(src):
-            # NOTE: lftp interprets sftp://FQDN/SRC as absolute path /SRC 
+            # NOTE: lftp interprets sftp://FQDN/SRC as absolute path /SRC
             #       We force relative paths into user home with a tilde.
             #       The resulting sftp://FQDN/~/SRC looks funky but works.
             run_dict['src'] = "~/%s" % src
@@ -666,10 +683,10 @@ def clean_transfer(configuration, client_id, transfer_id, force=False):
                                                       transfer_id))
     for sub_pid in sub_procs:
         if not force:
-            logger.warning('left-over child in %s %s: %s' % \
+            logger.warning('left-over child in %s %s: %s' %
                            (client_id, transfer_id, sub_procs))
         if not kill_sub_pid(configuration, client_id, transfer_id, sub_pid):
-            logger.error('could not terminate child process in %s %s: %s' % \
+            logger.error('could not terminate child process in %s %s: %s' %
                          (client_id, transfer_id, sub_procs))
         del_sub_pid(configuration, sub_pid_map, client_id, transfer_id,
                     sub_pid)
@@ -687,7 +704,7 @@ def wrap_run_transfer(configuration, client_id, transfer_dict):
     (save_status, save_msg) = update_data_transfer(configuration, client_id,
                                                    transfer_dict)
     if not save_status:
-        logger.error("failed to save %s status for %s: %s" % \
+        logger.error("failed to save %s status for %s: %s" %
                      (transfer_dict['status'], transfer_id, save_msg))
         return save_status
     try:
@@ -705,7 +722,7 @@ def wrap_run_transfer(configuration, client_id, transfer_dict):
     (save_status, save_msg) = update_data_transfer(configuration, client_id,
                                                    transfer_dict)
     if not save_status:
-        logger.error("failed to save %s status for %s: %s" % \
+        logger.error("failed to save %s status for %s: %s" %
                      (transfer_dict['status'], transfer_id, save_msg))
 
     status_msg = '%s %s from %s in %s %s with status code %s' % \
@@ -753,11 +770,12 @@ def foreground_transfer(configuration, client_id, transfer_dict):
     wrap_run_transfer(configuration, client_id, transfer_dict)
     del_worker_transfer(configuration, all_workers, client_id, transfer_id)
 
+
 def handle_transfer(configuration, client_id, transfer_dict):
     """Actually handle valid transfer request in transfer_dict"""
     logger.debug('in handling of %s %s for %s' % (transfer_dict['transfer_id'],
-                                                 transfer_dict['action'],
-                                                 client_id))
+                                                  transfer_dict['action'],
+                                                  client_id))
     if transfer_dict['status'] == "ACTIVE":
         msg = 'transfer service restarted: resume interrupted %(transfer_id)s '
         msg += '%(action)s (please ignore any recent log errors)'
@@ -774,7 +792,7 @@ def handle_transfer(configuration, client_id, transfer_dict):
                      % (transfer_dict['protocol'], transfer_dict['action'],
                         transfer_dict['fqdn'], exc, blind_pw(transfer_dict)))
         transfer_error(configuration, client_id,
-                       'failed to run %s %s from %s: %s' % \
+                       'failed to run %s %s from %s: %s' %
                        (transfer_dict['protocol'], transfer_dict['action'],
                         transfer_dict['fqdn'], exc))
 
@@ -788,7 +806,7 @@ def manage_transfers(configuration):
                                datatransfers_filename)
     for transfers_path in glob.glob(src_pattern):
         if os.path.getmtime(transfers_path) < last_update:
-            #logger.debug('skip transfer update for unchanged path: %s' % \
+            # logger.debug('skip transfer update for unchanged path: %s' % \
             #              transfers_path)
             continue
         logger.debug('handling update of transfers file: %s' % transfers_path)
@@ -800,10 +818,10 @@ def manage_transfers(configuration):
         (load_status, transfers) = load_data_transfers(configuration,
                                                        client_id)
         if not load_status:
-            logger.error('could not load transfer for path: %s' % \
-                          transfers_path)
+            logger.error('could not load transfer for path: %s' %
+                         transfers_path)
             continue
-            
+
         old_transfers[client_id] = all_transfers.get(client_id, {})
         all_transfers[client_id] = transfers
 
@@ -812,23 +830,23 @@ def manage_transfers(configuration):
             #logger.debug('inspecting transfer:\n%s' % blind_pw(transfer_dict))
             transfer_status = transfer_dict['status']
             if transfer_status in ("DONE", "FAILED", "PAUSED"):
-                #logger.debug('skip %(status)s transfer %(transfer_id)s' % \
+                # logger.debug('skip %(status)s transfer %(transfer_id)s' % \
                 #             transfer_dict)
                 continue
             if transfer_status in ("ACTIVE", ):
                 if get_worker_transfer(configuration, all_workers, client_id,
                                        transfer_id):
-                    logger.debug('wait for transfer %(transfer_id)s' % \
+                    logger.debug('wait for transfer %(transfer_id)s' %
                                  transfer_dict)
                     continue
                 else:
-                    logger.info('restart transfer %(transfer_id)s' % \
-                                 transfer_dict)
-            logger.info('handle %(status)s transfer %(transfer_id)s' % \
-                         transfer_dict)
+                    logger.info('restart transfer %(transfer_id)s' %
+                                transfer_dict)
+            logger.info('handle %(status)s transfer %(transfer_id)s' %
+                        transfer_dict)
             handle_transfer(configuration, client_id, transfer_dict)
 
-    
+
 if __name__ == '__main__':
     # Force no log init since we use separate logger
     configuration = get_configuration_object(skip_log=True)
@@ -842,7 +860,7 @@ if __name__ == '__main__':
     logger = daemon_logger('transfers', configuration.user_transfers_log,
                            log_level)
     configuration.logger = logger
-    
+
     # Allow e.g. logrotate to force log re-open after rotates
     signal.signal(signal.SIGHUP, hangup_handler)
 
@@ -878,27 +896,27 @@ unless it is available in mig/server/MiGserver.conf
     # to have multiprocessing access without races.
     transfer_manager = multiprocessing.Manager()
     # Ignore bogus "Instance of 'SyncManager' has no 'dict' member (no-member)"
-    sub_pid_map = transfer_manager.dict() # pylint: disable=no-member
-    
+    sub_pid_map = transfer_manager.dict()  # pylint: disable=no-member
+
     while not stop_running.is_set():
         try:
             manage_transfers(configuration)
-            
+
             for (client_id, transfer_id, worker) in \
                     all_worker_transfers(configuration, all_workers):
                 if not worker:
                     continue
-                logger.debug('Checking if %s %s with pid %d is finished' % \
+                logger.debug('Checking if %s %s with pid %d is finished' %
                              (client_id, transfer_id, worker.pid))
                 worker.join(1)
                 if worker.is_alive():
-                    logger.debug('Worker for %s %s running with pid %d' % \
+                    logger.debug('Worker for %s %s running with pid %d' %
                                  (client_id, transfer_id, worker.pid))
                 else:
-                    logger.info('Removing finished %s %s with pid %d' % \
+                    logger.info('Removing finished %s %s with pid %d' %
                                 (client_id, transfer_id, worker.pid))
                     clean_transfer(configuration, client_id, transfer_id)
-                
+
             # Throttle down
 
             time.sleep(30)
@@ -914,7 +932,7 @@ unless it is available in mig/server/MiGserver.conf
             continue
         # Terminate worker first to stop further handling, then kill any
         # orphaned subprocesses associated with it for clean resume later
-        logger.info('Terminating %s %s worker with pid %d' % \
+        logger.info('Terminating %s %s worker with pid %d' %
                     (client_id, transfer_id, worker.pid))
         worker.terminate()
         logger.info('Terminating any %s %s child processes' % (client_id,
