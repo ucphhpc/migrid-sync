@@ -155,7 +155,7 @@ def generate_confs(
     listen_clause='#Listen',
     serveralias_clause='#ServerAlias',
     distro='Debian',
-    landing_page='/cgi-bin/dashboard.py',
+    landing_page=None,
     skin='migrid-basic',
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -249,7 +249,6 @@ def generate_confs(
     user_dict['__LISTEN_CLAUSE__'] = listen_clause
     user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
     user_dict['__DISTRO__'] = distro
-    user_dict['__LANDING_PAGE__'] = landing_page
     user_dict['__SKIN__'] = skin
 
     # Apache fails on duplicate Listen directives so comment in that case
@@ -579,6 +578,20 @@ cert, oid and sid based https!
                                                'jupyter_mount',
                                                '%u.authorized_keys'))
     user_dict['__SSH_AUTH_KEY_LOCATIONS__'] = ' '.join(auth_key_locations)
+
+    if enable_wsgi:
+        # WSGI shares auth and bin and only discriminates in backend
+        xgi_bin = xgi_auth = 'wsgi-bin'
+    else:
+        xgi_bin = 'cgi-bin'
+        xgi_auth = 'cgi-auth'
+    user_dict['__TWOFACTOR_PAGE__'] = os.path.join(
+        '/', xgi_auth, 'twofactor.py')
+    if landing_page is None:
+        user_dict['__LANDING_PAGE__'] = os.path.join(
+            '/', xgi_bin, 'dashboard.py')
+    else:
+        user_dict['__LANDING_PAGE__'] = landing_page
 
     # Collect final variable values for log
     sorted_keys = user_dict.keys()

@@ -121,13 +121,13 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
 
 def read_file(path, logger):
     """Wrapper to handle reading of contents from path"""
-    logger.debug('reading file: %s' % path)
+    #logger.debug('reading file: %s' % path)
     content = None
     try:
         filehandle = open(path)
         content = filehandle.read()
         filehandle.close()
-        logger.debug('read %db from: %s' % (len(content), path))
+        #logger.debug('read %db from: %s' % (len(content), path))
     except Exception, err:
         logger.error('could not read %s: %s' % (path, err))
     return content
@@ -137,7 +137,7 @@ def read_tail(path, lines, logger):
     """Read last lines from path"""
     out_lines = []
     try:
-        logger.debug("loading %d lines from %s" % (lines, path))
+        #logger.debug("loading %d lines from %s" % (lines, path))
         if not os.path.exists(path):
             return out_lines
         tail_fd = open(path, 'r')
@@ -153,7 +153,7 @@ def read_tail(path, lines, logger):
             pos = tail_fd.tell()
             out_lines = tail_fd.readlines()
             step_size *= 2
-            logger.debug("reading %d lines from %s" % (lines, path))
+            #logger.debug("reading %d lines from %s" % (lines, path))
         tail_fd.close()
     except Exception, exc:
         logger.error("reading %d lines from %s: %s" % (lines, path, exc))
