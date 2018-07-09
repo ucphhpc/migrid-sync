@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,6 +47,7 @@ __version__ = '$Revision$'
 
 _userscript_version = __version__
 
+from shared.base import get_xgi_bin
 from shared.conf import get_configuration_object
 from shared.defaults import file_dest_sep, upload_block_size, keyword_auto
 from shared.publicscriptgen import *
@@ -61,7 +62,7 @@ __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
 
 def usage():
     """ Usage helper"""
-    
+
     print 'Usage: userscriptgen.py OPTIONS [LANGUAGE ... ]'
     print 'Where OPTIONS include:'
     print ' -c CURL_CMD\t: Use curl from CURL_CMD'
@@ -77,13 +78,13 @@ def usage():
 
 def version():
     """Version info"""
-    
+
     print 'MiG User Script Generator: %s' % __version__
 
 
 def version_function(lang):
     """Version helper"""
-    
+
     s = ''
     s += begin_function(lang, 'version', [], 'Show version details')
     if lang == 'sh':
@@ -109,13 +110,13 @@ def shared_usage_function(op, lang, extension):
 
 def cancel_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] JOBID [JOBID ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -126,13 +127,13 @@ def cancel_usage_function(lang, extension):
 
 def cat_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -143,13 +144,13 @@ def cat_usage_function(lang, extension):
 
 def cp_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -160,14 +161,14 @@ def cp_usage_function(lang, extension):
 
 def createbackup_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     # TODO: support multi src here (cumbersome due to freeze_copy_N format)
     usage_str = 'Usage: %s%s.%s [OPTIONS] NAME SRC'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -178,14 +179,14 @@ def createbackup_usage_function(lang, extension):
 
 def createfreeze_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     # TODO: support multi src here (cumbersome due to freeze_copy_N format)
     usage_str = 'Usage: %s%s.%s [OPTIONS] FLAVOR NAME DSC AUTHOR DPT ORG SRC'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -196,7 +197,7 @@ def createfreeze_usage_function(lang, extension):
 
 def datatransfer_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -214,13 +215,13 @@ def datatransfer_usage_function(lang, extension):
 
 def deletebackup_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FREEZE_ID' \
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -231,13 +232,13 @@ def deletebackup_usage_function(lang, extension):
 
 def deletefreeze_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FLAVOR FREEZE_ID' \
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -248,13 +249,13 @@ def deletefreeze_usage_function(lang, extension):
 
 def doc_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] [TOPIC ...]' % (mig_prefix,
-            op, extension)
+                                                          op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -265,13 +266,13 @@ def doc_usage_function(lang, extension):
 
 def freezedb_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS]' % (mig_prefix,
-            op, extension)
+                                              op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -282,13 +283,13 @@ def freezedb_usage_function(lang, extension):
 
 def imagepreview_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION PATH [ARG ...]' % (mig_prefix,
-            op, extension)
+                                                                    op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -336,13 +337,13 @@ def imagepreview_usage_function(lang, extension):
 
 def get_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...] FILE'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -359,13 +360,13 @@ def get_usage_function(lang, extension):
 
 def grep_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] PATTERN FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -376,13 +377,13 @@ def grep_usage_function(lang, extension):
 
 def head_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -398,13 +399,13 @@ def head_usage_function(lang, extension):
 
 def jobaction_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION JOBID [JOBID ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -415,7 +416,7 @@ def jobaction_usage_function(lang, extension):
 
 def liveio_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -432,13 +433,13 @@ def liveio_usage_function(lang, extension):
 
 def ls_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] [FILE ...]' % (mig_prefix,
-            op, extension)
+                                                         op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -461,13 +462,13 @@ def ls_usage_function(lang, extension):
 
 def md5sum_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -478,13 +479,13 @@ def md5sum_usage_function(lang, extension):
 
 def mkdir_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] DIRECTORY [DIRECTORY ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -500,7 +501,7 @@ def mkdir_usage_function(lang, extension):
 
 def mqueue_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -517,13 +518,13 @@ def mqueue_usage_function(lang, extension):
 
 def mv_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -534,13 +535,13 @@ def mv_usage_function(lang, extension):
 
 def put_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...] FILE' % (mig_prefix,
-            op, extension)
+                                                                   op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -566,13 +567,13 @@ def put_usage_function(lang, extension):
 
 def read_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] START END SRC DST'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -583,13 +584,13 @@ def read_usage_function(lang, extension):
 
 def resubmit_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] JOBID [JOBID ...]' % (mig_prefix, op,
-            extension)
+                                                                extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -600,13 +601,13 @@ def resubmit_usage_function(lang, extension):
 
 def rm_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -622,13 +623,13 @@ def rm_usage_function(lang, extension):
 
 def rmdir_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] DIRECTORY [DIRECTORY ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -645,7 +646,7 @@ def rmdir_usage_function(lang, extension):
 
 def scripts_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -667,13 +668,13 @@ def scripts_usage_function(lang, extension):
 
 def sha1sum_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -684,7 +685,7 @@ def sha1sum_usage_function(lang, extension):
 
 def sharelink_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
@@ -701,13 +702,13 @@ def sharelink_usage_function(lang, extension):
 
 def showbackup_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FREEZE_ID' \
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -715,15 +716,16 @@ def showbackup_usage_function(lang, extension):
 
     return s
 
+
 def showfreeze_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FLAVOR FREEZE_ID' \
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -731,15 +733,16 @@ def showfreeze_usage_function(lang, extension):
 
     return s
 
+
 def stat_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [...]' % (mig_prefix,
-            op, extension)
+                                                         op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -750,13 +753,13 @@ def stat_usage_function(lang, extension):
 
 def status_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] [JOBID ...]' % (mig_prefix,
-            op, extension)
+                                                          op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -776,13 +779,13 @@ def status_usage_function(lang, extension):
 
 def submit_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]' % (mig_prefix, op,
-            extension)
+                                                              extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -798,13 +801,13 @@ def submit_usage_function(lang, extension):
 
 def tail_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -820,13 +823,13 @@ def tail_usage_function(lang, extension):
 
 def test_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] [OPERATION ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -842,13 +845,13 @@ def test_usage_function(lang, extension):
 
 def touch_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] [FILE ...]' % (mig_prefix,
-            op, extension)
+                                                         op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -859,13 +862,13 @@ def touch_usage_function(lang, extension):
 
 def truncate_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -881,13 +884,13 @@ def truncate_usage_function(lang, extension):
 
 def unzip_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -898,13 +901,13 @@ def unzip_usage_function(lang, extension):
 
 def uploadchunked_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC ...] DST' % (mig_prefix,
-            op, extension)
+                                                                op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -922,13 +925,13 @@ def uploadchunked_usage_function(lang, extension):
 
 def wc_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -950,13 +953,13 @@ def wc_usage_function(lang, extension):
 
 def write_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] START END SRC DST'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -967,13 +970,13 @@ def write_usage_function(lang, extension):
 
 def zip_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
-         % (mig_prefix, op, extension)
+        % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -1027,7 +1030,7 @@ def cancel_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'cancel_job')
     return s
 
@@ -1060,7 +1063,7 @@ def cat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'cat_file')
     return s
 
@@ -1093,12 +1096,12 @@ def cp_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'cp_file')
     return s
 
 
-def createbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+def createbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the freeze_name and src args as
     arguments.
     """
@@ -1128,12 +1131,12 @@ def createbackup_function(configuration, lang, curl_cmd, curl_flags='--compresse
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'create_backup')
     return s
 
 
-def createfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+def createfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with flavor, freeze_name,
     freeze_description, freeze_author, freeze_department, freeze_organization,
     freeze_publish and src as arguments.
@@ -1164,7 +1167,7 @@ def createfreeze_function(configuration, lang, curl_cmd, curl_flags='--compresse
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'create_freeze')
     return s
 
@@ -1209,12 +1212,12 @@ def datatransfer_function(configuration, lang, curl_cmd, curl_flags='--compresse
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'datatransfer')
     return s
 
 
-def deletebackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+def deletebackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the freeze_id as argument.
     """
 
@@ -1243,12 +1246,12 @@ def deletebackup_function(configuration, lang, curl_cmd, curl_flags='--compresse
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'delete_backup')
     return s
 
 
-def deletefreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+def deletefreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the freeze_id as argument.
     """
 
@@ -1277,7 +1280,7 @@ def deletefreeze_function(configuration, lang, curl_cmd, curl_flags='--compresse
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'delete_freeze')
     return s
 
@@ -1312,7 +1315,7 @@ def doc_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'show_doc')
     return s
 
@@ -1336,7 +1339,7 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'expand_name', ['path_list',
-                        'server_flags', 'destinations'],
+                                              'server_flags', 'destinations'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -1348,7 +1351,7 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'expand_name')
     return s
 
@@ -1381,7 +1384,7 @@ def freezedb_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'freeze_db')
     return s
 
@@ -1390,7 +1393,7 @@ def imagepreview_function(configuration, lang, curl_cmd, curl_flags='--compresse
     """Call the corresponding cgi script with path, action and key=val pairs
     as arguments.
     """
-   
+
     relative_url = '"%s/imagepreview.py"' % get_xgi_bin(configuration)
     query = '""'
     # TODO: is arg_list really a list here?
@@ -1400,7 +1403,7 @@ def imagepreview_function(configuration, lang, curl_cmd, curl_flags='--compresse
     elif lang == 'python':
         post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = '["path=" + path] + arg_list'
-        
+
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -1418,12 +1421,13 @@ def imagepreview_function(configuration, lang, curl_cmd, curl_flags='--compresse
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'imagepreview')
     return s
 
 
-def get_function(configuration, lang, curl_cmd, curl_flags='--compressed --create-dirs'):
+def get_function(configuration, lang, curl_cmd,
+                 curl_flags='--compressed --create-dirs'):
     """Call the corresponding cgi script with src_path and dst_path as
     arguments.
     """
@@ -1462,7 +1466,7 @@ def get_function(configuration, lang, curl_cmd, curl_flags='--compressed --creat
         curl_cmd,
         curl_flags,
         curl_target,
-        )
+    )
     s += end_function(lang, 'get_file')
     return s
 
@@ -1497,7 +1501,7 @@ def grep_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'grep_path')
     return s
 
@@ -1530,7 +1534,7 @@ def head_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'head_file')
     return s
 
@@ -1565,7 +1569,7 @@ def jobaction_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'job_action')
     return s
 
@@ -1588,7 +1592,8 @@ def liveio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'job_liveio', ['action', 'job_id', 'src_list', 'dst'],
+    s += begin_function(lang, 'job_liveio', ['action', 'job_id', 'src_list',
+                                             'dst'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -1600,7 +1605,7 @@ def liveio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'job_liveio')
     return s
 
@@ -1633,7 +1638,7 @@ def ls_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'ls_file')
     return s
 
@@ -1668,7 +1673,7 @@ def md5sum_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'md5_sum')
     return s
 
@@ -1701,7 +1706,7 @@ def mkdir_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'mk_dir')
     return s
 
@@ -1735,7 +1740,7 @@ def mqueue_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'job_mqueue')
     return s
 
@@ -1768,7 +1773,7 @@ def mv_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'mv_file')
     return s
 
@@ -1802,7 +1807,7 @@ def put_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'put_file', ['src_path', 'dst_path',
-                        'submit_mrsl', 'extract_package'],
+                                           'submit_mrsl', 'extract_package'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -1839,7 +1844,7 @@ def put_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_cmd,
         curl_flags,
         curl_target,
-        )
+    )
     s += end_function(lang, 'put_file')
     return s
 
@@ -1848,24 +1853,25 @@ def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the src_path, dst_path, first
     and last as arguments.
     """
-    
-    # TODO: switch to default get_xgi_bin when rangefileaccess is ported 
-    relative_url = '"%s/rangefileaccess.py"' % get_xgi_bin(configuration, force_legacy=True)
-    # TODO: switch to post_data and urlenc_data when rangefileaccess is ported 
+
+    # TODO: switch to default get_xgi_bin when rangefileaccess is ported
+    relative_url = '"%s/rangefileaccess.py"' % get_xgi_bin(
+        configuration, force_legacy=True)
+    # TODO: switch to post_data and urlenc_data when rangefileaccess is ported
     # query = '""'
     post_data = '""'
     urlenc_data = '""'
     if lang == 'sh':
         query = \
             '"?$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$src_path"'
-        #post_data = \
+        # post_data = \
         #    '"$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
         #urlenc_data = '("src_path=$src_path")'
         curl_target = '("--output \'$dst_path\'")'
     elif lang == 'python':
         query = \
             "'?%s;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (default_args, server_flags, first, last, src_path)"
-        #post_data = \
+        # post_data = \
         #    "'%s;flags=%s;file_startpos=%s;file_endpos=%s' % (default_args, server_flags, first, last)"
         #urlenc_data = '["src_path=%s" % src_path]'
         curl_target = "['--output', dst_path]"
@@ -1874,8 +1880,8 @@ def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'read_file', ['first', 'last', 'src_path'
-                        , 'dst_path'],
+    s += begin_function(lang, 'read_file', ['first', 'last', 'src_path',
+                                            'dst_path'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -1888,7 +1894,7 @@ def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_cmd,
         curl_flags,
         curl_target,
-        )
+    )
     s += end_function(lang, 'read_file')
     return s
 
@@ -1921,7 +1927,7 @@ def resubmit_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'resubmit_job')
     return s
 
@@ -1954,7 +1960,7 @@ def rm_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'rm_file')
     return s
 
@@ -1987,7 +1993,7 @@ def rmdir_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'rm_dir')
     return s
 
@@ -2023,7 +2029,7 @@ def scripts_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'generate_scripts')
     return s
 
@@ -2058,7 +2064,7 @@ def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'sha1_sum')
     return s
 
@@ -2098,12 +2104,12 @@ def sharelink_function(configuration, lang, curl_cmd, curl_flags='--compressed')
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'sharelink')
     return s
 
 
-def showbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+def showbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the freeze_id as argument.
     """
 
@@ -2133,12 +2139,12 @@ def showbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'show_backup')
     return s
 
 
-def showfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+def showfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the freeze_id as argument.
     """
 
@@ -2168,7 +2174,7 @@ def showfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'show_freeze')
     return s
 
@@ -2201,7 +2207,7 @@ def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'stat_file')
     return s
 
@@ -2222,8 +2228,8 @@ def status_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'
-                        ], 'Execute the corresponding server operation')
+    s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'],
+                        'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
     s += curl_perform(
@@ -2234,7 +2240,7 @@ def status_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'job_status')
     return s
 
@@ -2257,13 +2263,13 @@ def submit_function(configuration, lang, curl_cmd, curl_flags=''):
     put_helper = put_function(configuration, lang, curl_cmd, curl_flags)
 
     s = ''
-    
+
     # Simply use a private copy of put_file function if local flag was given
 
     s += put_helper.replace('put_file', '__put_file')
 
     # Else proceed with server-side only submit
-    
+
     s += begin_function(lang, 'submit_file', ['path_list'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
@@ -2276,7 +2282,7 @@ def submit_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'submit_file')
     return s
 
@@ -2309,7 +2315,7 @@ def tail_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'tail_file')
     return s
 
@@ -2805,7 +2811,7 @@ def touch_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'touch_file')
     return s
 
@@ -2838,11 +2844,12 @@ def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'truncate_file')
     return s
 
-def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):  
+
+def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the 'src_list' and dst as
     argument.
     """
@@ -2872,12 +2879,13 @@ def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'unzip_file')
     return s
 
 
-def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+def uploadchunked_function(configuration, lang, curl_cmd,
+                           curl_flags='--compressed'):
     """Call the corresponding cgi script with action, src_path, dst_path
     arguments.
     """
@@ -2935,7 +2943,7 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
     if chunk_no == total_chunks - 1:
         end = total_size - 1
     chunk_bytes = 1 + end - start
-'''        
+'''
     s += curl_perform(
         lang,
         relative_url,
@@ -2946,13 +2954,13 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
         curl_flags,
         curl_target_put,
         curl_stdin_put,
-        )
+    )
     s += end_function(lang, 'uploadchunked_put')
 
     s += begin_function(lang, 'uploadchunked_move', ['path', 'current_dir',
                                                      'chunk_no', 'chunk_size',
-                                                    'total_chunks',
-                                                    'total_size'],
+                                                     'total_chunks',
+                                                     'total_size'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -2979,7 +2987,7 @@ def uploadchunked_function(configuration, lang, curl_cmd, curl_flags='--compress
         curl_flags,
         curl_target_move,
         curl_stdin_move,
-        )
+    )
     s += end_function(lang, 'uploadchunked_move')
 
     return s
@@ -3013,7 +3021,7 @@ def wc_function(configuration, lang, curl_cmd, curl_flags=''):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'wc_file')
     return s
 
@@ -3023,23 +3031,24 @@ def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     and last arguments.
     """
 
-    # TODO: switch to default get_xgi_bin when rangefileaccess is ported 
-    relative_url = '"%s/rangefileaccess.py"' % get_xgi_bin(configuration, force_legacy=True)
-    # TODO: switch to post_data and urlenc_data when rangefileaccess is ported 
+    # TODO: switch to default get_xgi_bin when rangefileaccess is ported
+    relative_url = '"%s/rangefileaccess.py"' % get_xgi_bin(
+        configuration, force_legacy=True)
+    # TODO: switch to post_data and urlenc_data when rangefileaccess is ported
     # query = '""'
     post_data = '""'
     urlenc_data = '""'
     if lang == 'sh':
         query = \
-              '"?$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$dst_path"'
-        #post_data = \
+            '"?$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$dst_path"'
+        # post_data = \
         #    '"$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
         #urlenc_data = '("path=$dst_path")'
         curl_target = '("--upload-file \'$src_path\'")'
     elif lang == 'python':
         query = \
-              "'?%s;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (default_args, server_flags, first, last, dst_path)"
-        #post_data = \
+            "'?%s;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (default_args, server_flags, first, last, dst_path)"
+        # post_data = \
         #    "'%s;flags=%s;file_startpos=%s;file_endpos=%s' % (default_args, server_flags, first, last)"
         #urlenc_data = '["path=%s" % dst_path]'
         curl_target = "['--upload-file', src_path]"
@@ -3048,8 +3057,8 @@ def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'write_file', ['first', 'last', 'src_path'
-                        , 'dst_path'],
+    s += begin_function(lang, 'write_file', ['first', 'last', 'src_path',
+                                             'dst_path'],
                         'Execute the corresponding server operation')
     s += auth_check_init(lang)
     s += timeout_check_init(lang)
@@ -3062,7 +3071,7 @@ def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_cmd,
         curl_flags,
         curl_target,
-        )
+    )
     s += end_function(lang, 'write_file')
     return s
 
@@ -3097,7 +3106,7 @@ def zip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'zip_file')
     return s
 
@@ -3113,7 +3122,7 @@ def expand_list(
     expanded_list,
     destinations=False,
     warnings=True,
-    ):
+):
     """Inline expansion of remote filenames from a list of patterns possibly
     with wild cards.
 
@@ -3175,7 +3184,7 @@ for pattern in ${src_list[@]}; do
         expand_paths=\"${expand_paths/$'\\n'/}\"
     done
 done
-"""% (file_dest_sep, file_dest_sep, expanded_list)
+""" % (file_dest_sep, file_dest_sep, expanded_list)
     elif lang == 'python':
         s += """
 %s = []
@@ -3214,10 +3223,10 @@ def shared_main(op, lang):
 def cancel_main(lang):
     """
     Generate main part of corresponding scripts.
-    
+
     lang specifies which script language to generate in.
     Currently 'sh' and 'python' are supported.
-    
+
     """
 
     s = ''
@@ -3613,7 +3622,7 @@ sys.exit(status)
 def imagepreview_main(lang):
     """
     Generate main part of corresponding scripts.
-    
+
     lang specifies which script language to generate in.
     """
 
@@ -3804,7 +3813,7 @@ sys.exit(status)
 def jobaction_main(lang):
     """
     Generate main part of corresponding scripts.
-    
+
     lang specifies which script language to generate in.
     """
 
@@ -4519,6 +4528,7 @@ sys.exit(status)
 
     return s
 
+
 def showfreeze_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -4551,6 +4561,7 @@ sys.exit(status)
         print 'Error: %s not supported!' % lang
 
     return s
+
 
 def stat_main(lang):
     """
@@ -5303,7 +5314,7 @@ sys.exit(status)
 
 def generate_cancel(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5312,7 +5323,7 @@ def generate_cancel(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5331,7 +5342,7 @@ def generate_cancel(configuration, scripts_languages, dest_dir='.'):
 
 def generate_cat(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5340,7 +5351,7 @@ def generate_cat(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5359,7 +5370,7 @@ def generate_cat(configuration, scripts_languages, dest_dir='.'):
 
 def generate_cp(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5368,7 +5379,7 @@ def generate_cp(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5387,7 +5398,7 @@ def generate_cp(configuration, scripts_languages, dest_dir='.'):
 
 def generate_createbackup(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5396,7 +5407,7 @@ def generate_createbackup(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5415,7 +5426,7 @@ def generate_createbackup(configuration, scripts_languages, dest_dir='.'):
 
 def generate_createfreeze(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5424,7 +5435,7 @@ def generate_createfreeze(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5443,7 +5454,7 @@ def generate_createfreeze(configuration, scripts_languages, dest_dir='.'):
 
 def generate_datatransfer(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5452,7 +5463,7 @@ def generate_datatransfer(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5471,7 +5482,7 @@ def generate_datatransfer(configuration, scripts_languages, dest_dir='.'):
 
 def generate_deletebackup(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5480,7 +5491,7 @@ def generate_deletebackup(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5499,7 +5510,7 @@ def generate_deletebackup(configuration, scripts_languages, dest_dir='.'):
 
 def generate_deletefreeze(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5508,7 +5519,7 @@ def generate_deletefreeze(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5527,7 +5538,7 @@ def generate_deletefreeze(configuration, scripts_languages, dest_dir='.'):
 
 def generate_doc(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5536,7 +5547,7 @@ def generate_doc(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5555,7 +5566,7 @@ def generate_doc(configuration, scripts_languages, dest_dir='.'):
 
 def generate_freezedb(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5564,7 +5575,7 @@ def generate_freezedb(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5583,7 +5594,7 @@ def generate_freezedb(configuration, scripts_languages, dest_dir='.'):
 
 def generate_imagepreview(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5592,7 +5603,7 @@ def generate_imagepreview(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5609,7 +5620,7 @@ def generate_imagepreview(configuration, scripts_languages, dest_dir='.'):
 
 def generate_get(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5618,7 +5629,7 @@ def generate_get(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5638,7 +5649,7 @@ def generate_get(configuration, scripts_languages, dest_dir='.'):
 
 def generate_grep(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5647,7 +5658,7 @@ def generate_grep(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5666,7 +5677,7 @@ def generate_grep(configuration, scripts_languages, dest_dir='.'):
 
 def generate_head(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5675,7 +5686,7 @@ def generate_head(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5694,7 +5705,7 @@ def generate_head(configuration, scripts_languages, dest_dir='.'):
 
 def generate_jobaction(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5703,7 +5714,7 @@ def generate_jobaction(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5722,7 +5733,7 @@ def generate_jobaction(configuration, scripts_languages, dest_dir='.'):
 
 def generate_lib(configuration, script_ops, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5753,7 +5764,7 @@ def generate_lib(configuration, script_ops, scripts_languages, dest_dir='.'):
 
 def generate_liveio(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5762,7 +5773,7 @@ def generate_liveio(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5781,7 +5792,7 @@ def generate_liveio(configuration, scripts_languages, dest_dir='.'):
 
 def generate_ls(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5790,7 +5801,7 @@ def generate_ls(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5809,7 +5820,7 @@ def generate_ls(configuration, scripts_languages, dest_dir='.'):
 
 def generate_md5sum(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5818,7 +5829,7 @@ def generate_md5sum(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5837,7 +5848,7 @@ def generate_md5sum(configuration, scripts_languages, dest_dir='.'):
 
 def generate_mkdir(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5846,7 +5857,7 @@ def generate_mkdir(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5865,7 +5876,7 @@ def generate_mkdir(configuration, scripts_languages, dest_dir='.'):
 
 def generate_mqueue(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5874,7 +5885,7 @@ def generate_mqueue(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5893,7 +5904,7 @@ def generate_mqueue(configuration, scripts_languages, dest_dir='.'):
 
 def generate_mv(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5902,7 +5913,7 @@ def generate_mv(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5921,7 +5932,7 @@ def generate_mv(configuration, scripts_languages, dest_dir='.'):
 
 def generate_put(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5930,7 +5941,7 @@ def generate_put(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5953,7 +5964,7 @@ def generate_put(configuration, scripts_languages, dest_dir='.'):
 
 def generate_read(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5962,7 +5973,7 @@ def generate_read(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -5981,7 +5992,7 @@ def generate_read(configuration, scripts_languages, dest_dir='.'):
 
 def generate_resubmit(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -5990,7 +6001,7 @@ def generate_resubmit(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6009,7 +6020,7 @@ def generate_resubmit(configuration, scripts_languages, dest_dir='.'):
 
 def generate_rm(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6018,7 +6029,7 @@ def generate_rm(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6037,7 +6048,7 @@ def generate_rm(configuration, scripts_languages, dest_dir='.'):
 
 def generate_rmdir(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6046,7 +6057,7 @@ def generate_rmdir(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6065,7 +6076,7 @@ def generate_rmdir(configuration, scripts_languages, dest_dir='.'):
 
 def generate_scripts(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6074,7 +6085,7 @@ def generate_scripts(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6093,7 +6104,7 @@ def generate_scripts(configuration, scripts_languages, dest_dir='.'):
 
 def generate_sha1sum(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6102,7 +6113,7 @@ def generate_sha1sum(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6121,7 +6132,7 @@ def generate_sha1sum(configuration, scripts_languages, dest_dir='.'):
 
 def generate_sharelink(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6130,7 +6141,7 @@ def generate_sharelink(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6149,7 +6160,7 @@ def generate_sharelink(configuration, scripts_languages, dest_dir='.'):
 
 def generate_showbackup(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6158,7 +6169,7 @@ def generate_showbackup(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6177,7 +6188,7 @@ def generate_showbackup(configuration, scripts_languages, dest_dir='.'):
 
 def generate_showfreeze(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6186,7 +6197,7 @@ def generate_showfreeze(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6205,7 +6216,7 @@ def generate_showfreeze(configuration, scripts_languages, dest_dir='.'):
 
 def generate_stat(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6214,7 +6225,7 @@ def generate_stat(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6233,7 +6244,7 @@ def generate_stat(configuration, scripts_languages, dest_dir='.'):
 
 def generate_status(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6242,7 +6253,7 @@ def generate_status(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6261,7 +6272,7 @@ def generate_status(configuration, scripts_languages, dest_dir='.'):
 
 def generate_submit(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6270,7 +6281,7 @@ def generate_submit(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6289,7 +6300,7 @@ def generate_submit(configuration, scripts_languages, dest_dir='.'):
 
 def generate_tail(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6298,7 +6309,7 @@ def generate_tail(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6317,7 +6328,7 @@ def generate_tail(configuration, scripts_languages, dest_dir='.'):
 
 def generate_test(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6326,7 +6337,7 @@ def generate_test(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6350,7 +6361,7 @@ def generate_test(configuration, scripts_languages, dest_dir='.'):
 
 def generate_touch(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6359,7 +6370,7 @@ def generate_touch(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6378,7 +6389,7 @@ def generate_touch(configuration, scripts_languages, dest_dir='.'):
 
 def generate_truncate(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6387,7 +6398,7 @@ def generate_truncate(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6406,7 +6417,7 @@ def generate_truncate(configuration, scripts_languages, dest_dir='.'):
 
 def generate_unzip(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6415,7 +6426,7 @@ def generate_unzip(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6434,7 +6445,7 @@ def generate_unzip(configuration, scripts_languages, dest_dir='.'):
 
 def generate_uploadchunked(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6443,7 +6454,7 @@ def generate_uploadchunked(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6466,7 +6477,7 @@ def generate_uploadchunked(configuration, scripts_languages, dest_dir='.'):
 
 def generate_wc(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6475,7 +6486,7 @@ def generate_wc(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6494,7 +6505,7 @@ def generate_wc(configuration, scripts_languages, dest_dir='.'):
 
 def generate_write(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6503,7 +6514,7 @@ def generate_write(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6522,7 +6533,7 @@ def generate_write(configuration, scripts_languages, dest_dir='.'):
 
 def generate_zip(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
-    
+
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('generate_', '')
@@ -6531,7 +6542,7 @@ def generate_zip(configuration, scripts_languages, dest_dir='.'):
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -6558,7 +6569,7 @@ include_license = True
 # Supported MiG operations (don't add 'test' as it is optional)
 
 # TODO: add find, *re, jobfeasible, jobschedule, mrslview, people,
-#           settings, vm*, 
+#           settings, vm*,
 
 script_ops = [
     'cancel',
@@ -6604,7 +6615,7 @@ script_ops = [
     'createfreeze',
     'showfreeze',
     'deletefreeze',
-    ]
+]
 
 # Script prefix for all user scripts
 
@@ -6686,7 +6697,7 @@ if __name__ == '__main__':
         # Add new languages here
 
         languages = [(sh_lang, sh_cmd, sh_ext), (python_lang,
-                     python_cmd, python_ext)]
+                                                 python_cmd, python_ext)]
         for (lang, cmd, ext) in languages:
             print 'Generating %s scripts' % lang
     else:
@@ -6723,5 +6734,5 @@ if __name__ == '__main__':
 
     if include_license:
         write_license(configuration, dest_dir)
-        
+
     sys.exit(0)

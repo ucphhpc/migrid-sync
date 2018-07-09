@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ for the supported programming languages.
 
 import os
 
+from shared.base import get_xgi_bin
 
 # Generator version (automagically updated by svn)
 
@@ -42,13 +43,14 @@ __version__ = '$Revision$'
 # Script helper functions #
 # ##########################
 
+
 def doc_string(lang, string, indent=0):
     """Insert doc string or comment in the script.
     Multi line comments (string with newlines) also work.
     """
 
     s = indent * ' '
-    
+
     if lang == 'sh':
         s += '# %s\n' % string.replace('\n', '\n' + indent * ' ' + '# ')
     elif lang == 'python':
@@ -202,7 +204,7 @@ done
 
     return s
 
-        
+
 def basic_usage_options(usage_str, lang):
 
     # Return usage instructions for the basic script flags.
@@ -303,6 +305,7 @@ def auth_check_init(lang):
 
     return s
 
+
 def timeout_check_init(lang):
     """Init timeout_check"""
     s = ''
@@ -341,7 +344,7 @@ def curl_perform(
     curl_flags='',
     curl_target="''",
     curl_stdin="''"
-    ):
+):
     """Expands relative_url, query and curl_target before
     issuing curl command. Thus those variables should contain
     appropriately escaped or quoted strings.
@@ -421,16 +424,16 @@ def curl_perform(
     command+=\"${timeout[@]} ${data[@]} ${urlenc[@]} ${target[@]} $url\"
     #echo \"DEBUG: command: $command\"
     eval $command
-"""% (
-                    curl_cmd,
-                    curl_flags,
-                    curl_target,
-                    relative_url,
-                    post_data,
-                    urlenc_data,
-                    query,
-                    curl_stdin,
-            )
+""" % (
+            curl_cmd,
+            curl_flags,
+            curl_target,
+            relative_url,
+            post_data,
+            urlenc_data,
+            query,
+            curl_stdin,
+        )
     elif lang == 'python':
         if curl_stdin == "''":
             s += """
@@ -515,7 +518,7 @@ def curl_perform(
             urlenc_data,
             query,
             curl_stdin,
-      )
+        )
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -820,24 +823,12 @@ def comment(lang, string):
     return s
 
 
-def get_xgi_bin(configuration, force_legacy=False):
-    """Lookup the preferred Xgi-bin for server URLs. If WSGI is enabled in the
-    configuration wsgi-bin is used. Otherwise the legacy cgi-bin is used.
-    The optional force_legacy argument can be used to force legacy cgi-bin use
-    e.g. for scripts that are not supported in WSGI.
-    """
-    
-    if not force_legacy and configuration.site_enable_wsgi:
-        return 'wsgi-bin'
-    return 'cgi-bin'
-
-
 def init_script(
     name,
     lang,
     interpreter,
     interpreter_flags='',
-    ):
+):
 
     s = '#!%s %s\n' % (interpreter, interpreter_flags)
     if lang == 'sh':
@@ -925,4 +916,3 @@ def write_license(configuration, dst_dir, name='COPYING'):
     except Exception, exc:
         print 'Error: failed to write license %s: %s' % (dst_path, exc)
         return False
-        

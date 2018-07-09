@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridscriptgen - vgrid and resource script generator backend
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,6 +39,7 @@ import os
 import sys
 import getopt
 
+from shared.base import get_xgi_bin
 from shared.conf import get_configuration_object
 from shared.publicscriptgen import *
 
@@ -88,14 +89,14 @@ def vgrid_single_argument_usage_function(
     extension,
     op,
     first_arg,
-    ):
+):
     """Usage functions for single argument scripts"""
 
     # Extract op from function name
     # op = sys._getframe().f_code.co_name.replace("_usage_function","")
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] %s' % (mig_prefix, op,
-            extension, first_arg)
+                                                 extension, first_arg)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -110,14 +111,14 @@ def vgrid_two_arguments_usage_function(
     op,
     first_arg,
     second_arg,
-    ):
+):
     """Usage functions for two argument scripts"""
 
     # Extract op from function name
     # op = sys._getframe().f_code.co_name.replace("_usage_function","")
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] %s %s' % (mig_prefix, op,
-            extension, first_arg, second_arg)
+                                                    extension, first_arg, second_arg)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -140,7 +141,7 @@ def vgrid_ten_arguments_usage_function(
     eighth_arg,
     ninth_arg,
     tenth_arg,
-    ):
+):
     """Usage functions for ten argument scripts"""
 
     # Extract op from function name
@@ -169,7 +170,7 @@ def vgrid_single_argument_function(
     command,
     first_arg,
     curl_flags='',
-    ):
+):
     """Core function for single argument scripts"""
     relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
@@ -196,7 +197,7 @@ def vgrid_single_argument_function(
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'submit_command')
     return s
 
@@ -209,7 +210,7 @@ def vgrid_single_argument_upload_function(
     content_type,
     first_arg,
     curl_flags='',
-    ):
+):
     """Core function for single argument upload scripts"""
     relative_url = '""'
     query = '""'
@@ -239,7 +240,7 @@ def vgrid_single_argument_upload_function(
         curl_cmd,
         curl_flags,
         curl_target,
-        )
+    )
     s += end_function(lang, 'submit_command')
     return s
 
@@ -252,7 +253,7 @@ def vgrid_two_arguments_function(
     first_arg,
     second_arg,
     curl_flags='',
-    ):
+):
     """Core function for two argument scripts"""
     relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
@@ -263,11 +264,10 @@ def vgrid_two_arguments_function(
     elif lang == 'python':
         post_data = "'%s' % default_args"
         urlenc_data = "['%s=' + %s, '%s=' + %s]" % (first_arg, first_arg,
-                                                   second_arg, second_arg)
+                                                    second_arg, second_arg)
     else:
         print 'Error: %s not supported!' % lang
         return ''
-
 
     s = ''
     s += begin_function(lang, 'submit_command', [first_arg, second_arg],
@@ -282,7 +282,7 @@ def vgrid_two_arguments_function(
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'submit_command')
     return s
 
@@ -303,7 +303,7 @@ def vgrid_ten_arguments_function(
     ninth_arg,
     tenth_arg,
     curl_flags='',
-    ):
+):
     """Core function for ten argument scripts"""
     relative_url = '"%s/%s.py"' % (get_xgi_bin(configuration), command)
     query = '""'
@@ -314,7 +314,7 @@ def vgrid_ten_arguments_function(
                        third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg)
         urlenc_data += '"%s=$%s" "%s=$%s" "%s=$%s" "%s=$%s" "%s=$%s")' % \
                        (sixth_arg, sixth_arg, seventh_arg, seventh_arg,
-                        eighth_arg, eighth_arg, ninth_arg, ninth_arg, 
+                        eighth_arg, eighth_arg, ninth_arg, ninth_arg,
                         tenth_arg, tenth_arg)
     elif lang == 'python':
         post_data = "'%s' % default_args"
@@ -324,12 +324,11 @@ def vgrid_ten_arguments_function(
         urlenc_data += "'%s=' + %s, '%s=' + %s, '%s=' + %s, '%s=' + %s, " % \
                        (fifth_arg, fifth_arg, sixth_arg, sixth_arg,
                         seventh_arg, seventh_arg, eighth_arg, eighth_arg)
-        urlenc_data += "'%s=' + %s, '%s=' + %s]" % (ninth_arg, ninth_arg, 
+        urlenc_data += "'%s=' + %s, '%s=' + %s]" % (ninth_arg, ninth_arg,
                                                     tenth_arg, tenth_arg)
     else:
         print 'Error: %s not supported!' % lang
         return ''
-
 
     s = ''
     s += begin_function(lang, 'submit_command', [first_arg, second_arg,
@@ -348,7 +347,7 @@ def vgrid_ten_arguments_function(
         query,
         curl_cmd,
         curl_flags,
-        )
+    )
     s += end_function(lang, 'submit_command')
     return s
 
@@ -493,7 +492,7 @@ def generate_single_argument(
     first_arg,
     scripts_languages,
     dest_dir='.',
-    ):
+):
     """Generator for single argument scripts"""
 
     # Extract op from function name
@@ -505,7 +504,7 @@ def generate_single_argument(
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -513,7 +512,7 @@ def generate_single_argument(
         script += version_function(lang)
 
         script += vgrid_single_argument_usage_function(lang, extension,
-                op, first_arg)
+                                                       op, first_arg)
         script += check_var_function(lang)
         script += read_conf_function(lang)
         script += vgrid_single_argument_function(configuration, lang, curl_cmd,
@@ -532,7 +531,7 @@ def generate_single_argument_upload(
     first_arg,
     scripts_languages,
     dest_dir='.',
-    ):
+):
     """Generator for single argument upload scripts"""
 
     # Extract op from function name
@@ -544,7 +543,7 @@ def generate_single_argument_upload(
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -552,18 +551,18 @@ def generate_single_argument_upload(
         script += version_function(lang)
 
         script += vgrid_single_argument_usage_function(lang, extension,
-                op, first_arg)
+                                                       op, first_arg)
         script += check_var_function(lang)
         script += read_conf_function(lang)
         script += vgrid_single_argument_upload_function(
-            configuration, 
+            configuration,
             lang,
             curl_cmd,
             op,
             content_type,
             first_arg,
             curl_flags='',
-            )
+        )
         script += vgrid_single_argument_main(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -578,7 +577,7 @@ def generate_two_arguments(
     second_arg,
     scripts_languages,
     dest_dir='.',
-    ):
+):
     """Generator for two argument scripts"""
 
     # Extract op from function name
@@ -590,7 +589,7 @@ def generate_two_arguments(
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -598,18 +597,18 @@ def generate_two_arguments(
         script += version_function(lang)
 
         script += vgrid_two_arguments_usage_function(lang, extension,
-                op, first_arg, second_arg)
+                                                     op, first_arg, second_arg)
         script += check_var_function(lang)
         script += read_conf_function(lang)
         script += vgrid_two_arguments_function(
-            configuration, 
+            configuration,
             lang,
             curl_cmd,
             op,
             first_arg,
             second_arg,
             curl_flags='',
-            )
+        )
         script += vgrid_two_arguments_main(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -632,7 +631,7 @@ def generate_ten_arguments(
     tenth_arg,
     scripts_languages,
     dest_dir='.',
-    ):
+):
     """Generator for seven argument scripts"""
 
     # Extract op from function name
@@ -644,7 +643,7 @@ def generate_ten_arguments(
 
     for (lang, interpreter, extension) in scripts_languages:
         verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                lang))
+                                                               lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
@@ -657,7 +656,7 @@ def generate_ten_arguments(
         script += check_var_function(lang)
         script += read_conf_function(lang)
         script += vgrid_ten_arguments_function(
-            configuration, 
+            configuration,
             lang,
             curl_cmd,
             op,
@@ -672,7 +671,7 @@ def generate_ten_arguments(
             ninth_arg,
             tenth_arg,
             curl_flags='',
-            )
+        )
         script += vgrid_ten_arguments_main(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
@@ -697,9 +696,9 @@ script_ops_ten_args = []
 # VGrid functions
 
 script_ops_ten_args.append(['addvgridtrigger', 'rule_id', 'vgrid_name',
-                              'path', 'match_dirs', 'match_recursive', 
-                              'changes', 'action', 'arguments',
-                              'rate_limit', 'settle_time'])
+                            'path', 'match_dirs', 'match_recursive',
+                            'changes', 'action', 'arguments',
+                            'rate_limit', 'settle_time'])
 
 script_ops_two_args = []
 
@@ -719,51 +718,52 @@ script_ops_two_args.append(['rmvgridtrigger', 'rule_id', 'vgrid_name'])
 # Res functions
 
 script_ops_two_args.append(['addresowner', 'unique_resource_name',
-                           'cert_id'])
+                            'cert_id'])
 script_ops_two_args.append(['rmresowner', 'unique_resource_name',
-                           'cert_id'])
+                            'cert_id'])
 
 script_ops_two_args.append(['startexe', 'unique_resource_name',
-                           'exe_name'])
+                            'exe_name'])
 script_ops_two_args.append(['statusexe', 'unique_resource_name',
-                           'exe_name'])
+                            'exe_name'])
 script_ops_two_args.append(['stopexe', 'unique_resource_name',
-                           'exe_name'])
+                            'exe_name'])
 script_ops_two_args.append(['restartexe', 'unique_resource_name',
-                           'exe_name'])
+                            'exe_name'])
 script_ops_two_args.append(['cleanexe', 'unique_resource_name', 'exe_name'])
 
 script_ops_two_args.append(['startallexes', 'unique_resource_name',
-                           'all'])
+                            'all'])
 script_ops_two_args.append(['statusallexes', 'unique_resource_name',
-                           'all'])
+                            'all'])
 script_ops_two_args.append(['stopallexes', 'unique_resource_name', 'all'
-                           ])
+                            ])
 script_ops_two_args.append(['restartallexes', 'unique_resource_name',
-                           'all'])
+                            'all'])
 script_ops_two_args.append(['cleanallexes', 'unique_resource_name',
-                           'all'])
+                            'all'])
 
 script_ops_two_args.append(['startstore', 'unique_resource_name',
-                           'store_name'])
+                            'store_name'])
 script_ops_two_args.append(['statusstore', 'unique_resource_name',
-                           'store_name'])
+                            'store_name'])
 script_ops_two_args.append(['stopstore', 'unique_resource_name',
-                           'store_name'])
+                            'store_name'])
 script_ops_two_args.append(['restartstore', 'unique_resource_name',
-                           'store_name'])
-script_ops_two_args.append(['cleanstore', 'unique_resource_name', 'store_name'])
+                            'store_name'])
+script_ops_two_args.append(
+    ['cleanstore', 'unique_resource_name', 'store_name'])
 
 script_ops_two_args.append(['startallstores', 'unique_resource_name',
-                           'all'])
+                            'all'])
 script_ops_two_args.append(['statusallstores', 'unique_resource_name',
-                           'all'])
+                            'all'])
 script_ops_two_args.append(['stopallstores', 'unique_resource_name', 'all'
-                           ])
+                            ])
 script_ops_two_args.append(['restartallstores', 'unique_resource_name',
-                           'all'])
+                            'all'])
 script_ops_two_args.append(['cleanallstores', 'unique_resource_name',
-                           'all'])
+                            'all'])
 
 script_ops_single_arg = []
 
@@ -793,11 +793,11 @@ script_ops_single_arg.append(['cleanfe', 'unique_resource_name'])
 
 script_ops_single_upload_arg = []
 script_ops_single_upload_arg.append(['submitresconf',
-                                    'text/resourceconf',
-                                    'configuration_file'])
+                                     'text/resourceconf',
+                                     'configuration_file'])
 script_ops_single_upload_arg.append(['submitnewre',
-                                    'text/runtimeenvconf',
-                                    'configuration_file'])
+                                     'text/runtimeenvconf',
+                                     'configuration_file'])
 
 # Script prefix for all user scripts
 
@@ -872,7 +872,7 @@ if __name__ == '__main__':
         # Add new languages here
 
         languages = [(sh_lang, sh_cmd, sh_ext), (python_lang,
-                     python_cmd, python_ext)]
+                                                 python_cmd, python_ext)]
         for (lang, cmd, ext) in languages:
             print 'Generating %s scripts' % lang
     else:

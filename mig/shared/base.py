@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - shared base helper functions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,12 +32,13 @@ import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from shared.defaults import sandbox_names, _user_invisible_files, \
-     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order
+    _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order
 
 _id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
 _key_val_sep = '='
 _remap_fields = ['CN', 'O', 'OU']
 cert_field_map = dict(cert_field_order)
+
 
 def client_id_dir(client_id):
     """Map client ID to a valid directory name:
@@ -55,6 +56,7 @@ def client_id_dir(client_id):
     client_dir = _dir_sep.join(dir_parts)
     return client_dir
 
+
 def client_dir_id(client_dir):
     """Map client directory name to valid client ID:
     client_dir is a distinguished name on the form +X=ab+Y=cdef_ghi+Z=klmn...
@@ -71,12 +73,14 @@ def client_dir_id(client_dir):
     client_id = _id_sep.join(id_parts)
     return client_id
 
+
 def client_alias(client_id):
     """Map client ID to a version containing only simple ASCII characters.
     This is for e.g. commandline friendly use and it is a one-to-one mapping.
     """
     # sftp and friends choke on potential '=' padding - replace by underscore
     return base64.urlsafe_b64encode(client_id).replace('=', '_')
+
 
 def fill_user(target):
     """Fill target user dictionary with all expected fields"""
@@ -151,10 +155,12 @@ def old_id_format(client_id):
     except:
         return client_id
 
+
 def sandbox_resource(unique_resource_name):
     """Returns boolean indicating if the resource is a sandbox"""
     fqdn = unique_resource_name.rsplit('.', 1)[0]
     return fqdn in sandbox_names
+
 
 def invisible_file(filename):
     """Returns boolean indicating if the file with filename is among restricted
@@ -163,6 +169,7 @@ def invisible_file(filename):
     Provided filename is expected to be without directory prefix.
     """
     return filename in _user_invisible_files
+
 
 def invisible_dir(dir_path):
     """Returns boolean indicating if the directory with dir_path is among
@@ -175,6 +182,7 @@ def invisible_dir(dir_path):
         if dirname in _user_invisible_dirs:
             return True
     return False
+
 
 def invisible_path(path, allow_vgrid_scripts=False):
     """Returns boolean indicating if the file or directory with path is among
@@ -205,6 +213,7 @@ def invisible_path(path, allow_vgrid_scripts=False):
         return True
     return False
 
+
 def requested_page(environ=None, fallback='dashboard.py'):
     """Lookup requested page from environ or os.environ if not provided.
     Return fallback if no page was found in environ.
@@ -212,9 +221,10 @@ def requested_page(environ=None, fallback='dashboard.py'):
     if not environ:
         environ = os.environ
     page_path = environ.get('SCRIPT_URL', False) or \
-                environ.get('PATH_INFO', False) or \
-                environ.get('REQUEST_URI', fallback).split('?', 1)[0]
+        environ.get('PATH_INFO', False) or \
+        environ.get('REQUEST_URI', fallback).split('?', 1)[0]
     return page_path
+
 
 def force_utf8(val):
     """Internal helper to encode unicode strings to utf8 version"""
@@ -225,6 +235,7 @@ def force_utf8(val):
         return val
     return val.encode("utf8")
 
+
 def force_unicode(val):
     """Internal helper to decode unicode strings from utf8 version"""
     # We run into all kind of nasty encoding problems if we mix
@@ -234,12 +245,13 @@ def force_unicode(val):
         return val.decode("utf8")
     return val
 
+
 def force_utf8_rec(input_obj):
     """Recursive object conversion from unicode to utf8: useful to convert e.g.
     dictionaries with nested unicode strings to a pure utf8 version.
     """
     if isinstance(input_obj, dict):
-        return {force_utf8_rec(i): force_utf8_rec(j) for (i, j) in \
+        return {force_utf8_rec(i): force_utf8_rec(j) for (i, j) in
                 input_obj.items()}
     elif isinstance(input_obj, list):
         return [force_utf8_rec(i) for i in input_obj]
@@ -247,6 +259,19 @@ def force_utf8_rec(input_obj):
         return force_utf8(input_obj)
     else:
         return input_obj
+
+
+def get_xgi_bin(configuration, force_legacy=False):
+    """Lookup the preferred Xgi-bin for server URLs. If WSGI is enabled in the
+    configuration wsgi-bin is used. Otherwise the legacy cgi-bin is used.
+    The optional force_legacy argument can be used to force legacy cgi-bin use
+    e.g. for scripts that are not supported in WSGI.
+    """
+
+    if not force_legacy and configuration.site_enable_wsgi:
+        return 'wsgi-bin'
+    return 'cgi-bin'
+
 
 def generate_https_urls(configuration, url_template, helper_dict):
     """Generate a string with one or more URLS for enabled https login
@@ -313,22 +338,22 @@ if __name__ == '__main__':
     test_paths = ['simple.txt', 'somedir/somefile.txt']
     sample_file = _user_invisible_files[0]
     sample_dir = _user_invisible_dirs[0]
-    illegal = ["%s%s%s" % (prefix, sample_dir, suffix) for (prefix, suffix) in \
+    illegal = ["%s%s%s" % (prefix, sample_dir, suffix) for (prefix, suffix) in
                [('', ''), ('./', ''), ('/', ''), ('somedir/', ''),
                 ('/somedir/', ''), ('somedir/sub/', ''), ('/somedir/sub/', ''),
                 ('', '/sub'), ('', '/sub/sample.txt'),
                 ('somedir/', '/sample.txt'), ('/somedir/', '/sample.txt'),
                 ('/somedir/sub/', '/sample.txt')]] + \
-                ["%s%s" % (prefix, sample_file) for prefix, _ in \
-               [('', ''), ('./', ''), ('/', ''), ('somedir/', ''),
-                ('/somedir/', ''), ('somedir/sub/', ''), ('/somedir/sub/', ''),
-                ]]
-    legal = ["%s%s%s" % (prefix, sample_file, suffix) for (prefix, suffix) in \
-               [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
-                ('', 'suffix/somedir'), ('prefix', 'suffix')]] +\
-                ["%s%s%s" % (prefix, sample_dir, suffix) for (prefix, suffix) in \
-               [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
-                ('', 'suffix/somedir'), ('prefix', 'suffix')]]
+        ["%s%s" % (prefix, sample_file) for prefix, _ in
+         [('', ''), ('./', ''), ('/', ''), ('somedir/', ''),
+          ('/somedir/', ''), ('somedir/sub/', ''), ('/somedir/sub/', ''),
+          ]]
+    legal = ["%s%s%s" % (prefix, sample_file, suffix) for (prefix, suffix) in
+             [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
+              ('', 'suffix/somedir'), ('prefix', 'suffix')]] +\
+        ["%s%s%s" % (prefix, sample_dir, suffix) for (prefix, suffix) in
+         [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
+          ('', 'suffix/somedir'), ('prefix', 'suffix')]]
     legal += ['sample.txt', 'somedir/sample.txt', '/somedir/sample.txt']
     print "orig id %s, dir %s, id %s (match %s)" % \
           (orig_id, client_dir, client_id, orig_id == client_id)
@@ -339,4 +364,3 @@ if __name__ == '__main__':
     print "make sure these are not invisible:"
     for path in legal:
         print "  %s: %s" % (path, not invisible_path(path))
-        
