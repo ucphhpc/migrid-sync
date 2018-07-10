@@ -35,12 +35,13 @@ or with a minor patch (see https://github.com/mar10/wsgidav/issues/29) to allow
 per-user subdir chrooting inside root_dir.
 """
 
+import binascii
 import os
 import signal
 import sys
 import threading
 import time
-import binascii
+import traceback
 
 try:
     from wsgidav.wsgidav_app import DEFAULT_CONFIG, WsgiDAVApp
@@ -183,7 +184,7 @@ class HardenedPyOpenSSLAdapter(pyOpenSSLAdapter):
                                                 OpenSSL,
                                                 self.private_key,
                                                 self.certificate,
-                                                dhparams)
+                                                dhparamsfile=dhparams)
 
     def wrap(self, sock):
         """Wrap and return the given socket.
@@ -1048,3 +1049,4 @@ unless it is available in mig/server/MiGserver.conf
         print info_msg
     except Exception, exc:
         logger.error("exiting on unexpected exception: %s" % exc)
+        logger.info(traceback.format_exc())
