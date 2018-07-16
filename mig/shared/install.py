@@ -256,8 +256,12 @@ def generate_confs(
                  sid_port]
     fqdn_list = [mig_cert_fqdn, ext_cert_fqdn, mig_oid_fqdn, ext_oid_fqdn,
                  sid_fqdn]
-    same_port = (len(port_list) != len(dict(zip(port_list, port_list)).keys()))
-    same_fqdn = (len(fqdn_list) != len(dict(zip(fqdn_list, fqdn_list)).keys()))
+    listen_list = zip(fqdn_list, port_list)
+    enabled_list = [(i, j) for (i, j) in listen_list if i]
+    enabled_ports = [j for (i, j) in enabled_list]
+    enabled_fqdns = [i for (i, j) in enabled_list]
+    same_port = (len(enabled_ports) != len(list(set(enabled_ports))))
+    same_fqdn = (len(enabled_fqdns) != len(list(set(enabled_fqdns))))
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
     if not same_port:
         user_dict['__IF_SEPARATE_PORTS__'] = ''

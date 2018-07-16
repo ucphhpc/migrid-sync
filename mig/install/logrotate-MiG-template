@@ -13,6 +13,7 @@ __MIG_STATE__/log/*.log __MIG_STATE__/log/*.out {
                 /etc/init.d/migrid reload ; \
            elif [ -p __MIG_CODE__/server/server.stdin ]; then \
                echo RELOADCONFIG >> __MIG_CODE__/server/server.stdin; \
-	   fi;
+           fi; \
+           service __APACHE_DAEMON__ reload;
 	endscript
 }
