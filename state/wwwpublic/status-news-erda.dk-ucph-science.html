@@ -106,17 +106,17 @@ We've experienced problems with the backend storage lately - access may be limit
 <p class="icon_slack iconspace leftpad icontext">
 There's a problem with the backend storage - we're investigating.
 </p>
-<p class="icon_slack iconspace leftpad icontext">
-All services except Seafile are fully operational.
-</p>
 <p class="icon_offline iconspace leftpad icontext">
 All systems are down for maintenance - they will be back soon.
 </p>
-
 <p class="icon_offline iconspace leftpad icontext">
 There's a problem with access to the backend storage - we're investigating.
 </p>
+<p class="icon_slack iconspace leftpad icontext">
+All services except Jupyter are fully operational.
+</p>
 -->
+
 <p>
 Please use the link at the bottom to contact support in case you have
 questions or encounter any problems.
@@ -124,6 +124,42 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage">2018/07/18: Jupyter back online</h4>
+<p>
+The Jupyter upgrades on Friday turned out to be more work than expected
+and required some more work this week. It is complete now and the
+service is back online.
+</p>
+<h4 class="staticpage">2018/07/12: Jupyter maintenance and downtime</h4>
+<p>
+The Jupyter service will be partially or completely unavailable for the
+rest of the day due to maintenance work and upgrades.<br/>
+</p>
+<h4 class="staticpage">2018/07/06: 2-Factor Authentication Support</h4>
+<p>
+In line with the recent IO-service security enhancements we've added
+support for 2-factor authentication (2FA) in our OpenID web logins. This
+means that users can now add an extra layer of security and make abuse
+much harder - even if somebody should intercept their UCPH login and
+password (or their dedicated ERDA OpenID password in case of external
+users). In short you as a security-minded user install an app on your
+mobile device (smart-phone or tablet) and scan a personal QR security
+code, which allows the app to continuously provide you with one-time
+passcodes for use along with your usual login. This assures that one can
+<em>only</em> get access by both knowing the password and possessing the
+device. Further details about the setup and use of 2FA is available
+under ERDA Setttings -> Web Access.<br/>
+We particularly recommend enabling 2FA if you use ERDA for any data
+categorized as confidentiality level F2 in the official UCPH data
+classification available at the 
+<a href="https://intranet.ku.dk/employeeguide/safety-and-emergency/information-security/Pages/default.aspx">
+UCPH intranet</a> (requires login).
+It should be emphasized that data confidentiality level F1 is <em>not</em>
+allowed on ERDA and should instead use an even safer and more closely
+monitored solution like e.g. <a href="http://sif-www.erda.dk">SIF</a>.<br/>
+We are currently investigating the possibilities for similar 2FA support
+on the IO-services.
+</p> 
 <h4 class="staticpage">2018/06/25: Password tightening on WebDAVS/SFTP/FTPS</h4>
 <p>
 Due to a rise in the number of automated password guessing attempts
@@ -133,8 +169,8 @@ the standard UCPH password requirements of eight characters from at least
 three character classes but also a number of additional checks for
 dictionary words and simple patterns.<br/>
 The rules were immediately enforced when setting or changing password
-and will also be enforced for existing passwords after the planned
-service restart this afternoon.<br/>
+and will also be enforced for existing passwords next time we restart
+the services.<br/>
 In case you can no longer access ERDA through WebDAVS/SFTP/FTPS, please
 go to your ERDA Settings page and try to set the password again for the
 particular service. If it is refused you need to come up with a new
@@ -362,6 +398,9 @@ Alle systemer er i øjeblikket nede p.g.a. planlagt vedligehold.
 <p class="icon_offline iconspace leftpad icontext">
 Der er i øjeblikket problemer med adgang til backend-lageret - vi undersøger sagen.
 </p>
+<p class="icon_slack iconspace leftpad icontext">
+Alle services undtagen Jupyter kører planmæssigt.
+</p>
 -->
 
 <p>
@@ -371,16 +410,52 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage">18/07-2018: Jupyter vedligehold og nedetid</h4>
+<p>
+Jupyter-opdateringerne i fredags viste sig mere omfattende end ventet og
+krævede yderligere indsats i denne uge. Det er nu overstået og servicen er
+online igen.
+</p>
+<h4 class="staticpage">12/07-2018: Jupyter vedligehold og nedetid</h4>
+<p>
+Jupyter-servicen vil være helt eller delvis utilgængelig resten af dagen
+pga vedligehold og opgradering.
+</p>
+<h4 class="staticpage">06/07-2018: Understøttelse af 2-faktor autentifikation</h4>
+<p>
+Som opfølgning på de nylige sikkerhedstiltag ift IO-services har vi
+tilføjet 2-faktor autentifikation (2FA) på vores OpenID web logins. I
+praksis betyder det at brugere nu kan tilføje et ekstra sikkerhedslag,
+hvorved kontomisbrug bliver markant sværere - selv hvis nogen skulle
+opsnappe deres KU login og kode (eller deres dedikerede ERDA login når
+vi taler eksterne brugere). Kort fortalt installerer man som
+sikkerhedsbevidst bruger en app på sin mobile enhed (smart-phone eller
+tablet) og skanner en personlig QR sikkerhedskode deri, for at få den
+til kontinuerligt at levere engangskoder til brug sammen med sit almindelige
+login. Derved sikres at man <em>kun</em> kan få adgang, hvis man både
+kender kode og har adgang til enheden. Yderligere detaljer om opsætning
+og brug findes under dine ERDA Settings -> Web Access.<br/>
+Vi anbefaler kraftigt at slå 2FA til, hvis man benytter ERDA til at
+opbevare data kategoriseret som fortrolighedsniveau F2 i den officielle
+KU dataklassifikation fra 
+<a href="https://intranet.ku.dk/medarbejderguide/sikkerhed-og-beredskab/IS/Sider/default.aspx">
+KUnet</a> (kræver login). Ved samme lejlighed må vi understrege at data
+kategoriseret som fortrolighedsniveau F1 <em>ikke</em> er tilladt at
+opbevare på ERDA. Brug i stedet en endnu sikrere og tættere monitoreret
+løsning som f.eks. <a href="http://sif-www.erda.dk">SIF</a> dertil.<br/>
+Vi undersøger i øjeblikket muligheden for ligeledes at tilbyde 2FA på vores
+IO-services. 
+</p>
 <h4 class="staticpage">25/06-2018: Strengere password-krav på WebDAVS/SFTP/FTPS</h4>
 <p>
 I lyset af det stigende antal angreb som forsøger at knække passwords til
-vores WebDAVS/SFTP/FTSP-services, har vi yderligere strammet kravene til
+vores WebDAVS/SFTP/FTPS-services, har vi yderligere strammet kravene til
 styrken af passwords. Udover de almindelige KU-krav om otte tegn fra
 mindst tre tegn-klasser har vi således indført hindring af passwords med
 almindelige ord eller simple fortløbende tegnsekvenser og møsntre.<br/>
 Stramningerne trådte i kraft med det samme for password-opsætning og
--skift. De vil desuden blive håndhævet for eksisterende passwords efter
-den planlagte service-genstart i eftermiddag.<br/>
+-skift. De vil desuden blive håndhævet for eksisterende passwords når vi
+næste gang genstarter services.<br/>
 Såfremt du ikke længere kan logge på de pågældende services kan du gå
 ind på din ERDA Settings side og prøve at sætte kodeordet igen. Hvis det
 afvises er du nødt til at finde på et nyt og stærkere kodeord.
