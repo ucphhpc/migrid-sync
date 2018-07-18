@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
@@ -50,7 +51,7 @@ import shutil
 import requests
 import shared.returnvalues as returnvalues
 from shared.conf import get_configuration_object
-from binascii import hexlify
+from shared.pwhash import generate_random_ascii
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert
 from shared.defaults import session_id_bytes
@@ -128,7 +129,7 @@ def prune_jupyter_mounts(jupyter_mounts, configuration):
     latests one
     :param jupyter_mounts: list of jupyter mount pickle state paths
     :param configuration the MiG configuration object
-    :return: a list containing only
+    :return: a list containing only the newest generated mount
     """
     latest = jupyter_mounts[0]
     for mount_file in jupyter_mounts:
@@ -138,7 +139,6 @@ def prune_jupyter_mounts(jupyter_mounts, configuration):
                 < int(jupyter_dict['CREATED_TIMESTAMP']):
             remove_jupyter_mount(latest, configuration)
             latest = mount_file
-
     return [latest]
 
 
@@ -154,7 +154,7 @@ def jupyter_host(configuration, output_objects, user):
     """
     configuration.logger.info("User: %s finished, redirecting to the jupyter host" % user)
     status = returnvalues.OK
-    home = ''.join([configuration.jupyter_base_url, '/home'])
+    home = configuration.jupyter_base_url + '/home'
     headers = [('Location', home), ('Remote-User', user)]
     output_objects.append({'object_type': 'start', 'headers': headers})
     return (output_objects, status)
@@ -279,9 +279,10 @@ def main(client_id, user_arguments_dict):
                             client_id, u_dir, old_perm))
             os.chmod(u_dir, 0755)
 
-    url_base = configuration.jupyter_url
-    url_auth = ''.join([url_base, configuration.jupyter_base_url, '/hub/home'])
-    url_mount = ''.join([url_base, configuration.jupyter_base_url, '/hub/mount'])
+    url_jup = configuration.jupyter_url
+    url_base = configuration.jupyter_base_url
+    url_auth = url_jup + url_base + '/hub/home' 
+    url_mount = url_jup + url_base + '/hub/mount'
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.
@@ -315,23 +316,28 @@ def main(client_id, user_arguments_dict):
     if len(active_mounts) == 1:
         # Check whether the user should authenticate and pass mount information
         jupyter_dict = unpickle(active_mounts[0], logger)
-        mount_dict = mig_to_mount_adapt(jupyter_dict)
-        logger.debug("Existing keys %s", mount_dict)
-        auth_mount_header = {'Remote-User': remote_user, 'Mount': str(
-            mount_dict)}
+        if not jupyter_dict:
+            # Remove broken set and fall through to create new a set of mount keys
+            logger.error("Failed to unpickle %s removing it", active_mounts[0])
+            remove_jupyter_mount(active_mounts[0], configuration)
+        else:
+            mount_dict = mig_to_mount_adapt(jupyter_dict)
+            logger.debug("Existing keys %s", mount_dict)
+            auth_mount_header = {'Remote-User': remote_user, 'Mount': str(
+                mount_dict)}
 
-        session = requests.session()
-        # Authenticate
-        session.get(url_auth, headers=auth_mount_header)
-        # Provide the active homedrive mount information
-        session.post(url_mount, headers=auth_mount_header)
+            session = requests.session()
+            # Authenticate
+            session.get(url_auth, headers=auth_mount_header)
+            # Provide the active homedrive mount information
+            session.post(url_mount, headers=auth_mount_header)
 
-        # Redirect client to jupyterhub
-        return jupyter_host(configuration, output_objects, remote_user)
+            # Redirect client to jupyterhub
+            return jupyter_host(configuration, output_objects, remote_user)
 
     # Create a new keyset
     # Create login session id
-    sessionid = hexlify(open('/dev/urandom').read(session_id_bytes))
+    session_id = generate_random_ascii(2*session_id_bytes, charset='0123456789abcdef')
 
     # Generate private/public keys
     (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair()
@@ -350,7 +356,7 @@ def main(client_id, user_arguments_dict):
         auth_content.append('%s %s\n' % (restrictions, mount_public_key))
         # Write auth file
         write_file('\n'.join(auth_content),
-                   os.path.join(subsys_path, sessionid
+                   os.path.join(subsys_path, session_id
                                 + '.authorized_keys'), logger, umask=027)
 
     logger.debug("User: %s - Creating a new jupyter mount keyset - "
@@ -359,7 +365,7 @@ def main(client_id, user_arguments_dict):
 
     jupyter_dict = {
         'MOUNT_HOST': configuration.short_title,
-        'SESSIONID': sessionid,
+        'SESSIONID': session_id,
         'USER_CERT': client_id,
         # don't need fraction precision, also not all systems provide fraction
         # precision.
@@ -386,20 +392,20 @@ def main(client_id, user_arguments_dict):
 
     # Update pickle with the new valid key
     jupyter_mount_state_path = os.path.join(mnt_path,
-                                            sessionid + '.jupyter_mount')
+                                            session_id + '.jupyter_mount')
 
     pickle(jupyter_dict, jupyter_mount_state_path, logger)
 
     # Link jupyter pickle state file
     linkdest_new_jupyter_mount = os.path.join(mnt_path,
-                                              sessionid + '.jupyter_mount')
+                                              session_id + '.jupyter_mount')
 
     linkloc_new_jupyter_mount = os.path.join(link_home,
-                                             sessionid + '.jupyter_mount')
+                                             session_id + '.jupyter_mount')
     make_symlink(linkdest_new_jupyter_mount, linkloc_new_jupyter_mount, logger)
 
     # Link userhome
-    linkloc_user_home = os.path.join(link_home, sessionid)
+    linkloc_user_home = os.path.join(link_home, session_id)
     make_symlink(user_home_dir, linkloc_user_home, logger)
 
     return jupyter_host(configuration, output_objects, remote_user)
