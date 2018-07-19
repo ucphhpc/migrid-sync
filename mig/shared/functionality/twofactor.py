@@ -40,6 +40,7 @@ import re
 import sys
 import time
 import urllib
+import urlparse
 
 # Only needed for 2FA so ignore import error and only fail on use
 try:
@@ -87,12 +88,20 @@ def signature():
     return ['text', defaults]
 
 
+def query_args(environ):
+    """Helper to provide a very lax and dynamic signature based on the actual
+    query string from environ. Used to allow and pass any additional args to
+    the requested redirect URL without ever using them here.
+    """
+    env_args = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
+    return env_args
+
+
 def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False, op_title=False,
-                                  op_menu=client_id)
+    (configuration, logger, output_objects, op_name) = initialize_main_variables(
+        client_id, op_header=False, op_title=False, op_menu=client_id)
 
     # Extract raw data first
     if environ is None:
@@ -102,9 +111,12 @@ def main(client_id, user_arguments_dict, environ=None):
     user_addr = environ.get('REMOTE_ADDR', '')
     user_id = environ.get('REMOTE_USER', '')
 
+    # IMPORTANT: use all actual args as base and override with real signature
+    all_args = query_args(environ)
     defaults = signature()[1]
+    all_args.update(defaults)
     (validate_status, accepted) = validate_input(user_arguments_dict,
-                                                 defaults, output_objects,
+                                                 all_args, output_objects,
                                                  allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -114,7 +126,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # logger.debug("User: %s executing %s with redirect url %s" %
     #             (client_id, op_name, redirect_url))
-    #logger.debug("env: %s" % environ)
+    # logger.debug("env: %s" % environ)
 
     if not configuration.site_enable_twofactor:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -128,8 +140,20 @@ def main(client_id, user_arguments_dict, environ=None):
 
     client_dir = client_id_dir(client_id)
     if redirect_url:
+        # Build forward query string from any real non-local args
+        forward_args = {}
+        for (key, val) in accepted.items():
+            if key not in defaults.keys() and val != ['AllowMe']:
+                forward_args[key] = val
+        redirect_location = redirect_url
+        if forward_args:
+            redirect_location += '?%s' % urllib.urlencode(forward_args, True)
+        # Manual url decoding required for e.g. slashes
+        redirect_location = urllib.unquote(redirect_location)
         headers = [('Status', '302 Moved'),
-                   ('Location', urllib.unquote(redirect_url))]
+                   ('Location', redirect_location)]
+        logger.debug("redirect_url %s and args %s gave %s" %
+                     (redirect_url, forward_args, redirect_location))
     else:
         headers = []
     webaccess_dict = load_webaccess(client_id, configuration,
@@ -141,8 +165,6 @@ def main(client_id, user_arguments_dict, environ=None):
         webaccess_dict = dict([(i, j['Value']) for (i, j) in
                                webaccess_defaults(configuration).items()])
 
-    logger.debug("found request url %s and user id %s" % (request_url,
-                                                          user_id))
     # NOTE: webaccess_defaults field availability depends on configuration
     if user_id.startswith(configuration.user_mig_oid_provider) and \
             webaccess_dict.get('MIG_OID_TWOFACTOR', False):
@@ -185,7 +207,7 @@ def main(client_id, user_arguments_dict, environ=None):
                  'skipmenu': True})
             output_objects.append({'object_type': 'html_form', 'text':
                                    html_tmpl(configuration)})
-            #output_objects.append({'object_type': 'script_status'})
+            # output_objects.append({'object_type': 'script_status'})
             return (output_objects, status)
     else:
         logger.info("no 2FA requirement for %s on %s" % (client_id,
@@ -228,6 +250,6 @@ def main(client_id, user_arguments_dict, environ=None):
         output_objects.append({'object_type': 'text', 'text':
                                '%s done without a redirect URL - stop here' %
                                op_name})
-    logger.debug("return from %s for %s with headers: %s" %
-                 (op_name, client_id, headers))
+    # logger.debug("return from %s for %s with headers: %s" %
+    #             (op_name, client_id, headers))
     return (output_objects, status)
