@@ -1314,7 +1314,7 @@ div.openidlogin {
 }
 #twofactorbox {
     position: absolute;
-    width: 300px;
+    width: 260px;
     height: 260px;
     left: 50%;
     /* Footer has static position based on min-height: adjust */ 
@@ -1330,6 +1330,12 @@ div.openidlogin {
 #twofactorbox img.authlogo {
     width: 120px;
     height: 120px;
+}
+#content div.twofactorstatus {
+    position: absolute;
+    left: 50%;
+    top: 100px;
+    margin-left: -140px;
 }
 
 

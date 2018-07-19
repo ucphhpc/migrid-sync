@@ -84,7 +84,7 @@ def html_tmpl(configuration):
 def signature():
     """Signature of the main function"""
 
-    defaults = {'token': [None], 'redirect_url': ['/']}
+    defaults = {'token': [None], 'redirect_url': ['']}
     return ['text', defaults]
 
 
@@ -123,6 +123,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     token = accepted['token'][-1]
     redirect_url = accepted['redirect_url'][-1]
+    check_only = False
 
     # logger.debug("User: %s executing %s with redirect url %s" %
     #             (client_id, op_name, redirect_url))
@@ -166,7 +167,11 @@ def main(client_id, user_arguments_dict, environ=None):
                                webaccess_defaults(configuration).items()])
 
     # NOTE: webaccess_defaults field availability depends on configuration
-    if user_id.startswith(configuration.user_mig_oid_provider) and \
+    if not redirect_url and token:
+        # This is the 2FA setup check mode
+        check_only = True
+        require_twofactor = True
+    elif user_id.startswith(configuration.user_mig_oid_provider) and \
             webaccess_dict.get('MIG_OID_TWOFACTOR', False):
         require_twofactor = True
     elif user_id.startswith(configuration.user_ext_oid_provider) \
@@ -197,17 +202,22 @@ def main(client_id, user_arguments_dict, environ=None):
         if token and b32_secret and pyotp.TOTP(b32_secret).verify(token):
             logger.info('Accepted valid auth token from %s' % client_id)
         else:
-            if token:
-                logger.info('Invalid token for %s (%s vs %s) - try again' %
-                            (client_id, token, pyotp.TOTP(b32_secret).now()))
-                # TODO: proper rate limit source / user here?
-                time.sleep(3)
             output_objects.append(
                 {'object_type': 'title', 'text': '2-Factor Authentication',
                  'skipmenu': True})
             output_objects.append({'object_type': 'html_form', 'text':
                                    html_tmpl(configuration)})
-            # output_objects.append({'object_type': 'script_status'})
+            if token:
+                logger.warning('Invalid token for %s (%s vs %s) - try again' %
+                               (client_id, token,
+                                pyotp.TOTP(b32_secret).now()))
+                output_objects.append({'object_type': 'html_form', 'text': '''
+<div class="twofactorstatus">
+<span class="error leftpad errortext">
+Incorrect token provided - please try again
+</span></div>'''})
+                # TODO: proper rate limit source / user here?
+                time.sleep(3)
             return (output_objects, status)
     else:
         logger.info("no 2FA requirement for %s on %s" % (client_id,
@@ -215,31 +225,36 @@ def main(client_id, user_arguments_dict, environ=None):
         session_key = 'DISABLED'
 
     # If we get here we either got correct token or verified 2FA to be disabled
-    cookie = Cookie.SimpleCookie()
-    # create a secure session cookie
-    session_key = os.urandom(twofactor_cookie_bytes)
-    session_key = re.sub(r'[=+/]+', '', base64.b64encode(session_key))
-    cookie['2FA_Auth'] = session_key
-    cookie['2FA_Auth']['path'] = '/'
-    cookie['2FA_Auth']['expires'] = twofactor_cookie_ttl
-    cookie['2FA_Auth']['secure'] = True
-    cookie['2FA_Auth']['httponly'] = True
 
-    # Create the state file to inform apache (rewrite) about auth
-    session_path = os.path.join(configuration.twofactor_home, session_key)
-    # We save user info just to be able to monitor and expire active sessions
-    session_data = '''%s
+    if check_only:
+        logger.info("skip session init in setup check for %s" % client_id)
+    else:
+        cookie = Cookie.SimpleCookie()
+        # create a secure session cookie
+        session_key = os.urandom(twofactor_cookie_bytes)
+        session_key = re.sub(r'[=+/]+', '', base64.b64encode(session_key))
+        cookie['2FA_Auth'] = session_key
+        cookie['2FA_Auth']['path'] = '/'
+        cookie['2FA_Auth']['expires'] = twofactor_cookie_ttl
+        cookie['2FA_Auth']['secure'] = True
+        cookie['2FA_Auth']['httponly'] = True
+
+        # Create the state file to inform apache (rewrite) about auth
+        session_path = os.path.join(configuration.twofactor_home, session_key)
+        # We save user info just to be able to monitor and expire active sessions
+        session_data = '''%s
 %s
 %s
 ''' % (user_agent, user_addr, client_id)
-    if not write_file(session_data, session_path, configuration.logger):
-        logger.error("could not write session for %s to %s" %
-                     (client_id, session_path))
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             "Internal error: could not create 2FA session!"})
-        return (output_objects, returnvalues.ERROR)
-    logger.info("saved session for %s in %s" % (client_id, session_path))
+        if not write_file(session_data, session_path, configuration.logger):
+            logger.error("could not write session for %s to %s" %
+                         (client_id, session_path))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "Internal error: could not create 2FA session!"})
+            return (output_objects, returnvalues.ERROR)
+        logger.info("saved session for %s in %s" % (client_id, session_path))
+
     if redirect_url:
         headers.append(tuple(str(cookie).split(': ', 1)))
         output_objects.append({'object_type': 'start', 'headers': headers})
@@ -247,9 +262,18 @@ def main(client_id, user_arguments_dict, environ=None):
     else:
         output_objects.append(
             {'object_type': 'title', 'text': '2FA', 'skipmenu': True})
-        output_objects.append({'object_type': 'text', 'text':
-                               '%s done without a redirect URL - stop here' %
-                               op_name})
+        output_objects.append({'object_type': 'html_form', 'text': '''
+<!-- Keep similar spacing -->
+<div class="twofactorstatus">
+<p class="centertext">
+<span class="ok leftpad">
+Correct token provided!
+</span>
+</p>
+<p>
+<a href="">Test again</a> or close the tab/window and proceed.
+</p>
+</div>'''})
     # logger.debug("return from %s for %s with headers: %s" %
     #             (op_name, client_id, headers))
     return (output_objects, status)

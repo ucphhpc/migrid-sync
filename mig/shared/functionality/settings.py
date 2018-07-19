@@ -39,7 +39,8 @@ except ImportError:
 
 import shared.returnvalues as returnvalues
 from shared.auth import load_twofactor_key, reset_twofactor_key
-from shared.base import client_alias, client_id_dir, extract_field, force_utf8
+from shared.base import client_alias, client_id_dir, extract_field, \
+    force_utf8, get_xgi_bin
 from shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
@@ -1821,13 +1822,21 @@ code from your authenticator app:<br/>
 </script>
 </td></tr>
 <tr><td>
+You should <a href="%(check_url)s" target="_blank">check</a> that your 2-factor
+client setup is really working before enabling it for login below.
+</td></tr>
+<tr><td>
+<br/>
+</td></tr>
+<tr><td>
 <span class="warningtext">Please immediately contact the %(site)s admins to
 reset your secret 2-factor authentication key if you ever loose a device with
 it installed or otherwise suspect someone may have gained access to it.
 </span>
 </td></tr>
 '''
-            fill_helpers.update({'otp_uri': otp_uri})
+        check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
+        fill_helpers.update({'otp_uri': otp_uri, 'check_url': check_url})
 
         html += '''
         <input type="hidden" name="topic" value="webaccess" />
