@@ -56,7 +56,7 @@ logins through a personal auth token generator on your phone or tablet.
             configuration.user_ext_oid_title,
             'Description': '''Add an extra layer of security to your %s OpenID
 logins through a personal auth token generator on your phone or tablet.
-''' % configuration.user_mig_oid_title,
+''' % configuration.user_ext_oid_title,
             'Example': 'True',
             'Type': 'boolean',
             'Value': False,

@@ -34,14 +34,14 @@ from shared.defaults import default_pager_entries, trash_linkname, csrf_field
 # Define all possible menu items
 menu_items = {}
 menu_items['dashboard'] = {'class': 'dashboard', 'url': 'dashboard.py',
-                           'title': 'Dashboard', 
+                           'title': 'Dashboard',
                            'hover': 'This is the overview page to start with'}
 menu_items['submitjob'] = {'class': 'submitjob', 'url': 'submitjob.py',
                            'title': 'Submit Job',
                            'hover': 'Submit a job for execution on a resource'}
 menu_items['files'] = {'class': 'files', 'url': 'fileman.py', 'title': 'Files',
                        'hover': 'manage files and folders in your home directory'}
-menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Jobs', 
+menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Jobs',
                       'hover': 'Manage and monitor your grid jobs'}
 menu_items['vgrids'] = {'class': 'vgrids', 'url': 'vgridman.py',
                         'title': 'VGrids',
@@ -53,25 +53,25 @@ menu_items['downloads'] = {'class': 'downloads', 'url': 'downloads.py',
                            'title': 'Downloads',
                            'hover': 'Download scripts to work directly from your local machine'}
 menu_items['runtimeenvs'] = {'class': 'runtimeenvs', 'url': 'redb.py',
-                             'title': 'Runtime Envs', 
+                             'title': 'Runtime Envs',
                              'hover': 'Runtime environments: software which can be made available'}
 menu_items['archives'] = {'class': 'archives', 'url': 'freezedb.py',
-                          'title': 'Archives', 
+                          'title': 'Archives',
                           'hover': 'Frozen archives: write-once file archives'}
 menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
                           'title': 'Settings',
                           'hover': 'Your personal settings for these pages'}
-menu_items['crontab'] = {'class': 'crontab', 'url':'crontab.py',
+menu_items['crontab'] = {'class': 'crontab', 'url': 'crontab.py',
                          'title': 'Schedule Tasks',
                          'hover': 'Your personal task scheduler'}
-menu_items['seafile'] = {'class': 'seafile', 'url':'/seafile/',
+menu_items['seafile'] = {'class': 'seafile', 'url': '/seafile/',
                          'title': 'Seafile',
                          'hover': 'Access the associated Seafile service'}
-menu_items['jupyter'] = {'class': 'jupyter', 'url':'jupyter.py',
+menu_items['jupyter'] = {'class': 'jupyter', 'url': 'jupyter.py',
                          'title': 'Jupyter',
                          'hover': 'Access the associated Jupyter service'}
 
-menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell', 
+menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell',
                        'hover': 'A command line interface, based on javascript and xmlrpc'}
 menu_items['wshell'] = {'class': 'shell',
                         'url': 'javascript:\
@@ -88,41 +88,42 @@ menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
                       'title': 'Docs',
                       'hover': 'Some built-in documentation for reference'}
 menu_items['people'] = {'class': 'people', 'url': 'people.py',
-                        'title': 'People', 
+                        'title': 'People',
                         'hover': 'View and communicate with other users'}
 menu_items['migadmin'] = {'class': 'migadmin', 'url': 'migadmin.py',
-                          'title': 'Server Admin', 
+                          'title': 'Server Admin',
                           'hover': 'Administrate this server'}
 menu_items['vmachines'] = {'class': 'vmachines', 'url': 'vmachines.py',
-                           'title': 'Virtual Machines', 
+                           'title': 'Virtual Machines',
                            'hover': 'Manage Virtual Machines'}
 menu_items['vmrequest'] = {'class': 'vmrequest', 'url': 'vmrequest.py',
-                           'title': 'Request Virtual Machine', 
+                           'title': 'Request Virtual Machine',
                            'hover': 'Request Virtual Machine'}
 menu_items['vmconnect'] = {'class': 'vmconnect', 'url': 'vmconnect.py',
-                           'title': 'Connect to Virtual Machine', 
+                           'title': 'Connect to Virtual Machine',
                            'hover': 'Connect to Virtual Machine'}
 menu_items['logout'] = {'class': 'logout', 'url': 'logout.py',
-                        'title': 'Logout', 
+                        'title': 'Logout',
                         'hover': 'Logout'}
 
 # Define all possible VGrid page columns
 vgrid_items = {}
-vgrid_items['files'] = {'class': 'vgridfiles', 'title': 'Files', 
+vgrid_items['files'] = {'class': 'vgridfiles', 'title': 'Files',
                         'hover': 'Open shared files'}
-vgrid_items['web'] = {'class': 'vgridweb', 'title': 'Web Pages', 
+vgrid_items['web'] = {'class': 'vgridweb', 'title': 'Web Pages',
                       'hover': 'View/edit private and public web pages'}
-vgrid_items['scm'] = {'class': 'vgridscm', 'title': 'SCM', 
+vgrid_items['scm'] = {'class': 'vgridscm', 'title': 'SCM',
                       'hover':
                       'Inspect private and public Source Code Management systems'}
-vgrid_items['tracker'] = {'class': 'vgridtracker', 'title': 'Tracker Tools', 
+vgrid_items['tracker'] = {'class': 'vgridtracker', 'title': 'Tracker Tools',
                           'hover': 'Open private and public project collaboration tools'}
-vgrid_items['forum'] = {'class': 'vgridforum', 'title': 'Forum', 
+vgrid_items['forum'] = {'class': 'vgridforum', 'title': 'Forum',
                         'hover': 'Enter private forum'}
-vgrid_items['workflows'] = {'class': 'vgridworkflows', 'title': 'Workflows', 
+vgrid_items['workflows'] = {'class': 'vgridworkflows', 'title': 'Workflows',
                             'hover': 'Enter private workflows'}
-vgrid_items['monitor'] = {'class': 'vgridmonitor', 'title': 'Monitor', 
+vgrid_items['monitor'] = {'class': 'vgridmonitor', 'title': 'Monitor',
                           'hover': 'Open private resource monitor'}
+
 
 def html_print(formatted_text, html=True):
     print html_add(formatted_text, html)
@@ -138,7 +139,7 @@ def html_add(formatted_text, html=True):
         return ''
 
 
-def render_menu(configuration, menu_class='navmenu', 
+def render_menu(configuration, menu_class='navmenu',
                 current_element='Unknown', base_menu=[],
                 user_menu=[]):
     """Render the menu contents using configuration"""
@@ -173,8 +174,8 @@ def render_menu(configuration, menu_class='navmenu',
         if os.path.splitext(spec['url'])[0] == current_element:
             selected = ' class="selected" '
         menu_lines += '   <li %s class="%s"><a href="%s" %s title="%s">%s</a></li>\n'\
-             % (spec.get('attr', ''), spec['class'], spec['url'], selected,
-                spec.get('hover',''), spec['title'])
+            % (spec.get('attr', ''), spec['class'], spec['url'], selected,
+               spec.get('hover', ''), spec['title'])
 
     menu_lines += ' </ul>\n'
     menu_lines += '</div>\n'
@@ -187,6 +188,7 @@ def get_css_helpers(configuration):
     return {'base_prefix': os.path.join(configuration.site_images, 'css'),
             'advanced_prefix': os.path.join(configuration.site_images, 'css'),
             'skin_prefix': configuration.site_skin_base}
+
 
 def extend_styles(configuration, styles, base=[], advanced=[], skin=[]):
     """Appends any stylesheets specified in the base, advanced and skin lists
@@ -209,12 +211,14 @@ def extend_styles(configuration, styles, base=[], advanced=[], skin=[]):
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/%(name)s" media="screen"/>
 ''' % css_helpers
 
+
 def base_styles(configuration, base=[], advanced=[], skin=[]):
     """Returns a dictionary of basic stylesheets for unthemed pages"""
     css_helpers = get_css_helpers(configuration)
     styles = {'base': '', 'advanced': '', 'skin': ''}
     extend_styles(configuration, styles, base, advanced, skin)
     return styles
+
 
 def themed_styles(configuration, base=[], advanced=[], skin=[]):
     """Returns a dictionary of basic stylesheets for themed JQuery UI pages.
@@ -236,6 +240,7 @@ def themed_styles(configuration, base=[], advanced=[], skin=[]):
     extend_styles(configuration, styles, base, advanced, skin)
     return styles
 
+
 def jquery_ui_js(configuration, js_import, js_init, js_ready):
     """Fill standard javascript template for JQuery UI pages. The three args
     add custom extra javascript in the usual load, init and ready phase used
@@ -256,7 +261,8 @@ def jquery_ui_js(configuration, js_import, js_init, js_ready):
 
 </script>
 ''' % {'js_import': js_import, 'js_init': js_init, 'js_ready': js_ready}
-            
+
+
 def tablesorter_js(configuration, tables_list=[], include_ajax=True):
     """Build standard tablesorter dependency imports, init and ready snippets.
     The tables_list contains one or more table definitions with id and options
@@ -287,6 +293,7 @@ def tablesorter_js(configuration, tables_list=[], include_ajax=True):
         ''' % table_dict
     return (add_import, add_init, add_ready)
 
+
 def confirm_js(configuration, width=500):
     """Build standard confirm dialog dependency imports, init and ready
     snippets.
@@ -297,7 +304,7 @@ def confirm_js(configuration, width=500):
     add_init = ''
     add_ready = '''
           // init confirmation dialog
-          $( "#confirm_dialog" ).dialog(
+          $("#confirm_dialog").dialog(
               // see http://jqueryui.com/docs/dialog/ for options
               { autoOpen: false,
                 modal: true, closeOnEscape: true,
@@ -307,7 +314,8 @@ def confirm_js(configuration, width=500):
                 }
               });
     ''' % width
-    return (add_import, add_init, add_ready)    
+    return (add_import, add_init, add_ready)
+
 
 def confirm_html(configuration, rows=4, cols=40, cls="fillwidth padspace"):
     """Build standard js filled confirm overlay dialog html"""
@@ -319,6 +327,7 @@ def confirm_html(configuration, rows=4, cols=40, cls="fillwidth padspace"):
     </div>
     ''' % (cls, cols, rows)
     return html
+
 
 def man_base_js(configuration, table_dicts, overrides={}):
     """Build base js for managers, i.e. dependency imports, init and ready
@@ -359,7 +368,7 @@ def man_base_js(configuration, table_dicts, overrides={}):
 '''
     for entry in table_dicts:
         filled = {'table_id': entry.get('table_id', 'managertable'),
-                  'pager_id': entry.get('pager_id', 'pager'), 
+                  'pager_id': entry.get('pager_id', 'pager'),
                   'sort_order': entry.get('sort_order', '[[0,1]]'),
                   'pager_entries': entry.get('pager_entries',
                                              default_pager_entries),
@@ -391,6 +400,7 @@ def man_base_js(configuration, table_dicts, overrides={}):
     ''' % (cf_ready, ts_ready)
     return (add_import, add_init, add_ready)
 
+
 def man_base_html(configuration, overrides={}):
     """Build base html skeleton for js-filled managers, i.e. prepare confirm
     dialog and a table with dynamic tablesorter and pager.
@@ -400,6 +410,7 @@ def man_base_html(configuration, overrides={}):
         if overrides.has_key(name):
             confirm_overrides[name] = overrides[name]
     return confirm_html(configuration, **confirm_overrides)
+
 
 def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
                     chroot=''):
@@ -560,6 +571,7 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
     add_ready = ''
     return (add_import, add_init, add_ready)
 
+
 def fancy_upload_html(configuration):
     """Build standard html fancy upload overlay dialog"""
     html = """
@@ -612,6 +624,7 @@ def fancy_upload_html(configuration):
     """
     return html
 
+
 def get_cgi_html_preamble(
     configuration,
     title,
@@ -624,9 +637,9 @@ def get_cgi_html_preamble(
     widgets=True,
     userstyle=True,
     user_widgets={},
-    ):
+):
     """Return the html tags to mark the beginning of a page."""
-    
+
     user_styles = ''
     user_scripts = ''
     if widgets:
@@ -701,6 +714,7 @@ def get_cgi_html_preamble(
        configuration.site_fav_icon, scripts, user_scripts, title)
     return out
 
+
 def get_cgi_html_header(
     configuration,
     title,
@@ -718,9 +732,9 @@ def get_cgi_html_header(
     base_menu=[],
     user_menu=[],
     user_widgets={},
-    ):
+):
     """Return the html tags to mark the beginning of a page."""
-    
+
     if not html:
         return ''
 
@@ -730,7 +744,8 @@ def get_cgi_html_header(
     if widgets:
         pre_menu = '\n'.join(user_widgets.get('PREMENU', ['<!-- empty -->']))
         post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
-        pre_content = '\n'.join(user_widgets.get('PRECONTENT', ['<!-- empty -->']))
+        pre_content = '\n'.join(user_widgets.get(
+            'PRECONTENT', ['<!-- empty -->']))
         user_pre_menu = '''<div class="premenuwidgets">
 <!-- begin user supplied pre menu widgets -->
 %s
@@ -746,7 +761,7 @@ def get_cgi_html_header(
 %s
 <!-- end user supplied pre content widgets -->
 </div>''' % pre_content
-        
+
     out = get_cgi_html_preamble(configuration,
                                 title,
                                 header,
@@ -815,7 +830,8 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
 
     user_post_content = ''
     if widgets:
-        post_content = '\n'.join(user_widgets.get('POSTCONTENT', ['<!-- empty -->']))
+        post_content = '\n'.join(user_widgets.get(
+            'POSTCONTENT', ['<!-- empty -->']))
         user_post_content = '''
 <div class="postcontentwidgets">
 <!-- begin user supplied post content widgets -->
@@ -862,6 +878,7 @@ def html_encode(raw_string):
     result = result.replace('"', '&#034;')
     return result
 
+
 def html_post_helper(function_name, destination, fields):
     """Create a hidden html form and a corresponding javascript function,
     function_name, that can be called to POST the form.
@@ -886,6 +903,7 @@ def html_post_helper(function_name, destination, fields):
                 % (function_name, key, key, val)
     html += '</form>\n'
     return html
+
 
 def console_log_javascript():
     """Javascript console logging: just include this and set cur_log_level before
@@ -954,4 +972,4 @@ var init_log = function() {
     console.debug("log ready");
 }
 </script>
-'''    
+'''

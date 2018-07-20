@@ -50,7 +50,8 @@ from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
 from shared.gdp import get_client_id_from_project_client_id
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import themed_styles, console_log_javascript
+from shared.html import jquery_ui_js, man_base_js, man_base_html, \
+    themed_styles, console_log_javascript
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, \
@@ -122,25 +123,26 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Settings'
 
-    # prepare support for toggling the views (by css/jquery)
+    # jquery support for toggling views and popup dialog
 
+    (add_import, add_init, add_ready) = man_base_js(configuration, [])
     title_entry['style'] = themed_styles(configuration)
+    # prepare support for toggling the views (by css/jquery)
     title_entry['style']['skin'] += '''
 %s
 ''' % cm_css
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+    add_import += '''
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+
+%s
+
+%s
 
 <!-- for 2FA QR codes -->
 <script type="text/javascript" src="/images/js/qrious.js"></script>
 
-%s
-
-%s
-
-<script type="text/javascript" >
+    ''' % (cm_javascript, console_log_javascript())
+    add_init += '''
     /* prepare global logging from console_log_javascript */
     try {
         log_level = "info";
@@ -154,17 +156,43 @@ def main(client_id, user_arguments_dict):
         $(classname).toggleClass("hidden");
     }
 
+    var okDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
+                    width: "800px", autoOpen: false, closeOnEscape: true,
+                    modal: true};
+    var okOTPDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
+                       width: "500px", autoOpen: false, closeOnEscape: true,
+                       modal: true};
 
-    function showQR(elem_id, otp_uri) {
-        /* Init QR code for 2FA */
-        var qr = new QRious({
-                             element: document.getElementById(elem_id),
-                             value: otp_uri,
-                             size: 200
-                            });
+    function switchOTPState(current, next) {
+        $("."+current+".switch_button").hide();
+        $("."+next).show();
     }
-
-$(document).ready(function() {
+    /* Fast-forward through OTP states like user clicks would do */
+    function setOTPProgress(states) {
+        var i;
+        for (i=0; i < states.length-1; i++) {
+            switchOTPState(states[i], states[i+1]);
+        }
+    }
+    function showQRCodeOTPDialog(elem_id, otp_uri) {
+          // init OTP dialog for QR code
+          $("#"+elem_id).dialog(okOTPDialog);
+          $("#"+elem_id).dialog("open");
+          $("#"+elem_id).html("<canvas id=\'otp_qr\'><!-- filled by script --></canvas>");
+          var qr = new QRious({
+                               element: document.getElementById("otp_qr"),
+                               value: otp_uri,
+                               size: 200
+                               });
+    }
+    function showTextOTPDialog(elem_id, otp_key) {
+          // init OTP dialog for text key
+          $("#"+elem_id).dialog(okOTPDialog);
+          $("#"+elem_id).dialog("open");
+          $("#"+elem_id).html("<span id=\'otp_text\'>"+otp_key+"</span>");
+    }
+    '''
+    add_ready += '''
               /* Init variables helper as foldable but closed and with individual
               heights */
               $(".variables-accordion").accordion({
@@ -175,9 +203,11 @@ $(document).ready(function() {
               /* fix and reduce accordion spacing */
               $(".ui-accordion-header").css("padding-top", 0)
                                        .css("padding-bottom", 0).css("margin", 0);
-});
-</script>
-''' % (cm_javascript, console_log_javascript())
+'''
+    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
+                                             add_init, add_ready)
+    output_objects.append({'object_type': 'html_form',
+                           'text': man_base_html(configuration)})
 
     valid_topics = ['general', 'style']
     active_menu = extract_menu(configuration, title_entry)
@@ -1737,6 +1767,8 @@ client versions from the link above.<br/>
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="webaccess">
+<div id="otp_dialog" title="TOTP Secret to Import in Your Authenticator App"
+   class="centertext hidden"><!-- filled by script --></div>
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="webaccess fixedlayout">
@@ -1751,26 +1783,37 @@ It is possible to tweak some of the web access methods here.
         if configuration.site_enable_twofactor:
             html += """
 <tr><td>
-<h3>2-Factor Authentication</h3>
+<h4>2-Factor Authentication</h4>
 </td></tr>
-<tr><td>
-We allow 2-factor authentication for greater password login security. In short
-it means that you get and enter a single-use <em>token</em> from e.g. your
-phone or tablet along with your usual login. This combination makes account
-abuse <b>much</b> harder even if your password gets stolen.<br/>
+<tr class='otp_intro'><td>
+We allow 2-factor authentication on %(site)s for greater password login
+security.
+In short it means that you enter a generated single-use <em>token</em> from
+e.g. your phone or tablet along with your usual login. This combination makes
+account abuse <b>much</b> harder, because even if your password gets stolen,
+it can't be used without your device.<br/>
+
+Preparing and enabling 2-factor authentication for your login is done in four
+steps.
+</td></tr>
+<tr class='otp_intro switch_button'><td>
+<button type=button
+  onClick='switchOTPState(\"otp_intro\", \"otp_install\");'>
+Okay, let's go!</button>
+</td></tr>
+<tr class='otp_install hidden'><td>
+<h5>1. Install an Authenticator App</h5>
 You first need to install a TOTP authenticator client like
 <a href='https://en.wikipedia.org/wiki/Google_Authenticator'>
 Google Authenticator</a>, <a href='https://freeotp.github.io/'>FreeOTP</a> or
-<a href='https://authy.com/download/'>Authy</a> on your phone or tablet. Then
-open it and scan your personal QR code below to let it generate the auth tokens
-for you to enter along with your logins.<br/>
-Please only actually enable 2-factor auth below after you've verified that your
-authenticator app displays new tokens every 30 seconds, to avoid locking
-yourself out.<br/>
-Once ready you can simply logout and login again to verify that a token is
-requested right after your usual %(site)s login.
+<a href='https://authy.com/download/'>Authy</a> on your phone or tablet. You
+can find them in your usual app store.<br/>
 </td></tr>
-<tr><td>
+<tr class='otp_install switch_button hidden'><td>
+<button type=button
+  onClick='switchOTPState(\"otp_install\", \"otp_import\");'>
+I've got it installed!</button>
+</td></tr>
 """ % {'site': configuration.short_title}
 
             # Make sure secret key is available in user settings but do not
@@ -1813,35 +1856,55 @@ requested right after your usual %(site)s login.
             #                             ('chs', '200x200'), ('chl', otp_uri)])
             # otp_img = '<img src="%s" />' % img_url
 
-            html += '''<tr><td>
-Your secret 2-factor authentication key can be imported by scanning this QR
-code from your authenticator app:<br/>
-<canvas id="otp-qr"><!-- filled by script --></canvas>
-<script>
-    showQR("otp-qr", "%(otp_uri)s");
-</script>
+            html += """<tr class='otp_import hidden'><td>
+<h5>2. Import Secret in Authenticator App</h5>
+Open the chosen authenticator app and import your secret 2-factor key either
+by simply scanning your personal
+<span id='otp_qr_link' class='fakelink infolink'
+  onClick='showQRCodeOTPDialog(\"otp_dialog\", \"%(otp_uri)s\");'>
+QR code</span> or by manually entering the
+<span id='otp_key_link' class='fakelink infolink'
+  onClick='showTextOTPDialog(\"otp_dialog\", \"%(b32_key)s\");'>
+key</span> if your app or device doesn't support scanning QR codes.
 </td></tr>
-<tr><td>
-You should <a href="%(check_url)s" target="_blank">check</a> that your 2-factor
-client setup is really working before enabling it for login below.
+<tr class='otp_import switch_button hidden'><td>
+<button type=button onClick='switchOTPState(\"otp_import\", \"otp_verify\");'>
+Yes, I've imported it!</button>
 </td></tr>
-<tr><td>
-<br/>
+<tr class='otp_verify hidden'><td>
+<h5>3. Verify the Authenticator App Setup</h5>
+Before you actually enable 2-factor authentication you should verify that your
+authenticator app displays new tokens every 30 seconds <em>and</em> that they
+are <a href='%(check_url)s' target='_blank'>correct</a>. Otherwise you might
+end up locking yourself out once you enable 2-factor authentication.<br/>
 </td></tr>
-<tr><td>
-<span class="warningtext">Please immediately contact the %(site)s admins to
+<tr class='otp_verify switch_button hidden'><td>
+<button type=button onClick='switchOTPState(\"otp_verify\", \"otp_ready\");'>
+It works!</button>
+</td></tr>
+<tr class='otp_ready hidden'><td>
+<h5>4. Enable 2-Factor Authentication</h5>
+Once you've followed the three steps above and verified your authenticator
+app, you can proceed to enable it for login below.<br/>
+Afterwards you can simply logout and login again to verify that a token is
+requested right after your usual %(site)s login.
+</td></tr>
+<tr class='otp_ready hidden'><td>
+<p class='warningtext'>SECURITY NOTE: please immediately contact the %(site)s admins to
 reset your secret 2-factor authentication key if you ever loose a device with
 it installed or otherwise suspect someone may have gained access to it.
-</span>
+</p>
 </td></tr>
-'''
+<tr class='otp_ready hidden'><td>
+"""
         check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
-        fill_helpers.update({'otp_uri': otp_uri, 'check_url': check_url})
+        fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
+                             'check_url': check_url})
 
         html += '''
         <input type="hidden" name="topic" value="webaccess" />
         </td></tr>
-        <tr><td>
+        <tr class="otp_ready hidden"><td>
         </td></tr>
         '''
         webaccess_entries = get_webaccess_specs(configuration)
@@ -1849,13 +1912,13 @@ it installed or otherwise suspect someone may have gained access to it.
             if val.get('Editor', None) == 'hidden':
                 continue
             entry = """
-            <tr class='title'><td>
+            <tr class='otp_ready hidden'><td class='title'>
             %(Title)s
             </td></tr>
-            <tr><td>
+            <tr class='otp_ready hidden'><td>
             %(Description)s
             </td></tr>
-            <tr><td>
+            <tr class='otp_ready hidden'><td>
             """ % val
             if val['Type'] == 'multiplestrings':
                 try:
@@ -1931,13 +1994,22 @@ it installed or otherwise suspect someone may have gained access to it.
             </td></tr>
             """ % entry
 
-        html += '''<tr><td>
+        html += '''<tr class="otp_ready hidden"><td>
         <input type="submit" value="Save Web Access Settings" />
 </td></tr>
 </table>
 </form>
 </div>
 '''
+
+        if configuration.site_enable_twofactor and \
+            (current_webaccess_dict.get("MIG_OID_TWOFACTOR", False) or
+             current_webaccess_dict.get("EXT_OID_TWOFACTOR", False)):
+            html += """<script>
+    setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify', 'otp_ready']);
+</script>
+        """
+
         fill_helpers.update({
             'client_id': client_id,
         })

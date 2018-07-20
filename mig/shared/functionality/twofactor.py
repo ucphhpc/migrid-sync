@@ -167,7 +167,7 @@ def main(client_id, user_arguments_dict, environ=None):
                                webaccess_defaults(configuration).items()])
 
     # NOTE: webaccess_defaults field availability depends on configuration
-    if not redirect_url and token:
+    if not redirect_url:
         # This is the 2FA setup check mode
         check_only = True
         require_twofactor = True
@@ -271,7 +271,8 @@ Correct token provided!
 </span>
 </p>
 <p>
-<a href="">Test again</a> or close the tab/window and proceed.
+<a href="">Test again</a> or <a href="javascript:close();">close</a> this
+tab/window and proceed.
 </p>
 </div>'''})
     # logger.debug("return from %s for %s with headers: %s" %

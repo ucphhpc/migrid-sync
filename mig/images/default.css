@@ -1337,7 +1337,15 @@ div.openidlogin {
     top: 100px;
     margin-left: -140px;
 }
-
+span.fakelink {
+  text-decoration: none;
+  color: #666;
+}
+span.fakelink:hover {
+  text-decoration: underline;
+  color: #999;
+  cursor: pointer;
+}
 
 /* 
 *************************************************************************
