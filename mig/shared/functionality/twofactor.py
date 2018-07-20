@@ -264,6 +264,7 @@ Incorrect token provided - please try again
             {'object_type': 'title', 'text': '2FA', 'skipmenu': True})
         output_objects.append({'object_type': 'html_form', 'text': '''
 <!-- Keep similar spacing -->
+<div class="twofactorbg">
 <div class="twofactorstatus">
 <p class="centertext">
 <span class="ok leftpad">
@@ -274,6 +275,7 @@ Correct token provided!
 <a href="">Test again</a> or <a href="javascript:close();">close</a> this
 tab/window and proceed.
 </p>
+</div>
 </div>'''})
     # logger.debug("return from %s for %s with headers: %s" %
     #             (op_name, client_id, headers))
