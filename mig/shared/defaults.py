@@ -286,6 +286,7 @@ vgrid_nest_sep = ':'
 # Password policy helpers
 POLICY_NONE, POLICY_WEAK = "NONE", "WEAK"
 POLICY_MEDIUM, POLICY_HIGH = "MEDIUM", "HIGH"
+POLICY_CUSTOM = "CUSTOM"
 
 # Prioritized protocol choices and internal values
 duplicati_protocol_choices = [('WebDAVS', 'davs'), ('SFTP', 'sftp'),

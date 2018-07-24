@@ -61,7 +61,7 @@ except ImportError:
     cracklib = None
 
 from shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
-    POLICY_HIGH
+    POLICY_HIGH, POLICY_CUSTOM
 
 # Parameters to PBKDF2. Only affect new passwords.
 SALT_LENGTH = 12
@@ -87,8 +87,6 @@ def make_hash(password):
         b64encode(pbkdf2_bin(password, salt, COST_FACTOR, KEY_LENGTH,
                              getattr(hashlib, HASH_FUNCTION))))
 
-# TODO: switch to strict_policy by default
-
 
 def check_hash(configuration, service, username, password, hashed,
                hash_cache=None, strict_policy=True):
@@ -105,7 +103,7 @@ def check_hash(configuration, service, username, password, hashed,
     pw_hash = hashlib.md5(password).hexdigest()
     if isinstance(hash_cache, dict) and \
             hash_cache.get(pw_hash, None) == hashed:
-        #print "found cached hash: %s" % hash_cache.get(pw_hash, None)
+        # print "found cached hash: %s" % hash_cache.get(pw_hash, None)
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
@@ -129,7 +127,7 @@ def check_hash(configuration, service, username, password, hashed,
     match = (diff == 0)
     if isinstance(hash_cache, dict) and match:
         hash_cache[pw_hash] = hashed
-        #print "cached hash: %s" % hash_cache.get(pw_hash, None)
+        # print "cached hash: %s" % hash_cache.get(pw_hash, None)
     return match
 
 
@@ -146,7 +144,7 @@ def unscramble_digest(salt, digest):
     """Unscramble loaded digest"""
     xor_int = int(salt, 16) ^ int(digest, 16)
     # Python 2.6 fails to parse implicit positional args (-Jonas)
-    #b16_digest = '{:X}'.format(xor_int)
+    # b16_digest = '{:X}'.format(xor_int)
     b16_digest = '{0:X}'.format(xor_int)
     return b16decode(b16_digest)
 
@@ -157,8 +155,6 @@ def make_digest(realm, username, password, salt):
     # TODO: can we switch to proper md5 hexdigest without breaking webdavs?
     digest = 'DIGEST$custom$CONFSALT$%s' % scramble_digest(salt, merged_creds)
     return digest
-
-# TODO: switch to strict_policy by default
 
 
 def check_digest(configuration, service, realm, username, password, digest,
@@ -214,7 +210,7 @@ def unscramble_password(salt, password):
     if salt:
         xor_int = int(salt, 64) ^ int(password, 64)
         # Python 2.6 fails to parse implicit positional args (-Jonas)
-        #b64_digest = '{:X}'.format(xor_int)
+        # b64_digest = '{:X}'.format(xor_int)
         b64_password = '{0:X}'.format(xor_int)
     else:
         b64_password = password
@@ -261,7 +257,7 @@ def check_scramble(configuration, service, username, password, scrambled,
 def make_csrf_token(configuration, method, operation, client_id, limit=None):
     """Generate a Cross-Site Request Forgery (CSRF) token to help verify the
     authenticity of user requests. The optional limit argument can be used to
-    e.g. put a timestamp into the mix, so that the token automatically expires. 
+    e.g. put a timestamp into the mix, so that the token automatically expires.
     """
     salt = configuration.site_digest_salt
     merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
@@ -282,6 +278,7 @@ def make_csrf_trust_token(configuration, method, operation, args, client_id,
     That is mainly used to allow use for checking where the trust token is
     already part of the args and therefore should not be considered.
     """
+    _logger = configuration.logger
     csrf_op = '%s' % operation
     if args:
         sorted_keys = sorted(args.keys())
@@ -293,20 +290,20 @@ def make_csrf_trust_token(configuration, method, operation, args, client_id,
         csrf_op += '_%s' % key
         for val in args[key]:
             csrf_op += '_%s' % val
-    configuration.logger.debug("made csrf_trust from url %s" % csrf_op)
+    _logger.debug("made csrf_trust from url %s" % csrf_op)
     return make_csrf_token(configuration, method, csrf_op, client_id, limit)
 
 
-def assure_password_strength(configuration, password):
-    """Make sure password fits site password policy in terms of length and
-    number of different character classes.
-    We split into four classes for now, lowercase, uppercase, digits and other.
+def parse_password_policy(configuration):
+    """Parse the custom password policy value to get the number of required
+    characters and different character classes.
+    NOTE: fails hard on invalid policy for best security.
     """
-    logger = configuration.logger
+    _logger = configuration.logger
     site_policy = configuration.site_password_policy
-    policy_fail_msg = 'password does not fit site password policy'
+    min_len, min_classes = -1, 42
     if site_policy == POLICY_NONE:
-        logger.debug('site password policy allows any password')
+        _logger.debug('site password policy allows ANY password')
         min_len, min_classes = 0, 0
     elif site_policy == POLICY_WEAK:
         min_len, min_classes = 6, 2
@@ -314,12 +311,35 @@ def assure_password_strength(configuration, password):
         min_len, min_classes = 8, 3
     elif site_policy == POLICY_HIGH:
         min_len, min_classes = 10, 4
+    elif site_policy.startswith(POLICY_CUSTOM):
+        try:
+            _, min_len_str, min_classes_str = site_policy.split(':', 2)
+            min_len, min_classes = int(min_len_str), int(min_classes_str)
+        except Exception, exc:
+            _logger.error('custom password policy %s on invalid format: %s' %
+                          (site_policy, exc))
     else:
+        _logger.error('unknown password policy keyword: %s' % site_policy)
+    _logger.debug('password policy %s requires %d chars from %d classes' %
+                  (site_policy, min_len, min_classes))
+    return min_len, min_classes
+
+
+def assure_password_strength(configuration, password):
+    """Make sure password fits site password policy in terms of length and
+    number of different character classes.
+    We split into four classes for now, lowercase, uppercase, digits and other.
+    """
+    _logger = configuration.logger
+    site_policy = configuration.site_password_policy
+    policy_fail_msg = 'password does not fit site password policy'
+    min_len, min_classes = parse_password_policy(configuration)
+    if min_len < 0 or min_classes > 4:
         raise Exception('invalid site password policy')
     if len(password) < min_len:
         err_msg = '%s: too short, at least %d chars required' % \
-                  (policy_fail_msg, min_len)
-        logger.warning(err_msg)
+            (policy_fail_msg, min_len)
+        _logger.warning(err_msg)
         raise ValueError(err_msg)
     char_class_map = {'lower': lowercase, 'upper': uppercase, 'digits': digits}
     base_chars = ''.join(char_class_map.values())
@@ -334,8 +354,8 @@ def assure_password_strength(configuration, password):
                 break
     if len(pw_classes) < min_classes:
         err_msg = '%s: too simple, at least %d character classes required' % \
-                  (policy_fail_msg, min_classes)
-        logger.warning(err_msg)
+            (policy_fail_msg, min_classes)
+        _logger.warning(err_msg)
         raise ValueError(err_msg)
     if configuration.site_password_cracklib:
         if cracklib:
@@ -346,9 +366,9 @@ def assure_password_strength(configuration, password):
             # NOTE: this raises ValueError if password is too simple
             cracklib.VeryFascistCheck(password)
         else:
-            logger.warning('cracklib requested in conf but not available')
-    logger.debug('password compliant with site password policy (%s)' %
-                 site_policy)
+            _logger.warning('cracklib requested in conf but not available')
+    _logger.debug('password compliant with site password policy (%s)' %
+                  site_policy)
     return True
 
 
@@ -362,7 +382,8 @@ def make_path_hash(configuration, path):
     https://en.wikipedia.org/wiki/Birthday_attack
     for the details.
     """
-    configuration.logger.debug("make path hash for %s" % path)
+    _logger = configuration.logger
+    _logger.debug("make path hash for %s" % path)
     hexdigest = hashlib.md5(path).hexdigest()
     return hexdigest
 

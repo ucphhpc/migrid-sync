@@ -37,8 +37,8 @@ import time
 from ConfigParser import ConfigParser
 
 from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
-    POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, freeze_flavors, \
-    duplicati_protocol_choices
+    POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, POLICY_CUSTOM, \
+    freeze_flavors, duplicati_protocol_choices
 from shared.logger import Logger
 from shared.html import menu_items, vgrid_items
 
@@ -1374,7 +1374,8 @@ location.""" % self.config_file
         if config.has_option('SITE', 'password_policy'):
             password_policy = config.get('SITE', 'password_policy')
             if password_policy in (POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM,
-                                   POLICY_HIGH):
+                                   POLICY_HIGH) or \
+                    password_policy.startswith(POLICY_CUSTOM):
                 self.site_password_policy = password_policy
         else:
             self.site_password_policy = POLICY_NONE
