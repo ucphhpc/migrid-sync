@@ -69,6 +69,7 @@ if '__main__' == __name__:
         'apache_run',
         'apache_lock',
         'apache_log',
+        'openssh_version',
         'mig_code',
         'mig_state',
         'mig_certs',

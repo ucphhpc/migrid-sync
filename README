@@ -283,6 +283,7 @@ settings:
 --apache_run=APACHE_RUN
 --apache_lock=APACHE_LOCK
 --apache_log=APACHE_LOG
+--openssh_version=OPENSSH_VERSION
 --mig_code=MIG_CODE
 --mig_state=MIG_STATE
 --mig_certs=MIG_CERTS
@@ -355,6 +356,7 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --apache_run=/var/run/apache2 \
                    --apache_lock=/var/lock/apache2 \
                    --apache_log=/var/log/apache2 \
+                   --openssh_version=7.2 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/apache2/MiG-certificates \
@@ -393,6 +395,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --apache_run=/var/run/apache2 \
                    --apache_lock=/var/lock/apache2 \
                    --apache_log=/var/log/apache2 \
+                   --openssh_version=7.2 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/apache2/MiG-certificates \
@@ -440,6 +443,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
+                   --openssh_version=7.4 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -484,6 +488,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
+                   --openssh_version=7.4 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -533,6 +538,7 @@ with optional 2-FA support:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
+                   --openssh_version=7.4 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -586,6 +592,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
+                   --openssh_version=7.4 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
