@@ -98,11 +98,12 @@ def generate_confs(
     jupyter_base_url='',
     user='mig',
     group='mig',
-    apache_version='2.2',
+    apache_version='2.4',
     apache_etc='/etc/apache2',
     apache_run='/var/run',
     apache_lock='/var/lock',
     apache_log='/var/log/apache2',
+    openssh_version='7.4',
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
@@ -193,6 +194,7 @@ def generate_confs(
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOCK__'] = apache_lock
     user_dict['__APACHE_LOG__'] = apache_log
+    user_dict['__OPENSSH_VERSION__'] = openssh_version
     user_dict['__ENABLE_SFTP__'] = enable_sftp
     user_dict['__ENABLE_SFTP_SUBSYS__'] = enable_sftp_subsys
     user_dict['__ENABLE_DAVS__'] = enable_davs
@@ -293,6 +295,19 @@ cert, oid and sid based https!
     else:
         user_dict['__APACHE_PRE2.4__'] = ''
         user_dict['__APACHE_RECENT__'] = '#'
+
+    # TODO: switch to shared strong SSH/TLS setting in mig/shared/tlsserver.py
+    #       and just format+insert in apache and openssh confs during generate.
+
+    # We use raw string comparison here which seems to work alright for X.Y.Z
+    if user_dict['__OPENSSH_VERSION__'] >= "7.3":
+        # Use new DH GroupX KexAlgorithms for openssh >=7.3
+        user_dict['__OPENSSH_KEXALGOS__'] = 'curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512'
+    else:
+        # Fall back to old DH Group Exchange KexAlgorithm for openssh <7.3
+        user_dict['__OPENSSH_KEXALGOS__'] = 'curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256'
+    user_dict['__OPENSSH_CIPHERS__'] = 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr'
+    user_dict['__OPENSSH_MACS__'] = 'hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com'
 
     # Define some FQDN helpers if set
     user_dict['__IFDEF_BASE_FQDN__'] = 'UnDefine'
@@ -686,6 +701,8 @@ as described in the mig/pam-mig and mig/libnss-mig READMEs and copy the
 generated sshd_config-MiG-sftp-subsys to /etc/ssh/ for a parallel service:
 sudo cp %(destination)s/sshd_config-MiG-sftp-subsys /etc/ssh/
 sudo chown 0:0 /etc/ssh/sshd_config-MiG-sftp-subsys
+We also recommend the moduli tuning to at least 2000 as mentioned on:
+https://stribika.github.io/2015/01/04/secure-secure-shell.html
 After making sure it fits your site you can start the openssh service with:
 sudo /usr/sbin/sshd -f /etc/ssh/sshd_config-MiG-sftp-subsys
 
@@ -837,12 +854,13 @@ def create_user(
     mig_dir = os.path.join(home, 'mig')
     server_dir = os.path.join(mig_dir, 'server')
     state_dir = os.path.join(home, 'state')
-    apache_version = '2.2'
+    apache_version = '2.4'
     apache_etc = '/etc/apache2'
     apache_dir = '%s-%s' % (apache_etc, user)
     apache_run = '%s/run' % apache_dir
     apache_lock = '%s/lock' % apache_dir
     apache_log = '%s/log' % apache_dir
+    openssh_version = '7.4'
     cert_dir = '%s/MiG-certificates' % apache_dir
     # We don't necessarily have free ports for daemons
     enable_sftp = 'False'
@@ -944,6 +962,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         apache_run,
         apache_lock,
         apache_log,
+        openssh_version,
         mig_dir,
         state_dir,
         cert_dir,
