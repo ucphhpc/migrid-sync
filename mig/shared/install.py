@@ -41,10 +41,13 @@ import os
 import re
 import random
 import socket
+import subprocess
 import sys
 
 from shared.defaults import default_http_port, default_https_port, \
-    auth_openid_mig_db, auth_openid_ext_db
+    auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
+    STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
+    STRONG_SSH_CIPHERS, STRONG_SSH_MACS
 from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 
 
@@ -82,7 +85,8 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
 
 
 def generate_confs(
-    generateconfs_command=' '.join(sys.argv),
+    # NOTE: make sure command line args with white-space are properly wrapped
+    generateconfs_command=subprocess.list2cmdline(sys.argv),
     source=os.path.dirname(sys.argv[0]),
     destination=os.path.dirname(sys.argv[0]),
     destination_suffix="",
@@ -296,18 +300,20 @@ cert, oid and sid based https!
         user_dict['__APACHE_PRE2.4__'] = ''
         user_dict['__APACHE_RECENT__'] = '#'
 
-    # TODO: switch to shared strong SSH/TLS setting in mig/shared/tlsserver.py
-    #       and just format+insert in apache and openssh confs during generate.
+    # We use strong Apache and OpenSSH settings from shared.defaults everywhere
+    user_dict['__APACHE_CIPHERS__'] = STRONG_TLS_CIPHERS
+    # TODO: Actually enforce curves for apache 2.4.8+ with OpenSSL 1.0.2+
+    user_dict['__APACHE_CURVES__'] = STRONG_TLS_CURVES
 
     # We use raw string comparison here which seems to work alright for X.Y.Z
     if user_dict['__OPENSSH_VERSION__'] >= "7.3":
-        # Use new DH GroupX KexAlgorithms for openssh >=7.3
-        user_dict['__OPENSSH_KEXALGOS__'] = 'curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512'
+        # Use current KexAlgorithms for openssh >=7.3
+        user_dict['__OPENSSH_KEXALGOS__'] = STRONG_SSH_KEXALGOS
     else:
-        # Fall back to old DH Group Exchange KexAlgorithm for openssh <7.3
-        user_dict['__OPENSSH_KEXALGOS__'] = 'curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256'
-    user_dict['__OPENSSH_CIPHERS__'] = 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr'
-    user_dict['__OPENSSH_MACS__'] = 'hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com'
+        # Fall back to legacy KexAlgorithms for openssh <7.3
+        user_dict['__OPENSSH_KEXALGOS__'] = STRONG_SSH_LEGACY_KEXALGOS
+    user_dict['__OPENSSH_CIPHERS__'] = STRONG_SSH_CIPHERS
+    user_dict['__OPENSSH_MACS__'] = STRONG_SSH_MACS
 
     # Define some FQDN helpers if set
     user_dict['__IFDEF_BASE_FQDN__'] = 'UnDefine'

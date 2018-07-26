@@ -81,7 +81,9 @@ except ImportError:
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
-from shared.defaults import keyword_auto
+from shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
+    STRONG_SSH_CIPHERS, STRONG_SSH_MACS, STRONG_SSH_LEGACY_KEXALGOS, \
+    STRONG_SSH_LEGACY_MACS
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
     acceptable_chmod, refresh_user_creds, refresh_job_creds, \
@@ -903,9 +905,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
                                    default_max_packet_size=max_packet_size)
     # Restrict transport to strong ciphers+kex+digests used in OpenSSH
     transport_security = transport.get_security_options()
-    recommended_ciphers = ('chacha20-poly1305@openssh.com',
-                           'aes256-gcm@openssh.com', 'aes128-gcm@openssh.com',
-                           'aes256-ctr', 'aes192-ctr', 'aes128-ctr')
+    recommended_ciphers = STRONG_SSH_CIPHERS.split(',')
     available_ciphers = transport_security.ciphers
     strong_ciphers = [i for i in recommended_ciphers if i in available_ciphers]
     logger.debug("TLS ciphers available %s, used %s" % (available_ciphers,
@@ -915,28 +915,46 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     else:
         logger.warning("No strong TLS ciphers available!")
         logger.info("You need a recent paramiko for best security")
-    recommended_kex = ('curve25519-sha256@libssh.org', 'ecdh-sha2-nistp521',
-                       'ecdh-sha2-nistp384', 'ecdh-sha2-nistp256',
-                       'diffie-hellman-group-exchange-sha256')
+    # NOTE: paramiko doesn't yet implement strong modern kex algos - use legacy
+    # A number of paramiko tickets indicate plans and interest for adding the
+    # strong curve25519-sha256@libssh.org eventually, but progress looks
+    # stalled. Until then our best alternative appears to be the legacy
+    # diffie-hellman-group-exchange-sha256 fallback, which should be safe as
+    # long as the moduli size tuning of e.g. ssh-audit is applied:
+    # http://cert.europa.eu/static/WhitePapers/CERT-EU-SWP_16-002_Weaknesses%20in%20Diffie-Hellman%20Key%20v1_0.pdf
+    recommended_kex = STRONG_SSH_KEXALGOS.split(',')
+    fallback_kex = STRONG_SSH_LEGACY_KEXALGOS.split(',')
     available_kex = transport_security.kex
     strong_kex = [i for i in recommended_kex if i in available_kex]
-    logger.debug("TLS kex available %s, used %s" % (available_kex,
-                                                    strong_kex))
+    medium_kex = [i for i in fallback_kex if i in available_kex]
+    logger.debug("TLS kex available %s, used %s (or fallback to %s)" %
+                 (available_kex, strong_kex, medium_kex))
     if strong_kex:
+        logger.debug("Using only strong key exchange algorithms: %s" %
+                     ', '.join(strong_kex))
         transport_security.kex = strong_kex
+    elif medium_kex:
+        logger.debug("Using only medium strength key exchange algorithms: %s" %
+                     ', '.join(medium_kex))
+        transport_security.kex = medium_kex
     else:
         logger.warning("No strong TLS key exchange algorithm available!")
         logger.info("You need a recent paramiko for best security")
-    recommended_digests = ('hmac-sha2-512-etm@openssh.com',
-                           'hmac-sha2-256-etm@openssh.com',
-                           'umac-128-etm@openssh.com', 'hmac-sha2-512',
-                           'hmac-sha2-256', 'umac-128@openssh.com')
+    recommended_digests = STRONG_SSH_MACS.split(',')
+    fallback_digests = STRONG_SSH_LEGACY_MACS.split(',')
     available_digests = transport_security.digests
     strong_digests = [i for i in recommended_digests if i in available_digests]
-    logger.debug("TLS digests available %s, used %s" % (available_digests,
-                                                        strong_digests))
+    medium_digests = [i for i in fallback_digests if i in available_digests]
+    logger.debug("TLS digests available %s, used %s (or fallback to %s)" %
+                 (available_digests, strong_digests, medium_digests))
     if strong_digests:
+        logger.debug("Using only strong message auth codes: %s" %
+                     ', '.join(strong_digests))
         transport_security.digests = strong_digests
+    elif medium_digests:
+        logger.debug("Using only medium strength message auth codes: %s" %
+                     ', '.join(medium_digests))
+        transport_security.digests = medium_digests
     else:
         logger.warning("No strong TLS digest algorithm available!")
         logger.info("You need paramiko 1.16 or later for best security")
@@ -962,7 +980,11 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
                  transport.packetizer.REKEY_PACKETS))
 
     transport.logger = logger
-    transport.load_server_moduli()
+    # Try to load precomputed primes from /etc/ssh/moduli
+    # NOTE: they should preferably be tuned in line with:
+    #       https://stribika.github.io/2015/01/04/secure-secure-shell.html
+    if not transport.load_server_moduli():
+        logger.warning("Load server moduli failed, group-exchange disabled")
     transport.add_server_key(host_key)
     # Force keep-alive and see if it helps detect broken sessions in tracking
     transport.set_keepalive(900)

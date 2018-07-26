@@ -297,3 +297,43 @@ duplicati_schedule_choices = [('Daily', '1D'), ('Weekly', '1W'),
 
 # Session timeout in seconds for IO services,
 io_session_timeout = {'davs': 60}
+
+
+# Strong SSL/TLS ciphers and curves to allow in Apache and other SSL/TLS-based
+# daemons (on Apache/OpenSSL format).
+# NOTE: harden in line with Mozilla recommendations:
+# https://wiki.mozilla.org/Security/Server_Side_TLS#Apache
+# Use ciphers and order recommended for 'Intermediate compatibility' as a base
+# to get a good balance between strength and legacy support. We further prune
+# the list from Mozilla to explicitly disable a handful of possibly weak
+# ciphers, not really needed to support all the common platforms (only still
+# maintained ones).
+# In short it makes sure TLSv1.2 and secure but light-weight elliptic curve
+# ciphers are preferred and then gracefully falls back to only other secure
+# ciphers.
+# On older versions of OpenSSL, unavailable ciphers will be discarded
+# automatically.
+STRONG_TLS_CIPHERS = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!SEED:!IDEA:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA:!DES-CBC3-SHA:!AES128-GCM-SHA256:!AES256-GCM-SHA384:!AES128-SHA256:!AES256-SHA256:!AES128-SHA:!AES256-SHA:!CAMELLIA256-SHA:!CAMELLIA128-SHA"
+# TODO: enforce curve order in Apache (2.4.8+), too?
+#       https://superuser.com/questions/964907/apache-and-ecc-curve-order
+# TODO: add curve 'X25519' as first choice once we reach openssl-1.1?
+STRONG_TLS_CURVES = "prime256v1:secp384r1:secp521r1"
+
+# Strong SSH key-exchange (Kex), cipher and message auth code (MAC) settings to
+# allow in OpenSSH and native Paramiko SFTP daemons (on OpenSSH format).
+# NOTE: harden in line with Mozilla recommendations for modern versions:
+# https://wiki.mozilla.org/Security/Guidelines/OpenSSH#Configuration
+# Additional hardening based on https://github.com/arthepsy/ssh-audit
+# Please note that the DH GroupX KexAlgorithms require OpenSSH 7.3+, but that
+# older versions can relatively safely fall back to instead use the
+# diffie-hellman-group-exchange-sha256 as long as the moduli tuning from
+# https://infosec.mozilla.org/guidelines/openssh is applied.
+# Tested to work with popular recent clients on the main platforms:
+# OpenSSH-6.6.1+, LFTP-4.4.13+, FileZilla-3.24+, WinSCP-5.13.3+ and PuTTY-0.70+
+STRONG_SSH_KEXALGOS = "curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512"
+STRONG_SSH_LEGACY_KEXALGOS = "curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256"
+STRONG_SSH_CIPHERS = "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
+STRONG_SSH_MACS = "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com"
+# NOTE: extend strong MACS with the best possible alterantives on old paramiko
+#       to avoid falling back to really bad ones
+STRONG_SSH_LEGACY_MACS = "%s,hmac-sha2-512,hmac-sha2-256" % STRONG_SSH_MACS

@@ -356,7 +356,7 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --apache_run=/var/run/apache2 \
                    --apache_lock=/var/lock/apache2 \
                    --apache_log=/var/log/apache2 \
-                   --openssh_version=7.2 \
+                   --openssh_version=6.7 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/apache2/MiG-certificates \

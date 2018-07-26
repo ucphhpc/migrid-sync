@@ -25,19 +25,19 @@
 # -- END_HEADER ---
 #
 
-"""Common HTTPS server functions for e.g. strict SSL/TLS setup"""
+"""Common HTTPS/WebDAVS/FTPS server functions for e.g. SSL/TLS setup with
+strong security settings.
+"""
 
 import ssl
 import sys
 
-# Mirror strong ciphers used in Apache
-STRONG_CIPHERS = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!SEED:!IDEA:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA:!DES-CBC3-SHA:!AES128-GCM-SHA256:!AES256-GCM-SHA384:!AES128-SHA256:!AES256-SHA256:!AES128-SHA:!AES256-SHA:!CAMELLIA256-SHA:!CAMELLIA128-SHA"
+from shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_CURVES
 
-DEFAULT_CURVE_PRIORITY = ['prime256v1', 'secp384r1', 'secp521r1']
 
 def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
-                         ciphers=STRONG_CIPHERS,
-                         curve_priority=DEFAULT_CURVE_PRIORITY):
+                         ciphers=STRONG_TLS_CIPHERS,
+                         curve_priority=STRONG_TLS_CURVES):
     """Build and return a hardened native SSL context to apply to a socket"""
     _logger = configuration.logger
     _logger.info("enforcing strong SSL/TLS connections")
@@ -66,7 +66,7 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
             ssl_ctx.load_dh_params(dhparamsfile)
             pfs_available = True
         except Exception, exc:
-            _logger.warning("Could not load optional dhparams from %s" % \
+            _logger.warning("Could not load optional dhparams from %s" %
                             dhparamsfile)
             _logger.info("""You can create a suitable dhparams file with:
 openssl dhparam 2048 -out %s""" % dhparamsfile)
@@ -78,7 +78,7 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
     # http://stackoverflow.com/questions/7340784/easy-install-pyopenssl-error/34048924#34048924
     if curve_priority:
         activated_curve = None
-        for curve_name in curve_priority:
+        for curve_name in curve_priority.split(':'):
             try:
                 _logger.debug("Blindly trying elliptic curve %s" % curve_name)
                 ssl_ctx.set_ecdh_curve(curve_name)
@@ -86,12 +86,12 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
                 pfs_available = True
                 break
             except Exception, exc:
-                _logger.warning("Couldn't init elliptic curve %s: %s" % \
+                _logger.warning("Couldn't init elliptic curve %s: %s" %
                                 (curve_name, exc))
-        if not activated_curve: 
+        if not activated_curve:
             _logger.info("""You need a recent pyopenssl built with elliptic
 curves to take advantage of this optional improved security feature""")
-    
+
     if not pfs_available:
         _logger.warning("""No Perfect Forward Secrecy with neither 
 dhparams nor elliptic curves available.""")
@@ -99,10 +99,11 @@ dhparams nor elliptic curves available.""")
     ssl_ctx.set_ciphers(ciphers)
     return ssl_ctx
 
+
 def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
                              cacertfile=None, dhparamsfile=None,
-                             ciphers=STRONG_CIPHERS,
-                             curve_priority=DEFAULT_CURVE_PRIORITY):
+                             ciphers=STRONG_TLS_CIPHERS,
+                             curve_priority=STRONG_TLS_CURVES):
     """Build and return a hardened OpenSSL context to apply to a socket"""
     _logger = configuration.logger
     SSL, crypto = OpenSSL.SSL, OpenSSL.crypto
@@ -136,7 +137,7 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
             ssl_ctx.load_tmp_dh(dhparamsfile)
             pfs_available = True
         except Exception, exc:
-            _logger.warning("Could not load optional dhparams from %s" % \
+            _logger.warning("Could not load optional dhparams from %s" %
                             dhparamsfile)
             _logger.info("""You can create a suitable dhparams file with:
 openssl dhparam 2048 -out %s""" % dhparamsfile)
@@ -148,23 +149,23 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
     # http://stackoverflow.com/questions/7340784/easy-install-pyopenssl-error/34048924#34048924
     if curve_priority:
         try:
-            # Returns a python set of curves and we grab one at random
+            # Returns a python set of curves to grab grab best one from
             available_curves = crypto.get_elliptic_curves()
             curve_map = dict([(i.name, i) for i in available_curves])
-            for curve_name in curve_priority:
+            for curve_name in curve_priority.split(':'):
                 if curve_name in curve_map.keys():
                     use_curve = curve_map[curve_name]
                     break
-            _logger.debug("Found elliptic curves %s and picked %s" % \
+            _logger.debug("Found elliptic curves %s and picked %s" %
                           (', '.join(curve_map.keys()), use_curve.name))
             ssl_ctx.set_tmp_ecdh(use_curve)
             pfs_available = True
         except Exception, exc:
-            _logger.warning("Couldn't init elliptic curve ciphers: %s" % \
+            _logger.warning("Couldn't init elliptic curve ciphers: %s" %
                             exc)
             _logger.info("""You need a recent pyopenssl built with elliptic
 curves to take advantage of this optional improved security feature""")
-    
+
     if not pfs_available:
         _logger.warning("""No Perfect Forward Secrecy with neither 
 dhparams nor elliptic curves available.""")
