@@ -203,7 +203,7 @@ class Login(object):
     """Login class to hold a single valid login for a user, job or share.
 
     The login method can be one of password, password digest or public key.
-    The optional chroot marks the ulogin for chrooting to the user home.
+    The optional chroot marks the login for chrooting to the user home.
     The optional ip_addr argument can be used to limit login source to a single
     IP address. This is particularly useful in relation to job sshfs mounts.
     """
@@ -549,6 +549,9 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
         all_keys = []
         if private_auth_file:
             all_passwords = get_authpasswords(path)
+        # Prefer password hash if available, otherwise fall back to scrambled
+        elif user_dict and user_dict.get('password_hash', ''):
+            all_passwords = [user_dict['password_hash']]
         elif user_dict and user_dict.get('password', ''):
             all_passwords = [user_dict['password']]
         else:

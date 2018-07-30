@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoid - OpenID account request backend
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,6 +47,7 @@ def signature():
     defaults = {}
     return ['html_form', defaults]
 
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
@@ -55,7 +56,8 @@ def main(client_id, user_arguments_dict):
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -67,22 +69,22 @@ def main(client_id, user_arguments_dict):
     title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = account_js_helpers(form_fields)
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
+                           'text': '''
  <div id="contextual_help">
   <div class="help_gfx_bubble"><!-- graphically connect field with help text --></div>
   <div class="help_message"><!-- filled by js --></div>
  </div>
-'''                       })
-    header_entry = {'object_type': 'header', 'text'
-                    : 'Welcome to the %s OpenID account request page' % \
+'''})
+    header_entry = {'object_type': 'header', 'text':
+                    'Welcome to the %s OpenID account request page' %
                     configuration.short_title}
     output_objects.append(header_entry)
-    
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     user_fields = {'full_name': '', 'organization': '', 'email': '',
                    'state': '', 'country': '', 'password': '',
@@ -96,40 +98,41 @@ def main(client_id, user_arguments_dict):
         extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
         extcert_link = {'object_type': 'link', 'destination': extcert_url,
                         'text': 'Sign up with existing certificate (%s)' % client_id}
-        output_objects.append({'object_type': 'warning', 'text'
-                              : 'Apparently you already have a suitable %s certificate that you may sign up with:' % \
-                                configuration.short_title
-                              })
+        output_objects.append({'object_type': 'warning', 'text': '''Apparently
+you already have a suitable %s certificate that you may sign up with:''' %
+                               configuration.short_title
+                               })
         output_objects.append(extcert_link)
-        output_objects.append({'object_type': 'warning', 'text'
-                              : 'However, if you want a dedicated %s OpenID you can still request one below:' % \
-                                configuration.short_title
-                              })
+        output_objects.append({'object_type': 'warning', 'text': '''However,
+if you want a dedicated %s %s User OpenID you can still request one below:'''
+                               % (configuration.short_title,
+                                  configuration.user_mig_oid_title)})
     elif client_id:
         for entry in (title_entry, header_entry):
             entry['text'] = entry['text'].replace('request', 'request / renew')
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : '''<p>
-Apparently you already have a valid %s certificate, but if you want to add
-OpenID access to the same account you can do so by posting the form below.
-Changing fields is <span class=mandatory>not</span> supported, so all fields
+        output_objects.append({'object_type': 'html_form', 'text': '''<p>
+Apparently you already have valid %s credentials, but if you want to add %s
+User OpenID access to the same account you can do so by posting the form below.
+Changing fields is <span class=mandatory> not </span> supported, so all fields
 must remain unchanged for it to work.
 Otherwise it results in a request for a new account and OpenID without access
-to your old files, jobs and privileges.</p>''' % \
-                               configuration.short_title})
+to your old files, jobs and privileges. </p>''' %
+                               (configuration.short_title,
+                                configuration.user_mig_oid_title)})
         user_fields.update(distinguished_name_to_user(client_id))
 
     user_fields.update({
-        'valid_name_chars': html_escape(valid_name_chars),
+        'valid_name_chars': '%s (and common accents)' %
+        html_escape(valid_name_chars),
         'valid_password_chars': html_escape(valid_password_chars),
         'password_min_len': password_min_len,
         'password_max_len': password_max_len,
         'site': configuration.short_title
-        })
+    })
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'form_method': form_method, 'csrf_field': csrf_field,
-                     'csrf_limit': csrf_limit}
+    fill_helpers = {'form_method': form_method, 'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
     target_op = 'reqoidaction'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
@@ -137,8 +140,7 @@ to your old files, jobs and privileges.</p>''' % \
 
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
     fill_helpers.update(user_fields)
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    output_objects.append({'object_type': 'html_form', 'text': """
 Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the OpenID account request to the %(site)s administrators.
 <p class='criticaltext highlight_message'>
 IMPORTANT: Please help us verify your identity by providing Organization and
@@ -163,14 +165,17 @@ Email data that we can easily validate!
 <tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' pattern='([A-Z]{2})?' maxlength=2 title='Leave empty or enter the capital 2-letter abbreviation of your state if you are a US resident' /> </td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Password</td><td><input id='password_field' type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Password of your choice, see help box for limitations' /> </td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Verify password</td><td><input id='verifypassword_field' type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Repeat your chosen password' /></td><td class=fill_space><br /></td></tr>
+<!-- NOTE: we technically allow saving the password on scrambled form hide it by default -->
+<tr class='hidden'><td class='optional label'>Password recovery</td><td class=''><input id='passwordrecovery_checkbox' type=checkbox name=passwordrecovery></td>
+</td><td class=fill_space><br/></td></tr>
 <tr><td class='optional label'>Optional comment or reason why you should<br />be granted a %(site)s account:</td><td><textarea id='comment_field' rows=4 name=comment title='A free-form comment where you can explain what you need the account for' ></textarea></td><td class=fill_space><br /></td></tr>
-<tr><td class='label'><!-- empty area --></td><td><input id='submit_button' type=submit value=Send /></td><td class=fill_space><br /></td></tr>
+<tr><td class='label'><!-- empty area --></td><td><input id='submit_button' type=submit value=Send /></td><td class=fill_space><br/></td></tr>
 </table>
 </form>
-</div>
 <hr />
+<div class='warn_message'>Please note that if you enable password recovery your password will be saved on encoded format but recoverable by the %(site)s administrators</div>
+</div>
 <br />
-<div class='warn_message'>Please note that passwords may be recoverable by the %(site)s administrators!</div>
 <br />
 <!-- Hidden help text -->
 <div id='help_text'>

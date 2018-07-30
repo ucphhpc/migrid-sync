@@ -90,7 +90,8 @@ from shared.safeinput import valid_distinguished_name, valid_password, \
     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
     valid_complex_url, InputException
 from shared.tlsserver import hardened_ssl_context
-from shared.useradm import get_openid_user_dn, check_password_scramble
+from shared.useradm import get_openid_user_dn, check_password_scramble, \
+    check_hash
 from shared.validstring import possible_user_id
 
 configuration, logger = None, None
@@ -196,9 +197,9 @@ class OpenIDHTTPServer(HTTPServer):
 
     min_expire_delay = 120
     last_expire = time.time()
-    # NOTE: We do not enable scramble_cache here since it is hardly any gain
-    #       and it potentially introduces a race
-    scramble_cache = None
+    # NOTE: We do not enable hash and scramble cache here since it is hardly
+    #       any gain and it potentially introduces a race
+    hash_cache, scramble_cache = None, None
 
     def __init__(self, *args, **kwargs):
         HTTPServer.__init__(self, *args, **kwargs)
@@ -246,6 +247,8 @@ class OpenIDHTTPServer(HTTPServer):
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
             expire_rate_limit(configuration, "openid")
+            if self.hash_cache:
+                self.hash_cache.clear()
             if self.scramble_cache:
                 self.scramble_cache.clear()
             logger.debug("Expired old rate limits and scramble cache")
@@ -705,10 +708,20 @@ Invalid '%s' input: %s
             # print "DEBUG: Check password against allowed %s" % allowed
             # NOTE: We always enforce password policy here to refuse weak
             #       legacy passwords.
-            if check_password_scramble(configuration, 'openid', username,
-                                       password, allowed,
-                                       configuration.site_password_salt,
-                                       self.server.scramble_cache, True):
+            # NOTE: we prefer password hash but with fall back to scrambled
+            is_hashed = allowed.startswith('PBKDF2$')
+            if is_hashed and check_hash(configuration, 'openid', username,
+                                        password, allowed,
+                                        self.server.hash_cache, True):
+                logger.info("Correct password hash for user %s" % username)
+                self.user_dn = distinguished_name
+                self.user_dn_dir = client_id_dir(distinguished_name)
+                self.login_expire = int(time.time() + self.session_ttl)
+                return True
+            elif not is_hashed and check_password_scramble(
+                    configuration, 'openid', username, password, allowed,
+                    configuration.site_password_salt,
+                    self.server.scramble_cache, True):
                 logger.info("Correct password for user %s" % username)
                 self.user_dn = distinguished_name
                 self.user_dn_dir = client_id_dir(distinguished_name)

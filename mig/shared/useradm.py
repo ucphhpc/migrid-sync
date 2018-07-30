@@ -262,7 +262,11 @@ def create_user(
                 renew = default_renew
             if renew:
                 user['old_password'] = user_db[client_id]['password']
-                # OpenID users do not provide a password
+                # MiG OpenID users without password recovery have empty
+                # password value and on renew we then leave any saved cert
+                # password alone.
+                # External OpenID users do not provide a password so again any
+                # existing password should be left alone on renewal.
                 if not user['password']:
                     user['password'] = user['old_password']
                 password_changed = (user['old_password'] != user['password'])

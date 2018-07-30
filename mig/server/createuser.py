@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createuser - Create or renew a MiG user with all the necessary directories
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -153,7 +153,7 @@ if '__main__' == __name__:
             user_dict['password'] = args[6]
         except IndexError:
             print 'Error: too few arguments given (expected 7 got %d)'\
-                 % len(args)
+                % len(args)
             usage()
             sys.exit(1)
     elif user_file:
@@ -192,13 +192,15 @@ if '__main__' == __name__:
     if role:
         user_dict['role'] = role
 
-    # Encode password if not already encoded
+    # Encode password if set but not already encoded
 
     salt = configuration.site_password_salt
-    try:
-        unscramble_password(salt, user_dict['password'])
-    except TypeError:
-        user_dict['password'] = scramble_password(salt, user_dict['password'])
+    if user_dict['password']:
+        try:
+            unscramble_password(salt, user_dict['password'])
+        except TypeError:
+            user_dict['password'] = scramble_password(
+                salt, user_dict['password'])
 
     # Default to one year of certificate validity (only used by CA scripts)
 
