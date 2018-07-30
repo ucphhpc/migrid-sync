@@ -49,16 +49,17 @@ import sys
 import time
 import shutil
 import requests
+
 import shared.returnvalues as returnvalues
-from shared.conf import get_configuration_object
-from shared.pwhash import generate_random_ascii
 from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert
+from shared.conf import get_configuration_object
 from shared.defaults import session_id_bytes
+from shared.fileio import make_symlink, pickle, unpickle, write_file
+from shared.functional import validate_input_and_cert
 from shared.httpsclient import unescape
 from shared.init import initialize_main_variables
-from shared.ssh import generate_ssh_rsa_key_pair
-from shared.fileio import make_symlink, pickle, unpickle, write_file
+from shared.pwhash import generate_random_ascii
+from shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
 
 
 def is_active(pickle_state, timeout=7200):
@@ -152,7 +153,8 @@ def jupyter_host(configuration, output_objects, user):
     :return: output_objects and a 200 OK status for the webserver to return
     to the client
     """
-    configuration.logger.info("User: %s finished, redirecting to the jupyter host" % user)
+    configuration.logger.info(
+        "User: %s finished, redirecting to the jupyter host" % user)
     status = returnvalues.OK
     home = configuration.jupyter_base_url + '/home'
     headers = [('Location', home), ('Remote-User', user)]
@@ -205,15 +207,15 @@ def main(client_id, user_arguments_dict):
     logger.debug("User: %s executing %s" % (client_id, op_name))
     if not configuration.site_enable_jupyter:
         output_objects.append(
-            {'object_type': 'error_text',
-             'text': '''The Jupyter service is not enabled on the system'''})
+            {'object_type': 'error_text', 'text':
+             'The Jupyter service is not enabled on the system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not configuration.site_enable_sftp_subsys and not \
             configuration.site_enable_sftp:
         output_objects.append(
-            {'object_type': 'error_text',
-             'text': '''The required sftp service is not enabled on the system'''})
+            {'object_type': 'error_text', 'text':
+             'The required sftp service is not enabled on the system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Test target jupyter url
@@ -224,8 +226,8 @@ def main(client_id, user_arguments_dict):
         logger.error("Failed to establish connection to %s error %s",
                      configuration.jupyter_url, err)
         output_objects.append(
-            {'object_type': 'error_text',
-             'text': '''Failed to establish connection to the Jupyter service'''})
+            {'object_type': 'error_text', 'text':
+             'Failed to establish connection to the Jupyter service'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     username = unescape(os.environ.get('REMOTE_USER', '')).strip()
@@ -239,8 +241,8 @@ def main(client_id, user_arguments_dict):
         logger.error("Can't connect to jupyter with an empty REMOTE_USER "
                      "environment variable")
         output_objects.append(
-            {'object_type': 'error_text',
-             'text': '''Failed to establish connection to the Jupyter service'''})
+            {'object_type': 'error_text', 'text':
+             'Failed to establish connection to the Jupyter service'})
         return (output_objects, returnvalues.CLIENT_ERROR)
     # Ensure the remote_user dict can be http posted
     remote_user = str(remote_user)
@@ -266,22 +268,12 @@ def main(client_id, user_arguments_dict):
         if not os.path.exists(subsys_path):
             os.makedirs(subsys_path)
 
-    # Check for correct permissions, 0755
-    no_g_write_dirs = [os.path.dirname(os.path.dirname(configuration.user_home)),
-                       configuration.user_home, user_home_dir]
-    for u_dir in no_g_write_dirs:
-        # check group flag
-        if os.stat(u_dir).st_mode & 022:
-            old_perm = oct(os.stat(u_dir).st_mode & 0777)
-            logger.info("User: %s directory %s"
-                        " had invalid permissions %s,"
-                        " resetting to 755" % (
-                            client_id, u_dir, old_perm))
-            os.chmod(u_dir, 0755)
+    # Make sure ssh daemon does not complain
+    tighten_key_perms(configuration, client_id)
 
     url_jup = configuration.jupyter_url
     url_base = configuration.jupyter_base_url
-    url_auth = url_jup + url_base + '/hub/home' 
+    url_auth = url_jup + url_base + '/hub/home'
     url_mount = url_jup + url_base + '/hub/mount'
 
     # Does the client home dir contain an active mount key
@@ -337,7 +329,8 @@ def main(client_id, user_arguments_dict):
 
     # Create a new keyset
     # Create login session id
-    session_id = generate_random_ascii(2*session_id_bytes, charset='0123456789abcdef')
+    session_id = generate_random_ascii(2*session_id_bytes,
+                                       charset='0123456789abcdef')
 
     # Generate private/public keys
     (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair()

@@ -44,7 +44,7 @@ from shared.profilekeywords import get_keywords_dict as get_profile_fields
 from shared.pwhash import make_hash, make_digest, assure_password_strength
 from shared.safeinput import valid_password
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
-from shared.ssh import parse_pub_key
+from shared.ssh import parse_pub_key, tighten_key_perms
 from shared.webaccesskeywords import get_keywords_dict as get_webaccess_fields
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
@@ -224,6 +224,7 @@ def parse_and_save_publickeys(keys_path, keys_content, client_id,
         keys_fd = open(keys_path, 'wb')
         keys_fd.write(keys_content)
         keys_fd.close()
+        tighten_key_perms(configuration, client_id)
     except Exception, exc:
         status = False
         msg = 'ERROR: writing %s publickey file: %s' % (client_id, exc)
@@ -302,6 +303,8 @@ def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
     (ssh/davs/ftps/seafile) in proto_conf_dir.
     """
     client_dir = client_id_dir(client_id)
+    # Make sure permissions are tight enough for e.g. ssh auth keys to work
+    os.umask(022)
     proto_conf_path = os.path.join(configuration.user_home, client_dir,
                                    proto_conf_dir)
     # Create proto conf dir for any old users

@@ -106,7 +106,6 @@ def fix_missing(config_file, verbose=True):
         'events_home': '~/state/events_home/',
         'twofactor_home': '~/state/twofactor_home/',
         'gdp_home': '~/state/gdp_home/',
-        'rate_limit_db': '~/mig/mig_system_files/daemon-rate-limit.db',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
         'site_vgrid_label': 'VGrid',
@@ -303,7 +302,6 @@ class Configuration:
     seafile_mount = ''
     openid_store = ''
     paraview_home = ''
-    rate_limit_db = ''
     site_landing_page = ''
     site_skin = ''
     site_collaboration_links = ''
@@ -722,12 +720,6 @@ location.""" % self.config_file
         else:
             self.vms_builder_home = os.path.join(
                 self.server_home, 'vms_builder')
-
-        if config.has_option('GLOBAL', 'rate_limit_db'):
-            self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
-        else:
-            self.rate_limit_db = os.path.join(self.mig_system_files,
-                                              'daemon-rate-limit.db')
 
         # Component settings
 
