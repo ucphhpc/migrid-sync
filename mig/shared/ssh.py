@@ -517,10 +517,10 @@ def tighten_key_perms(configuration, client_id, keys_dirname=ssh_conf_dir):
     for path in check_dirs:
         # check perms and limit if needed
         if os.path.exists(path) and os.stat(path).st_mode & 022:
-            old_perm = oct(os.stat(path).st_mode & 0777)
+            old_perm = os.stat(path).st_mode & 0777
             limit_perm = old_perm & 0755
             _logger.warning("%s has invalid ssh permissions %s, reset to %s"
-                            % (path, old_perm, limit_perm))
+                            % (path, oct(old_perm), oct(limit_perm)))
             os.chmod(path, limit_perm)
             fixed_dirs.append(path)
     return fixed_dirs
