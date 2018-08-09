@@ -6,7 +6,7 @@
 # options, key bindings, etc.
 #
 
-#umask 022
+umask 022
 
 # Set up aliases
 alias mv='mv -i'

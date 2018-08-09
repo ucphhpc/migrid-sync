@@ -356,7 +356,7 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --apache_run=/var/run/apache2 \
                    --apache_lock=/var/lock/apache2 \
                    --apache_log=/var/log/apache2 \
-                   --openssh_version=6.7 \
+                   --openssh_version=7.2 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/apache2/MiG-certificates \
@@ -443,7 +443,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=7.4 \
+                   --openssh_version=5.3 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -488,7 +488,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=7.4 \
+                   --openssh_version=5.3 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \

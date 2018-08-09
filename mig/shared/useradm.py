@@ -43,7 +43,8 @@ from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
-    authpasswords_filename, authdigests_filename, cert_field_order
+    authpasswords_filename, authdigests_filename, cert_field_order, \
+    davs_conf_dir
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
@@ -1417,13 +1418,37 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
                                    password)
     if not password:
         errors.append('No password set for %s' % user_id)
-        return (configuration, errors)
+    else:
+        try:
+            assure_password_strength(configuration, password)
+        except Exception, exc:
+            errors.append('password for %s does not satisfy local policy: %s'
+                          % (user_id, exc))
 
-    try:
-        assure_password_strength(configuration, password)
-    except Exception, exc:
-        errors.append('password for %s does not satisfy local policy: %s'
-                      % (user_id, exc))
+    client_dir = client_id_dir(user_id)
+    digest_path = os.path.join(configuration.user_home, client_dir,
+                               davs_conf_dir, authdigests_filename)
+    if verbose:
+        print "inspecting %s" % digest_path
+    all_digests = []
+    if os.path.isfile(digest_path):
+        if verbose:
+            print "Checking %s" % digest_path
+        all_digests = get_authpasswords(digest_path)
+    if not all_digests:
+        errors.append('No digest set for %s' % user_id)
+    for digest in all_digests:
+        digest = digest.strip()
+        _, _, _, payload = digest.split("$")
+        unscrambled = unscramble_digest(configuration.site_digest_salt,
+                                        payload)
+        _, _, password = unscrambled.split(":")
+        try:
+            assure_password_strength(configuration, password)
+        except Exception, exc:
+            errors.append('digest for %s does not satisfy local policy: %s'
+                          % (user_id, exc))
+
     return (configuration, errors)
 
 

@@ -97,6 +97,7 @@ if '__main__' == __name__:
         usage()
         sys.exit(1)
 
+    uid = 'unknown'
     errors = []
     if user_file:
         (configuration, errors) = req_password_check(user_file, conf_path,

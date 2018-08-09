@@ -47,7 +47,8 @@ import sys
 from shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
-    STRONG_SSH_CIPHERS, STRONG_SSH_MACS
+    STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
+    STRONG_SSH_LEGACY_MACS
 from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 
 
@@ -307,13 +308,15 @@ cert, oid and sid based https!
 
     # We use raw string comparison here which seems to work alright for X.Y.Z
     if user_dict['__OPENSSH_VERSION__'] >= "7.3":
-        # Use current KexAlgorithms for openssh >=7.3
+        # Use current strong Kex/Cipher/MAC settings for openssh >=7.3
         user_dict['__OPENSSH_KEXALGOS__'] = STRONG_SSH_KEXALGOS
+        user_dict['__OPENSSH_CIPHERS__'] = STRONG_SSH_CIPHERS
+        user_dict['__OPENSSH_MACS__'] = STRONG_SSH_MACS
     else:
-        # Fall back to legacy KexAlgorithms for openssh <7.3
+        # Fall back to legacy Kex/Cipher/MAC for openssh <7.3
         user_dict['__OPENSSH_KEXALGOS__'] = STRONG_SSH_LEGACY_KEXALGOS
-    user_dict['__OPENSSH_CIPHERS__'] = STRONG_SSH_CIPHERS
-    user_dict['__OPENSSH_MACS__'] = STRONG_SSH_MACS
+        user_dict['__OPENSSH_CIPHERS__'] = STRONG_SSH_LEGACY_CIPHERS
+        user_dict['__OPENSSH_MACS__'] = STRONG_SSH_LEGACY_MACS
 
     # Define some FQDN helpers if set
     user_dict['__IFDEF_BASE_FQDN__'] = 'UnDefine'

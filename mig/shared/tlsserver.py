@@ -149,7 +149,7 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
     # http://stackoverflow.com/questions/7340784/easy-install-pyopenssl-error/34048924#34048924
     if curve_priority:
         try:
-            # Returns a python set of curves to grab grab best one from
+            # Returns a python set of curves to grab best one from
             available_curves = crypto.get_elliptic_curves()
             curve_map = dict([(i.name, i) for i in available_curves])
             for curve_name in curve_priority.split(':'):
