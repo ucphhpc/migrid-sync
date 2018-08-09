@@ -272,14 +272,34 @@ The full status and output files are available at:
         from_id = args_list[0]
         password = args_list[1]
         header = '%s pasword reminder' % configuration.short_title
-        txt += \
-            """This is an auto generated password reminder from the %s server:
+        txt += """This is an auto-generated password reminder from %s:
 %s
 """ % (configuration.short_title, password)
-        txt += \
-            """Feel free to locally change the password as described in the
-user scripts tutorial online.
+        txt += """Feel free to change the password as described in the online
+documentation.
 """
+    elif status == 'ACCOUNTINTRO':
+        from_id = args_list[0]
+        user_email = args_list[1]
+        user_name = args_list[2]
+        short_title = configuration.short_title
+        migoid_title = configuration.user_mig_oid_title
+        migoid_url = configuration.migserver_https_mig_oid_url
+        header = 'Re: %s OpenID request for %s' % (short_title, user_name)
+        txt += """This is an auto-generated intro message from %s to inform
+about the creation or renewal of your %s user OpenID account.
+
+You can log in with username %s and your chosen password at
+%s
+
+Please contact the %s admins in case you should ever loose or forget your
+password. The same applies if you suspect or know that someone may have gotten
+hold of your login.
+
+Regards,
+The %s Admins
+""" % (short_title, migoid_title, user_email, migoid_url, short_title,
+            short_title)
     elif status == 'FORUMUPDATE':
         vgrid_name = args_list[0]
         author = args_list[1]

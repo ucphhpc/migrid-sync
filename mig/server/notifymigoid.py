@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# notifypassword - Send forgotten password from user database to user
+# notifymigoid - Send internal openid account create/renew email to user
 # Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,9 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Send forgotten user password from user database to user. Allows password
-reminder to saved notification address or email from Distinguished Name field
-of user entry.
+"""Send a short introduction to user upon internal OpenID account creation or
+renewal. Used to greet users signing up or renewing with internal OpenID
+service where we don't have another hook to send e.g. certificate and where
+autocreate is not in place.
+By default sends the information on email to the registered notification
+address or email from Distinguished Name field of user entry. If user
+configured additional messaging protocols they can also be used.
 """
 
 import sys
@@ -35,23 +39,24 @@ import getopt
 
 from shared.defaults import keyword_auto
 from shared.notification import notify_user
-from shared.useradm import init_user_adm, user_password_reminder
+from shared.useradm import init_user_adm, user_migoid_intro
 
 
-def usage(name='notifypassword.py'):
+def usage(name='notifymigoid.py'):
     """Usage help"""
 
-    print """Send forgotten password to user from user database.
+    print """Send internal OpenID account create/renew intro to user from user
+database.
 Usage:
 %(name)s [NOTIFY_OPTIONS]
 Where NOTIFY_OPTIONS may be one or more of:
-   -a                  Send reminder to email address from database
+   -a                  Send intro to email address from database
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_PATH          Use DB_PATH as user data base file path
-   -e EMAIL            Send reminder to custom email address
+   -e EMAIL            Send intro to custom email address
    -h                  Show this help
-   -I CERT_DN          Send reminder for user with ID (distinguished name)
-   -s PROTOCOL         Send reminder to notification protocol from settings
+   -I CERT_DN          Send intro for user with ID (distinguished name)
+   -s PROTOCOL         Send intro to notification protocol from settings
    -v                  Verbose output
 
 One or more destinations may be set by combining multiple -e, -s and -a
@@ -109,9 +114,8 @@ if '__main__' == __name__:
         print "No user_id provided!"
         sys.exit(1)
 
-    (configuration, password, addresses, errors) = \
-        user_password_reminder(user_id, raw_targets, conf_path,
-                               db_path, verbose)
+    (configuration, username, full_name, addresses, errors) = \
+        user_migoid_intro(user_id, raw_targets, conf_path, db_path, verbose)
 
     if errors:
         print "Address lookup errors:"
@@ -120,15 +124,15 @@ if '__main__' == __name__:
     if not addresses:
         print "Error: found no suitable addresses"
         sys.exit(1)
-    if not password:
-        print "Error: found no password for user"
+    if not username:
+        print "Error: found no username"
         sys.exit(1)
     logger = configuration.logger
     notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
     for (proto, address_list) in addresses.items():
         for address in address_list:
             notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
-    print "Sending password reminder(s) for '%s' to:\n%s" % \
+    print "Sending internal OpenID account intro for '%s' to:\n%s" % \
           (user_id, '\n'.join(notify_dict['NOTIFY']))
-    notify_user(notify_dict, [user_id, password], 'PASSWORDREMINDER', logger,
-                '', configuration)
+    notify_user(notify_dict, [user_id, username, full_name], 'ACCOUNTINTRO',
+                logger, '', configuration)

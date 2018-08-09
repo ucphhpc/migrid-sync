@@ -27,6 +27,7 @@
 
 """User administration functions"""
 
+from email.utils import parseaddr
 import datetime
 import fnmatch
 import os
@@ -1339,8 +1340,8 @@ def search_users(search_filter, conf_path, db_path, verbose=False):
     return hits
 
 
-def user_password_reminder(user_id, targets, conf_path, db_path,
-                           verbose=False):
+def _user_general_notify(user_id, targets, conf_path, db_path, verbose=False,
+                         get_fields=[]):
     """Find notification addresses for user_id and targets"""
 
     password, errors = '', []
@@ -1360,12 +1361,28 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
         _logger.error(err_msg)
         return []
 
-    if not user_db.has_key(user_id):
-        errors.append('No such user: %s' % user_id)
+    user_fields = {}
+    if user_db.has_key(user_id):
+        user_dict = user_db[user_id]
     else:
-        password = user_db[user_id].get('password', '')
+        user_dict = {}
+        errors.append('No such user: %s' % user_id)
+    # Extract username and password intelligently
+    if 'username' in get_fields:
+        username = user_dict.get(configuration.user_openid_alias, '')
+        user_fields['username'] = username
+        get_fields = [i for i in get_fields if i != 'username']
+    if 'password' in get_fields:
+        password = user_dict.get('password', '')
         password = unscramble_password(configuration.site_password_salt,
                                        password)
+        user_fields['password'] = password
+        get_fields = [i for i in get_fields if i != 'password']
+    # Any other fields are extracted verbatim
+    if get_fields:
+        for field in get_fields:
+            user_fields[field] = user_dict.get(field, None)
+
     addresses = dict(zip(configuration.notify_protocols,
                          [[] for _ in configuration.notify_protocols]))
     addresses['email'] = []
@@ -1375,12 +1392,41 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
             continue
         for address in address_list:
             if proto == 'email' and address == keyword_auto:
-                address = user_db[user_id].get('email', '')
+                address = user_dict.get('email', '')
                 if not address:
                     errors.append('missing email address in db!')
                     continue
             addresses[proto].append(address)
-    return (configuration, password, addresses, errors)
+    return (configuration, user_fields, addresses, errors)
+
+
+def user_password_reminder(user_id, targets, conf_path, db_path,
+                           verbose=False):
+    """Find notification addresses and password for user_id and targets"""
+
+    (configuration, fields, addresses, errors) = _user_general_notify(
+        user_id, targets, conf_path, db_path, verbose, ['password'])
+    return (configuration, fields['password'], addresses, errors)
+
+
+def user_migoid_intro(user_id, targets, conf_path, db_path, verbose=False):
+    """Find notification addresses for user_id and targets"""
+    (configuration, fields, addresses, errors) = _user_general_notify(
+        user_id, targets, conf_path, db_path, verbose, ['username',
+                                                        'full_name'])
+    # Send a copy to site admins
+    admin_addresses = []
+    if configuration.admin_email and \
+            isinstance(configuration.admin_email, basestring):
+        # NOTE: Explicitly separated by ', ' to distinguish Name <abc> form
+        parts = configuration.admin_email.split(', ')
+        for addr in parts:
+            (real_name, plain_addr) = parseaddr(addr.strip())
+            if plain_addr:
+                admin_addresses.append(plain_addr)
+    addresses['email'] += admin_addresses
+    return (configuration, fields['username'], fields['full_name'], addresses,
+            errors)
 
 
 def user_password_check(user_id, conf_path, db_path, verbose=False,
