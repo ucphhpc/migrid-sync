@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# importusers - Import users from XML file in provided URL
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# importusers - Import users from text or xml file in provided uri
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,34 +25,39 @@
 # -- END_HEADER ---
 #
 
-"""Import any missing users from provided URL into user DB and in file system"""
+"""Import any missing users from provided URI"""
 
 import os
 import sys
 import getopt
-import urllib
 import re
+import time
+import urllib
 
 import shared.returnvalues as returnvalues
 from shared.base import fill_user, distinguished_name_to_user
 from shared.conf import get_configuration_object
-from shared.defaults import csrf_field
+from shared.defaults import csrf_field, keyword_auto, cert_valid_days
 from shared.functionality.sendrequestaction import main
 from shared.handlers import get_csrf_limit, make_csrf_token
+from shared.pwhash import generate_random_ascii, unscramble_password, \
+    scramble_password
+from shared.safeinput import valid_password_chars
 from shared.useradm import init_user_adm, default_search, create_user, \
-     search_users
+    search_users
 
 
 def usage(name='importusers.py'):
     """Usage help"""
 
-    print """Import users from an external XML source URL.
+    print """Import users from an external plain text or XML source URI.
 Creates a local MiG user identified by DISTINGUISHED_NAME for each
-new <item>DISTINGUISHED_NAME</item> in the XML.
+new <item>DISTINGUISHED_NAME</item> in the XML or for each DISTINGUISHED_NAME
+line in the text file.
 
 Usage:
-%(name)s [OPTIONS] URL [URL [...]]
-Where OPTIONS may be one or more of:
+%(name)s [OPTIONS] URI [URI [...]]
+Where URI may be an URL or local file and OPTIONS may be one or more of:
    -C CERT_PATH        Use CERT_PATH as client certificate
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
@@ -60,9 +65,9 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -K KEY_PATH         Use KEY_PATH as client key
    -m VGRID            Make user a member of VGRID (multiple occurences allowed)
+   -p PASSWORD         Optional PASSWORD to set for user (AUTO to generate one)
    -v                  Verbose output
-"""\
-         % {'name': name}
+""" % {'name': name}
 
 
 def dump_contents(url, key_path=None, cert_path=None):
@@ -82,18 +87,17 @@ def dump_contents(url, key_path=None, cert_path=None):
 
 
 def parse_contents(user_data):
-    """Extract users from data dump - We simply catch all occurences
-    of anything looking like a DN (/ABC=bla bla/DEF=more words/...)
+    """Extract users from data dump - We simply catch all occurences of
+    anything looking like a DN (/ABC=bla bla/DEF=more words/...) either in
+    tags or in plain text line.
     """
 
     users = []
     for user_creds in re.findall('/[a-zA-Z]+=[^<]+', user_data):
-        user_dict = distinguished_name_to_user(user_creds)
+        user_dict = distinguished_name_to_user(user_creds.strip())
         users.append(user_dict)
     return users
 
-
-# ## Main ###
 
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
@@ -101,9 +105,10 @@ if '__main__' == __name__:
     key_path = None
     cert_path = None
     force = False
+    password = False
     verbose = False
     vgrids = []
-    opt_args = 'C:c:d:fhK:m:v'
+    opt_args = 'C:c:d:fhK:m:p:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -127,6 +132,8 @@ if '__main__' == __name__:
             key_path = val
         elif opt == '-m':
             vgrids.append(val)
+        elif opt == '-p':
+            password = val
         elif opt == '-v':
             verbose = True
         else:
@@ -134,7 +141,7 @@ if '__main__' == __name__:
             sys.exit(1)
 
     if not args:
-        print 'Must provide one or more URLs to import from'
+        print 'Must provide one or more URIs to import from'
         usage()
         sys.exit(1)
 
@@ -162,20 +169,47 @@ if '__main__' == __name__:
         fill_user(user_dict)
         client_id = user_dict['distinguished_name']
         csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                 client_id, csrf_limit)
-        user_dict['comment'] = 'imported from external URL'
+                                     client_id, csrf_limit)
+        user_dict['comment'] = 'imported from external URI'
+        if password == keyword_auto:
+            print 'Auto generating password for user: %s' % client_id
+            user_dict['password'] = generate_random_ascii(10,
+                                                          valid_password_chars)
+        elif password:
+            print 'Setting provided password for user: %s' % client_id
+            user_dict['password'] = password
+        else:
+            print 'Setting empty password for user: %s' % client_id
+            user_dict['password'] = ''
+
+        # Encode password if set but not already encoded
+        if user_dict['password']:
+            salt = configuration.site_password_salt
+            try:
+                unscramble_password(salt, user_dict['password'])
+            except TypeError:
+                user_dict['password'] = scramble_password(
+                    salt, user_dict['password'])
+
+        if not user_dict.has_key('expire'):
+            user_dict['expire'] = int(
+                time.time() + cert_valid_days * 24 * 60 * 60)
+
         try:
             create_user(user_dict, conf_path, db_path, force, verbose)
         except Exception, exc:
             print exc
             continue
         print 'Created %s in user database and in file system' % client_id
+        # Needed for CSRF check in safe_handler
+        os.environ.update({'SCRIPT_URL': '%s.py' % target_op,
+                           'REQUEST_METHOD': form_method})
         for name in vgrids:
             request = {'cert_id': client_id, 'vgrid_name': [name],
                        'request_type': ['vgridmember'],
                        'request_text':
                        ['automatic request from importusers script'],
-                       csrf_field: csrf_token}
+                       csrf_field: [csrf_token]}
             (output, status) = main(client_id, request)
             if status == returnvalues.OK:
                 print 'Request for %s membership in %s sent to owners' % \

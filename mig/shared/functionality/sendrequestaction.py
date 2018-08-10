@@ -31,7 +31,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.defaults import default_vgrid, any_vgrid, any_protocol, \
-     email_keyword_list, default_vgrid_settings_limit
+    email_keyword_list, default_vgrid_settings_limit
 from shared.accessrequests import save_access_request
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -40,9 +40,9 @@ from shared.notification import notify_user_thread
 from shared.resource import anon_to_real_res_map, resource_owners
 from shared.user import anon_to_real_user_map
 from shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
-     vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource
+    vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource
 from shared.vgridaccess import get_user_map, get_resource_map, \
-     user_vgrid_access, CONF, OWNERS, USERID
+    user_vgrid_access, CONF, OWNERS, USERID
 
 
 def signature():
@@ -74,7 +74,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -99,14 +99,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-
     valid_request_types = ['resourceowner', 'resourceaccept', 'resourcereject',
-                           'vgridowner', 'vgridmember','vgridresource',
+                           'vgridowner', 'vgridmember', 'vgridresource',
                            'vgridaccept', 'vgridreject', 'plain']
     if not request_type in valid_request_types:
         output_objects.append({
-            'object_type': 'error_text', 'text'
-            : '%s is not a valid request_type (valid types: %s)!'
+            'object_type': 'error_text', 'text':
+            '%s is not a valid request_type (valid types: %s)!'
             % (request_type.lower(),
                valid_request_types)})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -133,7 +132,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             user_id = anon_map[user_id]
         if not user_map.has_key(user_id):
             output_objects.append({'object_type': 'error_text',
-                                   'text': 'No such user: %s' % \
+                                   'text': 'No such user: %s' %
                                    user_id
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
@@ -153,26 +152,26 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if use_any:
             # Do not try disabled protocols if ANY was requested
             if not email_vgrids:
-                protocols = [proto for proto in protocols \
+                protocols = [proto for proto in protocols
                              if proto not in email_keyword_list]
             if not im_vgrids:
-                protocols = [proto for proto in protocols \
+                protocols = [proto for proto in protocols
                              if proto in email_keyword_list]
-        if not email_vgrids and [proto for proto in protocols \
+        if not email_vgrids and [proto for proto in protocols
                                  if proto in email_keyword_list]:
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'You are not allowed to send emails to %s!' % \
+                'object_type': 'error_text', 'text':
+                'You are not allowed to send emails to %s!' %
                 user_id
-                })
+            })
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if not im_vgrids and [proto for proto in protocols \
+        if not im_vgrids and [proto for proto in protocols
                               if proto not in email_keyword_list]:
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'You are not allowed to send instant messages to %s!' % \
+                'object_type': 'error_text', 'text':
+                'You are not allowed to send instant messages to %s!' %
                 user_id
-                })
+            })
             return (output_objects, returnvalues.CLIENT_ERROR)
         for proto in protocols:
             if not user_dict[CONF].get(proto.upper(), False):
@@ -181,15 +180,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     protocols = [i for i in protocols if i != proto]
                 else:
                     output_objects.append({
-                        'object_type': 'error_text', 'text'
-                        : 'User %s does not accept %s messages!' % \
+                        'object_type': 'error_text', 'text':
+                        'User %s does not accept %s messages!' %
                         (user_id, proto)
-                        })
+                    })
                     return (output_objects, returnvalues.CLIENT_ERROR)
         if not protocols:
             output_objects.append({
                 'object_type': 'error_text', 'text':
-                'User %s does not accept requested protocol(s) messages!' % \
+                'User %s does not accept requested protocol(s) messages!' %
                 user_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_list = [user_id]
@@ -202,19 +201,20 @@ CSRF-filtered POST requests to prevent unintended updates'''
             return (output_objects, returnvalues.CLIENT_ERROR)
         if not vgrid_name:
             output_objects.append({
-                'object_type': 'error_text', 'text': 'No vgrid_name specified!'})
+                'object_type': 'error_text', 'text':
+                'No vgrid_name specified!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         if vgrid_name.upper() == default_vgrid.upper():
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'No requests for %s are allowed!' % \
+                'object_type': 'error_text', 'text':
+                'No requests for %s are allowed!' %
                 default_vgrid
-                })
+            })
             return (output_objects, returnvalues.CLIENT_ERROR)
         if not vgrid_is_owner(vgrid_name, client_id, configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'You are not an owner of %s or a parent %s!' % \
+                 'You are not an owner of %s or a parent %s!' %
                  (vgrid_name, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # NOTE: we support exactly one vgrid but multiple users/resources here
@@ -232,7 +232,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 if not load_status:
                     output_objects.append({
                         'object_type': 'error_text', 'text':
-                        'Could not lookup owners of %s!' % \
+                        'Could not lookup owners of %s!' %
                         unique_resource_name})
                     continue
                 logger.info("adding res owners to recipients: %s" % res_owners)
@@ -258,17 +258,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
         res_map = get_resource_map(configuration)
         if not res_map.has_key(unique_resource_name):
             output_objects.append({'object_type': 'error_text',
-                                   'text': 'No such resource: %s' % \
+                                   'text': 'No such resource: %s' %
                                    unique_resource_name
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
         owners_list = res_map[unique_resource_name][OWNERS]
         if not client_id in owners_list:
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'You are not an owner of %s!' % unique_resource_name})
+                'object_type': 'error_text', 'text':
+                'You are not an owner of %s!' % unique_resource_name})
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Invalid resource %s message!' % \
+                                   'Invalid resource %s message!' %
                                    request_type})
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_id = '%s resource owners' % unique_resource_name
@@ -279,7 +279,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 'No resource ID specified!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)        
+            return (output_objects, returnvalues.CLIENT_ERROR)
         # NOTE: we support exactly one resource but multiple users here
         unique_resource_name = visible_res_names[-1].strip()
         anon_map = anon_to_real_res_map(configuration.resource_home)
@@ -289,18 +289,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
         res_map = get_resource_map(configuration)
         if not res_map.has_key(unique_resource_name):
             output_objects.append({'object_type': 'error_text',
-                                   'text': 'No such resource: %s' % \
+                                   'text': 'No such resource: %s' %
                                    unique_resource_name
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_list = res_map[unique_resource_name][OWNERS]
         if client_id in target_list:
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'You are already an owner of %s!' % unique_resource_name
-                })
+                'object_type': 'error_text', 'text':
+                'You are already an owner of %s!' % unique_resource_name
+            })
             return (output_objects, returnvalues.CLIENT_ERROR)
-        
+
         request_dir = os.path.join(configuration.resource_home,
                                    unique_resource_name)
         access_request = {'request_type': request_type, 'entity': client_id,
@@ -308,24 +308,25 @@ CSRF-filtered POST requests to prevent unintended updates'''
                           request_text}
         if not save_access_request(configuration, request_dir, access_request):
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'Could not save request - owners may still manually add you'
-                })
+                'object_type': 'error_text', 'text':
+                'Could not save request - owners may still manually add you'
+            })
             return (output_objects, returnvalues.SYSTEM_ERROR)
     elif request_type in ["vgridmember", "vgridowner", "vgridresource"]:
         if not vgrid_name:
             output_objects.append({
-                'object_type': 'error_text', 'text': 'No vgrid_name specified!'})
+                'object_type': 'error_text', 'text': 'No vgrid_name specified!'
+            })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # default vgrid is read-only
-        
+
         if vgrid_name.upper() == default_vgrid.upper():
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'No requests for %s are not allowed!' % \
+                'object_type': 'error_text', 'text':
+                'No requests for %s are not allowed!' %
                 default_vgrid
-                })
+            })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # stop owner or member request if already an owner
@@ -339,7 +340,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                  configuration):
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'You already have access to %s or a parent %s.' % \
+                     'You already have access to %s or a parent %s.' %
                      (vgrid_name, label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
         else:
@@ -347,7 +348,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if vgrid_is_owner(vgrid_name, client_id, configuration):
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'You are already an owner of %s or a parent %s!' % \
+                     'You are already an owner of %s or a parent %s!' %
                      (vgrid_name, label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -357,7 +358,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if vgrid_is_member(vgrid_name, client_id, configuration):
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'You are already a member of %s or a parent %s.' % \
+                     'You are already a member of %s or a parent %s.' %
                      (vgrid_name, label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -372,7 +373,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             settings_dict = {}
         request_recipients = settings_dict.get('request_recipients',
                                                default_vgrid_settings_limit)
-        # We load and use direct owners first if any - otherwise inherited 
+        # We load and use direct owners first if any - otherwise inherited
         owners_list = []
         for inherited in (False, True):
             (owners_status, owners_list) = vgrid_owners(vgrid_name,
@@ -390,9 +391,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  'Failed to lookup owners for %s %s - sure it exists?'
-                     % (vgrid_name, label)})
+                 % (vgrid_name, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        # Now we have direct or inherited owners to notify 
+        # Now we have direct or inherited owners to notify
         target_list = owners_list[:request_recipients]
 
         request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
@@ -400,14 +401,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
                           'target': vgrid_name, 'request_text': request_text}
         if not save_access_request(configuration, request_dir, access_request):
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'Could not save request - owners may still manually add you'
-                })
+                'object_type': 'error_text', 'text':
+                'Could not save request - owners may still manually add you'
+            })
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        
+
     else:
         output_objects.append({
-            'object_type': 'error_text', 'text': 'Invalid request type: %s' % \
+            'object_type': 'error_text', 'text': 'Invalid request type: %s' %
             request_type})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -421,7 +422,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if not target:
             logger.warning("skipping empty notify target: %s" % target_list)
             continue
-        
+
         # USER_CERT entry is destination
 
         notify = []
@@ -436,15 +437,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger,
             '',
             configuration,
-            )
+        )
 
         # Try finishing delivery but do not block forever on one message
         notifier.join(30)
     output_objects.append({'object_type': 'text', 'text':
-                           'Sent %s message to %d people' % \
+                           'Sent %s message to %d people' %
                            (request_type, len(target_list))})
     output_objects.append({'object_type': 'text', 'text':
                            """Please make sure you have notifications
 configured on your Setings page if you expect a reply to this message"""})
-    
+
     return (output_objects, returnvalues.OK)
