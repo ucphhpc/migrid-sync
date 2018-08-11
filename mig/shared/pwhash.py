@@ -391,3 +391,29 @@ def make_path_hash(configuration, path):
 def generate_random_ascii(count, charset):
     """Generate a string of count random characters from given charset"""
     return ''.join(SystemRandom().choice(charset) for _ in range(count))
+
+
+def generate_random_password(configuration, tries=42):
+    """Generate a password string of random characters from allowed password
+    charset and taking any active password policy in configuration into
+    account.
+    Tries can be used to tune the number of attempts to make sure random
+    selection does not yield too weak a password.
+    """
+    count, classes = parse_password_policy(configuration)
+    # TODO: use the password charset from safeinput instead?
+    charset = lowercase
+    if classes > 1:
+        charset += uppercase
+    if classes > 2:
+        charset += digits
+    if classes > 3:
+        charset += ',.;:+=&%#@£$/?*'
+    for i in xrange(tries):
+        password = generate_random_ascii(count, charset)
+        try:
+            assure_password_strength(configuration, password)
+            return password
+        except ValueError, err:
+            pass
+    raise ValueError("Failed to generate suitable password!")

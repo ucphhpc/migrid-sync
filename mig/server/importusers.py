@@ -40,7 +40,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import csrf_field, keyword_auto, cert_valid_days
 from shared.functionality.sendrequestaction import main
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.pwhash import generate_random_ascii, unscramble_password, \
+from shared.pwhash import generate_random_password, unscramble_password, \
     scramble_password
 from shared.safeinput import valid_password_chars
 from shared.useradm import init_user_adm, default_search, create_user, \
@@ -173,8 +173,7 @@ if '__main__' == __name__:
         user_dict['comment'] = 'imported from external URI'
         if password == keyword_auto:
             print 'Auto generating password for user: %s' % client_id
-            user_dict['password'] = generate_random_ascii(10,
-                                                          valid_password_chars)
+            user_dict['password'] = generate_random_password(configuration)
         elif password:
             print 'Setting provided password for user: %s' % client_id
             user_dict['password'] = password
