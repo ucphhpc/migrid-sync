@@ -400,6 +400,7 @@ def generate_random_password(configuration, tries=42):
     Tries can be used to tune the number of attempts to make sure random
     selection does not yield too weak a password.
     """
+    _logger = configuration.logger
     count, classes = parse_password_policy(configuration)
     # TODO: use the password charset from safeinput instead?
     charset = lowercase
@@ -410,10 +411,14 @@ def generate_random_password(configuration, tries=42):
     if classes > 3:
         charset += ',.;:+=&%#@£$/?*'
     for i in xrange(tries):
+        _logger.debug("make password with %d chars from %s" % (count, charset))
         password = generate_random_ascii(count, charset)
         try:
             assure_password_strength(configuration, password)
             return password
         except ValueError, err:
+            _logger.warning("generated password %s didn't fit policy - retry"
+                            % password)
             pass
+    _logger.error("failed to generate password to fit site policy")
     raise ValueError("Failed to generate suitable password!")

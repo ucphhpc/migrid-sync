@@ -183,12 +183,10 @@ if '__main__' == __name__:
 
         # Encode password if set but not already encoded
         if user_dict['password']:
-            salt = configuration.site_password_salt
-            try:
-                unscramble_password(salt, user_dict['password'])
-            except TypeError:
-                user_dict['password'] = scramble_password(
-                    salt, user_dict['password'])
+            if verbose:
+                print 'Scrambling password for user: %s' % client_id
+            user_dict['password'] = scramble_password(
+                configuration.site_password_salt, user_dict['password'])
 
         if not user_dict.has_key('expire'):
             user_dict['expire'] = int(
