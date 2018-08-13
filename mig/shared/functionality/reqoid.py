@@ -62,7 +62,8 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s OpenID account request' % configuration.short_title
+    title_entry['text'] = '%s OpenID account request' % \
+                          configuration.short_title
     title_entry['skipmenu'] = True
     form_fields = ['full_name', 'organization', 'email', 'country', 'state',
                    'password', 'verifypassword', 'comment']
@@ -97,7 +98,8 @@ def main(client_id, user_arguments_dict):
         extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
         extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
         extcert_link = {'object_type': 'link', 'destination': extcert_url,
-                        'text': 'Sign up with existing certificate (%s)' % client_id}
+                        'text': 'Sign up with existing certificate (%s)' %
+                        client_id}
         output_objects.append({'object_type': 'warning', 'text': '''Apparently
 you already have a suitable %s certificate that you may sign up with:''' %
                                configuration.short_title
@@ -182,7 +184,7 @@ Email data that we can easily validate!
   <div id='full_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
   <div id='organization_help'>Organization name or acronym  matching email</div>
   <div id='email_help'>Email address associated with your organization if at all possible</div>
-  <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
+  <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='https://en.wikipedia.org/wiki/ISO_3166-1'>help</a></div>
   <div id='state_help'>Optional 2-letter ANSI state code of your organization, please just leave empty unless it is in the US or similar, <a href='https://en.wikipedia.org/wiki/List_of_U.S._state_abbreviations'>help</a></div>
   <div id='password_help'>Password is restricted to the characters in '%(valid_password_chars)s and must be %(password_min_len)s to %(password_max_len)s characters long'</div>
   <div id='verifypassword_help'>Please repeat password</div>

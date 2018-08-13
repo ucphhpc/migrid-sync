@@ -60,55 +60,56 @@ def main(client_id, user_arguments_dict):
         configuration,
         allow_rejects=False,
         require_user=False
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s certificate account sign up' % configuration.short_title
+    title_entry['text'] = '%s certificate account sign up' % \
+                          configuration.short_title
     title_entry['skipmenu'] = True
-    form_fields = ['cert_id', 'cert_name', 'organization', 'email', 'country', 'state',
-                   'comment']
+    form_fields = ['cert_id', 'cert_name', 'organization', 'email', 'country',
+                   'state', 'comment']
     title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = account_js_helpers(form_fields)
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
+                           'text': '''
  <div id="contextual_help">
   <div class="help_gfx_bubble"><!-- graphically connect field with help text--></div>
   <div class="help_message"><!-- filled by js --></div>
  </div>
-'''                       })
-    header_entry = {'object_type': 'header', 'text'
-                    : 'Welcome to the %s certificate account sign up page' % \
+'''})
+    header_entry = {'object_type': 'header', 'text':
+                    'Welcome to the %s certificate account sign up page' %
                     configuration.short_title}
     output_objects.append(header_entry)
-    
+
     # Redirect to reqcert page without certificate requirement but without
     # changing access method (CGI vs. WSGI).
-    
+
     certreq_url = os.environ['REQUEST_URI'].replace('-bin', '-sid')
     certreq_url = os.path.join(os.path.dirname(certreq_url), 'reqcert.py')
     certreq_link = {'object_type': 'link', 'destination': certreq_url,
-                    'text': 'Request a new %s certificate account' % \
-                            configuration.short_title }
+                    'text': 'Request a new %s certificate account' %
+                            configuration.short_title}
     new_user = distinguished_name_to_user(client_id)
 
     # If cert auto create is on, add user without admin interaction
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'valid_name_chars': valid_name_chars,
-                     'client_id': client_id,
-                     'dn_max_len': dn_max_len,
-                     'common_name': new_user.get('full_name', ''),
-                     'org': new_user.get('organization', ''),
-                     'email': new_user.get('email', ''),
-                     'state': new_user.get('state', ''),
-                     'country': new_user.get('country', ''),
-                     'site': configuration.short_title,
-                     'form_method': form_method,
-                     'csrf_field': csrf_field,
-                     'csrf_limit': csrf_limit}
+    fill_helpers = {'valid_name_chars': valid_name_chars,
+                    'client_id': client_id,
+                    'dn_max_len': dn_max_len,
+                    'common_name': new_user.get('full_name', ''),
+                    'org': new_user.get('organization', ''),
+                    'email': new_user.get('email', ''),
+                    'state': new_user.get('state', ''),
+                    'country': new_user.get('country', ''),
+                    'site': configuration.short_title,
+                    'form_method': form_method,
+                    'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
     if configuration.auto_add_cert_user == False:
         target_op = 'extcertaction'
     else:
@@ -118,12 +119,19 @@ def main(client_id, user_arguments_dict):
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
 
-    output_objects.append({'object_type': 'html_form', 'text': """
-This page is used to sign up for %(site)s with an existing certificate from a Certificate Authority (CA) allowed for %(site)s.
-You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for %(site)s access instead of requesting a new one.
+    output_objects.append({'object_type': 'html_form', 'text': """This page is
+used to sign up for %(site)s with an existing certificate from a Certificate
+Authority (CA) allowed for %(site)s.
+You can use it if you already have a x509 certificate from another accepted CA.
+In this way you can simply use your existing certificate for %(site)s access
+instead of requesting a new one.
 <br />
-The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those.<br />
-Please enter any missing information below and press the Send button to submit the external certificate sign up request to the %(site)s administrators.
+The page tries to auto load any certificate your browser provides and fill in
+the fields accordingly, but in case it can't guess all
+<span class=mandatory>mandatory</span> fields, you still need to fill in
+those.<br />
+Please enter any missing information below and press the Send button to submit
+the external certificate sign up request to the %(site)s administrators.
 <p class='criticaltext highlight_message'>
 IMPORTANT: Please help us verify your identity by providing Organization and
 Email data that we can easily validate!
@@ -157,7 +165,7 @@ Email data that we can easily validate!
   <div id='cert_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
   <div id='organization_help'>Organization name or acronym  matching email</div>
   <div id='email_help'>Email address associated with your organization if at all possible</div>
-  <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
+  <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='https://en.wikipedia.org/wiki/ISO_3166-1'>help</a></div>
   <div id='state_help'>Optional 2-letter ANSI state code of your organization, please just leave empty unless it is in the US or similar, <a href='https://en.wikipedia.org/wiki/List_of_U.S._state_abbreviations'>help</a></div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
 </div>

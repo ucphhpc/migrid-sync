@@ -93,7 +93,8 @@ def parse_contents(user_data):
     """
 
     users = []
-    for user_creds in re.findall('/[a-zA-Z]+=[^<]+', user_data):
+    for user_creds in re.findall('/[a-zA-Z]+=[^<\n]+', user_data):
+        #print "DEBUG: handling user %s" % user_creds
         user_dict = distinguished_name_to_user(user_creds.strip())
         users.append(user_dict)
     return users
