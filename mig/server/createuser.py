@@ -223,7 +223,7 @@ if '__main__' == __name__:
     except Exception, exc:
         print exc
         sys.exit(1)
-    print 'Created or updated  %s in user database and in file system' % \
+    print 'Created or updated %s in user database and in file system' % \
           user_dict['distinguished_name']
     if user_file:
         if verbose:

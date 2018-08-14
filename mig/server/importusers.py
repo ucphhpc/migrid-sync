@@ -40,6 +40,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import csrf_field, keyword_auto, cert_valid_days
 from shared.functionality.sendrequestaction import main
 from shared.handlers import get_csrf_limit, make_csrf_token
+from shared.output import format_output
 from shared.pwhash import generate_random_password, unscramble_password, \
     scramble_password
 from shared.safeinput import valid_password_chars
@@ -94,7 +95,7 @@ def parse_contents(user_data):
 
     users = []
     for user_creds in re.findall('/[a-zA-Z]+=[^<\n]+', user_data):
-        #print "DEBUG: handling user %s" % user_creds
+        # print "DEBUG: handling user %s" % user_creds
         user_dict = distinguished_name_to_user(user_creds.strip())
         users.append(user_dict)
     return users
@@ -203,17 +204,29 @@ if '__main__' == __name__:
         os.environ.update({'SCRIPT_URL': '%s.py' % target_op,
                            'REQUEST_METHOD': form_method})
         for name in vgrids:
-            request = {'cert_id': client_id, 'vgrid_name': [name],
-                       'request_type': ['vgridmember'],
+            request = {'vgrid_name': [name], 'request_type': ['vgridmember'],
                        'request_text':
                        ['automatic request from importusers script'],
                        csrf_field: [csrf_token]}
-            (output, status) = main(client_id, request)
+            (output_objs, status) = main(client_id, request)
             if status == returnvalues.OK:
                 print 'Request for %s membership in %s sent to owners' % \
                       (client_id, name)
             else:
-                print 'Request for %s membership in %s failed: %s' % \
-                      (name, client_id, output)
+                print 'Request for %s membership in %s with %s failed:' % \
+                      (client_id, name, request)
+                output_format = 'text'
+                (ret_code, ret_msg) = status
+                output = format_output(configuration, ret_code,
+                                       ret_msg, output_objs, output_format)
+
+                # Explicit None means error during output formatting
+
+                if output is None:
+                    print "ERROR: %s output formatting failed: %s" % \
+                          (output_format, output_objs)
+                    output = 'Error: output could not be correctly delivered!'
+                else:
+                    print output
 
     print '%d new users imported' % len(new_users)
