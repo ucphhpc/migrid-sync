@@ -62,8 +62,9 @@ from grid_sftp import SimpleSftpServer as SftpServerImpl
 
 class IOSocketAdapter(object):
     """Adapt stdout and stdin to the usual socket API"""
+
     def __init__(self, stdin, stdout):
-        self._stdin  = stdin
+        self._stdin = stdin
         self._stdout = stdout
         self._transport = None
 
@@ -106,9 +107,7 @@ def start_server(params):
     os.putenv('MIG_CONF', conf_path)
     # Force no log init since we use separate logger
     configuration = get_configuration_object(skip_log=True)
-    # TODO: lower default log verbosity when ready for production use
-    #log_level = configuration.loglevel
-    log_level = 'debug'
+    log_level = configuration.loglevel
     if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
         log_level = sys.argv[1]
     # Use separate logger
@@ -140,7 +139,7 @@ def start_server(params):
         'time_stamp': 0,
         'logger': logger,
         'stop_running': threading.Event(),
-        }
+    }
 
     try:
         logger.info('Create socket adaptor')
@@ -158,7 +157,7 @@ def start_server(params):
         sftp_server.start()
     except Exception, exc:
         logger.error('Failed to run sftp server: %s' % exc)
-        
 
-if __name__ == '__main__':    
+
+if __name__ == '__main__':
     start_server(sys.argv)
