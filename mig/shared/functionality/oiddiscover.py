@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oiddiscover - discover valid openid relying party endpoints for this realm
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,6 +41,8 @@ import tempfile
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input
 from shared.init import initialize_main_variables, find_entry
+from shared.httpsclient import generate_openid_discovery_doc
+
 
 def signature():
     """Signature of the main function"""
@@ -55,13 +57,14 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     logger = configuration.logger
-    logger.info('oiddiscover: %s' % user_arguments_dict)    
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'OpenID Discovery for %s' % \
+    logger.info('oiddiscover: %s' % user_arguments_dict)
+    output_objects.append({'object_type': 'header', 'text':
+                           'OpenID Discovery for %s' %
                            configuration.short_title})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -70,68 +73,12 @@ def main(client_id, user_arguments_dict):
     if not user_arguments_dict.get('output_format', []):
         user_arguments_dict['output_format'] = ['file']
 
-    discovery_doc = '''<?xml version="1.0" encoding="UTF-8"?>
-<xrds:XRDS
-    xmlns:xrds="xri://$xrds"
-    xmlns:openid="http://openid.net/xmlns/1.0"
-    xmlns="xri://$xrd*($v*2.0)">
-    <XRD>
-        <Service priority="1">
-            <Type>http://specs.openid.net/auth/2.0/return_to</Type>
-            %s
-        </Service>
-    </XRD>
-</xrds:XRDS>
-'''
-
-    if configuration.site_enable_openid:
-        sid_url = configuration.migserver_https_sid_url
-        migoid_url = configuration.migserver_https_mig_oid_url
-        extoid_url = configuration.migserver_https_ext_oid_url
-        helper_urls = {
-            'migoid_entry_url': os.path.join(migoid_url),
-            'migoid_signup_url': os.path.join(sid_url, 'cgi-sid', 'signup.py'),
-            'migoid_login_url': os.path.join(sid_url, 'cgi-sid', 'login.py'),
-            # NOTE: we reuse cert req to create account for now
-            'migoid_create_url': os.path.join(sid_url, 'cgi-sid',
-                                              'reqcert.py'),
-            'migoid_dash_url': os.path.join(migoid_url, 'wsgi-bin',
-                                            'dashboard.py'),
-            'migoid_files_url': os.path.join(migoid_url, 'wsgi-bin',
-                                             'fileman.py'),
-            'extoid_entry_url': os.path.join(extoid_url),
-            'extoid_signup_url': os.path.join(sid_url, 'cgi-sid', 'signup.py'),
-            'extoid_login_url': os.path.join(sid_url, 'cgi-sid', 'login.py'),
-            # NOTE: autocreate with credentials from external OpenID provider
-            'extoid_create_url': os.path.join(extoid_url, 'wsgi-bin',
-                                              'autocreate.py'),
-            'extoid_dash_url': os.path.join(extoid_url, 'wsgi-bin',
-                                            'dashboard.py'),
-            'extoid_files_url': os.path.join(extoid_url, 'wsgi-bin',
-                                             'fileman.py')}
-        discovery_uris = '''<URI>%(extoid_entry_url)s</URI>
-            <URI>%(extoid_signup_url)s</URI>
-            <URI>%(extoid_login_url)s</URI>
-            <URI>%(extoid_create_url)s</URI>
-            <URI>%(extoid_dash_url)s</URI>
-            <URI>%(extoid_files_url)s</URI>
-            <URI>%(migoid_entry_url)s</URI>
-            <URI>%(migoid_signup_url)s</URI>
-            <URI>%(migoid_login_url)s</URI>
-            <URI>%(migoid_create_url)s</URI>
-            <URI>%(migoid_dash_url)s</URI>
-            <URI>%(migoid_files_url)s</URI>
-''' % helper_urls
-    else:
-        discovery_uris = ''
-
+    discovery_doc = generate_openid_discovery_doc(configuration)
     output_objects.append({'object_type': 'text', 'text':
                            'Advertising valid OpenID endpoints:'})
-
-    discovery_doc = discovery_doc % discovery_uris
-    # make sure we always have at least one output_format entry 
+    # make sure we always have at least one output_format entry
     output_format = user_arguments_dict.get('output_format', []) + ['file']
-    if  output_format[0] == 'file':
+    if output_format[0] == 'file':
         headers = [('Content-Type', 'application/xrds+xml'),
                    ('Content-Disposition', 'attachment; filename=oid.xrds'),
                    ('Content-Length', '%s' % len(discovery_doc))]

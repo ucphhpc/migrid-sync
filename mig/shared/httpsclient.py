@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 
 """Common HTTPS client functions for e.g. access control"""
 
+import os
 import socket
 from urllib import urlencode
 from urlparse import parse_qsl
@@ -170,3 +171,80 @@ def check_source_ip(remote_ip, unique_resource_name, proxy_fqdn=None):
     if not remote_ip in res_ip_list + proxy_ip_list:
         raise ValueError("Source IP address %s not in resource alias IPs %s"
                          % (remote_ip, ', '.join(res_ip_list + proxy_ip_list)))
+
+
+def generate_openid_discovery_doc(configuration):
+    """Prepare XML with OpenID discovery information for the OpenID 2.0 relying
+    party verification mechanism.
+    Returns empty string if no OpenID is enabled and otherwise points to valid
+    entry points with OpenID. The set of URLs depend on the availability of
+    migoid and extoid provider as well as whether site runs gdp.
+    """
+    discovery_doc = ''
+    if not configuration.user_openid_providers:
+        return discovery_doc
+
+    sid_url = configuration.migserver_https_sid_url
+    migoid_url = configuration.migserver_https_mig_oid_url
+    extoid_url = configuration.migserver_https_ext_oid_url
+    cgibin, wsgibin, cgisid = 'cgi-bin', 'wsgi-bin', 'cgi-sid'
+    urls = []
+    if migoid_url:
+        urls.append(migoid_url)
+        # NOTE: copy entries to avoid changing menu
+        entry_pages = [i for i in configuration.site_default_menu]
+        # NOTE: GDP has separate landing page
+        if configuration.site_enable_gdp:
+            entry_pages.append('gdpman')
+        for page in entry_pages:
+            urls.append(os.path.join(migoid_url, cgibin, '%s.py' % page))
+            if configuration.site_enable_wsgi:
+                urls.append(os.path.join(migoid_url, wsgibin, '%s.py' % page))
+    if extoid_url:
+        urls.append(extoid_url)
+        # NOTE: copy entries to avoid changing menu
+        entry_pages = [i for i in configuration.site_default_menu]
+        # NOTE: autocreate with credentials from external OpenID provider
+        if configuration.auto_add_oid_user:
+            entry_pages.append('autocreate')
+        # NOTE: we let ext users request migoid with authentication and fill
+        if migoid_url:
+            entry_pages.append('reqoid')
+        # NOTE: GDP has separate landing page
+        if configuration.site_enable_gdp:
+            entry_pages.append('gdpman')
+        for page in entry_pages:
+            urls.append(os.path.join(extoid_url, cgibin, '%s.py' % page))
+            if configuration.site_enable_wsgi:
+                urls.append(os.path.join(extoid_url, wsgibin, '%s.py' % page))
+    if sid_url:
+        entry_pages = ['signup', 'login']
+        # NOTE: we reuse cert req to create migoid account for now
+        entry_pages.append('reqcert')
+        for page in entry_pages:
+            urls.append(os.path.join(sid_url, cgisid, '%s.py' % page))
+
+    discovery_doc = '''<?xml version="1.0" encoding="UTF-8"?>
+<xrds:XRDS
+    xmlns:xrds="xri://$xrds"
+    xmlns:openid="http://openid.net/xmlns/1.0"
+    xmlns="xri://$xrd*($v*2.0)">
+    <XRD>
+        <Service priority="1">
+            <Type>http://specs.openid.net/auth/2.0/return_to</Type>
+%s
+        </Service>
+    </XRD>
+</xrds:XRDS>
+''' % '\n'.join(['            <URI>%s</URI>' % i for i in urls])
+    return discovery_doc
+
+
+if __name__ == "__main__":
+    from shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    print """OpenID discovery infomation XML which may be pasted into
+state/wwwpublic/oiddiscover.xml if site uses OpenId but doesn't enable the
+SID vhost:
+"""
+    print generate_openid_discovery_doc(conf)
