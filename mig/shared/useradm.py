@@ -45,7 +45,7 @@ from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
-    davs_conf_dir
+    davs_conf_dir, webaccess_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
@@ -61,6 +61,7 @@ from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
 from shared.vgridaccess import get_resource_map, get_vgrid_map, \
     refresh_user_map, refresh_resource_map, refresh_vgrid_map, VGRIDS, \
     OWNERS, MEMBERS
+from shared.webaccesskeywords import get_webaccess_specs
 
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
@@ -1432,8 +1433,8 @@ def user_migoid_intro(user_id, targets, conf_path, db_path, verbose=False):
 def user_password_check(user_id, conf_path, db_path, verbose=False,
                         override_policy=None):
     """Check password policy compliance for user_id. If the optional
-    is left unset the configuration policy value will be used otherwise the
-    given value is used"""
+    override_policy is left unset the configuration policy value will be used
+    otherwise the given value is used"""
 
     errors = []
     if conf_path:
@@ -1501,8 +1502,8 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
 def req_password_check(req_path, conf_path, db_path, verbose=False,
                        override_policy=None):
     """Check password policy compliance for request in req_path. If the optional
-    is left unset the configuration policy value will be used otherwise the
-    given value is used"""
+    override_policy is left unset the configuration policy value will be used
+    otherwise the given value is used"""
 
     errors = []
     if conf_path:
@@ -1533,6 +1534,56 @@ def req_password_check(req_path, conf_path, db_path, verbose=False,
     except Exception, exc:
         errors.append('password for %s does not satisfy local policy: %s'
                       % (user_id, exc))
+    return (configuration, errors)
+
+
+def user_twofactor_status(user_id, conf_path, db_path, fields, verbose=False):
+    """Check twofactor status for user_id"""
+
+    errors = []
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+    try:
+        user_db = load_user_db(db_path)
+        if verbose:
+            print 'Loaded existing user DB from: %s' % db_path
+    except Exception, err:
+        err_msg = 'Failed to load user DB: %s' % err
+        if verbose:
+            print err_msg
+        _logger.error(err_msg)
+        return []
+
+    if not user_db.has_key(user_id):
+        errors.append('No such user: %s' % user_id)
+        return (configuration, errors)
+
+    client_dir = client_id_dir(user_id)
+    webaccess_path = os.path.join(configuration.user_settings, client_dir,
+                                  webaccess_filename)
+    if verbose:
+        print "inspecting %s" % webaccess_path
+    webaccess_dict = None
+    try:
+        webaccess_dict = load(webaccess_path)
+    except Exception, err:
+        err_msg = 'Failed to load webaccess for %s: %s' % (user_id, err)
+        if verbose:
+            print err_msg
+
+    if not webaccess_dict:
+        errors.append('No webaccess settings saved for %s' % user_id)
+        return (configuration, errors)
+    if keyword_auto in fields:
+        fields = [pair[0] for pair in get_webaccess_specs(configuration)]
+    for key in fields:
+        if not webaccess_dict.get(key, False):
+            errors.append('%s not enabled for: %s' % (key, user_id))
+        elif verbose:
+            print "%s enabled for %s" % (key, user_id)
     return (configuration, errors)
 
 
