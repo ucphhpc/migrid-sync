@@ -603,20 +603,20 @@ def fancy_upload_html(configuration):
                 <button type='button' class='delete'>Delete</button>
                 <input type='checkbox' class='toggle'>
                 <!-- The global file processing state -->
-                <span class='fileupload-process'></span>
+                <span class='fileupload-process'><!-- dynamic --></span>
             </div>
             <!-- The global progress state -->
             <div class='fileupload-progress fade' style='display:none'>
                 <!-- The global progress bar -->
                 <div class='progress' role='progressbar' aria-valuemin='0'
-                    aria-valuemax='100'></div>
+                    aria-valuemax='100'><!-- dynamic --></div>
                 <!-- The extended global progress state -->
                 <div class='progress-extended'>&nbsp;</div>
             </div>
         </div>
         <!-- The table listing the files available for upload/download -->
         <table role='presentation' class='table table-striped'>
-        <tbody class='uploadfileslist'></tbody></table>
+        <tbody class='uploadfileslist'><!-- dynamic --></tbody></table>
     </form>
     <!-- For status and error output messages -->
     <div id='fancyuploadchunked_output'></div>

@@ -73,8 +73,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     <div id="fm_debug"></div>
     <div id="fm_filemanager">
         <div class="fm_path_breadcrumbs">
-            <ul id="fm_xbreadcrumbs" class="xbreadcrumbs">
-            </ul>
+            <ul id="fm_xbreadcrumbs" class="xbreadcrumbs"><!-- dynamic --></ul>
         </div>
         <div class="fm_buttonbar">
             <ul id="fm_buttons" class="buttonbar">
@@ -168,7 +167,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                         <button type="button" class="delete">Delete</button>
                         <input type="checkbox" class="toggle">
                         <!-- The global file processing state -->
-                        <span class="fileupload-process"></span>
+                        <span class="fileupload-process"><!-- dynamic --></span>
                     </div>
                     <!-- The global progress state -->
                     <div class="fileupload-progress fade" style="display:none">
@@ -180,10 +179,10 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                 </div>
                 <!-- The table listing the files available for upload/download -->
                 <table role="presentation" class="table table-striped"><tbody class="uploadfileslist">
-                </tbody></table>
+                <!-- dynamic --></tbody></table>
             </form>
             <!-- For status and error output messages -->
-            <div id="fancyuploadchunked_output"></div>
+            <div id="fancyuploadchunked_output"><!-- dynamic --></div>
         </div>'''
     if not configuration.site_enable_gdp:
         html += '''
@@ -210,12 +209,11 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                     <input type="submit" value="Upload" onClick="$(\'#upload_output\').html(\'<div><span class=\\\'iconleftpad info spinner\\\'>uploading ... please wait</span></div>\')" />
                 </fieldset>
             </form>
-            <div id="upload_output"></div>
-        </div>
-      </div>'''
+            <div id="upload_output"><!-- dynamic --></div>
+        </div>'''
     html += '''
-    </div>
-    
+      </div>
+    </div>    
     <div id="mkdir_dialog" title="Create New Folder" style="display: none;">
     
         <form id="mkdir_form" method="post" action="mkdir.py">
@@ -227,7 +225,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
             <input id="path" class="singlefield" type="text" name="path" size=50 />            
         </fieldset>
         </form>
-        <div id="mkdir_output"></div>
+        <div id="mkdir_output"><!-- dynamic --></div>
     </div>
     
     <div id="rename_dialog" title="Rename" style="display: none;">
@@ -243,7 +241,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <input id="name" class="singlefield" type="text" name="name" size=50 value="" />
     </fieldset>
     </form>
-    <div id="rename_output"></div>
+    <div id="rename_output"><!-- dynamic --></div>
     </div>
 
     <div id="chksum_dialog" title="Checksum" style="display: none;">
@@ -276,7 +274,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     <br />
     </p>
     </form>
-    <div id="chksum_output"></div>
+    <div id="chksum_output"><!-- dynamic --></div>
     </div>
 
     <div id="pack_dialog" title="Pack" style="display: none;">
@@ -297,7 +295,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     Use .e.g. <em>.zip</em> for a zip archive or <em>.tgz</em> for compressed tarball.
     </p>
     </form>
-    <div id="pack_output"></div>
+    <div id="pack_output"><!-- dynamic --></div>
     </div>
 
     <div id="unpack_dialog" title="Unpack" style="display: none;">
@@ -313,7 +311,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <input id="dst" class="singlefield" type="text" name="dst" size=50  value="" />
     </fieldset>
     </form>
-    <div id="unpack_output"></div>
+    <div id="unpack_output"><!-- dynamic --></div>
     </div>
 
     <div id="grep_dialog" title="Text search in file" style="display: none;">
@@ -328,13 +326,13 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
             <input id="pattern" class="singlefield" type="text" name="pattern" size=50 />
         </fieldset>
         </form>
-        <div id="grep_output"></div>
+        <div id="grep_output"><!-- dynamic --></div>
     </div>
     
     <div id="sharelink_dialog" title="Create Share Link"
         style="display: none;">
     %(sharelink_form)s
-    <div id="sharelink_output"></div>
+    <div id="sharelink_output"><!-- dynamic --></div>
     </div>
 
     <div id="imagesettings_dialog" title="Image Settings" style="display: none;">
@@ -439,7 +437,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         </form>                
     </div>
     </fieldset>
-    <div id="imagesettings_output"></div>
+    <div id="imagesettings_output"><!-- dynamic --></div>
     </div>
     ''' % fill_entries
     html += '''
@@ -449,7 +447,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 ''' % edit_file(configuration, client_id, '', '', output_format='json',
                 includes=edit_includes)
     html += '''
-    <div id="editor_output"></div>
+    <div id="editor_output"><!-- dynamic --></div>
     </div>
     '''
     return html

@@ -1858,7 +1858,7 @@ if (jQuery) (function($){
                             /* add or update existing filespacer */
                             if ($(".fm_files div.filespacer").length === 0) {
                                 //console.debug("add filespacer");
-                                $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path=""></div>');
+                                $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path=""><!-- spacer --></div>');
                             }
 
                             if (t !== '/') {
