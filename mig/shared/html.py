@@ -625,6 +625,137 @@ def fancy_upload_html(configuration):
     return html
 
 
+def twofactor_wizard_js(configuration):
+    """Build standard twofactor wizard dependency imports, init and ready
+    snippets.
+    """
+    add_import = '''
+<!-- for 2FA QR codes -->
+<script type="text/javascript" src="/images/js/qrious.js"></script>
+'''
+    add_init = '''
+    var toggleHidden = function(classname) {
+        // classname supposed to have a leading dot
+        $(classname).toggleClass("hidden");
+    }
+
+    var okDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
+                    width: "800px", autoOpen: false, closeOnEscape: true,
+                    modal: true};
+    var okOTPDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
+                       width: "500px", autoOpen: false, closeOnEscape: true,
+                       modal: true};
+
+    function switchOTPState(current, next) {
+        $("."+current+".switch_button").hide();
+        $("."+next).show();
+    }
+    /* Fast-forward through OTP states like user clicks would do */
+    function setOTPProgress(states) {
+        var i;
+        for (i=0; i < states.length-1; i++) {
+            switchOTPState(states[i], states[i+1]);
+        }
+    }
+    function showQRCodeOTPDialog(elem_id, otp_uri) {
+          // init OTP dialog for QR code
+          $("#"+elem_id).dialog(okOTPDialog);
+          $("#"+elem_id).dialog("open");
+          $("#"+elem_id).html("<canvas id=\'otp_qr\'><!-- filled by script --></canvas>");
+          var qr = new QRious({
+                               element: document.getElementById("otp_qr"),
+                               value: otp_uri,
+                               size: 200
+                               });
+    }
+    function showTextOTPDialog(elem_id, otp_key) {
+          // init OTP dialog for text key
+          $("#"+elem_id).dialog(okOTPDialog);
+          $("#"+elem_id).dialog("open");
+          $("#"+elem_id).html("<span id=\'otp_text\'>"+otp_key+"</span>");
+    }
+'''
+    add_ready = ''
+    return (add_import, add_init, add_ready)
+
+
+def twofactor_wizard_html(configuration):
+    """Build standard html twofactor wizard table content"""
+    html = """
+<tr class='otp_intro'><td>
+We %(demand_twofactor)s 2-factor authentication on %(site)s for greater
+password login security.
+In short it means that you enter a generated single-use <em>token</em> from
+e.g. your phone or tablet along with your usual login. This combination makes
+account abuse <b>much</b> harder, because even if your password gets stolen,
+it can't be used without your device.<br/>
+
+Preparing and enabling 2-factor authentication for your login is done in four
+steps.
+</td></tr>
+<tr class='otp_intro switch_button'><td>
+<button type=button class='ui-button'
+  onClick='switchOTPState(\"otp_intro\", \"otp_install\");'>
+Okay, let's go!</button>
+</td></tr>
+<tr class='otp_install hidden'><td>
+<h5>1. Install an Authenticator App</h5>
+You first need to install a TOTP authenticator client like
+<a href='https://en.wikipedia.org/wiki/Google_Authenticator'>
+Google Authenticator</a>, <a href='https://freeotp.github.io/'>FreeOTP</a> or
+<a href='https://authy.com/download/'>Authy</a> on your phone or tablet. You
+can find them in your usual app store.<br/>
+</td></tr>
+<tr class='otp_install switch_button hidden'><td>
+<button type=button class='ui-button'
+  onClick='switchOTPState(\"otp_install\", \"otp_import\");'>
+I've got it installed!</button>
+</td></tr>
+<tr class='otp_import hidden'><td>
+<h5>2. Import Secret in Authenticator App</h5>
+Open the chosen authenticator app and import your secret 2-factor key either
+by simply scanning your personal
+<span id='otp_qr_link' class='fakelink infolink'
+  onClick='showQRCodeOTPDialog(\"otp_dialog\", \"%(otp_uri)s\");'>
+QR code</span> or by manually entering the
+<span id='otp_key_link' class='fakelink infolink'
+  onClick='showTextOTPDialog(\"otp_dialog\", \"%(b32_key)s\");'>
+key</span> if your app or device doesn't support scanning QR codes.
+</td></tr>
+<tr class='otp_import switch_button hidden'><td>
+<button type=button class='ui-button'
+  onClick='switchOTPState(\"otp_import\", \"otp_verify\");'>
+Yes, I've imported it!</button>
+</td></tr>
+<tr class='otp_verify hidden'><td>
+<h5>3. Verify the Authenticator App Setup</h5>
+Before you actually enable 2-factor authentication you should verify that your
+authenticator app displays new tokens every 30 seconds <em>and</em> that they
+are <a href='%(check_url)s' target='_blank'>correct</a>. Otherwise you might
+end up locking yourself out once you enable 2-factor authentication.<br/>
+</td></tr>
+<tr class='otp_verify switch_button hidden'><td>
+<button type=button class='ui-button'
+  onClick='switchOTPState(\"otp_verify\", \"otp_ready\");'>
+It works!</button>
+</td></tr>
+<tr class='otp_ready hidden'><td>
+<h5>4. Enable 2-Factor Authentication</h5>
+Once you've followed the three steps above and verified your authenticator
+app, you can proceed to enable it for login below.<br/>
+Afterwards you can simply logout and login again to verify that a token is
+requested right after your usual %(site)s login.
+</td></tr>
+<tr class='otp_ready hidden'><td>
+<p class='warningtext'>SECURITY NOTE: please immediately contact the %(site)s admins to
+reset your secret 2-factor authentication key if you ever loose a device with
+it installed or otherwise suspect someone may have gained access to it.
+</p>
+</td></tr>
+"""
+    return html
+
+
 def get_cgi_html_preamble(
     configuration,
     title,

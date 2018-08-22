@@ -36,7 +36,7 @@ try:
 except ImportError:
     pyotp = None
 
-from shared.base import client_id_dir
+from shared.base import client_id_dir, extract_field, force_utf8
 from shared.defaults import twofactor_key_name, twofactor_key_bytes
 from shared.fileio import read_file, delete_file
 from shared.pwhash import scramble_password, unscramble_password
@@ -84,6 +84,51 @@ def load_twofactor_key(client_id, configuration, allow_missing=True):
         if not allow_missing:
             _logger.error("load 2FA key failed: %s" % exc)
     return b32_key
+
+
+def get_twofactor_secrets(configuration, client_id):
+    """Load twofactor bsae32 key and OTP uri for QR code. Generates secret for
+    user if not already done. Actual twofactor login requirement is not
+    enabled here, however.
+    """
+    _logger = configuration.logger
+    if pyotp is None:
+        _logger.error("The pyotp module is missing and required for 2FA!")
+        return ('', '')
+
+    # NOTE: 2FA secret key is a standalone file in user settings dir
+    #       Try to load existing and generate new one if not there.
+    #       We need the base32-encoded form as returned here.
+    b32_key = load_twofactor_key(client_id, configuration)
+    if not b32_key:
+        b32_key = reset_twofactor_key(client_id, configuration)
+
+    # URI-format for otp auth is
+    # otpauth://<otptype>/(<issuer>:)<accountnospaces>?
+    #         secret=<secret>(&issuer=<issuer>)(&image=<imageuri>)
+    # which we pull out of pyotp directly.
+    # We could display with Google Charts helper like this example
+    # https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&
+    #       chl=otpauth://totp/Example:alice@google.com?
+    #       secret=JBSWY3DPEHPK3PXP&issuer=Example
+    # but we prefer to use the QRious JS library to keep it local.
+    if configuration.user_openid_alias:
+        username = extract_field(
+            client_id, configuration.user_openid_alias)
+    else:
+        username = client_id
+    otp_uri = pyotp.totp.TOTP(b32_key).provisioning_uri(
+        username, issuer_name=configuration.short_title)
+    # IMPORTANT: pyotp unicode breaks wsgi when inserted - force utf8!
+    otp_uri = force_utf8(otp_uri)
+
+    # Google img examle
+    # img_url = 'https://www.google.com/chart?'
+    # img_url += urllib.urlencode([('cht', 'qr'), ('chld', 'M|0'),
+    #                             ('chs', '200x200'), ('chl', otp_uri)])
+    # otp_img = '<img src="%s" />' % img_url
+
+    return (b32_key, otp_uri)
 
 
 def expire_twofactor_session(configuration, client_id, environ, allow_missing=False):

@@ -31,16 +31,9 @@ import base64
 import os
 import urllib
 
-# Only needed for 2FA so ignore import error and only fail on use
-try:
-    import pyotp
-except ImportError:
-    pyotp = None
-
 import shared.returnvalues as returnvalues
-from shared.auth import load_twofactor_key, reset_twofactor_key
-from shared.base import client_alias, client_id_dir, extract_field, \
-    force_utf8, get_xgi_bin
+from shared.auth import get_twofactor_secrets
+from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin
 from shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
@@ -51,7 +44,8 @@ from shared.functional import validate_input_and_cert
 from shared.gdp import get_client_id_from_project_client_id
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-    themed_styles, console_log_javascript
+    themed_styles, console_log_javascript, twofactor_wizard_html, \
+    twofactor_wizard_js
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, \
@@ -126,6 +120,7 @@ def main(client_id, user_arguments_dict):
     # jquery support for toggling views and popup dialog
 
     (add_import, add_init, add_ready) = man_base_js(configuration, [])
+    (tfa_import, tfa_init, tfa_ready) = twofactor_wizard_js(configuration)
     title_entry['style'] = themed_styles(configuration)
     # prepare support for toggling the views (by css/jquery)
     title_entry['style']['skin'] += '''
@@ -138,10 +133,8 @@ def main(client_id, user_arguments_dict):
 
 %s
 
-<!-- for 2FA QR codes -->
-<script type="text/javascript" src="/images/js/qrious.js"></script>
-
-    ''' % (cm_javascript, console_log_javascript())
+%s
+    ''' % (cm_javascript, console_log_javascript(), tfa_import)
     add_init += '''
     /* prepare global logging from console_log_javascript */
     try {
@@ -151,47 +144,8 @@ def main(client_id, user_arguments_dict):
         alert("error: "+err);
     }
 
-    var toggleHidden = function(classname) {
-        // classname supposed to have a leading dot
-        $(classname).toggleClass("hidden");
-    }
-
-    var okDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
-                    width: "800px", autoOpen: false, closeOnEscape: true,
-                    modal: true};
-    var okOTPDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
-                       width: "500px", autoOpen: false, closeOnEscape: true,
-                       modal: true};
-
-    function switchOTPState(current, next) {
-        $("."+current+".switch_button").hide();
-        $("."+next).show();
-    }
-    /* Fast-forward through OTP states like user clicks would do */
-    function setOTPProgress(states) {
-        var i;
-        for (i=0; i < states.length-1; i++) {
-            switchOTPState(states[i], states[i+1]);
-        }
-    }
-    function showQRCodeOTPDialog(elem_id, otp_uri) {
-          // init OTP dialog for QR code
-          $("#"+elem_id).dialog(okOTPDialog);
-          $("#"+elem_id).dialog("open");
-          $("#"+elem_id).html("<canvas id=\'otp_qr\'><!-- filled by script --></canvas>");
-          var qr = new QRious({
-                               element: document.getElementById("otp_qr"),
-                               value: otp_uri,
-                               size: 200
-                               });
-    }
-    function showTextOTPDialog(elem_id, otp_key) {
-          // init OTP dialog for text key
-          $("#"+elem_id).dialog(okOTPDialog);
-          $("#"+elem_id).dialog("open");
-          $("#"+elem_id).html("<span id=\'otp_text\'>"+otp_key+"</span>");
-    }
-    '''
+%s
+    ''' % tfa_init
     add_ready += '''
               /* Init variables helper as foldable but closed and with individual
               heights */
@@ -203,7 +157,9 @@ def main(client_id, user_arguments_dict):
               /* fix and reduce accordion spacing */
               $(".ui-accordion-header").css("padding-top", 0)
                                        .css("padding-bottom", 0).css("margin", 0);
-'''
+
+%s
+''' % tfa_ready
     title_entry['javascript'] = jquery_ui_js(configuration, add_import,
                                              add_init, add_ready)
     output_objects.append({'object_type': 'html_form',
@@ -230,10 +186,7 @@ def main(client_id, user_arguments_dict):
     if configuration.site_enable_duplicati:
         valid_topics.append('duplicati')
     if configuration.site_enable_twofactor:
-        if pyotp is None:
-            logger.error("The pyotp module is missing and required for 2FA")
-        else:
-            valid_topics.append('webaccess')
+        valid_topics.append('webaccess')
     topics = accepted['topic']
     # Backwards compatibility
     if topics and topics[0] == 'ssh':
@@ -292,8 +245,7 @@ def main(client_id, user_arguments_dict):
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-        html = \
-            '''
+        html = '''
         <div id="settings">
         <form method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -320,8 +272,7 @@ def main(client_id, user_arguments_dict):
             if val['Context'] == 'notify' and \
                     keyword.lower() not in configuration.notify_protocols:
                 continue
-            entry = \
-                """
+            entry = """
             <tr class='title'><td>
             %s
             </td></tr>
@@ -477,8 +428,7 @@ your submit job page.
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-        html = \
-            '''
+        html = '''
 <div id="defaultcss">
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -645,8 +595,7 @@ get the default empty widget spaces.<br />
                             % (keyword, selected, choice, choice)
                         widgets_html += '</div>'
                 except:
-                    area = \
-                        """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
+                    area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if current_widgets_dict.has_key(keyword):
                         area += '\n'.join(current_widgets_dict[keyword])
@@ -767,8 +716,7 @@ so you may have to avoid blank lines in your text below.
                                 % (keyword, selected, choice, choice)
                         html += '</div>'
                 except:
-                    area = \
-                        """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
+                    area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if current_profile_dict.has_key(keyword):
                         area += '\n'.join(current_profile_dict[keyword])
@@ -1639,8 +1587,7 @@ for %(site)s backup use.
                                 % (keyword, selected, choice, choice)
                         html += '</div>'
                 except:
-                    area = \
-                        """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
+                    area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
                     if current_duplicati_dict.has_key(keyword):
                         area += '\n'.join(current_duplicati_dict[keyword])
@@ -1781,133 +1728,31 @@ It is possible to tweak some of the web access methods here.
 '''
 
         if configuration.site_enable_twofactor:
-            html += """
-<tr><td>
-<h4>2-Factor Authentication</h4>
-</td></tr>
-<tr class='otp_intro'><td>
-We allow 2-factor authentication on %(site)s for greater password login
-security.
-In short it means that you enter a generated single-use <em>token</em> from
-e.g. your phone or tablet along with your usual login. This combination makes
-account abuse <b>much</b> harder, because even if your password gets stolen,
-it can't be used without your device.<br/>
-
-Preparing and enabling 2-factor authentication for your login is done in four
-steps.
-</td></tr>
-<tr class='otp_intro switch_button'><td>
-<button type=button
-  onClick='switchOTPState(\"otp_intro\", \"otp_install\");'>
-Okay, let's go!</button>
-</td></tr>
-<tr class='otp_install hidden'><td>
-<h5>1. Install an Authenticator App</h5>
-You first need to install a TOTP authenticator client like
-<a href='https://en.wikipedia.org/wiki/Google_Authenticator'>
-Google Authenticator</a>, <a href='https://freeotp.github.io/'>FreeOTP</a> or
-<a href='https://authy.com/download/'>Authy</a> on your phone or tablet. You
-can find them in your usual app store.<br/>
-</td></tr>
-<tr class='otp_install switch_button hidden'><td>
-<button type=button
-  onClick='switchOTPState(\"otp_install\", \"otp_import\");'>
-I've got it installed!</button>
-</td></tr>
-""" % {'site': configuration.short_title}
-
-            # Make sure secret key is available in user settings but do not
-            # require 2FA access tokens before user saves with 2FA enabled.
+            b32_key, otp_uri = get_twofactor_secrets(configuration, client_id)
             # We limit key exposure by not showing it in clear and keeping it
             # out of backend dictionary with indirect generation only.
 
             # TODO: we might want to protect QR code with repeat basic login
             #       or a simple timeout since last login (cookie age).
-
-            # NOTE: 2FA secret key is a standalone file in user settings dir
-            #       Try to load existing and generate new one if not there.
-            #       We need the base32-encoded form as returned here.
-            b32_key = load_twofactor_key(real_user, configuration)
-            if not b32_key:
-                b32_key = reset_twofactor_key(real_user, configuration)
-
-            # URI-format for otp auth is
-            # otpauth://<otptype>/(<issuer>:)<accountnospaces>?
-            #         secret=<secret>(&issuer=<issuer>)(&image=<imageuri>)
-            # which we pull out of pyotp directly.
-            # We could display with Google Charts helper like this example
-            # https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&
-            #       chl=otpauth://totp/Example:alice@google.com?
-            #       secret=JBSWY3DPEHPK3PXP&issuer=Example
-            # but we prefer to use the QRious JS library to keep it local.
-            if configuration.user_openid_alias:
-                username = extract_field(
-                    real_user, configuration.user_openid_alias)
-            else:
-                username = real_user
-            otp_uri = pyotp.totp.TOTP(b32_key).provisioning_uri(
-                username, issuer_name=configuration.short_title)
-            # IMPORTANT: pyotp unicode breaks wsgi when inserted - force utf8!
-            otp_uri = force_utf8(otp_uri)
-
-            # Google img examle
-            # img_url = 'https://www.google.com/chart?'
-            # img_url += urllib.urlencode([('cht', 'qr'), ('chld', 'M|0'),
-            #                             ('chs', '200x200'), ('chl', otp_uri)])
-            # otp_img = '<img src="%s" />' % img_url
-
-            html += """<tr class='otp_import hidden'><td>
-<h5>2. Import Secret in Authenticator App</h5>
-Open the chosen authenticator app and import your secret 2-factor key either
-by simply scanning your personal
-<span id='otp_qr_link' class='fakelink infolink'
-  onClick='showQRCodeOTPDialog(\"otp_dialog\", \"%(otp_uri)s\");'>
-QR code</span> or by manually entering the
-<span id='otp_key_link' class='fakelink infolink'
-  onClick='showTextOTPDialog(\"otp_dialog\", \"%(b32_key)s\");'>
-key</span> if your app or device doesn't support scanning QR codes.
+            html += """
+<tr><td>
+<h4>2-Factor Authentication</h4>
 </td></tr>
-<tr class='otp_import switch_button hidden'><td>
-<button type=button onClick='switchOTPState(\"otp_import\", \"otp_verify\");'>
-Yes, I've imported it!</button>
-</td></tr>
-<tr class='otp_verify hidden'><td>
-<h5>3. Verify the Authenticator App Setup</h5>
-Before you actually enable 2-factor authentication you should verify that your
-authenticator app displays new tokens every 30 seconds <em>and</em> that they
-are <a href='%(check_url)s' target='_blank'>correct</a>. Otherwise you might
-end up locking yourself out once you enable 2-factor authentication.<br/>
-</td></tr>
-<tr class='otp_verify switch_button hidden'><td>
-<button type=button onClick='switchOTPState(\"otp_verify\", \"otp_ready\");'>
-It works!</button>
-</td></tr>
-<tr class='otp_ready hidden'><td>
-<h5>4. Enable 2-Factor Authentication</h5>
-Once you've followed the three steps above and verified your authenticator
-app, you can proceed to enable it for login below.<br/>
-Afterwards you can simply logout and login again to verify that a token is
-requested right after your usual %(site)s login.
-</td></tr>
-<tr class='otp_ready hidden'><td>
-<p class='warningtext'>SECURITY NOTE: please immediately contact the %(site)s admins to
-reset your secret 2-factor authentication key if you ever loose a device with
-it installed or otherwise suspect someone may have gained access to it.
-</p>
-</td></tr>
-<tr class='otp_ready hidden'><td>
 """
-        check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
-        fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
-                             'check_url': check_url})
+            html += twofactor_wizard_html(configuration)
+            check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
+            fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
+                                 'check_url': check_url, 'demand_twofactor':
+                                 'allow'})
 
+        webaccess_entries = get_webaccess_specs(configuration)
         html += '''
+        <tr class="otp_ready hidden"><td>
         <input type="hidden" name="topic" value="webaccess" />
         </td></tr>
         <tr class="otp_ready hidden"><td>
         </td></tr>
         '''
-        webaccess_entries = get_webaccess_specs(configuration)
         for (keyword, val) in webaccess_entries:
             if val.get('Editor', None) == 'hidden':
                 continue
@@ -2006,7 +1851,8 @@ it installed or otherwise suspect someone may have gained access to it.
             (current_webaccess_dict.get("MIG_OID_TWOFACTOR", False) or
              current_webaccess_dict.get("EXT_OID_TWOFACTOR", False)):
             html += """<script>
-    setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify', 'otp_ready']);
+    setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify',
+                    'otp_ready']);
 </script>
         """
 
