@@ -99,7 +99,7 @@ SIF
 <div id="toplogoleft" class="staticpage">
 </div>
 <div id="toplogocenter" class="staticpage">
-<img src="/images/skin/erda-ucph-science/banner-logo.jpg" id="logoimagecenter"
+<img src="/images/skin/sif-ucph-science/banner-logo.jpg" id="logoimagecenter"
      class="staticpage" alt="site logo center"/>
 <span id="logotitle" class="staticpage">
 University of Copenhagen - Electronic Research Data Archive
@@ -121,9 +121,7 @@ University of Copenhagen - Electronic Research Data Archive
 <div class="righttext langselect">
 <!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
 <select name="languages" id="langselect">
-  <!--
     <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
-  -->
   <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
 </select>
 </div>
@@ -148,6 +146,7 @@ Can just be disabled by putting it into an html comment when not in use.
   yesterday and are working on it.</span>
 <span class='systemwarn'>IMPORTANT: SIF backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.</span>
 -->
+<span class='systemwarn'>NOTE: SIF received official UCPH approval and will be enabled soon</span>
 </div>
 
 <div class="staticpage quickstartfields">
@@ -159,7 +158,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input class="signupbutton" type="submit" value="sign up" />
+<input class="signupbutton" type="submit" value="sign up" disabled />
 </form>
 <p><!--to get a user account. --></p> 
 </div>
@@ -167,40 +166,51 @@ Can just be disabled by putting it into an html comment when not in use.
 <h2 class="staticpage">I'm already on SIF!</h2>
 <p>In case you already signed up, you can proceed with</p>
 <input class="loginbutton" type="button" value="log in"
-       onClick="login('extoid');" />
+       onClick="login('extoid');" disabled />
 <p><!-- to your account. --></p>
 </div>
 </div>
+<!--
 <p>
 You may also want to refer to the 
 <a href="https://sif.erda.dk/public/ucph-erda-user-guide.pdf">
 User Guide</a> for a more thorough introduction, with help on
 getting started and making the most of your account.
 </p>
+-->
 
 <h2 class="staticpage">About UCPH SIF</h2>
 <p>
-SIF is the Sensitive Information Facility for UCPH-Science, and is meant to be used for storing data that falls under the EU General Data Protection Regulation, and other sensitive data. SIF delivers centralized storage space for sensitive shared project files in
-addition to archiving of these. As a user of SIF you should be aware of the following:
+SIF is the Sensitive Information Facility at University of Copenhagen
+(UCPH). It is meant for storing sensitive data in general and in
+particular personal data requiring special care under under the EU
+General Data Protection Regulation (GDPR). SIF delivers centralized
+storage space for sensitive project files
+<!-- in addition to archiving of these--> and allows safe
+sharing with other project participants using SIF.<br/>
+As a user of SIF you should beware of the following: 
 <ul>
-<li>When you create a new project the UCPH-Science legal office is automatically notified</li>
+<li>When you create a new project the UCPH legal office is automatically notified</li>
 <li>Any login attempt is logged</li>
-<li>Any access to data is logged along with your id, time of day and other relevant information</li>
-<li>Any access pattern that is considered “suspicious” will result in a suspension of your account</li>
+<li>Any access to data is logged along with your ID, time of day and other relevant information</li>
+<li>Any access pattern that is considered "suspicious" will result in a suspension of your account</li>
 </ul>
-You are not, under any circumstances, allowed to share your account with anybody else. 
-If other persons need access they must use their own account.<br/>
+You are not under <em>any</em> circumstances allowed to share your
+account with anybody else. If other persons need access to your data
+they <em>must</em> have and use their own account to do so.<br/>
 Examples of suspicious behaviour may include:
 <ul>
 <li>Login from different internet addresses within a short time frame</li>
 <li>Login from outside Denmark</li>
 <li>Structured download of data</li>
-<li>Any attempt to access data to which you have no privilige</li>
+<li>Attempts to circumvent security controls or access data to which you have no privilege</li>
 </ul>
-Please be aware that these rules are in place to protect you as a researcher and the University in general.
-We try hard to make the system as easy to use as possible while still ensuring security.
-For now it is limited to the faculty of Science,
-but it may be extended to all of UCPH in the future.
+Please note that these rules are in place to protect you as a researcher
+and University of Copenhagen in general. We try hard to make the system
+as easy to use as possible, while always ensuring the required high level
+of security.<br/>
+For now SIF use is limited to the faculty of Science, but it may be
+extended to all of UCPH in the future.
 </p>
 
 <h2 class="staticpage">Frequently Asked Questions (FAQ)</h2>
@@ -208,23 +218,21 @@ but it may be extended to all of UCPH in the future.
 <h4 class="staticpage">How much storage space do I have on SIF?</h4>
 <p>
 There's no space quota on the general SIF storage. Anything
-within a few tens of terabytes should be fine. We suggest that you
+within a few <!-- tens of --> terabytes should be fine. We suggest that you
 just have a word with us if you want to store more than that.
 </p>
 <h4 class="staticpage">Is my SIF Data Replicated and Backed Up?</h4>
 <p>
-All data on SIF is automatically replicated over multiple disks with
-RAID technology. We do <em>not</em> currently guarantee automatic and
-complete backup of ordinary data of your SIF projects.
-<!--
-Only files explicitly duplicated with the Archive feature
-get backed up to tape. This includes eventual remote tape backup for
-extra safety.
--->
+All user data on SIF is automatically replicated over multiple disks
+with RAID technology. We additionally run automatic nightly backup of
+all SIF user data to a remote location.
 </p>
 <h4 class="staticpage">How do I Transfer Entire Folders to/from SIF?</h4>
 <p>
-In the SIF web interface you can only upload/download individual files,
+Currently SIF only supports upload/download of individual files through
+the web interface.
+We're working on adding more efficient handling and transfer of entire
+folders.
 <!--
 so if you e.g. want to upload an entire folder structure there, first
 pack the folder(s) in a zip or tar file, upload it as usual and then
@@ -232,12 +240,12 @@ use <em>unpack</em> from the right click menu on the uploaded file.<br/>
 Likewise you can use <em>pack</em> on a folder in SIF, download and
 unpack it locally.<br/>
 Alternatively you can use the efficient file/folder handling described
--->
 For upload of an entire older structure, 
 you can use the efficient file/folder handling described
 in the Advanced Data Access sections of the user guide. That makes SIF
 appear like a network drive so that you can use your local file manager
 to copy entire folders to SIF.
+-->
 </p>
 <h4 class="staticpage">Why can't I use certain characters in file names?</h4>
 <p>
@@ -258,8 +266,8 @@ of allowing any additional characters that you may miss.
 </div>
 <h2 class="staticpage">Questions and Support</h2>
 <p>
-The user guide provides basic information about using SIF, but feel
-free to contact us using the email link at the bottom of the page in
+<!-- The user guide provides basic information about using SIF, but -->
+Feel free to contact us using the email link at the bottom of the page in
 case you have any questions or comments (in English or Danish).
 </p>
 <h2 class="staticpage">Terms of Use</h2>
@@ -296,6 +304,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <span class='systemwarn'>VIGTIGT: SIFs backend-lager er delvist nede pga et strømudfald</span><br/><br/>
 <span class='systemnote'>Der foregår strøm- og kølearbejde i HPC centret, så teknikerne er allerede på sagen.</span>
 -->
+<span class='systemwarn'>NOTE: SIF er blevet officielt KU godkendt og åbnes snarest</span>
 </div>
 
 <div class="staticpage quickstartfields">
@@ -307,7 +316,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input class="signupbutton" type="submit" value="tilmelding" />
+<input class="signupbutton" type="submit" value="tilmelding" disabled />
 </form>
 <p><!--  for at få en brugerkonto. --></p> 
 </div>
@@ -315,25 +324,54 @@ Can just be disabled by putting it into an html comment when not in use.
 <h2 class="staticpage">Jeg er allerede på SIF!</h2>
 <p>Hvis du allerede har tilmeldt dig SIF, kan du gå direkte til</p>  
 <input class="loginbutton" type="button" value="log ind"
-       onClick="login('extoid');" />
+       onClick="login('extoid');" disabled />
 <p><!-- på din brugerkonto. --></p>
 </div>
 </div>
+<!--
 <p>Vi anbefaler at du også ser nærmere på
 <a href="https://sif.erda.dk/public/ucph-erda-brugervejledning.pdf">
 SIF Brugervejledningen</a> for en grundigere introduktion, med hjælp
 til at komme igang og få størst nytte af din konto.
 </p>
+-->
 
 <h2 class="staticpage">Om UCPH SIF</h2>
 <p>
-University of Copenhagen - Sensitive Information Facility (UCPH SIF
-eller blot SIF) er et lager-, delings- og arkiveringssystem til sensitiv data
-leveret af Københavns Universitet til ansatte og studerende. I første omgang er det
-begrænset til Det natur- og biovidenskabelige fakultet (Science), men på
-længere sigt vil det muligvis blive udbredt til hele KU.
-SIF leverer centraliseret lagerplads til sensitive delte projektfiler samt
-arkiveringsfaciliteter til disse.
+SIF (Sensitive Information Facility) er en facilitet på Københans
+Universitet (KU). Den er rettet mod lagring af sensitive data, herunder
+personhenførbare data klassificeret som følsomme i
+persondataforordningen, forordning 2016/679 (også kendt som EU
+GDPR). SIF leverer centraliseret lagerplads til følsomme
+projektfiler<!-- samt arkiveringsfaciliteter til disse--> og mulighed
+for sikker deling med andre projektdeltagere på SIF.<br/>
+Som bruger på SIF bør du være opmærksom på følgende:
+<ul>
+<li>Når du opretter et nyt projekt får KUs juridiske afdeling automatisk
+  besked</li>
+<li>Ethvert loginforsøg bliver registreret</li>
+<li>Al dataadgang registreres sammen med dit ID, tidspunkt og øvrige
+  relevante data</li>
+<li>Adgangsmønstre som forekommer "mistænkelige" vil føre til
+  suspendering af din konto</li>
+</ul>
+Du må under <em>ingen</em> omstændigheder dele din konto med andre. Hvis
+andre har behov for adgang til dine data <em>skal</em> de have og
+benytte deres egen konto til formålet.<br/>
+Eksempler på mistænkelig adfærd kan være:
+<ul>
+<li>Login fra forskellige internet adresser indenfor et kort tidsrum</li>
+<li>Login fra placeringer udenfor Danmark</li>
+<li>Struktureret download af data</li>
+<li>Forsøg på at omgå sikkerhedsmekanismerne eller tilgå data du ikke har ret til</li>
+</ul>
+Bemærk at disse regler håndhæves for at beskytte både dig som forsker og
+Københavns Universitet i det hele taget. Vi gør vores bedste for at gøre
+systemet nemmest muligt at bruge, dog altid under skarpt hensyn til at
+opretholde det nødvendige høje sikkerhedsniveau.<br/>
+SIF er i første omgang begrænset til Det natur- og biovidenskabelige
+fakultet (Science), men på længere sigt vil det muligvis blive udbredt
+til hele KU. 
 </p>
 
 <h2 class="staticpage">Ofte stillede spørgsmål (OSS)</h2>
@@ -341,26 +379,23 @@ arkiveringsfaciliteter til disse.
 <h4 class="staticpage">Hvor meget plads har jeg på SIF?</h4>
 <p>
 Vi håndhæver ikke som sådan pladskvoter på selve SIF datalageret. 
-Så længe vi taler datamængder op til en snes
+Så længe vi taler datamængder op til <!-- en snes-->
 terabytes, skulle der ikke være nogen problemer. Hvis du gerne vil gemme
 mere end det, kan det sikkert også lade sig gøre - bare tag en snak med
 os om det.<br/>
 </p>
 <h4 class="staticpage">Er mine SIF data replikerede og med backup?</h4>
 <p>
-Al data på SIF er automatisk replikeret over flere diske v.h.a.
-RAID-teknologi. Vi garanterer <em>ikke</em> i øjeblikket automatisk og
-fuldstændig backup af almindelige data i dine SIF projektfoldere.
-<!--
-Kun filer som eksplicit er gemt som Archive bliver der gemt backup af. 
-Det inkluderer også
-efterfølgende automatisk kopi til bånd på en fjernlokation for ekstra
-sikkerhed.
--->
+Al brugerdata på SIF er automatisk replikeret over flere diske v.h.a.
+RAID-teknologi. Vi kører desuden hver nat automatisk backup af alle SIF
+brugerdata til en fjernlokation.
 </p>
 <h4 class="staticpage">Hvordan overfører jeg hele foldere til/fra SIF?</h4>
 <p>
-På dine SIF websider kan du kun uploade/downloade enkeltfiler,
+I øjeblikket understøtter SIF kun at man uploader/downloader enkeltfiler
+gennem web-interfacet. 
+Vi arbejder på at tilbyde mere effektiv håndtering og overførsel af hele
+mapper.
 <!--, så hvis
 du f.eks. vil uploade hele foldere den vej, må du først pakke dem i en
 zip- eller tar-fil, som du derefter uploader som vanligt og endelig
@@ -369,12 +404,12 @@ fil.<br/>
 Tilsvarende kan du bruge <em>pack</em> på en SIF folder, downloade den
 pakkede fil og udpakke lokalt.<br/>
 Alternativt kan du benytte den effektive fil/folder-håndtering som
--->
 For uploade af hele foldere kan du benytte den effektive 
 fil/folder-håndtering som beskrevet i afsnittene om Avanceret datatilgang 
 i brugervejledningen. 
 På den måde kan SIF tilgås som et netværksdrev så du kan benytte din
 almindelige filhåndtering til at kopiere hele foldere til og fra SIF.
+-->
 </p>
 <h4 class="staticpage">Hvorfor er der tegn jeg ikke kan bruge i filnavne?</h4>
 <p>
@@ -396,8 +431,8 @@ du måtte savne tilladt.
 </div>
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
-Brugervejledningen indeholder basal information om brugen af SIF, men
-kontakt os gerne (på dansk eller engelsk) med spørgsmål og kommentarer
+<!--Brugervejledningen indeholder basal information om brugen af SIF, men-->
+Kontakt os gerne (på dansk eller engelsk) med spørgsmål og kommentarer
 v.h.a. email-linket nederst på siden.
 </p>
 <!--
@@ -415,6 +450,7 @@ De fuldstændige detaljer vil altid være at finde i de
 officielle <a href="terms.html">terms of use</a> her fra siden.
 </p>
 </div>
+
 </div>
 </div>
 
@@ -425,8 +461,11 @@ officielle <a href="terms.html">terms of use</a> her fra siden.
 <div class="supporttext staticpage i18n" lang="en">
 <p class="supporttitle i18n" lang="en">Support</p>
 <p class="i18n" lang="en">
+<!--
 <a href="https://sif.erda.dk/public/ucph-erda-user-guide.pdf">SIF
-User Guide</a><br />Questions about SIF? <br />Please contact
+User Guide</a><br />
+-->
+Questions about SIF? <br />Please contact
 us at <a href="mailto:support@sif.erda.dk">support@sif.erda.dk</a></p>
 </div>
 <div class="supporttext staticpage i18n" lang="da">
