@@ -54,6 +54,8 @@ def reset_twofactor_key(client_id, configuration):
         if pyotp is None:
             raise Exception("The pyotp module is missing and required for 2FA")
         b32_key = pyotp.random_base32(length=twofactor_key_bytes)
+        # NOTE: pyotp.random_base32 returns unicode which causes trouble with WSGI
+        b32_key = force_utf8(b32_key)
         scrambled = scramble_password(configuration.site_password_salt,
                                       b32_key)
         key_fd = open(key_path, 'w')
@@ -62,6 +64,7 @@ def reset_twofactor_key(client_id, configuration):
     except Exception, exc:
         _logger.error("failed in reset 2FA key: %s" % exc)
         return False
+
     return b32_key
 
 

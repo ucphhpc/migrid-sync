@@ -30,6 +30,7 @@
 
 import os
 
+from shared.auth import expire_twofactor_session
 import shared.returnvalues as returnvalues
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -130,6 +131,11 @@ accepting fully signed GET requests to prevent unintended redirects'''})
     (found, remaining) = find_oid_sessions(configuration, oid_db,
             identity)
     if success and found and not remaining:
+
+        # Expire twofactor session
+
+        expire_twofactor_session(configuration, client_id, environ, allow_missing=True)
+
         # Generate HTML and submit redirect form
 
         csrf_limit = get_csrf_limit(configuration, environ)

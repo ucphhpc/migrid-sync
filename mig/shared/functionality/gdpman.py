@@ -27,25 +27,31 @@
 
 # TODO: this backend is horribly KU/UCPH-specific, should move that to conf
 
-"""Management of Sensitive Information Facility
-"""
+"""Management of Sensitive Information Facility"""
 
 import os
+import tempfile
 
+from shared.auth import expire_twofactor_session, get_twofactor_secrets
 import shared.returnvalues as returnvalues
+from shared.auth import load_twofactor_key, reset_twofactor_key
+from shared.base import client_alias, client_id_dir, extract_field, \
+    force_utf8, get_xgi_bin
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.gdp import ensure_user, get_projects, get_users, \
     project_accept, project_create, project_invite, project_login, \
     project_logout, project_remove_user, validate_user
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.html import themed_styles, jquery_ui_js
+from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from shared.html import themed_styles, jquery_ui_js, twofactor_wizard_html, \
+    twofactor_wizard_js
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables, find_entry
-from shared.pwhash import make_csrf_token
+from shared.settings import load_webaccess, parse_and_save_webaccess
 from shared.useradm import get_full_user_map
 from shared.url import openid_autologout_url
 from shared.vgrid import vgrid_create_allowed
+from shared.webaccesskeywords import get_keywords_dict as webaccess_keywords
 
 
 def signature():
@@ -78,22 +84,36 @@ def html_tmpl(
         "The workzone nummer is the Journal number from the acceptance of processing personal data." \
         + " Use 000000 as the workzone number if your project does not require a workzone registration."
 
-    user_map = get_full_user_map(configuration)
-    user_dict = user_map.get(client_id, None)
+    twofactor_enabled = False
+    create_projects = False
+    accepted_projects = False
+    invited_projects = False
+    invite_projects = False
+    remove_projects = False
 
-    # Optional limitation of create vgrid permission
+    if configuration.site_enable_twofactor:
+        current_webaccess_dict = load_webaccess(client_id, configuration)
+        if not current_webaccess_dict:
+            # no current webaccess found
+            current_webaccess_dict = {}
+        if current_webaccess_dict:
+            twofactor_enabled = True
 
-    create_projects = True
-    if not user_dict or not vgrid_create_allowed(configuration,
-                                                 user_dict):
-        create_projects = False
-    accepted_projects = get_projects(configuration, client_id,
-                                     'accepted')
-    invited_projects = get_projects(configuration, client_id, 'invited')
-    invite_projects = get_projects(
-        configuration, client_id, 'accepted', owner_only=True)
-    remove_projects = get_projects(
-        configuration, client_id, 'accepted', owner_only=True)
+    if not configuration.site_enable_twofactor \
+            or (configuration.site_enable_twofactor and twofactor_enabled):
+        user_map = get_full_user_map(configuration)
+        user_dict = user_map.get(client_id, None)
+
+        if user_dict and vgrid_create_allowed(configuration,
+                                              user_dict):
+            create_projects = True
+        accepted_projects = get_projects(configuration, client_id,
+                                         'accepted')
+        invited_projects = get_projects(configuration, client_id, 'invited')
+        invite_projects = get_projects(
+            configuration, client_id, 'accepted', owner_only=True)
+        remove_projects = get_projects(
+            configuration, client_id, 'accepted', owner_only=True)
 
     # Generate html
 
@@ -141,6 +161,12 @@ def html_tmpl(
         if action == 'remove':
             preselected_tab = tab_count
         tab_count += 1
+    if configuration.site_enable_twofactor:
+        html += """<li><a href="#twofactor">2-Factor Authentication</a></li>"""
+        if action == 'twofactor':
+            preselected_tab = tab_count
+        tab_count += 1
+
     html += """</ul>"""
     html += """
         <script type='text/javascript'>
@@ -159,8 +185,7 @@ def html_tmpl(
         <tbody>
         <tr><td id='status_msg'>%s</td></tr>
         </tbody>
-        </table>""" \
-            % status_msg
+        </table>""" % status_msg
 
     # Show login projects selectbox
 
@@ -389,7 +414,7 @@ def html_tmpl(
     if create_projects:
         html += \
             """
-        <div id="create">"""
+        <div id='create'>"""
         html += status_html
         html +=  \
             """
@@ -436,6 +461,80 @@ def html_tmpl(
         </tbody>
         </table>
         </form>
+        </div>
+        """
+
+    # 2-FA
+
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    fill_helpers = {'site': configuration.short_title,
+                    'form_method': form_method, 'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
+    if configuration.site_enable_twofactor:
+
+        html += \
+            """
+        <div id='twofactor'>
+            """
+        html += """
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th>2-Factor Authentication</th>
+            </tr>
+        </thead>
+        <tbody>
+        """
+        b32_key, otp_uri = get_twofactor_secrets(configuration, client_id)
+        # We limit key exposure by not showing it in clear and keeping it
+        # out of backend dictionary with indirect generation only.
+
+        # TODO: we might want to protect QR code with repeat basic login
+        #       or a simple timeout since last login (cookie age).
+        html += twofactor_wizard_html(configuration)
+        check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
+        if twofactor_enabled:
+            enable_hint = 'enable it (as you already did)'
+        else:
+            enable_hint = 'enable it below'
+        fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
+                             'check_url': check_url, 'demand_twofactor':
+                             'demand', 'enable_hint': enable_hint})
+
+        html += '''
+        <tr class="otp_ready hidden"><td>
+        </td></tr>
+        '''
+
+        if not twofactor_enabled:
+            html += '''<tr class="otp_ready hidden"><td>
+        <a class='ui-button' href='#' onclick='submitform(\"enable2fa\"); return false;'>Enable 2-Factor Authentication</a>
+</td></tr>
+'''
+
+        html += '''
+</tbody>
+</table>
+</div>
+'''
+
+    if configuration.site_enable_twofactor and \
+        (current_webaccess_dict.get("MIG_OID_TWOFACTOR", False) or
+         current_webaccess_dict.get("EXT_OID_TWOFACTOR", False)):
+        html += """<script>
+    setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify',
+                    'otp_ready']);
+</script>
+        """
+
+    fill_helpers.update({
+        'client_id': client_id,
+    })
+
+    fill_entries.update(fill_helpers)
+
+    html += """
         </div>
         """
 
@@ -575,7 +674,9 @@ def css_tmpl(configuration):
 def js_tmpl(configuration):
     """Javascript to include in the page header"""
 
+    (tfa_import, tfa_init, tfa_ready) = twofactor_wizard_js(configuration)
     js_import = ''
+    js_import += tfa_import
     js_init = """
     function submitform(project_action) {
         if (project_action == 'access') {
@@ -631,14 +732,22 @@ def js_tmpl(configuration):
             $('#gm_project_submit_form input[name=action]').val(project_action);
             $('#gm_project_submit_form').submit();
         }
-    }"""
+        else if (project_action == 'enable2fa') {
+            $('#gm_project_submit_form input[name=action]').val(project_action);
+            $('#gm_project_submit_form').submit();
+        }
+    }
+
+%s
+    """ % tfa_init
     js_ready = """
-    $(document).ready(function() {
         $("#project-tabs").tabs({
             collapsible: false,
             active: preselected_tab
         });
-    });"""
+
+    %s
+    """ % tfa_ready
 
     return jquery_ui_js(configuration, js_import, js_init, js_ready)
 
@@ -716,12 +825,68 @@ Please contact the Grid admins %s if you think it should be enabled.
         accepted,
     ):
         output_objects.append({'object_type': 'error_text',
-                               'text': 'action: %s' % action})
-        output_objects.append({'object_type': 'error_text',
                                'text': """Only accepting
-            CSRF-filtered POST accept_invites to prevent unintended updates"""
+            CSRF-filtered POST to prevent unintended updates"""
                                })
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if action == 'enable2fa':
+
+        # Expire any exisiting 2FA sessions
+        # Due to browser cookies outdated 2FA sessions may be re-initiated
+
+        expire_twofactor_session(
+            configuration, client_id, environ, allow_missing=False)
+
+        keywords_dict = webaccess_keywords(configuration)
+        topic_mrsl = ''
+        for keyword in keywords_dict.keys():
+            if keyword.endswith('_OID_TWOFACTOR'):
+                value = True
+            else:
+                value = keywords_dict[keyword]['value']
+            topic_mrsl += '''::%s::
+%s
+
+''' % (keyword.upper(), value)
+        try:
+            (filehandle, tmptopicfile) = tempfile.mkstemp(text=True)
+            os.write(filehandle, topic_mrsl)
+            os.close(filehandle)
+        except Exception, exc:
+            msg = 'Problem writing temporary topic file on server.'
+            logger.error("%s : %s" % (msg, exc))
+            output_objects.append(
+                {'object_type': 'error_text', 'text': msg})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        (parse_status, parse_msg) = \
+            parse_and_save_webaccess(tmptopicfile, client_id,
+                                     configuration)
+
+        try:
+            os.remove(tmptopicfile)
+        except Exception, exc:
+            pass  # probably deleted by parser!
+
+        status_msg = 'OK: 2-Factor Authentication enabled'
+        if not parse_status:
+            status_msg = 'ERROR: Failed to enable 2-Factor Authentication'
+            logger.error("%s -> %s" % (status_msg, parse_msg))
+            html = status_msg
+        else:
+            html = \
+                """
+            <a id='gdp_twofactorlogin' href='%s'></a>
+            <script type='text/javascript'>
+                document.getElementById('gdp_twofactorlogin').click();
+            </script>""" \
+                % environ['SCRIPT_URI']
+
+        output_objects.append({'object_type': 'html_form',
+                               'text': html})
+
+        return (output_objects, returnvalues.OK)
 
     if not action and identity or action == 'logout':
         autologout = project_logout(configuration, client_addr, 'https',
@@ -745,8 +910,11 @@ Please contact the Grid admins %s if you think it should be enabled.
                                         client_id,
                                         return_url,
                                         return_query_dict)
+
             output_objects.append({'object_type': 'html_form',
                                    'text': html})
+
+            return (output_objects, returnvalues.OK)
 
     # Generate html
 
@@ -784,7 +952,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             # Project login
 
             project_client_id = project_login(configuration, client_addr,
-                                        'https', client_id, base_vgrid_name)
+                                              'https', client_id, base_vgrid_name)
             if project_client_id:
                 dest_op_name = 'fileman'
                 base_url = environ.get('REQUEST_URI',
@@ -799,6 +967,9 @@ Please contact the Grid admins %s if you think it should be enabled.
                     % base_url
                 output_objects.append({'object_type': 'html_form',
                                        'text': html})
+
+                return (output_objects, returnvalues.OK)
+
             else:
                 action_msg = "ERROR: Login to project: '%s' failed" \
                     % base_vgrid_name

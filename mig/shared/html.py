@@ -683,13 +683,16 @@ def twofactor_wizard_html(configuration):
     """Build standard html twofactor wizard table content"""
     html = """
 <tr class='otp_intro'><td>
+<div id='otp_dialog' title='TOTP Secret to Import in Your Authenticator App'
+   class='centertext hidden'><!-- filled by script --></div>
 We %(demand_twofactor)s 2-factor authentication on %(site)s for greater
 password login security.
 In short it means that you enter a generated single-use <em>token</em> from
 e.g. your phone or tablet along with your usual login. This combination makes
 account abuse <b>much</b> harder, because even if your password gets stolen,
-it can't be used without your device.<br/>
-
+it can't be used without your device.
+</td></tr>
+<tr class='otp_intro'><td>
 Preparing and enabling 2-factor authentication for your login is done in four
 steps.
 </td></tr>
@@ -701,10 +704,11 @@ Okay, let's go!</button>
 <tr class='otp_install hidden'><td>
 <h5>1. Install an Authenticator App</h5>
 You first need to install a TOTP authenticator client like
-<a href='https://en.wikipedia.org/wiki/Google_Authenticator'>
-Google Authenticator</a>, <a href='https://freeotp.github.io/'>FreeOTP</a> or
-<a href='https://authy.com/download/'>Authy</a> on your phone or tablet. You
-can find them in your usual app store.<br/>
+<a href='https://en.wikipedia.org/wiki/Google_Authenticator' target='_blank'>
+Google Authenticator</a>,
+<a href='https://freeotp.github.io/' target='_blank'>FreeOTP</a> or
+<a href='https://authy.com/download/' target='_blank'>Authy</a> on your phone
+or tablet. You can find them in your usual app store.<br/>
 </td></tr>
 <tr class='otp_install switch_button hidden'><td>
 <button type=button class='ui-button'
@@ -742,7 +746,7 @@ It works!</button>
 <tr class='otp_ready hidden'><td>
 <h5>4. Enable 2-Factor Authentication</h5>
 Once you've followed the three steps above and verified your authenticator
-app, you can proceed to enable it for login below.<br/>
+app, you can proceed to %(enable_hint)s.<br/>
 Afterwards you can simply logout and login again to verify that a token is
 requested right after your usual %(site)s login.
 </td></tr>

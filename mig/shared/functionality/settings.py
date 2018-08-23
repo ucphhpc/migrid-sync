@@ -1714,8 +1714,6 @@ client versions from the link above.<br/>
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="webaccess">
-<div id="otp_dialog" title="TOTP Secret to Import in Your Authenticator App"
-   class="centertext hidden"><!-- filled by script --></div>
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="webaccess fixedlayout">
@@ -1743,7 +1741,8 @@ It is possible to tweak some of the web access methods here.
             check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
             fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
                                  'check_url': check_url, 'demand_twofactor':
-                                 'allow'})
+                                 'allow', 'enable_hint':
+                                 'enable it for login below'})
 
         webaccess_entries = get_webaccess_specs(configuration)
         html += '''

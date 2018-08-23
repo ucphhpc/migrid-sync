@@ -66,6 +66,7 @@ skip_client_id_rewrite = [
     'autologout.py',
     'gdpman.py',
     'rmvgridmember.py',
+    'twofactor.py',
     'vgridman.py',
     'viewvgrid.py',
 ]
@@ -85,6 +86,7 @@ valid_scripts = [
     'rmvgridmember.py',
     'settings.py',
     'settingsaction.py',
+    'twofactor.py',
     'uploadchunked.py',
 ]
 
