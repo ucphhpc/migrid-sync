@@ -6,14 +6,12 @@ __MIG_STATE__/log/*.log __MIG_STATE__/log/*.out {
 	delaycompress
 	notifempty
 	create 640 __USER__ __GROUP__
-	su __USER__ __GROUP__
+        # NOTE we need root to restart services
+	#su __USER__ __GROUP__
+	su root __GROUP__
 	sharedscripts
 	postrotate
-           if [ -x /etc/init.d/migrid ]; then \
-                /etc/init.d/migrid reload ; \
-           elif [ -p __MIG_CODE__/server/server.stdin ]; then \
-               echo RELOADCONFIG >> __MIG_CODE__/server/server.stdin; \
-           fi; \
+           service migrid reload; \
            service __APACHE_DAEMON__ reload;
 	endscript
 }

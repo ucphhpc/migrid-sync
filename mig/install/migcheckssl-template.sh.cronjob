@@ -22,8 +22,10 @@ cert_path="__MIG_CERTS__/letsencrypt"
 domain_cert_path="${cert_path}/${domain}"
 server_key="${domain_cert_path}/server.key"
 server_pem="${domain_cert_path}/server.pem"
+server_crt="${domain_cert_path}/server.crt"
 server_crt_ca_pem="${domain_cert_path}/server.crt.ca.pem"
 server_key_crt_ca_pem="${domain_cert_path}/server.key.crt.ca.pem"
+dhparams_pem="${domain_cert_path}/dhparams.pem"
 combined_pem="${domain_cert_path}/combined.pem"
 combined_pub="${domain_cert_path}/combined.pub"
 getssl_url="https://raw.githubusercontent.com/srvrco/getssl/master/getssl"
@@ -79,8 +81,10 @@ if [[ ${verbose} -eq 1 ]]; then
     echo "domain_cert_path: ${domain_cert_path}"
     echo "server_key: ${server_key}" 
     echo "server_pem: ${server_pem}" 
+    echo "server_crt: ${server_crt}" 
     echo "server_crt_ca_pem: ${server_crt_ca_pem}"
     echo "server_key_crt_ca_pem: ${server_key_crt_ca_pem}"
+    echo "dhparams_pem: ${dhparams_pem}" 
     echo "combined_pem: ${combined_pem}"
     echo "combined_pub: ${combined_pub}"
 fi
@@ -150,6 +154,12 @@ if [[ ${org_mtime} -ne ${new_mtime} ]]; then
         # Generate openssh public key for combined.pem in combined.pub
 
         ssh-keygen -y -f ${combined_pem} > ${combined_pub}
+    fi
+
+    # Append dhparams (if available) to server.crt for use in apache<2.4.8
+
+    if [ -f ${dhparams_pem} ]; then
+        cat ${dhparams_pem} >> ${server_crt}
     fi
 
     # Set permissions on all keys
