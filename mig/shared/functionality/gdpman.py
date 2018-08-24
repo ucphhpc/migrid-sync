@@ -509,7 +509,8 @@ def html_tmpl(
 
         if not twofactor_enabled:
             html += '''<tr class="otp_ready hidden"><td>
-        <a class='ui-button' href='#' onclick='submitform(\"enable2fa\"); return false;'>Enable 2-Factor Authentication</a>
+        Enable 2-factor authentication and<br/>
+        <a class='ui-button' href='#' onclick='submitform(\"enable2fa\"); return false;'>Start Using %(site)s</a>
 </td></tr>
 '''
 
