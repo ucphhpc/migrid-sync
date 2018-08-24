@@ -1,0 +1,15 @@
+Module for extracting SSL session information from builtin python ssl
+
+Tested with Python 2.7.5
+
+Embeds data structures from Python 2.7.5 source:
+Modules/socketmodule.h
+Modules/_ssl.c
+
+Install:
+=================
+pip install ../sslsession
+
+Uninstall:
+=================
+pip uninstall sslsession
