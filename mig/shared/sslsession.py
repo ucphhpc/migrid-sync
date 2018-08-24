@@ -35,6 +35,7 @@ try:
 except:
     _sslsession = None
 
+
 def _ensure_sslsession_lib(configuration):
     """Make sure _sslsession.so is correctly installed"""
     logger = configuration.logger
@@ -44,8 +45,9 @@ def _ensure_sslsession_lib(configuration):
         logger.error(msg)
         raise ImportError(msg)
 
+
 def get_ssl_master_key(configuration, ssl_sock):
-    """Extract SSL session master key SSL socket"""
+    """Extract SSL session master key from SSL socket"""
     logger = configuration.logger
 
     _ensure_sslsession_lib(configuration)
@@ -60,8 +62,9 @@ def get_ssl_master_key(configuration, ssl_sock):
 
     return master_key
 
+
 def get_ssl_session_id(configuration, ssl_sock):
-    """Extract SSL session id  key from SSL socket"""
+    """Extract SSL session id from SSL socket"""
     logger = configuration.logger
     _ensure_sslsession_lib(configuration)
 
