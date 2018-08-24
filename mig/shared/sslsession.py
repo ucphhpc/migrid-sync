@@ -28,29 +28,18 @@
 """Functions for extracting SSL session information
 """
 
-import binascii
-
 try:
     import _sslsession
-except:
-    _sslsession = None
+except ImportError, ierr:
+    msg = "The MiG python _sslsession.so library is required for this script"
+    raise ImportError(msg)
 
-
-def _ensure_sslsession_lib(configuration):
-    """Make sure _sslsession.so is correctly installed"""
-    logger = configuration.logger
-
-    if _sslsession is None:
-        msg = "Missing MiG python library: '_sslsession.so'"
-        logger.error(msg)
-        raise ImportError(msg)
+import binascii
 
 
 def get_ssl_master_key(configuration, ssl_sock):
     """Extract SSL session master key from SSL socket"""
     logger = configuration.logger
-
-    _ensure_sslsession_lib(configuration)
     master_key = None
     try:
         ssl_obj = ssl_sock._sslobj
@@ -66,8 +55,6 @@ def get_ssl_master_key(configuration, ssl_sock):
 def get_ssl_session_id(configuration, ssl_sock):
     """Extract SSL session id from SSL socket"""
     logger = configuration.logger
-    _ensure_sslsession_lib(configuration)
-
     session_id = None
     try:
         ssl_obj = ssl_sock._sslobj
