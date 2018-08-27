@@ -35,7 +35,6 @@ or with a minor patch (see https://github.com/mar10/wsgidav/issues/29) to allow
 per-user subdir chrooting inside root_dir.
 """
 
-import binascii
 import os
 import signal
 import sys
@@ -50,7 +49,6 @@ try:
     sys.path.append(os.path.dirname(server_init_path))
     from cherrypy import wsgiserver
     from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter, ssl
-    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter, SSL, crypto
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
         FilesystemProvider
     from wsgidav.domain_controller import WsgiDAVDomainController
@@ -65,13 +63,13 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id, io_session_timeout
 from shared.fileio import check_write_access, user_chroot_exceptions
-from shared.gdp import get_active_project_short_id, project_logout
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
-    track_close_expired_sessions, get_open_sessions, validate_session
-from shared.tlsserver import hardened_ssl_context, hardened_openssl_context
+    track_close_multiple_sessions, get_open_sessions, validate_session
+from shared.sslsession import get_ssl_session_id
+from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
@@ -148,66 +146,6 @@ def _find_authenticator(application):
         return _find_authenticator(application._application)
 
 
-class HardenedPyOpenSSLAdapter(pyOpenSSLAdapter):
-    """Hardened version of the pyOpenSSLAdapter using a shared ssl context
-    initializer which defaults to hardened values for ssl_version, ciphers and
-    options arguments for use in setting up the socket security.
-    This is particularly important in relation to mitigating a number of
-    popular SSL attack vectors like POODLE and CRIME.
-    The default is to try the most flexible security protocol negotiation, but
-    with only the strong ciphers recommended by Mozilla:
-    https://wiki.mozilla.org/Security/Server_Side_TLS#Apache
-    just like we do in the apache conf.
-    Similarly the insecure protocols, compression and client-side cipher
-    degradation is disabled if possible (python 2.7.9+).
-
-    Legacy versions of python (<2.7) support neither ciphers nor options tuning,
-    so for those versions a warning is issued and unless a custom ssl_version
-    is supplied the result is basically the original PyOpenSSLAdapter.
-    """
-    _active_sockets = {}
-
-    def __init__(self, certificate, private_key, certificate_chain=None):
-        pyOpenSSLAdapter.__init__(
-            self, certificate, private_key, certificate_chain)
-
-        # Set up hardened SSL context once and for all
-        dhparams = configuration.user_shared_dhparams
-
-        # Wrap SSL and crypto in an OpenSSL object as expected by
-        # hardened_openssl_context
-        def OpenSSL(): return None
-        OpenSSL.SSL = SSL
-        OpenSSL.crypto = crypto
-
-        self.context = hardened_openssl_context(configuration,
-                                                OpenSSL,
-                                                self.private_key,
-                                                self.certificate,
-                                                dhparamsfile=dhparams)
-
-    def wrap(self, sock):
-        """Wrap and return the given socket.
-        Note the previously initialized SSL context is tuned to pass hardened
-        ssl_version and ciphers arguments to the wrap_socket call. It also
-        limits protocols, key reuse and disables compression for modern python
-        versions to avoid a set of popular attack vectors.
-        """
-
-        (client_addr, client_port) = sock.getpeername()
-        socket_id = "%s.%s" % (client_addr, client_port)
-        # logger.debug("Wrapping ssl_socket: %s : %s : %s" %
-        #              (sock, socket_id, sock.get_state_string()))
-        self._active_sockets[socket_id] = sock
-
-        return pyOpenSSLAdapter.wrap(self, sock)
-
-    def get_active_sockets(self):
-        """Return active sockets"""
-
-        return self._active_sockets
-
-
 class HardenedSSLAdapter(BuiltinSSLAdapter):
     """Hardened version of the BuiltinSSLAdapter using a shared ssl context
     initializer which defaults to hardened values for ssl_version, ciphers and
@@ -225,6 +163,10 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
     so for those versions a warning is issued and unless a custom ssl_version
     is supplied the result is basically the original BuiltinSSLAdapter.
     """
+
+    _ssl_sockets_last_cleanup = time.time()
+    _ssl_sockets_lock = threading.Lock()
+    _ssl_sockets = {}
 
     # Inherited args
     certificate = None
@@ -269,6 +211,64 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
             logger.info("wrapped sock from %s with ciphers %s" %
                         (ssl_sock.getpeername(), ssl_sock.cipher()))
+
+            (client_addr, client_port) = ssl_sock.getpeername()
+            socket_id = "%s:%s" % (client_addr, client_port)
+            #logger.debug("socket_id: %s" % socket_id)
+            #logger.debug("system ssl_sock timeout: %s" % ssl_sock.gettimeout())
+            session_timeout = io_session_timeout.get('davs', 0)
+            if session_timeout > 0:
+                ssl_sock.settimeout(float(session_timeout))
+            #logger.debug("new ssl_sock timeout: %s" % ssl_sock.gettimeout())
+
+            ssl_session_id = get_ssl_session_id(configuration, ssl_sock)
+            #logger.debug("ssl_session_id: %s" % ssl_session_id)
+            timestamp = time.time()
+
+            self._ssl_sockets_lock.acquire()
+
+            # Clean up old SSL sockets and sessions
+
+            #logger.debug("cleanup timestamp: %s" % (timestamp-self._ssl_sockets_last_cleanup))
+            close_sessions = []
+            if (self._ssl_sockets_last_cleanup + session_timeout) < timestamp:
+                remove_sockets = []
+                for (key, val) in self._ssl_sockets.iteritems():
+                    if (val['accessed'] + session_timeout) < timestamp:
+                        # logger.debug("timeout: %s / %s" \
+                        #     % (timestamp-val['accessed'], session_timeout))
+                        try:
+                            fileno = val['ssl_sock'].fileno()
+                            # logger.debug("found active socket: %s, %s, %s" \
+                            #     % (key, val['session_id'], fileno))
+                        except Exception, exc:
+                            # logger.debug("found inactive socket: %s, %s" \
+                            #    % (key, val['session_id']))
+                            remove_sockets.append(key)
+                            close_sessions.append(val['session_id'])
+                for key in remove_sockets:
+                    #logger.debug("removing ssl_sock: %s" % key)
+                    del self._ssl_sockets[key]
+                self._ssl_sockets_last_cleanup = timestamp
+            try:
+                self._ssl_sockets[socket_id] = {
+                    'ssl_sock':  ssl_sock,
+                    'session_id': ssl_session_id,
+                    'created': timestamp,
+                    'accessed': timestamp,
+                    'prev_accessed': timestamp,
+                }
+            except Exception, exc:
+                logger.error(exc)
+            self._ssl_sockets_lock.release()
+
+            # NOTE: We want to release _ssl_sockets_lock before session cleanup
+
+            if close_sessions:
+                #logger.debug("close_sessions: %s" % close_sessions)
+                track_close_multiple_sessions(configuration,
+                                              'davs',
+                                              close_sessions)
         except ssl.SSLError:
             exc = sys.exc_info()[1]
             if exc.errno == ssl.SSL_ERROR_EOF:
@@ -296,6 +296,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     self.__force_close(_socket_list)
             logger.error("unexpected SSL/TLS wrap failure: %s" % exc)
             raise exc
+
         return ssl_sock, ssl_env
 
 
@@ -364,33 +365,27 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                     return True
         return False
 
-    def _get_ssl_session_id(self, ip_addr, tcp_port):
-        """Returns ssl session id"""
-        socket_id = "%s.%s" % (ip_addr, tcp_port)
-        session_id = None
+    def _get_ssl_sock(self, ip_addr, tcp_port):
+        """Update SSL socket info timestamp
+        and return SSL socket info"""
+
+        socket_id = "%s:%s" % (ip_addr, tcp_port)
+        result = None
+        ssl_sockets = \
+            wsgiserver.CherryPyWSGIServer.ssl_adapter._ssl_sockets
+        ssl_sockets_lock = \
+            wsgiserver.CherryPyWSGIServer.ssl_adapter._ssl_sockets_lock
+        ssl_sockets_lock.acquire()
         try:
-            active_sockets = \
-                wsgiserver.CherryPyWSGIServer.ssl_adapter.get_active_sockets()
-            active_socket = active_sockets[socket_id]
-            session_id = binascii.hexlify(active_socket.master_key())
+            result = ssl_sockets[socket_id]
+            result['prev_accessed'] = result['accessed']
+            result['accessed'] = time.time()
         except Exception as exc:
-            session_id = None
+            result = None
+            logger.error(exc)
+        ssl_sockets_lock.release()
 
-        return session_id
-
-    def _get_ssl_session_state_str(self, ip_addr, tcp_port):
-        """Returns ssl session state string"""
-        socket_id = "%s.%s" % (ip_addr, tcp_port)
-        state_str = None
-        try:
-            active_sockets = \
-                wsgiserver.CherryPyWSGIServer.ssl_adapter.get_active_sockets()
-            active_socket = active_sockets[socket_id]
-            state_str = active_socket.get_state_string()
-        except Exception as exc:
-            state_str = None
-
-        return state_str
+        return result
 
     def authDomainUser(self, realmname, username, password, environ):
         """Returns True if session is already authorized or
@@ -402,23 +397,27 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
-        socket_id = "%s.%s" % (ip_addr, tcp_port)
-        session_id = self._get_ssl_session_id(ip_addr, tcp_port)
+        ssl_sock = self._get_ssl_sock(ip_addr, tcp_port)
+        session_id = ssl_sock['session_id']
+        #logger.debug("SSL session_id: %s" % session_id)
+        if session_id is None:
+            msg = "Failed to retrieve SSL session id for: %s:%s" \
+                % (ip_addr, port)
+            logger.error(msg)
+            return False
+
         success = False
         if is_authorized_session(configuration, username, session_id):
+            # logger.debug("authorized session from: %s:%s -> %s" %
+            #              (ip_addr, tcp_port, session_id))
             success = True
-            #session_state = self._get_ssl_session_state_str(ip_addr, tcp_port)
-            # logger.debug("Using cached ssl session: %s : %s" %
-            #             (session_state, session_id))
-            # msg = "user %s already authorized with session_id: %s" \
-            #     % (username, session_id) \
-            #     + "in authDomainUser from %s:%s" % (ip_addr, tcp_port)
-            # logger.debug(msg)
         elif validate_session(configuration,
                               'davs',
                               username,
                               ip_addr,
                               tcp_port):
+            # logger.debug("validated session: %s:%s -> %s" %
+            #              (ip_addr, tcp_port, session_id))
             logger.info("refresh user %s" % username)
             update_users(configuration, self.user_map, username)
             logger.info("in authDomainUser from %s:%s" % (ip_addr, tcp_port))
@@ -443,13 +442,23 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                              offered)
             penalize_rate_limit(configuration, "davs", ip_addr, username,
                                 failed_count)
-        track_sessions(configuration,
-                       session_id,
-                       success,
-                       username,
-                       ip_addr,
-                       tcp_port,
-                       )
+
+            # Track newly authorized session
+
+            if success:
+                # logger.debug("auth passed for session: %s:%s -> %s" %
+                #              (ip_addr, tcp_port, session_id))
+                status = track_open_session(configuration,
+                                            'davs',
+                                            username,
+                                            ip_addr,
+                                            tcp_port,
+                                            session_id=session_id,
+                                            authorized=True)
+                # logger.debug("track_open_session: %s" % status)
+        # else:
+        #    logger.debug("rejected session: %s:%s -> %s" \
+        #        % (ip_addr, tcp_port, session_id))
 
         return success
 
@@ -463,17 +472,20 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
-        session_id = self._get_ssl_session_id(ip_addr, tcp_port)
+        ssl_sock = self._get_ssl_sock(ip_addr, tcp_port)
+        session_id = ssl_sock['session_id']
+        #logger.debug("SSL session_id: %s" % session_id)
+        if session_id is None:
+            msg = "Failed to retrieve SSL session id for: %s:%s" \
+                % (ip_addr, port)
+            logger.error(msg)
+            return False
+
         success = False
         if is_authorized_session(configuration, username, session_id):
+            # logger.debug("authorized session from: %s:%s -> %s" %
+            #              (ip_addr, tcp_port, session_id))
             success = True
-            # session_state = self._get_ssl_session_state_str(ip_addr, tcp_port)
-            # logger.debug("Using cached ssl session: %s : %s" %
-            #              (session_state, session_id))
-            # msg = "user %s already authorized with session_id: %s" \
-            #     % (username, session_id) \
-            #     + "in isRealmUser from %s:%s" % (ip_addr, tcp_port)
-            # logger.info(msg)
         elif validate_session(configuration,
                               'davs',
                               username,
@@ -488,13 +500,23 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             else:
                 logger.warning("invalid digest user %s from %s:%s" %
                                (username, ip_addr, tcp_port))
-        track_sessions(configuration,
-                       session_id,
-                       success,
-                       username,
-                       ip_addr,
-                       tcp_port,
-                       )
+
+            # Track newly authorized session
+
+            if success:
+                # logger.debug("auth passed for session: %s:%s -> %s" %
+                #              (ip_addr, tcp_port, session_id))
+                status = track_open_session(configuration,
+                                            'davs',
+                                            username,
+                                            ip_addr,
+                                            tcp_port,
+                                            session_id=session_id,
+                                            authorized=True)
+                # logger.debug("track_open_session: %s" % status)
+        # else:
+        #    logger.debug("rejected session: %s:%s -> %s" \
+        #        % (ip_addr, tcp_port, session_id))
 
         return success
 
@@ -734,7 +756,7 @@ class MiGFilesystemProvider(FilesystemProvider):
                 if os.path.islink(user_chroot):
                     try:
                         user_chroot = os.readlink(user_chroot)
-                    except Exception, err:
+                    except Exception, exc:
                         logger.error("could not expand link %s" % user_chroot)
                         continue
                 break
@@ -774,40 +796,6 @@ class MiGFilesystemProvider(FilesystemProvider):
         return MiGFileResource(path, environ, abs_path)
 
 
-def track_sessions(configuration,
-                   session_id,
-                   authorized,
-                   username,
-                   ip_addr,
-                   tcp_port,
-                   ):
-    """Track user sessions (open / close)"""
-
-    # msg = "\nsession_id: %s" % session_id \
-    #    + "\nauthorized: %s" % authorized \
-    #    + "\nusername: %s" % username \
-    #    + "\nip_addr: %s" % ip_addr \
-    #    + "\ntcp_port: %s" % tcp_port
-    # logger.debug(msg)
-    # msg = "track_sessions for %s from %s:%s" % (username, ip_addr, tcp_port) \
-    #     + " with session_id: %s, authorized: %s" % (session_id, authorized)
-    # logger.debug(msg)
-
-    track_close_expired_sessions(configuration,
-                                 'davs',
-                                 username,
-                                 ip_addr,
-                                 tcp_port)
-
-    track_open_session(configuration,
-                       'davs',
-                       username,
-                       ip_addr,
-                       tcp_port,
-                       session_id=session_id,
-                       authorized=authorized)
-
-
 def is_authorized_session(configuration, username, session_id):
     """Returns True if user session is open
     and authorized and within expire timestamp"""
@@ -815,16 +803,15 @@ def is_authorized_session(configuration, username, session_id):
     # logger.debug("session_id: %s, user_sessions: %s" %
     #             (session_id, user_sessions))
     result = False
+    session_timeout = io_session_timeout.get('davs', 0)
     sessions = get_open_sessions(configuration, 'davs', username)
-    session = sessions.get(session_id, '')
-    if session:
-        session_timeout = io_session_timeout.get('davs', 0)
-        authorized = session.get('authorized', False)
-        timestamp = session.get('timestamp', 0)
-        current_timestamp = time.time()
+    cur_session = sessions.get(session_id, '')
+    if cur_session:
+        authorized = cur_session.get('authorized', False)
+        timestamp = cur_session.get('timestamp', 0)
+        cur_timestamp = time.time()
         if authorized \
-                and current_timestamp - timestamp \
-                < io_session_timeout.get('davs', 0):
+                and cur_timestamp - timestamp < session_timeout:
             result = True
 
     return result
@@ -923,9 +910,7 @@ def run(configuration):
         chain = config['ssl_certificate_chain'] = ''
         # wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(
         #     cert, key, chain)
-        # wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(
-        #     cert, key, chain)
-        wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedPyOpenSSLAdapter(
+        wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(
             cert, key, chain)
 
     # Use bundled CherryPy WSGI Server to support SSL
