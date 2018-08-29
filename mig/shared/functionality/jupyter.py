@@ -124,23 +124,28 @@ def remove_jupyter_mount(jupyter_mount_path, configuration):
     os.remove(jupyter_mount_path)
 
 
-def prune_jupyter_mounts(jupyter_mounts, configuration):
+def get_newest_mount(jupyter_mounts):
     """
-    If multiple jupyter mounts are active, remove every except for the
-    latests one
-    :param jupyter_mounts: list of jupyter mount pickle state paths
-    :param configuration the MiG configuration object
-    :return: a list containing only the newest generated mount
+    Finds the most recent jupyter mount
+    :param jupyter_mounts: Expects a list of jupyter_mount
+    dictionaries. Furthermore that each dictionary has a state key that contains
+    the unpickled content of a jupyter state file.
+    :return: (newest_mount, [older_mounts]),
+    if jupyter_mounts is empty (None, []) is returned.
     """
-    latest = jupyter_mounts[0]
-    for mount_file in jupyter_mounts:
-        jupyter_dict = unpickle(mount_file, configuration)
-        latest_dict = unpickle(latest, configuration)
-        if int(latest_dict['CREATED_TIMESTAMP']) \
-                < int(jupyter_dict['CREATED_TIMESTAMP']):
-            remove_jupyter_mount(latest, configuration)
-            latest = mount_file
-    return [latest]
+    if not jupyter_mounts:
+        return None, []
+
+    old_mounts = []
+    latest = jupyter_mounts.pop(0)
+    for mount in jupyter_mounts:
+        if int(latest['state']['CREATED_TIMESTAMP']) \
+                < int(mount['state']['CREATED_TIMESTAMP']):
+            old_mounts.append(latest)
+            latest = mount
+        else:
+            old_mounts.append(mount)
+    return latest, old_mounts
 
 
 def jupyter_host(configuration, output_objects, user):
@@ -204,7 +209,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    logger.debug("User: %s executing %s" % (client_id, op_name))
+    logger.debug("User: %s executing %s", client_id, op_name)
     if not configuration.site_enable_jupyter:
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -288,44 +293,42 @@ def main(client_id, user_arguments_dict):
     active_mounts = []
     for jfile in jupyter_mount_files:
         jupyter_dict = unpickle(jfile, logger)
-        # Remove not active keys
-        if not is_active(jupyter_dict):
+        if not jupyter_dict:
+            # Remove failed unpickle
+            logger.error("Failed to unpickle %s removing it", jfile)
             remove_jupyter_mount(jfile, configuration)
         else:
-            active_mounts.append(jfile)
+            # Mount has been timed out
+            if not is_active(jupyter_dict):
+                remove_jupyter_mount(jfile, configuration)
+            else:
+                # Valid mount
+                active_mounts.append({'path': jfile, 'state': jupyter_dict})
 
     logger.debug("User: %s active keys: %s", client_id,
-                 "\n".join(active_mounts))
+                 "\n".join([mount['path'] for mount in active_mounts]))
+
     # If multiple are active, remove oldest
-    if len(active_mounts) > 1:
-        active_mounts = prune_jupyter_mounts(active_mounts, configuration)
-        if len(active_mounts) != 1:
-            logger.error("After pruning jupyter keys %s are still active",
-                         len(active_mounts))
+    active_mount, old_mounts = get_newest_mount(active_mounts)
+    for mount in old_mounts:
+        remove_jupyter_mount(mount['path'], configuration)
 
     # A valid active key is already present redirect straight to the jupyter
     # service, pass most recent mount information
-    if len(active_mounts) == 1:
-        # Check whether the user should authenticate and pass mount information
-        jupyter_dict = unpickle(active_mounts[0], logger)
-        if not jupyter_dict:
-            # Remove broken set and fall through to create new a set of mount keys
-            logger.error("Failed to unpickle %s removing it", active_mounts[0])
-            remove_jupyter_mount(active_mounts[0], configuration)
-        else:
-            mount_dict = mig_to_mount_adapt(jupyter_dict)
-            logger.debug("Existing keys %s", mount_dict)
-            auth_mount_header = {'Remote-User': remote_user, 'Mount': str(
-                mount_dict)}
+    if active_mount is not None:
+        mount_dict = mig_to_mount_adapt(active_mount['state'])
+        logger.debug("Existing keys %s", mount_dict)
+        auth_mount_header = {'Remote-User': remote_user, 'Mount': str(
+            mount_dict)}
 
-            session = requests.session()
-            # Authenticate
-            session.get(url_auth, headers=auth_mount_header)
-            # Provide the active homedrive mount information
-            session.post(url_mount, headers=auth_mount_header)
+        session = requests.session()
+        # Authenticate
+        session.get(url_auth, headers=auth_mount_header)
+        # Provide the active homedrive mount information
+        session.post(url_mount, headers=auth_mount_header)
 
-            # Redirect client to jupyterhub
-            return jupyter_host(configuration, output_objects, remote_user)
+        # Redirect client to jupyterhub
+        return jupyter_host(configuration, output_objects, remote_user)
 
     # Create a new keyset
     # Create login session id
