@@ -35,9 +35,9 @@ try:
 except ImportError, ierr:
     _sslsession = None
 
+
 def get_ssl_master_key(configuration, ssl_sock):
     """Extract SSL session master key from SSL socket"""
-    global _sslsession
     logger = configuration.logger
     master_key = None
     if _sslsession is None:
