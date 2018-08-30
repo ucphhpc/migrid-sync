@@ -37,9 +37,10 @@ except ImportError, ierr:
 
 def get_ssl_master_key(configuration, ssl_sock):
     """Extract SSL session master key from SSL socket"""
+    global _sslsession
     logger = configuration.logger
     master_key = None
-    if _ssl_session is None:
+    if _sslsession is None:
         logger.error("The MiG python _sslsession.so library is required!")
         return master_key
     try:
@@ -57,7 +58,7 @@ def get_ssl_session_id(configuration, ssl_sock):
     """Extract SSL session id from SSL socket"""
     logger = configuration.logger
     session_id = None
-    if _ssl_session is None:
+    if _sslsession is None:
         logger.error("The MiG python _sslsession.so library is required!")
         return session_id
     try:
