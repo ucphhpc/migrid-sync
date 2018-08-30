@@ -67,11 +67,11 @@ _active_sessions = {}
 _sessions_lock = threading.Lock()
 
 
-def __vaidate_gdp_session(configuration,
-                          proto,
-                          client_id,
-                          client_address,
-                          client_port):
+def __validate_gdp_session(configuration,
+                           proto,
+                           client_id,
+                           client_address,
+                           client_port):
     """Returns True if GDP user session is valid.
     GDP only allow one session per user"""
     logger = configuration.logger
@@ -84,13 +84,13 @@ def __vaidate_gdp_session(configuration,
     (status, msg) = validate_user(
         configuration, client_id, client_address, proto)
     if not status:
-        logger.info(msg)
+        logger.warning(msg)
     else:
         active_user_id = get_active_project_short_id(configuration,
                                                      client_id,
                                                      proto)
 
-    # GDP only allow on active user at any time
+    # GDP only allows one active user at any time
     # 'active_user_id' is registered as the active user in the GDP database
     # NOTE: If the daemon is killed without a proper session cleanup
     # Then the 'active' user field in the GDP database is not reset
@@ -103,7 +103,7 @@ def __vaidate_gdp_session(configuration,
         auth_sessions = {session_id: session for (session_id, session)
                          in open_sessions.iteritems()
                          if session.get('authorized')}
-        if auth_sessions:
+        if not auth_sessions:
 
             # No open sessions, reset GDP active user
 
@@ -125,9 +125,9 @@ def __vaidate_gdp_session(configuration,
                 #     % (session_id, client_id))
                 if not track_close_session(configuration,
                                            proto,
-                                           active_user_id,
                                            client_address,
                                            client_port,
+                                           client_id=active_user_id,
                                            session_id=session_id,
                                            prelocked=True):
                     status = False
@@ -1488,41 +1488,39 @@ def track_open_session(configuration,
     prev_authorized = False
     if session_id is None:
         session_id = "%s:%s" % (client_address, client_port)
-    locked = prelocked
-    if not prelocked:
-        locked = _sessions_lock.acquire(blocking)
-    if locked:
-        result = ''
-        try:
-            status = True
-            result = session_id
-            _cached = _active_sessions.get(client_id, {})
-            if not _cached:
-                _active_sessions[client_id] = _cached
-            _proto = _cached.get(proto, {})
-            if not _proto:
-                _cached[proto] = _proto
-            _session = _cached[proto].get(session_id, {})
-            if not _session:
-                _cached[proto][session_id] = _session
-            prev_authorized = _session.get('authorized', False)
-            _session['ip_addr'] = client_address
-            _session['tcp_port'] = client_port
-            _session['authorized'] = authorized
-            _session['timestamp'] = time.time()
-        except Exception, exc:
-            status = False
-            session_id = None
-            logger.error("track open session failed: %s" % exc)
+    if not prelocked and not _sessions_lock.acquire(blocking):
+        return result
+    result = ''
+    try:
+        status = True
+        result = session_id
+        _cached = _active_sessions.get(client_id, {})
+        if not _cached:
+            _active_sessions[client_id] = _cached
+        _proto = _cached.get(proto, {})
+        if not _proto:
+            _cached[proto] = _proto
+        _session = _cached[proto].get(session_id, {})
+        if not _session:
+            _cached[proto][session_id] = _session
+        prev_authorized = _session.get('authorized', False)
+        _session['ip_addr'] = client_address
+        _session['tcp_port'] = client_port
+        _session['authorized'] = authorized
+        _session['timestamp'] = time.time()
+    except Exception, exc:
+        status = False
+        session_id = None
+        logger.error("track open session failed: %s" % exc)
 
-    if not prelocked and locked:
+    if not prelocked:
         _sessions_lock.release()
 
     # If GDP and changed from NOT authorized to authorized
     # perform GDP project login
     # TODO: Consider skipping 'project_logout + login' if an
     #       active session exists.
-    #       Automatic 'project_logout' in '__vaidate_gdp_session'
+    #       Automatic 'project_logout' in '__validate_gdp_session'
 
     if configuration.site_enable_gdp \
             and status and authorized and not prev_authorized:
@@ -1545,22 +1543,18 @@ def get_open_sessions(configuration,
     # logger.debug("proto: '%s', client_id: %s, prelocked: %s"
     #              % (proto, client_id, prelocked))
     result = None
-    locked = prelocked
+    if not prelocked and not _sessions_lock.acquire(blocking):
+        return result
+    if client_id is None:
+        result = {key: val
+                  for (_, open_session)
+                  in _active_sessions.iteritems()
+                  if open_session.get(proto, '') == proto
+                  for (key, val) in open_session[proto].iteritems()}
+    else:
+        result = _active_sessions.get(client_id, {}).get(
+            proto, {})
     if not prelocked:
-        locked = _sessions_lock.acquire(blocking)
-        #logger.debug("lock status: %s" % locked)
-    if locked:
-        #logger.debug("_active_sessions: %s" % _active_sessions)
-        if client_id is None:
-            result = {key: val
-                      for (_, open_session)
-                      in _active_sessions.iteritems()
-                      if open_session.get(proto, '')
-                      for (key, val) in open_session[proto].iteritems()}
-        else:
-            result = _active_sessions.get(client_id, {}).get(
-                proto, {})
-    if not prelocked and locked:
         _sessions_lock.release()
 
     return result
@@ -1582,42 +1576,39 @@ def track_close_session(configuration,
     # logger.debug(msg)
     result = None
     status = False
-    deleted_session = None
     _client_id = client_id
 
     if session_id is None:
         session_id = "%s:%s" % (client_address, client_port)
-    locked = prelocked
-    if not prelocked:
-        locked = _sessions_lock.acquire(blocking)
-    if locked:
-        result = ''
-        if _client_id is None:
-            for (key, val) in _active_sessions.iteritems():
-                if val[proto].has_key(session_id):
-                    _client_id = key
-                    _sessions = val[proto]
-                    break
-        else:
-            _sessions = _active_sessions.get(_client_id, {}).get(
-                proto, {})
-        #logger.debug("_sessions : %s" % _sessions)
-        if _sessions and _sessions.has_key(session_id):
-            try:
-                status = True
-                result = session_id
-                deleted_session = _sessions[session_id]
-                del _sessions[session_id]
-            except Exception, exc:
-                status = False
-                result = None
-                msg = "track close session failed for: %s, %s" % (
-                    session_id, exc)
-                logger.error(msg)
-        else:
-            logger.warning("track close session: %s _NOT_ found" % session_id)
+    if not prelocked and not _sessions_lock.acquire(blocking):
+        return result
+    result = ''
+    if _client_id is None:
+        for (key, val) in _active_sessions.iteritems():
+            if val[proto].has_key(session_id):
+                _client_id = key
+                _sessions = val[proto]
+                break
+    else:
+        _sessions = _active_sessions.get(_client_id, {}).get(
+            proto, {})
+    # logger.debug("_sessions : %s" % _sessions)
+    if _sessions and _sessions.has_key(session_id):
+        try:
+            status = True
+            result = session_id
+            deleted_session = _sessions[session_id]
+            del _sessions[session_id]
+        except Exception, exc:
+            status = False
+            result = None
+            msg = "track close session failed for: %s, %s" % (
+                session_id, exc)
+            logger.error(msg)
+    else:
+        logger.warning("track close session: %s _NOT_ found" % session_id)
 
-    if not prelocked and locked:
+    if not prelocked:
         _sessions_lock.release()
 
     if status and configuration.site_enable_gdp \
@@ -1648,33 +1639,31 @@ def track_close_multiple_sessions(configuration,
     #     (session_ids, prelocked)
     # logger.debug(msg)
     result = None
-    locked = prelocked
-    if not prelocked:
-        locked = _sessions_lock.acquire(blocking)
-    if locked:
-        result = []
-        close_sessions = {client_id: client_session[proto]
-                          for (client_id, client_session)
-                          in _active_sessions.iteritems()
-                          for session_id in client_session[proto].keys()
-                          if session_id in session_ids}
-        #logger.debug("_active_sessions: %s" % _active_sessions)
-        #logger.debug("close_sessions: %s" % close_sessions)
-        for (client_id, client_session) in close_sessions.items():
-            for (session_id, session) in client_session.items():
-                ip_addr = session['ip_addr']
-                tcp_port = session['tcp_port']
-                status = track_close_session(configuration,
-                                             proto,
-                                             ip_addr,
-                                             tcp_port,
-                                             client_id=client_id,
-                                             session_id=session_id,
-                                             prelocked=True)
-                if status:
-                    result.append(session_id)
+    if not prelocked and not _sessions_lock.acquire(blocking):
+        return result
+    result = []
+    close_sessions = {client_id: client_session[proto]
+                      for (client_id, client_session)
+                      in _active_sessions.iteritems()
+                      for session_id in client_session[proto].keys()
+                      if session_id in session_ids}
+    # logger.debug("_active_sessions: %s" % _active_sessions)
+    # logger.debug("close_sessions: %s" % close_sessions)
+    for (client_id, client_session) in close_sessions.items():
+        for (session_id, session) in client_session.items():
+            ip_addr = session['ip_addr']
+            tcp_port = session['tcp_port']
+            status = track_close_session(configuration,
+                                         proto,
+                                         ip_addr,
+                                         tcp_port,
+                                         client_id=client_id,
+                                         session_id=session_id,
+                                         prelocked=True)
+            if status:
+                result.append(session_id)
 
-    if not prelocked and locked:
+    if not prelocked:
         _sessions_lock.release()
 
     return result
@@ -1697,35 +1686,34 @@ def track_close_expired_sessions(
     result = None
     status = False
     session_timeout = io_session_timeout.get(proto, 0)
-    locked = prelocked
-    if not prelocked:
-        locked = _sessions_lock.acquire(blocking)
-    if locked:
-        result = {}
-        open_sessions = get_open_sessions(
-            configuration, proto, client_id, prelocked=True)
-        current_timestamp = time.time()
-        remove_sessions = []
-        # logger.debug("current_timestamp: %s" % (current_timestamp))
-        for session_id, session in open_sessions.iteritems():
-            timestamp = session.get('timestamp', 0)
-            # logger.debug("%s -> %s" % (session_id, session))
-            # logger.debug("current_timestamp - timestamp: %s" %
-            #              (current_timestamp - timestamp))
-            if current_timestamp - timestamp > session_timeout:
-                remove_sessions.append(session_id)
-        # logger.debug("remove_sessions: %s" % remove_sessions)
-        for session_id in remove_sessions:
-            status = track_close_session(configuration,
-                                         proto,
-                                         client_address,
-                                         client_port,
-                                         client_id=client_id,
-                                         session_id=session_id,
-                                         prelocked=True)
-            result[session_id] = status
 
-    if not prelocked and locked:
+    if not prelocked and not _sessions_lock.acquire(blocking):
+        return result
+    result = {}
+    open_sessions = get_open_sessions(
+        configuration, proto, client_id, prelocked=True)
+    current_timestamp = time.time()
+    remove_sessions = []
+    # logger.debug("current_timestamp: %s" % (current_timestamp))
+    for session_id, session in open_sessions.iteritems():
+        timestamp = session.get('timestamp', 0)
+        # logger.debug("%s -> %s" % (session_id, session))
+        # logger.debug("current_timestamp - timestamp: %s" %
+        #              (current_timestamp - timestamp))
+        if current_timestamp - timestamp > session_timeout:
+            remove_sessions.append(session_id)
+    # logger.debug("remove_sessions: %s" % remove_sessions)
+    for session_id in remove_sessions:
+        status = track_close_session(configuration,
+                                     proto,
+                                     client_address,
+                                     client_port,
+                                     client_id=client_id,
+                                     session_id=session_id,
+                                     prelocked=True)
+        result[session_id] = status
+
+    if not prelocked:
         _sessions_lock.release()
 
     return result
@@ -1738,20 +1726,19 @@ def active_sessions(configuration,
                     blocking=True):
     """Look up how many active proto sessions client_id has running"""
     logger = configuration.logger
-    cur_active_sessions = None
-    locked = prelocked
-    if not prelocked:
-        locked = _sessions_lock.acquire(blocking)
-    if locked:
-        try:
-            _cached = _active_sessions.get(client_id, {})
-            _active = _cached.get(proto, {})
-            cur_active_sessions = len(_active.keys())
-        except Exception, exc:
-            cur_active_sessions = None
-            logger.error("active sessions failed: %s" % exc)
+    result = None
 
-    if not prelocked and locked:
+    if not prelocked and not _sessions_lock.acquire(blocking):
+        return result
+    try:
+        _cached = _active_sessions.get(client_id, {})
+        _active = _cached.get(proto, {})
+        result = len(_active.keys())
+    except Exception, exc:
+        result = None
+        logger.error("active sessions failed: %s" % exc)
+
+    if not prelocked:
         _sessions_lock.release()
 
     return cur_active_sessions
@@ -1770,11 +1757,11 @@ def validate_session(configuration,
     # logger.debug(msg)
     result = True
     if configuration.site_enable_gdp:
-        result = __vaidate_gdp_session(configuration,
-                                       proto,
-                                       client_id,
-                                       client_address,
-                                       client_port)
+        result = __validate_gdp_session(configuration,
+                                        proto,
+                                        client_id,
+                                        client_address,
+                                        client_port)
 
     return result
 
@@ -1865,10 +1852,12 @@ if __name__ == "__main__":
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
     print "Track close session"
-    track_close_session(conf, test_proto, test_id, test_address, test_port)
+    track_close_session(conf, test_proto, test_address,
+                        test_port, client_id=test_id)
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
     print "Track close session"
-    track_close_session(conf, test_proto, test_id, test_address, test_port+1)
+    track_close_session(conf, test_proto, test_address,
+                        test_port+1, client_id=test_id)
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
