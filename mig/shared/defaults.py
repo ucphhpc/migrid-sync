@@ -289,8 +289,8 @@ POLICY_MEDIUM, POLICY_HIGH = "MEDIUM", "HIGH"
 POLICY_CUSTOM = "CUSTOM"
 
 # Prioritized protocol choices and internal values
-duplicati_protocol_choices = [('WebDAVS', 'davs'), ('SFTP', 'sftp'),
-                              ('FTPS', 'ftps')]
+duplicati_protocol_choices = [('SFTP', 'sftp'), ('FTPS', 'ftps'),
+                              ('WebDAVS', 'davs')]
 # Prioritized schedule backup frequency choices and json values
 duplicati_schedule_choices = [('Daily', '1D'), ('Weekly', '1W'),
                               ('Monthly', '1M'), ('Never', '')]
