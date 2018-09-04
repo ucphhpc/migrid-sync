@@ -413,9 +413,8 @@ class Configuration:
     migserver_https_mig_oid_url = ''
     migserver_https_ext_oid_url = ''
     migserver_https_sid_url = ''
-    jupyter_url = ''
+    jupyter_hosts = ''
     jupyter_base_url = ''
-    jupyter_url = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
     cputime_for_empty_jobs = 0
@@ -1101,8 +1100,8 @@ location.""" % self.config_file
                 'SITE', 'enable_jupyter')
         else:
             self.site_enable_jupyter = False
-        if config.has_option('GLOBAL', 'jupyter_url'):
-            self.jupyter_url = config.get('GLOBAL', 'jupyter_url')
+        if config.has_option('GLOBAL', 'jupyter_hosts'):
+            self.jupyter_hosts = config.get('GLOBAL', 'jupyter_hosts')
 
         if config.has_option('GLOBAL', 'jupyter_base_url'):
             self.jupyter_base_url = config.get('GLOBAL', 'jupyter_base_url')

@@ -27,8 +27,8 @@
 #
 
 """Automatic home drive mount from jupyter
-This backend makes two requests to the target url specified by the
-configuration.jupyter_url variable the first requests authenticates against the
+This backend makes two requests to the target url as picked randomly from the
+configuration.jupyter_hosts list, the first authenticates against the
 jupyterhub server, it passes the Remote-User header with the client_id's email.
 The second request takes the newly instantiated ssh keyset and passes it to the
 jupyterhub server via the Mount header.
@@ -49,6 +49,7 @@ import sys
 import time
 import shutil
 import requests
+import random
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
@@ -148,6 +149,27 @@ def get_newest_mount(jupyter_mounts):
     return latest, old_mounts
 
 
+def get_jupyter_host(configuration, logger):
+    """
+    Returns an URL to an active jupyterhub host
+    if no active host is found, None is returned
+    :param configuration:
+    :return: url string or None
+    """
+    hosts = configuration.jupyter_hosts.split(" ")
+    while len(hosts) > 0:
+        r = random.randrange(0, len(hosts) - 1)
+        try:
+            with requests.session() as s:
+                s.get(hosts[r])
+                return hosts[r]
+        except requests.ConnectionError as err:
+            logger.error("Failed to establish connection to %s error %s",
+                         hosts[r], err)
+            hosts.pop(r)
+    return None
+
+
 def jupyter_host(configuration, output_objects, user):
     """
     Returns the users jupyterhub host
@@ -223,13 +245,9 @@ def main(client_id, user_arguments_dict):
              'The required sftp service is not enabled on the system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # Test target jupyter url
-    session = requests.session()
-    try:
-        session.get(configuration.jupyter_url)
-    except requests.ConnectionError as err:
-        logger.error("Failed to establish connection to %s error %s",
-                     configuration.jupyter_url, err)
+    # Get an active jupyterhost
+    host = get_jupyter_host(configuration, logger)
+    if host is None:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Failed to establish connection to the Jupyter service'})
@@ -276,10 +294,9 @@ def main(client_id, user_arguments_dict):
     # Make sure ssh daemon does not complain
     tighten_key_perms(configuration, client_id)
 
-    url_jup = configuration.jupyter_url
     url_base = configuration.jupyter_base_url
-    url_auth = url_jup + url_base + '/hub/home'
-    url_mount = url_jup + url_base + '/hub/mount'
+    url_auth = host + url_base + '/hub/home'
+    url_mount = host + url_base + '/hub/mount'
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.

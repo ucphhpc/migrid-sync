@@ -52,7 +52,8 @@ from shared.defaults import default_http_port, default_https_port, \
 from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 
 
-def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
+def fill_template(template_file, output_file, settings, eat_trailing_space=[],
+                  additional=None):
     """Fill a configuration template using provided settings dictionary"""
     try:
         template = open(template_file, 'r')
@@ -70,7 +71,6 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
         if variable in eat_trailing_space:
             suffix = '\s{0,1}'
         contents = re.sub(variable + suffix, value, contents)
-
     # print "output:\n", contents
 
     # print "writing specific contents to %s" % (output_file)
@@ -81,6 +81,63 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
         output.close()
     except Exception, err:
         print 'Error: writing output file %s: %s' % (output_file, err)
+        return False
+    return True
+
+
+def template_insert(template_file, insert_identifiers, unique=False):
+    """ Insert into a configuration template using provided settings dictionary
+    :param template_file: path to the template configuration file that should be
+    modified with inserts
+    :param insert_identifiers: dictionary, where the keys are used as search strings
+    to find the index where the insert should take place. The values can either be a list
+    of a single string
+    :param unique: Whether the function should check whether the supplied value is
+    already present in the template_file, if so it won't insert it
+    :return: True/False based on whether an insert took place
+    """
+
+    try:
+        template = open(template_file, 'r')
+        contents = template.readlines()
+        template.close()
+    except Exception, err:
+        print 'Error: reading template file %s: %s' % (template_file,
+                                                       err)
+        return False
+
+    # print "template read:\n", output
+    for (variable, value) in insert_identifiers.items():
+        try:
+            # identifier index
+            f_index = [i for i in range(len(contents)) if variable in contents[i]][0]
+        except IndexError, err:
+            print("Template insert, Identifer: %s not found in %s: %s" % (variable,
+                                                                          template_file,
+                                                                          err))
+            return False
+
+        if type(value) is list:
+            for v in value:
+                if unique and len([line for line in contents if v in line]) > 0:
+                    continue
+                f_index += 1
+                contents.insert(f_index, v)
+
+        elif type(value) is str:
+            if unique and len([line for line in contents if value in line]) > 0:
+                break
+            contents.insert(f_index+1, value)
+        else:
+            print("A non-valid insert identifer dictionary value was supplied, "
+                  "supports str and list")
+            return False
+    try:
+        output = open(template_file, 'w')
+        output.writelines(contents)
+        output.close()
+    except Exception, err:
+        print 'Error: writing output file %s: %s' % (template_file, err)
         return False
     return True
 
@@ -99,7 +156,7 @@ def generate_confs(
     ext_oid_fqdn='localhost',
     sid_fqdn='localhost',
     io_fqdn='localhost',
-    jupyter_url='',
+    jupyter_hosts='',
     jupyter_base_url='',
     user='mig',
     group='mig',
@@ -180,7 +237,6 @@ def generate_confs(
     user_dict['__EXT_OID_FQDN__'] = ext_oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
-    user_dict['__JUPYTER_URL__'] = jupyter_url
     user_dict['__JUPYTER_BASE_URL__'] = jupyter_base_url
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
@@ -279,14 +335,12 @@ WARNING: you probably have to use either different fqdn or port settings for
 cert, oid and sid based https!
 """
 
+    # List of (file, insert_identifiers) used to dynamically add to template
+    # configuration files
+    insert_list = []
+
     # Paraview and Jupyter require websockets proxy - enable conditionally
     user_dict['__WEBSOCKETS_COMMENTED__'] = '#'
-
-    if jupyter_url:
-        user_dict['__JUPYTER_WEB_SOCKET__'] = jupyter_url.replace("https://", "")\
-            .replace("http://", "").replace("www.", "")
-    else:
-        user_dict['__JUPYTER_WEB_SOCKET__'] = ''
 
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
 
@@ -374,17 +428,9 @@ cert, oid and sid based https!
         user_dict['__IFDEF_IO_FQDN__'] = 'Define'
     # No port for __IO_FQDN__
 
-    user_dict['__IFDEF_JUPYTER_URL__'] = 'UnDefine'
-    if user_dict['__JUPYTER_URL__'] != '':
-        user_dict['__IFDEF_JUPYTER_URL__'] = 'Define'
-
     user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'UnDefine'
     if user_dict['__JUPYTER_BASE_URL__'] != '':
         user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'Define'
-
-    user_dict['__IFDEF_JUPYTER_WEB_SOCKET__'] = 'UnDefine'
-    if user_dict['__JUPYTER_WEB_SOCKET__'] != '':
-        user_dict['__IFDEF_JUPYTER_WEB_SOCKET__'] = 'Define'
 
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
@@ -427,6 +473,62 @@ cert, oid and sid based https!
         user_dict['__JUPYTER_COMMENTED__'] = ''
         # Jupyter requires websockets proxy
         user_dict['__WEBSOCKETS_COMMENTED__'] = ''
+
+        if jupyter_hosts:
+            user_dict['__JUPYTER_HOSTS__'] = jupyter_hosts
+
+            jupyter_tmp_inserts = {
+                'BalancerMemberPlaceholder': [],
+                'WSBalancerMemberPlaceholder': []
+            }
+
+            apache_conf_inserts = {
+                'JupyterHostsPlaceholder': []
+            }
+
+            hosts = jupyter_hosts.split(' ')
+            # Insert hosts into jupyter-template
+            for i_h, host in enumerate(hosts):
+                member = "BalancerMember %s route=%s retry=10 timeout=600\n" % (
+                    "${JUPYTER_HOST_%s}" % i_h, i_h)
+                ws_member = member.replace("${JUPYTER_HOST_%s}" % i_h,
+                                           "${WS_JUPYTER_HOST_%s}" % i_h)
+
+                member_def = "    __JUPYTER_COMMENTED__   " + member
+                ws_member_def = "    __JUPYTER_COMMENTED__   " + ws_member
+
+                jupyter_tmp_inserts['BalancerMemberPlaceholder'].append(member_def)
+                jupyter_tmp_inserts['WSBalancerMemberPlaceholder'].append(ws_member_def)
+
+                member_helper = "__IFDEF_JUPYTER_HOST_%s__ " \
+                                "JUPYTER_HOST_%s __JUPYTER_HOST_%s__\n" % (i_h, i_h, i_h)
+                ws_member_helper = "__IFDEF_WS_JUPYTER_HOST_%s__ WS_JUPYTER_HOST_%s " \
+                                   "__WS_JUPYTER_HOST_%s__\n" % (i_h, i_h, i_h)
+
+                apache_conf_inserts['JupyterHostsPlaceholder'].append(member_helper)
+                apache_conf_inserts['JupyterHostsPlaceholder'].append(ws_member_helper)
+
+                user_dict['__IFDEF_JUPYTER_HOST_%s__' % i_h] = 'Define'
+                user_dict['__IFDEF_WS_JUPYTER_HOST_%s__' % i_h] = 'Define'
+
+                user_dict['__JUPYTER_HOST_%s__' % i_h] = host
+                ws_host = host.replace("https://", "wss://").replace("http://", "ws://")
+                user_dict['__WS_JUPYTER_HOST_%s__' % i_h] = ws_host
+
+                # No user supplied port, assign based on url prefix
+                if len(host.split(":")) < 3:
+                    if host.startswith("https://"):
+                        user_dict['__JUPYTER_HOST_%s__' % i_h] += ":443"
+                        user_dict['__WS_JUPYTER_HOST_%s__' % i_h] += ":443"
+                    else:
+                        user_dict['__JUPYTER_HOST_%s__' % i_h] += ":80"
+                        user_dict['__WS_JUPYTER_HOST_%s__' % i_h] += ":80"
+
+            insert_list.extend([
+                ("apache-jupyter-template.conf", jupyter_tmp_inserts),
+                ("apache-apache2-template.conf", apache_conf_inserts)
+            ])
+
     else:
         user_dict['__JUPYTER_COMMENTED__'] = '#'
 
@@ -628,6 +730,9 @@ cert, oid and sid based https!
                                 for i in sorted_keys])
     user_dict['__GENERATECONFS_VARIABLES__'] = variable_lines
 
+    for (temp_file, insert_identifiers) in insert_list:
+        template_insert(temp_file, insert_identifiers, unique=True)
+
     # modify this list when adding/removing template->target
     replacement_list = [
         ("generateconfs-template.log", "generateconfs.log"),
@@ -638,8 +743,8 @@ cert, oid and sid based https!
         ("apache-MiG-template.conf", "MiG.conf"),
         ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
         ("apache-init.d-deb-template", "apache-%s" % user),
-        ("apache-MiG-template.conf", "MiG.conf"),
         ("apache-service-template.conf", "apache2.service"),
+        ("apache-jupyter-template.conf", "jupyter.conf"),
         ("trac-MiG-template.ini", "trac.ini"),
         ("logrotate-MiG-template", "logrotate-migrid"),
         ("MiGserver-template.conf", "MiGserver.conf"),
@@ -693,6 +798,7 @@ httpd.conf, ports.conf and envvars to %(apache_etc)s/:
 sudo cp %(destination)s/apache2.conf %(apache_etc)s/
 sudo cp %(destination)s/httpd.conf %(apache_etc)s/
 sudo cp %(destination)s/ports.conf %(apache_etc)s/
+sudo cp %(destination)s/jupyter.conf %(apache_etc)s/
 sudo cp %(destination)s/envvars %(apache_etc)s/
 
 and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
@@ -1026,6 +1132,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     apache_httpd_conf = os.path.join(dst, 'httpd.conf')
     apache_ports_conf = os.path.join(dst, 'ports.conf')
     apache_mig_conf = os.path.join(dst, 'MiG.conf')
+    apache_jupyter_conf = os.path.join(dst, 'jupyter.conf')
     server_conf = os.path.join(dst, 'MiGserver.conf')
     trac_ini = os.path.join(dst, 'trac.ini')
     apache_initd_script = os.path.join(dst, 'apache-%s' % user)
@@ -1049,6 +1156,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     print 'sudo cp -f -d %s %s/' % (apache_httpd_conf, apache_dir)
     print 'sudo cp -f -d %s %s/' % (apache_ports_conf, apache_dir)
     print 'sudo cp -f -d %s %s/conf.d/' % (apache_mig_conf, apache_dir)
+    print 'sudo cp -f -d %s %s/' % (apache_jupyter_conf, apache_dir)
     print 'sudo cp -f -d %s %s/' % (apache_initd_script, apache_dir)
     print 'sudo mkdir -p %s %s %s ' % (apache_run, apache_lock, apache_log)
 
