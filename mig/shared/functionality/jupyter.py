@@ -48,8 +48,8 @@ import socket
 import sys
 import time
 import shutil
-import requests
 import random
+import requests
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
@@ -157,16 +157,16 @@ def get_jupyter_host(configuration, logger):
     :return: url string or None
     """
     hosts = configuration.jupyter_hosts.split(" ")
-    while len(hosts) > 0:
-        r = random.randrange(0, len(hosts) - 1)
+    while hosts:
+        rng = random.randrange(0, len(hosts) - 1)
         try:
-            with requests.session() as s:
-                s.get(hosts[r])
-                return hosts[r]
+            with requests.session() as session:
+                session.get(hosts[rng])
+                return hosts[rng]
         except requests.ConnectionError as err:
             logger.error("Failed to establish connection to %s error %s",
-                         hosts[r], err)
-            hosts.pop(r)
+                         hosts[rng], err)
+            hosts.pop(rng)
     return None
 
 
