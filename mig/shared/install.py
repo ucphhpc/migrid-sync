@@ -494,8 +494,8 @@ cert, oid and sid based https!
                 ws_member = member.replace("${JUPYTER_HOST_%s}" % i_h,
                                            "${WS_JUPYTER_HOST_%s}" % i_h)
 
-                member_def = "    __JUPYTER_COMMENTED__   " + member
-                ws_member_def = "    __JUPYTER_COMMENTED__   " + ws_member
+                member_def = "__JUPYTER_COMMENTED__        " + member
+                ws_member_def = "__JUPYTER_COMMENTED__        " + ws_member
 
                 jupyter_tmp_inserts['BalancerMemberPlaceholder'].append(member_def)
                 jupyter_tmp_inserts['WSBalancerMemberPlaceholder'].append(ws_member_def)
