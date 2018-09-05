@@ -211,6 +211,9 @@ if (jQuery) (function($){
             if (jsonRes[i]['object_type'] === 'warning') {
                 warnings +='<span class="warningtext warning iconleftpad">'+jsonRes[i].text+'</span><br />';
             }
+            if (jsonRes[i]['object_type'] === 'file_not_found') {
+                warnings +='<span class="warningtext warning iconleftpad">File not found: '+jsonRes[i].name+'</span><br />';
+            }
         }
         return warnings;
     };
@@ -712,10 +715,6 @@ if (jQuery) (function($){
                        $(".fm_files").parent().reload('');
                    }, "json"
                   );
-        }
-
-        function mkdir(current_dir, path, options) {
-
         }
 
         function pack(current_dir, src, dst, options) {
@@ -1437,26 +1436,26 @@ if (jQuery) (function($){
                 //var path_enc = encodeURI($(el).attr(pathAttribute));
                 window.open('sharelink.py');
             },
-            sharelink: function(action, el, pos) {
+            createsharelink: function(action, el, pos) {
                 var target = $(el).attr(pathAttribute);
-                $("#sharelink_form input[name='path']").val(target);
-                $("#sharelink_form input[name='read_access']").prop('checked', true);
-                $("#sharelink_form input[name='write_access']").prop('checked', false);
+                $("#create_sharelink_form input[name='path']").val(target);
+                $("#create_sharelink_form input[name='read_access']").prop('checked', true);
+                $("#create_sharelink_form input[name='write_access']").prop('checked', false);
                 // Disable write here for files
                 if (target.lastIndexOf("/") === (target.length-1)) {
-                    $("#sharelink_form input[name='write_access']").prop('disabled', false);
+                    $("#create_sharelink_form input[name='write_access']").prop('disabled', false);
                 } else {
-                    $("#sharelink_form input[name='write_access']").prop('disabled', true);
+                    $("#create_sharelink_form input[name='write_access']").prop('disabled', true);
                 }
-                $("#sharelink_form input[name='expire']").val('');
-                $("#sharelink_dialog").dialog({
+                $("#create_sharelink_form input[name='expire']").val('');
+                $("#create_sharelink_dialog").dialog({
                     buttons: {
                         Ok: function() {
                             startProgress("Generating share link ...");
-                            var path = $("#sharelink_form input[name='path']").val();
-                            var read_access = $("#sharelink_form input[name='read_access']").prop('checked');
-                            var write_access = $("#sharelink_form input[name='write_access']").prop('checked');
-                            var expire = $("#sharelink_form input[name='expire']").val();
+                            var path = $("#create_sharelink_form input[name='path']").val();
+                            var read_access = $("#create_sharelink_form input[name='read_access']").prop('checked');
+                            var write_access = $("#create_sharelink_form input[name='write_access']").prop('checked');
+                            var expire = $("#create_sharelink_form input[name='expire']").val();
                             $(this).dialog('close');
                             jsonWrapper(el, '#cmd_dialog', 'sharelink.py', {action: 'create',
                                                                             path: path,
@@ -1472,8 +1471,39 @@ if (jQuery) (function($){
                     autoOpen: false, closeOnEscape: true, modal: true,
                     width: '700px'
                 });
-                $("#sharelink_dialog").dialog('open');
-                $("#sharelink_form input[name='path']").focus();
+                $("#create_sharelink_dialog").dialog('open');
+                $("#create_sharelink_form input[name='path']").focus();
+            },
+            importsharelink: function(action, el, pos) {
+                var target = $(el).attr(pathAttribute);
+                $("#import_sharelink_form input[name='dst']").val(target);
+                $("#import_sharelink_form input[name='src']").val('*');
+                $("#import_sharelink_form input[name='share_id']").val('');
+                $("#import_sharelink_dialog").dialog({
+                    buttons: {
+                        Ok: function() {
+                            startProgress("Importing from share link ...");
+                            var share_id = $("#import_sharelink_form input[name='share_id']").val();
+                            var src = $("#import_sharelink_form input[name='src']").val();
+                            var dst = $("#import_sharelink_form input[name='dst']").val();
+                            var flags = $("#import_sharelink_form input[name='flags']").val();
+                            $(this).dialog('close');
+                            jsonWrapper(el, '#cmd_dialog', 'cp.py', {path: "",
+                                                                     share_id: share_id,
+                                                                     src: src,
+                                                                     dst: dst,
+                                                                     flags: flags,
+                                                                    });
+                        },
+                        Cancel: function() {
+                            $(this).dialog('close');
+                        }
+                    },
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '700px'
+                });
+                $("#import_sharelink_dialog").dialog('open');
+                $("#import_sharelink_form input[name='share_id']").focus();
             },
             imagesettings: function(action, el, pos) {
                 var rel_path = $(el).attr(pathAttribute);
@@ -2043,7 +2073,11 @@ if (jQuery) (function($){
                     "sep3": "---------",
                     "imagesettings": {name: "Image Settings", icon: "edit"},
                     "sep4": "---------",
-                    "sharelink": {name: "Share Link", icon: "sharelink"},
+                    "sharelinks": {"name": "Share Link", icon: "sharelink", 
+                                   "items": {"createsharelink": {name: "Create", icon: "createsharelink"},
+                                             "importsharelink": {name: "Import", icon: "importsharelink"}
+                                            }
+                                  },
                     "sharelinks-sep": "---------",
                     "datatransfers": {name: "Data Transfers", icon: "datatransfers",
                                       "items": {"dataimport": {name: "Import", icon: "dataimport"},
@@ -2084,7 +2118,7 @@ if (jQuery) (function($){
                     /* TODO: add list archive contents */
                     //"listpack": {name: "Show Packed Contents", icon: "listpack"},
                     "sep3": "---------",
-                    "sharelink": {name: "Share Link", icon: "sharelink"},
+                    "createsharelink": {name: "Share Link", icon: "sharelink"},
                     "sharelink-sep": "---------",
                     "submit": {name: "Submit", icon: "submit"},
                     "submit-sep": "---------",
@@ -2407,18 +2441,36 @@ if (jQuery) (function($){
                  }
                 });
 
-            $("#sharelink_form").ajaxForm(
-                {target: '#sharelink_output', dataType: 'json',
+            $("#create_sharelink_form").ajaxForm(
+                {target: '#create_sharelink_output', dataType: 'json',
                  success: function(responseObject, statusText) {
                      var errors = $(this).renderError(responseObject);
                      var warnings = $(this).renderWarning(responseObject);
                      if (errors.length > 0) {
-                         $("#sharelink_output").html(errors);
+                         $("#create_sharelink_output").html(errors);
                      } else if (warnings.length > 0) {
-                         $("#sharelink_output").html(warnings);
+                         $("#create_sharelink_output").html(warnings);
                      } else {
-                         $("#sharelink_output").html("created!");
-                         $("#sharelink_dialog").dialog('close');
+                         $("#create_sharelink_output").html("created!");
+                         $("#create_sharelink_dialog").dialog('close');
+                     }
+                     /* always reload parent to reset progress, etc */
+                     $(".fm_files").parent().reload('');
+                 }
+                });
+
+            $("#import_sharelink_form").ajaxForm(
+                {target: '#import_sharelink_output', dataType: 'json',
+                 success: function(responseObject, statusText) {
+                     var errors = $(this).renderError(responseObject);
+                     var warnings = $(this).renderWarning(responseObject);
+                     if (errors.length > 0) {
+                         $("#import_sharelink_output").html(errors);
+                     } else if (warnings.length > 0) {
+                         $("#import_sharelink_output").html(warnings);
+                     } else {
+                         $("#import_sharelink_output").html("imported!");
+                         $("#import_sharelink_dialog").dialog('close');
                      }
                      /* always reload parent to reset progress, etc */
                      $(".fm_files").parent().reload('');

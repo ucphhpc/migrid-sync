@@ -39,6 +39,7 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.gdp import project_log
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose, recursive
+from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 
 
@@ -50,6 +51,7 @@ def signature():
         'src': REJECT_UNSET,
         'dst': REJECT_UNSET,
         'iosessionid': [''],
+        'share_id': [''],
     }
     return ['', defaults]
 
@@ -79,6 +81,7 @@ def main(client_id, user_arguments_dict, environ=None):
     src_list = accepted['src']
     dst = accepted['dst'][-1]
     iosessionid = accepted['iosessionid'][-1]
+    share_id = accepted['share_id'][-1]
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -94,21 +97,65 @@ CSRF-filtered POST requests to prevent unintended updates'''
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                             client_dir)) + os.sep
 
-    if not client_id:
+    # Special handling if used from a job (no client_id but iosessionid)
+    if not client_id and iosessionid:
         base_dir = os.path.realpath(configuration.webserver_home
                                     + os.sep + iosessionid) + os.sep
 
+    # Use selected base as source and destination dir by default
+    src_base = dst_base = base_dir
+
+    # Sharelink import if share_id is given - change to sharelink as src base
+    if share_id:
+        try:
+            (share_mode, _) = extract_mode_id(configuration, share_id)
+        except ValueError, err:
+            logger.error('%s called with invalid share_id %s: %s' %
+                         (op_name, share_id, err))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Invalid sharelink ID: %s' % share_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        # TODO: load and check sharelink pickle (currently requires client_id)
+        if share_mode == 'write-only':
+            logger.error('%s called import from write-only sharelink: %s'
+                         % (op_name, accepted))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Sharelink %s is write-only!' % share_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        target_dir = os.path.join(share_mode, share_id)
+        src_base = os.path.abspath(os.path.join(configuration.sharelink_home,
+                                                target_dir)) + os.sep
+        if os.path.isfile(os.path.realpath(src_base)):
+            logger.error('%s called import on single file sharelink: %s'
+                         % (op_name, share_id))
+            output_objects.append(
+                {'object_type': 'error_text', 'text': """Import is only
+supported for directory sharelinks!"""})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        elif not os.path.isdir(src_base):
+            logger.error('%s called import with non-existant sharelink: %s'
+                         % (op_name, share_id))
+            output_objects.append(
+                {'object_type': 'error_text', 'text': 'No such sharelink: %s'
+                 % share_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
     status = returnvalues.OK
 
-    abs_dest = base_dir + dst
+    abs_dest = dst_base + dst
     dst_list = glob.glob(abs_dest)
     if not dst_list:
 
         # New destination?
 
         if not glob.glob(os.path.dirname(abs_dest)):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Illegal dst path provided!'})
+            logger.error('%s called with illegal dst: %s'
+                         % (op_name, dst))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Illegal dst path provided!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
             dst_list = [abs_dest]
@@ -118,8 +165,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     dest = dst_list[-1]
     if len(dst_list) > 1:
         output_objects.append(
-            {'object_type': 'warning', 'text'
-             : 'dst (%s) matches multiple targets - using last: %s'
+            {'object_type': 'warning', 'text':
+             'dst (%s) matches multiple targets - using last: %s'
              % (dst, dest)})
 
     # IMPORTANT: path must be expanded to abs for proper chrooting
@@ -128,13 +175,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # Don't use abs_path in output as it may expose underlying
     # fs layout.
 
-    relative_dest = abs_dest.replace(base_dir, '')
-    if not valid_user_path(configuration, abs_dest, base_dir, True):
+    relative_dest = abs_dest.replace(dst_base, '')
+    if not valid_user_path(configuration, abs_dest, dst_base, True):
         logger.warning('%s tried to %s restricted path %s ! (%s)'
                        % (client_id, op_name, abs_dest, dst))
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : "Invalid destination (%s expands to an illegal path)" % dst})
+            {'object_type': 'error_text', 'text':
+             "Invalid destination (%s expands to an illegal path)" % dst})
         return (output_objects, returnvalues.CLIENT_ERROR)
     if not check_write_access(abs_dest, parent_dir=True):
         logger.warning('%s called without write access: %s'
@@ -142,16 +189,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'cannot copy to "%s": inside a read-only location!'
-              % relative_dest})
+             % relative_dest})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for pattern in src_list:
-        unfiltered_match = glob.glob(base_dir + pattern)
+        unfiltered_match = glob.glob(src_base + pattern)
         match = []
         for server_path in unfiltered_match:
             # IMPORTANT: path must be expanded to abs for proper chrooting
             abs_path = os.path.abspath(server_path)
-            if not valid_user_path(configuration, abs_path, base_dir, True):
+            if not valid_user_path(configuration, abs_path, src_base, True):
                 logger.warning('%s tried to %s restricted path %s ! (%s)'
                                % (client_id, op_name, abs_path, pattern))
                 continue
@@ -166,7 +213,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:
-            relative_path = abs_path.replace(base_dir, '')
+            relative_path = abs_path.replace(src_base, '')
             if verbose(flags):
                 output_objects.append(
                     {'object_type': 'file', 'name': relative_path})
@@ -176,8 +223,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if os.path.islink(abs_path):
                 output_objects.append(
                     {'object_type': 'warning', 'text': """You're not allowed to
-copy entire special folders like %s shared folders!""" 
-                    % configuration.site_vgrid_label})
+copy entire special folders like %s shared folders!"""
+                     % configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
@@ -194,8 +241,9 @@ copy entire special folders like %s shared folders!"""
 
             if not recursive(flags) and os.path.isdir(abs_path):
                 logger.warning('skipping directory source %s' % abs_path)
-                output_objects.append({'object_type': 'warning', 'text'
-                        : 'skipping directory src %s!' % relative_path})
+                output_objects.append(
+                    {'object_type': 'warning', 'text':
+                     'skipping directory src %s!' % relative_path})
                 continue
 
             # If destination is a directory the src should be copied there
@@ -209,8 +257,8 @@ copy entire special folders like %s shared folders!"""
                 logger.warning('%s tried to %s %s to itself! (%s)'
                                % (client_id, op_name, abs_path, pattern))
                 output_objects.append(
-                    {'object_type': 'warning', 'text'
-                     : "Cannot copy '%s' to self!" % relative_path})
+                    {'object_type': 'warning', 'text':
+                     "Cannot copy '%s' to self!" % relative_path})
                 status = returnvalues.CLIENT_ERROR
                 continue
             if os.path.isdir(abs_path) and \
@@ -218,8 +266,8 @@ copy entire special folders like %s shared folders!"""
                 logger.warning('%s tried to %s %s to itself! (%s)'
                                % (client_id, op_name, abs_path, pattern))
                 output_objects.append(
-                    {'object_type': 'warning', 'text'
-                     : "Cannot copy '%s' to (sub) self!" % relative_path})
+                    {'object_type': 'warning', 'text':
+                     "Cannot copy '%s' to (sub) self!" % relative_path})
                 status = returnvalues.CLIENT_ERROR
                 continue
 

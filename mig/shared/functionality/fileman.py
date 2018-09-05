@@ -40,7 +40,7 @@ from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.gdp import get_project_from_client_id
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry, extract_menu
-from shared.sharelinks import create_share_link_form
+from shared.sharelinks import create_share_link_form, import_share_link_form
 
 
 def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
@@ -50,8 +50,10 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     fill_entries = {'vgrid_label': configuration.site_vgrid_label,
                     'default_max_chunks': default_max_chunks,
                     'chroot': chroot}
-    fill_entries['sharelink_form'] = create_share_link_form(
+    fill_entries['create_sharelink_form'] = create_share_link_form(
         configuration, client_id, 'json', '', csrf_map.get('sharelink', ''))
+    fill_entries['import_sharelink_form'] = import_share_link_form(
+        configuration, client_id, 'json', '', csrf_map.get('cp', ''))
     if configuration.site_enable_jobs and \
             'submitjob' in extract_menu(configuration, title_entry):
         fill_entries["upload_submit_entry"] = '''
@@ -329,10 +331,16 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <div id="grep_output"><!-- dynamic --></div>
     </div>
     
-    <div id="sharelink_dialog" title="Create Share Link"
+    <div id="create_sharelink_dialog" title="Create Share Link"
         style="display: none;">
-    %(sharelink_form)s
-    <div id="sharelink_output"><!-- dynamic --></div>
+    %(create_sharelink_form)s
+    <div id="create_sharelink_output"><!-- dynamic --></div>
+    </div>
+
+    <div id="import_sharelink_dialog" title="Import from Share Link"
+        style="display: none;">
+    %(import_sharelink_form)s
+    <div id="import_sharelink_output"><!-- dynamic --></div>
     </div>
 
     <div id="imagesettings_dialog" title="Image Settings" style="display: none;">

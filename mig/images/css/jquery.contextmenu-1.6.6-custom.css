@@ -218,6 +218,8 @@ Original license header follows...
 .context-menu-list LI.icon-pack { background-image: url(/images/icons/compress.png); }
 .context-menu-list LI.icon-unpack { background-image: url(/images/icons/zip.png); }
 .context-menu-list LI.icon-sharelink { background-image: url(/images/icons/table_link.png); }
+.context-menu-list LI.icon-createsharelink { background-image: url(/images/icons/table_add.png); }
+.context-menu-list LI.icon-importsharelink { background-image: url(/images/icons/table_lightning.png); }
 .context-menu-list LI.icon-sharelinks { background-image: url(/images/icons/table_gear.png); }
 .context-menu-list LI.icon-dataimport { background-image: url(/images/icons/page_white_get.png); }
 .context-menu-list LI.icon-dataexport { background-image: url(/images/icons/page_white_put.png); }

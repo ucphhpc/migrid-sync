@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelinks - share link helper functions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,7 @@ from random import SystemRandom
 
 from shared.base import client_id_dir, extract_field
 from shared.defaults import sharelinks_filename, csrf_field, \
-     share_mode_charset, share_id_charset
+    share_mode_charset, share_id_charset
 from shared.fileio import makedirs_rec, make_symlink, delete_symlink
 from shared.serial import load, dump
 
@@ -51,6 +51,7 @@ mode_chars_map = {'read-only': __ro_mode_chars, 'read-write': __rw_mode_chars,
 
 __bool_map = {True: 'Yes', False: 'No'}
 
+
 def generate_sharelink_id(configuration, share_mode):
     """We use one random char from the substring matching share_mode and
     configuration.sharelink_length-1 random chars for the actual ID part. With
@@ -59,9 +60,10 @@ def generate_sharelink_id(configuration, share_mode):
     guessing.
     """
     share_id = SystemRandom().choice(mode_chars_map[share_mode])
-    share_id += ''.join([SystemRandom().choice(share_id_charset) for _ in \
+    share_id += ''.join([SystemRandom().choice(share_id_charset) for _ in
                          range(configuration.site_sharelink_length-1)])
     return share_id
+
 
 def extract_mode_id(configuration, share_id):
     """Extract mode from first char and return along with ID-only part.
@@ -74,6 +76,7 @@ def extract_mode_id(configuration, share_id):
         if share_id[:1] in mode_chars:
             return (mode, share_id[1:])
     raise ValueError("Invalid share_id '%s' !" % share_id)
+
 
 def is_active(configuration, share_dict):
     """Check if share link inf share_dict is active in the sense that the
@@ -96,6 +99,7 @@ def is_active(configuration, share_dict):
         return False
     return True
 
+
 def build_sharelinkitem_object(configuration, share_dict):
     """Build a share link object based on input share_dict"""
 
@@ -108,7 +112,7 @@ def build_sharelinkitem_object(configuration, share_dict):
                                                         created_asctime),
         # Legacy: make sure single_file is always set
         'single_file': False,
-        }
+    }
     share_id = share_dict['share_id']
     share_item.update(share_dict)
     share_item['active'] = __bool_map[is_active(configuration, share_item)]
@@ -124,20 +128,21 @@ def build_sharelinkitem_object(configuration, share_dict):
     share_item['opensharelink'] = {
         'object_type': 'link',
         'destination': share_url,
-        'class': 'urllink iconspace', 
+        'class': 'urllink iconspace',
         'title': 'Open share link %s' % share_id,
         'text': ''}
     edit_url = 'sharelink.py?action=edit;share_id=%s' % share_id
     share_item['editsharelink'] = {
         'object_type': 'link',
         'destination': edit_url,
-        'class': 'editlink iconspace', 
+        'class': 'editlink iconspace',
         'title': 'Edit or invite to share link %s' % share_id,
         'text': ''}
     # NOTE: datetime is not json-serializable so we force to string
     for field in ['created_timestamp']:
         share_item[field] = str(share_item[field])
     return share_item
+
 
 def create_share_link_form(configuration, client_id, output_format,
                            form_append='', csrf_token=''):
@@ -147,7 +152,7 @@ def create_share_link_form(configuration, client_id, output_format,
                     'csrf_field': csrf_field, 'csrf_token': csrf_token,
                     'target_op': 'sharelink', 'form_method': 'post'}
     html = '''
-    <form id="sharelink_form" method="%(form_method)s" action="%(target_op)s.py">
+    <form id="create_sharelink_form" method="%(form_method)s" action="%(target_op)s.py">
     <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
     <fieldset>
         <input type="hidden" name="output_format" value="%(output_format)s" />
@@ -199,25 +204,80 @@ def create_share_link_form(configuration, client_id, output_format,
         </table>
     </fieldset>
     </form>
-''' %  fill_helpers
+''' % fill_helpers
     return html
+
+
+def import_share_link_form(configuration, client_id, output_format,
+                           form_append='', csrf_token=''):
+    """HTML for the import of share links"""
+    fill_helpers = {'vgrid_label': configuration.site_vgrid_label,
+                    'output_format': output_format, 'form_append': form_append,
+                    'csrf_field': csrf_field, 'csrf_token': csrf_token,
+                    'target_op': 'cp', 'form_method': 'post'}
+    html = '''
+    <form id="import_sharelink_form" method="%(form_method)s" action="%(target_op)s.py">
+    <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+    <fieldset>
+        <input type="hidden" name="output_format" value="%(output_format)s" />
+        <input type="hidden" name="action" value="create" />
+        <p>
+        You can import the files and directories someone shared with you in
+        <em>share links</em>, e.g. to get your own copy of read-only material.
+        Just leave Source path to "*" to import entire share link content.
+        </p>
+        <p class="warningtext">
+        Please select a destination folder where the import does not interfere
+        with your existing data.
+        </p>
+        <table>
+        <tr><td colspan=2>
+        <label for="share_id">Share Link ID:</label>
+        <input id="importshareid" class="singlefield" type="text" name="share_id" size=50
+        value="" required pattern="[^ ]+"
+        title="id string of share link to import from" />
+        </td></tr>
+        <tr><td colspan=2>
+        <label for="src">Source path:</label>
+        <input id="importsrc" class="singlefield" type="text" name="src" size=50
+        value="" required pattern="[^ ]+"
+        title="relative path or pattern of files to import from sharelink" />
+        <tr><td colspan=2>
+        <label for="dst">Destination folder:</label>
+        <input id="importdst" class="singlefield" type="text" name="dst" size=50
+        value="" required pattern="[^ ]+" readonly
+        title="relative directory path to import sharelink into" />
+        </td></tr>
+        <tr class="hidden"><td colspan=2>
+        <label for="flags">Flags:</label>
+        <input id="importflags" class="singlefield" type="text" name="flags" size=40  value="r" />
+        </td></tr>
+        <tr><td colspan=2>
+        %(form_append)s
+        </td></tr>
+        </table>
+    </fieldset>
+    </form>
+''' % fill_helpers
+    return html
+
 
 def invite_share_link_helper(configuration, client_id, share_dict,
                              output_format, form_append=''):
     """Build share link invitation helper dict to fill strings"""
     fill_helpers = {'vgrid_label': configuration.site_vgrid_label, 'short_title':
-                   configuration.short_title, 'output_format': output_format,
-                   # Legacy: make sure single_file is always set
-                   'single_file': False}
+                    configuration.short_title, 'output_format': output_format,
+                    # Legacy: make sure single_file is always set
+                    'single_file': False}
     fill_helpers.update(share_dict)
     if fill_helpers['single_file']:
         fill_helpers['share_url'] = "%s/share_redirect/%s" \
-                                   % (configuration.migserver_https_sid_url,
-                                      fill_helpers['share_id'])
+            % (configuration.migserver_https_sid_url,
+               fill_helpers['share_id'])
     else:
         fill_helpers['share_url'] = "%s/sharelink/%s" \
-                                   % (configuration.migserver_https_sid_url,
-                                      fill_helpers['share_id'])
+            % (configuration.migserver_https_sid_url,
+               fill_helpers['share_id'])
     fill_helpers['name'] = extract_field(client_id, 'full_name')
     fill_helpers['email'] = extract_field(client_id, 'email')
     fill_helpers['form_append'] = form_append
@@ -228,20 +288,22 @@ def invite_share_link_helper(configuration, client_id, share_dict,
 --- Optional invitation message follows below ---''' % fill_helpers
     return fill_helpers
 
+
 def invite_share_link_message(configuration, client_id, share_dict,
                               output_format, form_append=""):
     """Get automatic message preamble for invitation mails"""
     fill_helpers = invite_share_link_helper(configuration, client_id,
-                                           share_dict, output_format,
-                                           form_append)
+                                            share_dict, output_format,
+                                            form_append)
     return fill_helpers['auto_msg']
+
 
 def invite_share_link_form(configuration, client_id, share_dict, output_format,
                            form_append='', csrf_token=''):
     """HTML for the inviting people to share links"""
     fill_helpers = invite_share_link_helper(configuration, client_id,
-                                           share_dict, output_format,
-                                           form_append)
+                                            share_dict, output_format,
+                                            form_append)
     fill_helpers.update({'csrf_field': csrf_field, 'csrf_token': csrf_token,
                          'target_op': 'sharelink', 'form_method': 'post'})
     html = '''
@@ -292,8 +354,9 @@ def invite_share_link_form(configuration, client_id, share_dict, output_format,
         </table>
     </fieldset>
     </form>
-''' %  fill_helpers
+''' % fill_helpers
     return html
+
 
 def load_share_links(configuration, client_id):
     """Find all share links owned by user"""
@@ -301,8 +364,8 @@ def load_share_links(configuration, client_id):
     logger.debug("load share links for %s" % client_id)
     try:
         sharelinks_path = os.path.join(configuration.user_settings,
-                                      client_id_dir(client_id),
-                                      sharelinks_filename)
+                                       client_id_dir(client_id),
+                                       sharelinks_filename)
         logger.debug("load sharelinks from %s" % sharelinks_path)
         if os.path.isfile(sharelinks_path):
             sharelinks = load(sharelinks_path)
@@ -312,6 +375,7 @@ def load_share_links(configuration, client_id):
         return (False, "could not load saved share links: %s" % exc)
     return (True, sharelinks)
 
+
 def get_share_link(share_id, client_id, configuration, share_map=None):
     """Helper to extract all details for a share link. The optional
     share_map argument can be used to pass an already loaded dictionary of
@@ -319,12 +383,12 @@ def get_share_link(share_id, client_id, configuration, share_map=None):
     """
     if share_map is None:
         (load_status, share_map) = load_share_links(configuration,
-                                                       client_id)
+                                                    client_id)
         if not load_status:
             return (load_status, share_map)
     share_dict = share_map.get(share_id, None)
     if share_dict is None:
-        return (False, 'No such share in saved share links: %s' % \
+        return (False, 'No such share in saved share links: %s' %
                 share_id)
     return (True, share_dict)
 
@@ -340,9 +404,9 @@ def modify_share_links(action, share_dict, client_id, configuration,
     share_id = share_dict['share_id']
     if share_map is None:
         (load_status, share_map) = load_share_links(configuration,
-                                                       client_id)
+                                                    client_id)
         if not load_status:
-            logger.error("modify_share_links failed in load: %s" % \
+            logger.error("modify_share_links failed in load: %s" %
                          share_map)
             return (load_status, share_map)
 
@@ -365,34 +429,34 @@ def modify_share_links(action, share_dict, client_id, configuration,
     if action == "create":
         if not make_symlink(target_path, symlink_path, configuration.logger,
                             False):
-            logger.error("could not make share symlink: %s (already exists?)" \
+            logger.error("could not make share symlink: %s (already exists?)"
                          % symlink_path)
             return (False, share_map)
         share_dict.update({
             'created_timestamp': datetime.datetime.now(),
             'owner': client_id,
-            })
+        })
         share_map[share_id] = share_dict
     elif action == "modify":
         if not make_symlink(target_path, symlink_path, configuration.logger,
                             True):
-            logger.error("could not update share symlink: %s"  % symlink_path)
+            logger.error("could not update share symlink: %s" % symlink_path)
             return (False, share_map)
         share_dict['created_timestamp'] = datetime.datetime.now()
         share_map[share_id].update(share_dict)
     elif action == "delete":
         if not delete_symlink(symlink_path, configuration.logger):
-            logger.error("could not delete share symlink: %s (missing?)" % \
+            logger.error("could not delete share symlink: %s (missing?)" %
                          symlink_path)
             return (False, share_map)
         del share_map[share_id]
     else:
         return (False, "Invalid action %s on share links" % action)
-        
+
     try:
         sharelinks_path = os.path.join(configuration.user_settings,
-                                      client_id_dir(client_id),
-                                      sharelinks_filename)
+                                       client_id_dir(client_id),
+                                       sharelinks_filename)
         dump(share_map, sharelinks_path)
     except Exception, err:
         logger.error("modify_share_links failed: %s" % err)
@@ -401,7 +465,7 @@ def modify_share_links(action, share_dict, client_id, configuration,
 
 
 def create_share_link(share_dict, client_id, configuration,
-                         share_map=None):
+                      share_map=None):
     """Create a new share link for client_id. The optional share_map argument
     can be used to pass an already loaded dictionary of saved share links to
     avoid reloading.
@@ -409,14 +473,16 @@ def create_share_link(share_dict, client_id, configuration,
     return modify_share_links("create", share_dict, client_id, configuration,
                               share_map)
 
+
 def update_share_link(share_dict, client_id, configuration,
-                         share_map=None):
+                      share_map=None):
     """Update existing share link for client_id. The optional share_map
     argument can be used to pass an already loaded dictionary of saved share
     links to avoid reloading.
     """
     return modify_share_links("modify", share_dict, client_id, configuration,
                               share_map)
+
 
 def delete_share_link(share_id, client_id, configuration, share_map=None):
     """Delete an existing share link without checking ownership. The optional
