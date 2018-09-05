@@ -151,9 +151,11 @@ def get_newest_mount(jupyter_mounts):
 
 def get_jupyter_host(configuration, logger):
     """
-    Returns an URL to an active jupyterhub host
+    Returns a URL to an active jupyterhub host
     if no active host is found, None is returned
-    :param configuration:
+    :param configuration: The MiG Configuration object
+    :param logger: an external logger object, expects an available .error() member
+    function
     :return: url string or None
     """
     hosts = configuration.jupyter_hosts.split(" ")
@@ -248,6 +250,7 @@ def main(client_id, user_arguments_dict):
     # Get an active jupyterhost
     host = get_jupyter_host(configuration, logger)
     if host is None:
+        logger.error("No active jupyterhub host could be found")
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Failed to establish connection to the Jupyter service'})

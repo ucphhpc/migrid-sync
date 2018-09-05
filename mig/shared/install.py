@@ -117,17 +117,16 @@ def template_insert(template_file, insert_identifiers, unique=False):
                                                                           err))
             return False
 
-        if type(value) is list:
+        if isinstance(value, str):
+            if unique and [line for line in contents if value in line]:
+                break
+            contents.insert(f_index+1, value)
+        elif isinstance(value, list):
             for v in value:
-                if unique and len([line for line in contents if v in line]) > 0:
+                if unique and [line for line in contents if v in line]:
                     continue
                 f_index += 1
                 contents.insert(f_index, v)
-
-        elif type(value) is str:
-            if unique and len([line for line in contents if value in line]) > 0:
-                break
-            contents.insert(f_index+1, value)
         else:
             print("A non-valid insert identifer dictionary value was supplied, "
                   "supports str and list")
@@ -238,6 +237,7 @@ def generate_confs(
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
     user_dict['__JUPYTER_BASE_URL__'] = jupyter_base_url
+    user_dict['__JUPYTER_HOSTS__'] = jupyter_hosts
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
@@ -525,10 +525,9 @@ cert, oid and sid based https!
                         user_dict['__WS_JUPYTER_HOST_%s__' % i_h] += ":80"
 
             insert_list.extend([
-                ("apache-jupyter-template.conf", jupyter_tmp_inserts),
+                ("apache-MiG-jupyter-template.conf", jupyter_tmp_inserts),
                 ("apache-apache2-template.conf", apache_conf_inserts)
             ])
-
     else:
         user_dict['__JUPYTER_COMMENTED__'] = '#'
 
@@ -744,7 +743,7 @@ cert, oid and sid based https!
         ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
         ("apache-init.d-deb-template", "apache-%s" % user),
         ("apache-service-template.conf", "apache2.service"),
-        ("apache-jupyter-template.conf", "jupyter.conf"),
+        ("apache-MiG-jupyter-template.conf", "MiG-jupyter.conf"),
         ("trac-MiG-template.ini", "trac.ini"),
         ("logrotate-MiG-template", "logrotate-migrid"),
         ("MiGserver-template.conf", "MiGserver.conf"),
@@ -798,7 +797,7 @@ httpd.conf, ports.conf and envvars to %(apache_etc)s/:
 sudo cp %(destination)s/apache2.conf %(apache_etc)s/
 sudo cp %(destination)s/httpd.conf %(apache_etc)s/
 sudo cp %(destination)s/ports.conf %(apache_etc)s/
-sudo cp %(destination)s/jupyter.conf %(apache_etc)s/
+sudo cp %(destination)s/MiG-jupyter.conf %(apache_etc)s/
 sudo cp %(destination)s/envvars %(apache_etc)s/
 
 and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
@@ -1132,7 +1131,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     apache_httpd_conf = os.path.join(dst, 'httpd.conf')
     apache_ports_conf = os.path.join(dst, 'ports.conf')
     apache_mig_conf = os.path.join(dst, 'MiG.conf')
-    apache_jupyter_conf = os.path.join(dst, 'jupyter.conf')
+    apache_jupyter_conf = os.path.join(dst, 'MiG-jupyter.conf')
     server_conf = os.path.join(dst, 'MiGserver.conf')
     trac_ini = os.path.join(dst, 'trac.ini')
     apache_initd_script = os.path.join(dst, 'apache-%s' % user)
