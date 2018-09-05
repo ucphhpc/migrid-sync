@@ -117,7 +117,7 @@ def template_insert(template_file, insert_identifiers, unique=False):
                                                                           err))
             return False
 
-        if isinstance(value, str):
+        if isinstance(value, basestring):
             if unique and [line for line in contents if value in line]:
                 break
             contents.insert(f_index+1, value)
