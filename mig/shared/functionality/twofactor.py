@@ -72,7 +72,7 @@ def html_tmpl(configuration):
 <img class="authlogo" src="https://lh3.googleusercontent.com/HPc5gptPzRw3wFhJE1ZCnTqlvEvuVFBAsV9etfouOhdRbkp-zNtYTzKUmUVPERSZ_lAL=w300"><br/>
   <form method="POST">
     <input class="tokeninput" type="text" id="token" name="token"
-        placeholder="Authentication Token" autofocus><br/>
+        placeholder="Authentication Token" autocomplete="off" autofocus><br/>
     <input class="submit" type="submit" value="Submit">
   </form>
 </div>
