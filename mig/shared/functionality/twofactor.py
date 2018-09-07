@@ -42,14 +42,9 @@ import time
 import urllib
 import urlparse
 
-# Only needed for 2FA so ignore import error and only fail on use
-try:
-    import pyotp
-except ImportError:
-    pyotp = None
-
 import shared.returnvalues as returnvalues
-from shared.auth import load_twofactor_key
+from shared.auth import twofactor_available, load_twofactor_key, \
+    get_twofactor_token, verify_twofactor_token
 from shared.base import force_utf8
 from shared.defaults import twofactor_cookie_bytes, twofactor_cookie_ttl
 from shared.fileio import write_file
@@ -180,9 +175,9 @@ def main(client_id, user_arguments_dict, environ=None):
     else:
         require_twofactor = False
 
-    # Fail gently if pyotp dependency is unavailable
-    if require_twofactor and pyotp is None:
-        logger.error("The pyotp module is missing and required for 2FA")
+    # Fail gently if twofactor dependencies are unavailable
+    if require_twofactor and not twofactor_available(configuration):
+        logger.error("Required dependencies are missing for 2FA support")
         require_twofactor = False
 
     if require_twofactor:
@@ -199,7 +194,8 @@ def main(client_id, user_arguments_dict, environ=None):
                      configuration.short_title})
                 return (output_objects, returnvalues.ERROR)
         # Check that user provided matching token and set cookie on success
-        if token and b32_secret and pyotp.TOTP(b32_secret).verify(token):
+        if token and b32_secret and verify_twofactor_token(
+                configuration, client_id, b32_secret, token):
             logger.info('Accepted valid auth token from %s' % client_id)
         else:
             output_objects.append(
@@ -210,7 +206,8 @@ def main(client_id, user_arguments_dict, environ=None):
             if token:
                 logger.warning('Invalid token for %s (%s vs %s) - try again' %
                                (client_id, token,
-                                pyotp.TOTP(b32_secret).now()))
+                                get_twofactor_token(configuration, client_id,
+                                                    b32_secret)))
                 output_objects.append({'object_type': 'html_form', 'text': '''
 <div class="twofactorstatus">
 <span class="error leftpad errortext">

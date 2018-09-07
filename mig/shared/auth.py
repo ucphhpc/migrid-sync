@@ -42,6 +42,15 @@ from shared.fileio import read_file, delete_file
 from shared.pwhash import scramble_password, unscramble_password
 
 
+def twofactor_available(configuration):
+    """Get current twofactor taken for base32 key"""
+    _logger = configuration.logger
+    if pyotp is None:
+        _logger.error("The pyotp module is missing and required for 2FA!")
+        return False
+    return True
+
+
 def reset_twofactor_key(client_id, configuration):
     """Reset 2FA secret key and write to user settings file in scrambled form.
     Return the new secret key on unscrambled base32 form.
@@ -90,14 +99,13 @@ def load_twofactor_key(client_id, configuration, allow_missing=True):
 
 
 def get_twofactor_secrets(configuration, client_id):
-    """Load twofactor bsae32 key and OTP uri for QR code. Generates secret for
+    """Load twofactor base32 key and OTP uri for QR code. Generates secret for
     user if not already done. Actual twofactor login requirement is not
     enabled here, however.
     """
     _logger = configuration.logger
     if pyotp is None:
-        _logger.error("The pyotp module is missing and required for 2FA!")
-        return ('', '')
+        raise Exception("The pyotp module is missing and required for 2FA")
 
     # NOTE: 2FA secret key is a standalone file in user settings dir
     #       Try to load existing and generate new one if not there.
@@ -132,6 +140,25 @@ def get_twofactor_secrets(configuration, client_id):
     # otp_img = '<img src="%s" />' % img_url
 
     return (b32_key, otp_uri)
+
+
+def get_twofactor_token(configuration, client_id, b32_key):
+    """Get current twofactor taken for base32 key"""
+    _logger = configuration.logger
+    if pyotp is None:
+        raise Exception("The pyotp module is missing and required for 2FA")
+    # IMPORTANT: pyotp unicode breaks when used in our strings - force utf8!
+    token = pyotp.TOTP(b32_key).now()
+    token = force_utf8(token)
+    return token
+
+
+def verify_twofactor_token(configuration, client_id, b32_key, token):
+    """Verify that supplied token matches the current token for base32 key"""
+    _logger = configuration.logger
+    if pyotp is None:
+        raise Exception("The pyotp module is missing and required for 2FA")
+    return pyotp.TOTP(b32_key).verify(token)
 
 
 def expire_twofactor_session(configuration, client_id, environ, allow_missing=False):
