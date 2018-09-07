@@ -156,10 +156,12 @@ if '__main__' == __name__:
     for user_dict in users:
         id_search = default_search()
         id_search['distinguished_name'] = user_dict['distinguished_name']
-        if search_users(id_search, conf_path, db_path, verbose):
+        (configuration, hits) = search_users(id_search, conf_path, db_path,
+                                             verbose)
+        if hits:
             if verbose:
-                print 'Not adding existing user: %s'\
-                      % user_dict['distinguished_name']
+                print 'Not adding existing user: %(distinguished_name)s' % \
+                      user_dict
             continue
         new_users.append(user_dict)
 

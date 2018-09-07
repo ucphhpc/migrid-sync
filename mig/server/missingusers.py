@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # missingusers - Search for missing users in MiG user database
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ import getopt
 
 from shared.base import client_dir_id, distinguished_name_to_user
 from shared.useradm import init_user_adm, search_users, default_search
+
 
 def usage(name='missingusers.py'):
     """Usage help"""
@@ -126,7 +127,8 @@ if '__main__' == __name__:
         fs_hits.append((user_id, user_dict))
     fs_hits_dict = dict(fs_hits)
 
-    db_hits = search_users(search_filter, conf_path, db_path, verbose)
+    (configuration, db_hits) = search_users(search_filter, conf_path, db_path,
+                                            verbose)
     db_hits_dict = dict(db_hits)
 
     print "Missing users:"

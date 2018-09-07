@@ -31,6 +31,7 @@ import getopt
 import pickle
 import sys
 
+from shared.conf import get_configuration_object
 from shared.defaults import keyword_auto
 from shared.pwhash import assure_password_strength, unscramble_password
 from shared.useradm import init_user_adm, search_users, default_search, \
@@ -103,17 +104,20 @@ if '__main__' == __name__:
         (configuration, errors) = req_password_check(user_file, conf_path,
                                                      db_path, verbose, policy)
     else:
-        hits = search_users(search_filter, conf_path, db_path, verbose)
+        (configuration, hits) = search_users(search_filter, conf_path, db_path,
+                                             verbose)
         if not hits:
             print "No matching users in user DB"
         else:
+            # Load conf only once and reuse hits as a sparse user DB for speed
+            conf_path, db_path = configuration, dict(hits)
             print "Password policy errors:"
             for (uid, user_dict) in hits:
                 if verbose:
                     print "Checking %s" % uid
-                (configuration, err) = user_password_check(uid, conf_path,
-                                                           db_path, verbose,
-                                                           policy)
+                (_, err) = user_password_check(uid, conf_path,
+                                               db_path, verbose,
+                                               policy)
                 errors += err
     if errors:
         print '\n'.join(errors)

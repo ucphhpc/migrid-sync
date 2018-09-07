@@ -207,10 +207,13 @@ def create_user(
 
     user_db = {}
     if conf_path:
+        if isinstance(conf_path, basestring):
 
-        # has been checked for accessibility above...
+            # has been checked for accessibility above...
 
-        configuration = Configuration(conf_path)
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
 
@@ -584,7 +587,10 @@ def edit_user(
 
     user_db = {}
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
@@ -596,9 +602,12 @@ def edit_user(
 
     if os.path.exists(db_path):
         try:
-            user_db = load_user_db(db_path)
-            if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
+            if isinstance(db_path, dict):
+                user_db = db_path
+            else:
+                user_db = load_user_db(db_path)
+                if verbose:
+                    print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             if not force:
                 raise Exception('Failed to load user DB: %s' % err)
@@ -788,7 +797,10 @@ def delete_user(
 
     user_db = {}
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
 
@@ -801,9 +813,12 @@ def delete_user(
 
     if os.path.exists(db_path):
         try:
-            user_db = load_user_db(db_path)
-            if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
+            if isinstance(db_path, dict):
+                user_db = db_path
+            else:
+                user_db = load_user_db(db_path)
+                if verbose:
+                    print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             if not force:
                 raise Exception('Failed to load user DB: %s' % err)
@@ -1042,15 +1057,21 @@ def migrate_users(
 
     user_db = {}
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
 
     if os.path.exists(db_path):
         try:
-            user_db = load_user_db(db_path)
-            if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
+            if isinstance(db_path, dict):
+                user_db = db_path
+            else:
+                user_db = load_user_db(db_path)
+                if verbose:
+                    print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             if not force:
                 raise Exception('Failed to load user DB: %s' % err)
@@ -1203,15 +1224,21 @@ def fix_entities(
 
     user_db = {}
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
 
     if os.path.exists(db_path):
         try:
-            user_db = load_user_db(db_path)
-            if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
+            if isinstance(db_path, dict):
+                user_db = db_path
+            else:
+                user_db = load_user_db(db_path)
+                if verbose:
+                    print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             if not force:
                 raise Exception('Failed to load user DB: %s' % err)
@@ -1255,15 +1282,21 @@ def fix_userdb_keys(
 
     user_db = {}
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
 
     if os.path.exists(db_path):
         try:
-            user_db = load_user_db(db_path)
-            if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
+            if isinstance(db_path, dict):
+                user_db = db_path
+            else:
+                user_db = load_user_db(db_path)
+                if verbose:
+                    print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             if not force:
                 raise Exception('Failed to load user DB: %s' % err)
@@ -1304,21 +1337,27 @@ def search_users(search_filter, conf_path, db_path, verbose=False):
     """Search for matching users"""
 
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
 
     try:
-        user_db = load_user_db(db_path)
-        if verbose:
-            print 'Loaded existing user DB from: %s' % db_path
+        if isinstance(db_path, dict):
+            user_db = db_path
+        else:
+            user_db = load_user_db(db_path)
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
         err_msg = 'Failed to load user DB: %s' % err
         if verbose:
             print err_msg
         _logger.error(err_msg)
-        return []
+        return (configuration, [])
 
     hits = []
     for (uid, user_dict) in user_db.items():
@@ -1338,7 +1377,7 @@ def search_users(search_filter, conf_path, db_path, verbose=False):
         if not match:
             continue
         hits.append((uid, user_dict))
-    return hits
+    return (configuration, hits)
 
 
 def _user_general_notify(user_id, targets, conf_path, db_path, verbose=False,
@@ -1347,14 +1386,20 @@ def _user_general_notify(user_id, targets, conf_path, db_path, verbose=False,
 
     password, errors = '', []
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
     try:
-        user_db = load_user_db(db_path)
-        if verbose:
-            print 'Loaded existing user DB from: %s' % db_path
+        if isinstance(db_path, dict):
+            user_db = db_path
+        else:
+            user_db = load_user_db(db_path)
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
         err_msg = 'Failed to load user DB: %s' % err
         if verbose:
@@ -1438,14 +1483,20 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
 
     errors = []
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
     try:
-        user_db = load_user_db(db_path)
-        if verbose:
-            print 'Loaded existing user DB from: %s' % db_path
+        if isinstance(db_path, dict):
+            user_db = db_path
+        else:
+            user_db = load_user_db(db_path)
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
         err_msg = 'Failed to load user DB: %s' % err
         if verbose:
@@ -1486,10 +1537,15 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
         errors.append('No digest set for %s' % user_id)
     for digest in all_digests:
         digest = digest.strip()
-        _, _, _, payload = digest.split("$")
-        unscrambled = unscramble_digest(configuration.site_digest_salt,
-                                        payload)
-        _, _, password = unscrambled.split(":")
+        try:
+            _, _, _, payload = digest.split("$")
+            unscrambled = unscramble_digest(configuration.site_digest_salt,
+                                            payload)
+            _, _, password = unscrambled.split(":")
+        except Exception, exc:
+            errors.append('digest for %s could not be unpacked: %s'
+                          % (user_id, exc))
+            continue
         try:
             assure_password_strength(configuration, password)
         except Exception, exc:
@@ -1507,7 +1563,10 @@ def req_password_check(req_path, conf_path, db_path, verbose=False,
 
     errors = []
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
@@ -1542,14 +1601,20 @@ def user_twofactor_status(user_id, conf_path, db_path, fields, verbose=False):
 
     errors = []
     if conf_path:
-        configuration = Configuration(conf_path)
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
     try:
-        user_db = load_user_db(db_path)
-        if verbose:
-            print 'Loaded existing user DB from: %s' % db_path
+        if isinstance(db_path, dict):
+            user_db = db_path
+        else:
+            user_db = load_user_db(db_path)
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
         err_msg = 'Failed to load user DB: %s' % err
         if verbose:

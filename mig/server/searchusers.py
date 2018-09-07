@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # searchusers - Search in MiG user database
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -115,7 +115,8 @@ if '__main__' == __name__:
             usage()
             sys.exit(0)
 
-    hits = search_users(search_filter, conf_path, db_path, verbose)
+    (configuration, hits) = search_users(search_filter, conf_path, db_path,
+                                         verbose)
     print "Matching users:"
     for (uid, user_dict) in hits:
         if only_fields:

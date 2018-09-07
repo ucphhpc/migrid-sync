@@ -96,10 +96,13 @@ if '__main__' == __name__:
 
     uid = 'unknown'
     errors = []
-    hits = search_users(search_filter, conf_path, db_path, verbose)
+    (configuration, hits) = search_users(search_filter, conf_path, db_path,
+                                         verbose)
     if not hits:
         print "No matching users in user DB"
     else:
+        # Reuse conf and hits as a sparse user DB for speed
+        conf_path, db_path = configuration, dict(hits)
         print "2FA status:"
         for (uid, user_dict) in hits:
             if not include_project_users and \
@@ -107,9 +110,8 @@ if '__main__' == __name__:
                 continue
             if verbose:
                 print "Checking %s" % uid
-            (configuration, err) = user_twofactor_status(uid, conf_path,
-                                                         db_path, fields,
-                                                         verbose)
+            (_, err) = user_twofactor_status(uid, conf_path, db_path, fields,
+                                             verbose)
             errors += err
     if errors:
         print '\n'.join(errors)
