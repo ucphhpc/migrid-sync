@@ -1,0 +1,339 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# core - site style overrides for all pages
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+/* ERDA UCPH Science skin style sheet */
+
+body {
+  /* Fonts in line with UCPH style guidelines */
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+/* Fixed width layout in line with UCPH style guidelines */
+body.staticpage {
+  margin: 0 auto;
+  width: 984px;
+  border-right: 1px solid #CCC;
+  border-left: 1px solid #CCC;
+}
+
+a {
+  color: #165AAD;
+  /* body font selection hides bottom of e.g. urllink icons */
+  font-family: Verdana, Helvetica, Aria, sans-serif;
+}
+
+a:hover, a:active {
+  color: #165AAD;
+}
+
+
+h1 {
+  border: 1px solid darkgrey;
+  color: #fff;
+  background: #46743c;
+  padding: 2px 4px;
+}
+
+/* On static pages we leave out the colored box around all headers so we adjust
+   padding accordingly to not indent content at beginning of the line. 
+*/
+h1.staticpage {
+  border: 0;
+  margin: 12px 0;
+  color: #000;
+  background: none;
+  font-size: 18px;
+  padding: 4px 0px;
+}
+
+h2.staticpage {
+  padding: 10px 0px 2px 0px;
+  border-bottom: 0;
+}
+
+h3.staticpage {
+  padding: 3px 0px;
+}
+
+/* Exclude JQuery UI accordions from padding tweaks */
+h4.staticpage:not(.ui-accordion-header) {
+  /*border: 1px solid #fff;*/
+  padding: 2px 0px;
+}
+
+div.quickstartfields {
+  color: #000;
+}
+div.loginfield, div.signupfield {
+  display: inline-block;
+  border: 2px solid #679c5b;
+  color: #fff;
+  background-color: #46743c;
+  margin: 0px 4px;
+  font-size: 12px;
+  width: 460px;
+  border-radius: 4px;
+}
+div.loginfield > h2, div.signupfield > h2 {
+  padding: 0px;
+}
+div.loginfield {
+    float: right;
+}
+
+table {
+  /* no background color or border */
+  color: #000;
+  border: 0;
+}
+
+.contentblock.staticpage {
+  /* NOTE: spacing to footer now uses #content.staticpage instead */
+}
+
+
+/* Navigational menu... */
+.navmenu {
+  background: white;
+  border: none;
+}
+
+.navmenu ul li a:hover, .navsubmenu ul li a:hover {
+  background-color: #679c5b;
+}
+
+.navmenu ul li a.selected {
+  background-color: #46743c;
+}
+
+.navmenu ul li a, .navsubmenu ul li a {
+  border: 1px solid #666;
+  color: #46743c;
+  font-weight: normal;
+  background-color: #eee;
+}
+
+.styled_button:hover {
+  background-color: #679c5b;
+}
+
+.styled_button.selected {
+  background-color: #46743c;
+}
+
+
+
+/* Used in one place... maybe that place should be fixed? to use h1 instead */
+#migheader {
+  color: #eee;
+  background: url("/images/skin/erda-ucph-science/background.png") repeat scroll left center #eee;
+}
+
+#toplogo {
+  border: 0;
+  color: #333;
+  border-top: 0px solid #46743c;
+  border-bottom: 1px solid #46743c;
+}
+#toplogo.staticpage {
+  min-height: 92px;
+  border-bottom: 0;
+}
+/*
+#toplogoleft {
+}
+*/
+#toplogoleft.staticpage {
+  display: none;
+}
+#toplogocenter {
+  height: 20px;
+  margin: 4px 0px;
+  float: left;
+}
+#toplogocenter.staticpage {
+  float: none;
+  margin: 0;
+}
+#toplogoright {
+  /* use right side logo, too */
+  display: block;
+}
+#toplogoright.staticpage {
+  display: none;
+}
+#logoimageleft {
+  opacity: 1;
+  padding: 5px 0px;
+}
+#logoimageleft.staticpage {
+  display: none;
+}
+#logoimagecenter {
+  opacity: 1;
+  padding: 5px 0px;
+}
+#logoimagecenter.staticpage {
+  padding: 0;
+  margin-left: auto;
+  margin-right: auto;
+  z-index: 1;
+  display: block;
+  vertical-align: middle;
+}
+#logoimageright {
+  opacity: 1;
+  padding: 0px 0px;
+}
+#logoimageright.staticpage {
+  display: none;
+}
+#logotitle {
+  font-weight: normal;
+  vertical-align: middle;
+  color: #666;
+  font-size: 16px;
+}
+#logotitle.staticpage {
+  display: none;
+}
+
+#bottomspace {
+  padding: 4px;
+}
+#bottomlogo {
+  border: 0;
+  background: #eee;
+  padding: 10px 10px 2px 10px;
+  font-size: 10px;
+  font-weight: normal;
+  line-height: 1.35em;
+  color: #666;
+  height: 76px;
+  border-bottom: 1px solid #CCC;
+}
+
+#bottomlogo p, #bottomlogo span {
+  font-size: 11px;
+  font-weight: normal;
+  line-height: 1.35em;
+  padding: 0px;
+}
+#bottomlogo p.supporttitle {
+  font-weight: bold;
+  padding: 0;
+  margin-bottom: 10px;
+}
+#bottomlogo h2 {
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 1.15em;
+  padding: 0px 4px;
+}
+#supportimage {
+  display: none;
+}
+#credits {
+  color: black;
+}
+
+#content, .content {
+  border: none;
+  padding: 4px 0;
+}
+#content.staticpage, .content.staticpage {
+  padding: 8px;
+  /* Make sure to have some gap between content and footer */
+  min-height: 600px;
+}
+.even_row {
+  background: #679c5b;
+}
+
+.odd_row {
+  background: #8FD182;
+}
+
+.settingsbutton {
+  border: 1px solid #666;
+  background-color: #fff;
+  color: #46743c;
+}
+a.settingsbutton {
+  font-weight: normal;
+}
+
+a:hover.settingsbutton {
+  font-weight: normal;
+  border: 1px solid #46743c; 
+  background-color: #679c5b; 
+  color: #fff; 
+}
+
+.activebutton {
+  border: 1px solid #46743c;
+  background-color: #46743c;
+  color: #fff;
+}
+
+.genericbutton {
+  border: 1px solid #666;
+  background-color: #fff;
+  color: #46743c;
+}
+a.genericbutton {
+  font-weight: normal;
+}
+
+a:hover.genericbutton {
+  font-weight: normal;
+  border: 1px solid #46743c; 
+  background-color: #679c5b; 
+  color: #fff; 
+}
+
+/* Override colors on 2FA dialog */
+#twofactorbox input[type=submit] {
+    background-color: #679c5b;
+}
+#twofactorbox input[type=submit]:hover {
+    background-color: #46743c;
+}
+
+
+/* IMPORTANT: these overrides must come after .*link settings to work */
+.owner {
+  border: 1px solid gold;
+}
+.member {
+  background-color: transparent;
+}
+.public {
+  background-color: silver;
+}
