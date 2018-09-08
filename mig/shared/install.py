@@ -482,7 +482,7 @@ cert, oid and sid based https!
                 'WSBalancerMemberPlaceholder': []
             }
 
-            apache_conf_inserts = {
+            jupyter_def_inserts = {
                 'JupyterHostsPlaceholder': []
             }
 
@@ -505,8 +505,8 @@ cert, oid and sid based https!
                 ws_member_helper = "__IFDEF_WS_JUPYTER_HOST_%s__ WS_JUPYTER_HOST_%s " \
                                    "__WS_JUPYTER_HOST_%s__\n" % (i_h, i_h, i_h)
 
-                apache_conf_inserts['JupyterHostsPlaceholder'].append(member_helper)
-                apache_conf_inserts['JupyterHostsPlaceholder'].append(ws_member_helper)
+                jupyter_def_inserts['JupyterHostsPlaceholder'].append(member_helper)
+                jupyter_def_inserts['JupyterHostsPlaceholder'].append(ws_member_helper)
 
                 user_dict['__IFDEF_JUPYTER_HOST_%s__' % i_h] = 'Define'
                 user_dict['__IFDEF_WS_JUPYTER_HOST_%s__' % i_h] = 'Define'
@@ -526,7 +526,7 @@ cert, oid and sid based https!
 
             insert_list.extend([
                 ("apache-MiG-jupyter-template.conf", jupyter_tmp_inserts),
-                ("apache-apache2-template.conf", apache_conf_inserts)
+                ("apache-MiG-jupyter-def-template.conf", jupyter_def_inserts)
             ])
     else:
         user_dict['__JUPYTER_COMMENTED__'] = '#'
@@ -744,6 +744,7 @@ cert, oid and sid based https!
         ("apache-init.d-deb-template", "apache-%s" % user),
         ("apache-service-template.conf", "apache2.service"),
         ("apache-MiG-jupyter-template.conf", "MiG-jupyter.conf"),
+        ("apache-MiG-jupyter-def-template.conf", "MiG-jupyter-def.conf"),
         ("trac-MiG-template.ini", "trac.ini"),
         ("logrotate-MiG-template", "logrotate-migrid"),
         ("MiGserver-template.conf", "MiGserver.conf"),
@@ -798,6 +799,7 @@ sudo cp %(destination)s/apache2.conf %(apache_etc)s/
 sudo cp %(destination)s/httpd.conf %(apache_etc)s/
 sudo cp %(destination)s/ports.conf %(apache_etc)s/
 sudo cp %(destination)s/MiG-jupyter.conf %(apache_etc)s/
+sudo cp %(destination)s/MiG-jupyter-def.conf %(apache_etc)s/
 sudo cp %(destination)s/envvars %(apache_etc)s/
 
 and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
