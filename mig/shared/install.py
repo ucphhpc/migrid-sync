@@ -96,14 +96,12 @@ def template_insert(template_file, insert_identifiers, unique=False):
     already present in the template_file, if so it won't insert it
     :return: True/False based on whether an insert took place
     """
-
     try:
         template = open(template_file, 'r')
         contents = template.readlines()
         template.close()
     except Exception, err:
-        print 'Error: reading template file %s: %s' % (template_file,
-                                                       err)
+        print 'Error: reading template file %s: %s' % (template_file, err)
         return False
 
     # print "template read:\n", output
@@ -138,6 +136,46 @@ def template_insert(template_file, insert_identifiers, unique=False):
     except Exception, err:
         print 'Error: writing output file %s: %s' % (template_file, err)
         return False
+    return True
+
+
+def template_remove(template_file, remove_pattern):
+    """
+    Removes a line from a template_file based on the supplied remove_pattern.
+    :param template_file: Path to the template configuration file that should have a
+    pattern removed
+    :param remove_pattern: Expects a type that supports an "in" statement condition check
+    :return: True/False based on whether the removal was successful.
+    """
+    try:
+        template = open(template_file, 'r')
+        contents = template.readlines()
+        template.close()
+    except Exception, err:
+        print 'Error: reading template file %s: %s' % (template_file, err)
+        return False
+
+    try:
+        # identifier indexes
+        f_indexes = [i for i in range(len(contents)) if remove_pattern in contents[i]]
+    except IndexError, err:
+        print("Template remove, Identifer: %s not found in %s: %s" % (remove_pattern,
+                                                                      template_file,
+                                                                      err))
+        return False
+
+    # Remove in reverse
+    for f_i in sorted(f_indexes, reverse=True):
+        del contents[f_i]
+
+    try:
+        output = open(template_file, 'w')
+        output.writelines(contents)
+        output.close()
+    except Exception, err:
+        print 'Error: writing output file %s: %s' % (template_file, err)
+        return False
+
     return True
 
 
@@ -474,6 +512,11 @@ cert, oid and sid based https!
         # Jupyter requires websockets proxy
         user_dict['__WEBSOCKETS_COMMENTED__'] = ''
 
+        # Ensure that when generating a new jupyter configuration that legacy host data
+        #  is removed beforehand
+        template_remove("apache-MiG-jupyter-template.conf", "BalancerMember ${")
+        template_remove("apache-MiG-jupyter-def-template.conf", "__IFDEF")
+
         if jupyter_hosts:
             user_dict['__JUPYTER_HOSTS__'] = jupyter_hosts
 
@@ -489,7 +532,7 @@ cert, oid and sid based https!
             hosts = jupyter_hosts.split(' ')
             # Insert hosts into jupyter-template
             for i_h, host in enumerate(hosts):
-                member = "BalancerMember %s route=%s retry=10 timeout=600\n" % (
+                member = "BalancerMember %s route=%s retry=600 timeout=10\n" % (
                     "${JUPYTER_HOST_%s}" % i_h, i_h)
                 ws_member = member.replace("${JUPYTER_HOST_%s}" % i_h,
                                            "${WS_JUPYTER_HOST_%s}" % i_h)
