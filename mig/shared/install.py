@@ -373,6 +373,9 @@ WARNING: you probably have to use either different fqdn or port settings for
 cert, oid and sid based https!
 """
 
+    # List of (file, remove_identifers) used to dynamically remove lines from template
+    # configurations files
+    cleanup_list = []
     # List of (file, insert_identifiers) used to dynamically add to template
     # configuration files
     insert_list = []
@@ -512,11 +515,6 @@ cert, oid and sid based https!
         # Jupyter requires websockets proxy
         user_dict['__WEBSOCKETS_COMMENTED__'] = ''
 
-        # Ensure that when generating a new jupyter configuration that legacy host data
-        #  is removed beforehand
-        template_remove("apache-MiG-jupyter-template.conf", "BalancerMember ${")
-        template_remove("apache-MiG-jupyter-def-template.conf", "__IFDEF")
-
         if jupyter_hosts:
             user_dict['__JUPYTER_HOSTS__'] = jupyter_hosts
 
@@ -571,6 +569,12 @@ cert, oid and sid based https!
                 ("apache-MiG-jupyter-template.conf", jupyter_tmp_inserts),
                 ("apache-MiG-jupyter-def-template.conf", jupyter_def_inserts)
             ])
+
+            cleanup_list.extend([
+                ("apache-MiG-jupyter-template.conf", "BalancerMember ${"),
+                ("apache-MiG-jupyter-def-template.conf", "__IFDEF")
+            ])
+
     else:
         user_dict['__JUPYTER_COMMENTED__'] = '#'
 
@@ -772,6 +776,7 @@ cert, oid and sid based https!
                                 for i in sorted_keys])
     user_dict['__GENERATECONFS_VARIABLES__'] = variable_lines
 
+    # Insert lines into templates
     for (temp_file, insert_identifiers) in insert_list:
         template_insert(temp_file, insert_identifiers, unique=True)
 
@@ -812,6 +817,10 @@ cert, oid and sid based https!
             os.chmod(out_path, os.stat(in_path).st_mode)
         else:
             print "Skipping missing template: %s" % in_path
+
+    # Remove lines from templates
+    for (temp_file, remove_pattern) in cleanup_list:
+        template_remove(temp_file, remove_pattern)
 
     instructions = '''Configurations for MiG and Apache were generated in
 %(destination)s%(destination_suffix)s/ and symlinked to %(destination)s .
