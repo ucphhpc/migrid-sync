@@ -1487,6 +1487,11 @@ if (jQuery) (function($){
                             var src = $("#import_sharelink_form input[name='src']").val();
                             var dst = $("#import_sharelink_form input[name='dst']").val();
                             var flags = $("#import_sharelink_form input[name='flags']").val();
+                            if (share_id.indexOf('/') >= 0) {
+                                console.info("strip URL prefix from Share Link ID: "+share_id);
+                                share_id = share_id.replace(/^.*\//, '');
+                                console.info("stripped Share Link ID: "+share_id);
+                            }
                             $(this).dialog('close');
                             jsonWrapper(el, '#cmd_dialog', 'cp.py', {path: "",
                                                                      share_id: share_id,

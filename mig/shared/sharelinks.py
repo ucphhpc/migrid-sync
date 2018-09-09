@@ -217,8 +217,8 @@ def import_share_link_form(configuration, client_id, output_format,
                     'target_op': 'cp', 'form_method': 'post'}
     html = '''
     <form id="import_sharelink_form" method="%(form_method)s" action="%(target_op)s.py">
-    <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
     <fieldset>
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
         <input type="hidden" name="output_format" value="%(output_format)s" />
         <input type="hidden" name="action" value="create" />
         <p>
