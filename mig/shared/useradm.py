@@ -1537,14 +1537,15 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
         errors.append('No digest set for %s' % user_id)
     for digest in all_digests:
         digest = digest.strip()
+        unscrambled = ''
         try:
             _, _, _, payload = digest.split("$")
             unscrambled = unscramble_digest(configuration.site_digest_salt,
                                             payload)
             _, _, password = unscrambled.split(":")
         except Exception, exc:
-            errors.append('digest for %s could not be unpacked: %s'
-                          % (user_id, exc))
+            errors.append('digest for %s could not be unpacked (%s): %s'
+                          % (user_id, unscrambled, exc))
             continue
         try:
             assure_password_strength(configuration, password)

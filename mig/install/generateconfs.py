@@ -126,8 +126,9 @@ if '__main__' == __name__:
         'skin',
     )
     settings = {}
+    default_val = 'DEFAULT'
     for key in names:
-        settings[key] = 'DEFAULT'
+        settings[key] = default_val
 
     flag_str = 'h'
     opts_str = ["%s=" % key for key in names] + ["help"]
@@ -143,6 +144,9 @@ if '__main__' == __name__:
         if opt in ('-h', '--help'):
             usage(names)
             sys.exit(0)
+        # Concatenate multiple jupyter host args
+        elif opt_name == 'jupyter_hosts' and settings[opt_name] != default_val:
+            settings[opt_name] += ' %s' % val
         elif opt_name in names:
             settings[opt_name] = val
         else:

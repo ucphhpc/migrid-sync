@@ -6,7 +6,7 @@ __MIG_STATE__/log/*.log __MIG_STATE__/log/*.out {
 	delaycompress
 	notifempty
 	create 640 __USER__ __GROUP__
-        # NOTE we need root to restart services
+	# NOTE we need root to restart services
 	#su __USER__ __GROUP__
 	su root __GROUP__
 	sharedscripts
