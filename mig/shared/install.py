@@ -530,7 +530,7 @@ cert, oid and sid based https!
             hosts = jupyter_hosts.split(' ')
             # Insert hosts into jupyter-template
             for i_h, host in enumerate(hosts):
-                member = "BalancerMember %s route=%s retry=600 timeout=10\n" % (
+                member = "BalancerMember %s route=%s retry=600 timeout=40\n" % (
                     "${JUPYTER_HOST_%s}" % i_h, i_h)
                 ws_member = member.replace("${JUPYTER_HOST_%s}" % i_h,
                                            "${WS_JUPYTER_HOST_%s}" % i_h)
