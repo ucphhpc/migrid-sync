@@ -35,6 +35,11 @@ mig_login(driver, url, login, passwd)
 ...
 """
 
+# Robust import - only fail if used without being available
+try:
+    import pyotp
+except ImportError:
+    pyotp = None
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -108,11 +113,19 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
         if callbacks.get(state, None):
             callbacks[state](driver, state)
         driver.find_element_by_name("allow").click()
+        # Check for login error msg to return proper status
+        try:
+            error_elem = driver.find_element_by_class_name("alert")
+            if error_elem:
+                print "UCPH OpenID login error: %s" % error_elem.text
+                status = False
+        except Exception:
+            pass
     else:
         status = False
         print "UCPH OpenID login _NOT_ found"
 
-    print "Starting UCPH OpenID login: %s" % status
+    print "UCPH OpenID login result: %s" % status
     return status
 
 
@@ -146,11 +159,56 @@ def mig_login(driver, url, login, passwd, callbacks={}):
         if callbacks.get(state, None):
             callbacks[state](driver, state)
         driver.find_element_by_name("yes").click()
+        # Check for login error msg to return proper status
+        try:
+            error_elem = driver.find_element_by_class_name("errortext")
+            if error_elem:
+                print "UCPH OpenID login error: %s" % error_elem.text
+                status = False
+        except Exception:
+            pass
     else:
         status = False
         print "MiG OpenID login _NOT_ found"
 
-    print "Starting MiG OpenID login: %s" % status
+    print "MiG OpenID login result: %s" % status
+    return status
+
+
+def shared_twofactor(driver, url, twofactor_key, callbacks={}):
+    """Login through the post-OpenID 2FA web form and optionally execute any
+    provided callbacks for ready and filled states. The callbacks dictionary
+    should contain state names bound to functions accepting driver and state
+    name like do_stuff(driver, state) .
+    Requires the pyotp module to generate the current TOTP token based on
+    the provided base32-encoded twofactor_key.
+    """
+    status = True
+    twofactor_token = None
+    try:
+        token_elem = driver.find_element_by_class_name('tokeninput')
+        if token_elem:
+            state = 'twofactor-ready'
+            if callbacks.get(state, None):
+                callbacks[state](driver, state)
+            if pyotp is None:
+                raise Exception("2FA form found but no pyotp helper installed")
+            twofactor_token = pyotp.TOTP(twofactor_key).now()
+    except Exception, exc:
+        print "ERROR: failed in UCPH 2FA: %s" % exc
+
+    if twofactor_token:
+        # print "DEBUG: send token %s" % twofactor_token
+        token_elem.send_keys(twofactor_token)
+        state = 'twofactor-filled'
+        if callbacks.get(state, None):
+            callbacks[state](driver, state)
+        driver.find_element_by_class_name("submit").click()
+    else:
+        status = False
+        print "Post-OpenID 2FA _NOT_ found"
+
+    print "2-Factor Auth result: %s" % status
     return status
 
 

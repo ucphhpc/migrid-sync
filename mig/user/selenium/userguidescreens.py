@@ -37,8 +37,8 @@ import sys
 import time
 import traceback
 
-from migcore import init_driver, ucph_login, mig_login, shared_logout, \
-    save_screen, scroll_to_elem, doubleclick_elem
+from migcore import init_driver, ucph_login, mig_login, shared_twofactor, \
+    shared_logout, save_screen, scroll_to_elem, doubleclick_elem
 
 
 def ajax_wait(driver, name, class_name="spinner"):
@@ -49,12 +49,12 @@ def ajax_wait(driver, name, class_name="spinner"):
         try:
             driver.find_element_by_class_name(class_name)
             if not ajax_started:
-                #print "DEBUG: detected ajax started"
+                # print "DEBUG: detected ajax started"
                 ajax_started = True
                 continue
         except Exception, exc:
             if ajax_started:
-                #print "DEBUG: detected ajax done"
+                # print "DEBUG: detected ajax done"
                 break
             else:
                 print "Warning: exception during ajax wait: %s" % exc
@@ -68,7 +68,7 @@ def files_actions(driver, url, login, passwd, callbacks):
     nav_name = "Files"
     navmenu = driver.find_element_by_class_name('navmenu')
     link = navmenu.find_element_by_link_text(nav_name)
-    #print "DEBUG: found %s link: %s" % (nav_name, link)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     ajax_wait(driver, nav_name, "ui-progressbar")
     state = 'files-ready'
@@ -82,7 +82,7 @@ def workgroups_actions(driver, url, login, passwd, callbacks):
     nav_name = "Workgroups"
     navmenu = driver.find_element_by_class_name('navmenu')
     link = navmenu.find_element_by_link_text(nav_name)
-    #print "DEBUG: found %s link: %s" % (nav_name, link)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     ajax_wait(driver, nav_name)
     state = 'workgroups-ready'
@@ -96,7 +96,7 @@ def archives_actions(driver, url, login, passwd, callbacks):
     nav_name = "Archives"
     navmenu = driver.find_element_by_class_name('navmenu')
     link = navmenu.find_element_by_link_text(nav_name)
-    #print "DEBUG: found %s link: %s" % (nav_name, link)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     ajax_wait(driver, nav_name)
     state = 'archives-ready'
@@ -106,7 +106,7 @@ def archives_actions(driver, url, login, passwd, callbacks):
 
     create_link = driver.find_element_by_link_text(
         'Create a new freeze archive')
-    #print "DEBUG: found create archives link: %s" % create_link
+    # print "DEBUG: found create archives link: %s" % create_link
     create_link.click()
 
     state = 'archive-empty'
@@ -141,7 +141,7 @@ and owner automatically assigned.
     # Select first txt file (at least welcome.txt is always there)
     files_area = driver.find_element_by_class_name("fm_files")
     select_file = files_area.find_element_by_class_name("ext_txt")
-    #print "DEBUG: scroll to file elem: %s" % select_file
+    # print "DEBUG: scroll to file elem: %s" % select_file
     scroll_to_elem(driver, select_file)
 
     # TODO: figure out how to get this dclick working
@@ -261,11 +261,12 @@ and owner automatically assigned.
         # Then detect and confirm DOI usage dialog
         try:
             popup_dialog = driver.find_element_by_class_name("popupcontent")
-            #print "DEBUG: found popup dialog: %s" % popup_dialog
+            # print "DEBUG: found popup dialog: %s" % popup_dialog
             # Wait for display popup
             for _ in range(10):
                 if not popup_dialog.is_displayed():
-                    #print "DEBUG: waiting for popup dialog: %s" % popup_dialog
+                    # print "DEBUG: waiting for popup dialog: %s" %
+                    # popup_dialog
                     time.sleep(1)
                 else:
                     # If still not shown we consider it done
@@ -277,7 +278,7 @@ and owner automatically assigned.
                 popup_found = True
                 popup_buttons = popup_dialog.find_elements_by_class_name("btn")
                 for button in popup_buttons:
-                    #print "DEBUG: inspect popup button: %s" % button.text
+                    # print "DEBUG: inspect popup button: %s" % button.text
                     if button.text.upper() == 'UNDERSTOOD':
                         button.click()
                         popup_done = True
@@ -288,7 +289,7 @@ and owner automatically assigned.
             if popup_found and not popup_done:
                 raise Exception("Warning: no UNDERSTOOD button")
         except Exception, exc:
-            #print "DEBUG: popup accept dialog: %s" % exc
+            # print "DEBUG: popup accept dialog: %s" % exc
             if popup_found:
                 print "ERROR: popup accept dialog failed: %s" % exc
                 # Try again since popup WAS found
@@ -298,7 +299,7 @@ and owner automatically assigned.
         # Check if DOI form is there and ready
         try:
             doi_idenfier = driver.find_element_by_id("IdentifierType")
-            #print "DEBUG: found DOI identifier: %s" % doi_idenfier
+            # print "DEBUG: found DOI identifier: %s" % doi_idenfier
             break
         except Exception, exc:
             print "DEBUG: DOI page not ready: %s" % exc
@@ -324,7 +325,7 @@ def settings_actions(driver, url, login, passwd, callbacks):
     nav_name = "Settings"
     navmenu = driver.find_element_by_class_name('navmenu')
     link = navmenu.find_element_by_link_text(nav_name)
-    #print "DEBUG: found %s link: %s" % (nav_name, link)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name)
     state = 'settings-ready'
@@ -349,13 +350,13 @@ def user_actions(driver, url, login, passwd, sections, callbacks={}):
         print "ERROR: failed in user actions: %s" % exc
         status = False
 
-    #print "DEBUG: return: %s" % status
+    # print "DEBUG: return: %s" % status
     return status
 
 
 def main():
     """Main"""
-    argc = len(sys.argv)-1
+    argc = len(sys.argv) - 1
     if argc < 4:
         print "USAGE: %s browser url openid login [password]" % sys.argv[0]
         return 1
@@ -368,6 +369,10 @@ def main():
         passwd = sys.argv[5]
     else:
         passwd = getpass.getpass()
+    if argc > 5:
+        twofactor_key = sys.argv[6]
+    else:
+        twofactor_key = getpass.getpass("2FA *key*: ")
 
     # Screenshot helpers
     mig_calls, ucph_calls, action_calls, logout_calls = {}, {}, {}, {}
@@ -393,7 +398,8 @@ def main():
         ucph_calls[name] = lambda driver, name: save_screen(
             driver, active_path % name)
 
-    for name in ('files-ready', 'workgroups-ready', 'archives-ready',
+    for name in ('twofactor-ready', 'twofactor-filled', 'files-ready',
+                 'workgroups-ready', 'archives-ready',
                  'archive-empty', 'archive-fileman', 'archive-filled',
                  'archive-submitted', 'archive-finalized', 'archive-view',
                  'archive-register', 'settings-ready'):
@@ -419,6 +425,12 @@ def main():
         if not status:
             print "%s OpenID login FAILED!" % openid
             return 1
+
+        if twofactor_key:
+            status = shared_twofactor(driver, url, twofactor_key, action_calls)
+        if not status:
+            print "2FA after %s OpenID login FAILED!" % openid
+            return 2
 
         # Now proceed with actual actions to document in turn
 

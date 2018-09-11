@@ -32,11 +32,12 @@ import sys
 import time
 import traceback
 
-from migcore import init_driver, mig_login
+from migcore import init_driver, mig_login, shared_twofactor
+
 
 def main():
     """Main"""
-    argc = len(sys.argv)-1
+    argc = len(sys.argv) - 1
     if argc < 3:
         print "USAGE: %s browser url login [password]" % sys.argv[0]
         return 1
@@ -48,6 +49,10 @@ def main():
         passwd = sys.argv[4]
     else:
         passwd = getpass.getpass()
+    if argc > 4:
+        twofactor_key = sys.argv[5]
+    else:
+        twofactor_key = getpass.getpass("2FA *key*: ")
 
     driver = init_driver(browser)
     try:
@@ -57,13 +62,20 @@ def main():
             print "MiG OpenID login FAILED!"
             return 1
 
+        if twofactor_key:
+            status = shared_twofactor(driver, url, twofactor_key)
+            if not status:
+                print "Post-OpenID 2FA FAILED!"
+                return 2
+
         print "Now you can proceed using the browser or interrupt with Ctrl-C"
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         print "User interrupt requested - shutting down"
     except Exception as exc:
-        traceback.format_exc()
+        print "Unexpected exception:"
+        print traceback.format_exc()
 
 if __name__ == "__main__":
     main()
