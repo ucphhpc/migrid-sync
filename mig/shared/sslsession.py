@@ -35,6 +35,7 @@ try:
 except ImportError, ierr:
     _sslsession = None
 
+SSL_SESSION_ID_LENGTH = 64
 
 def get_ssl_master_key(configuration, ssl_sock):
     """Extract SSL session master key from SSL socket"""

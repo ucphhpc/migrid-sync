@@ -68,7 +68,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
     track_close_expired_sessions, get_open_sessions, validate_session
-from shared.sslsession import get_ssl_session_id
+from shared.sslsession import SSL_SESSION_ID_LENGTH, get_ssl_session_id
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength
@@ -365,6 +365,13 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 logger.error(exc)
             _ssl_sockets_lock.release()
             # logger.debug("ssl_sock session_id: '%s'" % session_id)
+
+        # Check if session_id is valid
+
+        if session_id and len(session_id) != SSL_SESSION_ID_LENGTH:
+            logger.error("Invalid session_id: (%s) '%s'"
+                         % (len(session_id), session_id))
+            session_id = ''
 
         return session_id
 
