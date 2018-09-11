@@ -339,7 +339,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 
     def _get_session_id(self, environ):
         """Extract session id from environ if set,
-        otherwise extract it form _ssl_socket"""
+        otherwise extract it from _ssl_socket"""
 
         session_id = ''
         ssl_adapter = \

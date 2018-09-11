@@ -1674,7 +1674,7 @@ def track_close_expired_sessions(
         client_id=None,
         prelocked=False,
         blocking=True):
-    """Track expired sessions and close them,]
+    """Track expired sessions and close them,
     returns dictionary with closed sessions"""
 
     logger = configuration.logger
