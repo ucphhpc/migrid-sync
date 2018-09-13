@@ -1486,7 +1486,7 @@ def track_open_session(configuration,
     result = None
     status = False
     prev_authorized = False
-    if session_id is None:
+    if session_id is None or not session_id:
         session_id = "%s:%s" % (client_address, client_port)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
@@ -1581,7 +1581,7 @@ def track_close_session(configuration,
     # logger.debug(msg)
     result = None
     status = False
-    if session_id is None:
+    if session_id is None or not session_id:
         session_id = "%s:%s" % (client_address, client_port)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result

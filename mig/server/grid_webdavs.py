@@ -68,7 +68,8 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
     track_close_expired_sessions, get_open_sessions, validate_session
-from shared.sslsession import SSL_SESSION_ID_LENGTH, get_ssl_session_id
+from shared.sslsession import SSL_SESSION_ID_LENGTH, get_ssl_session_id,\
+    get_ssl_master_key
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength
@@ -78,8 +79,6 @@ from shared.validstring import possible_user_id, possible_sharelink_id
 
 
 configuration, logger = None, None
-_ssl_sockets_lock = threading.Lock()
-_ssl_sockets = {}
 
 
 def hangup_handler(signal, frame):
@@ -132,6 +131,18 @@ def _get_port(environ):
     if not port:
         port = environ['REMOTE_PORT']
     return port
+
+
+def _get_ssl_session_id(environ):
+    """Extract ssl session id from envirion dict"""
+    ssl_session_id = environ.get('HTTP_X_SSL_SESSION_ID', '')
+    if not ssl_session_id:
+        ssl_session_id = environ.get('SSL_SESSION_ID', '')
+
+    if len(session_id) != SSL_SESSION_ID_LENGTH:
+        session_id = ''
+
+    return ssl_session_id
 
 
 def _get_digest(environ):
@@ -197,6 +208,21 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             except Exception, exc:
                 pass
 
+    def get_environ(self, ssl_sock):
+        """Update SSL environ with session_id and master_key"""
+
+        ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
+
+        ssl_session_id = get_ssl_session_id(configuration, ssl_sock)
+        if ssl_session_id is not None:
+            ssl_environ['SSL_SESSION_ID'] = ssl_session_id
+
+        ssl_master_key = get_ssl_master_key(configuration, ssl_sock)
+        if ssl_master_key is not None:
+            ssl_environ['SSL_MASTER_KEY'] = ssl_master_key
+
+        return ssl_environ
+
     def wrap(self, sock):
         """Wrap and return the given socket, plus WSGI environ entries.
         Note the previously initialized SSL context is tuned to pass hardened
@@ -212,35 +238,16 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                         self.ssl_ctx.session_stats())
             ssl_sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
             _socket_list.append(ssl_sock)
-            ssl_env = BuiltinSSLAdapter.get_environ(self, ssl_sock)
+            ssl_env = self.get_environ(ssl_sock)
             logger.info("wrapped sock from %s with ciphers %s" %
                         (ssl_sock.getpeername(), ssl_sock.cipher()))
 
             (client_addr, client_port) = ssl_sock.getpeername()
-            socket_id = "%s:%s" % (client_addr, client_port)
-            # logger.debug("socket_id: %s" % socket_id)
             # logger.debug("system ssl_sock timeout: %s" % ssl_sock.gettimeout())
             session_timeout = io_session_timeout.get('davs', 0)
             if session_timeout > 0:
                 ssl_sock.settimeout(float(session_timeout))
             # logger.debug("new ssl_sock timeout: %s" % ssl_sock.gettimeout())
-
-            ssl_session_id = get_ssl_session_id(configuration, ssl_sock)
-            # logger.debug("ssl_session_id: %s" % ssl_session_id)
-            timestamp = time.time()
-
-            _ssl_sockets_lock.acquire()
-            try:
-                _ssl_sockets[socket_id] = {
-                    'ssl_sock':  ssl_sock,
-                    'session_id': ssl_session_id,
-                    'created': timestamp,
-                    'accessed': timestamp,
-                }
-            except Exception, exc:
-                logger.error(exc)
-            _ssl_sockets_lock.release()
-
         except ssl.SSLError:
             exc = sys.exc_info()[1]
             if exc.errno == ssl.SSL_ERROR_EOF:
@@ -337,44 +344,6 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                     return True
         return False
 
-    def _get_session_id(self, environ):
-        """Extract session id from environ if set,
-        otherwise extract it from _ssl_socket"""
-
-        session_id = ''
-        ssl_adapter = \
-            wsgiserver.CherryPyWSGIServer.ssl_adapter
-        # logger.debug("ssl_adapter: %s" % ssl_adapter)
-
-        # If no SSL adapter check if SSL session id is in environ from apache
-
-        if ssl_adapter is None:
-            session_id = environ.get('HTTP_X_SSL_SESSION_ID', '')
-            # logger.debug("environ ssl session_id: '%s'" % session_id)
-        else:
-            ip_addr = _get_addr(environ)
-            tcp_port = _get_port(environ)
-            socket_id = "%s:%s" % (ip_addr, tcp_port)
-            _ssl_sockets_lock.acquire()
-            try:
-                ssl_sock = _ssl_sockets[socket_id]
-                ssl_sock['accessed'] = time.time()
-                session_id = ssl_sock['session_id']
-            except Exception as exc:
-                session_id = ''
-                logger.error(exc)
-            _ssl_sockets_lock.release()
-            # logger.debug("ssl_sock session_id: '%s'" % session_id)
-
-        # Check if session_id is valid
-
-        if session_id and len(session_id) != SSL_SESSION_ID_LENGTH:
-            logger.error("Invalid session_id: (%s) '%s'"
-                         % (len(session_id), session_id))
-            session_id = ''
-
-        return session_id
-
     def authDomainUser(self, realmname, username, password, environ):
         """Returns True if session is already authorized or
         the username / password pair is valid for the realm,
@@ -385,7 +354,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
-        session_id = self._get_session_id(environ)
+        session_id = _get_ssl_session_id(environ)
         # logger.debug("SSL session_id: %s" % session_id)
         success = False
         if session_id \
@@ -429,7 +398,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 
             # Track newly authorized session
 
-            if success:
+            if success and session_id:
                 # logger.debug("auth passed for session: %s:%s -> %s" %
                 #              (ip_addr, tcp_port, session_id))
                 status = track_open_session(configuration,
@@ -456,10 +425,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
-        session_id = self._get_session_id(environ)
+        session_id = _get_ssl_session_id(environ)
         # logger.debug("SSL session_id: %s" % session_id)
         success = False
-        if session_id \
+        if session_id and len(session_id) == SSL_SESSION_ID_LENGTH \
                 and is_authorized_session(configuration,
                                           username,
                                           session_id):
@@ -483,7 +452,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 
             # Track newly authorized session
 
-            if success:
+            if success and session_id:
                 # logger.debug("auth passed for session: %s:%s -> %s" %
                 #              (ip_addr, tcp_port, session_id))
                 status = track_open_session(configuration,
@@ -835,67 +804,6 @@ def update_users(configuration, user_map, username):
                      changed_shares=changed_shares)
 
 
-class SSLSocketExpire(threading.Thread):
-    """Expire SSL sockets in a user thread"""
-
-    def __init__(self):
-        """Init SSL socket expire thread"""
-        threading.Thread.__init__(self)
-        self.sslsocket_timeout = io_session_timeout.get('davs', 0)
-        self.shutdown = threading.Event()
-
-    def _remove_expired_sslsockets(self):
-        """Check and close expired SSL sockets"""
-
-        logger = configuration.logger
-        timestamp = time.time()
-
-        # Clean up old SSL sockets
-
-        _ssl_sockets_lock.acquire()
-        for key in _ssl_sockets.keys():
-            cur_ssl_socket = _ssl_sockets[key]
-            if (cur_ssl_socket['accessed'] + self.sslsocket_timeout) \
-                    < timestamp:
-                # logger.debug("timeout: %s / %s"
-                #              % (timestamp-cur_ssl_socket['accessed'],
-                #                 self.sslsocket_timeout))
-                try:
-                    fileno = cur_ssl_socket['ssl_sock'].fileno()
-                    # logger.debug("found active socket: %s, %s, %s"
-                    #              % (key, cur_ssl_socket['session_id'],
-                    #                 fileno))
-                except Exception, exc:
-                    # logger.debug("removing inactive socket: %s, %s"
-                    #              % (key, cur_ssl_socket['session_id']))
-                    del _ssl_sockets[key]
-
-        self._ssl_sockets_last_cleanup = timestamp
-        _ssl_sockets_lock.release()
-
-    def run(self):
-        """Start SSL sockets expire thread"""
-        logger = configuration.logger
-        logger.info("Starting SSLSocketExpire thread: #%s" % self.ident)
-        sleeptime = 1
-        elapsed = 0
-        while not self.shutdown.is_set():
-            time.sleep(sleeptime)
-            elapsed += sleeptime
-            if elapsed > self.sslsocket_timeout:
-                # logger.debug("SSL socket cleanup: %s" % time.time())
-                self._remove_expired_sslsockets()
-                elapsed = 0
-
-    def stop(self):
-        """Stop SSL sockets expire thread"""
-        logger = configuration.logger
-        logger.info("Stopping SSLSocketExpire thread: #%s" % self.ident)
-        self.shutdown.set()
-        self.join()
-        # logger.debug("Stopped SSLSocketExpire thread: #%s" % self.ident)
-
-
 class SessionExpire(threading.Thread):
     """Track expired sessions in a user thread"""
 
@@ -988,7 +896,6 @@ def run(configuration):
     wsgiserver.CherryPyWSGIServer.ssl_adapter = None
     nossl = config.get('nossl', False)
     if not nossl:
-        sslsocketexpire = SSLSocketExpire()
         cert = config['ssl_certificate'] = configuration.user_davs_key
         key = config['ssl_private_key'] = configuration.user_davs_key
         chain = config['ssl_certificate_chain'] = ''
@@ -1006,21 +913,15 @@ def run(configuration):
 
     sessionexpiretracker = SessionExpire()
     try:
-        if not nossl:
-            sslsocketexpire.start()
         sessionexpiretracker.start()
         server.start()
     except KeyboardInterrupt:
         server.stop()
         sessionexpiretracker.stop()
-        if not nossl:
-            sslsocketexpire.stop()
         # forward KeyboardInterrupt to main thread
         raise
     except Exception:
         sessionexpiretracker.stop()
-        if not nossl:
-            sslsocketexpire.stop()
         # forward error to main thread
         raise
 
