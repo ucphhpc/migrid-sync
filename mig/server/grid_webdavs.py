@@ -428,7 +428,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         session_id = _get_ssl_session_id(environ)
         # logger.debug("SSL session_id: %s" % session_id)
         success = False
-        if session_id and len(session_id) == SSL_SESSION_ID_LENGTH \
+        if session_id \
                 and is_authorized_session(configuration,
                                           username,
                                           session_id):
