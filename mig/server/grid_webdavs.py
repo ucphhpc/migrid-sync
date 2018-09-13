@@ -361,8 +361,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 and is_authorized_session(configuration,
                                           username,
                                           session_id):
-            # logger.debug("found authorized session (%s) for: %s from %s:%s" \
-            #             % (session_id, username, ip_addr, tcp_port))
+            # logger.debug("found authorized session for: %s from %s:%s:%s" \
+            #             % (username, ip_addr, tcp_port, session_id))
             success = True
         elif validate_session(configuration,
                               'davs',
@@ -432,8 +432,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 and is_authorized_session(configuration,
                                           username,
                                           session_id):
-            # logger.debug("found authorized session (%s) for: %s from %s:%s" \
-            #             % (session_id, username, ip_addr, tcp_port))
+            # logger.debug("found authorized session for: %s from %s:%s:%s" \
+            #             % (username, ip_addr, tcp_port, session_id))
             success = True
         elif validate_session(configuration,
                               'davs',
@@ -820,11 +820,12 @@ class SessionExpire(threading.Thread):
         logger = configuration.logger
         closed_sessions = track_close_expired_sessions(configuration, 'davs')
         for session in closed_sessions:
-            msg = "closed expired session (%s) for: %s from %s:%s" \
-            % (session['session_id'],
-               session['client_id'], 
-               session['ip_addr'], 
-               session['tcp_port'])
+            msg = "closed expired session for: %s from %s:%s" \
+                % (session['client_id'],
+                   session['ip_addr'],
+                   session['tcp_port']) \
+                +  ":%s" % session['session_id']
+
             logger.info(msg)
 
         return closed_sessions
