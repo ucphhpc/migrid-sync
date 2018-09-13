@@ -361,8 +361,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 and is_authorized_session(configuration,
                                           username,
                                           session_id):
-            # logger.debug("authorized session from: %s:%s -> %s" %
-            #              (ip_addr, tcp_port, session_id))
+            # logger.debug("found authorized session (%s) for: %s from %s:%s" \
+            #             % (session_id, username, ip_addr, tcp_port))
             success = True
         elif validate_session(configuration,
                               'davs',
@@ -432,8 +432,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 and is_authorized_session(configuration,
                                           username,
                                           session_id):
-            # logger.debug("authorized session from: %s:%s -> %s" %
-            #              (ip_addr, tcp_port, session_id))
+            # logger.debug("found authorized session (%s) for: %s from %s:%s" \
+            #             % (session_id, username, ip_addr, tcp_port))
             success = True
         elif validate_session(configuration,
                               'davs',
@@ -818,8 +818,16 @@ class SessionExpire(threading.Thread):
         "Check and close expired session"
 
         logger = configuration.logger
-        result = track_close_expired_sessions(configuration, 'davs')
-        # logger.debug("SessionExpire: %s" % result)
+        closed_sessions = track_close_expired_sessions(configuration, 'davs')
+        for session in closed_sessions:
+            msg = "closed expired session (%s) for: %s from %s:%s" \
+            % (session['session_id'],
+               session['client_id'], 
+               session['ip_addr'], 
+               session['tcp_port'])
+            logger.info(msg)
+
+        return closed_sessions
 
     def run(self):
         """Start session expire thread"""

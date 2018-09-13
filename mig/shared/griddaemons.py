@@ -1645,7 +1645,7 @@ def track_close_multiple_sessions(configuration,
     result = None
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
-    result = {}
+    result = []
     open_sessions = get_open_sessions(
         configuration, proto, prelocked=True)
     # logger.debug("open_sessions: %s" % open_sessions)
@@ -1661,7 +1661,7 @@ def track_close_multiple_sessions(configuration,
                                     session_id=cur_id,
                                     prelocked=True)
             if closed_session is not None:
-                result.update(closed_session)
+                result.append(closed_session)
     if not prelocked:
         _sessions_lock.release()
 
@@ -1687,7 +1687,7 @@ def track_close_expired_sessions(
     session_timeout = io_session_timeout.get(proto, 0)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
-    result = {}
+    result = []
     open_sessions = get_open_sessions(
         configuration, proto, client_id=client_id, prelocked=True)
     # logger.debug("open_sessions: %s" % open_sessions)
@@ -1708,7 +1708,7 @@ def track_close_expired_sessions(
                                     session_id=cur_session['session_id'],
                                     prelocked=True)
             if closed_session is not None:
-                result.update(closed_session)
+                result.append(closed_session)
     if not prelocked:
         _sessions_lock.release()
 
