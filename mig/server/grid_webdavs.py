@@ -139,8 +139,8 @@ def _get_ssl_session_id(environ):
     if not ssl_session_id:
         ssl_session_id = environ.get('SSL_SESSION_ID', '')
 
-    if len(session_id) != SSL_SESSION_ID_LENGTH:
-        session_id = ''
+    if len(ssl_session_id) != SSL_SESSION_ID_LENGTH:
+        ssl_session_id = ''
 
     return ssl_session_id
 
