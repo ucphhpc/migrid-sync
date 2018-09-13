@@ -134,7 +134,7 @@ def _get_port(environ):
 
 
 def _get_ssl_session_id(environ):
-    """Extract ssl session id from envirion dict"""
+    """Extract SSL session id from environ dict"""
     ssl_session_id = environ.get('HTTP_X_SSL_SESSION_ID', '')
     if not ssl_session_id:
         ssl_session_id = environ.get('SSL_SESSION_ID', '')
