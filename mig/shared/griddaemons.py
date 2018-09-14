@@ -1475,9 +1475,10 @@ def track_open_session(configuration,
                        blocking=True):
     """Track that client_id opened a new session from
     client_address and client_port.
-    If session_id is _NOT_ set the client_ip:client_port
+    If session_id is _NOT_ set then client_ip:client_port
     is used as session_id.
-    """
+    Returns dictionary with new session"""
+
     logger = configuration.logger
     # msg = "track open session for %s" % client_id \
     #     + " from %s:%s with session_id: %s" % \
@@ -1490,10 +1491,8 @@ def track_open_session(configuration,
         session_id = "%s:%s" % (client_address, client_port)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
-    result = ''
     try:
         status = True
-        result = session_id
         _cached = _active_sessions.get(client_id, {})
         if not _cached:
             _active_sessions[client_id] = _cached
@@ -1510,9 +1509,10 @@ def track_open_session(configuration,
         _session['tcp_port'] = client_port
         _session['authorized'] = authorized
         _session['timestamp'] = time.time()
+        result = _session
     except Exception, exc:
         status = False
-        session_id = None
+        result = None
         logger.error("track open session failed: %s" % exc)
 
     if not prelocked:
@@ -1536,12 +1536,38 @@ def track_open_session(configuration,
     return result
 
 
+def get_active_session(configuration,
+                       proto,
+                       client_id,
+                       session_id,
+                       prelocked=False,
+                       blocking=True):
+    """Return active session with session_id
+    if it exists for with proto for client_id"""
+    logger = configuration.logger
+    # logger.debug("proto: '%s', client_id: %s, session_id: %s," \
+    #              % (proto, client_id) \
+    #              + " prelocked: %s, blocking: %s" \
+    #              % (prelocked, blocking))
+    result = None
+    if not prelocked and not _sessions_lock.acquire(blocking):
+        return result
+    result = _active_sessions.get(client_id, {}).get(
+        proto, {}).get(session_id, {})
+
+    if not prelocked:
+        _sessions_lock.release()
+
+    return result
+
+
 def get_open_sessions(configuration,
                       proto,
                       client_id=None,
                       prelocked=False,
                       blocking=True):
-    """Return active proto sessions for client_id"""
+    """Returns dictionary {session_id: session}
+    with open proto sessions for client_id"""
     logger = configuration.logger
     # logger.debug("proto: '%s', client_id: %s, prelocked: %s, blocking: %s"
     #              % (proto, client_id, prelocked, blocking))
@@ -1549,15 +1575,16 @@ def get_open_sessions(configuration,
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
     # logger.debug("_active_sessions: %s" % _active_sessions)
-    if client_id is None:
+    if client_id is not None:
+        result = _active_sessions.get(client_id, {}).get(
+            proto, {})
+    else:
         result = {}
         for (_, open_sessions) in _active_sessions.iteritems():
             open_proto_session = open_sessions.get(proto, {})
             if open_proto_session:
                 result.update(open_proto_session)
-    else:
-        result = _active_sessions.get(client_id, {}).get(
-            proto, {})
+
     if not prelocked:
         _sessions_lock.release()
 
@@ -1572,8 +1599,8 @@ def track_close_session(configuration,
                         session_id=None,
                         prelocked=False,
                         blocking=True):
-    """Track that client_id closed one proto session,
-    returns dictionary with closed session"""
+    """Track that proto session for client_id is closed,
+    returns closed session dictionary"""
     logger = configuration.logger
     # msg = "track close session for proto: '%s'" % proto \
     #     + " from %s:%s with session_id: %s, client_id: %s, prelocked: %s" % \
@@ -1602,8 +1629,9 @@ def track_close_session(configuration,
                 + ", error: %s" % exc
             logger.error(msg)
     else:
-        msg = "track close session: %s _NOT_ found for client: %s" \
-            % (session_id, client_id)
+        msg = "track close session: '%s' _NOT_ found for proto: '%s'" \
+            % (session_id, proto) \
+            + ", client: '%s'" % client_id
         logger.warning(msg)
 
     if not prelocked:
@@ -1629,54 +1657,14 @@ def track_close_session(configuration,
     return result
 
 
-def track_close_multiple_sessions(configuration,
-                                  proto,
-                                  session_ids,
-                                  prelocked=False,
-                                  blocking=True):
-    """Close multiple sessions based on session_ids list,
-    returns dictionary with closed sessions"""
-
-    logger = configuration.logger
-    # msg = "track close multiple sessions for proto: '%s'" % proto \
-    #     + " with session_ids: %s, prelocked: %s" % \
-    #     (session_ids, prelocked)
-    # logger.debug(msg)
-    result = None
-    if not prelocked and not _sessions_lock.acquire(blocking):
-        return result
-    result = []
-    open_sessions = get_open_sessions(
-        configuration, proto, prelocked=True)
-    # logger.debug("open_sessions: %s" % open_sessions)
-    for cur_id in open_sessions.keys():
-        if open_session_id in session_ids:
-            cur_session = open_sessions[cur_id]
-            closed_session = \
-                track_close_session(configuration,
-                                    proto,
-                                    cur_session['client_id'],
-                                    cur_session['ip_addr'],
-                                    cur_session['tcp_port'],
-                                    session_id=cur_id,
-                                    prelocked=True)
-            if closed_session is not None:
-                result.append(closed_session)
-    if not prelocked:
-        _sessions_lock.release()
-
-    return result
-
-
 def track_close_expired_sessions(
         configuration,
         proto,
         client_id=None,
         prelocked=False,
         blocking=True):
-    """Track expired sessions and close them,
-    returns dictionary with closed sessions"""
-
+    """Track expired sessions and close them.
+    Returns dictionary of closed sessions {session_id: session}"""
     logger = configuration.logger
     # msg = "track close sessions for proto: '%s'" % proto \
     #     + " with client_id: %s, prelocked: %s, blocking: %s" % \
@@ -1687,7 +1675,7 @@ def track_close_expired_sessions(
     session_timeout = io_session_timeout.get(proto, 0)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
-    result = []
+    result = {}
     open_sessions = get_open_sessions(
         configuration, proto, client_id=client_id, prelocked=True)
     # logger.debug("open_sessions: %s" % open_sessions)
@@ -1695,20 +1683,21 @@ def track_close_expired_sessions(
     # logger.debug("current_timestamp: %s" % (current_timestamp))
     for open_session_id in open_sessions.keys():
         timestamp = open_sessions[open_session_id]['timestamp']
-        # logger.debug("current_timestamp - timestamp: %s"
-        #              % (current_timestamp - timestamp))
+        # logger.debug("current_timestamp - timestamp: %s / %s"
+        #              % (current_timestamp - timestamp, session_timeout))
         if current_timestamp - timestamp > session_timeout:
             cur_session = open_sessions[open_session_id]
+            cur_session_id = cur_session['session_id']
             closed_session = \
                 track_close_session(configuration,
                                     proto,
                                     cur_session['client_id'],
                                     cur_session['ip_addr'],
                                     cur_session['tcp_port'],
-                                    session_id=cur_session['session_id'],
+                                    session_id=cur_session_id,
                                     prelocked=True)
             if closed_session is not None:
-                result.append(closed_session)
+                result[cur_session_id] = closed_session
     if not prelocked:
         _sessions_lock.release()
 
@@ -1768,7 +1757,8 @@ if __name__ == "__main__":
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     conf.logger = logging
-    test_proto, test_address, test_port, test_id = 'DUMMY', '127.0.0.42', 42000, 'user@some-domain.org'
+    test_proto, test_address, test_port, test_id, test_session_id = \
+        'DUMMY', '127.0.0.42', 42000, 'user@some-domain.org', 'DUMMY_SESSION_ID'
     test_pw = "T3stp4ss"
     invalid_id = 'root'
     print "Running unit test on rate limit functions"
@@ -1835,7 +1825,6 @@ if __name__ == "__main__":
     print "Check with invalid user from same address"
     hit = hit_rate_limit(conf, test_proto, test_address, invalid_id)
     print "Blocked: %s" % hit
-
     print "Test active session counting"
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
@@ -1855,3 +1844,349 @@ if __name__ == "__main__":
     track_close_session(conf, test_proto, test_id, test_address, test_port+1, )
     active_count = active_sessions(conf, test_proto, test_id)
     print "Open sessions: %d" % active_count
+    print "Test session tracking functions"
+    expected_session_keys = ['ip_addr',
+                             'tcp_port',
+                             'session_id',
+                             'authorized',
+                             'client_id',
+                             'timestamp']
+    print "Track open session #1"
+    open_session = track_open_session(conf,
+                                      test_proto,
+                                      test_id,
+                                      test_address,
+                                      test_port,
+                                      test_session_id,
+                                      authorized=True)
+    if isinstance(open_session, dict):
+        if open_session.keys() == expected_session_keys:
+            print "OK"
+        else:
+            print "ERROR: Invalid session dictionary: '%s'" \
+                % (open_session)
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(open_session)
+        exit(1)
+    print "Track open session #2"
+    open_session = track_open_session(conf,
+                                      test_proto,
+                                      test_id,
+                                      test_address,
+                                      test_port+1,
+                                      test_session_id+"_1",
+                                      authorized=True)
+    if isinstance(open_session, dict):
+        if open_session.keys() == expected_session_keys:
+            print "OK"
+        else:
+            print "ERROR: Invalid session dictionary: '%s'" \
+                % (open_session)
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(open_session)
+        exit(1)
+    print "Track open session #3"
+    open_session = track_open_session(conf,
+                                      test_proto,
+                                      test_id+"_1",
+                                      test_address,
+                                      test_port+2,
+                                      test_session_id+"_2",
+                                      authorized=True)
+    if isinstance(open_session, dict):
+        if open_session.keys() == expected_session_keys:
+            print "OK"
+        else:
+            print "ERROR: Invalid session dictionary: '%s'" \
+                % (open_session)
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(open_session)
+        exit(1)
+    print "Track open session #4"
+    open_session = track_open_session(conf,
+                                      test_proto,
+                                      test_id+"_1",
+                                      test_address,
+                                      test_port+3,
+                                      test_session_id+"_3",
+                                      authorized=True)
+    if isinstance(open_session, dict):
+        if open_session.keys() == expected_session_keys:
+            print "OK"
+        else:
+            print "ERROR: Invalid session dictionary: '%s'" \
+                % (open_session)
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(open_session)
+    print "Track get open sessions #1"
+    cur_open_sessions = get_open_sessions(conf, 'INVALID')
+    if isinstance(cur_open_sessions, dict):
+        if not cur_open_sessions:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % cur_open_sessions
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
+        exit(1)
+    print "Track get open sessions #2"
+    cur_open_sessions = get_open_sessions(conf, test_proto, 'INVALID')
+    if isinstance(cur_open_sessions, dict):
+        if not cur_open_sessions:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % cur_open_sessions
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
+        exit(1)
+    print "Track get open sessions #3"
+    cur_open_sessions = get_open_sessions(conf, test_proto)
+    if isinstance(cur_open_sessions, dict):
+        if len(cur_open_sessions.keys()) != 4:
+            print "ERROR: Expected dictionary #keys: 4" \
+                + ", found: %s, %s" % (len(cur_open_sessions.keys()),
+                                       cur_open_sessions.keys())
+            exit(1)
+        status = True
+        for (key, val) in cur_open_sessions.iteritems():
+            if not isinstance(val, dict) \
+                    or val.keys() != expected_session_keys:
+                status = False
+                print "ERROR: Invalid session dictionary: '%s'" \
+                    % (val)
+                exit(1)
+        if status:
+            print "OK"
+    else:
+        print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
+        exit(1)
+    print "Track get open sessions #4"
+    cur_open_sessions = get_open_sessions(conf,
+                                          test_proto,
+                                          client_id=test_id)
+    if isinstance(cur_open_sessions, dict):
+        if len(cur_open_sessions.keys()) != 2:
+            print "ERROR: Expected dictionary #keys: 2" \
+                + ", found: %s, %s" % (len(cur_open_sessions.keys()),
+                                       cur_open_sessions.keys())
+            exit(1)
+
+        status = True
+        for (key, val) in cur_open_sessions.iteritems():
+            if not isinstance(val, dict) \
+                    or val.keys() != expected_session_keys:
+                status = False
+                print "ERROR: Invalid session dictionary: '%s'" \
+                    % (val)
+        if status:
+            print "OK"
+    else:
+        print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
+        exit(1)
+    print "Track get active session #1"
+    active_session = get_active_session(conf,
+                                        'INVALID',
+                                        test_id,
+                                        test_session_id)
+    if isinstance(active_session, dict):
+        if not active_session:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % active_session
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(active_session)
+        exit(1)
+    print "Track get active session #2"
+    active_session = get_active_session(conf,
+                                        test_proto,
+                                        'INVALID',
+                                        test_session_id)
+    if isinstance(active_session, dict):
+        if not active_session:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % active_session
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(active_session)
+        exit(1)
+    print "Track get active session #3"
+    active_session = get_active_session(conf,
+                                        test_proto,
+                                        test_id,
+                                        'INVALID')
+    if isinstance(active_session, dict):
+        if not active_session:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % active_session
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(active_session)
+        exit(1)
+    print "Track get active session #4"
+    active_session = get_active_session(conf,
+                                        test_proto,
+                                        test_id,
+                                        test_session_id)
+    if isinstance(active_session, dict):
+        if active_session.keys() == expected_session_keys:
+            print "OK"
+        else:
+            print "ERROR: Invalid session dictionary: '%s'" \
+                % (active_session)
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(active_session)
+        exit(1)
+    print "Track close session #1"
+    close_session = track_close_session(conf,
+                                        'INVALID',
+                                        test_id,
+                                        test_address,
+                                        test_port,
+                                        session_id=test_session_id)
+    if isinstance(close_session, dict):
+        if not close_session:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % close_session
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(close_session)
+        exit(1)
+    print "Track close session #2"
+    close_session = track_close_session(conf,
+                                        test_proto,
+                                        'INVALID',
+                                        test_address,
+                                        test_port,
+                                        session_id=test_session_id)
+    if isinstance(close_session, dict):
+        if not close_session:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % close_session
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(close_session)
+        exit(1)
+    print "Track close session #3"
+    close_session = track_close_session(conf,
+                                        test_proto,
+                                        test_id,
+                                        test_address,
+                                        test_port,
+                                        session_id=None)
+    if isinstance(close_session, dict):
+        if not close_session:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % close_session
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(close_session)
+        exit(1)
+    print "Track close session #4"
+    close_session = track_close_session(conf,
+                                        test_proto,
+                                        test_id,
+                                        test_address,
+                                        test_port,
+                                        session_id=test_session_id)
+    if isinstance(close_session, dict):
+        if close_session.keys() == expected_session_keys:
+            print "OK"
+        else:
+            print "ERROR: Invalid session dictionary: '%s'" \
+                % (close_session)
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(close_session)
+        exit(1)
+    print "Track close expired sessions #1"
+    expired_sessions = track_close_expired_sessions(conf,
+                                                    'INVALID')
+    if isinstance(expired_sessions, dict):
+        if not expired_sessions:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % expired_sessions
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(expired_sessions)
+        exit(1)
+    print "Track close expired sessions #2"
+    expired_sessions = track_close_expired_sessions(conf,
+                                                    test_proto,
+                                                    'INVALID')
+    if isinstance(expired_sessions, dict):
+        if not expired_sessions:
+            print "OK"
+        else:
+            print "ERROR: Excpected empty dictionary: %s" \
+                % expired_sessions
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(expired_sessions)
+        exit(1)
+    print "Track close expired sessions #3"
+    expired_sessions = track_close_expired_sessions(conf,
+                                                    test_proto,
+                                                    client_id=test_id)
+    if isinstance(expired_sessions, dict):
+        if len(expired_sessions.keys()) == 1:
+            status = True
+            for (key, val) in expired_sessions.iteritems():
+                if not isinstance(val, dict) \
+                        or val.keys() != expected_session_keys:
+                    status = False
+                    print "ERROR: Invalid session dictionary: '%s'" \
+                        % (val)
+                    exit(1)
+            if status:
+                print "OK"
+        else:
+            print "ERROR: Expected 1 expired session, found: %s" \
+                % len(expired_sessions.keys())
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(expired_sessions)
+        exit(1)
+    print "Track close expired sessions #4"
+    expired_sessions = track_close_expired_sessions(conf,
+                                                    test_proto)
+    if isinstance(expired_sessions, dict):
+        if len(expired_sessions.keys()) == 2:
+            status = True
+            for (key, val) in expired_sessions.iteritems():
+                if not isinstance(val, dict) \
+                        or val.keys() != expected_session_keys:
+                    status = False
+                    print "ERROR: Invalid session dictionary: '%s'" \
+                        % (val)
+                    exit(1)
+            if status:
+                print "OK"
+        else:
+            print "ERROR: Expected 2 expired session, found: %s" \
+                % len(expired_sessions.keys())
+            exit(1)
+    else:
+        print "ERROR: Expected dictionary: %s" % type(expired_sessions)
+        exit(1)
