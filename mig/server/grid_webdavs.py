@@ -67,7 +67,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
-    track_close_expired_sessions, get_open_sessions, validate_session
+    track_close_expired_sessions, get_active_session, validate_session
 from shared.sslsession import SSL_SESSION_ID_LENGTH, get_ssl_session_id,\
     get_ssl_master_key
 from shared.tlsserver import hardened_ssl_context
@@ -753,11 +753,13 @@ def is_authorized_session(configuration, username, session_id):
     #             (session_id, user_sessions))
     result = False
     session_timeout = io_session_timeout.get('davs', 0)
-    sessions = get_open_sessions(configuration, 'davs', client_id=username)
-    cur_session = sessions.get(session_id, '')
-    if cur_session:
-        authorized = cur_session.get('authorized', False)
-        timestamp = cur_session.get('timestamp', 0)
+    session = get_active_session(configuration, 
+                                'davs',
+                                client_id=username,
+                                session_id=session_id)
+    if session:
+        authorized = session.get('authorized', False)
+        timestamp = session.get('timestamp', 0)
         cur_timestamp = time.time()
         if authorized \
                 and cur_timestamp - timestamp < session_timeout:
