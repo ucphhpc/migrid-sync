@@ -1542,8 +1542,8 @@ def get_active_session(configuration,
                        session_id,
                        prelocked=False,
                        blocking=True):
-    """Return active session with session_id
-    if it exists for with proto for client_id"""
+    """Returns active session if it exists 
+    for proto, client_id and session_id"""
     logger = configuration.logger
     # logger.debug("proto: '%s', client_id: %s, session_id: %s," \
     #              % (proto, client_id) \
@@ -1977,7 +1977,6 @@ if __name__ == "__main__":
                 + ", found: %s, %s" % (len(cur_open_sessions.keys()),
                                        cur_open_sessions.keys())
             exit(1)
-
         status = True
         for (key, val) in cur_open_sessions.iteritems():
             if not isinstance(val, dict) \
@@ -1985,6 +1984,7 @@ if __name__ == "__main__":
                 status = False
                 print "ERROR: Invalid session dictionary: '%s'" \
                     % (val)
+                exit(1)
         if status:
             print "OK"
     else:
