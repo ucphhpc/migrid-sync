@@ -51,7 +51,7 @@ atjobs_expr = re.compile(atjobs_pattern)
 def get_command_map(configuration):
     """Generate a dictionary with the supported commands and their expected
     call arguments."""
-    
+
     # TODO: add all ops with effect here!
 
     cmd_map = {
@@ -70,7 +70,7 @@ def get_command_map(configuration):
         'mkdir': ['path'],
         'chksum': ['hash_algo', 'path', 'dst', 'max_chunks'],
         'mqueue': ['queue', 'action', 'msg_id', 'msg'],
-        }
+    }
     if configuration.site_enable_jobs:
         cmd_map.update({
             'submit': ['path'],
@@ -78,30 +78,32 @@ def get_command_map(configuration):
             'resubmit': ['job_id'],
             'jobaction': ['job_id', 'action'],
             'liveio': ['action', 'src', 'dst', 'job_id'],
-            })
+        })
     # TODO: expose sharelinks something like this?
-    #if configuration.site_enable_sharelinks:
+    # if configuration.site_enable_sharelinks:
     #    cmd_map.update({
     #        'sharelink': ['path', 'read_access', 'write_access', 'invite', 'msg'],
     #        })
     if configuration.site_enable_transfers:
         cmd_map.update({
             'datatransfer': ['transfer_id', 'action'],
-            })
+        })
     if configuration.site_enable_preview:
         cmd_map.update({
             'imagepreview': ['flags', 'action', 'path', 'extension'],
-            })
+        })
     if configuration.site_enable_freeze:
         cmd_map.update({
             'createbackup': ['freeze_name', 'freeze_copy_0'],
             'deletebackup': ['freeze_id'],
-            })
+            'addfreezedata': ['freeze_id', 'freeze_copy_0'],
+        })
     if configuration.site_enable_crontab:
         cmd_map.update({
             'crontab': ['crontab', 'action'],
-            })
+        })
     return cmd_map
+
 
 def get_path_expand_map(trigger_path, rule, state_change):
     """Generate a dictionary with the supported variables to be expanded and
@@ -124,11 +126,12 @@ def get_path_expand_map(trigger_path, rule, state_change):
         '+TRIGGERCHANGE+': state_change,
         '+TRIGGERVGRIDNAME+': rule['vgrid_name'],
         '+TRIGGERRUNAS+': rule['run_as'],
-        }
+    }
 
     # TODO: provide exact expanded wildcards?
 
     return expand_map
+
 
 def get_time_expand_map(timestamp, rule):
     """Generate a dictionary with the supported variables to be expanded and
@@ -146,8 +149,9 @@ def get_time_expand_map(timestamp, rule):
         '+SCHEDYEAR+': "%d" % timestamp.year,
         '+SCHEDDAYOFWEEK+': "%d" % timestamp.weekday(),
         '+SCHEDRUNAS+': rule['run_as'],
-        }
+    }
     return expand_map
+
 
 def map_args_to_vars(var_list, arg_list):
     """Map command args to backend var names - if more args than vars we
@@ -165,6 +169,7 @@ def map_args_to_vars(var_list, arg_list):
             del remain_vars[0]
     return args_dict
 
+
 def load_crontab(client_id, configuration, allow_missing=True):
     """Load entries from plain user crontab file"""
     _logger = configuration.logger
@@ -180,12 +185,13 @@ def load_crontab(client_id, configuration, allow_missing=True):
         crontab_contents = ''
     return crontab_contents
 
+
 def load_atjobs(client_id, configuration, allow_missing=True):
     """Load entries from plain user atjobs file"""
     _logger = configuration.logger
     client_dir = client_id_dir(client_id)
     atjobs_path = os.path.join(configuration.user_settings, client_dir,
-                                atjobs_name)
+                               atjobs_name)
     try:
         atjobs_fd = open(atjobs_path, "rb")
         atjobs_contents = atjobs_fd.read()
@@ -194,6 +200,7 @@ def load_atjobs(client_id, configuration, allow_missing=True):
         _logger.error('failed reading %s atjobs file: %s' % (client_id, exc))
         atjobs_contents = ''
     return atjobs_contents
+
 
 def parse_crontab_contents(configuration, client_id, crontab_lines):
     """Parse raw crontab content lines and return a list of crontab dictionary
@@ -208,7 +215,7 @@ def parse_crontab_contents(configuration, client_id, crontab_lines):
             continue
         hit = crontab_expr.match(line.strip())
         if not hit:
-            _logger.warning("Skip invalid crontab line for %s: %s" % \
+            _logger.warning("Skip invalid crontab line for %s: %s" %
                             (client_id, line))
             continue
         # Format: minute hour dayofmonth month dayofweek command
@@ -218,7 +225,8 @@ def parse_crontab_contents(configuration, client_id, crontab_lines):
                  'run_as': client_id}
         crontab_entries.append(entry)
     return crontab_entries
-    
+
+
 def parse_atjobs_contents(configuration, client_id, atjobs_lines):
     """Parse raw atjobs content lines and return a list of atjobs dictionary
     entries.
@@ -234,7 +242,7 @@ def parse_atjobs_contents(configuration, client_id, atjobs_lines):
             continue
         hit = atjobs_expr.match(line.strip())
         if not hit:
-            _logger.warning("Skip invalid atjobs line for %s: %s" % \
+            _logger.warning("Skip invalid atjobs line for %s: %s" %
                             (client_id, line))
             continue
         # ISO format (see top)
@@ -250,7 +258,8 @@ def parse_atjobs_contents(configuration, client_id, atjobs_lines):
         else:
             _logger.warning("skip expired at job: %s" % line)
     return atjobs_entries
-    
+
+
 def parse_crontab(configuration, client_id, path):
     """Parse client_id crontab in path and return a list of crontab dictionary
     entries.
@@ -265,6 +274,7 @@ def parse_crontab(configuration, client_id, path):
         return []
     return parse_crontab_contents(configuration, client_id, crontab_lines)
 
+
 def parse_atjobs(configuration, client_id, path):
     """Parse client_id atjobs in path and return a list of atjobs dictionary
     entries.
@@ -278,6 +288,7 @@ def parse_atjobs(configuration, client_id, path):
         _logger.error("Failed to read atjobs in %s" % path)
         return []
     return parse_atjobs_contents(configuration, client_id, atjobs_lines)
+
 
 def parse_and_save_crontab(crontab, client_id, configuration):
     """Validate and write the crontab for client_id"""
@@ -298,14 +309,15 @@ def parse_and_save_crontab(crontab, client_id, configuration):
         msg = 'ERROR: writing %s crontab file: %s' % (client_id, exc)
     return (status, msg)
 
+
 def parse_and_save_atjobs(atjobs, client_id, configuration):
     """Validate and write the atjobs for client_id"""
     client_dir = client_id_dir(client_id)
     atjobs_path = os.path.join(configuration.user_settings, client_dir,
-                                atjobs_name)
+                               atjobs_name)
     status, msg = True, ''
     atjobs_entries = parse_atjobs_contents(configuration, client_id,
-                                             atjobs.splitlines())
+                                           atjobs.splitlines())
     try:
         atjobs_fd = open(atjobs_path, "wb")
         # TODO: filter out broken lines before write?
@@ -317,6 +329,7 @@ def parse_and_save_atjobs(atjobs, client_id, configuration):
         msg = 'ERROR: writing %s atjobs file: %s' % (client_id, exc)
     return (status, msg)
 
+
 def cron_match(configuration, cron_time, entry):
     """Check if cron_time matches the time specs in entry"""
     _logger = configuration.logger
@@ -327,15 +340,17 @@ def cron_match(configuration, cron_time, entry):
     for name, val in time_vals.items():
         # Strip any leading zeros before integer match
         if not fnmatch.fnmatch("%s" % val, entry[name].lstrip('0')):
-            _logger.debug("cron_match failed on %s: %s vs %s" % \
+            _logger.debug("cron_match failed on %s: %s vs %s" %
                           (name, val, entry[name]))
             return False
     return True
+
 
 def at_remain(configuration, at_time, entry):
     """Return the number of minutes remaining before entry should run"""
     _logger = configuration.logger
     return int((entry['time_stamp'] - at_time).total_seconds() / 60)
+
 
 if __name__ == '__main__':
     from shared.conf import get_configuration_object
@@ -343,7 +358,8 @@ if __name__ == '__main__':
     client_id = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
     now = datetime.datetime.now()
     now = now.replace(second=0, microsecond=0)
-    trigger_rule = {'templates': [], 'run_as': client_id, 'rate_limit': '', 'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False, 'match_files': True, 'arguments': ['+TRIGGERPATH+'], 'settle_time': '', 'path': '*.txt*', 'changes': ['modified'], 'action': 'trigger-created', 'match_recursive': True}
+    trigger_rule = {'templates': [], 'run_as': client_id, 'rate_limit': '', 'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False, 'match_files': True,
+                    'arguments': ['+TRIGGERPATH+'], 'settle_time': '', 'path': '*.txt*', 'changes': ['modified'], 'action': 'trigger-created', 'match_recursive': True}
     trigger_samples = [('abc.txt', 'modified'), ('subdir/def.txt', 'modified')]
     print "Test trigger event map:"
     for (path, change) in trigger_samples:
@@ -352,7 +368,8 @@ if __name__ == '__main__':
         for (key, val) in expanded.items():
             print "    %s: %s" % (key, val)
 
-    crontab_lines = ['* * * * * pack cront-test.txt cron-test-+SCHEDYEAR+-+SCHEDMONTH+-+SCHEDDAY+.zip']
+    crontab_lines = [
+        '* * * * * pack cront-test.txt cron-test-+SCHEDYEAR+-+SCHEDMONTH+-+SCHEDDAY+.zip']
     crontab_rules = parse_crontab_contents(conf, client_id, crontab_lines)
     cron_times = [now, datetime.datetime(now.year+1, 12, 24, 12, 42),
                   datetime.datetime(now.year+2, 1, 2, 9, 2)]
@@ -366,7 +383,7 @@ if __name__ == '__main__':
             for (key, val) in expanded.items():
                 print "    %s: %s" % (key, val)
     now_stamp = now.isoformat(" ")
-    atjobs_lines = ['%s touch at-test-+SCHEDYEAR+-+SCHEDMONTH+-+SCHEDDAY+.zip' \
+    atjobs_lines = ['%s touch at-test-+SCHEDYEAR+-+SCHEDMONTH+-+SCHEDDAY+.zip'
                     % now_stamp]
     print "parse at job lines: %s" % atjobs_lines
     atjobs_rules = parse_atjobs_contents(conf, client_id, atjobs_lines)
@@ -375,5 +392,5 @@ if __name__ == '__main__':
     for rule in atjobs_rules:
         for timestamp in cron_times:
             remain = at_remain(conf, timestamp, rule)
-            print "At %s job is %dm in the future for rule" % (timestamp, remain)
-        
+            print "At %s job is %dm in the future for rule" % (
+                timestamp, remain)
