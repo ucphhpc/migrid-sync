@@ -821,13 +821,12 @@ class SessionExpire(threading.Thread):
 
         logger = configuration.logger
         closed_sessions = track_close_expired_sessions(configuration, 'davs')
-        for session in closed_sessions:
-            msg = "closed expired session for: %s from %s:%s" \
+        for (_, session) in closed_sessions.iteritems():
+            msg = "closed expired session for: %s from %s:%s:%s" \
                 % (session['client_id'],
                    session['ip_addr'],
-                   session['tcp_port']) \
-                +  ":%s" % session['session_id']
-
+                   session['tcp_port'],
+                   session['session_id'])
             logger.info(msg)
 
         return closed_sessions
