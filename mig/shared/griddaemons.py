@@ -31,6 +31,7 @@ import fnmatch
 import glob
 import logging
 import os
+import sys
 import socket
 import time
 import threading
@@ -1487,7 +1488,7 @@ def track_open_session(configuration,
     result = None
     status = False
     prev_authorized = False
-    if session_id is None or not session_id:
+    if not session_id:
         session_id = "%s:%s" % (client_address, client_port)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
@@ -1608,7 +1609,7 @@ def track_close_session(configuration,
     # logger.debug(msg)
     result = None
     status = False
-    if session_id is None or not session_id:
+    if not session_id:
         session_id = "%s:%s" % (client_address, client_port)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
@@ -1865,10 +1866,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Invalid session dictionary: '%s'" \
                 % (open_session)
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(open_session)
-        exit(1)
+        sys.exit(1)
     print "Track open session #2"
     open_session = track_open_session(conf,
                                       test_proto,
@@ -1883,10 +1884,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Invalid session dictionary: '%s'" \
                 % (open_session)
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(open_session)
-        exit(1)
+        sys.exit(1)
     print "Track open session #3"
     open_session = track_open_session(conf,
                                       test_proto,
@@ -1901,10 +1902,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Invalid session dictionary: '%s'" \
                 % (open_session)
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(open_session)
-        exit(1)
+        sys.exit(1)
     print "Track open session #4"
     open_session = track_open_session(conf,
                                       test_proto,
@@ -1919,7 +1920,7 @@ if __name__ == "__main__":
         else:
             print "ERROR: Invalid session dictionary: '%s'" \
                 % (open_session)
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(open_session)
     print "Track get open sessions #1"
@@ -1930,10 +1931,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % cur_open_sessions
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
-        exit(1)
+        sys.exit(1)
     print "Track get open sessions #2"
     cur_open_sessions = get_open_sessions(conf, test_proto, 'INVALID')
     if isinstance(cur_open_sessions, dict):
@@ -1942,10 +1943,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % cur_open_sessions
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
-        exit(1)
+        sys.exit(1)
     print "Track get open sessions #3"
     cur_open_sessions = get_open_sessions(conf, test_proto)
     if isinstance(cur_open_sessions, dict):
@@ -1953,7 +1954,7 @@ if __name__ == "__main__":
             print "ERROR: Expected dictionary #keys: 4" \
                 + ", found: %s, %s" % (len(cur_open_sessions.keys()),
                                        cur_open_sessions.keys())
-            exit(1)
+            sys.exit(1)
         status = True
         for (key, val) in cur_open_sessions.iteritems():
             if not isinstance(val, dict) \
@@ -1961,12 +1962,12 @@ if __name__ == "__main__":
                 status = False
                 print "ERROR: Invalid session dictionary: '%s'" \
                     % (val)
-                exit(1)
+                sys.exit(1)
         if status:
             print "OK"
     else:
         print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
-        exit(1)
+        sys.exit(1)
     print "Track get open sessions #4"
     cur_open_sessions = get_open_sessions(conf,
                                           test_proto,
@@ -1976,7 +1977,7 @@ if __name__ == "__main__":
             print "ERROR: Expected dictionary #keys: 2" \
                 + ", found: %s, %s" % (len(cur_open_sessions.keys()),
                                        cur_open_sessions.keys())
-            exit(1)
+            sys.exit(1)
         status = True
         for (key, val) in cur_open_sessions.iteritems():
             if not isinstance(val, dict) \
@@ -1984,12 +1985,12 @@ if __name__ == "__main__":
                 status = False
                 print "ERROR: Invalid session dictionary: '%s'" \
                     % (val)
-                exit(1)
+                sys.exit(1)
         if status:
             print "OK"
     else:
         print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
-        exit(1)
+        sys.exit(1)
     print "Track get active session #1"
     active_session = get_active_session(conf,
                                         'INVALID',
@@ -2001,10 +2002,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % active_session
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(active_session)
-        exit(1)
+        sys.exit(1)
     print "Track get active session #2"
     active_session = get_active_session(conf,
                                         test_proto,
@@ -2016,10 +2017,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % active_session
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(active_session)
-        exit(1)
+        sys.exit(1)
     print "Track get active session #3"
     active_session = get_active_session(conf,
                                         test_proto,
@@ -2031,10 +2032,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % active_session
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(active_session)
-        exit(1)
+        sys.exit(1)
     print "Track get active session #4"
     active_session = get_active_session(conf,
                                         test_proto,
@@ -2046,10 +2047,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Invalid session dictionary: '%s'" \
                 % (active_session)
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(active_session)
-        exit(1)
+        sys.exit(1)
     print "Track close session #1"
     close_session = track_close_session(conf,
                                         'INVALID',
@@ -2063,10 +2064,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % close_session
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(close_session)
-        exit(1)
+        sys.exit(1)
     print "Track close session #2"
     close_session = track_close_session(conf,
                                         test_proto,
@@ -2080,10 +2081,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % close_session
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(close_session)
-        exit(1)
+        sys.exit(1)
     print "Track close session #3"
     close_session = track_close_session(conf,
                                         test_proto,
@@ -2097,10 +2098,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % close_session
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(close_session)
-        exit(1)
+        sys.exit(1)
     print "Track close session #4"
     close_session = track_close_session(conf,
                                         test_proto,
@@ -2114,10 +2115,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Invalid session dictionary: '%s'" \
                 % (close_session)
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(close_session)
-        exit(1)
+        sys.exit(1)
     print "Track close expired sessions #1"
     expired_sessions = track_close_expired_sessions(conf,
                                                     'INVALID')
@@ -2127,10 +2128,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % expired_sessions
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(expired_sessions)
-        exit(1)
+        sys.exit(1)
     print "Track close expired sessions #2"
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto,
@@ -2141,10 +2142,10 @@ if __name__ == "__main__":
         else:
             print "ERROR: Excpected empty dictionary: %s" \
                 % expired_sessions
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(expired_sessions)
-        exit(1)
+        sys.exit(1)
     print "Track close expired sessions #3"
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto,
@@ -2158,16 +2159,16 @@ if __name__ == "__main__":
                     status = False
                     print "ERROR: Invalid session dictionary: '%s'" \
                         % (val)
-                    exit(1)
+                    sys.exit(1)
             if status:
                 print "OK"
         else:
             print "ERROR: Expected 1 expired session, found: %s" \
                 % len(expired_sessions.keys())
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(expired_sessions)
-        exit(1)
+        sys.exit(1)
     print "Track close expired sessions #4"
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto)
@@ -2180,13 +2181,13 @@ if __name__ == "__main__":
                     status = False
                     print "ERROR: Invalid session dictionary: '%s'" \
                         % (val)
-                    exit(1)
+                    sys.exit(1)
             if status:
                 print "OK"
         else:
             print "ERROR: Expected 2 expired session, found: %s" \
                 % len(expired_sessions.keys())
-            exit(1)
+            sys.exit(1)
     else:
         print "ERROR: Expected dictionary: %s" % type(expired_sessions)
-        exit(1)
+        sys.exit(1)
