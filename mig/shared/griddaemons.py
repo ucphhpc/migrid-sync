@@ -1543,7 +1543,7 @@ def get_active_session(configuration,
                        session_id,
                        prelocked=False,
                        blocking=True):
-    """Returns active session if it exists 
+    """Returns active session if it exists
     for proto, client_id and session_id"""
     logger = configuration.logger
     # logger.debug("proto: '%s', client_id: %s, session_id: %s," \
@@ -1860,6 +1860,16 @@ if __name__ == "__main__":
                                       test_port,
                                       test_session_id,
                                       authorized=True)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 1:
+        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 0:
+        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(open_session, dict):
         if open_session.keys() == expected_session_keys:
             print "OK"
@@ -1878,6 +1888,16 @@ if __name__ == "__main__":
                                       test_port+1,
                                       test_session_id+"_1",
                                       authorized=True)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 0:
+        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(open_session, dict):
         if open_session.keys() == expected_session_keys:
             print "OK"
@@ -1896,6 +1916,16 @@ if __name__ == "__main__":
                                       test_port+2,
                                       test_session_id+"_2",
                                       authorized=True)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 1:
+        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(open_session, dict):
         if open_session.keys() == expected_session_keys:
             print "OK"
@@ -1914,6 +1944,16 @@ if __name__ == "__main__":
                                       test_port+3,
                                       test_session_id+"_3",
                                       authorized=True)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(open_session, dict):
         if open_session.keys() == expected_session_keys:
             print "OK"
@@ -2058,6 +2098,16 @@ if __name__ == "__main__":
                                         test_address,
                                         test_port,
                                         session_id=test_session_id)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(close_session, dict):
         if not close_session:
             print "OK"
@@ -2075,6 +2125,16 @@ if __name__ == "__main__":
                                         test_address,
                                         test_port,
                                         session_id=test_session_id)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(close_session, dict):
         if not close_session:
             print "OK"
@@ -2092,6 +2152,16 @@ if __name__ == "__main__":
                                         test_address,
                                         test_port,
                                         session_id=None)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(close_session, dict):
         if not close_session:
             print "OK"
@@ -2109,6 +2179,16 @@ if __name__ == "__main__":
                                         test_address,
                                         test_port,
                                         session_id=test_session_id)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 1:
+        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(close_session, dict):
         if close_session.keys() == expected_session_keys:
             print "OK"
@@ -2122,6 +2202,16 @@ if __name__ == "__main__":
     print "Track close expired sessions #1"
     expired_sessions = track_close_expired_sessions(conf,
                                                     'INVALID')
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 1:
+        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(expired_sessions, dict):
         if not expired_sessions:
             print "OK"
@@ -2136,6 +2226,16 @@ if __name__ == "__main__":
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto,
                                                     'INVALID')
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 1:
+        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(expired_sessions, dict):
         if not expired_sessions:
             print "OK"
@@ -2150,6 +2250,16 @@ if __name__ == "__main__":
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto,
                                                     client_id=test_id)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 0:
+        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 2:
+        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(expired_sessions, dict):
         if len(expired_sessions.keys()) == 1:
             status = True
@@ -2172,6 +2282,16 @@ if __name__ == "__main__":
     print "Track close expired sessions #4"
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto)
+    active_count = active_sessions(conf, test_proto, test_id)
+    if active_count != 0:
+        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id, active_count)
+        sys.exit(1)
+    active_count = active_sessions(conf, test_proto, test_id+"_1")
+    if active_count != 0:
+        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count)
+        sys.exit(1)
     if isinstance(expired_sessions, dict):
         if len(expired_sessions.keys()) == 2:
             status = True
