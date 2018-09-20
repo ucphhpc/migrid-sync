@@ -285,14 +285,18 @@ rsync -aP %s@%s:mig/server/MiG-users.db ~/
         """
 As '%s' on %s:
 cd ~/mig/server
-./createuser.py -u '%s'"""\
-         % (mig_user, configuration.server_fqdn, req_path)
+./createuser.py -u '%s'""" % (mig_user, configuration.server_fqdn, req_path)
+    command_user_notify = \
+        """
+As '%s' on %s:
+cd ~/mig/server
+./notifymigoid.py -a -I '%s'""" % (mig_user, configuration.server_fqdn,
+                                   user_id)
     command_user_delete = \
         """
 As '%s' user on %s:
 cd ~/mig/server
-./deleteuser.py -i '%s'"""\
-         % (mig_user, configuration.server_fqdn, user_id)
+./deleteuser.py -i '%s'""" % (mig_user, configuration.server_fqdn, user_id)
     if not configuration.ca_fqdn or not configuration.ca_user:
         command_cert_revoke = '[Disabled On This Site]'
     else:
@@ -305,6 +309,7 @@ sudo su - %s
             configuration.admin_email, user_id)
 
     user_dict['command_user_create'] = command_user_create
+    user_dict['command_user_notify'] = command_user_notify
     user_dict['command_user_delete'] = command_user_delete
     user_dict['command_cert_create'] = command_cert_create
     user_dict['command_cert_revoke'] = command_cert_revoke
@@ -327,6 +332,9 @@ Received an OpenID request with account data
 
 Command to create user on %(site)s server:
 %(command_user_create)s
+
+Command to inform user and %(site)s admins:
+%(command_user_notify)s
 
 Optional command to create matching certificate:
 %(command_cert_create)s
