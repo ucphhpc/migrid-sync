@@ -108,7 +108,8 @@ def template_insert(template_file, insert_identifiers, unique=False):
     for (variable, value) in insert_identifiers.items():
         try:
             # identifier index
-            f_index = [i for i in range(len(contents)) if variable in contents[i]][0]
+            f_index = [i for i in range(
+                len(contents)) if variable in contents[i]][0]
         except IndexError, err:
             print("Template insert, Identifer: %s not found in %s: %s" % (variable,
                                                                           template_file,
@@ -157,7 +158,8 @@ def template_remove(template_file, remove_pattern):
 
     try:
         # identifier indexes
-        f_indexes = [i for i in range(len(contents)) if remove_pattern in contents[i]]
+        f_indexes = [i for i in range(
+            len(contents)) if remove_pattern in contents[i]]
     except IndexError, err:
         print("Template remove, Identifer: %s not found in %s: %s" % (remove_pattern,
                                                                       template_file,
@@ -231,9 +233,11 @@ def generate_confs(
     enable_imnotify='False',
     enable_dev_accounts='False',
     enable_twofactor='False',
+    enable_cracklib='False',
     enable_openid='False',
     mig_oid_provider='',
     ext_oid_provider='',
+    dhparams_path='',
     daemon_keycert='',
     daemon_pubkey='',
     daemon_show_address='',
@@ -319,6 +323,7 @@ def generate_confs(
     user_dict['__ENABLE_IMNOTIFY__'] = enable_imnotify
     user_dict['__ENABLE_DEV_ACCOUNTS__'] = enable_dev_accounts
     user_dict['__ENABLE_TWOFACTOR__'] = enable_twofactor
+    user_dict['__ENABLE_CRACKLIB__'] = enable_cracklib
     user_dict['__ENABLE_OPENID__'] = enable_openid
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
@@ -332,6 +337,7 @@ def generate_confs(
     user_dict['__MIG_OID_URL__'] = ''
     user_dict['__EXT_OID_URL__'] = ''
     user_dict['__SID_URL__'] = ''
+    user_dict['__DHPARAMS_PATH__'] = dhparams_path
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
     user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
@@ -538,22 +544,28 @@ cert, oid and sid based https!
                 member_def = "__JUPYTER_COMMENTED__        " + member
                 ws_member_def = "__JUPYTER_COMMENTED__        " + ws_member
 
-                jupyter_tmp_inserts['BalancerMemberPlaceholder'].append(member_def)
-                jupyter_tmp_inserts['WSBalancerMemberPlaceholder'].append(ws_member_def)
+                jupyter_tmp_inserts['BalancerMemberPlaceholder'].append(
+                    member_def)
+                jupyter_tmp_inserts['WSBalancerMemberPlaceholder'].append(
+                    ws_member_def)
 
                 member_helper = "__IFDEF_JUPYTER_HOST_%s__ " \
-                                "JUPYTER_HOST_%s __JUPYTER_HOST_%s__\n" % (i_h, i_h, i_h)
+                                "JUPYTER_HOST_%s __JUPYTER_HOST_%s__\n" % (
+                                    i_h, i_h, i_h)
                 ws_member_helper = "__IFDEF_WS_JUPYTER_HOST_%s__ WS_JUPYTER_HOST_%s " \
                                    "__WS_JUPYTER_HOST_%s__\n" % (i_h, i_h, i_h)
 
-                jupyter_def_inserts['JupyterHostsPlaceholder'].append(member_helper)
-                jupyter_def_inserts['JupyterHostsPlaceholder'].append(ws_member_helper)
+                jupyter_def_inserts['JupyterHostsPlaceholder'].append(
+                    member_helper)
+                jupyter_def_inserts['JupyterHostsPlaceholder'].append(
+                    ws_member_helper)
 
                 user_dict['__IFDEF_JUPYTER_HOST_%s__' % i_h] = 'Define'
                 user_dict['__IFDEF_WS_JUPYTER_HOST_%s__' % i_h] = 'Define'
 
                 user_dict['__JUPYTER_HOST_%s__' % i_h] = host
-                ws_host = host.replace("https://", "wss://").replace("http://", "ws://")
+                ws_host = host.replace(
+                    "https://", "wss://").replace("http://", "ws://")
                 user_dict['__WS_JUPYTER_HOST_%s__' % i_h] = ws_host
 
                 # No user supplied port, assign based on url prefix
@@ -600,10 +612,38 @@ cert, oid and sid based https!
 
     # Enable 2FA only if explicitly requested
     if user_dict['__ENABLE_TWOFACTOR__'].lower() == 'true':
+        try:
+            import pyotp
+        except ImportError:
+            print "ERROR: twofactor use requested but pyotp is not installed!"
+            sys.exit(1)
         user_dict['__TWOFACTOR_COMMENTED__'] = ''
     else:
         user_dict['__TWOFACTOR_COMMENTED__'] = '#'
 
+    # Enable cracklib only if explicitly requested and installed
+    if user_dict['__ENABLE_CRACKLIB__'].lower() == 'true':
+        try:
+            import cracklib
+        except ImportError:
+            print "ERROR: cracklib use requested but lib is not installed!"
+            sys.exit(1)
+
+    # Enable events daemon only if requested and deps are installed
+    if user_dict['__ENABLE_EVENTS__'].lower() == 'true':
+        try:
+            import watchdog
+        except ImportError:
+            print "ERROR: events use requested but watchdog is not installed!"
+            sys.exit(1)
+
+    # Enable OpenID auth daemon only if requested and installed
+    if user_dict['__ENABLE_OPENID__'].lower() == 'true':
+        try:
+            import openid
+        except ImportError:
+            print "ERROR: openid use requested but lib is not installed!"
+            sys.exit(1)
     # Enable OpenID auth module only if openid_providers is given
     if user_dict['__EXT_OID_PROVIDER_BASE__'].strip() or \
             user_dict['__MIG_OID_PROVIDER_BASE__'].strip():
@@ -616,6 +656,15 @@ cert, oid and sid based https!
         user_dict['__SHOW_ADDRESS_COMMENTED__'] = ''
     else:
         user_dict['__SHOW_ADDRESS_COMMENTED__'] = '#'
+
+    # Enable dhparams only if explicitly requested and file available
+    if user_dict['__DHPARAMS_PATH__']:
+        if not os.path.isfile(os.path.expanduser("%(__DHPARAMS_PATH__)s" %
+                                                 user_dict)):
+            print "ERROR: requested dhparams file not found!"
+            print """You can create it with:
+openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict
+            sys.exit(1)
 
     # Auto-fill fingerprints if daemon key is set
     if user_dict['__DAEMON_KEYCERT__']:
@@ -1036,6 +1085,7 @@ def create_user(
     enable_davs = 'False'
     enable_ftps = 'False'
     enable_twofactor = 'False'
+    enable_cracklib = 'False'
     enable_openid = 'False'
     enable_wsgi = 'True'
     wsgi_procs = '5'
@@ -1058,6 +1108,7 @@ def create_user(
     enable_dev_accounts = 'False'
     mig_oid_provider = ''
     ext_oid_provider = ''
+    dhparams_path = ''
     daemon_keycert = ''
     daemon_pubkey = ''
     daemon_show_address = ''
@@ -1158,9 +1209,11 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_imnotify,
         enable_dev_accounts,
         enable_twofactor,
+        enable_cracklib,
         enable_openid,
         mig_oid_provider,
         ext_oid_provider,
+        dhparams_path,
         daemon_keycert,
         daemon_pubkey,
         daemon_show_address,

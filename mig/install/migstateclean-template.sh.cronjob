@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Clean up stale job files and links in state dir
+# Clean up stale user/job files and links in state dir
+# Includes notification about pending user account requests
 #
 # PLEASE NOTE: all mRSL files should be saved for auditing purposes
 #
@@ -14,6 +15,16 @@
 # Modify this base dir variable to fit actual state dir location in your setup
 STATEDIR="__MIG_STATE__"
 
+echo "= Pending Account Requests ="
+# Account request files should be accepted or rejected - not just left ignored
+max_days=2
+for name in $STATEDIR/user_pending; do
+	echo "Checking account request files older than $max_days days from $name"
+	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 grep -H emailAddress  " 
+done
+
+echo
+echo "= Stale File Removal ="
 # Clean up after jobs if they haven't done so themselves within a month.
 # Do not delete state files like pickled queues and last start marker, however.
 max_days=30
