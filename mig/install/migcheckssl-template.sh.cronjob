@@ -18,16 +18,17 @@
 export PATH="/usr/local/sbin:${PATH}"
 
 domain="__BASE_FQDN__"
-cert_path="__MIG_CERTS__/letsencrypt"
+cert_base="__MIG_CERTS__"
+cert_path="${cert_base}/letsencrypt"
 domain_cert_path="${cert_path}/${domain}"
 server_key="${domain_cert_path}/server.key"
 server_pem="${domain_cert_path}/server.pem"
 server_crt="${domain_cert_path}/server.crt"
 server_crt_ca_pem="${domain_cert_path}/server.crt.ca.pem"
 server_key_crt_ca_pem="${domain_cert_path}/server.key.crt.ca.pem"
-dhparams_pem="${domain_cert_path}/dhparams.pem"
 combined_pem="${domain_cert_path}/combined.pem"
 combined_pub="${domain_cert_path}/combined.pub"
+dhparams_pem="${cert_base}/dhparams.pem"
 getssl_url="https://raw.githubusercontent.com/srvrco/getssl/master/getssl"
 getssl_tmp="/tmp/getssl"
 getssl_script="getssl"
@@ -159,6 +160,8 @@ if [[ ${org_mtime} -ne ${new_mtime} ]]; then
     # Append dhparams (if available) to server.crt for use in apache<2.4.8
 
     if [ -f ${dhparams_pem} ]; then
+        echo "Append ${dhparams_pem} to ${server_crt} to address LOGJAM, etc."
+        echo "for older apache versions where it can't be passed in conf."
         cat ${dhparams_pem} >> ${server_crt}
     fi
 
