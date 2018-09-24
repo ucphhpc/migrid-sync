@@ -299,7 +299,7 @@ def main(client_id, user_arguments_dict):
 
     url_base = configuration.jupyter_base_url
     url_auth = host + url_base + '/hub/home'
-    url_mount = host + url_base + '/hub/mount'
+    url_data = host + url_base + '/hub/data'
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.
@@ -345,7 +345,7 @@ def main(client_id, user_arguments_dict):
         # Authenticate
         session.get(url_auth, headers=auth_mount_header)
         # Provide the active homedrive mount information
-        session.post(url_mount, headers=auth_mount_header)
+        session.post(url_data, headers=auth_mount_header)
 
         # Redirect client to jupyterhub
         return jupyter_host(configuration, output_objects, remote_user)
@@ -404,7 +404,7 @@ def main(client_id, user_arguments_dict):
     session = requests.session()
     session.get(url_auth, headers=auth_mount_header)
     # Provide homedrive mount information
-    session.post(url_mount, headers=auth_mount_header)
+    session.post(url_data, headers=auth_mount_header)
 
     # Update pickle with the new valid key
     jupyter_mount_state_path = os.path.join(mnt_path,
