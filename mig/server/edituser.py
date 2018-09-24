@@ -116,6 +116,8 @@ if '__main__' == __name__:
             user_dict['state'] = args[2]
             user_dict['country'] = args[3]
             user_dict['email'] = args[4]
+            user_dict['comment'] = args[5]
+            user_dict['password'] = args[6]
         except IndexError:
 
             # Ignore missing optional arguments
