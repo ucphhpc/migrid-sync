@@ -36,6 +36,7 @@ except ImportError, ierr:
     _sslsession = None
 
 SSL_SESSION_ID_LENGTH = 64
+SSL_MASTER_KEY_LENGTH = 96
 
 def get_ssl_master_key(configuration, ssl_sock):
     """Extract SSL session master key from SSL socket"""
@@ -48,6 +49,8 @@ def get_ssl_master_key(configuration, ssl_sock):
         ssl_obj = ssl_sock._sslobj
         master_key_bin = _sslsession.master_key(ssl_obj)
         master_key = binascii.hexlify(master_key_bin)
+        if master_key.isdigit() and int(master_key) == 0:
+            master_key = None
     except Exception, exc:
         master_key = None
         logger.error(exc)
@@ -66,6 +69,8 @@ def get_ssl_session_id(configuration, ssl_sock):
         ssl_obj = ssl_sock._sslobj
         session_id_bin = _sslsession.session_id(ssl_obj)
         session_id = binascii.hexlify(session_id_bin)
+        if session_id.isdigit() and int(session_id) == 0:
+            session_id = None
     except Exception, exc:
         session_id = None
         logger.error(exc)
