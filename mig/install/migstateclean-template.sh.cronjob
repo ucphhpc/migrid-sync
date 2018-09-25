@@ -19,8 +19,8 @@ echo "= Pending Account Requests ="
 # Account request files should be accepted or rejected - not just left ignored
 max_days=2
 for name in $STATEDIR/user_pending; do
-	echo "Checking account request files older than $max_days days from $name"
-	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 grep -H emailAddress  " 
+    echo "Checking account request files older than $max_days days from $name"
+    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 grep -H emailAddress  " 
 done
 
 echo
@@ -29,22 +29,24 @@ echo "= Stale File Removal ="
 # Do not delete state files like pickled queues and last start marker, however.
 max_days=30
 for name in $STATEDIR/mig_system_files/{tmp,no_grid_jobs}* $STATEDIR/sessid_to_mrsl_link_home $STATEDIR/webserver_home; do
-	echo "Deleting files older than $max_days days from $name"
-	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 rm -f "
+    # Skip patterns without match to avoid errors
+    echo "$name" | grep -q '*' && continue
+    echo "Deleting files older than $max_days days from $name"
+    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f "
 done
 
 # Empty job cruft can be removed within a week
 max_days=7
 for name in $STATEDIR/user_home/no_grid_jobs_in_grid_scheduler; do
-	echo "Deleting files older than $max_days days from $name"
-	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 rm -f " 
+    echo "Deleting files older than $max_days days from $name"
+    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f " 
 done
 
 # 2-factor session files expire within a day and can safely be removed within a week
 max_days=7
 for name in $STATEDIR/twofactor_home; do
-	echo "Deleting files older than $max_days days from $name"
-	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 rm -f " 
+    echo "Deleting files older than $max_days days from $name"
+    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f " 
 done
 
 exit 0
