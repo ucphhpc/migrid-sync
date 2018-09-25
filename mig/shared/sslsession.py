@@ -49,8 +49,9 @@ def get_ssl_master_key(configuration, ssl_sock):
         ssl_obj = ssl_sock._sslobj
         master_key_bin = _sslsession.master_key(ssl_obj)
         master_key = binascii.hexlify(master_key_bin)
-        if master_key.isdigit() and int(master_key) == 0:
-            master_key = None
+        if len(master_key) != SSL_MASTER_KEY_LENGTH \
+                or master_key.isdigit() and int(master_key) == 0:
+            raise TypeError("Invalid SSL master_key: %s" % master_key)
     except Exception, exc:
         master_key = None
         logger.error(exc)
@@ -69,7 +70,12 @@ def get_ssl_session_id(configuration, ssl_sock):
         ssl_obj = ssl_sock._sslobj
         session_id_bin = _sslsession.session_id(ssl_obj)
         session_id = binascii.hexlify(session_id_bin)
-        if session_id.isdigit() and int(session_id) == 0:
+        if len(session_id) != SSL_SESSION_ID_LENGTH:
+            raise TypeError("Invalid session_id: %s" % session_id)
+        elif session_id.isdigit() and int(session_id) == 0:
+            # session_id might be empty according to rfc5246:
+            # https://tools.ietf.org/html/rfc5246
+            logger.warning("Found empty SSL session_id: %s" % session_id)
             session_id = None
     except Exception, exc:
         session_id = None
