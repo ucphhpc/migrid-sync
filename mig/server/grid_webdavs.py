@@ -68,7 +68,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
     track_close_expired_sessions, get_active_session, validate_session
-from shared.sslsession import SSL_SESSION_ID_LENGTH, get_ssl_session_id,\
+from shared.sslsession import SSL_MASTER_KEY_LENGTH, get_ssl_session_id,\
     get_ssl_master_key
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
@@ -133,16 +133,16 @@ def _get_port(environ):
     return port
 
 
-def _get_ssl_session_id(environ):
+def _get_ssl_master_key(environ):
     """Extract SSL session id from environ dict"""
-    ssl_session_id = environ.get('HTTP_X_SSL_SESSION_ID', '')
-    if not ssl_session_id:
-        ssl_session_id = environ.get('SSL_SESSION_ID', '')
+    ssl_master_key = environ.get('HTTP_X_SSL_MASTER_KEY', '')
+    if not ssl_master_key:
+        ssl_master_key = environ.get('SSL_MASTER_KEY', '')
 
-    if len(ssl_session_id) != SSL_SESSION_ID_LENGTH:
-        ssl_session_id = ''
+    if len(ssl_master_key) != SSL_MASTER_KEY_LENGTH:
+        ssl_master_key = ''
 
-    return ssl_session_id
+    return ssl_master_key
 
 
 def _get_digest(environ):
@@ -354,8 +354,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
-        session_id = _get_ssl_session_id(environ)
-        # logger.debug("SSL session_id: %s" % session_id)
+        session_id = _get_ssl_master_key(environ)
+        # logger.debug("session_id: %s" % session_id)
         success = False
         if session_id \
                 and is_authorized_session(configuration,
@@ -425,8 +425,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
-        session_id = _get_ssl_session_id(environ)
-        # logger.debug("SSL session_id: %s" % session_id)
+        session_id = _get_ssl_master_key(environ)
+        # logger.debug("session_id: %s" % session_id)
         success = False
         if session_id \
                 and is_authorized_session(configuration,
