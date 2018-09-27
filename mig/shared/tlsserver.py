@@ -52,6 +52,10 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     ssl_options |= getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
     ssl_options |= getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000)
     ssl_options |= getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000)
+    # Useful for debugging
+    # ssl_options |= getattr(ssl, 'OP_NO_TICKET',  0x0004000)
+    # ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x1000000)
+    # ssl_options |= getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000)
     if sys.version_info[:2] >= (2, 7) and ssl_ctx:
         _logger.info("enforcing strong SSL/TLS options")
         _logger.debug("SSL/TLS options: %s" % ssl_options)
