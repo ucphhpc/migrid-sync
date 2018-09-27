@@ -72,7 +72,8 @@ from shared.sslsession import SSL_MASTER_KEY_LENGTH, get_ssl_session_id,\
     get_ssl_master_key
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
-from shared.pwhash import unscramble_digest, assure_password_strength
+from shared.pwhash import unscramble_digest, assure_password_strength, \
+    make_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
     check_password_digest, generate_password_digest
 from shared.validstring import possible_user_id, possible_sharelink_id
@@ -133,16 +134,13 @@ def _get_port(environ):
     return port
 
 
-def _get_ssl_master_key(environ):
-    """Extract SSL session id from environ dict"""
-    ssl_master_key = environ.get('HTTP_X_SSL_MASTER_KEY', '')
-    if not ssl_master_key:
-        ssl_master_key = environ.get('SSL_MASTER_KEY', '')
+def _get_ssl_session_token(environ):
+    """Extract SSL session token from environ dict"""
+    ssl_session_token = environ.get('HTTP_X_SSL_SESSION_TOKEN', '')
+    if not ssl_session_token:
+        ssl_session_token = environ.get('SSL_SESSION_TOKEN', '')
 
-    if len(ssl_master_key) != SSL_MASTER_KEY_LENGTH:
-        ssl_master_key = ''
-
-    return ssl_master_key
+    return ssl_session_token
 
 
 def _get_digest(environ):
@@ -209,18 +207,19 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 pass
 
     def get_environ(self, ssl_sock):
-        """Update SSL environ with session_id and master_key"""
+        """Update SSL environ with SSL session token used for internal 
+        WebDAVS session tracing
+        """
 
+        (client_addr, _) = ssl_sock.getpeername()
         ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
-
-        ssl_session_id = get_ssl_session_id(configuration, ssl_sock)
-        if ssl_session_id is not None:
-            ssl_environ['SSL_SESSION_ID'] = ssl_session_id
-
         ssl_master_key = get_ssl_master_key(configuration, ssl_sock)
         if ssl_master_key is not None:
-            ssl_environ['SSL_MASTER_KEY'] = ssl_master_key
-
+                        ssl_environ['SSL_SESSION_TOKEN'] = make_digest(
+                            'webdavs',
+                            client_addr,
+                            ssl_master_key,
+                            configuration.site_digest_salt)
         return ssl_environ
 
     def wrap(self, sock):
@@ -354,7 +353,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
-        session_id = _get_ssl_master_key(environ)
+        session_id = _get_ssl_session_token(environ)
         # logger.debug("session_id: %s" % session_id)
         success = False
         if session_id \
@@ -369,7 +368,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                               username,
                               ip_addr,
                               tcp_port):
-            # logger.debug("validated session: %s:%s -> %s" %
+            # logger.debug("validated session: %s:%s:%s" %
             #              (ip_addr, tcp_port, session_id))
             logger.info("refresh user %s" % username)
             update_users(configuration, self.user_map, username)
@@ -425,7 +424,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
-        session_id = _get_ssl_master_key(environ)
+        session_id = _get_ssl_session_token(environ)
         # logger.debug("session_id: %s" % session_id)
         success = False
         if session_id \
@@ -440,6 +439,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                               username,
                               ip_addr,
                               tcp_port):
+            # logger.debug("validated session: %s:%s:%s" %
+            #              (ip_addr, tcp_port, session_id))
             update_users(configuration, self.user_map, username)
 
             if self._get_user_digests(ip_addr, realmname, username):
@@ -753,10 +754,10 @@ def is_authorized_session(configuration, username, session_id):
     #             (session_id, user_sessions))
     result = False
     session_timeout = io_session_timeout.get('davs', 0)
-    session = get_active_session(configuration, 
-                                'davs',
-                                client_id=username,
-                                session_id=session_id)
+    session = get_active_session(configuration,
+                                 'davs',
+                                 client_id=username,
+                                 session_id=session_id)
     if session:
         authorized = session.get('authorized', False)
         timestamp = session.get('timestamp', 0)
