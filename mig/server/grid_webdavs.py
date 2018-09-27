@@ -210,7 +210,6 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         """Update SSL environ with SSL session token used for internal 
         WebDAVS session tracing
         """
-
         (client_addr, _) = ssl_sock.getpeername()
         ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
         ssl_master_key = get_ssl_master_key(configuration, ssl_sock)
