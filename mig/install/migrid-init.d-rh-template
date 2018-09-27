@@ -153,8 +153,9 @@ start_events() {
     DAEMON_PATH=${MIG_EVENTS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    # NOTE: event handlers can be quite heavy so we lower sched prio a bit
     echo -n "Starting MiG events daemon: $SHORT_NAME"
-    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+    daemon +10 --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/events.out 2>&1 &"
     RET2=$?
     [ $RET2 ] && success
@@ -166,8 +167,9 @@ start_cron() {
     DAEMON_PATH=${MIG_CRON}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    # NOTE: cron jobs can be quite heavy so we lower sched prio a bit
     echo -n "Starting MiG cron daemon: $SHORT_NAME"
-    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+    daemon +10 --user ${MIG_USER} --pidfile ${PID_FILE} \
 	   "${DAEMON_PATH} >> ${MIG_LOG}/cron.out 2>&1 &"
     RET2=$?
     [ $RET2 ] && success

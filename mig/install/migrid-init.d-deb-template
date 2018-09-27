@@ -120,8 +120,9 @@ start_events() {
     DAEMON_PATH=${MIG_EVENTS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    # NOTE: event handlers can be quite heavy so we lower sched prio a bit
     log_daemon_msg "Starting MiG events daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --nicelevel 10 --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -131,8 +132,9 @@ start_cron() {
     DAEMON_PATH=${MIG_CRON}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    # NOTE: cron jobs can be quite heavy so we lower sched prio a bit
     log_daemon_msg "Starting MiG cron daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --nicelevel 10 --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
