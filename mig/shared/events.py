@@ -79,11 +79,13 @@ def get_command_map(configuration):
             'jobaction': ['job_id', 'action'],
             'liveio': ['action', 'src', 'dst', 'job_id'],
         })
-    # TODO: expose sharelinks something like this?
-    # if configuration.site_enable_sharelinks:
-    #    cmd_map.update({
-    #        'sharelink': ['path', 'read_access', 'write_access', 'invite', 'msg'],
-    #        })
+    if configuration.site_enable_sharelinks:
+        # TODO: expose additional operations for sharelinks?
+        #       maybe split up sharelinks.py into explicit action scripts?
+        cmd_map.update({
+            # 'addsharelink': ['path', 'read_access', 'write_access', 'invite', 'msg'],
+            'delsharelink': ['share_id'],
+        })
     if configuration.site_enable_transfers:
         cmd_map.update({
             'datatransfer': ['transfer_id', 'action'],
