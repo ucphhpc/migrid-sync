@@ -215,7 +215,20 @@ def import_share_link_form(configuration, client_id, output_format,
                     'output_format': output_format, 'form_append': form_append,
                     'csrf_field': csrf_field, 'csrf_token': csrf_token,
                     'target_op': 'cp', 'form_method': 'post'}
-    html = '''
+    # TODO: move js to separate function?
+    html = ''
+    html += '''
+    <script>
+    function toggle_overwrite_warning() {
+        if ($("#overwrite_check").prop("checked")) {
+            $("#overwrite_warn").show();
+        } else {
+            $("#overwrite_warn").hide();
+        }
+    }
+    </script>
+    '''
+    html += '''
     <form id="import_sharelink_form" method="%(form_method)s" action="%(target_op)s.py">
     <fieldset>
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -249,8 +262,24 @@ def import_share_link_form(configuration, client_id, output_format,
         title="relative directory path to import sharelink into" />
         </td></tr>
         <tr class="hidden"><td colspan=2>
-        <label for="flags">Flags:</label>
-        <input id="importflags" class="singlefield" type="text" name="flags" size=40  value="r" />
+        <br />
+        </td></tr>
+        <tr><td colspan=2>
+        <br/>
+        </td></tr>
+        <tr class="hidden"><td colspan=2>
+        <!-- NOTE: we translate individual flag helpers in jquery fileman -->
+        <!-- always use recursive -->
+        <label for="recursive">Recursive:</label>
+        <input type="checkbox" name="recursive" checked="checked" />
+        </td></tr>
+        <tr><td colspan=2>
+        <!-- toggle force on/off -->
+        <label for="overwrite">Overwrite files:</label>
+        <input id="overwrite_check" type="checkbox" name="overwrite"
+            onClick="toggle_overwrite_warning();" />
+        <span id="overwrite_warn" class="hidden iconspace leftpad warn">
+        careful - may result in data loss!</span>
         </td></tr>
         <tr><td colspan=2>
         %(form_append)s

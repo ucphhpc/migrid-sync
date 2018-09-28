@@ -511,6 +511,13 @@ def strip_dir(path):
     return name
 
 
+def check_empty_dir(path):
+    """Check if path is an empty directory"""
+    if not os.path.isdir(path):
+        return False
+    return not os.listdir(path)
+
+
 def _check_access(path, mode, parent_dir, follow_symlink):
     """Internal helper to check for mode access on path. If parent_dir is set
     the check is applied to the directory part of path. With follow_symlink set

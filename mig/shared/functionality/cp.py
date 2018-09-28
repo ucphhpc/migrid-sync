@@ -33,12 +33,12 @@ import shutil
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.fileio import check_write_access
+from shared.fileio import check_write_access, check_empty_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.gdp import project_log
 from shared.init import initialize_main_variables
-from shared.parseflags import verbose, recursive
+from shared.parseflags import verbose, recursive, force
 from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 
@@ -190,6 +190,17 @@ supported for directory sharelinks!"""})
             {'object_type': 'error_text', 'text':
              'cannot copy to "%s": inside a read-only location!'
              % relative_dest})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    if share_id and not force(flags) and not check_empty_dir(abs_dest):
+        logger.warning('%s called %s sharelink import with non-empty dst: %s'
+                       % (op_name, share_id, abs_dest))
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             """Importing a sharelink like '%s' into the non-empty '%s' folder
+will potentially overwrite existing files with the sharelink version. If you
+really want that, please try import again and select the overwrite box to
+confirm it. You may want to back up any important data from %s first, however.
+""" % (share_id, relative_dest, relative_dest)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for pattern in src_list:

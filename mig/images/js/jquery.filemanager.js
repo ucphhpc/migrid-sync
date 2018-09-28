@@ -1479,6 +1479,8 @@ if (jQuery) (function($){
                 $("#import_sharelink_form input[name='dst']").val(target);
                 $("#import_sharelink_form input[name='src']").val('*');
                 $("#import_sharelink_form input[name='share_id']").val('');
+                $("#import_sharelink_form #overwrite_check").prop('checked', false);
+                $("#import_sharelink_form #overwrite_warn").hide();
                 $("#import_sharelink_dialog").dialog({
                     buttons: {
                         Ok: function() {
@@ -1486,7 +1488,14 @@ if (jQuery) (function($){
                             var share_id = $("#import_sharelink_form input[name='share_id']").val();
                             var src = $("#import_sharelink_form input[name='src']").val();
                             var dst = $("#import_sharelink_form input[name='dst']").val();
-                            var flags = $("#import_sharelink_form input[name='flags']").val();
+                            var flags = '';
+                            if ($("#import_sharelink_form input[name='overwrite']").prop('checked')) {
+                                flags += 'f';
+                            }
+                            if ($("#import_sharelink_form input[name='recursive']").prop('checked')) {
+                                flags += 'r';
+                            }
+                            console.info("parsed flags: "+flags);
                             if (share_id.indexOf('/') >= 0) {
                                 console.info("strip URL prefix from Share Link ID: "+share_id);
                                 share_id = share_id.replace(/^.*\//, '');
