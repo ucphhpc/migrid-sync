@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# createbackup - back end for backup archives
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# createbackup - back end for one-shot backup archive creation
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,17 +25,18 @@
 # -- END_HEADER ---
 #
 
-"""Creation of backup archives for write-once files"""
+"""One-shot creation of final backup archives for write-once files"""
 
-from shared.functionality.createfreeze import main as freeze_main, \
-     signature as freeze_signature
+from shared.functionality.createfreeze import main as createfreeze_main, \
+    signature as createfreeze_signature, keyword_final
 
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
-    # Mimic call to createfreeze with backup fields set
-    args_dict = freeze_signature()[1]
+    # Mimic call to createfreeze with finalized backup fields set
+    args_dict = createfreeze_signature()[1]
     args_dict.update(user_arguments_dict)
     args_dict['flavor'] = ['backup']
-    return freeze_main(client_id, args_dict)
+    args_dict['freeze_state'] = [keyword_final]
+    return createfreeze_main(client_id, args_dict)

@@ -270,7 +270,7 @@ freeze_flavors = {
                'createfreeze_title': 'Create Backup Archive',
                'showfreeze_title': 'Show Backup Archive Details',
                'deletefreeze_title': 'Delete Backup Archive',
-               'states': [keyword_final]}
+               'states': [keyword_pending, keyword_final]}
 }
 
 # Default value for ALL integer limits in vgrid settings

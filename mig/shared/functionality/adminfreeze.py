@@ -300,7 +300,7 @@ thesis.
             now = datetime.datetime.now().isoformat().replace(':', '')
             fill_helpers['freeze_name'] = 'backup-%s' % now
         fill_helpers["archive_header"] = "Files and folders to Archive"
-        fill_helpers["button_label"] = "Archive as Backup"
+        fill_helpers["button_label"] = "Save and Preview"
         intro_text = """
 Please select the files and folders to backup below.
 """
@@ -377,10 +377,7 @@ so please be careful when filling in the details.
 %(fancy_dialog)s
     """ % fill_helpers
 
-    if flavor == 'backup':
-        target_op = 'createbackup'
-    else:
-        target_op = 'createfreeze'
+    target_op = 'createfreeze'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})

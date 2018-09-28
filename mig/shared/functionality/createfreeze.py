@@ -33,14 +33,14 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
-     keyword_auto, keyword_pending, keyword_final
+    keyword_auto, keyword_pending, keyword_final
 from shared.fileio import strip_dir
 from shared.freezefunctions import create_frozen_archive, published_url, \
-     is_frozen_archive
+    is_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+    html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.safeinput import valid_path
 from shared.validstring import valid_user_path
@@ -60,8 +60,9 @@ def signature():
         'freeze_department': [''],
         'freeze_organization': [''],
         'freeze_state': [keyword_auto],
-        }
+    }
     return ['text', defaults]
+
 
 def _parse_form_xfer(xfer, user_args, client_id, configuration):
     """Parse xfer request (i.e. copy, move or upload) file/dir entries from
@@ -72,8 +73,8 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
     i = 0
     client_dir = client_id_dir(client_id)
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
-    xfer_pattern = 'freeze_%s_%%d' % xfer 
+                                            client_dir)) + os.sep
+    xfer_pattern = 'freeze_%s_%%d' % xfer
     for i in xrange(max_freeze_files):
         if user_args.has_key(xfer_pattern % i):
             source_path = user_args[xfer_pattern % i][-1].strip()
@@ -92,24 +93,24 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 os.path.join(base_dir, source_path))
             # Prevent out-of-bounds, and restrict some greedy targets
             if not valid_user_path(configuration, abs_path, base_dir, True):
-                _logger.error('found illegal directory traversal %s entry: %s' \
+                _logger.error('found illegal directory traversal %s entry: %s'
                               % (xfer, source_path))
-                rejected.append('invalid path: %s (%s)' % \
+                rejected.append('invalid path: %s (%s)' %
                                 (source_path, 'illegal path!'))
                 continue
             elif os.path.exists(abs_path) and os.path.samefile(abs_path,
                                                                base_dir):
-                _logger.warning('refusing archival of entire user home %s: %s' \
+                _logger.warning('refusing archival of entire user home %s: %s'
                                 % (xfer, source_path))
-                rejected.append('invalid path: %s (%s)' % \
+                rejected.append('invalid path: %s (%s)' %
                                 (source_path, 'entire home not allowed!'))
                 continue
             elif in_vgrid_share(configuration, abs_path) == source_path:
                 _logger.warning(
-                    'refusing archival of entire vgrid shared folder %s: %s' % \
+                    'refusing archival of entire vgrid shared folder %s: %s' %
                     (xfer, source_path))
-                rejected.append('invalid path: %s (%s)' % \
-                                (source_path, 'entire %s share not allowed!' \
+                rejected.append('invalid path: %s (%s)' %
+                                (source_path, 'entire %s share not allowed!'
                                  % configuration.site_vgrid_label))
                 continue
 
@@ -125,13 +126,16 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 files.append((abs_path, source_path.lstrip(os.sep)))
     return (files, rejected)
 
+
 def parse_form_copy(user_args, client_id, configuration):
     """Parse copy file/dir entries from user_args"""
     return _parse_form_xfer("copy", user_args, client_id, configuration)
 
+
 def parse_form_move(user_args, client_id, configuration):
     """Parse move file/dir entries from user_args"""
     return _parse_form_xfer("move", user_args, client_id, configuration)
+
 
 def parse_form_upload(user_args, client_id, configuration):
     """Parse upload file entries from user_args"""
@@ -154,21 +158,23 @@ def parse_form_upload(user_args, client_id, configuration):
             files.append((filename, file_item[0]))
     return (files, rejected)
 
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    title_entry = find_entry(output_objects, 'title') 
-    label = "%s" % configuration.site_vgrid_label   
+    title_entry = find_entry(output_objects, 'title')
+    label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = "Create Archive"
     # NOTE: Delay header entry here to include freeze flavor
     # All non-file fields must be validated
-    validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
+    validate_args = dict([(key, user_arguments_dict.get(key, val)) for
                           (key, val) in defaults.items()])
     # IMPORTANT: we must explicitly inlude CSRF token
-    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, ['AllowMe'])
+    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, [
+                                                        'AllowMe'])
     (validate_status, accepted) = validate_input_and_cert(
         validate_args,
         defaults,
@@ -176,7 +182,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -193,7 +199,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not flavor in freeze_flavors.keys():
         output_objects.append({'object_type': 'error_text', 'text':
-                           'Invalid freeze flavor: %s' % flavor})
+                               'Invalid freeze flavor: %s' % flavor})
         return (output_objects, returnvalues.CLIENT_ERROR)
     if not freeze_state in freeze_flavors[flavor]['states'] + [keyword_auto]:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -228,7 +234,7 @@ Please contact the site admins %s if you think it should be enabled.
     do_publish = (freeze_publish.lower() in ('on', 'true', 'yes', '1'))
 
     # Share init of base meta with lookup of default state in freeze_flavors
-    if not freeze_state or freeze_state == keyword_auto:        
+    if not freeze_state or freeze_state == keyword_auto:
         freeze_state = freeze_flavors[flavor]['states'][0]
     freeze_meta = {'ID': freeze_id, 'STATE': freeze_state}
 
@@ -251,10 +257,10 @@ Please contact the site admins %s if you think it should be enabled.
 You must provide author and department for the thesis!"""})
             return (output_objects, returnvalues.CLIENT_ERROR)
         freeze_meta.update(
-            { 'FLAVOR': flavor, 'NAME': freeze_name,
-              'DESCRIPTION': freeze_description,
-              'AUTHOR': freeze_author, 'DEPARTMENT': freeze_department,
-              'ORGANIZATION': freeze_organization, 'PUBLISH': do_publish})
+            {'FLAVOR': flavor, 'NAME': freeze_name,
+             'DESCRIPTION': freeze_description,
+             'AUTHOR': freeze_author, 'DEPARTMENT': freeze_department,
+             'ORGANIZATION': freeze_organization, 'PUBLISH': do_publish})
     elif is_frozen_archive(client_id, freeze_id, configuration):
         logger.debug("updating existing %s archive for %s" % (flavor,
                                                               client_id))
@@ -263,12 +269,13 @@ You must provide author and department for the thesis!"""})
         if freeze_name and freeze_name != keyword_auto:
             changes['NAME'] = freeze_name
         if freeze_description:
-              changes['DESCRIPTION'] = freeze_description
+            changes['DESCRIPTION'] = freeze_description
         if freeze_publish:
-              changes['PUBLISH'] = do_publish
-        logger.debug("updating existing %s archive for %s with: %s" % \
+            changes['PUBLISH'] = do_publish
+        logger.debug("updating existing %s archive for %s with: %s" %
                      (flavor, client_id, changes))
-        logger.debug("publish is %s based on %s" % (do_publish, freeze_publish))
+        logger.debug("publish is %s based on %s" %
+                     (do_publish, freeze_publish))
         freeze_meta.update(changes)
     else:
         logger.error("no such %s archive for %s: %s" % (flavor, client_id,
@@ -277,7 +284,6 @@ You must provide author and department for the thesis!"""})
 Invalid archive ID %s - you must either create a new archive or edit an
 existing archive of yours!""" % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
 
     # Now parse and validate files to archive
 
@@ -293,9 +299,9 @@ existing archive of yours!""" % freeze_id})
                                                         client_id,
                                                         configuration)
     if copy_rejected + move_rejected + upload_rejected:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Errors parsing freeze files: %s' % \
-                               '\n '.join(copy_rejected + move_rejected + \
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Errors parsing freeze files: %s' %
+                               '\n '.join(copy_rejected + move_rejected +
                                           upload_rejected)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -350,7 +356,7 @@ freezing.""" % (flavor, freeze_id)})
         'class': 'viewarchivelink iconspace genericbutton',
         'title': 'View details about your %s archive' % flavor,
         'text': 'View details',
-        })
+    })
 
     if freeze_state == keyword_pending:
         output_objects.append({'object_type': 'text', 'text': ''})
@@ -360,7 +366,7 @@ freezing.""" % (flavor, freeze_id)})
             'class': 'editarchivelink iconspace genericbutton',
             'title': 'Further modify your pending %s archive' % flavor,
             'text': 'Edit archive',
-            })
+        })
         output_objects.append({'object_type': 'text', 'text': ''})
         output_objects.append({'object_type': 'html_form', 'text': """
 <br/><hr/><br/>
@@ -368,7 +374,7 @@ freezing.""" % (flavor, freeze_id)})
 archive before you get the additional data integrity/persistance guarantees
 like tape archiving.
 </p>"""})
-        
+
         form_method = 'post'
         target_op = 'createfreeze'
         csrf_limit = get_csrf_limit(configuration)
@@ -377,17 +383,18 @@ like tape archiving.
         helper = html_post_helper('createfreeze', '%s.py' % target_op,
                                   {'freeze_id': freeze_id,
                                    'freeze_state': keyword_final,
+                                   'flavor': flavor,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
 
         output_objects.append({
             'object_type': 'link',
             'destination':
-            "javascript: confirmDialog(%s, '%s');" % \
+            "javascript: confirmDialog(%s, '%s');" %
             ('createfreeze', 'Really finalize %s?' % freeze_id),
             'class': 'finalizearchivelink iconspace genericbutton',
             'title': 'Finalize %s archive to prevent further changes' % flavor,
             'text': 'Finalize archive',
-            })
+        })
 
     return (output_objects, returnvalues.OK)

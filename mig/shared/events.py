@@ -95,6 +95,7 @@ def get_command_map(configuration):
             'imagepreview': ['flags', 'action', 'path', 'extension'],
         })
     if configuration.site_enable_freeze:
+        # NOTE: createbackup is a one-shot create+finalize backup helper.
         cmd_map.update({
             'createbackup': ['freeze_name', 'freeze_copy_0'],
             'deletebackup': ['freeze_id'],

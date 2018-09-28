@@ -687,7 +687,7 @@ def commit_frozen_archive(freeze_dict, arch_dir, configuration):
         _logger.info("%s archive %s of %s marked %s with %s files of %sb" %
                      (freeze_dict['FLAVOR'], freeze_id, freeze_dict['CREATOR'],
                       freeze_dict['STATE'], total_files, total_size))
-        _logger.info("freeze %s finalized with on-tape %s promise" %
+        _logger.info("freeze %s finalized with on-tape deadline %s" %
                      (freeze_id, on_tape_date))
     freeze_dict['LOCATION'] = archive_locations
     _logger.info("update meta for %s" % freeze_id)
