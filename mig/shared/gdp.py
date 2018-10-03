@@ -900,7 +900,10 @@ def validate_user(configuration, user_id, user_addr, protocol):
     (status, msg) = __validate_user_db(configuration, client_id,
                                        user_db)
 
-    if status:
+    # On missing user issue standard warning for consistency with non-GDP case
+    if not status:
+        _logger.warning("Invalid login for %s from %s" % (user_id, user_addr))
+    else:
 
         # Retrieve user account info
 
