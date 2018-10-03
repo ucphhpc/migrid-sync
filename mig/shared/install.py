@@ -848,6 +848,9 @@ openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict
         ("static-skin-template.css", "static-skin.css"),
         ("index-template.html", "index.html"),
         ("openssh-MiG-sftp-subsys-template.conf", "sshd_config-MiG-sftp-subsys"),
+        ("fail2ban-MiG-daemons-filter-template.conf", "MiG-daemons-filter.conf"),
+        ("fail2ban-sshd-pw-crack-filter-template.conf", "sshd-pw-crack-filter.conf"),
+        ("fail2ban-MiG-daemons-jail-template.conf", "MiG-daemons-jail.conf"),
         # service script for MiG daemons
         ("migrid-init.d-rh-template", "migrid-init.d-rh"),
         ("migrid-init.d-deb-template", "migrid-init.d-deb"),
@@ -939,6 +942,20 @@ The logrotate-mig contains a logrotate configuration to automatically
 rotate and compress log files for all MiG daemons.
 You can install it with:
 sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
+
+The MiG-daemons-filter.conf and sshd-pw-crack-filter.conf contain Fail2Ban
+filters and MiG-daemons-jail.conf contains a matching Fail2Ban jail
+configuration to automatically lock out clients after a number of consecutive
+password errors to prevent brute-force scans for all MiG network daemons.
+You can install them with:
+sudo cp %(destination)s/MiG-daemons-filter.conf \\
+        /etc/fail2ban/filter.d/MiG-daemons.conf
+sudo cp %(destination)s/sshd-pw-crack-filter.conf \\
+        /etc/fail2ban/filter.d/sshd-pw-crack.conf
+sudo cp %(destination)s/MiG-daemons-jail.conf \\
+        /etc/fail2ban/jails.local
+After making sure they fit your site you can start the fail2ban service with:
+sudo service fail2ban restart
 
 The migstateclean and migerrors files are cron scripts to automatically
 clean up state files and grep for important errors in all MiG log files.

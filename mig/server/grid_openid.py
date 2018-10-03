@@ -511,7 +511,8 @@ Invalid '%s' input: %s
 
             if not hit_rate_limit(configuration, "openid",
                                   self.client_address[0], self.user) and \
-                    self.checkLogin(self.user, self.password):
+                    self.checkLogin(self.user, self.password,
+                                    self.client_address[0]):
                 logger.debug("handleAllow validated login %s" % identity)
                 trust_root = request.trust_root
                 if self.query.get('remember', 'no') == 'yes':
@@ -685,7 +686,7 @@ Invalid '%s' input: %s
         if webresponse.body:
             self.wfile.write(webresponse.body)
 
-    def checkLogin(self, username, password):
+    def checkLogin(self, username, password, addr):
         """Check username and password stored in MiG user DB"""
 
         # Only need to update users here
@@ -713,7 +714,8 @@ Invalid '%s' input: %s
             if is_hashed and check_hash(configuration, 'openid', username,
                                         password, allowed,
                                         self.server.hash_cache, True):
-                logger.info("Correct password hash for user %s" % username)
+                logger.info("Accepted password hash login for %s from %s" %
+                            (username, addr))
                 self.user_dn = distinguished_name
                 self.user_dn_dir = client_id_dir(distinguished_name)
                 self.login_expire = int(time.time() + self.session_ttl)
@@ -722,14 +724,15 @@ Invalid '%s' input: %s
                     configuration, 'openid', username, password, allowed,
                     configuration.site_password_salt,
                     self.server.scramble_cache, True):
-                logger.info("Correct password for user %s" % username)
+                logger.info("Accepted password login for %s from %s" %
+                            (username, addr))
                 self.user_dn = distinguished_name
                 self.user_dn_dir = client_id_dir(distinguished_name)
                 self.login_expire = int(time.time() + self.session_ttl)
                 return True
             else:
                 logger.warning("Failed password check for user %s" % username)
-        logger.error("Invalid login for user %s" % username)
+        logger.error("Failed password login for %s from %s" % (username, addr))
         return False
 
     def doLogin(self):
@@ -747,7 +750,8 @@ Invalid '%s' input: %s
                 self.password = None
             if not hit_rate_limit(configuration, "openid",
                                   self.client_address[0], self.user) and \
-                    self.checkLogin(self.user, self.password):
+                    self.checkLogin(self.user, self.password,
+                                    self.client_address[0]):
                 if not self.query['success_to']:
                     self.query['success_to'] = '%s/id/' % self.server.base_url
                 update_rate_limit(configuration, "openid",

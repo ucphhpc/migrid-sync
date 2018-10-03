@@ -379,12 +379,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                            realmname,
                                            username,
                                            password):
-                logger.info("Accepted login for %s from %s" %
+                logger.info("Accepted password login for %s from %s" %
                             (username, ip_addr))
                 success = True
             else:
-                logger.warning("Invalid login for %s from %s" %
-                               (username, ip_addr))
+                logger.error("Failed password login for %s from %s" %
+                             (username, ip_addr))
             failed_count = update_rate_limit(configuration,
                                              "davs",
                                              ip_addr,

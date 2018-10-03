@@ -902,7 +902,8 @@ def validate_user(configuration, user_id, user_addr, protocol):
 
     # On missing user issue standard warning for consistency with non-GDP case
     if not status:
-        _logger.warning("Invalid login for %s from %s" % (user_id, user_addr))
+        _logger.error("Failed password login for %s from %s" %
+                      (user_id, user_addr))
     else:
 
         # Retrieve user account info

@@ -749,6 +749,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         Paranoid users / grid owners should not enable password access in the
         first place!
         """
+        client_ip = self.client_addr[0]
         username = force_utf8(username)
         # Only need to update users and shares here, since jobs only use keys
         daemon_conf = self.conf
@@ -773,19 +774,18 @@ class SimpleSSHServer(paramiko.ServerInterface):
             strict_policy = False
         else:
             strict_policy = True
-        if hit_rate_limit(configuration, "sftp-pw", self.client_addr[0],
-                          username):
-            logger.warning("Rate limiting login from %s" % self.client_addr[0])
+        if hit_rate_limit(configuration, "sftp-pw", client_ip, username):
+            logger.warning("Rate limiting login from %s" % client_ip)
         elif self.allow_password:
             # list of User login objects for username
             entries = login_map_lookup(daemon_conf, username)
             for entry in entries:
                 if entry.password is not None:
                     if entry.ip_addr is not None and \
-                       entry.ip_addr != self.client_addr[0]:
+                       entry.ip_addr != client_ip:
                         self.logger.warning(
                             "ignore login as %s with wrong IP: %s vs %s" %
-                            (username, entry.ip_addr, self.client_addr[0]))
+                            (username, entry.ip_addr, client_ip))
                         continue
 
                     allowed = entry.password
@@ -793,24 +793,26 @@ class SimpleSSHServer(paramiko.ServerInterface):
                     if check_password_hash(configuration, 'sftp', username,
                                            offered, allowed, hash_cache,
                                            strict_policy):
-                        self.logger.info("Authenticated %s" % username)
+                        self.logger.info(
+                            "Accepted password login for %s from %s" %
+                            (username, client_ip))
                         self.authenticated_user = username
-                        update_rate_limit(configuration, "sftp-pw",
-                                          self.client_addr[0], username, True,
-                                          offered)
+                        update_rate_limit(configuration, "sftp-pw", client_ip,
+                                          username, True, offered)
                         return paramiko.AUTH_SUCCESSFUL
-        err_msg = "Password authentication failed for %s" % username
+        err_msg = "Failed password login for %s from %s" % (username,
+                                                            client_ip)
         self.logger.error(err_msg)
         print err_msg
-        failed_count = update_rate_limit(configuration, "sftp-pw",
-                                         self.client_addr[0], username, False,
-                                         offered)
-        penalize_rate_limit(configuration, "sftp-pw", self.client_addr[0],
-                            username, failed_count)
+        failed_count = update_rate_limit(configuration, "sftp-pw", client_ip,
+                                         username, False, offered)
+        penalize_rate_limit(configuration, "sftp-pw", client_ip, username,
+                            failed_count)
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         """Public key auth against usermap"""
+        client_ip = self.client_addr[0]
         username = force_utf8(username)
         key = key
         offered = None
@@ -837,40 +839,40 @@ class SimpleSSHServer(paramiko.ServerInterface):
                          changed_shares, changed_jupyter_mounts)
 
         offered = key.get_base64()
-        if hit_rate_limit(configuration, "sftp-key", self.client_addr[0],
-                          username, max_fails=10):
-            logger.warning("Rate limiting login from %s" % self.client_addr[0])
+        if hit_rate_limit(configuration, "sftp-key", client_ip, username,
+                          max_fails=10):
+            logger.warning("Rate limiting login from %s" % client_ip)
         elif self.allow_publickey:
             # list of User login objects for username
             entries = login_map_lookup(daemon_conf, username)
             for entry in entries:
                 if entry.public_key is not None:
                     if entry.ip_addr is not None and \
-                            entry.ip_addr != self.client_addr[0]:
+                            entry.ip_addr != client_ip:
                         self.logger.warning(
                             "ignore login as %s with wrong IP: %s vs %s" %
-                            (username, entry.ip_addr, self.client_addr[0]))
+                            (username, entry.ip_addr, client_ip))
                         continue
 
                     allowed = entry.public_key.get_base64()
                     #self.logger.debug("Public key check for %s" % username)
                     if allowed == offered:
-                        self.logger.info("Public key match for %s" % username)
+                        self.logger.info(
+                            "Accepted public key login for %s from %s" %
+                            (username, client_ip))
                         self.authenticated_user = username
-                        update_rate_limit(configuration, "sftp-key",
-                                          self.client_addr[0], username, True,
-                                          offered)
+                        update_rate_limit(configuration, "sftp-key", client_ip,
+                                          username, True, offered)
                         return paramiko.AUTH_SUCCESSFUL
-        err_msg = 'Public key authentication failed for %s:\n%s' % \
-                  (username, offered)
+        err_msg = 'Failed public key login for %s from %s\n%s' % \
+                  (username, client_ip, offered)
         # Typically tries one or more keys from ssh-agent before success
         self.logger.warning(err_msg)
         print err_msg
-        failed_count = update_rate_limit(configuration, "sftp-key",
-                                         self.client_addr[0], username, False,
-                                         offered)
-        penalize_rate_limit(configuration, "sftp-key", self.client_addr[0],
-                            username, failed_count)
+        failed_count = update_rate_limit(configuration, "sftp-key", client_ip,
+                                         username, False, offered)
+        penalize_rate_limit(configuration, "sftp-key", client_ip, username,
+                            failed_count)
         return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):

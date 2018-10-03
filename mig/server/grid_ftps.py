@@ -196,8 +196,10 @@ class MiGUserAuthorizer(DummyAuthorizer):
         Paranoid users / grid owners should not enable password access in the
         first place!
         """
+        client_ip = handler.remote_ip
         username = force_utf8(username)
-        logger.debug("Authenticating %s" % username)
+        logger.debug("Run authentication of %s from %s" % (username,
+                                                           client_ip))
 
         # We don't have a handle_request for server so expire here instead
 
@@ -217,8 +219,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
             strict_policy = False
         else:
             strict_policy = True
-        if hit_rate_limit(configuration, "ftps", handler.remote_ip, username):
-            logger.warning("Rate limiting login from %s" % handler.remote_ip)
+        if hit_rate_limit(configuration, "ftps", client_ip, username):
+            logger.warning("Rate limiting login from %s" % client_ip)
         elif 'password' in configuration.user_ftps_auth and \
                 self.has_user(username):
             # list of User login objects for username
@@ -230,16 +232,17 @@ class MiGUserAuthorizer(DummyAuthorizer):
                     if check_password_hash(configuration, 'ftps', username,
                                            offered, allowed, hash_cache,
                                            strict_policy):
-                        logger.info("Authenticated %s" % username)
+                        logger.info("Accepted password login for %s from %s" %
+                                    (username, client_ip))
                         self.authenticated_user = username
-                        update_rate_limit(configuration, "ftps",
-                                          handler.remote_ip, username, True,
-                                          offered)
+                        update_rate_limit(configuration, "ftps", client_ip,
+                                          username, True, offered)
                         return True
         else:
             logger.warning("no such user %s" % username)
 
-        err_msg = "Password authentication failed for %s" % username
+        err_msg = "Failed password login for %s from %s" % (username,
+                                                            client_ip)
         logger.error(err_msg)
         print err_msg
         self.authenticated_user = None
