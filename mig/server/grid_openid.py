@@ -459,6 +459,8 @@ Invalid '%s' input: %s
         Must verify user is already logged in or validate username/password
         pair against user DB.
         """
+        # Use client address directly but with optional local proxy override
+        client_ip = self.headers.get('X-Forwarded-For', self.client_address[0])
         request = self.server.lastCheckIDRequest.get(self.user)
         # NOTE: last request may be None here e.g. on back after illegal char!
         if not request:
@@ -509,10 +511,9 @@ Invalid '%s' input: %s
                 logger.debug("no password in query")
                 self.password = None
 
-            if not hit_rate_limit(configuration, "openid",
-                                  self.client_address[0], self.user) and \
-                    self.checkLogin(self.user, self.password,
-                                    self.client_address[0]):
+            if not hit_rate_limit(configuration, "openid", client_ip,
+                                  self.user) and \
+                    self.checkLogin(self.user, self.password, client_ip):
                 logger.debug("handleAllow validated login %s" % identity)
                 trust_root = request.trust_root
                 if self.query.get('remember', 'no') == 'yes':
@@ -521,9 +522,8 @@ Invalid '%s' input: %s
                 self.login_expire = int(time.time() + self.session_ttl)
                 logger.info("handleAllow approving login %s" % identity)
                 response = self.approved(request, identity)
-                update_rate_limit(configuration, "openid",
-                                  self.client_address[0], self.user, True,
-                                  self.password)
+                update_rate_limit(configuration, "openid", client_ip,
+                                  self.user, True, self.password)
             else:
                 logger.warning("handleAllow rejected login %s" % identity)
                 #logger.debug("full query: %s" % self.query)
@@ -531,12 +531,10 @@ Invalid '%s' input: %s
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 failed_count = update_rate_limit(configuration, "openid",
-                                                 self.client_address[0],
-                                                 fail_user, False,
+                                                 client_ip, fail_user, False,
                                                  fail_pw)
-                penalize_rate_limit(configuration, "openid",
-                                    self.client_address[0], fail_user,
-                                    failed_count)
+                penalize_rate_limit(configuration, "openid", client_ip,
+                                    fail_user, failed_count)
                 # Login failed - return to refering page to let user try again
                 retry_url = self.headers.get('Referer')
                 # Add error message to display
@@ -737,6 +735,8 @@ Invalid '%s' input: %s
 
     def doLogin(self):
         """Login handler"""
+        # Use client address directly but with optional local proxy override
+        client_ip = self.headers.get('X-Forwarded-For', self.client_address[0])
         if 'submit' in self.query:
             if 'user' in self.query:
                 self.user = self.query['user']
@@ -748,15 +748,13 @@ Invalid '%s' input: %s
                 self.password = self.query['password']
             else:
                 self.password = None
-            if not hit_rate_limit(configuration, "openid",
-                                  self.client_address[0], self.user) and \
-                    self.checkLogin(self.user, self.password,
-                                    self.client_address[0]):
+            if not hit_rate_limit(configuration, "openid", client_ip,
+                                  self.user) and \
+                    self.checkLogin(self.user, self.password, client_ip):
                 if not self.query['success_to']:
                     self.query['success_to'] = '%s/id/' % self.server.base_url
-                update_rate_limit(configuration, "openid",
-                                  self.client_address[0], self.user, True,
-                                  self.password)
+                update_rate_limit(configuration, "openid", client_ip,
+                                  self.user, True, self.password)
                 # print "doLogin succeded: redirect to %s" % self.query['success_to']
                 self.redirect(self.query['success_to'])
             else:
@@ -765,12 +763,10 @@ Invalid '%s' input: %s
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 failed_count = update_rate_limit(configuration, "openid",
-                                                 self.client_address[0],
-                                                 fail_user, False,
+                                                 client_ip, fail_user, False,
                                                  fail_pw)
-                penalize_rate_limit(configuration, "openid",
-                                    self.client_address[0], fail_user,
-                                    failed_count)
+                penalize_rate_limit(configuration, "openid", client_ip,
+                                    fail_user, failed_count)
                 # Login failed - return to refering page to let user try again
                 retry_url = self.headers.get('Referer', self.server.base_url)
                 # Add error message to display
