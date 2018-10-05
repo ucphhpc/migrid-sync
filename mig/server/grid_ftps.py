@@ -288,8 +288,8 @@ class MiGRestrictedFilesystem(AbstractedFS):
                         daemon_conf['chroot_exceptions'])
             #logger.debug("accepted access to %s" % path)
             return True
-        except ValueError:
-            logger.warning("rejected illegal access to %s" % path)
+        except ValueError, err:
+            logger.warning("rejected illegal access to %s :: %s" % (path, err))
             return False
 
     def chmod(self, path, mode):
