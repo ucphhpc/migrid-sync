@@ -41,7 +41,6 @@ from shared.defaults import default_mrsl_filename, \
 from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
-from shared.gdp import get_client_id_from_project_client_id
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
     themed_styles, console_log_javascript, twofactor_wizard_html, \
@@ -1698,11 +1697,6 @@ client versions from the link above.<br/>
 
     if 'twofactor' in topics:
 
-        # GDP shares twofactor for all projects of user
-        real_user = client_id
-        if configuration.site_enable_gdp:
-            real_user = get_client_id_from_project_client_id(configuration,
-                                                             client_id)
         # load current twofactor
 
         current_twofactor_dict = load_twofactor(real_user, configuration)
