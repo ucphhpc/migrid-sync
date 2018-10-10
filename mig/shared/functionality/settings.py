@@ -49,11 +49,11 @@ from shared.html import jquery_ui_js, man_base_js, man_base_html, \
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, \
-    load_webaccess
+    load_twofactor
 from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
-from shared.webaccesskeywords import get_webaccess_specs
+from shared.twofactorkeywords import get_twofactor_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import create_alias_link, get_default_mrsl, \
     get_default_css, get_short_id
@@ -190,7 +190,7 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('duplicati')
     if configuration.site_enable_twofactor \
             and not configuration.site_enable_gdp:
-        valid_topics.append('webaccess')
+        valid_topics.append('twofactor')
     topics = accepted['topic']
     # Backwards compatibility
     if topics and topics[0] == 'ssh':
@@ -202,7 +202,7 @@ def main(client_id, user_arguments_dict):
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
                        ('ftps', 'FTPS'), ('seafile', 'Seafile'),
-                       ('duplicati', 'Duplicati'), ('webaccess', 'Web Access'),
+                       ('duplicati', 'Duplicati'), ('twofactor', 'Web Access'),
                        ]:
         if key in valid_topics:
             topic_titles[key] = val
@@ -1696,31 +1696,31 @@ client versions from the link above.<br/>
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'webaccess' in topics:
+    if 'twofactor' in topics:
 
-        # GDP shares webaccess for all projects of user
+        # GDP shares twofactor for all projects of user
         real_user = client_id
         if configuration.site_enable_gdp:
             real_user = get_client_id_from_project_client_id(configuration,
                                                              client_id)
-        # load current webaccess
+        # load current twofactor
 
-        current_webaccess_dict = load_webaccess(real_user, configuration)
-        if not current_webaccess_dict:
+        current_twofactor_dict = load_twofactor(real_user, configuration)
+        if not current_twofactor_dict:
 
-            # no current webaccess found
+            # no current twofactor found
 
-            current_webaccess_dict = {}
+            current_twofactor_dict = {}
 
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
-<div id="webaccess">
+<div id="twofactor">
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-<table class="webaccess fixedlayout">
+<table class="twofactor fixedlayout">
 <tr class="title"><td class="centertext">
 Web Access
 </td></tr>
@@ -1748,15 +1748,15 @@ It is possible to tweak some of the web access methods here.
                                  'allow', 'enable_hint':
                                  'enable it for login below'})
 
-        webaccess_entries = get_webaccess_specs(configuration)
+        twofactor_entries = get_twofactor_specs(configuration)
         html += '''
         <tr class="otp_ready hidden"><td>
-        <input type="hidden" name="topic" value="webaccess" />
+        <input type="hidden" name="topic" value="twofactor" />
         </td></tr>
         <tr class="otp_ready hidden"><td>
         </td></tr>
         '''
-        for (keyword, val) in webaccess_entries:
+        for (keyword, val) in twofactor_entries:
             if val.get('Editor', None) == 'hidden':
                 continue
             entry = """
@@ -1775,8 +1775,8 @@ It is possible to tweak some of the web access methods here.
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
                     current_choice = []
-                    if current_webaccess_dict.has_key(keyword):
-                        current_choice = current_webaccess_dict[keyword]
+                    if current_twofactor_dict.has_key(keyword):
+                        current_choice = current_twofactor_dict[keyword]
 
                     if valid_choices:
                         entry += '<div class="scrollselect">'
@@ -1796,8 +1796,8 @@ It is possible to tweak some of the web access methods here.
                     area = '''
                 <textarea id="%s" cols=40 rows=1 name="%s">''' \
                         % (keyword, keyword)
-                    if current_webaccess_dict.has_key(keyword):
-                        area += '\n'.join(current_webaccess_dict[keyword])
+                    if current_twofactor_dict.has_key(keyword):
+                        area += '\n'.join(current_twofactor_dict[keyword])
                     area += '</textarea>'
                     entry += wrap_edit_area(keyword, area, general_edit,
                                             'BASIC')
@@ -1808,8 +1808,8 @@ It is possible to tweak some of the web access methods here.
 
                 valid_choices = eval('configuration.%s' % keyword.lower())
                 current_choice = ''
-                if current_webaccess_dict.has_key(keyword):
-                    current_choice = current_webaccess_dict[keyword]
+                if current_twofactor_dict.has_key(keyword):
+                    current_choice = current_twofactor_dict[keyword]
 
                 if valid_choices:
                     entry += '<select name="%s">' % keyword
@@ -1828,8 +1828,8 @@ It is possible to tweak some of the web access methods here.
 
                 valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
-                if current_webaccess_dict.has_key(keyword):
-                    current_choice = current_webaccess_dict[keyword]
+                if current_twofactor_dict.has_key(keyword):
+                    current_choice = current_twofactor_dict[keyword]
                 entry += '<select name="%s">' % keyword
                 for choice in valid_choices:
                     selected = ''
@@ -1851,8 +1851,8 @@ It is possible to tweak some of the web access methods here.
 '''
 
         if configuration.site_enable_twofactor and \
-            (current_webaccess_dict.get("MIG_OID_TWOFACTOR", False) or
-             current_webaccess_dict.get("EXT_OID_TWOFACTOR", False)):
+            (current_twofactor_dict.get("MIG_OID_TWOFACTOR", False) or
+             current_twofactor_dict.get("EXT_OID_TWOFACTOR", False)):
             html += """<script>
     setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify',
                     'otp_ready']);

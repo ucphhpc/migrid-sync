@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# webaccesskeywords - supported web access settings
+# twofactorkeywords - supported web access settings
 # Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -28,7 +28,7 @@
 """Keywords in the web access settings"""
 
 
-def get_webaccess_specs(configuration):
+def get_twofactor_specs(configuration):
     """Return an ordered list of (keywords, spec) tuples. The order is
     used for configuration order consistency.
     """
@@ -46,7 +46,7 @@ logins through a personal auth token generator on your phone or tablet.
             'Type': 'boolean',
             'Value': False,
             'Editor': 'select',
-            'Context': 'webaccess',
+            'Context': 'twofactor',
             'Required': False,
         }))
     if configuration.migserver_https_ext_oid_url and \
@@ -61,7 +61,7 @@ logins through a personal auth token generator on your phone or tablet.
             'Type': 'boolean',
             'Value': False,
             'Editor': 'select',
-            'Context': 'webaccess',
+            'Context': 'twofactor',
             'Required': False,
         }))
     return specs
@@ -72,4 +72,4 @@ def get_keywords_dict(configuration):
 
     # create the keywords in a single dictionary
 
-    return dict(get_webaccess_specs(configuration))
+    return dict(get_twofactor_specs(configuration))

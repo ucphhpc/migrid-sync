@@ -39,11 +39,11 @@ from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
     parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs, \
     parse_and_save_ftps, parse_and_save_seafile, parse_and_save_duplicati, \
-    parse_and_save_webaccess
+    parse_and_save_twofactor
 from shared.profilekeywords import get_keywords_dict as profile_keywords
 from shared.settingskeywords import get_keywords_dict as settings_keywords
 from shared.useradm import create_seafile_mount_link, remove_seafile_mount_link
-from shared.webaccesskeywords import get_keywords_dict as webaccess_keywords
+from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 from shared.widgetskeywords import get_keywords_dict as widgets_keywords
 
 
@@ -60,8 +60,8 @@ def extend_defaults(configuration, defaults, user_args):
         keywords_dict = profile_keywords()
     elif topic == 'duplicati':
         keywords_dict = duplicati_keywords()
-    elif topic == 'webaccess':
-        keywords_dict = webaccess_keywords(configuration)
+    elif topic == 'twofactor':
+        keywords_dict = twofactor_keywords(configuration)
     elif topic == 'sftp':
         keywords_dict = {'publickeys': '', 'password': ''}
     elif topic == 'webdavs':
@@ -127,8 +127,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         keywords_dict = profile_keywords()
     elif topic == 'duplicati':
         keywords_dict = duplicati_keywords()
-    elif topic == 'webaccess':
-        keywords_dict = webaccess_keywords(configuration)
+    elif topic == 'twofactor':
+        keywords_dict = twofactor_keywords(configuration)
     elif topic in ('sftp', 'webdavs', 'ftps', 'seafile', ):
         # We don't use mRSL parser here
         keywords_dict = {}
@@ -173,14 +173,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
         (parse_status, parse_msg) = \
             parse_and_save_duplicati(tmptopicfile, client_id,
                                      configuration)
-    elif topic == 'webaccess':
-        # GDP shares webaccess for all projects of user
+    elif topic == 'twofactor':
+        # GDP shares twofactor for all projects of user
         real_user = client_id
         if configuration.site_enable_gdp:
             real_user = get_client_id_from_project_client_id(configuration,
                                                              client_id)
         (parse_status, parse_msg) = \
-            parse_and_save_webaccess(tmptopicfile, real_user,
+            parse_and_save_twofactor(tmptopicfile, real_user,
                                      configuration)
     elif topic == 'sftp':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))

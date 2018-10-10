@@ -50,9 +50,9 @@ from shared.defaults import twofactor_cookie_bytes, twofactor_cookie_ttl
 from shared.fileio import write_file
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
-from shared.settings import load_webaccess
+from shared.settings import load_twofactor
 from shared.useradm import client_id_dir
-from shared.webaccesskeywords import get_keywords_dict as webaccess_defaults
+from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 
 
 def html_tmpl(configuration):
@@ -152,25 +152,25 @@ def main(client_id, user_arguments_dict, environ=None):
                      (redirect_url, forward_args, redirect_location))
     else:
         headers = []
-    webaccess_dict = load_webaccess(client_id, configuration,
+    twofactor_dict = load_twofactor(client_id, configuration,
                                     allow_missing=True)
-    logger.debug("found webaccess_dict for %s : %s" %
-                 (client_id, webaccess_dict))
-    if not webaccess_dict:
-        logger.warning("fall back to webaccess defaults for %s" % client_id)
-        webaccess_dict = dict([(i, j['Value']) for (i, j) in
-                               webaccess_defaults(configuration).items()])
+    logger.debug("found twofactor_dict for %s : %s" %
+                 (client_id, twofactor_dict))
+    if not twofactor_dict:
+        logger.warning("fall back to twofactor defaults for %s" % client_id)
+        twofactor_dict = dict([(i, j['Value']) for (i, j) in
+                               twofactor_defaults(configuration).items()])
 
-    # NOTE: webaccess_defaults field availability depends on configuration
+    # NOTE: twofactor_defaults field availability depends on configuration
     if not redirect_url:
         # This is the 2FA setup check mode
         check_only = True
         require_twofactor = True
     elif user_id.startswith(configuration.user_mig_oid_provider) and \
-            webaccess_dict.get('MIG_OID_TWOFACTOR', False):
+            twofactor_dict.get('MIG_OID_TWOFACTOR', False):
         require_twofactor = True
     elif user_id.startswith(configuration.user_ext_oid_provider) \
-            and webaccess_dict.get('EXT_OID_TWOFACTOR', False):
+            and twofactor_dict.get('EXT_OID_TWOFACTOR', False):
         require_twofactor = True
     else:
         require_twofactor = False

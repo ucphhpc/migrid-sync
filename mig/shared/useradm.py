@@ -45,7 +45,7 @@ from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
-    davs_conf_dir, webaccess_filename
+    davs_conf_dir, twofactor_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
@@ -61,7 +61,7 @@ from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
 from shared.vgridaccess import get_resource_map, get_vgrid_map, \
     refresh_user_map, refresh_resource_map, refresh_vgrid_map, VGRIDS, \
     OWNERS, MEMBERS
-from shared.webaccesskeywords import get_webaccess_specs
+from shared.twofactorkeywords import get_twofactor_specs
 
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
@@ -1629,25 +1629,25 @@ def user_twofactor_status(user_id, conf_path, db_path, fields, verbose=False):
         return (configuration, errors)
 
     client_dir = client_id_dir(user_id)
-    webaccess_path = os.path.join(configuration.user_settings, client_dir,
-                                  webaccess_filename)
+    twofactor_path = os.path.join(configuration.user_settings, client_dir,
+                                  twofactor_filename)
     if verbose:
-        print "inspecting %s" % webaccess_path
-    webaccess_dict = None
+        print "inspecting %s" % twofactor_path
+    twofactor_dict = None
     try:
-        webaccess_dict = load(webaccess_path)
+        twofactor_dict = load(twofactor_path)
     except Exception, err:
-        err_msg = 'Failed to load webaccess for %s: %s' % (user_id, err)
+        err_msg = 'Failed to load twofactor for %s: %s' % (user_id, err)
         if verbose:
             print err_msg
 
-    if not webaccess_dict:
-        errors.append('No webaccess settings saved for %s' % user_id)
+    if not twofactor_dict:
+        errors.append('No twofactor settings saved for %s' % user_id)
         return (configuration, errors)
     if keyword_auto in fields:
-        fields = [pair[0] for pair in get_webaccess_specs(configuration)]
+        fields = [pair[0] for pair in get_twofactor_specs(configuration)]
     for key in fields:
-        if not webaccess_dict.get(key, False):
+        if not twofactor_dict.get(key, False):
             errors.append('%s not enabled for: %s' % (key, user_id))
         elif verbose:
             print "%s enabled for %s" % (key, user_id)

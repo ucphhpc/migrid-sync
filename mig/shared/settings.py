@@ -32,7 +32,7 @@ from binascii import hexlify
 import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
-    widgets_filename, webaccess_filename, duplicati_filename, ssh_conf_dir, \
+    widgets_filename, twofactor_filename, duplicati_filename, ssh_conf_dir, \
     davs_conf_dir, ftps_conf_dir, seafile_conf_dir, duplicati_conf_dir, \
     authkeys_filename, authpasswords_filename, authdigests_filename, \
     keyword_unchanged, dav_domain
@@ -45,7 +45,7 @@ from shared.pwhash import make_hash, make_digest, assure_password_strength
 from shared.safeinput import valid_password
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.ssh import parse_pub_key, tighten_key_perms
-from shared.webaccesskeywords import get_keywords_dict as get_webaccess_fields
+from shared.twofactorkeywords import get_keywords_dict as get_twofactor_fields
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
@@ -198,12 +198,12 @@ Backup destination page during import.'''
     return status
 
 
-def parse_and_save_webaccess(filename, client_id, configuration):
-    """Validate and write webaccess entries from filename. The 2FA user key
+def parse_and_save_twofactor(filename, client_id, configuration):
+    """Validate and write twofactor entries from filename. The 2FA user key
     and any required auth files need to be handled separately.
     """
-    return parse_and_save_pickle(filename, webaccess_filename,
-                                 get_webaccess_fields(configuration),
+    return parse_and_save_pickle(filename, twofactor_filename,
+                                 get_twofactor_fields(configuration),
                                  client_id, configuration, False, False)
 
 
@@ -408,14 +408,14 @@ def load_profile(client_id, configuration, include_meta=False,
                                allow_missing)
 
 
-def load_webaccess(client_id, configuration, include_meta=False,
+def load_twofactor(client_id, configuration, include_meta=False,
                    allow_missing=True):
-    """Load webaccess from pickled webaccess file. Optional include_meta
+    """Load twofactor from pickled twofactor file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
 
-    return load_section_helper(client_id, configuration, webaccess_filename,
-                               get_webaccess_fields(configuration).keys(),
+    return load_section_helper(client_id, configuration, twofactor_filename,
+                               get_twofactor_fields(configuration).keys(),
                                include_meta, allow_missing)
 
 
@@ -575,13 +575,13 @@ def update_duplicati(client_id, configuration, changes, defaults,
                                  changes, defaults, create_missing)
 
 
-def update_webaccess(client_id, configuration, changes, defaults,
+def update_twofactor(client_id, configuration, changes, defaults,
                      create_missing=True):
-    """Update webaccess in pickled webaccess file with values from changes
-    dictionary. Optional create_missing can be used if the webaccess pickle
+    """Update twofactor in pickled twofactor file with values from changes
+    dictionary. Optional create_missing can be used if the twofactor pickle
     should be created if not already there.
     The defaults dictionary is used to set any missing values.
     """
 
-    return update_section_helper(client_id, configuration, webaccess_filename,
+    return update_section_helper(client_id, configuration, twofactor_filename,
                                  changes, defaults, create_missing)

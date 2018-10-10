@@ -45,11 +45,11 @@ from shared.html import themed_styles, jquery_ui_js, twofactor_wizard_html, \
     twofactor_wizard_js
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_webaccess, parse_and_save_webaccess
+from shared.settings import load_twofactor, parse_and_save_twofactor
 from shared.useradm import get_full_user_map
 from shared.url import openid_autologout_url
 from shared.vgrid import vgrid_create_allowed
-from shared.webaccesskeywords import get_keywords_dict as webaccess_keywords
+from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 
 
 def signature():
@@ -90,11 +90,11 @@ def html_tmpl(
     remove_projects = False
 
     if configuration.site_enable_twofactor:
-        current_webaccess_dict = load_webaccess(client_id, configuration)
-        if not current_webaccess_dict:
-            # no current webaccess found
-            current_webaccess_dict = {}
-        if current_webaccess_dict:
+        current_twofactor_dict = load_twofactor(client_id, configuration)
+        if not current_twofactor_dict:
+            # no current twofactor found
+            current_twofactor_dict = {}
+        if current_twofactor_dict:
             twofactor_enabled = True
 
     if not configuration.site_enable_twofactor \
@@ -519,8 +519,8 @@ def html_tmpl(
 '''
 
     if configuration.site_enable_twofactor and \
-        (current_webaccess_dict.get("MIG_OID_TWOFACTOR", False) or
-         current_webaccess_dict.get("EXT_OID_TWOFACTOR", False)):
+        (current_twofactor_dict.get("MIG_OID_TWOFACTOR", False) or
+         current_twofactor_dict.get("EXT_OID_TWOFACTOR", False)):
         html += """<script>
     setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify',
                     'otp_ready']);
@@ -837,7 +837,7 @@ Please contact the Grid admins %s if you think it should be enabled.
         expire_twofactor_session(
             configuration, client_id, environ, allow_missing=False)
 
-        keywords_dict = webaccess_keywords(configuration)
+        keywords_dict = twofactor_keywords(configuration)
         topic_mrsl = ''
         for keyword in keywords_dict.keys():
             if keyword.endswith('_OID_TWOFACTOR'):
@@ -860,7 +860,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         (parse_status, parse_msg) = \
-            parse_and_save_webaccess(tmptopicfile, client_id,
+            parse_and_save_twofactor(tmptopicfile, client_id,
                                      configuration)
 
         try:
