@@ -160,7 +160,7 @@ def html_tmpl(
             preselected_tab = tab_count
         tab_count += 1
     if configuration.site_enable_twofactor:
-        html += """<li><a href="#twofactor">2-Factor Authentication</a></li>"""
+        html += """<li><a href="#twofactor">Two-Factor Auth</a></li>"""
         if action == 'twofactor':
             preselected_tab = tab_count
         tab_count += 1

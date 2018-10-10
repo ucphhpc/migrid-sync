@@ -202,7 +202,7 @@ def main(client_id, user_arguments_dict):
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
                        ('ftps', 'FTPS'), ('seafile', 'Seafile'),
-                       ('duplicati', 'Duplicati'), ('twofactor', 'Two Factor'),
+                       ('duplicati', 'Duplicati'), ('twofactor', '2-Factor Auth'),
                        ]:
         if key in valid_topics:
             topic_titles[key] = val
