@@ -34,9 +34,7 @@ import tempfile
 
 from shared.auth import expire_twofactor_session, get_twofactor_secrets
 import shared.returnvalues as returnvalues
-from shared.auth import load_twofactor_key, reset_twofactor_key
-from shared.base import client_alias, client_id_dir, extract_field, \
-    force_utf8, get_xgi_bin
+from shared.base import get_xgi_bin
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.gdp import ensure_user, get_projects, get_users, \
@@ -890,8 +888,11 @@ Please contact the Grid admins %s if you think it should be enabled.
         return (output_objects, returnvalues.OK)
 
     if not action and identity or action == 'logout':
-        autologout = project_logout(configuration, client_addr, 'https',
-                                    client_id, autologout=True)
+        autologout = project_logout(configuration,
+                                    'https',
+                                    client_addr,
+                                    client_id,
+                                    autologout=True)
 
         if autologout or action == 'logout':
             return_url = req_url
@@ -952,8 +953,11 @@ Please contact the Grid admins %s if you think it should be enabled.
 
             # Project login
 
-            project_client_id = project_login(configuration, client_addr,
-                                              'https', client_id, base_vgrid_name)
+            project_client_id = project_login(configuration,
+                                              'https',
+                                              client_addr,
+                                              client_id,
+                                              base_vgrid_name)
             if project_client_id:
                 dest_op_name = 'fileman'
                 base_url = environ.get('REQUEST_URI',

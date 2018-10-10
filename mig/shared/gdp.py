@@ -265,6 +265,21 @@ def __project_name_from_user_id(configuration, user_id):
     return result
 
 
+def __project_short_id_from_user_id(configuration, user_id):
+    """Extract project_short_id from *user_id*
+    *user_id* is either a project_client_id or project_short_id"""
+
+    configuration.logger.debug("user_id: %s" % user_id)
+    try:
+        result = __project_short_id_from_project_client_id(
+            configuration,
+            user_id)
+    except:
+        result = user_id
+
+    return result
+
+
 def __create_gdp_user_db_entry(configuration):
     """Create empty GDP user db entry"""
 
@@ -1512,15 +1527,16 @@ def project_accept(
 
 def project_login(
         configuration,
-        client_addr,
         protocol,
+        client_addr,
         user_id,
         project_name=None):
     """Log *client_id* into project_name"""
 
     _logger = configuration.logger
-    _logger.debug("user_id: '%s', client_addr: '%s', project_name: '%s'"
-                  % (user_id, client_addr, project_name))
+    _logger.debug("protocol: '%s', user_id: '%s', \
+                  client_addr: '%s', project_name: '%s'"
+                  % (protocol, user_id, client_addr, project_name))
     result = None
     status = True
     flock = None
@@ -1632,8 +1648,8 @@ def project_login(
 
 def project_logout(
         configuration,
-        client_addr,
         protocol,
+        client_addr,
         user_id,
         autologout=False):
     """Logout user *client_id* from active project
@@ -1723,6 +1739,58 @@ def project_logout(
             project_name=project_name,
             user_addr=client_addr,
         )
+
+    if status:
+        result = True
+
+    return result
+
+
+def project_open(
+        configuration,
+        protocol,
+        client_addr,
+        user_id):
+    """Open project for *project_short_id* with *protocol*
+    if user is logged into another project, then autologout before login
+    if user is already logged into the current project
+    then skip logout/login"""
+
+    _logger = configuration.logger
+    _logger.debug("protocol: '%s', client_addr: '%s', user_id: '%s'"
+                  % (protocol, client_addr, user_id))
+    result = False
+
+    project_short_id = __project_short_id_from_user_id(configuration, user_id)
+    client_id = __client_id_from_user_id(configuration, user_id)
+    project_name = get_project_from_user_id(configuration, user_id)
+    if project_name is None:
+        _logger.error(
+            "GDP: Missing project name in user_id: '%s'" % user_id)
+        return result
+    (status, msg) = validate_user(
+        configuration, client_id, client_addr, protocol)
+    if not status:
+        _logger.warning(msg)
+    else:
+        active_user_id = get_active_project_short_id(configuration,
+                                                     client_id,
+                                                     protocol)
+        if active_user_id is not None \
+                and active_user_id != project_short_id:
+            status = project_logout(configuration,
+                                    protocol,
+                                    client_addr,
+                                    active_user_id,
+                                    autologout=True)
+        if status \
+                and active_user_id != project_short_id:
+            status = project_login(
+                configuration,
+                protocol,
+                client_addr,
+                client_id,
+                project_name)
 
     if status:
         result = True

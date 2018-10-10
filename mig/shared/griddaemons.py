@@ -40,8 +40,6 @@ from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path, force_utf8
 from shared.defaults import dav_domain, io_session_timeout
 from shared.fileio import unpickle
-from shared.gdp import project_login, project_logout, \
-    get_active_project_short_id, validate_user
 from shared.safeinput import valid_path
 from shared.sharelinks import extract_mode_id
 from shared.ssh import parse_pub_key
@@ -66,80 +64,6 @@ _rate_limits = {}
 _rate_limits_lock = threading.Lock()
 _active_sessions = {}
 _sessions_lock = threading.Lock()
-
-
-def __validate_gdp_session(configuration,
-                           proto,
-                           client_id,
-                           client_address,
-                           client_port):
-    """Returns True if GDP user session is valid.
-    GDP only allow one session per user"""
-    logger = configuration.logger
-    # msg = "proto: %s, client_id: %s" % (proto, client_id) \
-    #     + " client_address: %s, client_port: %s" \
-    #    % (client_address, client_port)
-    # logger.debug(msg)
-    result = False
-    status = False
-    (status, msg) = validate_user(
-        configuration, client_id, client_address, proto)
-    if not status:
-        logger.warning(msg)
-    else:
-        active_user_id = get_active_project_short_id(configuration,
-                                                     client_id,
-                                                     proto)
-
-    # GDP only allows one active user at any time
-    # 'active_user_id' is registered as the active user in the GDP database
-    # NOTE: If the daemon is killed without a proper session cleanup
-    # Then the 'active' user field in the GDP database is not reset
-
-    if status and active_user_id is not None:
-        _sessions_lock.acquire()
-
-        open_sessions = get_open_sessions(
-            configuration, proto, client_id=active_user_id, prelocked=True)
-        auth_sessions = {session_id: session for (session_id, session)
-                         in open_sessions.iteritems()
-                         if session.get('authorized')}
-        if not auth_sessions:
-
-            # No open sessions, reset GDP active user
-
-            status = project_logout(configuration,
-                                    client_address,
-                                    proto,
-                                    active_user_id,
-                                    autologout=True)
-        else:
-
-            # Close all active sessions from client_id
-            # before accepting new sessions
-            # NOTE: track_close_session trigger 'project_logout'
-            # TODO: Consider skipping session close if:
-            #       active_user_id == client_id and IP is the same
-
-            for session_id in auth_sessions.keys():
-                # logger.debug("closing session: %s for active_user_id: %s" \
-                #     % (session_id, client_id))
-                if not track_close_session(configuration,
-                                           proto,
-                                           active_user_id,
-                                           client_address,
-                                           client_port,
-                                           session_id=session_id,
-                                           prelocked=True):
-                    status = False
-                    logger.error("Failed to close session: %s for: %s"
-                                 % (session_id, active_user_id))
-        _sessions_lock.release()
-
-    if status:
-        result = True
-
-    return result
 
 
 def accepting_username_validator(configuration, username):
@@ -1486,14 +1410,11 @@ def track_open_session(configuration,
     #     (client_address, client_port, session_id)
     # logger.debug(msg)
     result = None
-    status = False
-    prev_authorized = False
     if not session_id:
         session_id = "%s:%s" % (client_address, client_port)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
     try:
-        status = True
         _cached = _active_sessions.get(client_id, {})
         if not _cached:
             _active_sessions[client_id] = _cached
@@ -1503,7 +1424,6 @@ def track_open_session(configuration,
         _session = _cached[proto].get(session_id, {})
         if not _session:
             _cached[proto][session_id] = _session
-        prev_authorized = _session.get('authorized', False)
         _session['session_id'] = session_id
         _session['client_id'] = client_id
         _session['ip_addr'] = client_address
@@ -1512,27 +1432,11 @@ def track_open_session(configuration,
         _session['timestamp'] = time.time()
         result = _session
     except Exception, exc:
-        status = False
         result = None
         logger.error("track open session failed: %s" % exc)
 
     if not prelocked:
         _sessions_lock.release()
-
-    # If GDP and changed from NOT authorized to authorized
-    # perform GDP project login
-    # TODO : Move GDP project login away from session tracking ?
-    # TODO: Consider skipping 'project_logout + login' if an
-    #       active session exists.
-    #       Automatic 'project_logout' in '__validate_gdp_session'
-
-    if configuration.site_enable_gdp \
-            and status and authorized and not prev_authorized:
-        project_login(
-            configuration,
-            client_address,
-            proto,
-            client_id)
 
     return result
 
@@ -1608,7 +1512,6 @@ def track_close_session(configuration,
     #     (client_address, client_port, session_id, client_id, prelocked)
     # logger.debug(msg)
     result = None
-    status = False
     if not session_id:
         session_id = "%s:%s" % (client_address, client_port)
     if not prelocked and not _sessions_lock.acquire(blocking):
@@ -1619,12 +1522,10 @@ def track_close_session(configuration,
     # logger.debug("_sessions : %s" % _sessions)
     if open_sessions and open_sessions.has_key(session_id):
         try:
-            status = True
-            closed_session = open_sessions[session_id]
+            result = open_sessions[session_id]
             del open_sessions[session_id]
         except Exception, exc:
-            status = False
-            closed_session = None
+            result = None
             msg = "track close session failed for client: %s" % client_id \
                 + "with session id: %s" % session_id \
                 + ", error: %s" % exc
@@ -1637,23 +1538,6 @@ def track_close_session(configuration,
 
     if not prelocked:
         _sessions_lock.release()
-
-    # TODO: Move GDP project logout away from session tracking ?
-
-    if status and configuration.site_enable_gdp \
-            and closed_session.get('authorized', False):
-        # logger.debug("track_close_project_logout: %s, %s" \
-        #              % (_client_id, _session.keys()))
-        # TODO: Should we raise an exception if project_logout fails ?
-        project_logout(
-            configuration,
-            client_address,
-            proto,
-            closed_session['client_id'],
-            autologout=True)
-
-    if status:
-        result = closed_session
 
     return result
 
@@ -1672,7 +1556,6 @@ def track_close_expired_sessions(
     #     (client_id, prelocked, blocking)
     # logger.debug(msg)
     result = None
-    status = False
     session_timeout = io_session_timeout.get(proto, 0)
     if not prelocked and not _sessions_lock.acquire(blocking):
         return result
@@ -1726,28 +1609,6 @@ def active_sessions(configuration,
 
     if not prelocked:
         _sessions_lock.release()
-
-    return result
-
-
-def validate_session(configuration,
-                     proto,
-                     client_id,
-                     client_address,
-                     client_port):
-    """Returns True if user session is valid."""
-    logger = configuration.logger
-    # msg = "proto: %s, client_id: %s" % (proto, client_id) \
-    #     + " client_address: %s, client_port: %s" \
-    #    % (client_address, client_port)
-    # logger.debug(msg)
-    result = True
-    if configuration.site_enable_gdp:
-        result = __validate_gdp_session(configuration,
-                                        proto,
-                                        client_id,
-                                        client_address,
-                                        client_port)
 
     return result
 

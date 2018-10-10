@@ -123,7 +123,7 @@ the %s Admins if it happens repeatedly.
                             configuration.user_ext_oid_provider):
                     reentry_page = configuration.migserver_https_ext_oid_url
                 project_logout(
-                    configuration, environ['REMOTE_ADDR'], 'https', client_id)
+                    configuration, 'https', environ['REMOTE_ADDR'], client_id)
                 html = '''
                 <a id='gdp_logout' href='%s'></a>
                 <script type='text/javascript'>

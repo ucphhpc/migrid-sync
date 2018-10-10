@@ -63,13 +63,13 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id, io_session_timeout
 from shared.fileio import check_write_access, user_chroot_exceptions
+from shared.gdp import project_open
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
-    track_close_expired_sessions, get_active_session, validate_session
-from shared.sslsession import SSL_MASTER_KEY_LENGTH, get_ssl_session_id,\
-    get_ssl_master_key
+    track_close_expired_sessions, get_active_session
+from shared.sslsession import get_ssl_master_key
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength, \
@@ -207,18 +207,18 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 pass
 
     def get_environ(self, ssl_sock):
-        """Update SSL environ with SSL session token used for internal 
+        """Update SSL environ with SSL session token used for internal
         WebDAVS session tracing
         """
         (client_addr, _) = ssl_sock.getpeername()
         ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
         ssl_master_key = get_ssl_master_key(configuration, ssl_sock)
         if ssl_master_key is not None:
-                        ssl_environ['SSL_SESSION_TOKEN'] = make_digest(
-                            'webdavs',
-                            client_addr,
-                            ssl_master_key,
-                            configuration.site_digest_salt)
+            ssl_environ['SSL_SESSION_TOKEN'] = make_digest(
+                'webdavs',
+                client_addr,
+                ssl_master_key,
+                configuration.site_digest_salt)
         return ssl_environ
 
     def wrap(self, sock):
@@ -239,8 +239,6 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             ssl_env = self.get_environ(ssl_sock)
             logger.info("wrapped sock from %s with ciphers %s" %
                         (ssl_sock.getpeername(), ssl_sock.cipher()))
-
-            (client_addr, client_port) = ssl_sock.getpeername()
             # logger.debug("system ssl_sock timeout: %s" % ssl_sock.gettimeout())
             session_timeout = io_session_timeout.get('davs', 0)
             if session_timeout > 0:
@@ -362,11 +360,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             # logger.debug("found authorized session for: %s from %s:%s:%s" \
             #             % (username, ip_addr, tcp_port, session_id))
             success = True
-        elif validate_session(configuration,
-                              'davs',
-                              username,
-                              ip_addr,
-                              tcp_port):
+        else:
             # logger.debug("validated session: %s:%s:%s" %
             #              (ip_addr, tcp_port, session_id))
             logger.info("refresh user %s" % username)
@@ -394,6 +388,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             penalize_rate_limit(configuration, "davs", ip_addr, username,
                                 failed_count)
 
+            if success and configuration.site_enable_gdp:
+                success = project_open(configuration,
+                                       'davs',
+                                       ip_addr,
+                                       username)
+
             # Track newly authorized session
 
             if success and session_id:
@@ -407,9 +407,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                             session_id=session_id,
                                             authorized=True)
                 # logger.debug("track_open_session: %s" % status)
-        # else:
-        #    logger.debug("rejected session: %s:%s -> %s" \
-        #        % (ip_addr, tcp_port, session_id))
+
+        if not success:
+            logger.warning("Invalid login for %s from %s"
+                           % (username, ip_addr))
 
         return success
 
@@ -433,11 +434,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             # logger.debug("found authorized session for: %s from %s:%s:%s" \
             #             % (username, ip_addr, tcp_port, session_id))
             success = True
-        elif validate_session(configuration,
-                              'davs',
-                              username,
-                              ip_addr,
-                              tcp_port):
+        else:
             # logger.debug("validated session: %s:%s:%s" %
             #              (ip_addr, tcp_port, session_id))
             update_users(configuration, self.user_map, username)
@@ -449,6 +446,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             else:
                 logger.warning("invalid digest user %s from %s:%s" %
                                (username, ip_addr, tcp_port))
+
+            if success and configuration.site_enable_gdp:
+                success = project_open(configuration,
+                                       'davs',
+                                       ip_addr,
+                                       username)
 
             # Track newly authorized session
 
@@ -463,9 +466,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                             session_id=session_id,
                                             authorized=True)
                 # logger.debug("track_open_session: %s" % status)
-        # else:
-        #    logger.debug("rejected session: %s:%s -> %s" \
-        #        % (ip_addr, tcp_port, session_id))
+
+        if not success:
+            logger.warning("Invalid login for %s from %s"
+                           % (username, ip_addr))
 
         return success
 
