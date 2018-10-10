@@ -165,7 +165,10 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
-    valid_topics = ['general', 'style']
+    if configuration.site_enable_gdp:
+        valid_topics = []
+    else:
+        valid_topics = ['general', 'style']
     active_menu = extract_menu(configuration, title_entry)
     if 'submitjob' in active_menu:
         valid_topics.append('job')
@@ -185,7 +188,8 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('seafile')
     if configuration.site_enable_duplicati:
         valid_topics.append('duplicati')
-    if configuration.site_enable_twofactor:
+    if configuration.site_enable_twofactor \
+            and not configuration.site_enable_gdp:
         valid_topics.append('webaccess')
     topics = accepted['topic']
     # Backwards compatibility
