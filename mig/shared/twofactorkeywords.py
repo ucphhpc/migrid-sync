@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# twofactorkeywords - supported web access settings
+# twofactorkeywords - supported two factor settings
 # Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Keywords in the web access settings"""
+"""Keywords in the two factor settings"""
 
 
 def get_twofactor_specs(configuration):

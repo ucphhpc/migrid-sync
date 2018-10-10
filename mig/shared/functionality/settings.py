@@ -202,7 +202,7 @@ def main(client_id, user_arguments_dict):
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
                        ('ftps', 'FTPS'), ('seafile', 'Seafile'),
-                       ('duplicati', 'Duplicati'), ('twofactor', 'Web Access'),
+                       ('duplicati', 'Duplicati'), ('twofactor', 'Two Factor'),
                        ]:
         if key in valid_topics:
             topic_titles[key] = val
@@ -1722,10 +1722,10 @@ client versions from the link above.<br/>
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="twofactor fixedlayout">
 <tr class="title"><td class="centertext">
-Web Access
+Two Factor Authentication
 </td></tr>
 <tr><td>
-It is possible to tweak some of the web access methods here.
+It is possible to tweak some of the two factor authentication here.
 </td></tr>
 '''
 
@@ -1843,7 +1843,7 @@ It is possible to tweak some of the web access methods here.
             """ % entry
 
         html += '''<tr class="otp_ready hidden"><td>
-        <input type="submit" value="Save Web Access Settings" />
+        <input type="submit" value="Save Two Factor Authentication Settings" />
 </td></tr>
 </table>
 </form>
