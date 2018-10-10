@@ -187,8 +187,9 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('seafile')
     if configuration.site_enable_duplicati:
         valid_topics.append('duplicati')
-    if configuration.site_enable_twofactor \
-            and not configuration.site_enable_gdp:
+    if configuration.site_enable_twofactor:
+    # \
+    #        and not configuration.site_enable_gdp:
         valid_topics.append('twofactor')
     topics = accepted['topic']
     # Backwards compatibility
@@ -1699,7 +1700,7 @@ client versions from the link above.<br/>
 
         # load current twofactor
 
-        current_twofactor_dict = load_twofactor(real_user, configuration)
+        current_twofactor_dict = load_twofactor(client_id, configuration)
         if not current_twofactor_dict:
 
             # no current twofactor found
