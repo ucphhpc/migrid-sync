@@ -38,7 +38,7 @@ except ImportError:
 
 from shared.base import client_id_dir, extract_field, force_utf8
 from shared.defaults import twofactor_key_name, twofactor_key_bytes
-from shared.fileio import read_file, delete_file
+from shared.fileio import read_file, delete_file, delete_symlink
 from shared.pwhash import scramble_password, unscramble_password
 
 
@@ -63,7 +63,8 @@ def reset_twofactor_key(client_id, configuration):
         if pyotp is None:
             raise Exception("The pyotp module is missing and required for 2FA")
         b32_key = pyotp.random_base32(length=twofactor_key_bytes)
-        # NOTE: pyotp.random_base32 returns unicode which causes trouble with WSGI
+        # NOTE: pyotp.random_base32 returns unicode
+        #       which causes trouble with WSGI
         b32_key = force_utf8(b32_key)
         scrambled = scramble_password(configuration.site_password_salt,
                                       b32_key)
@@ -161,7 +162,10 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
     return pyotp.TOTP(b32_key).verify(token)
 
 
-def expire_twofactor_session(configuration, client_id, environ, allow_missing=False):
+def expire_twofactor_session(configuration,
+                             client_id,
+                             environ,
+                             allow_missing=False):
     """Expire active twofactor session for user with identity. Looks up any
     corresponding session cookies and extracts the session_id. In case a
     matching session_id state file exists it is deleted after checking that it
@@ -172,7 +176,7 @@ def expire_twofactor_session(configuration, client_id, environ, allow_missing=Fa
     session_cookie.load(environ.get('HTTP_COOKIE', None))
     session_cookie = session_cookie.get('2FA_Auth', None)
     if session_cookie is None:
-        _logger.warning("no session cookie found for %s" % client_id)
+        _logger.warning("no 2FA session cookie found for %s" % client_id)
         if allow_missing:
             return True
         return False
@@ -181,20 +185,29 @@ def expire_twofactor_session(configuration, client_id, environ, allow_missing=Fa
     session_data = read_file(session_path, _logger)
     if session_data is None:
         if allow_missing:
-            _logger.info("twofactor session empty: %s" % session_path)
+            _logger.info("2FA session empty: %s" % session_path)
             return True
-        _logger.error("no such twofactor session to expire: %s" % session_path)
+        _logger.error("no 2FA session to expire: %s" % session_path)
         expired = False
     elif session_data.find(client_id) == -1:
-        _logger.error("session %s does not belong to %s - ignoring! (%s)" %
+        _logger.error("2FA session %s does not belong to %s - ignoring! (%s)" %
                       (session_id, client_id, session_data))
         expired = False
     else:
+        delete_status = True
         if delete_file(session_path, _logger, allow_missing=allow_missing):
-            _logger.info("expired session %s for %s" % (session_id, client_id))
+            _logger.info("expired 2FA session %s for %s" % (session_id, client_id))
+            client_dir = client_id_dir(client_id)
+            client_link_path = os.path.join(configuration.twofactor_home,
+                                            client_dir)
+            if not delete_symlink(client_link_path, _logger):
+                logger.warning(
+                    "failed to delete 2FA session symlink %s for %s"
+                    % (client_link_path, client_id))
             expired = True
         else:
-            _logger.error("failed to delete session file %s for %s!" %
+            _logger.error("failed to delete 2FA session file %s for %s!" %
                           (session_path, client_id))
             expired = False
+
     return expired
