@@ -47,7 +47,7 @@ from shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token
 from shared.base import force_utf8
 from shared.defaults import twofactor_cookie_bytes, twofactor_cookie_ttl
-from shared.fileio import write_file
+from shared.fileio import make_symlink, write_file
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
 from shared.settings import load_twofactor
@@ -238,14 +238,25 @@ Incorrect token provided - please try again
 
         # Create the state file to inform apache (rewrite) about auth
         session_path = os.path.join(configuration.twofactor_home, session_key)
+        client_dir_path = os.path.join(configuration.twofactor_home, client_dir)
         # We save user info just to be able to monitor and expire active sessions
         session_data = '''%s
 %s
 %s
 ''' % (user_agent, user_addr, client_id)
+        write_status = True
         if not write_file(session_data, session_path, configuration.logger):
+            write_status = False
             logger.error("could not write session for %s to %s" %
                          (client_id, session_path))
+        if not make_symlink(session_key,
+                            client_dir_path, 
+                            logger,
+                            force=True):
+            write_status = False
+            logger.error("could not make session symlink %s -> %s" %
+                          (client_dir_path, session_key))
+        if not write_status:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  "Internal error: could not create 2FA session!"})
