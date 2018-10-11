@@ -100,22 +100,21 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
         old_umask = os.umask(umask)
     if not os.path.isdir(head) and make_parent:
         try:
-            logger.debug('making directory %s' % head)
+            logger.debug('making directory: %s' % head)
             os.mkdir(head)
         except Exception, err:
-            logger.error('could not create dir %s' % err)
+            logger.error('could not create dir: %s' % err)
     try:
         filehandle = open(path, mode)
         filehandle.write(content)
         filehandle.close()
-        msg = 'file written: %s' % path
+        # logger.debug('file written: %s' % path)
         retval = True
     except Exception, err:
-        msg = 'could not write %s %s' % (path, err)
+        logger.error('could not write file: %s, error: %s' % (path, err))
         retval = False
     if umask is not None:
         os.umask(old_umask)
-    logger.debug(msg)
     return retval
 
 
