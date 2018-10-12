@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+# 
 # -- END_HEADER ---
 #
 
@@ -842,6 +842,11 @@ Please contact the Grid admins %s if you think it should be enabled.
         for keyword in keywords_dict.keys():
             if keyword.endswith('_OID_TWOFACTOR'):
                 value = True
+            elif keyword == 'WEBDAVS_TWOFACTOR':
+                if configuration.site_enable_davs:
+                    value = True
+                else:
+                    value = False
             else:
                 value = keywords_dict[keyword]['value']
             topic_mrsl += '''::%s::

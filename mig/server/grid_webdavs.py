@@ -68,7 +68,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
-    track_close_expired_sessions, get_active_session
+    track_close_expired_sessions, get_active_session, valid_twofactor_session
 from shared.sslsession import get_ssl_master_key
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
@@ -372,7 +372,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             elif self._check_auth_password(ip_addr,
                                            realmname,
                                            username,
-                                           password):
+                                           password) \
+                    and valid_twofactor_session(configuration, username):
                 logger.info("Accepted password login for %s from %s" %
                             (username, ip_addr))
                 success = True
@@ -439,7 +440,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             #              (ip_addr, tcp_port, session_id))
             update_users(configuration, self.user_map, username)
 
-            if self._get_user_digests(ip_addr, realmname, username):
+            if self._get_user_digests(ip_addr, realmname, username) \
+                    and valid_twofactor_session(configuration, username):
                 # logger.debug("valid digest user %s from %s:%s" %
                 #              (username, ip_addr, tcp_port))
                 success = True

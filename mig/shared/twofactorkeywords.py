@@ -64,6 +64,20 @@ logins through a personal auth token generator on your phone or tablet.
             'Context': 'twofactor',
             'Required': False,
         }))
+    if configuration.site_enable_davs:
+        specs.append(('WEBDAVS_TWOFACTOR', {
+            'Title': 'Enable 2-FA for WebDAVS login',
+            'Description': '''Add an extra layer of security to your WebDAVS
+logins through a personal auth token generator on your phone or tablet.
+''',        
+            'Example': 'True',
+            'Type': 'boolean',
+            'Value': False,
+            'Editor': 'select',
+            'Context': 'twofactor',
+            'Required': False,
+        }))
+    
     return specs
 
 

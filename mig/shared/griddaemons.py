@@ -40,10 +40,12 @@ from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path, force_utf8
 from shared.defaults import dav_domain, io_session_timeout
 from shared.fileio import unpickle
+from shared.gdp import get_client_id_from_project_client_id
 from shared.safeinput import valid_path
 from shared.sharelinks import extract_mode_id
 from shared.ssh import parse_pub_key
-from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
+from shared.useradm import expand_openid_alias, \
+    ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
@@ -54,6 +56,7 @@ from shared.validstring import possible_user_id, possible_gdp_user_id, \
     valid_user_path, is_valid_email_address
 
 default_max_fails, default_fail_cache = 5, 120
+default_twofactor_ttl = 86400
 
 # NOTE: auth keys file may easily contain only blank lines, so we decide to
 #       consider any such file of less than a 100 bytes invalid.
@@ -1609,6 +1612,50 @@ def active_sessions(configuration,
 
     if not prelocked:
         _sessions_lock.release()
+
+    return result
+
+
+def valid_twofactor_session(configuration, username):
+    """Check if 2FA is enabled and *username* has a valid 2FA session.
+    Returns True if 2FA is enabled and a valid session exists.
+    NOTE:
+    1) In this first version 2FA sessions are solely activated
+        through HTTPS 2FA AUTH.
+    2) All daemons share the same 2FA session key and is validated by timestamp
+    3) If a more finegrained 2FA auth is needed along with the details
+        stored in the session_key file, then add twofa to the Login class
+        and merge this function with the existing 'refresh_X_creds' framework
+    """
+    conf = configuration.daemon_conf
+    logger = conf.get("logger", logging.getLogger())
+    # logger.debug("username: '%s'" % username)
+    result = False
+    if not configuration.site_enable_twofactor:
+        return result
+    client_id = expand_openid_alias(username, configuration)
+    if configuration.site_enable_gdp:
+        client_id = get_client_id_from_project_client_id(
+            configuration, client_id)
+    client_dir = client_id_dir(client_id)
+    client_link_path = os.path.join(configuration.twofactor_home, client_dir)
+    current_timestamp = time.time()
+    if os.path.exists(client_link_path):
+        twofa_session_key_path = os.path.realpath(client_link_path)
+        if os.path.exists(twofa_session_key_path):
+            twofa_session_key_timestamp = os.path.getmtime(
+                twofa_session_key_path)
+            if twofa_session_key_timestamp \
+                    > current_timestamp - default_twofactor_ttl:
+                result = True
+            else:
+                expired_time = current_timestamp \
+                    - twofa_session_key_timestamp - default_twofactor_ttl
+                logger.warning(
+                    "2FA session_key for %s expired %s seconds ago"
+                    % (username, expired_time))
+        else:
+            logger.warning("no 2FA session_key found for user: %s" % username)
 
     return result
 
