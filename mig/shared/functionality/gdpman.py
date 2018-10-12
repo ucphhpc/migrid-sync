@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-# 
+#
 # -- END_HEADER ---
 #
 
@@ -134,33 +134,33 @@ def html_tmpl(
 
     html += \
         """
-        <div id="project-tabs">
-        <ul class="fillwidth padspace">"""
+        <div id='project-tabs'>
+        <ul class='fillwidth padspace'>"""
     if accepted_projects:
-        html += """<li><a href="#access">Access project</a></li>"""
+        html += """<li><a href='#access'>Access project</a></li>"""
         tab_count += 1
     if create_projects:
-        html += """<li><a href="#create">Create project</a></li>"""
+        html += """<li><a href='#create'>Create project</a></li>"""
         if action == 'create':
             preselected_tab = tab_count
         tab_count += 1
     if invite_projects:
-        html += """<li><a href="#invite">Invite participant</a></li>"""
+        html += """<li><a href='#invite'>Invite participant</a></li>"""
         if action == 'invite':
             preselected_tab = tab_count
         tab_count += 1
     if invited_projects:
-        html += """<li><a href="#accept">Accept invitation</a></li>"""
+        html += """<li><a href='#accept'>Accept invitation</a></li>"""
         if action == 'accept_invite':
             preselected_tab = tab_count
         tab_count += 1
     if remove_projects:
-        html += """<li><a href="#remove">Remove participant</a></li>"""
+        html += """<li><a href='#remove'>Remove participant</a></li>"""
         if action == 'remove':
             preselected_tab = tab_count
         tab_count += 1
     if configuration.site_enable_twofactor:
-        html += """<li><a href="#twofactor">Two-Factor Auth</a></li>"""
+        html += """<li><a href='#twofactor'>Two-Factor Auth</a></li>"""
         if action == 'twofactor':
             preselected_tab = tab_count
         tab_count += 1
@@ -190,9 +190,9 @@ def html_tmpl(
     if accepted_projects:
         html += \
             """
-        <div id="access">"""
+        <div id='access'>"""
         html += status_html
-        html +=  \
+        html += \
             """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
@@ -241,7 +241,7 @@ def html_tmpl(
     if invited_projects:
         html += \
             """
-        <div id="accept">"""
+        <div id='accept'>"""
         html += status_html
         html +=  \
             """
@@ -292,7 +292,7 @@ def html_tmpl(
     if invite_projects:
         html += \
             """
-        <div id="invite">"""
+        <div id='invite'>"""
         html += status_html
         html +=  \
             """
@@ -352,7 +352,7 @@ def html_tmpl(
     if remove_projects:
         html += \
             """
-        <div id="remove">"""
+        <div id='remove'>"""
         html += status_html
         html +=  \
             """
@@ -500,23 +500,23 @@ def html_tmpl(
                              'check_url': check_url, 'demand_twofactor':
                              'demand', 'enable_hint': enable_hint})
 
-        html += '''
-        <tr class="otp_ready hidden"><td>
+        html += """
+        <tr class='otp_ready hidden'><td>
         </td></tr>
-        '''
+        """
 
         if not twofactor_enabled:
-            html += '''<tr class="otp_ready hidden"><td>
+            html += """<tr class='otp_ready hidden'><td>
         Enable 2-factor authentication and<br/>
         <a class='ui-button' href='#' onclick='submitform(\"enable2fa\"); return false;'>Start Using %(site)s</a>
 </td></tr>
-'''
+"""
 
-        html += '''
+        html += """
 </tbody>
 </table>
 </div>
-'''
+"""
 
     if configuration.site_enable_twofactor and \
         (current_twofactor_dict.get("MIG_OID_TWOFACTOR", False) or
@@ -588,7 +588,8 @@ def html_logout_tmpl(configuration, csrf_token):
 def css_tmpl(configuration):
     """Stylesheets to include in the page header
     Selectbox CSS from : https://codepen.io/ericrasch/pen/zjDBx
-    TODO: Turn into MiG css ?"""
+    TODO: Turn into MiG css ?
+    """
 
     css = themed_styles(configuration)
 
@@ -740,7 +741,7 @@ def js_tmpl(configuration):
 %s
     """ % tfa_init
     js_ready = """
-        $("#project-tabs").tabs({
+        $('#project-tabs').tabs({
             collapsible: false,
             active: preselected_tab
         });
