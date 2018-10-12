@@ -269,12 +269,13 @@ def __project_short_id_from_user_id(configuration, user_id):
     """Extract project_short_id from *user_id*
     *user_id* is either a project_client_id or project_short_id"""
 
-    configuration.logger.debug("user_id: %s" % user_id)
-    try:
-        result = __project_short_id_from_project_client_id(
-            configuration,
-            user_id)
-    except:
+    _logger = configuration.logger
+    _logger.debug("user_id: %s" % user_id)
+    
+    result = __project_short_id_from_project_client_id(
+                configuration,
+                user_id)
+    if result is None:
         result = user_id
 
     return result
