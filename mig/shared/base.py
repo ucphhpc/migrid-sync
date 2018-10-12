@@ -120,7 +120,7 @@ def distinguished_name_to_user(distinguished_name):
     user_dict = {'distinguished_name': distinguished_name}
     parts = distinguished_name.split('/')
     for field in parts:
-        if not field:
+        if not field or field.find('=') == -1:
             continue
         (key, val) = field.split('=', 1)
         if 'NA' == val:
