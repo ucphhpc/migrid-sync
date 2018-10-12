@@ -118,11 +118,11 @@ def distinguished_name_to_user(distinguished_name):
     """
 
     user_dict = {'distinguished_name': distinguished_name}
-    parts = distinguished_name.split('/')
+    parts = distinguished_name.split(_id_sep)
     for field in parts:
-        if not field or field.find('=') == -1:
+        if not field or field.find(_key_val_sep) == -1:
             continue
-        (key, val) = field.split('=', 1)
+        (key, val) = field.split(_key_val_sep, 1)
         if 'NA' == val:
             val = ''
         if not key in cert_field_map.values():
@@ -138,22 +138,6 @@ def extract_field(distinguished_name, field_name):
     """Extract field_name value from client_id if included"""
     user = distinguished_name_to_user(distinguished_name)
     return user.get(field_name, None)
-
-
-# TODO: old_id_format should be eliminated after complete migration to full DN
-
-def old_id_format(client_id):
-    """Map client ID to the old underscore CN only ID:
-    client_id is a distinguished name on the form /X=ab/Y=cdef ghi/CN=klmn...
-    so we just extract the CN field and replace space with underscore.
-    """
-
-    try:
-        old_id = client_id.split('/CN=', 1)[1]
-        old_id = old_id.split('/', 1)[0]
-        return old_id.replace(' ', '_')
-    except:
-        return client_id
 
 
 def sandbox_resource(unique_resource_name):

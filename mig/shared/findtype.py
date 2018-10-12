@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # findtype - Detect client entity type
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,7 @@ import os
 from string import letters, digits
 
 from shared.defaults import user_db_filename
-from shared.base import client_id_dir, old_id_format
+from shared.base import client_id_dir
 from shared.listhandling import is_item_in_pickled_list
 from shared.validstring import valid_user_path
 from shared.serial import load
@@ -41,12 +41,12 @@ MIG_SERVER_ID = 'MiG-Server'
 
 
 def is_user(entity_id, mig_server_home):
-    """Check if user exits in database""" 
+    """Check if user exists in database"""
 
     result = False
 
     db_path = os.path.join(mig_server_home, user_db_filename)
-    try:   
+    try:
         user_db = load(db_path)
         if user_db.has_key(entity_id):
             result = True
@@ -90,11 +90,11 @@ def is_owner(
     unique_config_name,
     config_home,
     logger,
-    ):
+):
     """Check that client_id is listed in pickled owners file"""
 
     config_path = os.path.abspath(os.path.join(config_home,
-                                  unique_config_name, 'owners'))
+                                               unique_config_name, 'owners'))
 
     # Check validity of unique_config_name
 
@@ -111,15 +111,12 @@ by client: '%s'
 unique name: '%s'
 
 caller: %s"""
-                        % (client_id, unique_config_name, caller))
+                       % (client_id, unique_config_name, caller))
         return False
-    return is_item_in_pickled_list(config_path, client_id, logger)\
-         or is_item_in_pickled_list(config_path,
-                                    old_id_format(client_id), logger)
+    return is_item_in_pickled_list(config_path, client_id, logger)
+
 
 def is_admin(client_id, configuration, logger):
     """Check that client_id is listed in MiG admins"""
 
     return client_id in configuration.admin_list
-
-
