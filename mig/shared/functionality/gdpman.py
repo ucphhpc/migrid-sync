@@ -843,10 +843,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             if keyword.endswith('_OID_TWOFACTOR'):
                 value = True
             elif keyword == 'WEBDAVS_TWOFACTOR':
-                if configuration.site_enable_davs:
-                    value = True
-                else:
-                    value = False
+                value = True
             else:
                 value = keywords_dict[keyword]['value']
             topic_mrsl += '''::%s::
