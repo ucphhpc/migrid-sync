@@ -38,7 +38,8 @@ import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path, force_utf8
-from shared.defaults import dav_domain, io_session_timeout
+from shared.defaults import dav_domain, io_session_timeout, \
+    twofactor_cookie_ttl
 from shared.fileio import unpickle
 from shared.gdp import get_client_id_from_project_client_id
 from shared.safeinput import valid_path
@@ -56,7 +57,6 @@ from shared.validstring import possible_user_id, possible_gdp_user_id, \
     valid_user_path, is_valid_email_address
 
 default_max_fails, default_fail_cache = 5, 120
-default_twofactor_ttl = 86400
 
 # NOTE: auth keys file may easily contain only blank lines, so we decide to
 #       consider any such file of less than a 100 bytes invalid.
@@ -1646,11 +1646,11 @@ def valid_twofactor_session(configuration, username):
             twofa_session_key_timestamp = os.path.getmtime(
                 twofa_session_key_path)
             if twofa_session_key_timestamp \
-                    > current_timestamp - default_twofactor_ttl:
+                    > current_timestamp - twofactor_cookie_ttl:
                 result = True
             else:
                 expired_time = current_timestamp \
-                    - twofa_session_key_timestamp - default_twofactor_ttl
+                    - twofa_session_key_timestamp - twofactor_cookie_ttl
                 logger.warning(
                     "2FA session_key for %s expired %s seconds ago"
                     % (username, expired_time))
