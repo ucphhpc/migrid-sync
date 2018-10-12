@@ -201,7 +201,7 @@ def expire_twofactor_session(configuration,
             client_link_path = os.path.join(configuration.twofactor_home,
                                             client_dir)
             if not delete_symlink(client_link_path, _logger):
-                logger.warning(
+                _logger.warning(
                     "failed to delete 2FA session symlink %s for %s"
                     % (client_link_path, client_id))
             expired = True
