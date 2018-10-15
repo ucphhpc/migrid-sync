@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migdavs - sample python_webdav-based davs client for user home access
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,16 +33,18 @@ lxml (https://pypi.python.org/pypi/lxml),
 requests (https://pypi.python.org/pypi/requests),
 mock (https://pypi.python.org/pypi/mock),
 and BeautifulSoup (https://pypi.python.org/pypi/BeautifulSoup).
+which can all be installed with:
+pip install python_webdav httplib2 lxml mock beautifulsoup
 
 Run with:
-python migdavs.py [GENERATED_USERNAME]
+python migdavs.py [SERVER] [PORT] [USERNAME] [PASSWORD]
 
-where the optional GENERATED_USERNAME is the username displayed on your
-personal MiG ssh settings page. You will be interactively prompted for it if
-it is not provided on the command line.
-
-Please check the global configuration section below if it fails. The comments
-should help you tweak the configuration to solve most common problems.
+where the optional arguments specify the SERVER and PORT running the WebDAVS
+service to use and the USERNAME would likely be your registered email or
+whatever automatic username is displayed on your personal MiG WebDAVS Settings
+page. Similarly PASSWORD is the one you saved there.
+You will be interactively prompted for credentials if they are neither provided
+on the command line nor available in any local ~/.netrc file.
 
 This example should be a good starting point for writing your own custom davs
 client acting on your MiG home.
@@ -52,28 +54,20 @@ import getpass
 import netrc
 import os
 import sys
+
 import python_webdav
 import python_webdav.client
 from requests.exceptions import ConnectionError
-
-
-# Global configuration ###
-
-server_fqdn = 'dk-cert.migrid.org'
-# server_fqdn = 'localhost'
-server_port = 4443
 
 
 class MiGDAVClient(python_webdav.client.Client):
 
     """Extend basic client with a few methods we want for the testing"""
 
-    def __init__(self, webdav_server_uri, webdav_path='.', port=80, realm='',
-                 allow_bad_cert=False):
+    def __init__(self, webdav_server_uri, webdav_path='.', port=80, realm=''):
         """Just call parent constructor for now"""
         python_webdav.client.Client.__init__(self, webdav_server_uri,
-                                             webdav_path, port, realm,
-                                             allow_bad_cert)
+                                             webdav_path, port, realm)
 
     def stat(self, path):
         """Wrap underlying connection.client.get_properties to provide
@@ -111,7 +105,7 @@ class MiGDAVClient(python_webdav.client.Client):
 
     def get(self, src_path, dst_path):
         """Wrap send_get to emulate sftp get. The existing download_file method
-        is limited to providing destination directory so we modify the code
+        is limited to providing destination directory, so we modify the code
         from there.
         """
         resource_path = "%s/%s" % (
@@ -130,75 +124,78 @@ class MiGDAVClient(python_webdav.client.Client):
         return resp, content
 
     def put(self, src_path, dst_path):
-        """Wrap upload_file to emulate sftp put"""
-        # TODO: this should work without error but upload succeeds and throws
-        #    requests.exceptions.ConnectionError:
-        #    HTTPSConnectionPool(host='localhost', port=4443):
-        #        Max retries exceeded with url: /this-is-a-migdavs-dummy-file.txt
-        #          (Caused by <class 'socket.error'>: [Errno 32] Broken pipe)
+        """Wrap send_put to emulate sftp put. The existing upload_file method
+        appears broken and results in a 400 error response from the server, so
+        we modify the code from there.
+        """
         try:
-            self.upload_file(src_path, dst_path)
-        except ConnectionError:
-            pass
+            src_fd = open(src_path, 'rb')
+            resp, content = self.connection.send_put(dst_path, src_fd.read())
+        except IOError:
+            raise
+        finally:
+            src_fd.close()
 
 
 # Initialize client session ###
 
 if __name__ == "__main__":
+    server_fqdn = 'dk-io.migrid.org'
+    server_port = 443
     user_name, password = None, None
-    try:
-        auth_helper = netrc.netrc()
-        creds = auth_helper.authenticators(server_fqdn)
-        if creds:
-            (user_name, _, password) = creds
-            print "Read login for %s from .netrc" % server_fqdn
-    except Exception, exc:
-        print "Didn't find login in ~/.netrc: %s" % exc
 
     # Override with username/password from command line if given
 
     if sys.argv[1:]:
-        user_name = sys.argv[1]
-        print "Using username %s from command line" % user_name
+        server_fqdn = sys.argv[1]
     if sys.argv[2:]:
-        password = sys.argv[2]
-        print "Using password from command line"
+        server_port = int(sys.argv[2])
+    if sys.argv[3:]:
+        user_name = sys.argv[3]
+    if sys.argv[4:]:
+        password = sys.argv[4]
+
+    print "Using server at %s:%d" % (server_fqdn, server_port)
+
+    if not user_name or not password:
+        print "Reading any available credentials from ~/.netrc"
+        auto_user_name, auto_password = None, None
+        try:
+            auth_helper = netrc.netrc()
+            creds = auth_helper.authenticators(server_fqdn)
+            if creds:
+                (auto_user_name, _, auto_password) = creds
+                if not user_name or auto_user_name == user_name:
+                    user_name = auto_user_name
+                    password = auto_password
+                    print "Read login for %s from .netrc" % server_fqdn
+        except Exception, exc:
+            print "Didn't find suitable credentials in ~/.netrc: %s" % exc
 
     if not user_name:
-        print """Please enter/paste the short alias username from your MiG
-ssh settings page"""
+        print """Please enter/paste the short alias username from your %s
+WebDAVS Settings page""" % server_fqdn
         user_name = raw_input('Username: ')
-    if not password:
-        print """Please enter your password entered on your MiG ssh settings
-page"""
-        password = getpass.getpass('Password: ')
 
-    # grid_davs server does not support long usernames it seems - so please
-    # enable email alias or similar and use it here
-#    if len(user_name) < 64:
-#        print """Warning: the supplied username is shorter than expected!
-# Please verify it on your MiG ssh Settings page in case of failure."""
-    if len(user_name) > 99:
-        print """Warning: the supplied username is longer than expected!
-Please note that the long user names are not supported on the server and that
-you should use the short alias found on your MiG ssh Settings page."""
+        print """Please enter your password entered on your %s WebDAVS
+Settings page""" % server_fqdn
+        password = getpass.getpass('Password: ')
 
     # Connect with provided settings
 
-    ignore_cert = True
     server_url = 'https://%s:%d' % (server_fqdn, server_port)
     print "connecting to %s" % server_url
 
-    client = MiGDAVClient(server_url, allow_bad_cert=ignore_cert)
+    client = MiGDAVClient(server_url)
 
     print "auth as user %s" % user_name
     client.set_connection(user_name, password)
 
     # Sample actions on your MiG home directory ###
 
-    # List and stat files in the remote .ssh dir which should always be there
+    # List and stat files in the remote .davs dir which should always be there
 
-    base = '.ssh'
+    base = '.davs'
     print "listing files in %s" % base
     # ls returns list of list with hrefs - convert to relative paths
     # list includes directory itself so filter on type
@@ -206,9 +203,9 @@ you should use the short alias found on your MiG ssh Settings page."""
     hrefs = [i[1] for i in nested_hrefs if i[0] != 'collection']
     files = []
     for uri in hrefs:
-        split_str = ':%d/%s/' % (server_port, base)
-        pos = uri.find(split_str)
-        rel_path = uri[pos + len(split_str):]
+        # NOTE: uri may be full URL or slash-prefixed server path here - strip
+        rel_path = uri.replace(server_url, '').lstrip('/')
+        rel_path = rel_path.replace(base, '').lstrip('/')
         files.append(rel_path)
     print "got files: %s" % files
     path_stat = client.stat(base)
@@ -219,6 +216,11 @@ you should use the short alias found on your MiG ssh Settings page."""
         print "stat on %s" % rel_path
         path_stat = client.stat(rel_path)
         print "stat %s:\n%s" % (rel_path, path_stat)
+    welcome = 'welcome.txt'
+    print "download %s from home" % welcome
+    client.get(welcome, welcome)
+    path_stat = os.stat(welcome)
+    print "local stat %s:\n%s" % (welcome, path_stat)
     dummy = 'this-is-a-migdavs-dummy-file.txt'
     dummy_text = "sample file\ncontents from client\n"
     dummy_fd = open(dummy, "w")
@@ -229,12 +231,13 @@ you should use the short alias found on your MiG ssh Settings page."""
     print "local stat %s:\n%s" % (dummy, path_stat)
     print "upload migdavsdummy in %s home" % dummy
     client.put(dummy, dummy)
+    print "stat on uploaded %s" % dummy
     path_stat = client.stat(dummy)
     print "remote stat %s:\n%s" % (dummy, path_stat)
     print "delete dummy in %s" % dummy
     os.remove(dummy)
     print "verify gone: %s" % (dummy not in os.listdir('.'))
-    print "download migdavsdummy from %s home" % dummy
+    print "download %s from home" % dummy
     client.get(dummy, dummy)
     path_stat = os.stat(dummy)
     print "local stat %s:\n%s" % (dummy, path_stat)
