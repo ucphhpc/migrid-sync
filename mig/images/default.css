@@ -1069,7 +1069,7 @@ a:hover.settingsbutton {
   background-image: url('/images/icons/user.png');
   padding-left: 18px;
 }
-.webaccesssettingslink {
+.twofactorsettingslink {
   background-image: url('/images/icons/computer_key.png');
   padding-left: 18px;
 }
