@@ -1716,7 +1716,7 @@ client versions from the link above.<br/>
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="twofactor fixedlayout">
 <tr class="title"><td class="centertext">
-Two Factor Authentication
+2-Factor Authentication
 </td></tr>
 <tr><td>
 It is possible to tweak some of the two factor authentication here.
@@ -1837,7 +1837,7 @@ It is possible to tweak some of the two factor authentication here.
             """ % entry
 
         html += '''<tr class="otp_ready hidden"><td>
-        <input type="submit" value="Save Two Factor Authentication Settings" />
+        <input type="submit" value="Save 2-Factor Auth Settings" />
 </td></tr>
 </table>
 </form>

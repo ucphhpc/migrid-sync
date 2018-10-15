@@ -68,7 +68,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
-    track_close_expired_sessions, get_active_session, valid_twofactor_session
+    track_close_expired_sessions, get_active_session, check_twofactor_session
 from shared.sslsession import get_ssl_master_key
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, reopen_log
@@ -341,12 +341,13 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         return False
 
     def authDomainUser(self, realmname, username, password, environ):
-        """Returns True if session is already authorized or
-        the username / password pair is valid for the realm,
-        False otherwise. Used for basic authentication.
-
-        We explicitly compare against saved hash rather than password
-
+        """Returns True if session is already authorized or the
+        username / password pair is valid for the realm, False otherwise.
+        I.e. this method is only used for the 'basic' auth method, while
+        'digest' auth takes another code path.
+        Includes optional 2-factor authentication if enabled.
+        
+        NOTE: We explicitly compare against saved hash rather than password.
         """
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
@@ -369,11 +370,9 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             offered = password
             if hit_rate_limit(configuration, "davs", ip_addr, username):
                 logger.warning("Rate limiting login from %s" % ip_addr)
-            elif self._check_auth_password(ip_addr,
-                                           realmname,
-                                           username,
-                                           password) \
-                    and valid_twofactor_session(configuration, username):
+            elif self._check_auth_password(
+                ip_addr, realmname, username, password) and \
+                check_twofactor_session(configuration, username, 'davs'):
                 logger.info("Accepted password login for %s from %s" %
                             (username, ip_addr))
                 success = True
@@ -440,8 +439,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             #              (ip_addr, tcp_port, session_id))
             update_users(configuration, self.user_map, username)
 
-            if self._get_user_digests(ip_addr, realmname, username) \
-                    and valid_twofactor_session(configuration, username):
+            if self._get_user_digests(ip_addr, realmname, username) and \
+                   check_twofactor_session(configuration, username, 'davs'):
                 # logger.debug("valid digest user %s from %s:%s" %
                 #              (username, ip_addr, tcp_port))
                 success = True
@@ -478,8 +477,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     def getRealmUserPassword(self, realmname, username, environ):
         """Return the password for the given username for the realm.
 
-        Used for digest authentication and always called after isRealmUser
-        so update creds is already applied. We just rate limit and check here.
+        Used only for 'digest' auth and always called after isRealmUser, so
+        update creds is already applied. We just rate limit and check here.
         """
 
         # TODO: consider digest caching here!
