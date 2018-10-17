@@ -30,6 +30,7 @@
 import base64
 import datetime
 import os
+import sys
 import time
 # NOTE: Use faster scandir if available
 try:
@@ -41,7 +42,7 @@ except ImportError:
     from os import walk
 from urllib import quote
 
-from shared.base import client_id_dir
+from shared.base import client_id_dir, distinguished_name_to_user
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
     public_archive_dir, public_archive_index, freeze_flavors, keyword_final, \
     keyword_pending, keyword_auto, max_freeze_files
@@ -58,6 +59,8 @@ TARGET_PATH = 'PATH'
 ARCHIVE_PREFIX = 'archive-'
 CACHE_EXT = ".cache"
 __chksum_unset = 'please request explicitly'
+__public_meta = [('CREATOR', 'Owner'), ('NAME', 'Name'),
+                 ('DESCRIPTION', 'Description'), ('CREATED_TIMESTAMP', 'Date')]
 
 
 def public_freeze_id(freeze_dict, configuration):
@@ -555,6 +558,21 @@ def handle_frozen_files(freeze_id, arch_dir, freeze_copy, freeze_move,
     return (True, copy_res + move_res + upload_res)
 
 
+def format_meta(key, val):
+    """Simple helper to mangle meta field display on landing page"""
+    out = val
+    if key == 'CREATOR':
+        user_dict = distinguished_name_to_user(val)
+        # NOTE: obfuscate email by replacing with html entities
+        for (src, dst) in [('@', '&#064;'), ('.', '&#046;')]:
+            user_dict['email'] = user_dict.get('email', '').replace(src, dst)
+        out = "%(full_name)s, %(organization)s, %(email)s" % user_dict
+    elif key == 'CREATED_TIMESTAMP':
+        # Drop microsecond precision
+        out = val.replace(microsecond=0)
+    return out
+
+
 def write_landing_page(freeze_dict, arch_dir, frozen_files, configuration):
     """Write a landing page for archive publishing. Depending on archive state
     it will be a draft or the final version.
@@ -562,9 +580,6 @@ def write_landing_page(freeze_dict, arch_dir, frozen_files, configuration):
     _logger = configuration.logger
     freeze_id = freeze_dict['ID']
     published_id = public_freeze_id(freeze_dict, configuration)
-    public_meta = [('CREATOR', 'Owner'), ('NAME', 'Name'),
-                   ('DESCRIPTION', 'Description'),
-                   ('CREATED_TIMESTAMP', 'Date')]
     real_pub_dir = published_dir(freeze_dict, configuration)
     real_pub_index = os.path.join(arch_dir, public_archive_index)
     arch_url = published_url(freeze_dict, configuration)
@@ -623,13 +638,13 @@ The user-supplied meta data and files are available below.
 <div class='archive-metadata'>
 <h2 class='staticpage'>Archive Meta Data</h2>
 """ % (publish_preamble, published_id)
-    for (meta_key, meta_label) in public_meta:
+    for (meta_key, meta_label) in __public_meta:
         meta_value = freeze_dict.get(meta_key, '')
         if meta_value:
             # Preserve any text formatting in e.g. description
             contents += """<h4 class='staticpage'>%s</h4>
 <pre class='archive-%s'>%s</pre>
-""" % (meta_label, meta_label.lower(), meta_value)
+""" % (meta_label, meta_label.lower(), format_meta(meta_key, meta_value))
     contents += """</div>
 
 <div class='archive-files'>
@@ -892,3 +907,27 @@ def delete_frozen_archive(freeze_dict, client_id, configuration):
         _logger.error("could not remove archive dir for %s" % freeze_dict)
         return (False, 'Error deleting frozen archive %s' % freeze_id)
     return (True, '')
+
+
+if __name__ == "__main__":
+    if not sys.argv[2:]:
+        print "USAGE: freezefunctions.py CLIENT_ID ARCHIVE_ID"
+        print "       Runs basic unit tests for the ARCHIVE_ID of CLIENT_ID"
+        sys.exit(1)
+    from shared.conf import get_configuration_object
+    configuration = get_configuration_object()
+    client_id = sys.argv[1]
+    freeze_id = sys.argv[2]
+    print "Loading %s of %s" % (freeze_id, client_id)
+    (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
+                                                    configuration)
+    if not load_status:
+        print "Failed to load %s for %s: %s" % (freeze_id, client_id,
+                                                freeze_dict)
+        sys.exit(1)
+    print "Metadata for %s is:" % freeze_id
+    for (meta_key, meta_label) in __public_meta:
+        meta_value = freeze_dict.get(meta_key, '')
+        if meta_value:
+            # Preserve any text formatting in e.g. description
+            print "%s: %s" % (meta_label, format_meta(meta_key, meta_value))
