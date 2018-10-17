@@ -740,6 +740,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     if not init_status:
         _logger.error(init_res)
         return (init_status, init_res)
+
     # We received the updated freeze_meta dict from init
     freeze_dict = init_res
     freeze_id = freeze_dict['ID']
@@ -787,7 +788,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                       (freeze_id, client_id, freeze_entries))
         return (False, "Error: final archives must have one or more files")
 
-    if published:
+    if freeze_dict.get('PUBLISH', False):
         (web_status, web_res) = write_landing_page(freeze_dict, arch_dir,
                                                    frozen_files, configuration)
     elif published:
