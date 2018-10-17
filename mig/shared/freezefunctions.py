@@ -55,7 +55,8 @@ from shared.serial import load, dump
 
 TARGET_ARCHIVE = 'ARCHIVE'
 TARGET_PATH = 'PATH'
-__cache_ext = ".cache"
+ARCHIVE_PREFIX = 'archive-'
+CACHE_EXT = ".cache"
 __chksum_unset = 'please request explicitly'
 
 
@@ -240,7 +241,7 @@ def list_frozen_archives(configuration, client_id):
 
         # Skip dot files/dirs and cache entries
 
-        if entry.startswith('.') or entry.endswith(__cache_ext):
+        if not entry.startswith(ARCHIVE_PREFIX) or entry.endswith(CACHE_EXT):
             continue
         if is_frozen_archive(client_id, entry, configuration):
 
@@ -313,7 +314,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
             break
     if not found:
         return (False, 'Could not open frozen archive %s' % freeze_id)
-    cache_path = "%s%s" % (arch_dir, __cache_ext)
+    cache_path = "%s%s" % (arch_dir, CACHE_EXT)
     file_map = {}
     try:
         cached = []
@@ -441,7 +442,7 @@ def init_frozen_archive(freeze_meta, client_id, configuration):
     _logger = configuration.logger
     user_archives = get_frozen_root(client_id, '', configuration)
     try:
-        arch_dir = make_temp_dir(prefix='archive-',
+        arch_dir = make_temp_dir(prefix=ARCHIVE_PREFIX,
                                  dir=user_archives)
     except Exception, err:
         _logger.error("create dir for %s from %s failed: %s" % (freeze_meta,
@@ -836,7 +837,7 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
     freeze_dict['FILES'] = [i for i in freeze_dict.get('FILES', []) if
                             i['name'] not in deleted]
 
-    cache_path = "%s%s" % (arch_dir, __cache_ext)
+    cache_path = "%s%s" % (arch_dir, CACHE_EXT)
     if os.path.isfile(cache_path):
         cached = load(cache_path)
         if not cached:
@@ -886,7 +887,7 @@ def delete_frozen_archive(freeze_dict, client_id, configuration):
             _logger.error(web_res)
             return (False, web_res)
 
-    if not delete_file(arch_dir+__cache_ext, _logger, allow_missing=True) \
+    if not delete_file(arch_dir+CACHE_EXT, _logger, allow_missing=True) \
             or not remove_rec(arch_dir, configuration):
         _logger.error("could not remove archive dir for %s" % freeze_dict)
         return (False, 'Error deleting frozen archive %s' % freeze_id)
