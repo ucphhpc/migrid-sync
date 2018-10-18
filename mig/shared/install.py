@@ -48,7 +48,7 @@ from shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
-    STRONG_SSH_LEGACY_MACS
+    STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX
 from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 
 
@@ -418,6 +418,10 @@ cert, oid and sid based https!
         user_dict['__OPENSSH_KEXALGOS__'] = STRONG_SSH_LEGACY_KEXALGOS
         user_dict['__OPENSSH_CIPHERS__'] = STRONG_SSH_LEGACY_CIPHERS
         user_dict['__OPENSSH_MACS__'] = STRONG_SSH_LEGACY_MACS
+
+    # We know that login with one of these common usernames is a password
+    # cracking attempt since our own username format differs.
+    user_dict['__CRACK_USERNAME_REGEX__'] = CRACK_USERNAME_REGEX
 
     # Define some FQDN helpers if set
     user_dict['__IFDEF_BASE_FQDN__'] = 'UnDefine'
@@ -849,6 +853,8 @@ openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict
         ("index-template.html", "index.html"),
         ("openssh-MiG-sftp-subsys-template.conf", "sshd_config-MiG-sftp-subsys"),
         ("fail2ban-MiG-daemons-filter-template.conf", "MiG-daemons-filter.conf"),
+        ("fail2ban-MiG-daemons-pw-crack-filter-template.conf",
+         "MiG-daemons-pw-crack-filter.conf"),
         ("fail2ban-sshd-pw-crack-filter-template.conf", "sshd-pw-crack-filter.conf"),
         ("fail2ban-MiG-daemons-jail-template.conf", "MiG-daemons-jail.conf"),
         # service script for MiG daemons
@@ -950,6 +956,8 @@ password errors to prevent brute-force scans for all MiG network daemons.
 You can install them with:
 sudo cp %(destination)s/MiG-daemons-filter.conf \\
         /etc/fail2ban/filter.d/MiG-daemons.conf
+sudo cp %(destination)s/MiG-daemons-pw-crack-filter.conf \\
+        /etc/fail2ban/filter.d/MiG-daemons-pw-crack.conf
 sudo cp %(destination)s/sshd-pw-crack-filter.conf \\
         /etc/fail2ban/filter.d/sshd-pw-crack.conf
 sudo cp %(destination)s/MiG-daemons-jail.conf \\

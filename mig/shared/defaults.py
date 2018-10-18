@@ -341,3 +341,6 @@ STRONG_SSH_MACS = "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,u
 # NOTE: extend strong MACS with the best possible alterantives on old paramiko
 #       to avoid falling back to really bad ones
 STRONG_SSH_LEGACY_MACS = "%s,hmac-sha2-512,hmac-sha2-256" % STRONG_SSH_MACS
+
+# A pattern to match usernames unambiguously identifying cracking attempts
+CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|lp|operator|ftp|irc|nobody|sys|pi|guest|www|www-data|mysql|postgres|oracle|mongodb|redis|hadoop|cpanel|plesk|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|supervisor|csgoserver|device|deploy|test|1234|0101|0)'
