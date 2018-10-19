@@ -65,7 +65,7 @@ the following additional software:
 -Trac plugins (e.g. http://trac-hacks.org/)
 -Jupyter (https://jupyter.org/)
 -Docker (https://www.docker.com/)
-
+-Fail2Ban (http://www.fail2ban.org/) w. IPSet (http://ipset.netfilter.org/)
 
 On Debian/Ubuntu servers the corresponding basic packages can be
 installed with:
@@ -76,7 +76,7 @@ and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      python-irclib python-paramiko python-enchant python-jsonrpclib \
      python-requests python-cracklib python-pyotp openssh-server \
-     libpam0g-dev mercurial trac trac-mercurial lftp rsync
+     libpam0g-dev mercurial trac trac-mercurial lftp rsync fail2ban ipset
 
 Apache comes with a number of modules included, so it is usually not
 necessary to explicitly install e.g. mod-ssl, mod-proxy and mod-rewrite.
