@@ -96,7 +96,7 @@ from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-    penalize_rate_limit
+    penalize_rate_limit, check_twofactor_session
 from shared.tlsserver import hardened_openssl_context
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
@@ -229,9 +229,11 @@ class MiGUserAuthorizer(DummyAuthorizer):
                 if entry['pwd'] is not None:
                     allowed = entry['pwd']
                     logger.debug("Password check for %s" % username)
-                    if check_password_hash(configuration, 'ftps', username,
-                                           offered, allowed, hash_cache,
-                                           strict_policy):
+                    if check_password_hash(
+                        configuration, 'ftps', username, offered, allowed,
+                        hash_cache, strict_policy) and \
+                        check_twofactor_session(configuration, username,
+                                                'ftps'):
                         logger.info("Accepted password login for %s from %s" %
                                     (username, client_ip))
                         self.authenticated_user = username

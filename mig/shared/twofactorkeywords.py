@@ -69,7 +69,9 @@ logins through a personal auth token generator on your phone or tablet.
             'Title': 'Enable 2-FA for WebDAVS login',
             'Description': '''Add an extra layer of security to your WebDAVS
 logins through a personal auth token generator on your phone or tablet.
-''',        
+Works by logging in to the %s web site with 2FA enabled to start
+an authenticated session and then logging into WebDAVS as usual.
+''' % configuration.short_title,        
             'Example': 'True',
             'Type': 'boolean',
             'Value': False,
@@ -80,9 +82,11 @@ logins through a personal auth token generator on your phone or tablet.
     if configuration.site_enable_sftp:
         specs.append(('SFTP_PASSWORD_TWOFACTOR', {
             'Title': 'Enable 2-FA for SFTP password login',
-            'Description': '''Add an extra layer of security to your SFTP
+            'Description': '''Add an extra layer of security to your SFTP password
 logins through a personal auth token generator on your phone or tablet.
-''',        
+Works by logging in to the %s web site with 2FA enabled to start
+an authenticated session and then logging into SFTP as usual.
+''' % configuration.short_title,
             'Example': 'True',
             'Type': 'boolean',
             'Value': False,
@@ -92,9 +96,26 @@ logins through a personal auth token generator on your phone or tablet.
         }))
         specs.append(('SFTP_KEY_TWOFACTOR', {
             'Title': 'Enable 2-FA for SFTP key login',
-            'Description': '''Add an extra layer of security to your SFTP
+            'Description': '''Add an extra layer of security to your SFTP key
 logins through a personal auth token generator on your phone or tablet.
-''',        
+Works by logging in to the %s web site with 2FA enabled to start
+an authenticated session and then logging into SFTP as usual.
+''' % configuration.short_title,
+            'Example': 'True',
+            'Type': 'boolean',
+            'Value': False,
+            'Editor': 'select',
+            'Context': 'twofactor',
+            'Required': False,
+        }))
+    if configuration.site_enable_ftps:
+        specs.append(('FTPS_TWOFACTOR', {
+            'Title': 'Enable 2-FA for FTPS login',
+            'Description': '''Add an extra layer of security to your FTPS
+logins through a personal auth token generator on your phone or tablet.
+Works by logging in to the %s web site with 2FA enabled to start
+an authenticated session and then logging into FTPS as usual.
+''' % configuration.short_title,        
             'Example': 'True',
             'Type': 'boolean',
             'Value': False,
