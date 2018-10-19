@@ -225,7 +225,12 @@ def create_user(
     renew = default_renew
     # Requested with existing valid certificate?
     # Used in order to authorize password change
-    authorized = user.get('authorized', False)
+    if user.has_key('authorized'):
+        authorized = user['authorized']
+        # Always remove any authorized fields before DB insert
+        del user['authorized']
+    else:
+        authorized = False
 
     if verbose:
         print 'User ID: %s\n' % client_id
@@ -278,20 +283,24 @@ def create_user(
                 password_changed = (user['old_password'] != user['password'])
                 if password_changed:
                     if authorized:
-                        del user['authorized']
                         print "User authorized password update"
                     elif not user['old_password']:
                         print "User requested password - previously disabled"
                     else:
-                        if verbose:
-                            print """Renewal request supplied a different
-password:
-Please re-request with the original password or use existing cert to assure
-authenticity!"""
-                        err = """Cannot renew account using a new password!
-Please tell user to use the original password or request renewal using a
-certificate that is still valid."""
-                        raise Exception(err)
+                        print """User '%s' exists with *different* password!
+Generally users with an existing account should sign up again through Xgi-bin
+using their existing credentials to authorize password changes.""" % client_id
+                        accept_answer = raw_input(
+                            'Accept password change? [y/N] ')
+                        authorized = accept_answer.lower().startswith('y')
+                        if not authorized:
+                            if verbose:
+                                print """Renewal request supplied a different
+password and you didn't accept change anyway - nothing more to do"""
+                            err = """Cannot renew account using a new password!
+Please tell user to use the original password or request renewal using Xgi-bin
+with certificate or OpenID authentication to authorize the change."""
+                            raise Exception(err)
                 if verbose:
                     print 'Renewing existing user'
                 # Take old user details and override fields with new ones but
