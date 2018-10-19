@@ -90,7 +90,7 @@ from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
     refresh_share_creds, refresh_jupyter_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, track_open_session, track_close_session, \
-    active_sessions
+    active_sessions, check_twofactor_session
 from shared.logger import daemon_logger, reopen_log
 from shared.useradm import check_password_hash
 from shared.validstring import possible_user_id, possible_gdp_user_id, \
@@ -790,9 +790,11 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
                     allowed = entry.password
                     #self.logger.debug("Password check for %s" % username)
-                    if check_password_hash(configuration, 'sftp', username,
-                                           offered, allowed, hash_cache,
-                                           strict_policy):
+                    if check_password_hash(
+                        configuration, 'sftp', username, offered, allowed,
+                        hash_cache, strict_policy) and \
+                        check_twofactor_session(configuration, username,
+                                                'sftp-pw'):
                         self.logger.info(
                             "Accepted password login for %s from %s" %
                             (username, client_ip))
@@ -856,7 +858,9 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
                     allowed = entry.public_key.get_base64()
                     #self.logger.debug("Public key check for %s" % username)
-                    if allowed == offered:
+                    if allowed == offered and \
+                           check_twofactor_session(configuration, username,
+                                                   'sftp-key'):
                         self.logger.info(
                             "Accepted public key login for %s from %s" %
                             (username, client_ip))

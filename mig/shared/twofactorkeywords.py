@@ -77,6 +77,31 @@ logins through a personal auth token generator on your phone or tablet.
             'Context': 'twofactor',
             'Required': False,
         }))
+    if configuration.site_enable_sftp:
+        specs.append(('SFTP_PASSWORD_TWOFACTOR', {
+            'Title': 'Enable 2-FA for SFTP password login',
+            'Description': '''Add an extra layer of security to your SFTP
+logins through a personal auth token generator on your phone or tablet.
+''',        
+            'Example': 'True',
+            'Type': 'boolean',
+            'Value': False,
+            'Editor': 'select',
+            'Context': 'twofactor',
+            'Required': False,
+        }))
+        specs.append(('SFTP_KEY_TWOFACTOR', {
+            'Title': 'Enable 2-FA for SFTP key login',
+            'Description': '''Add an extra layer of security to your SFTP
+logins through a personal auth token generator on your phone or tablet.
+''',        
+            'Example': 'True',
+            'Type': 'boolean',
+            'Value': False,
+            'Editor': 'select',
+            'Context': 'twofactor',
+            'Required': False,
+        }))
     
     return specs
 

@@ -1674,8 +1674,10 @@ def check_twofactor_session(configuration, username, proto):
         twofactor_dict = dict([(i, j['Value']) for (i, j) in
                                twofactor_defaults(configuration).items()])
 
-    if proto in ('ssh', 'sftp', 'scp', 'rsync'):
-        proto_field = 'SFTP'
+    if proto in ('ssh-pw', 'sftp-pw', 'scp-pw', 'rsync-pw'):
+        proto_field = 'SFTP_PASSWORD'
+    elif proto in ('ssh-key', 'sftp-key', 'scp-key', 'rsync-key'):
+        proto_field = 'SFTP_KEY'
     elif proto in ('dav', 'davs'):
         proto_field = 'WEBDAVS'
     elif proto in ('ftp', 'ftps'):
