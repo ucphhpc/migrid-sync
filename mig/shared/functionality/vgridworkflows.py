@@ -36,19 +36,20 @@ import os
 import re
 import time
 
-from shared.base import client_id_dir
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
+from shared.cmdapi import get_usage_map
 from shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
     workflows_log_cnt, pending_states, final_states, img_trigger_prefix
-from shared.events import get_path_expand_map, get_command_map
+from shared.events import get_path_expand_map
 from shared.fileio import unpickle, makedirs_rec, move_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import jquery_ui_js, man_base_js, man_base_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose
 from shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
-     vgrid_triggers, vgrid_set_triggers
+    vgrid_triggers, vgrid_set_triggers
 
 default_pager_entries = 20
 
@@ -58,6 +59,7 @@ default_pager_entries = 20
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
 allowed_operations = list(set(list_operations + show_operations))
+
 
 def signature():
     """Signature of the main function"""
@@ -116,14 +118,14 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
     operation = accepted['operation'][-1]
     flags = ''.join(accepted['flags'][-1])
-    
+
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         output_objects.append({'object_type': 'error_text',
@@ -134,14 +136,14 @@ access the workflows.'''
 
     if not operation in allowed_operations:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Operation must be one of %s.''' % \
+                               '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})
         return (output_objects, returnvalues.OK)
 
     if operation in show_operations:
 
         # jquery support for tablesorter (and unused confirmation dialog)
-        # table initially sorted by 0 (last update / date) 
+        # table initially sorted by 0 (last update / date)
 
         refresh_call = 'ajax_workflowjobs("%s", "%s")' % (vgrid_name, flags)
         table_spec = {'table_id': 'workflowstable', 'sort_order': '[[0,1]]',
@@ -162,7 +164,7 @@ access the workflows.'''
               /* fix and reduce accordion spacing */
               $(".ui-accordion-header").css("padding-top", 0)
                                        .css("padding-bottom", 0).css("margin", 0);
-              /* NOTE: requires managers CSS fix for proper tab bar height */      
+              /* NOTE: requires managers CSS fix for proper tab bar height */
               $(".workflow-tabs").tabs();
               $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
         '''
@@ -184,15 +186,15 @@ access the workflows.'''
 
     if operation in list_operations:
         trigger_job_dir = os.path.join(configuration.vgrid_home,
-                                       os.path.join(vgrid_name, '.%s.jobs'
-                                       % configuration.vgrid_triggers))
+                                       os.path.join(
+                                           vgrid_name, '.%s.jobs'
+                                           % configuration.vgrid_triggers))
         trigger_job_pending_dir = os.path.join(trigger_job_dir,
-                'pending_states')
-        trigger_job_final_dir = os.path.join(trigger_job_dir, 'final_states'
-                )
+                                               'pending_states')
+        trigger_job_final_dir = os.path.join(trigger_job_dir, 'final_states')
 
         if makedirs_rec(trigger_job_pending_dir, logger) \
-            and makedirs_rec(trigger_job_final_dir, logger):
+                and makedirs_rec(trigger_job_final_dir, logger):
             abs_vgrid_dir = '%s/' \
                 % os.path.abspath(os.path.join(configuration.vgrid_files_home,
                                   vgrid_name))
@@ -202,8 +204,9 @@ access the workflows.'''
                 trigger_job = unpickle(trigger_job_filepath, logger)
                 serverjob_filepath = \
                     os.path.join(configuration.mrsl_files_dir,
-                                 os.path.join(client_id_dir(trigger_job['owner'
-                                 ]), '%s.mRSL' % trigger_job['jobid']))
+                                 os.path.join(
+                                     client_id_dir(trigger_job['owner']),
+                                     '%s.mRSL' % trigger_job['jobid']))
                 serverjob = unpickle(serverjob_filepath, logger)
                 if serverjob:
                     if serverjob['STATUS'] in pending_states:
@@ -211,29 +214,30 @@ access the workflows.'''
                         trigger_rule = trigger_job['rule']
                         trigger_action = trigger_event['event_type']
                         trigger_time = time.ctime(trigger_event['time_stamp'
-                                ])
-                        trigger_path = '%s %s' % (trigger_event['src_path'
-                                ].replace(abs_vgrid_dir, ''),
-                                trigger_event['dest_path'
-                                ].replace(abs_vgrid_dir, ''))
+                                                                ])
+                        trigger_path = '%s %s' % \
+                                       (trigger_event['src_path'].replace(
+                                        abs_vgrid_dir, ''),
+                                           trigger_event['dest_path'].replace(
+                                        abs_vgrid_dir, ''))
                         job = {'object_type': 'trigger_job', 'job_id':
                                trigger_job['jobid'], 'rule_id':
                                trigger_rule['rule_id'], 'path': trigger_path,
                                'action': trigger_action, 'time': trigger_time,
                                'status': serverjob['STATUS']}
                         if not job['rule_id'].startswith(img_trigger_prefix) \
-                               or verbose(flags):
+                                or verbose(flags):
                             trigger_jobs.append(job)
                     elif serverjob['STATUS'] in final_states:
                         src_path = os.path.join(trigger_job_pending_dir,
-                                filename)
+                                                filename)
                         dest_path = os.path.join(trigger_job_final_dir,
-                                filename)
+                                                 filename)
                         move_file(src_path, dest_path, configuration)
                     else:
                         logger.error('Trigger job: %s, unknown state: %s'
                                      % (trigger_job['jobid'],
-                                     serverjob['STATUS']))
+                                        serverjob['STATUS']))
 
         log_content = read_trigger_log(configuration, vgrid_name, flags)
 
@@ -250,7 +254,7 @@ access the workflows.'''
             ('action', [keyword_auto] + valid_trigger_actions),
             ('arguments', None),
             ('run_as', client_id),
-            ]
+        ]
 
         # NOTE: we do NOT show saved template contents - see addvgridtriggers
 
@@ -269,27 +273,28 @@ access the workflows.'''
             configuration,
             extra_fields + optional_fields,
             filter_items=system_filter
-            )
+        )
         if not init_status:
             output_objects.append({'object_type': 'error_text', 'text':
                                    'failed to load triggers: %s' % oobjs})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        # Generate variable helper values for a few concrete samples for help text 
+        # Generate variable helper values for a few concrete samples for help
+        # text
         vars_html = ''
         dummy_rule = {'run_as': client_id, 'vgrid_name': vgrid_name}
         samples = [('input.txt', 'modified'), ('input/image42.raw', 'changed')]
         for (path, change) in samples:
             vgrid_path = os.path.join(vgrid_name, path)
             vars_html += "<b>Expanded variables when %s is %s:</b><br/>" % \
-                            (vgrid_path, change)
+                (vgrid_path, change)
             expanded = get_path_expand_map(vgrid_path, dummy_rule, change)
             for (key, val) in expanded.items():
                 vars_html += "    %s: %s<br/>" % (key, val)
         commands_html = ''
-        commands = get_command_map(configuration)
-        for (cmd, cmd_args) in commands.items():
-            commands_html += "    %s %s<br/>" % (cmd, (' '.join(cmd_args)).upper())
+        commands = get_usage_map(configuration)
+        for usage in commands.values():
+            commands_html += "    %s<br/>" % usage
 
         helper_html = """
 <div class='variables-accordion'>
@@ -328,11 +333,12 @@ your disposal:<br/>
         output_objects.append({'object_type': 'html_form', 'text':  '''
 <div id="manage-tab">
 '''})
-    
+
         output_objects.append({'object_type': 'sectionheader',
                               'text': 'Manage Triggers'})
         output_objects.extend(oobjs)
-        output_objects.append({'object_type': 'html_form', 'text': helper_html})
+        output_objects.append(
+            {'object_type': 'html_form', 'text': helper_html})
 
         if configuration.site_enable_crontab:
             output_objects.append({'object_type': 'html_form', 'text':  '''
@@ -356,8 +362,9 @@ in reaction to file system events.</p>
     '''})
         output_objects.append({'object_type': 'sectionheader',
                               'text': 'Active Trigger Jobs'})
-        output_objects.append({'object_type': 'table_pager', 'entry_name': 'job',
-                               'default_entries': default_pager_entries})
+        output_objects.append(
+            {'object_type': 'table_pager', 'entry_name': 'job',
+             'default_entries': default_pager_entries})
 
     output_objects.append({'object_type': 'trigger_job_list', 'trigger_jobs':
                            trigger_jobs})
@@ -372,10 +379,8 @@ in reaction to file system events.</p>
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})
-    
+
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})
     return (output_objects, returnvalues.OK)
-
-

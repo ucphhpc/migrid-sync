@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridtrigger - add vgrid trigger
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,17 +28,18 @@
 """Add a trigger to a given vgrid"""
 
 import os
+import shlex
 import time
 
 from shared.base import client_id_dir
 from shared.defaults import any_state, keyword_auto, valid_trigger_actions, \
-      valid_trigger_changes, keyword_all
+    valid_trigger_changes, keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
-     vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers, \
+    vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers, \
      vgrid_triggers
 import shared.returnvalues as returnvalues
 
@@ -81,7 +82,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -93,7 +94,8 @@ def main(client_id, user_arguments_dict):
     path = accepted['path'][-1].lstrip(os.sep).strip()
     changes = [i.strip() for i in ' '.join(accepted['changes']).split()]
     action = accepted['action'][-1].strip()
-    arguments = [i.strip() for i in ' '.join(accepted['arguments']).split()]
+    arguments = [i.strip() for i in
+                 shlex.split(' '.join(accepted['arguments']))]
     rate_limit = accepted['rate_limit'][-1].strip()
     settle_time = accepted['settle_time'][-1].strip()
     match_files = accepted['match_files'][-1].strip() == 'True'
@@ -122,7 +124,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                client_dir)) + os.sep
 
     # we just use a high res timestamp as automatic rule_id
-    
+
     if rule_id == keyword_auto:
         rule_id = "%d" % (time.time() * 1E8)
 
@@ -142,8 +144,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   rule_id, 'trigger',
                                   configuration)
     if not ret_val:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif msg:
 
@@ -163,17 +165,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
         else:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 '%s is already a trigger owned by somebody else in the %s' % \
+                 '%s is already a trigger owned by somebody else in the %s' %
                  (rule_id, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already in subvgrid
 
     (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
-            configuration)
+                                                    configuration)
     if not list_status:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Error getting list of sub%ss: %s' % \
+                               'Error getting list of sub%ss: %s' %
                                (label, subvgrids)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     for subvgrid in subvgrids:
@@ -182,21 +184,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                    '''%(rule_id)s is already in a
 sub-%(vgrid_label)s (%(subvgrid)s). Please remove the trigger from the
 sub-%(vgrid_label)s and try again''' % {'rule_id': rule_id,
-                                        'subvgrid': subvgrid, 
+                                        'subvgrid': subvgrid,
                                         'vgrid_label': label}})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action in valid_trigger_actions:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : "invalid action value %s" % action})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             "invalid action value %s" % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    
+
     if keyword_all in changes:
         changes = valid_trigger_changes
     for change in changes:
         if not change in valid_trigger_changes:
-            output_objects.append({'object_type': 'error_text', 'text'
-                              : "found invalid change value %s" % change})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "found invalid change value %s" % change})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Check if we should load saved trigger for rank change or update
@@ -205,34 +209,36 @@ sub-%(vgrid_label)s and try again''' % {'rule_id': rule_id,
     if rank is not None or update_id is not None:
         (load_status, all_triggers) = vgrid_triggers(vgrid_name, configuration)
         if not load_status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Failed to load triggers for %s: %s' % \
-                                   (vgrid_name, all_triggers)})
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'Failed to load triggers for %s: %s' %
+                (vgrid_name, all_triggers)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         for saved_dict in all_triggers:
             if saved_dict['rule_id'] == rule_id:
                 rule_dict = saved_dict
                 break
         if rule_dict is None:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'No such trigger %s for %s: %s' % \
-                                   (rule_id, vgrid_name, all_triggers)})
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'No such trigger %s for %s: %s' % (rule_id, vgrid_name,
+                                                   all_triggers)})
             return (output_objects, returnvalues.CLIENT_ERROR)
     elif not path:
-        # New trigger with missing path 
+        # New trigger with missing path
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Either path or rank must
 be set.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif action == "submit" and not arguments:
-        # New submit trigger with missing mrsl arguments 
+        # New submit trigger with missing mrsl arguments
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Submit triggers must give
 a job description file path as argument.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Handle create and update (i.e. new, update all or just refresh mRSL)
-    
+
     if rank is None:
 
         # IMPORTANT: we save the job template contents to avoid potential abuse
@@ -243,7 +249,7 @@ a job description file path as argument.'''})
         templates = []
 
         # Merge current and saved values
-        
+
         req_dict = {'rule_id': rule_id,
                     'vgrid_name': vgrid_name,
                     'path': path,
@@ -272,11 +278,12 @@ a job description file path as argument.'''})
                 # IMPORTANT: path must be expanded to abs for proper chrooting
                 abs_path = os.path.abspath(os.path.join(base_dir, rel_path))
                 try:
-                    if not valid_user_path(configuration, abs_path, base_dir, True):
-                        logger.warning('%s tried to %s restricted path %s ! (%s)'
-                                       % (client_id, op_name, abs_path,
-                                          rel_path))
-                        raise ValueError('invalid submit path argument: %s' \
+                    if not valid_user_path(configuration, abs_path, base_dir,
+                                           True):
+                        logger.warning(
+                            '%s tried to %s restricted path %s ! (%s)'
+                            % (client_id, op_name, abs_path, rel_path))
+                        raise ValueError('invalid submit path argument: %s'
                                          % rel_path)
                     temp_fd = open(abs_path)
                     templates.append(temp_fd.read())
@@ -285,12 +292,12 @@ a job description file path as argument.'''})
                     logger.error("read submit argument file failed: %s" % err)
                     output_objects.append(
                         {'object_type': 'error_text', 'text':
-                         'failed to read submit argument file "%s"' % rel_path})
+                         'failed to read submit argument file "%s"' % rel_path
+                         })
                     return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
         # Save updated template contents here
         rule_dict['templates'] = templates
-
 
     # Add to list and pickle
 
@@ -306,19 +313,19 @@ a job description file path as argument.'''})
     if rank is not None:
         logger.info('%s moved trigger %s to %d' % (client_id, rule_id, rank))
         output_objects.append({'object_type': 'text', 'text':
-                               'moved %s trigger %s to position %d' % \
+                               'moved %s trigger %s to position %d' %
                                (vgrid_name, rule_id, rank)})
     elif update_id:
         logger.info('%s updated trigger: %s' % (client_id, rule_dict))
         output_objects.append(
             {'object_type': 'text', 'text':
-             'Existing trigger %s successfully updated in %s %s!' % \
+             'Existing trigger %s successfully updated in %s %s!' %
              (rule_id, vgrid_name, label)})
     else:
         logger.info('%s added new trigger: %s' % (client_id, rule_dict))
         output_objects.append(
             {'object_type': 'text', 'text':
-             'New trigger %s successfully added to %s %s!' % \
+             'New trigger %s successfully added to %s %s!' %
              (rule_id, vgrid_name, label)})
 
     output_objects.append({'object_type': 'link', 'destination':

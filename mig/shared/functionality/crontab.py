@@ -36,12 +36,13 @@ import re
 import time
 
 from shared.base import client_id_dir
+from shared.cmdapi import get_usage_map
 from shared.defaults import crontab_name, cron_log_cnt, cron_output_dir, \
-     cron_log_name, csrf_field
+    cron_log_name, csrf_field
 import shared.returnvalues as returnvalues
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from shared.events import get_time_expand_map, get_command_map, load_crontab, \
-     parse_and_save_crontab, load_atjobs, parse_and_save_atjobs
+from shared.events import get_time_expand_map, load_crontab, load_atjobs, \
+    parse_and_save_crontab, parse_and_save_atjobs
 from shared.fileio import makedirs_rec
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
@@ -59,6 +60,7 @@ crontab_edit = cm_options.copy()
 crontab_edit['mode'] = 'shell'
 atjobs_edit = cm_options.copy()
 atjobs_edit['mode'] = 'shell'
+
 
 def signature():
     """Signature of the main function"""
@@ -105,20 +107,20 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     action = accepted['action'][-1]
     crontab = '\n'.join(accepted['crontab'])
     flags = ''.join(accepted['flags'][-1])
-    
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Scheduled Tasks'
 
     # jquery support for tabs
-    
-    (add_import, add_init, add_ready) = man_base_js(configuration, 
+
+    (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [],
                                                     {'width': 600})
     add_ready += '''
@@ -132,7 +134,7 @@ def main(client_id, user_arguments_dict):
               /* fix and reduce accordion spacing */
               $(".ui-accordion-header").css("padding-top", 0)
                                        .css("padding-bottom", 0).css("margin", 0);
-              /* NOTE: requires managers CSS fix for proper tab bar height */      
+              /* NOTE: requires managers CSS fix for proper tab bar height */
               $(".crontab-tabs").tabs();
               $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
         '''
@@ -141,13 +143,13 @@ def main(client_id, user_arguments_dict):
 %s
 ''' % cm_css
     title_entry['javascript'] = cm_javascript + "\n" + \
-                                jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
+        jquery_ui_js(configuration, add_import,
+                     add_init, add_ready)
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
-    header_entry = {'object_type': 'header', 'text'
-                           : 'Schedule Tasks'}
+    header_entry = {'object_type': 'header',
+                    'text': 'Schedule Tasks'}
     output_objects.append(header_entry)
 
     if not configuration.site_enable_crontab:
@@ -161,8 +163,8 @@ Please contact the site admins %s if you think they should be enabled.
     logger.debug('crontab from %s: %s' % (client_id, accepted))
 
     if not action in valid_actions:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid action "%s" (supported: %s)' % \
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -191,7 +193,7 @@ Please contact the site admins %s if you think they should be enabled.
 #
 # For example, if you have a Documents folder and want to create a backup of it
 # at 5 a.m every week, you can do so by adding a rule like:
-# 0 5 * * 1 pack Documents Documents-backup.zip 
+# 0 5 * * 1 pack Documents Documents-backup.zip
 # somewhere below this help text. Just leave out the leading '# '.
 #
 # m h  dom mon dow   command
@@ -228,7 +230,6 @@ Please contact the site admins %s if you think they should be enabled.
         if action == "show":
             log_content = read_cron_log(configuration, client_id, flags)
 
-
             # Make page with manage crontab and log tab
 
             output_objects.append({'object_type': 'html_form', 'text':  '''
@@ -244,11 +245,12 @@ Please contact the site admins %s if you think they should be enabled.
             output_objects.append({'object_type': 'html_form', 'text':  '''
 <div id="manage-tab">
 '''})
-    
-            output_objects.append({'object_type': 'sectionheader',
-                              'text': 'Manage Scheduled Tasks'})
 
-            fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+            output_objects.append({'object_type': 'sectionheader',
+                                   'text': 'Manage Scheduled Tasks'})
+
+            fill_helpers.update(
+                {'target_op': target_op, 'csrf_token': csrf_token})
             html = '''
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -265,7 +267,7 @@ logged and you can use View Logs above to inspect them.
 </p>
 <p class="warningtext">Please note that for security reasons you can ONLY
 schedule runs of a limited set of commands, namely a selection of the most
-useful actions you would be able to interactively run. 
+useful actions you would be able to interactively run.
 </p>
 <p>
 The fold-outs at the bottom contain additional help on the available commands
@@ -297,19 +299,20 @@ particular time.
 '''
             html += wrap_edit_area(keyword_atjobs, atjobs_area, atjobs_edit,
                                    'BASIC')
-            
+
             html += '''<br/>
 <input type="submit" value="Save Cron/At Jobs Settings" />
 </form>
 '''
 
             vars_html = ''
-            dummy_rule = {'run_as': client_id,
-                          'command': ['touch', 'crontest-+SCHEDYEAR+-+SCHEDMONTH+-+SCHEDDAY+.txt']}
+            dummy_rule = {
+                'run_as': client_id, 'command':
+                ['touch', 'crontest-+SCHEDYEAR+-+SCHEDMONTH+-+SCHEDDAY+.txt']}
             now = datetime.datetime.now()
             now = now.replace(microsecond=0)
-            cron_times = [now, datetime.datetime(now.year+1, 12, 24, 12, 42),
-                          datetime.datetime(now.year+2, 1, 2, 9, 2, 42)]
+            cron_times = [now, datetime.datetime(now.year + 1, 12, 24, 12, 42),
+                          datetime.datetime(now.year + 2, 1, 2, 9, 2, 42)]
             for timestamp in cron_times:
                 vars_html += "<b>Expanded time %s variables:</b><br/>" % \
                              timestamp
@@ -326,9 +329,9 @@ particular time.
                              (' '.join(dummy_rule['command']),
                               ' '.join(filled_command))
             commands_html = ''
-            commands = get_command_map(configuration)
-            for (cmd, cmd_args) in commands.items():
-                commands_html += "    %s %s<br/>" % (cmd, (' '.join(cmd_args)).upper())        
+            commands = get_usage_map(configuration)
+            for usage in commands.values():
+                commands_html += "    %s<br/>" % usage
             html += """
 <br/>
 <div class='variables-accordion'>
@@ -354,7 +357,7 @@ and so on. You have the following commands at your disposal:<br/>
                 'keyword_crontab': keyword_crontab,
                 'current_atjobs': atjobs_contents,
                 'keyword_atjobs': keyword_atjobs,
-                })
+            })
             output_objects.append({'object_type': 'html_form', 'text':
                                    html % fill_helpers})
 
@@ -368,7 +371,7 @@ and so on. You have the following commands at your disposal:<br/>
     <div id="log-tab">
 '''})
             output_objects.append({'object_type': 'sectionheader',
-                               'text': 'Scheduled Tasks Log'})
+                                   'text': 'Scheduled Tasks Log'})
 
             output_objects.append({'object_type': 'crontab_log', 'log_content':
                                    log_content})
@@ -376,14 +379,14 @@ and so on. You have the following commands at your disposal:<br/>
 </div>
 </div>
 '''})
-    
+
     elif action in post_actions:
         if action == "save":
             header_entry['text'] = 'Save Scheduled Tasks'
             crontab = '\n'.join(accepted.get('crontab', ['']))
             (parse_status, parse_msg) = \
-                           parse_and_save_crontab(crontab, client_id,
-                                                  configuration)
+                parse_and_save_crontab(crontab, client_id,
+                                       configuration)
             if not parse_status:
                 output_objects.append({'object_type': 'error_text', 'text':
                                        'Error parsing and saving crontab: %s'
@@ -391,8 +394,8 @@ and so on. You have the following commands at your disposal:<br/>
                 output_status = returnvalues.CLIENT_ERROR
             else:
                 if parse_msg:
-                    output_objects.append({'object_type': 'html_form', 'text': 
-                                           '<p class="warningtext">%s</p>' % \
+                    output_objects.append({'object_type': 'html_form', 'text':
+                                           '<p class="warningtext">%s</p>' %
                                            parse_msg})
                 else:
                     output_objects.append({'object_type': 'text', 'text':
@@ -400,8 +403,8 @@ and so on. You have the following commands at your disposal:<br/>
 
             atjobs = '\n'.join(accepted.get('atjobs', ['']))
             (parse_status, parse_msg) = \
-                           parse_and_save_atjobs(atjobs, client_id,
-                                                  configuration)
+                parse_and_save_atjobs(atjobs, client_id,
+                                      configuration)
             if not parse_status:
                 output_objects.append({'object_type': 'error_text', 'text':
                                        'Error parsing and saving atjobs: %s'
@@ -409,8 +412,8 @@ and so on. You have the following commands at your disposal:<br/>
                 output_status = returnvalues.CLIENT_ERROR
             else:
                 if parse_msg:
-                    output_objects.append({'object_type': 'html_form', 'text': 
-                                           '<p class="warningtext">%s</p>' % \
+                    output_objects.append({'object_type': 'html_form', 'text':
+                                           '<p class="warningtext">%s</p>' %
                                            parse_msg})
                 else:
                     output_objects.append({'object_type': 'text', 'text':
@@ -420,5 +423,3 @@ and so on. You have the following commands at your disposal:<br/>
                                    'text': 'Return to schedule task overview'})
 
     return (output_objects, returnvalues.OK)
-
-

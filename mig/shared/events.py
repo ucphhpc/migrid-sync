@@ -31,6 +31,7 @@ import datetime
 import fnmatch
 import os
 import re
+import shlex
 
 from shared.base import client_id_dir
 from shared.defaults import crontab_name, atjobs_name
@@ -46,66 +47,6 @@ crontab_expr = re.compile(crontab_pattern)
 atjobs_pattern = "^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2}):"
 atjobs_pattern += "([0-9]{2}) (.*)$"
 atjobs_expr = re.compile(atjobs_pattern)
-
-
-def get_command_map(configuration):
-    """Generate a dictionary with the supported commands and their expected
-    call arguments."""
-
-    # TODO: add all ops with effect here!
-
-    cmd_map = {
-        'pack': ['src', 'dst'],
-        'unpack': ['src', 'dst'],
-        'zip': ['src', 'dst'],
-        'unzip': ['src', 'dst'],
-        'tar': ['src', 'dst'],
-        'untar': ['src', 'dst'],
-        'cp': ['src', 'dst'],
-        'mv': ['src', 'dst'],
-        'rm': ['path'],
-        'rmdir': ['path'],
-        'truncate': ['path'],
-        'touch': ['path'],
-        'mkdir': ['path'],
-        'chksum': ['hash_algo', 'path', 'dst', 'max_chunks'],
-        'mqueue': ['queue', 'action', 'msg_id', 'msg'],
-    }
-    if configuration.site_enable_jobs:
-        cmd_map.update({
-            'submit': ['path'],
-            'canceljob': ['job_id'],
-            'resubmit': ['job_id'],
-            'jobaction': ['job_id', 'action'],
-            'liveio': ['action', 'src', 'dst', 'job_id'],
-        })
-    if configuration.site_enable_sharelinks:
-        # TODO: expose additional operations for sharelinks?
-        #       maybe split up sharelinks.py into explicit action scripts?
-        cmd_map.update({
-            # 'addsharelink': ['path', 'read_access', 'write_access', 'invite', 'msg'],
-            'delsharelink': ['share_id'],
-        })
-    if configuration.site_enable_transfers:
-        cmd_map.update({
-            'datatransfer': ['transfer_id', 'action'],
-        })
-    if configuration.site_enable_preview:
-        cmd_map.update({
-            'imagepreview': ['flags', 'action', 'path', 'extension'],
-        })
-    if configuration.site_enable_freeze:
-        # NOTE: createbackup is a one-shot create+finalize backup helper.
-        cmd_map.update({
-            'createbackup': ['freeze_name', 'freeze_copy_0'],
-            'deletebackup': ['freeze_id'],
-            'addfreezedata': ['freeze_id', 'freeze_copy_0'],
-        })
-    if configuration.site_enable_crontab:
-        cmd_map.update({
-            'crontab': ['crontab', 'action'],
-        })
-    return cmd_map
 
 
 def get_path_expand_map(trigger_path, rule, state_change):
@@ -154,23 +95,6 @@ def get_time_expand_map(timestamp, rule):
         '+SCHEDRUNAS+': rule['run_as'],
     }
     return expand_map
-
-
-def map_args_to_vars(var_list, arg_list):
-    """Map command args to backend var names - if more args than vars we
-    assume variable length on the first arg:
-       zip src1 src2 src3 dst -> src: [src1, src2, src3], dst: [dst]
-    """
-
-    args_dict = dict(zip(var_list, [[] for _ in var_list]))
-    remain_vars = [i for i in var_list]
-    remain_args = [i for i in arg_list]
-    while remain_args:
-        args_dict[remain_vars[0]].append(remain_args[0])
-        del remain_args[0]
-        if len(remain_args) < len(remain_vars):
-            del remain_vars[0]
-    return args_dict
 
 
 def load_crontab(client_id, configuration, allow_missing=True):
@@ -224,8 +148,8 @@ def parse_crontab_contents(configuration, client_id, crontab_lines):
         # Format: minute hour dayofmonth month dayofweek command
         entry = {'minute': hit.group(1), 'hour': hit.group(2),
                  'dayofmonth': hit.group(3), 'month': hit.group(4),
-                 'dayofweek': hit.group(5), 'command': hit.group(6).split(),
-                 'run_as': client_id}
+                 'dayofweek': hit.group(5),
+                 'command': shlex.split(hit.group(6)), 'run_as': client_id}
         crontab_entries.append(entry)
     return crontab_entries
 
@@ -254,7 +178,7 @@ def parse_atjobs_contents(configuration, client_id, atjobs_lines):
                                  int(hit.group(5)), int(hit.group(6)))
         # Ignore seconds
         when = when.replace(second=0)
-        cmd_list = hit.group(7).split()
+        cmd_list = shlex.split(hit.group(7))
         entry = {'time_stamp': when, 'run_as': client_id, 'command': cmd_list}
         if (when - now).total_seconds() >= 0:
             atjobs_entries.append(entry)
@@ -361,7 +285,8 @@ if __name__ == '__main__':
     client_id = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
     now = datetime.datetime.now()
     now = now.replace(second=0, microsecond=0)
-    trigger_rule = {'templates': [], 'run_as': client_id, 'rate_limit': '', 'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False, 'match_files': True,
+    trigger_rule = {
+        'templates': [], 'run_as': client_id, 'rate_limit': '', 'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False, 'match_files': True,
                     'arguments': ['+TRIGGERPATH+'], 'settle_time': '', 'path': '*.txt*', 'changes': ['modified'], 'action': 'trigger-created', 'match_recursive': True}
     trigger_samples = [('abc.txt', 'modified'), ('subdir/def.txt', 'modified')]
     print "Test trigger event map:"
@@ -374,8 +299,8 @@ if __name__ == '__main__':
     crontab_lines = [
         '* * * * * pack cront-test.txt cron-test-+SCHEDYEAR+-+SCHEDMONTH+-+SCHEDDAY+.zip']
     crontab_rules = parse_crontab_contents(conf, client_id, crontab_lines)
-    cron_times = [now, datetime.datetime(now.year+1, 12, 24, 12, 42),
-                  datetime.datetime(now.year+2, 1, 2, 9, 2)]
+    cron_times = [now, datetime.datetime(now.year + 1, 12, 24, 12, 42),
+                  datetime.datetime(now.year + 2, 1, 2, 9, 2)]
     print "Test cron event map:"
     for rule in crontab_rules:
         for timestamp in cron_times:

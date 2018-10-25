@@ -70,11 +70,11 @@ except ImportError, exc:
     sys.exit(1)
 
 from shared.base import force_utf8
+from shared.cmdapi import parse_command_args
 from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
     workflows_log_size, workflows_log_cnt, csrf_field
-from shared.events import get_path_expand_map, map_args_to_vars, \
-    get_command_map
+from shared.events import get_path_expand_map
 from shared.fileio import makedirs_rec, pickle, unpickle
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.job import fill_mrsl_template, new_job
@@ -417,20 +417,16 @@ def run_command(
     """
 
     pid = multiprocessing.current_process().pid
-    command_map = get_command_map(configuration)
-    logger.info('(%s) run command for %s: %s' % (pid, target_path,
-                                                 command_list))
-    if not command_list or not command_list[0] in command_map:
-        raise ValueError('unsupported command: %s' % command_list[0])
-    function = command_list[0]
-    args_form = command_map[function]
     client_id = rule['run_as']
     command_str = ' '.join(command_list)
+    logger.info('(%s) run command for %s: %s' % (pid, target_path,
+                                                 command_list))
 
     # logger.debug('(%s) run %s on behalf of %s' % (pid, command_str,
     #             client_id))
 
-    user_arguments_dict = map_args_to_vars(args_form, command_list[1:])
+    (function, user_arguments_dict) = parse_command_args(configuration,
+                                                         command_list)
 
     form_method = 'post'
     target_op = "%s" % function
@@ -682,7 +678,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         workflows_logger.setLevel(logging.INFO)
         handler = logging.handlers.RotatingFileHandler(
             log_path, maxBytes=workflows_log_size,
-            backupCount=workflows_log_cnt-1)
+            backupCount=workflows_log_cnt - 1)
         formatter = \
             logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         handler.setFormatter(formatter)
@@ -895,7 +891,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         flat_chain = ['%s : %s' % pair for pair in
                                       _chain]
                         chain_str = ' <-> '.join(flat_chain)
-                        rel_chain_str = chain_str[shared_state['base_dir_len']:]
+                        rel_chain_str = chain_str[
+                            shared_state['base_dir_len']:]
 
                         logger.warning('(%s) breaking trigger cycle %s'
                                        % (pid, chain_str))
@@ -908,9 +905,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     fake._chain = _chain
                     logger.info('(%s) trigger %s event on %s' % (pid,
                                                                  change, path))
-                    self.__workflow_info(configuration,
-                                         rule['vgrid_name'], 'trigger %s event on %s'
-                                         % (change, rel_path))
+                    self.__workflow_info(
+                        configuration, rule['vgrid_name'],
+                        'trigger %s event on %s' % (change, rel_path))
                     self.handle_event(fake)
         elif rule['action'] == 'submit':
             mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
@@ -1034,7 +1031,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     for ent in scandir(src_path):
                         if ent.is_dir(follow_symlinks=True):
-                            vgrid_sub_path = ent.path[shared_state['base_dir_len']:]
+                            vgrid_sub_path = ent.path[
+                                shared_state['base_dir_len']:]
 
                             if not vgrid_sub_path in \
                                     vgrid_dir_cache.keys() or \
@@ -1092,7 +1090,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             del miss_cache[event_id]
             return
         else:
-            # logger.debug('(%s) no miss cache change for %s' % (pid, event_id))
+            # logger.debug('(%s) no miss cache change for %s' % (pid,
+            # event_id))
             return
 
         if len(miss_cache) < _cache_expire_size:
@@ -1218,7 +1217,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     rule_hit = True
 
-                    # TODO: Replace try / catch with a 'event queue / thread pool' setup
+                    # TODO: Replace try/catch with an event queue or thread
+                    #       pool setup
 
                     waiting_for_thread_resources = True
                     while waiting_for_thread_resources:
@@ -1344,7 +1344,8 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
                 for ent in scandir(vgrid_files_path):
                     if ent.is_dir(follow_symlinks=True):
-                        vgrid_sub_path = ent.path[shared_state['base_dir_len']:]
+                        vgrid_sub_path = ent.path[
+                            shared_state['base_dir_len']:]
                         # Force utf8 everywhere to avoid encoding issues
                         vgrid_sub_path = force_utf8(vgrid_sub_path)
                         if not vgrid_sub_path in vgrid_dir_cache.keys():

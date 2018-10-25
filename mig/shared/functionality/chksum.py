@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chksum - Calculate a checksum for one or more files
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,15 +34,16 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_max_chunks
 from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
-     sha512sum_file, write_file, check_write_access
+    sha512sum_file, write_file, check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
-from shared.parseflags import verbose, binary
+from shared.parseflags import verbose
 from shared.validstring import valid_user_path
 
 _algo_map = {'md5': md5sum_file, 'sha1': sha1sum_file,
              'sha256': sha256sum_file, 'sha512': sha512sum_file}
+
 
 def signature():
     """Signature of the main function"""
@@ -67,7 +68,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -79,7 +80,7 @@ def main(client_id, user_arguments_dict):
     current_dir = accepted['current_dir'][-1].lstrip(os.sep)
 
     # All paths are relative to current_dir
-    
+
     pattern_list = [os.path.join(current_dir, i) for i in pattern_list]
     if dst:
         dst = os.path.join(current_dir, dst)
@@ -94,22 +95,21 @@ def main(client_id, user_arguments_dict):
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
-
+            output_objects.append(
+                {'object_type': 'text', 'text': '%s using flag: %s' % (op_name,
+                                                                       flag)})
 
     # IMPORTANT: path must be expanded to abs for proper chrooting
-    abs_dir = os.path.abspath(os.path.join(base_dir, 
+    abs_dir = os.path.abspath(os.path.join(base_dir,
                                            current_dir.lstrip(os.sep)))
     if not valid_user_path(configuration, abs_dir, base_dir, True):
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : "You're not allowed to work in %s!"
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "You're not allowed to work in %s!"
                                % current_dir})
         logger.warning('%s tried to %s restricted path %s ! (%s)'
                        % (client_id, op_name, abs_dir, current_dir))
         return (output_objects, returnvalues.CLIENT_ERROR)
-        
+
     if verbose(flags):
         output_objects.append({'object_type': 'text', 'text':
                                "working in %s" % current_dir})
@@ -134,20 +134,19 @@ def main(client_id, user_arguments_dict):
         relative_dest = abs_dest.replace(base_dir, '')
         if not valid_user_path(configuration, abs_dest, base_dir, True):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "Invalid path! (%s expands to an illegal path)" % dst})
+                {'object_type': 'error_text', 'text':
+                 "Invalid path! (%s expands to an illegal path)" % dst})
             logger.warning('%s tried to %s restricted path %s !(%s)'
                            % (client_id, op_name, abs_dest, dst))
             return (output_objects, returnvalues.CLIENT_ERROR)
         if not check_write_access(abs_dest, parent_dir=True):
-            logger.warning('%s called without write access: %s' % \
+            logger.warning('%s called without write access: %s' %
                            (op_name, abs_dest))
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'cannot checksum to "%s": inside a read-only location!' % \
+                 'cannot checksum to "%s": inside a read-only location!' %
                  relative_dest})
             return (output_objects, returnvalues.CLIENT_ERROR)
-
 
     all_lines = []
     for pattern in pattern_list:
@@ -193,20 +192,20 @@ def main(client_id, user_arguments_dict):
                     output_lines.append(line)
                 except Exception, exc:
                     output_objects.append(
-                        {'object_type': 'error_text', 'text': "%s: '%s': %s" % \
+                        {'object_type': 'error_text', 'text': "%s: '%s': %s" %
                          (op_name, relative_path, exc)})
                     logger.error("%s: failed on '%s': %s" % (op_name,
                                                              relative_path, exc))
                     status = returnvalues.SYSTEM_ERROR
                     continue
             entry = {'object_type': 'file_output',
-                       'lines': output_lines}
+                     'lines': output_lines}
             output_objects.append(entry)
             all_lines += output_lines
-            
+
     if dst and not write_file(''.join(all_lines), abs_dest, logger):
         output_objects.append({'object_type': 'error_text',
-                               'text': "failed to write checksums to %s" % \
+                               'text': "failed to write checksums to %s" %
                                relative_dest})
         logger.error("writing checksums to %s for %s failed" % (abs_dest,
                                                                 client_id))
