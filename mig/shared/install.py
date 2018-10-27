@@ -389,8 +389,6 @@ cert, oid and sid based https!
     # Paraview and Jupyter require websockets proxy - enable conditionally
     user_dict['__WEBSOCKETS_COMMENTED__'] = '#'
 
-    user_dict['__IF_SEPARATE_PORTS__'] = '#'
-
     # Switch between apache 2.2 and 2.4 directives to match requested version
     user_dict['__APACHE_RECENT_ONLY__'] = 'Only for apache>=2.4'
     user_dict['__APACHE_PRE2.4_ONLY__'] = 'Only for apache<2.4'
