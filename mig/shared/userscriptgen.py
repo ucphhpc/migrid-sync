@@ -154,6 +154,15 @@ def cp_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
+    force_usage_string = '-f\t\tforce action'
+    recursive_usage_string = '-r\t\tact recursively'
+    if lang == 'sh':
+        s += '\n    echo "%s"' % force_usage_string
+        s += '\n    echo "%s"' % recursive_usage_string
+    elif lang == 'python':
+        s += '\n    print "%s"' % force_usage_string
+        s += '\n    print "%s"' % recursive_usage_string
+
     s += end_function(lang, 'usage')
 
     return s
@@ -611,10 +620,13 @@ def rm_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
+    force_usage_string = '-f\t\tforce action'
     recursive_usage_string = '-r\t\tact recursively'
     if lang == 'sh':
+        s += '\n    echo "%s"' % force_usage_string
         s += '\n    echo "%s"' % recursive_usage_string
     elif lang == 'python':
+        s += '\n    print "%s"' % force_usage_string
         s += '\n    print "%s"' % recursive_usage_string
     s += end_function(lang, 'usage')
 
@@ -3296,7 +3308,18 @@ def cp_main(lang):
 
     s = ''
     s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
+    if lang == 'sh':
+        s += parse_options(lang, 'fr',
+                           '''        f)  server_flags="${server_flags}f"
+            flags="${flags} -f";;
+        r)  server_flags="${server_flags}r"
+            flags="${flags} -r";;''')
+    elif lang == 'python':
+        s += parse_options(lang, 'fr',
+                           '''    elif opt == "-f":
+        server_flags += "f"
+    elif opt == "-r":
+        server_flags += "r"''')
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -4321,13 +4344,17 @@ def rm_main(lang):
     s = ''
     s += basic_main_init(lang)
     if lang == 'sh':
-        s += parse_options(lang, 'r',
-                           '        r)  server_flags="${server_flags}r"\n           flags="${flags} -r";;'
-                           )
+        s += parse_options(lang, 'fr',
+                           '''        f)  server_flags="${server_flags}f"
+            flags="${flags} -f";;
+        r)  server_flags="${server_flags}r"
+            flags="${flags} -r";;''')
     elif lang == 'python':
-        s += parse_options(lang, 'r',
-                           '    elif opt == "-r":\n        server_flags += "r"'
-                           )
+        s += parse_options(lang, 'fr',
+                           '''    elif opt == "-f":
+        server_flags += "f"
+    elif opt == "-r":
+        server_flags += "r"''')
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
