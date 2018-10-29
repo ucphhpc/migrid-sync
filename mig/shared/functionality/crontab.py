@@ -373,6 +373,8 @@ and so on. You have the following commands at your disposal:<br/>
             output_objects.append({'object_type': 'sectionheader',
                                    'text': 'Scheduled Tasks Log'})
 
+            # TODO: switch to ajax and job monitor+refresh like in workflows
+
             output_objects.append({'object_type': 'crontab_log', 'log_content':
                                    log_content})
             output_objects.append({'object_type': 'html_form', 'text':  '''

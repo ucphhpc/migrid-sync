@@ -173,9 +173,15 @@ def parse_atjobs_contents(configuration, client_id, atjobs_lines):
                             (client_id, line))
             continue
         # ISO format (see top)
-        when = datetime.datetime(int(hit.group(1)), int(hit.group(2)),
-                                 int(hit.group(3)), int(hit.group(4)),
-                                 int(hit.group(5)), int(hit.group(6)))
+        try:
+            when = datetime.datetime(int(hit.group(1)), int(hit.group(2)),
+                                     int(hit.group(3)), int(hit.group(4)),
+                                     int(hit.group(5)), int(hit.group(6)))
+        except Exception, exc:
+            _logger.warning("Skip invalid atjobs line for %s: %s (%s)" %
+                            (client_id, line, exc))
+            continue
+            
         # Ignore seconds
         when = when.replace(second=0)
         cmd_list = shlex.split(hit.group(7))
