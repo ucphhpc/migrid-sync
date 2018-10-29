@@ -27,6 +27,24 @@
 
 """Keywords in the two factor settings"""
 
+def check_twofactor_deps(configuration, client_id, twofactor_dict):
+    """Go through 2FA dependencies and return a boolean to indicate if
+    all dependencies are satisfied. I.e. web 2FA must be enabled before IO
+    2FA is allowed.
+    """
+    dep_enabled, core_enabled = False, False
+    specs_dict = get_keywords_dict(configuration)
+    for (field, spec) in specs_dict.items():
+        if spec.get('Context', None) == 'twofactor':
+            if twofactor_dict.get(field, None):
+                core_enabled = True
+        elif spec.get('Context', None) == 'twofactor_dep':
+            if twofactor_dict.get(field, None):
+                dep_enabled = True
+
+    if dep_enabled and not core_enabled:
+        return False
+    return True
 
 def get_twofactor_specs(configuration):
     """Return an ordered list of (keywords, spec) tuples. The order is
@@ -76,7 +94,7 @@ an authenticated session and then logging into WebDAVS as usual.
             'Type': 'boolean',
             'Value': False,
             'Editor': 'select',
-            'Context': 'twofactor',
+            'Context': 'twofactor_dep',
             'Required': False,
         }))
     if configuration.site_enable_sftp:
@@ -91,7 +109,7 @@ an authenticated session and then logging into SFTP as usual.
             'Type': 'boolean',
             'Value': False,
             'Editor': 'select',
-            'Context': 'twofactor',
+            'Context': 'twofactor_dep',
             'Required': False,
         }))
         specs.append(('SFTP_KEY_TWOFACTOR', {
@@ -105,7 +123,7 @@ an authenticated session and then logging into SFTP as usual.
             'Type': 'boolean',
             'Value': False,
             'Editor': 'select',
-            'Context': 'twofactor',
+            'Context': 'twofactor_dep',
             'Required': False,
         }))
     if configuration.site_enable_ftps:
@@ -120,7 +138,7 @@ an authenticated session and then logging into FTPS as usual.
             'Type': 'boolean',
             'Value': False,
             'Editor': 'select',
-            'Context': 'twofactor',
+            'Context': 'twofactor_dep',
             'Required': False,
         }))
     

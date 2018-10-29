@@ -45,7 +45,8 @@ from shared.pwhash import make_hash, make_digest, assure_password_strength
 from shared.safeinput import valid_password
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.ssh import parse_pub_key, tighten_key_perms
-from shared.twofactorkeywords import get_keywords_dict as get_twofactor_fields
+from shared.twofactorkeywords import get_keywords_dict as get_twofactor_fields, \
+     check_twofactor_deps
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
@@ -201,10 +202,28 @@ Backup destination page during import.'''
 def parse_and_save_twofactor(filename, client_id, configuration):
     """Validate and write twofactor entries from filename. The 2FA user key
     and any required auth files need to be handled separately.
+    After saving we check and warn if primary 2FA settings aren't enabled and
+    any of the depending secondary ones are. I.e. web 2FA is needed for reuse
+    in I/O daemons.
     """
-    return parse_and_save_pickle(filename, twofactor_filename,
-                                 get_twofactor_fields(configuration),
-                                 client_id, configuration, False, False)
+    _logger = configuration.logger
+    status = parse_and_save_pickle(filename, twofactor_filename,
+                                   get_twofactor_fields(configuration),
+                                   client_id, configuration, False, False)
+    if status[0]:
+        saved_values = load_twofactor(client_id, configuration)
+        if not saved_values:
+            _logger.error('loading just saved %s twofactor settings failed!'
+                          % client_id)
+            return (False, 'could not load saved 2FA settings!')
+        if not check_twofactor_deps(configuration, client_id, saved_values):
+            warn = '''IMPORTANT: twofactor auth for the efficient data access
+protocols like SFTP, FTPS and WebDAVS <emph>requires</emph> twofactor auth to
+be enabled for one or more basic web login methods, because they share the same
+twofactor session. I.e. only enable twofactor for SFTP, FTPS or WebDAVS with
+twofactor enabled for your web login.'''
+            status = (status[0], status[1] + warn)
+    return status
 
 
 def parse_and_save_publickeys(keys_path, keys_content, client_id,
