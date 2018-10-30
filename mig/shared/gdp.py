@@ -97,6 +97,7 @@ valid_log_actions = [
     'auto_logged_out',
     'copied',
     'created',
+    'wrote',
     'deleted',
     'invited_user',
     'removed_user',

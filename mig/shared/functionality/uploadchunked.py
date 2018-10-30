@@ -431,7 +431,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
                 if configuration.site_enable_gdp:
                     msg = "'%s'" % rel_dst
-                    project_log(configuration, 'https', client_id, 'created',
+                    project_log(configuration, 'https', client_id, 'wrote',
                                 msg, user_addr=environ['REMOTE_ADDR'])
 
             uploaded.append(file_entry)
