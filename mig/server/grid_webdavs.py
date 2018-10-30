@@ -63,7 +63,7 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id, io_session_timeout
 from shared.fileio import check_write_access, user_chroot_exceptions
-from shared.gdp import project_open
+from shared.gdp import project_open, project_log
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
@@ -346,7 +346,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         I.e. this method is only used for the 'basic' auth method, while
         'digest' auth takes another code path.
         Includes optional 2-factor authentication if enabled.
-        
+
         NOTE: We explicitly compare against saved hash rather than password.
         """
         ip_addr = _get_addr(environ)
@@ -371,8 +371,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             if hit_rate_limit(configuration, "davs", ip_addr, username):
                 logger.warning("Rate limiting login from %s" % ip_addr)
             elif self._check_auth_password(
-                ip_addr, realmname, username, password) and \
-                check_twofactor_session(configuration, username, 'davs'):
+                    ip_addr, realmname, username, password) and \
+                    check_twofactor_session(configuration, username, 'davs'):
                 logger.info("Accepted password login for %s from %s" %
                             (username, ip_addr))
                 success = True
@@ -440,7 +440,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             update_users(configuration, self.user_map, username)
 
             if self._get_user_digests(ip_addr, realmname, username) and \
-                   check_twofactor_session(configuration, username, 'davs'):
+                    check_twofactor_session(configuration, username, 'davs'):
                 # logger.debug("valid digest user %s from %s:%s" %
                 #              (username, ip_addr, tcp_port))
                 success = True
@@ -541,6 +541,8 @@ class MiGFileResource(FileResource):
     """
 
     def __init__(self, path, environ, filePath):
+        self.username = _username_from_env(environ)
+        self.ip_addr = _get_addr(environ)
         FileResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
@@ -548,17 +550,51 @@ class MiGFileResource(FileResource):
     def handleCopy(self, destPath, depthInfinity):
         """Handle a COPY request natively, but with our restrictions"""
         _handle_allowed("copy", self._filePath)
-        return super(MiGFileResource, self).handleCopy(destPath, depthInfinity)
+        result = super(MiGFileResource, self).handleCopy(
+            destPath, depthInfinity)
+        if configuration.site_enable_gdp:
+            msg = "'%s' -> '%s'" % (self.path.strip('/'), destPath.strip('/'))
+            project_log(configuration, 'davs', self.username, 'copied',
+                        msg, user_addr=self.ip_addr)
+        return result
 
     def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
         _handle_allowed("move", self._filePath)
-        return super(MiGFileResource, self).handleMove(destPath)
+        result = super(MiGFileResource, self).handleMove(destPath)
+        if configuration.site_enable_gdp:
+            msg = "'%s' -> '%s'" % (self.path.strip('/'), destPath.strip('/'))
+            project_log(configuration, 'davs', self.username, 'moved',
+                        msg, user_addr=self.ip_addr)
+        return result
 
     def handleDelete(self):
         """Handle a DELETE request natively, but with our restrictions"""
         _handle_allowed("delete", self._filePath)
-        return super(MiGFileResource, self).handleDelete()
+        result = super(MiGFileResource, self).handleDelete()
+        if configuration.site_enable_gdp:
+            msg = "'%s'" % self.path.strip('/')
+            project_log(configuration, 'davs', self.username, 'deleted',
+                        msg, user_addr=self.ip_addr)
+        return result
+
+    def getContent(self):
+        """Handle a GET request natively and log for GDP"""
+        result = super(MiGFileResource, self).getContent()
+        if configuration.site_enable_gdp:
+            msg = "'%s'" % self.path.strip('/')
+            project_log(configuration, 'davs', self.username, 'accessed',
+                        msg, user_addr=self.ip_addr)
+        return result
+
+    def beginWrite(self, contentType=None):
+        """Handle a PUT request natively and log for GDP"""
+        result = super(MiGFileResource, self).beginWrite()
+        if configuration.site_enable_gdp:
+            msg = "'%s'" % self.path.strip('/')
+            project_log(configuration, 'davs', self.username, 'wrote',
+                        msg, user_addr=self.ip_addr)
+        return result
 
 
 class MiGFolderResource(FolderResource):
@@ -571,6 +607,8 @@ class MiGFolderResource(FolderResource):
     """
 
     def __init__(self, path, environ, filePath):
+        self.username = _username_from_env(environ)
+        self.ip_addr = _get_addr(environ)
         FolderResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
@@ -578,18 +616,42 @@ class MiGFolderResource(FolderResource):
     def handleCopy(self, destPath, depthInfinity):
         """Handle a COPY request natively, but with our restrictions"""
         _handle_allowed("copy", self._filePath)
-        return super(MiGFolderResource, self).handleCopy(destPath,
-                                                         depthInfinity)
+        result = super(MiGFolderResource, self).handleCopy(
+            destPath, depthInfinity)
+        if configuration.site_enable_gdp:
+            msg = "'%s' -> '%s'" % (self.path.strip('/'), destPath.strip('/'))
+            project_log(configuration, 'davs', self.username, 'copied',
+                        msg, user_addr=self.ip_addr)
+        return result
 
     def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
         _handle_allowed("move", self._filePath)
-        return super(MiGFolderResource, self).handleMove(destPath)
+        result = super(MiGFolderResource, self).handleMove(destPath)
+        if configuration.site_enable_gdp:
+            msg = "'%s' -> '%s'" % (self.path.strip('/'), destPath.strip('/'))
+            project_log(configuration, 'davs', self.username, 'moved',
+                        msg, user_addr=self.ip_addr)
+        return result
 
     def handleDelete(self):
         """Handle a DELETE request natively, but with our restrictions"""
         _handle_allowed("delete", self._filePath)
-        return super(MiGFolderResource, self).handleDelete()
+        result = super(MiGFolderResource, self).handleDelete()
+        if configuration.site_enable_gdp:
+            msg = "'%s'" % self.path.strip('/')
+            project_log(configuration, 'davs', self.username, 'deleted',
+                        msg, user_addr=self.ip_addr)
+        return result
+
+    def createCollection(self, name):
+        result = super(MiGFolderResource, self).createCollection(name)
+        if configuration.site_enable_gdp:
+            relpath = "%s%s" % (self.path, name)
+            msg = "'%s'" % relpath.strip('/')
+            project_log(configuration, 'davs', self.username, 'created',
+                        msg, user_addr=self.ip_addr)
+        return result
 
     def getMemberNames(self):
         """Return list of direct collection member names (utf-8 encoded).
@@ -613,7 +675,6 @@ class MiGFolderResource(FolderResource):
         Call parent version, filter invisible and mangle to our own
         MiGFileResource and MiGFolderResource objects.
         """
-
         # logger.debug("in getMember")
         res = FolderResource.getMember(self, name)
         if invisible_path(res.name):
@@ -698,6 +759,8 @@ class MiGFilesystemProvider(FilesystemProvider):
         """
         if environ is None:
             raise RuntimeError("A recent/patched wsgidav is needed, see code")
+        if path is None:
+            raise RuntimeError("Invalid path: %s" % path)
         # logger.debug("_locToFilePath: %s" % path)
         username = _username_from_env(environ)
         # logger.debug("_locToFilePath %s: find chroot for %s" % (path, username))
@@ -714,7 +777,7 @@ class MiGFilesystemProvider(FilesystemProvider):
                         logger.error("could not expand link %s" % user_chroot)
                         continue
                 break
-        pathInfoParts = path.strip(os.sep).split(os.sep)
+        pathInfoParts = path.strip('/').split('/')
         abs_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
         try:
             abs_path = get_fs_path(configuration, abs_path, user_chroot,
