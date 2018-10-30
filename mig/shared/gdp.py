@@ -29,6 +29,7 @@
 
 import os
 import time
+import base64
 import hashlib
 import inspect
 import logging
@@ -120,14 +121,37 @@ def __user_db_filepath(configuration):
     return (db_filepath, db_lock_filepath)
 
 
+def __validate_user_id(configuration, user_id):
+    """Return valid user id, decode possible user alias"""
+
+    _logger = configuration.logger
+    # _logger.debug('user_id: %s' % user_id)    
+
+    result = None
+    if user_id.find("@") == -1 and user_id.find('/') == -1:
+        try: 
+            result = base64.b64decode(user_id.replace('_', '='))
+        except Exception, exc:
+            result = None
+    else:
+        result = user_id
+
+    if result is None \
+            or result.find("@") == -1 and result.find('/') == -1:
+        _logger.error("Invalid user_id: %s" % result)
+        result = None
+
+    return result
+
+
 def __client_id_from_project_client_id(configuration,
                                        project_client_id):
     """Extract client_id from *project_client_id"""
 
     _logger = configuration.logger
-    _logger.debug('project_client_id: %s' % project_client_id)
-    result = None
+    # _logger.debug('project_client_id: %s' % project_client_id)
 
+    result = None
     try:
         if project_client_id.find(client_id_project_postfix) > -1:
             result = \
@@ -148,9 +172,9 @@ def __project_name_from_project_client_id(configuration,
     """Extract project name from *project_client_id*"""
 
     _logger = configuration.logger
-    _logger.debug('project_client_id: %s' % project_client_id)
+    # _logger.debug('project_client_id: %s' % project_client_id)
+    
     result = None
-
     try:
         if project_client_id.find(client_id_project_postfix) > -1:
             result = \
@@ -170,7 +194,7 @@ def __short_id_from_client_id(configuration, client_id):
     """Extract login handle (email address) from *client_id*"""
 
     _logger = configuration.logger
-    _logger.debug('client_id: %s' % client_id)
+    # _logger.debug('client_id: %s' % client_id)
 
     user_alias = configuration.user_openid_alias
     result = get_short_id(configuration, client_id, user_alias)
@@ -184,7 +208,7 @@ def __project_short_id_from_project_client_id(configuration,
     from *project_client_id*"""
 
     _logger = configuration.logger
-    _logger.debug('project_client_id: %s' % project_client_id)
+    # _logger.debug('project_client_id: %s' % project_client_id)
 
     user_alias = configuration.user_openid_alias
     result = get_short_id(configuration, project_client_id, user_alias)
@@ -196,9 +220,9 @@ def __client_id_from_project_short_id(configuration, project_short_id):
     """Extract client_id from *project_short_id*"""
 
     _logger = configuration.logger
-    _logger.debug('project_short_id: %s' % project_short_id)
+    # _logger.debug('project_short_id: %s' % project_short_id)
+    
     result = None
-
     user_id_array = project_short_id.split('@')
     user_id = "@".join(user_id_array[:-1])
     client_id = expand_openid_alias(user_id, configuration)
@@ -218,7 +242,8 @@ def __client_id_from_user_id(configuration, user_id):
     or project_user_id"""
 
     _logger = configuration.logger
-    _logger.debug('user_id: %s' % user_id)
+    # _logger.debug('user_id: %s' % user_id)
+    
     result = None
 
     # Extract client_id from user_id
@@ -240,7 +265,8 @@ def __project_client_id_from_user_id(configuration, user_id):
     *user_id* is either a project_client_id or project_short_id"""
 
     _logger = configuration.logger
-    _logger.debug('user_id: %s' % user_id)
+    # _logger.debug('user_id: %s' % user_id)
+
     result = None
 
     # Extract client_id from user_id
@@ -270,7 +296,7 @@ def __project_short_id_from_user_id(configuration, user_id):
     *user_id* is either a project_client_id or project_short_id"""
 
     _logger = configuration.logger
-    _logger.debug("user_id: %s" % user_id)
+    # _logger.debug("user_id: %s" % user_id)
     
     result = __project_short_id_from_project_client_id(
                 configuration,
@@ -328,9 +354,9 @@ def __validate_user_db(configuration, client_id, user_db=None):
     """
 
     _logger = configuration.logger
-    _logger.debug("client_id: '%s', user_db: %s" % (client_id, user_db))
-    status = True
+    # _logger.debug("client_id: '%s', user_db: %s" % (client_id, user_db))
 
+    status = True
     msg = ""
     user = None
     projects = None
@@ -519,8 +545,8 @@ def __send_project_create_confirmation(configuration,
     """Send project create confirmation to *login* and GDP admins"""
 
     _logger = configuration.logger
-    _logger.debug("login: '%s', project_name: '%s'" % (login,
-                                                       project_name))
+    # _logger.debug("login: '%s', project_name: '%s'" % (login,
+    #                                                    project_name))
 
     status = True
     template = None
@@ -697,7 +723,7 @@ def get_project_from_short_id(configuration, project_short_id):
 
     _logger = configuration.logger
     result = None
-    _logger.debug("project_short_id: %s" % project_short_id)
+    # _logger.debug("project_short_id: %s" % project_short_id)
 
     try:
         result = project_short_id.split('@')[2]
@@ -712,28 +738,36 @@ def get_project_from_short_id(configuration, project_short_id):
 def get_project_from_user_id(configuration, user_id):
     """Returns project name from *user_id*"""
 
-    return __project_name_from_user_id(configuration, user_id)
+    project_name = None
+    user_id = __validate_user_id(configuration, user_id)
+    if user_id is not None:
+        project_name = __project_name_from_user_id(configuration, user_id)
+
+    return project_name
 
 
 def get_active_project_client_id(configuration, user_id, protocol):
     """Returns active project_client_id for *user_id* with *protocol*"""
 
     _logger = configuration.logger
-    _logger.debug("user_id: '%s', protocol: '%s'"
-                  % (user_id, protocol))
-    result = None
-    client_id = __client_id_from_user_id(configuration, user_id)
+    # _logger.debug("user_id: '%s', protocol: '%s'"
+    #               % (user_id, protocol))
 
-    if client_id is not None:
-        user_db = __load_user_db(configuration)
-        (status, _) = __validate_user_db(configuration, client_id,
-                                         user_db)
-        # Retrieve active project client id
-        if status:
-            result = user_db.get(client_id,
-                                 {}).get('account',
-                                         {}).get(protocol,
-                                                 {}).get('role', '')
+    result = None
+    user_id = __validate_user_id(configuration, user_id)
+    if user_id is not None:        
+        client_id = __client_id_from_user_id(configuration, user_id)
+
+        if client_id is not None:
+            user_db = __load_user_db(configuration)
+            (status, _) = __validate_user_db(configuration, client_id,
+                                             user_db)
+            # Retrieve active project client id
+            if status:
+                result = user_db.get(client_id,
+                                     {}).get('account',
+                                             {}).get(protocol,
+                                                     {}).get('role', '')
 
     return result
 
@@ -742,10 +776,10 @@ def get_active_project_short_id(configuration, user_id, protocol):
     """Returns active project_short_id for *user_id* with *protocol*"""
 
     _logger = configuration.logger
-    _logger.debug("user_id: '%s', protocol: '%s'"
-                  % (user_id, protocol))
-    result = None
+    # _logger.debug("user_id: '%s', protocol: '%s'"
+    #               % (user_id, protocol))
 
+    result = None
     project_client_id = get_active_project_client_id(
         configuration, user_id, protocol)
     result = __project_short_id_from_project_client_id(
@@ -759,8 +793,11 @@ def get_short_id_from_user_id(configuration, user_id):
     *user_id* is either a client_id, project_client_id, short_id
     or project_user_id"""
 
-    client_id = __client_id_from_user_id(configuration, user_id)
-    result = __short_id_from_client_id(configuration, client_id)
+    result = None
+    user_id = __validate_user_id(configuration, user_id)
+    if user_id is not None:        
+        client_id = __client_id_from_user_id(configuration, user_id)
+        result = __short_id_from_client_id(configuration, client_id)
 
     return result
 
@@ -897,8 +934,8 @@ def validate_user(configuration, user_id, user_addr, protocol):
     """
 
     _logger = configuration.logger
-    _logger.debug("user_id: '%s', user_addr: '%s', protocol: '%s'"
-                  % (user_id, user_addr, protocol))
+    # _logger.debug("user_id: '%s', user_addr: '%s', protocol: '%s'"
+    #               % (user_id, user_addr, protocol))
 
     flock = None
     timestamp = time.time()
@@ -908,7 +945,7 @@ def validate_user(configuration, user_id, user_addr, protocol):
     account_state = None
 
     client_id = __client_id_from_user_id(configuration, user_id)
-    _logger.debug("client_id: '%s'" % client_id)
+    # _logger.debug("client_id: '%s'" % client_id)
 
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
@@ -1020,7 +1057,8 @@ def get_projects(configuration, client_id, state, owner_only=False):
     """Return list of GDP projects for user *client_id* with *state*"""
 
     _logger = configuration.logger
-    _logger.debug("client_id: '%s', state: '%s'" % (client_id, state))
+    # _logger.debug("client_id: '%s', state: '%s'" % (client_id, state))
+
     status = True
     result = None
 
@@ -1082,8 +1120,9 @@ def get_project_user_dn(configuration, requested_script, client_id, protocol):
     """
 
     _logger = configuration.logger
-    _logger.debug("requested_script: '%s', client_id: '%s', protocol: '%s'"
-                  % (requested_script, client_id, protocol))
+    # _logger.debug("requested_script: '%s', client_id: '%s', protocol: '%s'"
+    #               % (requested_script, client_id, protocol))
+
     result = ''
     user_db = __load_user_db(configuration)
 
@@ -1130,8 +1169,9 @@ def ensure_user(configuration, client_addr, client_id):
     """Ensure GDP user db entry for *client_id*"""
 
     _logger = configuration.logger
-    _logger.debug("client_addr: '%s', client_id: '%s'"
-                  % (client_addr, client_id))
+    # _logger.debug("client_addr: '%s', client_id: '%s'"
+    #               % (client_addr, client_id))
+
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, locked=True)
@@ -1156,11 +1196,11 @@ def project_remove_user(
     from *project_name"""
 
     _logger = configuration.logger
-    _logger.debug(
-        "owner_client_addr: '%s', owner_client_id: '%s'"
-        % (owner_client_addr, owner_client_id)
-        + ", client_id: '%s', project_name: '%s'"
-        % (client_id, project_name))
+    # _logger.debug(
+    #     "owner_client_addr: '%s', owner_client_id: '%s'"
+    #     % (owner_client_addr, owner_client_id)
+    #     + ", client_id: '%s', project_name: '%s'"
+    #     % (client_id, project_name))
 
     status = True
 
@@ -1223,8 +1263,8 @@ def project_remove_user(
             log_msg += " is already removed from project: '%s'" % project_name
             _logger.error('GDP: %s' % log_msg)
         else:
-            _logger.debug("Removing member: '%s' from vgrid: '%s'" %
-                          (project_client_id, project_name))
+            # _logger.debug("Removing member: '%s' from vgrid: '%s'" %
+            #               (project_client_id, project_name))
             (status, vgrid_msg) = vgrid_remove_members(configuration,
                                                        project_name,
                                                        [project_client_id],
@@ -1239,8 +1279,8 @@ def project_remove_user(
                 mig_user_dict = mig_user_map.get(project_client_id, None)
                 if mig_user_dict is not None:
                     try:
-                        _logger.debug("Deleting MiG user: '%s'" %
-                                      project_client_id)
+                        # _logger.debug("Deleting MiG user: '%s'" %
+                        #               project_client_id)
                         delete_user(mig_user_dict, configuration.config_file,
                                     mig_user_db_path, force=True)
                     except Exception, exc:
@@ -1286,11 +1326,11 @@ def project_invite(
     to *project_name"""
 
     _logger = configuration.logger
-    _logger.debug(
-        "owner_client_addr: '%s', owner_client_id: '%s'"
-        % (owner_client_addr, owner_client_id)
-        + ", client_id: '%s', project_name: '%s'"
-        % (client_id, project_name))
+    # _logger.debug(
+    #     "owner_client_addr: '%s', owner_client_id: '%s'"
+    #     % (owner_client_addr, owner_client_id)
+    #     + ", client_id: '%s', project_name: '%s'"
+    #     % (client_id, project_name))
 
     status = True
 
@@ -1360,8 +1400,9 @@ def create_project_user(
     """Create new project user"""
 
     _logger = configuration.logger
-    _logger.debug("client_addr: '%s', client_id: '%s', project_name: '%s'"
-                  % (client_addr, client_id, project_name))
+    # _logger.debug("client_addr: '%s', client_id: '%s', project_name: '%s'"
+    #               % (client_addr, client_id, project_name))
+
     status = True
     msg = ""
 
@@ -1432,10 +1473,10 @@ def project_accept(
     """Accept project invitation"""
 
     _logger = configuration.logger
-    _logger.debug("client_addr: '%s', client_id: '%s', project_name: '%s'"
-                  % (client_addr, client_id, project_name))
-    status = True
+    # _logger.debug("client_addr: '%s', client_id: '%s', project_name: '%s'"
+    #               % (client_addr, client_id, project_name))
 
+    status = True
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, locked=True)
@@ -1535,9 +1576,10 @@ def project_login(
     """Log *client_id* into project_name"""
 
     _logger = configuration.logger
-    _logger.debug("protocol: '%s', user_id: '%s', \
-                  client_addr: '%s', project_name: '%s'"
-                  % (protocol, user_id, client_addr, project_name))
+    # _logger.debug("protocol: '%s', user_id: '%s', \
+    #               client_addr: '%s', project_name: '%s'"
+    #               % (protocol, user_id, client_addr, project_name))
+
     result = None
     status = True
     flock = None
@@ -1660,8 +1702,9 @@ def project_logout(
     """
 
     _logger = configuration.logger
-    _logger.debug("user_id: '%s', protocol: '%s', client_addr: '%s'"
-                  % (user_id, protocol, client_addr))
+    # _logger.debug("user_id: '%s', protocol: '%s', client_addr: '%s'"
+    #               % (user_id, protocol, client_addr))
+
     status = True
     result = False
     project_name = None
@@ -1758,8 +1801,9 @@ def project_open(
     then skip logout/login"""
 
     _logger = configuration.logger
-    _logger.debug("protocol: '%s', client_addr: '%s', user_id: '%s'"
-                  % (protocol, client_addr, user_id))
+    # _logger.debug("protocol: '%s', client_addr: '%s', user_id: '%s'"
+    #               % (protocol, client_addr, user_id))
+
     result = False
 
     project_short_id = __project_short_id_from_user_id(configuration, user_id)
@@ -1808,9 +1852,9 @@ def project_create(
     """Create new project with *project_name* and owner *client_id*"""
 
     _logger = configuration.logger
-    _logger.debug(
-        "project_create: client_id: '%s'"
-        + ", project_name: '%s'", client_id, project_name)
+    # _logger.debug(
+    #     "project_create: client_id: '%s'"
+    #     + ", project_name: '%s'", client_id, project_name)
 
     status = True
     msg = ""
