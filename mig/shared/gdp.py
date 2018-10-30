@@ -125,11 +125,11 @@ def __validate_user_id(configuration, user_id):
     """Return valid user id, decode possible user alias"""
 
     _logger = configuration.logger
-    # _logger.debug('user_id: %s' % user_id)    
+    # _logger.debug('user_id: %s' % user_id)
 
     result = None
     if user_id.find("@") == -1 and user_id.find('/') == -1:
-        try: 
+        try:
             result = base64.b64decode(user_id.replace('_', '='))
         except Exception, exc:
             result = None
@@ -173,7 +173,7 @@ def __project_name_from_project_client_id(configuration,
 
     _logger = configuration.logger
     # _logger.debug('project_client_id: %s' % project_client_id)
-    
+
     result = None
     try:
         if project_client_id.find(client_id_project_postfix) > -1:
@@ -221,7 +221,7 @@ def __client_id_from_project_short_id(configuration, project_short_id):
 
     _logger = configuration.logger
     # _logger.debug('project_short_id: %s' % project_short_id)
-    
+
     result = None
     user_id_array = project_short_id.split('@')
     user_id = "@".join(user_id_array[:-1])
@@ -243,7 +243,7 @@ def __client_id_from_user_id(configuration, user_id):
 
     _logger = configuration.logger
     # _logger.debug('user_id: %s' % user_id)
-    
+
     result = None
 
     # Extract client_id from user_id
@@ -297,10 +297,10 @@ def __project_short_id_from_user_id(configuration, user_id):
 
     _logger = configuration.logger
     # _logger.debug("user_id: %s" % user_id)
-    
+
     result = __project_short_id_from_project_client_id(
-                configuration,
-                user_id)
+        configuration,
+        user_id)
     if result is None:
         result = user_id
 
@@ -755,7 +755,7 @@ def get_active_project_client_id(configuration, user_id, protocol):
 
     result = None
     user_id = __validate_user_id(configuration, user_id)
-    if user_id is not None:        
+    if user_id is not None:
         client_id = __client_id_from_user_id(configuration, user_id)
 
         if client_id is not None:
@@ -795,7 +795,7 @@ def get_short_id_from_user_id(configuration, user_id):
 
     result = None
     user_id = __validate_user_id(configuration, user_id)
-    if user_id is not None:        
+    if user_id is not None:
         client_id = __client_id_from_user_id(configuration, user_id)
         result = __short_id_from_client_id(configuration, client_id)
 
