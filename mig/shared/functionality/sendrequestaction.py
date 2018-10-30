@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequestaction - send request for e.g. member or ownership action handler
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -52,7 +52,7 @@ def signature():
                 'vgrid_name': [''], 'cert_id': [],
                 'protocol': [any_protocol],
                 'request_type': REJECT_UNSET,
-                'request_text': REJECT_UNSET}
+                'request_text': ['']}
     return ['html_form', defaults]
 
 
