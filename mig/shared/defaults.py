@@ -331,16 +331,24 @@ STRONG_TLS_CURVES = "prime256v1:secp384r1:secp521r1"
 # Tested to work with popular recent clients on the main platforms:
 # OpenSSH-6.6.1+, LFTP-4.4.13+, FileZilla-3.24+, WinSCP-5.13.3+ and PuTTY-0.70+
 # NOTE: CentOS-6 still comes with OpenSSH-5.3 without strong Kex+MAC support
-# thus it's necessary to force legacy ssh to support any such clients.
+# thus it's necessary to fake legacy ssh version to support any such clients.
 STRONG_SSH_KEXALGOS = "curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512"
-STRONG_SSH_LEGACY_KEXALGOS = "curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256"
+BEST_SSH_LEGACY_KEXALGOS = "curve25519-sha256@libssh.org"
+SAFE_SSH_LEGACY_KEXALGOS = "diffie-hellman-group-exchange-sha256"
+STRONG_SSH_LEGACY_KEXALGOS = ",".join([BEST_SSH_LEGACY_KEXALGOS,
+                                       SAFE_SSH_LEGACY_KEXALGOS])
 STRONG_SSH_CIPHERS = "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
 # NOTE: strong cipher support go way back - just reuse
-STRONG_SSH_LEGACY_CIPHERS = STRONG_SSH_CIPHERS
+BEST_SSH_LEGACY_CIPHERS = STRONG_SSH_CIPHERS
+SAFE_SSH_LEGACY_CIPHERS = ""
+STRONG_SSH_LEGACY_CIPHERS = ','.join([BEST_SSH_LEGACY_CIPHERS,
+                                     SAFE_SSH_LEGACY_CIPHERS])
 STRONG_SSH_MACS = "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com"
-# NOTE: extend strong MACS with the best possible alterantives on old paramiko
+# NOTE: extend strong MACS with the best possible alternatives on old paramiko
 #       to avoid falling back to really bad ones
-STRONG_SSH_LEGACY_MACS = "%s,hmac-sha2-512,hmac-sha2-256" % STRONG_SSH_MACS
+BEST_SSH_LEGACY_MACS = STRONG_SSH_MACS
+SAFE_SSH_LEGACY_MACS = "hmac-sha2-512,hmac-sha2-256"
+STRONG_SSH_LEGACY_MACS = ",".join([BEST_SSH_LEGACY_MACS, SAFE_SSH_LEGACY_MACS])
 
 # A pattern to match usernames unambiguously identifying cracking attempts
-CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|lp|operator|ftp|irc|nobody|sys|pi|guest|www|www-data|mysql|postgres|oracle|mongodb|redis|hadoop|cpanel|plesk|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|supervisor|csgoserver|device|deploy|test|1234|0101|0)'
+CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|lp|operator|ftp|irc|nobody|sys|pi|guest|www|www-data|mysql|postgres|oracle|mongodb|redis|hadoop|cpanel|plesk|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|supervisor|csgoserver|device|deploy|test|1234|0101|0)'
