@@ -501,7 +501,7 @@ def __validate_user_db(configuration, client_id, user_db=None):
     return (status, msg)
 
 
-def __load_user_db(configuration, locked=False):
+def __load_user_db(configuration, locked=False, allow_missing=False):
     """Load pickled GDP user database"""
 
     _logger = configuration.logger
@@ -513,7 +513,8 @@ def __load_user_db(configuration, locked=False):
     if os.path.exists(db_filepath):
         result = load(db_filepath)
     else:
-        _logger.error("Missing GDP user DB: '%s'" % db_filepath)
+        if not allow_missing:
+            _logger.error("Missing GDP user DB: '%s'" % db_filepath)
         result = {}
 
     if not locked:
@@ -1147,7 +1148,7 @@ def ensure_user(configuration, client_addr, client_id):
 
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
-    user_db = __load_user_db(configuration, locked=True)
+    user_db = __load_user_db(configuration, locked=True, allow_missing=True)
     user = user_db.get(client_id, None)
     if user is None:
         user_db[client_id] = __create_gdp_user_db_entry(configuration)

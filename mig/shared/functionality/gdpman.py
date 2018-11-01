@@ -846,7 +846,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             elif keyword == 'WEBDAVS_TWOFACTOR':
                 value = True
             else:
-                value = keywords_dict[keyword]['value']
+                value = keywords_dict[keyword]['Value']
             topic_mrsl += '''::%s::
 %s
 
@@ -890,7 +890,11 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         return (output_objects, returnvalues.OK)
 
-    if not action and identity or action == 'logout':
+    # Make sure user exists in GDP user db
+
+    ensure_user(configuration, client_addr, client_id)
+
+    if not action or action == 'logout':
         autologout = project_logout(configuration,
                                     'https',
                                     client_addr,
@@ -923,7 +927,6 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     # Generate html
 
-    ensure_user(configuration, client_addr, client_id)
     (validate_status, validate_msg) = validate_user(configuration,
                                                     client_id,
                                                     client_addr,
