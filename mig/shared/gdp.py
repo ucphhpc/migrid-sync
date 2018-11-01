@@ -34,6 +34,7 @@ import hashlib
 import inspect
 import logging
 import logging.handlers
+
 try:
     import pdfkit
 except:
@@ -60,6 +61,7 @@ from shared.vgridkeywords import get_settings_keywords_dict
 
 user_db_filename = 'gdp-users.db'
 client_id_project_postfix = '/GDP='
+
 
 skip_client_id_rewrite = [
     'adminvgrid.py',
@@ -814,6 +816,7 @@ def project_log(
     """Log project actions, each project has a distinct logfile"""
 
     _logger = configuration.logger
+    _gdp_logger = configuration.gdp_logger
     status = True
 
     # Validate action
@@ -867,35 +870,8 @@ def project_log(
             "GDP: project_log missing project name for: '%s'" % client_id)
 
     if status:
-
-        # Initialize logger each project got its own logfile
-        # TODO: cache GDP log initialization ?
-
-        log_name = '%s.log' % project_name
-        log_path = os.path.join(configuration.gdp_home,
-                                os.path.join(project_name, log_name))
-        header = False
-        if not os.path.exists(log_path):
-            header = True
-        flock_path = '%s.lock' % log_path
-        flock = acquire_file_lock(flock_path)
-        logger = logging.getLogger('GDP')
-        logger.setLevel(logging.INFO)
-        handler = logging.FileHandler(log_path, mode='a+',
-                                      encoding=None, delay=False)
-        formatter = \
-            logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
         if user_addr is None:
             user_addr = 'UNKNOWN'
-
-        # Generate log message and log to project log
-
-        if header:
-            msg_header = \
-                ': PROJECT : USER : IP : PROTOCOL : ACTION : MESSAGE'
-            logger.info(msg_header)
 
         msg = ": %s : %s : %s : %s : %s : %s" % (
             project_name,
@@ -905,12 +881,8 @@ def project_log(
             action,
             details,
         )
-        logger.info(msg)
-        handler.flush()
-        handler.close()
-        logger.removeHandler(handler)
-        release_file_lock(flock)
-
+        _gdp_logger.info(msg)
+        """
         # Log message to MiG log with caller details:
 
         frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
@@ -919,9 +891,9 @@ def project_log(
         function_name = frameinfo[2]
         lineno = frameinfo[1]
 
-        _logger.info('GDP:%s:%s:%s:%s: %s' % (module_name, revision,
+        _logger.debug('GDP:%s:%s:%s:%s: %s' % (module_name, revision,
                                               function_name, lineno, msg))
-
+        """
     return status
 
 

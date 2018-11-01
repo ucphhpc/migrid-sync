@@ -71,7 +71,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     track_close_expired_sessions, get_active_session, check_twofactor_session
 from shared.sslsession import get_ssl_master_key
 from shared.tlsserver import hardened_ssl_context
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, daemon_gdp_logger, reopen_log
 from shared.pwhash import unscramble_digest, assure_password_strength, \
     make_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
@@ -1013,9 +1013,12 @@ if __name__ == "__main__":
         log_level = sys.argv[1]
 
     # Use separate logger
-    logger = daemon_logger("webdavs", configuration.user_davs_log, log_level)
+    logger = daemon_logger("webdavs", configuration.user_davs_log)
     configuration.logger = logger
-
+    if configuration.site_enable_gdp:
+        gdp_logger = daemon_gdp_logger("webdavs-gdp")
+        configuration.gdp_logger = gdp_logger
+    
     # Allow e.g. logrotate to force log re-open after rotates
     signal.signal(signal.SIGHUP, hangup_handler)
 
