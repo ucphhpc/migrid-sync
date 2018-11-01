@@ -41,7 +41,8 @@ from shared.base import client_dir_id, client_id_dir, client_alias, \
 from shared.defaults import dav_domain, io_session_timeout, \
     twofactor_cookie_ttl
 from shared.fileio import unpickle
-from shared.gdp import get_client_id_from_project_client_id
+from shared.gdp import get_client_id_from_project_client_id, \
+    get_project_from_user_id
 from shared.safeinput import valid_path
 from shared.settings import load_twofactor
 from shared.sharelinks import extract_mode_id
@@ -112,8 +113,16 @@ class Login(object):
     IP address. This is particularly useful in relation to job sshfs mounts.
     """
 
-    def __init__(self, username, home, password=None, digest=None,
-                 public_key=None, chroot=True, ip_addr=None, user_dict=None):
+    def __init__(self,
+                 configuration,
+                 username,
+                 home,
+                 password=None,
+                 digest=None,
+                 public_key=None,
+                 chroot=True,
+                 ip_addr=None,
+                 user_dict=None):
         self.username = username
         self.password = password
         self.digest = digest
@@ -128,6 +137,9 @@ class Login(object):
         self.home = home
         if self.home is None:
             self.home = self.username
+        if configuration.site_enable_gdp:
+            project_name = get_project_from_user_id(configuration, username)
+            self.home = os.path.join(self.home, project_name)
 
     def __str__(self):
         """Byte string formater - username is already forced to utf8 so other
@@ -350,13 +362,25 @@ def get_share_changes(conf, username, sharelink_path):
     return changed_paths
 
 
-def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
-                    chroot=True, user_dict=None):
+def add_user_object(configuration,
+                    login,
+                    home,
+                    password=None,
+                    digest=None,
+                    pubkey=None,
+                    chroot=True,
+                    user_dict=None):
     """Add a single Login object to active user list"""
+    conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
-    user = Login(username=login, home=home, password=password,
-                 digest=digest, public_key=pubkey, chroot=chroot,
+    user = Login(configuration,
+                 username=login,
+                 home=home,
+                 password=password,
+                 digest=digest,
+                 public_key=pubkey,
+                 chroot=chroot,
                  user_dict=user_dict)
     # logger.debug("Adding user login:\n%s" % user)
     if creds_lock:
@@ -366,13 +390,26 @@ def add_user_object(conf, login, home, password=None, digest=None, pubkey=None,
         creds_lock.release()
 
 
-def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
-                   chroot=True, ip_addr=None):
+def add_job_object(configuration,
+                   login,
+                   home,
+                   password=None,
+                   digest=None,
+                   pubkey=None,
+                   chroot=True,
+                   ip_addr=None):
     """Add a single Login object to active jobs list"""
+    conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
-    job = Login(username=login, home=home, password=password, digest=digest,
-                public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
+    job = Login(configuration,
+                username=login,
+                home=home,
+                password=password,
+                digest=digest,
+                public_key=pubkey,
+                chroot=chroot,
+                ip_addr=ip_addr)
     # logger.debug("Adding job login:\n%s" % job)
     if creds_lock:
         creds_lock.acquire()
@@ -381,13 +418,20 @@ def add_job_object(conf, login, home, password=None, digest=None, pubkey=None,
         creds_lock.release()
 
 
-def add_share_object(conf, login, home, password=None, digest=None,
+def add_share_object(configuration, login, home, password=None, digest=None,
                      pubkey=None, chroot=True, ip_addr=None):
     """Add a single Login object to active shares list"""
+    conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
-    share = Login(username=login, home=home, password=password, digest=digest,
-                  public_key=pubkey, chroot=chroot, ip_addr=ip_addr)
+    share = Login(configuration,
+                  username=login,
+                  home=home,
+                  password=password,
+                  digest=digest,
+                  public_key=pubkey,
+                  chroot=chroot,
+                  ip_addr=ip_addr)
     # logger.debug("Adding share login:\n%s" % share)
     if creds_lock:
         creds_lock.acquire()
@@ -396,12 +440,14 @@ def add_share_object(conf, login, home, password=None, digest=None,
         creds_lock.release()
 
 
-def add_jupyter_object(conf, login, home, password=None, digest=None,
+def add_jupyter_object(configuration, login, home, password=None, digest=None,
                        pubkey=None, chroot=True, ip_addr=None):
     """Add a single Login object to active jupyter mount list"""
+    conf = configuration.daemon_conf
     logger = conf.get('logger', logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
-    jupyter_mount = Login(username=login,
+    jupyter_mount = Login(configuration,
+                          username=login,
                           home=home,
                           password=password,
                           digest=digest,
@@ -416,13 +462,14 @@ def add_jupyter_object(conf, login, home, password=None, digest=None,
         creds_lock.release()
 
 
-def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
+def update_user_objects(configuration, auth_file, path, user_vars, auth_protos,
                         private_auth_file):
     """Update login objects for auth_file with path to conf users dict. Remove
     any old entries for user and add the current ones.
     If private_auth_file is false we have to treat auth_file as a MiG user DB
     rather than the private credential files in user homes.
     """
+    conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     creds_lock = conf.get('creds_lock', None)
     proto_authkeys, proto_authpasswords, proto_authdigests = auth_protos
@@ -494,32 +541,56 @@ def update_user_objects(conf, auth_file, path, user_vars, auth_protos,
             logger.warning("Skipping broken key %s for user %s (%s)" %
                            (user_key, user_id, exc))
             continue
-        add_user_object(conf, user_alias, user_dir, pubkey=user_key)
+        add_user_object(configuration, user_alias, user_dir, pubkey=user_key)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            add_user_object(conf, short_id, user_dir, pubkey=user_key,
+            add_user_object(configuration,
+                            short_id,
+                            user_dir,
+                            pubkey=user_key,
                             user_dict=user_dict)
-            add_user_object(conf, short_alias, user_dir, pubkey=user_key,
+            add_user_object(configuration,
+                            short_alias,
+                            user_dir,
+                            pubkey=user_key,
                             user_dict=user_dict)
     for user_password in all_passwords:
         user_password = user_password.strip()
-        add_user_object(conf, user_alias, user_dir, password=user_password,
+        add_user_object(configuration,
+                        user_alias,
+                        user_dir,
+                        password=user_password,
                         user_dict=user_dict)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            add_user_object(conf, short_id, user_dir, password=user_password,
+            add_user_object(configuration,
+                            short_id,
+                            user_dir,
+                            password=user_password,
                             user_dict=user_dict)
-            add_user_object(conf, short_alias, user_dir,
-                            password=user_password, user_dict=user_dict)
+            add_user_object(configuration,
+                            short_alias,
+                            user_dir,
+                            password=user_password,
+                            user_dict=user_dict)
     for user_digest in all_digests:
         user_digest = user_digest.strip()
-        add_user_object(conf, user_alias, user_dir, digest=user_digest,
+        add_user_object(configuration,
+                        user_alias,
+                        user_dir,
+                        digest=user_digest,
                         user_dict=user_dict)
         # Add short alias copy if user aliasing is enabled
         if short_id:
-            add_user_object(conf, short_id, user_dir, digest=user_digest,
+            add_user_object(configuration,
+                            short_id,
+                            user_dir,
+                            digest=user_digest,
                             user_dict=user_dict)
-            add_user_object(conf, short_alias, user_dir, digest=user_digest,
+            add_user_object(configuration,
+                            short_alias,
+                            user_dir,
+                            digest=user_digest,
                             user_dict=user_dict)
     # logger.debug("after update users list is:\n%s" % \
     #             '\n'.join(["%s" % i for i in conf['users']]))
@@ -627,7 +698,11 @@ def refresh_user_creds(configuration, protocol, username):
             # logger.debug("find short_alias for %s" % short_id)
             short_alias = client_alias(short_id)
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
-        update_user_objects(conf, auth_file, path, user_vars, auth_protos,
+        update_user_objects(configuration,
+                            auth_file,
+                            path,
+                            user_vars,
+                            auth_protos,
                             private_auth_file)
     if changed_paths:
         logger.info("Refreshed user %s from configuration: %s" %
@@ -718,7 +793,11 @@ def refresh_users(configuration, protocol):
         if last_update >= os.path.getmtime(path):
             continue
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
-        update_user_objects(conf, auth_file, path, user_vars, auth_protos,
+        update_user_objects(configuration,
+                            auth_file,
+                            path,
+                            user_vars,
+                            auth_protos,
                             private_auth_file)
         changed_users += [user_id, user_alias]
         if short_id is not None:
@@ -809,7 +888,10 @@ def refresh_job_creds(configuration, protocol, username):
                            (user_key, user_alias, exc))
 
         if user_ip is not None and valid_pubkey:
-            add_job_object(conf, user_alias, user_dir, pubkey=user_key,
+            add_job_object(configuration,
+                           user_alias,
+                           user_dir,
+                           pubkey=user_key,
                            ip_addr=user_ip)
             changed_jobs.append(user_alias)
 
@@ -895,7 +977,10 @@ def refresh_jobs(configuration, protocol):
                                (user_key, user_alias, exc))
 
             if user_ip is not None and valid_pubkey:
-                add_job_object(conf, user_alias, user_dir, pubkey=user_key,
+                add_job_object(configuration,
+                               user_alias,
+                               user_dir,
+                               pubkey=user_key,
                                ip_addr=user_ip)
                 cur_usernames.append(user_alias)
                 changed_jobs.append(user_alias)
@@ -1001,7 +1086,10 @@ def refresh_share_creds(configuration, protocol, username,
         user_password = share_dict['share_pw_hash']
         user_digest = share_dict['share_pw_digest']
         logger.info("Adding login for share %s" % user_alias)
-        add_share_object(conf, user_alias, user_dir, password=user_password,
+        add_share_object(configuration,
+                         user_alias,
+                         user_dir,
+                         password=user_password,
                          digest=user_digest)
         changed_shares.append(user_alias)
 
@@ -1087,7 +1175,7 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
             user_password = share_dict['share_pw_hash']
             user_digest = share_dict['share_pw_digest']
             logger.info("Adding login for share %s" % user_alias)
-            add_share_object(conf, user_alias, user_dir,
+            add_share_object(configuration, user_alias, user_dir,
                              password=user_password,
                              digest=user_digest)
             cur_usernames.append(user_alias)
@@ -1166,7 +1254,8 @@ def refresh_jupyter_creds(configuration, protocol, username):
                 creds_lock.release()
 
             # Add the new valid keyset that gives access to user_dir
-            add_jupyter_object(conf, user_alias, user_dir, pubkey=user_key)
+            add_jupyter_object(configuration, user_alias,
+                               user_dir, pubkey=user_key)
             active_jupyter_creds.append(user_alias)
 
     if creds_lock:
@@ -1650,6 +1739,7 @@ def valid_twofactor_session(configuration, client_id):
             logger.warning("no 2FA session_key found for %s" % client_id)
     return False
 
+
 def check_twofactor_session(configuration, username, proto):
     """Run any required 2-factor authentication checks for given username and
     proto.
@@ -1692,7 +1782,6 @@ def check_twofactor_session(configuration, username, proto):
         return True
     logger.debug("check required 2FA session in %s for %s" % (proto, username))
     return valid_twofactor_session(configuration, client_id)
-
 
 
 if __name__ == "__main__":
