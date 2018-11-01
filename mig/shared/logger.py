@@ -27,11 +27,15 @@
 
 """Logging helpers"""
 
+import syslog
 import logging
 
 _default_level = "info"
 _default_format = "%(asctime)s %(levelname)s %(message)s"
 _debug_format = "%(asctime)s %(module)s:%(funcName)s:%(lineno)s %(levelname)s %(message)s"
+
+SYSLOG_GDP = syslog.LOG_LOCAL0
+
 
 def _name_to_level(name):
     """Translate log level name to internal logging value"""
@@ -44,15 +48,31 @@ def _name_to_level(name):
         name = _default_level
     return levels[name]
 
+
 def _name_to_format(name):
-    formats = {"debug": _debug_format, "info": _default_format, 
-              "warning": _default_format, "error": _default_format,
-              "critical": _default_format}
+    formats = {"debug": _debug_format, "info": _default_format,
+               "warning": _default_format, "error": _default_format,
+               "critical": _default_format}
     name = name.lower()
     if not name in formats:
         print 'Unknown logging format %s, using %s!' % (name, _default_format)
         name = _default_format
     return formats[name]
+
+
+class SysLogLibHandler(logging.Handler):
+    """A logging handler that emits messages to syslog.syslog."""
+
+    def __init__(self, facility, logident='logger'):
+        try:
+            syslog.openlog(
+                ident=logident, logoption=syslog.LOG_PID, facility=facility)
+        except Exception as err:
+            raise
+        logging.Handler.__init__(self)
+
+    def emit(self, record):
+        syslog.syslog(self.format(record))
 
 
 class Logger:
@@ -61,12 +81,19 @@ class Logger:
     """
     logger = None
     logginglevel = None
-    hdlr = None
     logfile = None
+    syslog = None
     loggingformat = None
 
-    def __init__(self, logfile, level, app='mig_main_logger'):
+    def __init__(self,
+                 level,
+                 logformat=None,
+                 logfile=None,
+                 syslog=None,
+                 app='mig_main_logger'):
         self.logfile = logfile
+        self.syslog = syslog
+        self.app = app
         self.logger = logging.getLogger(app)
 
         # Repeated import of Configuration in cgi's would cause echo
@@ -74,67 +101,72 @@ class Logger:
         # logger!
 
         self.logginglevel = _name_to_level(level)
-        self.loggingformat = _name_to_format(level)
+        if logformat is None:
+            self.loggingformat = _name_to_format(level)
+        else:
+            self.loggingformat = logformat
 
         if not self.logger.handlers:
             self.init_handler()
-        else:
-            self.hdlr = self.logger.handlers[0]
 
         self.logger.setLevel(self.logginglevel)
 
-    def init_handler(self, stderr=False):
+        # Make sure root logger does not filter us
+
+        logging.getLogger().setLevel(self.logginglevel)
+
+    def init_handler(self):
         """Init handler"""
         formatter = logging.Formatter(self.loggingformat)
-        if self.logfile == False:
+        if self.logfile is None and self.syslog is None:
 
             # Add null handler to simply throw away all log messages
-            
-            self.hdlr = logging.NullHandler()
-            self.logger.addHandler(self.hdlr)  
-        elif stderr:
 
-            # Add stderr handler
-
-            self.console = logging.StreamHandler()
-            self.console.setFormatter(formatter)
-            self.logger.addHandler(self.console)
-        else:
+            handler = logging.NullHandler()
+            self.logger.addHandler(handler)
+        elif self.logfile is not None:
 
             # Add file handler
 
-            self.hdlr = logging.FileHandler(self.logfile)
-            self.hdlr.setFormatter(formatter)
-            self.logger.addHandler(self.hdlr)
+            handler = logging.FileHandler(self.logfile)
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
 
-    def remove_handler(self, stderr=False):
+        elif self.syslog is not None:
+
+            # Add syslog lib handler
+
+            handler = SysLogLibHandler(self.syslog, logident=self.app)
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+
+    def hangup(self):
         """Remove handler"""
-        if stderr:
 
-            # Remove stderr handler
-
-            self.logger.removeHandler(self.console)
-        else:
-
-            # Remove file handler
-
-            self.logger.removeHandler(self.hdlr)
+        for handler in self.logger.handlers:
+            handler.close()
+            self.logger.removeHandler(handler)
 
     def loglevel(self):
         """Return active log level"""
         return logging.getLevelName(self.logginglevel)
 
-    def hangup(self):
-        """Reopen log file handlers to catch log rotation"""
+    def reopen(self):
+        """Force reopening of any associated handlers.
+        There's no method to re-open the handler, but the next call to
+        emit() will automatically re-open the handler if it isn't already open:
+        https://groups.google.com/forum/#!topic/comp.lang.python/h6-h95PiPTU
+        """
 
-        # We can not allow all handlers to be removed since it causes
-        # a race. Thus we temporarily introduce a stderr handler while
-        # reloading the file handler.
+        # Close handlers
 
-        self.init_handler(stderr=True)
-        self.remove_handler(stderr=False)
-        self.init_handler(stderr=False)
-        self.remove_handler(stderr=True)
+        for handler in self.logger.handlers:
+            handler.close()
+
+        # Close root handlers
+
+        for handler in logging.getLogger().handlers:
+            handler.close()
 
     def shutdown(self):
         """Flush all open files and disable logging to prepare for a
@@ -146,21 +178,23 @@ class Logger:
 
 def daemon_logger(name, path=None, level="INFO", log_format=None):
     """Simple logger for daemons to get separate logging in standard format"""
-    log_level = _name_to_level(level)
-    if not log_format:
-        log_format = _name_to_format(level)
-    formatter = logging.Formatter(log_format)
-    if path:
-        handler = logging.FileHandler(path)
+    logger_obj = Logger(level, logformat=log_format, logfile=path, app=name)
+
+    return logger_obj.logger
+
+
+def daemon_gdp_logger(name, path=None, level="INFO", log_format=None):
+    """Simple logger for daemons to get separate logging in standard format"""
+
+    if path is None:
+        gdp_logger_obj = Logger(
+            level, logformat=log_format, syslog=SYSLOG_GDP, app=name)
     else:
-        handler = logging.StreamHandler()
-    handler.setLevel(log_level)
-    handler.setFormatter(formatter)
-    # Make sure root logger does not filter us
-    logging.getLogger().setLevel(log_level)
-    logger = logging.getLogger(name)
-    logger.addHandler(handler)
-    return logger
+        gdp_logger_obj = Logger(
+            level, logformat=log_format, logfile=path, app=name)
+
+    return gdp_logger_obj.logger
+
 
 def reopen_log(conf):
     """A helper to force reopening of any associated log FileHandlers like:
@@ -169,14 +203,47 @@ def reopen_log(conf):
     """
     logger = conf.logger
     for handler in logger.handlers:
-        if isinstance(handler, logging.FileHandler):
-            handler.close()
+        handler.close()
+
+    gdp_logger = conf.gdp_logger
+    for handler in gdp_logger.handlers:
+        handler.close()
+
 
 if __name__ == "__main__":
     from shared.conf import get_configuration_object
     import os
     conf = get_configuration_object()
     print "Unit testing logger functions"
+    print "=== Logger object  ==="
+    log_path = "/tmp/logger-dummy.log"
+    conf.logger_obj = logger_obj = \
+        Logger("INFO", logfile=log_path, app="testing")
+    conf.logger = logger = logger_obj.logger
+    print "Add some log entries"
+    logger.debug("for unit testing")
+    logger.info("for unit testing")
+    logger.warning("for unit testing")
+    logger.error("for unit testing")
+    print "Now log contains:"
+    log_fd = open(log_path, "r")
+    for line in log_fd:
+        print line.strip()
+    log_fd.close()
+    print "Remove log and force reopen"
+    os.remove(log_path)
+    logger_obj.reopen()
+    print "Add another log entry"
+    logger.info("for unit testing")
+    print "Now log contains:"
+    log_fd = open(log_path, "r")
+    for line in log_fd:
+        print line.strip()
+    log_fd.close()
+    print "Cleaning up"
+    os.remove(log_path)
+    logger_obj.hangup()
+
     print "=== daemon logger functions ==="
     log_path = "/tmp/logger-dummy.log"
     print "Open a daemon logger"

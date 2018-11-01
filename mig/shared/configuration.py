@@ -39,7 +39,7 @@ from ConfigParser import ConfigParser
 from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
     POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, POLICY_CUSTOM, \
     freeze_flavors, duplicati_protocol_choices
-from shared.logger import Logger
+from shared.logger import Logger, SYSLOG_GDP
 from shared.html import menu_items, vgrid_items
 
 
@@ -450,6 +450,8 @@ class Configuration:
     loglevel = ''
     logger_obj = None
     logger = None
+    gdp_logger_obj = None
+    gdp_logger = None
     peers = None
 
     # feasibility
@@ -542,7 +544,7 @@ location.""" % self.config_file
             self.loglevel = 'info'
 
         if skip_log:
-            self.log_path = False
+            self.log_path = None
         else:
             self.log_path = os.path.join(self.log_dir, self.logfile)
             if verbose:
@@ -551,12 +553,9 @@ location.""" % self.config_file
         # reopen or initialize logger
 
         if self.logger_obj:
-
-            # hangup reopens log file
-
-            self.logger_obj.hangup()
+            self.logger_obj.reopen()
         else:
-            self.logger_obj = Logger(self.log_path, self.loglevel)
+            self.logger_obj = Logger(self.loglevel, logfile=self.log_path)
 
         logger = self.logger_obj.logger
         self.logger = logger
@@ -1462,10 +1461,20 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_transfers_log'):
             self.user_transfers_log = config.get(
                 'GLOBAL', 'user_transfers_log')
+        syslog_gdp = None
         if config.has_option('SITE', 'enable_gdp'):
             self.site_enable_gdp = config.getboolean('SITE', 'enable_gdp')
+            if not skip_log:
+                syslog_gdp = SYSLOG_GDP
         else:
             self.site_enable_gdp = False
+        # Init GDP logger
+        if self.gdp_logger_obj:
+            self.gdp_logger_obj.reopen()
+        else:
+            self.gdp_logger_obj = Logger(
+                "INFO", syslog=syslog_gdp, app='main-gdp')
+        self.gdp_logger = self.gdp_logger_obj.logger
         if config.has_option('SITE', 'transfers_from'):
             transfers_from_str = config.get('SITE', 'transfers_from')
             unique_transfers_from = []
