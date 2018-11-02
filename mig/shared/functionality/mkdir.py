@@ -33,7 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.fileio import check_write_access
 from shared.functional import validate_input, REJECT_UNSET
-from shared.gdp import project_log
+from shared.gdp import get_project_from_client_id, project_log
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import parents, verbose
@@ -213,7 +213,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     os.mkdir(abs_path)
                 logger.info('%s %s done' % (op_name, abs_path))
                 if configuration.site_enable_gdp:
-                    msg = "'%s'" % relative_path
+                    gdp_project = get_project_from_client_id(configuration,
+                                                             client_id)
+                    msg = "'%s'" % relative_path[len(gdp_project)+1:]
                     project_log(configuration, 'https', client_id, 'created',
                                 msg, user_addr=environ['REMOTE_ADDR'])
             except Exception, exc:

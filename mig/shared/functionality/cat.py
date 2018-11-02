@@ -34,7 +34,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.gdp import project_log
+from shared.gdp import get_project_from_client_id, project_log
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose, binary
 from shared.validstring import valid_user_path
@@ -148,14 +148,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 fd.close()
 
                 if configuration.site_enable_gdp:
-                    msg = "'%s'" % relative_path
+                    gdp_project = get_project_from_client_id(configuration,
+                                                             client_id)
+                    msg = "'%s'" % relative_path[len(gdp_project)+1:]
                     project_log(configuration, 'https', client_id, 'accessed',
                                 msg, user_addr=environ['REMOTE_ADDR'])
 
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                                        'text': "%s: '%s': %s"
-                                        % (op_name, relative_path, exc)})
+                                       % (op_name, relative_path, exc)})
                 logger.error("%s: failed on '%s': %s"
                              % (op_name, relative_path, exc))
 

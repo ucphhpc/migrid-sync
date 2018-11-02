@@ -36,7 +36,7 @@ from shared.base import client_id_dir
 from shared.fileio import check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.gdp import project_log
+from shared.gdp import get_project_from_client_id, project_log
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose
 from shared.validstring import valid_user_path
@@ -211,7 +211,11 @@ move entire special folders like %s shared folders!"""
                 shutil.move(abs_path, abs_target)
                 logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
                 if configuration.site_enable_gdp:
-                    msg = "'%s' -> '%s'" % (relative_path, relative_dest)
+                    gdp_project = get_project_from_client_id(configuration,
+                                                             client_id)
+                    msg = "'%s' -> '%s'" % (
+                        relative_path[len(gdp_project)+1:],
+                        relative_dest[len(gdp_project)+1:])
                     project_log(configuration, 'https', client_id, 'moved',
                                 msg, user_addr=environ['REMOTE_ADDR'])
             except Exception, exc:

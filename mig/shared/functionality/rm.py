@@ -39,7 +39,7 @@ from shared.defaults import trash_linkname
 from shared.fileio import check_write_access
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.gdp import project_log
+from shared.gdp import get_project_from_client_id, project_log
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose, recursive, force
 from shared.sharelinks import extract_mode_id
@@ -109,10 +109,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
         except ValueError, err:
-            logger.error('%s called with invalid share_id %s: %s' % \
+            logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Invalid sharelink ID: %s' % share_id})
+            output_objects.append(
+                {'object_type': 'error_text', 'text': 'Invalid sharelink ID: %s' % share_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         user_id = 'anonymous user through share ID %s' % share_id
@@ -250,8 +250,8 @@ You're not allowed to delete entire special folders like %s shares and %s
                 continue
             try:
                 if rm_helper == remove_path and \
-                        os.path.commonprefix([real_path, trash_base]) \
-                            == trash_base:
+                    os.path.commonprefix([real_path, trash_base]) \
+                        == trash_base:
                     logger.warning("%s: already in trash: '%s'" % (op_name,
                                                                    real_path))
                     output_objects.append({'object_type': 'error_text', 'text': """
@@ -295,12 +295,15 @@ You're not allowed to delete entire special folders like %s shares and %s
             output_objects.append({'object_type': 'text',
                                    'text': "removed %s" % (relative_path)})
             if configuration.site_enable_gdp:
+                gdp_project = get_project_from_client_id(configuration,
+                                                         client_id)
+                gdp_relative_path = relative_path[len(gdp_project)+1:]
                 if rm_helper == remove_path:
-                    msg = "'%s' -> Trash" % relative_path
+                    msg = "'%s' -> Trash" % gdp_relative_path
                     project_log(configuration, 'https', client_id, 'moved',
                                 msg, user_addr=environ['REMOTE_ADDR'])
                 else:
-                    msg = "%s" % relative_path
+                    msg = "%s" % gdp_relative_path
                     project_log(configuration, 'https', client_id, 'deleted',
                                 msg, user_addr=environ['REMOTE_ADDR'])
 

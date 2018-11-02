@@ -43,7 +43,7 @@ from shared.fileio import strip_dir, write_chunk, delete_file, move, \
     get_file_size, makedirs_rec, check_write_access
 from shared.functional import validate_input
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.gdp import project_log
+from shared.gdp import get_project_from_client_id, project_log
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import in_place, verbose
 from shared.safeinput import valid_path
@@ -227,10 +227,11 @@ def main(client_id, user_arguments_dict, environ=None):
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
         except ValueError, err:
-            logger.error('%s called with invalid share_id %s: %s' % \
+            logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Invalid sharelink ID: %s' % share_id})
+            output_objects.append(
+                {'object_type': 'error_text',
+                 'text': 'Invalid sharelink ID: %s' % share_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         user_id = 'anonymous user through share ID %s' % share_id
@@ -374,7 +375,7 @@ def main(client_id, user_arguments_dict, environ=None):
             # NOTE: normpath to fix e.g. leading // which prevents base URL
             file_entry['url'] = os.path.normpath("/%s/%s"
                                                  % (redirect_path.lstrip('/'),
-                                                  rel_path))
+                                                    rel_path))
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % \
@@ -427,10 +428,12 @@ def main(client_id, user_arguments_dict, environ=None):
                 # NOTE: normpath+lstrip to avoid leading // and thus no base URL
                 file_entry['url'] = os.path.normpath("/%s/%s"
                                                      % (redirect_path.lstrip('/'),
-                                                      rel_dst))
+                                                        rel_dst))
 
                 if configuration.site_enable_gdp:
-                    msg = "'%s'" % rel_dst
+                    gdp_project = get_project_from_client_id(configuration,
+                                                             client_id)
+                    msg = "'%s'" % rel_dst[len(gdp_project)+1:]
                     project_log(configuration, 'https', client_id, 'wrote',
                                 msg, user_addr=environ['REMOTE_ADDR'])
 
@@ -471,7 +474,7 @@ def main(client_id, user_arguments_dict, environ=None):
             # NOTE: normpath+lstrip to avoid leading // and thus no base URL
             file_entry["url"] = os.path.normpath("/%s/%s"
                                                  % (redirect_path.lstrip('/'),
-                                                  rel_path))
+                                                    rel_path))
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % \
