@@ -291,9 +291,11 @@ copy entire special folders like %s shared folders!"""
                 if configuration.site_enable_gdp:
                     gdp_project = get_project_from_client_id(configuration,
                                                              client_id)
-                    msg = "'%s' -> '%s'" % (
-                        relative_path[len(gdp_project)+1:],
-                        relative_dest[len(gdp_project)+1:])
+                    log_src_path = relative_path[len(gdp_project)+1:]
+                    log_dest_path = os.path.join(
+                        relative_dest[len(gdp_project)+1:],
+                        os.path.basename(relative_path))
+                    msg = "'%s' -> '%s'" % (log_src_path, log_dest_path)
                     project_log(configuration, 'https', client_id, 'copied',
                                 msg, user_addr=environ['REMOTE_ADDR'])
 
