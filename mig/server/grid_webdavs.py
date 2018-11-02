@@ -1013,10 +1013,13 @@ if __name__ == "__main__":
         log_level = sys.argv[1]
 
     # Use separate logger
-    logger = daemon_logger("webdavs", configuration.user_davs_log)
+    logger = daemon_logger("webdavs",
+                           level=log_level,
+                           path=configuration.user_davs_log)
     configuration.logger = logger
     if configuration.site_enable_gdp:
-        gdp_logger = daemon_gdp_logger("webdavs-gdp")
+        gdp_logger = daemon_gdp_logger("webdavs-gdp",
+                                       level=log_level)
         configuration.gdp_logger = gdp_logger
     
     # Allow e.g. logrotate to force log re-open after rotates
