@@ -1775,9 +1775,9 @@ def check_password_hash(configuration, service, username, password,
 
     The optional hash_cache dictionary argument can be used to cache lookups
     and speed up repeated use.
-    The optional boolean strict_policy argument switches warnings about
-    password policy incompliance to fatal errors. Should only be disabled for
-    sharelinks.
+    The optional boolean strict_policy argument switches password policy checks
+    on/off. Should only be disabled for sharelinks and similar where policy is
+    not guaranteed to apply.
     """
     _logger = configuration.logger
     try:

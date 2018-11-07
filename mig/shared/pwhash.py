@@ -94,8 +94,9 @@ def check_hash(configuration, service, username, password, hashed,
     password satisfies the local password policy. The optional hash_cache
     dictionary argument can be used to cache recent lookups to save time in
     e.g. webdav where each operation triggers hash check.
-    The optional boolean strict_policy argument changes warnings about password
-    policy incompliance to unconditional rejects.
+    The optional boolean strict_policy argument decides whether or not the site
+    password policy is enforced. It is used to disable checks for e.g.
+    sharelinks where the policy is not guaranteed to apply.
     """
     _logger = configuration.logger
     if isinstance(password, unicode):
@@ -106,13 +107,16 @@ def check_hash(configuration, service, username, password, hashed,
         # print "found cached hash: %s" % hash_cache.get(pw_hash, None)
         return True
     # We check policy AFTER cache lookup since it is already verified for those
-    try:
-        assure_password_strength(configuration, password)
-    except Exception, exc:
-        _logger.warning("%s password for %s does not fit local policy: %s"
-                        % (service, username, exc))
-        if strict_policy:
+    if strict_policy:
+        try:
+            assure_password_strength(configuration, password)
+        except Exception, exc:
+            _logger.warning("%s password for %s does not fit local policy: %s"
+                            % (service, username, exc))
             return False
+    else:
+        _logger.debug("password policy check disabled for %s login as %s" % \
+                      (service, username))
     algorithm, hash_function, cost_factor, salt, hash_a = hashed.split('$')
     assert algorithm == 'PBKDF2'
     hash_a = b64decode(hash_a)
