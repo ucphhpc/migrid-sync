@@ -436,6 +436,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
+                   --public_alias_fqdn=erda.ku.dk \
                    --mig_cert_fqdn= \
                    --ext_cert_fqdn=cert.erda.dk \
                    --mig_oid_fqdn=ext.erda.dk \
@@ -484,6 +485,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
+                   --public_alias_fqdn=erda.ku.dk \
                    --mig_cert_fqdn= \
                    --ext_cert_fqdn=cert.erda.dk \
                    --mig_oid_fqdn=ext.erda.dk \
