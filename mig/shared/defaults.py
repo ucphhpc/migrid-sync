@@ -339,10 +339,7 @@ STRONG_SSH_LEGACY_KEXALGOS = ",".join([BEST_SSH_LEGACY_KEXALGOS,
                                        SAFE_SSH_LEGACY_KEXALGOS])
 STRONG_SSH_CIPHERS = "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
 # NOTE: strong cipher support go way back - just reuse
-BEST_SSH_LEGACY_CIPHERS = STRONG_SSH_CIPHERS
-SAFE_SSH_LEGACY_CIPHERS = ""
-STRONG_SSH_LEGACY_CIPHERS = ','.join([BEST_SSH_LEGACY_CIPHERS,
-                                     SAFE_SSH_LEGACY_CIPHERS])
+STRONG_SSH_LEGACY_CIPHERS = BEST_SSH_LEGACY_CIPHERS = SAFE_SSH_LEGACY_CIPHERS = STRONG_SSH_CIPHERS
 STRONG_SSH_MACS = "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com"
 # NOTE: extend strong MACS with the best possible alternatives on old paramiko
 #       to avoid falling back to really bad ones
@@ -351,4 +348,4 @@ SAFE_SSH_LEGACY_MACS = "hmac-sha2-512,hmac-sha2-256"
 STRONG_SSH_LEGACY_MACS = ",".join([BEST_SSH_LEGACY_MACS, SAFE_SSH_LEGACY_MACS])
 
 # A pattern to match usernames unambiguously identifying cracking attempts
-CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|lp|operator|ftp|irc|nobody|sys|pi|guest|www|www-data|mysql|postgres|oracle|mongodb|redis|hadoop|cpanel|plesk|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|supervisor|csgoserver|device|deploy|test|1234|0101|0)'
+CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|lp|operator|ftp|irc|nobody|sys|pi|guest|www|www-data|mysql|postgres|oracle|mongodb|redis|hadoop|cpanel|plesk|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|uucp|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|ubnt|supervisor|csgoserver|device|deploy|support|info|test[0-9]*|user[0-9]*|[0-9]+)'
