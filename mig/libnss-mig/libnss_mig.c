@@ -2,7 +2,7 @@
  * --- BEGIN_HEADER ---
  *
  * libnss_mig - NSS module for MiG user authentication
- * Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *
@@ -35,7 +35,7 @@
  * ---
  *
  * This MiG version was written by Kenneth Skovhede <skovhede@nbi.ku.dk>
- * and extended for sharelinks+Xsidmount by Jonas Bardino <bardino@nb.ku.dk>.
+ * and extended for sharelinks+Xsidmount by Jonas Bardino <bardino@nbi.ku.dk>.
  *
  */
 

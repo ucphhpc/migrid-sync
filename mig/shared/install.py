@@ -189,6 +189,7 @@ def generate_confs(
     destination_suffix="",
     base_fqdn='localhost',
     public_fqdn='localhost',
+    public_alias_fqdn='',
     mig_cert_fqdn='localhost',
     ext_cert_fqdn='localhost',
     mig_oid_fqdn='localhost',
@@ -249,6 +250,7 @@ def generate_confs(
     trac_admin_path='',
     trac_ini_path='',
     public_port=default_http_port,
+    public_alias_port=default_https_port,
     mig_cert_port=default_https_port,
     ext_cert_port=default_https_port+1,
     mig_oid_port=default_https_port+3,
@@ -272,6 +274,7 @@ def generate_confs(
     user_dict['__GENERATECONFS_COMMAND__'] = generateconfs_command
     user_dict['__BASE_FQDN__'] = base_fqdn
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
+    user_dict['__PUBLIC_ALIAS_FQDN__'] = public_alias_fqdn
     user_dict['__MIG_CERT_FQDN__'] = mig_cert_fqdn
     user_dict['__EXT_CERT_FQDN__'] = ext_cert_fqdn
     user_dict['__MIG_OID_FQDN__'] = mig_oid_fqdn
@@ -283,6 +286,7 @@ def generate_confs(
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
+    user_dict['__PUBLIC_ALIAS_PORT__'] = str(public_alias_port)
     user_dict['__MIG_CERT_PORT__'] = str(mig_cert_port)
     user_dict['__EXT_CERT_PORT__'] = str(ext_cert_port)
     user_dict['__MIG_OID_PORT__'] = str(mig_oid_port)
@@ -332,6 +336,7 @@ def generate_confs(
     user_dict['__EXT_OID_PROVIDER_ID__'] = ext_oid_provider
     user_dict['__EXT_OID_AUTH_DB__'] = auth_openid_ext_db
     user_dict['__PUBLIC_URL__'] = ''
+    user_dict['__PUBLIC_ALIAS_URL__'] = ''
     user_dict['__MIG_CERT_URL__'] = ''
     user_dict['__EXT_CERT_URL__'] = ''
     user_dict['__MIG_OID_URL__'] = ''
@@ -357,6 +362,7 @@ def generate_confs(
     user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
     user_dict['__DISTRO__'] = distro
     user_dict['__SKIN__'] = skin
+    user_dict['__PUBLIC_ALIAS_LISTEN__'] = listen_clause
 
     # Apache fails on duplicate Listen directives so comment in that case
     port_list = [mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port,
@@ -433,6 +439,13 @@ cert, oid and sid based https!
     user_dict['__IFDEF_PUBLIC_PORT__'] = 'UnDefine'
     if user_dict['__PUBLIC_PORT__']:
         user_dict['__IFDEF_PUBLIC_PORT__'] = 'Define'
+
+    user_dict['__IFDEF_PUBLIC_ALIAS_FQDN__'] = 'UnDefine'
+    if user_dict['__PUBLIC_ALIAS_FQDN__']:
+        user_dict['__IFDEF_PUBLIC_ALIAS_FQDN__'] = 'Define'
+    user_dict['__IFDEF_PUBLIC_ALIAS_PORT__'] = 'UnDefine'
+    if user_dict['__PUBLIC_ALIAS_PORT__']:
+        user_dict['__IFDEF_PUBLIC_ALIAS_PORT__'] = 'Define'
 
     user_dict['__IFDEF_MIG_CERT_FQDN__'] = 'UnDefine'
     if user_dict['__MIG_CERT_FQDN__']:
@@ -750,6 +763,19 @@ openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict
             print "adding explicit public port (%s)" % [public_port,
                                                         default_http_port]
             user_dict['__PUBLIC_URL__'] += ':%(__PUBLIC_PORT__)s' % user_dict
+    if public_alias_fqdn:
+        user_dict['__PUBLIC_ALIAS_URL__'] = 'https://%(__PUBLIC_ALIAS_FQDN__)s' \
+                                            % user_dict
+        if str(public_alias_port) != str(default_https_port):
+            print "adding explicit public alias port (%s)" % [public_alias_port,
+                                                              default_https_port]
+            user_dict['__PUBLIC_ALIAS_URL__'] += ':%(__PUBLIC_ALIAS_PORT__)s' \
+                                                 % user_dict
+        # Apache fails on duplicate listen clauses
+        if public_alias_fqdn == public_fqdn and \
+                public_alias_port == public_port:
+            user_dict['__PUBLIC_ALIAS_LISTEN__'] = "# %s" % listen_clause
+
     if mig_cert_fqdn:
         user_dict['__MIG_CERT_URL__'] = 'https://%(__MIG_CERT_FQDN__)s' % user_dict
         if str(mig_cert_port) != str(default_https_port):
@@ -1191,6 +1217,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         dst_suffix,
         base_fqdn,
         public_fqdn,
+        '',
         mig_cert_fqdn,
         ext_cert_fqdn,
         mig_oid_fqdn,
@@ -1246,6 +1273,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         trac_admin_path,
         trac_ini_path,
         public_port,
+        '',
         mig_cert_port,
         ext_cert_port,
         mig_oid_port,
