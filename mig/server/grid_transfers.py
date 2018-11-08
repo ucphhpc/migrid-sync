@@ -93,9 +93,10 @@ def stop_handler(signal, frame):
 
 def hangup_handler(signal, frame):
     """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
+    pid = multiprocessing.current_process().pid
+    logger.info('(%s) reopening log in reaction to hangup signal' % pid)
     reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
+    logger.info('(%s) reopened log after hangup signal' % pid)
 
 
 def __transfer_log(configuration, client_id, msg, level='info'):
