@@ -24,14 +24,14 @@ alias la='ls -al'
 
 alias emacs='emacs -nw'
 alias vdo='vimdiff -o'
-alias pylintchanged="svn status | grep -v '\?' | egrep '.py$' | sed 's/.* //' | xargs -r -t pylint -E"
+alias pylintchanged="svn status | egrep -v '^\?' | egrep '.py$' | sed 's/.* //' | xargs -r -t pylint -E"
 
 # Shell functions
 setenv() { typeset -x "${1}${1:+=}${(@)argv[2,$#]}" }  # csh compatibility
 freload() { while (( $# )); do; unfunction $1; autoload -U $1; shift; done }
 
 vdocond() {
-    diff -q $@ | grep -q differ && vdo $@
+    test ! -e ${@: -1} || diff -q $@ | grep -q differ && vdo $@
 }
 
 # Where to look for autoloaded function definitions
