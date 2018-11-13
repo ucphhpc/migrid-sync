@@ -69,11 +69,10 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, add_user_object, track_open_session, \
     track_close_expired_sessions, get_active_session, check_twofactor_session
-from shared.sslsession import get_ssl_master_key
+from shared.sslsession import ssl_session_token
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, daemon_gdp_logger, reopen_log
-from shared.pwhash import unscramble_digest, assure_password_strength, \
-    make_digest
+from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
     check_password_digest, generate_password_digest
 from shared.validstring import possible_user_id, possible_sharelink_id
@@ -136,11 +135,11 @@ def _get_port(environ):
 
 def _get_ssl_session_token(environ):
     """Extract SSL session token from environ dict"""
-    ssl_session_token = environ.get('HTTP_X_SSL_SESSION_TOKEN', '')
-    if not ssl_session_token:
-        ssl_session_token = environ.get('SSL_SESSION_TOKEN', '')
+    token = environ.get('HTTP_X_SSL_SESSION_TOKEN', '')
+    if not token:
+        token = environ.get('SSL_SESSION_TOKEN', '')
 
-    return ssl_session_token
+    return token
 
 
 def _get_digest(environ):
@@ -210,15 +209,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         """Update SSL environ with SSL session token used for internal
         WebDAVS session tracing
         """
-        (client_addr, _) = ssl_sock.getpeername()
         ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
-        ssl_master_key = get_ssl_master_key(configuration, ssl_sock)
-        if ssl_master_key is not None:
-            ssl_environ['SSL_SESSION_TOKEN'] = make_digest(
-                'webdavs',
-                client_addr,
-                ssl_master_key,
-                configuration.site_digest_salt)
+        token = ssl_session_token(configuration,
+                                  ssl_sock,
+                                  'davs')
+        if token is not None:
+            ssl_environ['SSL_SESSION_TOKEN'] = token
+
         return ssl_environ
 
     def wrap(self, sock):
@@ -1021,7 +1018,7 @@ if __name__ == "__main__":
         gdp_logger = daemon_gdp_logger("webdavs-gdp",
                                        level=log_level)
         configuration.gdp_logger = gdp_logger
-    
+
     # Allow e.g. logrotate to force log re-open after rotates
     signal.signal(signal.SIGHUP, hangup_handler)
 

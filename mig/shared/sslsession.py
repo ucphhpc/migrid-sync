@@ -35,10 +35,13 @@ try:
 except ImportError, ierr:
     _sslsession = None
 
+from shared.pwhash import make_digest
+
 SSL_SESSION_ID_LENGTH = 64
 SSL_MASTER_KEY_LENGTH = 96
 
-def get_ssl_master_key(configuration, ssl_sock):
+
+def ssl_master_key(configuration, ssl_sock):
     """Extract SSL session master key from SSL socket"""
     logger = configuration.logger
     master_key = None
@@ -59,7 +62,7 @@ def get_ssl_master_key(configuration, ssl_sock):
     return master_key
 
 
-def get_ssl_session_id(configuration, ssl_sock):
+def ssl_session_id(configuration, ssl_sock):
     """Extract SSL session id from SSL socket"""
     logger = configuration.logger
     session_id = None
@@ -82,3 +85,17 @@ def get_ssl_session_id(configuration, ssl_sock):
         logger.error(exc)
 
     return session_id
+
+
+def ssl_session_token(configuration, ssl_sock, realm):
+    """Generate SSL session identifier token"""
+    session_token = None
+    (client_addr, _) = ssl_sock.getpeername()
+    master_key = ssl_master_key(configuration, ssl_sock)
+    if master_key is not None:
+        session_token = make_digest(realm,
+                                    client_addr,
+                                    master_key,
+                                    configuration.site_digest_salt)
+
+    return session_token
