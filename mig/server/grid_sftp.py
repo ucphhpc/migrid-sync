@@ -196,8 +196,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # For stand-alone paramiko servers the active user is in transport,
         # where as for paramiko subsys in openssh it is in USER env.
         if self.transport:
-            #logger.debug('extract active user from transport')
-            self.user_name = self.transport.get_username()
+            # IMPORTANT: use already authenticated login username rather than
+            # untrusted transport.get_username() here
+            #logger.debug('extract authenticated user from server')
+            self.user_name = server.get_authenticated_user()
         else:
             #logger.debug('active env: %s' % os.environ)
             username = os.environ.get('USER', 'INVALID')
@@ -859,8 +861,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
                     allowed = entry.public_key.get_base64()
                     #self.logger.debug("Public key check for %s" % username)
                     if allowed == offered and \
-                           check_twofactor_session(configuration, username,
-                                                   'sftp-key'):
+                        check_twofactor_session(configuration, username,
+                                                'sftp-key'):
                         self.logger.info(
                             "Accepted public key login for %s from %s" %
                             (username, client_ip))
