@@ -591,15 +591,27 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	return PAM_AUTH_ERR;
     }
 
+    if (access(auth_filename, F_OK) != 0) {
+	writelogmessage(LOG_INFO, "No password file %s found: %s\n",
+			auth_filename, strerror(errno));
+	return PAM_AUTH_ERR;
+    }
+
     if (access(auth_filename, R_OK) != 0) {
-	writelogmessage(LOG_INFO, "Read access to file %s denied: %s\n",
+	writelogmessage(LOG_WARNING, "Read access to file %s denied: %s\n",
 			auth_filename, strerror(errno));
 	return PAM_AUTH_ERR;
     }
 
     struct stat st;
     if (stat(auth_filename, &st) != 0) {
-	writelogmessage(LOG_INFO, "Failed to read file size: %s\n",
+	writelogmessage(LOG_WARNING, "Failed to read file size: %s\n",
+			auth_filename);
+	return PAM_AUTH_ERR;
+    }
+
+    if (st.st_size == 0) {
+	writelogmessage(LOG_INFO, "Ignoring empty pbkdf digest file: %s\n",
 			auth_filename);
 	return PAM_AUTH_ERR;
     }
