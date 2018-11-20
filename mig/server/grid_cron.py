@@ -59,8 +59,9 @@ except ImportError:
 # Otherwise fail
 
 try:
+    from distutils.version import StrictVersion
     from scandir import scandir, walk, __version__ as scandir_version
-    if float(scandir_version) < 1.3:
+    if StrictVersion(scandir_version) < StrictVersion("1.3"):
 
         # Important os.walk compatibility utf8 fixes were not added until 1.3
 
@@ -170,7 +171,7 @@ def run_command(
         logger.info('traceback:\n%s' % traceback.format_exc())
         raise exc
     logger.info('(%s) done running command for %s: %s' % (pid,
-                target_path, command_str))
+                                                          target_path, command_str))
 
     # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
 
@@ -264,7 +265,7 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
                 #                  % (pid, src_path))
         else:
             logger.debug('(%s) unhandled event: %s for: %s' % (pid,
-                         state, src_path))
+                                                               state, src_path))
 
     def update_crontabs(self, event):
         """Handle all crontab updates"""
@@ -277,13 +278,13 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
             self.__update_crontab_monitor(configuration, src_path, state)
         elif os.path.basename(src_path) == crontab_name:
             logger.debug('(%s) %s -> Updating crontab for: %s' % (pid,
-                         state, src_path))
+                                                                  state, src_path))
             rel_path = src_path[len(configuration.user_settings):]
             client_dir = os.path.basename(os.path.dirname(src_path))
             client_id = client_dir_id(client_dir)
             user_home = os.path.join(configuration.user_home, client_dir)
             logger.info('(%s) refresh %s crontab from %s' % (pid,
-                        client_id, src_path))
+                                                             client_id, src_path))
             if state == 'deleted':
                 cur_crontab = []
                 logger.debug("(%s) deleted crontab from '%s'" %
@@ -299,13 +300,13 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
             logger.debug('(%s) all crontabs: %s' % (pid, all_crontabs))
         elif os.path.basename(src_path) == atjobs_name:
             logger.debug('(%s) %s -> Updating atjobs for: %s' % (pid,
-                         state, src_path))
+                                                                 state, src_path))
             rel_path = src_path[len(configuration.user_settings):]
             client_dir = os.path.basename(os.path.dirname(src_path))
             client_id = client_dir_id(client_dir)
             user_home = os.path.join(configuration.user_home, client_dir)
             logger.info('(%s) refresh %s atjobs from %s' % (pid,
-                        client_id, src_path))
+                                                            client_id, src_path))
             if state == 'deleted':
                 cur_atjobs = []
                 logger.debug("(%s) deleted atjobs from '%s'" %
@@ -321,7 +322,7 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
             logger.debug('(%s) all atjobs: %s' % (pid, all_atjobs))
         else:
             logger.debug('(%s) %s skipping non-cron file: %s' % (pid,
-                         state, src_path))
+                                                                 state, src_path))
 
     def on_modified(self, event):
         """Handle modified crontab file"""

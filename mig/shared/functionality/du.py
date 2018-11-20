@@ -31,8 +31,9 @@ import os
 import glob
 # NOTE: Use faster scandir if available
 try:
+    from distutils.version import StrictVersion
     from scandir import walk, __version__ as scandir_version
-    if float(scandir_version) < 1.3:
+    if StrictVersion(scandir_version) < StrictVersion("1.3"):
         # Important os.walk compatibility utf8 fixes were not added until 1.3
         raise ImportError("scandir version is too old: fall back to os.walk")
 except ImportError:
@@ -67,7 +68,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -78,15 +79,14 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     status = returnvalues.OK
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     for pattern in pattern_list:
 
@@ -115,7 +115,7 @@ def main(client_id, user_arguments_dict):
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         # NOTE: we produce output matching an invocation of:
@@ -166,13 +166,12 @@ def main(client_id, user_arguments_dict):
                                     'bytes': size})
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, exc)})
+                                       'text': "%s: '%s': %s" % (op_name,
+                                                                 relative_path,
+                                                                 exc)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
         output_objects.append({'object_type': 'filedus', 'filedus': filedus})
     return (output_objects, status)
-
-

@@ -29,8 +29,9 @@
 
 # NOTE: Use faster scandir if available
 try:
+    from distutils.version import StrictVersion
     from scandir import walk, __version__ as scandir_version
-    if float(scandir_version) < 1.3:
+    if StrictVersion(scandir_version) < StrictVersion("1.3"):
         # Important os.walk compatibility utf8 fixes were not added until 1.3
         raise ImportError("scandir version is too old: fall back to os.walk")
 except ImportError:
@@ -43,9 +44,10 @@ import time
 from shared.base import invisible_path
 from shared.defaults import trash_destdir, trash_linkname
 from shared.vgrid import in_vgrid_share, in_vgrid_writable, in_vgrid_priv_web, \
-     in_vgrid_pub_web
+    in_vgrid_pub_web
 
 ACTIONS = (CREATE, MODIFY, MOVE, DELETE) = "create", "modify", "move", "delete"
+
 
 def get_home_location(configuration, path):
     """Find the proper home folder for path. I.e. the corresponding user home,
@@ -54,7 +56,7 @@ def get_home_location(configuration, path):
     real_path = os.path.realpath(path)
     if real_path.startswith(configuration.user_home):
         suffix = real_path.replace(configuration.user_home, '').lstrip(os.sep)
-        suffix = suffix.split(os.sep, 1)[0]        
+        suffix = suffix.split(os.sep, 1)[0]
         return os.path.join(configuration.user_home, suffix)
     elif real_path.startswith(configuration.vgrid_files_home):
         suffix = in_vgrid_share(configuration, real_path)
@@ -70,6 +72,7 @@ def get_home_location(configuration, path):
         return os.path.join(configuration.vgrid_public_base, suffix)
     else:
         return None
+
 
 def get_trash_location(configuration, path, visible_link=False):
     """Find the proper trash folder for path. I.e. the one in the root of the
@@ -88,16 +91,19 @@ def get_trash_location(configuration, path, visible_link=False):
             trash_base = os.path.join(trash_base, trash_destdir)
     return trash_base
 
+
 def _check_access(configuration, action, target_list):
     """Verify access to action on paths in target_list"""
     _logger = configuration.logger
     for path in target_list:
         if invisible_path(path):
-            _logger.warning("%s rejected on invisible path: %s" % (action, path))
+            _logger.warning("%s rejected on invisible path: %s" %
+                            (action, path))
             raise ValueError('contains protected files/folders')
         elif os.path.islink(path):
             _logger.warning("%s rejected on link %s" % (action, path))
             raise ValueError('contains special files/folders')
+
 
 def _build_changes_path(configuration, changeset, pending=False):
     """Shared helper to build changes event path for changeset.
@@ -109,7 +115,8 @@ def _build_changes_path(configuration, changeset, pending=False):
         filename = ".%s-pending" % filename
     changes_path = os.path.join(configuration.events_home, filename)
     return changes_path
-    
+
+
 def _fill_changes(configuration, changeset, action, target_list):
     """Helper to fill events file for a future user I/O action. Used internally
     by prepare_changes for building the event set during recursive traversal.
@@ -121,7 +128,8 @@ def _fill_changes(configuration, changeset, action, target_list):
     failure.
     """
     _logger = configuration.logger
-    _logger.debug("prepare %s %s event on %s" % (changeset, action, target_list))
+    _logger.debug("prepare %s %s event on %s" %
+                  (changeset, action, target_list))
     # Make sure events dir exists
     try:
         os.makedirs(configuration.events_home)
@@ -140,9 +148,10 @@ def _fill_changes(configuration, changeset, action, target_list):
         cfd.close()
         return pending_path
     except Exception, err:
-        _logger.error("Failed to save events: %s %s %s: %s" % \
+        _logger.error("Failed to save events: %s %s %s: %s" %
                       (changeset, action, target_list, err))
         return None
+
 
 def prepare_changes(configuration, operation, changeset, action, path,
                     recursive):
@@ -174,12 +183,13 @@ def prepare_changes(configuration, operation, changeset, action, path,
     for (root, dirs, files) in walk(path, topdown=False, followlinks=True):
         for (kind, target) in [('files', files), ('dirs', dirs)]:
             if target:
-                target_list = [os.path.join(root, name) for name in target]                
+                target_list = [os.path.join(root, name) for name in target]
                 _check_access(configuration, action, target_list)
                 _logger.debug('%s user sub %s: %s' % (operation, kind,
                                                       target_list))
                 _fill_changes(configuration, changeset, action, target_list)
     return pending_path
+
 
 def commit_changes(configuration, changeset):
     """Actually commit events file after applying user I/O action. Used
@@ -201,9 +211,10 @@ def commit_changes(configuration, changeset):
         os.rename(pending_path, changeset_path)
         return changeset_path
     except Exception, err:
-        _logger.error("Failed to commit %s events in %s: %s" % \
+        _logger.error("Failed to commit %s events in %s: %s" %
                       (changeset, pending_path, err))
         return None
+
 
 def abort_changes(configuration, changeset):
     """Abort prepared events in changeset upon early failure of any user I/O
@@ -216,14 +227,15 @@ def abort_changes(configuration, changeset):
     if not os.path.exists(pending_path):
         return True
     try:
-        
+
         os.remove(pending_path)
         return True
     except Exception, err:
         _logger.error("failed to clean up after %s in %s" % (changeset,
                                                              pending_path))
         return None
-    
+
+
 def delete_path(configuration, path):
     """Wrapper to handle direct deletion of user file(s) in path. This version
     skips the user-friendly intermediate step of really just moving path to
@@ -245,7 +257,7 @@ def delete_path(configuration, path):
         result = False
         errors.append('no such path')
         return (result, errors)
-        
+
     try:
         _logger.info('prepare delete user path %s' % path)
         pending_path = prepare_changes(configuration, 'delete', changeset,
@@ -261,12 +273,13 @@ def delete_path(configuration, path):
         errors.append("%s" % err)
         import traceback
         _logger.error("trace: %s" % traceback.format_exc())
-            
+
     if result:
         commit_changes(configuration, changeset)
     else:
         abort_changes(configuration, changeset)
     return (result, errors)
+
 
 def remove_path(configuration, path):
     """Wrapper to handle removal of user file(s) in path. This version uses the
@@ -302,7 +315,7 @@ def remove_path(configuration, path):
     if os.path.commonprefix([real_path, trash_base]) == trash_base:
         _logger.info('path %s is already in trash - do nothing' % real_path)
         return (result, errors)
-    
+
     # Make sure trash folder and alias exists
     try:
         os.makedirs(trash_base)
@@ -331,12 +344,13 @@ def remove_path(configuration, path):
         _logger.error('could not remove %s: %s' % (path, err))
         result = False
         errors.append("%s" % err)
-            
+
     if result:
         commit_changes(configuration, changeset)
     else:
         abort_changes(configuration, changeset)
     return (result, errors)
+
 
 def touch_path(configuration, path, timestamp=None):
     """Create path if it doesn't exist and set/update timestamp"""
@@ -365,6 +379,7 @@ def touch_path(configuration, path, timestamp=None):
         errors.append("%s" % err)
     return (result, errors)
 
+
 def __make_test_files(configuration, test_path, dirs, files, links):
     """For unit testing setup"""
     try:
@@ -385,12 +400,14 @@ def __make_test_files(configuration, test_path, dirs, files, links):
         else:
             os.symlink('.', real_path)
 
+
 def __clean_test_files(configuration, test_path):
     """For unit testing cleanup"""
     try:
         shutil.rmtree(test_path)
     except:
         pass
+
 
 if __name__ == "__main__":
     from shared.base import client_id_dir
@@ -428,4 +445,3 @@ if __name__ == "__main__":
             print "Run %s on %s" % (del_func, real_target)
             print del_func(configuration, real_target)
             __clean_test_files(configuration, real_tmp)
-            

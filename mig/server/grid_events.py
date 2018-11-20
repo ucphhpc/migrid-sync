@@ -59,8 +59,9 @@ except ImportError:
 # Otherwise fail
 
 try:
+    from distutils.version import StrictVersion
     from scandir import scandir, walk, __version__ as scandir_version
-    if float(scandir_version) < 1.3:
+    if StrictVersion(scandir_version) < StrictVersion("1.3"):
 
         # Important os.walk compatibility utf8 fixes were not added until 1.3
 
