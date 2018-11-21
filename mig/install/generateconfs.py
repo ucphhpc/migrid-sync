@@ -160,6 +160,7 @@ if '__main__' == __name__:
 
     if args:
         print 'Error: non-option arguments are no longer supported!'
+        print " ... found: %s" % args
         usage(names)
         sys.exit(1)
     if settings['destination_suffix'] == 'DEFAULT':

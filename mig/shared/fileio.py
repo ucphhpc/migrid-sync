@@ -193,7 +193,8 @@ def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
 def make_symlink(dest, src, logger, force=False):
     """Wrapper to make src a symlink to dest path"""
 
-    if os.path.exists(src) and force and delete_symlink(src, logger):
+    # NOTE: we use islink instead of exists here to handle broken symlinks
+    if os.path.islink(src) and force and delete_symlink(src, logger):
         logger.debug('deleted existing symlink: %s' % (src))
 
     try:

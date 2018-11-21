@@ -29,6 +29,7 @@
 
 import Cookie
 import os
+import time
 
 # Only needed for 2FA so ignore import error and only fail on use
 try:
@@ -37,7 +38,8 @@ except ImportError:
     pyotp = None
 
 from shared.base import client_id_dir, extract_field, force_utf8
-from shared.defaults import twofactor_key_name, twofactor_key_bytes
+from shared.defaults import twofactor_key_name, twofactor_key_bytes, \
+    twofactor_cookie_ttl
 from shared.fileio import read_file, delete_file, delete_symlink
 from shared.pwhash import scramble_password, unscramble_password
 
@@ -162,6 +164,52 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
     return pyotp.TOTP(b32_key).verify(token)
 
 
+def client_twofactor_session(configuration,
+                             client_id,
+                             environ):
+    """Extract any active twofactor session ID from client cookie"""
+    _logger = configuration.logger
+    session_cookie = Cookie.SimpleCookie()
+    session_cookie.load(environ.get('HTTP_COOKIE', None))
+    session_cookie = session_cookie.get('2FA_Auth', None)
+    if session_cookie is None:
+        return None
+    return session_cookie.value
+
+
+def check_twofactor_session(configuration,
+                            client_id,
+                            environ):
+    """Check active twofactor session for user with identity. Looks up any
+    corresponding session cookies and extracts the session_id. In case a
+    matching session_id state file exists it is read and verified to belong to
+    the user and still not be expired.
+    """
+    _logger = configuration.logger
+    session_id = client_twofactor_session(configuration, client_id, environ)
+    if not session_id:
+        _logger.warning("no 2FA session found for %s" % client_id)
+        return False
+    session_path = os.path.join(configuration.twofactor_home, session_id)
+    session_data = read_file(session_path, _logger)
+    session_expire = os.stat(session_path).st_ctime + twofactor_cookie_ttl
+    now = time.time()
+    if session_data is None:
+        return False
+    elif session_data.find(client_id) == -1:
+        _logger.error("2FA session %s does not belong to %s - ignoring! (%s)" %
+                      (session_id, client_id, session_data))
+        return False
+    elif session_expire < now:
+        _logger.info("2FA session %s for %s expired (%s)" %
+                     (session_id, client_id, session_expire))
+        return False
+    else:
+        _logger.debug("2FA session %s for %s is valid (%s)" %
+                      (session_id, client_id, session_expire))
+        return True
+
+
 def expire_twofactor_session(configuration,
                              client_id,
                              environ,
@@ -172,15 +220,12 @@ def expire_twofactor_session(configuration,
     does indeed originate from the client_id.
     """
     _logger = configuration.logger
-    session_cookie = Cookie.SimpleCookie()
-    session_cookie.load(environ.get('HTTP_COOKIE', None))
-    session_cookie = session_cookie.get('2FA_Auth', None)
-    if session_cookie is None:
-        _logger.warning("no 2FA session cookie found for %s" % client_id)
+    session_id = client_twofactor_session(configuration, client_id, environ)
+    if not session_id:
+        _logger.warning("no valid 2FA session found for %s" % client_id)
         if allow_missing:
             return True
         return False
-    session_id = session_cookie.value
     session_path = os.path.join(configuration.twofactor_home, session_id)
     session_data = read_file(session_path, _logger)
     if session_data is None:
@@ -196,7 +241,8 @@ def expire_twofactor_session(configuration,
     else:
         delete_status = True
         if delete_file(session_path, _logger, allow_missing=allow_missing):
-            _logger.info("expired 2FA session %s for %s" % (session_id, client_id))
+            _logger.info("expired 2FA session %s for %s" %
+                         (session_id, client_id))
             client_dir = client_id_dir(client_id)
             client_link_path = os.path.join(configuration.twofactor_home,
                                             client_dir)

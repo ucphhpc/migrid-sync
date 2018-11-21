@@ -238,30 +238,37 @@ Incorrect token provided - please try again
 
         # Create the state file to inform apache (rewrite) about auth
         session_path = os.path.join(configuration.twofactor_home, session_key)
-        client_link_path = os.path.join(configuration.twofactor_home, client_dir)
-        # We save user info just to be able to monitor and expire active sessions
+        client_link_path = os.path.join(
+            configuration.twofactor_home, client_dir)
+        # We save user info just to be able to monitor and expire active
+        # sessions
         session_data = '''%s
 %s
 %s
 ''' % (user_agent, user_addr, client_id)
         write_status = True
-        if not (write_file(session_data, session_path, configuration.logger) \
-                and make_symlink(session_key,
-                                 client_link_path, 
-                                 logger,
-                                 force=True)):
+        if not write_file(session_data, session_path, configuration.logger):
             delete_file(session_data, logger, allow_missing=True)
-            logger.error("could not create 2FA session for %s" \
-                    % client_id)
+            logger.error("could not create 2FA session for %s"
+                         % client_id)
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  "Internal error: could not create 2FA session!"})
             return (output_objects, returnvalues.ERROR)
 
-        logger.info("saved 2FA session for %s in %s" \
+        logger.info("saved 2FA session for %s in %s"
                     % (client_id, session_path))
-        logger.info("created 2FA session symlink %s -> %s" \
-                    % (session_path, client_link_path))
+
+        # NOTE: this make_symlink call may result in a race if non-2FA clients
+        #       issue multiple parallel requests to trigger concurrent 2FA init.
+        #       Missing clean-up may also cause error in creation on next login.
+        # We only need the symlink to 2FA log out so we ignore all such errors.
+        if make_symlink(session_key, client_link_path, logger, force=True):
+            logger.info("created 2FA session symlink %s -> %s"
+                        % (session_path, client_link_path))
+        else:
+            logger.error("2FA session symlink create %s -> %s failed" %
+                         (session_path, client_link_path))
 
     if redirect_url:
         headers.append(tuple(str(cookie).split(': ', 1)))
