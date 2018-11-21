@@ -36,7 +36,7 @@ from getpass import getpass
 from shared.base import fill_distinguished_name, fill_user
 from shared.conf import get_configuration_object
 from shared.defaults import cert_valid_days
-from shared.pwhash import unscramble_password, scramble_password, make_hash
+from shared.pwhash import unscramble_password, scramble_password
 from shared.serial import load
 from shared.useradm import init_user_adm, create_user, load_user_dict
 
@@ -193,17 +193,14 @@ if '__main__' == __name__:
         user_dict['role'] = role
 
     # Encode password if set but not already encoded
-    # If no salt is provided, default to hash instead
+
     salt = configuration.site_password_salt
     if user_dict['password']:
-        if salt:
-            try:
-                unscramble_password(salt, user_dict['password'])
-            except TypeError:
-                user_dict['password'] = scramble_password(
-                    salt, user_dict['password'])
-        else:
-            user_dict['password'] = make_hash(user_dict['password'])
+        try:
+            unscramble_password(salt, user_dict['password'])
+        except TypeError:
+            user_dict['password'] = scramble_password(
+                salt, user_dict['password'])
 
     # Default to one year of certificate validity (only used by CA scripts)
 
