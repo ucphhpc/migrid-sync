@@ -108,7 +108,9 @@ def load_crontab(client_id, configuration, allow_missing=True):
         crontab_contents = crontab_fd.read()
         crontab_fd.close()
     except Exception, exc:
-        _logger.error('failed reading %s crontab file: %s' % (client_id, exc))
+        if not allow_missing:
+            _logger.error('failed reading %s crontab file: %s' % (client_id,
+                                                                  exc))
         crontab_contents = ''
     return crontab_contents
 
@@ -124,7 +126,9 @@ def load_atjobs(client_id, configuration, allow_missing=True):
         atjobs_contents = atjobs_fd.read()
         atjobs_fd.close()
     except Exception, exc:
-        _logger.error('failed reading %s atjobs file: %s' % (client_id, exc))
+        if not allow_missing:
+            _logger.error('failed reading %s atjobs file: %s' % (client_id,
+                                                                 exc))
         atjobs_contents = ''
     return atjobs_contents
 
@@ -181,7 +185,7 @@ def parse_atjobs_contents(configuration, client_id, atjobs_lines):
             _logger.warning("Skip invalid atjobs line for %s: %s (%s)" %
                             (client_id, line, exc))
             continue
-            
+
         # Ignore seconds
         when = when.replace(second=0)
         cmd_list = shlex.split(hit.group(7))
@@ -292,8 +296,11 @@ if __name__ == '__main__':
     now = datetime.datetime.now()
     now = now.replace(second=0, microsecond=0)
     trigger_rule = {
-        'templates': [], 'run_as': client_id, 'rate_limit': '', 'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False, 'match_files': True,
-                    'arguments': ['+TRIGGERPATH+'], 'settle_time': '', 'path': '*.txt*', 'changes': ['modified'], 'action': 'trigger-created', 'match_recursive': True}
+        'templates': [], 'run_as': client_id, 'rate_limit': '',
+        'vgrid_name': 'eScience', 'rule_id': 'test-dummy', 'match_dirs': False,
+        'match_files': True, 'arguments': ['+TRIGGERPATH+'], 'settle_time': '',
+        'path': '*.txt*', 'changes': ['modified'], 'action': 'trigger-created',
+        'match_recursive': True}
     trigger_samples = [('abc.txt', 'modified'), ('subdir/def.txt', 'modified')]
     print "Test trigger event map:"
     for (path, change) in trigger_samples:
