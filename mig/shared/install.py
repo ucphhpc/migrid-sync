@@ -205,12 +205,14 @@ def generate_confs(
     apache_run='/var/run',
     apache_lock='/var/lock',
     apache_log='/var/log/apache2',
+    apache_worker_procs='256',
     openssh_version='7.4',
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
     enable_sftp='True',
     enable_sftp_subsys='True',
+    sftp_subsys_auth_procs='10',
     enable_davs='True',
     enable_ftps='True',
     enable_wsgi='True',
@@ -301,9 +303,11 @@ def generate_confs(
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOCK__'] = apache_lock
     user_dict['__APACHE_LOG__'] = apache_log
+    user_dict['__APACHE_WORKER_PROCS__'] = apache_worker_procs
     user_dict['__OPENSSH_VERSION__'] = openssh_version
     user_dict['__ENABLE_SFTP__'] = enable_sftp
     user_dict['__ENABLE_SFTP_SUBSYS__'] = enable_sftp_subsys
+    user_dict['__SFTP_SUBSYS_AUTH_PROCS__'] = sftp_subsys_auth_procs
     user_dict['__ENABLE_DAVS__'] = enable_davs
     user_dict['__ENABLE_FTPS__'] = enable_ftps
     user_dict['__ENABLE_WSGI__'] = enable_wsgi
@@ -1126,11 +1130,13 @@ def create_user(
     apache_run = '%s/run' % apache_dir
     apache_lock = '%s/lock' % apache_dir
     apache_log = '%s/log' % apache_dir
+    apache_worker_procs = '256'
     openssh_version = '7.4'
     cert_dir = '%s/MiG-certificates' % apache_dir
     # We don't necessarily have free ports for daemons
     enable_sftp = 'False'
     enable_sftp_subsys = 'False'
+    sftp_subsys_auth_procs = '10'
     enable_davs = 'False'
     enable_ftps = 'False'
     enable_twofactor = 'False'
@@ -1231,12 +1237,14 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         apache_run,
         apache_lock,
         apache_log,
+        apache_worker_procs,
         openssh_version,
         mig_dir,
         state_dir,
         cert_dir,
         enable_sftp,
         enable_sftp_subsys,
+        sftp_subsys_auth_procs,
         enable_davs,
         enable_ftps,
         enable_wsgi,
