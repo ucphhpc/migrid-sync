@@ -535,7 +535,8 @@ and the same with added Jupyter integration and optional 2FA support:
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=erda-ucph-science --wsgi_procs=25 
+                   --skin=erda-ucph-science --apache_worker_procs=512 \
+                   --wsgi_procs=25 --sftp_subsys_auth_procs=25
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, job execution, Jupyter integration, previews and OpenID login
