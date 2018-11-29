@@ -503,6 +503,16 @@ JSONRPC interface is delivered with the jsonrpclib module:"""})
                            'title': 'Python JSONRPC Module at Python Package Index',
                            'text': 'Python JSONRPClib Module (Apache 2.0 license)'})
 
+    output_objects.append({'object_type': 'text', 'text': """
+The optional country code validation support in certificate and OpenID account
+creation relies on the iso3166 module from:"""})
+    output_objects.append({'object_type': 'link',
+                           'destination':
+                           'https://pypi.org/project/iso3166/',
+                           'class': 'urllink iconspace',
+                           'title': 'iso3166 at Python Package Index',
+                           'text': 'iso3166 Module (MIT license)'})
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""

@@ -188,6 +188,10 @@ The optional PyOTP module used for 2-factor authentication is not
 necessarily recent in distributions but then readily available with pip:
 sudo pip install pyotp
 
+The optional country code validation in certificate and OpenID account 
+request backends requires the iso3166 module which may be installed with:
+sudo pip install iso3166
+
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
 MiG you should download and unpack the source code (including this

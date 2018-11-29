@@ -32,9 +32,9 @@
 import os
 import time
 import tempfile
-import re
 
 import shared.returnvalues as returnvalues
+from shared.accountreq import existing_country_code, forced_org_email_match
 from shared.base import client_id_dir, force_utf8, force_unicode, \
     generate_https_urls, fill_distinguished_name
 from shared.defaults import cert_valid_days
@@ -62,51 +62,6 @@ def signature():
         'comment': [''],
     }
     return ['text', defaults]
-
-
-def forced_org_email_match(org, email, configuration):
-    """Check that email and organization follow the required policy"""
-
-    logger = configuration.logger
-    # Policy regexps: prioritized order with most general last
-    force_org_email = [('DIKU', ['^[a-zA-Z0-9_.+-]+@diku.dk$',
-                                 '^[a-zA-Z0-9_.+-]+@di.ku.dk$']),
-                       ('NBI', ['^[a-zA-Z0-9_.+-]+@nbi.ku.dk$',
-                                '^[a-zA-Z0-9_.+-]+@nbi.dk$',
-                                '^[a-zA-Z0-9_.+-]+@fys.ku.dk$']),
-                       ('IMF', ['^[a-zA-Z0-9_.+-]+@math.ku.dk$']),
-                       ('DTU', ['^[a-zA-Z0-9_.+-]+@dtu.dk$']),
-                       # Keep this KU catch-all last and do not generalize it!
-                       ('KU', ['^[a-zA-Z0-9_.+-]+@(alumni.|)ku.dk$']),
-                       ]
-    force_org_email_dict = dict(force_org_email)
-    is_forced_email = False
-    is_forced_org = False
-    if org.upper() in force_org_email_dict.keys():
-        is_forced_org = True
-        # Consistent casing
-        org = org.upper()
-    email_hit = '__BOGUS__'
-    for (forced_org, forced_email_list) in force_org_email:
-        for forced_email in forced_email_list:
-            if re.match(forced_email, email):
-                is_forced_email = True
-                email_hit = forced_email
-                logger.debug('email match on %s vs %s' % (email, forced_email))
-                break
-
-        # Use first hit to avoid catch-all overriding specific hits
-        if is_forced_email or is_forced_org and org == forced_org:
-            break
-    if is_forced_org != is_forced_email or \
-            not email_hit in force_org_email_dict.get(org, ['__BOGUS__']):
-        logger.error('Illegal email and organization combination: %s' %
-                     ([email, org, is_forced_org, is_forced_email,
-                       email_hit, force_org_email_dict.get(org,
-                                                           ['__BOGUS__'])]))
-        return False
-    else:
-        return True
 
 
 def main(client_id, user_arguments_dict):
@@ -197,6 +152,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
              'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    if not existing_country_code(country, configuration):
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Illegal country code:
+Please read and follow the instructions shown in the help bubble when filling
+the country field on the request page!
+Specifically if you are from the U.K. you need to use GB as country code in
+line with the ISO-3166 standard.
+'''})
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     # TODO: move this check to conf?
 
     if not forced_org_email_match(org, email, configuration):
@@ -259,7 +227,7 @@ resources anyway.
         logger.error('Failed to write OpenID account request to %s: %s'
                      % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Request could not be sent to grid
+                               '''Request could not be sent to site
 administrators. Please contact them manually on %s if this error persists.'''
                                % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -370,17 +338,17 @@ Command to delete user again on %(site)s server:
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text':
                                '''An error occured trying to send the email
-requesting the grid administrators to create a new OpenID and account. Please
+requesting the site administrators to create a new OpenID and account. Please
 email them (%s) manually and include the session ID: %s''' % (admin_email,
                                                               tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
-        {'object_type': 'text', 'text': """Request sent to grid administrators:
+        {'object_type': 'text', 'text': """Request sent to site administrators:
 Your OpenID account request will be verified and handled as soon as possible,
 so please be patient.
 Once handled an email will be sent to the account you have specified ('%s') with
 further information. In case of inquiries about this request, please email
-the grid administrators (%s) and include the session ID: %s""" %
+the site administrators (%s) and include the session ID: %s""" %
          (email, configuration.admin_email, tmp_id)})
     return (output_objects, returnvalues.OK)
