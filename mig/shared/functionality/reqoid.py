@@ -38,6 +38,7 @@ from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
+from shared.pwhash import parse_password_policy
 from shared.safeinput import html_escape
 
 
@@ -123,12 +124,15 @@ to your old files, jobs and privileges. </p>''' %
                                 configuration.user_mig_oid_title)})
         user_fields.update(distinguished_name_to_user(client_id))
 
+    # Site policy dictates min length greater or equal than password_min_len
+    policy_min_len, policy_min_classes = parse_password_policy(configuration)
     user_fields.update({
         'valid_name_chars': '%s (and common accents)' %
         html_escape(valid_name_chars),
         'valid_password_chars': html_escape(valid_password_chars),
-        'password_min_len': password_min_len,
+        'password_min_len': max(policy_min_len, password_min_len),
         'password_max_len': password_max_len,
+        'password_min_classes': max(policy_min_classes, 1),
         'site': configuration.short_title
     })
     form_method = 'post'
@@ -186,9 +190,9 @@ Email data that we can easily validate!
   <div id='email_help'>Email address associated with your organization if at all possible</div>
   <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='https://en.wikipedia.org/wiki/ISO_3166-1'>help</a></div>
   <div id='state_help'>Optional 2-letter ANSI state code of your organization, please just leave empty unless it is in the US or similar, <a href='https://en.wikipedia.org/wiki/List_of_U.S._state_abbreviations'>help</a></div>
-  <div id='password_help'>Password is restricted to the characters in '%(valid_password_chars)s and must be %(password_min_len)s to %(password_max_len)s characters long'</div>
+  <div id='password_help'>Password is restricted to the characters:<br/><tt>%(valid_password_chars)s</tt><br/>Certain other complexity requirements apply for adequate strength. For example it must be %(password_min_len)s to %(password_max_len)s characters long and contain at least %(password_min_classes)d different character classes.</div>
   <div id='verifypassword_help'>Please repeat password</div>
-  <div id='comment_help'>Optional, but a short informative comment may help us verify your account needs and thus speed up our response.</div>
+  <div id='comment_help'>Optional, but a short informative comment may help us verify your account needs and thus speed up our response. Typically the name of a local collaboration partner or project may be helpful.</div>
 </div>
 """ % fill_helpers})
 
