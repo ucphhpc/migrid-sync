@@ -591,6 +591,7 @@ def edit_user(
     db_path,
     force=False,
     verbose=False,
+    meta_only=False,
 ):
     """Edit user"""
 
@@ -637,12 +638,20 @@ def edit_user(
         del user_dict["distinguished_name"]
         fill_distinguished_name(user_dict)
         new_id = user_dict["distinguished_name"]
-        if user_db.has_key(new_id):
-            raise Exception("Edit aborted: new user already exists!")
-        _logger.info("Force old user renew to fix missing files")
-        create_user(old_user, conf_path, db_path, force, verbose,
-                    ask_renew=False, default_renew=True)
-        del user_db[client_id]
+        if not meta_only:
+            if user_db.has_key(new_id):
+                raise Exception("Edit aborted: new user already exists!")
+            _logger.info("Force old user renew to fix missing files")
+            create_user(old_user, conf_path, db_path, force, verbose,
+                        ask_renew=False, default_renew=True)
+            del user_db[client_id]
+        elif new_id != client_id:
+            raise Exception("Edit aborted: illegal meta_only ID change! %s %s"
+                            % (client_id, new_id))
+        else:
+            _logger.info("Only updating metadata for %s: %s" % (client_id,
+                                                                changes))
+
         user_db[new_id] = user_dict
         save_user_db(user_db, db_path)
         if verbose:
@@ -654,6 +663,9 @@ def edit_user(
         if not force:
             raise Exception('Failed to edit %s with %s in user DB: %s'
                             % (client_id, changes, err))
+
+    if meta_only:
+        return user_dict
 
     new_client_dir = client_id_dir(new_id)
 
