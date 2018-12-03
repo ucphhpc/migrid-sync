@@ -42,7 +42,7 @@ from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
-from shared.pwhash import scramble_password
+from shared.pwhash import scramble_password, assure_password_strength
 from shared.serial import dumps
 
 
@@ -127,6 +127,21 @@ CSRF-filtered POST requests to prevent unintended updates'''})
             {'object_type': 'error_text', 'text':
              'Password and verify password are not identical!'
              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    try:
+        assure_password_strength(configuration, password)
+    except Exception, exc:
+        logger.warning(
+            "%s invalid password for '%s' (policy %s): %s" %
+            (op_name, cert_name, configuration.site_password_policy, exc))
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid password requested: %s.'
+                               % exc
+                               })
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not existing_country_code(country, configuration):
