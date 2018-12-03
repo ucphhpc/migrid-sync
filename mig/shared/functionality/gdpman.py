@@ -1059,7 +1059,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                 msg = "missing workzone number"
 
             elif workzone_id != '000000':
-                workzone_id = create_workzone_id
+                create_workzone_id = workzone_id
 
             if status:
                 (status, msg) = project_create(configuration,
