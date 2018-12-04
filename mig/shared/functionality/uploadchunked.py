@@ -434,7 +434,7 @@ def main(client_id, user_arguments_dict, environ=None):
                     gdp_project = get_project_from_client_id(configuration,
                                                              client_id)
                     msg = "'%s'" % rel_dst[len(gdp_project)+1:]
-                    project_log(configuration, 'https', client_id, 'wrote',
+                    project_log(configuration, 'https', client_id, 'modified',
                                 msg, user_addr=environ['REMOTE_ADDR'])
 
             uploaded.append(file_entry)

@@ -99,7 +99,8 @@ valid_log_actions = [
     'auto_logged_out',
     'copied',
     'created',
-    'wrote',
+    'modified',
+    'truncated',
     'deleted',
     'invited_user',
     'removed_user',
@@ -883,18 +884,14 @@ def project_log(
             details,
         )
         _gdp_logger.info(msg)
-        """
         # Log message to MiG log with caller details:
-
-        frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
-        module_name = inspect.getmodulename(frameinfo[0])
-        revision = 1
-        function_name = frameinfo[2]
-        lineno = frameinfo[1]
-
-        _logger.debug('GDP:%s:%s:%s:%s: %s' % (module_name, revision,
-                                              function_name, lineno, msg))
-        """
+        # frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
+        # module_name = inspect.getmodulename(frameinfo[0])
+        # revision = 1
+        # function_name = frameinfo[2]
+        # lineno = frameinfo[1]
+        # _logger.debug('GDP:%s:%s:%s:%s: %s' % (module_name, revision,
+        #                                       function_name, lineno, msg))
     return status
 
 
@@ -1769,7 +1766,7 @@ def project_open(
         protocol,
         client_addr,
         user_id):
-    """Open project for *project_short_id* with *protocol*
+    """Open project for *user_id* with *protocol*
     if user is logged into another project, then autologout before login
     if user is already logged into the current project
     then skip logout/login"""
@@ -1815,6 +1812,24 @@ def project_open(
         result = True
 
     return result
+
+
+def project_close(
+        configuration,
+        protocol,
+        client_addr,
+        user_id):
+    """Close project for *user_id* with *protocol*"""
+
+    _logger = configuration.logger
+    # _logger.debug("protocol: '%s', client_addr: '%s', user_id: '%s'"
+    #               % (protocol, client_addr, user_id))
+
+    return project_logout(
+        configuration,
+        protocol,
+        client_addr,
+        user_id)
 
 
 def project_create(
