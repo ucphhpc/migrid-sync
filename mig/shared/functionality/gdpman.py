@@ -845,6 +845,10 @@ Please contact the Grid admins %s if you think it should be enabled.
                 value = True
             elif keyword == 'WEBDAVS_TWOFACTOR':
                 value = True
+            elif keyword == 'SFTP_PASSWORD_TWOFACTOR':
+                value = True
+            elif keyword == 'SFTP_KEY_TWOFACTOR':
+                value = True
             else:
                 value = keywords_dict[keyword]['Value']
             topic_mrsl += '''::%s::

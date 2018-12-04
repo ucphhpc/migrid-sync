@@ -85,17 +85,17 @@ from shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_MACS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_LEGACY_MACS
 from shared.fileio import check_write_access, user_chroot_exceptions
+from shared.gdp import project_open, project_close, project_log
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
     acceptable_chmod, refresh_user_creds, refresh_job_creds, \
     refresh_share_creds, refresh_jupyter_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, track_open_session, track_close_session, \
     active_sessions, check_twofactor_session
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, daemon_gdp_logger, reopen_log
 from shared.useradm import check_password_hash
-from shared.validstring import possible_user_id, possible_gdp_user_id, \
-    possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
-from shared.vgrid import vgrid_restrict_write_support
+from shared.validstring import possible_user_id ,possible_job_id,\
+    possible_sharelink_id, possible_jupyter_mount_id
 
 configuration, logger = None, None
 
@@ -114,6 +114,7 @@ class SFTPHandle(paramiko.SFTPHandle):
 
     logger = None
     sftpserver = None
+    ftrace = None
 
     def __init__(self, flags=0, sftpserver=None):
         paramiko.SFTPHandle.__init__(self, flags)
@@ -121,6 +122,12 @@ class SFTPHandle(paramiko.SFTPHandle):
             self.sftpserver = sftpserver
         if self.logger is None:
             self.logger = logger
+        self.ftrace = {}
+        for tracetype in ['read', 'write']:
+            self.ftrace[tracetype] = \
+                {'startpos': 0,
+                 'endpos': 0,
+                 'count': 0}
         #self.logger.debug("SFTPHandle init: %s" % repr(flags))
 
     def stat(self):
@@ -139,6 +146,86 @@ class SFTPHandle(paramiko.SFTPHandle):
         # self.logger.debug("SFTPHandle chattr %s on path %s" % \
         #                  (repr(attr), path))
         return self.sftpserver._chattr(path, attr, self)
+
+    def read(self, offset, length):
+        """Handle operations of same name"""
+        rftrace = self.ftrace['read']
+        startpos = self.readfile.tell()
+        result = super(SFTPHandle, self).read(offset, length)
+        if configuration.site_enable_gdp:
+            # GDP log file reads
+            path = getattr(self, "path", "unknown")
+            user_name = getattr(self, "user_name", "unknown")
+            ip_addr = getattr(self, "ip_addr", "unknown")
+            if rftrace['count'] == 0 \
+                    or offset < rftrace['startpos']:
+                rftrace['startpos'] = offset
+            endpos = self.readfile.tell()
+            if endpos > rftrace['endpos']:
+                rftrace['endpos'] = endpos
+            # Log first write and all non-contiguous writes
+            if rftrace['count'] == 0 \
+                    or offset != startpos:
+                msg = "'%s' (%s:%s)" % (
+                    path, rftrace['startpos'], rftrace['endpos'])
+                project_log(configuration, 'sftp', user_name, 'accessed',
+                            msg, user_addr=ip_addr)
+                rftrace['startpos'] = rftrace['endpos']
+                rftrace['count'] = 1
+            else:
+                rftrace['count'] += 1
+        return result
+
+    def write(self, offset, data):
+        """Handle operations of same name"""
+
+        wftrace = self.ftrace['write']
+        startpos = self.writefile.tell()
+        result = super(SFTPHandle, self).write(offset, data)
+        if configuration.site_enable_gdp \
+                and result == 0:
+            # GDP log file writes
+            path = getattr(self, "path", "unknown")
+            user_name = getattr(self, "user_name", "unknown")
+            ip_addr = getattr(self, "ip_addr", "unknown")
+            if wftrace['count'] == 0 \
+                    or offset < wftrace['startpos']:
+                wftrace['startpos'] = offset
+            endpos = self.writefile.tell()
+            if endpos > wftrace['endpos']:
+                wftrace['endpos'] = endpos
+            # Log first write and all non-contiguous writes
+            if wftrace['count'] == 0 \
+                    or offset != startpos:
+                msg = "'%s' (%s:%s)" % (
+                    path, wftrace['startpos'], wftrace['endpos'])
+                project_log(configuration, 'sftp', user_name, 'modified',
+                            msg, user_addr=ip_addr)
+                wftrace['startpos'] = wftrace['endpos']
+                wftrace['count'] = 1
+            else:
+                wftrace['count'] += 1
+        return result
+
+    def close(self):
+        rftrace = self.ftrace['read']
+        wftrace = self.ftrace['write']
+        result = super(SFTPHandle, self).close()
+        if configuration.site_enable_gdp:
+            path = getattr(self, "path", "unknown")
+            user_name = getattr(self, "user_name", "unknown")
+            ip_addr = getattr(self, "ip_addr", "unknown")
+            if rftrace['count'] > 1:
+                msg = "'%s' (%s:%s)" % (
+                    path, rftrace['startpos'], rftrace['endpos'])
+                project_log(configuration, 'sftp', user_name, 'accessed',
+                            msg, user_addr=ip_addr)
+            if wftrace['count'] > 1:
+                msg = "'%s' (%s:%s)" % (
+                    path, wftrace['startpos'], wftrace['endpos'])
+                project_log(configuration, 'sftp', user_name, 'modified',
+                            msg, user_addr=ip_addr)
+        return result
 
 
 class SimpleSftpServer(paramiko.SFTPServerInterface):
@@ -200,6 +287,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # untrusted transport.get_username() here
             #logger.debug('extract authenticated user from server')
             self.user_name = server.get_authenticated_user()
+            self.ip_addr = self.transport.getpeername()[0]
         else:
             #logger.debug('active env: %s' % os.environ)
             username = os.environ.get('USER', 'INVALID')
@@ -225,8 +313,9 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             update_login_map(daemon_conf, changed_users, changed_jobs,
                              changed_shares, changed_jupyter_mounts)
             self.user_name = username
+            self.ip_addr = "unknown"
 
-        logger.debug('auth user is %s' % self.user_name)
+        #logger.debug('auth user is %s' % self.user_name)
 
         #logger.debug('update user chroot based on login map')
 
@@ -240,7 +329,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 # IMPORTANT: Must be utf8 for 'ls' to work on user home!
                 self.root = force_utf8("%s/%s" % (self.root, entry.home))
                 break
-        logger.debug('auth user chroot is %s' % self.root)
+        #logger.debug('auth user chroot is %s' % self.root)
 
     # Use shared daemon fs helper functions
 
@@ -375,8 +464,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 new_mode = (mode & 0775) | 0750
             else:
                 new_mode = (mode & 0775) | 0640
-            self.logger.debug("chmod %s (%s) without damage on %s :: %s" %
-                              (new_mode, mode, path, real_path))
+            # self.logger.debug("chmod %s (%s) without damage on %s :: %s" %
+            #                  (new_mode, mode, path, real_path))
             try:
                 if file_obj is None:
                     os.chmod(real_path, new_mode)
@@ -428,8 +517,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             fake = os.open(real_path, flags, 0644)
             os.close(fake)
             # Now fake our own chattr to set any requested mode and times
-            self.logger.debug("fake chattr on %s :: %s (%s %s)" %
-                              (path, real_path, repr(flags), repr(attr)))
+            # self.logger.debug("fake chattr on %s :: %s (%s %s)" %
+            #                  (path, real_path, repr(flags), repr(attr)))
             self.chattr(path, attr)
             # self.logger.debug("chattr done on %s :: %s (%s %s)" % \
             #                  (path, real_path, repr(flags), repr(attr)))
@@ -451,6 +540,23 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             setattr(handle, 'readfile', readfile)
             setattr(handle, 'writefile', writefile)
             setattr(handle, 'active', active)
+            if configuration.site_enable_gdp:
+                setattr(handle, 'user_name', self.user_name)
+                setattr(handle, 'ip_addr', self.ip_addr)
+                log_action = ''
+                if flags & os.O_CREAT:
+                    log_action = 'created'
+                elif flags & (os.O_WRONLY |
+                              os.O_TRUNC):
+                    log_action = 'truncated'
+                if log_action:
+                    log_msg = "'%s'" % path
+                    project_log(configuration,
+                                'sftp',
+                                self.user_name,
+                                log_action,
+                                log_msg,
+                                user_addr=self.ip_addr)
             # self.logger.debug("open done %s :: %s (%s %s)" % \
             #                  (path, real_path, str(handle), mode))
             return handle
@@ -507,8 +613,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # for consistency with lstat
         if not os.path.exists(real_path):
             # It's common to check file existence with stat so don't warn
-            self.logger.debug("stat on missing path %s :: %s" %
-                              (path, real_path))
+            # self.logger.debug("stat on missing path %s :: %s" %
+            #                  (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
             return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
@@ -529,8 +635,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("lstat %s :: %s" % (path, real_path))
         if not os.path.lexists(real_path):
             # It's common to check file existence with stat so no warning here
-            self.logger.debug("lstat on missing path %s :: %s" %
-                              (path, real_path))
+            # self.logger.debug("lstat on missing path %s :: %s" %
+            #                  (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         #self.logger.debug('return lstat %s' % path)
         try:
@@ -566,6 +672,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         try:
             os.remove(real_path)
             self.logger.info("removed %s :: %s" % (path, real_path))
+            if configuration.site_enable_gdp:
+                msg = "'%s'" % path
+                project_log(configuration, 'sftp', self.user_name, 'deleted',
+                            msg, user_addr=self.ip_addr)
             return paramiko.SFTP_OK
         except Exception, err:
             self.logger.error("remove on %s :: %s failed: %s" %
@@ -606,6 +716,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             shutil.move(real_oldpath, real_newpath)
             self.logger.info("renamed %s to %s :: %s to %s"
                              % (oldpath, newpath, real_oldpath, real_newpath))
+            if configuration.site_enable_gdp:
+                msg = "'%s' -> '%s'" % (
+                    oldpath,
+                    newpath)
+                project_log(configuration, 'sftp', self.user_name, 'moved',
+                            msg, user_addr=self.ip_addr)
             return paramiko.SFTP_OK
         except Exception, err:
             self.logger.error("rename on %s :: %s failed: %s" %
@@ -633,6 +749,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # Force MiG default mode
             os.mkdir(real_path, 0755)
             self.logger.info("made dir %s :: %s" % (path, real_path))
+            if configuration.site_enable_gdp:
+                msg = "'%s'" % path
+                project_log(configuration, 'sftp', self.user_name, 'created',
+                            msg, user_addr=self.ip_addr)
             return paramiko.SFTP_OK
         except Exception, err:
             self.logger.error("mkdir on %s :: %s failed: %s" %
@@ -665,6 +785,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         try:
             os.rmdir(real_path)
             self.logger.info("removed dir %s :: %s" % (path, real_path))
+            if configuration.site_enable_gdp:
+                msg = "'%s'" % path
+                project_log(configuration, 'sftp', self.user_name, 'deleted',
+                            msg, user_addr=self.ip_addr)
             return paramiko.SFTP_OK
         except Exception, err:
             self.logger.error("rmdir on %s :: %s failed: %s" %
@@ -756,9 +880,6 @@ class SimpleSSHServer(paramiko.ServerInterface):
         # Only need to update users and shares here, since jobs only use keys
         daemon_conf = self.conf
         changed_users, changed_jobs, changed_shares = [], [], []
-        if possible_gdp_user_id(configuration, username):
-            daemon_conf, changed_users = refresh_user_creds(configuration,
-                                                            'sftp', username)
         if possible_user_id(configuration, username):
             daemon_conf, changed_users = refresh_user_creds(configuration,
                                                             'sftp', username)
@@ -916,8 +1037,8 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     recommended_ciphers = STRONG_SSH_CIPHERS.split(',')
     available_ciphers = transport_security.ciphers
     strong_ciphers = [i for i in recommended_ciphers if i in available_ciphers]
-    logger.debug("TLS ciphers available %s, used %s" % (available_ciphers,
-                                                        strong_ciphers))
+    # logger.debug("TLS ciphers available %s, used %s" % (available_ciphers,
+    #                                                    strong_ciphers))
     if strong_ciphers:
         transport_security.ciphers = strong_ciphers
     else:
@@ -935,15 +1056,15 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     available_kex = transport_security.kex
     strong_kex = [i for i in recommended_kex if i in available_kex]
     medium_kex = [i for i in fallback_kex if i in available_kex]
-    logger.debug("TLS kex available %s, used %s (or fallback to %s)" %
-                 (available_kex, strong_kex, medium_kex))
+    # logger.debug("TLS kex available %s, used %s (or fallback to %s)" %
+    #             (available_kex, strong_kex, medium_kex))
     if strong_kex:
-        logger.debug("Using only strong key exchange algorithms: %s" %
-                     ', '.join(strong_kex))
+        # logger.debug("Using only strong key exchange algorithms: %s" %
+        #             ', '.join(strong_kex))
         transport_security.kex = strong_kex
     elif medium_kex:
-        logger.debug("Using only medium strength key exchange algorithms: %s" %
-                     ', '.join(medium_kex))
+        # logger.debug("Using only medium strength key exchange algorithms: %s" %
+        #             ', '.join(medium_kex))
         transport_security.kex = medium_kex
     else:
         logger.warning("No strong TLS key exchange algorithm available!")
@@ -953,15 +1074,15 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     available_digests = transport_security.digests
     strong_digests = [i for i in recommended_digests if i in available_digests]
     medium_digests = [i for i in fallback_digests if i in available_digests]
-    logger.debug("TLS digests available %s, used %s (or fallback to %s)" %
-                 (available_digests, strong_digests, medium_digests))
+    # logger.debug("TLS digests available %s, used %s (or fallback to %s)" %
+    #             (available_digests, strong_digests, medium_digests))
     if strong_digests:
-        logger.debug("Using only strong message auth codes: %s" %
-                     ', '.join(strong_digests))
+        # logger.debug("Using only strong message auth codes: %s" %
+        #             ', '.join(strong_digests))
         transport_security.digests = strong_digests
     elif medium_digests:
-        logger.debug("Using only medium strength message auth codes: %s" %
-                     ', '.join(medium_digests))
+        # logger.debug("Using only medium strength message auth codes: %s" %
+        #             ', '.join(medium_digests))
         transport_security.digests = medium_digests
     else:
         logger.warning("No strong TLS digest algorithm available!")
@@ -972,9 +1093,9 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     # trade-off but OpenSSH does re-keying even less frequently.
     # Please note that some weaker ciphers still cap re-key limit below the
     # value we set here and in the client.
-    logger.debug("Double default re-keying sizes %d bytes / %d packets" %
-                 (transport.packetizer.REKEY_BYTES,
-                  transport.packetizer.REKEY_PACKETS))
+    # logger.debug("Double default re-keying sizes %d bytes / %d packets" %
+    #             (transport.packetizer.REKEY_BYTES,
+    #              transport.packetizer.REKEY_PACKETS))
     # Bump re-keying from 512MB to 2GB to reduce large transfer slow-downs
     rekey_scale = 4
     transport.packetizer.REKEY_BYTES *= rekey_scale
@@ -1007,7 +1128,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
             pass
         mod = __import__(mod_name, fromlist=fromlist)
         impl = getattr(mod, class_name)
-        logger.debug("Custom implementation: %s" % conf['sftp_implementation'])
+        #logger.debug("Custom implementation: %s" % conf['sftp_implementation'])
     else:
         impl = SimpleSftpServer
     transport.set_subsystem_handler("sftp", paramiko.SFTPServer, sftp_si=impl,
@@ -1040,14 +1161,27 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         logger.info("Proceed with login for %s with %d active sessions" %
                     (username, active_count))
 
-    if username is None:
-        logger.warning("Login from %s failed" % (addr, ))
+    success = False
+    if username is not None:
+        success = True
+        if configuration.site_enable_gdp:
+            success = project_open(configuration,
+                                   'sftp',
+                                   addr[0],
+                                   username)
+    if success:
+        print "Login for %s from %s" % (username, addr, )
+        logger.info("Login for %s from %s" % (username, addr, ))
+        track_open_session(configuration,
+                           'sftp',
+                           username,
+                           addr[0],
+                           addr[1],
+                           authorized=True)
+    else:
+        logger.info("Login from %s failed" % (addr, ))
         print "Login from %s failed - closing connection" % (addr, )
         transport.close()
-    else:
-        logger.info("Login for %s from %s" % (username, addr, ))
-        print "Login for %s from %s" % (username, addr, )
-        track_open_session(configuration, 'sftp', username, addr[0], addr[1])
 
     # Ignore user connection here as we only care about sftp.
     # Keep the connection alive until user disconnects or server is halted.
@@ -1062,7 +1196,11 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         time.sleep(1)
 
     if username is not None:
+        print "Logout for %s from %s" % (username, addr, )
+        logger.info("Logout for %s from %s" % (username, addr, ))
         track_close_session(configuration, 'sftp', username, addr[0], addr[1])
+        if configuration.site_enable_gdp:
+            project_close(configuration, 'sftp', addr[0], username)
 
 
 def start_service(configuration):
@@ -1094,8 +1232,8 @@ def start_service(configuration):
     while True:
         client_tuple = None
         try:
-            logger.debug('accept with %d active sessions' %
-                         threading.active_count())
+            # logger.debug('accept with %d active sessions' %
+            #             threading.active_count())
             client_tuple = server_socket.accept()
             # accept may return None or tuple with None part in corner cases
             if client_tuple == None or None in client_tuple:
@@ -1132,6 +1270,10 @@ if __name__ == "__main__":
     # Use separate logger
     logger = daemon_logger("sftp", configuration.user_sftp_log, log_level)
     configuration.logger = logger
+    if configuration.site_enable_gdp:
+        gdp_logger = daemon_gdp_logger("sftp-gdp",
+                                       level=log_level)
+        configuration.gdp_logger = gdp_logger
 
     # Allow e.g. logrotate to force log re-open after rotates
     signal.signal(signal.SIGHUP, hangup_handler)
