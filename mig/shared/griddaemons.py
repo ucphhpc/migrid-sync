@@ -1757,10 +1757,10 @@ def check_twofactor_session(configuration, username, proto):
             configuration, client_id)
     twofactor_dict = load_twofactor(client_id, configuration,
                                     allow_missing=True)
-    logger.debug("found twofactor_dict for %s : %s" %
-                 (client_id, twofactor_dict))
+    # logger.debug("found twofactor_dict for %s : %s" %
+    #              (client_id, twofactor_dict))
     if not twofactor_dict:
-        logger.debug("fall back to twofactor defaults for %s" % client_id)
+        # logger.debug("fall back to twofactor defaults for %s" % client_id)
         twofactor_dict = dict([(i, j['Value']) for (i, j) in
                                twofactor_defaults(configuration).items()])
 
@@ -1777,10 +1777,19 @@ def check_twofactor_session(configuration, username, proto):
         return False
     proto_field += "_TWOFACTOR"
     if not twofactor_dict.get(proto_field, False):
-        logger.debug("user %s does not require twofactor for %s" % (client_id,
-                                                                    proto))
-        return True
-    logger.debug("check required 2FA session in %s for %s" % (proto, username))
+        if configuration.site_enable_gdp:
+
+            # GDP require twofactor settings for all protocols 
+
+            msg = "Missing GDP twofactor settings for user: %s, protocol: %s" \
+                % (client_id, proto)
+            logger.error(msg)
+            return False
+        else:                                                           
+            # logger.debug("user %s does not require twofactor for %s" % (client_id,
+            #                                                             proto))
+            return True
+    # logger.debug("check required 2FA session in %s for %s" % (proto, username))
     return valid_twofactor_session(configuration, client_id)
 
 
