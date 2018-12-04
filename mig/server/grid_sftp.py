@@ -132,7 +132,7 @@ class SFTPHandle(paramiko.SFTPHandle):
 
     def stat(self):
         """Handle operations of same name"""
-        # self.logger.debug("SFTPHandle stat on %s" % getattr(self, "path",
+        #self.logger.debug("SFTPHandle stat on %s" % getattr(self, "path",
         #                                                    "unknown"))
         active = getattr(self, 'active')
         file_obj = getattr(self, active)
@@ -143,7 +143,7 @@ class SFTPHandle(paramiko.SFTPHandle):
     def chattr(self, attr):
         """Handle operations of same name"""
         path = getattr(self, "path", "unknown")
-        # self.logger.debug("SFTPHandle chattr %s on path %s" % \
+        #self.logger.debug("SFTPHandle chattr %s on path %s" % \
         #                  (repr(attr), path))
         return self.sftpserver._chattr(path, attr, self)
 
@@ -178,7 +178,6 @@ class SFTPHandle(paramiko.SFTPHandle):
 
     def write(self, offset, data):
         """Handle operations of same name"""
-
         wftrace = self.ftrace['write']
         startpos = self.writefile.tell()
         result = super(SFTPHandle, self).write(offset, data)
@@ -208,6 +207,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         return result
 
     def close(self):
+        """Handle operations of same name"""
         rftrace = self.ftrace['read']
         wftrace = self.ftrace['write']
         result = super(SFTPHandle, self).close()
@@ -340,7 +340,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                                 sftp_path.lstrip(os.sep)))
         reply = get_fs_path(configuration, abs_path, self.root,
                             self.chroot_exceptions)
-        # self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
+        #self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
         #                                                     reply))
         return reply
 
@@ -349,7 +349,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("strip_root: %s" % sftp_path)
         reply = strip_root(configuration, sftp_path, self.root,
                            self.chroot_exceptions)
-        # self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
+        #self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
         #                                                     reply))
         return reply
 
@@ -360,7 +360,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         if not reply:
             self.logger.warning("acceptable_chmod failed: %s %s %s" %
                                 (sftp_path, mode, self.chmod_exceptions))
-        # self.logger.debug("acceptable_chmod returns: %s :: %s" % \
+        #self.logger.debug("acceptable_chmod returns: %s :: %s" % \
         #                      (sftp_path, reply))
         return reply
 
@@ -398,7 +398,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         if getattr(attr, 'st_mode', None) is not None and attr.st_mode > 0:
             #self.logger.debug('_chattr st_mode: %s' % attr.st_mode)
             ignored = False
-            # self.logger.debug("chattr %s forwarding for path %s :: %s" % \
+            #self.logger.debug("chattr %s forwarding for path %s :: %s" % \
             #                    (repr(attr), path, real_path))
             return self._chmod(path, attr.st_mode, sftphandle)
         if getattr(attr, 'st_atime', None) is not None or \
@@ -408,7 +408,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                    os.path.getatime(real_path))
             change_mtime = getattr(attr, 'st_mtime',
                                    os.path.getmtime(real_path))
-            # self.logger.debug('_chattr st_atime: %s, st_mtime: %s' % \
+            #self.logger.debug('_chattr st_atime: %s, st_mtime: %s' % \
             #                    (change_atime, change_mtime))
             os.utime(real_path, (change_atime, change_mtime))
             self.logger.info("changed times %s %s for path %s :: %s" %
@@ -464,7 +464,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 new_mode = (mode & 0775) | 0750
             else:
                 new_mode = (mode & 0775) | 0640
-            # self.logger.debug("chmod %s (%s) without damage on %s :: %s" %
+            #self.logger.debug("chmod %s (%s) without damage on %s :: %s" %
             #                  (new_mode, mode, path, real_path))
             try:
                 if file_obj is None:
@@ -492,7 +492,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except ValueError, err:
             self.logger.warning('open %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
-        # self.logger.debug("open on %s :: %s (%s %s)" % \
+        #self.logger.debug("open on %s :: %s (%s %s)" % \
         #                  (path, real_path, repr(flags), repr(attr)))
         if not (flags & os.O_CREAT) and not os.path.exists(real_path):
             self.logger.error("open existing file on missing path %s :: %s" %
@@ -517,10 +517,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             fake = os.open(real_path, flags, 0644)
             os.close(fake)
             # Now fake our own chattr to set any requested mode and times
-            # self.logger.debug("fake chattr on %s :: %s (%s %s)" %
+            #self.logger.debug("fake chattr on %s :: %s (%s %s)" %
             #                  (path, real_path, repr(flags), repr(attr)))
             self.chattr(path, attr)
-            # self.logger.debug("chattr done on %s :: %s (%s %s)" % \
+            #self.logger.debug("chattr done on %s :: %s (%s %s)" % \
             #                  (path, real_path, repr(flags), repr(attr)))
             mode = flags_to_mode(flags)
             if flags == os.O_RDONLY:
@@ -557,7 +557,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                 log_action,
                                 log_msg,
                                 user_addr=self.ip_addr)
-            # self.logger.debug("open done %s :: %s (%s %s)" % \
+            #self.logger.debug("open done %s :: %s (%s %s)" % \
             #                  (path, real_path, str(handle), mode))
             return handle
         except Exception, err:
@@ -613,7 +613,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # for consistency with lstat
         if not os.path.exists(real_path):
             # It's common to check file existence with stat so don't warn
-            # self.logger.debug("stat on missing path %s :: %s" %
+            #self.logger.debug("stat on missing path %s :: %s" %
             #                  (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
@@ -635,7 +635,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #self.logger.debug("lstat %s :: %s" % (path, real_path))
         if not os.path.lexists(real_path):
             # It's common to check file existence with stat so no warning here
-            # self.logger.debug("lstat on missing path %s :: %s" %
+            #self.logger.debug("lstat on missing path %s :: %s" %
             #                  (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         #self.logger.debug('return lstat %s' % path)
