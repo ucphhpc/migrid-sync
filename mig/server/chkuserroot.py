@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chkuserroot - Simple Apache httpd user chroot helper daemon
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,12 +36,11 @@ and rewrite to fail or success depending on output.
 
 import os
 import re
-import signal
 import sys
 import time
 
 from shared.conf import get_configuration_object
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 from shared.validstring import valid_user_path
 
 configuration, logger = None, None
@@ -50,12 +49,6 @@ configuration, logger = None, None
 # Please keep in sync with rewrite in apache MiG conf.
 
 INVALID_MARKER = "_OUT_OF_BOUNDS_"
-
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
@@ -74,7 +67,7 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     if verbose:
         print '''This is simple user chroot check helper daemon which just
@@ -87,10 +80,11 @@ unless it is available in mig/server/MiGserver.conf
         print 'Starting chkuserroot helper daemon - Ctrl-C to quit'
 
     # NOTE: we use sys stdin directly
-    
+
     chkuserroot_stdin = sys.stdin
 
-    addr_path_pattern = re.compile("^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})::(/.*)$")
+    addr_path_pattern = re.compile(
+        "^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})::(/.*)$")
     keep_running = True
     if verbose:
         print 'Reading commands from sys stdin'
@@ -107,14 +101,16 @@ unless it is available in mig/server/MiGserver.conf
                 raw_path = path = match.group(2)
             logger.info("chkuserroot from %s got path: %s" % (client_ip, path))
             if not os.path.isabs(path):
-                logger.error("not an absolute path from %s: %s" % (client_ip, path))
+                logger.error("not an absolute path from %s: %s" %
+                             (client_ip, path))
                 print INVALID_MARKER
                 continue
             # NOTE: extract home dir before ANY expansion to avoid escape
             #       with e.g. /PATH/TO/OWNUSER/../OTHERUSER/somefile.txt
             root = configuration.user_home.rstrip(os.sep) + os.sep
             if not path.startswith(root):
-                logger.error("got path from %s with invalid root: %s" % (client_ip, path))
+                logger.error("got path from %s with invalid root: %s" %
+                             (client_ip, path))
                 print INVALID_MARKER
                 continue
             # Extract name of home as first component after root base
@@ -128,7 +124,8 @@ unless it is available in mig/server/MiGserver.conf
             # outside home, which is checked later.
             path = os.path.abspath(path)
             if not path.startswith(home_path):
-                logger.error("got path from %s outside user home: %s" % (client_ip, raw_path))
+                logger.error("got path from %s outside user home: %s" %
+                             (client_ip, raw_path))
                 print INVALID_MARKER
                 continue
 
@@ -139,11 +136,12 @@ unless it is available in mig/server/MiGserver.conf
             # IMPORTANT: use path and not real_path here in order to test both
             if not valid_user_path(configuration, path, home_path,
                                    allow_equal=False, apache_scripts=True):
-                logger.error("path from %s outside user chroot %s: %s (%s)" % \
+                logger.error("path from %s outside user chroot %s: %s (%s)" %
                              (client_ip, home_path, raw_path, real_path))
                 print INVALID_MARKER
                 continue
-            logger.info("found valid user chroot path from %s: %s" % (client_ip, real_path))
+            logger.info("found valid user chroot path from %s: %s" %
+                        (client_ip, real_path))
             print real_path
 
             # Throttle down a bit to yield

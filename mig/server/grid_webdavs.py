@@ -36,7 +36,6 @@ per-user subdir chrooting inside root_dir.
 """
 
 import os
-import signal
 import sys
 import threading
 import time
@@ -71,7 +70,8 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     track_close_expired_sessions, get_active_session, check_twofactor_session
 from shared.sslsession import ssl_session_token
 from shared.tlsserver import hardened_ssl_context
-from shared.logger import daemon_logger, daemon_gdp_logger, reopen_log
+from shared.logger import daemon_logger, daemon_gdp_logger, \
+    register_hangup_handler
 from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
     check_password_digest, generate_password_digest
@@ -79,13 +79,6 @@ from shared.validstring import possible_user_id, possible_sharelink_id
 
 
 configuration, logger = None, None
-
-
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 
 def _handle_allowed(request, abs_path):
@@ -1020,7 +1013,7 @@ if __name__ == "__main__":
         configuration.gdp_logger = gdp_logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     # Allow configuration overrides on command line
     litmus_password = None

@@ -70,8 +70,6 @@ only used in plain FTP mode.
 """
 
 import os
-import signal
-#import socket
 import sys
 import time
 
@@ -98,20 +96,13 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, check_twofactor_session
 from shared.tlsserver import hardened_openssl_context
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 from shared.useradm import check_password_hash
 from shared.validstring import possible_user_id, possible_sharelink_id
 from shared.vgrid import vgrid_restrict_write_support
 
 
 configuration, logger = None, None
-
-
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 
 class MiGTLSFTPHandler(TLS_FTPHandler):
@@ -420,7 +411,7 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     # Allow configuration overrides on command line
     nossl = False

@@ -48,7 +48,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import datatransfers_filename, transfers_log_size, \
     transfers_log_cnt, user_keys_dir, _user_invisible_paths
 from shared.fileio import makedirs_rec, pickle
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 from shared.notification import notify_user_thread
 from shared.pwhash import unscramble_digest
 from shared.safeeval import subprocess_popen, subprocess_pipe
@@ -89,14 +89,6 @@ def stop_handler(signal, frame):
     # Print blank line to avoid mix with Ctrl-C line
     print ''
     stop_running.set()
-
-
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    pid = multiprocessing.current_process().pid
-    logger.info('(%s) reopening log in reaction to hangup signal' % pid)
-    reopen_log(configuration)
-    logger.info('(%s) reopened log after hangup signal' % pid)
 
 
 def __transfer_log(configuration, client_id, msg, level='info'):
@@ -863,7 +855,7 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     if not configuration.site_enable_transfers:
         err_msg = "Data transfers are disabled in configuration!"

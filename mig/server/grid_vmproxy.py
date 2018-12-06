@@ -33,20 +33,16 @@ import sys
 import time
 
 from shared.conf import get_configuration_object
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 from shared.safeeval import subprocess_popen
 
 configuration, logger = None, None
 
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 def handle_stop(signum, stack):
     print "Got signal %s - fake ctrl-c" % signum
     raise KeyboardInterrupt
+
 
 if __name__ == '__main__':
     # Force no log init since we use separate logger
@@ -62,7 +58,7 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     # Allow clean exit
     signal.signal(signal.SIGTERM, handle_stop)
@@ -98,7 +94,7 @@ unless it is available in mig/server/MiGserver.conf
     while keep_running:
         try:
             # Run vm-proxy helper in the foreground from corresponding dir
-            daemon_proc = subprocess_popen([daemon_path, '-n'], 
+            daemon_proc = subprocess_popen([daemon_path, '-n'],
                                            cwd=vm_proxy_base)
             retval = daemon_proc.wait()
             logger.info("daemon returned %s" % retval)

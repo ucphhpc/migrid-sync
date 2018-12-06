@@ -79,7 +79,7 @@ from shared.events import get_path_expand_map
 from shared.fileio import makedirs_rec, pickle, unpickle
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.job import fill_mrsl_template, new_job
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 from shared.serial import load
 from shared.vgrid import vgrid_valid_entities
 from shared.vgridaccess import check_vgrid_access
@@ -134,15 +134,6 @@ def stop_handler(sig, frame):
     # Print blank line to avoid mix with Ctrl-C line
     print ''
     stop_running.set()
-
-
-def hangup_handler(sig, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-
-    pid = multiprocessing.current_process().pid
-    logger.info('(%s) reopening log in reaction to hangup signal' % pid)
-    reopen_log(configuration)
-    logger.info('(%s) reopened log after hangup signal' % pid)
 
 
 def make_fake_event(path, state, is_directory=False):
@@ -1568,8 +1559,7 @@ def monitor(configuration, vgrid_name):
     shared_state['base_dir_len'] = len(shared_state['base_dir'])
 
     # Allow e.g. logrotate to force log re-open after rotates
-
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     # Monitor rule configurations
 
@@ -1748,11 +1738,9 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     # Allow clean shutdown on SIGINT only to main process
-
     signal.signal(signal.SIGINT, stop_handler)
 
     if not configuration.site_enable_events:

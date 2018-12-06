@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sftp_subsys - SFTP subsys exposing access to MiG user homes through openssh
-# Copyright (C) 2010-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,13 +34,18 @@ Then change /etc/ssh/sshd_config to use this file as sftp subsystem provider:
 Subsystem   sftp    /path/to/mig/server/sftp_subsys.py
 
 Similarly setup those logins to use credentials from individual user home dirs
-and chrooting there:
+and chrooting there like:
 Match Group mig
     AuthorizedKeysFile %h/.ssh/authorized_keys
-    ChrootDirectory %h
-    ForceCommand internal-sftp
-    
+    ForceCommand /path/to/mig/server/sftp_subsys.py
+
 and restart sshd.
+
+Please note that the configuration generator creates a fully functional
+openssh configuration including the above setup for users. So you can just
+use it with --enable_sftp_subsys=True and copy the generated
+sshd_config-MiG-sftp-subsys to /etc/ssh/sshd_config-MiG-sftp-subsys for easy
+setup.
 
 Inspired by https://gist.github.com/lonetwin/3b5982cf88c598c0e169
 """
@@ -56,8 +61,10 @@ from paramiko.transport import Transport
 
 from shared.conf import get_configuration_object
 from shared.fileio import user_chroot_exceptions
-from shared.logger import daemon_logger
+from shared.logger import daemon_logger, register_hangup_handler
 from grid_sftp import SimpleSftpServer as SftpServerImpl
+
+configuration, logger = None, None
 
 
 class IOSocketAdapter(object):
@@ -100,8 +107,7 @@ class IOSocketAdapter(object):
         return self._transport
 
 
-def start_server(params):
-    """Run the subsystem"""
+if __name__ == '__main__':
     # We need to manualy extract MiG conf path since running from openssh
     conf_path = os.path.join(os.path.dirname(__file__), 'MiGserver.conf')
     os.putenv('MIG_CONF', conf_path)
@@ -114,7 +120,10 @@ def start_server(params):
     logger = daemon_logger('sftp-subsys', configuration.user_sftp_subsys_log,
                            log_level)
     configuration.logger = logger
-    logger.info('Basic sftp subsystem initialized')
+    # Allow e.g. logrotate to force log re-open after rotates
+    register_hangup_handler(configuration)
+    pid = os.getpid()
+    logger.info('(%d) Basic sftp subsystem initialized' % pid)
     # Lookup chroot exceptions once and for all
     chroot_exceptions = user_chroot_exceptions(configuration)
     # Any extra chmod exceptions here - we already cover invisible_path check
@@ -142,22 +151,40 @@ def start_server(params):
     }
 
     try:
-        logger.info('Create socket adaptor')
+        logger.debug('Create socket adaptor')
         socket_adapter = IOSocketAdapter(sys.stdin, sys.stdout)
-        logger.info('Create server interface')
+        logger.debug('Create server interface')
         server_if = ServerInterface()
-        logger.info('Create sftp server')
+        logger.debug('Create sftp server')
         # Pass helper vars directly on class to avoid API tampering
         SftpServerImpl.configuration = configuration
         SftpServerImpl.conf = configuration.daemon_conf
         SftpServerImpl.logger = logger
         sftp_server = SFTPServer(socket_adapter, 'sftp', server=server_if,
                                  sftp_si=SftpServerImpl)
-        logger.info('Start sftp server')
+        logger.info('(%s) Start sftp subsys server' % pid)
+        # NOTE: we explicitly loop and join thread to act on hangup signal
+        sftp_server.setDaemon(False)
         sftp_server.start()
+        while True:
+            try:
+                if configuration.daemon_conf['stop_running'].is_set():
+                    # TODO: should we terminate sftp_server here?
+                    logger.info('(%d) Join sftp subsys server worker' % pid)
+                    sftp_server.join()
+                    break
+                else:
+                    # Join with 1s timeout to stay responsive but catch finish
+                    sftp_server.join(1)
+                    # Check alive to decide if join succeeded or timed out
+                    if not sftp_server.isAlive():
+                        configuration.daemon_conf['stop_running'].set()
+                        break
+            except KeyboardInterrupt:
+                logger.info("(%d) Received user interrupt" % pid)
+                configuration.daemon_conf['stop_running'].set()
+        logger.info('(%d) Finished sftp subsys server' % pid)
     except Exception, exc:
-        logger.error('Failed to run sftp server: %s' % exc)
-
-
-if __name__ == '__main__':
-    start_server(sys.argv)
+        logger.error('(%d) Failed to run sftp subsys server: %s' % (pid, exc))
+        import traceback
+        logger.error(traceback.format_exc())

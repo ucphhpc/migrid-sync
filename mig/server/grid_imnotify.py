@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify - IM notifier daemon
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,6 @@ multiprotocol transports.
 """
 
 import os
-import signal
 import sys
 import time
 import thread
@@ -53,7 +52,7 @@ except ImportError:
     irclib = None
 
 from shared.conf import get_configuration_object
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 
 getting_buddy_list = False
 protocol_online_dict = {
@@ -62,23 +61,18 @@ protocol_online_dict = {
     'yahoo': False,
     'icq': False,
     'aol': False,
-    }
+}
 nick_and_id_dict = {}
 
 configuration, logger = None, None
 
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 def send_msg(
     connection,
     dest,
     im_network,
     msg,
-    ):
+):
     """Send IM request through connection"""
 
     print 'send msg called'
@@ -94,7 +88,7 @@ def send_msg(
     for _ in range(30):
         if not protocol_online_dict[im_network]:
             print 'waiting for protocol %s to get online (status for all protocols: %s)'\
-                 % (im_network, protocol_online_dict)
+                % (im_network, protocol_online_dict)
             time.sleep(2)
         else:
             got_online = True
@@ -133,21 +127,22 @@ def send_msg(
         if not dest.endswith('@yahoo'):
             dest += '@yahoo'
     print 'looking for %s_%s in %s' % (replaced_im_network, dest,
-            nick_and_id_dict)
+                                       nick_and_id_dict)
     if nick_and_id_dict.has_key('%s_%s' % (replaced_im_network, dest)):
 
         # nick was found in buddy dict. Get the nickname.
 
         id_dict = nick_and_id_dict['%s_%s' % (replaced_im_network,
-                                   dest)]
-        print 'account %s_%s found in buddy list: %s' % (replaced_im_network, dest, id_dict)
+                                              dest)]
+        print 'account %s_%s found in buddy list: %s' % (
+            replaced_im_network, dest, id_dict)
         nickname = id_dict['nick']
     else:
 
         # nick was not found in buddy dict, add user
 
         print 'account %s_%s not found in buddy list, adding..'\
-             % (im_network, dest)
+            % (im_network, dest)
 
         # Get protocol ID (called account)
 
@@ -166,7 +161,7 @@ def send_msg(
             nickname = 'nick%d' % id_index
 
         print 'assigned local nick %s to new user %s with %d nicks'\
-             % (nickname, dest, len(nick_and_id_dict))
+            % (nickname, dest, len(nick_and_id_dict))
 
         # give contact a second to get online
 
@@ -176,7 +171,7 @@ def send_msg(
 
         print 'add %s %s %s' % (account_number, dest, nickname)
         connection.privmsg('root', 'add %s %s %s' % (account_number,
-                           dest, nickname))
+                                                     dest, nickname))
         time.sleep(2)
 
     # actually send the message
@@ -244,7 +239,8 @@ def on_privmsg(connection, event):
         # TODO: make the if check more specific to be sure wrong messages are never accepted
         # recvd_split[2] is on the form: jabber(mig_daemon@jab
 
-        im_network_tmp_split = recvd_split[2].split('(')  # rstrip(")").lstrip("(").lower() # (YAHOO) -> yahoo
+        im_network_tmp_split = recvd_split[2].split(
+            '(')  # rstrip(")").lstrip("(").lower() # (YAHOO) -> yahoo
         im_network = im_network_tmp_split[0]
         if im_network.startswith('osc'):
             im_network = 'osc'
@@ -288,7 +284,7 @@ def on_join(connection, event):
         connection.privmsg('root', login_msg)
     else:
         print 'someone joined channel: %s'\
-             % irclib.nm_to_n(event.source())
+            % irclib.nm_to_n(event.source())
 
 
 def on_disconnect(connection, event):
@@ -313,7 +309,7 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     if not configuration.site_enable_imnotify:
         err_msg = "IM notify helper is disabled in configuration!"
@@ -342,7 +338,7 @@ unless it is available in mig/server/MiGserver.conf
     bitlbee_password = configuration.user_imnotify_password
 
     if not server or not port or not target or not nickname or \
-           not bitlbee_password:
+            not bitlbee_password:
         print server, port, target, nickname
         err_msg = "IM notify helper setup is incomplete in configuration!"
         logger.error(err_msg)
@@ -368,7 +364,7 @@ unless it is available in mig/server/MiGserver.conf
                 os.mkfifo(stdin_path)
             except Exception, err:
                 print 'Could not create missing IM stdin pipe %s: %s'\
-                     % (stdin_path, err)
+                    % (stdin_path, err)
     except:
         print 'error opening IM stdin! %s' % sys.exc_info()[0]
         sys.exit(1)
@@ -384,7 +380,7 @@ unless it is available in mig/server/MiGserver.conf
         keep_running = False
     except Exception, err:
         print 'could not open IM stdin %s, exception: %s' % (stdin_path,
-                err)
+                                                             err)
         sys.exit(1)
 
     while keep_running:
@@ -394,7 +390,7 @@ unless it is available in mig/server/MiGserver.conf
                 irc = irclib.IRC()
                 try:
                     irc_server = irc.server().connect(server, port,
-                            nickname)
+                                                      nickname)
                 except irclib.ServerConnectionError, exc:
                     print 'Could not connect to irc server: %s' % exc
                     irc = None
@@ -436,7 +432,7 @@ unless it is available in mig/server/MiGserver.conf
                 split_line = line.split(' ', 3)
                 if len(split_line) != 4:
                     print 'received SENDMESSAGE not on correct format %s'\
-                         % line
+                        % line
                     continue
 
                 protocol = split_line[1]
@@ -444,7 +440,7 @@ unless it is available in mig/server/MiGserver.conf
                 message = split_line[3]
 
                 print 'Sending message: protocol: %s to: %s message: %s'\
-                     % (protocol, recipient, message)
+                    % (protocol, recipient, message)
                 send_msg(irc_server, recipient, protocol, message)
                 print 'Message sent to %s' % recipient
             elif line.upper().startswith('SHOWBUDDIES'):

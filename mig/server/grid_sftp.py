@@ -63,7 +63,6 @@ Requires Paramiko module (http://pypi.python.org/pypi/paramiko).
 """
 
 import os
-import signal
 import shutil
 import socket
 import sys
@@ -92,19 +91,13 @@ from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit, track_open_session, track_close_session, \
     active_sessions, check_twofactor_session
-from shared.logger import daemon_logger, daemon_gdp_logger, reopen_log
+from shared.logger import daemon_logger, daemon_gdp_logger, \
+    register_hangup_handler
 from shared.useradm import check_password_hash
 from shared.validstring import possible_user_id, possible_job_id,\
     possible_sharelink_id, possible_jupyter_mount_id
 
 configuration, logger = None, None
-
-
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 
 class SFTPHandle(paramiko.SFTPHandle):
@@ -1276,7 +1269,7 @@ if __name__ == "__main__":
         configuration.gdp_logger = gdp_logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     # Allow configuration overrides on command line
     if sys.argv[2:]:

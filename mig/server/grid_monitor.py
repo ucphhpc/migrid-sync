@@ -29,7 +29,6 @@
 
 import datetime
 import os
-import signal
 import sys
 import time
 
@@ -38,18 +37,13 @@ from shared.defaults import default_vgrid
 from shared.fileio import unpickle
 from shared.gridstat import GridStat
 from shared.html import get_cgi_html_header, get_cgi_html_footer, themed_styles
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 from shared.output import format_timedelta
 from shared.resource import anon_resource_id
 from shared.vgridaccess import get_vgrid_map_vgrids
 
 configuration, logger = None, None
 
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 def create_monitor(vgrid_name):
     """Write monitor HTML file for vgrid_name"""
@@ -68,7 +62,7 @@ def create_monitor(vgrid_name):
         'logo_url': '/images/logo.jpg',
         'now': now,
         'short_title': configuration.short_title,
-        }
+    }
 
     monitor_meta = '''<meta http-equiv="refresh" content="%(sleep_secs)s" />
 ''' % html_vars
@@ -105,20 +99,20 @@ $(document).ready(function() {
 );
 </script>
 '''
-    
+
     html = get_cgi_html_header(
         configuration,
         '%(short_title)s Monitor, VGrid %(vgrid_name)s' % html_vars,
         '',
         html=True,
         meta=monitor_meta,
-        base_styles=themed_styles(configuration),                       
+        base_styles=themed_styles(configuration),
         scripts=monitor_js,
         bodyfunctions='',
         menu=False,
         widgets=False,
         userstyle=False,
-        )
+    )
     html += \
         '''
 <!-- end of raw header: this line is used by showvgridmonitor -->
@@ -166,7 +160,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
     gstat = GridStat(configuration, logger)
 
     runtimeenv_dict = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
-            'RUNTIMEENVIRONMENT', {})
+                                      'RUNTIMEENVIRONMENT', {})
 
     parse_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                   'PARSE')
@@ -175,46 +169,46 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
     frozen_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                    'FROZEN')
     executing_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
-            'EXECUTING')
+                                      'EXECUTING')
     failed_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                    'FAILED')
     retry_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                   'RETRY')
     canceled_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
-            'CANCELED')
+                                     'CANCELED')
     expired_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                     'EXPIRED')
     finished_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
-            'FINISHED')
+                                     'FINISHED')
 
     nodecount_requested = gstat.get_value(gstat.VGRID,
-            vgrid_name.upper(), 'NODECOUNT_REQ')
+                                          vgrid_name.upper(), 'NODECOUNT_REQ')
     nodecount_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
-            'NODECOUNT_DONE')
+                                     'NODECOUNT_DONE')
     cputime_requested = gstat.get_value(gstat.VGRID,
-            vgrid_name.upper(), 'CPUTIME_REQ')
+                                        vgrid_name.upper(), 'CPUTIME_REQ')
     cputime_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                    'CPUTIME_DONE')
 
     used_walltime = gstat.get_value(gstat.VGRID,
                                     vgrid_name.upper(),
                                     'USED_WALLTIME')
-                        
+
     if (used_walltime == 0):
         used_walltime = datetime.timedelta(0)
-                                     
+
     used_walltime = format_timedelta(used_walltime)
 
     disk_requested = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
-            'DISK_REQ')
+                                     'DISK_REQ')
     disk_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                 'DISK_DONE')
     memory_requested = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
-            'MEMORY_REQ')
+                                       'MEMORY_REQ')
     memory_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                   'MEMORY_DONE')
     cpucount_requested = gstat.get_value(gstat.VGRID,
-            vgrid_name.upper(), 'CPUCOUNT_REQ')
+                                         vgrid_name.upper(), 'CPUCOUNT_REQ')
     cpucount_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                     'CPUCOUNT_DONE')
     runtimeenv_requested = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
@@ -256,7 +250,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
         'memory_done': memory_done,
         'runtimeenv_requested': runtimeenv_requested,
         'runtimeenv_done': runtimeenv_done,
-        }
+    }
 
     html += \
         """<h2>Job Stats</h2><table class=monitorstats><tr><td>
@@ -299,10 +293,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
         for entry in runtimeenv_dict.keys():
             if not entry == '':
                 html += '<tr><td>' + entry + '</td><td>'\
-                     + str(runtimeenv_dict[entry]) + '</td></tr>\n'
+                    + str(runtimeenv_dict[entry]) + '</td></tr>\n'
 
     total_number_of_exe_resources, total_number_of_store_resources = 0, 0
-    total_number_of_exe_cpus, total_number_of_store_gigs= 0, 0
+    total_number_of_exe_cpus, total_number_of_store_gigs = 0, 0
 
     vgrid_name_list = vgrid_name.split('/')
     current_dir = ''
@@ -329,15 +323,15 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 last_request_dict = unpickle(mon_file_name, logger)
                 if not last_request_dict:
                     print 'could not open and unpickle: '\
-                         + mon_file_name
+                        + mon_file_name
                     continue
                 if not last_request_dict.has_key('CREATED_TIME'):
                     print 'skip broken last request dict: '\
-                         + mon_file_name
+                        + mon_file_name
                     continue
 
                 difference = datetime.datetime.now()\
-                     - last_request_dict['CREATED_TIME']
+                    - last_request_dict['CREATED_TIME']
                 days = str(difference.days)
                 hours = str(difference.seconds / 3600)
                 minutes = str((difference.seconds % 3600) / 60)
@@ -351,7 +345,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     cputime = last_request_dict['cputime']
                 else:
                     print 'ERROR: last request does not contain cputime field!: %s'\
-                         % last_request_dict
+                        % last_request_dict
                     continue
 
                 try:
@@ -361,7 +355,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                         cpusec = int(float(cputime))
                     except ValueError, verr:
                         print 'ERROR: failed to parse cputime %s: %s'\
-                             % (cputime, verr)
+                            % (cputime, verr)
 
                 # Include execution delay guesstimate for strict fill
                 # LRMS resources
@@ -374,9 +368,9 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     delay = 0
 
                 time_remaining = (last_request_dict['CREATED_TIME']
-                                   + datetime.timedelta(seconds=cpusec)
-                                   + datetime.timedelta(seconds=delay))\
-                     - datetime.datetime.now()
+                                  + datetime.timedelta(seconds=cpusec)
+                                  + datetime.timedelta(seconds=delay))\
+                    - datetime.datetime.now()
                 days_rem = str(time_remaining.days)
                 hours_rem = str(time_remaining.seconds / 3600)
                 minutes_rem = str((time_remaining.seconds % 3600) / 60)
@@ -385,11 +379,11 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 if time_remaining.days < -7:
                     try:
                         print 'removing: %s as we havent seen him for %s days.'\
-                             % (mon_file_name, abs(time_remaining).days)
+                            % (mon_file_name, abs(time_remaining).days)
                         os.remove(mon_file_name)
                     except Exception, err:
                         print "could not remove: '%s' Error: %s"\
-                             % (mon_file_name, str(err))
+                            % (mon_file_name, str(err))
                     pass
                 else:
                     unique_res_name_and_exe_list = \
@@ -402,8 +396,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                         time_rem_abs = abs(time_remaining)
                         if time_rem_abs.days == 0\
-                             and int(time_rem_abs.seconds)\
-                             < int(slackperiod):
+                                and int(time_rem_abs.seconds)\
+                                < int(slackperiod):
                             resource_status = 'slack'
                             slack_count = slack_count + 1
                         else:
@@ -416,11 +410,12 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     exes += '<tr>'
                     exes += \
                         '<td><img src=/images/status-icons/%s.png /></td>'\
-                         % resource_status
+                        % resource_status
                     public_id = unique_res_name_and_exe_list[1]
                     if last_request_dict['RESOURCE_CONFIG'].get('ANONYMOUS', True):
                         public_id = anon_resource_id(public_id)
-                    public_name = last_request_dict['RESOURCE_CONFIG'].get('PUBLICNAME', '')
+                    public_name = last_request_dict['RESOURCE_CONFIG'].get(
+                        'PUBLICNAME', '')
                     resource_parts = public_id.split('_', 2)
                     resource_name = "<a href='viewres.py?unique_resource_name=%s'>%s</a>" % \
                                     (resource_parts[0], resource_parts[0])
@@ -436,42 +431,42 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     exes += '<td><div class="sortkey">%s</div>%s<br />' %  \
                             (last_epoch, last_asctime)
                     exes += '(%sd %sh %sm %ss ago)</td>' % (days, hours, minutes,
-                                                          seconds)
+                                                            seconds)
                     exes += '<td>' + vgrid_name + '</td>'
                     runtime_envs = last_request_dict['RESOURCE_CONFIG'
-                               ]['RUNTIMEENVIRONMENT']
+                                                     ]['RUNTIMEENVIRONMENT']
                     runtime_envs.sort()
                     re_list_text = ', '.join([i[0] for i in runtime_envs])
                     exes += '<td title="%s">' % re_list_text \
-                         + str(len(runtime_envs)) + '</td>'
+                        + str(len(runtime_envs)) + '</td>'
                     exes += '<td>'\
-                         + str(last_request_dict['RESOURCE_CONFIG'
-                               ]['CPUTIME']) + '</td><td>'\
-                         + str(last_request_dict['RESOURCE_CONFIG'
-                               ]['NODECOUNT']) + '</td><td>'\
-                         + str(last_request_dict['RESOURCE_CONFIG'
-                               ]['CPUCOUNT']) + '</td><td>'\
-                         + str(last_request_dict['RESOURCE_CONFIG'
-                               ]['DISK']) + '</td><td>'\
-                         + str(last_request_dict['RESOURCE_CONFIG'
-                               ]['MEMORY']) + '</td><td>'\
-                         + str(last_request_dict['RESOURCE_CONFIG'
-                               ]['ARCHITECTURE']) + '</td>'
+                        + str(last_request_dict['RESOURCE_CONFIG'
+                                                ]['CPUTIME']) + '</td><td>'\
+                        + str(last_request_dict['RESOURCE_CONFIG'
+                                                ]['NODECOUNT']) + '</td><td>'\
+                        + str(last_request_dict['RESOURCE_CONFIG'
+                                                ]['CPUCOUNT']) + '</td><td>'\
+                        + str(last_request_dict['RESOURCE_CONFIG'
+                                                ]['DISK']) + '</td><td>'\
+                        + str(last_request_dict['RESOURCE_CONFIG'
+                                                ]['MEMORY']) + '</td><td>'\
+                        + str(last_request_dict['RESOURCE_CONFIG'
+                                                ]['ARCHITECTURE']) + '</td>'
                     exes += '<td>' + last_request_dict['STATUS']\
-                         + '</td><td>' + str(last_request_dict['CPUTIME'
-                            ]) + '</td>'
+                        + '</td><td>' + str(last_request_dict['CPUTIME'
+                                                              ]) + '</td>'
 
                     exes += '<td class=status_%s>' % resource_status
                     if 'unavailable' == resource_status:
                         exes += '-'
                     elif 'slack' == resource_status:
                         exes += 'Within slack period (%s < %s secs)'\
-                             % (time_rem_abs.seconds, slackperiod)
+                            % (time_rem_abs.seconds, slackperiod)
                     elif 'offline' == resource_status:
                         exes += 'down?'
                     else:
                         exes += '%sd, %sh, %sm, %ss'\
-                             % (days_rem, hours_rem, minutes_rem,
+                            % (days_rem, hours_rem, minutes_rem,
                                 seconds_rem)
                     exes += '</td>'
 
@@ -479,10 +474,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     if last_request_dict['STATUS'] == 'Job assigned':
                         job_assigned = job_assigned + 1
                         job_assigned_cpus = job_assigned_cpus\
-                             + int(last_request_dict['RESOURCE_CONFIG'
-                                   ]['NODECOUNT'])\
-                             * int(last_request_dict['RESOURCE_CONFIG'
-                                   ]['CPUCOUNT'])
+                            + int(last_request_dict['RESOURCE_CONFIG'
+                                                    ]['NODECOUNT'])\
+                            * int(last_request_dict['RESOURCE_CONFIG'
+                                                    ]['CPUCOUNT'])
 
                     total_number_of_exe_resources += 1
                     total_number_of_exe_cpus += int(
@@ -495,7 +490,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                 if current_dir != vgrid_name:
                     continue
-                
+
                 # read last resource action status file
 
                 mon_file_name = os.path.join(abs_mon_dir, filename)
@@ -503,15 +498,15 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 last_status_dict = unpickle(mon_file_name, logger)
                 if not last_status_dict:
                     print 'could not open and unpickle: '\
-                         + mon_file_name
+                        + mon_file_name
                     continue
                 if not last_status_dict.has_key('CREATED_TIME'):
                     print 'skip broken last request dict: '\
-                         + mon_file_name
+                        + mon_file_name
                     continue
 
                 difference = datetime.datetime.now()\
-                     - last_status_dict['CREATED_TIME']
+                    - last_status_dict['CREATED_TIME']
                 days = str(difference.days)
                 hours = str(difference.seconds / 3600)
                 minutes = str((difference.seconds % 3600) / 60)
@@ -519,7 +514,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                 if last_status_dict['STATUS'] == 'stopped':
                     time_stopped = datetime.datetime.now() - \
-                                   last_status_dict['CREATED_TIME']
+                        last_status_dict['CREATED_TIME']
                     if time_stopped.days > 7:
                         try:
                             print 'removing: %s as we havent seen him for %s days.'\
@@ -546,24 +541,24 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 total_disk = last_status_dict['RESOURCE_CONFIG']['DISK']
                 free_disk, avail_disk, used_disk, used_percent = 0, 0, 0, 0
                 gig_bytes = 1.0 * 2**30
-                
+
                 # Fall back status - show last action unless statvfs succeeds
-                
+
                 last_status = last_status_dict['STATUS']
                 last_timetuple = last_status_dict['CREATED_TIME'].timetuple()
-                
+
                 # These disk stats are slightly confusing but match 'df'
                 # 'available' is the space that can actually be used so it
                 # is typically less than 'free'.
-                    
+
                 try:
                     disk_stats = os.statvfs(mount_point)
                     total_disk = disk_stats.f_bsize * disk_stats.f_blocks / \
-                                 gig_bytes
+                        gig_bytes
                     avail_disk = disk_stats.f_bsize * disk_stats.f_bavail / \
-                                 gig_bytes
+                        gig_bytes
                     free_disk = disk_stats.f_bsize * disk_stats.f_bfree / \
-                                gig_bytes
+                        gig_bytes
                     used_disk = total_disk - free_disk
                     used_percent = 100.0 * used_disk / (avail_disk + used_disk)
                     last_status = 'checked'
@@ -571,7 +566,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     days, hours, minutes, seconds = 0, 0, 0, 0
                 except OSError, ose:
                     print 'could not stat mount point %s: %s' % \
-                                 (mount_point, ose)
+                        (mount_point, ose)
                     is_live = False
                 if last_status_dict['STATUS'] == 'stopped':
                     resource_status = 'offline'
@@ -589,8 +584,9 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 stores += '<tr>'
                 stores += \
                     '<td><img src=/images/status-icons/%s.png /></td>'\
-                     % resource_status
-                public_name = last_status_dict['RESOURCE_CONFIG'].get('PUBLICNAME', '')
+                    % resource_status
+                public_name = last_status_dict['RESOURCE_CONFIG'].get(
+                    'PUBLICNAME', '')
                 resource_parts = public_id.split('_', 2)
                 resource_name = "<a href='viewres.py?unique_resource_name=%s'>%s</a>" % \
                                 (resource_parts[0], resource_parts[0])
@@ -674,18 +670,18 @@ Listing the last check for each resource<br />
 """
     html += stores
     html += '</tbody>\n</table>\n'
-    
+
     html += '''
 <h2>VGrid Totals</h2>
 A total of <b>'''\
          + str(total_number_of_exe_resources) + '</b> exe resources ('\
-         + str(total_number_of_exe_cpus) + " cpu's) and <b>"\
-         + str(total_number_of_store_resources) + '</b> store resources ('\
-         + str(int(total_number_of_store_gigs)) + " GB) joined this VGrid ("\
-         + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
-         + str(slack_count) + ' slack)<br />'
+        + str(total_number_of_exe_cpus) + " cpu's) and <b>"\
+        + str(total_number_of_store_resources) + '</b> store resources ('\
+        + str(int(total_number_of_store_gigs)) + " GB) joined this VGrid ("\
+        + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
+        + str(slack_count) + ' slack)<br />'
     html += str(job_assigned) + ' exe resources (' + str(job_assigned_cpus)\
-         + """ cpu's) appear to be executing a job<br />
+        + """ cpu's) appear to be executing a job<br />
 <br />
 """
     html += \
@@ -714,14 +710,14 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     if not configuration.site_enable_jobs:
         err_msg = "Job support is disabled in configuration!"
         logger.error(err_msg)
         print err_msg
         sys.exit(1)
-    
+
     print """
 Running grid monitor generator.
 

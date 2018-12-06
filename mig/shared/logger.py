@@ -27,12 +27,15 @@
 
 """Logging helpers"""
 
-import syslog
 import logging
+import os
+import signal
+import syslog
 
 _default_level = "info"
 _default_format = "%(asctime)s %(levelname)s %(message)s"
 _debug_format = "%(asctime)s %(module)s:%(funcName)s:%(lineno)s %(levelname)s %(message)s"
+__hangup_helpers = {}
 
 SYSLOG_GDP = syslog.LOG_LOCAL0
 
@@ -208,6 +211,27 @@ def reopen_log(conf):
     gdp_logger = conf.gdp_logger
     for handler in gdp_logger.handlers:
         handler.close()
+
+
+def hangup_handler(signal, frame):
+    """A simple signal handler to force log reopening on SIGHUP"""
+    pid = os.getpid()
+    configuration = __hangup_helpers['configuration']
+    logger = configuration.logger
+    logger.info('(%s) reopening log in reaction to hangup signal' % pid)
+    reopen_log(configuration)
+    logger.info('(%s) reopened log after hangup signal' % pid)
+
+
+def register_hangup_handler(conf):
+    """Register a HUP signal handler to reopen log based on provided
+    configuration object.
+    NOTE: We need to keep configuration object around for signal handler to
+    use without explicit args.
+    """
+    # Allow e.g. logrotate to force log re-open after rotates
+    __hangup_helpers['configuration'] = conf
+    signal.signal(signal.SIGHUP, hangup_handler)
 
 
 if __name__ == "__main__":

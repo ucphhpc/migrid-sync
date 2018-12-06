@@ -64,7 +64,6 @@ import cgi
 import cgitb
 import os
 import ssl
-import signal
 import sys
 import time
 
@@ -85,7 +84,7 @@ from shared.defaults import user_db_filename
 from shared.griddaemons import refresh_user_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
     penalize_rate_limit
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 from shared.safeinput import valid_distinguished_name, valid_password, \
     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
     valid_complex_url, InputException
@@ -102,13 +101,6 @@ cert_field_map.update({'role': 'ROLE', 'timezone': 'TZ', 'nickname': 'NICK',
 cert_field_names = cert_field_map.keys()
 cert_field_values = cert_field_map.values()
 cert_field_aliases = {}
-
-
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 
 def quoteattr(val):
@@ -1399,7 +1391,7 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     # For masquerading
     show_address = configuration.user_openid_show_address

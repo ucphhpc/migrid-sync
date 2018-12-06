@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify_stdout - Dummy IM daemon
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,20 +28,13 @@
 """Dummy IM daemon writing requests to stdout instead of sending them"""
 
 import os
-import signal
 import sys
 import time
 
 from shared.conf import get_configuration_object
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 
 configuration, logger = None, None
-
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 if __name__ == '__main__':
     # Force no log init since we use separate logger
@@ -58,7 +51,7 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     if not configuration.site_enable_imnotify:
         err_msg = "IM notify helper is disabled in configuration!"
@@ -89,7 +82,7 @@ if __name__ == '__main__':
                 os.mkfifo(stdin_path)
             except Exception, err:
                 print 'Could not create missing IM stdin pipe %s: %s'\
-                     % (stdin_path, err)
+                    % (stdin_path, err)
     except:
         print 'error opening IM stdin! %s' % sys.exc_info()[0]
         sys.exit(1)

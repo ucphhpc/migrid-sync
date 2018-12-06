@@ -41,16 +41,11 @@ from time import sleep
 from shared.base import sandbox_resource
 from shared.conf import get_resource_configuration, \
     get_configuration_object
-from shared.logger import daemon_logger, reopen_log
+from shared.logger import daemon_logger, register_hangup_handler
 from shared.ssh import execute_on_resource
 
 configuration, logger = None, None
 
-def hangup_handler(signal, frame):
-    """A simple signal handler to force log reopening on SIGHUP"""
-    logger.info("reopening log in reaction to hangup signal")
-    reopen_log(configuration)
-    logger.info("reopened log after hangup signal")
 
 def persistent_connection(resource_config, logger):
     """Keep running a persistent master connection"""
@@ -66,10 +61,12 @@ def persistent_connection(resource_config, logger):
         try:
             logger.debug('connecting to %s' % hostname)
             (exit_code, executed) = execute_on_resource('sleep %d'
-                     % sleep_secs, False, resource_config, logger)
+                                                        % sleep_secs,
+                                                        False, resource_config,
+                                                        logger)
             if 0 != exit_code:
-                msg = 'ssh multiplex %s: %s returned %i' % (hostname,
-                        executed, exit_code)
+                msg = 'ssh multiplex %s: %s returned %i' % \
+                      (hostname, executed, exit_code)
                 print msg
 
                 # make sure control_socket was cleaned up
@@ -87,8 +84,8 @@ def persistent_connection(resource_config, logger):
                 sleep(sleep_secs)
         except StandardError, err:
 
-            msg = '%s thread caught exception (%s) - retry later'\
-                 % (hostname, err)
+            msg = '%s thread caught exception (%s) - retry later' % \
+                  (hostname, err)
             print msg
             logger.error(msg)
             sleep(sleep_secs)
@@ -124,7 +121,7 @@ if __name__ == '__main__':
     configuration.logger = logger
 
     # Allow e.g. logrotate to force log re-open after rotates
-    signal.signal(signal.SIGHUP, hangup_handler)
+    register_hangup_handler(configuration)
 
     if not configuration.site_enable_jobs:
         err_msg = "Job support is disabled in configuration!"
@@ -143,12 +140,12 @@ unless it is available in mig/server/MiGserver.conf
     resource_path = configuration.resource_home
     for unique_resource_name in os.listdir(configuration.resource_home):
         res_dir = os.path.realpath(configuration.resource_home + os.sep
-                                    + unique_resource_name)
+                                   + unique_resource_name)
 
         # skip all dot dirs - they are from repos etc and _not_ jobs
 
         if res_dir.find(os.sep + '.') != -1:
-            continue    
+            continue
         if not os.path.isdir(res_dir):
             continue
         dir_name = os.path.basename(res_dir)
@@ -157,13 +154,11 @@ unless it is available in mig/server/MiGserver.conf
         try:
             (status, res_conf) = \
                 get_resource_configuration(configuration.resource_home,
-                    unique_resource_name, logger)
+                                           unique_resource_name, logger)
             if not status:
                 continue
-            if res_conf.has_key('SSHMULTIPLEX') and res_conf['SSHMULTIPLEX'
-                    ]:
-                print 'adding multiplexing resource %s'\
-                     % unique_resource_name
+            if res_conf.has_key('SSHMULTIPLEX') and res_conf['SSHMULTIPLEX']:
+                print 'adding multiplexing resource %s' % unique_resource_name
                 fqdn = res_conf['HOSTURL']
                 res_conf['HOMEDIR'] = res_dir
                 persistent_hosts[fqdn] = res_conf
@@ -173,7 +168,7 @@ unless it is available in mig/server/MiGserver.conf
             #    print "ignoring non-multiplexing resource %s" % unique_resource_name
 
             print "Failed to open resource conf '%s': %s"\
-                 % (unique_resource_name, err)
+                % (unique_resource_name, err)
 
     threads = {}
 
@@ -184,7 +179,7 @@ unless it is available in mig/server/MiGserver.conf
         if not threads.has_key(hostname):
             threads[hostname] = \
                 threading.Thread(target=persistent_connection, args=(conf,
-                                 logger))
+                                                                     logger))
             threads[hostname].setDaemon(True)
             threads[hostname].start()
 
