@@ -450,7 +450,8 @@ stop_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     echo -n "Shutting down MiG sftpsubsys workers: $SHORT_NAME "
-    pkill -f ${DAEMON_PATH}
+    # Proc only running if one or more clients are connected
+    pkill -f ${DAEMON_PATH} || true
     echo
 }
 stop_sftpsubsys() {
@@ -594,8 +595,10 @@ reload_sftpsubsys_workers() {
     DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     echo -n "Reloading MiG sftpsubsys workers: $SHORT_NAME "
-    pkill -HUP -f ${DAEMON_PATH}
+    # Proc only running if one or more clients are connected
+    pkill -HUP -f ${DAEMON_PATH} || true
     echo
+
 }
 reload_sftpsubsys() {
     test_sftpsubsys_enabled || return
