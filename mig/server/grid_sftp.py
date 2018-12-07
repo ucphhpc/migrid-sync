@@ -127,7 +127,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         # self.logger.debug("SFTPHandle init: %s" % repr(flags))
 
     def __gdp_log(method):
-        """Decorater used for GDP logging
+        """Decorator used for GDP logging
         The first non-contiguous read/write operation is logged.
         Thereafter all contiguous read/write operations are clustered
         into one log entry to avoid log flooding.
@@ -159,7 +159,7 @@ class SFTPHandle(paramiko.SFTPHandle):
             # operation to ensure that files are _NOT_ accessed/modified
             # without a corresponding log entry.
 
-            if method.__name__ == "read" or method.__name__ == "write":
+            if method.__name__ in ('read', 'write'):
                 log_action = valid_log_actions.get(method.__name__, None)
                 if log_action is None:
                     logger.error(
@@ -176,10 +176,12 @@ class SFTPHandle(paramiko.SFTPHandle):
                     offset = method_args[0]
                     currentpos = self.readfile.tell()
                     endpos = offset + method_args[1]
-                else:
+                elif method.__name__ == "write":
                     offset = method_args[0]
                     currentpos = self.writefile.tell()
                     endpos = offset + len(method_args[1])
+                else:
+                    return None
                 if ftrace['count'] == 0 \
                         or offset < ftrace['startpos']:
                     ftrace['startpos'] = offset
@@ -212,6 +214,7 @@ class SFTPHandle(paramiko.SFTPHandle):
                 # Verify that the calculated and real file end positions match
                 # TODO: This check might be removed
 
+                file_endpos = -1
                 if method.__name__ == "read":
                     file_endpos = self.readfile.tell()
                 elif method.__name__ == "write":
