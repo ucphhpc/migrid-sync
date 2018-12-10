@@ -40,6 +40,7 @@ import sys
 import threading
 import time
 import traceback
+from functools import wraps
 
 try:
     from wsgidav.wsgidav_app import DEFAULT_CONFIG, WsgiDAVApp
@@ -537,54 +538,86 @@ class MiGFileResource(FileResource):
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
 
+    def __allow_handle(method):
+        """Decorator wrapper for _handle_allowed"""
+        @wraps(method)
+        def _impl(self, *method_args, **method_kwargs):
+            result = None
+            if method.__name__ == 'handleCopy':
+                _handle_allowed("copy", self._filePath)
+            elif method.__name__ == 'handleMove':
+                _handle_allowed("move", self._filePath)
+            elif method.__name__ == 'handleDelete':
+                _handle_allowed("delete", self._filePath)
+            else:
+                _handle_allowed("unknown", self._filePath)
+            return method(self, *method_args, **method_kwargs)
+        return _impl
+
+    def __gdp_log(method):
+        """Decorator used for GDP logging"""
+        @wraps(method)
+        def _impl(self, *method_args, **method_kwargs):
+            if not configuration.site_enable_gdp:
+                return method(self, *method_args, **method_kwargs)
+            if method.__name__ == "handleCopy":
+                log_action = "copied"
+                destPath = method_args[0]
+                log_msg = "'%s' -> '%s'" \
+                    % (self.path.strip('/'), destPath.strip('/'))
+            elif method.__name__ == "handleMove":
+                log_action = "moved"
+                destPath = method_args[0]
+                log_msg = "'%s' -> '%s'" \
+                    % (self.path.strip('/'), destPath.strip('/'))
+            elif method.__name__ == "handleDelete":
+                log_action = "deleted"
+                log_msg = "'%s'" % self.path.strip('/')
+            elif method.__name__ == "getContent":
+                log_action = "accessed"
+                log_msg = "'%s'" % self.path.strip('/')
+            elif method.__name__ == "beginWrite":
+                log_action = "modified"
+                log_msg = "'%s'" % self.path.strip('/')
+            else:
+                logger.warning("GDP log for '%s' _NOT_ implemented"
+                               % method.__name__)
+                raise DAVError(HTTP_FORBIDDEN)
+            if not project_log(configuration, 'davs', self.username,
+                               log_action, log_msg,
+                               user_addr=self.ip_addr):
+                raise DAVError(HTTP_FORBIDDEN)
+            return method(self, *method_args, **method_kwargs)
+        return _impl
+
+    @__allow_handle
+    @__gdp_log
     def handleCopy(self, destPath, depthInfinity):
         """Handle a COPY request natively, but with our restrictions"""
-        _handle_allowed("copy", self._filePath)
-        result = super(MiGFileResource, self).handleCopy(
+        return super(MiGFileResource, self).handleCopy(
             destPath, depthInfinity)
-        if configuration.site_enable_gdp:
-            msg = "'%s' -> '%s'" % (self.path.strip('/'), destPath.strip('/'))
-            project_log(configuration, 'davs', self.username, 'copied',
-                        msg, user_addr=self.ip_addr)
-        return result
 
+    @__allow_handle
+    @__gdp_log
     def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
-        _handle_allowed("move", self._filePath)
-        result = super(MiGFileResource, self).handleMove(destPath)
-        if configuration.site_enable_gdp:
-            msg = "'%s' -> '%s'" % (self.path.strip('/'), destPath.strip('/'))
-            project_log(configuration, 'davs', self.username, 'moved',
-                        msg, user_addr=self.ip_addr)
-        return result
+        return super(MiGFileResource, self).handleMove(destPath)
 
+    @__allow_handle
+    @__gdp_log
     def handleDelete(self):
         """Handle a DELETE request natively, but with our restrictions"""
-        _handle_allowed("delete", self._filePath)
-        result = super(MiGFileResource, self).handleDelete()
-        if configuration.site_enable_gdp:
-            msg = "'%s'" % self.path.strip('/')
-            project_log(configuration, 'davs', self.username, 'deleted',
-                        msg, user_addr=self.ip_addr)
-        return result
+        return super(MiGFileResource, self).handleDelete()
 
+    @__gdp_log
     def getContent(self):
         """Handle a GET request natively and log for GDP"""
-        result = super(MiGFileResource, self).getContent()
-        if configuration.site_enable_gdp:
-            msg = "'%s'" % self.path.strip('/')
-            project_log(configuration, 'davs', self.username, 'accessed',
-                        msg, user_addr=self.ip_addr)
-        return result
+        return super(MiGFileResource, self).getContent()
 
+    @__gdp_log
     def beginWrite(self, contentType=None):
         """Handle a PUT request natively and log for GDP"""
-        result = super(MiGFileResource, self).beginWrite()
-        if configuration.site_enable_gdp:
-            msg = "'%s'" % self.path.strip('/')
-            project_log(configuration, 'davs', self.username, 'wrote',
-                        msg, user_addr=self.ip_addr)
-        return result
+        return super(MiGFileResource, self).beginWrite()
 
 
 class MiGFolderResource(FolderResource):
@@ -603,45 +636,78 @@ class MiGFolderResource(FolderResource):
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
 
+    def __allow_handle(method):
+        """Decorator wrapper for _handle_allowed"""
+        @wraps(method)
+        def _impl(self, *method_args, **method_kwargs):
+            result = None
+            if method.__name__ == 'handleCopy':
+                _handle_allowed("copy", self._filePath)
+            elif method.__name__ == 'handleMove':
+                _handle_allowed("move", self._filePath)
+            elif method.__name__ == 'handleDelete':
+                _handle_allowed("delete", self._filePath)
+            else:
+                _handle_allowed("unknown", self._filePath)
+            return method(self, *method_args, **method_kwargs)
+        return _impl
+
+    def __gdp_log(method):
+        """Decorator used for GDP logging"""
+        @wraps(method)
+        def _impl(self, *method_args, **method_kwargs):
+            if not configuration.site_enable_gdp:
+                return method(self, *method_args, **method_kwargs)
+            if method.__name__ == "handleCopy":
+                log_action = "copied"
+                destPath = method_args[0]
+                log_msg = "'%s' -> '%s'" \
+                    % (self.path.strip('/'), destPath.strip('/'))
+            elif method.__name__ == "handleMove":
+                log_action = "moved"
+                destPath = method_args[0]
+                log_msg = "'%s' -> '%s'" \
+                    % (self.path.strip('/'), destPath.strip('/'))
+            elif method.__name__ == "handleDelete":
+                log_action = "deleted"
+                log_msg = "'%s'" % self.path.strip('/')
+            elif method.__name__ == "createCollection":
+                log_action = "created"
+                relpath = "%s%s" % (self.path, method_args[0])
+                log_msg = "'%s'" % relpath.strip('/')
+            else:
+                logger.warning("GDP log for '%s' _NOT_ implemented"
+                               % method.__name__)
+                raise DAVError(HTTP_FORBIDDEN)
+            if not project_log(configuration, 'davs', self.username,
+                               log_action, log_msg,
+                               user_addr=self.ip_addr):
+                raise DAVError(HTTP_FORBIDDEN)
+            return method(self, *method_args, **method_kwargs)
+        return _impl
+
+    @__allow_handle
+    @__gdp_log
     def handleCopy(self, destPath, depthInfinity):
         """Handle a COPY request natively, but with our restrictions"""
-        _handle_allowed("copy", self._filePath)
-        result = super(MiGFolderResource, self).handleCopy(
+        return super(MiGFolderResource, self).handleCopy(
             destPath, depthInfinity)
-        if configuration.site_enable_gdp:
-            msg = "'%s' -> '%s'" % (self.path.strip('/'), destPath.strip('/'))
-            project_log(configuration, 'davs', self.username, 'copied',
-                        msg, user_addr=self.ip_addr)
-        return result
 
+    @__allow_handle
+    @__gdp_log
     def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
-        _handle_allowed("move", self._filePath)
-        result = super(MiGFolderResource, self).handleMove(destPath)
-        if configuration.site_enable_gdp:
-            msg = "'%s' -> '%s'" % (self.path.strip('/'), destPath.strip('/'))
-            project_log(configuration, 'davs', self.username, 'moved',
-                        msg, user_addr=self.ip_addr)
-        return result
+        return super(MiGFolderResource, self).handleMove(destPath)
 
+    @__allow_handle
+    @__gdp_log
     def handleDelete(self):
         """Handle a DELETE request natively, but with our restrictions"""
-        _handle_allowed("delete", self._filePath)
-        result = super(MiGFolderResource, self).handleDelete()
-        if configuration.site_enable_gdp:
-            msg = "'%s'" % self.path.strip('/')
-            project_log(configuration, 'davs', self.username, 'deleted',
-                        msg, user_addr=self.ip_addr)
-        return result
+        return super(MiGFolderResource, self).handleDelete()
 
+    @__gdp_log
     def createCollection(self, name):
-        result = super(MiGFolderResource, self).createCollection(name)
-        if configuration.site_enable_gdp:
-            relpath = "%s%s" % (self.path, name)
-            msg = "'%s'" % relpath.strip('/')
-            project_log(configuration, 'davs', self.username, 'created',
-                        msg, user_addr=self.ip_addr)
-        return result
+        return super(MiGFolderResource, self).createCollection(name)
 
     def getMemberNames(self):
         """Return list of direct collection member names (utf-8 encoded).
