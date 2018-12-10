@@ -542,7 +542,6 @@ class MiGFileResource(FileResource):
         """Decorator wrapper for _handle_allowed"""
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
-            result = None
             if method.__name__ == 'handleCopy':
                 _handle_allowed("copy", self._filePath)
             elif method.__name__ == 'handleMove':
@@ -640,7 +639,6 @@ class MiGFolderResource(FolderResource):
         """Decorator wrapper for _handle_allowed"""
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
-            result = None
             if method.__name__ == 'handleCopy':
                 _handle_allowed("copy", self._filePath)
             elif method.__name__ == 'handleMove':
