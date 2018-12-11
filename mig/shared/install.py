@@ -629,6 +629,18 @@ cert, oid and sid based https!
     else:
         user_dict['__APACHE_SUFFIX__'] = ""
 
+    # Helpers for the migstatecleanup cron job
+    user_dict['__CRON_VERBOSE_CLEANUP__'] = '1'
+    if 'migoid' in signup_methods or 'migcert' in signup_methods:
+        user_dict['__CRON_REQ_CLEANUP__'] = '1'
+    else:
+        user_dict['__CRON_REQ_CLEANUP__'] = '0'
+
+    if user_dict['__ENABLE_JOBS__'].lower() == 'true':
+        user_dict['__CRON_JOB_CLEANUP__'] = '1'
+    else:
+        user_dict['__CRON_JOB_CLEANUP__'] = '0'
+
     # Enable 2FA only if explicitly requested
     if user_dict['__ENABLE_TWOFACTOR__'].lower() == 'true':
         try:
@@ -637,8 +649,10 @@ cert, oid and sid based https!
             print "ERROR: twofactor use requested but pyotp is not installed!"
             sys.exit(1)
         user_dict['__TWOFACTOR_COMMENTED__'] = ''
+        user_dict['__CRON_TWOFACTOR_CLEANUP__'] = '1'
     else:
         user_dict['__TWOFACTOR_COMMENTED__'] = '#'
+        user_dict['__CRON_TWOFACTOR_CLEANUP__'] = '0'
 
     # Enable cracklib only if explicitly requested and installed
     if user_dict['__ENABLE_CRACKLIB__'].lower() == 'true':

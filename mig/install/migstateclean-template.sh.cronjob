@@ -14,40 +14,56 @@
 
 # Modify this base dir variable to fit actual state dir location in your setup
 STATEDIR="__MIG_STATE__"
+VERBOSE=__CRON_VERBOSE_CLEANUP__
+REQCLEANUP=__CRON_REQ_CLEANUP__
+JOBCLEANUP=__CRON_JOB_CLEANUP__
+TFCLEANUP=__CRON_TWOFACTOR_CLEANUP__
 
-echo "= Pending Account Requests ="
-# Account request files should be accepted or rejected - not just left ignored
-max_days=2
-for name in $STATEDIR/user_pending; do
-    echo "Checking account request files older than $max_days days from $name"
-    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 grep -H emailAddress  " 
-done
+logmsg() {
+    if [ $VERBOSE -eq 1 ]; then
+        echo $@
+    fi
+}
 
-echo
-echo "= Stale File Removal ="
-# Clean up after jobs if they haven't done so themselves within a month.
-# Do not delete state files like pickled queues and last start marker, however.
-max_days=30
-for name in $STATEDIR/mig_system_files/{tmp,no_grid_jobs}* $STATEDIR/sessid_to_mrsl_link_home $STATEDIR/webserver_home; do
-    # Skip patterns without match to avoid errors
-    echo "$name" | grep -q '*' && continue
-    echo "Deleting files older than $max_days days from $name"
-    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f "
-done
 
-# Empty job cruft can be removed within a week
-max_days=7
-for name in $STATEDIR/user_home/no_grid_jobs_in_grid_scheduler; do
-    echo "Deleting files older than $max_days days from $name"
-    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f " 
-done
+if [ $REQCLEANUP -eq 1 ]; then
+    logmsg "= Pending Account Requests ="
+    # Account req files should be accepted or rejected - never left ignored
+    max_days=2
+    for name in $STATEDIR/user_pending; do
+        logmsg "Checking account request files older than $max_days days from $name"
+        su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 grep -H emailAddress"
+    done
+fi
 
-# 2-factor session files expire within a day and can safely be removed within a week
-max_days=7
-for name in $STATEDIR/twofactor_home; do
-    echo "Deleting files and symlinks older than $max_days days from $name"
-    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f " 
-    su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -xtype l | xargs -n1 rm -f " 
-done
+if [ $JOBCLEANUP -eq 1 ]; then
+    logmsg ""
+    logmsg "= Stale File Removal ="
+    # Clean up after jobs if they haven't done so themselves within a month.
+    # Don't delete files like pickled queues and last start marker, however.
+    max_days=30
+    for name in $STATEDIR/mig_system_files/{tmp,no_grid_jobs}* $STATEDIR/sessid_to_mrsl_link_home $STATEDIR/webserver_home; do
+        # Skip patterns without match to avoid errors
+        echo "$name" | grep -q '*' && continue
+        logmsg "Deleting files older than $max_days days from $name"
+        su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f "
+    done
 
+    # Empty job cruft can be removed within a week
+    max_days=7
+    for name in $STATEDIR/user_home/no_grid_jobs_in_grid_scheduler; do
+        logmsg "Deleting files older than $max_days days from $name"
+        su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f " 
+    done
+fi
+
+if [ $TFCLEANUP -eq 1 ]; then
+    # 2-factor session files expire within a day and can then safely be removed
+    max_days=1
+    for name in $STATEDIR/twofactor_home; do
+        logmsg "Deleting files and symlinks older than $max_days days from $name"
+        su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f " 
+        su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -xtype l | xargs -n1 rm -f " 
+    done
+fi
 exit 0
