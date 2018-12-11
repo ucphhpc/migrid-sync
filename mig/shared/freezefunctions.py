@@ -310,7 +310,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
     # TODO: remove legacy look-up directly in freeze_home when migrated
     client_dir = client_id_dir(client_id)
     user_archives = os.path.join(configuration.freeze_home, client_dir)
-    found = False
+    found, arch_dir = False, ''
     for archive_home in (user_archives, configuration.freeze_home):
         arch_dir = os.path.join(archive_home, freeze_id)
         if os.path.isdir(arch_dir):
@@ -319,6 +319,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
     if not found:
         return (False, 'Could not open frozen archive %s' % freeze_id)
     cache_path = "%s%s" % (arch_dir, CACHE_EXT)
+    meta_path = os.path.join(arch_dir, freeze_meta_filename)
     file_map = {}
     try:
         cached = []
@@ -326,7 +327,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
             cached = load(cache_path)
         if cached:
             needs_update = False
-            if os.path.getmtime(cache_path) < os.path.getmtime(arch_dir):
+            if os.path.getmtime(cache_path) < os.path.getmtime(meta_path):
                 needs_update = True
             elif checksum_list:
                 for checksum in checksum_list:
