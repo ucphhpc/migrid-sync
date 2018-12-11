@@ -62,6 +62,13 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    if not configuration.site_enable_openid or \
+            not 'migoid' in configuration.site_signup_methods:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''Local OpenID login is not enabled on this site'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s OpenID account request' % \
                           configuration.short_title

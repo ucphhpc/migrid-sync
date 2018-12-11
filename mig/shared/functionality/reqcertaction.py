@@ -75,6 +75,12 @@ def main(client_id, user_arguments_dict):
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    if not 'migcert' in configuration.site_signup_methods:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''X.509 certificate login is not enabled on this site'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s certificate account request' % \
                           configuration.short_title
