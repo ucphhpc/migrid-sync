@@ -33,10 +33,10 @@ import re
 
 from shared.base import valid_dir_input
 from shared.defaults import default_vgrid, keyword_owners, keyword_members, \
-     keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
-     csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
+    keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
+    csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
 from fileio import make_symlink, move, check_readonly, check_writable, \
-     check_write_access
+    check_write_access
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
@@ -46,12 +46,13 @@ from shared.output import html_link
 from shared.serial import load, dump
 from shared.sharelinkkeywords import get_sharelink_keywords_dict
 from shared.vgridkeywords import get_trigger_keywords_dict, \
-     get_settings_keywords_dict
+    get_settings_keywords_dict
+
 
 def vgrid_add_remove_table(client_id,
-                           vgrid_name, 
-                           item_string, 
-                           script_suffix, 
+                           vgrid_name,
+                           item_string,
+                           script_suffix,
                            configuration,
                            extra_fields=[],
                            filter_items=[]):
@@ -73,7 +74,7 @@ def vgrid_add_remove_table(client_id,
     out = []
 
     if not item_string in ['owner', 'member', 'resource', 'trigger']:
-        out.append({'object_type': 'error_text', 'text': 
+        out.append({'object_type': 'error_text', 'text':
                     'Internal error: Unknown item type %s.' % item_string
                     })
         return (False, out)
@@ -81,14 +82,14 @@ def vgrid_add_remove_table(client_id,
     optional = False
 
     # Default to dynamic input fields, and override for triggers
-    
+
     id_html_tr = '''<tr><td>
           <div id="dyn%sspares">
           <!-- placeholder for dynamic add %s fields -->
       </div>
       </td></tr>
     ''' % (item_string, item_string)
-    
+
     if item_string == 'resource':
         id_field = 'unique_resource_name'
         optional = True
@@ -108,7 +109,7 @@ def vgrid_add_remove_table(client_id,
     if item_string in ['owner', 'member']:
         openid_add = ""
         if configuration.user_openid_providers:
-            openid_add = "either the OpenID alias or "    
+            openid_add = "either the OpenID alias or "
         id_note_tr = """
       <tr>
       <td>
@@ -171,17 +172,17 @@ doubt, just let the user request access and accept it with the
                         val = ' '.join(val)
                     extra_fields_html += '<td>%s</td>' % val
                 table += \
-"""          <tr><td></td><td>%s</td>%s</tr>""" % (elem[id_field],
-                                                   extra_fields_html)
+                    """          <tr><td></td><td>%s</td>%s</tr>""" % (elem[id_field],
+                                                                       extra_fields_html)
             elif elem:
                 table += \
-"          <tr><td></td><td>%s</td></tr>"\
-                     % elem
+                    "          <tr><td></td><td>%s</td></tr>"\
+                    % elem
             else:
                 # We can encounter empty string elements here, because creation
                 # of subvgrids have historically set owners to [''].
                 configuration.logger.warning(
-                    'unexpected elem %s in vgrid_add_remove_table extras %s' \
+                    'unexpected elem %s in vgrid_add_remove_table extras %s'
                     % (elem, vgrid_name))
                 continue
         table += '''
@@ -191,7 +192,7 @@ doubt, just let the user request access and accept it with the
 
     if direct:
         # Shared forms to use dynamically for ALL table entries
-        dyn_helper = {'vgrid_name': vgrid_name, 
+        dyn_helper = {'vgrid_name': vgrid_name,
                       id_field: '__DYNAMIC__'}
         target_op = 'add%s' % script_suffix
         csrf_token = make_csrf_token(configuration, form_method,
@@ -241,7 +242,7 @@ doubt, just let the user request access and accept it with the
                 # We can encounter empty string elements here, because creation
                 # of subvgrids have historically set owners to [''] .
                 configuration.logger.warning(
-                    'unexpected elem %s in vgrid_add_remove_table %s direct' \
+                    'unexpected elem %s in vgrid_add_remove_table %s direct'
                     % (elem, direct))
                 continue
 
@@ -253,8 +254,8 @@ doubt, just let the user request access and accept it with the
             dyn_dict['rank'] = 0
             vgrid_table += html_link({
                 'destination':
-                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
-                ('add%s' % script_suffix , "Really move %s first?" % \
+                "javascript: confirmDialog(%s, '%s', %s, %s);" %
+                ('add%s' % script_suffix, "Really move %s first?" %
                  elem_id, 'undefined', "%s" % dyn_dict),
                 'class': 'firstlink iconspace',
                 'title': 'Move %s %s of %s first in list' % (item_string,
@@ -264,19 +265,19 @@ doubt, just let the user request access and accept it with the
             dyn_dict['rank'] = max(index - 1, 0)
             vgrid_table += html_link({
                 'destination':
-                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
-                ('add%s' % script_suffix , "Really move %s up?" % \
+                "javascript: confirmDialog(%s, '%s', %s, %s);" %
+                ('add%s' % script_suffix, "Really move %s up?" %
                  elem_id, 'undefined', "%s" % dyn_dict),
                 'class': 'previouslink iconspace',
                 'title': 'Move %s %s of %s previous in list' % (item_string,
-                                                                elem_id, 
+                                                                elem_id,
                                                                 vgrid_name),
                 'text': ''})
             dyn_dict['rank'] = min(index + 1, len(direct) - 1)
             vgrid_table += html_link({
                 'destination':
-                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
-                ('add%s' % script_suffix , "Really move %s down?" % \
+                "javascript: confirmDialog(%s, '%s', %s, %s);" %
+                ('add%s' % script_suffix, "Really move %s down?" %
                  elem_id, 'undefined', "%s" % dyn_dict),
                 'class': 'nextlink iconspace',
                 'title': 'Move %s %s of %s next in list' % (item_string,
@@ -286,8 +287,8 @@ doubt, just let the user request access and accept it with the
             dyn_dict['rank'] = len(direct) - 1
             vgrid_table += html_link({
                 'destination':
-                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
-                ('add%s' % script_suffix , "Really move %s last?" % \
+                "javascript: confirmDialog(%s, '%s', %s, %s);" %
+                ('add%s' % script_suffix, "Really move %s last?" %
                  elem_id, 'undefined', "%s" % dyn_dict),
                 'class': 'lastlink iconspace',
                 'title': 'Move %s %s of %s last in list' % (item_string,
@@ -298,7 +299,7 @@ doubt, just let the user request access and accept it with the
                 # Unset rank to enforce update
                 dyn_dict['rank'] = ''
                 dst = "confirmDialog(%s, '%s', %s, %s);" % \
-                      ('add%s' % script_suffix , "Really refresh %s %s ?" % \
+                      ('add%s' % script_suffix, "Really refresh %s %s ?" %
                        (item_string, elem_id), 'undefined', "%s" % dyn_dict)
                 if elem['action'] != 'submit':
                     dst = "alert('only relevant for submit %ss');" % \
@@ -317,9 +318,9 @@ doubt, just let the user request access and accept it with the
             del dyn_dict['rank']
             vgrid_table += html_link({
                 'destination':
-                "javascript: confirmDialog(%s, '%s', %s, %s);" % \
-                ('rm%s' % script_suffix , "Really remove %s %s ?" % \
-                 (item_string, elem_id), 'undefined', "{%s: '%s'}" % \
+                "javascript: confirmDialog(%s, '%s', %s, %s);" %
+                ('rm%s' % script_suffix, "Really remove %s %s ?" %
+                 (item_string, elem_id), 'undefined', "{%s: '%s'}" %
                  (id_field, elem_id)),
                 'class': 'removelink iconspace',
                 'title': 'Remove %s %s of %s' % (item_string, elem_id,
@@ -334,8 +335,9 @@ doubt, just let the user request access and accept it with the
           </tbody>
         </table>
         '''
-        out.append({'object_type': 'html_form', 'text': vgrid_table % fill_helpers})
-        
+        out.append({'object_type': 'html_form',
+                    'text': vgrid_table % fill_helpers})
+
     # form to add a new item
 
     extra_fields_html = ''
@@ -384,7 +386,7 @@ doubt, just let the user request access and accept it with the
       </fieldset>
       </form>
 ''' % fill_helpers})
-    
+
     return (True, out)
 
 
@@ -402,10 +404,11 @@ def vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
     """Combines owner and member check"""
 
     if vgrid_is_owner(vgrid_name, client_id, configuration) or \
-           vgrid_is_member(vgrid_name, client_id, configuration):
+            vgrid_is_member(vgrid_name, client_id, configuration):
         return True
     else:
         return False
+
 
 def vgrid_allowed(client_id, allowed_pattern):
     """Helper function to check if client_id is allowed using
@@ -419,6 +422,7 @@ def vgrid_allowed(client_id, allowed_pattern):
             return True
     return False
 
+
 def vgrid_is_entity_in_list(
     vgrid_name,
     entity_id,
@@ -427,7 +431,7 @@ def vgrid_is_entity_in_list(
     recursive,
     dict_field=False,
     allow_missing=False
-    ):
+):
     """Return True if specified entity_id is in group
     ('owners', 'members', 'resources', 'triggers', 'settings', 'sharelinks', 
     'imagesettings') of vgrid.
@@ -450,8 +454,9 @@ def vgrid_is_entity_in_list(
 
     if dict_field:
         entries = [i[dict_field] for i in entries]
-        
+
     return vgrid_allowed(entity_id, entries)
+
 
 def vgrid_is_owner(vgrid_name, client_id, configuration, recursive=True):
     """Check if client_id is an owner of vgrid_name. Please note
@@ -524,7 +529,7 @@ def vgrid_is_trigger_owner(vgrid_name, rule_id, client_id, configuration,
     # No such trigger
 
     return False
-                
+
 
 def vgrid_is_setting(vgrid_name, option_id, configuration, recursive=True,
                      allow_missing=True):
@@ -536,6 +541,7 @@ def vgrid_is_setting(vgrid_name, option_id, configuration, recursive=True,
                                    configuration, recursive, 'option_id',
                                    allow_missing)
 
+
 def vgrid_is_sharelink(vgrid_name, option_id, configuration, recursive=True,
                        allow_missing=True):
     """Check if option_id is a sharelink in vgrid_name. We allow missing
@@ -545,6 +551,7 @@ def vgrid_is_sharelink(vgrid_name, option_id, configuration, recursive=True,
     return vgrid_is_entity_in_list(vgrid_name, option_id, 'sharelinks',
                                    configuration, recursive, 'option_id',
                                    allow_missing)
+
 
 def vgrid_is_imagesetting(vgrid_name, imagesetting_id, configuration, recursive=True,
                           allow_missing=True):
@@ -556,11 +563,13 @@ def vgrid_is_imagesetting(vgrid_name, imagesetting_id, configuration, recursive=
                                    configuration, recursive, 'imagesetting_id',
                                    allow_missing)
 
+
 def vgrid_list_subvgrids(vgrid_name, configuration):
     """Return list of subvgrids of vgrid_name"""
 
     return vgrid_list_vgrids(configuration, include_default=False,
                              root_vgrid=vgrid_name)
+
 
 def vgrid_list_parents(vgrid_name, configuration):
     """Return list of parent vgrids of vgrid_name listed with root first"""
@@ -571,6 +580,7 @@ def vgrid_list_parents(vgrid_name, configuration):
         vgrid = (os.sep).join(parts[:i+1])
         result_list.append(vgrid)
     return result_list
+
 
 def vgrid_list_vgrids(configuration, include_default=True, root_vgrid=''):
     """List all vgrids and sub-vgrids created on the system. The optional
@@ -596,7 +606,7 @@ def vgrid_list_vgrids(configuration, include_default=True, root_vgrid=''):
             complete_vgrid_location = os.path.join(root, directory)
             vgrid_name_without_location = \
                 complete_vgrid_location.replace(configuration.vgrid_home,
-                    '', 1)
+                                                '', 1)
 
             vgrids_list.append(vgrid_name_without_location)
     if include_default and not default_vgrid in vgrids_list:
@@ -610,7 +620,7 @@ def init_vgrid_script_add_rem(
     subject,
     subject_type,
     configuration,
-    ):
+):
     """Initialize vgrid specific add and remove scripts"""
 
     msg = ''
@@ -629,12 +639,12 @@ def init_vgrid_script_add_rem(
     if subject_type == 'member' or subject_type == 'owner':
         if not is_user(subject, configuration.mig_server_home):
             msg += '%s is not a valid %s user!' % \
-                    (subject, configuration.short_title)
+                (subject, configuration.short_title)
             return (False, msg, None)
     elif subject_type == 'resource':
         if not is_resource(subject, configuration.resource_home):
             msg += '%s is not a valid %s resource' % \
-                    (subject, configuration.short_title)
+                (subject, configuration.short_title)
             msg += \
                 ' (OK, if removing or e.g. the resource creation is pending)'
     elif subject_type == 'request':
@@ -658,14 +668,14 @@ def init_vgrid_script_add_rem(
     # special case: members may terminate own membership
 
     if (subject_type == 'member') and (client_id == subject) \
-        and (vgrid_is_member(vgrid_name, subject, configuration)):
+            and (vgrid_is_member(vgrid_name, subject, configuration)):
 
         return (True, msg, [])
 
     # special case: members may remove own triggers and add new ones
 
     if (subject_type == 'trigger') and \
-           (not vgrid_is_trigger(vgrid_name, subject, configuration) or \
+        (not vgrid_is_trigger(vgrid_name, subject, configuration) or
             vgrid_is_trigger_owner(vgrid_name, subject, client_id,
                                    configuration)):
         return (True, msg, [])
@@ -695,11 +705,12 @@ def init_vgrid_script_list(vgrid_name, client_id, configuration):
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         msg += 'Failure: You must be an owner or member of '\
-             + vgrid_name\
-             + ' vgrid to get a list of members/owners/resources/triggers/settings/sharelinks/imagesettings'
+            + vgrid_name\
+            + ' vgrid to get a list of members/owners/resources/triggers/settings/sharelinks/imagesettings'
         return (False, msg, None)
 
     return (True, msg, [])
+
 
 def merge_vgrid_settings(vgrid_name, configuration, settings_list):
     """Merge a list of possibly inherited vgrid settings dictionaries into a
@@ -722,18 +733,18 @@ def merge_vgrid_settings(vgrid_name, configuration, settings_list):
     for vgrid_dict in settings_list[::-1]:
         for (key, val) in vgrid_dict.items():
             if not key in specs_map:
-                _logger.warning("unknown settings key %s for %s (%s)" \
+                _logger.warning("unknown settings key %s for %s (%s)"
                                 % (key, vgrid_name, vgrid_dict))
                 continue
             spec = specs_map[key]
             # Always fill missing field unless it is non-inherited
             if not key in merged and spec['Inherit'] != keyword_never:
-                #_logger.debug("take first %s value %s in %s" % \
+                # _logger.debug("take first %s value %s in %s" % \
                 #            (key, val, vgrid_name))
                 merged[key] = val
             elif spec['Inherit'] == keyword_any and val and not merged[key]:
-                # If we find a True value it must be inherited 
-                #_logger.debug("force %s to %s for %s" % (key, val,
+                # If we find a True value it must be inherited
+                # _logger.debug("force %s to %s for %s" % (key, val,
                 #                                        vgrid_name))
                 merged[key] = val
     # Fill non-inherited fields with last dict value or defaults if unset
@@ -741,18 +752,20 @@ def merge_vgrid_settings(vgrid_name, configuration, settings_list):
     for (key, spec) in specs_map.items():
         if spec['Inherit'] == keyword_never:
             val = vgrid_dict.get(key, spec['Value'])
-            #_logger.debug("take direct value %s for %s in %s" % \
+            # _logger.debug("take direct value %s for %s in %s" % \
             #                (key, val, vgrid_name))
             merged[key] = val
     # Finally always set correct vgrid_name even if no settings exist
     merged['vgrid_name'] = vgrid_name
     return merged
 
+
 def vgrid_flat_name(vgrid_name, configuration):
     """Translates from vgrid_name to the flat-form directory name used to
     discriminate between readonly and writable access.
     """
     return vgrid_name.strip('/').replace('/', vgrid_nest_sep)
+
 
 def vgrid_restrict_write_paths(vgrid_name, configuration):
     """Helper to generate vgrid relevant paths for handling readonly changes"""
@@ -761,7 +774,8 @@ def vgrid_restrict_write_paths(vgrid_name, configuration):
     rw_path = os.path.join(configuration.vgrid_files_writable, flat_vgrid)
     ro_path = os.path.join(configuration.vgrid_files_readonly, flat_vgrid)
     return (flat_vgrid, link_path, rw_path, ro_path)
-    
+
+
 def vgrid_restrict_write_support(configuration):
     """Check and return boolean to indicate if write restricted VGrids shares
     are supported. Requires the vgrid_files_readonly and vgrid_files_writable
@@ -779,6 +793,7 @@ def vgrid_restrict_write_support(configuration):
     # TODO: check that os.path.ismount on vgrid_files_readonly or parent
     return True
 
+
 def vgrid_allow_restrict_write(vgrid_name, write_access, configuration,
                                auto_migrate=False):
     """Check if vgrid_name shared files can be changed to enforce requested
@@ -793,20 +808,20 @@ def vgrid_allow_restrict_write(vgrid_name, write_access, configuration,
     """
     _logger = configuration.logger
     if not vgrid_restrict_write_support(configuration):
-        _logger.error("cannot change %s write access to %s - no conf support" \
+        _logger.error("cannot change %s write access to %s - no conf support"
                       % (vgrid_name, write_access))
         return False
     (flat_vgrid, link_path, rw_path, ro_path) = \
-                 vgrid_restrict_write_paths(vgrid_name, configuration)
+        vgrid_restrict_write_paths(vgrid_name, configuration)
     # If share is a regular folder in vgrid_files_home make sure it can be
     # migrated to vgrid_files_writable and then symlinked as usual.
     if not os.path.islink(link_path) and os.path.isdir(link_path):
         if not auto_migrate:
-            _logger.error("Old style vgrid in %s and no auto migrate!" % \
+            _logger.error("Old style vgrid in %s and no auto migrate!" %
                           link_path)
             return False
         if os.path.exists(rw_path):
-            _logger.error("can't move %s into new layout - %s exists!" % \
+            _logger.error("can't move %s into new layout - %s exists!" %
                           (link_path, rw_path))
             return False
         # Move fails if read-only .vgridX collab component dirs exists. It
@@ -821,7 +836,7 @@ def vgrid_allow_restrict_write(vgrid_name, write_access, configuration,
             if not os.path.exists(collab_path) or os.path.islink(collab_path):
                 continue
             if not check_write_access(collab_path):
-                _logger.error("can't migrate %s into new layout - RO %s dir" % \
+                _logger.error("can't migrate %s into new layout - RO %s dir" %
                               (link_path, collab_path))
                 return False
 
@@ -842,8 +857,8 @@ def vgrid_allow_restrict_write(vgrid_name, write_access, configuration,
             _logger.error('failed to load inherited %s settings' % vgrid_name)
             return False
         if inherit_settings.get('write_shared_files', keyword_members) not in \
-               [keyword_members, write_access]:
-            _logger.info('inherited settings prevent making %s %s writable' % \
+                [keyword_members, write_access]:
+            _logger.info('inherited settings prevent making %s %s writable' %
                          (vgrid_name, write_access))
             return False
 
@@ -854,7 +869,7 @@ def vgrid_allow_restrict_write(vgrid_name, write_access, configuration,
     else:
         (sub_status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
         if not sub_status:
-            _logger.info('failed to load list of sub vgrids for %s: %s' % \
+            _logger.info('failed to load list of sub vgrids for %s: %s' %
                          (vgrid_name, sub_vgrids))
             return False
         check_children = sub_vgrids
@@ -869,12 +884,13 @@ def vgrid_allow_restrict_write(vgrid_name, write_access, configuration,
         # NOTE: sub must already have same or stricter write_access. Default is
         #       full access, so it must be explicitly limited for all children.
         if sub_settings.get('write_shared_files', keyword_members) not in \
-               [keyword_none, write_access]:
-            _logger.info('refuse limit write on %s to %s due to %s setting' % \
+                [keyword_none, write_access]:
+            _logger.info('refuse limit write on %s to %s due to %s setting' %
                          (write_access, vgrid_name, sub))
             return False
     return True
-        
+
+
 def vgrid_restrict_write(vgrid_name, write_access, configuration,
                          auto_migrate=False):
     """Switch vgrid_name shared folder to enforce write_access limitation by
@@ -891,17 +907,17 @@ def vgrid_restrict_write(vgrid_name, write_access, configuration,
                                       auto_migrate):
         return False
     (flat_vgrid, link_path, rw_path, ro_path) = \
-                 vgrid_restrict_write_paths(vgrid_name, configuration)
+        vgrid_restrict_write_paths(vgrid_name, configuration)
     # If share is a regular folder in vgrid_files_home migrate it to new
     # layout in vgrid_files_writable first and then symlink as usual.
     if auto_migrate and not os.path.islink(link_path) and \
-           os.path.isdir(link_path):
-        _logger.info("migrating %s into new layout %s" % \
+            os.path.isdir(link_path):
+        _logger.info("migrating %s into new layout %s" %
                      (link_path, rw_path))
         if not move(link_path, rw_path):
-            _logger.error("failed to move %s into new layout %s !" % \
+            _logger.error("failed to move %s into new layout %s !" %
                           (link_path, rw_path))
-        return False    
+        return False
     if write_access == keyword_members:
         # Force vgrid home link to the new writable location
         _logger.info("switch %s to writable path %s" % (vgrid_name, rw_path))
@@ -922,7 +938,7 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     change the output list.
     If optional replace_missing is set that value is inserted for missing entries.
     """
-    _logger = configuration.logger    
+    _logger = configuration.logger
     if group == 'owners':
         name = configuration.vgrid_owners
     elif group == 'members':
@@ -964,45 +980,51 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
                 for filter_item in filter_entries:
                     if isinstance(filter_item, tuple):
                         (key, val) = filter_item
-                        msg = [entry for entry in msg if not \
+                        msg = [entry for entry in msg if not
                                re.match(val, entry[key])]
                     else:
-                        msg = [entry for entry in msg if not \
+                        msg = [entry for entry in msg if not
                                re.match(filter_item, entry)]
 
                 # Filter any invalid entries here to avoid checking everywhere
-                msg = vgrid_valid_entities(configuration, vgrid_name, group, msg)
+                msg = vgrid_valid_entities(
+                    configuration, vgrid_name, group, msg)
                 # Wrap settings tuples for each vgrid in a separate dict
                 # to make inheritance handling easier.
                 if group == 'settings':
-                    # NOTE: list.extend() expects a list 
+                    # NOTE: list.extend() expects a list
                     msg = [dict(msg)]
                 output.extend(msg)
         elif allow_missing and not os.path.exists(name_path):
             if replace_missing is not None:
-                # NOTE: list.extend() expects a list 
+                # NOTE: list.extend() expects a list
                 output.extend([replace_missing])
         else:
             return (False, msg)
     return (True, output)
 
+
 def vgrid_owners(vgrid_name, configuration, recursive=True):
     """Extract owners list for a vgrid"""
     return vgrid_list(vgrid_name, 'owners', configuration, recursive)
+
 
 def vgrid_members(vgrid_name, configuration, recursive=True):
     """Extract members list for a vgrid"""
     return vgrid_list(vgrid_name, 'members', configuration, recursive)
 
+
 def vgrid_resources(vgrid_name, configuration, recursive=True):
     """Extract resources list for a vgrid"""
     return vgrid_list(vgrid_name, 'resources', configuration, recursive)
+
 
 def vgrid_triggers(vgrid_name, configuration, recursive=True,
                    allow_missing=True):
     """Extract triggers list for a vgrid"""
     return vgrid_list(vgrid_name, 'triggers', configuration, recursive,
                       allow_missing)
+
 
 def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True,
                    as_dict=False):
@@ -1020,17 +1042,20 @@ def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True
             output = output.items()
     return (status, output)
 
+
 def vgrid_sharelinks(vgrid_name, configuration, recursive=True,
                      allow_missing=True):
     """Extract sharelinks list for a vgrid"""
     return vgrid_list(vgrid_name, 'sharelinks', configuration, recursive,
                       allow_missing)
 
+
 def vgrid_imagesettings(vgrid_name, configuration, recursive=True,
-                     allow_missing=True):
+                        allow_missing=True):
     """Extract imagesettings list for a vgrid"""
     return vgrid_list(vgrid_name, 'imagesettings', configuration, recursive,
                       allow_missing)
+
 
 def vgrid_match_resources(vgrid_name, resources, configuration):
     """Return a list of resources filtered to only those allowed in
@@ -1044,7 +1069,7 @@ def vgrid_match_resources(vgrid_name, resources, configuration):
         if vgrid_is_resource(vgrid_name, entry, configuration):
             match.append(entry)
     return match
-    
+
 
 def job_fits_res_vgrid(job_vgrid_list, res_vgrid_list):
     """Used to find match between job and resource vgrids.
@@ -1079,10 +1104,11 @@ def vgrid_request_and_job_match(resource_vgrid, job_vgrid):
     # allow: resource DALTON, job DALTON/DK
 
     for (resource_elem, job_elem) in zip(resource_vgrid_list,
-            job_vgrid_list):
+                                         job_vgrid_list):
         if resource_elem != job_elem:
             return False
     return True
+
 
 def user_allowed_vgrids(configuration, client_id, inherited=False):
     """Return a list of all VGrids that the user with client_id is allowed to
@@ -1103,6 +1129,7 @@ def user_allowed_vgrids(configuration, client_id, inherited=False):
             allowed.append(vgrid)
     return allowed
 
+
 def res_allowed_vgrids(configuration, client_id):
     """Return a list of all VGrids that the resource with
     client_id is allowed to access. I.e. the VGrids
@@ -1118,6 +1145,7 @@ def res_allowed_vgrids(configuration, client_id):
         if vgrid_is_resource(vgrid, client_id, configuration):
             allowed.append(vgrid)
     return allowed
+
 
 def vgrid_access_match(configuration, job_owner, job, res_id, res):
     """Match job and resource vgrids and include access control.
@@ -1137,19 +1165,20 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
         if not found:
             configuration.logger.info('no valid vgrid found!')
             break
-        configuration.logger.info('test if best vgrids %s , %s are valid' % \
+        configuration.logger.info('test if best vgrids %s , %s are valid' %
                                   (best_job, best_res))
         if not vgrid_is_owner_or_member(best_job, job_owner, configuration):
-            configuration.logger.info('del invalid vgrid %s from job (%s)' % \
+            configuration.logger.info('del invalid vgrid %s from job (%s)' %
                                       (best_job, job_owner))
             job_req = [i for i in job_req if i != best_job]
         if not vgrid_is_resource(best_res, res_id, configuration):
-            configuration.logger.info('del invalid vgrid %s from res (%s)' \
+            configuration.logger.info('del invalid vgrid %s from res (%s)'
                                       % (best_res, res_id))
             res_req = [i for i in res_req if i != best_res]
         else:
             break
     return answer
+
 
 def mark_nested_vgrids_modified(configuration, vgrid_name):
     """Mark vgrid_name and all child vgrids modified to signal e.g. vgrid_map
@@ -1161,6 +1190,7 @@ def mark_nested_vgrids_modified(configuration, vgrid_name):
         mark_vgrid_modified(configuration, sub)
     return list_status
 
+
 def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
     """Validate that entities in id_list are on required format"""
     _logger = configuration.logger
@@ -1171,30 +1201,30 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
         # list of strings
         for entry in id_list:
             if not isinstance(entry, basestring):
-                raise ValueError("invalid %s entry for %s: %s" % \
-                      (kind, vgrid_name, entry))
+                raise ValueError("invalid %s entry for %s: %s" %
+                                 (kind, vgrid_name, entry))
     elif kind == 'triggers':
         # list of dictionaries on fixed format
         specs_map = get_trigger_keywords_dict(configuration)
         for entry in id_list:
             if not isinstance(entry, dict):
-                raise ValueError("invalid %s dictionary entry for %s: %s" % \
+                raise ValueError("invalid %s dictionary entry for %s: %s" %
                                  (kind, vgrid_name, entry))
             for (key, spec) in specs_map.items():
                 if not key in entry:
                     if spec['Required']:
                         raise ValueError(
-                        "missing value for %s in %s entry" % (key, kind))
+                            "missing value for %s in %s entry" % (key, kind))
                     else:
                         continue
                 val = entry[key]
                 required_instance = specs_map[key]['Instance']
                 if not isinstance(val, required_instance):
                     _logger.warning(
-                        "invalid type for '%s' value '%s' in %s entry:\n%s" % \
+                        "invalid type for '%s' value '%s' in %s entry:\n%s" %
                         (key, val, kind, entry))
                     raise ValueError(
-                        "invalid type for '%s' value %s (%s) in %s entry" % \
+                        "invalid type for '%s' value %s (%s) in %s entry" %
                         (key, val, type(val), kind))
             # TODO: handle keys outside spec?
     elif kind == 'settings':
@@ -1202,7 +1232,7 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
         specs_map = get_settings_keywords_dict(configuration)
         for item in id_list:
             if not isinstance(item, tuple):
-                raise ValueError("invalid %s tuple item for %s: %s" % \
+                raise ValueError("invalid %s tuple item for %s: %s" %
                                  (kind, vgrid_name, item))
         entry = dict(id_list)
         for (key, spec) in specs_map.items():
@@ -1216,10 +1246,10 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
             required_instance = specs_map[key]['Instance']
             if not isinstance(val, required_instance):
                 _logger.warning(
-                    "invalid type for '%s' value '%s' in %s entry:\n%s" % \
+                    "invalid type for '%s' value '%s' in %s entry:\n%s" %
                     (key, val, kind, entry))
                 raise ValueError(
-                    "invalid type for '%s' value %s (%s) in %s entry" % \
+                    "invalid type for '%s' value %s (%s) in %s entry" %
                     (key, val, type(val), kind))
         # TODO: handle keys outside spec?
     elif kind == 'sharelinks':
@@ -1227,33 +1257,34 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
         specs_map = get_sharelink_keywords_dict(configuration)
         for entry in id_list:
             if not isinstance(entry, dict):
-                raise ValueError("invalid %s dictionary entry for %s: %s" % \
+                raise ValueError("invalid %s dictionary entry for %s: %s" %
                                  (kind, vgrid_name, entry))
             for (key, spec) in specs_map.items():
                 if not key in entry:
                     if spec['Required']:
                         raise ValueError(
-                        "missing value for %s in %s entry" % (key, kind))
+                            "missing value for %s in %s entry" % (key, kind))
                     else:
                         continue
                 val = entry[key]
                 required_instance = specs_map[key]['Instance']
                 if not isinstance(val, required_instance):
                     _logger.warning(
-                        "invalid type for '%s' value '%s' in %s entry:\n%s" % \
+                        "invalid type for '%s' value '%s' in %s entry:\n%s" %
                         (key, val, kind, entry))
                     raise ValueError(
-                        "invalid type for '%s' value %s (%s) in %s entry" % \
+                        "invalid type for '%s' value %s (%s) in %s entry" %
                         (key, val, type(val), kind))
             # TODO: handle keys outside spec?
     elif kind == 'imagesettings':
         for i in id_list:
             if not isinstance(i, dict):
-                raise ValueError("invalid %s entry for %s: %s" % \
-                      (kind, vgrid_name, i))
+                raise ValueError("invalid %s entry for %s: %s" %
+                                 (kind, vgrid_name, i))
         # TODO: add detailed field validation based on keywords like above
     else:
         raise ValueError("unknown kind: '%s'" % kind)
+
 
 def vgrid_valid_entities(configuration, vgrid_name, kind, id_list):
     """Return the subset of entries in id_list that are on required format"""
@@ -1269,12 +1300,13 @@ def vgrid_valid_entities(configuration, vgrid_name, kind, id_list):
         try:
             vgrid_validate_entities(configuration, vgrid_name, kind, i)
         except Exception, exc:
-            _logger.warning("skipping %s on invalid format %s: %s" % \
+            _logger.warning("skipping %s on invalid format %s: %s" %
                             (kind, i, exc))
             continue
         valid.extend(i)
     return valid
-        
+
+
 def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
                        update_id=None, rank=None):
     """Append list of IDs to pickled list of kind for vgrid_name"""
@@ -1296,7 +1328,7 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
     else:
         return (False, "vgrid_add_entities: unknown kind: '%s'" % kind)
 
-    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
+    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name,
                                    entity_filename)
     try:
         vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
@@ -1319,7 +1351,7 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
         # Default to append
         if rank is None:
             rank = len(entities)
-        #_logger.debug("add %s %s at pos %s in %s" % \
+        # _logger.debug("add %s %s at pos %s in %s" % \
         #                           (kind, id_list, rank, entities))
         entities = entities[:rank] + id_list + entities[rank:]
         #_logger.debug("added: %s" % entities)
@@ -1329,20 +1361,24 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
     except Exception, exc:
         return (False, "could not add %s for %s: %s" % (kind, vgrid_name, exc))
 
+
 def vgrid_add_owners(configuration, vgrid_name, id_list, rank=None):
     """Append id_list to pickled list of owners for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'owners',
                               id_list, None, rank)
+
 
 def vgrid_add_members(configuration, vgrid_name, id_list, rank=None):
     """Append id_list to pickled list of members for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'members',
                               id_list, None, rank)
 
+
 def vgrid_add_resources(configuration, vgrid_name, id_list, rank=None):
     """Append id_list to pickled list of resources for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'resources',
                               id_list, None, rank)
+
 
 def vgrid_add_triggers(configuration, vgrid_name, id_list, update_id=None,
                        rank=None):
@@ -1350,11 +1386,13 @@ def vgrid_add_triggers(configuration, vgrid_name, id_list, update_id=None,
     return vgrid_add_entities(configuration, vgrid_name, 'triggers',
                               id_list, update_id, rank)
 
+
 def vgrid_add_settings(configuration, vgrid_name, id_list, update_id=None,
                        rank=None):
     """Append id_list to pickled list of settings for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'settings',
                               id_list, update_id, rank)
+
 
 def vgrid_add_sharelinks(configuration, vgrid_name, id_list, update_id=None,
                          rank=None):
@@ -1362,11 +1400,13 @@ def vgrid_add_sharelinks(configuration, vgrid_name, id_list, update_id=None,
     return vgrid_add_entities(configuration, vgrid_name, 'sharelinks',
                               id_list, update_id, rank)
 
+
 def vgrid_add_imagesettings(configuration, vgrid_name, id_list, update_id=None,
                             rank=None):
     """Append id_list to pickled list of imagesettings for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'imagesettings',
                               id_list, update_id, rank)
+
 
 def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
                           allow_empty, dict_field=False):
@@ -1393,16 +1433,16 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         entity_filename = configuration.vgrid_imagesettings
     else:
         return (False, "vgrid_remove_entities: unknown kind: '%s'" % kind)
-    
-    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
+
+    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name,
                                    entity_filename)
 
     # Force raw string to list to avoid nasty silent substring matching below
     # I.e. removing abc.def.0 would also remove def.0
-    
+
     if isinstance(id_list, basestring):
         id_list = [id_list]
-        
+
     try:
         entities = load(entity_filepath)
         if dict_field:
@@ -1418,15 +1458,18 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         return (False, "could not remove %s for %s: %s" % (kind, vgrid_name,
                                                            exc))
 
+
 def vgrid_remove_owners(configuration, vgrid_name, id_list, allow_empty=False):
     """Remove id_list from pickled list of owners for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'owners',
                                  id_list, allow_empty)
 
+
 def vgrid_remove_members(configuration, vgrid_name, id_list, allow_empty=True):
     """Remove id_list from pickled list of members for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'members',
                                  id_list, allow_empty)
+
 
 def vgrid_remove_resources(configuration, vgrid_name, id_list,
                            allow_empty=True):
@@ -1434,11 +1477,13 @@ def vgrid_remove_resources(configuration, vgrid_name, id_list,
     return vgrid_remove_entities(configuration, vgrid_name, 'resources',
                                  id_list, allow_empty)
 
+
 def vgrid_remove_triggers(configuration, vgrid_name, id_list,
-                           allow_empty=True):
+                          allow_empty=True):
     """Remove id_list from pickled list of triggers for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'triggers',
                                  id_list, allow_empty, dict_field='rule_id')
+
 
 def vgrid_remove_settings(configuration, vgrid_name, id_list,
                           allow_empty=True):
@@ -1446,17 +1491,20 @@ def vgrid_remove_settings(configuration, vgrid_name, id_list,
     return vgrid_remove_entities(configuration, vgrid_name, 'settings',
                                  id_list, allow_empty, dict_field='option_id')
 
+
 def vgrid_remove_sharelinks(configuration, vgrid_name, id_list,
-                          allow_empty=True):
+                            allow_empty=True):
     """Remove id_list from pickled list of sharelinks for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'sharelinks',
                                  id_list, allow_empty, dict_field='share_id')
 
+
 def vgrid_remove_imagesettings(configuration, vgrid_name, id_list,
-                          allow_empty=True):
+                               allow_empty=True):
     """Remove id_list from pickled list of imagesettings for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'imagesettings',
                                  id_list, allow_empty, dict_field='imagesetting_id')
+
 
 def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     """Set kind list to provided id_list for given vgrid. The allow_empty
@@ -1480,7 +1528,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     else:
         return (False, "vgrid_set_entities: unknown kind: '%s'" % kind)
 
-    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
+    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name,
                                    entity_filename)
 
     try:
@@ -1493,40 +1541,48 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     except Exception, exc:
         return (False, "could not set %s for %s: %s" % (kind, vgrid_name, exc))
 
+
 def vgrid_set_owners(configuration, vgrid_name, id_list, allow_empty=False):
     """Set list of owners for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'owners',
                               id_list, allow_empty)
+
 
 def vgrid_set_members(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of members for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'members',
                               id_list, allow_empty)
 
+
 def vgrid_set_resources(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of resources for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'resources',
                               id_list, allow_empty)
+
 
 def vgrid_set_triggers(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of triggers for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'triggers',
                               id_list, allow_empty)
 
+
 def vgrid_set_settings(configuration, vgrid_name, id_list, allow_empty=False):
     """Set list of settings for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'settings',
                               id_list, allow_empty)
+
 
 def vgrid_set_sharelinks(configuration, vgrid_name, id_list, allow_empty=False):
     """Set list of sharelinks for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'sharelinks',
                               id_list, allow_empty)
 
+
 def vgrid_set_imagesettings(configuration, vgrid_name, id_list, allow_empty=False):
     """Set list of imagesettings for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'imagesettings',
                               id_list, allow_empty)
+
 
 def validated_vgrid_list(configuration, job_dict):
     """Grabs VGRID field value from job_dict if available and makes sure that
@@ -1543,6 +1599,7 @@ def validated_vgrid_list(configuration, job_dict):
         job_vgrids = [job_vgrids]
     return job_vgrids
 
+
 def vgrid_create_allowed(configuration, user_dict):
     """Check if user with user_dict is allowed to create vgrid_name based on
     optional configuration limits.
@@ -1551,6 +1608,7 @@ def vgrid_create_allowed(configuration, user_dict):
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             return False
     return True
+
 
 def __in_vgrid_special(configuration, path, vgrid_special_base, flat=False):
     """Helper function to detect subvgrid public/private web hosting dirs and
@@ -1564,7 +1622,7 @@ def __in_vgrid_special(configuration, path, vgrid_special_base, flat=False):
     vgrid_path = None
     vgrid_home = configuration.vgrid_home
     real_path = os.path.realpath(path)
-    #_logger.debug("in vgrid special %s vs %s" % \
+    # _logger.debug("in vgrid special %s vs %s" % \
     #                           (real_path, vgrid_special_base))
     if real_path.startswith(vgrid_special_base):
         vgrid_path = real_path.replace(vgrid_special_base, '').lstrip(os.sep)
@@ -1574,11 +1632,12 @@ def __in_vgrid_special(configuration, path, vgrid_special_base, flat=False):
             vgrid_path = vgrid_path.replace(vgrid_nest_sep, '/')
         while vgrid_path != os.sep:
             if os.path.isdir(os.path.join(vgrid_home, vgrid_path)):
-                _logger.debug("in vgrid special found %s" % \
-                                           vgrid_path)
+                # _logger.debug("in vgrid special found %s" % \
+                #                           vgrid_path)
                 break
             vgrid_path = os.path.dirname(vgrid_path)
     return vgrid_path
+
 
 def in_vgrid_writable(configuration, path):
     """Checks if path is inside a writable vgrid share and returns the name of
@@ -1589,6 +1648,7 @@ def in_vgrid_writable(configuration, path):
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_files_writable, flat=True)
 
+
 def in_vgrid_readonly(configuration, path):
     """Checks if path is inside a readonly vgrid share and returns the name of
     the deepest such sub-vgrid it is inside if so.
@@ -1598,12 +1658,14 @@ def in_vgrid_readonly(configuration, path):
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_files_readonly, flat=True)
 
+
 def in_vgrid_share(configuration, path):
     """Checks if path is inside a vgrid share and returns the name of the
     deepest such sub-vgrid it is inside if so.
     """
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_files_home)
+
 
 def in_vgrid_priv_web(configuration, path):
     """Checks if path is inside a vgrid priv web dir and returns the name of
@@ -1612,6 +1674,7 @@ def in_vgrid_priv_web(configuration, path):
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_private_base)
 
+
 def in_vgrid_pub_web(configuration, path):
     """Checks if path is inside a vgrid pub web dir and returns the name of
     the deepest such sub-vgrid it is inside if so.
@@ -1619,12 +1682,14 @@ def in_vgrid_pub_web(configuration, path):
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_public_base)
 
+
 def in_vgrid_store_res(configuration, path):
     """Checks if path is inside a vgrid storage resource and returns the name
     of the deepest such sub-vgrid it is inside if so.
     """
     return __in_vgrid_special(configuration, path,
                               configuration.resource_home)
+
 
 def _shared_allow_adm(configuration, vgrid_name, client_id, target):
     """Check if client_id is allowed to edit target values for vgrid_name. This
@@ -1647,26 +1712,30 @@ def _shared_allow_adm(configuration, vgrid_name, client_id, target):
     restrict_adm = settings.get('restrict_%s_adm' % target,
                                 default_vgrid_settings_limit)
     if restrict_adm > 0 and not client_id in owners[:restrict_adm]:
-        _logger.error("%s is not allowed to admin %s for %s: %s (%s)" % \
+        _logger.error("%s is not allowed to admin %s for %s: %s (%s)" %
                       (client_id, target, vgrid_name, owners, settings))
         msg = '%s settings only allow the first %d owner(s) to edit %s' % \
               (configuration.site_vgrid_label, restrict_adm, target)
         return (False, msg)
-    _logger.debug("%s is allowed to admin %s for %s: %s (%s)" % \
-                      (client_id, target, vgrid_name, owners, settings))
+    _logger.debug("%s is allowed to admin %s for %s: %s (%s)" %
+                  (client_id, target, vgrid_name, owners, settings))
     return (True, '')
+
 
 def allow_settings_adm(configuration, vgrid_name, client_id):
     """Check if client_id is allowed to edit settings for vgrid"""
     return _shared_allow_adm(configuration, vgrid_name, client_id, 'settings')
 
+
 def allow_owners_adm(configuration, vgrid_name, client_id):
     """Check if client_id is allowed to edit owners for vgrid"""
     return _shared_allow_adm(configuration, vgrid_name, client_id, 'owners')
 
+
 def allow_members_adm(configuration, vgrid_name, client_id):
     """Check if client_id is allowed to edit members for vgrid"""
     return _shared_allow_adm(configuration, vgrid_name, client_id, 'members')
+
 
 def allow_resources_adm(configuration, vgrid_name, client_id):
     """Check if client_id is allowed to edit resources for vgrid"""
@@ -1680,31 +1749,31 @@ if __name__ == "__main__":
     vgrid = "MyGroup"
     kind = 'triggers'
     valid_trigger = {'rule_id': 'valid_rule',
-                    'vgrid_name': vgrid,
-                    'path': '*.zip',
-                    'changes': ['modified'],
-                    'run_as': client_id,
-                    'action': 'unzip',
-                    'arguments': ['+TRIGGERPATH+'],
-                    'rate_limit': '1/m',
-                    'settle_time': '10s',
-                    'match_files': True,
-                    'match_dirs': False,
-                    'match_recursive': False,
+                     'vgrid_name': vgrid,
+                     'path': '*.zip',
+                     'changes': ['modified'],
+                     'run_as': client_id,
+                     'action': 'unzip',
+                     'arguments': ['+TRIGGERPATH+'],
+                     'rate_limit': '1/m',
+                     'settle_time': '10s',
+                     'match_files': True,
+                     'match_dirs': False,
+                     'match_recursive': False,
                      }
     invalid_trigger = {'rule_id': 1,
-                    'vgrid_name': False,
-                    'path': ['*.zip'],
-                    'changes': 'modified',
-                    'run_as': [client_id],
-                    'action': None,
-                    'arguments': '+TRIGGERPATH+',
-                    'rate_limit': 1,
-                    'settle_time': 10,
-                    'match_files': 'True',
-                    'match_dirs': None,
-                    'match_recursive': 'False',
-                     }
+                       'vgrid_name': False,
+                       'path': ['*.zip'],
+                       'changes': 'modified',
+                       'run_as': [client_id],
+                       'action': None,
+                       'arguments': '+TRIGGERPATH+',
+                       'rate_limit': 1,
+                       'settle_time': 10,
+                       'match_files': 'True',
+                       'match_dirs': None,
+                       'match_recursive': 'False',
+                       }
     test_triggers = [valid_trigger]
     for (key, val) in invalid_trigger.items():
         broken_trigger = valid_trigger.copy()
@@ -1755,8 +1824,8 @@ if __name__ == "__main__":
                         'write_shared_files': 'me',
                         'write_priv_web': keyword_all,
                         'write_pub_web': keyword_any,
-                    'hidden': None,
-                     }
+                        'hidden': None,
+                        }
     test_settings = [valid_settings]
     for (key, val) in invalid_settings.items():
         broken_settings = valid_settings.copy()
@@ -1776,4 +1845,3 @@ if __name__ == "__main__":
             print "settings check succeeded"
         except Exception, exc:
             print "settings check failed: %s" % exc
-

@@ -115,7 +115,7 @@ def check_hash(configuration, service, username, password, hashed,
                             % (service, username, exc))
             return False
     else:
-        _logger.debug("password policy check disabled for %s login as %s" % \
+        _logger.debug("password policy check disabled for %s login as %s" %
                       (service, username))
     algorithm, hash_function, cost_factor, salt, hash_a = hashed.split('$')
     assert algorithm == 'PBKDF2'
@@ -265,7 +265,7 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     """
     salt = configuration.site_digest_salt
     merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
-    configuration.logger.debug("CSRF for %s" % merged)
+    #configuration.logger.debug("CSRF for %s" % merged)
     xor_id = "%s" % (int(salt, 16) ^ int(b16encode(merged), 16))
     token = hashlib.sha256(xor_id).hexdigest()
     return token
