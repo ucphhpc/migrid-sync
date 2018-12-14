@@ -28,7 +28,11 @@
 """Athentication helper functions"""
 
 import Cookie
+import base64
+import glob
+import hashlib
 import os
+import re
 import time
 
 # Only needed for 2FA so ignore import error and only fail on use
@@ -39,9 +43,10 @@ except ImportError:
 
 from shared.base import client_id_dir, extract_field, force_utf8
 from shared.defaults import twofactor_key_name, twofactor_key_bytes, \
-    twofactor_cookie_ttl
+    twofactor_cookie_bytes, twofactor_cookie_ttl
 from shared.fileio import read_file, delete_file, delete_symlink
 from shared.pwhash import scramble_password, unscramble_password
+from shared.fileio import pickle, unpickle
 
 
 def twofactor_available(configuration):
@@ -145,6 +150,21 @@ def get_twofactor_secrets(configuration, client_id):
     return (b32_key, otp_uri)
 
 
+def generate_session_prefix(configuration, client_id):
+    """Generate a session prefix with a hash of client_id"""
+    return hashlib.sha256(client_id).hexdigest()
+
+
+def generate_session_key(configuration, client_id):
+    """Generate a random session key with a hash of user id as prefix so that
+    it is easy to locate all sessions belonging to a particular user.
+    """
+    session_key = generate_session_prefix(configuration, client_id)
+    random_key = os.urandom(twofactor_cookie_bytes)
+    session_key += re.sub(r'[=+/]+', '', base64.b64encode(random_key))
+    return session_key
+
+
 def get_twofactor_token(configuration, client_id, b32_key):
     """Get current twofactor taken for base32 key"""
     _logger = configuration.logger
@@ -177,47 +197,134 @@ def client_twofactor_session(configuration,
     return session_cookie.value
 
 
-def check_twofactor_session(configuration,
-                            client_id,
-                            environ):
+def load_twofactor_session(configuration, session_key):
+    """Load given twofactor session"""
+    _logger = configuration.logger
+    session_path = os.path.join(configuration.twofactor_home, session_key)
+    # Use session file timestamp as default session start
+    try:
+        session_expire = os.stat(session_path).st_ctime + twofactor_cookie_ttl
+    except Exception, exc:
+        _logger.warning("Could not stat session_path %s: %s" % (session_path,
+                                                                exc))
+        return {}
+    # NOTE: try to load pickle but with fallback to legacy plain file
+    session_data = unpickle(session_path, _logger)
+    if session_data:
+        # new pickle format contains explicit session_end
+        session_expire = session_data.get('session_end', session_expire)
+    else:
+        legacy_session = read_file(session_path, _logger)
+        session_lines = legacy_session.split('\n')
+        session_data = {'user_agent': 'UNKNOWN', 'user_addr': 'UNKNOWN',
+                        'client_id': 'UNKNOWN', 'session_end': session_expire,
+                        'session_start': session_expire - twofactor_cookie_ttl}
+        for (key, val) in zip(['user_agent', 'user_addr', 'client_id'],
+                              session_lines):
+            session_data[key] = val.strip()
+    return session_data
+
+
+def save_twofactor_session(configuration, client_id, session_key, user_addr,
+                           user_agent, session_start, session_end=-1):
+    """Save twofactor session dict for client_id"""
+    session_path = os.path.join(configuration.twofactor_home, session_key)
+    if session_end < 0:
+        session_end = session_start + twofactor_cookie_ttl
+    session_data = {'client_id': client_id, 'session_key': session_key,
+                    'user_addr': user_addr, 'user_agent': user_agent,
+                    'session_start': session_start, 'session_end': session_end}
+    return pickle(session_data, session_path, configuration.logger)
+
+
+def list_twofactor_sessions(configuration, client_id, user_addr=None):
+    """List all twofactor sessions for client_id. Optionally filter with client
+    source.
+    """
+    _logger = configuration.logger
+    sessions = {}
+    client_prefix = generate_session_prefix(configuration, client_id)
+    pattern = os.path.join(configuration.twofactor_home, client_prefix+'*')
+    for session_path in glob.glob(pattern):
+        session_key = os.path.basename(session_path)
+        session_data = load_twofactor_session(configuration, session_key)
+        if session_data.get('client_id', None) != client_id:
+            _logger.debug("skip session %s without user match for %s" %
+                          (session_data, client_id))
+            continue
+        elif user_addr and session_data.get('user_addr', None) != user_addr:
+            _logger.debug("skip session %s without address match for %s (%s)" %
+                          (session_data, client_id, user_addr))
+            continue
+        sessions[session_key] = session_data
+    _logger.debug("found sessions for %s: %s" % (client_id, sessions.keys()))
+    return sessions
+
+
+def active_twofactor_session(configuration, client_id, user_addr=None):
+    """Load (latest) active twofactor session dict for client_id if any.
+    Optionally filter to only target sessions originating from user_addr.
+    """
+    _logger = configuration.logger
+    sessions = list_twofactor_sessions(configuration, client_id, user_addr)
+    latest = None
+    now = time.time()
+    for session_data in sessions.values():
+        # Already checked client_id and optional user_addr match in list
+        if session_data.get('session_end', -1) < now:
+            _logger.debug("skip expired session %s (%s)" %
+                          (session_data, now))
+            continue
+        elif latest is None or latest.get('session_end', -1) < \
+                session_data.get('session_end', -1):
+            latest = session_data
+    _logger.debug("latest session for %s is %s" % (client_id, latest))
+    return latest
+
+
+def check_twofactor_active(configuration,
+                           client_id,
+                           user_addr,
+                           environ):
     """Check active twofactor session for user with identity. Looks up any
     corresponding session cookies and extracts the session_id. In case a
     matching session_id state file exists it is read and verified to belong to
     the user and still not be expired.
+    The user_addr argument is used to make sure an active twofactor session
+    exists from that particular address. It can be set to None to disable the
+    address check and allow users to change network as long as they have an
+    active 2FA session.
     """
     _logger = configuration.logger
     session_id = client_twofactor_session(configuration, client_id, environ)
     if not session_id:
         _logger.warning("no 2FA session found for %s" % client_id)
         return False
-    session_path = os.path.join(configuration.twofactor_home, session_id)
-    session_data = read_file(session_path, _logger)
-    session_expire = os.stat(session_path).st_ctime + twofactor_cookie_ttl
-    now = time.time()
+    session_data = active_twofactor_session(configuration, client_id,
+                                            user_addr)
     if session_data is None:
-        return False
-    elif session_data.find(client_id) == -1:
-        _logger.error("2FA session %s does not belong to %s - ignoring! (%s)" %
-                      (session_id, client_id, session_data))
-        return False
-    elif session_expire < now:
-        _logger.info("2FA session %s for %s expired (%s)" %
-                     (session_id, client_id, session_expire))
+        _logger.debug("No active 2FA session for %s (%s)" % (client_id,
+                                                             user_addr))
         return False
     else:
-        _logger.debug("2FA session %s for %s is valid (%s)" %
-                      (session_id, client_id, session_expire))
+        _logger.debug("2FA session for %s (%s) is valid: %s" % (client_id,
+                                                                user_addr,
+                                                                session_data))
         return True
 
 
 def expire_twofactor_session(configuration,
                              client_id,
                              environ,
-                             allow_missing=False):
-    """Expire active twofactor session for user with identity. Looks up any
-    corresponding session cookies and extracts the session_id. In case a
+                             allow_missing=False,
+                             user_addr=None):
+    """Expire active twofactor session for user with client_id. Looks up any
+    corresponding session cookie and extracts the session_id. In case a
     matching session_id state file exists it is deleted after checking that it
     does indeed originate from the client_id.
+    The optional user_addr argument is used to only expire the active session
+    from a particular source address for client_id. Left to None in gdp mode to
+    expire all sessions and make sure only one session is ever active at a time.
     """
     _logger = configuration.logger
     session_id = client_twofactor_session(configuration, client_id, environ)
@@ -226,34 +333,27 @@ def expire_twofactor_session(configuration,
         if allow_missing:
             return True
         return False
-    session_path = os.path.join(configuration.twofactor_home, session_id)
-    session_data = read_file(session_path, _logger)
-    if session_data is None:
+    # Expire all client_id session files matching user_addr
+    sessions = list_twofactor_sessions(configuration, client_id, user_addr)
+    if not sessions:
         if allow_missing:
-            _logger.info("2FA session empty: %s" % session_path)
+            _logger.info("No active 2FA session for %s (%s)" % (client_id,
+                                                                user_addr))
             return True
-        _logger.error("no 2FA session to expire: %s" % session_path)
+        _logger.error("no 2FA session to expire for %s (%s)" % (client_id,
+                                                                user_addr))
         expired = False
-    elif session_data.find(client_id) == -1:
-        _logger.error("2FA session %s does not belong to %s - ignoring! (%s)" %
-                      (session_id, client_id, session_data))
-        expired = False
-    else:
+    for (session_key, session_data) in sessions.items():
+        session_path = os.path.join(configuration.twofactor_home, session_key)
+        # Already checked client_id and optionally user_addr match
         delete_status = True
         if delete_file(session_path, _logger, allow_missing=allow_missing):
-            _logger.info("expired 2FA session %s for %s" %
-                         (session_id, client_id))
-            client_dir = client_id_dir(client_id)
-            client_link_path = os.path.join(configuration.twofactor_home,
-                                            client_dir)
-            if not delete_symlink(client_link_path, _logger):
-                _logger.warning(
-                    "failed to delete 2FA session symlink %s for %s"
-                    % (client_link_path, client_id))
+            _logger.info("expired 2FA session %s for %s in %s" %
+                         (session_data, client_id, session_path))
             expired = True
         else:
-            _logger.error("failed to delete 2FA session file %s for %s!" %
-                          (session_path, client_id))
+            _logger.error("failed to delete 2FA session file %s for %s in %s" %
+                          (session_path, client_id, session_path))
             expired = False
 
     return expired

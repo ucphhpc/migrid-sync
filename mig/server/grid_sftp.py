@@ -1028,6 +1028,12 @@ class SimpleSSHServer(paramiko.ServerInterface):
         update_login_map(daemon_conf, changed_users, changed_jobs,
                          changed_shares)
 
+        # For e.g. GDP we require all logins to match active 2FA session IP,
+        # but otherwise user may freely switch net during 2FA lifetime.
+        if configuration.site_twofactor_strict_address:
+            enforce_address = client_ip
+        else:
+            enforce_address = None
         hash_cache = daemon_conf['hash_cache']
         offered = password
         # Only sharelinks should be excluded from strict password policy
@@ -1055,7 +1061,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                         configuration, 'sftp', username, offered, allowed,
                         hash_cache, strict_policy) and \
                         check_twofactor_session(configuration, username,
-                                                'sftp-pw'):
+                                                enforce_address, 'sftp-pw'):
                         self.logger.info(
                             "Accepted password login for %s from %s" %
                             (username, client_ip))
@@ -1101,6 +1107,12 @@ class SimpleSSHServer(paramiko.ServerInterface):
         update_login_map(daemon_conf, changed_users, changed_jobs,
                          changed_shares, changed_jupyter_mounts)
 
+        # For e.g. GDP we require all logins to match active 2FA session IP,
+        # but otherwise user may freely switch net during 2FA lifetime.
+        if configuration.site_twofactor_strict_address:
+            enforce_address = client_ip
+        else:
+            enforce_address = None
         offered = key.get_base64()
         if hit_rate_limit(configuration, "sftp-key", client_ip, username,
                           max_fails=10):
@@ -1121,7 +1133,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                     # self.logger.debug("Public key check for %s" % username)
                     if allowed == offered and \
                         check_twofactor_session(configuration, username,
-                                                'sftp-key'):
+                                                enforce_address, 'sftp-key'):
                         self.logger.info(
                             "Accepted public key login for %s from %s" %
                             (username, client_ip))

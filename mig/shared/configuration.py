@@ -930,6 +930,11 @@ location.""" % self.config_file
                 'SITE', 'enable_twofactor')
         else:
             self.site_enable_twofactor = False
+        if config.has_option('SITE', 'twofactor_strict_address'):
+            self.site_twofactor_strict_address = config.getboolean(
+                'SITE', 'twofactor_strict_address')
+        else:
+            self.site_twofactor_strict_address = False
         if config.has_option('SITE', 'enable_crontab'):
             self.site_enable_crontab = config.getboolean(
                 'SITE', 'enable_crontab')
@@ -1703,6 +1708,10 @@ location.""" % self.config_file
         if config.has_option('ARC', 'arc_clusters'):
             self.arc_clusters = config.get('ARC',
                                            'arc_clusters').split()
+
+        # Force same 2FA address for IO logins in GDP mode
+        if self.site_enable_gdp:
+            self.site_twofactor_strict_address = True
 
     def parse_peers(self, peerfile):
 

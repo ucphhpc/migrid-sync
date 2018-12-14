@@ -202,6 +202,12 @@ class MiGUserAuthorizer(DummyAuthorizer):
         self._update_logins(configuration, username)
 
         daemon_conf = configuration.daemon_conf
+        # For e.g. GDP we require all logins to match active 2FA session IP,
+        # but otherwise user may freely switch net during 2FA lifetime.
+        if configuration.site_twofactor_strict_address:
+            enforce_address = client_ip
+        else:
+            enforce_address = None
         hash_cache = daemon_conf['hash_cache']
         offered = password
         # Only sharelinks should be excluded from strict password policy
@@ -224,7 +230,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
                         configuration, 'ftps', username, offered, allowed,
                         hash_cache, strict_policy) and \
                         check_twofactor_session(configuration, username,
-                                                'ftps'):
+                                                enforce_address, 'ftps'):
                         logger.info("Accepted password login for %s from %s" %
                                     (username, client_ip))
                         self.authenticated_user = username

@@ -36,6 +36,7 @@ import socket
 import time
 import threading
 
+from shared.auth import active_twofactor_session
 from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path, force_utf8
 from shared.defaults import dav_domain, io_session_timeout, \
@@ -1707,7 +1708,7 @@ def active_sessions(configuration,
     return result
 
 
-def valid_twofactor_session(configuration, client_id):
+def valid_twofactor_session(configuration, client_id, addr=None):
     """Check if *client_id* has a valid 2FA session.
     NOTE:
     1) In this first version 2FA sessions are solely activated
@@ -1718,29 +1719,17 @@ def valid_twofactor_session(configuration, client_id):
        and merge this function with the existing 'refresh_X_creds' framework
     """
     logger = configuration.logger
-    client_dir = client_id_dir(client_id)
-    client_link_path = os.path.join(configuration.twofactor_home, client_dir)
-    current_timestamp = time.time()
-    if os.path.exists(client_link_path):
-        twofa_session_key_path = os.path.realpath(client_link_path)
-        if os.path.exists(twofa_session_key_path):
-            twofa_session_key_timestamp = os.path.getmtime(
-                twofa_session_key_path)
-            if twofa_session_key_timestamp \
-                    > current_timestamp - twofactor_cookie_ttl:
-                return True
-            else:
-                expired_time = current_timestamp \
-                    - twofa_session_key_timestamp - twofactor_cookie_ttl
-                logger.warning(
-                    "2FA session_key for %s expired %s seconds ago"
-                    % (client_id, expired_time))
-        else:
-            logger.warning("no 2FA session_key found for %s" % client_id)
-    return False
+    session_data = active_twofactor_session(configuration, client_id, addr)
+    if session_data is None:
+        logger.warning("no 2FA session found for %s (%s)" % (client_id, addr))
+        return False
+    else:
+        logger.debug("valid 2FA session found for %s (%s): %s" %
+                     (client_id, addr, session_data))
+        return True
 
 
-def check_twofactor_session(configuration, username, proto):
+def check_twofactor_session(configuration, username, addr, proto):
     """Run any required 2-factor authentication checks for given username and
     proto.
     First check if site enables twofactor at all and in that case if the user
@@ -1779,18 +1768,18 @@ def check_twofactor_session(configuration, username, proto):
     if not twofactor_dict.get(proto_field, False):
         if configuration.site_enable_gdp:
 
-            # GDP require twofactor settings for all protocols 
+            # GDP require twofactor settings for all protocols
 
             msg = "Missing GDP twofactor settings for user: %s, protocol: %s" \
                 % (client_id, proto)
             logger.error(msg)
             return False
-        else:                                                           
+        else:
             # logger.debug("user %s does not require twofactor for %s" % (client_id,
             #                                                             proto))
             return True
     # logger.debug("check required 2FA session in %s for %s" % (proto, username))
-    return valid_twofactor_session(configuration, client_id)
+    return valid_twofactor_session(configuration, client_id, addr)
 
 
 if __name__ == "__main__":

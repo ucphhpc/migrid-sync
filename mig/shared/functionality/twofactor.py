@@ -34,9 +34,7 @@ but completely rewritten to fit our infrastructure and on-disk layout.
 """
 
 import Cookie
-import base64
 import os
-import re
 import sys
 import time
 import urllib
@@ -44,10 +42,11 @@ import urlparse
 
 import shared.returnvalues as returnvalues
 from shared.auth import twofactor_available, load_twofactor_key, \
-    get_twofactor_token, verify_twofactor_token
+    get_twofactor_token, verify_twofactor_token, generate_session_key, \
+    load_twofactor_session, save_twofactor_session
 from shared.base import force_utf8
 from shared.defaults import twofactor_cookie_bytes, twofactor_cookie_ttl
-from shared.fileio import delete_file, make_symlink, write_file
+from shared.fileio import delete_file, write_file
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
 from shared.settings import load_twofactor
@@ -219,7 +218,6 @@ Incorrect token provided - please try again
     else:
         logger.info("no 2FA requirement for %s on %s" % (client_id,
                                                          request_url))
-        session_key = 'DISABLED'
 
     # If we get here we either got correct token or verified 2FA to be disabled
 
@@ -227,28 +225,21 @@ Incorrect token provided - please try again
         logger.info("skip session init in setup check for %s" % client_id)
     else:
         cookie = Cookie.SimpleCookie()
+        # TODO: reuse any existing session?
         # create a secure session cookie
-        session_key = os.urandom(twofactor_cookie_bytes)
-        session_key = re.sub(r'[=+/]+', '', base64.b64encode(session_key))
+        session_key = generate_session_key(configuration, client_id)
+        session_start = time.time()
         cookie['2FA_Auth'] = session_key
         cookie['2FA_Auth']['path'] = '/'
+        # NOTE: SimpleCookie translates expires ttl to actual date from now
         cookie['2FA_Auth']['expires'] = twofactor_cookie_ttl
         cookie['2FA_Auth']['secure'] = True
         cookie['2FA_Auth']['httponly'] = True
 
         # Create the state file to inform apache (rewrite) about auth
-        session_path = os.path.join(configuration.twofactor_home, session_key)
-        client_link_path = os.path.join(
-            configuration.twofactor_home, client_dir)
-        # We save user info just to be able to monitor and expire active
-        # sessions
-        session_data = '''%s
-%s
-%s
-''' % (user_agent, user_addr, client_id)
-        write_status = True
-        if not write_file(session_data, session_path, configuration.logger):
-            delete_file(session_data, logger, allow_missing=True)
+        # We save user info to be able to monitor and expire active sessions
+        if not save_twofactor_session(configuration, client_id, session_key,
+                                      user_addr, user_agent, session_start):
             logger.error("could not create 2FA session for %s"
                          % client_id)
             output_objects.append(
@@ -257,18 +248,7 @@ Incorrect token provided - please try again
             return (output_objects, returnvalues.ERROR)
 
         logger.info("saved 2FA session for %s in %s"
-                    % (client_id, session_path))
-
-        # NOTE: this make_symlink call may result in a race if non-2FA clients
-        #       issue multiple parallel requests to trigger concurrent 2FA init.
-        #       Missing clean-up may also cause error in creation on next login.
-        # We only need the symlink to 2FA log out so we ignore all such errors.
-        if make_symlink(session_key, client_link_path, logger, force=True):
-            logger.info("created 2FA session symlink %s -> %s"
-                        % (session_path, client_link_path))
-        else:
-            logger.error("2FA session symlink create %s -> %s failed" %
-                         (session_path, client_link_path))
+                    % (client_id, session_key))
 
     if redirect_url:
         headers.append(tuple(str(cookie).split(': ', 1)))

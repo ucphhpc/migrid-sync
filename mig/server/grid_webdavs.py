@@ -344,6 +344,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         tcp_port = _get_port(environ)
         session_id = _get_ssl_session_token(environ)
         # logger.debug("session_id: %s" % session_id)
+        # For e.g. GDP we require all logins to match active 2FA session IP,
+        # but otherwise user may freely switch net during 2FA lifetime.
+        if configuration.site_twofactor_strict_address:
+            enforce_address = ip_addr
+        else:
+            enforce_address = None
         success = False
         if session_id \
                 and is_authorized_session(configuration,
@@ -363,7 +369,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 logger.warning("Rate limiting login from %s" % ip_addr)
             elif self._check_auth_password(
                     ip_addr, realmname, username, password) and \
-                    check_twofactor_session(configuration, username, 'davs'):
+                    check_twofactor_session(configuration, username,
+                                            enforce_address, 'davs'):
                 logger.info("Accepted password login for %s from %s" %
                             (username, ip_addr))
                 success = True
@@ -416,6 +423,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
         session_id = _get_ssl_session_token(environ)
+        # For e.g. GDP we require all logins to match active 2FA session IP,
+        # but otherwise user may freely switch net during 2FA lifetime.
+        if configuration.site_twofactor_strict_address:
+            enforce_address = ip_addr
+        else:
+            enforce_address = None
         # logger.debug("session_id: %s" % session_id)
         success = False
         if session_id \
@@ -431,7 +444,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             update_users(configuration, self.user_map, username)
 
             if self._get_user_digests(ip_addr, realmname, username) and \
-                    check_twofactor_session(configuration, username, 'davs'):
+                    check_twofactor_session(configuration, username,
+                                            enforce_address, 'davs'):
                 # logger.debug("valid digest user %s from %s:%s" %
                 #              (username, ip_addr, tcp_port))
                 success = True
