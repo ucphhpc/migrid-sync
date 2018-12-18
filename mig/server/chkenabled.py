@@ -97,9 +97,16 @@ if '__main__' == __name__:
 
     if verbose:
         print 'Lookup configuration value for %s' % feature
+    retval = 42
     try:
         configuration = get_configuration_object(skip_log=True)
-        print getattr(configuration, "site_enable_%s" % feature)
+        enabled = getattr(configuration, "site_enable_%s" % feature)
+        if verbose:
+            print 'Configuration value for %s: %s' % (feature, enabled)
+        if enabled:
+            retval = 0
     except Exception, err:
         print err
         sys.exit(1)
+
+    sys.exit(retval)

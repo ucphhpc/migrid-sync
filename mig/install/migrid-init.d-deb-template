@@ -59,18 +59,18 @@ MIG_CHKUSERROOT=${MIG_CODE}/server/chkuserroot.py
 MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 
 show_usage() {
-    echo "Usage: migrid {start|stop|status|restart|reload} [daemon]"
-    echo "where daemon is left empty for all or given as one of the following"
+    echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
+    echo "where daemon is left out for all or given along with DAEMON as one of the following"
     echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)"
 }
 
 check_enabled() {
-    su - ${MIG_USER} -c "python ${MIG_CODE}/server/chkenabled.py $1"
+    su - ${MIG_USER} -c "python ${MIG_CODE}/server/chkenabled.py $1" > /dev/null
     DAEMON_ENABLED=$?
-    if [ $DAEMON_ENABLED_ENABLED -ne 0 ]; then
+    if [ ${DAEMON_ENABLED} -ne 0 ]; then
         echo "$1 not enabled in MiGserver conf - skipping"
     fi
-    return $DAEMON_ENABLED
+    return ${DAEMON_ENABLED}
 }
 
 kick_script() {
@@ -889,11 +889,28 @@ case "$1" in
     status)
         eval "status_$TARGET" && exit 0 || exit $?
 	;;
-    restart|force-reload)
+    restart)
         eval "stop_$TARGET"
         eval "start_$TARGET"
 	;;
     reload)
+        eval "reload_$TARGET"
+	;;
+    # NOTE: we need custom targets for single daemon actions (systemd issue?)
+    startdaemon)
+        eval "start_$TARGET"
+	;;
+    stopdaemon)
+        eval "stop_$TARGET"
+	;;
+    statusdaemon)
+        eval "status_$TARGET"
+	;;
+    restartdaemon)
+        eval "stop_$TARGET"
+        eval "start_$TARGET"
+	;;
+    reloaddaemon)
         eval "reload_$TARGET"
 	;;
     *)

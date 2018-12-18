@@ -34,7 +34,7 @@ getssl_tmp="/tmp/getssl"
 getssl_script="getssl"
 getssl_path=`which ${getssl_script} 2>/dev/null`
 apache_services="httpd apache2"
-migrid_services="migrid"
+migrid_subservices="ftps webdavs openid"
 
 if [[ $(id -u) -ne 0 ]]; then
     echo "Please run $0 as root"
@@ -135,7 +135,7 @@ if [[ ${org_mtime} -ne ${new_mtime} ]]; then
 
     chown 0:0 ${domain_cert_path}/*.{key,pem}
 
-    if [ -n "${migrid_services}" ]; then
+    if [ -n "${migrid_subservices}" ]; then
         if [[ ${verbose} -eq 1 ]]; then
             echo "Creating ${combined_pem} and ${combined_pub}"
         fi
@@ -169,9 +169,18 @@ if [[ ${org_mtime} -ne ${new_mtime} ]]; then
 
     chmod 400 ${domain_cert_path}/*.{key,pem}
 
-    # Restart migrid and apache services if they exist
+    # Restart migrid and apache service daemons if set
 
-    for svc in ${migrid_services} ${apache_services}; do
+    for subsvc in ${migrid_subservices}; do
+        service migrid statusdaemon ${subsvc} > /dev/null 2>&1
+        if [[ $? -eq 0 ]]; then
+            if [[ ${verbose} -eq 1 ]]; then
+                echo "--- Restarting migrid daemon: ${subsvc} ---"
+            fi
+            service migrid restartdaemon ${subsvc}
+        fi
+    done
+    for svc in ${apache_services}; do
         service ${svc} status > /dev/null 2>&1
         if [[ $? -eq 0 ]]; then
             if [[ ${verbose} -eq 1 ]]; then
