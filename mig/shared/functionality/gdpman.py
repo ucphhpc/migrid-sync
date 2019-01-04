@@ -38,8 +38,9 @@ from shared.base import get_xgi_bin
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.gdp import ensure_user, get_projects, get_users, \
-    project_accept, project_create, project_invite, project_login, \
-    project_logout, project_remove_user, validate_user
+    get_active_project_client_id, project_accept, project_create, \
+    project_invite, project_login, project_logout, project_remove_user, \
+    validate_user
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, jquery_ui_js, twofactor_wizard_html, \
     twofactor_wizard_js
@@ -115,6 +116,7 @@ def html_tmpl(
 
     # Generate html
 
+    status_html = ""
     html = \
         """
         <form id='gm_project_submit_form' action='gdpman.py', method='post'>
@@ -172,7 +174,7 @@ def html_tmpl(
         </script>""" % preselected_tab
 
     if status_msg:
-        status_html = \
+        status_html += \
             """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
@@ -785,6 +787,11 @@ def main(client_id, user_arguments_dict, environ=None):
     base_vgrid_name = accepted['base_vgrid_name'][-1].strip()
     workzone_id = accepted['gdp_workzone_id'][-1].strip()
     username = accepted['username'][-1].strip()
+    if action:
+        _logger.info("GDP Manager: ip: '%s', action: '%s', base_vgrid_name: '%s'"
+                     % (client_addr, action, base_vgrid_name)
+                     + ", workzone_id: '%s', username: '%s'"
+                     % (workzone_id, username))
 
     # Generate header, title, css and js
 
@@ -866,9 +873,8 @@ Please contact the Grid admins %s if you think it should be enabled.
                 {'object_type': 'error_text', 'text': msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        (parse_status, parse_msg) = \
-            parse_and_save_twofactor(tmptopicfile, client_id,
-                                     configuration)
+        (parse_status, parse_msg) = parse_and_save_twofactor(tmptopicfile, client_id,
+                                                             configuration)
 
         try:
             os.remove(tmptopicfile)
@@ -881,8 +887,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             logger.error("%s -> %s" % (status_msg, parse_msg))
             html = status_msg
         else:
-            html = \
-                """
+            html = """
             <a id='gdp_twofactorlogin' href='%s'></a>
             <script type='text/javascript'>
                 document.getElementById('gdp_twofactorlogin').click();
@@ -899,21 +904,22 @@ Please contact the Grid admins %s if you think it should be enabled.
     ensure_user(configuration, client_addr, client_id)
 
     if not action or action == 'logout':
-        autologout = project_logout(configuration,
-                                    'https',
-                                    client_addr,
-                                    client_id,
-                                    autologout=True)
+        active_project_client_id = get_active_project_client_id(
+            configuration, client_id, 'https')
 
-        if autologout or action == 'logout':
+        if active_project_client_id or action == 'logout':
+            project_logout(configuration,
+                           'https',
+                           client_addr,
+                           client_id,
+                           autologout=True)
             return_url = req_url
             if action == 'logout':
                 return_query_dict = None
             else:
                 return_query_dict = user_arguments_dict
 
-            html = \
-                """
+            html = """
             <a id='autologout' href='%s'></a>
             <script type='text/javascript'>
                 document.getElementById('autologout').click();
@@ -936,8 +942,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                                                     client_addr,
                                                     'https')
     if not validate_status:
-        html = \
-            """
+        html = """
             <table class='gm_projects_table' style='border-spacing=0;'>
             <thead>
                 <tr>
@@ -973,8 +978,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                 base_url = environ.get('REQUEST_URI',
                                        '').split('?')[0].replace(op_name,
                                                                  dest_op_name)
-                html = \
-                    """
+                html = """
                 <a id='gdp_login' href='%s'></a>
                 <script type='text/javascript'>
                     document.getElementById('gdp_login').click();
@@ -1082,7 +1086,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             action_msg = validate_msg
         html = html_tmpl(configuration, action, client_id, csrf_token,
                          action_msg)
-        #html += html_logout_tmpl(configuration, csrf_token)
+        # html += html_logout_tmpl(configuration, csrf_token)
         output_objects.append({'object_type': 'html_form',
                                'text': html})
 
