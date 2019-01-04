@@ -234,14 +234,16 @@ def create_user(
 
     if verbose:
         print 'User ID: %s\n' % client_id
-    if os.path.exists(db_path):
+    if not os.path.exists(db_path):
+        raise Exception("Missing user DB: '%s'" % db_path)
+    else:
         try:
             user_db = load(db_path)
             if verbose:
                 print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             if not force:
-                raise Exception('Failed to load user DB!')
+                raise Exception("Failed to load user DB: '%s'" % db_path)
 
         # Prevent alias clashes by preventing addition of new users with same
         # alias. We only allow renew of existing user.
