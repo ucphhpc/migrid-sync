@@ -895,6 +895,8 @@ openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict
         ("index-template.html", "index.html"),
         ("openssh-MiG-sftp-subsys-template.conf", "sshd_config-MiG-sftp-subsys"),
         ("fail2ban-MiG-daemons-filter-template.conf", "MiG-daemons-filter.conf"),
+        ("fail2ban-MiG-daemons-handshake-filter-template.conf",
+         "MiG-daemons-handshake-filter.conf"),
         ("fail2ban-MiG-daemons-pw-crack-filter-template.conf",
          "MiG-daemons-pw-crack-filter.conf"),
         ("fail2ban-sshd-pw-crack-filter-template.conf", "sshd-pw-crack-filter.conf"),
@@ -998,6 +1000,8 @@ password errors to prevent brute-force scans for all MiG network daemons.
 You can install them with:
 sudo cp %(destination)s/MiG-daemons-filter.conf \\
         /etc/fail2ban/filter.d/MiG-daemons.conf
+sudo cp %(destination)s/MiG-daemons-handshake-filter.conf \\
+        /etc/fail2ban/filter.d/MiG-daemons-handshake.conf
 sudo cp %(destination)s/MiG-daemons-pw-crack-filter.conf \\
         /etc/fail2ban/filter.d/MiG-daemons-pw-crack.conf
 sudo cp %(destination)s/sshd-pw-crack-filter.conf \\
