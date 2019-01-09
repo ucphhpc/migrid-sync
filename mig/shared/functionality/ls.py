@@ -41,13 +41,13 @@ from shared.defaults import seafile_ro_dirname, trash_destdir, csrf_field
 from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
-     confirm_js, confirm_html, themed_styles
+    confirm_js, confirm_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
 from shared.sharelinks import extract_mode_id
 from shared.validstring import valid_user_path
 from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \
-     in_vgrid_readonly, in_vgrid_writable, in_vgrid_store_res
+    in_vgrid_readonly, in_vgrid_writable, in_vgrid_store_res
 
 
 def signature():
@@ -55,6 +55,7 @@ def signature():
     defaults = {'flags': [''], 'path': ['.'], 'share_id': [''],
                 'current_dir': ['.']}
     return ['dir_listings', defaults]
+
 
 def select_all_javascript():
     """javascript to select all html checkboxes"""
@@ -64,6 +65,7 @@ function toggleChecked() {
    $('td input[type=checkbox]').prop('checked', doCheck);
 }
     """
+
 
 def selected_file_actions_javascript():
     """javascript  to dynamically select action for marked items"""
@@ -104,6 +106,7 @@ function selectedFilesAction() {
 }
     """
 
+
 def fileinfo_stat(path):
     """Additional stat information for file manager"""
     file_information = {'size': 0, 'created': 0, 'modified': 0, 'accessed': 0,
@@ -111,16 +114,18 @@ def fileinfo_stat(path):
     if os.path.exists(path):
         ext = 'dir'
         if not os.path.isdir(path):
-            ext = os.path.splitext(path)[1].replace('.', '')
-        file_information = {'size': os.path.getsize(path),
-                            'created': os.path.getctime(path),
-                            'modified': os.path.getmtime(path),
-                            'accessed': os.path.getatime(path),
-                            'ext': ext
-        }
-        
+            ext = os.path.splitext(path)[1].lstrip('.')
+        file_information['ext'] = ext
+        try:
+            file_information['size'] = os.path.getsize(path)
+            file_information['created'] = os.path.getctime(path)
+            file_information['modified'] = os.path.getmtime(path)
+            file_information['accessed'] = os.path.getatime(path)
+        except OSError, ose:
+            pass
     return file_information
-    
+
+
 def long_format(path):
     """output extra info like filesize about the file located at path"""
     format_line = ''
@@ -167,13 +172,13 @@ def handle_file(
     file_with_dir,
     actual_file,
     flags='',
-    ):
+):
     """handle a file"""
 
     # Build entire line before printing to avoid newlines
 
     # Recursion can get here when called without explicit invisible files
-    
+
     if invisible_path(file_with_dir):
         return
     special = ''
@@ -188,12 +193,12 @@ def handle_file(
         'file_with_dir': file_with_dir,
         'flags': flags,
         'special': special,
-        }
+    }
     if long_list(flags):
         file_obj['long_format'] = long_format(actual_file)
-        
-    if file_info(flags):    
-        file_obj['file_info'] = fileinfo_stat(actual_file)        
+
+    if file_info(flags):
+        file_obj['file_info'] = fileinfo_stat(actual_file)
 
     listing.append(file_obj)
 
@@ -205,22 +210,22 @@ def handle_dir(
     dirname_with_dir,
     actual_dir,
     flags='',
-    ):
+):
     """handle a dir"""
 
     # Recursion can get here when called without explicit invisible files
-    
+
     if invisible_path(dirname_with_dir):
         return
     special = ''
     extra_class = ''
     real_dir = os.path.realpath(actual_dir)
-    abs_dir =  os.path.abspath(actual_dir)
+    abs_dir = os.path.abspath(actual_dir)
     # If we followed a symlink it is not a plain dir
     if real_dir != abs_dir:
         access_type = configuration.site_vgrid_label
         parent_dir = os.path.basename(os.path.dirname(actual_dir))
-        #configuration.logger.debug("checking link %s type (%s)" % \
+        # configuration.logger.debug("checking link %s type (%s)" % \
         #                           (dirname_with_dir, real_dir))
         # Separate vgrid special dirs from plain ones
         if dirname_with_dir in (in_vgrid_share(configuration, actual_dir),
@@ -232,16 +237,16 @@ def handle_dir(
             dir_type = 'shared files'
             extra_class = 'vgridshared readonly'
         elif in_vgrid_pub_web(configuration, actual_dir) == \
-                 dirname_with_dir[len('public_base/'):]:
+                dirname_with_dir[len('public_base/'):]:
             dir_type = 'public web page'
             extra_class = 'vgridpublicweb'
         elif in_vgrid_priv_web(configuration, actual_dir) == \
-                 dirname_with_dir[len('private_base/'):]:
+                dirname_with_dir[len('private_base/'):]:
             dir_type = 'private web page'
             extra_class = 'vgridprivateweb'
         # NOTE: in_vgrid_X returns None on miss, so don't use replace directly
         elif (in_vgrid_store_res(configuration, actual_dir) or '').replace(
-            os.sep, '_') == os.path.basename(dirname_with_dir):
+                os.sep, '_') == os.path.basename(dirname_with_dir):
             dir_type = 'storage resource files'
             if os.path.islink(actual_dir):
                 extra_class = 'vgridstoreres'
@@ -256,7 +261,7 @@ def handle_dir(
         else:
             dir_type = 'sub'
         # TODO: improve this greedy matching here?
-        #configuration.logger.debug("check real_dir %s vs %s" % (real_dir,
+        # configuration.logger.debug("check real_dir %s vs %s" % (real_dir,
         #                                                        trash_destdir))
         if real_dir.endswith(trash_destdir):
             dir_type = ''
@@ -274,11 +279,11 @@ def handle_dir(
         'flags': flags,
         'special': special,
         'extra_class': extra_class,
-        }
+    }
 
     if long_list(flags):
         dir_obj['actual_dir'] = long_format(actual_dir)
-        
+
     if file_info(flags):
         dir_obj['file_info'] = fileinfo_stat(actual_dir)
 
@@ -293,15 +298,15 @@ def handle_ls(
     real_path,
     flags='',
     depth=0,
-    ):
+):
     """Recursive function to emulate GNU ls (-R)"""
 
     # Sanity check
 
     if depth > 255:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error: file recursion maximum exceeded!'
-                              })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error: file recursion maximum exceeded!'
+                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # references to '.' or similar are stripped by abspath
@@ -313,7 +318,7 @@ def handle_ls(
         relative_path = real_path.replace(base_dir, '')
 
     # Recursion can get here when called without explicit invisible files
-    
+
     if invisible_path(relative_path):
         return
 
@@ -324,8 +329,8 @@ def handle_ls(
         try:
             contents = os.listdir(real_path)
         except Exception, exc:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Failed to list contents of %s: %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Failed to list contents of %s: %s'
                                    % (base_name, exc)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -367,7 +372,7 @@ def handle_ls(
                 real_path,
                 flags,
                 -1,
-                )
+            )
 
             for name in contents:
                 path = real_path + os.sep + name
@@ -381,7 +386,7 @@ def handle_ls(
                         path,
                         flags,
                         depth + 1,
-                        )
+                    )
 
 
 def main(client_id, user_arguments_dict):
@@ -396,7 +401,7 @@ def main(client_id, user_arguments_dict):
         defaults,
         output_objects,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -429,10 +434,11 @@ def main(client_id, user_arguments_dict):
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
         except ValueError, err:
-            logger.error('%s called with invalid share_id %s: %s' % \
+            logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Invalid sharelink ID: %s' % share_id})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Invalid sharelink ID: %s' % share_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         # then include shared by %(owner)s on page header
@@ -469,9 +475,9 @@ def main(client_id, user_arguments_dict):
             '''
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Authentication is missing!'
-                              })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Authentication is missing!'
+                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     visibility_toggle = '''
@@ -479,7 +485,7 @@ def main(client_id, user_arguments_dict):
         %s
         </style>
         ''' % (visibility_mods % {'main_id': main_id})
-    
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
@@ -487,9 +493,9 @@ def main(client_id, user_arguments_dict):
 
     if not os.path.isdir(base_dir):
         logger.error('%s called on missing base_dir: %s' % (op_name, base_dir))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'No such %s!' % page_title.lower()
-                              })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'No such %s!' % page_title.lower()
+                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
@@ -549,15 +555,15 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': confirm_html(configuration)})
 
-    # Shared URL helpers 
+    # Shared URL helpers
     ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s;flags=%s' % \
                       (id_args, flags)
     csrf_token = make_csrf_token(configuration, form_method, 'rm', client_id,
                                  csrf_limit)
     rm_url_template = 'rm.py?%spath=%%(rel_path_enc)s;%s=%s' % \
                       (id_args, csrf_field, csrf_token)
-    rmdir_url_template ='rm.py?%spath=%%(rel_path_enc)s;flags=r;%s=%s' % \
-                         (id_args, csrf_field, csrf_token)
+    rmdir_url_template = 'rm.py?%spath=%%(rel_path_enc)s;flags=r;%s=%s' % \
+        (id_args, csrf_field, csrf_token)
     editor_url_template = 'editor.py?%spath=%%(rel_path_enc)s' % id_args
     redirect_url_template = '/%s/%%(rel_path_enc)s' % redirect_path
 
@@ -569,8 +575,8 @@ Working directory:
 </td></tr>
 <tr><td class='centertext'>
 """
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : location_pre_html})
+    output_objects.append(
+        {'object_type': 'html_form', 'text': location_pre_html})
     # Use current_dir nav location links
     for pattern in pattern_list[:1]:
         links = []
@@ -583,10 +589,11 @@ Working directory:
                 continue
             prefix = os.path.join(prefix, i)
             links.append({'object_type': 'link', 'text': i,
-                         'destination': ls_url_template % \
+                          'destination': ls_url_template %
                           {'rel_dir_enc': quote(prefix)}})
-        output_objects.append({'object_type': 'multilinkline', 'links'
-                              : links, 'sep': ' %s ' % os.sep})
+        output_objects.append(
+            {'object_type': 'multilinkline', 'links': links, 'sep': ' %s ' %
+             os.sep})
     location_post_html = """
 </td></tr>
 </table>
@@ -594,8 +601,8 @@ Working directory:
 <br />
 """
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : location_post_html})
+    output_objects.append(
+        {'object_type': 'html_form', 'text': location_post_html})
 
     more_html = """
 <div class='files if_full'>
@@ -627,8 +634,7 @@ Action on paths selected below
 </div>
 """ % {'form_method': form_method}
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : more_html})
+    output_objects.append({'object_type': 'html_form', 'text': more_html})
     dir_listings = []
     output_objects.append({
         'object_type': 'dir_listings',
@@ -642,7 +648,7 @@ Action on paths selected below
         'rmdir_url_template': rmdir_url_template,
         'editor_url_template': editor_url_template,
         'redirect_url_template': redirect_url_template,
-        })
+    })
 
     first_match = None
     for pattern in pattern_list:
@@ -670,13 +676,13 @@ Action on paths selected below
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         # Never show any ls output in write-only mode (css hide is not enough!)
         if not read_mode:
             continue
-        
+
         for abs_path in match:
             if abs_path + os.sep == base_dir:
                 relative_path = '.'
@@ -688,14 +694,13 @@ Action on paths selected below
                 'relative_path': relative_path,
                 'entries': entries,
                 'flags': flags,
-                }
+            }
 
             handle_ls(configuration, output_objects, entries, base_dir,
                       abs_path, flags, 0)
             dir_listings.append(dir_listing)
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br/>
+    output_objects.append({'object_type': 'html_form', 'text': """<br/>
     <div class='files disable_read'>
     <p class='info icon'>"""})
     # Shared message for text (e.g. user scripts) and html-format
@@ -706,7 +711,7 @@ This is a write-only share so you do not have access to see the files, only
 upload data and create directories.
     """})
     output_objects.append({'object_type': 'html_form', 'text':
-                            """
+                           """
     </p>
     </div>
     <div class='files enable_read'>
@@ -781,7 +786,7 @@ upload data and create directories.
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
     """ % fill_helpers
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"% entry
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
     fill_helpers['tmp_flags'] = flags.replace('r', '')
     htmlform += """
     <input type='submit' value='On' /><br />
@@ -793,7 +798,7 @@ upload data and create directories.
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
     """ % fill_helpers
-                                  
+
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
                     % entry
@@ -829,7 +834,7 @@ upload data and create directories.
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
     """ % fill_helpers
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"% entry
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
     htmlform += """
     <input type='submit' value='Off' /><br />
     </form>
@@ -839,8 +844,7 @@ upload data and create directories.
 
     # show flag buttons after contents to limit clutter
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : htmlform})
+    output_objects.append({'object_type': 'html_form', 'text': htmlform})
 
     # create additional action forms
 
