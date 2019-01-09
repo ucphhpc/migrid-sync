@@ -85,7 +85,7 @@ kick_script() {
 #       and we do not need to explicitly forward MIG_CONF value.
 
 start_script() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -99,7 +99,7 @@ start_script() {
     fi
 }
 start_monitor() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_MONITOR}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -111,7 +111,7 @@ start_monitor() {
     fi
 }
 start_sshmux() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_SSHMUX}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -123,7 +123,7 @@ start_sshmux() {
     fi
 }
 start_events() {
-    check_enabled "events" || return
+    check_enabled "events" || return 0
     DAEMON_PATH=${MIG_EVENTS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -136,7 +136,7 @@ start_events() {
     fi
 }
 start_cron() {
-    check_enabled "crontab" || return
+    check_enabled "crontab" || return 0
     DAEMON_PATH=${MIG_CRON}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -149,7 +149,7 @@ start_cron() {
     fi
 }
 start_transfers() {
-    check_enabled "transfers" || return
+    check_enabled "transfers" || return 0
     DAEMON_PATH=${MIG_TRANSFERS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -161,7 +161,7 @@ start_transfers() {
     fi
 }
 start_openid() {
-    check_enabled "openid" || return
+    check_enabled "openid" || return 0
     DAEMON_PATH=${MIG_OPENID}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -173,7 +173,7 @@ start_openid() {
     fi
 }
 start_sftp() {
-    check_enabled "sftp" || return
+    check_enabled "sftp" || return 0
     DAEMON_PATH=${MIG_SFTP}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -185,7 +185,7 @@ start_sftp() {
     fi
 }
 start_webdavs() {
-    check_enabled "davs" || return
+    check_enabled "davs" || return 0
     DAEMON_PATH=${MIG_WEBDAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -197,7 +197,7 @@ start_webdavs() {
     fi
 }
 start_davs() {
-    check_enabled "davs" || return
+    check_enabled "davs" || return 0
     DAEMON_PATH=${MIG_DAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -209,7 +209,7 @@ start_davs() {
     fi
 }
 start_ftps() {
-    check_enabled "ftps" || return
+    check_enabled "ftps" || return 0
     DAEMON_PATH=${MIG_FTPS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -221,7 +221,7 @@ start_ftps() {
     fi
 }
 start_imnotify() {
-    check_enabled "imnotify" || return
+    check_enabled "imnotify" || return 0
     DAEMON_PATH=${MIG_IMNOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -233,7 +233,7 @@ start_imnotify() {
     fi
 }
 start_vmproxy() {
-    check_enabled "vmachines" || return
+    check_enabled "vmachines" || return 0
     DAEMON_PATH=${MIG_VMPROXY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -245,7 +245,7 @@ start_vmproxy() {
     fi
 }
 start_sftpsubsys() {
-    check_enabled "sftp_subsys" || return
+    check_enabled "sftp_subsys" || return 0
     DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     log_daemon_msg "Starting MiG sftpsubsys daemon" ${SHORT_NAME} || true
@@ -277,7 +277,7 @@ start_all() {
 # NOTE: We always manualy remove pid files as only the Debian start-stop-daemon
 # supports the --remove-pidfile flag
 stop_script() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -299,7 +299,7 @@ stop_script() {
     fi
 }
 stop_monitor() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_MONITOR}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -312,7 +312,7 @@ stop_monitor() {
     fi
 }
 stop_sshmux() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_SSHMUX}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -325,7 +325,7 @@ stop_sshmux() {
     fi
 }
 stop_events() {
-    check_enabled "events" || return
+    check_enabled "events" || return 0
     DAEMON_PATH=${MIG_EVENTS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -347,7 +347,7 @@ stop_events() {
     fi
 }
 stop_cron() {
-    check_enabled "crontab" || return
+    check_enabled "crontab" || return 0
     DAEMON_PATH=${MIG_CRON}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -369,7 +369,7 @@ stop_cron() {
     fi
 }
 stop_transfers() {
-    check_enabled "transfers" || return
+    check_enabled "transfers" || return 0
     DAEMON_PATH=${MIG_TRANSFERS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -391,7 +391,7 @@ stop_transfers() {
     fi
 }
 stop_openid() {
-    check_enabled "openid" || return
+    check_enabled "openid" || return 0
     DAEMON_PATH=${MIG_OPENID}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -404,7 +404,7 @@ stop_openid() {
     fi
 }
 stop_sftp() {
-    check_enabled "sftp" || return
+    check_enabled "sftp" || return 0
     DAEMON_PATH=${MIG_SFTP}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -417,7 +417,7 @@ stop_sftp() {
     fi
 }
 stop_webdavs() {
-    check_enabled "davs" || return
+    check_enabled "davs" || return 0
     DAEMON_PATH=${MIG_WEBDAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -430,7 +430,7 @@ stop_webdavs() {
     fi
 }
 stop_davs() {
-    check_enabled "davs" || return
+    check_enabled "davs" || return 0
     DAEMON_PATH=${MIG_DAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -443,7 +443,7 @@ stop_davs() {
     fi
 }
 stop_ftps() {
-    check_enabled "ftps" || return
+    check_enabled "ftps" || return 0
     DAEMON_PATH=${MIG_FTPS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -456,7 +456,7 @@ stop_ftps() {
     fi
 }
 stop_imnotify() {
-    check_enabled "imnotify" || return
+    check_enabled "imnotify" || return 0
     DAEMON_PATH=${MIG_IMNOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -469,7 +469,7 @@ stop_imnotify() {
     fi
 }
 stop_vmproxy() {
-    check_enabled "vmachines" || return
+    check_enabled "vmachines" || return 0
     DAEMON_PATH=${MIG_VMPROXY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -490,7 +490,7 @@ stop_sftpsubsys_workers() {
     log_end_msg $? || true
 }
 stop_sftpsubsys() {
-    check_enabled "sftp_subsys" || return
+    check_enabled "sftp_subsys" || return 0
     DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     log_daemon_msg "Stopping MiG sftpsubsys" ${SHORT_NAME} || true
@@ -524,7 +524,7 @@ stop_all() {
 
 # NOTE: start-stop-daemon --stop --signal HUP BLA just means send HUP signal
 reload_script() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -536,7 +536,7 @@ reload_script() {
     fi
 }
 reload_monitor() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_MONITOR}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -548,7 +548,7 @@ reload_monitor() {
     fi
 }
 reload_sshmux() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_SSHMUX}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -560,7 +560,7 @@ reload_sshmux() {
     fi
 }
 reload_events() {
-    check_enabled "events" || return
+    check_enabled "events" || return 0
     DAEMON_PATH=${MIG_EVENTS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -572,7 +572,7 @@ reload_events() {
     fi
 }
 reload_cron() {
-    check_enabled "crontab" || return
+    check_enabled "crontab" || return 0
     DAEMON_PATH=${MIG_CRON}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -584,7 +584,7 @@ reload_cron() {
     fi
 }
 reload_transfers() {
-    check_enabled "transfers" || return
+    check_enabled "transfers" || return 0
     DAEMON_PATH=${MIG_TRANSFERS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -596,7 +596,7 @@ reload_transfers() {
     fi
 }
 reload_openid() {
-    check_enabled "openid" || return
+    check_enabled "openid" || return 0
     DAEMON_PATH=${MIG_OPENID}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -608,7 +608,7 @@ reload_openid() {
     fi
 }
 reload_sftp() {
-    check_enabled "sftp" || return
+    check_enabled "sftp" || return 0
     DAEMON_PATH=${MIG_SFTP}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -620,7 +620,7 @@ reload_sftp() {
     fi
 }
 reload_webdavs() {
-    check_enabled "davs" || return
+    check_enabled "davs" || return 0
     DAEMON_PATH=${MIG_WEBDAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -632,7 +632,7 @@ reload_webdavs() {
     fi
 }
 reload_davs() {
-    check_enabled "davs" || return
+    check_enabled "davs" || return 0
     DAEMON_PATH=${MIG_DAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -644,7 +644,7 @@ reload_davs() {
     fi
 }
 reload_ftps() {
-    check_enabled "ftps" || return
+    check_enabled "ftps" || return 0
     DAEMON_PATH=${MIG_FTPS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -656,7 +656,7 @@ reload_ftps() {
     fi
 }
 reload_imnotify() {
-    check_enabled "imnotify" || return
+    check_enabled "imnotify" || return 0
     DAEMON_PATH=${MIG_IMNOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -668,7 +668,7 @@ reload_imnotify() {
     fi
 }
 reload_vmproxy() {
-    check_enabled "vmachines" || return
+    check_enabled "vmachines" || return 0
     DAEMON_PATH=${MIG_VMPROXY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -688,7 +688,7 @@ reload_sftpsubsys_workers() {
     log_end_msg $? || true
 }
 reload_sftpsubsys() {
-    check_enabled "sftp_subsys" || return
+    check_enabled "sftp_subsys" || return 0
     DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     log_daemon_msg "Reloading MiG sftpsubsys" ${SHORT_NAME} || true
@@ -737,91 +737,91 @@ reload_all() {
 }
 
 status_script() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_monitor() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_MONITOR}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_sshmux() {
-    check_enabled "jobs" || return
+    check_enabled "jobs" || return 0
     DAEMON_PATH=${MIG_SSHMUX}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_events() {
-    check_enabled "events" || return
+    check_enabled "events" || return 0
     DAEMON_PATH=${MIG_EVENTS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_cron() {
-    check_enabled "crontab" || return
+    check_enabled "crontab" || return 0
     DAEMON_PATH=${MIG_CRON}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_transfers() {
-    check_enabled "transfers" || return
+    check_enabled "transfers" || return 0
     DAEMON_PATH=${MIG_TRANSFERS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_openid() {
-    check_enabled "openid" || return
+    check_enabled "openid" || return 0
     DAEMON_PATH=${MIG_OPENID}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_sftp() {
-    check_enabled "sftp" || return
+    check_enabled "sftp" || return 0
     DAEMON_PATH=${MIG_SFTP}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_webdavs() {
-    check_enabled "davs" || return
+    check_enabled "davs" || return 0
     DAEMON_PATH=${MIG_WEBDAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_davs() {
-    check_enabled "davs" || return
+    check_enabled "davs" || return 0
     DAEMON_PATH=${MIG_DAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_ftps() {
-    check_enabled "ftps" || return
+    check_enabled "ftps" || return 0
     DAEMON_PATH=${MIG_FTPS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_imnotify() {
-    check_enabled "imnotify" || return
+    check_enabled "imnotify" || return 0
     DAEMON_PATH=${MIG_IMNOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_vmproxy() {
-    check_enabled "vmachines" || return
+    check_enabled "vmachines" || return 0
     DAEMON_PATH=${MIG_VMPROXY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -833,7 +833,7 @@ status_sftpsubsys_workers() {
     pgrep -f ${DAEMON_PATH} > /dev/null
 }
 status_sftpsubsys() {
-    check_enabled "sftp_subsys" || return
+    check_enabled "sftp_subsys" || return 0
     DAEMON_PATH=${MIG_SFTPSUBSYS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}" > /dev/null
