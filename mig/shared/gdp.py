@@ -57,6 +57,7 @@ from shared.vgrid import vgrid_flat_name, vgrid_is_owner, vgrid_set_owners, \
 from shared.vgridkeywords import get_settings_keywords_dict
 
 user_db_filename = 'gdp-users.db'
+users_log_filename = 'gdp-users.log'
 client_id_project_postfix = '/GDP='
 
 
@@ -768,6 +769,30 @@ def __scamble_user_id(configuration, user_id):
     return hashlib.sha256(user_id).hexdigest()
 
 
+def __update_users_log(configuration, client_id):
+    """Add *client_id* and it's hash to GDP users log"""
+    _logger = configuration.logger
+    log_filepath = os.path.join(configuration.gdp_home, users_log_filename)
+    Result = False
+    try:
+        if not os.path.exists(log_filepath):
+            touch(log_filepath)
+        fh = open(log_filepath, 'ab')
+        timestamp = datetime.fromtimestamp(time.time())
+        date = timestamp.strftime('%d-%m-%Y_%H-%M-%S')
+        client_id_hash = __scamble_user_id(configuration, client_id)
+        msg = "%s : %s : %s :\n" \
+            % (date, client_id, client_id_hash)
+        fh.write(msg)
+        fh.close()
+        result = True
+    except Exception, exc:
+        _logger.error("GDP: __update_users_log failed: %s" % exc)
+        result = False
+
+    return result
+
+
 def get_client_id_from_project_client_id(configuration, project_client_id):
     """Returns base client_id from *project_client_id*"""
 
@@ -1285,18 +1310,24 @@ def ensure_user(configuration, client_addr, client_id):
     # _logger.debug("client_addr: '%s', client_id: '%s'"
     #               % (client_addr, client_id))
 
+    result = False
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, locked=True, allow_missing=True)
     user = user_db.get(client_id, None)
     if user is None:
         user_db[client_id] = __create_gdp_user_db_entry(configuration)
-        __save_user_db(configuration, user_db, locked=True)
-        _logger.info("Created GDP user: '%s'" % client_id)
+        status = __update_users_log(configuration, client_id)
+        if status:
+            __save_user_db(configuration, user_db, locked=True)
+            _logger.info("Created GDP user: '%s'" % client_id)
+            result = True
+        else:
+            _logger.error("Failed to create GDP user: '%s'" % client_id)
 
     release_file_lock(flock)
 
-    return True
+    return result
 
 
 def project_remove_user(
@@ -1606,6 +1637,9 @@ def create_project_user(
             _logger.error(log_err_msg
                           + ": Failed to create symlink: '%s' -> '%s'"
                           % (src, project_files_link))
+
+    if status:
+        status = __update_users_log(configuration, project_client_id)
 
     ret_msg = err_msg
     if status:
