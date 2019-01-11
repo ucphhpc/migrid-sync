@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mkdir - create directory in user home
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,11 +33,11 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.fileio import check_write_access
 from shared.functional import validate_input, REJECT_UNSET
-from shared.gdp import get_project_from_client_id, project_log
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import parents, verbose
 from shared.sharelinks import extract_mode_id
+from shared.userio import GDPIOLogError, gdp_iolog
 from shared.validstring import valid_user_path
 
 
@@ -206,19 +206,26 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 status = returnvalues.CLIENT_ERROR
                 continue
             try:
+                gdp_iolog(configuration,
+                          client_id,
+                          environ['REMOTE_ADDR'],
+                          'created',
+                          [relative_path])
                 if parents(flags):
                     if not os.path.isdir(abs_path):
                         os.makedirs(abs_path)
                 else:
                     os.mkdir(abs_path)
                 logger.info('%s %s done' % (op_name, abs_path))
-                if configuration.site_enable_gdp:
-                    gdp_project = get_project_from_client_id(configuration,
-                                                             client_id)
-                    msg = "'%s'" % relative_path[len(gdp_project)+1:]
-                    project_log(configuration, 'https', client_id, 'created',
-                                msg, user_addr=environ['REMOTE_ADDR'])
             except Exception, exc:
+                if not isinstance(exc, GDPIOLogError):
+                    gdp_iolog(configuration,
+                              client_id,
+                              environ['REMOTE_ADDR'],
+                              'created',
+                              [relative_path],
+                              failed=True,
+                              details=exc)
                 output_objects.append({'object_type': 'error_text',
                                        'text': "%s: '%s' failed!"
                                        % (op_name, relative_path)})

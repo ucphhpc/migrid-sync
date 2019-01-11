@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -140,6 +140,7 @@ class SFTPHandle(paramiko.SFTPHandle):
             result = None
             valid_log_actions = {'read': 'accessed',
                                  'write': 'modified'}
+            operation = method.__name__
             path = getattr(self, "path", None)
             user_name = getattr(self, "user_name", None)
             ip_addr = getattr(self, "ip_addr", None)
@@ -159,27 +160,29 @@ class SFTPHandle(paramiko.SFTPHandle):
             # operation to ensure that files are _NOT_ accessed/modified
             # without a corresponding log entry.
 
-            if method.__name__ in ('read', 'write'):
-                log_action = valid_log_actions.get(method.__name__, None)
+            if operation in ('read', 'write'):
+                log_action = valid_log_actions.get(operation, None)
                 if log_action is None:
                     logger.error(
                         "Missing GDP log action for operation: '%s'"
                         % method.__name__)
                     return None
-                ftrace = self.ftrace.get(method.__name__, None)
+                ftrace = self.ftrace.get(operation, None)
                 if ftrace is None:
                     logger.error(
                         "Missing GDP log ftrace for operation: '%s'"
-                        % method.__name__)
+                        % operation)
                     return None
-                if method.__name__ == "read":
+                if operation == "read":
                     offset = method_args[0]
+                    length = method_args[1]
                     currentpos = self.readfile.tell()
-                    endpos = offset + method_args[1]
-                elif method.__name__ == "write":
+                    endpos = offset + length
+                elif operation == "write":
                     offset = method_args[0]
+                    length = len(method_args[1])
                     currentpos = self.writefile.tell()
-                    endpos = offset + len(method_args[1])
+                    endpos = offset + length
                 else:
                     return None
                 if ftrace['count'] == 0 \
@@ -193,14 +196,15 @@ class SFTPHandle(paramiko.SFTPHandle):
 
                 if ftrace['count'] == 0 \
                         or offset != currentpos:
-                    msg = "'%s' (%s:%s)" % (
-                        path, ftrace['startpos'], ftrace['endpos'])
+                    msg = "(%s:%s)" % (ftrace['startpos'], ftrace['endpos'])
                     ftrace['logstatus'] = project_log(configuration,
                                                       'sftp',
                                                       user_name,
+                                                      ip_addr,
                                                       log_action,
-                                                      msg,
-                                                      user_addr=ip_addr)
+                                                      path=path,
+                                                      details=msg,
+                                                      )
                     ftrace['startpos'] = ftrace['endpos']
                     ftrace['count'] = 1
                 else:
@@ -209,7 +213,23 @@ class SFTPHandle(paramiko.SFTPHandle):
                 # Only invoke read/write operation if log was successful
 
                 if ftrace['logstatus']:
-                    result = method(self, *method_args, **method_kwargs)
+                    try:
+                        result = method(self, *method_args, **method_kwargs)
+                    except Exception, exc:
+                        result = None
+                        msg = "(%d:%d): %s" \
+                            % (offset, offset+length, exc)
+                        logger.error("%s failed: '%s': %s"
+                                     % (operation, path, msg))
+                        project_log(configuration,
+                                    'sftp',
+                                    user_name,
+                                    ip_addr,
+                                    log_action,
+                                    failed=True,
+                                    path=path,
+                                    details=msg,
+                                    )
 
                 # Verify that the calculated and real file end positions match
                 # TODO: This check might be removed
@@ -220,19 +240,24 @@ class SFTPHandle(paramiko.SFTPHandle):
                 elif method.__name__ == "write":
                     file_endpos = self.writefile.tell()
                 if file_endpos != endpos:
-                    msg = "GDP log calculated endpos: %s is different" \
+                    msg = "GDP log calculated endpos: %s != " \
                         % endpos \
-                        + " from file endpos: %s, '%s'" % \
+                        + " file endpos: %s, '%s'" % \
                         (file_endpos, self.sftpserver._get_fs_path(path))
                     logger.warning(msg)
 
             # close
 
-            elif method.__name__ == "close":
+            elif operation == "close":
 
                 # Invoke 'close' to flush outstanding file writes
 
-                result = method(self, *method_args, **method_kwargs)
+                try:
+                    result = method(self, *method_args, **method_kwargs)
+                except Exception, exc:
+                    result = None
+                    logger.error("%s failed: '%s': %s"
+                                 % (operation, path, exc))
 
                 # After close flush pending read/write log entries
 
@@ -245,14 +270,16 @@ class SFTPHandle(paramiko.SFTPHandle):
                     else:
                         ftrace = self.ftrace[ftrace_type]
                         if ftrace['count'] > 1:
-                            msg = "'%s' (%s:%s)" % (
-                                path, ftrace['startpos'], ftrace['endpos'])
+                            msg = "(%s:%s)" % (
+                                ftrace['startpos'], ftrace['endpos'])
                             project_log(configuration,
                                         'sftp',
                                         user_name,
+                                        ip_addr,
                                         log_action,
-                                        msg,
-                                        user_addr=ip_addr)
+                                        path=path,
+                                        details=msg,
+                                        )
             return result
         return _impl
 
@@ -392,21 +419,25 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 break
         # logger.debug('auth user chroot is %s' % self.root)
 
-    def __gdp_log(self, operation, *args, **kwargs):
-        """GDP loggger function"""
+    def __gdp_log(self,
+                  operation,
+                  path,
+                  dst_path=None,
+                  flags=None,
+                  error=None):
+        """GDP logger helper function"""
         if not configuration.site_enable_gdp:
             return True
         logger = configuration.logger
         result = False
         skiplog = False
         log_action = ''
-        log_msg = ''
+        log_msg = None
+        log_error = False
 
         # open
 
         if operation == "open":
-            flags = kwargs.get('flags', None)
-            path = kwargs.get('path', None)
             if flags is None:
                 logger.error("Missing GDP log flags")
                 return False
@@ -420,58 +451,56 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 log_action = 'truncated'
             else:
                 skiplog = True
-            log_msg = "'%s'" % path
+
+        # list_folder
+
+        elif operation == "list_folder":
+            if path is None:
+                logger.error("Missing GDP log path")
+                return False
+            log_action = 'accessed'
 
         # remove
 
         elif operation == "remove":
-            path = kwargs.get('path', None)
             if path is None:
                 logger.error("Missing GDP log path")
                 return False
             log_action = 'deleted'
-            log_msg = "'%s'" % path
 
         # rename
 
         elif operation == "rename":
-            oldpath = kwargs.get('oldpath', None)
-            newpath = kwargs.get('newpath', None)
-            if oldpath is None:
-                logger.error("Missing GDP log oldpath")
+            if path is None:
+                logger.error("Missing GDP log path")
                 return False
-            if newpath is None:
-                logger.error("Missing GDP log newpath")
+            if dst_path is None:
+                logger.error("Missing GDP log dst_path")
                 return False
             log_action = 'moved'
-            log_msg = "'%s' -> '%s'" % (oldpath, newpath)
 
         # mkdir
 
         elif operation == "mkdir":
-            path = kwargs.get('path', None)
             if path is None:
                 logger.error("Missing GDP log path")
                 return False
             log_action = 'created'
-            log_msg = "'%s'" % path
 
         # rmdir
 
         elif operation == "rmdir":
-            path = kwargs.get('path', None)
             if path is None:
                 logger.error("Missing GDP log path")
                 return False
             log_action = 'deleted'
-            log_msg = "'%s'" % path
 
         # Currently we do not add failed message directly
         # to log as it might contain user information
 
-        failed = kwargs.get('failed', None)
-        if failed is not None:
-            log_msg += " *FAILED*"
+        if error is not None:
+            log_error = True
+            log_msg = error
 
         # Log message
 
@@ -481,9 +510,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             result = project_log(configuration,
                                  'sftp',
                                  self.user_name,
+                                 self.ip_addr,
                                  log_action,
-                                 log_msg,
-                                 user_addr=self.ip_addr)
+                                 failed=log_error,
+                                 path=path,
+                                 dst_path=dst_path,
+                                 details=log_msg,
+                                 )
         return result
 
     # Use shared daemon fs helper functions
@@ -662,7 +695,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("open for modify on read-only path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
-        if not self.__gdp_log("open", path=path, flags=flags):
+        if not self.__gdp_log("open", path, flags=flags):
             return paramiko.SFTP_FAILURE
         handle = SFTPHandle(flags, sftpserver=self)
         setattr(handle, 'real_path', real_path)
@@ -703,7 +736,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             #                  (path, real_path, str(handle), mode))
             return handle
         except Exception, err:
-            self.__gdp_log("open", path=path, flags=flags, failed=err)
+            self.__gdp_log("open", path, flags=flags, error=err)
             self.logger.error("open on %s :: %s (%s) failed: %s" %
                               (path, real_path, mode, err))
             return paramiko.SFTP_FAILURE
@@ -728,6 +761,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except Exception, err:
             self.logger.error("list_folder on %s :: %s failed: %s" %
                               (path, real_path, err))
+            return paramiko.SFTP_FAILURE
+        if not self.__gdp_log("list_folder", path):
             return paramiko.SFTP_FAILURE
         for filename in files:
             if invisible_path(filename):
@@ -812,14 +847,14 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("remove on missing path %s :: %s" % (path,
                                                                    real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        if not self.__gdp_log("remove", path=path):
+        if not self.__gdp_log("remove", path):
             return paramiko.SFTP_FAILURE
         try:
             os.remove(real_path)
             self.logger.info("removed %s :: %s" % (path, real_path))
             return paramiko.SFTP_OK
         except Exception, err:
-            self.__gdp_log("remove", path=path, failed=err)
+            self.__gdp_log("remove", path, error=err)
             self.logger.error("remove on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
@@ -852,7 +887,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('move on read-only new path %s :: %s' %
                                 (newpath, real_newpath))
             return paramiko.SFTP_PERMISSION_DENIED
-        if not self.__gdp_log("rename", oldpath=oldpath, newpath=newpath):
+        if not self.__gdp_log("rename", oldpath, dst_path=newpath):
             return paramiko.SFTP_FAILURE
         try:
             # Use shutil move to allow move to other file system like external
@@ -862,8 +897,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                              % (oldpath, newpath, real_oldpath, real_newpath))
             return paramiko.SFTP_OK
         except Exception, err:
-            self.__gdp_log("rename", oldpath=oldpath, newpath=newpath,
-                           failed=err)
+            self.__gdp_log("rename", oldpath, dst_path=newpath,
+                           error=err)
             self.logger.error("rename on %s :: %s failed: %s" %
                               (real_oldpath, real_newpath, err))
             return paramiko.SFTP_FAILURE
@@ -885,7 +920,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('mkdir on read-only path %s :: %s' %
                                 (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
-        if not self.__gdp_log("mkdir", path=path):
+        if not self.__gdp_log("mkdir", path):
             return paramiko.SFTP_FAILURE
         try:
             # Force MiG default mode
@@ -893,7 +928,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.info("made dir %s :: %s" % (path, real_path))
             return paramiko.SFTP_OK
         except Exception, err:
-            self.__gdp_log("mkdir", path=path, failed=err)
+            self.__gdp_log("mkdir", path, error=err)
             self.logger.error("mkdir on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE
@@ -920,7 +955,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.warning('rmdir on read-only path %s :: %s' %
                                 (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
-        if not self.__gdp_log("rmdir", path=path):
+        if not self.__gdp_log("rmdir", path):
             return paramiko.SFTP_FAILURE
         # self.logger.debug("rmdir on path %s :: %s" % (path, real_path))
         try:
@@ -928,7 +963,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.info("removed dir %s :: %s" % (path, real_path))
             return paramiko.SFTP_OK
         except Exception, err:
-            self.__gdp_log("rmdir", path=path, failed=err)
+            self.__gdp_log("rmdir", path, error=err)
             self.logger.error("rmdir on %s :: %s failed: %s" %
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE

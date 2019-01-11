@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rm - backend to remove files/directories in user home
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,11 +39,11 @@ from shared.defaults import trash_linkname
 from shared.fileio import check_write_access
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.gdp import get_project_from_client_id, project_log
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose, recursive, force
 from shared.sharelinks import extract_mode_id
-from shared.userio import remove_path, delete_path, get_trash_location
+from shared.userio import remove_path, delete_path, get_trash_location, \
+    GDPIOLogError, gdp_iolog
 from shared.validstring import valid_user_path
 
 
@@ -281,8 +281,39 @@ You're not allowed to delete entire special folders like %s shares and %s
             # TODO: user settings to define read-only and auto-expire in trash?
             # TODO: add trash support for sftp/ftps/webdavs?
 
-            (rm_status, rm_err) = rm_helper(configuration, abs_path)
-            if not rm_status:
+            gdp_iolog_action = 'deleted'
+            gdp_iolog_paths = [relative_path]
+            if rm_helper == remove_path:
+                gdp_iolog_action = 'moved'
+                trash_linkname = \
+                    get_trash_location(configuration, abs_path, True)
+                trash_relative_path = \
+                    trash_linkname.replace(configuration.user_home, '')
+                trash_relative_path = \
+                    trash_linkname.replace(configuration.vgrid_files_home, '')
+                gdp_iolog_paths.append(trash_relative_path)
+            try:
+                gdp_iolog(configuration,
+                          client_id,
+                          environ['REMOTE_ADDR'],
+                          gdp_iolog_action,
+                          gdp_iolog_paths)
+                gdp_iolog_status = True
+            except GDPIOLogError, exc:
+                gdp_iolog_status = False
+                rm_err = [str(exc)]
+            rm_status = False
+            if gdp_iolog_status:
+                (rm_status, rm_err) = rm_helper(configuration, abs_path)
+            if not rm_status or not gdp_iolog_status:
+                if gdp_iolog_status:
+                    gdp_iolog(configuration,
+                              client_id,
+                              environ['REMOTE_ADDR'],
+                              gdp_iolog_action,
+                              gdp_iolog_paths,
+                              failed=True,
+                              details=rm_err)
                 logger.error("%s: failed on '%s': %s"
                              % (op_name, abs_path, ', '.join(rm_err)))
                 output_objects.append(
@@ -294,18 +325,6 @@ You're not allowed to delete entire special folders like %s shares and %s
             logger.info("%s: successfully (re)moved %s" % (op_name, abs_path))
             output_objects.append({'object_type': 'text',
                                    'text': "removed %s" % (relative_path)})
-            if configuration.site_enable_gdp:
-                gdp_project = get_project_from_client_id(configuration,
-                                                         client_id)
-                gdp_relative_path = relative_path[len(gdp_project)+1:]
-                if rm_helper == remove_path:
-                    msg = "'%s' -> Trash" % gdp_relative_path
-                    project_log(configuration, 'https', client_id, 'moved',
-                                msg, user_addr=environ['REMOTE_ADDR'])
-                else:
-                    msg = "%s" % gdp_relative_path
-                    project_log(configuration, 'https', client_id, 'deleted',
-                                msg, user_addr=environ['REMOTE_ADDR'])
 
     output_objects.append({'object_type': 'link',
                            'destination': 'ls.py%s' % id_query,

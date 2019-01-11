@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userio - wrappers to keep user file I/O in a single replaceable module
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,6 +43,7 @@ import time
 
 from shared.base import invisible_path
 from shared.defaults import trash_destdir, trash_linkname
+from shared.gdp import get_project_from_client_id, project_log
 from shared.vgrid import in_vgrid_share, in_vgrid_writable, in_vgrid_priv_web, \
     in_vgrid_pub_web
 
@@ -156,7 +157,7 @@ def _fill_changes(configuration, changeset, action, target_list):
 def prepare_changes(configuration, operation, changeset, action, path,
                     recursive):
     """Prepare events file for a future user I/O action as a part of named
-    operation. 
+    operation.
     The path argument may be a list of single path entries or (src, dst)
     tuples in case of a move. The action argument may take any of the change
     values CREATE, MODIFY, MOVE and DELETE defined here.
@@ -378,6 +379,63 @@ def touch_path(configuration, path, timestamp=None):
         result = False
         errors.append("%s" % err)
     return (result, errors)
+
+
+class GDPIOLogError(Exception):
+    """Exception raised by gdp_log function"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
+def gdp_iolog(configuration,
+              client_id,
+              ip_addr,
+              operation,
+              paths,
+              failed=False,
+              details=None):
+    """A wrapper used for GDP IO logging.
+    """
+    if not configuration.site_enable_gdp:
+        return
+
+    if not isinstance(paths, list) or not paths or len(paths) > 2:
+        raise GDPIOLogError(
+            "'paths' parameter must be a list of length 1 or 2")
+
+    project_name = get_project_from_client_id(configuration,
+                                              client_id)
+    for path in paths:
+        if path != project_name and not path.startswith(project_name + '/'):
+
+            raise GDPIOLogError("Invalid GDP path: '%s'" % path)
+
+    src_path = paths[0][len(project_name)+1:]
+    dst_path = None
+    if not src_path:
+        src_path = '/'
+    if len(paths) == 2:
+        dst_path = paths[1][len(project_name)+1:]
+        if not dst_path:
+            dst_path = '/'
+    status = project_log(configuration,
+                         'https',
+                         client_id,
+                         ip_addr,
+                         operation,
+                         failed=failed,
+                         path=src_path,
+                         dst_path=dst_path,
+                         details=details,
+                         project_name=project_name)
+    if not status:
+        raise GDPIOLogError("GDP logger failed: '%s'" % path)
+
+    return
 
 
 def __make_test_files(configuration, test_path, dirs, files, links):

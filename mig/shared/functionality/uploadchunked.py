@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadchunked - Chunked and efficient file upload back end
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,11 +43,11 @@ from shared.fileio import strip_dir, write_chunk, delete_file, move, \
     get_file_size, makedirs_rec, check_write_access
 from shared.functional import validate_input
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.gdp import get_project_from_client_id, project_log
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import in_place, verbose
 from shared.safeinput import valid_path
 from shared.sharelinks import extract_mode_id
+from shared.userio import GDPIOLogError, gdp_iolog
 from shared.validstring import valid_user_path
 
 # The input argument for fileupload files
@@ -414,10 +414,27 @@ def main(client_id, user_arguments_dict, environ=None):
                 moved = False
             else:
                 try:
-                    makedirs_rec(dest_dir, configuration)
+                    gdp_iolog(configuration,
+                              client_id,
+                              environ['REMOTE_ADDR'],
+                              'modified',
+                              [rel_dst])
+                    if not makedirs_rec(dest_dir,
+                                        configuration,
+                                        accept_existing=True):
+                        raise IOError(
+                            "failed to create dest_dir: %s" % dest_dir)
                     move(abs_src_path, dest_path)
                     moved = True
                 except Exception, exc:
+                    if not isinstance(exc, GDPIOLogError):
+                        gdp_iolog(configuration,
+                                  client_id,
+                                  environ['REMOTE_ADDR'],
+                                  'modified',
+                                  [rel_dst],
+                                  failed=True,
+                                  details=exc)
                     logger.error('could not move %s to %s: %s'
                                  % (abs_src_path, dest_path, exc))
                     moved = False
@@ -429,14 +446,6 @@ def main(client_id, user_arguments_dict, environ=None):
                 file_entry['url'] = os.path.normpath("/%s/%s"
                                                      % (redirect_path.lstrip('/'),
                                                         rel_dst))
-
-                if configuration.site_enable_gdp:
-                    gdp_project = get_project_from_client_id(configuration,
-                                                             client_id)
-                    msg = "'%s'" % rel_dst[len(gdp_project)+1:]
-                    project_log(configuration, 'https', client_id, 'modified',
-                                msg, user_addr=environ['REMOTE_ADDR'])
-
             uploaded.append(file_entry)
         logger.info('move done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)

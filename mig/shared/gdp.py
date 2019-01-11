@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdp - helper functions related to GDP actions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -83,7 +83,6 @@ valid_scripts = [
     'mkdir.py',
     'mv.py',
     'rm.py',
-    'rmvgridmember.py',
     'settings.py',
     'settingsaction.py',
     'twofactor.py',
@@ -272,7 +271,9 @@ def __project_client_id_from_user_id(configuration, user_id):
 
     # Extract client_id from user_id
 
-    result = expand_openid_alias(user_id, configuration)
+    client_id = expand_openid_alias(user_id, configuration)
+    if client_id and client_id.find(client_id_project_postfix) > -1:
+        result = client_id
 
     return result
 
@@ -761,6 +762,12 @@ def __delete_mig_user(configuration, client_id, allow_missing=False):
     return (status, ret_msg)
 
 
+def __scamble_user_id(configuration, user_id):
+    """Scamble user_id"""
+
+    return hashlib.sha256(user_id).hexdigest()
+
+
 def get_client_id_from_project_client_id(configuration, project_client_id):
     """Returns base client_id from *project_client_id*"""
 
@@ -861,10 +868,14 @@ def project_log(
         configuration,
         protocol,
         user_id,
+        user_addr,
         action,
-        details,
+        failed=False,
+        path=None,
+        dst_path=None,
+        details=None,
         project_name=None,
-        user_addr=None):
+):
     """Log project actions, each project has a distinct logfile"""
 
     _logger = configuration.logger
@@ -909,7 +920,7 @@ def project_log(
     # Generate user hash for log
 
     if status:
-        user_hash = hashlib.sha256(client_id).hexdigest()
+        user_hash = __scamble_user_id(configuration, client_id)
 
     # Get project name
 
@@ -933,13 +944,88 @@ def project_log(
                       + ": Missing ip addr")
 
     if status:
-        msg = ": %s : %s : %s : %s : %s : %s" % (
+        if details is None:
+            details = '-'
+        else:
+
+            # Make sure that no user details are revealed in GDP log
+
+            try:
+                details = str(details)
+                #_logger.debug("user_id: %s" % user_id)
+                details = details.replace(user_id, user_hash)
+
+                # Scramble project_client_id and associated short_id and dirs
+
+                project_client_id = \
+                    __project_client_id_from_user_id(configuration, user_id)
+                #_logger.debug("project_client_id: %s" % project_client_id)
+                if project_client_id:
+                    project_client_id_hash = \
+                        __scamble_user_id(configuration, project_client_id)
+                    details = details.replace(
+                        project_client_id, project_client_id_hash)
+                    project_dir = client_id_dir(project_client_id)
+                    #_logger.debug("project_dir: %s" % project_dir)
+                    project_dir_hash = __scamble_user_id(
+                        configuration, project_client_id)
+                    details = details.replace(project_dir, project_dir_hash)
+                    project_short_id = __short_id_from_client_id(configuration,
+                                                                 client_id)
+                    #_logger.debug("project_short_id: %s" % project_short_id)
+                    project_short_id_hash = __scamble_user_id(
+                        configuration, project_short_id)
+                    details = details.replace(
+                        project_short_id, project_short_id_hash)
+
+                # Scramble client_id and associated short_id and dirs
+
+                client_id = __client_id_from_user_id(configuration, user_id)
+                #_logger.debug("client_id: %s" % client_id)
+                if client_id:
+                    client_id_hash = __scamble_user_id(
+                        configuration, client_id)
+                    details = details.replace(client_id, client_id_hash)
+                    client_dir = client_id_dir(client_id)
+                    #_logger.debug("client_dir: %s" % client_dir)
+                    client_dir_hash = __scamble_user_id(
+                        configuration, client_dir)
+                    details = details.replace(client_dir, client_dir_hash)
+                    short_id = __short_id_from_client_id(configuration,
+                                                         client_id)
+                    #_logger.debug("short_id: %s" % short_id)
+                    short_id_hash = __scamble_user_id(configuration, short_id)
+                    details = details.replace(short_id, short_id_hash)
+                else:
+                    raise ValueError(
+                        "Missing client_id for user_id: %s" % user_id)
+            except Exception, exc:
+                status = False
+                _logger.error(log_err_msg + ": %s" % exc)
+
+    if status and path is None:
+        path = '-'
+
+    if status and dst_path is None:
+        dst_path = '-'
+
+    if status:
+        if not failed:
+            status_msg = "OK"
+        else:
+            status_msg = "FAILED"
+
+    if status:
+        msg = ": %s : %s : %s : %s : %s : %s : %s : %s : %s :" % (
             project_name,
             user_hash,
             user_addr,
             protocol,
             action,
-            details,
+            status_msg,
+            path,
+            dst_path,
+            details
         )
         _gdp_logger.info(msg)
 
@@ -1282,7 +1368,7 @@ def project_remove_user(
         project_state = project.get('state', '')
         if not project:
             status = False
-            template = ": Provided user is _NOT_ registred with the project"
+            template = ": Provided user is _NOT_ registered with the project"
             err_msg += template
             _logger.error(log_err_msg + template)
         elif project_state == 'removed':
@@ -1316,16 +1402,17 @@ def project_remove_user(
             _logger.error(log_err_msg
                           + ": Unexpected project state: '%s'" % project_state)
         if status:
-            project_log_msg = "User id: %s" % hashlib.sha256(
-                client_id).hexdigest()
+            project_log_msg = "User id: %s" \
+                % __scamble_user_id(configuration, client_id)
+
             status = project_log(
                 configuration,
                 'https',
                 owner_client_id,
+                owner_client_addr,
                 'removed_user',
-                project_log_msg,
+                details=project_log_msg,
                 project_name=project_name,
-                user_addr=owner_client_addr,
             )
             if not status:
                 _logger.error(log_err_msg
@@ -1407,22 +1494,23 @@ def project_invite(
 
             # Log invitation details to project log
 
-            log_msg = "User id: %s" % hashlib.sha256(client_id).hexdigest()
+            log_msg = "User id: %s" \
+                % __scamble_user_id(configuration, client_id)
             status = project_log(
                 configuration,
                 'https',
                 owner_client_id,
+                owner_client_addr,
                 'invited_user',
-                log_msg,
+                details=log_msg,
                 project_name=project_name,
-                user_addr=owner_client_addr,
             )
             if not status:
                 _logger.error(log_err_msg
                               + ": Project log failed")
         else:
             status = False
-            template = ": User already registred with project"
+            template = ": User already registered with project"
             err_msg += template
             _logger.error(log_err_msg + template)
 
@@ -1621,10 +1709,10 @@ def project_accept(
             configuration,
             'https',
             client_id,
+            client_addr,
             'accept_invite',
-            log_msg,
+            details=log_msg,
             project_name=project_name,
-            user_addr=client_addr,
         )
         if not status:
             _logger.error(log_err_msg
@@ -1730,7 +1818,7 @@ def project_login(
             status = False
             _logger.error(log_err_msg
                           + ": Expected state='accepted', got state='%s'"
-                          % user_project['state'])
+                          % project_state)
 
     # Retrieve user account info
 
@@ -1762,16 +1850,16 @@ def project_login(
     if status:
         project_client_id = get_project_client_id(client_id,
                                                   project_name)
-        log_msg = "Project user id: %s" % hashlib.sha256(
-            project_client_id).hexdigest()
+        log_msg = "Project user id: %s" \
+            % __scamble_user_id(configuration, project_client_id)
         status = project_log(
             configuration,
             protocol,
             project_client_id,
+            client_addr,
             'logged_in',
-            log_msg,
+            details=log_msg,
             project_name=project_name,
-            user_addr=client_addr,
         )
         if not status:
             _logger.error(log_err_msg
@@ -1876,16 +1964,16 @@ def project_logout(
 
         # Generate log message and log to project log
 
-        log_msg = "Project user id: %s" % hashlib.sha256(
-            project_client_id).hexdigest()
+        log_msg = "Project user id: %s" \
+            % __scamble_user_id(configuration, project_client_id)
         status = project_log(
             configuration,
             protocol,
             project_client_id,
+            client_addr,
             action,
-            log_msg,
+            details=log_msg,
             project_name=project_name,
-            user_addr=client_addr,
         )
         if not status:
             _logger.error(log_err_msg
@@ -2215,10 +2303,10 @@ This directory is used for hosting private files for the '%s' '%s'.
             configuration,
             'https',
             client_id,
+            client_addr,
             'created',
-            log_msg,
+            details=log_msg,
             project_name=project_name,
-            user_addr=client_addr,
         )
         if not status:
             _logger.error(log_err_msg
@@ -2267,8 +2355,8 @@ This directory is used for hosting private files for the '%s' '%s'.
                 _logger.warning(
                     "GDP: project_create : roll back :"
                     + " GDP user: '%s', project: '%s'"
-                    + " _NOT_ found in GDP database"
-                    % (client_id, project_name))
+                    % (client_id, project_name)
+                    + " _NOT_ found in GDP database")
             __save_user_db(configuration, user_db, locked=True)
             release_file_lock(flock)
 

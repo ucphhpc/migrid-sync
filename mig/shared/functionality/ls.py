@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,6 +45,7 @@ from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
 from shared.sharelinks import extract_mode_id
+from shared.userio import GDPIOLogError, gdp_iolog
 from shared.validstring import valid_user_path
 from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \
     in_vgrid_readonly, in_vgrid_writable, in_vgrid_store_res
@@ -389,8 +390,11 @@ def handle_ls(
                     )
 
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
+
+    if environ is None:
+        environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
@@ -695,7 +699,19 @@ Action on paths selected below
                 'entries': entries,
                 'flags': flags,
             }
-
+            try:
+                gdp_iolog(configuration,
+                          client_id,
+                          environ['REMOTE_ADDR'],
+                          'accessed',
+                          [relative_path])
+            except GDPIOLogError, exc:
+                output_objects.append({'object_type': 'error_text',
+                                       'text': "%s: '%s': %s"
+                                       % (op_name, relative_path, exc)})
+                logger.error("%s: failed on '%s': %s"
+                             % (op_name, relative_path, exc))
+                continue
             handle_ls(configuration, output_objects, entries, base_dir,
                       abs_path, flags, 0)
             dir_listings.append(dir_listing)

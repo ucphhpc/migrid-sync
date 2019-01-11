@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -573,34 +573,64 @@ class MiGFileResource(FileResource):
         def _impl(self, *method_args, **method_kwargs):
             if not configuration.site_enable_gdp:
                 return method(self, *method_args, **method_kwargs)
-            if method.__name__ == "handleCopy":
+            operation = method.__name__
+            src_path = self.path
+            dst_path = None
+            log_src_path = None
+            log_dst_path = None
+            if operation == "handleCopy":
+                dst_path = method_args[0]
                 log_action = "copied"
-                destPath = method_args[0]
-                log_msg = "'%s' -> '%s'" \
-                    % (self.path.strip('/'), destPath.strip('/'))
-            elif method.__name__ == "handleMove":
+                log_src_path = src_path.strip('/')
+                log_dst_path = dst_path.strip('/')
+            elif operation == "handleMove":
+                dst_path = method_args[0]
                 log_action = "moved"
-                destPath = method_args[0]
-                log_msg = "'%s' -> '%s'" \
-                    % (self.path.strip('/'), destPath.strip('/'))
-            elif method.__name__ == "handleDelete":
+                log_src_path = src_path.strip('/')
+                log_dst_path = dst_path.strip('/')
+            elif operation == "handleDelete":
                 log_action = "deleted"
-                log_msg = "'%s'" % self.path.strip('/')
-            elif method.__name__ == "getContent":
+                log_src_path = src_path.strip('/')
+            elif operation == "getContent":
                 log_action = "accessed"
-                log_msg = "'%s'" % self.path.strip('/')
-            elif method.__name__ == "beginWrite":
+                log_src_path = src_path.strip('/')
+            elif operation == "beginWrite":
                 log_action = "modified"
-                log_msg = "'%s'" % self.path.strip('/')
+                log_src_path = src_path.strip('/')
             else:
                 logger.warning("GDP log for '%s' _NOT_ implemented"
-                               % method.__name__)
+                               % operation)
                 raise DAVError(HTTP_FORBIDDEN)
-            if not project_log(configuration, 'davs', self.username,
-                               log_action, log_msg,
-                               user_addr=self.ip_addr):
+            if not project_log(configuration,
+                               'davs',
+                               self.username,
+                               self.ip_addr,
+                               log_action,
+                               path=log_src_path,
+                               dst_path=log_dst_path,
+                               ):
                 raise DAVError(HTTP_FORBIDDEN)
-            return method(self, *method_args, **method_kwargs)
+            try:
+                result = method(self, *method_args, **method_kwargs)
+            except Exception, exc:
+                result = None
+                logger_msg = "%s failed: '%s'" % (operation, src_path)
+                if dst_path is not None:
+                    logger_msg += " -> '%s'" % dst_path
+                logger_msg += ": %s" % exc
+                logger.error(logger_msg)
+                project_log(configuration,
+                            'davs',
+                            self.username,
+                            self.ip_addr,
+                            log_action,
+                            failed=True,
+                            path=log_src_path,
+                            dst_path=log_dst_path,
+                            details=exc,
+                            )
+                raise
+            return result
         return _impl
 
     @__allow_handle
@@ -670,32 +700,73 @@ class MiGFolderResource(FolderResource):
         def _impl(self, *method_args, **method_kwargs):
             if not configuration.site_enable_gdp:
                 return method(self, *method_args, **method_kwargs)
-            if method.__name__ == "handleCopy":
+            operation = method.__name__
+            src_path = self.path
+            dst_path = None
+            log_src_path = None
+            log_dst_path = None
+            if operation == "handleCopy":
+                dst_path = method_args[0]
                 log_action = "copied"
-                destPath = method_args[0]
-                log_msg = "'%s' -> '%s'" \
-                    % (self.path.strip('/'), destPath.strip('/'))
-            elif method.__name__ == "handleMove":
+                log_src_path = src_path.strip('/')
+                log_dst_path = dst_path.strip('/')
+            elif operation == "handleMove":
+                dst_path = method_args[0]
                 log_action = "moved"
-                destPath = method_args[0]
-                log_msg = "'%s' -> '%s'" \
-                    % (self.path.strip('/'), destPath.strip('/'))
-            elif method.__name__ == "handleDelete":
+                log_src_path = src_path.strip('/')
+                log_dst_path = dst_path.strip('/')
+            elif operation == "handleDelete":
                 log_action = "deleted"
-                log_msg = "'%s'" % self.path.strip('/')
-            elif method.__name__ == "createCollection":
+                log_src_path = src_path.strip('/')
+            elif operation == "createCollection":
                 log_action = "created"
-                relpath = "%s%s" % (self.path, method_args[0])
-                log_msg = "'%s'" % relpath.strip('/')
+                dst_path = method_args[0]
+                relpath = "%s%s" % (src_path, dst_path)
+                log_src_path = relpath.strip('/')
+            elif operation == "createEmptyResource":
+                log_action = "created"
+                dst_path = method_args[0]
+                relpath = "%s%s" % (src_path, dst_path)
+                log_src_path = relpath.strip('/')
+            elif operation == "getMemberNames":
+                log_action = "accessed"
+                log_src_path = src_path.strip('/')
             else:
                 logger.warning("GDP log for '%s' _NOT_ implemented"
-                               % method.__name__)
+                               % operation)
                 raise DAVError(HTTP_FORBIDDEN)
-            if not project_log(configuration, 'davs', self.username,
-                               log_action, log_msg,
-                               user_addr=self.ip_addr):
+            if not log_src_path:
+                log_src_path = '.'
+            if not project_log(configuration,
+                               'davs',
+                               self.username,
+                               self.ip_addr,
+                               log_action,
+                               path=log_src_path,
+                               dst_path=log_dst_path,
+                               ):
                 raise DAVError(HTTP_FORBIDDEN)
-            return method(self, *method_args, **method_kwargs)
+            try:
+                result = method(self, *method_args, **method_kwargs)
+            except Exception, exc:
+                result = None
+                logger_msg = "%s failed: '%s'" % (operation, src_path)
+                if dst_path is not None:
+                    logger_msg += " -> '%s'" % dst_path
+                logger_msg += ": %s" % exc
+                logger.error(logger_msg)
+                project_log(configuration,
+                            'davs',
+                            self.username,
+                            self.ip_addr,
+                            log_action,
+                            failed=True,
+                            path=log_src_path,
+                            dst_path=log_dst_path,
+                            details=exc,
+                            )
+                raise
+            return result
         return _impl
 
     @__allow_handle
@@ -719,8 +790,15 @@ class MiGFolderResource(FolderResource):
 
     @__gdp_log
     def createCollection(self, name):
+        """Handle a MKCOL request natively, but with our restrictions"""
         return super(MiGFolderResource, self).createCollection(name)
 
+    @__gdp_log
+    def createEmptyResource(self, name):
+        """Handle operation of same name, but with our restrictions"""
+        return super(MiGFolderResource, self).createEmptyResource(name)
+
+    @__gdp_log
     def getMemberNames(self):
         """Return list of direct collection member names (utf-8 encoded).
 
@@ -728,6 +806,7 @@ class MiGFolderResource(FolderResource):
 
         Use parent version and filter out any invisible file names.
         """
+        # logger.debug("in getMemberNames: %s" % self.path)
         return [i for i in super(MiGFolderResource, self).getMemberNames() if
                 not invisible_path(i)]
 
@@ -743,7 +822,7 @@ class MiGFolderResource(FolderResource):
         Call parent version, filter invisible and mangle to our own
         MiGFileResource and MiGFolderResource objects.
         """
-        # logger.debug("in getMember")
+        # logger.debug("in getMember: %s" % name)
         res = FolderResource.getMember(self, name)
         if invisible_path(res.name):
             res = None

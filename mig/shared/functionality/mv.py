@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mv - backend to move files/directories in user home
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,9 +36,9 @@ from shared.base import client_id_dir
 from shared.fileio import check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
-from shared.gdp import get_project_from_client_id, project_log
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose
+from shared.userio import GDPIOLogError, gdp_iolog
 from shared.validstring import valid_user_path
 
 
@@ -208,17 +208,22 @@ move entire special folders like %s shared folders!"""
                                           os.path.basename(abs_path))
 
             try:
+                gdp_iolog(configuration,
+                        client_id,
+                        environ['REMOTE_ADDR'],
+                        'moved',
+                        [relative_path, relative_dest])                        
                 shutil.move(abs_path, abs_target)
                 logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
-                if configuration.site_enable_gdp:
-                    gdp_project = get_project_from_client_id(configuration,
-                                                             client_id)
-                    msg = "'%s' -> '%s'" % (
-                        relative_path[len(gdp_project)+1:],
-                        relative_dest[len(gdp_project)+1:])
-                    project_log(configuration, 'https', client_id, 'moved',
-                                msg, user_addr=environ['REMOTE_ADDR'])
             except Exception, exc:
+                if not isinstance(exc, GDPIOLogError):
+                    gdp_iolog(configuration,
+                            client_id,
+                            environ['REMOTE_ADDR'],
+                            'moved',
+                            [relative_path, relative_dest],
+                            failed=True,
+                            details=exc)
                 output_objects.append({'object_type': 'error_text',
                                        'text': "%s: '%s': %s"
                                        % (op_name, relative_path, exc)})
