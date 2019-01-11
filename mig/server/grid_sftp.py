@@ -109,7 +109,7 @@ class SFTPHandle(paramiko.SFTPHandle):
     logger = None
     sftpserver = None
     ftrace = None
-    valid_ftrace_types = ['read', 'write']
+    valid_ftrace_types = None
 
     def __init__(self, flags=0, sftpserver=None):
         paramiko.SFTPHandle.__init__(self, flags)
@@ -117,13 +117,15 @@ class SFTPHandle(paramiko.SFTPHandle):
             self.sftpserver = sftpserver
         if self.logger is None:
             self.logger = logger
-        self.ftrace = {}
-        for ftracetype in self.valid_ftrace_types:
-            self.ftrace[ftracetype] = \
-                {'startpos': 0,
-                 'endpos': 0,
-                 'count': 0,
-                 'logstatus': False}
+        if configuration.site_enable_gdp:
+            self.valid_ftrace_types = ['read', 'write']
+            self.ftrace = {}
+            for ftracetype in self.valid_ftrace_types:
+                self.ftrace[ftracetype] = \
+                    {'startpos': 0,
+                     'endpos': 0,
+                     'count': 0,
+                     'logstatus': False}
         # self.logger.debug("SFTPHandle init: %s" % repr(flags))
 
     def __gdp_log(method):
