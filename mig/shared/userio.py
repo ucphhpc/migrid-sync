@@ -402,18 +402,14 @@ def gdp_iolog(configuration,
     """
     if not configuration.site_enable_gdp:
         return
-
     if not isinstance(paths, list) or not paths or len(paths) > 2:
         raise GDPIOLogError(
             "'paths' parameter must be a list of length 1 or 2")
-
     project_name = get_project_from_client_id(configuration,
                                               client_id)
     for path in paths:
         if path != project_name and not path.startswith(project_name + '/'):
-
             raise GDPIOLogError("Invalid GDP path: '%s'" % path)
-
     src_path = paths[0][len(project_name)+1:]
     dst_path = None
     if not src_path:
