@@ -177,7 +177,8 @@ def __project_name_from_project_client_id(configuration,
 
     result = None
     try:
-        if project_client_id.find(client_id_project_postfix) > -1:
+        if project_client_id \
+                and project_client_id.find(client_id_project_postfix) > -1:
             result = \
                 project_client_id.split(
                     client_id_project_postfix)[1].split('/')[0]
@@ -765,8 +766,17 @@ def __delete_mig_user(configuration, client_id, allow_missing=False):
 
 def __scamble_user_id(configuration, user_id):
     """Scamble user_id"""
+    _logger = configuration.logger
 
-    return hashlib.sha256(user_id).hexdigest()
+    result = None
+    try:
+        result = hashlib.sha256(user_id).hexdigest()
+    except Exception, exc:
+        _logger.error("GDP: __scamble_user_id failed for user: '%s': %s"
+                      % (user_id, exc))
+        result = None
+
+    return result
 
 
 def __update_users_log(configuration, client_id):
@@ -1933,22 +1943,21 @@ def project_logout(
     result = False
     project_name = None
     role = None
-
     client_id = __client_id_from_user_id(configuration, user_id)
     project_client_id = __project_client_id_from_user_id(
         configuration, user_id)
-    project_name = __project_name_from_project_client_id(configuration,
-                                                         project_client_id)
-
-    log_ok_msg = "GDP: User: '%s' from ip: %s" \
+    log_ok_msg = "GDP: Project logout for user: '%s' from ip: %s" \
         % (client_id, client_addr) \
-        + ", logged out from project: '%s' with protocol: '%s'" \
-        % (project_name, protocol)
-
+        + " with protocol: '%s'" % protocol
     log_err_msg = "GDP: Project logout failed for user: '%s' from ip: %s" \
         % (client_id, client_addr) \
-        + ", project: '%s' with protocol: '%s'" \
-        % (project_name, protocol)
+        + " with protocol: '%s'" % protocol
+    if project_client_id:
+        project_name = \
+            __project_name_from_project_client_id(configuration,
+                                                  project_client_id)
+        log_ok_msg += ", project: '%s'" % project_name
+        log_err_msg += ", project: '%s'" % project_name
 
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
@@ -1977,18 +1986,23 @@ def project_logout(
     if status:
         role = user_account.get(protocol,
                                 {}).get('role', '')
-        if project_client_id == client_id:
-            project_client_id = role
         if not role:
             status = False
             _logger.error(log_err_msg +
                           ": User is _NOT_ logged in")
-        elif project_client_id is not None and role != project_client_id:
+        elif project_client_id and role != project_client_id:
             status = False
             _logger.error(log_err_msg +
                           ": User is currently logged in"
                           + " to another project: '%s'"
                           % get_project_from_user_id(configuration, role))
+        elif not project_client_id:
+            project_client_id = role
+            project_name = \
+                __project_name_from_project_client_id(configuration,
+                                                      project_client_id)
+            log_ok_msg += ", project: '%s'" % project_name
+            log_err_msg += ", project: '%s'" % project_name
 
     if status:
         if autologout:
