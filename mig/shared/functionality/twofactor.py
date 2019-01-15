@@ -43,7 +43,7 @@ import urlparse
 import shared.returnvalues as returnvalues
 from shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
-    load_twofactor_session, save_twofactor_session
+    load_twofactor_session, save_twofactor_session, expire_twofactor_session
 from shared.base import force_utf8
 from shared.defaults import twofactor_cookie_bytes, twofactor_cookie_ttl
 from shared.fileio import delete_file, write_file
@@ -235,6 +235,19 @@ Incorrect token provided - please try again
         cookie['2FA_Auth']['expires'] = twofactor_cookie_ttl
         cookie['2FA_Auth']['secure'] = True
         cookie['2FA_Auth']['httponly'] = True
+
+        # GDP only allow one active 2FA-session
+        if configuration.site_enable_gdp:
+            if not expire_twofactor_session(configuration,
+                                            client_id,
+                                            environ,
+                                            allow_missing=True):
+                logger.error("could not expire old 2FA sessions for %s"
+                             % client_id)
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     "Internal error: could not expire old 2FA sessions!"})
+                return (output_objects, returnvalues.ERROR)
 
         # Create the state file to inform apache (rewrite) about auth
         # We save user info to be able to monitor and expire active sessions
