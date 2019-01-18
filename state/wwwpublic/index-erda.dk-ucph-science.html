@@ -158,6 +158,8 @@ Can just be disabled by putting it into an html comment when not in use.
   yesterday and are working on it.</span>
 <span class='systemwarn'>IMPORTANT: ERDA backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.</span>
 <span class='systemwarn'>NOTE: we are back online after a massive outage last night</span><br/><br/>
+<span class='systemwarn'>IMPORTANT: Jupyter is limited to the current running notebooks</span><br/><br/>
+<span class='systemnote'>We are currently unable to start addtional notebooks.</span>
 -->
 </div>
 
@@ -349,6 +351,28 @@ presentation. We are continuously evaluating the need for allowing more
 exotic characters but always with focus on not breaking existing
 interfaces and backends. Feel free to contact us about the possibility
 of allowing any additional characters that you may miss.
+<h4 class="staticpage">How do I install and run software XYZ in Jupyter?</h4>
+<p>
+We've added Jupyter integration in ERDA, so that you can run interactive
+data analysis sessions e.g. in a Python or R environment with direct
+access to all your ERDA data.<br/>
+A number of software packages are already available in the different ERDA
+Jupyter instances, but sometimes you may still want to run additional
+software there. For Python and Jupyter extension packages it may work to simply
+install temporarily with pip or pip3 inside the session via
+the <em>Terminal</em> in the main Jupyter <em>Launcher</em> window, or
+by writing a standard Python <em>requirements.txt</em> file in your ERDA
+home and run it interactively with something like
+<tt>pip3 install -r requirements.txt</tt> from the Jupyter Terminal.<br/>
+Alternatively you can install Python software dependencies like e.g. the
+scikit-image package directly in the Jupyter Notebook itself by evaluating
+<tt>!pip3 install scikit-image</tt> in a cell.<br/>
+At the moment installing software that requires compilation or come with other
+external dependencies is typically not supported. We're
+working on a framework to allow some self-service customization of the
+Jupyter instances. Until then you can contact us at our support email if
+you have additional software wishes. Then we will see if they can be
+fulfilled - but we can't give any promises.
 </p>
 <h4 class="staticpage">Can I get or keep an ERDA account without a UCPH account?</h4>
 <p>
@@ -449,6 +473,8 @@ Can just be disabled by putting it into an html comment when not in use.
 <span class='systemwarn'>VIGTIGT: ERDAs backend-lager er delvist nede pga et strømudfald</span><br/><br/>
 <span class='systemnote'>Der foregår strøm- og kølearbejde i HPC centret, så teknikerne er allerede på sagen.</span>
 <span class='systemwarn'>NB: vi er tilbage i almindelig drift efter et massivt udfald i nat.</span><br/><br/>
+<span class='systemwarn'>VIGTIGT: Jupyter kan i �jeblikket ikke starte nye notebooks</span><br/><br/>
+<span class='systemnote'>Du vil derfor desværre nok ikke kunne starte en ny notebook.</span>
 -->
 </div>
 
@@ -648,6 +674,29 @@ tillade yderligere eksotiske tegn, hele tiden under krav om hverken at
 skade brugergrænseflader eller bagvedliggende systemer. Du er
 naturligvis velkommen til at kontakte os angående at få yderligere tegn
 du måtte savne tilladt.
+</p>
+<h4 class="staticpage">Hvordan installerer og kører jeg software XYZ i Jupyter?</h4>
+<p>
+Vi har integreret Jupyter i ERDA, så man som bruger kan lave interaktiv
+dataanalyse i f.eks. Python eller R og med direkte adgang til alt sit
+ERDA-data.<br/>
+Jupyter-miljøet har forskellige images med en stribe software-pakker
+installeret, men nogle gange kan det stadig være bekvemt at køre
+yderligere special-software. Nogle udvidelser til Python og Jupyter kan
+installeres midlertidigt med pip eller pip3 via en <em>Terminal</em> fra
+Jupyter hovedsiden, eller ved at skrive en standard Python
+<em>requirements.txt</em> fil i ens ERDA mappe og køre den ved Jupyter
+opstart med noget i stil med 
+<tt>pip3 install -r requirements.txt</tt> fra Jupyter-terminalen.<br/>
+Man kan alternativt installere Python software-afhængigheder som f.eks.
+scikit-image pakken direkte i Jupyter Notebooks ved at evaluere
+<tt>!pip3 install scikit-image</tt> i en celle.<br/>
+I øjeblikket er installation af software som kræver kompilering eller
+har eksterne afhængigheder typisk ikke understøttet. Vi arbejder på at
+udvikle en gør-det-selv tilpasning af Jupyter-instanserne, så det i noget
+omfang bliver muligt. Indtil da er fremgangsmåden at skrive til vores
+support-email med evt ønsker om yderligere software. Så undersøger vi om
+det er muligt at tilføje - men vi kan ikke love noget.
 </p>
 <h4 class="staticpage">Kan jeg få eller beholde en ERDA-konto uden en KU-konto?</h4>
 <p>

@@ -127,11 +127,15 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
-<h4 class="staticpage">2019/01/17: Web Access and Login Errors</h4>
+<h4 class="staticpage">2019/01/17: Web Access/Login Downtime and subsequent fallouts</h4>
 <p>
-We experienced errors related to authentication and generel Web access.
-The suspected cause at this point is that KU's OpenID service did not allow our servers to authenticate users properly.
-We are currently looking into this and will report back once we know more.
+We experienced errors related to authentication and generel Web access between 13:00 and 15:00.
+The initial fallout was due to errors in authenticating against KU's OpenID service.
+After this had been resolved and the service had settled for a while, 
+subsequent authenticated users via the OpenID service experienced request failures both in accessing ERDA and the Jupyter service.
+This was discovered being due to a flood of failed requests from re-authenticated users accessing previously created Jupyter servers.
+This was resolved by reseting the old Jupyter servers. For now this has stabialized both ERDA and Jupyter, however we will continue to monitor 
+the situtation if subsequent failures should arise.
 </p>
 <h4 class="staticpage">2018/09/09: Import Share Links</h4>
 <p>
@@ -458,9 +462,16 @@ du har spørgsmål eller oplever problemer.
 <div class="news-accordion">
 <h4 class="staticpage">2019/01/17: Web Adgang og Login Fejl</h4>
 <p>
-Vi oplevede fejl i forbindelse med godkendelse og generel Web adgang.
-Den mistænkte årsag på dette tidspunkt er, at KUs OpenID-tjeneste ikke tillod vores servere at autentificere brugere korrekt.
-Vi kigger i øjeblikket på dette og vil rapportere tilbage, når vi ved mere.
+Vi oplevede fejl i forbindelse med login og generel web-adgang mellem kl. 13.00 og 15.00.
+Dette oprindelige udfald skyldtes fejl i autentificering mod KUs OpenID-tjeneste.
+Efter dette var overstået var tjenesten stabiliserende i et stykke tid.
+Dog fulgte dette et senere udfald, specifikt med fejlende forespørgsler 
+mod både ERDA og Jupyter for OpenID autentificerede brugere.
+Dette skyltes at gen-autentificerede OpenID brugere der tidligere havde 
+startet en Jupyter server forårsagede fejlagtige forespørgsler fra deres gamle
+ Jupyter server både til og fra ERDA. Dette blev løst ved at nulstille de gamle Jupyter-servere. 
+For nuværende har dette stabiliserende både ERDA og Jupyter, dog vi vil fortsætte med at overvåge
+situationen i tilfælde af flere fejl skulle følge.
 </p>
 <h4 class="staticpage">2018/09/09: Import Share Links</h4>
 <p>
