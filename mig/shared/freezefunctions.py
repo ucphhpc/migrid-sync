@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezefunctions - freeze archive helper functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 
 import base64
 import datetime
+import json
 import os
 import sys
 import time
@@ -45,13 +46,15 @@ from urllib import quote
 
 from shared.base import client_id_dir, distinguished_name_to_user
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
-    public_archive_dir, public_archive_index, freeze_flavors, keyword_final, \
-    keyword_pending, keyword_auto, max_freeze_files
+    public_archive_dir, public_archive_index, public_archive_files, \
+    public_archive_doi, freeze_flavors, keyword_final, keyword_pending, \
+    keyword_auto, max_freeze_files
 from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
     makedirs_rec, make_symlink, make_temp_dir
-from shared.html import get_cgi_html_preamble, get_cgi_html_footer
+from shared.html import get_cgi_html_preamble, get_cgi_html_footer, \
+    jquery_ui_js, man_base_js, themed_styles, tablesorter_pager
 from shared.pwhash import make_path_hash
 from shared.serial import load, dump
 
@@ -60,8 +63,11 @@ TARGET_PATH = 'PATH'
 ARCHIVE_PREFIX = 'archive-'
 CACHE_EXT = ".cache"
 __chksum_unset = 'please request explicitly'
-__public_meta = [('CREATOR', 'Owner'), ('NAME', 'Name'),
-                 ('DESCRIPTION', 'Description'), ('CREATED_TIMESTAMP', 'Date')]
+__auto_meta = [('CREATOR', 'Creator'), ('CREATED_TIMESTAMP', 'Date')]
+__public_meta = [('AUTHOR', 'Author(s)'), ('NAME', 'Title'),
+                 ('DESCRIPTION', 'Description')]
+__public_archive_internals = [public_archive_index, public_archive_files,
+                              public_archive_doi]
 
 
 def public_freeze_id(freeze_dict, configuration):
@@ -105,14 +111,17 @@ def published_dir(freeze_dict, configuration):
                         public_freeze_id(freeze_dict, configuration))
 
 
-def published_url(freeze_dict, configuration):
-    """Translate internal freeze_id to a published archive URL"""
+def published_url(freeze_dict, configuration, target=public_archive_index):
+    """Translate internal freeze_id to a published archive URL. The optional
+    target argument is used to request a specific archive helper instead of
+    the landing page.
+    """
     base_url = configuration.migserver_http_url
     if configuration.migserver_https_sid_url:
         base_url = configuration.migserver_https_sid_url
     return os.path.join(base_url, 'public', public_archive_dir,
                         public_freeze_id(freeze_dict, configuration),
-                        public_archive_index)
+                        target)
 
 
 def build_freezeitem_object(configuration, freeze_dict, summary=False):
@@ -355,7 +364,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
     updates = 0
     for (root, _, filenames) in walk(arch_dir):
         for name in filenames:
-            if name in [freeze_meta_filename]:
+            if name in [freeze_meta_filename] + __public_archive_internals:
                 continue
             frozen_path = os.path.join(root, name)
             _logger.debug("refresh cache for file %s" % frozen_path)
@@ -575,7 +584,8 @@ def format_meta(key, val):
     return out
 
 
-def write_landing_page(freeze_dict, arch_dir, frozen_files, configuration):
+def write_landing_page(freeze_dict, arch_dir, frozen_files, cached,
+                       configuration):
     """Write a landing page for archive publishing. Depending on archive state
     it will be a draft or the final version.
     """
@@ -584,7 +594,10 @@ def write_landing_page(freeze_dict, arch_dir, frozen_files, configuration):
     published_id = public_freeze_id(freeze_dict, configuration)
     real_pub_dir = published_dir(freeze_dict, configuration)
     real_pub_index = os.path.join(arch_dir, public_archive_index)
+    real_pub_files = os.path.join(arch_dir, public_archive_files)
     arch_url = published_url(freeze_dict, configuration)
+    files_url = published_url(freeze_dict, configuration, public_archive_files)
+    doi_url = published_url(freeze_dict, configuration, public_archive_doi)
     freeze_dict['PUBLISH_URL'] = arch_url
     _logger.debug("create landing page for %s on %s" % (freeze_id, arch_url))
     publish_preamble = ""
@@ -597,10 +610,149 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
 """
         publish_title = "Public Archive Preview: %s" % published_id
 
+    # jquery support for tablesorter
+    # table initially sorted by col. 0 (filename)
+
+    refresh_call = 'ajax_showfiles("%s", "%s")' % \
+                   (freeze_id, ['md5'])
+    table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
+                  'refresh_call': refresh_call}
+    (add_import, add_init, add_ready) = man_base_js(configuration,
+                                                    [table_spec])
+    add_init += """
+    function ajax_showfiles(freeze_id, checksum_list) {
+        var url = '%s';
+        var tbody_elem = $('#frozenfilestable tbody');
+        $(tbody_elem).empty();
+        console.debug('Loading files from '+url+' ...');
+        $('#ajax_status').html('Loading files ...');
+        $('#ajax_status').addClass('spinner iconleftpad');
+        var files_req = $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: function(jsonRes, textStatus) {
+                console.debug('got response from files lookup: '+textStatus);
+                console.debug(jsonRes);
+                var chunk_size = 200;
+                var files_data = '';
+                var entry = null;
+                var i, j, name;
+                /* NOTE: only md5sums really fit page width so hide the rest */
+                /* var chksums = ['md5sum', 'sha1sum', 'sha256sum', 'sha512sum']; */
+                var chksums = ['md5sum'];
+                for (i=0; i < jsonRes.length; i++) {
+                    console.debug('found file: '+ jsonRes[i].name);
+                    entry = jsonRes[i];
+                    files_data += '<tr><td><a href=\"'+entry.name+'\">'+entry.name+'</a></td><td><div class=\"sortkey hidden\">'+entry.timestamp+'</div>'+entry.date+'</td><td>'+entry.size+'</td><td class=\"md5sum hidden\"><pre>'+entry.md5sum+'</pre></td><td class=\"sha1sum hidden\"><pre>'+entry.sha1sum+'</pre></td><td class=\"sha256sum hidden\"><pre>'+entry.sha256sum+'</pre></td><td class=\"sha512sum hidden\"><pre>'+entry.sha512sum+'</pre></td></tr>';
+                    /* chunked updates - append after after every chunk_size entries */
+                    if (i > 0 && i %% chunk_size === 0) {
+                        console.debug('append chunk of ' + chunk_size + ' entries');
+                        $(tbody_elem).append(files_data);
+                        files_data = "";
+                    }
+                }
+                if (files_data) {
+                    console.debug('append remaining chunk of ' + (i %% chunk_size) + ' entries');
+                    $(tbody_elem).append(files_data);
+                }
+                /* Inspect first element and enable available checksums */
+                if (entry !== null) {
+                    for (j=0; j < chksums.length; j++) {
+                        name = chksums[j];
+                        var sum = $(entry).attr(name);
+                        /* console.debug('found '+name+' checksum: '+ sum); */
+                        if (sum.indexOf(' ') === -1) {
+                            console.debug('show '+name);
+                            $('.'+name).show();
+                        } else {
+                            console.debug('no '+name+' to show');
+                        }
+                     }
+                }
+
+                $('#ajax_status').html('');
+                $('#ajax_status').removeClass('spinner iconleftpad');
+                $('#frozenfilestable').trigger('update');
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('files lookup failed: '+textStatus+' : '+errorThrown);
+                $('#ajax_status').html('No files data available');
+                $('#ajax_status').removeClass('spinner iconleftpad');
+            }
+        });
+    }
+    function toggle_raw_doi_meta() {
+        $('#raw_doi_meta').toggle();
+        if ($('#toggle_raw_doi_link').hasClass('doishowdetails')) {
+            $('#toggle_raw_doi_link').removeClass('doishowdetails');
+            $('#toggle_raw_doi_link').addClass('doihidedetails');
+        } else {
+            $('#toggle_raw_doi_link').removeClass('doihidedetails');
+            $('#toggle_raw_doi_link').addClass('doishowdetails');
+        }
+    }
+    function ajax_showdoi() {
+        var url = '%s';
+        console.debug('loading DOI data from '+url+' ...');
+        $('#doicontents').html('Loading DOI data ...');
+        $('#doicontents').addClass('spinner iconleftpad');
+        var doi_req = $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: function(jsonRes, textStatus) {
+                console.debug('got response from doi lookup: '+textStatus);
+                console.debug(jsonRes);
+                var doi_data = '', raw_meta='';
+                var doi_url = jsonRes.id;
+                var doi = jsonRes.doi;
+                var datacite_url = 'https://search.datacite.org/works/'+doi;
+                doi_data += '<h4>Archive DOI</h4>';
+                doi_data += '<p><a class=\"iconleftpad doilink\" href=\"';
+                doi_data += doi_url + '\">'+doi_url+'</a></p>';
+                doi_data += '<h4>DataCite Entry</h4>';
+                doi_data += '<p>Complete DOI meta data and citation info is ';
+                doi_data += 'available in the <a class=\"iconleftpad doisearchlink\"';
+                doi_data += 'href=\"' + datacite_url + '\">';
+                doi_data += 'DataCite DOI Collection</a>.</p>';
+                doi_data += '<h4>DOI Details</h4>';
+                raw_meta += JSON.stringify(jsonRes, null, 4);
+                $('#doicontents').html(doi_data);
+                $('#raw_doi_meta').html(raw_meta);
+                $('#doicontents').removeClass('spinner iconleftpad');
+                $('#doitoggle').show();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.info('No DOI data found')
+                console.debug('DOI request said: '+textStatus+' : '+errorThrown);
+                doi_data = 'No DOI data found';
+                $('#doicontents').html(doi_data);
+                $('#doicontents').removeClass('spinner iconleftpad');
+            }
+        });
+    }
+    """ % (files_url, doi_url)
+    add_ready += """
+    ajax_showdoi('%s');
+    %s;
+    """ % (freeze_id, refresh_call)
+    # Fake manager themed style setup for tablesorter layout
+    style_entry = themed_styles(configuration)
+    base_style = style_entry.get("base", "")
+    advanced_style = style_entry.get("advanced", "")
+    skin_style = style_entry.get("skin", "")
+    ajax_load = jquery_ui_js(configuration, add_import,
+                             add_init, add_ready)
+
     # Use the default preamble to get style, skin and so on right
 
     contents = get_cgi_html_preamble(configuration, publish_title, "",
-                                     widgets=False, userstyle=False)
+                                     base_styles=base_style,
+                                     advanced_styles=advanced_style,
+                                     skin_styles=skin_style,
+                                     scripts=ajax_load, widgets=False,
+                                     userstyle=False)
 
     # Manually create modified page start like get_cgi_html_header but
     # using staticpage class for flexible skinning
@@ -629,39 +781,73 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
 
     # Then fill actual archive page
 
+    auto_line = ''
+    auto_map = {'published_id': published_id}
+    # TODO: drop meta_label here
+    for (meta_key, meta_label) in __auto_meta:
+        meta_value = freeze_dict.get(meta_key, '')
+        auto_map[meta_key.lower()] = format_meta(meta_key, meta_value)
+
+    auto_line = """This is the public archive with ID %(published_id)s created
+on %(created_timestamp)s by %(creator)s.""" % auto_map
     contents += """
 %s
 <div class='archive-header'>
-<h1 class='staticpage'>Public Archive</h1>
-This is the public archive with unique ID %s .<br/>
-The user-supplied meta data and files are available below.
+<p class='archive-autometa archive-box'>%s
+</p>
 </div>
 
 <div class='archive-metadata'>
 <h2 class='staticpage'>Archive Meta Data</h2>
-""" % (publish_preamble, published_id)
+""" % (publish_preamble, auto_line)
     for (meta_key, meta_label) in __public_meta:
         meta_value = freeze_dict.get(meta_key, '')
         if meta_value:
             # Preserve any text formatting in e.g. description
             contents += """<h4 class='staticpage'>%s</h4>
-<pre class='archive-%s'>%s</pre>
+<pre class='archive-%s standardfonts'>%s</pre>
 """ % (meta_label, meta_label.lower(), format_meta(meta_key, meta_value))
     contents += """</div>
 
-<div class='archive-files'>
+<div class='archive-doidata'>
+<h2 class='staticpage'>Archive DOI Data</h2>
+    <div id='doicontents'><!-- filled by AJAX call--></div>
+    <div id='doitoggle' class='hidden'>
+    <a id='toggle_raw_doi_link' class='iconleftpad doishowdetails'
+    href='#' onClick='toggle_raw_doi_meta();'>Show/hide all DOI meta data</a>
+    registered with DataCite.
+    </div>
+    <div id='raw_doi_meta' class='hidden archive-box'>
+    <!-- filled by AJAX call-->
+    </div>
+    """
+    contents += """</div>
+    """
+
+    # TODO: chunk json files for responsive AJAX load?
+    toolbar = tablesorter_pager(configuration)
+    contents += """
+<div class='archive-filestable'>
 <h2 class='staticpage'>Archive Files</h2>
-        """
-    for rel_path in frozen_files:
-        # Careful to avoid problems with filenames containing single quotes
-        # and encode e.g. percent signs that would otherwise interfere
-        contents += '''<a href="%s">%s</a><br/>
-''' % (quote(rel_path), rel_path)
+    %s    
+    <table id='frozenfilestable' class='frozenfiles columnsort'>
+        <thead class='title'>
+            <tr><th>Name</th><th>Date</th><th>Size</th>
+            <th class='md5sum hidden'>MD5 Checksum</th>
+            <th class='sha1sum hidden'>SHA1 Checksum</th>
+            <th class='sha256sum hidden'>SHA256 Checksum</th>
+            <th class='sha512sum hidden'>SHA512 Checksum</th>
+            </tr>
+        </thead>
+        <tbody><!-- rows filled by AJAX call--></tbody>
+    </table>
+    """ % toolbar
     contents += """</div>
 %s
-        """ % get_cgi_html_footer(configuration, widgets=False)
+    """ % get_cgi_html_footer(configuration, widgets=False)
     if not make_symlink(arch_dir, real_pub_dir, _logger, force=True) or \
-            not write_file(contents, real_pub_index, _logger):
+            not write_file(contents, real_pub_index, _logger) or \
+            not write_file(json.dumps(cached), real_pub_files, _logger):
         return (False, 'Error making landing page for archive publishing')
     return (True, freeze_dict)
 
@@ -675,11 +861,13 @@ def remove_landing_page(freeze_dict, arch_dir, configuration,
     freeze_id = freeze_dict['ID']
     real_pub_dir = published_dir(freeze_dict, configuration)
     real_pub_index = os.path.join(arch_dir, public_archive_index)
+    real_pub_files = os.path.join(arch_dir, public_archive_files)
     if freeze_dict.get('PUBLISH_URL', ''):
         del freeze_dict['PUBLISH_URL']
     _logger.debug("remove landing page for %s" % freeze_id)
-    if not delete_symlink(real_pub_dir, _logger, allow_missing=allow_missing) or \
-            not delete_file(real_pub_index, _logger, allow_missing=allow_missing):
+    if not delete_symlink(real_pub_dir, _logger, allow_missing=allow_missing) \
+       or not delete_file(real_pub_index, _logger, allow_missing=allow_missing)\
+       or not delete_file(real_pub_files, _logger, allow_missing=allow_missing):
         return (False, 'Error removing published landing page for archive')
     return (True, freeze_dict)
 
@@ -774,7 +962,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         return (files_status, files_res)
     # Merge list of existing files from loaded archive with new ones
     frozen_files = [i['name'] for i in freeze_dict.get('FILES', [])
-                    if i['name'] != public_archive_index]
+                    if i['name'] not in __public_archive_internals]
     frozen_files += files_res
     _logger.debug("proceed with frozen_files: %s" % frozen_files)
 
@@ -791,8 +979,19 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         return (False, "Error: final archives must have one or more files")
 
     if freeze_dict.get('PUBLISH', False):
+        # NOTE: force cache generation without chksums for immediate use here
+        (files_status, cached) = get_frozen_files(client_id, freeze_id,
+                                                  configuration, [])
+        if not files_status:
+            return (False, 'failed to build cached files for %s' % freeze_id)
+        _logger.debug("loaded cached files for '%s': %s" % (freeze_id, cached))
+        # Add human-friendly text timestamp
+        for i in cached:
+            i['date'] = "%s" % \
+                        datetime.datetime.fromtimestamp(int(i['timestamp']))
         (web_status, web_res) = write_landing_page(freeze_dict, arch_dir,
-                                                   frozen_files, configuration)
+                                                   frozen_files, cached,
+                                                   configuration)
     elif published:
         (web_status, web_res) = remove_landing_page(freeze_dict, arch_dir,
                                                     configuration,
@@ -874,9 +1073,10 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
 
     if freeze_dict.get('PUBLISH', False):
         frozen_files = [i['name'] for i in freeze_dict.get('FILES', [])
-                        if i['name'] != public_archive_index]
+                        if i['name'] not in __public_archive_internals]
         (web_status, web_res) = write_landing_page(freeze_dict, arch_dir,
-                                                   frozen_files, configuration)
+                                                   frozen_files, cached,
+                                                   configuration)
         if not web_status:
             _logger.error(web_res)
             return (False, web_res)

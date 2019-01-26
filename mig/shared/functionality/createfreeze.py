@@ -268,6 +268,8 @@ You must provide author and department for the thesis!"""})
         changes = {}
         if freeze_name and freeze_name != keyword_auto:
             changes['NAME'] = freeze_name
+        if freeze_author:
+            changes['AUTHOR'] = freeze_author
         if freeze_description:
             changes['DESCRIPTION'] = freeze_description
         if freeze_publish:

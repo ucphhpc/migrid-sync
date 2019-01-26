@@ -1232,10 +1232,13 @@ def guess_type(name):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
         for key in ('execution_user', 'storage_user'):
             __type_map[key] = lambda x: valid_job_id(x, min_length=0)
-        for key in ('freeze_author', 'freeze_department',
-                    'freeze_organization',
+        for key in ('freeze_department', 'freeze_organization',
                     ):
             __type_map[key] = lambda x: valid_commonname(x, min_length=0)
+        # author may be empty or a comma-separated list
+        for key in ('freeze_author', ):
+            __type_map[key] = lambda x: valid_commonname(x, min_length=0,
+                                                         extra_chars=',')
         # EXECONFIG vgrid field which may be empty or a comma-separated list
         for key in ('vgrid', ):
             __type_map[key] = lambda x: valid_vgrid_name(x, min_length=0,

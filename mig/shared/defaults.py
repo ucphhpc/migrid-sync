@@ -190,6 +190,8 @@ download_block_size = 268435456
 wwwpublic_alias = 'public'
 public_archive_dir = 'archives'
 public_archive_index = 'published-archive.html'
+public_archive_files = 'published-files.json'
+public_archive_doi = 'published-doi.json'
 
 edit_lock_suffix = '.editor_lock__'
 edit_lock_timeout = 600

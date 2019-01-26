@@ -122,6 +122,7 @@ Please contact the site admins %s if you think it should be enabled.
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     lookup_map = {'freeze_id': 'ID', 'freeze_name': 'NAME',
+                  'freeze_author': 'AUTHOR',
                   'freeze_description': 'DESCRIPTION'}
     for (key, val) in lookup_map.items():
         fill_helpers[key] = freeze_dict.get(val, '')
@@ -385,19 +386,21 @@ so please be careful when filling in the details.
     freeze_form = """
 <form enctype='multipart/form-data' method='%(form_method)s' action='%(target_op)s.py'>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-<b>Name:</b><br />
 <input type='hidden' name='flavor' value='%(flavor)s' />
 <input type='hidden' name='freeze_id' value='%(freeze_id)s' />
+<b>Name:</b><br />
 <input class='fillwidth padspace' type='text' name='freeze_name'
     value='%(freeze_name)s' autofocus required pattern='[a-zA-Z0-9_. -]+'
-    title='unique name for the freeze archive. I.e. letters and digits separated only by underscores, periods and hyphens' />
+    title='unique name for the freeze archive. I.e. letters and digits separated only by spaces, underscores, periods and hyphens' />
 """
     if flavor != 'backup':
         # TODO: do these make sense to have here or just forced in backend?
         freeze_form += """
-<input type='hidden' name='freeze_author' value='' />
 <input type='hidden' name='freeze_department' value='' />
 <input type='hidden' name='freeze_organization' value='' />
+<br><b>Author(s):</b><br />
+<input class='fillwidth padspace' type='text' name='freeze_author'
+    value='%(freeze_author)s' title='optional archive author(s) in case archive is created on behalf of one or more people' />
 <br /><b>Description:</b><br />
 <textarea class='fillwidth padspace' rows='20' name='freeze_description'>%(freeze_description)s</textarea>
 <br />

@@ -912,12 +912,12 @@ div.archive pre {
   background: url('/images/icons/hourglass_go.png') no-repeat;
   padding-left: 18px;
 }
-.createarchivelink {
+.createarchivelink, .doishowdetails {
   background-image: url('/images/icons/book_add.png');
   background-repeat: no-repeat;
   padding-left: 18px;
 }
-.viewarchivelink {
+.viewarchivelink, .doisearchlink {
   background-image: url('/images/icons/book_open.png');
   background-repeat: no-repeat;
   padding-left: 18px;
@@ -927,7 +927,7 @@ div.archive pre {
   background-repeat: no-repeat;
   padding-left: 18px;
 }
-.deletearchivelink {
+.deletearchivelink, .doihidedetails {
   background-image: url('/images/icons/book_delete.png');
   background-repeat: no-repeat;
   padding-left: 18px;
@@ -942,7 +942,7 @@ div.archive pre {
   background-repeat: no-repeat;
   padding-left: 18px;
 }
-.previewarchivelink {
+.previewarchivelink, .doilink {
   background-image: url('/images/icons/book_link.png');
   background-repeat: no-repeat;
   padding-left: 18px;
@@ -1346,6 +1346,17 @@ span.fakelink:hover {
   color: #999;
   cursor: pointer;
 }
+
+/* Layout boxes for archive landing pages */
+.standardfonts {
+  font-family: verdana, helvetica, serif, times;
+}
+.archive-box {
+  border: solid #ccc 1px;
+  border-radius: 4px; 
+  padding: 2px;
+}
+
 
 /* 
 *************************************************************************

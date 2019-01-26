@@ -263,6 +263,59 @@ def jquery_ui_js(configuration, js_import, js_init, js_ready):
 ''' % {'js_import': js_import, 'js_init': js_init, 'js_ready': js_ready}
 
 
+def tablesorter_pager(configuration, id_prefix='', entry_name='files',
+                      page_entries=[5, 10, 20, 25, 40, 50, 80, 100, 250, 500,
+                                    1000],
+                      default_entries=25, form_prepend='', form_append='',
+                      enable_refresh_button=True):
+    """Generate html pager for tablesorter table"""
+    toolbar = '''
+  <div>
+    <div class="toolbar">        
+      <div class="pager" id="%spager">
+      <form style="display: inline;" action="">
+%s
+''' % (id_prefix, form_prepend)
+    toolbar += '''            
+        <img class="first icon" alt="first" src="/images/icons/arrow_left.png"/>
+        <img class="prev icon" alt="prev" src="/images/icons/arrow_left.png"/>
+        <input class="pagedisplay" type="text" size=15 readonly="readonly" />
+        <img class="next icon" alt="next" src="/images/icons/arrow_right.png"/>
+        <img class="last icon" alt="last" src="/images/icons/arrow_right.png"/>
+        <select class="pagesize">
+'''
+    for value in page_entries:
+        selected = ''
+        if value == default_entries:
+            selected = 'selected'
+        toolbar += '<option %s value="%d">%d %s per page</option>\n'\
+                   % (selected, value, value, entry_name)
+    toolbar += '''
+        </select>
+        %s
+''' % form_append
+    if enable_refresh_button:
+        refresh_button = '''
+            <img class="pagerrefresh icon" alt="refresh" src="/images/icons/arrow_refresh.png"
+                title="Refresh" />
+                '''
+    else:
+        refresh_button = ""
+    toolbar += '''
+        <div id="%spagerrefresh" class="inline">
+            %s
+            <div id="ajax_status" class="inline"><!-- Dynamically filled by js --></div>
+        </div>
+''' % (id_prefix, refresh_button)
+    toolbar += '''
+      </form>
+      </div>
+    </div>
+  </div>
+    '''
+    return toolbar
+
+
 def tablesorter_js(configuration, tables_list=[], include_ajax=True):
     """Build standard tablesorter dependency imports, init and ready snippets.
     The tables_list contains one or more table definitions with id and options
