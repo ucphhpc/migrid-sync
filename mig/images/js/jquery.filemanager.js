@@ -1519,6 +1519,54 @@ if (jQuery) (function($){
                 $("#import_sharelink_dialog").dialog('open');
                 $("#import_sharelink_form input[name='share_id']").focus();
             },
+            importfreeze: function(action, el, pos) {
+                var target = $(el).attr(pathAttribute);
+                $("#import_freeze_form input[name='dst']").val(target);
+                $("#import_freeze_form input[name='src']").val('*');
+                $("#import_freeze_form input[name='freeze_id']").val('');
+                $("#import_freeze_form #overwrite_check").prop('checked', false);
+                $("#import_freeze_form #overwrite_warn").hide();
+                $("#import_freeze_dialog").dialog({
+                    buttons: {
+                        Ok: function() {
+                            startProgress("Importing from archive ...");
+                            var freeze_id = $("#import_freeze_form input[name='freeze_id']").val();
+                            var src = $("#import_freeze_form input[name='src']").val();
+                            var dst = $("#import_freeze_form input[name='dst']").val();
+                            var flags = '';
+                            if ($("#import_freeze_form input[name='overwrite']").prop('checked')) {
+                                flags += 'f';
+                            }
+                            if ($("#import_freeze_form input[name='recursive']").prop('checked')) {
+                                flags += 'r';
+                            }
+                            console.info("parsed flags: "+flags);
+                            /* TODO: allow public archives here, too? */
+                            /*
+                            if (freeze_id.indexOf('/') >= 0) {
+                                console.info("strip URL prefix from Archive ID: "+freeze_id);
+                                freeze_id = freeze_id.replace(/^.*\//, '');
+                                console.info("stripped Archive ID: "+freeze_id);
+                            }
+                            */
+                            $(this).dialog('close');
+                            jsonWrapper(el, '#cmd_dialog', 'cp.py', {path: "",
+                                                                     freeze_id: freeze_id,
+                                                                     src: src,
+                                                                     dst: dst,
+                                                                     flags: flags,
+                                                                    });
+                        },
+                        Cancel: function() {
+                            $(this).dialog('close');
+                        }
+                    },
+                    autoOpen: false, closeOnEscape: true, modal: true,
+                    width: '700px'
+                });
+                $("#import_freeze_dialog").dialog('open');
+                $("#import_freeze_form input[name='freeze_id']").focus();
+            },
             imagesettings: function(action, el, pos) {
                 var rel_path = $(el).attr(pathAttribute);
                 var open_dialog = mig_imagesettings_init("imagesettings_dialog", rel_path, options);
@@ -2093,6 +2141,17 @@ if (jQuery) (function($){
                                             }
                                   },
                     "sharelinks-sep": "---------",
+                    "archives": {"name": "Archive", icon: "archive", 
+                                 "items": {
+                                     /* TODO: Add direct 'archive this' launchers like these */
+                                     /*
+                                        "createfreeze": {name: "Create Freeze", icon: "createfreeze"}, 
+                                        "createbackup": {name: "Create Backup", icon: "createbackup"}, 
+                                     */
+                                     "importfreeze": {name: "Import", icon: "importfreeze"}
+                                 }
+                                },
+                    "archives-sep": "---------",
                     "datatransfers": {name: "Data Transfers", icon: "datatransfers",
                                       "items": {"dataimport": {name: "Import", icon: "dataimport"},
                                                 "dataexport": {name: "Export", icon: "dataexport"}
@@ -2485,6 +2544,24 @@ if (jQuery) (function($){
                      } else {
                          $("#import_sharelink_output").html("imported!");
                          $("#import_sharelink_dialog").dialog('close');
+                     }
+                     /* always reload parent to reset progress, etc */
+                     $(".fm_files").parent().reload('');
+                 }
+                });
+
+            $("#import_freeze_form").ajaxForm(
+                {target: '#import_freeze_output', dataType: 'json',
+                 success: function(responseObject, statusText) {
+                     var errors = $(this).renderError(responseObject);
+                     var warnings = $(this).renderWarning(responseObject);
+                     if (errors.length > 0) {
+                         $("#import_freeze_output").html(errors);
+                     } else if (warnings.length > 0) {
+                         $("#import_freeze_output").html(warnings);
+                     } else {
+                         $("#import_freeze_output").html("imported!");
+                         $("#import_freeze_dialog").dialog('close');
                      }
                      /* always reload parent to reset progress, etc */
                      $(".fm_files").parent().reload('');

@@ -34,6 +34,7 @@ import shutil
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.fileio import check_write_access, check_empty_dir
+from shared.freezefunctions import is_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
@@ -52,6 +53,7 @@ def signature():
         'dst': REJECT_UNSET,
         'iosessionid': [''],
         'share_id': [''],
+        'freeze_id': [''],
     }
     return ['', defaults]
 
@@ -82,6 +84,7 @@ def main(client_id, user_arguments_dict, environ=None):
     dst = accepted['dst'][-1]
     iosessionid = accepted['iosessionid'][-1]
     share_id = accepted['share_id'][-1]
+    freeze_id = accepted['freeze_id'][-1]
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -136,10 +139,30 @@ supported for directory sharelinks!"""})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif not os.path.isdir(src_base):
             logger.error('%s called import with non-existant sharelink: %s'
-                         % (op_name, share_id))
+                         % (client_id, share_id))
             output_objects.append(
                 {'object_type': 'error_text', 'text': 'No such sharelink: %s'
                  % share_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # Archive import if freeze_id is given - change to archive as src base
+    if freeze_id:
+        if not is_frozen_archive(client_id, freeze_id, configuration):
+            logger.error('%s called with invalid freeze_id: %s' %
+                         (op_name, freeze_id))
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Invalid archive ID: %s' % freeze_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        target_dir = os.path.join(client_dir, freeze_id)
+        src_base = os.path.abspath(os.path.join(configuration.freeze_home,
+                                                target_dir)) + os.sep
+        if not os.path.isdir(src_base):
+            logger.error('%s called import with non-existant archive: %s'
+                         % (client_id, freeze_id))
+            output_objects.append(
+                {'object_type': 'error_text', 'text': 'No such archive: %s'
+                 % freeze_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     status = returnvalues.OK
@@ -201,6 +224,17 @@ will potentially overwrite existing files with the sharelink version. If you
 really want that, please try import again and select the overwrite box to
 confirm it. You may want to back up any important data from %s first, however.
 """ % (share_id, relative_dest, relative_dest)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    if freeze_id and not force(flags) and not check_empty_dir(abs_dest):
+        logger.warning('%s called %s archive import with non-empty dst: %s'
+                       % (op_name, freeze_id, abs_dest))
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             """Importing an archive like '%s' into the non-empty '%s' folder
+will potentially overwrite existing files with the archive version. If you
+really want that, please try import again and select the overwrite box to
+confirm it. You may want to back up any important data from %s first, however.
+""" % (freeze_id, relative_dest, relative_dest)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for pattern in src_list:

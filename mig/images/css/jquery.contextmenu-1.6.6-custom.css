@@ -221,6 +221,10 @@ Original license header follows...
 .context-menu-list LI.icon-createsharelink { background-image: url(/images/icons/table_add.png); }
 .context-menu-list LI.icon-importsharelink { background-image: url(/images/icons/table_lightning.png); }
 .context-menu-list LI.icon-sharelinks { background-image: url(/images/icons/table_gear.png); }
+.context-menu-list LI.icon-archive { background-image: url(/images/icons/box.png); }
+.context-menu-list LI.icon-createfreeze { background-image: url(/images/icons/box_add.png); }
+.context-menu-list LI.icon-createbackup { background-image: url(/images/icons/box_add.png); }
+.context-menu-list LI.icon-importfreeze { background-image: url(/images/icons/box_lightning.png); }
 .context-menu-list LI.icon-dataimport { background-image: url(/images/icons/page_white_get.png); }
 .context-menu-list LI.icon-dataexport { background-image: url(/images/icons/page_white_put.png); }
 .context-menu-list LI.icon-datatransfers { background-image: url(/images/icons/table_refresh.png); }

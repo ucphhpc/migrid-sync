@@ -33,6 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import trash_linkname, csrf_backends, csrf_field, \
     default_max_chunks
+from shared.freezefunctions import import_freeze_form
 from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_css_deps, \
     advanced_editor_js_deps, lock_info, edit_file
@@ -53,6 +54,8 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     fill_entries['create_sharelink_form'] = create_share_link_form(
         configuration, client_id, 'json', '', csrf_map.get('sharelink', ''))
     fill_entries['import_sharelink_form'] = import_share_link_form(
+        configuration, client_id, 'json', '', csrf_map.get('cp', ''))
+    fill_entries['import_freeze_form'] = import_freeze_form(
         configuration, client_id, 'json', '', csrf_map.get('cp', ''))
     if configuration.site_enable_jobs and \
             'submitjob' in extract_menu(configuration, title_entry):
@@ -341,6 +344,12 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         style="display: none;">
     %(import_sharelink_form)s
     <div id="import_sharelink_output"><!-- dynamic --></div>
+    </div>
+
+    <div id="import_freeze_dialog" title="Import from archive"
+        style="display: none;">
+    %(import_freeze_form)s
+    <div id="import_freeze_output"><!-- dynamic --></div>
     </div>
 
     <div id="imagesettings_dialog" title="Image Settings" style="display: none;">

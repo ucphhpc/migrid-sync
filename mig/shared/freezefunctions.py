@@ -48,7 +48,7 @@ from shared.base import client_id_dir, distinguished_name_to_user
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
     public_archive_dir, public_archive_index, public_archive_files, \
     public_archive_doi, freeze_flavors, keyword_final, keyword_pending, \
-    keyword_auto, max_freeze_files
+    keyword_auto, max_freeze_files, csrf_field
 from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
@@ -1110,6 +1110,89 @@ def delete_frozen_archive(freeze_dict, client_id, configuration):
         _logger.error("could not remove archive dir for %s" % freeze_dict)
         return (False, 'Error deleting frozen archive %s' % freeze_id)
     return (True, '')
+
+
+def import_freeze_form(configuration, client_id, output_format,
+                       form_append='', csrf_token=''):
+    """HTML for the import of archives"""
+    fill_helpers = {'vgrid_label': configuration.site_vgrid_label,
+                    'output_format': output_format, 'form_append': form_append,
+                    'csrf_field': csrf_field, 'csrf_token': csrf_token,
+                    'target_op': 'cp', 'form_method': 'post'}
+    # TODO: move js to separate function?
+    html = ''
+    html += '''
+    <script>
+    function toggle_overwrite_warning() {
+        if ($("#overwrite_check").prop("checked")) {
+            $("#overwrite_warn").show();
+        } else {
+            $("#overwrite_warn").hide();
+        }
+    }
+    </script>
+    '''
+    html += '''
+    <form id="import_freeze_form" method="%(form_method)s" action="%(target_op)s.py">
+    <fieldset>
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+        <input type="hidden" name="output_format" value="%(output_format)s" />
+        <input type="hidden" name="action" value="create" />
+        <p>
+        You can import the files and directories you stored in an archive, e.g.
+        to restore your own original copy of read-only material.
+        Just leave Source path to "*" to import entire archive content.
+        </p>
+        <p class="warningtext">
+        Please select a destination folder where the import does not interfere
+        with your existing data.
+        </p>
+        <table>
+        <tr><td colspan=2>
+        <label for="freeze_id">Archive ID:</label>
+        <input id="importfreezeid" class="singlefield" type="text" name="freeze_id" size=50
+        value="" required pattern="[^ ]+"
+        title="id string of archive to import from" />
+        </td></tr>
+        <tr><td colspan=2>
+        <label for="src">Source path:</label>
+        <input id="importsrc" class="singlefield" type="text" name="src" size=50
+        value="" required pattern="[^ ]+"
+        title="relative path or pattern of files to import from archive" />
+        <tr><td colspan=2>
+        <label for="dst">Destination folder:</label>
+        <input id="importdst" class="singlefield" type="text" name="dst" size=50
+        value="" required pattern="[^ ]+" readonly
+        title="relative directory path to import archive into" />
+        </td></tr>
+        <tr class="hidden"><td colspan=2>
+        <br />
+        </td></tr>
+        <tr><td colspan=2>
+        <br/>
+        </td></tr>
+        <tr class="hidden"><td colspan=2>
+        <!-- NOTE: we translate individual flag helpers in jquery fileman -->
+        <!-- always use recursive -->
+        <label for="recursive">Recursive:</label>
+        <input type="checkbox" name="recursive" checked="checked" />
+        </td></tr>
+        <tr><td colspan=2>
+        <!-- toggle force on/off -->
+        <label for="overwrite">Overwrite files:</label>
+        <input id="overwrite_check" type="checkbox" name="overwrite"
+            onClick="toggle_overwrite_warning();" />
+        <span id="overwrite_warn" class="hidden iconspace leftpad warn">
+        careful - may result in data loss!</span>
+        </td></tr>
+        <tr><td colspan=2>
+        %(form_append)s
+        </td></tr>
+        </table>
+    </fieldset>
+    </form>
+''' % fill_helpers
+    return html
 
 
 if __name__ == "__main__":
