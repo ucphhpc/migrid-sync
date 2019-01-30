@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -696,6 +696,23 @@ Invalid '%s' input: %s
             allowed = entry.password
             if allowed is None or not password:
                 continue
+            # Refuse access for expired accounts unless disabled in conf
+            if entry.user_dict and configuration.user_openid_enforce_expire:
+                now = time.time()
+                try:
+                    expire = int(entry.user_dict['expire'])
+                except Exception, exc:
+                    logger.error("could not extract account expire: %s" % exc)
+                    expire = -1
+                logger.debug("Check expire for account %s: %d vs %d" %
+                             (username, expire, now))
+                if expire < now:
+                    logger.warning("Ignore expired %s account login from %s" %
+                                   (username, addr))
+                    continue
+                else:
+                    logger.debug("Continue auth for active account %s from %s"
+                                 % (username, addr))
             # print "DEBUG: Check password against allowed %s" % allowed
             # NOTE: We always enforce password policy here to refuse weak
             #       legacy passwords.

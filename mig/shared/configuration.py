@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -171,6 +171,7 @@ def fix_missing(config_file, verbose=True):
         'user_openid_auth': ['password'],
         'user_openid_alias': '',
         'user_openid_log': 'openid.log',
+        'user_openid_enforce_expire': True,
         'user_mig_oid_title': '',
         'user_ext_oid_title': '',
         'user_mig_oid_provider': '',
@@ -377,6 +378,7 @@ class Configuration:
     user_openid_auth = ['password']
     user_openid_alias = ''
     user_openid_log = 'openid.log'
+    user_openid_enforce_expire = True
     user_mig_oid_title = ''
     user_ext_oid_title = ''
     user_mig_oid_provider = ''
@@ -1005,6 +1007,9 @@ location.""" % self.config_file
                                                 'user_openid_alias')
         if config.has_option('GLOBAL', 'user_openid_log'):
             self.user_openid_log = config.get('GLOBAL', 'user_openid_log')
+        if config.has_option('GLOBAL', 'user_openid_enforce_expire'):
+            self.user_openid_enforce_expire = config.getboolean(
+                'GLOBAL', 'user_openid_enforce_expire')
         if config.has_option('GLOBAL', 'user_mig_oid_title'):
             self.user_mig_oid_title = config.get('GLOBAL',
                                                  'user_mig_oid_title')
