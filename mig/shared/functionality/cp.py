@@ -33,7 +33,7 @@ import shutil
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.fileio import check_write_access, check_empty_dir
+from shared.fileio import check_write_access, check_empty_dir, makedirs_rec
 from shared.freezefunctions import is_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -206,6 +206,13 @@ supported for directory sharelinks!"""})
             {'object_type': 'error_text', 'text':
              "Invalid destination (%s expands to an illegal path)" % dst})
         return (output_objects, returnvalues.CLIENT_ERROR)
+    # We must make sure target dir exists if called in import X mode
+    if (share_id or freeze_id) and not makedirs_rec(abs_dest, configuration):
+        logger.error('could not create import destination dir: %s' % abs_dest)
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'cannot import to "%s" : file in the way?' % relative_dest})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
     if not check_write_access(abs_dest, parent_dir=True):
         logger.warning('%s called without write access: %s'
                        % (op_name, abs_dest))

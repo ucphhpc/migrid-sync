@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# events - shared event trigger helper functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# events - shared event trigger and cron/at helper functions
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Event trigger helper functions"""
+"""Event trigger and cron/at helper functions"""
 
 import datetime
 import fnmatch

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cmdapi - shared backend command line access helper functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,8 @@ def get_flag_map(configuration):
     commands with flags are included.
     """
 
-    flags_map = {'cp': ['r', 'f'], 'rm': ['r', 'f'], 'mkdir': ['p']}
+    flags_map = {'cp': ['r', 'f'], 'rm': ['r', 'f'], 'mkdir': ['p'],
+                 'importsharelink': ['r', 'f'], 'importfreeze': ['r', 'f']}
     return flags_map
 
 
@@ -78,6 +79,7 @@ def get_command_map(configuration):
         cmd_map.update({
             # 'addsharelink': ['path', 'read_access', 'write_access', 'invite', 'msg'],
             'delsharelink': ['share_id'],
+            'importsharelink': ['share_id', 'src', 'dst'],
         })
     if configuration.site_enable_transfers:
         cmd_map.update({
@@ -93,6 +95,7 @@ def get_command_map(configuration):
             'createbackup': ['freeze_name', 'freeze_copy_0'],
             'deletebackup': ['freeze_id'],
             'addfreezedata': ['freeze_id', 'freeze_copy_0'],
+            'importfreeze': ['freeze_id', 'src', 'dst'],
         })
     if configuration.site_enable_crontab:
         cmd_map.update({

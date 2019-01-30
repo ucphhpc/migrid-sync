@@ -394,12 +394,15 @@ def makedirs_rec(dir_path, configuration, accept_existing=True):
     accept_existing argument can be used to turn off the default behaviour of
     ignoring if dir_path already exists.
     """
+    _logger = configuration.logger
     try:
+        if os.path.exists(dir_path) and not os.path.isdir(dir_path):
+            _logger.error("Non-directory in the way: %s" % dir_path)
+            return False
         os.makedirs(dir_path)
     except OSError, err:
         if not accept_existing or err.errno != errno.EEXIST:
-            configuration.logger.error("Could not makedirs_rec %s: %s" %
-                                       (dir_path, err))
+            _logger.error("Could not makedirs_rec %s: %s" % (dir_path, err))
             return False
     return True
 
