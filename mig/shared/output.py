@@ -165,7 +165,7 @@ ___%s___
                                                          ['path', 'cur_size',
                                                           'total_size',
                                                           'percent', 'done']))
-            
+
         elif i['object_type'] == 'submitstatuslist':
             submitstatuslist = i['submitstatuslist']
             if len(submitstatuslist) == 0:
@@ -304,7 +304,7 @@ ___%s___
                     else:
                         val = ','.join(val)
                     single_share[key] = val
-            lines += pprint_table(txt_table_if_have_keys(header, 
+            lines += pprint_table(txt_table_if_have_keys(header,
                                                          sharelinkslist,
                                                          content_keys))
         elif i['object_type'] == 'upgrade_info':
@@ -325,7 +325,7 @@ ___%s___
             if len(resubmitobjs) == 0:
                 continue
             header = [['Job ID', 'Resubmit status', 'New job ID',
-                      'Message']]
+                       'Message']]
             lines += pprint_table(txt_table_if_have_keys(
                 header, resubmitobjs, ['job_id', 'status', 'new_job_id',
                                        'message']))
@@ -334,7 +334,7 @@ ___%s___
             if len(changedstatusjobs) == 0:
                 continue
             header = [['Job ID', 'Old status', 'New status',
-                      'Message']]
+                       'Message']]
             lines += pprint_table(txt_table_if_have_keys(
                 header, changedstatusjobs, ['job_id', 'oldstatus', 'newstatus',
                                             'message']))
@@ -382,72 +382,72 @@ ctime\t%(ctime)s
                         lines.append('Execute: %(execute)s\n' % obj)
                     if obj.has_key('verified'):
                         lines.append('Verified status: %(verified)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('verified_timestamp'):
                         lines.append('Verified: %(verified_timestamp)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('received_timestamp'):
                         lines.append('Received: %(received_timestamp)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('queued_timestamp'):
                         lines.append('Queued: %(queued_timestamp)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('schedule_timestamp'):
                         lines.append('Scheduled: %(schedule_timestamp)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('schedule_hint'):
                         lines.append('Schedule hint: %(schedule_hint)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('schedule_hits'):
                         lines.append('Suitable resources: %(schedule_hits)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('expected_delay'):
                         lines.append('Expected delay: %(expected_delay)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('executing_timestamp'):
                         lines.append('Executing: %(executing_timestamp)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('resource'):
                         lines.append('Resource: %(resource)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('vgrid'):
                         lines.append('%s: %s'
-                                 % (configuration.site_vgrid_label, obj['vgrid']))
+                                     % (configuration.site_vgrid_label, obj['vgrid']))
                     if obj.has_key('finished_timestamp'):
                         lines.append('Finished: %(finished_timestamp)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('failed_timestamp'):
                         lines.append('Failed: %(failed_timestamp)s\n'
-                                 % obj)
+                                     % obj)
                     if obj.has_key('canceled_timestamp'):
                         lines.append('Canceled: %(canceled_timestamp)s\n'
-                                 % obj)
+                                     % obj)
                     for execution_history in obj['execution_histories']:
                         count = execution_history['count']
                         single_history = \
                             execution_history['execution_history']
                         lines.append('Execution history</td><td>#%s</td></tr>'
-                                 % count)
+                                     % count)
                         if single_history.has_key('queued'):
                             lines.append('Queued %s: %s\n' % (count,
-                                    single_history['queued']))
+                                                              single_history['queued']))
                         if single_history.has_key('executing'):
                             lines.append('Executing %s: %s\n' % (count,
-                                    single_history['executing']))
+                                                                 single_history['executing']))
                         if single_history.has_key('resource'):
                             lines.append('Resource %s: %s\n' % (count,
-                                    single_history['resource']))
+                                                                single_history['resource']))
                         if single_history.has_key('vgrid'):
                             lines.append('%s %s: %s' %
                                          (configuration.site_vgrid_label,
                                           count, single_history['vgrid']))
                         if single_history.has_key('failed'):
                             lines.append('Failed %s: %s\n' % (count,
-                                    single_history['failed']))
+                                                              single_history['failed']))
                         if single_history.has_key('failed_message'):
                             lines.append('Failed message %s: %s\n'
-                                     % (count,
-                                    single_history['failed_message']))
+                                         % (count,
+                                            single_history['failed_message']))
 
                     # add newline before next job)
 
@@ -543,9 +543,9 @@ ctime\t%(ctime)s
                     certificate_info += '%s: %s\n' % (key, val)
                 lines.append(certificate_info)
         elif i['object_type'] == 'image_settings_list' or \
-             i['object_type'] == 'image_setting' or \
-             i['object_type'] == 'image_meta' or \
-             i['object_type'] == 'volume_meta':
+                i['object_type'] == 'image_setting' or \
+                i['object_type'] == 'image_meta' or \
+                i['object_type'] == 'volume_meta':
             for elm in i:
                 lines.append('%s: %s\n' % (str(elm), str(i[elm])))
         elif i['object_type'] == 'script_status':
@@ -556,7 +556,7 @@ ctime\t%(ctime)s
             pass
         else:
             lines.append('unknown object %s\n' % i)
-            
+
     if status_line:
         status_line = status_line.replace('TIMING_INFO', timing_info)
         lines = [status_line] + lines
@@ -565,7 +565,7 @@ ctime\t%(ctime)s
 
 def html_link(obj):
     """html format link"""
-    
+
     extra_fields = ['id', 'class', 'title', 'target']
     extra_params = []
     # Set parameter in link
@@ -592,7 +592,7 @@ def html_cond_summary(job_cond_msg):
                          job_cond_msg['suggestion'])
         if job_cond_msg.has_key('verdict'):
             img_tag = '<img src="%s" alt="%s %s" />' % \
-                      (job_cond_msg['icon'], 'Job readiness condition', 
+                      (job_cond_msg['icon'], 'Job readiness condition',
                        job_cond_msg['color'])
             lines.append('<tr><td>%s&nbsp;%s</td></tr>' %
                          (img_tag, job_cond_msg['verdict']))
@@ -698,7 +698,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 base_menu,
                 user_menu,
                 user_widgets
-                ))
+            ))
         elif i['object_type'] == 'text':
             lines.append('<p>%s</p>' % html_escape(i['text']))
         elif i['object_type'] == 'verbatim':
@@ -713,27 +713,27 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append("<table class='jobs'>")
                 for obj in jobs:
                     lines.append('<tr><th>Job Id</th><th>%s</th></tr>'
-                                  % obj['job_id'])
+                                 % obj['job_id'])
                     lines.append('<tr><td>Status</td><td>%s</td></tr>'
-                                  % obj['status'])
+                                 % obj['status'])
                     if obj.has_key('execute'):
                         lines.append('<tr><td>Execute</td><td>%s</td></tr>'
-                                 % obj['execute'])
+                                     % obj['execute'])
                     if obj.has_key('verified'):
                         lines.append('<tr><td>Verified status</td>'
                                      '<td>%s</td></tr>' % obj['verified'])
                     if obj.has_key('verified_timestamp'):
                         lines.append('<tr><td>Verified</td><td>%s</td></tr>'
-                                 % obj['verified_timestamp'])
+                                     % obj['verified_timestamp'])
                     if obj.has_key('received_timestamp'):
                         lines.append('<tr><td>Received</td><td>%s</td></tr>'
-                                 % obj['received_timestamp'])
+                                     % obj['received_timestamp'])
                     if obj.has_key('queued_timestamp'):
                         lines.append('<tr><td>Queued</td><td>%s</td></tr>'
-                                 % obj['queued_timestamp'])
+                                     % obj['queued_timestamp'])
                     if obj.has_key('schedule_timestamp'):
                         lines.append('<tr><td>Scheduled</td><td>%s</td></tr>'
-                                 % obj['schedule_timestamp'])
+                                     % obj['schedule_timestamp'])
                     if obj.has_key('schedule_hint'):
                         lines.append('<tr><td>Schedule result</td>'
                                      '<td>%s</td></tr>' % obj['schedule_hint'])
@@ -746,23 +746,23 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                             obj['expected_delay'])
                     if obj.has_key('executing_timestamp'):
                         lines.append('<tr><td>Executing</td><td>%s</td></tr>'
-                                 % obj['executing_timestamp'])
+                                     % obj['executing_timestamp'])
                     if obj.has_key('resource'):
                         lines.append('<tr><td>Resource</td><td>%s</td></tr>'
-                                 % obj['resource'])
+                                     % obj['resource'])
                     if obj.has_key('vgrid'):
                         lines.append('<tr><td>%s</td><td>%s</td></tr>'
-                                 % (configuration.site_vgrid_label,
-                                    obj['vgrid']))
+                                     % (configuration.site_vgrid_label,
+                                        obj['vgrid']))
                     if obj.has_key('finished_timestamp'):
                         lines.append('<tr><td>Finished</td><td>%s</td></tr>'
-                                 % obj['finished_timestamp'])
+                                     % obj['finished_timestamp'])
                     if obj.has_key('failed_timestamp'):
                         lines.append('<tr><td>Failed</td><td>%s</td></tr>'
-                                 % obj['failed_timestamp'])
+                                     % obj['failed_timestamp'])
                     if obj.has_key('canceled_timestamp'):
                         lines.append('<tr><td>Canceled</td><td>%s</td></tr>'
-                                 % obj['canceled_timestamp'])
+                                     % obj['canceled_timestamp'])
                     for execution_history in obj['execution_histories']:
                         count = execution_history['count']
                         single_history = \
@@ -815,7 +815,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                      % html_link(obj['liveiolink']))
                     if obj.has_key('outputfileslink'):
                         lines.append('<br />%s'
-                                 % html_link(obj['outputfileslink']))
+                                     % html_link(obj['outputfileslink']))
                     lines.append('<tr><td colspan=2><br /></td></tr>')
 
                 lines.append('</table>')
@@ -863,8 +863,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('<tr>%s</tr>'
                              % html_table_if_have_keys(
                                  resubmitobj,
-                             ['job_id', 'status', 'new_job_id',
-                             'message']))
+                                 ['job_id', 'status', 'new_job_id',
+                                  'message']))
             lines.append('</table>')
         elif i['object_type'] == 'changedstatusjobs':
             changedstatusjobs = i['changedstatusjobs']
@@ -887,8 +887,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                          "<th>Message</th></tr>")
             for saveschedule in saveschedulejobs:
                 lines.append('<tr>%s</tr>'
-                              % html_table_if_have_keys(saveschedule,
-                             ['job_id', 'message']))
+                             % html_table_if_have_keys(saveschedule,
+                                                       ['job_id', 'message']))
             lines.append('</table>')
             lines.append(i['savescheduleinfo'])
         elif i['object_type'] == 'checkcondjobs':
@@ -913,20 +913,20 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                          "<th>Modified time</th><th>Created time</th></tr>")
             for stat in stats:
                 lines.append('<tr>%s</tr>'
-                              % html_table_if_have_keys(stat, [
-                    'name',
-                    'device',
-                    'inode',
-                    'mode',
-                    'nlink',
-                    'uid',
-                    'gid',
-                    'rdev',
-                    'size',
-                    'atime',
-                    'mtime',
-                    'ctime',
-                    ]))
+                             % html_table_if_have_keys(stat, [
+                                 'name',
+                                 'device',
+                                 'inode',
+                                 'mode',
+                                 'nlink',
+                                 'uid',
+                                 'gid',
+                                 'rdev',
+                                 'size',
+                                 'atime',
+                                 'mtime',
+                                 'ctime',
+                             ]))
             lines.append('</table>')
         elif i['object_type'] == 'fileuploadobjs':
             fileuploadobjs = i['fileuploadobjs']
@@ -941,7 +941,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     lines.append('<tr>%s</tr>'
                                  % html_table_if_have_keys(
                                      fileuploadobj, ['name', 'saved',
-                        'extract_packages',
+                                                     'extract_packages',
                                                      'submitmrsl', 'size',
                                                      'message', ]))
                 lines.append('</table>')
@@ -951,7 +951,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                          "</th></tr>")
             for (key, val) in job_dict.items():
                 lines.append('<tr><td>%s</td><td>%s</td></tr>' % (key,
-                             val))
+                                                                  val))
             lines.append('</table>')
         elif i['object_type'] == 'html_form':
             lines.append(i['text'])
@@ -988,7 +988,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('<tr class="if_full">')
             cols = 0
             lines.append('<td colspan=%d><hr></td>'
-                          % (columns - cols))
+                         % (columns - cols))
             lines.append('</tr>')
 
             row_number = 1
@@ -1001,8 +1001,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         if directory == dir_listing['entries'][0]:
                             lines.append('<tr class="if_full">')
                             lines.append('<td width=20%%>%s:<br />total %s</td>'
-                                     % (dir_listing['relative_path'],
-                                    len(dir_listing['entries'])))
+                                         % (dir_listing['relative_path'],
+                                            len(dir_listing['entries'])))
                             cols += 1
                             lines.append(
                                 '''<td class="empty_cell narrow" colspan="%d"></td>
@@ -1112,7 +1112,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         open_link = '''
                         <a class="leftpad fileicon ext_%s" title="open" href="%s">
                         %s</a>''' % (file_ext.lstrip('.').lower(), open_url,
-                        filename)
+                                     filename)
                         lines.append("<td>%s</td>" % open_link)
                         cols += 1
                         if this_file.get('file_dest', False):
@@ -1170,7 +1170,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('<ul>')
             for list_item in i['list']:
                 lines.append(('<li>%s</li>' % list_item).replace('\n',
-                             '<br />'))
+                                                                 '<br />'))
             lines.append('</ul>')
         elif i['object_type'] == 'linklist':
             links = i['links']
@@ -1181,7 +1181,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                              '<th>Link</th></tr>')
                 for link in links:
                     lines.append('<tr><td>%s</td><td>%s</td></tr>'
-                                  % (html_escape(link['text']),
+                                 % (html_escape(link['text']),
                                      html_link(link)))
                 lines.append('</table>')
         elif i['object_type'] == 'multilinkline':
@@ -1189,9 +1189,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             if len(links) == 0:
                 lines.append('No links found!')
             else:
-                sep = i.get('sep', ' , ') 
+                sep = i.get('sep', ' , ')
                 lines.append(sep.join([html_link(link) for link in
-                             links]))
+                                       links]))
         elif i['object_type'] == 'file':
             lines.append(i['name'])
         elif i['object_type'] == 'progress_list':
@@ -1207,13 +1207,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('</tr>')
                 for progress in progress_list:
                     lines.append('<tr>%s</tr>'
-                                  % html_table_if_have_keys(progress,
-                                                            ['path',
-                                                             'cur_size',
-                                                             'total_size',
-                                                             'percent',
-                                                             'done']))
-                lines.append('</table>')    
+                                 % html_table_if_have_keys(progress,
+                                                           ['path',
+                                                            'cur_size',
+                                                            'total_size',
+                                                            'percent',
+                                                            'done']))
+                lines.append('</table>')
         elif i['object_type'] == 'submitstatuslist':
             submitstatuslist = i['submitstatuslist']
             if len(submitstatuslist) == 0:
@@ -1235,7 +1235,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                              '<th>Info</th></tr>')
                 for (name, val) in objects:
                     lines.append('<tr><td>%s</td><td>%s</td></tr>'
-                                  % (name, val))
+                                 % (name, val))
                 lines.append('</table>')
         elif i['object_type'] == 'sandboxinfos':
             sandboxinfos = i['sandboxinfos']
@@ -1285,8 +1285,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 </tr>''' % (single_re['name'], viewlink, ownerlink, single_re['description'],
                     ', '.join(single_re['providers']
                               ), single_re['resource_count'],
-            single_re['created']))
-                
+                    single_re['created']))
+
             lines.append('''
 </tbody>
 </table>''')
@@ -1328,11 +1328,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
             lines.append('<table class="runtimeenvdetails">')
             lines.append('<tr><td>Name</td><td>%s</td></tr>' % i['name'
-                         ])
+                                                                 ])
             lines.append('<tr><td>Description</td><td>%s</td></tr>'
-                          % i['description'])
+                         % i['description'])
             lines.append('<tr><td>Needed&nbsp;software</td><td>%s</td></tr>'
-                          % software_html)
+                         % software_html)
             lines.append('<tr><td>Environment&nbsp;variables</td>'
                          '<td>%s</td></tr>' % environment_html)
             if i['testprocedure']:
@@ -1363,7 +1363,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                  % name} for name in i['providers']]
             provider_links = [html_link(res) for res in view_providers]
             lines.append('<tr><td>Resources</td><td>%s</td></tr>'
-                          % ', '.join(provider_links))
+                         % ', '.join(provider_links))
             lines.append('</table>')
         elif i['object_type'] == 'frozenarchives':
             frozenarchives = i['frozenarchives']
@@ -1402,9 +1402,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <td>%s</td><td class="centertext">%s%s%s</td><td>%s</td><td>%s</td><td>%s</td>
 <td>%s</td><td class="centertext">%s</td>
 </tr>''' % (single_freeze['id'], viewlink, editlink, dellink,
-            single_freeze['name'], single_freeze['created'],
-            single_freeze['flavor'], single_freeze['state'], file_count))
-                
+                    single_freeze['name'], single_freeze['created'],
+                    single_freeze['flavor'], single_freeze['state'], file_count))
+
             lines.append('''
 </tbody>
 </table>''')
@@ -1462,7 +1462,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('<tr><td class="title">Title</td>'
                              '<td>%s</td></tr>' % i['name'])
             lines.append('<tr><td class="title">Flavor</td>'
-                             '<td>%s</td></tr>' % i['flavor'])
+                         '<td>%s</td></tr>' % i['flavor'])
             if flavor in ('freeze', 'phd'):
                 if i.get('author', '') not in ('', 'UNSET'):
                     lines.append('<tr><td class="title">Author</td>'
@@ -1488,14 +1488,14 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('<tr><td class="title">Published</td>'
                              '<td>%s</td></tr>' % published)
             lines.append('<tr><td class="title">State</td><td>%s</td></tr>'
-                          % i['state'])
+                         % i['state'])
             lines.append('<tr><td class="title">Creator</td><td>%s</td></tr>'
-                          % i['creator'])
+                         % i['creator'])
             lines.append('<tr><td class="title">Created</td><td>%s</td></tr>'
-                          % i['created'])
+                         % i['created'])
             for (location, store_date) in i.get('location', []):
                 lines.append('<tr><td class="title">On %s</td><td>%s</td></tr>'
-                          % (location, store_date))
+                             % (location, store_date))
             lines.append('</table>')
             lines.append('</div>')
             lines.append('</div>')
@@ -1561,14 +1561,14 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <td style="min-width: 60%%;">%s</td><td>%s</td><td>%s</td><td>%s</td>
 </tr></table>
 </tr>''' % (single_transfer['transfer_id'], editlink_html, dellink_html,
-            single_transfer['action'], single_transfer['protocol'],
-            single_transfer['fqdn'], single_transfer['port'], login,
-            ', '.join(single_transfer['src']), single_transfer['dst'],
-            ', '.join(single_transfer.get('exclude', [])),
+                    single_transfer['action'], single_transfer['protocol'],
+                    single_transfer['fqdn'], single_transfer['port'], login,
+                    ', '.join(single_transfer['src']), single_transfer['dst'],
+                    ', '.join(single_transfer.get('exclude', [])),
                     single_transfer.get(
                         'compress', False), single_transfer['updated'],
-            single_transfer['status'], outputlink, datalink_html,
-            redolink_html))
+                    single_transfer['status'], outputlink, datalink_html,
+                    redolink_html))
             lines.append('''
 </tbody>
 </table>''')
@@ -1599,8 +1599,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <td style="width: 70%%;">
 <textarea class="publickey" rows="5" readonly="readonly">%s</textarea>
 </tr>''' % (single_key['key_id'], dellink_html,
-            single_key['created'], single_key['type'],
-            single_key['bits'], single_key['public_key']))
+                    single_key['created'], single_key['type'],
+                    single_key['bits'], single_key['public_key']))
             lines.append('''
 </tbody>
 </table>''')
@@ -1651,9 +1651,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('''
 <tr>
 <td>%s</td><td class="centertext">%s%s%s</td><td>%s</td>''' % (single_share['share_id'],
-                                              openlink_html, editlink_html,
-                                              dellink_html,
-                                              single_share['path']))
+                                                               openlink_html, editlink_html,
+                                                               dellink_html,
+                                                               single_share['path']))
                 for (key, title) in optional_cols:
                     if not key in skip_list:
                         if isinstance(single_share[key], basestring):
@@ -1709,7 +1709,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <tr>
 <td>%s</td><td class="centertext">%s</td><td class="centertext">%s</td><td>%s</td><td>%s</td><td>%s</td>
 </tr>''' % (req_type, acceptlink_html, rejectlink_html, single_req['entity'],
-            single_req['created'], single_req['request_text']))
+                    single_req['created'], single_req['request_text']))
 
             lines.append('''
 </tbody>
@@ -1752,11 +1752,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
 <td>%s</td>
 </tr>''' % (single_accountreq['id'], addlink_html, dellink_html,
-            single_accountreq['full_name'], single_accountreq['email'],
-            single_accountreq['organization'], single_accountreq['country'],
-            single_accountreq['state'], single_accountreq['comment'],
-            ', '.join(single_accountreq['auth']), single_accountreq['created']))
-            
+                    single_accountreq['full_name'], single_accountreq['email'],
+                    single_accountreq['organization'], single_accountreq['country'],
+                    single_accountreq['state'], single_accountreq['comment'],
+                    ', '.join(single_accountreq['auth']), single_accountreq['created']))
+
             lines.append('''
 </tbody>
 </table>
@@ -1884,7 +1884,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 ''' % (key, val)
             if not i['stores']:
                 resource_html += '<tr><td coslpan=2>None</td></tr>'
-                    
+
             resource_html += '''
 </table>
 '''
@@ -1941,8 +1941,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             user_html += '<table class="user">'
             for (key, val) in i['fields']:
                 user_html += \
-                          '<tr><td>%s</td><td>%s</td></tr>' % \
-                          (key, val)
+                    '<tr><td>%s</td><td>%s</td></tr>' % \
+                    (key, val)
             user_html += '</table>'
             lines.append(user_html)
         elif i['object_type'] == 'vgrid_info':
@@ -1953,8 +1953,8 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 if isinstance(val, basestring):
                     val = val.replace('\n', '<br/>')
                 vgrid_html += \
-                          '<tr><td><h4>%s</h4></td><td>%s</td></tr>' % \
-                          (key, val)
+                    '<tr><td><h4>%s</h4></td><td>%s</td></tr>' % \
+                    (key, val)
             vgrid_html += '</table>'
             lines.append(vgrid_html)
         elif i['object_type'] == 'forum_threads':
@@ -2158,7 +2158,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                     'forum': ['privateforumlink'],
                     'workflows': ['privateworkflowslink'],
                     'monitor': ['privatemonitorlink'],
-                    }
+                }
                 lines.append("""
 <table class='vgrids columnsort' id='vgridtable'>
 """)
@@ -2189,18 +2189,18 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                     lines.append('<td class="centertext">')
                     if obj.has_key('viewvgridlink'):
                         lines.append('%s'
-                                 % html_link(obj['viewvgridlink']))
+                                     % html_link(obj['viewvgridlink']))
                     lines.append('</td>')
                     lines.append('<td class="centertext">')
                     if obj.has_key('administratelink'):
                         lines.append('%s'
-                                 % html_link(obj['administratelink']))
+                                     % html_link(obj['administratelink']))
                     lines.append('</td>')
                     lines.append('<td class="centertext">')
                     # membership links: should be there in any case
                     if obj.has_key('memberlink'):
                         lines.append('%s'
-                                 % html_link(obj['memberlink']))
+                                     % html_link(obj['memberlink']))
                     lines.append('</td>')
                     for key in components:
                         lines.append('<td class="centertext">')
@@ -2340,14 +2340,14 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
 
 def file_format(configuration, ret_val, ret_msg, out_obj):
     """Dump raw file contents"""
-    
+
     file_content = ''
-    
+
     for entry in out_obj:
         if entry['object_type'] == 'file_output':
             for line in entry['lines']:
                 file_content += line
-            
+
     return file_content
 
 
@@ -2366,7 +2366,7 @@ def get_valid_outputformats():
         'resource',
         'json',
         'file'
-        ]
+    ]
 
 
 def format_output(
@@ -2375,7 +2375,7 @@ def format_output(
     ret_msg,
     out_obj,
     outputformat,
-    ):
+):
     """This is the public method that should be called from other scripts"""
 
     valid_formats = get_valid_outputformats()
@@ -2406,9 +2406,9 @@ def format_output(
             header = entry
     if not start:
         if not header:
-            out_obj = [{'object_type': 'header', 
+            out_obj = [{'object_type': 'header',
                         'text': '%s error' % configuration.short_title}]\
-                      + out_obj
+                + out_obj
         if not title:
             out_obj = [{
                 'object_type': 'title',
@@ -2417,7 +2417,7 @@ def format_output(
                 'style': '',
                 'javascript': '',
                 'bodyfunctions': '',
-                }] + out_obj
+            }] + out_obj
 
     if not outputformat in valid_formats:
         return txt_format(configuration, ret_val, ret_msg, out_obj)
@@ -2446,7 +2446,7 @@ def format_timedelta(timedelta):
     minutes_str = "%s" % (str(minutes))
     if (minutes < 10):
         minutes_str = "0%s" % (minutes_str)
-        
+
     seconds_str = "%s" % (str(seconds))
     if (seconds < 10):
         seconds_str = "0%s" % (seconds_str)
@@ -2460,6 +2460,5 @@ def format_timedelta(timedelta):
                                         seconds_str)
     else:
         result = "%s:%s:%s" % (hours_str, minutes_str, seconds_str)
-        
-    return result
 
+    return result
