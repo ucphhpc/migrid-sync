@@ -780,6 +780,10 @@ background: url(/images/icons/code.png) left center no-repeat;
     list-style-type: none;
 }
 
+.jupyter-tabs { 
+    /* needed to avoid tabs bar growing to entire menu height */
+    overflow: auto;
+}
 .workflow-tabs { 
     /* needed to avoid tabs bar growing to entire menu height */
     overflow: auto;

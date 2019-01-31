@@ -43,6 +43,7 @@ import random
 import socket
 import subprocess
 import sys
+import ast
 
 from shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
@@ -50,6 +51,9 @@ from shared.defaults import default_http_port, default_https_port, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
     STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX
 from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
+from shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
+    gen_rewrite_template
+from shared.safeinput import valid_alphanumeric, InputException
 
 
 def fill_template(template_file, output_file, settings, eat_trailing_space=[],
@@ -126,6 +130,12 @@ def template_insert(template_file, insert_identifiers, unique=False):
                     continue
                 f_index += 1
                 contents.insert(f_index, v)
+        elif isinstance(value, dict):
+            for k, v in value.items():
+                if unique and [line for line in contents if v in line]:
+                    continue
+                f_index += 1
+                contents.insert(f_index, v)
         else:
             print("A non-valid insert identifer dictionary value was supplied, "
                   "supports str and list")
@@ -196,8 +206,8 @@ def generate_confs(
     ext_oid_fqdn='localhost',
     sid_fqdn='localhost',
     io_fqdn='localhost',
-    jupyter_hosts='',
-    jupyter_base_url='',
+    jupyter_services='',
+    jupyter_services_desc='{}',
     user='mig',
     group='mig',
     apache_version='2.4',
@@ -283,8 +293,12 @@ def generate_confs(
     user_dict['__EXT_OID_FQDN__'] = ext_oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
-    user_dict['__JUPYTER_BASE_URL__'] = jupyter_base_url
-    user_dict['__JUPYTER_HOSTS__'] = jupyter_hosts
+    user_dict['__JUPYTER_SERVICES__'] = jupyter_services
+    user_dict['__JUPYTER_DEFS__'] = ''
+    user_dict['__JUPYTER_OPENIDS__'] = ''
+    user_dict['__JUPYTER_REWRITES__'] = ''
+    user_dict['__JUPYTER_PROXIES__'] = '' 
+    user_dict['__JUPYTER_SECTIONS__'] = ''
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
@@ -494,10 +508,6 @@ cert, oid and sid based https!
         user_dict['__IFDEF_IO_FQDN__'] = 'Define'
     # No port for __IO_FQDN__
 
-    user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'UnDefine'
-    if user_dict['__JUPYTER_BASE_URL__'] != '':
-        user_dict['__IFDEF_JUPYTER_BASE_URL__'] = 'Define'
-
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
     if user_dict['__HG_PATH__']:
@@ -540,71 +550,132 @@ cert, oid and sid based https!
         # Jupyter requires websockets proxy
         user_dict['__WEBSOCKETS_COMMENTED__'] = ''
 
-        if jupyter_hosts:
-            user_dict['__JUPYTER_HOSTS__'] = jupyter_hosts
+        # Dynamic apache configuration replacement lists
+        jupyter_sections, jupyter_proxies, jupyter_defs, \
+             jupyter_openids, jupyter_rewrites = [], [], [], [], []
+        services = user_dict['__JUPYTER_SERVICES__'].split()
 
-            jupyter_tmp_inserts = {
-                'BalancerMemberPlaceholder': [],
-                'WSBalancerMemberPlaceholder': []
+        try:
+            descs = ast.literal_eval(jupyter_services_desc)
+        except SyntaxError, err:
+            print 'Error: jupyter_services_desc ' \
+             'could not be intepreted correctly. Double check that your ' \
+             'formatting is correct, a dictionary formatted string is expected.'
+            sys.exit(1)
+
+        if not isinstance(descs, dict):
+            print 'Error: %s was incorrectly formatted,' \
+             ' expects a string formatted as a dictionary' % descs
+            sys.exit(1)
+
+        service_hosts = {}
+        for service in services:
+            # TODO, do more checks on format
+            name_hosts = service.split(".", 1)
+            if len(name_hosts) != 2:
+                print 'Error: You have not correctly formattet ' \
+                 'the jupyter_services parameter, ' \
+                 'expects --jupyter_services="service_name.' \
+                 'http(s)://jupyterhost-url-or-ip ' \
+                 'other_service.http(s)://jupyterhost-url-or-ip"'
+                sys.exit(1)
+            name, host = name_hosts[0], name_hosts[1]
+            try:
+                valid_alphanumeric(name)
+            except InputException, err:
+                print 'Error: The --jupyter_services name: %s was incorrectly ' \
+                    'formatted, only allows alphanumeric characters %s' % (name,
+                                                                           err)
+            if name and host:
+                if name not in service_hosts:
+                    service_hosts[name] = {'hosts': []}
+                service_hosts[name]['hosts'].append(host)
+
+        for name, values in service_hosts.items():
+            # Service definitions
+            u_name = name.upper()
+            url = '/' + name
+            definition = 'Define'
+            def_name = '%s_URL' % u_name
+            def_value = url
+            new_def = "%s %s %s\n" % (definition, def_name, def_value)
+            if new_def not in jupyter_defs:
+                jupyter_defs.append(new_def)
+
+            # Prepare MiG conf template for jupyter sections
+            section_header = '[__JUPYTER_%s__]\n' % u_name
+            section_name = 'service_name=__JUPYTER_%s_NAME__\n' % u_name
+            section_desc = 'service_desc=__JUPYTER_%s_DESC__\n' % u_name
+            section_hosts = 'service_hosts=__JUPYTER_%s_HOSTS__\n' % u_name
+
+            for section_item in (section_header, section_name, section_desc,
+                                 section_hosts):
+                if section_item not in jupyter_sections:
+                    jupyter_sections.append(section_item)
+
+            user_values = {
+                '__JUPYTER_%s__' % u_name: 'JUPYTER_%s' % u_name,
+                '__JUPYTER_%s_NAME__' % u_name: name,
+                '__JUPYTER_%s_HOSTS__' % u_name: ' '.join(values['hosts'])
             }
 
-            jupyter_def_inserts = {
-                'JupyterHostsPlaceholder': []
-            }
+            if name in descs:
+                desc_value = descs[name] + "\n"
+            else:
+                desc_value = "\n"
 
-            hosts = jupyter_hosts.split(' ')
-            # Insert hosts into jupyter-template
-            for i_h, host in enumerate(hosts):
+            user_values.update({'__JUPYTER_%s_DESC__\n' % u_name: desc_value})
+
+            # Update user_dict with definition values
+            for u_k, u_v in user_values.items():
+                if u_k not in user_dict:
+                    user_dict[u_k] = u_v
+
+            # Setup apache openid template
+            openid_template = gen_openid_template(url, def_name)
+            jupyter_openids.append(openid_template)
+
+            # Setup apache rewrite template
+            rewrite_template = gen_rewrite_template(url, def_name)
+            jupyter_rewrites.append(rewrite_template)
+
+            hosts, ws_hosts = [], []
+            # Populate apache confs with hosts definitions and balancer members
+            for i_h, host in enumerate(values['hosts']):
+                name_index = '%s_%s' % (u_name, i_h)
                 member = "BalancerMember %s route=%s retry=600 timeout=40\n" % (
-                    "${JUPYTER_HOST_%s}" % i_h, i_h)
-                ws_member = member.replace("${JUPYTER_HOST_%s}" % i_h,
-                                           "${WS_JUPYTER_HOST_%s}" % i_h)
+                    "${JUPYTER_%s}" % name_index, i_h)
+                ws_member = member.replace("${JUPYTER_%s}" % name_index,
+                                           "${WS_JUPYTER_%s}" % name_index)
+                hosts.append(member)
+                ws_hosts.append(ws_member)
 
-                member_def = "__JUPYTER_COMMENTED__        " + member
-                ws_member_def = "__JUPYTER_COMMENTED__        " + ws_member
-
-                jupyter_tmp_inserts['BalancerMemberPlaceholder'].append(
-                    member_def)
-                jupyter_tmp_inserts['WSBalancerMemberPlaceholder'].append(
-                    ws_member_def)
-
-                member_helper = "__IFDEF_JUPYTER_HOST_%s__ " \
-                                "JUPYTER_HOST_%s __JUPYTER_HOST_%s__\n" % (
-                                    i_h, i_h, i_h)
-                ws_member_helper = "__IFDEF_WS_JUPYTER_HOST_%s__ WS_JUPYTER_HOST_%s " \
-                                   "__WS_JUPYTER_HOST_%s__\n" % (i_h, i_h, i_h)
-
-                jupyter_def_inserts['JupyterHostsPlaceholder'].append(
-                    member_helper)
-                jupyter_def_inserts['JupyterHostsPlaceholder'].append(
-                    ws_member_helper)
-
-                user_dict['__IFDEF_JUPYTER_HOST_%s__' % i_h] = 'Define'
-                user_dict['__IFDEF_WS_JUPYTER_HOST_%s__' % i_h] = 'Define'
-
-                user_dict['__JUPYTER_HOST_%s__' % i_h] = host
                 ws_host = host.replace(
                     "https://", "wss://").replace("http://", "ws://")
-                user_dict['__WS_JUPYTER_HOST_%s__' % i_h] = ws_host
+                member_def = "Define JUPYTER_%s %s" % (name_index, host)
+                ws_member_def = "Define WS_JUPYTER_%s %s" % (name_index,
+                                                             ws_host)
 
                 # No user supplied port, assign based on url prefix
                 if len(host.split(":")) < 3:
                     if host.startswith("https://"):
-                        user_dict['__JUPYTER_HOST_%s__' % i_h] += ":443"
-                        user_dict['__WS_JUPYTER_HOST_%s__' % i_h] += ":443"
+                        member_def += ":443\n"
+                        ws_member_def += ":443\n"
                     else:
-                        user_dict['__JUPYTER_HOST_%s__' % i_h] += ":80"
-                        user_dict['__WS_JUPYTER_HOST_%s__' % i_h] += ":80"
+                        member_def += ":80\n"
+                        ws_member_def += ":80\n"
 
-            insert_list.extend([
-                ("apache-MiG-jupyter-template.conf", jupyter_tmp_inserts),
-                ("apache-MiG-jupyter-def-template.conf", jupyter_def_inserts)
-            ])
+                jupyter_defs.extend([member_def, ws_member_def])
+            # Get proxy template and append to template conf
+            proxy_template = gen_balancer_proxy_template(url, def_name, name,
+                                                         hosts, ws_hosts)
+            jupyter_proxies.append(proxy_template)
 
-            cleanup_list.extend([
-                ("apache-MiG-jupyter-template.conf", "BalancerMember ${"),
-                ("apache-MiG-jupyter-def-template.conf", "__IFDEF")
-            ])
+        user_dict['__JUPYTER_DEFS__'] = ''.join(jupyter_defs)
+        user_dict['__JUPYTER_OPENIDS__'] = '\n'.join(jupyter_openids)
+        user_dict['__JUPYTER_REWRITES__'] = '\n'.join(jupyter_rewrites)
+        user_dict['__JUPYTER_PROXIES__'] = '\n'.join(jupyter_proxies)
+        user_dict['__JUPYTER_SECTIONS__'] = ''.join(jupyter_sections)
 
     else:
         user_dict['__JUPYTER_COMMENTED__'] = '#'
@@ -886,8 +957,10 @@ openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict
         ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
         ("apache-init.d-deb-template", "apache-%s" % user),
         ("apache-service-template.conf", "apache2.service"),
-        ("apache-MiG-jupyter-template.conf", "MiG-jupyter.conf"),
         ("apache-MiG-jupyter-def-template.conf", "MiG-jupyter-def.conf"),
+        ("apache-MiG-jupyter-openid-template.conf", "MiG-jupyter-openid.conf"),
+        ("apache-MiG-jupyter-proxy-template.conf", "MiG-jupyter-proxy.conf"),
+        ("apache-MiG-jupyter-rewrite-template.conf", "MiG-jupyter-rewrite.conf"),
         ("trac-MiG-template.ini", "trac.ini"),
         ("logrotate-MiG-template", "logrotate-migrid"),
         ("MiGserver-template.conf", "MiGserver.conf"),
@@ -952,9 +1025,15 @@ httpd.conf, ports.conf and envvars to %(apache_etc)s/:
 sudo cp %(destination)s/apache2.conf %(apache_etc)s/
 sudo cp %(destination)s/httpd.conf %(apache_etc)s/
 sudo cp %(destination)s/ports.conf %(apache_etc)s/
-sudo cp %(destination)s/MiG-jupyter.conf %(apache_etc)s/
-sudo cp %(destination)s/MiG-jupyter-def.conf %(apache_etc)s/
 sudo cp %(destination)s/envvars %(apache_etc)s/
+
+If jupyter is enabled, the following configuration directory must be created
+ and subsequent configuration files copied as follows,
+sudo mkdir -p %(apache_etc)s/conf.extras.d
+sudo cp %(destination)s/MiG-jupyter-def.conf %(apache_etc)s/conf.extras.d
+sudo cp %(destination)s/MiG-jupyter-openid.conf %(apache_etc)s/conf.extras.d
+sudo cp %(destination)s/MiG-jupyter-proxy.conf %(apache_etc)s/conf.extras.d
+sudo cp %(destination)s/MiG-jupyter-rewrite.conf %(apache_etc)s/conf.extras.d
 
 and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
 cp %(destination)s/trac.ini %(mig_code)s/server/
@@ -1315,7 +1394,10 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     apache_httpd_conf = os.path.join(dst, 'httpd.conf')
     apache_ports_conf = os.path.join(dst, 'ports.conf')
     apache_mig_conf = os.path.join(dst, 'MiG.conf')
-    apache_jupyter_conf = os.path.join(dst, 'MiG-jupyter.conf')
+    apache_jupyter_def = os.path.join(dst, 'MiG-jupyter-def.conf')
+    apache_jupyter_openid = os.path.join(dst, 'MiG-jupyter-openid.conf')
+    apache_jupyter_proxy = os.path.join(dst, 'MiG-jupyter-proxy.conf')
+    apache_jupyter_rewrite = os.path.join(dst, 'MiG-jupyter-rewrite.conf')
     server_conf = os.path.join(dst, 'MiGserver.conf')
     trac_ini = os.path.join(dst, 'trac.ini')
     apache_initd_script = os.path.join(dst, 'apache-%s' % user)
@@ -1339,7 +1421,14 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     print 'sudo cp -f -d %s %s/' % (apache_httpd_conf, apache_dir)
     print 'sudo cp -f -d %s %s/' % (apache_ports_conf, apache_dir)
     print 'sudo cp -f -d %s %s/conf.d/' % (apache_mig_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_jupyter_conf, apache_dir)
+    print 'sudo mkdir -p %s/conf.extras.d' % (apache_dir)
+    print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_def, apache_dir)
+    print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_openid,
+                                                  apache_dir)
+    print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_proxy,
+                                                  apache_dir)
+    print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_rewrite,
+                                                  apache_dir)
     print 'sudo cp -f -d %s %s/' % (apache_initd_script, apache_dir)
     print 'sudo mkdir -p %s %s %s ' % (apache_run, apache_lock, apache_log)
 

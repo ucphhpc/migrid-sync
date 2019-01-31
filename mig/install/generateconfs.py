@@ -61,8 +61,8 @@ if '__main__' == __name__:
         'ext_oid_fqdn',
         'sid_fqdn',
         'io_fqdn',
-        'jupyter_hosts',
-        'jupyter_base_url',
+        'jupyter_services',
+        'jupyter_services_desc',
         'user',
         'group',
         'apache_version',
@@ -70,14 +70,12 @@ if '__main__' == __name__:
         'apache_run',
         'apache_lock',
         'apache_log',
-        'apache_worker_procs',
         'openssh_version',
         'mig_code',
         'mig_state',
         'mig_certs',
         'enable_sftp',
         'enable_sftp_subsys',
-        'sftp_subsys_auth_procs',
         'enable_davs',
         'enable_ftps',
         'enable_wsgi',
@@ -150,9 +148,6 @@ if '__main__' == __name__:
         if opt in ('-h', '--help'):
             usage(names)
             sys.exit(0)
-        # Concatenate multiple jupyter host args
-        elif opt_name == 'jupyter_hosts' and settings[opt_name] != default_val:
-            settings[opt_name] += ' %s' % val
         elif opt_name in names:
             settings[opt_name] = val
         else:

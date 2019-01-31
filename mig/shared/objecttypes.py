@@ -282,6 +282,10 @@ user_stats = {'object_type': 'user_stats', 'required': ['disk', 'jobs',
               'resources', 'certificate'], 'optional': []}
 openid_status = {'object_type': 'openid_status', 'required': ['server',
                  'status', 'error'], 'optional': []}
+service = {'object_type': 'service', 'required': ['name', 'targetlink'],
+           'optional': []}
+services = {'object_type': 'services',
+            'required_list': [('services', 'service')]}
 table_pager = {'object_type': 'table_pager', 'required': ['entry_name'],
                'optional': ['id_prefix', 'default_entries']}
 object_types = {'object_type': 'object_types',
@@ -329,6 +333,7 @@ volume_meta = {'object_type': 'volume_meta', 'required': [
     'file_md5sum',
     'data_type',
     ], 'optional': []}
+
 image_settings_list = {'object_type': 'image_settings_list',
                        'required': ['extension_list',
                        'image_settings_status_list', 'volume_settings_status_list',
@@ -441,6 +446,8 @@ valid_types_list = [
     vgrid_list,
     user_stats,
     openid_status,
+    service,
+    services,
     table_pager,
     image_meta,
     volume_meta,
