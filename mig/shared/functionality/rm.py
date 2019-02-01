@@ -285,12 +285,12 @@ You're not allowed to delete entire special folders like %s shares and %s
             gdp_iolog_paths = [relative_path]
             if rm_helper == remove_path:
                 gdp_iolog_action = 'moved'
-                trash_linkname = \
+                trash_base_path = \
                     get_trash_location(configuration, abs_path, True)
                 trash_relative_path = \
-                    trash_linkname.replace(configuration.user_home, '')
+                    trash_base_path.replace(configuration.user_home, '')
                 trash_relative_path = \
-                    trash_linkname.replace(configuration.vgrid_files_home, '')
+                    trash_relative_path.replace(configuration.vgrid_files_home, '')
                 gdp_iolog_paths.append(trash_relative_path)
             try:
                 gdp_iolog(configuration,
