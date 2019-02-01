@@ -546,6 +546,11 @@ cert, oid and sid based https!
         user_dict['__SEAFILE_COMMENTED__'] = '#'
 
     if user_dict['__ENABLE_JUPYTER__'].lower() == 'true':
+        try:
+            import requests
+        except ImportError:
+            print "ERROR: jupyter use requested but requests is not installed!"
+            sys.exit(1)
         user_dict['__JUPYTER_COMMENTED__'] = ''
         # Jupyter requires websockets proxy
         user_dict['__WEBSOCKETS_COMMENTED__'] = ''
