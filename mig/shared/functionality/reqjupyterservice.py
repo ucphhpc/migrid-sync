@@ -88,14 +88,15 @@ def is_active(pickle_state, timeout=7200):
 def mig_to_mount_adapt(mig):
     """
     :param mig: expects a dictionary containing mig state keys including,
-    MOUNT_HOST, SESSIONID, MOUNTSSHPRIVATEKEY and TARGET_MOUNT_ADDR
+    MOUNT_HOST, SESSIONID, MOUNTSSHPRIVATEKEY, TARGET_MOUNT_ADDR and PORT
     :return: returns a dictionary
     """
     mount = {
         'HOST': mig['MOUNT_HOST'],
         'USERNAME': mig['SESSIONID'],
         'PRIVATEKEY': mig['MOUNTSSHPRIVATEKEY'],
-        'PATH': mig['TARGET_MOUNT_ADDR']
+        'PATH': mig['TARGET_MOUNT_ADDR'],
+        'PORT': str(mig.get('PORT', 22))
     }
     return mount
 
@@ -106,7 +107,7 @@ def mig_to_user_adapt(mig):
     :return: a dictionary that is ready to send to a jupyterhub host
     """
     user = {
-        'USERID': mig['USER_CERT']
+        'CERT': mig['USER_CERT']
     }
     return user
 
@@ -295,6 +296,12 @@ def main(client_id, user_arguments_dict):
              'The required sftp service is not enabled on the system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    if configuration.site_enable_sftp:
+        sftp_port = configuration.user_sftp_port
+
+    if configuration.site_enable_sftp_subsys:
+        sftp_port = configuration.user_sftp_subsys_port
+
     requested_service = accepted['service'][-1]
     service = {k: v for section, options in configuration.jupyter_services.items()
                for k, v in options.items()
@@ -420,7 +427,7 @@ def main(client_id, user_arguments_dict):
         auth_mount_header = {'Remote-User': remote_user, 'Mount': str(
             mount_dict)}
         user_header = {'Remote-User': remote_user,
-                       'User-ID': str(user_dict)}
+                       'User': str(user_dict)}
 
         session = requests.session()
         # Authenticate
@@ -472,7 +479,8 @@ def main(client_id, user_arguments_dict):
         'MOUNTSSHPRIVATEKEY': mount_private_key,
         'MOUNTSSHPUBLICKEY': mount_public_key,
         # Used by the jupyterhub to know which host to mount against
-        'TARGET_MOUNT_ADDR': "@" + sftp_addresses[0] + ":"
+        'TARGET_MOUNT_ADDR': "@" + sftp_addresses[0] + ":",
+        'PORT': sftp_port
     }
 
     # Only post the required keys, adapt to API expectations
