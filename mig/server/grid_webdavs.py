@@ -63,7 +63,7 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id, io_session_timeout
 from shared.fileio import check_write_access, user_chroot_exceptions
-from shared.gdp import project_open, project_log
+from shared.gdp import project_open, project_close, project_log
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
     refresh_user_creds, refresh_share_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
@@ -387,10 +387,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                 failed_count)
 
             if success and configuration.site_enable_gdp:
-                success = project_open(configuration,
-                                       'davs',
-                                       ip_addr,
-                                       username)
+                (success, _) = project_open(configuration,
+                                            'davs',
+                                            ip_addr,
+                                            username)
 
             # Track newly authorized session
 
@@ -1250,7 +1250,10 @@ unless it is available in mig/server/MiGserver.conf
     daemon_conf['acceptdigest'] = daemon_conf['allow_digest']
     # Keep order of auth methods (please note the 2GB+ upload bug with digest)
     daemon_conf['defaultdigest'] = 'digest' in configuration.user_davs_auth[:1]
-
+    if configuration.site_enable_gdp:
+        # Close projects marked as open due to NON-clean exits
+        project_close(configuration, 'davs',
+                      address, user_id=None)
     logger.info("Starting WebDAV server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)

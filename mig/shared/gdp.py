@@ -44,7 +44,7 @@ except:
 
 from shared.base import client_id_dir, valid_dir_input
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
-    user_db_filename as mig_user_db_filename
+    io_session_timeout, user_db_filename as mig_user_db_filename
 from shared.fileio import touch, make_symlink, write_file, remove_rec, \
     acquire_file_lock, release_file_lock
 from shared.notification import send_email
@@ -783,7 +783,7 @@ def __update_users_log(configuration, client_id):
     """Add *client_id* and it's hash to GDP users log"""
     _logger = configuration.logger
     log_filepath = os.path.join(configuration.gdp_home, users_log_filename)
-    Result = False
+    result = False
     try:
         if not os.path.exists(log_filepath):
             touch(log_filepath)
@@ -800,6 +800,50 @@ def __update_users_log(configuration, client_id):
         _logger.error("GDP: __update_users_log failed: %s" % exc)
         result = False
 
+    return result
+
+
+def __active_project(configuration, user_id, protocol):
+    """Returns dictionary with active project info for
+    *user_id* with *protocol*"""
+
+    _logger = configuration.logger
+    # _logger.debug("user_id: '%s', protocol: '%s'"
+    #               % (user_id, protocol))
+
+    result = None
+    user_id = __validate_user_id(configuration, user_id)
+    if user_id is not None:
+        client_id = __client_id_from_user_id(configuration, user_id)
+
+        if client_id is not None:
+            user_db = __load_user_db(configuration)
+            (status, _) = __validate_user_db(configuration, client_id,
+                                             user_db)
+            # Retrieve active project client id
+            if status:
+                result = {}
+                user = user_db.get(client_id)
+                account = user.get('account', {})
+                account_protocol = account.get(protocol, {})
+                role = account_protocol.get('role', '')
+                protocol_last_login = account_protocol.get('last_login', {})
+                protocol_last_timestamp = protocol_last_login.get(
+                    'timestamp', '')
+                protocol_last_ip = protocol_last_login.get('ip', '')
+                if role:
+                    result['user_id'] = user_id
+                    result['protocol'] = protocol
+                    result['client_id'] = client_id
+                    result['project_client_id'] = role
+                    result['project_short_id'] = \
+                        __project_short_id_from_project_client_id(
+                            configuration, role)
+                    result['last_timestamp'] = protocol_last_timestamp
+                    result['last_ip'] = protocol_last_ip
+                    result['name'] = \
+                        __project_name_from_project_client_id(configuration,
+                                                              role)
     return result
 
 
@@ -846,25 +890,10 @@ def get_project_from_user_id(configuration, user_id):
 def get_active_project_client_id(configuration, user_id, protocol):
     """Returns active project_client_id for *user_id* with *protocol*"""
 
-    _logger = configuration.logger
-    # _logger.debug("user_id: '%s', protocol: '%s'"
-    #               % (user_id, protocol))
-
     result = None
-    user_id = __validate_user_id(configuration, user_id)
-    if user_id is not None:
-        client_id = __client_id_from_user_id(configuration, user_id)
-
-        if client_id is not None:
-            user_db = __load_user_db(configuration)
-            (status, _) = __validate_user_db(configuration, client_id,
-                                             user_db)
-            # Retrieve active project client id
-            if status:
-                result = user_db.get(client_id,
-                                     {}).get('account',
-                                             {}).get(protocol,
-                                                     {}).get('role', '')
+    active_project = __active_project(configuration, user_id, protocol)
+    if active_project is not None:
+        result = active_project.get('project_client_id', '')
 
     return result
 
@@ -1090,9 +1119,6 @@ def validate_user(configuration, user_id, user_addr, protocol):
     # _logger.debug("user_id: '%s', user_addr: '%s', protocol: '%s'"
     #               % (user_id, user_addr, protocol))
 
-    flock = None
-    timestamp = time.time()
-    min_ip_change_time = 600
     user = None
     account = None
     account_state = None
@@ -1108,12 +1134,9 @@ def validate_user(configuration, user_id, user_addr, protocol):
 
     # _logger.debug("client_id: '%s'" % client_id)
 
-    (_, db_lock_filepath) = __user_db_filepath(configuration)
-    flock = acquire_file_lock(db_lock_filepath)
-    user_db = __load_user_db(configuration, locked=True)
+    user_db = __load_user_db(configuration)
     (status, validate_msg) = __validate_user_db(configuration, client_id,
                                                 user_db)
-
     if not status:
         err_msg = validate_msg
     else:
@@ -1125,8 +1148,8 @@ def validate_user(configuration, user_id, user_addr, protocol):
         account_state = account.get('state')
         account_protocol = account.get(protocol)
         protocol_last_login = account_protocol.get('last_login')
-        protocol_last_timestamp = protocol_last_login.get('timestamp')
-        protocol_last_ip = protocol_last_login.get('ip')
+        protocol_login_timestamp = protocol_last_login.get('timestamp')
+        protocol_login_ip = protocol_last_login.get('ip')
 
         # Check if user account is active
         if account_state == 'suspended':
@@ -1141,48 +1164,14 @@ def validate_user(configuration, user_id, user_addr, protocol):
             err_msg += template
             _logger.error(log_err_msg
                           + ": " + template)
-        elif protocol_last_ip \
-                and protocol_last_ip != user_addr:
-
-            # Check if IP changed since last login
-            # TODO: Put GeoIP check here
-
-            _logger.info(
-                "GDP: User '%s', protocol: '%s', changed ip: %s -> %s" %
-                (client_id, protocol, protocol_last_ip, user_addr))
-
-            # Reject login if IP changed within min_ip_change_time
-
-            if protocol_last_timestamp and timestamp \
-                    - protocol_last_timestamp < min_ip_change_time:
-                status = False
-                remaining_block = (min_ip_change_time -
-                                   (timestamp - protocol_last_timestamp))
-                template = "IP changed from %s to %s" \
-                    % (protocol_last_ip, user_addr) \
-                    + ", try again in %0.f seconds" % remaining_block
-                err_msg += template
-                _logger.error(log_err_msg + ", " + err_msg)
 
         # Generate last login message
 
-        if status and protocol_last_ip:
-            lastlogin = datetime.fromtimestamp(protocol_last_timestamp)
+        if status and protocol_login_ip:
+            lastlogin = datetime.fromtimestamp(protocol_login_timestamp)
             lastloginstr = lastlogin.strftime('%d/%m/%Y %H:%M:%S')
-
-            ok_msg = "Last %s access: %s from %s" % (protocol, lastloginstr,
-                                                     protocol_last_ip)
-        if status:
-
-            # Update last login info
-
-            protocol_last_login['ip'] = user_addr
-            protocol_last_login['timestamp'] = timestamp
-
-            __save_user_db(configuration, user_db, locked=True)
-
-    if flock is not None:
-        release_file_lock(flock)
+            ok_msg = "Last %s project login: %s from %s" \
+                % (protocol, lastloginstr, protocol_login_ip)
 
     ret_msg = err_msg
     if status:
@@ -1330,10 +1319,12 @@ def ensure_user(configuration, client_addr, client_id):
         status = __update_users_log(configuration, client_id)
         if status:
             __save_user_db(configuration, user_db, locked=True)
-            _logger.info("Created GDP user: '%s'" % client_id)
+            _logger.info("Created GDP user: '%s' from IP: %s" \
+                % (client_id, client_addr))
             result = True
         else:
-            _logger.error("Failed to create GDP user: '%s'" % client_id)
+            _logger.error("Failed to create GDP user: '%s' from IP: %s" \
+                % (client_id, client_addr))
 
     release_file_lock(flock)
 
@@ -1911,6 +1902,8 @@ def project_login(
     if status:
         user_account[protocol]['role'] = \
             user_project['client_id'] = project_client_id
+        user_account[protocol]['last_login']['timestamp'] = time.time()
+        user_account[protocol]['last_login']['ip'] = client_addr
         __save_user_db(configuration, user_db, locked=True)
 
     if flock is not None:
@@ -2053,61 +2046,129 @@ def project_open(
     # _logger.debug("protocol: '%s', client_addr: '%s', user_id: '%s'"
     #               % (protocol, client_addr, user_id))
 
-    result = False
-
+    status = True
+    active_short_id = ''
     project_short_id = __project_short_id_from_user_id(configuration, user_id)
     client_id = __client_id_from_user_id(configuration, user_id)
     project_name = get_project_from_user_id(configuration, user_id)
     if project_name is None:
-        _logger.error(
-            "GDP: Missing project name in user_id: '%s'" % user_id)
-        return result
-    (status, msg) = validate_user(
-        configuration, client_id, client_addr, protocol)
-    if not status:
-        _logger.warning(msg)
-    else:
-        active_user_id = get_active_project_short_id(configuration,
-                                                     client_id,
-                                                     protocol)
-        if active_user_id is not None \
-                and active_user_id != project_short_id:
-            status = project_logout(configuration,
-                                    protocol,
-                                    client_addr,
-                                    active_user_id,
-                                    autologout=True)
-        if status \
-                and active_user_id != project_short_id:
-            status = project_login(
-                configuration,
-                protocol,
-                client_addr,
-                client_id,
-                project_name)
+        msg = "Missing project name in user_id: '%s'" % user_id
+        _logger.error("GDP: " + msg)
+        return (False, msg)
+
+    ok_msg = "Opened project: '%s'" % project_name
+    err_msg = "Failed to open project: '%s'" % project_name
+    log_ok_msg = "GDP: User: '%s' from ip: %s, protocol: '%s'" \
+        % (user_id, client_addr, protocol) \
+        + ", opened project: '%s'" % project_name
+    log_err_msg = "GDP: User: '%s' from ip: %s, protocol: '%s'" \
+        % (user_id, client_addr, protocol) \
+        + ", failed to opened project: '%s'" % project_name
+
+    # NOTE: validate_user updates timestamp, extract active_project first
+    active_project = __active_project(configuration,
+                                      client_id,
+                                      protocol)
+    if active_project is None:
+        status = False
+        template = ": Failed to extract active project"
+        err_msg += template
+        _logger.error(log_err_msg + template)
 
     if status:
-        result = True
+        (status, validate_msg) = validate_user(
+            configuration, client_id, client_addr, protocol)
+        if not status:
+            _logger.error(log_err_msg + ": %s" % validate_msg)
 
-    return result
+    if status and active_project:
+        active_short_id = active_project.get('project_short_id', '')
+        template = ": Project close required for: '%s'" \
+            % active_project.get('name', '')
+        if active_short_id:
+            if protocol != 'davs':
+                status = False
+            else:
+                cur_timestamp = time.time()
+                project_timestamp = active_project.get('last_timestamp', 0)
+                project_change_time = io_session_timeout.get(protocol, 0)
+                time_to_autologout = (
+                    project_timestamp + project_change_time) - cur_timestamp
+                autologout = False
+                if active_short_id == project_short_id:
+                    autologout = True
+                elif active_short_id != project_short_id:
+                    if time_to_autologout < 0:
+                        autologout = True
+                    else:
+                        status = False
+                        template += ": Wait %s seconds for autologout" \
+                            % time_to_autologout
+                if autologout:
+                    status = project_logout(
+                        configuration,
+                        protocol,
+                        client_addr,
+                        active_short_id,
+                        autologout=True)
+                    if status:
+                        active_short_id = ''
+        if not status:
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+    if status:
+        status = project_login(
+            configuration,
+            protocol,
+            client_addr,
+            client_id,
+            project_name)
+
+    ret_msg = err_msg
+    if status:
+        ret_msg = ok_msg
+        _logger.info(log_ok_msg)
+
+    return (status, ret_msg)
 
 
 def project_close(
         configuration,
         protocol,
         client_addr,
-        user_id):
-    """Close project for *user_id* with *protocol*"""
+        user_id=None):
+    """Close project for *user_id* with *protocol*
+    if *user_id* is None close all project for *protocol*"""
 
     _logger = configuration.logger
     # _logger.debug("protocol: '%s', client_addr: '%s', user_id: '%s'"
-    #               % (protocol, client_addr, user_id))
+    #                % (protocol, client_addr, user_id))
 
-    return project_logout(
-        configuration,
-        protocol,
-        client_addr,
-        user_id)
+    result = True
+    active_user_ids = []
+    if user_id is not None:
+        autologout = False
+        active_user_ids.append(user_id)
+    else:
+        autologout = True
+        user_db = __load_user_db(configuration)
+        for (_, user_dict) in user_db.iteritems():
+            role = user_dict.get('account', {}).get(
+                protocol, {}).get('role', '')
+            if role:
+                active_user_ids.append(role)
+    for active_user in active_user_ids:
+        status = project_logout(
+            configuration,
+            protocol,
+            client_addr,
+            active_user,
+            autologout=autologout)
+        if not status:
+            result = False
+
+    return result
 
 
 def project_create(

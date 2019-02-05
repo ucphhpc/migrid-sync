@@ -266,6 +266,7 @@ def active_twofactor_session(configuration, client_id, user_addr=None):
     Optionally filter to only target sessions originating from user_addr.
     """
     _logger = configuration.logger
+    # _logger.debug("client_id: '%s', %s" % (client_id, user_addr))
     sessions = list_twofactor_sessions(configuration, client_id, user_addr)
     latest = None
     now = time.time()

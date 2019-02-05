@@ -1352,10 +1352,10 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     if username is not None:
         success = True
         if configuration.site_enable_gdp:
-            success = project_open(configuration,
-                                   'sftp',
-                                   addr[0],
-                                   username)
+            (success, _) = project_open(configuration,
+                                        'sftp',
+                                        addr[0],
+                                        username)
     if success:
         print "Login for %s from %s" % (username, addr, )
         logger.info("Login for %s from %s" % (username, addr, ))
@@ -1554,6 +1554,9 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'max_packet_size': configuration.user_sftp_max_packet_size,
         'max_sftp_sessions': configuration.user_sftp_max_sessions,
     }
+    if configuration.site_enable_gdp:
+       # Close projects marked as open due to NON-clean exits
+        project_close(configuration, 'sftp', address, user_id=None)
     logger.info("Starting SFTP server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)
