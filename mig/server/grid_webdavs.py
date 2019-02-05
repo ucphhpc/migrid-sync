@@ -454,10 +454,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                (username, ip_addr, tcp_port))
 
             if success and configuration.site_enable_gdp:
-                success = project_open(configuration,
-                                       'davs',
-                                       ip_addr,
-                                       username)
+                (success, _) = project_open(configuration,
+                                            'davs',
+                                            ip_addr,
+                                            username)
 
             # Track newly authorized session
 
