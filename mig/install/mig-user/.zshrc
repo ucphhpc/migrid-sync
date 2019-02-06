@@ -23,6 +23,7 @@ alias ll='ls -l'
 alias la='ls -al'
 
 alias emacs='emacs -nw'
+alias vi='vim'
 alias vdo='vimdiff -o'
 alias pylintchanged="svn status | egrep -v '^\?' | egrep '.py$' | sed 's/.* //' | xargs -r -t pylint -E"
 
