@@ -770,7 +770,8 @@ so you may have to avoid blank lines in your text below.
         default_authpassword = current_ssh_dict.get('authpassword', '')
         username = client_alias(client_id)
         if configuration.user_sftp_alias:
-            username = extract_field(client_id, configuration.user_sftp_alias)
+            username = get_short_id(configuration, client_id,
+                                    configuration.user_sftp_alias)
             create_alias_link(username, client_id, configuration.user_home)
         sftp_server = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
