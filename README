@@ -629,8 +629,8 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --mig_oid_provider='' \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=False --enable_wsgi=True \
-                   --enable_sftp=False --enable_sftp_subsys=False \
-                   --enable_davs=False --enable_ftps=False \
+                   --enable_sftp=True --enable_sftp_subsys=False \
+                   --enable_davs=True --enable_ftps=False \
                    --enable_sharelinks=False --enable_transfers=False \
                    --enable_duplicati=False --enable_seafile=False \
                    --enable_sandboxes=False --enable_vmachines=False \
