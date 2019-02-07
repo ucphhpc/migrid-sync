@@ -88,7 +88,6 @@ def main(client_id, user_arguments_dict):
     add_ready += '''
         /* NOTE: requires managers CSS fix for proper tab bar height */
         $(".jupyter-tabs").tabs();
-        $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
     '''
 
     title_entry = find_entry(output_objects, 'title')
