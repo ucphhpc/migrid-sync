@@ -44,6 +44,7 @@ keyset.
 """
 
 import os
+import re
 import socket
 import sys
 import time
@@ -52,7 +53,7 @@ import random
 import requests
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
+from shared.base import client_id_dir, extract_field
 from shared.conf import get_configuration_object
 from shared.defaults import session_id_bytes
 from shared.fileio import make_symlink, pickle, unpickle, write_file, \
@@ -84,6 +85,20 @@ def is_active(pickle_state, timeout=7200):
         active = False
     return active
 
+def to_unix_account(input_str):
+    """
+    Extracts a set of valid characters from input_str and returns a
+     32 character string that can be used as a unix account name
+    :param mig: A string that is used to generate a valid unix account name.
+    :return: None if failed or string with a maximum length of 32 characters
+    """
+    if not isinstance(input_str, basestring) or not input_str:
+        return None
+    input_str = input_str.lower()
+    valid_unix_name = "".join(re.findall('[a-z0-9_.\-]+', input_str))
+    if not valid_unix_name:
+        return None
+    return valid_unix_name[:32]
 
 def mig_to_mount_adapt(mig):
     """
@@ -103,12 +118,16 @@ def mig_to_mount_adapt(mig):
 def mig_to_user_adapt(mig):
     """
     :param mig: expects a dictionary containing a USER_CERT key that defines
-    the users unique x509 certificate.
+    the users unique x509 Distinguish Name.
     :return: a dictionary that is ready to send to a jupyterhub host
     """
     user = {
         'CERT': mig['USER_CERT']
     }
+    if 'USER_EMAIL' in mig:
+        unix_name = to_unix_account(['USER_EMAIL'])
+        if unix_name:
+            user['UNIX_NAME'] = unix_name
     return user
 
 def remove_jupyter_mount(jupyter_mount_path, configuration):
@@ -482,6 +501,9 @@ def main(client_id, user_arguments_dict):
         'TARGET_MOUNT_ADDR': "@" + sftp_addresses[0] + ":",
         'PORT': sftp_port
     }
+    client_email = extract_field(client_id, 'email')
+    if client_email:
+        jupyter_dict.update({'USER_EMAIL': client_email})
 
     # Only post the required keys, adapt to API expectations
     mount_dict = mig_to_mount_adapt(jupyter_dict)
