@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reseditaction - Resource editor action handler back end
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,7 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
 from shared.resource import prepare_conf, write_resource_config, \
-     create_resource, update_resource, resource_owners
+    create_resource, update_resource, resource_owners
 from shared.safeinput import html_escape
 
 
@@ -54,7 +54,7 @@ def signature():
 
 
 def handle_update(configuration, client_id, resource_id, user_vars,
-                    output_objects, new_resource=False):
+                  output_objects, new_resource=False):
     """Update existing resource configuration from request"""
 
     logger = configuration.logger
@@ -69,7 +69,7 @@ def handle_update(configuration, client_id, resource_id, user_vars,
         logger.info('write to file: %s' % pending_file)
         write_resource_config(configuration, user_vars, pending_file)
     except Exception, err:
-        logger.error('Resource conf %s could not be written: %s' % \
+        logger.error('Resource conf %s could not be written: %s' %
                      (pending_file, err))
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not write configuration!'})
@@ -82,16 +82,16 @@ def handle_update(configuration, client_id, resource_id, user_vars,
                                                pending_file)
         if not update_status:
             output_objects.append({'object_type': 'error_text', 'text':
-                               'Resource update failed:'})
+                                   'Resource update failed:'})
             output_objects.append({'object_type': 'html_form', 'text': msg})
             return False
         unique_resource_name = '%(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars
         output_objects.append({'object_type': 'text', 'text':
-                               'Updated %s resource configuration!' % \
+                               'Updated %s resource configuration!' %
                                unique_resource_name})
         output_objects.append({'object_type': 'link',
                                'destination':
-                               'resadmin.py?unique_resource_name=%s' % \
+                               'resadmin.py?unique_resource_name=%s' %
                                unique_resource_name,
                                'class': 'adminlink iconspace',
                                'title': 'Administrate resource',
@@ -106,7 +106,7 @@ def handle_update(configuration, client_id, resource_id, user_vars,
                                                resource_name, pending_file)
         if not create_status:
             output_objects.append({'object_type': 'error_text', 'text':
-                               'Resource creation failed:'})
+                                   'Resource creation failed:'})
             output_objects.append({'object_type': 'html_form', 'text': msg})
             return False
         output += '''Your resource was added as %s.%s
@@ -118,7 +118,7 @@ def handle_update(configuration, client_id, resource_id, user_vars,
         if not run_status:
             logger.error(msg)
             output_objects.append({'object_type': 'error_text', 'text':
-                               'Failed to parse new configuration:'})
+                                   'Failed to parse new configuration:'})
             output_objects.append({'object_type': 'html_form', 'text': msg})
             try:
                 os.remove(pending_file)
@@ -137,11 +137,11 @@ def handle_update(configuration, client_id, resource_id, user_vars,
 the %s administrator(s):
 %s
 Please manually contact the %s grid administrator(s) (%s)
-and provide this information''' % (tmp_id, msg, 
-                                   configuration.short_title, 
-                                   configuration.short_title,
-                                   configuration.admin_email)
-                               })
+and provide this information''' % (tmp_id, msg,
+                                       configuration.short_title,
+                                       configuration.short_title,
+                                       configuration.admin_email)
+                                   })
             return False
         output += """Your creation request of the resource: <b>%s</b>
 has been sent to the %s server administration and will be processed as
@@ -195,7 +195,12 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
 
-    ### IMPORTANT: we can not validate input completely here!
+    if not configuration.site_enable_resources:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Resources are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # IMPORTANT: we can not validate input completely here!
     # We validate the parts used in the path manipulation and only use
     # the remaining variables directly in the generated config file that
     # is then handed to the parser for full validation.
@@ -206,7 +211,7 @@ def main(client_id, user_arguments_dict):
     critical_fields.append(csrf_field)
     for field in critical_fields:
         critical_arguments[field] = user_arguments_dict.get(field, [''])
-    
+
     (validate_status, accepted) = validate_input_and_cert(
         critical_arguments,
         defaults,
@@ -214,7 +219,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -249,21 +254,22 @@ CSRF-filtered POST requests to prevent unintended updates'''
                            'Resource edit actions'})
     conf = prepare_conf(configuration, user_arguments_dict, resource_id)
     if 'create' == action:
-        logger.info('%s is trying to create resource %s (%s)' % \
+        logger.info('%s is trying to create resource %s (%s)' %
                     (client_id, hosturl, conf))
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Creating resource configuration'})
+        output_objects.append(
+            {'object_type': 'sectionheader', 'text':
+             'Creating resource configuration'})
 
         # We only get here if hostidentifier is dynamic so no access control
 
         if not handle_update(configuration, client_id, resource_id, conf,
-                               output_objects, True):
+                             output_objects, True):
             status = returnvalues.SYSTEM_ERROR
     elif 'update' == action:
-        logger.info('%s is trying to update resource %s (%s)' % \
+        logger.info('%s is trying to update resource %s (%s)' %
                     (client_id, resource_id, conf))
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                               : 'Updating existing resource configuration'})
+        output_objects.append({'object_type': 'sectionheader', 'text':
+                               'Updating existing resource configuration'})
 
         # Prevent unauthorized access to existing resources
 
@@ -271,23 +277,22 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                                      resource_id)
         if not owner_status:
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "Could not look up '%s' owners - no such resource?" % \
+                {'object_type': 'error_text', 'text':
+                 "Could not look up '%s' owners - no such resource?" %
                  resource_id})
             status = returnvalues.SYSTEM_ERROR
         elif client_id in owner_list:
             if not handle_update(configuration, client_id, resource_id, conf,
-                                   output_objects, False):
+                                 output_objects, False):
                 status = returnvalues.SYSTEM_ERROR
         else:
             status = returnvalues.CLIENT_ERROR
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'You can only update your own resources!'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'You can only update your own resources!'
                                    })
     else:
         status = returnvalues.CLIENT_ERROR
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Unknown action request!'
-                               })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Unknown action request!'})
 
     return (output_objects, status)

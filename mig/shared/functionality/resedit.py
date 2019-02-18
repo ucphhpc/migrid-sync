@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resedit - Resource editor back end
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,14 +38,14 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments
-from shared.resource import init_conf, empty_resource_config 
+from shared.resource import init_conf, empty_resource_config
 from shared.vgridaccess import res_vgrid_access
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'hosturl': [''], 'hostidentifier':['']}
+    defaults = {'hosturl': [''], 'hostidentifier': ['']}
     return ['html_form', defaults]
 
 
@@ -59,6 +59,7 @@ def field_size(value, default=30):
     else:
         size = value_len
     return size
+
 
 def available_choices(configuration, client_id, resource_id, field, spec):
     """Find the available choices for the selectable field.
@@ -82,6 +83,7 @@ def available_choices(configuration, client_id, resource_id, field, spec):
         choices = [default] + [i for i in choices if not default == i]
     return choices
 
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
@@ -95,7 +97,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -104,8 +106,13 @@ def main(client_id, user_arguments_dict):
     resource_id = '%s.%s' % (hosturl, hostidentifier)
     extra_selects = 3
 
+    if not configuration.site_enable_resources:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Resources are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     # Find allowed VGrids and Runtimeenvironments and add them to
-    # configuration object for automated choice handling    
+    # configuration object for automated choice handling
 
     allowed_vgrids = [''] + res_vgrid_access(configuration, resource_id)
     allowed_vgrids.sort()
@@ -115,7 +122,7 @@ def main(client_id, user_arguments_dict):
     allowed_run_envs.sort()
     area_cols = 80
     area_rows = 5
-    
+
     status = returnvalues.OK
 
     logger.info('Starting Resource edit GUI.')
@@ -123,22 +130,22 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Resource Editor'
     output_objects.append({'object_type': 'header', 'text': 'Resource Editor'
-                          })
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : '%s Resource Editor' % configuration.short_title})
-    output_objects.append({'object_type': 'text', 'text'
-                           : '''
+                           })
+    output_objects.append({'object_type': 'sectionheader',
+                           'text': '%s Resource Editor' % configuration.short_title})
+    output_objects.append({'object_type': 'text', 'text': '''
 Please fill in or edit the fields below to fit your %s resource reservation. Most fields
 will work with their default values. So if you are still in doubt after reading the help
 description, you can likely just leave the field alone.''' % configuration.short_title
-                          })
+                           })
 
     if hosturl and hostidentifier:
         conf = init_conf(configuration, hosturl, hostidentifier)
         if not conf:
             status = returnvalues.CLIENT_ERROR
-            output_objects.append({'object_type': 'error_text', 'text'
-                           : '''No such resource! (%s.%s)''' % (hosturl, hostidentifier)})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 '''No such resource! (%s.%s)''' % (hosturl, hostidentifier)})
             return (output_objects, status)
     else:
         conf = empty_resource_config(configuration)
@@ -149,10 +156,10 @@ description, you can likely just leave the field alone.''' % configuration.short
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'short_title': configuration.short_title,
-                     'form_method': form_method,
-                     'csrf_field': csrf_field,
-                     'csrf_limit': csrf_limit}
+    fill_helpers = {'short_title': configuration.short_title,
+                    'form_method': form_method,
+                    'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
     target_op = 'reseditaction'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
@@ -166,11 +173,12 @@ description, you can likely just leave the field alone.''' % configuration.short
 
     # Resource overall fields
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                           : "Main Resource Settings"})
-    output_objects.append({'object_type': 'text', 'text'
-                           : """This section configures general options for the resource."""
-                           })
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': "Main Resource Settings"})
+    output_objects.append(
+        {'object_type': 'text', 'text':
+         """This section configures general options for the resource."""
+         })
 
     (title, field) = ('Host FQDN', 'HOSTURL')
     if hosturl:
@@ -178,19 +186,17 @@ description, you can likely just leave the field alone.''' % configuration.short
             hostip = conf.get('HOSTIP', socket.gethostbyname(hosturl))
         except:
             hostip = '<unknown>'
-        output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br />
+        output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
 <input type='hidden' name='%s' value='%s' />
 <input type='hidden' name='hostip' value='%s' />
 %s
 <br />
 <br />""" % (title, field, field, conf[field], hostip,
-           conf[field])
-                               })
+             conf[field])
+        })
     else:
-        output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br />
+        output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
 <input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s'
     required pattern='[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+'
@@ -198,31 +204,29 @@ description, you can likely just leave the field alone.''' % configuration.short
 />
 <br />
 <br />""" % (title, field, field, field_size(conf[field]),
-           conf[field])
-                               })
+             conf[field])
+        })
 
     (title, field) = ('Host identifier', 'HOSTIDENTIFIER')
     if hostidentifier:
-        output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br />
+        output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
 <input type='hidden' name='%s' value='%s' />
 %s
 <br />
 <br />""" % (title, field, field, conf[field], conf[field])
-                               })                               
+        })
 
     (field, title) = 'frontendhome', 'Frontend Home Path'
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br />
+    output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#%s'>help</a><br />
 <input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s'
     required pattern='[^ ]+' title='Absolute path to user home on the resource'
 />
 <br />
 <br />""" % (title, field, field,
-           field_size(conf[field]), conf[field])
-                               })
+             field_size(conf[field]), conf[field])
+    })
 
     for (field, spec) in res_fields:
         title = spec['Title']
@@ -245,13 +249,12 @@ description, you can likely just leave the field alone.''' % configuration.short
 <input class='fillwidth padspace' type='text' name='%s' size='%d' value='%s'
     %s />
 """ % (field, field_size(conf[field]), conf[field], required_str)
-            output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br />
+            output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a>
 <br />
 %s<br />
 <br />""" % (title, field, input_str)
-                                   })
+            })
         elif 'select' == spec['Editor']:
             choices = available_choices(configuration, client_id,
                                         resource_id, field, spec)
@@ -273,16 +276,15 @@ description, you can likely just leave the field alone.''' % configuration.short
                         display = ' '
                     value_select += """<option %s value='%s'>%s</option>\n""" \
                                     % (selected, name, display)
-                value_select += """</select><br />\n"""    
-            output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br />
+                value_select += """</select><br />\n"""
+            output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
 %s
 <br />""" % (title, field, value_select)
-                                   })
+            })
 
     # Not all resource fields here map directly to keywords/specs input field
-    
+
     (title, field) = ('Runtime Environments', 'RUNTIMEENVIRONMENT')
     re_list = conf[field]
     show = re_list + [('', []) for i in range(extra_selects)]
@@ -306,42 +308,39 @@ description, you can likely just leave the field alone.''' % configuration.short
                      (area_cols, area_rows, i, values)
         i += 1
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br />
+    output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#res-%s'>help</a><br />
 Please enter any required environment variable settings on the form NAME=VALUE in the box below
 each selected runtimeenvironment.<br />
 %s
 <br />""" % (title, field, re_select)
-                           })
-
+    })
 
     # Execution node fields
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                           : "Execution nodes"})
-    output_objects.append({'object_type': 'text', 'text'
-                           : """This section configures execution nodes on the resource."""
-                           })
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': "Execution nodes"})
+    output_objects.append(
+        {'object_type': 'text', 'text':
+         """This section configures execution nodes on the resource."""
+         })
     (field, title) = 'executionnodes', 'Execution Node(s)'
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br />
+    output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a><br />
 <input class='fillwidth padspace' type='text' name='exe-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
-           field_size(conf['all_exes'][field]), conf['all_exes'][field])
-                               })
+             field_size(conf['all_exes'][field]), conf['all_exes'][field])
+    })
 
     (field, title) = 'executionhome', 'Execution Home Path'
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br />
+    output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a><br />
 <input class='fillwidth padspace' type='text' name='exe-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
-           field_size(conf['all_exes'][field]), conf['all_exes'][field])
-                               })
+             field_size(conf['all_exes'][field]), conf['all_exes'][field])
+    })
 
     for (field, spec) in exe_fields:
         title = spec['Title']
@@ -356,22 +355,21 @@ each selected runtimeenvironment.<br />
 <input class='fillwidth padspace' type='number' name='exe-%s' size='%d' value='%s'
     min=0 pattern='[0-9]+' %s />
 """ % (field, field_size(conf['all_exes'][field]), conf['all_exes'][field],
-       required_str)
+                    required_str)
             else:
                 input_str = """
 <input class='fillwidth padspace' type='text' name='exe-%s' size='%d' value='%s'
     %s />
 """ % (field, field_size(conf['all_exes'][field]), conf['all_exes'][field],
-       required_str)
+                    required_str)
 
-            output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br />
+            output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a>
 <br />
 %s
 <br />
 <br />""" % (title, field, input_str)
-                                   })
+            })
         elif 'select' == spec['Editor']:
             choices = available_choices(configuration, client_id,
                                         resource_id, field, spec)
@@ -393,41 +391,39 @@ each selected runtimeenvironment.<br />
                         display = ' '
                     value_select += """<option %s value='%s'>%s</option>\n""" \
                                     % (selected, name, display)
-                value_select += """</select><br />\n"""    
-            output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br />
+                value_select += """</select><br />\n"""
+            output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#exe-%s'>help</a><br />
 %s
 <br />""" % (title, field, value_select)
-                                   })
-    
+            })
+
     # Storage node fields
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                           : "Storage nodes"})
-    output_objects.append({'object_type': 'text', 'text'
-                           : """This section configures storage nodes on the resource."""
-                           })
-    
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': "Storage nodes"})
+    output_objects.append(
+        {'object_type': 'text', 'text':
+         """This section configures storage nodes on the resource."""
+         })
+
     (field, title) = 'storagenodes', 'Storage Node(s)'
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br />
+    output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a><br />
 <input class='fillwidth padspace' type='text' name='store-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
-           field_size(conf['all_stores'][field]), conf['all_stores'][field])
-                               })
+             field_size(conf['all_stores'][field]), conf['all_stores'][field])
+    })
 
     (field, title) = 'storagehome', 'Storage Home Path'
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br />
+    output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a><br />
 <input class='fillwidth padspace' type='text' name='store-%s' size='%d' value='%s' />
 <br />
 <br />""" % (title, field, field,
-           field_size(conf['all_stores'][field]), conf['all_stores'][field])
-                               })
+             field_size(conf['all_stores'][field]), conf['all_stores'][field])
+    })
 
     for (field, spec) in store_fields:
         title = spec['Title']
@@ -442,22 +438,21 @@ each selected runtimeenvironment.<br />
 <input class='fillwidth padspace' type='number' name='store-%s' size='%d' value='%s'
     min=0 pattern='[0-9]+' %s />
 """ % (field, field_size(conf['all_stores'][field]), conf['all_stores'][field],
-       required_str)
+                    required_str)
             else:
                 input_str = """
 <input class='fillwidth padspace' type='text' name='store-%s' size='%d' value='%s'
     %s />
 """ % (field, field_size(conf['all_stores'][field]), conf['all_stores'][field],
-       required_str)
+                    required_str)
 
-            output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br />
+            output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a>
 <br />
 %s
 <br />
 <br />""" % (title, field, input_str)
-                                   })
+            })
         elif 'select' == spec['Editor']:
             choices = available_choices(configuration, client_id,
                                         resource_id, field, spec)
@@ -479,13 +474,12 @@ each selected runtimeenvironment.<br />
                         display = ' '
                     value_select += """<option %s value='%s'>%s</option>\n""" \
                                     % (selected, name, display)
-                value_select += """</select><br />\n"""    
-            output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br />
+                value_select += """</select><br />\n"""
+            output_objects.append({'object_type': 'html_form', 'text': """<br />
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='resedithelp.py#store-%s'>help</a><br />
 %s
 <br />""" % (title, field, value_select)
-                                   })
+            })
 
     output_objects.append({'object_type': 'html_form', 'text': """
 <input type='submit' value='Save' />

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # restartfe - restart resource frontend
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -48,9 +48,9 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to RESTART frontend ----------'
-                          })
+    output_objects.append({'object_type': 'text', 'text':
+                           '--------- Trying to RESTART frontend ----------'
+                           })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -60,11 +60,16 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     unique_resource_name = accepted['unique_resource_name'][-1]
+
+    if not configuration.site_enable_resources:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Resources are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -79,17 +84,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You must be an owner of '
-                               + unique_resource_name
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'You must be an owner of ' +
+                               unique_resource_name
                                + ' to restart the resource frontend!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (status, msg) = stop_resource(unique_resource_name,
                                   configuration.resource_home, logger)
     if not status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s. Error stopping resource' % msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '%s. Error stopping resource' % msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (status, msg2) = start_resource(unique_resource_name,
@@ -97,15 +103,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                     configuration.migserver_https_sid_url,
                                     logger)
     if not status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s. Error starting resource' % msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '%s. Error starting resource' % msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # everything ok
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Stop output: %s ; Start output: %s' % (msg,
-                          msg2)})
+    output_objects.append({'object_type': 'text', 'text':
+                           'Stop output: %s ; Start output: %s' % (msg,
+                                                                   msg2)})
     return (output_objects, returnvalues.OK)
-
-

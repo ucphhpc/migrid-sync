@@ -725,6 +725,11 @@ location.""" % self.config_file
             self.site_enable_jobs = config.getboolean('SITE', 'enable_jobs')
         else:
             self.site_enable_jobs = True
+        if config.has_option('SITE', 'enable_resources'):
+            self.site_enable_resources = config.getboolean('SITE',
+                                                           'enable_resources')
+        else:
+            self.site_enable_resources = True
         if config.has_option('GLOBAL', 'user_monitor_log'):
             self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
         if config.has_option('SITE', 'enable_events'):

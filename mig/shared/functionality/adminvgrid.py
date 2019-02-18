@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminvgrid - administrate a vgrid
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,19 +34,19 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
-     valid_trigger_changes, valid_trigger_actions, keyword_owners, \
-     keyword_members, keyword_none, csrf_field, default_vgrid_settings_limit
+    valid_trigger_changes, valid_trigger_actions, keyword_owners, \
+    keyword_members, keyword_none, csrf_field, default_vgrid_settings_limit
 from shared.accessrequests import list_access_requests, load_access_request, \
-     build_accessrequestitem_object
+    build_accessrequestitem_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+    html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.sharelinks import build_sharelinkitem_object
 from shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
-     vgrid_settings, vgrid_sharelinks, vgrid_list_parents, vgrid_owners, \
-     vgrid_members, vgrid_resources, vgrid_restrict_write_support
+    vgrid_settings, vgrid_sharelinks, vgrid_list_parents, vgrid_owners, \
+    vgrid_members, vgrid_resources, vgrid_restrict_write_support
 
 _user_choice = [("owners", keyword_owners), ("members", keyword_members)]
 _all_choice = [("everyone", keyword_all)]
@@ -61,11 +61,13 @@ _valid_write_access = _none_choice + _user_choice
 _valid_visible = _user_choice + _all_choice
 _valid_bool = _bool_choice
 
+
 def signature():
     """Signature of the main function"""
 
     defaults = {'vgrid_name': REJECT_UNSET}
     return ['html_form', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -84,7 +86,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -97,13 +99,13 @@ def main(client_id, user_arguments_dict):
     # with alphabetical client ID last)
     # sharelinks table initially sorted by 5, 4 reversed (active first and
     # in growing age)
-    
+
     table_specs = [{'table_id': 'accessrequeststable', 'pager_id':
                     'accessrequests_pager', 'sort_order':
                     '[[0,0],[4,0],[3,0]]'},
                    {'table_id': 'sharelinkstable', 'pager_id':
                     'sharelinks_pager', 'sort_order': '[[5,1],[4,1]]'}]
-    (add_import, add_init, add_ready) = man_base_js(configuration, 
+    (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     table_specs,
                                                     {'width': 600})
     add_init += '''
@@ -137,7 +139,9 @@ def main(client_id, user_arguments_dict):
             //console.debug("in add member blur handler");
             onMemberInputChange();
         }
-    );
+    );'''
+    if configuration.site_enable_resources:
+        add_ready += '''
     onResourceInputChange();
     $("#dynresourcespares").on("blur", "input[name=unique_resource_name]",
         function(event) {
@@ -151,21 +155,21 @@ def main(client_id, user_arguments_dict):
                                              add_init, add_ready)
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
-    
+
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'short_title': configuration.short_title,
-                     'vgrid_label': label,
-                     'form_method': form_method,
-                     'csrf_field': csrf_field,
-                     'csrf_limit': csrf_limit}
+    fill_helpers = {'short_title': configuration.short_title,
+                    'vgrid_label': label,
+                    'form_method': form_method,
+                    'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : "Administrate '%s'" % vgrid_name })
+    output_objects.append(
+        {'object_type': 'header', 'text': "Administrate '%s'" % vgrid_name})
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
-        output_objects.append({'object_type': 'error_text', 'text': 
-                    'Only owners of %s can administrate it.' % vgrid_name })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Only owners of %s can administrate it.' % vgrid_name})
         target_op = "sendrequestaction"
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -180,9 +184,9 @@ def main(client_id, user_arguments_dict):
         output_objects.append(
             {'object_type': 'link',
              'destination':
-             "javascript: confirmDialog(%s, '%s', '%s');"\
-             % (js_name, "Request ownership of " + \
-                vgrid_name + ":<br/>" + \
+             "javascript: confirmDialog(%s, '%s', '%s');"
+             % (js_name, "Request ownership of " +
+                vgrid_name + ":<br/>" +
                 "\nPlease write a message to the owners below.",
                 'request_text'),
              'class': 'addadminlink iconspace',
@@ -191,50 +195,40 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     for (item, scr) in zip(['owner', 'member', 'resource'],
-                        ['vgridowner', 'vgridmember', 'vgridres']):
+                           ['vgridowner', 'vgridmember', 'vgridres']):
+        if item == 'resource' and not configuration.site_enable_resources:
+            continue
         output_objects.append({'object_type': 'sectionheader',
                                'text': "%ss" % item.title()
                                })
-        if item == 'trigger':
-            # Always run as rule creator to avoid users being able to act on
-            # behalf of ANY other user using triggers (=exploit)
-            extra_fields = [('path', None),
-                            ('changes', [keyword_all] + valid_trigger_changes),
-                            ('run_as', client_id),
-                            ('action', [keyword_auto] + valid_trigger_actions),
-                            ('arguments', None)]
-        else:
-            extra_fields = []
-
-        (init_status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, item, 
-                                                 scr, configuration,
-                                                 extra_fields)
+        (init_status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name,
+                                                      item, scr, configuration)
         if not init_status:
             output_objects.extend(oobjs)
             return (output_objects, returnvalues.SYSTEM_ERROR)
         else:
-            output_objects.append({'object_type': 'html_form', 
-                                   'text': '<div class="div-%s">' % item })
+            output_objects.append({'object_type': 'html_form',
+                                   'text': '<div class="div-%s">' % item})
             output_objects.append(
-                {'object_type': 'link', 
-                 'destination': 
+                {'object_type': 'link',
+                 'destination':
                  "javascript:toggleHidden('.div-%s');" % item,
                  'class': 'removeitemlink iconspace',
                  'title': 'Toggle view',
-                 'text': 'Hide %ss' % item.title() })
+                 'text': 'Hide %ss' % item.title()})
             output_objects.extend(oobjs)
             output_objects.append(
-                {'object_type': 'html_form', 
+                {'object_type': 'html_form',
                  'text': '</div><div class="hidden div-%s">' % item})
             output_objects.append(
-                {'object_type': 'link', 
-                 'destination': 
+                {'object_type': 'link',
+                 'destination':
                  "javascript:toggleHidden('.div-%s');" % item,
                  'class': 'additemlink iconspace',
                  'title': 'Toggle view',
-                 'text': 'Show %ss' % item.title() })
-            output_objects.append({'object_type': 'html_form', 
-                                   'text': '</div>' })
+                 'text': 'Show %ss' % item.title()})
+            output_objects.append({'object_type': 'html_form',
+                                   'text': '</div>'})
 
     # Pending requests
 
@@ -302,7 +296,7 @@ def main(client_id, user_arguments_dict):
         request_item['acceptrequestlink'] = {
             'object_type': 'link',
             'destination':
-             "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+            "javascript: confirmDialog(%s, '%s', %s, %s);" %
             ("accept%(request_type)sreq" % req,
              "Accept %(target)s %(request_type)s request from %(entity)s" % req,
              'undefined', "{%s}" % ', '.join(["'%s': '%s'" % pair for pair in accept_args.items()])),
@@ -312,7 +306,7 @@ def main(client_id, user_arguments_dict):
         request_item['rejectrequestlink'] = {
             'object_type': 'link',
             'destination':
-             "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+            "javascript: confirmDialog(%s, '%s', %s, %s);" %
             ("rejectvgridreq",
              "Reject %(target)s %(request_type)s request from %(entity)s" % req,
              'undefined', "%s" % reject_args),
@@ -329,17 +323,17 @@ def main(client_id, user_arguments_dict):
                            'default_entries': default_pager_entries})
     output_objects.append({'object_type': 'accessrequests',
                            'accessrequests': request_list})
-    
+
     # VGrid Share links
 
     # Table columns to skip
     skip_list = ['editsharelink', 'delsharelink', 'invites', 'expire',
                  'single_file']
-    
+
     # NOTE: Inheritance is a bit tricky for sharelinks because parent shares
     # only have relevance if they actually share a path that is a prefix of
     # vgrid_name.
-    
+
     (share_status, share_list) = vgrid_sharelinks(vgrid_name, configuration)
     sharelinks = []
     if share_status:
@@ -349,20 +343,21 @@ def main(client_id, user_arguments_dict):
             include_share = False
             # Direct sharelinks (careful not to greedy match A/B with A/BCD)
             if rel_path == vgrid_name or \
-                   rel_path.startswith(vgrid_name+os.sep):
+                    rel_path.startswith(vgrid_name+os.sep):
                 include_share = True
             # Parent vgrid sharelinks that in effect also give access here
             for parent in parent_vgrids:
-                if rel_path == parent: 
+                if rel_path == parent:
                     include_share = True
             if include_share:
-                share_item = build_sharelinkitem_object(configuration, share_dict)
+                share_item = build_sharelinkitem_object(
+                    configuration, share_dict)
                 sharelinks.append(share_item)
 
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Share Links"})
-    output_objects.append({'object_type': 'html_form', 
-                 'text': '<p>Current share links in %s shared folder</p>' % \
+    output_objects.append({'object_type': 'html_form',
+                           'text': '<p>Current share links in %s shared folder</p>' %
                            vgrid_name})
     output_objects.append({'object_type': 'table_pager', 'id_prefix':
                            'sharelinks_', 'entry_name': 'share links',
@@ -372,7 +367,7 @@ def main(client_id, user_arguments_dict):
                            'skip_list': skip_list})
 
     # VGrid settings
-    
+
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Settings"})
 
@@ -399,7 +394,7 @@ def main(client_id, user_arguments_dict):
         'form_method': form_method,
         'csrf_field': csrf_field,
         'csrf_limit': csrf_limit
-        })
+    })
     target_op = 'vgridsettings'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
@@ -435,7 +430,7 @@ the corresponding participants. Similarly setting a visibility flag to
             choices = _valid_visible + _reset_choice
         else:
             choices = _valid_visible + _keep_choice
-        for (key, val) in choices: 
+        for (key, val) in choices:
             checked = ''
             if settings_dict.get(field, keyword_owners) == val:
                 checked = "checked"
@@ -475,7 +470,7 @@ the corresponding participants. Similarly setting a visibility flag to
     settings_form += '<br/>'
     field = 'restrict_members_adm'
     restrict_members_adm = settings_dict.get(field,
-                                          default_vgrid_settings_limit)
+                                             default_vgrid_settings_limit)
     if direct_dict.get(field, False):
         direct_note = _reset_note
     else:
@@ -530,7 +525,7 @@ yet supported and thus are disabled below.
             choices = _valid_write_access + _reset_choice
         else:
             choices = _valid_write_access + _keep_choice
-        for (key, val) in choices: 
+        for (key, val) in choices:
             disabled = ''
             # TODO: remove these artifical limits once we support changing
             # TODO: also add check for vgrid web reshare in sharelink then
@@ -556,7 +551,7 @@ yet supported and thus are disabled below.
             choices = _valid_sharelink + _reset_choice
         else:
             choices = _valid_sharelink + _keep_choice
-        for (key, val) in choices: 
+        for (key, val) in choices:
             checked = ''
             if settings_dict.get(field, keyword_owners) == val:
                 checked = "checked"
@@ -587,12 +582,12 @@ yet supported and thus are disabled below.
             choices = _valid_bool + _reset_choice
         else:
             choices = _valid_bool + _keep_choice
-        for (key, val) in choices: 
+        for (key, val) in choices:
             checked, inherit_note = '', ''
             if settings_dict.get(field, False) == val:
                 checked = "checked"
             if direct_dict.get(field, False) != \
-                   settings_dict.get(field, False):
+                    settings_dict.get(field, False):
                 inherit_note = '''&nbsp;<span class="warningtext iconspace">
 Forced by a parent %(vgrid_label)s. Please disable there first if you want to
 change the value here.</span>''' % settings_dict
@@ -643,10 +638,10 @@ change the value here.</span>''' % settings_dict
                                                            configuration,
                                                            False)
     if not resources_status:
-        logger.error("failed to load resources for %s: %s" % \
+        logger.error("failed to load resources for %s: %s" %
                      (vgrid_name, resources_direct))
         return (output_objects, returnvalues.SYSTEM_ERROR)
-    
+
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Delete %s " % vgrid_name})
     if len(owners_direct) > 1 or members_direct or resources_direct:
@@ -675,12 +670,12 @@ You cannot undo such delete operations, so please use with great care!
         output_objects.append({'object_type': 'html_form', 'text': helper})
         output_objects.append(
             {'object_type': 'link', 'destination':
-             "javascript: confirmDialog(%s, '%s');" % \
-             (js_name, 'Really leave and delete %s?' % \
+             "javascript: confirmDialog(%s, '%s');" %
+             (js_name, 'Really leave and delete %s?' %
               vgrid_name),
              'class': 'removelink iconspace',
-             'title': 'Leave and delete %s' % vgrid_name, 
+             'title': 'Leave and delete %s' % vgrid_name,
              'text': 'Leave and delete %s' % vgrid_name}
-            )
+        )
 
     return (output_objects, returnvalues.OK)

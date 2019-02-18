@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # restartexe - Back end to restart one or more resource exe units
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -46,7 +46,7 @@ def signature():
         'exe_name': [],
         'all': [''],
         'parallel': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -55,9 +55,9 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to RESTART exe ----------'
-                          })
+    output_objects.append({'object_type': 'text', 'text':
+                           '--------- Trying to RESTART exe ----------'
+                           })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -67,7 +67,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -76,6 +76,11 @@ def main(client_id, user_arguments_dict):
     exe_name_list = accepted['exe_name']
     all = accepted['all'][-1].lower() == 'true'
     parallel = accepted['parallel'][-1].lower() == 'true'
+
+    if not configuration.site_enable_resources:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Resources are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -87,8 +92,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failure: You must be an owner of '
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Failure: You must be an owner of '
                                + unique_resource_name
                                + ' to restart the exe!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -101,16 +106,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # take action based on supplied list of exes
 
     if len(exe_name_list) == 0:
-        output_objects.append({'object_type': 'text', 'text'
-                              : "No exes specified and 'all' argument not set to true: Nothing to do!"
-                              })
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             "No exes specified and 'all' argument not set to true: Nothing to do!"
+             })
 
     workers = []
     task_list = []
     for exe_name in exe_name_list:
         task = Worker(target=stop_resource_exe,
                       args=(unique_resource_name, exe_name,
-                      configuration.resource_home, logger))
+                            configuration.resource_home, logger))
         workers.append((exe_name, [task]))
         task_list.append(task)
         throttle_max_concurrent(task_list)
@@ -128,8 +134,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         task_list[0].join()
         task = Worker(target=start_resource_exe,
                       args=(unique_resource_name, exe_name,
-                      configuration.resource_home, int(cputime),
-                      logger))
+                            configuration.resource_home, int(cputime),
+                            logger))
         task_list.append(task)
         throttle_max_concurrent(task_list)
         task.start()
@@ -138,24 +144,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     for (exe_name, task_list) in workers:
         (status, msg) = task_list[0].finish()
-        output_objects.append({'object_type': 'header', 'text'
-                              : 'Restart exe output:'})
+        output_objects.append(
+            {'object_type': 'header', 'text': 'Restart exe output:'})
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems stopping exe during restart: %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Problems stopping exe during restart: %s'
                                    % msg})
 
         (status2, msg2) = task_list[1].finish()
         if not status2:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems starting exe during restart: %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Problems starting exe during restart: %s'
                                    % msg2})
             exit_status = returnvalues.SYSTEM_ERROR
         if status and status2:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Restart exe success: Stop output: %s ; Start output: %s'
-                                   % (msg, msg2)})
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 'Restart exe success: Stop output: %s ; Start output: %s'
+                 % (msg, msg2)})
 
     return (output_objects, exit_status)
-
-

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # restartstore - Back end to restart one or more resource store units
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,7 +45,7 @@ def signature():
         'store_name': [],
         'all': [''],
         'parallel': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -54,9 +54,9 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to RESTART store ----------'
-                          })
+    output_objects.append({'object_type': 'text', 'text':
+                           '--------- Trying to RESTART store ----------'
+                           })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -66,7 +66,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -74,6 +74,11 @@ def main(client_id, user_arguments_dict):
     store_name_list = accepted['store_name']
     all = accepted['all'][-1].lower() == 'true'
     parallel = accepted['parallel'][-1].lower() == 'true'
+
+    if not configuration.site_enable_resources:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Resources are not enabled on this system'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -85,8 +90,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failure: You must be an owner of '
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Failure: You must be an owner of '
                                + unique_resource_name
                                + ' to restart the store!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -99,15 +104,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # take action based on supplied list of stores
 
     if len(store_name_list) == 0:
-        output_objects.append({'object_type': 'text', 'text'
-                              : "No stores specified and 'all' argument not set to true: Nothing to do!"
-                              })
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             "No stores specified and 'all' argument not set to true: Nothing to do!"
+             })
 
     workers = []
     for store_name in store_name_list:
         task = Worker(target=stop_resource_store,
                       args=(unique_resource_name, store_name,
-                      configuration.resource_home, logger))
+                            configuration.resource_home, logger))
         workers.append((store_name, [task]))
         task.start()
         if not parallel:
@@ -123,8 +129,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         task_list[0].join()
         task = Worker(target=start_resource_store,
                       args=(unique_resource_name, store_name,
-                      configuration.resource_home,
-                      logger))
+                            configuration.resource_home,
+                            logger))
         task_list.append(task)
         task.start()
         if not parallel:
@@ -132,24 +138,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     for (store_name, task_list) in workers:
         (status, msg) = task_list[0].finish()
-        output_objects.append({'object_type': 'header', 'text'
-                              : 'Restart store output:'})
+        output_objects.append(
+            {'object_type': 'header', 'text': 'Restart store output:'})
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems stopping store during restart: %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Problems stopping store during restart: %s'
                                    % msg})
 
         (status2, msg2) = task_list[1].finish()
         if not status2:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems starting store during restart: %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Problems starting store during restart: %s'
                                    % msg2})
             exit_status = returnvalues.SYSTEM_ERROR
         if status and status2:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Restart store success: Stop output: %s ; Start output: %s'
-                                   % (msg, msg2)})
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 'Restart store success: Stop output: %s ; Start output: %s'
+                 % (msg, msg2)})
 
     return (output_objects, exit_status)
-
-

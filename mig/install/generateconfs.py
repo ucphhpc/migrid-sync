@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -83,6 +83,7 @@ if '__main__' == __name__:
         'enable_wsgi',
         'wsgi_procs',
         'enable_jobs',
+        'enable_resources',
         'enable_events',
         'enable_sharelinks',
         'enable_transfers',

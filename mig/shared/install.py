@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -229,6 +229,7 @@ def generate_confs(
     wsgi_procs='10',
     enable_gdp='False',
     enable_jobs='True',
+    enable_resources='True',
     enable_events='True',
     enable_sharelinks='True',
     enable_transfers='True',
@@ -328,6 +329,7 @@ def generate_confs(
     user_dict['__WSGI_PROCS__'] = wsgi_procs
     user_dict['__ENABLE_GDP__'] = enable_gdp
     user_dict['__ENABLE_JOBS__'] = enable_jobs
+    user_dict['__ENABLE_RESOURCES__'] = enable_resources
     user_dict['__ENABLE_EVENTS__'] = enable_events
     user_dict['__ENABLE_SHARELINKS__'] = enable_sharelinks
     user_dict['__ENABLE_TRANSFERS__'] = enable_transfers
@@ -1247,6 +1249,7 @@ def create_user(
     enable_wsgi = 'True'
     wsgi_procs = '5'
     enable_jobs = 'True'
+    enable_resources = 'True'
     enable_events = 'True'
     enable_sharelinks = 'True'
     enable_transfers = 'True'
@@ -1352,6 +1355,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_wsgi,
         wsgi_procs,
         enable_jobs,
+        enable_resources,
         enable_events,
         enable_sharelinks,
         enable_transfers,
