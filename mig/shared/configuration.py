@@ -41,6 +41,7 @@ from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
     freeze_flavors, duplicati_protocol_choices
 from shared.logger import Logger, SYSLOG_GDP
 from shared.html import menu_items, vgrid_items
+from shared.fileio import read_file
 
 
 def fix_missing(config_file, verbose=True):
@@ -1117,6 +1118,15 @@ location.""" % self.config_file
         # Load generated jupyter sections
         for section in config.sections():
             if 'JUPYTER_' in section:
+                # Allow service_desc to be a file that should be read
+                if config.has_option(section, 'service_desc'):
+                    service_desc = config.get(section, 'service_desc')
+                    if os.path.exists(service_desc) \
+                            and os.path.isfile(service_desc):
+                        content = read_file(service_desc, logger)
+                        if content:
+                            config.set(section, 'service_desc', content)
+
                 self.jupyter_services[section] = {option: config.get(section,
                                                                      option)
                                                   for option in
