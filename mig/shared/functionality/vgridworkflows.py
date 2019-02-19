@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridworkflows - data-driven workflows for owners and members
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -129,7 +129,7 @@ def main(client_id, user_arguments_dict):
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         output_objects.append({'object_type': 'error_text',
-                              'text': '''You must be an owner or member of %s vgrid to
+                               'text': '''You must be an owner or member of %s vgrid to
 access the workflows.'''
                                % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -193,11 +193,11 @@ access the workflows.'''
                                                'pending_states')
         trigger_job_final_dir = os.path.join(trigger_job_dir, 'final_states')
 
-        if makedirs_rec(trigger_job_pending_dir, logger) \
-                and makedirs_rec(trigger_job_final_dir, logger):
+        if makedirs_rec(trigger_job_pending_dir, configuration) \
+                and makedirs_rec(trigger_job_final_dir, configuration):
             abs_vgrid_dir = '%s/' \
                 % os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                                  vgrid_name))
+                                               vgrid_name))
             for filename in os.listdir(trigger_job_pending_dir):
                 trigger_job_filepath = \
                     os.path.join(trigger_job_pending_dir, filename)
@@ -335,7 +335,7 @@ your disposal:<br/>
 '''})
 
         output_objects.append({'object_type': 'sectionheader',
-                              'text': 'Manage Triggers'})
+                               'text': 'Manage Triggers'})
         output_objects.extend(oobjs)
         output_objects.append(
             {'object_type': 'html_form', 'text': helper_html})
@@ -361,7 +361,7 @@ in reaction to file system events.</p>
     <div id="jobs-tab">
     '''})
         output_objects.append({'object_type': 'sectionheader',
-                              'text': 'Active Trigger Jobs'})
+                               'text': 'Active Trigger Jobs'})
         output_objects.append(
             {'object_type': 'table_pager', 'entry_name': 'job',
              'default_entries': default_pager_entries})
