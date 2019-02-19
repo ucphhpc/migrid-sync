@@ -322,13 +322,13 @@ def main(client_id, user_arguments_dict):
         sftp_port = configuration.user_sftp_subsys_port
 
     requested_service = accepted['service'][-1]
-    service = {k: v for section, options in configuration.jupyter_services.items()
+    service = {k: v for options in configuration.jupyter_services
                for k, v in options.items()
                if options['service_name'] == requested_service}
 
     if not service:
-        valid_services = [options['name'] for section,
-                          options in configuration.jupyter_services.items()]
+        valid_services = [options['name']
+                          for options in configuration.jupyter_services]
         output_objects.append(
             {'object_type': 'error_text',
              'text': '%s is not a valid jupyter service, '

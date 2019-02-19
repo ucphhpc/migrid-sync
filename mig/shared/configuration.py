@@ -503,7 +503,7 @@ class Configuration:
         """Re-read and parse configuration file. Optional skip_log
         initializes default logger to use the NullHandler in order to avoid
         uninitialized log while not really touching log files or causing stdio
-        output. 
+        output.
         """
 
         try:
@@ -1114,7 +1114,7 @@ location.""" % self.config_file
         else:
             self.site_enable_jupyter = False
 
-        self.jupyter_services = {}
+        self.jupyter_services = []
         # Load generated jupyter sections
         for section in config.sections():
             if 'JUPYTER_' in section:
@@ -1127,10 +1127,10 @@ location.""" % self.config_file
                         if content:
                             config.set(section, 'service_desc', content)
 
-                self.jupyter_services[section] = {option: config.get(section,
-                                                                     option)
-                                                  for option in
-                                                  config.options(section)}
+                self.jupyter_services.append({option: config.get(section,
+                                                                 option)
+                                              for option in
+                                              config.options(section)})
 
         if config.has_option('GLOBAL', 'vgrid_owners'):
             self.vgrid_owners = config.get('GLOBAL', 'vgrid_owners')

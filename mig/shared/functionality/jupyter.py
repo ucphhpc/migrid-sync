@@ -80,7 +80,7 @@ def main(client_id, user_arguments_dict):
     services = [{'object_type': 'service',
                  'name': options['service_name'],
                  'description': options.get('service_desc', '')}
-                for service, options in configuration.jupyter_services.items()]
+                for options in configuration.jupyter_services]
 
     # Show jupyter services menu
     (add_import, add_init, add_ready) = man_base_js(configuration, [])
