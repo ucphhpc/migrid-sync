@@ -100,7 +100,7 @@ def main(client_id, user_arguments_dict):
 
     fill_helpers = {
         'jupyter_tabs': ''.join(['<li><a href="#%s-tab">%s</a></li>' %
-                                 (service['name'], service['name'].upper())
+                                 (service['name'], service['name'])
                                  for service in services])
     }
 
@@ -130,7 +130,7 @@ def main(client_id, user_arguments_dict):
         '''})
 
         output_service = {'object_type': 'service',
-                          'name': "Start %s" % service['name'].upper(),
+                          'name': "Start %s" % service['name'],
                           'targetlink': 'reqjupyterservice.py?service=%s'
                           % service['name']}
         output_objects.append(output_service)
