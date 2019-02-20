@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -778,7 +778,9 @@ so you may have to avoid blank lines in your text below.
         fingerprint_info = ''
         sftp_md5 = configuration.user_sftp_key_md5
         sftp_sha256 = configuration.user_sftp_key_sha256
+        sftp_trust_dns = configuration.user_sftp_key_from_dns
         fingerprints = []
+        hostkey_from_dns = 'ask'
         if sftp_md5:
             fingerprints.append("%s (MD5)" % sftp_md5)
         if sftp_sha256:
@@ -786,6 +788,8 @@ so you may have to avoid blank lines in your text below.
         if fingerprints:
             fingerprint_info = '''You may be asked to verify the server key
 fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
+        if sftp_trust_dns:
+            hostkey_from_dns = 'yes'
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -840,6 +844,7 @@ to avoid typing the full login details every time:<br />
 <pre>
 Host %(sftp_server)s
 Hostname %(sftp_server)s
+VerifyHostKeyDNS %(hostkey_from_dns)s
 User %(username)s
 Port %(sftp_port)s
 # Assuming you have your private key in ~/.mig/id_rsa
@@ -928,6 +933,7 @@ value="%(default_authpassword)s" />
             'username': username,
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
+            'hostkey_from_dns': hostkey_from_dns,
             'max_sessions': configuration.user_sftp_max_sessions,
             'fingerprint_info': fingerprint_info,
             'auth_methods': ' / '.join(configuration.user_sftp_auth).title(),

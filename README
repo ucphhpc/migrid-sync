@@ -431,6 +431,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_from_dns=False \
                    --signup_methods="extoid migoid migcert" \
                    --login_methods="extoid migoid migcert" \
                    --landing_page='/wsgi-bin/dashboard.py' \
@@ -481,6 +482,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
@@ -534,6 +536,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
@@ -592,6 +595,7 @@ with optional 2-FA support:
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_from_dns=False \
                    --daemon_show_address=io.idmc.dk \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
@@ -649,6 +653,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid" --login_methods="extoid" \
                    --distro=centos --landing_page='/wsgi-bin/gdpman.py' \
                    --skin=erda-ucph-science \

@@ -133,6 +133,7 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_key_pub': '~/certs/server.pub',
         'user_sftp_key_md5': '',
         'user_sftp_key_sha256': '',
+        'user_sftp_key_from_dns': '',
         'user_sftp_auth': ['publickey', 'password'],
         'user_sftp_alias': '',
         'user_sftp_log': 'sftp.log',
@@ -338,6 +339,7 @@ class Configuration:
     user_sftp_key_pub = ''
     user_sftp_key_md5 = ''
     user_sftp_key_sha256 = ''
+    user_sftp_key_from_dns = False
     user_sftp_auth = ['publickey', 'password']
     user_sftp_alias = ''
     user_sftp_log = 'sftp.log'
@@ -784,6 +786,9 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_sftp_key_sha256'):
             fingerprint = config.get('GLOBAL', 'user_sftp_key_sha256')
             self.user_sftp_key_sha256 = fingerprint
+        if config.has_option('GLOBAL', 'user_sftp_key_from_dns'):
+            self.user_sftp_key_from_dns = config.getboolean(
+                'GLOBAL', 'user_sftp_key_from_dns')
         if config.has_option('GLOBAL', 'user_sftp_auth'):
             self.user_sftp_auth = config.get('GLOBAL',
                                              'user_sftp_auth').split()

@@ -109,6 +109,7 @@ if '__main__' == __name__:
         'dhparams_path',
         'daemon_keycert',
         'daemon_pubkey',
+        'daemon_pubkey_from_dns',
         'daemon_show_address',
         'alias_field',
         'signup_methods',

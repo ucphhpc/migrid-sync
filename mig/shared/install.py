@@ -254,6 +254,7 @@ def generate_confs(
     dhparams_path='',
     daemon_keycert='',
     daemon_pubkey='',
+    daemon_pubkey_from_dns='False',
     daemon_show_address='',
     alias_field='',
     signup_methods='extcert',
@@ -298,7 +299,7 @@ def generate_confs(
     user_dict['__JUPYTER_DEFS__'] = ''
     user_dict['__JUPYTER_OPENIDS__'] = ''
     user_dict['__JUPYTER_REWRITES__'] = ''
-    user_dict['__JUPYTER_PROXIES__'] = '' 
+    user_dict['__JUPYTER_PROXIES__'] = ''
     user_dict['__JUPYTER_SECTIONS__'] = ''
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
@@ -368,6 +369,7 @@ def generate_confs(
     user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
     user_dict['__DAEMON_PUBKEY_MD5__'] = ''
     user_dict['__DAEMON_PUBKEY_SHA256__'] = ''
+    user_dict['__DAEMON_PUBKEY_FROM_DNS__'] = daemon_pubkey_from_dns
     user_dict['__DAEMON_SHOW_ADDRESS__'] = daemon_show_address
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__SIGNUP_METHODS__'] = signup_methods
@@ -559,20 +561,20 @@ cert, oid and sid based https!
 
         # Dynamic apache configuration replacement lists
         jupyter_sections, jupyter_proxies, jupyter_defs, \
-             jupyter_openids, jupyter_rewrites = [], [], [], [], []
+            jupyter_openids, jupyter_rewrites = [], [], [], [], []
         services = user_dict['__JUPYTER_SERVICES__'].split()
 
         try:
             descs = ast.literal_eval(jupyter_services_desc)
         except SyntaxError, err:
             print 'Error: jupyter_services_desc ' \
-             'could not be intepreted correctly. Double check that your ' \
-             'formatting is correct, a dictionary formatted string is expected.'
+                'could not be intepreted correctly. Double check that your ' \
+                'formatting is correct, a dictionary formatted string is expected.'
             sys.exit(1)
 
         if not isinstance(descs, dict):
             print 'Error: %s was incorrectly formatted,' \
-             ' expects a string formatted as a dictionary' % descs
+                ' expects a string formatted as a dictionary' % descs
             sys.exit(1)
 
         service_hosts = {}
@@ -581,10 +583,10 @@ cert, oid and sid based https!
             name_hosts = service.split(".", 1)
             if len(name_hosts) != 2:
                 print 'Error: You have not correctly formattet ' \
-                 'the jupyter_services parameter, ' \
-                 'expects --jupyter_services="service_name.' \
-                 'http(s)://jupyterhost-url-or-ip ' \
-                 'other_service.http(s)://jupyterhost-url-or-ip"'
+                    'the jupyter_services parameter, ' \
+                    'expects --jupyter_services="service_name.' \
+                    'http(s)://jupyterhost-url-or-ip ' \
+                    'other_service.http(s)://jupyterhost-url-or-ip"'
                 sys.exit(1)
             name, host = name_hosts[0], name_hosts[1]
             try:
@@ -1271,6 +1273,7 @@ def create_user(
     dhparams_path = ''
     daemon_keycert = ''
     daemon_pubkey = ''
+    daemon_pubkey_from_dns = 'False'
     daemon_show_address = ''
     alias_field = 'email'
     hg_path = '/usr/bin/hg'
@@ -1380,6 +1383,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         dhparams_path,
         daemon_keycert,
         daemon_pubkey,
+        daemon_pubkey_from_dns,
         daemon_show_address,
         alias_field,
         hg_path,
@@ -1431,7 +1435,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     print 'sudo cp -f -d %s %s/' % (apache_ports_conf, apache_dir)
     print 'sudo cp -f -d %s %s/conf.d/' % (apache_mig_conf, apache_dir)
     print 'sudo mkdir -p %s/conf.extras.d' % (apache_dir)
-    print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_def, apache_dir)
+    print 'sudo cp -f -d %s %s/conf.extras.d/' % (
+        apache_jupyter_def, apache_dir)
     print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_openid,
                                                   apache_dir)
     print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_proxy,
