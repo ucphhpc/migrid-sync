@@ -528,8 +528,8 @@ and the same with added Jupyter integration and optional 2FA support:
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True \
-                   --jupyter_hosts=http://dag00{2,3,4,5,6,7}.science \
-                   --jupyter_base_url='/dag' \
+                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science MODI.http://130.225.104.214' \
+                   --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
@@ -587,8 +587,8 @@ with optional 2-FA support:
                    --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True \
-                   --jupyter_hosts=http://dag00{2,3,4,5,6,7}.science \
-                   --jupyter_base_url='/dag' \
+                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science MODI.http://130.225.104.214' \
+                   --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
