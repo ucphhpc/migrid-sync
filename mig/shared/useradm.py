@@ -1478,7 +1478,7 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
     return (configuration, fields['password'], addresses, errors)
 
 
-def user_migoid_intro(user_id, targets, conf_path, db_path, verbose=False):
+def user_migoid_notify(user_id, targets, conf_path, db_path, verbose=False):
     """Find notification addresses for user_id and targets"""
     (configuration, fields, addresses, errors) = _user_general_notify(
         user_id, targets, conf_path, db_path, verbose, ['username',

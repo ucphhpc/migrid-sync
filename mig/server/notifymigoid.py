@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notifymigoid - Send internal openid account create/renew email to user
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,12 +34,12 @@ address or email from Distinguished Name field of user entry. If user
 configured additional messaging protocols they can also be used.
 """
 
-import sys
 import getopt
+import sys
 
 from shared.defaults import keyword_auto
 from shared.notification import notify_user
-from shared.useradm import init_user_adm, user_migoid_intro
+from shared.useradm import init_user_adm, user_migoid_notify
 
 
 def usage(name='notifymigoid.py'):
@@ -115,7 +115,7 @@ if '__main__' == __name__:
         sys.exit(1)
 
     (configuration, username, full_name, addresses, errors) = \
-        user_migoid_intro(user_id, raw_targets, conf_path, db_path, verbose)
+        user_migoid_notify(user_id, raw_targets, conf_path, db_path, verbose)
 
     if errors:
         print "Address lookup errors:"

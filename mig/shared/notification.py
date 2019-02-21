@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notification - instant message and email notification helpers
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 
 """Notification functions"""
 
+import datetime
 import os
 import smtplib
 import threading
@@ -300,6 +301,52 @@ Regards,
 The %s Admins
 """ % (short_title, migoid_title, user_email, migoid_url, short_title,
             short_title)
+    elif status == 'ACCOUNTEXPIRE':
+        from_id = args_list[0]
+        user_email = args_list[1]
+        user_name = args_list[2]
+        user_dict = args_list[3]
+        short_title = configuration.short_title
+        migoid_title = configuration.user_mig_oid_title
+        auth_migoid_url = configuration.migserver_https_mig_oid_url
+        anon_migoid_url = configuration.migserver_https_sid_url
+        expire = datetime.datetime.fromtimestamp(user_dict['expire'])
+        id_lines = """Full name: %(full_name)s
+Email address: %(email)s
+Organization: %(organization)s
+Two letter country-code: %(country)s
+State: %(state)s
+""" % user_dict
+        header = 'Re: %s OpenID request for %s' % (short_title, user_name)
+        txt += """This is an auto-generated account expire warning from %s to
+inform you about the need to renew your %s user OpenID account before %s
+if you want to preserve that account access.
+
+As long as your account hasn't expired you can always login with your username
+%s and request semi-automatic renewal only filling the password and comment
+fields at
+%s/cgi-bin/reqoid.py
+In that way you can also choose a new password if you like.
+
+After account expiry you can only manually renew by opening the
+basic account request page at
+%s/cgi-sid/reqoid.py
+and entering the values you're signed up with:
+%s
+Importantly you then have to enter your EXISTING password!
+
+In either case please enter a few lines of comment including why you (still)
+need access. Mentioning names of project and main collaboration partners
+on-site may also be helpful to speed up our verification and renewal process.
+
+Please contact the %s admins in case you should ever loose or forget your
+password. The same applies if you suspect or know that someone may have gotten
+hold of your login.
+
+Regards,
+The %s Admins
+""" % (short_title, migoid_title, expire, user_email, auth_migoid_url,
+            anon_migoid_url, id_lines, short_title, short_title)
     elif status == 'FORUMUPDATE':
         vgrid_name = args_list[0]
         author = args_list[1]
