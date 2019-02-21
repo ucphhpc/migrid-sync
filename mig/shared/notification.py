@@ -317,7 +317,7 @@ Organization: %(organization)s
 Two letter country-code: %(country)s
 State: %(state)s
 """ % user_dict
-        header = 'Re: %s OpenID request for %s' % (short_title, user_name)
+        header = 'Re: %s OpenID login expire for %s' % (short_title, user_name)
         txt += """This is an auto-generated account expire warning from %s to
 inform you about the need to renew your %s user OpenID account before %s
 if you want to preserve that account access.
