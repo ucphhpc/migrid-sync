@@ -448,13 +448,13 @@ def main(client_id, user_arguments_dict):
         user_header = {'Remote-User': remote_user,
                        'User': str(user_dict)}
 
-        session = requests.session()
-        # Authenticate
-        session.get(url_auth, headers=auth_mount_header)
-        # Provide the active homedrive mount information
-        session.post(url_data, headers=auth_mount_header)
-        # Provide the active user information
-        session.post(url_data, headers=user_header)
+        with requests.session() as session:
+            # Authenticate
+            session.get(url_auth, headers=auth_mount_header)
+            # Provide the active homedrive mount information
+            session.post(url_data, headers=auth_mount_header)
+            # Provide the active user information
+            session.post(url_data, headers=user_header)
 
         # Redirect client to jupyterhub
         return jupyter_host(configuration, output_objects, remote_user, url_home)
@@ -518,13 +518,12 @@ def main(client_id, user_arguments_dict):
                    'User': str(user_dict)}
 
     # First login
-    session = requests.session()
-    session.get(url_auth, headers=auth_mount_header)
-    # Provide homedrive mount information
-    session.post(url_data, headers=auth_mount_header)
-    # Provide the user information
-    session.post(url_data, headers=user_header)
-
+    with requests.session() as session:
+        session.get(url_auth, headers=auth_mount_header)
+        # Provide homedrive mount information
+        session.post(url_data, headers=auth_mount_header)
+        # Provide the user information
+        session.post(url_data, headers=user_header)
 
     # Update pickle with the new valid key
     jupyter_mount_state_path = os.path.join(mnt_path,
