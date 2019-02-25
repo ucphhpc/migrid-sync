@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+# run notifyexpire as mig user for a set of days left values
+
+# Select the number of days left to warn users about
+days_left=(3 10 30)
+# Additional flags to inform user by email with CC to admin
+flags="-a -C"
+
+# No more edits required below
+now=$(date +"%s")
+for min_day in ${days_left[@]}; do
+    after=$((now+$min_day*3600*24))
+    before=$((after+3600*24))
+    su - mig -c "python mig/server/notifyexpire.py -A $after -B $before $flags"
+done
+
+exit 0

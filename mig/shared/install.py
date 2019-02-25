@@ -989,6 +989,7 @@ openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict
         # cron helpers
         ("migerrors-template.sh.cronjob", "migerrors"),
         ("migsftpmon-template.sh.cronjob", "migsftpmon"),
+        ("mignotifyexpire-template.sh.cronjob", "mignotifyexpire"),
         ("migstateclean-template.sh.cronjob", "migstateclean"),
         ("migcheckssl-template.sh.cronjob", "migcheckssl"),
     ]
@@ -1099,11 +1100,14 @@ sudo cp %(destination)s/MiG-daemons-jail.conf \\
 After making sure they fit your site you can start the fail2ban service with:
 sudo service fail2ban restart
 
-The migstateclean and migerrors files are cron scripts to automatically
-clean up state files and grep for important errors in all MiG log files.
+The migstateclean, migerrors, migsftpmon and mignotifyexpire files are cron
+scripts to automatically clean up state files, grep for important errors in all
+MiG log files, warn about possible sftp crypto issues and inform local
+certificate and openid users about upcoming account expiry.
 You can install them with:
-chmod 755 %(destination)s/{migstateclean,migerrors}
-sudo cp %(destination)s/{migstateclean,migerrors} /etc/cron.daily/
+chmod 755 %(destination)s/{migstateclean,migerrors,migsftpmon,mignotifyexpire}
+sudo cp %(destination)s/{migstateclean,migerrors,migsftpmon,mignotifyexpire} \\
+        /etc/cron.daily/
 
 The migcheckssl file is cron scripts that automatically checks for 
 LetsEncrypt certificate renewal. 

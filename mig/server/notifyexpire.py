@@ -78,7 +78,8 @@ if '__main__' == __name__:
     raw_targets = {}
     user_id = None
     search_filter = default_search()
-    # Default expire range between now and in 30 days
+    # Default to all users with expire range between now and in 30 days
+    search_filter['distinguished_name'] = '*'
     search_filter['expire_after'] = int(time.time())
     search_filter['expire_before'] = int(time.time() + 30 * 24 * 3600)
     now = int(time.time())
