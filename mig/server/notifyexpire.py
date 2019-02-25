@@ -53,9 +53,11 @@ database and send warning email if imminent.
 Usage:
 %(name)s [NOTIFY_OPTIONS]
 Where NOTIFY_OPTIONS may be one or more of:
-   -a                  Send warning to email address from database
-   -b EXPIRE_BEFORE    Limit to users set to expire before EXPIRE_BEFORE time
+   -a                  Send warning to email address of user from database
+   -A EXPIRE_AFTER     Limit to users expiring after EXPIRE_AFTER (epoch)
+   -B EXPIRE_BEFORE    Limit to users expiring before EXPIRE_BEFORE (epoch)
    -c CONF_FILE        Use CONF_FILE as server configuration
+   -C                  Send a copy of notifications to configured site admins
    -d DB_PATH          Use DB_PATH as user data base file path
    -e EMAIL            Send warning to custom email address
    -h                  Show this help
@@ -72,14 +74,16 @@ if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     verbose = False
+    admin_copy = False
     raw_targets = {}
     user_id = None
     search_filter = default_search()
     # Default expire range between now and in 30 days
     search_filter['expire_after'] = int(time.time())
     search_filter['expire_before'] = int(time.time() + 30 * 24 * 3600)
+    now = int(time.time())
     exit_code = 0
-    opt_args = 'ab:c:d:e:hI:s:v'
+    opt_args = 'aA:B:c:Cd:e:hI:s:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -91,10 +95,28 @@ if '__main__' == __name__:
         if opt == '-a':
             raw_targets['email'] = raw_targets.get('email', [])
             raw_targets['email'].append(keyword_auto)
-        elif opt == '-b':
-            search_filter['expire_before'] = int(val)
+        elif opt == '-A':
+            after = now
+            if val.startswith('+'):
+                after += int(val[1:])
+            elif val.startswith('-'):
+                after -= int(val[1:])
+            else:
+                after = int(val)
+            search_filter['expire_after'] = after
+        elif opt == '-B':
+            before = now
+            if val.startswith('+'):
+                before += int(val[1:])
+            elif val.startswith('-'):
+                before -= int(val[1:])
+            else:
+                before = int(val)
+            search_filter['expire_before'] = before
         elif opt == '-c':
             conf_path = val
+        elif opt == '-C':
+            admin_copy = True
         elif opt == '-d':
             db_path = val
         elif opt == '-e':
@@ -123,43 +145,43 @@ if '__main__' == __name__:
 
     (configuration, hits) = search_users(search_filter, conf_path, db_path,
                                          verbose)
+    logger = configuration.logger
     # NOTE: we already filtered expired accounts here
     search_dn = search_filter['distinguished_name']
     before = datetime.datetime.fromtimestamp(search_filter['expire_before'])
     after = datetime.datetime.fromtimestamp(search_filter['expire_after'])
     print """Checking imminent expire for %d users matching ID '%s' with expire
-between %s and %s.""" % (len(hits), search_dn, after, before)
+between %s and %s""" % (len(hits), search_dn, after, before)
     for (user_id, user_dict) in hits:
-        print 'Check for %s' % user_id
+        if verbose:
+            print 'Check for %s' % user_id
 
         if not user_dict.get('password', '') and \
                 not user_dict.get('password_hash', ''):
-            print "Skip user without local password"
+            if verbose:
+                print "Skip user without local password"
             continue
 
-        (configuration, username, full_name, addresses, errors) = \
-            user_migoid_notify(user_id, raw_targets, conf_path,
-                               db_path, verbose)
-
+        (_, username, full_name, addresses, errors) = user_migoid_notify(
+            user_id, raw_targets, conf_path, db_path, verbose, admin_copy)
         if errors:
             print "Address lookup errors:"
             print '\n'.join(errors)
-            exit_code += 1
-            continue
-
-        if not addresses:
-            print "Error: found no suitable addresses for %s" % user_id
             exit_code += 1
             continue
         if not username:
             print "Error: found no username for %s" % user_id
             exit_code += 1
             continue
-        logger = configuration.logger
+        expire_date = datetime.datetime.fromtimestamp(user_dict['expire'])
+        print "Account %s expires on %s" % (user_id, expire_date)
         notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
         for (proto, address_list) in addresses.items():
             for address in address_list:
                 notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
+        # Don't actually send unless requested
+        if not raw_targets and not admin_copy:
+            continue
         print "Send internal OpenID account expire warning for '%s' to:\n%s" \
               % (user_id, '\n'.join(notify_dict['NOTIFY']))
         notify_user(notify_dict, [user_id, username, full_name, user_dict],

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1478,22 +1478,23 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
     return (configuration, fields['password'], addresses, errors)
 
 
-def user_migoid_notify(user_id, targets, conf_path, db_path, verbose=False):
+def user_migoid_notify(user_id, targets, conf_path, db_path, verbose=False,
+                       admin_copy=False):
     """Find notification addresses for user_id and targets"""
     (configuration, fields, addresses, errors) = _user_general_notify(
         user_id, targets, conf_path, db_path, verbose, ['username',
                                                         'full_name'])
-    # Send a copy to site admins
-    admin_addresses = []
-    if configuration.admin_email and \
+    # Optionally send a copy to site admins
+    if admin_copy and configuration.admin_email and \
             isinstance(configuration.admin_email, basestring):
+        admin_addresses = []
         # NOTE: Explicitly separated by ', ' to distinguish Name <abc> form
         parts = configuration.admin_email.split(', ')
         for addr in parts:
             (real_name, plain_addr) = parseaddr(addr.strip())
             if plain_addr:
                 admin_addresses.append(plain_addr)
-    addresses['email'] += admin_addresses
+        addresses['email'] += admin_addresses
     return (configuration, fields['username'], fields['full_name'], addresses,
             errors)
 

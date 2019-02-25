@@ -265,8 +265,8 @@ cd ~/mig/server
         """
 As '%s' on %s:
 cd ~/mig/server
-./notifymigoid.py -a -I '%s'""" % (mig_user, configuration.server_fqdn,
-                                   user_id)
+./notifymigoid.py -a -C -I '%s'""" % (mig_user, configuration.server_fqdn,
+                                      user_id)
     command_user_delete = \
         """
 As '%s' user on %s:

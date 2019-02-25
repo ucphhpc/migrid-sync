@@ -52,6 +52,7 @@ Usage:
 Where NOTIFY_OPTIONS may be one or more of:
    -a                  Send intro to email address from database
    -c CONF_FILE        Use CONF_FILE as server configuration
+   -C                  Send a copy of notifications to configured site admins
    -d DB_PATH          Use DB_PATH as user data base file path
    -e EMAIL            Send intro to custom email address
    -h                  Show this help
@@ -68,9 +69,10 @@ if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     verbose = False
+    admin_copy = False
     raw_targets = {}
     user_id = None
-    opt_args = 'ac:d:e:hI:s:v'
+    opt_args = 'ac:Cd:e:hI:s:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -84,6 +86,8 @@ if '__main__' == __name__:
             raw_targets['email'].append(keyword_auto)
         elif opt == '-c':
             conf_path = val
+        elif opt == '-C':
+            admin_copy = True
         elif opt == '-d':
             db_path = val
         elif opt == '-e':
@@ -115,7 +119,8 @@ if '__main__' == __name__:
         sys.exit(1)
 
     (configuration, username, full_name, addresses, errors) = \
-        user_migoid_notify(user_id, raw_targets, conf_path, db_path, verbose)
+        user_migoid_notify(user_id, raw_targets, conf_path, db_path, verbose,
+                           admin_copy)
 
     if errors:
         print "Address lookup errors:"
