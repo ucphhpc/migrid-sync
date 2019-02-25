@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # importusers - Import users from text or xml file in provided uri
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -46,6 +46,7 @@ from shared.pwhash import generate_random_password, unscramble_password, \
 from shared.safeinput import valid_password_chars
 from shared.useradm import init_user_adm, default_search, create_user, \
     search_users
+from shared.vgridaccess import refresh_user_map
 
 
 def usage(name='importusers.py'):
@@ -62,6 +63,7 @@ Where URI may be an URL or local file and OPTIONS may be one or more of:
    -C CERT_PATH        Use CERT_PATH as client certificate
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
+   -e EXPIRE           Set user account expiration to EXPIRE (epoch)
    -f                  Force operations to continue past errors
    -h                  Show this help
    -K KEY_PATH         Use KEY_PATH as client key
@@ -95,7 +97,7 @@ def parse_contents(user_data):
 
     users = []
     for user_creds in re.findall('/[a-zA-Z]+=[^<\n]+', user_data):
-        # print "DEBUG: handling user %s" % user_creds
+        #print "DEBUG: handling user %s" % user_creds
         user_dict = distinguished_name_to_user(user_creds.strip())
         users.append(user_dict)
     return users
@@ -106,11 +108,12 @@ if '__main__' == __name__:
     conf_path = None
     key_path = None
     cert_path = None
+    expire = int(time.time() + cert_valid_days * 24 * 60 * 60)
     force = False
     password = False
     verbose = False
     vgrids = []
-    opt_args = 'C:c:d:fhK:m:p:v'
+    opt_args = 'C:c:d:e:fhK:m:p:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -123,6 +126,8 @@ if '__main__' == __name__:
             conf_path = val
         elif opt == '-d':
             db_path = val
+        elif opt == '-e':
+            expire = int(val)
         elif opt == '-f':
             force = True
         elif opt == '-h':
@@ -151,6 +156,7 @@ if '__main__' == __name__:
     for url in args:
         url_dump = dump_contents(url, key_path, cert_path)
         users += parse_contents(url_dump)
+    #print "DEBUG: raw users to import: %s" % users
 
     new_users = []
     for user_dict in users:
@@ -164,16 +170,12 @@ if '__main__' == __name__:
                       user_dict
             continue
         new_users.append(user_dict)
+    #print "DEBUG: new users to import: %s" % new_users
 
     configuration = get_configuration_object()
-    form_method = 'post'
-    csrf_limit = get_csrf_limit(configuration)
-    target_op = 'sendrequestaction'
     for user_dict in new_users:
         fill_user(user_dict)
         client_id = user_dict['distinguished_name']
-        csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                     client_id, csrf_limit)
         user_dict['comment'] = 'imported from external URI'
         if password == keyword_auto:
             print 'Auto generating password for user: %s' % client_id
@@ -192,9 +194,8 @@ if '__main__' == __name__:
             user_dict['password'] = scramble_password(
                 configuration.site_password_salt, user_dict['password'])
 
-        if not user_dict.has_key('expire'):
-            user_dict['expire'] = int(
-                time.time() + cert_valid_days * 24 * 60 * 60)
+        # Force expire
+        user_dict['expire'] = expire
 
         try:
             create_user(user_dict, conf_path, db_path, force, verbose)
@@ -202,9 +203,22 @@ if '__main__' == __name__:
             print exc
             continue
         print 'Created %s in user database and in file system' % client_id
-        # Needed for CSRF check in safe_handler
-        os.environ.update({'SCRIPT_URL': '%s.py' % target_op,
-                           'REQUEST_METHOD': form_method})
+
+    # NOTE: force update user_map before calling sendrequestaction!
+    #       create_user does NOT necessarily update it due to caching time.
+    refresh_user_map(configuration)
+
+    # Needed for CSRF check in safe_handler
+    form_method = 'post'
+    csrf_limit = get_csrf_limit(configuration)
+    target_op = 'sendrequestaction'
+    os.environ.update({'SCRIPT_URL': '%s.py' % target_op,
+                       'REQUEST_METHOD': form_method})
+    for user_dict in new_users:
+        fill_user(user_dict)
+        client_id = user_dict['distinguished_name']
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
         for name in vgrids:
             request = {'vgrid_name': [name], 'request_type': ['vgridmember'],
                        'request_text':
