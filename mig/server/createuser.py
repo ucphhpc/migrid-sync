@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createuser - Create or renew a MiG user with all the necessary directories
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -64,6 +64,7 @@ or
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
+   -e EXPIRE           Set user account expiration to EXPIRE (epoch)
    -f                  Force operations to continue past errors
    -h                  Show this help
    -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
@@ -78,6 +79,7 @@ Where OPTIONS may be one or more of:
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
+    expire = int(time.time() + cert_valid_days * 24 * 60 * 60)
     force = False
     verbose = False
     ask_renew = True
@@ -87,7 +89,7 @@ if '__main__' == __name__:
     short_id = None
     role = None
     user_dict = {}
-    opt_args = 'c:d:fhi:o:rR:u:v'
+    opt_args = 'c:d:e:fhi:o:rR:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -100,6 +102,8 @@ if '__main__' == __name__:
             conf_path = val
         elif opt == '-d':
             db_path = val
+        elif opt == '-e':
+            expire = int(val)
         elif opt == '-f':
             force = True
         elif opt == '-h':
@@ -202,10 +206,10 @@ if '__main__' == __name__:
             user_dict['password'] = scramble_password(
                 salt, user_dict['password'])
 
-    # Default to one year of certificate validity (only used by CA scripts)
+    # Set account expire for use with local certificate or OpenID login
 
     if not user_dict.has_key('expire'):
-        user_dict['expire'] = int(time.time() + cert_valid_days * 24 * 60 * 60)
+        user_dict['expire'] = expire
     if user_id:
         user_dict['distinguished_name'] = user_id
     elif not user_dict.has_key('distinguished_name'):
