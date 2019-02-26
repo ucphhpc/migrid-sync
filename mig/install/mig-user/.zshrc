@@ -32,7 +32,7 @@ setenv() { typeset -x "${1}${1:+=}${(@)argv[2,$#]}" }  # csh compatibility
 freload() { while (( $# )); do; unfunction $1; autoload -U $1; shift; done }
 
 vdocond() {
-    test ! -e ${@: -1} || diff -q $@ | grep -q differ && vdo $@
+    diff -q $@ 2>&1 | egrep -q 'differ|No such file' && vdo $@
 }
 
 # Where to look for autoloaded function definitions
