@@ -151,8 +151,13 @@ if '__main__' == __name__:
     search_dn = search_filter['distinguished_name']
     before = datetime.datetime.fromtimestamp(search_filter['expire_before'])
     after = datetime.datetime.fromtimestamp(search_filter['expire_after'])
-    print """Checking imminent expire for %d users matching ID '%s' with expire
-between %s and %s""" % (len(hits), search_dn, after, before)
+    if verbose:
+        if hits:
+            print "Check %d expire(s) between %s and %s for user ID '%s'" % \
+                  (len(hits), after, before, search_dn)
+        else:
+            print "No expires between %s and %s for user ID '%s'" % \
+                  (after, before, search_dn)
     for (user_id, user_dict) in hits:
         if verbose:
             print 'Check for %s' % user_id
@@ -160,13 +165,13 @@ between %s and %s""" % (len(hits), search_dn, after, before)
         if not user_dict.get('password', '') and \
                 not user_dict.get('password_hash', ''):
             if verbose:
-                print "Skip user without local password"
+                print "Skip account %s without local password" % user_id
             continue
 
         (_, username, full_name, addresses, errors) = user_migoid_notify(
             user_id, raw_targets, conf_path, db_path, verbose, admin_copy)
         if errors:
-            print "Address lookup errors:"
+            print "Address lookup errors for %s :" % user_id
             print '\n'.join(errors)
             exit_code += 1
             continue
@@ -174,8 +179,8 @@ between %s and %s""" % (len(hits), search_dn, after, before)
             print "Error: found no username for %s" % user_id
             exit_code += 1
             continue
-        expire_date = datetime.datetime.fromtimestamp(user_dict['expire'])
-        print "Account %s expires on %s" % (user_id, expire_date)
+        expire = datetime.datetime.fromtimestamp(user_dict['expire'])
+        print "Account %s expires on %s" % (user_id, expire)
         notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
         for (proto, address_list) in addresses.items():
             for address in address_list:
