@@ -1015,6 +1015,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
         # cron helpers
         ("migerrors-template.sh.cronjob", "migerrors"),
         ("migsftpmon-template.sh.cronjob", "migsftpmon"),
+        ("migimportdoi-template.sh.cronjob", "migimportdoi"),
         ("mignotifyexpire-template.sh.cronjob", "mignotifyexpire"),
         ("migstateclean-template.sh.cronjob", "migstateclean"),
         ("migcheckssl-template.sh.cronjob", "migcheckssl"),
@@ -1126,13 +1127,14 @@ sudo cp %(destination)s/MiG-daemons-jail.conf \\
 After making sure they fit your site you can start the fail2ban service with:
 sudo service fail2ban restart
 
-The migstateclean, migerrors, migsftpmon and mignotifyexpire files are cron
-scripts to automatically clean up state files, grep for important errors in all
-MiG log files, warn about possible sftp crypto issues and inform local
-certificate and openid users about upcoming account expiry.
+The migstateclean, migerrors, migsftpmon, migimportdoi and mignotifyexpire
+files are cron scripts to automatically clean up state files, grep for
+important errors in all MiG log files, warn about possible sftp crypto issues,
+download DOI metadata from upstream provider and inform local certificate and
+openid users about upcoming account expiry.
 You can install them with:
-chmod 755 %(destination)s/{migstateclean,migerrors,migsftpmon,mignotifyexpire}
-sudo cp %(destination)s/{migstateclean,migerrors,migsftpmon,mignotifyexpire} \\
+chmod 755 %(destination)s/mig{stateclean,errors,sftpmon,importdoi,notifyexpire}
+sudo cp %(destination)s/mig{stateclean,errors,sftpmon,importdoi,notifyexpire} \\
         /etc/cron.daily/
 
 The migcheckssl file is cron scripts that automatically checks for
