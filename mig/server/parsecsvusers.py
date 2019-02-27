@@ -42,8 +42,8 @@ Use e.g. as in
 ./parsecsvusers.py participants.csv > import-participants.list
 then import with something like
 ./importusers.py [OPTIONS] import-participants.list
-where OPTIONS might include things like automatic account expire time and
-workgroup membership.
+where OPTIONS might include things like generate password, automatic account
+expire time and workgroup membership.
 Afterwards one would then typically use notifymigoid and notifypassword to
 inform imported users about their login.
 """
