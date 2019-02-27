@@ -6,6 +6,17 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== February 27th, 2019 ===
+Long due new release with plenty of added features especially in four
+areas, namely an OpenSSH-based SFTP service, Jupyter integration, DOI 
+integration for archives and a new site mode to host EU GDPR data with
+the associated strict access and logging requirements.
+In relation to that work we've a.o. added 2FA support, import from sharelinks
+and archives, added helpers to ease use of Jupyter as an interactive
+course infrastructure. Additionally ithe release includes a number of
+security improvements across the board.
+
+
 === April 18th, 2017 ===
 Mainly a security enhancing release, so we recommend that everyone
 running a grid instance upgrades to this version.
@@ -182,6 +193,60 @@ for other users.
 More detailed changelogs for the public releases.
 The full changelog is available from the repository:
 https://sourceforge.net/p/migrid/code/commit_browser
+
+== 1.8.0 ==
+- Configurable password strength policy
+- New JSONRPC interface similar to the existing XMLRPC one
+- More grid workflow trigger optimizations to reduce load
+- Security: tighten chrooting with additional 2nd level checks
+- Split cert and OpenID access into native (mig) and external (ext) flavors
+- Security: tighten password, CSRF and protocol defaults to modern requirements
+- Updates to better fit the now commonly used Apache 2.4 release
+- LetsEncrypt certificate integration
+- Security: enable pure password hashes in user DB for OpenID use 
+- PAM and NSS modules for generic MiG (virtual) user lookup
+- OpenSSH subsys integration of SFTP service for much better performance
+- Optimize shared IO daemon login helpers for less load and overhead 
+- Security: enforce Content Security Policy for frames in Apache and OpenID
+- Jupyter integration with swarm clustering support
+- Support OpenID autologout to e.g. avoid sign up loop
+- Skin updates and polish
+- Update to JQuery UI 1.12 and simplify theme rolling for skins
+- Changed generateconf helper to preserve versioned history
+- Seafile 6.2+ support with implicit WSGI instead of FastCGI
+- Schedule Tasks feature for natively running backends in cron/at fashion
+- More enable_X site conf to enable/disable only wanted features and daemons
+- Chunked WSGI output to allow e.g. >2GB downloads there as well
+- Several init script updates to handle all daemons and consider enable_X
+- Work around OpenID session time out in a number of AJAX web interfaces
+- New GDPR mode for sites hosting sensitive and specifically personal data
+- Security: tighten email validation for improved XSS protection
+- Selenium scripts to verify web interfaces and for user guide screenshots
+- Support custom excludes in Data import/export
+- Reworked freeze archive creation flow for flexibility and DOI support
+- WebDAVS session tracking for performance optimization and GDPR restriction
+- Allow sites to run without SID vhost
+- Cracklib integration for better user password strength verification
+- Fail2Ban integration to protect against automated scans, etc.
+- 2FA support in web and most IO daemons, with a setup wizard
+- Migrate to WSGI default pages instead of old CGI
+- Security: use custom strong DH params in a number of locations
+- Fix problems with reload and log rotate
+- Admin helpers for native OpenID users and batch user creation 
+- Support direct import from sharelinks
+- Support flags in commands from workflow trigger rules and schedule tasks
+- Security: explicit CVE-2018-21000805 workaround, just in case
+- Reworked logging for a single implementation for all interfaces and daemons
+- Support for Scandir-1.3+
+- Tunable sshd and apache helper process count for scalability
+- Syslog support for GDP logs
+- Fix race in archive cache update
+- Re-implement individual daemon control in init script, which systemd broke
+- AJAX loading on landing page for freeze archives for better responsiveness
+- Support direct import from own backup and freeze archives i.e. to restore
+- Allow automatic account expire for native OpenID access
+- Security: let SFTP clients fetch host pub key from DNSSEC
+
 
 == 1.7.0 ==
 - Added read-only support in VGrids and prepare for granular write-restrict
