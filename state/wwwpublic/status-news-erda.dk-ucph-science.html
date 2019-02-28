@@ -127,6 +127,22 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage">2019/02/06: SIF Efficient Data Access</h4>
+<p>
+Finally efficient file and folder access through WebDAVS and SFTP has
+arrived for SIF. The services already used in ERDA had to be extended to
+include detailed logging of every single access and file operation. For
+higher security we've added twofactor auth and made it mandatory on
+SIF. Finally we implemented additional restrictions for the services on
+SIF, so that users can only access a single project at a time and only
+from a single IP address there. This is in line with the existing data
+leak prevention mechanisms enforced for SIF web access.
+Please note that on SIF therefore both services require a previous web
+login with twofactor auth for additional security. Apart from that the
+same features are available, so that users can use SIF as a network
+drive with similar setup as for ERDA. Please refer to Advanced Data
+Access sections in the user guide for additional information.
+</p>
 <h4 class="staticpage">2019/01/21: Planned Maintenance - Expected Downtime</h4>
 <p>
 We've completed the planned upgrade of the software stack on ERDA and
@@ -467,6 +483,23 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage">06/02-2019: SIF Effektiv dataadgang</h4>
+<p>
+SIF har langt om længe også fået effektiv dataadgang gennem WebDAVS og
+SFTP. De tilsvarende services har længe været tilgængelige på ERDA, men
+måtte udbygges til at logge hver eneste adgang og filoperation. For
+yderligere sikring har vi tilføjet to-faktor godkendelse og gjort det
+obligatorisk dor dem på SIF. Endelig implementerede vi yderligere
+restriktioner for de to services på SIF, så brugere kun kan tilgå netop
+et projekts data af gangen, og kun fra en enkelt IP-adresse. Det er helt
+i tråd med de eksisterende mekanismer til at sikre mod datalæk på SIFs
+web-adgang.
+Bemærk at begge services på SIF derfor kræver et forudgående web-login
+med to-faktor godkendelse for yderligere sikkerhed. Derudover tilbydes
+de samme features, så brugere kan benytte SIF som et netværksdrev med
+lignende opsætning som på ERDA. Vi henviser til afsnittet om Avanceret
+datatilgang i brugervejledningen for yderligere information.
+</p>
 <h4 class="staticpage">21/01-2019: Vedligehold og planlagt nedetid</h4>
 <p>
 Vi har gennemført den planlagte opgradering af ERDA og IDMC frontends
