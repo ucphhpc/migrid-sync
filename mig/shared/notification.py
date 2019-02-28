@@ -315,25 +315,23 @@ The %s Admins
 Email address: %(email)s
 Organization: %(organization)s
 Two letter country-code: %(country)s
-State: %(state)s
-""" % user_dict
-        header = 'Re: %s OpenID login expire for %s' % (short_title, user_name)
-        txt += """This is an auto-generated account expire warning from %s to
-inform you about the need to renew your %s user OpenID account before %s
+State: %(state)s""" % user_dict
+        header = '%s OpenID login expire for %s' % (short_title, user_name)
+        txt += """This is an automatic account access expire warning from %s.
+Basically you need to renew your %s user OpenID login before %s
 if you want to preserve that account access.
 
-As long as your account hasn't expired you can always login with your username
-%s and request semi-automatic renewal only filling the password and comment
-fields at
+Until that date you can always simply login with your username %s and request
+semi-automatic renewal, only filling the password and comment fields at
 %s/cgi-bin/reqoid.py
 In that way you can also choose a new password if you like.
 
-After account expiry you can only manually renew by opening the
-basic account request page at
+After account access expiry you can only manually renew by opening the basic
+account request page at
 %s/cgi-sid/reqoid.py
-and entering the values you're signed up with:
+and entering the values you're signed up with, namely:
 %s
-Importantly you then have to enter your EXISTING password!
+Importantly you then have to use your EXISTING password!
 
 In either case please enter a few lines of comment including why you (still)
 need access. Mentioning names of project and main collaboration partners
