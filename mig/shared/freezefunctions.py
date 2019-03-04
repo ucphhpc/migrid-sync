@@ -620,8 +620,19 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
     add_init += """
+    /* NOTE: use a URL lookup helper for all URLs to avoid cross-domain ajax
+             requests and the resulting rejects when using alias domains.
+    */
+    function lookup_url(url) {
+        var raw_array = url.split('/');
+        var relative_url = raw_array.slice(3, raw_array.Length).join('/');
+        var current_array = $(location).attr('href').split('/');
+        var protocol = current_array[0];
+        var fqdn = current_array[2];
+        return protocol + '//' + fqdn + '/' + relative_url;
+    }
     function ajax_showfiles(freeze_id, checksum_list) {
-        var url = '%s';
+        var url = lookup_url('%s');
         var tbody_elem = $('#frozenfilestable tbody');
         $(tbody_elem).empty();
         console.debug('Loading files from '+url+' ...');
@@ -693,7 +704,7 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
         }
     }
     function ajax_showdoi() {
-        var url = '%s';
+        var url = lookup_url('%s');
         console.debug('loading DOI data from '+url+' ...');
         $('#doicontents').html('Loading DOI data ...');
         $('#doicontents').addClass('spinner iconleftpad');
