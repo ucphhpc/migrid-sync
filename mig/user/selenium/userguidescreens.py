@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userguidescreens - selenium-based web client to grab user guide screenshots
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,8 @@ import time
 import traceback
 
 from migcore import init_driver, ucph_login, mig_login, shared_twofactor, \
-    shared_logout, save_screen, scroll_to_elem, doubleclick_elem
+    shared_logout, save_screen, scroll_to_elem, doubleclick_elem, \
+    select_item_by_index
 
 
 def ajax_wait(driver, name, class_name="spinner"):
@@ -61,6 +62,35 @@ def ajax_wait(driver, name, class_name="spinner"):
         print "DEBUG: waiting for ajax to finish: %s" % name
         time.sleep(1)
     return True
+
+
+def management_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    # Go through all manager tabs in turn
+    for nav_name in ["Access project", "Create project", "Accept invitation",
+                     "Two-Factor Auth"]:
+        navmenu = driver.find_element_by_id('project-tabs')
+        link = navmenu.find_element_by_link_text(nav_name)
+        # print "DEBUG: found %s link: %s" % (nav_name, link)
+        link.click()
+        # ajax_wait(driver, nav_name, "ui-progressbar")
+        state = '%s-ready' % nav_name.lower().replace(' ', '-')
+        if callbacks.get(state, None):
+            print "INFO: callback for: %s" % state
+            callbacks[state](driver, state)
+    # Go to Access project tab and open first project
+    nav_name = "Access project"
+    navmenu = driver.find_element_by_id('project-tabs')
+    link = navmenu.find_element_by_link_text(nav_name)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    # ajax_wait(driver, nav_name, "ui-progressbar")
+    dropdown_container = navmenu.find_element_by_class_name('gm_select')
+    proj_dropdown = navmenu.find_element_by_name('access_base_vgrid_name')
+    select_item_by_index(driver, proj_dropdown, 2)
+    link = driver.find_element_by_link_text('Login')
+    link.click()
+    ajax_wait(driver, nav_name, "ui-progressbar")
 
 
 def files_actions(driver, url, login, passwd, callbacks):
@@ -402,7 +432,9 @@ def main():
                  'workgroups-ready', 'archives-ready',
                  'archive-empty', 'archive-fileman', 'archive-filled',
                  'archive-submitted', 'archive-finalized', 'archive-view',
-                 'archive-register', 'settings-ready'):
+                 'archive-register', 'settings-ready', 'access-project-ready',
+                 'create-project-ready', 'accept-invitation-ready',
+                 'two-factor-auth-ready'):
         action_calls[name] = lambda driver, name: save_screen(
             driver, active_path % name)
 
@@ -436,12 +468,19 @@ def main():
 
         # TODO: add Schedule Tasks, Jupyter, ... ?
 
-        all_sections = [
-            ('Files', files_actions),
-            ('Workgroups', workgroups_actions),
-            ('Archives', archives_actions),
-            ('Settings', settings_actions)
-        ]
+        if url.find('sif') != -1:
+            all_sections = [
+                ('Management', management_actions),
+                ('Files', files_actions),
+                ('Settings', settings_actions)
+            ]
+        else:
+            all_sections = [
+                ('Files', files_actions),
+                ('Workgroups', workgroups_actions),
+                ('Archives', archives_actions),
+                ('Settings', settings_actions)
+            ]
         section_names = [name for (name, _) in all_sections]
         print "Run user guide actions for: %s" % ', '.join(section_names)
         status = user_actions(driver, url, login, passwd,

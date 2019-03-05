@@ -43,6 +43,7 @@ except ImportError:
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
 
 
 def init_driver(browser):
@@ -71,6 +72,12 @@ def scroll_to_elem(driver, elem):
     # NOTE: move_to_element fails if outside viewport - try this workaround
     # action_chains.move_to_element(elem).perform()
     elem.send_keys(Keys.ARROW_DOWN)
+
+
+def select_item_by_index(driver, elem, index):
+    """Pick item with index in elem select drop-down"""
+    select_box = Select(elem)
+    select_box.select_by_index(index)
 
 
 def doubleclick_elem(driver, elem):
@@ -220,18 +227,18 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
     """
     status = True
     do_logout = False
-    print "DEBUG: run logout: %s" % url
+    print "Do logout"
     try:
         link = driver.find_element_by_link_text('Logout')
-        print "DEBUG: found link: %s" % link
+        # print "DEBUG: found link: %s" % link
         if link:
-            print "DEBUG: use link: %s" % link
+            # print "DEBUG: use link: %s" % link
             do_logout = True
             state = 'logout-ready'
             if callbacks.get(state, None):
-                print "DEBUG: callback for: %s" % state
+                # print "DEBUG: callback for: %s" % state
                 callbacks[state](driver, state)
-            print "DEBUG: click link: %s" % link
+            # print "DEBUG: click link: %s" % link
             link.click()
     except Exception, exc:
         print "ERROR: failed in logout: %s" % exc
@@ -239,11 +246,11 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
     if do_logout:
         print "Confirm logout"
         confirm_elem = driver.find_element_by_link_text("Yes")
-        print "DEBUG: found confirm elem: %s" % confirm_elem
+        # print "DEBUG: found confirm elem: %s" % confirm_elem
         state = 'logout-confirm'
         if callbacks.get(state, None):
             callbacks[state](driver, state)
-        print "DEBUG: click confirm elem: %s" % confirm_elem
+        # print "DEBUG: click confirm elem: %s" % confirm_elem
         confirm_elem.click()
     else:
         status = False
