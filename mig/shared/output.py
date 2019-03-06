@@ -2246,13 +2246,13 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         elif i['object_type'] == 'service':
             service = i
             lines.append('''
-            <a class='ui-button' id='service' href='%s'>%s</a>
+            <a class="ui-button" id="service" href="%s" target="_blank">%s</a>
             ''' % (service['targetlink'], service['name']))
         elif i['object_type'] == 'services':
             services = i['services']
             for service in services:
                 lines.append('''
-                <a class='ui-button' id='service' href='%s'>%s</a>
+                <a class="ui-button" id="service" href="%s">%s</a>
                 ''' % (service['targetlink'], service['name']))
         elif i['object_type'] == 'script_status':
             status_line = i.get('text')
