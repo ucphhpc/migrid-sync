@@ -57,7 +57,7 @@ from shared.vgrid import vgrid_flat_name, vgrid_is_owner, vgrid_set_owners, \
 from shared.vgridkeywords import get_settings_keywords_dict
 
 user_db_filename = 'gdp-users.db'
-users_log_filename = 'gdp-users.log'
+user_log_filename = 'gdp-users.log'
 client_id_project_postfix = '/GDP='
 
 
@@ -120,6 +120,15 @@ def __user_db_filepath(configuration):
     db_lock_filepath = '%s.lock' % db_filepath
 
     return (db_filepath, db_lock_filepath)
+
+
+def __user_log_filepath(configuration):
+    """Generate GDP user_db filepath"""
+
+    log_filepath = os.path.join(configuration.gdp_home, user_log_filename)
+    log_lock_filepath = '%s.lock' % log_filepath
+
+    return (log_filepath, log_lock_filepath)
 
 
 def __validate_user_id(configuration, user_id):
@@ -361,11 +370,11 @@ def __validate_user_db(configuration, client_id, user_db=None):
     # _logger.debug("client_id: '%s', user_db: %s" % (client_id, user_db))
 
     status = True
-    msg = ""
     user = None
     projects = None
     account = None
-    err_msg = "GDP: Database format error for user: '%s'" % client_id
+    err_msg = "Database format error for user: '%s'" % client_id
+    log_err_msg = "GDP: " + err_msg
 
     if user_db is None:
         user_db = __load_user_db(configuration)
@@ -375,13 +384,14 @@ def __validate_user_db(configuration, client_id, user_db=None):
     user = user_db.get(client_id, None)
     if user is None:
         status = False
-        msg = err_msg + ": Missing user entry in GDP DB"
-        _logger.error(msg)
+        template = ": Missing user entry in GDP DB"
+        err_msg += template
+        _logger.error(log_err_msg + template)
     elif not isinstance(user, dict):
         status = False
-        msg = err_msg \
-            + ": User entry is _NOT_ a dictionary instance"
-        _logger.error(msg)
+        template = ": User entry is _NOT_ a dictionary instance"
+        err_msg += template
+        _logger.error(log_err_msg + template)
 
     # Validate projects
 
@@ -389,28 +399,30 @@ def __validate_user_db(configuration, client_id, user_db=None):
         projects = user.get('projects', None)
         if projects is None:
             status = False
-            msg = err_msg \
-                + ": Missing 'projects' entry in GDP DB"
-            _logger.error(msg)
+            template = ": Missing 'projects' entry in GDP DB"
+            err_msg += template
+            _logger.error(log_err_msg + template)
         elif not isinstance(projects, dict):
             status = False
-            msg = err_msg \
-                + ": 'projects' entry is _NOT_ a dictionary instance"
-            _logger.error(msg)
+            template = ": 'projects' entry is _NOT_ a dictionary instance"
+            err_msg += template
+            _logger.error(log_err_msg + template)
 
     if status:
         for (key, value) in projects.iteritems():
             if not 'client_id' in value.keys():
                 status = False
-                msg = err_msg + \
-                    ": Missing 'client_id' entry for project: '%s'" % (key)
-                _logger.error(msg)
+                template = ": Missing 'client_id' entry for project: '%s'" \
+                    % key
+                err_msg += template
+                _logger.error(log_err_msg + template)
                 break
             if not 'state' in value.keys():
                 status = False
-                msg = err_msg + ": Missing 'state' entry" \
-                    + " for project: '%s'" % key
-                _logger.error(msg)
+                template = ": Missing 'state' entry" + " for project: '%s'" \
+                    % key
+                err_msg += template
+                _logger.error(log_err_msg + template)
                 break
 
     # Validate account
@@ -419,37 +431,41 @@ def __validate_user_db(configuration, client_id, user_db=None):
         account = user.get('account', None)
         if account is None:
             status = False
-            msg = err_msg + ": Missing 'account' entry in GDP DB"
-            _logger.error(msg)
+            template = ": Missing 'account' entry in GDP DB"
+            err_msg += template
+            _logger.error(log_err_msg + template)
         elif not isinstance(account, dict):
             status = False
-            msg = err_msg \
-                + ": 'account' is _NOT_ a dictionary instance"
-            _logger.error(msg)
+            template = ": 'account' is _NOT_ a dictionary instance"
+            err_msg += template
+            _logger.error(log_err_msg + template)
 
     # Validate account state
 
     if status and not 'state' in account:
         status = False
-        msg = err_msg + ": Missing 'account -> state' entry in GDP DB"
-        _logger.error(msg)
+        template = ": Missing 'account -> state' entry in GDP DB"
+        err_msg += template
+        _logger.error(log_err_msg + template)
 
     # Validate account protocol
 
     if status:
         for protocol in valid_protocols:
             account_protocol = account.get(protocol, None)
+
             if account_protocol is None:
                 status = False
-                msg = err_msg \
-                    + ": Missing 'account -> %s' entry in GDP DB" % protocol
-                _logger.error(msg)
+                template = ": Missing 'account -> %s' entry in GDP DB" \
+                    % protocol
+                err_msg += template
+                _logger.error(log_err_msg + template)
             elif not isinstance(account_protocol, dict):
                 status = False
-                msg = err_msg \
-                    + ": 'account -> %s' is _NOT_ a dictionary instance" \
+                template = ": 'account -> %s' is _NOT_ a dictionary instance" \
                     % protocol
-                _logger.error(msg)
+                err_msg += template
+                _logger.error(log_err_msg + template)
 
             # Validate account protocol role
 
@@ -457,10 +473,10 @@ def __validate_user_db(configuration, client_id, user_db=None):
                 role = account_protocol.get('role', None)
                 if role is None:
                     status = False
-                    msg = err_msg \
-                        + ": Missing 'account -> %s -> role'" % protocol \
+                    template = ": Missing 'account -> %s -> role'" % protocol \
                         + " entry in GDP DB"
-                    _logger.error(msg)
+                    err_msg += template
+                    _logger.error(log_err_msg + template)
 
             # Validate account protocol last login
 
@@ -468,39 +484,43 @@ def __validate_user_db(configuration, client_id, user_db=None):
                 protocol_last_login = account_protocol.get('last_login', None)
                 if protocol_last_login is None:
                     status = False
-                    msg = err_msg \
-                        + ": Missing 'account -> %s ->" % protocol \
-                        + " last_login' entry in GDP DB"
-                    _logger.error(msg)
+                    template = ": Missing 'account -> %s" % protocol \
+                        + " -> last_login' entry in GDP DB"
+                    err_msg += template
+                    _logger.error(log_err_msg + template)
                 elif not isinstance(protocol_last_login, dict):
                     status = False
-                    msg = err_msg \
-                        + ": 'account -> %s -> last_login'" % protocol \
+                    template = ": 'account -> %s -> last_login'" % protocol \
                         + " is _NOT_ a dictionary instance"
-                    _logger.error(msg)
+                    err_msg += template
+                    _logger.error(log_err_msg + template)
 
             # Validate account protocol last login timestamp
 
             if status and not 'timestamp' in protocol_last_login:
                 status = False
-                msg = err_msg \
-                    + ": Missing 'account -> %s" % protocol \
+                template = ": Missing 'account -> %s" % protocol \
                     + " -> last_login -> timestamp' entry in GDP DB"
-                _logger.error(msg)
+                err_msg += template
+                _logger.error(log_err_msg + template)
 
             # Validate account last login ip
 
             if status and not 'ip' in protocol_last_login:
                 status = False
-                msg = err_msg \
-                    + ": missing 'account -> %s ->" % protocol \
+                template = ": missing 'account -> %s ->" % protocol \
                     + " last_login -> ip' entry in GDP DB"
-                _logger.error(msg)
+                err_msg += template
+                _logger.error(log_err_msg + template)
 
             if not status:
                 break
 
-    return (status, msg)
+    ret_msg = ""
+    if not status:
+        ret_msg = err_msg
+
+    return (status, ret_msg)
 
 
 def __load_user_db(configuration, locked=False, allow_missing=False):
@@ -779,11 +799,53 @@ def __scamble_user_id(configuration, user_id):
     return result
 
 
-def __update_users_log(configuration, client_id):
+def __get_user_log_entry(configuration,
+                         client_id,
+                         match_client_id=True,
+                         match_hashed_client_id=True,
+                         locked=False):
+    """Returns (client_id, client_id_hash) user log entry for *client_id*"""
+    _logger = configuration.logger
+
+    result = None
+    (log_filepath, log_lock_filepath) = __user_log_filepath(configuration)
+    hashed_client_id = __scamble_user_id(configuration, client_id)
+    if hashed_client_id is None:
+        return result
+    if not locked:
+        flock = acquire_file_lock(log_lock_filepath)
+    try:
+        if not os.path.exists(log_filepath):
+            touch(log_filepath)
+        fh = open(log_filepath, 'rb')
+        line = fh.readline()
+        while line:
+            line_arr = map(str.strip, line.split(":"))
+            line_arr = map(str.rstrip, line_arr)
+            if (match_client_id and client_id == line_arr[1]) \
+                    or (match_hashed_client_id
+                        and hashed_client_id == line_arr[2]):
+                result = (line_arr[1], line_arr[2])
+            line = fh.readline()
+        fh.close()
+    except Exception, exc:
+        _logger.error("GDP: __get_user_log_entry failed: %s" % exc)
+        result = None
+    if not locked:
+        release_file_lock(flock)
+
+    return result
+
+
+def __update_user_log(configuration, client_id, locked=False):
     """Add *client_id* and it's hash to GDP users log"""
     _logger = configuration.logger
-    log_filepath = os.path.join(configuration.gdp_home, users_log_filename)
+
     result = False
+    flock = None
+    (log_filepath, log_lock_filepath) = __user_log_filepath(configuration)
+    if not locked:
+        flock = acquire_file_lock(log_lock_filepath)
     try:
         if not os.path.exists(log_filepath):
             touch(log_filepath)
@@ -797,8 +859,10 @@ def __update_users_log(configuration, client_id):
         fh.close()
         result = True
     except Exception, exc:
-        _logger.error("GDP: __update_users_log failed: %s" % exc)
+        _logger.error("GDP: __update_user_log failed: %s" % exc)
         result = False
+    if not locked:
+        release_file_lock(flock)
 
     return result
 
@@ -1309,26 +1373,55 @@ def ensure_user(configuration, client_addr, client_id):
     # _logger.debug("client_addr: '%s', client_id: '%s'"
     #               % (client_addr, client_id))
 
-    result = False
+    status = False
     (_, db_lock_filepath) = __user_db_filepath(configuration)
-    flock = acquire_file_lock(db_lock_filepath)
+    db_flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, locked=True, allow_missing=True)
     user = user_db.get(client_id, None)
-    if user is None:
-        user_db[client_id] = __create_gdp_user_db_entry(configuration)
-        status = __update_users_log(configuration, client_id)
-        if status:
-            __save_user_db(configuration, user_db, locked=True)
-            _logger.info("Created GDP user: '%s' from IP: %s" \
-                % (client_id, client_addr))
-            result = True
+    err_msg = "Failed to ensure user: '%s' from ip: %s" \
+        % (client_id, client_addr)
+    log_err_msg = "GDP: " + err_msg
+    if user is not None:
+        status = True
+    else:
+        (_, log_lock_filepath) = __user_log_filepath(configuration)
+        log_flock = acquire_file_lock(log_lock_filepath)
+        user_log_entry = __get_user_log_entry(configuration,
+                                              client_id,
+                                              match_client_id=False,
+                                              locked=True)
+        if user_log_entry and user_log_entry[0] != client_id:
+            err_msg += ": User-hash already exists in user log"
+            _logger.error(log_err_msg + ": User-hash: '%s'"
+                          % user_log_entry[1]
+                          + " already exists in user log for user: '%s'"
+                          % user_log_entry[0])
+        elif user_log_entry and user_log_entry[0] == client_id:
+            template = ": User already exists in user log"
+            err_msg += template
+            _logger.error(log_err_msg + template)
         else:
-            _logger.error("Failed to create GDP user: '%s' from IP: %s" \
-                % (client_id, client_addr))
+            user_db[client_id] = __create_gdp_user_db_entry(configuration)
+            update_status = __update_user_log(
+                configuration, client_id, locked=True)
+            if update_status:
+                __save_user_db(configuration, user_db, locked=True)
+                _logger.info("GDP: Created GDP DB entry for user: '%s'"
+                             % client_id
+                             + " from IP: %s" % client_addr)
+                status = True
+            else:
+                template = ": Failed to create GDP DB entry"
+                err_msg += template
+                _logger.error(log_err_msg + template)
+        release_file_lock(log_flock)
+    release_file_lock(db_flock)
 
-    release_file_lock(flock)
+    ret_msg = ""
+    if not status:
+        ret_msg = err_msg
 
-    return result
+    return (status, ret_msg)
 
 
 def project_remove_user(
@@ -1593,38 +1686,48 @@ def create_project_user(
         % (client_id, client_addr) \
         + ", failed to create project_user: '%s'" % project_client_id
 
-    # Create aliases for supported services (openid, davs and sftp)
-
-    aliases = []
-    for user_alias in [configuration.user_openid_alias,
-                       configuration.user_davs_alias,
-                       configuration.user_sftp_alias]:
-        alias = get_short_id(configuration, project_client_id, user_alias)
-        if not alias in aliases:
-            aliases.append(alias)
-
-    # Create new MiG user for project
-
-    mig_user_map = get_full_user_map(configuration)
-    mig_user_dict = mig_user_map.get(client_id, None)
-    mig_user_dict['distinguished_name'] = project_client_id
-    mig_user_dict['comment'] = "GDP autocreated user for project: '%s'" \
-        % project_name
-    mig_user_dict['openid_names'] = aliases
-    mig_user_dict['auth'] = ['']
-    mig_user_dict['short_id'] = ''
-    mig_user_dict['old_password'] = ''
-    mig_user_dict['password'] = ''
-    mig_user_db_path = os.path.join(configuration.mig_server_home,
-                                    mig_user_db_filename)
-    try:
-        create_user(mig_user_dict, configuration.config_file,
-                    mig_user_db_path, ask_renew=False,
-                    default_renew=True)
-    except Exception, exc:
+    user_log_entry = __get_user_log_entry(configuration,
+                                          project_client_id,
+                                          match_client_id=False)
+    if user_log_entry and user_log_entry[0] != project_client_id:
         status = False
-        _logger.error(log_err_msg
-                      + ": Failed to create user: %s" % (exc))
+        _logger.error("GDP: Project user hash: '%s'" % user_log_entry[1]
+                      + " is already used for user: '%s'" % user_log_entry[0])
+
+    if status:
+
+        # Create aliases for supported services (openid, davs and sftp)
+
+        aliases = []
+        for user_alias in [configuration.user_openid_alias,
+                           configuration.user_davs_alias,
+                           configuration.user_sftp_alias]:
+            alias = get_short_id(configuration, project_client_id, user_alias)
+            if not alias in aliases:
+                aliases.append(alias)
+
+        # Create new MiG user for project
+
+        mig_user_map = get_full_user_map(configuration)
+        mig_user_dict = mig_user_map.get(client_id, None)
+        mig_user_dict['distinguished_name'] = project_client_id
+        mig_user_dict['comment'] = "GDP autocreated user for project: '%s'" \
+            % project_name
+        mig_user_dict['openid_names'] = aliases
+        mig_user_dict['auth'] = ['']
+        mig_user_dict['short_id'] = ''
+        mig_user_dict['old_password'] = ''
+        mig_user_dict['password'] = ''
+        mig_user_db_path = os.path.join(configuration.mig_server_home,
+                                        mig_user_db_filename)
+        try:
+            create_user(mig_user_dict, configuration.config_file,
+                        mig_user_db_path, ask_renew=False,
+                        default_renew=True)
+        except Exception, exc:
+            status = False
+            _logger.error(log_err_msg
+                          + ": Failed to create user: %s" % (exc))
 
     # Create symlink from project dir to newly created MiG user dir
 
@@ -1639,8 +1742,10 @@ def create_project_user(
                           + ": Failed to create symlink: '%s' -> '%s'"
                           % (src, project_files_link))
 
-    if status:
-        status = __update_users_log(configuration, project_client_id)
+    # Update user log if project_client_id not yet in it
+
+    if status and not user_log_entry:
+        status = __update_user_log(configuration, project_client_id)
 
     ret_msg = err_msg
     if status:

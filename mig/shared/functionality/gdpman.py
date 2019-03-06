@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdpman - Sensitive Information Facility management
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -901,9 +901,9 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     # Make sure user exists in GDP user db
 
-    ensure_user(configuration, client_addr, client_id)
+    (status, ensure_msg) = ensure_user(configuration, client_addr, client_id)
 
-    if not action or action == 'logout':
+    if status and not action or action == 'logout':
         active_project_client_id = get_active_project_client_id(
             configuration, client_id, 'https')
 
@@ -937,11 +937,17 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     # Generate html
 
-    (validate_status, validate_msg) = validate_user(configuration,
-                                                    client_id,
-                                                    client_addr,
-                                                    'https')
-    if not validate_status:
+    if status:
+        (status, validate_msg) = validate_user(configuration,
+                                               client_id,
+                                               client_addr,
+                                               'https')
+    if not status:
+        status_msg = ''
+        if ensure_msg:
+            status_msg = ensure_msg
+        elif validate_msg:
+            status_msg = validate_msg
         html = """
             <table class='gm_projects_table' style='border-spacing=0;'>
             <thead>
@@ -954,7 +960,7 @@ Please contact the Grid admins %s if you think it should be enabled.
                 <tr><td>%s</td></tr>
             </tbody>
             </table>""" \
-            % validate_msg
+            % status_msg
         html += html_logout_tmpl(configuration, csrf_token)
         output_objects.append({'object_type': 'html_form',
                                'text': html})
@@ -962,7 +968,6 @@ Please contact the Grid admins %s if you think it should be enabled.
 
         # Entry page
 
-        status = True
         action_msg = ''
         if action == 'access':
 
