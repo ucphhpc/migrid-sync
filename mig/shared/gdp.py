@@ -556,7 +556,7 @@ def __save_user_db(configuration, user_db, locked=False):
         flock = acquire_file_lock(db_lock_filepath)
 
     if not os.path.exists(db_filepath):
-        touch(db_filepath)
+        touch(db_filepath, configuration)
 
     dump(user_db, db_filepath)
 
@@ -816,7 +816,7 @@ def __get_user_log_entry(configuration,
         flock = acquire_file_lock(log_lock_filepath)
     try:
         if not os.path.exists(log_filepath):
-            touch(log_filepath)
+            touch(log_filepath, configuration)
         fh = open(log_filepath, 'rb')
         line = fh.readline()
         while line:
@@ -848,7 +848,7 @@ def __update_user_log(configuration, client_id, locked=False):
         flock = acquire_file_lock(log_lock_filepath)
     try:
         if not os.path.exists(log_filepath):
-            touch(log_filepath)
+            touch(log_filepath, configuration)
         fh = open(log_filepath, 'ab')
         timestamp = datetime.fromtimestamp(time.time())
         date = timestamp.strftime('%d-%m-%Y_%H-%M-%S')

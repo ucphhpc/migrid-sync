@@ -194,7 +194,7 @@ def check_mrsl_files(
 
     logger.info('setting time of last_start_file %s to %s'
                  % (last_start_file, check_mrsl_files_start_time))
-    io.touch(last_start_file, check_mrsl_files_start_time)
+    io.touch(last_start_file, configuration, timestamp=check_mrsl_files_start_time)
     check_mrsl_files_end_time = time.time()
     logger.info('finished checking for mRSL files in %fs' % \
                 (check_mrsl_files_end_time-check_mrsl_files_start_time))

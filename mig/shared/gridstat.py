@@ -464,7 +464,7 @@ class GridStat:
         # Touch buildtimestamp file, so the modified time of it is
         # updated
 
-        touch(buildtimestamp_file)
+        touch(buildtimestamp_file, self.__configuration)
 
         # Traverse mRSL dir and update cache
 

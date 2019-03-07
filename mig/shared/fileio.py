@@ -303,7 +303,7 @@ def send_message_to_grid_script(message, logger, configuration):
         return False
 
 
-def touch(filepath, timestamp=None):
+def touch(filepath, configuration, timestamp=None):
     """Create or update timestamp for filepath"""
     try:
         if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
@@ -314,16 +314,15 @@ def touch(filepath, timestamp=None):
             filehandle.close()
         else:
             open(filepath, 'w').close()
-
         if timestamp != None:
-
             # set timestamp to supplied value
-
             os.utime(filepath, (timestamp, timestamp))
     except Exception, err:
-
-        print "could not touch file: '%s', Error: %s" % (filepath, err)
+        configuration.logger.error("could not touch file: '%s'" % filepath \
+            + ": %s" % err)
         return False
+
+    return True
 
 
 def remove_rec(dir_path, configuration):

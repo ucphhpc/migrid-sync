@@ -1984,7 +1984,7 @@ def create_setting(
 
         time.sleep(1)
         timestamp = time.time()
-        touch(abs_vgrid_trigger_filepath, timestamp)
+        touch(abs_vgrid_trigger_filepath, configuration, timestamp=timestamp)
 
     if status == returnvalues.OK:
         output_objects.append({'object_type': 'text', 'text': OK_MSG})
@@ -2054,7 +2054,7 @@ def update_setting(
                 abs_path, extension)
 
         timestamp = time.time()
-        touch(abs_last_modified_filepath, timestamp)
+        touch(abs_last_modified_filepath, configuration, timestamp=timestamp)
         output_objects.append({'object_type': 'text', 'text': OK_MSG})
         logger.debug('trigger timestamp: %s, path: %s ' % (timestamp,
                      abs_last_modified_filepath))
