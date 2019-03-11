@@ -46,7 +46,8 @@ from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
     davs_conf_dir, twofactor_filename
-from shared.fileio import filter_pickled_list, filter_pickled_dict
+from shared.fileio import filter_pickled_list, filter_pickled_dict, \
+    make_symlink, delete_symlink
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
@@ -56,6 +57,7 @@ from shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
 from shared.settings import update_settings, update_profile, update_widgets
+from shared.sharelinks import load_share_links, update_share_link
 from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
     vgrid_add_members, vgrid_remove_members
 from shared.vgridaccess import get_resource_map, get_vgrid_map, \
@@ -671,12 +673,21 @@ def edit_user(
 
     new_client_dir = client_id_dir(new_id)
 
+    # NOTE: published archives are linked to a hash based on creator ID.
+    # We first remove any conflicting symlink from previous renames before
+    # renaming user archive dir and creating the new legacy alias afterwards.
+
+    old_arch_home = os.path.join(configuration.freeze_home, client_dir)
+    new_arch_home = os.path.join(configuration.freeze_home, new_client_dir)
+    delete_symlink(new_arch_home, _logger, allow_missing=True)
+
     # Rename user dirs recursively
 
     for base_dir in (configuration.user_home,
                      configuration.user_settings,
                      configuration.user_cache,
                      configuration.mrsl_files_dir,
+                     configuration.freeze_home,
                      configuration.resource_pending):
 
         old_path = os.path.join(base_dir, client_dir)
@@ -690,6 +701,10 @@ def edit_user(
     if verbose:
         print 'User dirs for %s was successfully renamed!'\
             % client_id
+
+    # Now create freeze_home alias to preserve access to published archives
+
+    make_symlink(new_arch_home, old_arch_home, _logger)
 
     # Update any OpenID symlinks
 
@@ -788,11 +803,34 @@ def edit_user(
         if verbose:
             print 'Could not load runtime env list: %s' % re_list
 
+    # Loop through moved sharelinks map pickle and update fs paths
+
+    (load_status, sharelinks) = load_share_links(configuration, new_id)
+    if verbose:
+        print 'Update %d sharelinks' % len(sharelinks)
+    if load_status:
+        for (share_id, share_dict) in sharelinks.items():
+            # Update owner and use generic update helper to replace symlink
+            share_dict['owner'] = new_id
+            (mod_status, err) = update_share_link(share_dict, new_id,
+                                                  configuration, sharelinks)
+            if verbose:
+                if mod_status:
+                    print 'Updated sharelink %s from %s to %s' % (share_id,
+                                                                  client_id,
+                                                                  new_id)
+                elif err:
+                    print 'Could not update owner of %s: %s' % (share_id, err)
+    else:
+        if verbose:
+            print 'Could not load sharelinks: %s' % sharelinks
+
     # TODO: update remaining user credentials in various locations?
     # * queued and active jobs (tricky due to races)
     # * user settings files?
     # * mrsl files?
     # * user stats?
+    # * triggers?
 
     _logger.info("Renamed user %s to %s" % (client_id, new_id))
     mark_user_modified(configuration, new_id)

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # edituser - Edit a MiG user
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,9 @@ from shared.useradm import init_user_adm, edit_user
 def usage(name='edituser.py'):
     """Usage help"""
 
-    print """Edit existing user in MiG user database and file system.
+    print """Edit existing user in MiG user database and file system. Allows
+user ID changes.
+NOTE: It's usually easier to use editmeta.py for non-ID field changes.
 Usage:
 %(name)s [OPTIONS] -i USER_ID [FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] \
     [EMAIL] [COMMENT] [PASSWORD]

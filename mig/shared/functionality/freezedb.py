@@ -142,7 +142,10 @@ from the management.
 
     frozenarchives = []
     if operation in list_operations:
-        (list_status, ret) = list_frozen_archives(configuration, client_id)
+        # NOTE: we do NOT enforce creator match here as edituser can't update
+        #       without breaking any published archives
+        (list_status, ret) = list_frozen_archives(configuration, client_id,
+                                                  strict_owner=False)
         if not list_status:
             logger.error("%s: failed for '%s': %s" % (op_name,
                                                       client_id, ret))
@@ -168,11 +171,6 @@ from the management.
                                                   summary=True)
             freeze_id = freeze_item['id']
             flavor = freeze_item.get('flavor', 'freeze')
-
-            if client_id != freeze_item['creator']:
-                logger.warning("skip archive %s with wrong owner: %s vs %s" %
-                               (freeze_id, client_id, freeze_item['creator']))
-                continue
 
             # Users may view all their archives
             freeze_item['viewfreezelink'] = {

@@ -228,10 +228,13 @@ def parse_time_delta(str_value):
     return datetime.timedelta(minutes=minutes)
 
 
-def list_frozen_archives(configuration, client_id):
+def list_frozen_archives(configuration, client_id, strict_owner=False):
     """Find all frozen_archives owned by user. We used to store all archives
     directly in freeze_home, but have switched to client_id sub dirs since they
     are personal anyway. Look in the client_id folder first.
+    If strict_owner is requested the list will only include archives where the
+    CREATOR meta field matches client_id. This may leave out archives for
+    renamed users or any future shared archives.
     """
     _logger = configuration.logger
     frozen_list = []
@@ -262,7 +265,10 @@ def list_frozen_archives(configuration, client_id):
 
             (meta_status, meta_out) = get_frozen_meta(client_id, entry,
                                                       configuration)
-            if meta_status and meta_out['CREATOR'] == client_id:
+            if not meta_status:
+                _logger.warning("skip archive %s without metadata" % entry)
+                continue
+            if not strict_owner or meta_out['CREATOR'] == client_id:
                 frozen_list.append(entry)
         else:
             _logger.warning(
