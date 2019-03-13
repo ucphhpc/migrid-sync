@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Import any missing DOIs from provided URI"""
+"""Import any missing DOIs from provided URI - useful from cron job"""
 
 import json
 import os
@@ -74,10 +74,10 @@ where VALUE may be an FQDN, a DOI or a query on the format 'query=BLA' .
    published archive folder.
  * query=QUERY can be used to test DOI lookups without writing any files.
 
- E.g. to import all DOIs registered by UCPH and hosted here one would run:
- importdoi.py dk.ku
- or to match only those registered to erda.ku.dk:
- importdoi.py erda.ku.dk
+E.g. to import all DOIs registered by UCPH and hosted here one would run:
+  importdoi.py dk.ku
+or to match only those registered to erda.ku.dk:
+  importdoi.py erda.ku.dk
 """
         sys.exit(1)
 
@@ -86,6 +86,7 @@ where VALUE may be an FQDN, a DOI or a query on the format 'query=BLA' .
     dump = True
     query = ''
     direct = ''
+    verbose = False
     if target.startswith('query='):
         dump = False
         query += '?' + target
@@ -100,7 +101,8 @@ where VALUE may be an FQDN, a DOI or a query on the format 'query=BLA' .
         except Exception, exc:
             print "ERROR in DataCite request: %s" % exc
             sys.exit(2)
-        print "parsed datacite response with %d fields" % len(parsed)
+        if verbose:
+            print "parsed datacite response with %d fields" % len(parsed)
         # Result should be a plain dict here and we want a list of such dicts
         if isinstance(parsed, list):
             parsed_data = parsed
@@ -122,7 +124,7 @@ where VALUE may be an FQDN, a DOI or a query on the format 'query=BLA' .
             attributes = entry.get('attributes', {})
             plain_doi = attributes.get("doi", None)
             if plain_doi is None:
-                print "skip full lookup of malformed entry: %s" % entry
+                print "WARNING skip full lookup of malformed entry: %s" % entry
                 continue
             #print "DEBUG: repeat full lookup for %s" % plain_doi
             try:
@@ -132,9 +134,10 @@ where VALUE may be an FQDN, a DOI or a query on the format 'query=BLA' .
                 continue
             parsed_data.append(full)
 
+    imported, existing = 0, 0
     for entry in parsed_data:
         if not isinstance(entry, dict):
-            print "skip malformed entry: %s" % entry
+            print "WARNING skip malformed entry: %s" % entry
             continue
         #print "DEBUG: handle entry: %s" % entry
         doi_url = entry.get("id", None)
@@ -142,22 +145,27 @@ where VALUE may be an FQDN, a DOI or a query on the format 'query=BLA' .
         archive_url = entry.get('url', '')
         archive_id = os.path.basename(os.path.dirname(archive_url))
         if not archive_id or not doi_url:
-            print "Failed to extract DOI and archive ID from %s (%s %s)" % \
+            print "WARNING DOI or archive ID missing from %s (%s %s)" % \
                   (entry, archive_id, doi_url)
             continue
         if dump:
             archive_root = os.path.join(configuration.wwwpublic, 'archives',
                                         archive_id)
             if not os.path.isdir(archive_root):
-                print "No matching archive %s to dump DOI data for %s into" % \
+                print "ERROR No archive %s to dump DOI data for %s into" % \
                       (archive_root, doi)
                 continue
             doi_path = os.path.join(archive_root, public_archive_doi)
             if os.path.exists(doi_path):
-                print "Skip already dumped DOI data in %s" % doi_path
+                if verbose:
+                    print "Skip already dumped DOI data in %s" % doi_path
+                existing += 1
                 continue
             print "Save DOI entry for %s into archive %s" % (doi, archive_id)
             doi_fd = open(doi_path, 'w')
             json.dump(entry, doi_fd)
             doi_fd.close()
+            imported += 1
+    print "Found %d existing - and imported %d new DOI entries" % \
+          (existing, imported)
     sys.exit(0)
