@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # usercache - User state caching
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,13 +39,14 @@ from shared.serial import load, dump
 JOB_REFRESH_DELAY = 120
 DISK_REFRESH_DELAY = 3600
 # Internal field names
-TOTALS = (OWN, VGRID, JOBS) = ('__user_totals__', '__vgrid_totals__', '__jobs__')
+TOTALS = (OWN, VGRID, JOBS) = (
+    '__user_totals__', '__vgrid_totals__', '__jobs__')
 (FILES, DIRECTORIES, BYTES, KIND) = \
-        ('__files__', '__directories__', '__bytes__', '__kind__')
+    ('__files__', '__directories__', '__bytes__', '__kind__')
 STATES = (PARSE, QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED,
           FAILED, FROZEN) = \
-          ("PARSE", "QUEUED", "EXECUTING", "FINISHED", "RETRY", "CANCELED",
-           "EXPIRED", "FAILED", "FROZEN")
+    ("PARSE", "QUEUED", "EXECUTING", "FINISHED", "RETRY", "CANCELED",
+     "EXPIRED", "FAILED", "FROZEN")
 FINAL_STATES = (FINISHED, CANCELED, EXPIRED, FAILED)
 JOBFIELDS = ["STATUS"]
 
@@ -85,7 +86,7 @@ def contents_changed(configuration, root, files, ref_stamp):
             return True
     return False
 
-    
+
 def update_disk_stats(configuration, stats, root, rel_root, dirs, files,
                       total):
     """Update disk stats for root"""
@@ -93,8 +94,8 @@ def update_disk_stats(configuration, stats, root, rel_root, dirs, files,
     _logger = configuration.logger
 
     # Gather size of all entries in root
-    
-    size = 0 
+
+    size = 0
     for name in files + dirs:
         path = os.path.join(root, name)
         # Ignore any access errors
@@ -122,6 +123,7 @@ def update_disk_stats(configuration, stats, root, rel_root, dirs, files,
         stats[rel_root][KIND] = total
     return stats
 
+
 def update_job_stats(stats, job_id, job):
     """Update job stats for job"""
 
@@ -136,6 +138,7 @@ def update_job_stats(stats, job_id, job):
     for field in JOBFIELDS:
         stats[job_id][field] = job[field]
     return stats
+
 
 def refresh_disk_stats(configuration, client_id):
     """Refresh disk use stats for specified user"""
@@ -168,7 +171,7 @@ def refresh_disk_stats(configuration, client_id):
     now = time.time()
     if now < stats_stamp + DISK_REFRESH_DELAY:
         lock_handle.close()
-        return stats        
+        return stats
 
     # Walk entire home dir and update any parts that changed
     # Please note that walk doesn't follow symlinks so we have
@@ -187,11 +190,11 @@ def refresh_disk_stats(configuration, client_id):
         # Directory and contents unchanged - ignore
 
         if stats.has_key(rel_root) and \
-               not contents_changed(configuration, root, files, stats_stamp):
+                not contents_changed(configuration, root, files, stats_stamp):
             continue
 
         dirty = True
-        
+
         update_disk_stats(configuration, stats, root, rel_root, dirs, files,
                           total)
 
@@ -206,12 +209,12 @@ def refresh_disk_stats(configuration, client_id):
             # Directory and contents unchanged - ignore
 
             if stats.has_key(rel_root) and \
-                   not contents_changed(configuration, root, files,
-                                        stats_stamp):
+                not contents_changed(configuration, root, files,
+                                     stats_stamp):
                 continue
 
             dirty = True
-        
+
             update_disk_stats(configuration, stats, root, rel_root, dirs,
                               files, total)
 
@@ -228,7 +231,7 @@ def refresh_disk_stats(configuration, client_id):
             stats[total][DIRECTORIES] -= stats[rel_root][DIRECTORIES]
             stats[total][BYTES] -= stats[rel_root][BYTES]
         else:
-            _logger.warning("Ignoring outdated stat entry for %s: %s" % \
+            _logger.warning("Ignoring outdated stat entry for %s: %s" %
                             (root, stats[rel_root]))
         del stats[rel_root]
         dirty = True
@@ -244,6 +247,7 @@ def refresh_disk_stats(configuration, client_id):
 
     stats['time_stamp'] = stats_stamp
     return stats
+
 
 def refresh_job_stats(configuration, client_id):
     """Refresh job stats for specified user"""
@@ -264,8 +268,8 @@ def refresh_job_stats(configuration, client_id):
 
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
 
-    job_stats = {PARSE: 0, QUEUED: 0, EXECUTING:0, FINISHED: 0, RETRY: 0,
-                    CANCELED: 0, EXPIRED: 0, FAILED: 0, FROZEN: 0}
+    job_stats = {PARSE: 0, QUEUED: 0, EXECUTING: 0, FINISHED: 0, RETRY: 0,
+                 CANCELED: 0, EXPIRED: 0, FAILED: 0, FROZEN: 0}
     try:
         stats = load(stats_path)
         stats_stamp = os.path.getmtime(stats_path)
@@ -280,7 +284,7 @@ def refresh_job_stats(configuration, client_id):
     now = time.time()
     if now < stats_stamp + JOB_REFRESH_DELAY:
         lock_handle.close()
-        return stats        
+        return stats
 
     # Inspect all jobs in user job dir and update the ones that changed
     # since last stats run
@@ -294,12 +298,16 @@ def refresh_job_stats(configuration, client_id):
         except Exception, exc:
             _logger.warning("getmtime failed on %s: %s" % (job_path, exc))
             job_stamp = -1
-        
+
         if stats.has_key(name) and job_stamp < stats_stamp:
             continue
 
         dirty = True
-        job = load(job_path)
+        try:
+            job = load(job_path)
+        except Exception, exc:
+            _logger.warning("unpickle failed on %s: %s" % (job_path, exc))
+            continue
         update_job_stats(stats, name, job)
 
     if dirty:
@@ -313,6 +321,7 @@ def refresh_job_stats(configuration, client_id):
 
     stats['time_stamp'] = stats_stamp
     return stats
+
 
 if "__main__" == __name__:
     import sys
