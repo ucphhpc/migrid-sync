@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.ajaxhelpers - jquery based ajax helpers for managers
-  # Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -25,13 +25,11 @@
   # -- END_HEADER ---
   #
 
-  # This is a modified version of the Matlab Grid service by Jost Berthold.
-  # Original license headers follow below.
-
 */
 
 /* Enable strict mode to help catch tricky errors early */
 "use strict";
+
 
 var center_class="class='centertext'";
 var title_class="class='title'";

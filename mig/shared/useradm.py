@@ -588,6 +588,58 @@ The %(short_title)s admins
     return user
 
 
+def fix_sharelinks(old_id, client_id, conf_path, db_path, verbose=False):
+    """Update sharelinks left-over from legacy version of edit_user"""
+    user_db = {}
+    if conf_path:
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+
+    if verbose:
+        print 'User ID: %s\n' % client_id
+
+    if os.path.exists(db_path):
+        try:
+            if isinstance(db_path, dict):
+                user_db = db_path
+            else:
+                user_db = load_user_db(db_path)
+                if verbose:
+                    print 'Loaded existing user DB from: %s' % db_path
+        except Exception, err:
+            raise Exception('Failed to load user DB: %s' % err)
+
+    if not user_db.has_key(client_id):
+        raise Exception("User DB entry '%s' doesn't exist!" % client_id)
+
+    # Loop through moved sharelinks map pickle and update fs paths
+
+    (load_status, sharelinks) = load_share_links(configuration, client_id)
+    if verbose:
+        print 'Update %d sharelinks' % len(sharelinks)
+    if load_status:
+        for (share_id, share_dict) in sharelinks.items():
+            # Update owner and use generic update helper to replace symlink
+            share_dict['owner'] = client_id
+            (mod_status, err) = update_share_link(share_dict, client_id,
+                                                  configuration, sharelinks)
+            if verbose:
+                if mod_status:
+                    print 'Updated sharelink %s from %s to %s' % (share_id,
+                                                                  old_id,
+                                                                  client_id)
+                elif err:
+                    print 'Could not update owner of %s: %s' % (share_id, err)
+    else:
+        if verbose:
+            print 'Could not load sharelinks: %s' % sharelinks
+
+
 def edit_user(
     client_id,
     changes,
