@@ -945,7 +945,8 @@ def twofactor_token_html(configuration):
 <div id="twofactorbox" class="staticpage">
 <img class="sitelogo" src="%(skin_base)s/logo-left.png"><br/>
 <img class="authlogo" src="https://lh3.googleusercontent.com/HPc5gptPzRw3wFhJE1ZCnTqlvEvuVFBAsV9etfouOhdRbkp-zNtYTzKUmUVPERSZ_lAL=w300"><br/>
-  <form id="otp_token_form" action="twofactor.py" method="POST">
+  <!-- IMPORTANT: this form should not have an explicit action! -->
+  <form id="otp_token_form" method="POST">
     <input class="tokeninput" type="text" id="token" name="token"
         placeholder="Authentication Token" autocomplete="off" autofocus><br/>
     <input id="otp_token_submit" class="submit" type="submit" value="Submit">
