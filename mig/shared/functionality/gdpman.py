@@ -43,7 +43,7 @@ from shared.gdp import ensure_user, get_projects, get_users, \
     validate_user
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, jquery_ui_js, twofactor_wizard_html, \
-    twofactor_wizard_js
+    twofactor_wizard_js, twofactor_token_html
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_twofactor, parse_and_save_twofactor
@@ -117,8 +117,18 @@ def html_tmpl(
     # Generate html
 
     status_html = ""
-    html = \
-        """
+    html = ""
+    if configuration.site_enable_twofactor:
+        html += """
+<div id='otp_verify_dialog' title='Verify Authenticator App Token'
+   class='centertext hidden'>
+"""
+        # NOTE: wizard needs dialog with form outside the main settings form
+        # because nested forms cause problems
+        html += twofactor_token_html(configuration)
+        html += """</div>
+"""
+    html += """
         <form id='gm_project_submit_form' action='gdpman.py', method='post'>
         <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
         <input type='hidden' name='action' value='' />
