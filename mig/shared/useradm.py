@@ -731,6 +731,11 @@ def edit_user(
 
     old_arch_home = os.path.join(configuration.freeze_home, client_dir)
     new_arch_home = os.path.join(configuration.freeze_home, new_client_dir)
+    # Make sure (lazy created) freeze home exists
+    try:
+        os.makedirs(old_arch_home)
+    except Exception, exc:
+        pass
     delete_symlink(new_arch_home, _logger, allow_missing=True)
 
     # Rename user dirs recursively
