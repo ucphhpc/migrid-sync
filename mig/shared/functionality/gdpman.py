@@ -129,7 +129,7 @@ def html_tmpl(
         html += """</div>
 """
     html += """
-        <form id='gm_project_submit_form' action='gdpman.py', method='post'>
+        <form id='gm_project_submit_form' action='gdpman.py' method='post'>
         <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
         <input type='hidden' name='action' value='' />
         <input type='hidden' name='base_vgrid_name' value='' />
@@ -576,7 +576,7 @@ def html_logout_tmpl(configuration, csrf_token):
 
     html = \
         """
-    <form id='gm_logout_form' action='gdpman.py', method='post'>
+    <form id='gm_logout_form' action='gdpman.py' method='post'>
     <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
     <input type='hidden' name='action' value='' />
     <table class='gm_projects_table' style='border-spacing=0;'>
