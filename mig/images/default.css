@@ -1214,6 +1214,9 @@ a:hover.genericbutton {
   width: -moz-available;
   width: -webkit-fill-available;
 }
+.dbllineheight {
+  line-height: 2.0;
+}
 
 fieldset label {
     float: left;
@@ -1286,7 +1289,11 @@ div.openidlogin {
     margin-bottom: 40px;
 }
 
-/* Layout for 2FA token entry page */
+/* Layout for 2FA token entry page and verification popup */
+div.twofactorbg {
+    min-height: 360px;
+    min-width: 360px;
+}
 #content div.twofactorbg {
     min-height: 600px;
 }
@@ -1317,9 +1324,8 @@ div.openidlogin {
     width: 260px;
     height: 260px;
     left: 50%;
-    /* Footer has static position based on min-height: adjust */ 
-    /* top: 50%; */
-    top: 300px;
+    /* For popup default relative offset is fine */
+    top: 50%;
     margin-top: -150px;
     margin-left: -150px;
     border-radius: 5px;
@@ -1327,11 +1333,15 @@ div.openidlogin {
     padding: 20px;
     text-align: center;
 }
+#content #twofactorbox {
+    /* Adjust to fit page footer with static position based on min-height: adjust */ 
+    top: 300px;
+}
 #twofactorbox img.authlogo {
     width: 120px;
     height: 120px;
 }
-#content div.twofactorstatus {
+div.twofactorstatus {
     position: absolute;
     left: 50%;
     top: 100px;

@@ -44,7 +44,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
     themed_styles, console_log_javascript, twofactor_wizard_html, \
-    twofactor_wizard_js
+    twofactor_wizard_js, twofactor_token_html
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, \
@@ -1717,16 +1717,20 @@ client versions from the link above.<br/>
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-        html = '''
+        html = """
+<div id='otp_verify_dialog' title='Verify Authenticator App Token'
+   class='centertext hidden'>
+"""
+        # NOTE: wizard needs dialog with form outside the main settings form
+        # because nested forms cause problems
+        html += twofactor_token_html(configuration)
+        html += '''</div>
 <div id="twofactor">
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="twofactor fixedlayout">
 <tr class="title"><td class="centertext">
 2-Factor Authentication
-</td></tr>
-<tr><td>
-It is possible to tweak some of the two factor authentication here.
 </td></tr>
 '''
 
@@ -1737,11 +1741,6 @@ It is possible to tweak some of the two factor authentication here.
 
             # TODO: we might want to protect QR code with repeat basic login
             #       or a simple timeout since last login (cookie age).
-            html += """
-<tr><td>
-<h4>2-Factor Authentication</h4>
-</td></tr>
-"""
             html += twofactor_wizard_html(configuration)
             check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
             fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,

@@ -49,30 +49,10 @@ from shared.defaults import twofactor_cookie_bytes, twofactor_cookie_ttl
 from shared.fileio import delete_file, write_file
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
+from shared.html import twofactor_token_html
 from shared.settings import load_twofactor
 from shared.useradm import client_id_dir
 from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
-
-
-def html_tmpl(configuration):
-    """Render html for 2FA token input - similar to the template used in the
-    apache_2fa example but with a few custumizations to include our own logo
-    and force input focus on load.
-    """
-    html = '''<!-- make sure content div covers any background pattern -->
-<div class="twofactorbg">
-<div id="twofactorbox" class="staticpage">
-<img class="sitelogo" src="%(skin_base)s/logo-left.png"><br/>
-<img class="authlogo" src="https://lh3.googleusercontent.com/HPc5gptPzRw3wFhJE1ZCnTqlvEvuVFBAsV9etfouOhdRbkp-zNtYTzKUmUVPERSZ_lAL=w300"><br/>
-  <form method="POST">
-    <input class="tokeninput" type="text" id="token" name="token"
-        placeholder="Authentication Token" autocomplete="off" autofocus><br/>
-    <input class="submit" type="submit" value="Submit">
-  </form>
-</div>
-</div>
-''' % {'skin_base': configuration.site_skin_base}
-    return html
 
 
 def signature():
@@ -201,17 +181,22 @@ def main(client_id, user_arguments_dict, environ=None):
                 {'object_type': 'title', 'text': '2-Factor Authentication',
                  'skipmenu': True})
             output_objects.append({'object_type': 'html_form', 'text':
-                                   html_tmpl(configuration)})
+                                   twofactor_token_html(configuration)})
             if token:
                 logger.warning('Invalid token for %s (%s vs %s) - try again' %
                                (client_id, token,
                                 get_twofactor_token(configuration, client_id,
                                                     b32_secret)))
+                # NOTE: we keep actual result in plain text for json extract
                 output_objects.append({'object_type': 'html_form', 'text': '''
 <div class="twofactorstatus">
-<span class="error leftpad errortext">
-Incorrect token provided - please try again
-</span></div>'''})
+<div class="error leftpad errortext">
+'''})
+                output_objects.append({'object_type': 'text', 'text':
+                                       'Incorrect token provided - please try again'})
+                output_objects.append({'object_type': 'html_form', 'text': '''
+</div>
+</div>'''})
                 # TODO: proper rate limit source / user here?
                 time.sleep(3)
             return (output_objects, status)
@@ -270,15 +255,17 @@ Incorrect token provided - please try again
     else:
         output_objects.append(
             {'object_type': 'title', 'text': '2FA', 'skipmenu': True})
+        # NOTE: we keep actual result in plain text for json extract
         output_objects.append({'object_type': 'html_form', 'text': '''
 <!-- Keep similar spacing -->
 <div class="twofactorbg">
 <div class="twofactorstatus">
-<p class="centertext">
-<span class="ok leftpad">
-Correct token provided!
-</span>
-</p>
+<div class="ok leftpad">
+'''})
+        output_objects.append({'object_type': 'text', 'text':
+                               'Correct token provided!'})
+        output_objects.append({'object_type': 'html_form', 'text': '''        
+</div>
 <p>
 <a href="">Test again</a> or <a href="javascript:close();">close</a> this
 tab/window and proceed.
