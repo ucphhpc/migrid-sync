@@ -245,7 +245,6 @@ def html_tmpl(
             </td></tr>
         </tbody>
         </table>
-        </form>
         </div>"""
 
     # Show project invitations selectbox
@@ -296,7 +295,6 @@ def html_tmpl(
             </td></tr>
         </tbody>
         </table>
-        </form>
         </div>"""
 
     # Show project invite selectbox
@@ -355,7 +353,6 @@ def html_tmpl(
             </td></tr>
         </tbody>
         </table>
-        </form>
         </div>
         """
 
@@ -415,7 +412,6 @@ def html_tmpl(
             </td></tr>
         </tbody>
         </table>
-        </form>
         </div>
         """
 
@@ -470,7 +466,6 @@ def html_tmpl(
             </td></tr>
         </tbody>
         </table>
-        </form>
         </div>
         """
 
@@ -536,8 +531,7 @@ def html_tmpl(
         html += """<script>
     setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify',
                     'otp_ready']);
-</script>
-        """
+</script>"""
 
     fill_helpers.update({
         'client_id': client_id,
@@ -546,15 +540,14 @@ def html_tmpl(
     fill_entries.update(fill_helpers)
 
     html += """
-        </div>
-        """
+</div>"""
 
     # Tabs and form close tags
 
-    html += \
-        """
-        </div>
-        </form>"""
+    html += """
+</form>    
+</div>
+"""
     html = html % fill_entries
 
     if preselected_tab > 0:
