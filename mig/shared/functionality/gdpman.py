@@ -546,7 +546,6 @@ def html_tmpl(
 
     html += """
 </form>    
-</div>
 """
     html = html % fill_entries
 
