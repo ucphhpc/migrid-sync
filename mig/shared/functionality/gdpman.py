@@ -120,6 +120,7 @@ def html_tmpl(
     html = ""
     if configuration.site_enable_twofactor:
         html += """
+<div id='help_dialog' class='centertext hidden'></div>
 <div id='otp_verify_dialog' title='Verify Authenticator App Token'
    class='centertext hidden'>
 """
@@ -433,7 +434,11 @@ def html_tmpl(
         <tbody>
             <tr>
                 <td>
-                Workzone number: <a title='%(workzone_help_txt)s' href='#' onclick='return false;'><img align='top' src='%(workzone_help_icon)s' /></a>
+                Workzone number: <span  class='fakelink'
+                  onclick='showHelp(\"Workzone Help\", \"%(workzone_help_txt)s\");' />
+                  <img align='top'
+                  src='%(workzone_help_icon)s' title='%(workzone_help_txt)s'>
+                </span>
                 </td>
             </tr>
             <tr>
@@ -742,6 +747,12 @@ def js_tmpl(configuration):
         }
     }
 
+   function showHelp(title, msg) {
+        $('#help_dialog').dialog('option', 'title', title);
+        $('#help_dialog').html('<p>'+msg+'</p>');
+        $('#help_dialog').dialog('open');
+    }
+
 %s
     """ % tfa_init
     js_ready = """
@@ -750,6 +761,10 @@ def js_tmpl(configuration):
             active: preselected_tab
         });
 
+        $('#help_dialog').dialog(
+              { autoOpen: false, width: 500, modal: true, closeOnEscape: true,
+                buttons: { 'Ok': function() { $(this).dialog('close'); }}
+              });
     %s
     """ % tfa_ready
 
