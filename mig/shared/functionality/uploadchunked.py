@@ -479,7 +479,7 @@ def main(client_id, user_arguments_dict, environ=None):
                                        'text': 'wrote chunk %s at %d'
                                        % (chunk_tuple[1:], offset)})
             logger.info('wrote %s chunk at %s' % (abs_path, chunk_tuple[1:]))
-            file_entry["size"] = os.path.getsize(abs_path)
+            file_entry["size"] = get_file_size(abs_path, logger)
             # NOTE: normpath+lstrip to avoid leading // and thus no base URL
             file_entry["url"] = os.path.normpath("/%s/%s"
                                                  % (redirect_path.lstrip('/'),
