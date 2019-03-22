@@ -288,7 +288,7 @@ documentation.
         migoid_url = configuration.migserver_https_mig_oid_url
         header = 'Re: %s OpenID request for %s' % (short_title, user_name)
         txt += """This is an auto-generated intro message from %s to inform
-about the creation or renewal of your %s user OpenID account.
+about the creation or renewal of your user account with  OpenID login.
 
 You can log in with username %s and your chosen password at
 %s
@@ -299,8 +299,7 @@ hold of your login.
 
 Regards,
 The %s Admins
-""" % (short_title, migoid_title, user_email, migoid_url, short_title,
-            short_title)
+""" % (short_title, user_email, migoid_url, short_title, short_title)
     elif status == 'ACCOUNTEXPIRE':
         from_id = args_list[0]
         user_email = args_list[1]
@@ -318,8 +317,8 @@ Two letter country-code: %(country)s
 State: %(state)s""" % user_dict
         header = '%s OpenID login expire for %s' % (short_title, user_name)
         txt += """This is an automatic account access expire warning from %s.
-Basically you need to renew your %s user OpenID login before %s
-if you want to preserve that account access.
+Basically you need to renew your OpenID login before %s
+if you want to preserve that account access method.
 
 Until that date you can always simply login with your username %s and request
 semi-automatic renewal, only filling the password and comment fields at
@@ -343,8 +342,8 @@ hold of your login.
 
 Regards,
 The %s Admins
-""" % (short_title, migoid_title, expire, user_email, auth_migoid_url,
-            anon_migoid_url, id_lines, short_title, short_title)
+""" % (short_title, expire, user_email, auth_migoid_url, anon_migoid_url,
+            id_lines, short_title, short_title)
     elif status == 'FORUMUPDATE':
         vgrid_name = args_list[0]
         author = args_list[1]
