@@ -528,7 +528,7 @@ Invalid '%s' input: %s
                 penalize_rate_limit(configuration, "openid", client_ip,
                                     fail_user, failed_count)
                 # Login failed - return to refering page to let user try again
-                retry_url = self.headers.get('Referer')
+                retry_url = self.headers.get('Referer', '')
                 # Add error message to display
                 if retry_url.find('?') == -1:
                     retry_url += '?'

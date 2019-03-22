@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,11 +31,11 @@ import cgi
 import time
 
 import shared.returnvalues as returnvalues
-from shared.base import requested_page
+from shared.base import requested_page, allow_script
 from shared.defaults import download_block_size
 from shared.conf import get_configuration_object
 from shared.objecttypes import get_object_type_info
-from shared.output import validate, format_output
+from shared.output import validate, format_output, dummy_main, reject_main
 from shared.safeinput import valid_backend_name, html_escape
 from shared.scriptinput import fieldstorage_to_dict
 
@@ -44,16 +44,6 @@ def object_type_info(object_type):
     """Lookup object type"""
 
     return get_object_type_info(object_type)
-
-
-def dummy_main(client_id, user_arguments_dict):
-    """Dummy main-function to override with backend import"""
-    return ([
-        {'object_type': 'title', 'text': 'Internal Error'},
-        {'object_type': 'header', 'text': 'Internal Error'},
-        {'object_type': 'error_text', 'text':
-         "This backend should always be overriden!"}
-    ], returnvalues.SYSTEM_ERROR)
 
 
 def stub(configuration, client_id, import_path, backend, user_arguments_dict,
@@ -177,10 +167,17 @@ def application(environ, start_response):
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to dashboard if all fails
         script_path = requested_page(environ, configuration.site_landing_page)
-        backend = os.path.splitext(os.path.basename(script_path))[0]
+        script_name = os.path.basename(script_path)
+        backend = os.path.splitext(script_name)[0]
         module_path = 'shared.functionality.%s' % backend
-        (output_objs, ret_val) = stub(configuration, client_id, module_path,
-                                      backend, user_arguments_dict, environ)
+        (allow, msg) = allow_script(configuration, script_name, client_id)
+        if allow:
+            (output_objs, ret_val) = stub(configuration, client_id,
+                                          module_path, backend,
+                                          user_arguments_dict, environ)
+        else:
+            (output_objs, ret_val) = reject_main(client_id,
+                                                 user_arguments_dict)
         status = '200 OK'
     except Exception, exc:
         _logger.error("handling of WSGI request for %s from %s failed: %s" %
@@ -210,11 +207,11 @@ def application(environ, start_response):
         if entry['object_type'] == 'start':
             start_entry = entry
     if not start_entry:
-        #_logger.debug("WSGI adding explicit headers: %s" % default_headers)
+        # _logger.debug("WSGI adding explicit headers: %s" % default_headers)
         start_entry = {'object_type': 'start', 'headers': default_headers}
         output_objs = [start_entry] + output_objs
     elif not start_entry.get('headers', []):
-        #_logger.debug("WSGI adding missing headers: %s" % default_headers)
+        # _logger.debug("WSGI adding missing headers: %s" % default_headers)
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
 
@@ -230,7 +227,7 @@ def application(environ, start_response):
 
     content_length = len(output)
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
-        #_logger.debug("WSGI adding explicit content length %s" % content_length)
+        # _logger.debug("WSGI adding explicit content length %s" % content_length)
         response_headers.append(('Content-Length', str(content_length)))
 
     start_response(status, response_headers)

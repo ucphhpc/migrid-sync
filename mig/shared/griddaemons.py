@@ -138,9 +138,6 @@ class Login(object):
         self.home = home
         if self.home is None:
             self.home = self.username
-        if configuration.site_enable_gdp:
-            project_name = get_project_from_user_id(configuration, username)
-            self.home = os.path.join(self.home, project_name)
 
     def __str__(self):
         """Byte string formater - username is already forced to utf8 so other
@@ -698,6 +695,12 @@ def refresh_user_creds(configuration, protocol, username):
             # Allow both raw alias field value and asciified alias
             # logger.debug("find short_alias for %s" % short_id)
             short_alias = client_alias(short_id)
+        # In GDP-mode user must be chrooted to project home for IO daemons
+        # but obviously not for the OpenID login prior to project login.
+        if configuration.site_enable_gdp and private_auth_file and \
+                protocol != 'openid':
+            project_name = get_project_from_user_id(configuration, user_id)
+            user_dir = os.path.join(user_dir, project_name)
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
         update_user_objects(configuration,
                             auth_file,
@@ -793,6 +796,12 @@ def refresh_users(configuration, protocol):
             cur_usernames.append(short_alias)
         if last_update >= os.path.getmtime(path):
             continue
+        # In GDP-mode user must be chrooted to project home for IO daemons
+        # but obviously not for the OpenID login prior to project login.
+        if configuration.site_enable_gdp and private_auth_file and \
+                protocol != 'openid':
+            project_name = get_project_from_user_id(configuration, user_id)
+            user_dir = os.path.join(user_dir, project_name)
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
         update_user_objects(configuration,
                             auth_file,

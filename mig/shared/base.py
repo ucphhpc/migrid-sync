@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - shared base helper functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,8 @@ import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from shared.defaults import sandbox_names, _user_invisible_files, \
-    _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order
+    _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, \
+    valid_gdp_auth_scripts, valid_gdp_anon_scripts
 
 _id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
 _key_val_sep = '='
@@ -315,6 +316,35 @@ def valid_dir_input(base, variable):
     return True
 
 
+def allow_script(configuration, script_name, client_id):
+    """Helper to detect if script_name is allowed to run or not based on site
+    configuration. I.e. GDP-mode disables a number of functionalities.
+    """
+    _logger = configuration.logger
+    #_logger.debug("in allow_script for %s from %s" % (script_name, client_id))
+    if configuration.site_enable_gdp:
+        #_logger.debug("in allow_script gdp for %s" % script_name)
+        reject_append = " functionality disabled by site configuration!"
+        if not client_id:
+            if script_name in valid_gdp_anon_scripts:
+                allow = True
+                msg = ""
+            else:
+                allow = False
+                msg = "anonoymous access to" + reject_append
+        else:
+            if script_name in valid_gdp_auth_scripts + valid_gdp_anon_scripts:
+                allow = True
+                msg = ""
+            else:
+                allow = False
+                msg = "all access to" + reject_append
+    else:
+        allow, msg = True, ''
+    #_logger.debug("allow_script returns %s for %s" % (allow, script_name))
+    return (allow, msg)
+
+
 if __name__ == '__main__':
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'
     client_dir = client_id_dir(orig_id)
@@ -348,3 +378,13 @@ if __name__ == '__main__':
     print "make sure these are not invisible:"
     for path in legal:
         print "  %s: %s" % (path, not invisible_path(path))
+
+    from shared.conf import get_configuration_object
+    configuration = get_configuration_object()
+    print "check script restrictions:"
+    for script_name in ['reqoid.py', 'ls.py', 'sharelink.py', 'put']:
+        (allow, msg) = allow_script(configuration, script_name, '')
+        print "check %s without client id: %s %s" % (script_name, allow, msg)
+        (allow, msg) = allow_script(configuration, script_name, client_id)
+        print "check %s with client id '%s': %s %s" % (script_name, client_id,
+                                                       allow, msg)

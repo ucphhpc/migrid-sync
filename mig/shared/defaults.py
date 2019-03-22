@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -351,3 +351,34 @@ STRONG_SSH_LEGACY_MACS = ",".join([BEST_SSH_LEGACY_MACS, SAFE_SSH_LEGACY_MACS])
 
 # A pattern to match usernames unambiguously identifying cracking attempts
 CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|lp|operator|controller|ftp|irc|nobody|sys|pi|guest|www|www-data|mysql|postgres|oracle|mongodb|sybase|redis|hadoop|zimbra|cpanel|plesk|openhabian|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|uucp|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|ubnt|supervisor|csgoserver|device|laboratory|deploy|support|info|test[0-9]*|user[0-9]*|[0-9]+|root;[a-z0-9]+)'
+
+# GDP mode settings
+# NOTE: these are Xgi-bin scripts to allow
+valid_gdp_auth_scripts = [
+    'autocreate.py',
+    'autologout.py',
+    'cat.py',
+    'cp.py',
+    'fileman.py',
+    'gdpman.py',
+    'logout.py',
+    'ls.py',
+    'mkdir.py',
+    'mv.py',
+    'rm.py',
+    'settings.py',
+    'settingsaction.py',
+    'twofactor.py',
+    'uploadchunked.py',
+]
+# NOTE: these are cgi-sid scripts to allow
+valid_gdp_anon_scripts = [
+    'reqoid.py',
+    'reqoidaction.py',
+    'reqcert.py',
+    'reqcertaction.py',
+    'oiddiscover.py',
+    'oidping.py',
+    'login.py',
+    'signup.py',
+]

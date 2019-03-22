@@ -44,7 +44,8 @@ except:
 
 from shared.base import client_id_dir, valid_dir_input
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
-    io_session_timeout, user_db_filename as mig_user_db_filename
+    io_session_timeout, user_db_filename as mig_user_db_filename, \
+    valid_gdp_auth_scripts as valid_auth_scripts
 from shared.fileio import touch, make_symlink, write_file, remove_rec, \
     acquire_file_lock, release_file_lock
 from shared.notification import send_email
@@ -70,24 +71,6 @@ skip_client_id_rewrite = [
     'twofactor.py',
     'vgridman.py',
     'viewvgrid.py',
-]
-
-valid_scripts = [
-    'autocreate.py',
-    'autologout.py',
-    'cat.py',
-    'cp.py',
-    'fileman.py',
-    'gdpman.py',
-    'logout.py',
-    'ls.py',
-    'mkdir.py',
-    'mv.py',
-    'rm.py',
-    'settings.py',
-    'settingsaction.py',
-    'twofactor.py',
-    'uploadchunked.py',
 ]
 
 valid_log_actions = [
@@ -1334,13 +1317,14 @@ def get_project_user_dn(configuration, requested_script, client_id, protocol):
     # Check for valid GDP script
 
     valid = False
-    for script in valid_scripts:
+    for script in valid_auth_scripts:
         if requested_script.find(script) > -1:
             valid = True
             break
     if not valid:
         _logger.error(log_err_msg
-                      + ": _NOT_ in valid_scripts: %s" % valid_scripts)
+                      + ": _NOT_ in valid_auth_scripts: %s" %
+                      valid_auth_scripts)
     else:
 
         # Check if requested_script operates with original client_id
@@ -2168,7 +2152,7 @@ def project_open(
         + ", opened project: '%s'" % project_name
     log_err_msg = "GDP: User: '%s' from ip: %s, protocol: '%s'" \
         % (user_id, client_addr, protocol) \
-        + ", failed to opened project: '%s'" % project_name
+        + ", failed to open project: '%s'" % project_name
 
     # NOTE: validate_user updates timestamp, extract active_project first
     active_project = __active_project(configuration,

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgiscriptstub - cgi wrapper functions for functionality backends
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,11 +33,13 @@ cgitb.enable()
 import os
 import time
 
-from shared.base import requested_page
+from shared.base import requested_page, allow_script
 from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
-from shared.output import format_output
+from shared.output import format_output, reject_main
+from shared.returnvalues import CLIENT_ERROR
 from shared.scriptinput import fieldstorage_to_dict
+
 
 def init_cgi_script(environ, delayed_input=None):
     """Shared init"""
@@ -79,16 +81,16 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg,
 
     output = format_output(configuration, ret_code, ret_msg, output_objs,
                            output_format)
-    
+
     # Explicit None means error during output formatting - empty string is okay
 
     if output is None:
         output = 'Error: output could not be correctly delivered!'
 
-    header_out = '\n'.join(["%s: %s" % (key, val) for (key, val) in headers]) 
-    
+    header_out = '\n'.join(["%s: %s" % (key, val) for (key, val) in headers])
+
     # configuration.logger.debug("raw output:\n%s\n%s" % (header_out, output))
-    
+
     print header_out
     print ''
 
@@ -116,7 +118,7 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     # Always rely on os.environ here since only called from cgi scripts
     environ = os.environ
     (configuration, logger, client_id, user_arguments_dict) = \
-                    init_cgi_script(environ, delayed_input)
+        init_cgi_script(environ, delayed_input)
 
     # default to html output
 
@@ -124,12 +126,19 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
 
     # TODO: add environ arg support to all main backends and use here
 
+    script_name = os.path.basename(environ.get('SCRIPT_NAME', 'UNKNOWN'))
+    logger.debug("check allow script %s from %s" % (script_name, client_id))
+    (allow, msg) = allow_script(configuration, script_name, client_id)
     try:
+        if not allow:
+            logger.warning("script %s rejected: %s" % (script_name, msg))
+            # Override main function with reject helper
+            main = reject_main
         (out_obj, (ret_code, ret_msg)) = main(client_id, user_arguments_dict)
     except:
         import traceback
         logger.error("script crashed:\n%s" % traceback.format_exc())
-        
+
     after_time = time.time()
     out_obj.append({'object_type': 'timing_info', 'text':
                     "done in %.3fs" % (after_time - before_time)})
@@ -137,6 +146,7 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
         output_format = user_arguments_dict.get('output_format', ['html'])[-1]
 
     finish_cgi_script(configuration, output_format, ret_code, ret_msg, out_obj)
+
 
 def run_cgi_script(main, delayed_input=None, delay_format=False):
     """Just a wrapper for run_cgi_script_possibly_with_cert now since we always

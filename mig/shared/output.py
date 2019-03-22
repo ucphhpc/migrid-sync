@@ -44,6 +44,26 @@ from shared.safeinput import html_escape
 row_name = ('even', 'odd')
 
 
+def reject_main(client_id, user_arguments_dict):
+    """A simple main-function to use if functionality backend is disabled"""
+    return ([
+        {'object_type': 'title', 'text': 'Access Error'},
+        {'object_type': 'header', 'text': 'Access Error'},
+        {'object_type': 'error_text', 'text':
+         "This backend is disabled by site configuration!"}
+    ], returnvalues.CLIENT_ERROR)
+
+
+def dummy_main(client_id, user_arguments_dict):
+    """Dummy main-function to override with backend import"""
+    return ([
+        {'object_type': 'title', 'text': 'Internal Error'},
+        {'object_type': 'header', 'text': 'Internal Error'},
+        {'object_type': 'error_text', 'text':
+         "This backend should always be overriden!"}
+    ], returnvalues.SYSTEM_ERROR)
+
+
 def txt_table_if_have_keys(header, input_dict, keywordlist):
     """create txt table contents based on keys in a dictionary"""
 
