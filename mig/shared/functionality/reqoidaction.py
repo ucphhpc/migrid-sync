@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoidaction - handle OpenID account requests and send email to admins
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -240,7 +240,7 @@ administrators. Please contact them manually on %s if this error persists.'''
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('Wrote OpenID account request to %s' % req_path)
-    tmp_id = req_path.replace(user_pending, '')
+    tmp_id = os.path.basename(req_path)
     user_dict['tmp_id'] = tmp_id
 
     mig_user = os.environ.get('USER', 'mig')
