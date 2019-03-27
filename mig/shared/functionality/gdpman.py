@@ -106,13 +106,13 @@ def html_tmpl(
         if user_dict and vgrid_create_allowed(configuration,
                                               user_dict):
             create_projects = True
+            invite_projects = get_projects(
+                configuration, client_id, 'accepted', owner_only=True)
+            remove_projects = get_projects(
+                configuration, client_id, 'accepted', owner_only=True)
         accepted_projects = get_projects(configuration, client_id,
                                          'accepted')
         invited_projects = get_projects(configuration, client_id, 'invited')
-        invite_projects = get_projects(
-            configuration, client_id, 'accepted', owner_only=True)
-        remove_projects = get_projects(
-            configuration, client_id, 'accepted', owner_only=True)
 
     # Generate html
 
