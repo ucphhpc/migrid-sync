@@ -32,6 +32,7 @@
 # processname: grid_webdavs.py
 ## processname: grid_davs.py
 # processname: grid_ftps.py
+# processname: grid_notify.py
 # processname: grid_imnotify.py
 # processname: grid_vmproxy.py
 # processname: sshd
@@ -80,6 +81,7 @@ MIG_SFTPSUBSYS_WORKER=${MIG_CODE}/server/sftp_subsys.py
 MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
 MIG_DAVS=${MIG_CODE}/server/grid_davs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
+MIG_NOTIFY=${MIG_CODE}/server/grid_notify.py
 MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
 MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 MIG_CHKUSERROOT=${MIG_CODE}/server/chkuserroot.py
@@ -88,7 +90,7 @@ MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|notify|imnotify|vmproxy|all)"
 }
 
 check_enabled() {
@@ -269,6 +271,19 @@ start_ftps() {
     [ $RET2 ] || echo "Warning: ftps not started."
     echo
 }
+start_notify() {
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG notify daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+       "${DAEMON_PATH} >> ${MIG_LOG}/notify.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: notify not started."
+    echo
+}
 start_imnotify() {
     check_enabled "imnotify" || return
     DAEMON_PATH=${MIG_IMNOTIFY}
@@ -326,6 +341,7 @@ start_all() {
     start_webdavs
     #start_davs
     start_ftps
+    start_notify
     start_imnotify
     start_vmproxy
     return 0
@@ -454,6 +470,14 @@ stop_ftps() {
     killproc ${DAEMON_PATH}
     echo
 }
+stop_notify() {
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG notify: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
 stop_imnotify() {
     check_enabled "imnotify" || return
     DAEMON_PATH=${MIG_IMNOTIFY}
@@ -508,6 +532,7 @@ stop_all() {
     stop_webdavs
     #stop_davs
     stop_ftps
+    stop_notify
     stop_imnotify
     stop_vmproxy
     return 0
@@ -612,6 +637,14 @@ reload_ftps() {
     killproc ${DAEMON_PATH} -HUP
     echo
 }
+reload_notify() {
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG notify: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
 reload_imnotify() {
     check_enabled "imnotify" || return
     DAEMON_PATH=${MIG_IMNOTIFY}
@@ -679,6 +712,7 @@ reload_all() {
     reload_webdavs
     #reload_davs
     reload_ftps
+    reload_notify
     reload_imnotify
     reload_vmproxy
     # Apache helpers to verify proper chrooting
@@ -764,6 +798,12 @@ status_ftps() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH} 
 }
+status_notify() {
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH} 
+}
 status_imnotify() {
     check_enabled "imnotify" || return
     DAEMON_PATH=${MIG_IMNOTIFY}
@@ -805,6 +845,7 @@ status_all() {
     status_webdavs
     #status_davs
     status_ftps
+    status_notify
     status_imnotify
     status_vmproxy
     return 0
@@ -818,7 +859,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|notify|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')

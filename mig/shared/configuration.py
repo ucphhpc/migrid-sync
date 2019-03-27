@@ -107,6 +107,7 @@ def fix_missing(config_file, verbose=True):
         'events_home': '~/state/events_home/',
         'twofactor_home': '~/state/twofactor_home/',
         'gdp_home': '~/state/gdp_home/',
+        'notify_home': '~/state/notify_home',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
         'site_vgrid_label': 'VGrid',
@@ -189,6 +190,7 @@ def fix_missing(config_file, verbose=True):
         'user_events_log': 'events.log',
         'user_cron_log': 'cron.log',
         'user_transfers_log': 'transfers.log',
+        'user_notify_log': 'notify.log',
         'user_shared_dhparams': '~/certs/dhparams.pem',
         'logfile': 'server.log',
         'loglevel': 'info',
@@ -302,6 +304,7 @@ class Configuration:
     events_home = ''
     twofactor_home = ''
     gdp_home = ''
+    notify_home = ''
     seafile_mount = ''
     openid_store = ''
     paraview_home = ''
@@ -397,6 +400,7 @@ class Configuration:
     user_events_log = 'events.log'
     user_cron_log = 'cron.log'
     user_transfers_log = 'transfers.log'
+    user_notify_log = 'notify.log'
     user_shared_dhparams = ''
     user_imnotify_address = ''
     user_imnotify_port = 6667
@@ -696,10 +700,12 @@ location.""" % self.config_file
             self.events_home = config.get('GLOBAL', 'events_home')
         if config.has_option('GLOBAL', 'twofactor_home'):
             self.twofactor_home = config.get('GLOBAL', 'twofactor_home')
-        if config.has_option('GLOBAL', 'vm_home'):
-            self.vm_home = config.get('GLOBAL', 'vm_home')
         if config.has_option('GLOBAL', 'gdp_home'):
             self.gdp_home = config.get('GLOBAL', 'gdp_home')
+        if config.has_option('GLOBAL', 'notify_home'):
+            self.notify_home = config.get('GLOBAL', 'notify_home')
+        if config.has_option('GLOBAL', 'vm_home'):
+            self.vm_home = config.get('GLOBAL', 'vm_home')
         if config.has_option('GLOBAL', 'freeze_home'):
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
         if config.has_option('GLOBAL', 'sharelink_home'):
@@ -1493,6 +1499,9 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_transfers_log'):
             self.user_transfers_log = config.get(
                 'GLOBAL', 'user_transfers_log')
+        if config.has_option('GLOBAL', 'user_notify_log'):
+            self.user_transfers_log = config.get(
+                'GLOBAL', 'user_notify_log')
         syslog_gdp = None
         if config.has_option('SITE', 'enable_gdp'):
             self.site_enable_gdp = config.getboolean('SITE', 'enable_gdp')
@@ -1697,7 +1706,8 @@ location.""" % self.config_file
                          'user_openid_log', 'user_monitor_log',
                          'user_sshmux_log', 'user_vmproxy_log',
                          'user_events_log', 'user_cron_log',
-                         'user_transfers_log', 'user_imnotify_log',
+                         'user_transfers_log', 'user_notify_log',
+                         'user_imnotify_log',
                          'user_chkuserroot_log', 'user_chksidroot_log'):
             _log_path = getattr(self, _log_var)
             if not os.path.isabs(_log_path):

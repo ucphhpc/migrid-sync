@@ -29,8 +29,10 @@
 
 import datetime
 import os
+import pickle
 import smtplib
 import threading
+import time
 from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
@@ -38,11 +40,13 @@ from email.mime.text import MIMEText
 from email.Utils import formatdate
 from urllib import quote
 
-from shared.base import force_utf8, generate_https_urls
+from shared.base import force_utf8, generate_https_urls, extract_field
 from shared.defaults import email_keyword_list, job_output_dir, \
     transfer_output_dir
+from shared.fileio import send_message_to_grid_notify
 from shared.safeinput import is_valid_simple_email
 from shared.settings import load_settings
+from shared.useradm import expand_openid_alias
 
 # might be python 2.4, without xml.etree
 # ...in which case: better not configure usage_record_dir
@@ -288,7 +292,7 @@ documentation.
         migoid_url = configuration.migserver_https_mig_oid_url
         header = 'Re: %s OpenID request for %s' % (short_title, user_name)
         txt += """This is an auto-generated intro message from %s to inform
-about the creation or renewal of your user account with  OpenID login.
+about the creation or renewal of your user account with OpenID login.
 
 You can log in with username %s and your chosen password at
 %s
@@ -719,3 +723,28 @@ def parse_im_relay(path):
         status += 'IM relay parsing failed: %s' % err
 
     return (status, protocol, address, header, msg)
+
+
+def send_system_notification(user_id, category, message, configuration):
+    """Send system notification to *user_id* through grid_notify"""
+    logger = configuration.logger
+    
+    client_id = expand_openid_alias(user_id, configuration)
+    if not client_id or not extract_field(client_id, 'email'):
+        logger.error("send_system_notification: Invalid user_id: %s" % user_id)
+        return False
+
+    if not isinstance(category, list):
+        logger.error("send_system_notification: category must be a list")
+        return False
+    
+    notification = {'category': category,
+                    'user_id': user_id,
+                    'message': message,
+                    'timestamp': time.time(),
+                    }
+    pickled_notification = pickle.dumps(notification)
+
+    return send_message_to_grid_notify(pickled_notification,
+                                       configuration.logger,
+                                       configuration)

@@ -53,6 +53,7 @@ MIG_SFTPSUBSYS_WORKER=${MIG_CODE}/server/sftp_subsys.py
 MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
 MIG_DAVS=${MIG_CODE}/server/grid_davs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
+MIG_NOTIFY=${MIG_CODE}/server/grid_notify.py
 MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
 MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 MIG_CHKUSERROOT=${MIG_CODE}/server/chkuserroot.py
@@ -61,7 +62,7 @@ MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|notify|imnotify|vmproxy|all)"
 }
 
 check_enabled() {
@@ -220,6 +221,17 @@ start_ftps() {
 	log_end_msg 1 || true
     fi
 }
+start_notify() {
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG notify daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER}  --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
+    log_end_msg 0 || true
+    else
+    log_end_msg 1 || true
+    fi
+}
 start_imnotify() {
     check_enabled "imnotify" || return 0
     DAEMON_PATH=${MIG_IMNOTIFY}
@@ -269,6 +281,7 @@ start_all() {
     start_webdavs
     #start_davs
     start_ftps
+    start_notify
     start_imnotify
     start_vmproxy
     return 0
@@ -455,6 +468,18 @@ stop_ftps() {
 	log_end_msg 1 || true
     fi
 }
+stop_notify() {
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG notify" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
+    log_end_msg 0 || true
+    else
+    log_end_msg 1 || true
+    fi
+}
 stop_imnotify() {
     check_enabled "imnotify" || return 0
     DAEMON_PATH=${MIG_IMNOTIFY}
@@ -517,6 +542,7 @@ stop_all() {
     stop_webdavs
     #stop_davs
     stop_ftps
+    stop_notify
     stop_imnotify
     stop_vmproxy
     return 0
@@ -655,6 +681,17 @@ reload_ftps() {
 	log_end_msg 1 || true
     fi
 }
+reload_notify() {
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Reloading MiG notify" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --signal HUP --quiet --oknodo --pidfile ${PID_FILE} ; then
+    log_end_msg 0 || true
+    else
+    log_end_msg 1 || true
+    fi
+}
 reload_imnotify() {
     check_enabled "imnotify" || return 0
     DAEMON_PATH=${MIG_IMNOTIFY}
@@ -728,6 +765,7 @@ reload_all() {
     reload_webdavs
     #reload_davs
     reload_ftps
+    reload_notify
     reload_imnotify
     reload_vmproxy
     # Apache helpers to verify proper chrooting
@@ -813,6 +851,12 @@ status_ftps() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
+status_notify() {
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
+}
 status_imnotify() {
     check_enabled "imnotify" || return 0
     DAEMON_PATH=${MIG_IMNOTIFY}
@@ -854,6 +898,7 @@ status_all() {
     status_webdavs
     #status_davs
     status_ftps
+    status_notify
     status_imnotify
     status_vmproxy
     return 0
@@ -867,7 +912,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|notify|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')

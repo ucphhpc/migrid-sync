@@ -303,6 +303,30 @@ def send_message_to_grid_script(message, logger, configuration):
         return False
 
 
+def send_message_to_grid_notify(message, logger, configuration):
+    """Write message to notify home"""
+    try:
+        (filedescriptor, filepath) = make_temp_file(
+                                        suffix='.%s' % time.time(),
+                                        prefix='',
+                                        dir=configuration.notify_home)
+        filehandle = os.fdopen(filedescriptor, 'a')
+        filehandle.write(message)
+        filehandle.close()
+        return True
+    except Exception, err:
+        logger.error("Failed to send_message_to_grid_notify: %s" % err)
+        try: 
+            filehandle.close()
+        except Exception, err:
+            pass
+        try:
+            os.remove(filepath)        
+        except Exception, err:
+            pass
+        return False
+
+
 def touch(filepath, configuration, timestamp=None):
     """Create or update timestamp for filepath"""
     try:
