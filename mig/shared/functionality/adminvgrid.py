@@ -110,7 +110,7 @@ def main(client_id, user_arguments_dict):
                                                     {'width': 600})
     add_init += '''
         var toggleHidden = function(classname) {
-            // classname supposed to have a leading dot 
+            // classname supposed to have a leading dot
             $(classname).toggleClass("hidden");
         };
         /* helpers for dynamic form input fields */
@@ -353,6 +353,9 @@ def main(client_id, user_arguments_dict):
                 share_item = build_sharelinkitem_object(
                     configuration, share_dict)
                 sharelinks.append(share_item)
+    else:
+        logger.warning("failed to load vgrid sharelinks for %s: %s" %
+                       (vgrid_name, share_list))
 
     output_objects.append({'object_type': 'sectionheader',
                            'text': "Share Links"})
@@ -446,7 +449,7 @@ the corresponding participants. Similarly setting a visibility flag to
     else:
         direct_note = _keep_note
     settings_form += '''
-            <h4>Restrict Settings</h4> 
+            <h4>Restrict Settings</h4>
             Restrict changing of these settings to only the first
             <input type="number" name="restrict_settings_adm" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
@@ -461,7 +464,7 @@ the corresponding participants. Similarly setting a visibility flag to
     else:
         direct_note = _keep_note
     settings_form += '''
-            <h4>Restrict Owner Administration</h4> 
+            <h4>Restrict Owner Administration</h4>
             Restrict administration of owners to only the first
             <input type="number" name="restrict_owners_adm" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
@@ -476,7 +479,7 @@ the corresponding participants. Similarly setting a visibility flag to
     else:
         direct_note = _keep_note
     settings_form += '''
-            <h4>Restrict Member Administration</h4> 
+            <h4>Restrict Member Administration</h4>
             Restrict administration of members to only the first
             <input type="number" name="restrict_members_adm" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
@@ -491,7 +494,7 @@ the corresponding participants. Similarly setting a visibility flag to
     else:
         direct_note = _keep_note
     settings_form += '''
-            <h4>Restrict Resource Administration</h4> 
+            <h4>Restrict Resource Administration</h4>
             Restrict administration of resources to only the first
             <input type="number" name="restrict_resources_adm" min=0 max=999
             minlength=1 maxlength=3 value=%d required />
@@ -567,7 +570,7 @@ yet supported and thus are disabled below.
     else:
         direct_note = _keep_note
     settings_form += '''
-            <h4>Request Recipients</h4> 
+            <h4>Request Recipients</h4>
             Notify only first
             <input type="number" name="request_recipients" min=0 max=999
             minlength=1 maxlength=3 value=%d required />

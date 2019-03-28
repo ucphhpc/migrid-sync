@@ -44,8 +44,8 @@ import time
 from shared.base import invisible_path
 from shared.defaults import trash_destdir, trash_linkname
 from shared.gdp import get_project_from_client_id, project_log
-from shared.vgrid import in_vgrid_share, in_vgrid_writable, in_vgrid_priv_web, \
-    in_vgrid_pub_web
+from shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
+    in_vgrid_priv_web, in_vgrid_pub_web
 
 ACTIONS = (CREATE, MODIFY, MOVE, DELETE) = "create", "modify", "move", "delete"
 
@@ -60,7 +60,7 @@ def get_home_location(configuration, path):
         suffix = suffix.split(os.sep, 1)[0]
         return os.path.join(configuration.user_home, suffix)
     elif real_path.startswith(configuration.vgrid_files_home):
-        suffix = in_vgrid_share(configuration, real_path)
+        suffix = in_vgrid_legacy_share(configuration, real_path)
         return os.path.join(configuration.vgrid_files_home, suffix)
     elif real_path.startswith(configuration.vgrid_files_writable):
         suffix = in_vgrid_writable(configuration, real_path)

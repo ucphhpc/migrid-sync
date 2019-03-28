@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1659,12 +1659,23 @@ def in_vgrid_readonly(configuration, path):
                               configuration.vgrid_files_readonly, flat=True)
 
 
-def in_vgrid_share(configuration, path):
-    """Checks if path is inside a vgrid share and returns the name of the
-    deepest such sub-vgrid it is inside if so.
+def in_vgrid_legacy_share(configuration, path):
+    """Checks if path is inside a vgrid legacy share and returns the name of
+    the deepest such sub-vgrid it is inside if so.
     """
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_files_home)
+
+
+def in_vgrid_share(configuration, path):
+    """Checks if path is inside a vgrid share on either current or legacy
+    format and returns the name of the deepest such sub-vgrid it is inside if
+    so.
+    """
+    modern = in_vgrid_writable(configuration, path)
+    if modern:
+        return modern
+    return in_vgrid_legacy_share(configuration, path)
 
 
 def in_vgrid_priv_web(configuration, path):

@@ -229,8 +229,7 @@ def handle_dir(
         # configuration.logger.debug("checking link %s type (%s)" % \
         #                           (dirname_with_dir, real_dir))
         # Separate vgrid special dirs from plain ones
-        if dirname_with_dir in (in_vgrid_share(configuration, actual_dir),
-                                in_vgrid_writable(configuration, actual_dir)):
+        if in_vgrid_share(configuration, actual_dir) == dirname_with_dir:
             dir_type = 'shared files'
             extra_class = 'vgridshared'
         elif in_vgrid_readonly(configuration, actual_dir) == dirname_with_dir:
