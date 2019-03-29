@@ -1670,11 +1670,15 @@ def in_vgrid_legacy_share(configuration, path):
 def in_vgrid_share(configuration, path):
     """Checks if path is inside a vgrid share on either current or legacy
     format and returns the name of the deepest such sub-vgrid it is inside if
-    so.
+    so. Please note that for modern vgrids the path may be either writable or
+    readonly, so both must be checked.
     """
-    modern = in_vgrid_writable(configuration, path)
-    if modern:
-        return modern
+    modern_writable = in_vgrid_writable(configuration, path)
+    if modern_writable:
+        return modern_writable
+    modern_readonly = in_vgrid_readonly(configuration, path)
+    if modern_readonly:
+        return modern_readonly
     return in_vgrid_legacy_share(configuration, path)
 
 
