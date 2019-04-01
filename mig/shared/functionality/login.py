@@ -49,7 +49,8 @@ def signature(configuration):
 
     defaults = {'show': configuration.site_login_methods,
                 'modauthopenid.error': [''],
-                'modauthopenid.referrer': ['']}
+                'modauthopenid.referrer': [''],
+                'redirect_url': ['']}
     return ['html_form', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -73,6 +74,8 @@ def main(client_id, user_arguments_dict):
         logger.info('%s showing default topics' % op_name)
         show = defaults['show']
     openid_error = ', '.join(accepted['modauthopenid.error'])
+    # OpenID server errors may return here with redirect url set
+    redirect_url = accepted['redirect_url'][-1]
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s login selector' % configuration.short_title
@@ -109,6 +112,10 @@ def main(client_id, user_arguments_dict):
 <br />
 Please report the problem to your OpenID identity provider.
 """ % configuration.short_title
+        if redirect_url:
+            report_fail += """<br />The error happened on access to %s ."""  \
+                           % redirect_url
+            
         if 'no_idp_found' in openid_error:
             err_txt += "OpenID server did not respond!"
             report_txt += """It appears the requested OpenID login service is
@@ -122,6 +129,7 @@ below.""" % configuration.short_title
             err_txt += "OpenID server error!"
             report_txt += """It appears there's a problem with the requested
 OpenID login service""" + report_fail
+
         html += """<h2>OpenID Login to %s Failed!</h2>
 <div class='errortext'>
 %s (error code(s): %s)
