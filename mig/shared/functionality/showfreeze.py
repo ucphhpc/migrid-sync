@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -213,7 +213,7 @@ Please contact the site admins %s if you think it should be enabled.
         # insert dummy placeholder to build table
         output_objects.append({'object_type': 'frozenarchive',
                                'id': freeze_id, 'creator': client_id,
-                               'flavor': 'freeze',  'frozenfiles': [],
+                               'flavor': flavor,  'frozenfiles': [],
                                'name': 'loading ...',
                                'description': 'loading ...',
                                'created': 'loading ...',
@@ -259,6 +259,7 @@ then finalize it for actual persistent freezing.
                                      client_id, csrf_limit)
         helper = html_post_helper('createfreeze', '%s.py' % target_op,
                                   {'freeze_id': freeze_id,
+                                   'flavor': flavor,
                                    'freeze_state': keyword_final,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})

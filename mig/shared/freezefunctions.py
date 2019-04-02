@@ -280,8 +280,13 @@ def list_frozen_archives(configuration, client_id, strict_owner=False):
 def is_frozen_archive(client_id, freeze_id, configuration):
     """Check that freeze_id is an existing frozen archive. I.e. that it is
     available either in the new client_id sub-dir or directly in the legacy
-    freeze_home location.
+    freeze_home location. Importantly in the latter case it MUST have the right
+    owner.
+    We do accept owner differences for archives in the new layout, because they
+    should only ever end up like that due to edituser where we don't change
+    published archive owner due to conistency considerations.
     """
+    _logger = configuration.logger
     # TODO: remove legacy look-up directly in freeze_home when migrated
     client_dir = client_id_dir(client_id)
     user_archives = os.path.join(configuration.freeze_home, client_dir)
@@ -289,6 +294,18 @@ def is_frozen_archive(client_id, freeze_id, configuration):
         freeze_path = os.path.join(archive_home, freeze_id)
         if os.path.isdir(freeze_path) and \
                 os.path.isfile(os.path.join(freeze_path, freeze_meta_filename)):
+            # NOTE: we MUST check owner for legacy archives for access control
+            if archive_home == configuration.freeze_home:
+                (meta_status, meta_out) = get_frozen_meta(client_id, freeze_id,
+                                                          configuration)
+                if not meta_status:
+                    _logger.warning("skip archive %s with broken metadata" %
+                                    freeze_id)
+                    continue
+                if meta_out['CREATOR'] != client_id:
+                    _logger.warning("skip old archive %s with wrong owner %s"
+                                    % (freeze_id, meta_out['CREATOR']))
+                    continue
             return True
     return False
 
@@ -910,8 +927,8 @@ def commit_frozen_archive(freeze_dict, arch_dir, configuration):
         _logger.info("%s archive %s of %s marked %s with %s files of %sb" %
                      (freeze_dict['FLAVOR'], freeze_id, freeze_dict['CREATOR'],
                       freeze_dict['STATE'], total_files, total_size))
-        _logger.info("freeze %s finalized with on-tape deadline %s" %
-                     (freeze_id, on_tape_date))
+        _logger.info("%s archive %s finalized with on-tape deadline %s" %
+                     (freeze_dict['FLAVOR'], freeze_id, on_tape_date))
     freeze_dict['LOCATION'] = archive_locations
     _logger.info("update meta for %s" % freeze_id)
     try:
