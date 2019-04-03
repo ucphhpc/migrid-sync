@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 #
-# fixsharelinks - update sharelinks for legacy edituser victims
+# fixusersharelinks - update sharelinks for legacy edituser victims
 # Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -35,10 +35,10 @@ them to the current user home and updating the pickled owner info.
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, fix_sharelinks
+from shared.useradm import init_user_adm, fix_user_sharelinks
 
 
-def usage(name='fixsharelinks.py'):
+def usage(name='fixusersharelinks.py'):
     """Usage help"""
 
     print """Update user sharelinks to fix any links not previously handled by
@@ -91,7 +91,7 @@ if '__main__' == __name__:
 
     old_id, new_id = args[0], args[1]
     try:
-        fix_sharelinks(old_id, new_id, conf_path, db_path, verbose)
+        fix_user_sharelinks(old_id, new_id, conf_path, db_path, verbose)
     except Exception, err:
         print err
         sys.exit(1)

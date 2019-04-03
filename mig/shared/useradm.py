@@ -57,9 +57,11 @@ from shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
 from shared.settings import update_settings, update_profile, update_widgets
-from shared.sharelinks import load_share_links, update_share_link
+from shared.sharelinks import load_share_links, update_share_link, \
+    get_share_link, mode_chars_map
 from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
-    vgrid_add_members, vgrid_remove_members
+    vgrid_add_members, vgrid_remove_members, in_vgrid_share, \
+    vgrid_sharelinks, vgrid_add_sharelinks
 from shared.vgridaccess import get_resource_map, get_vgrid_map, \
     refresh_user_map, refresh_resource_map, refresh_vgrid_map, VGRIDS, \
     OWNERS, MEMBERS
@@ -458,7 +460,7 @@ SSLRequire (%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s")
             access += '''
 SSLRequire (%%{SSL_CLIENT_S_DN} eq "%(distinguished_name_enc)s")
 '''
-        access += '''    
+        access += '''
 # We prepare for future require user format with cert here in the hope that
 # we can eventually disable the above SSLRequire check and access_compat.
 require user "%(distinguished_name)s"
@@ -485,7 +487,7 @@ require user "%(distinguished_name)s"
     <IfModule mod_access_compat.c>
         Satisfy any
     </IfModule>
-</IfVersion>  
+</IfVersion>
 '''
 
         filehandle.write(access % info)
@@ -588,7 +590,7 @@ The %(short_title)s admins
     return user
 
 
-def fix_sharelinks(old_id, client_id, conf_path, db_path, verbose=False):
+def fix_user_sharelinks(old_id, client_id, conf_path, db_path, verbose=False):
     """Update sharelinks left-over from legacy version of edit_user"""
     user_db = {}
     if conf_path:
@@ -638,6 +640,66 @@ def fix_sharelinks(old_id, client_id, conf_path, db_path, verbose=False):
     else:
         if verbose:
             print 'Could not load sharelinks: %s' % sharelinks
+
+
+def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
+    """Update vgrid sharelinks to include any missing ones due to the bug fixed
+    in rev4168+4169.
+    """
+    user_db = {}
+    if conf_path:
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+
+    # Loop through sharelinks and check that the vgrid ones are registered
+
+    for mode_sub in mode_chars_map.keys():
+        sharelink_base = os.path.join(configuration.sharelink_home, mode_sub)
+        for share_id in os.listdir(sharelink_base):
+            if share_id.startswith('.'):
+                # skip dot dirs
+                continue
+            sharelink_path = os.path.join(sharelink_base, share_id)
+            sharelink_realpath = os.path.realpath(sharelink_path)
+            vgrid_name = in_vgrid_share(configuration, sharelink_realpath)
+            if not vgrid_name:
+                continue
+
+            (load_status, links_list) = vgrid_sharelinks(vgrid_name,
+                                                         configuration,
+                                                         recursive=False)
+            if load_status:
+                links_dict = dict([(i['share_id'], i) for i in links_list])
+            else:
+                links_dict = {}
+
+            if not share_id in links_dict.keys():
+                user_path = os.readlink(sharelink_path)
+                if verbose:
+                    print 'Handle missing vgrid %s sharelink %s to %s (%s)' % \
+                        (vgrid_name, share_id, sharelink_realpath, user_path)
+                client_dir = user_path.replace(configuration.user_home, '')
+                client_dir = client_dir.split(os.sep)[0]
+                client_id = client_dir_id(client_dir)
+                (get_status, share_dict) = get_share_link(share_id, client_id,
+                                                          configuration)
+                if not get_status:
+                    print 'Error loading sharelink dict for %s of %s' % \
+                        (share_id, client_id)
+                    continue
+
+                print 'Add missing sharelink %s to vgrid %s' % (share_id,
+                                                                vgrid_name)
+
+                (add_status, add_msg) = vgrid_add_sharelinks(
+                    configuration, vgrid_name, [share_dict])
+                if not add_status:
+                    print 'ERROR: add missing sharelink failed: %s' % add_msg
 
 
 def edit_user(
