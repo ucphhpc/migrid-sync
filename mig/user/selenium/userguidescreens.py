@@ -488,8 +488,14 @@ def main():
         print "Finished user guide actions"
 
         print "Proceed as you wish while logged in or request stop in console"
-        while raw_input('action: ') not in ['quit', 'exit', 'stop']:
-            time.sleep(1)
+        action = None
+        while action not in ['quit', 'exit', 'stop']:
+            action = raw_input('action: ')
+            if action.startswith('save'):
+                name = action.split('save ', 1)[1]
+                save_screen(driver, active_path % name)
+            else:
+                time.sleep(1)
 
         print "Log out before exit"
         status = shared_logout(driver, url, login, passwd, logout_calls)
