@@ -257,6 +257,7 @@ def fix_missing(config_file, verbose=True):
 
 
 class Configuration:
+
     """Server configuration in parsed form"""
 
     mig_server_id = None
@@ -959,6 +960,11 @@ location.""" % self.config_file
             self.site_enable_crontab = False
         if config.has_option('GLOBAL', 'user_cron_log'):
             self.user_cron_log = config.get('GLOBAL', 'user_cron_log')
+        if config.has_option('SITE', 'enable_notify'):
+            self.site_enable_notify = config.getboolean(
+                'SITE', 'enable_notify')
+        else:
+            self.site_enable_notify = False
         if config.has_option('SITE', 'enable_imnotify'):
             self.site_enable_imnotify = config.getboolean(
                 'SITE', 'enable_imnotify')
@@ -1514,7 +1520,7 @@ location.""" % self.config_file
             self.gdp_logger_obj.reopen()
         else:
             self.gdp_logger_obj = Logger(
-                "INFO", syslog=syslog_gdp, app='main-gdp')
+                self.loglevel, syslog=syslog_gdp, app='main-gdp')
         self.gdp_logger = self.gdp_logger_obj.logger
         if config.has_option('SITE', 'transfers_from'):
             transfers_from_str = config.get('SITE', 'transfers_from')
@@ -1713,7 +1719,8 @@ location.""" % self.config_file
             if not os.path.isabs(_log_path):
                 setattr(self, _log_var, os.path.join(self.log_dir, _log_path))
 
-        # cert and key for generating a default proxy for nordugrid/ARC resources
+        # cert and key for generating a default proxy for nordugrid/ARC
+        # resources
 
         if config.has_option('GLOBAL', 'nordugrid_cert'):
             self.nordugrid_cert = config.get('GLOBAL', 'nordugrid_cert')

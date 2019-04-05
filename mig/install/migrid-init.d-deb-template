@@ -222,6 +222,7 @@ start_ftps() {
     fi
 }
 start_notify() {
+    check_enabled "notify" || return
     DAEMON_PATH=${MIG_NOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -469,6 +470,7 @@ stop_ftps() {
     fi
 }
 stop_notify() {
+    check_enabled "notify" || return
     DAEMON_PATH=${MIG_NOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -682,6 +684,7 @@ reload_ftps() {
     fi
 }
 reload_notify() {
+    check_enabled "notify" || return
     DAEMON_PATH=${MIG_NOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
@@ -852,6 +855,7 @@ status_ftps() {
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_notify() {
+    check_enabled "notify" || return
     DAEMON_PATH=${MIG_NOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
