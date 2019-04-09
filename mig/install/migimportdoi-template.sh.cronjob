@@ -2,8 +2,10 @@
 #
 # run importdoi as mig user
 
-# Add any custom domains to lookup DOIs for here
-doi_fqdn="__PUBLIC_ALIAS_FQDN__" 
+# Add any custom domains to lookup DOIs for here and format according to
+# https://support.datacite.org/docs/api-queries
+# where we simply filter on our own FQDN in the registered DOI url.
+doi_fqdn="url:__PUBLIC_ALIAS_FQDN__" 
 
 # No more edits below
 su - mig -c "python mig/server/importdoi.py $doi_fqdn"

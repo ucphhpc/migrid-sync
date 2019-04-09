@@ -126,7 +126,8 @@ or to match only those registered to erda.ku.dk:
             if plain_doi is None:
                 print "WARNING skip full lookup of malformed entry: %s" % entry
                 continue
-            #print "DEBUG: repeat full lookup for %s" % plain_doi
+            if verbose:
+                print "repeat full lookup for %s" % plain_doi
             try:
                 full = datacite_full(plain_doi)
             except Exception, exc:
@@ -134,7 +135,7 @@ or to match only those registered to erda.ku.dk:
                 continue
             parsed_data.append(full)
 
-    imported, existing = 0, 0
+    imported, existing, new = 0, 0, 0
     for entry in parsed_data:
         if not isinstance(entry, dict):
             print "WARNING skip malformed entry: %s" % entry
@@ -148,24 +149,29 @@ or to match only those registered to erda.ku.dk:
             print "WARNING DOI or archive ID missing from %s (%s %s)" % \
                   (entry, archive_id, doi_url)
             continue
+        archive_root = os.path.join(configuration.wwwpublic, 'archives',
+                                    archive_id)
+        if not os.path.isdir(archive_root):
+            print "ERROR No archive %s for DOI %s data" % (archive_root, doi)
+            continue
+        doi_path = os.path.join(archive_root, public_archive_doi)
+        if os.path.exists(doi_path):
+            if verbose:
+                print "Found existing DOI data in %s" % doi_path
+            existing += 1
+            continue
+        new += 1
         if dump:
-            archive_root = os.path.join(configuration.wwwpublic, 'archives',
-                                        archive_id)
-            if not os.path.isdir(archive_root):
-                print "ERROR No archive %s to dump DOI data for %s into" % \
-                      (archive_root, doi)
-                continue
-            doi_path = os.path.join(archive_root, public_archive_doi)
-            if os.path.exists(doi_path):
-                if verbose:
-                    print "Skip already dumped DOI data in %s" % doi_path
-                existing += 1
-                continue
-            print "Save DOI entry for %s into archive %s" % (doi, archive_id)
+            print "Save DOI %s for archive %s" % (doi, archive_id)
             doi_fd = open(doi_path, 'w')
             json.dump(entry, doi_fd)
             doi_fd.close()
             imported += 1
-    print "Found %d existing - and imported %d new DOI entries" % \
-          (existing, imported)
+        else:
+            print "New DOI %s for archive %s" % (doi, archive_id)
+            if verbose:
+                print "\t%s" % entry
+
+    print "Found %d existing - and imported %d of %d new DOI entries" % \
+          (existing, imported, new)
     sys.exit(0)
