@@ -89,6 +89,7 @@ def html_tmpl(
     invited_projects = False
     invite_projects = False
     remove_projects = False
+    await_projects = False
 
     if configuration.site_enable_twofactor:
         current_twofactor_dict = load_twofactor(client_id, configuration)
@@ -113,6 +114,10 @@ def html_tmpl(
         accepted_projects = get_projects(configuration, client_id,
                                          'accepted')
         invited_projects = get_projects(configuration, client_id, 'invited')
+
+    await_projects = (not create_projects and not invite_projects and
+                      not remove_projects and not accepted_projects and not
+                      invited_projects)
 
     # Generate html
 
@@ -170,6 +175,11 @@ def html_tmpl(
     if remove_projects:
         html += """<li><a href='#remove'>Remove participant</a></li>"""
         if action == 'remove':
+            preselected_tab = tab_count
+        tab_count += 1
+    if await_projects:
+        html += """<li><a href='#await'>Await project</a></li>"""
+        if action == 'await':
             preselected_tab = tab_count
         tab_count += 1
     if configuration.site_enable_twofactor:
@@ -474,6 +484,40 @@ def html_tmpl(
         </div>
         """
 
+    # Show project await message
+
+    if await_projects:
+        html += \
+            """
+        <div id='await'>"""
+        html += status_html
+        html +=  \
+            """
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th>No project access yet:</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+            It appears you don't have permission to create projects, and you
+            neither have projects to access nor pending project invitations to
+            accept.
+            </td></tr>
+            <tr><td>
+            Please contact you collaboration partner(s) and have them
+            invite you to join their project for access.
+            </td></tr>
+            <tr><td>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
+            </td></tr>
+        </tbody>
+        </table>
+        </div>
+        """
+
     # 2-FA
 
     form_method = 'post'
@@ -525,6 +569,9 @@ def html_tmpl(
 """
 
         html += """
+        <tr><td>
+                <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
+            </td></tr>
 </tbody>
 </table>
 </div>
