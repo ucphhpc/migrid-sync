@@ -401,8 +401,8 @@ def main(client_id, user_arguments_dict):
 
     url_base = '/' + service['service_name']
     url_home = url_base + '/home'
-    url_auth = host + url_base + '/hub/home'
-    url_data = host + url_base + '/hub/data'
+    url_auth = host + url_base + '/hub/login'
+    url_data = host + url_base + '/hub/user-data'
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.
@@ -443,18 +443,21 @@ def main(client_id, user_arguments_dict):
         user_dict = mig_to_user_adapt(active_mount['state'])
         logger.debug("Existing header values, Mount: %s User: %s",
                      (mount_dict, user_dict))
-        auth_mount_header = {'Remote-User': remote_user, 'Mount': str(
-            mount_dict)}
-        user_header = {'Remote-User': remote_user,
-                       'User': str(user_dict)}
+        auth_header = {'Remote-User': remote_user}
+        json_data = {'data': {'Mount': mount_dict,
+                              'User': user_dict}}
 
         with requests.session() as session:
-            # Authenticate
-            session.get(url_auth, headers=auth_mount_header)
-            # Provide the active homedrive mount information
-            session.post(url_data, headers=auth_mount_header)
-            # Provide the active user information
-            session.post(url_data, headers=user_header)
+            # Authenticate and submit data
+            response = session.post(url_auth, headers=auth_header)
+            if response.status_code == 200:
+                response = session.post(url_data, json=json_data)
+                if response.status_code != 200:
+                    logger.error("Jupyter: User %s failed to submit data %s to %s",
+                                 (client_id, json_data, url_data))
+            else:
+                logger.error("Jupyter: User %s failed to authenticate against %s",
+                             (client_id, url_auth))
 
         # Redirect client to jupyterhub
         return jupyter_host(configuration, output_objects, remote_user, url_home)
@@ -509,21 +512,25 @@ def main(client_id, user_arguments_dict):
     mount_dict = mig_to_mount_adapt(jupyter_dict)
     user_dict = mig_to_user_adapt(jupyter_dict)
     logger.debug("User: %s Mount header: %s", client_id, mount_dict)
-    logger.debug("User: %s User-ID header: %s", client_id, user_dict)
+    logger.debug("User: %s User header: %s", client_id, user_dict)
 
     # Auth and pass a new set of valid mount keys
-    auth_mount_header = {'Remote-User': remote_user,
-                         'Mount': str(mount_dict)}
-    user_header = {'Remote-User': remote_user,
-                   'User': str(user_dict)}
+    auth_header = {'Remote-User': remote_user}
+    json_data = {'data': {'Mount': mount_dict,
+                          'User': user_dict}}
 
     # First login
     with requests.session() as session:
-        session.get(url_auth, headers=auth_mount_header)
-        # Provide homedrive mount information
-        session.post(url_data, headers=auth_mount_header)
-        # Provide the user information
-        session.post(url_data, headers=user_header)
+        # Authenticate
+        response = session.post(url_auth, headers=auth_header)
+        if response.status_code == 200:
+            response = session.post(url_data, json=json_data)
+            if response.status_code != 200:
+                logger.error("Jupyter: User %s failed to submit data %s to %s",
+                             (client_id, json_data, url_data))
+        else:
+            logger.error("Jupyter: User %s failed to authenticate against %s",
+                         (client_id, url_auth))
 
     # Update pickle with the new valid key
     jupyter_mount_state_path = os.path.join(mnt_path,
