@@ -728,7 +728,11 @@ def parse_im_relay(path):
 def send_system_notification(user_id, category, message, configuration):
     """Send system notification to *user_id* through grid_notify"""
     logger = configuration.logger
-    
+    if not configuration.site_enable_notify:
+        warn_msg = "System notify helper is disabled in configuration!"
+        logger.warning(warn_msg)
+        return False
+
     client_id = expand_openid_alias(user_id, configuration)
     if not client_id or not extract_field(client_id, 'email'):
         logger.error("send_system_notification: Invalid user_id: %s" % user_id)
