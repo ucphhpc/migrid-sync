@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# gdpman - Sensitive Information Facility management
+# gdpman - entry point with project access and management for GDP-enabled sites
 # Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,9 +25,7 @@
 # -- END_HEADER ---
 #
 
-# TODO: this backend is horribly KU/UCPH-specific, should move that to conf
-
-"""Management of Sensitive Information Facility"""
+"""Entry page with project access and management for GDP-enabled sites"""
 
 import os
 import tempfile
@@ -38,8 +36,8 @@ from shared.base import get_xgi_bin
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.gdp import ensure_user, get_projects, get_users, \
-    get_active_project_client_id, project_accept, project_create, \
-    project_invite, project_login, project_logout, project_remove_user, \
+    get_active_project_client_id, project_accept_user, project_create, \
+    project_invite_user, project_login, project_logout, project_remove_user, \
     validate_user
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import themed_styles, jquery_ui_js, twofactor_wizard_html, \
@@ -59,11 +57,92 @@ def signature():
     defaults = {
         'action': [''],
         'base_vgrid_name': [''],
-        'gdp_workzone_id': [''],
+        'gdp_category_id': [''],
+        'gdp_ref_id': [''],
+        'gdp_ref_value': [''],
         'username': [''],
         'status_msg': [''],
     }
     return ['text', defaults]
+
+
+def fill_category(configuration, category_id, action, ref_dict):
+    """Fill a data category dict for *category_id* based on configuration
+    categories for *action* and actual reference values in *ref_dict*.
+    Raises ValueError if one or more required category reference fields are
+    missing from ref_dict or if category doesn't exist in data categories.
+    """
+    _logger = configuration.logger
+    _logger.debug('fill %s dict from %s %s values' % (category_id, action,
+                                                      ref_dict))
+    category_dict = {'category_id': category_id}
+    # _logger.debug('build map to fill %s %s dict from: %s' %
+    #              (category_id, action, configuration.gdp_data_categories))
+    category_map = dict([(i['category_id'], i) for i in
+                         configuration.gdp_data_categories])
+    if not category_map.has_key(category_id):
+        raise ValueError('no such data category: %s' % category_id)
+    category_dict.update(category_map[category_id])
+    # _logger.debug('fill %s dict %s with %s values' % (category_id,
+    #                                                  category_dict,
+    #                                                  ref_dict))
+    for ref_fill in category_dict.get('references', {}).get(action, []):
+        key = ref_fill['ref_id']
+        if not ref_dict.has_key(key):
+            raise ValueError('no %s value' % key)
+        ref_fill['value'] = ref_dict[key]
+    _logger.debug('filled %s dict: %s' % (category_id, category_dict))
+    return category_dict
+
+
+def html_category_fields(configuration, action):
+    """Helper to generate dynamic form category fields for a *action* based on
+    the configured and chosen project data categories. Uses a general form
+    class layout to easily show/hide with javascript code based on project
+    selection.
+    """
+    fields = "<!-- dynamic fields for %s -->" % action
+    for category_entry in configuration.gdp_data_categories:
+        # Make a local copy for filling
+        specs = {}
+        specs.update(category_entry)
+        specs['hidden'] = 'hidden'
+        for ref_dict in category_entry.get('references', {}).get(action, []):
+            # Copy to avoid changing
+            ref_fill = {'action': action}
+            ref_fill.update(specs)
+            ref_fill.update(ref_dict)
+            # Default to anything as value if not set in ref_dict
+            ref_fill['ref_pattern'] = ref_fill.get('ref_pattern', '.*')
+            ref_fill['ref_help_html'] = ''
+            if ref_fill.get('ref_help', ''):
+                ref_fill['ref_help_icon'] = "%s/icons/help.png" % \
+                    configuration.site_images
+                ref_fill['ref_help_html'] = """
+<span  class='fakelink'
+    onclick='showHelp(\"%(ref_name)s Help\", \"%(ref_help)s\");'>
+<img align='top' src='%(ref_help_icon)s' title='%(ref_help)s'>
+</span>""" % ref_fill
+
+            fields += """
+        <tr class='%(action)s %(category_id)s_section category_section %(hidden)s'>
+            <td>
+            %(ref_name)s: %(ref_help_html)s<br/>
+            </td>
+        </tr>
+        <tr class='%(action)s %(category_id)s_section category_section %(hidden)s'>
+            <td>
+            <div class='ref_field'>
+            <!-- NOTE: keep a single field for ref with ref_id in name -->
+            <input id='%(action)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
+                name='%(action)s_%(ref_id)s' required pattern='%(ref_pattern)s'
+                placeholder='%(ref_name)s' title='%(ref_help)s'
+                type='text' size='30' />
+            </div>
+            </td>
+        </tr>
+            """ % ref_fill
+    return fields
 
 
 def html_tmpl(
@@ -77,11 +156,6 @@ def html_tmpl(
     fill_entries = {}
     fill_entries['csrf_field'] = csrf_field
     fill_entries['csrf_token'] = csrf_token
-    fill_entries['workzone_help_icon'] = "%s/icons/help.png" \
-        % configuration.site_images
-    fill_entries['workzone_help_txt'] = \
-        "The workzone nummer is the Journal number from the acceptance of processing personal data." \
-        + " Use 000000 as the workzone number if your project does not require a workzone registration."
 
     twofactor_enabled = False
     create_projects = False
@@ -115,9 +189,12 @@ def html_tmpl(
                                          'accepted')
         invited_projects = get_projects(configuration, client_id, 'invited')
 
-    await_projects = (not create_projects and not invite_projects and
-                      not remove_projects and not accepted_projects and not
-                      invited_projects)
+    # Gather all projects known to user and use in await and category map
+    known_projects = {}
+    for entry in [invite_projects, remove_projects, accepted_projects,
+                  invited_projects]:
+        known_projects.update(entry)
+    await_projects = (not create_projects and not known_projects)
 
     # Generate html
 
@@ -140,7 +217,8 @@ def html_tmpl(
         <input type='hidden' name='action' value='' />
         <input type='hidden' name='base_vgrid_name' value='' />
         <input type='hidden' name='username' value='' />
-        <input type='hidden' name='gdp_workzone_id' value='' />
+        <input type='hidden' name='gdp_category_id' value='' />
+        <div class='volatile_fields'><!-- dynamic JS ref fields --></div>
         </form>
         <form id='gm_project_form'>
         """
@@ -155,30 +233,30 @@ def html_tmpl(
         <div id='project-tabs'>
         <ul class='fillwidth padspace'>"""
     if accepted_projects:
-        html += """<li><a href='#access'>Access project</a></li>"""
+        html += """<li><a href='#access'>Access Project</a></li>"""
         tab_count += 1
     if create_projects:
-        html += """<li><a href='#create'>Create project</a></li>"""
+        html += """<li><a href='#create'>Create Project</a></li>"""
         if action == 'create':
             preselected_tab = tab_count
         tab_count += 1
     if invite_projects:
-        html += """<li><a href='#invite'>Invite participant</a></li>"""
-        if action == 'invite':
+        html += """<li><a href='#invite_user'>Invite Participant</a></li>"""
+        if action == 'invite_user':
             preselected_tab = tab_count
         tab_count += 1
     if invited_projects:
-        html += """<li><a href='#accept'>Accept invitation</a></li>"""
-        if action == 'accept_invite':
+        html += """<li><a href='#accept_user'>Accept Invitation</a></li>"""
+        if action == 'accept_user':
             preselected_tab = tab_count
         tab_count += 1
     if remove_projects:
-        html += """<li><a href='#remove'>Remove participant</a></li>"""
-        if action == 'remove':
+        html += """<li><a href='#remove_user'>Remove Participant</a></li>"""
+        if action == 'remove_user':
             preselected_tab = tab_count
         tab_count += 1
     if await_projects:
-        html += """<li><a href='#await'>Await project</a></li>"""
+        html += """<li><a href='#await'>Await Invitation</a></li>"""
         if action == 'await':
             preselected_tab = tab_count
         tab_count += 1
@@ -189,10 +267,15 @@ def html_tmpl(
         tab_count += 1
 
     html += """</ul>"""
+    # Insert category map helper for all known projects
+    category_map = dict([(key, val['category_meta']['category_id']) for (key, val) in
+                         known_projects.items()])
     html += """
         <script type='text/javascript'>
-            var preselected_tab = %s;
-        </script>""" % preselected_tab
+            preselected_tab = %s;
+            /* Initialize category_map */
+            category_map = %s;
+        </script>""" % (preselected_tab, category_map)
 
     if status_msg:
         status_html += \
@@ -229,7 +312,7 @@ def html_tmpl(
                 <select name='access_base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(accepted_projects):
+        for project in sorted(accepted_projects.keys()):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
@@ -263,23 +346,23 @@ def html_tmpl(
     if invited_projects:
         html += \
             """
-        <div id='accept'>"""
+        <div id='accept_user'>"""
         html += status_html
         html +=  \
             """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th>Accept invite:</th>
+                <th>Accept project invitation:</th>
             </tr>
         </thead>
         <tbody>
             <tr><td>
                 <div class='styled-select gm_select semi-square'>
-                <select name='accept_invite_base_vgrid_name'>
+                <select name='accept_user_base_vgrid_name' onChange='selectAcceptUserProject(value);'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(invited_projects):
+        for project in sorted(invited_projects.keys()):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
@@ -290,6 +373,11 @@ def html_tmpl(
                 </select>
                 </div>
             </td></tr>
+            """
+
+        # Insert all category refs but show only the ones for chosen project
+        html += html_category_fields(configuration, 'accept_user')
+        html += """
         </tbody>
         </table>
         <table class='gm_projects_table' style='border-spacing=0;'>
@@ -301,7 +389,7 @@ def html_tmpl(
         <tbody>
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='ui-button' id='accept_invite' href='#' onclick='submitform(\"accept_invite\"); return false;'>Accept</a>
+                <a class='ui-button' id='accept_user' href='#' onclick='submitform(\"accept_user\"); return false;'>Accept</a>
                 <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
@@ -313,7 +401,7 @@ def html_tmpl(
     if invite_projects:
         html += \
             """
-        <div id='invite'>"""
+        <div id='invite_user'>"""
         html += status_html
         html +=  \
             """
@@ -326,14 +414,13 @@ def html_tmpl(
         <tbody>
             <tr><td>
                 <div class='styled-select gm_select semi-square'>
-                <select name='invite_base_vgrid_name'>
+                <select name='invite_user_base_vgrid_name' onChange='selectInviteUserProject(value);'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(invite_projects):
+        for project in sorted(invite_projects.keys()):
             html += \
                 """
-                <option value='%s'>%s</option>""" \
-                % (project, project)
+                <option value='%s'>%s</option>""" % (project, project)
         html += \
             """
                 <option value=''>───────</option>
@@ -346,8 +433,14 @@ def html_tmpl(
                 </td>
             </tr><tr>
                 <td>
-                <input name='invite_user_id' type='text' size='30'/>
+                <input name='invite_user_short_id' required placeholder='User ID'
+                    title='Email of user to invite' type='email' size='30'/>
             </td></tr>
+            """
+
+        # Insert all category refs but show only the ones for chosen project
+        html += html_category_fields(configuration, 'invite_user')
+        html += """
         </tbody>
         </table>
         <table class='gm_projects_table' style='border-spacing=0;'>
@@ -359,7 +452,7 @@ def html_tmpl(
         <tbody>
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='ui-button' id='invite' href='#' onclick='submitform(\"invite\"); return false;'>Invite</a>
+                <a class='ui-button' id='invite_user' href='#' onclick='submitform(\"invite_user\"); return false;'>Invite</a>
                 <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
@@ -372,7 +465,7 @@ def html_tmpl(
     if remove_projects:
         html += \
             """
-        <div id='remove'>"""
+        <div id='remove_user'>"""
         html += status_html
         html +=  \
             """
@@ -385,10 +478,10 @@ def html_tmpl(
         <tbody>
             <tr><td>
                 <div class='styled-select gm_select semi-square'>
-                <select name='remove_base_vgrid_name'>
+                <select name='remove_user_base_vgrid_name' onChange='selectRemoveUserProject(value);'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(remove_projects):
+        for project in sorted(remove_projects.keys()):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
@@ -405,8 +498,14 @@ def html_tmpl(
                 </td>
             </tr><tr>
                 <td>
-                <input name='remove_user_id' type='text' size='30'/>
+                <input name='remove_user_short_id' required placeholder='User ID'
+                    title='Email of user to remove' type='email' size='30'/>
             </td></tr>
+            """
+
+        # Insert all category refs but show only the ones for chosen project
+        html += html_category_fields(configuration, 'remove_user')
+        html += """
         </tbody>
         </table>
         <table class='gm_projects_table' style='border-spacing=0;'>
@@ -418,7 +517,7 @@ def html_tmpl(
         <tbody>
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='ui-button' id='remove' href='#' onclick='submitform(\"remove\"); return false;'>Remove</a>
+                <a class='ui-button' id='remove_user' href='#' onclick='submitform(\"remove_user\"); return false;'>Remove</a>
                 <a class='ui-button' id='logout' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
@@ -429,12 +528,10 @@ def html_tmpl(
     # Show project create selectbox
 
     if create_projects:
-        html += \
-            """
+        html += """
         <div id='create'>"""
         html += status_html
-        html +=  \
-            """
+        html += """
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
@@ -442,20 +539,83 @@ def html_tmpl(
             </tr>
         </thead>
         <tbody>
+        """
+        category_html, ref_html = "", ""
+        default_category = False
+        for category_entry in configuration.gdp_data_categories:
+            # Make a local copy for filling
+            specs = {}
+            specs.update(category_entry)
+            # Let first be selected and visible, then hide the rest
+            if not default_category:
+                default_category = category_entry['category_id']
+                specs['hidden'] = ''
+            else:
+                specs['hidden'] = 'hidden'
+
+            category_html += """
+<input id='%(category_id)s_radio' name='create_category' type='radio'
+    value='%(category_id)s' onClick='selectRef(\"create\", \"%(category_id)s\");'/>
+    <span class='category_title'>%(category_title)s</span>
+            """ % specs
+            for ref_dict in category_entry.get('references', {}).get('create',
+                                                                     []):
+                # Copy to avoid changing
+                ref_fill = {}
+                ref_fill.update(specs)
+                ref_fill.update(ref_dict)
+                # Default to anything as value if not set in ref_dict
+                ref_fill['ref_pattern'] = ref_fill.get('ref_pattern', '.*')
+                ref_fill['ref_help_html'] = ''
+                if ref_fill.get('ref_help', ''):
+                    ref_fill['ref_help_icon'] = "%s/icons/help.png" % \
+                        configuration.site_images
+                    ref_fill['ref_help_html'] = """
+    <span  class='fakelink'
+        onclick='showHelp(\"%(ref_name)s Help\", \"%(ref_help)s\");'>
+    <img align='top' src='%(ref_help_icon)s' title='%(ref_help)s'>
+    </span>""" % ref_fill
+
+                ref_html += """
+            <tr class='create %(category_id)s_section category_section %(hidden)s'>
+                <td>
+                %(ref_name)s: %(ref_help_html)s<br/>
+                </td>
+            </tr>
+            <tr class='create %(category_id)s_section category_section %(hidden)s'>
+                <td>
+                <div class='ref_field'>
+                <!-- NOTE: keep a single field for ref with ref_id in name --> 
+                <input id='create_%(ref_id)s' class='%(category_id)s_ref category_ref'
+                    name='create_%(ref_id)s' required pattern='%(ref_pattern)s'
+                    placeholder='%(ref_name)s' title='%(ref_help)s'
+                    type='text' size='30' />
+                </div>
+                </td>
+            </tr>
+                """ % ref_fill
+        if configuration.gdp_data_categories:
+            html += """
             <tr>
                 <td>
-                Workzone number: <span  class='fakelink'
-                  onclick='showHelp(\"Workzone Help\", \"%(workzone_help_txt)s\");' />
-                  <img align='top'
-                  src='%(workzone_help_icon)s' title='%(workzone_help_txt)s'>
-                </span>
+                Data Category:
                 </td>
             </tr>
             <tr>
                 <td>
-                <input name='create_workzone_id' type='text' size='30'/>
-                </td>
+                <div id='category_select'>
+                %s
+                </div>
+                <script type='text/javascript'>
+                    /* force click to override browser cache */
+                    $('#%s_radio').click();
+                </script>
+                <br/>
+            </td>
             </tr>
+            """ % (category_html, default_category)
+            html += ref_html
+        html += """
             <tr>
                 <td>
                 Name:
@@ -463,7 +623,9 @@ def html_tmpl(
             </tr>
             <tr>
                 <td>
-                <input name='create_base_vgrid_name' type='text' size='30'/>
+                <input name='create_base_vgrid_name' type='text' size='30'
+                required pattern='.+' placeholder='%s Name'
+                title='A name for your project or data set'/>
             </td></tr>
         </tbody>
         </table>
@@ -482,7 +644,7 @@ def html_tmpl(
         </tbody>
         </table>
         </div>
-        """
+        """ % configuration.site_vgrid_label
 
     # Show project await message
 
@@ -597,17 +759,10 @@ def html_tmpl(
     # Tabs and form close tags
 
     html += """
-</form>    
+</form>
 """
     html = html % fill_entries
 
-    if preselected_tab > 0:
-        html += \
-            """
-            <script type='text/javascript'>
-                $(selector).tabs('option', 'active', %s);
-            </script>
-            """ % preselected_tab
     return html
 
 
@@ -641,92 +796,6 @@ def html_logout_tmpl(configuration, csrf_token):
     return html
 
 
-def css_tmpl(configuration):
-    """Stylesheets to include in the page header
-    Selectbox CSS from : https://codepen.io/ericrasch/pen/zjDBx
-    TODO: Turn into MiG css ?
-    """
-
-    css = themed_styles(configuration)
-
-    # TODO: move this custom css to style sheets where it belongs
-
-    css['base'] += \
-        """
-<style>
-    .gm_projects_table {
-        padding-left: 25px;
-        padding-top: 5px;
-        padding-bottom: 5px;
-    }
-    .gm_projects_table th {
-        padding-right: 50px;
-        padding-top: 7px;
-        padding-bottom: 7px;
-        text-align: left;
-    }
-    .gm_projects_table td {
-        padding-left: 10px;
-        text-align: left;
-    }
-
-    /* -------------------- Select Box Styles: bavotasan.com Method (with special adaptations by ericrasch.com) */
-    /* -------------------- Source: http://bavotasan.com/2011/style-select-box-using-only-css/ */
-
-    .styled-select {
-       background: url(/images/icons/select_arrow.png) no-repeat 96% 0;
-       background-size: 25px 25px;
-       height: 25px;
-       overflow: hidden;
-       width: 240px;
-       max-width: 240px;
-    }
-
-    .styled-select select {
-       background: transparent;
-       border: none;
-       font-size: 13px;
-       height: 25px;
-       overflow: hidden;
-       padding: 3px; /* If you add too much padding here, the options won't show in IE */
-       width: 268px;
-       max-width: 268px;
-    }
-
-    .semi-square {
-       -webkit-border-radius: 5px;
-       -moz-border-radius: 5px;
-       border-radius: 5px;
-    }
-
-    /* -------------------- Colors: Background */
-    .gm_select {
-        background-color: #679c5b;
-    }
-
-    /* -------------------- Colors: Text */
-    .gm_select select {
-        color: #fff;
-    }
-
-    /* Set the desired color for the focus state */
-    .gm_select select:focus {
-        background-color: #679c5b;
-        color: #fff;
-    }
-
-    /* Make M$ IE and EDGE behave like other browsers */
-    .gm_select select:focus::-ms-value {
-        background: #679c5b;
-        color:  #fff;
-    }
-}
-
-</style>"""
-
-    return css
-
-
 def js_tmpl(configuration):
     """Javascript to include in the page header"""
 
@@ -734,62 +803,183 @@ def js_tmpl(configuration):
     js_import = ''
     js_import += tfa_import
     js_init = """
+    var preselected_tab = 0;
+    var category_map = {};
+    
+    function selectRef(project_action, category_id) {
+        /* Hide and disable inactive input fields to avoid interference */
+        $('.category_section.'+project_action).hide();
+        $('.'+category_id+'_section.'+project_action).show();
+        $('.'+category_id+'_section.'+project_action+' .category_ref').prop('disabled', true);
+        $('.'+category_id+'_section.'+project_action+' .category_ref').prop('disabled', false);
+    }
+    function selectInviteUserProject(project_name) {
+        /* Helper to switch category fields on project select in invite_user tab */
+        var category_id = category_map[project_name];
+        selectRef('invite_user', category_id);
+    }
+    function selectAcceptUserProject(project_name) {
+        /* Helper to switch category fields on project select in accept_user tab */
+        var category_id = category_map[project_name];
+        selectRef('accept_user', category_id);
+    }
+    function selectRemoveUserProject(project_name) {
+        /* Helper to switch category fields on project select in remove_user tab */
+        var category_id = category_map[project_name];
+        selectRef('remove_user', category_id);
+    }
+    function extractProject(project_action) {
+        var project_name = '';
+        var err_help = 'selected'
+        if (project_action === 'create') {
+            project_name = $('#gm_project_form input[name='+project_action+'_base_vgrid_name]').val();
+            err_help = 'name provided';
+        } else {
+            project_name = $('#gm_project_form select[name='+project_action+'_base_vgrid_name]').val();
+        }
+        if (!project_name) {
+            showError('Input Error', 'No project '+err_help+'!');
+            return null;
+        }
+        return project_name;
+    }
+    function extractUser(project_action) {
+        var user_name = $('#gm_project_form input[name='+project_action+'_short_id]').val();
+        /* TODO: switch to select drop-down in remove user? */
+        if (! $('#gm_project_form input[name='+project_action+'_short_id]')[0].checkValidity()) {
+            console.error('user field is missing or not on required format!');
+            //console.debug(project_action+'_short_id: '+user_name);
+            showError('Value Error', 'User missing or not on required format!');
+            return null;
+        }
+        return user_name;
+    }
+    function extractCategory(project_action, project_name) {
+        var category_name = '';
+        var err_help = 'found';
+        if (!project_name) {
+            /* No project selected (already handled elsewhere) */
+            console.error('project_name unset - cannot extract category!');
+            return null;
+        } else if (project_action === 'create') {
+            category_name = $('#gm_project_form input[name='+project_action+'_category]:checked').val();
+            err_help = 'selected';
+        } else {
+            /* Extract category from category_map for project_name */
+            if (project_name in category_map) {
+                category_name = category_map[project_name];
+            } else {
+                console.error('project_name '+project_name+' not found in category_map');
+            }
+        }
+        if (category_name === '') {
+            showError('Input Error', 'No data category '+err_help+' for the \"'+project_name+'\" project.<br/>Please contact the site admins.');
+            return null;
+        }
+        return category_name;
+    }
+    function handleStaticFields(project_action, project_name, user_name, category_name) {
+        if (project_action === null || project_name === null || user_name === null || category_name === null) {
+            console.error('one or more errors in static fields!');
+            return false;
+        }
+        $('#gm_project_submit_form input[name=action]').val(project_action);
+        $('#gm_project_submit_form input[name=base_vgrid_name]').val(project_name);
+        $('#gm_project_submit_form input[name=username]').val(user_name);
+        $('#gm_project_submit_form input[name=gdp_category_id]').val(category_name);
+        return true;
+    }
+    function handleDynamicFields(project_action, category_name) {
+        /* Check validity of dynamic fields */
+        var valid_fields = true;
+        $('#gm_project_form .'+category_name+'_section.'+project_action+' input:enabled').each(
+                function() {
+                    var ref_id = $(this).attr('id').replace(project_action+'_', '');
+                    var ref_val = $(this).val();
+                    //console.debug('checking: '+ref_id+': '+ref_val);
+                    var valid_value = $(this)[0].checkValidity();
+                    //console.debug(ref_id+' valid: '+valid_value);
+                    if (!valid_value) {
+                        showError('Value Error', 'Provided '+ref_id+' value is not on the required format!<p>'+$(this).attr('title')+'</p>');
+                        console.error(ref_id+' value '+ref_val+' is invalid!');
+                    }
+                    valid_fields &= valid_value;
+                });
+        if (!valid_fields) {
+            console.error('one or more form fields are missing or not on required format!');
+            return false;
+        }     
+        
+        $('#gm_project_submit_form .volatile_fields').empty();
+        //console.debug('cleared gdp helper form: '+ $('#gm_project_submit_form').html());
+        /* Loop through any project_action references and transfer in turn */
+        //console.debug('loop through refs and transfer values');
+        /* pick active category input fields */
+        $('#gm_project_form .'+category_name+'_section.'+project_action+' input:enabled').each(
+            function() {
+                var ref_id, ref_val, field;
+                if ($(this).val() !== '') {
+                    ref_id = $(this).attr('id').replace(project_action+'_', '');
+                    ref_val = $(this).val();
+                    //console.debug('set '+ref_id+': '+ref_val);
+                    /* NOTE: add ref input fields dynamically */
+                    //$('#gm_project_submit_form input[name=gdp_ref_id]').val(ref_id);
+                    field = '<input name=\"gdp_ref_id\" type=hidden value=\"';
+                    field += ref_id + '\">\\n';
+                    $('#gm_project_submit_form .volatile_fields').append(field);
+                    field = '<input name=\"gdp_ref_value\" type=hidden value=\"';
+                    field += ref_val + '\">\\n';
+                    $('#gm_project_submit_form .volatile_fields').append(field);
+                }
+            }
+        );
+        console.debug('ready to submit form: '+$('#gm_project_submit_form').html());
+        return true;
+    }
     function submitform(project_action) {
+        /* Clear any stale data from previous form submits first */
+        $('#gm_project_submit_form').trigger('reset');
         if (project_action == 'access') {
-            if ($('#gm_project_form select[name=access_base_vgrid_name]').val() !== '') {
-                $('#gm_project_submit_form input[name=action]').val(project_action);
-                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
-                    $('#gm_project_form select[name=access_base_vgrid_name]').val());
-                $('#gm_project_submit_form').submit();
-            }
+            var project_name = extractProject(project_action);
+            if (!handleStaticFields(project_action, project_name, '', '')) return false;
+            $('#gm_project_submit_form').submit();
         }
-        else if (project_action == 'accept_invite') {
-            if ($('#gm_project_form select[name=accept_invite_base_vgrid_name]').val() !== '') {
-                $('#gm_project_submit_form input[name=action]').val(project_action);
-                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
-                    $('#gm_project_form select[name=accept_invite_base_vgrid_name]').val());
-                $('#gm_project_submit_form').submit();
-            }
+        else if (project_action == 'accept_user') {
+            var project_name = extractProject(project_action);
+            var category_name = extractCategory(project_action, project_name);
+            if (!handleStaticFields(project_action, project_name, '', category_name)) return false;
+            if (!handleDynamicFields(project_action, category_name)) return false;
+            $('#gm_project_submit_form').submit();
         }
-        else if (project_action == 'invite') {
-            if ($('#gm_project_form select[name=base_vgrid_name]').val() !== '' &&
-                    $('#gm_project_form input[name=invite_user_id]').val() !== '') {
-                $('#gm_project_submit_form input[name=action]').val(project_action);
-                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
-                    $('#gm_project_form select[name=invite_base_vgrid_name]').val());
-                $('#gm_project_submit_form input[name=username]').val(
-                    $('#gm_project_form input[name=invite_user_id]').val());
-                $('#gm_project_submit_form').submit();
-            }
+        else if (project_action == 'invite_user') {
+            var project_name = extractProject(project_action);
+            var user_name = extractUser(project_action);
+            var category_name = extractCategory(project_action, project_name);
+            if (!handleStaticFields(project_action, project_name, user_name, category_name)) return false;
+            if (!handleDynamicFields(project_action, category_name)) return false;
+            $('#gm_project_submit_form').submit();
         }
-        else if (project_action == 'remove') {
-            if ($('#gm_project_form select[name=remove_base_vgrid_name]').val() !== '' &&
-                    $('#gm_project_form input[name=remove_user_id]').val() !== '') {
-                $('#gm_project_submit_form input[name=action]').val(project_action);
-                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
-                    $('#gm_project_form select[name=remove_base_vgrid_name]').val());
-                $('#gm_project_submit_form input[name=username]').val(
-                    $('#gm_project_form input[name=remove_user_id]').val());
-                $('#gm_project_submit_form').submit();
-            }
+        else if (project_action == 'remove_user') {
+            var project_name = extractProject(project_action);
+            var user_name = extractUser(project_action);
+            var category_name = extractCategory(project_action, project_name);
+            if (!handleStaticFields(project_action, project_name, user_name, category_name)) return false;
+            if (!handleDynamicFields(project_action, category_name)) return false;
+            $('#gm_project_submit_form').submit();
         }
         else if (project_action == 'create') {
-            if ($('#gm_project_form input[name=create_base_vgrid_name]').val() !== '' &&
-                    $('#gm_project_form input[name=create_workzone_id]').val() !== '') {
-                $('#gm_project_submit_form input[name=action]').val(project_action);
-                $('#gm_project_submit_form input[name=base_vgrid_name]').val(
-                    $('#gm_project_form input[name=create_base_vgrid_name]').val());
-                $('#gm_project_submit_form input[name=gdp_workzone_id]').val(
-                    $('#gm_project_form input[name=create_workzone_id]').val());
-                $('#gm_project_submit_form').submit();
-            }
+            var project_name = extractProject(project_action);
+            var category_name = extractCategory(project_action, project_name);
+            if (!handleStaticFields(project_action, project_name, '', category_name)) return false;
+            if (!handleDynamicFields(project_action, category_name)) return false;
+            $('#gm_project_submit_form').submit();
         }
         else if (project_action == 'logout') {
-            $('#gm_project_submit_form input[name=action]').val(project_action);
+            if (!handleStaticFields(project_action, '', '', '')) return false;
             $('#gm_project_submit_form').submit();
         }
         else if (project_action == 'enable2fa') {
-            $('#gm_project_submit_form input[name=action]').val(project_action);
+            if (!handleStaticFields(project_action, '', '', '')) return false;
             $('#gm_project_submit_form').submit();
         }
     }
@@ -798,6 +988,10 @@ def js_tmpl(configuration):
         $('#help_dialog').dialog('option', 'title', title);
         $('#help_dialog').html('<p>'+msg+'</p>');
         $('#help_dialog').dialog('open');
+    }
+   function showError(title, msg) {
+        console.error(msg);
+        showHelp(title, '<span class=\"warningtext\">'+msg+'</span>');
     }
 
 %s
@@ -812,6 +1006,7 @@ def js_tmpl(configuration):
               { autoOpen: false, width: 500, modal: true, closeOnEscape: true,
                 buttons: { 'Ok': function() { $(this).dialog('close'); }}
               });
+
     %s
     """ % tfa_ready
 
@@ -849,20 +1044,24 @@ def main(client_id, user_arguments_dict, environ=None):
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
     base_vgrid_name = accepted['base_vgrid_name'][-1].strip()
-    workzone_id = accepted['gdp_workzone_id'][-1].strip()
+    gdp_category_id = accepted['gdp_category_id'][-1].strip()
+    gdp_ref_id_list = [i.strip() for i in accepted['gdp_ref_id']]
+    gdp_ref_value_list = [i.strip() for i in accepted['gdp_ref_value']]
+    gdp_ref_pairs = zip(gdp_ref_id_list, gdp_ref_value_list)
     username = accepted['username'][-1].strip()
     if action:
-        _logger.info("GDP Manager: ip: '%s', action: '%s', base_vgrid_name: '%s'"
-                     % (client_addr, action, base_vgrid_name)
-                     + ", workzone_id: '%s', username: '%s'"
-                     % (workzone_id, username))
+        log_msg = "GDP Manager: ip: '%s', action: '%s', base_vgrid_name: '%s'"
+        log_msg += ", category_id %s, references: %s, username: '%s'"
+        _logger.info(log_msg % (client_addr, action, base_vgrid_name,
+                                gdp_category_id, gdp_ref_pairs, username))
 
     # Generate header, title, css and js
 
-    title_text = 'SIF Management'
+    title_text = '%s %s Management' % (configuration.short_title,
+                                       configuration.site_vgrid_label)
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = title_text
-    title_entry['style'] = css_tmpl(configuration)
+    title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = js_tmpl(configuration, )
 
     output_objects.append({'object_type': 'header',
@@ -872,15 +1071,14 @@ def main(client_id, user_arguments_dict, environ=None):
 
     if not configuration.site_enable_gdp:
         output_objects.append({'object_type': 'error_text',
-                               'text': """SIF disabled on this site.
-Please contact the Grid admins %s if you think it should be enabled.
-"""
-                               % configuration.admin_email})
+                               'text': """%s Management disabled on this site.
+Please contact the site admins %s if you think it should be enabled.
+""" % configuration.admin_email})
         return (output_objects, returnvalues.ERROR)
     if client_id and client_id == identity:
         output_objects.append({'object_type': 'error_text',
                                'text':
-                               'CERT user credentials _NOT_ supported by this site.'})
+                               'CERT user credentials NOT supported by this site.'})
         return (output_objects, returnvalues.ERROR)
     elif not identity:
         output_objects.append({'object_type': 'error_text',
@@ -1061,58 +1259,151 @@ Please contact the Grid admins %s if you think it should be enabled.
             else:
                 action_msg = "ERROR: Login to project: '%s' failed" \
                     % base_vgrid_name
-        elif action == 'accept_invite':
+        elif action == 'accept_user':
 
-            # Project accept invitation
+            # Project accept user invitation
 
-            (status, msg) = project_accept(configuration, client_addr,
-                                           client_id, base_vgrid_name)
+            logger.debug(": %s : accept user invitation to project: '%s' : %s : from ip: %s'"
+                         % (client_id,
+                            base_vgrid_name,
+                            gdp_ref_pairs,
+                            client_addr))
+
+            # extract owned projects and saved data category
+            invited_projects = get_projects(configuration, client_id,
+                                            'invited')
+            if not base_vgrid_name in invited_projects.keys():
+                status = False
+                msg = "'%s' is NOT a valid project id" % base_vgrid_name
+                _logger.error("gdpman: accept user invitation: %s" % msg)
+            else:
+                project = invited_projects[base_vgrid_name]
+                gdp_category_id = project['category_meta']['category_id']
+                if not gdp_category_id:
+                    status = False
+                    msg = "%s does NOT have a data category" % base_vgrid_name
+                    _logger.warning("gdpman: accept user invitation: %s" % msg)
+                    gdp_category_id = 'UNKNOWN'
+
+            if status:
+                # Check and fill references
+
+                try:
+                    category_entry = fill_category(configuration,
+                                                   gdp_category_id, action,
+                                                   dict(gdp_ref_pairs))
+                except ValueError, err:
+                    status = False
+                    msg = "missing reference: %s" % err
+
+                (status, msg) = project_accept_user(configuration, client_addr,
+                                                    client_id, base_vgrid_name,
+                                                    category_entry)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
                 action_msg = 'ERROR: %s' % msg
 
-        elif action == 'invite':
+        elif action == 'invite_user':
+
+            # Project invitation
+
+            logger.debug(": %s : invite user %s to project: '%s' : %s : from ip: %s'"
+                         % (client_id,
+                            username,
+                            base_vgrid_name,
+                            gdp_ref_pairs,
+                            client_addr))
+
             gdp_users = get_users(configuration)
 
             if not username in gdp_users.keys():
                 status = False
-                msg = "'%s' is _NOT_ a valid user id" % username
+                msg = "'%s' is NOT a valid user id" % username
                 _logger.error("gdpman: Invite user: %s" % msg)
 
-            if status:
+            # extract owned projects and saved data category
+            invite_projects = get_projects(configuration, client_id,
+                                           'accepted', owner_only=True)
+            if not base_vgrid_name in invite_projects.keys():
+                status = False
+                msg = "'%s' is NOT a valid project id" % base_vgrid_name
+                _logger.error("gdpman: Invite user: %s" % msg)
+            else:
+                project = invite_projects[base_vgrid_name]
+                gdp_category_id = project['category_meta']['category_id']
+                if not gdp_category_id:
+                    status = False
+                    msg = " %s does NOT have a data category" % base_vgrid_name
+                    _logger.warning("gdpman: invite user: %s" % msg)
+                    gdp_category_id = 'UNKNOWN'
 
-                # Project invitation
+            if status:
+                # Check and fill references
+
+                try:
+                    category_entry = fill_category(configuration, gdp_category_id,
+                                                   action, dict(gdp_ref_pairs))
+                except ValueError, err:
+                    status = False
+                    msg = "missing reference: %s" % err
 
                 invite_client_id = gdp_users[username]
-                (status, msg) = project_invite(configuration,
-                                               client_addr,
-                                               client_id,
-                                               invite_client_id,
-                                               base_vgrid_name)
+                (status, msg) = project_invite_user(configuration,
+                                                    client_addr,
+                                                    client_id,
+                                                    invite_client_id,
+                                                    base_vgrid_name,
+                                                    category_entry)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
                 action_msg = 'ERROR: %s' % msg
 
-        elif action == 'remove':
+        elif action == 'remove_user':
+
+            # Project remove user
+
             gdp_users = get_users(configuration)
 
             if not username in gdp_users.keys():
                 status = False
-                msg = "'%s' is _NOT_ a valid user id" % username
+                msg = "'%s' is NOT a valid user id" % username
                 _logger.error("gdpman: Remove user: %s" % msg)
 
-            if status:
+            # extract owned projects and saved data category
+            remove_projects = get_projects(
+                configuration, client_id, 'accepted', owner_only=True)
+            if not base_vgrid_name in remove_projects.keys():
+                status = False
+                msg = "'%s' is NOT a valid project id" % base_vgrid_name
+                _logger.error("gdpman: Remove user: %s" % msg)
+            else:
+                project = remove_projects[base_vgrid_name]
+                gdp_category_id = project['category_meta']['category_id']
+                if not gdp_category_id:
+                    status = False
+                    msg = "%s does NOT have a data category" % base_vgrid_name
+                    _logger.warning("gdpman: remove user: %s" % msg)
+                    gdp_category_id = 'UNKNOWN'
 
-                # Project invitation
+            if status:
+                # Check and fill references
+
+                try:
+                    category_entry = fill_category(configuration, gdp_category_id,
+                                                   action, dict(gdp_ref_pairs))
+                except ValueError, err:
+                    status = False
+                    msg = "missing reference: %s" % err
 
                 remove_client_id = gdp_users[username]
                 (status, msg) = project_remove_user(configuration,
                                                     client_addr,
                                                     client_id,
                                                     remove_client_id,
-                                                    base_vgrid_name)
+                                                    base_vgrid_name,
+                                                    category_entry)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
@@ -1122,28 +1413,28 @@ Please contact the Grid admins %s if you think it should be enabled.
 
             # Project create
 
-            logger.debug(": %s : creating project: '%s' : %s : from ip: %s'"
+            logger.debug(": %s : creating project: '%s' : %s %s : from ip: %s'"
                          % (client_id,
                             base_vgrid_name,
-                            workzone_id,
+                            gdp_category_id,
+                            gdp_ref_pairs,
                             client_addr))
 
-            # Check workzone_id
+            # Check and fill references
 
-            create_workzone_id = ''
-            if not workzone_id:
+            try:
+                category_entry = fill_category(configuration, gdp_category_id,
+                                               action, dict(gdp_ref_pairs))
+            except ValueError, err:
                 status = False
-                msg = "missing workzone number"
-
-            elif workzone_id != '000000':
-                create_workzone_id = workzone_id
+                msg = "missing reference: %s" % err
 
             if status:
                 (status, msg) = project_create(configuration,
                                                client_addr,
                                                client_id,
                                                base_vgrid_name,
-                                               create_workzone_id)
+                                               category_entry)
             if status:
                 action_msg = 'OK: %s' % msg
             else:

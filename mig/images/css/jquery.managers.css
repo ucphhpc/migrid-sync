@@ -839,3 +839,72 @@ background: url(/images/icons/code.png) left center no-repeat;
 #submit_button {
     width: auto;
 }
+
+/* gdpman */
+.gm_projects_table {
+    padding-left: 25px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.gm_projects_table th {
+    padding-right: 50px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    text-align: left;
+}
+.gm_projects_table td {
+    padding-left: 10px;
+    text-align: left;
+}
+
+/* -------------------- Select Box Styles: bavotasan.com Method (with special adaptations by ericrasch.com) */
+/* -------------------- Source: http://bavotasan.com/2011/style-select-box-using-only-css/ */
+/*     Selectbox CSS from : https://codepen.io/ericrasch/pen/zjDBx */
+
+.styled-select {
+    background: url(/images/icons/select_arrow.png) no-repeat 96% 0;
+    background-size: 25px 25px;
+    height: 25px;
+    overflow: hidden;
+    width: 240px;
+    max-width: 240px;
+}
+
+.styled-select select {
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    height: 25px;
+    overflow: hidden;
+    padding: 3px; /* If you add too much padding here, the options won't show in IE */
+    width: 268px;
+    max-width: 268px;
+}
+
+.semi-square {
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+/* -------------------- Colors: Background */
+.gm_select {
+    background-color: #679c5b;
+}
+
+/* -------------------- Colors: Text */
+.gm_select select {
+    color: #fff;
+}
+
+/* Set the desired color for the focus state */
+.gm_select select:focus {
+    background-color: #679c5b;
+    color: #fff;
+}
+
+/* Make M$ IE and EDGE behave like other browsers */
+.gm_select select:focus::-ms-value {
+    background: #679c5b;
+    color:  #fff;
+}

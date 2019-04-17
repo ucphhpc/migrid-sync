@@ -1,0 +1,72 @@
+[
+    {"category_id": "personal_data",
+     "category_title": "Personal Data",
+     "references": {
+         "create": [
+             {"ref_id": "workzone_id",
+              "ref_name": "Workzone Number",
+              "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
+              "ref_help": "The workzone number is the journal number from the acceptance of processing personal data"
+             }],
+         "invite_user": [
+             {"ref_id": "access_id",
+              "ref_name": "Data Access Agreement ID",
+              "ref_help": "The data access agreement ID is the journal number of the data access agreement"
+             }],
+         "accept_user": [],
+         "remove_user": []
+     },
+     "create_notify_template": "notify-create-personal_data.txt",
+     "invite_user_notify_template": "notify-invite_user-personal_data.txt",
+     "accept_user_notify_template": "notify-accept_user-personal_data.txt",
+     "remove_user_notify_template": "notify-remove_user-personal_data.txt"
+    },
+    {"category_id": "data_transfer",
+     "category_title": "Data Transfer",
+     "references": {
+         "create": [
+             {"ref_id": "transfer_id",
+              "ref_name": "Transfer Agreement ID",
+              "ref_help": "The transfer agreement ID is the journal number of the data transfer agreement"
+             },
+             {"ref_id": "nda_id",
+              "ref_name": "Non-disclosure Agreement ID",
+              "ref_help": "The Non-disclosure agreement ID is the journal number of the associated NDA"
+             }],
+         "invite_user": [
+             {"ref_id": "access_id",
+              "ref_name": "Data Access Agreement ID",
+              "ref_help": "The data access agreement ID is the journal number of the data access agreement"
+             },
+             {"ref_id": "nda_id",
+              "ref_name": "Non-disclosure Agreement ID",
+              "ref_help": "The Non-disclosure agreement ID is the journal number of the associated NDA"
+             }
+         ],
+         "accept_user": [
+             {"ref_id": "nda_id",
+              "ref_name": "Non-disclosure Agreement ID",
+              "ref_help": "The Non-disclosure agreement ID is the journal number of the associated NDA"
+             }
+         ],
+         "remove_user": [
+             {"ref_id": "remove_id",
+              "ref_name": "Data Access Removal ID",
+              "ref_help": "The data access removal ID is the journal number of the data access removal"
+             }
+         ]
+     },
+     "create_notify_template": "notify-create-data_transfer.txt",
+     "invite_user_notify_template": "notify-invite_user-data_transfer.txt",
+     "accept_user_notify_template": "notify-accept_user-data_transfer.txt",
+     "remove_user_notify_template": "notify-remove_user-data_transfer.txt"
+    },
+    {"category_id": "general_data",
+     "category_title": "General Sensitive Data",
+     "references": {"create": [], "invite_user": [], "accept_user": [], "remove_user": []},
+     "create_notify_template": "notify-create-general_data.txt",
+     "invite_user_notify_template": "notify-invite_user-general_data.txt",
+     "accept_user_notify_template": "notify-accept_user-general_data.txt",
+     "remove_user_notify_template": "notify-remove_user-general_data.txt"     
+    }
+]

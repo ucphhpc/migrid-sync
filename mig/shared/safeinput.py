@@ -768,11 +768,32 @@ def is_valid_simple_email(addr):
         return False
 
 
-def valid_gdp_workzone_id(workzone_id):
-    """Verify that supplied workzone_id only contains characters that
-    we consider valid in workzone id's.
+def __valid_gdp_var(gdp_var):
+    """Verify that supplied gdp_var only contains characters that
+    we consider valid in various gdp variable names.
     """
-    __valid_contents(workzone_id, digits + '-/')
+    __valid_contents(gdp_var, letters + '_')
+
+
+def valid_gdp_category_id(category_id):
+    """Verify that supplied category_id only contains characters that
+    we consider valid in GDP categories.
+    """
+    __valid_gdp_var(category_id)
+
+
+def valid_gdp_ref_id(ref_id):
+    """Verify that supplied ref_id only contains characters that
+    we consider valid in GDP ref IDs.
+    """
+    __valid_gdp_var(ref_id)
+
+
+def valid_gdp_ref_value(ref_value):
+    """Verify that supplied ref_value only contains characters that
+    we consider valid in GDP ref values.
+    """
+    __valid_contents(ref_value, letters + digits + '+-=/.:_')
 
 
 def filter_ascii(contents):
@@ -1367,8 +1388,12 @@ def guess_type(name):
 
         # GDP
 
-        for key in ('gdp_workzone_id', ):
-            __type_map[key] = valid_gdp_workzone_id
+        for key in ('gdp_category_id', ):
+            __type_map[key] = valid_gdp_category_id
+        for key in ('gdp_ref_id', ):
+            __type_map[key] = valid_gdp_ref_id
+        for key in ('gdp_ref_value', ):
+            __type_map[key] = valid_gdp_ref_value
 
     # Return type checker from __type_map with fall back to alphanumeric
 

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# serial - object serialization operations using pickle
+# serial - object serialization operations using pickle or json
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -28,41 +28,57 @@
 """Pickle based serializing"""
 
 import cPickle as pickle
+import json
 
-def dumps(data, protocol=0):
-    """Dump data to serialized string"""
 
-    return pickle.dumps(data)
+def dumps(data, protocol=0, serializer='pickle'):
+    """Dump data to serialized string using given serializer."""
+    serial_helper = pickle.dumps
+    if serializer == 'json':
+        serial_helper = json.dumps
+    return serial_helper(data)
 
-def dump(data, path, protocol=0):
+
+def dump(data, path, protocol=0, serializer='pickle'):
     """Dump data to file given by path"""
 
+    serial_helper = pickle.dump
+    if serializer == 'json':
+        serial_helper = json.dump
     filehandle = open(path, 'wb')
-    pickle.dump(data, filehandle, 0)
+    serial_helper(data, filehandle, 0)
     filehandle.close()
 
-def loads(data):
+
+def loads(data, serializer='pickle'):
     """Load data from serialized string"""
 
-    return pickle.loads(data)
+    serial_helper = pickle.loads
+    if serializer == 'json':
+        serial_helper = json.loads
+    return serial_helper(data)
 
-def load(path):
+
+def load(path, serializer='pickle'):
     """Load serialized data from file given by path"""
 
+    serial_helper = pickle.load
+    if serializer == 'json':
+        serial_helper = json.load
     filehandle = open(path, 'rb')
-    data = pickle.load(filehandle)
+    data = serial_helper(filehandle)
     filehandle.close()
     return data
+
 
 if "__main__" == __name__:
     print "Testing serializer"
     tmp_path = "dummyserial.tmp"
-    orig = {'abc': 123, 'def': 'def', 'ghi':42.0}
+    orig = {'abc': 123, 'def': 'def', 'ghi': 42.0}
     print "testing serializing to string and back"
     data = loads(dumps(orig))
-    print "original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data) 
+    print "original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data)
     print "testing serializing to file and back"
     dump(orig, tmp_path)
     data = load(tmp_path)
-    print "original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data) 
-    
+    print "original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data)

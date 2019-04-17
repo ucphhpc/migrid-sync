@@ -41,7 +41,7 @@ from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
     freeze_flavors, duplicati_protocol_choices
 from shared.logger import Logger, SYSLOG_GDP
 from shared.html import menu_items, vgrid_items
-from shared.fileio import read_file
+from shared.fileio import read_file, load_json
 
 
 def fix_missing(config_file, verbose=True):
@@ -1522,6 +1522,14 @@ location.""" % self.config_file
             self.gdp_logger_obj = Logger(
                 self.loglevel, syslog=syslog_gdp, app='main-gdp')
         self.gdp_logger = self.gdp_logger_obj.logger
+
+        self.gdp_data_categories = []
+        if config.has_option('GLOBAL', 'gdp_data_categories'):
+            load_path = config.get('GLOBAL', 'gdp_data_categories')
+            data_categories = load_json(load_path, logger)
+            if data_categories:
+                self.gdp_data_categories = data_categories
+
         if config.has_option('SITE', 'transfers_from'):
             transfers_from_str = config.get('SITE', 'transfers_from')
             unique_transfers_from = []
