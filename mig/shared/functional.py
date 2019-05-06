@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # functional - functionality backend helpers
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,14 +40,16 @@ from shared.httpsclient import extract_client_cert, extract_client_openid
 from shared.safeinput import validated_input, REJECT_UNSET
 from shared.useradm import expire_oid_sessions
 
+
 def warn_on_rejects(rejects, output_objects):
     """Helper to fill in output_objects in case of rejects"""
     if rejects:
         for (key, err_list) in rejects.items():
             for err in err_list:
                 output_objects.append({'object_type': 'error_text',
-                        'text': 'input parsing error: %s: %s: %s'
-                         % (key, force_utf8(err[0]), force_utf8(err[1]))})
+                                       'text': 'input parsing error: %s: %s: %s'
+                                       % (key, force_utf8(err[0]),
+                                          force_utf8(err[1]))})
 
 
 def merge_defaults(user_input, defaults):
@@ -79,25 +81,29 @@ def validate_input(
     output_objects,
     allow_rejects,
     prefilter_map=None,
-    ):
+):
     """A wrapper used by most back end functionality"""
 
-    # always allow output_format, csrf_field and underscore cache-prevention
-    # dummy - we don't want redundant lines in all scripts for that.
+    # always allow output_format, csrf_field, stray modauthopenid nonces and
+    # underscore cache-prevention dummy - we don't want redundant lines in all
+    # scripts for that.
     # NOTE: use AllowMe to avoid input validation errors from e.g. underscore
 
     defaults['output_format'] = ['AllowMe']
     defaults[csrf_field] = ['AllowMe']
+    # This sometimes appears from modauthopenid and would otherwise cause e.g.
+    # input parsing error: modauthopenid.nonce: YDHZzoBtgI: unexpected field
+    defaults['modauthopenid.nonce'] = ['AllowMe']
     defaults['_'] = ['AllowMe']
     if prefilter_map:
         prefilter_input(user_arguments_dict, prefilter_map)
     (accepted, rejected) = validated_input(user_arguments_dict,
-            defaults)
+                                           defaults)
     warn_on_rejects(rejected, output_objects)
     if rejected.keys() and not allow_rejects:
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Input arguments were rejected - not allowed for this script!'
+            {'object_type': 'error_text', 'text':
+             'Input arguments were rejected - not allowed for this script!'
              })
         output_objects.append(
             {'object_type': 'link', 'text': 'Go back to try again',
@@ -117,7 +123,7 @@ def validate_input_and_cert(
     require_user=True,
     filter_values=None,
     environ=None,
-    ):
+):
     """A wrapper used by most back end functionality - redirects to sign up
     if client_id is missing.
     """
@@ -132,18 +138,17 @@ def validate_input_and_cert(
         creds_error = "No such user (%s)" % client_id
 
     if creds_error and not requested_page().endswith('logout.py'):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : creds_error
-                              })
+        output_objects.append({'object_type': 'error_text', 'text': creds_error
+                               })
 
         if configuration.site_enable_gdp:
             main_url = configuration.migserver_http_url
             output_objects.append(
-                    {'object_type': 'text', 'text': '''Apparently you do not
+                {'object_type': 'text', 'text': '''Apparently you do not
                         have access to this page, please return to:'''})
 
             output_objects.append({'object_type': 'link', 'text': main_url,
-                                       'destination': main_url})
+                                   'destination': main_url})
         else:
             # Redirect to sign-up cert page trying to guess relevant choices
 
@@ -165,7 +170,7 @@ def validate_input_and_cert(
             else:
                 output_objects.append(
                     {'object_type': 'text', 'text': '''Apparently you already have
-    suitable credentials and just need to sign up for a local %s account on:''' % \
+    suitable credentials and just need to sign up for a local %s account on:''' %
                      configuration.short_title})
 
                 if extract_client_cert(configuration, environ) is None:
@@ -180,12 +185,12 @@ def validate_input_and_cert(
                                                            identity)
                     else:
                         logger.info("no openid user logged in")
-                 
+
                 output_objects.append({'object_type': 'link', 'text': signup_url,
                                        'destination': signup_url + signup_query})
         return (False, output_objects)
 
     (status, retval) = validate_input(user_arguments_dict, defaults,
-            output_objects, allow_rejects, filter_values)
+                                      output_objects, allow_rejects, filter_values)
 
     return (status, retval)
