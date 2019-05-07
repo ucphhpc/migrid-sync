@@ -350,12 +350,14 @@ def get_frozen_meta(client_id, freeze_id, configuration):
 
 
 def get_frozen_files(client_id, freeze_id, configuration,
-                     checksum_list=['md5'], force_refresh=False):
+                     checksum_list=['md5'], max_chunks=-1,
+                     force_refresh=False):
     """Helper to list names and stats for files in a frozen archive.
     I.e. lookup the contents of an achive either in the new client_id sub-dir
     or directly in the legacy freeze_home location.
     The optional checksum_list arguments can be used to switch between
     potentially heavy checksum calculation e.g. when used in freezedb.
+    By default entire files are checksummed for any algos in checksum_list.
     The optional force_refresh flag can be used to refresh cached values even
     if meta file did not change since last call. This is helpful to track
     progress in big file copies/uploads.
@@ -427,25 +429,25 @@ def get_frozen_files(client_id, freeze_id, configuration,
             for algo in supported_hash_algos():
                 chksum_field = '%ssum' % algo
                 entry[chksum_field] = entry.get(chksum_field, __chksum_unset)
-            # Update checksum if requested and not there already
+            # Update checksum (entire file) if requested and not there already
             if 'md5' in checksum_list and entry['md5sum'] == __chksum_unset:
-                # Checksum first 32 MB of files
-                entry['md5sum'] = md5sum_file(frozen_path)
+                entry['md5sum'] = md5sum_file(frozen_path,
+                                              max_chunks=max_chunks)
                 updates += 1
             elif 'sha1' in checksum_list and \
                     entry['sha1sum'] == __chksum_unset:
-                # Checksum first 32 MB of files
-                entry['sha1sum'] = sha1sum_file(frozen_path)
+                entry['sha1sum'] = sha1sum_file(frozen_path,
+                                                max_chunks=max_chunks)
                 updates += 1
             elif 'sha256' in checksum_list and \
                     entry['sha256sum'] == __chksum_unset:
-                # Checksum first 32 MB of files
-                entry['sha256sum'] = sha256sum_file(frozen_path)
+                entry['sha256sum'] = sha256sum_file(frozen_path,
+                                                    max_chunks=max_chunks)
                 updates += 1
             elif 'sha512' in checksum_list and \
                     entry['sha512sum'] == __chksum_unset:
-                # Checksum first 32 MB of files
-                entry['sha512sum'] = sha512sum_file(frozen_path)
+                entry['sha512sum'] = sha512sum_file(frozen_path,
+                                                    max_chunks=max_chunks)
                 updates += 1
             files.append(entry)
     if updates > 0:
@@ -477,12 +479,12 @@ def get_frozen_archive(client_id, freeze_id, configuration,
     _logger.debug("loaded meta for '%s': %s" %
                   (freeze_id, brief_freeze(meta_out)))
     # Keep refreshing cache while archive operations are in progress
-    force_refresh = False
+    cache_refresh = False
     if meta_out.get('STATE', keyword_final) == keyword_updating:
-        force_refresh = True
+        cache_refresh = True
     (files_status, files_out) = get_frozen_files(client_id, freeze_id,
                                                  configuration, checksum_list,
-                                                 force_refresh)
+                                                 force_refresh=cache_refresh)
     if not files_status:
         return (False, 'failed to extract files for %s' % freeze_id)
     _logger.debug("loaded files for '%s': %s" %
@@ -1085,7 +1087,8 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     if freeze_dict.get('PUBLISH', False):
         # NOTE: force cache generation without chksums for immediate use here
         (files_status, cached) = get_frozen_files(client_id, freeze_id,
-                                                  configuration, [])
+                                                  configuration, [],
+                                                  force_refresh=True)
         if not files_status:
             return (False, 'failed to build cached files for %s' % freeze_id)
         _logger.debug("loaded cached files for '%s': %s" %
