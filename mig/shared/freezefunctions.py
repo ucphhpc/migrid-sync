@@ -377,12 +377,12 @@ def get_frozen_files(client_id, freeze_id, configuration,
     cache_path = "%s%s" % (arch_dir, CACHE_EXT)
     meta_path = os.path.join(arch_dir, freeze_meta_filename)
     file_map = {}
+    needs_update = False
     try:
         cached = []
         if os.path.isfile(cache_path):
             cached = load(cache_path)
         if cached:
-            needs_update = False
             if os.path.getmtime(cache_path) < os.path.getmtime(meta_path):
                 needs_update = True
             elif checksum_list:
@@ -419,13 +419,20 @@ def get_frozen_files(client_id, freeze_id, configuration,
             _logger.debug("refresh cache for file %s" % frozen_path)
             rel_path = os.path.join(root.replace(arch_dir, '', 1), name)
             rel_path = rel_path.lstrip(os.sep)
-            entry = file_map.get(rel_path, None)
-            if entry is None:
-                entry = {'name': rel_path,
-                         'timestamp': os.path.getctime(frozen_path),
-                         'size': os.path.getsize(frozen_path)
-                         }
+            entry = file_map.get(rel_path, {})
+            if not entry or needs_update:
+                entry['name'] = entry.get('name', rel_path)
+                file_ctime, file_size = -1, -1
+                try:
+                    file_ctime = os.path.getctime(frozen_path)
+                    file_size = os.path.getsize(frozen_path)
+                except Exception, err:
+                    _logger.warning("failed to update cached %s stats: %s" %
+                                    (frozen_path, err))
+                entry['timestamp'] = file_ctime
+                entry['size'] = file_size
                 updates += 1
+
             for algo in supported_hash_algos():
                 chksum_field = '%ssum' % algo
                 entry[chksum_field] = entry.get(chksum_field, __chksum_unset)
