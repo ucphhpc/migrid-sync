@@ -274,8 +274,8 @@ function ajax_freezedb(permanent_freeze, keyword_final) {
   });
 }
 
-function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final, 
-                         freeze_doi_url, freeze_doi_url_field) {
+function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
+                         keyword_final, freeze_doi_url, freeze_doi_url_field) {
     console.debug("load archive "+freeze_id+" of flavor "+flavor+" with "+
                   checksum_list.toString()+" checksums");
     var tbody_elem = $("#frozenfilestable tbody");
@@ -390,7 +390,10 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_final,
               $("."+checksum_list[entry_no]+"sum").show();
           }
           console.debug("show hidden divs if relevant");
-          if (arch.state !== keyword_final) {
+          if (arch.state === keyword_updating) {
+              console.debug("show update warning");
+              $("div.updatearchive").show();
+          } else if (arch.state !== keyword_final) {
               console.debug("show edit and finalize buttons");
               $("div.editarchive").show();
           } else if (arch.flavor !== 'backup' && freeze_doi_url && publish_url) {

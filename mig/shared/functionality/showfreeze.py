@@ -31,9 +31,9 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, freeze_flavors, \
-    csrf_field, keyword_final
+    csrf_field, keyword_updating, keyword_final
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
-    build_freezeitem_object, supported_hash_algos, TARGET_PATH
+    build_freezeitem_object, brief_freeze, supported_hash_algos, TARGET_PATH
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
@@ -111,7 +111,7 @@ Please contact the site admins %s if you think it should be enabled.
         return (output_objects, returnvalues.OK)
 
     # We don't generally know checksum and edit status until AJAX returns
-    hide_elems = {'edit': 'hidden', 'register': 'hidden'}
+    hide_elems = {'edit': 'hidden', 'update': 'hidden', 'register': 'hidden'}
     for algo in sorted_algos:
         hide_elems['%ssum' % algo] = 'hidden'
 
@@ -120,9 +120,9 @@ Please contact the site admins %s if you think it should be enabled.
         # jquery support for tablesorter and confirmation dialog
         # table initially sorted by col. 0 (filename)
 
-        refresh_call = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s", "%s")' % \
-                       (freeze_id, flavor, checksum_list, keyword_final,
-                        configuration.site_freeze_doi_url,
+        refresh_call = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s", "%s", "%s")' % \
+                       (freeze_id, flavor, checksum_list, keyword_updating,
+                        keyword_final, configuration.site_freeze_doi_url,
                         configuration.site_freeze_doi_url_field)
         table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
                       'refresh_call': refresh_call}
@@ -196,16 +196,19 @@ Please contact the site admins %s if you think it should be enabled.
                  'text': 'No such %s archive "%s"' % (flavor, freeze_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        # Allow edit if not in final state and allow request DOI if finalized
-        # and not a backup archive.
-        if freeze_dict.get('STATE', keyword_final) != keyword_final:
+        # Allow edit if not in updating/final state and allow request DOI if
+        # finalized and not a backup archive.
+        freeze_state = freeze_dict.get('STATE', keyword_final)
+        if freeze_state == keyword_updating:
+            hide_elems['update'] = ''
+        elif freeze_state != keyword_final:
             hide_elems['edit'] = ''
         elif flavor != 'backup' and configuration.site_freeze_doi_url and \
                 freeze_dict.get('PUBLISH_URL', ''):
             hide_elems['register'] = ''
 
         logger.debug("%s: build obj for '%s': %s" %
-                     (op_name, freeze_id, freeze_dict))
+                     (op_name, freeze_id, brief_freeze(freeze_dict)))
         output_objects.append(
             build_freezeitem_object(configuration, freeze_dict))
 
@@ -237,6 +240,12 @@ Show archive with file checksums - might take quite a while to calculate:
         # We don't know state of archive in this case until AJAX returns
         # so we hide the section and let AJAX show it if relevant
         output_objects.append({'object_type': 'html_form', 'text': """
+<div class='updatearchive %(update)s'>
+<p class='warn_message'>
+Archive is currently in the process of being updated. No further changes can be
+applied until running archive operations are completed. 
+</p>
+</div>
 <div class='editarchive %(edit)s'>
 <p>
 You can continue inspecting and changing your archive until you're satisfied,

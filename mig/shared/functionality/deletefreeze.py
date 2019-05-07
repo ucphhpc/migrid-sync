@@ -5,7 +5,7 @@
 #
 
 # deletefreeze - delete an entire frozen archive or files in one
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,8 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import freeze_flavors, keyword_final, keyword_all
+from shared.defaults import freeze_flavors, keyword_updating, keyword_final, \
+    keyword_all
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
     delete_frozen_archive, delete_archive_files, TARGET_ARCHIVE, TARGET_PATH
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -152,7 +153,22 @@ Please contact the site admins %s if you think it should be enabled.
     # Prevent user-delete of the frozen archive if configuration forbids it.
     # We exclude any archives in the pending intermediate freeze state.
     # Freeze admins are also excluded from the restrictions.
-    if freeze_dict.get('STATE', keyword_final) == keyword_final and \
+    state = freeze_dict.get('STATE', keyword_final)
+    if state == keyword_updating:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             "Can't change %s archive %s which is currently being updated" %
+             (flavor, freeze_id)})
+        output_objects.append({
+            'object_type': 'link',
+            'destination': 'showfreeze.py?freeze_id=%s;flavor=%s' %
+            (freeze_id, flavor),
+            'class': 'viewarchivelink iconspace genericbutton',
+            'title': 'View details about your %s archive' % flavor,
+            'text': 'View details',
+        })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif state == keyword_final and \
             flavor in configuration.site_permanent_freeze and \
             not client_id in configuration.site_freeze_admins:
         output_objects.append(

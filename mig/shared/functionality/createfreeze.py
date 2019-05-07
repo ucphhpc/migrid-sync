@@ -307,7 +307,8 @@ existing archive of yours!""" % freeze_id})
                                           upload_rejected)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # NOTE: this may be a new or an existing pending archive
+    # NOTE: this may be a new or an existing pending archive, and it will fail
+    #       if archive is already under update
     (retval, retmsg) = create_frozen_archive(freeze_meta, copy_files,
                                              move_files, upload_files,
                                              client_id, configuration)

@@ -345,6 +345,17 @@ def allow_script(configuration, script_name, client_id):
     return (allow, msg)
 
 
+def brief_list(full_list, max_entries=10):
+    """Takes full_list and returns a potentially shortened representation with
+    at most max_entries elements where any excess elements are pruned from the
+    center. Similar to numpy string output of big arrays.
+    """
+    if not full_list[max_entries:]:
+        return full_list
+    half_entries = max_entries / 2
+    return full_list[:half_entries] + [' ... shortened ... '] + full_list[-half_entries:]
+
+
 if __name__ == '__main__':
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'
     client_dir = client_id_dir(orig_id)
@@ -388,3 +399,6 @@ if __name__ == '__main__':
         (allow, msg) = allow_script(configuration, script_name, client_id)
         print "check %s with client id '%s': %s %s" % (script_name, client_id,
                                                        allow, msg)
+    print "brief format of short list: %s" % brief_list(range(5))
+    print "brief format of long list: %s" % brief_list(range(30))
+    print "brief format of huge list: %s" % brief_list(range(200))

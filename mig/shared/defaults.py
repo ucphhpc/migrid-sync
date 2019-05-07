@@ -43,6 +43,7 @@ keyword_none = 'NONE'
 keyword_unchanged = 'UNCHANGED'
 keyword_final = 'FINAL'
 keyword_pending = 'PENDING'
+keyword_updating = 'UPDATING'
 keyword_owners = 'OWNERS'
 keyword_members = 'MEMBERS'
 
@@ -138,6 +139,7 @@ profile_filename = 'userprofile'
 twofactor_filename = 'twofactor'
 duplicati_filename = 'duplicati'
 freeze_meta_filename = 'meta.pck'
+freeze_lock_filename = 'freeze.lock'
 datatransfers_filename = 'transfers'
 user_keys_dir = 'keys'
 sharelinks_filename = 'sharelinks'
@@ -262,17 +264,17 @@ freeze_flavors = {
                'createfreeze_title': 'Create Freeze Archive',
                'showfreeze_title': 'Show Freeze Archive Details',
                'deletefreeze_title': 'Delete Freeze Archive',
-               'states': [keyword_pending, keyword_final]},
+               'states': [keyword_pending, keyword_updating, keyword_final]},
     'phd': {'adminfreeze_title': 'PhD Thesis Archival',
             'createfreeze_title': 'Create Thesis Archive',
             'showfreeze_title': 'Show Thesis Archive Details',
             'deletefreeze_title': 'Delete Thesis Archive',
-            'states': [keyword_pending, keyword_final]},
+            'states': [keyword_pending, keyword_updating, keyword_final]},
     'backup': {'adminfreeze_title': 'Backup Archival',
                'createfreeze_title': 'Create Backup Archive',
                'showfreeze_title': 'Show Backup Archive Details',
                'deletefreeze_title': 'Delete Backup Archive',
-               'states': [keyword_pending, keyword_final]}
+               'states': [keyword_pending, keyword_updating, keyword_final]}
 }
 
 # Default value for ALL integer limits in vgrid settings
