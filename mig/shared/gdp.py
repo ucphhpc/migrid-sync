@@ -943,7 +943,7 @@ def __update_user_log(configuration, client_id, locked=False):
     return result
 
 
-def __active_project(configuration, user_id, protocol):
+def __active_project(configuration, user_id, protocol, locked=False):
     """Returns dictionary with active project info for
     *user_id* with *protocol*"""
 
@@ -957,7 +957,7 @@ def __active_project(configuration, user_id, protocol):
         client_id = __client_id_from_user_id(configuration, user_id)
 
         if client_id is not None:
-            user_db = __load_user_db(configuration)
+            user_db = __load_user_db(configuration, locked=locked)
             (status, _) = __validate_user_db(configuration, client_id,
                                              user_db)
             # Retrieve active project client id
@@ -1269,7 +1269,7 @@ def project_log(
     return status
 
 
-def validate_user(configuration, user_id, user_addr, protocol):
+def validate_user(configuration, user_id, user_addr, protocol, locked=False):
     """Validate user:
     Log every validation
     Validate user database format
@@ -1297,7 +1297,7 @@ def validate_user(configuration, user_id, user_addr, protocol):
 
     # _logger.debug("client_id: '%s'" % client_id)
 
-    user_db = __load_user_db(configuration)
+    user_db = __load_user_db(configuration, locked=locked)
     (status, validate_msg) = __validate_user_db(configuration, client_id,
                                                 user_db)
     if not status:
@@ -2107,7 +2107,8 @@ def project_login(
         protocol,
         client_addr,
         user_id,
-        project_name=None):
+        project_name=None,
+        locked=False):
     """Log *client_id* into project_name"""
 
     _logger = configuration.logger
@@ -2140,8 +2141,9 @@ def project_login(
     # NOTE: This should be the case already if system is consistent
 
     if status:
-        (_, db_lock_filepath) = __user_db_filepath(configuration)
-        flock = acquire_file_lock(db_lock_filepath)
+        if not locked:
+            (_, db_lock_filepath) = __user_db_filepath(configuration)
+            flock = acquire_file_lock(db_lock_filepath)
 
         # Retrieve user and project info
 
@@ -2234,7 +2236,8 @@ def project_logout(
         protocol,
         client_addr,
         user_id,
-        autologout=False):
+        autologout=False,
+        locked=False):
     """Logout user *client_id* from active project
     If *client_id* is None then *project_client_id* must not be None
     Returns True if *client_id* got and active project and is logged out if it
@@ -2265,8 +2268,9 @@ def project_logout(
         log_ok_msg += ", project: '%s'" % project_name
         log_err_msg += ", project: '%s'" % project_name
 
-    (_, db_lock_filepath) = __user_db_filepath(configuration)
-    flock = acquire_file_lock(db_lock_filepath)
+    if not locked:
+        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, locked=True)
 
     # Retrieve user
@@ -2360,6 +2364,7 @@ def project_open(
     #               % (protocol, client_addr, user_id))
 
     status = True
+    skiplogin = False
     active_short_id = ''
     project_short_id = __project_short_id_from_user_id(configuration, user_id)
     client_id = __client_id_from_user_id(configuration, user_id)
@@ -2378,10 +2383,14 @@ def project_open(
         % (user_id, client_addr, protocol) \
         + ", failed to open project: '%s'" % project_name
 
+    (_, db_lock_filepath) = __user_db_filepath(configuration)
+    flock = acquire_file_lock(db_lock_filepath)
+
     # NOTE: validate_user updates timestamp, extract active_project first
     active_project = __active_project(configuration,
                                       client_id,
-                                      protocol)
+                                      protocol,
+                                      locked=True)
     if active_project is None:
         status = False
         template = ": Failed to extract active project"
@@ -2390,7 +2399,7 @@ def project_open(
 
     if status:
         (status, validate_msg) = validate_user(
-            configuration, client_id, client_addr, protocol)
+            configuration, client_id, client_addr, protocol, locked=True)
         if not status:
             _logger.error(log_err_msg + ": %s" % validate_msg)
 
@@ -2399,9 +2408,7 @@ def project_open(
         template = ": Project close required for: '%s'" \
             % active_project.get('name', '')
         if active_short_id:
-            if protocol != 'davs':
-                status = False
-            else:
+            if protocol == 'davs':
                 cur_timestamp = time.time()
                 project_timestamp = active_project.get('last_timestamp', 0)
                 project_change_time = io_session_timeout.get(protocol, 0)
@@ -2423,20 +2430,27 @@ def project_open(
                         protocol,
                         client_addr,
                         active_short_id,
-                        autologout=True)
-                    if status:
-                        active_short_id = ''
+                        autologout=True,
+                        locked=True)
+            elif active_short_id == project_short_id:
+                skiplogin = True
+            else:
+                status = False
+
         if not status:
             err_msg += template
             _logger.error(log_err_msg + template)
 
-    if status:
+    if status and not skiplogin:
         status = project_login(
             configuration,
             protocol,
             client_addr,
             client_id,
-            project_name)
+            project_name,
+            locked=True)
+
+    release_file_lock(flock)
 
     ret_msg = err_msg
     if status:
