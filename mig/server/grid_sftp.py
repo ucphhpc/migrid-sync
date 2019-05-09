@@ -86,14 +86,17 @@ from shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
     STRONG_SSH_LEGACY_MACS
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.gdp import project_open, project_close, project_log
-from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
-    acceptable_chmod, refresh_user_creds, refresh_job_creds, \
-    refresh_share_creds, refresh_jupyter_creds, update_login_map, \
-    login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-    penalize_rate_limit, track_open_session, track_close_session, \
-    active_sessions, check_twofactor_session
+from shared.griddaemons import authlog, default_username_validator, \
+    get_fs_path, strip_root, flags_to_mode, acceptable_chmod, \
+    refresh_user_creds, refresh_job_creds, refresh_share_creds, \
+    refresh_jupyter_creds, update_login_map, login_map_lookup, \
+    hit_rate_limit, update_rate_limit, expire_rate_limit, \
+    track_open_session, track_close_session, active_sessions, \
+    check_twofactor_session
 from shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
+from shared.notification import send_system_notification
+from shared.pwhash import make_scramble
 from shared.useradm import check_password_hash
 from shared.validstring import possible_user_id, possible_job_id,\
     possible_sharelink_id, possible_jupyter_mount_id
@@ -1021,6 +1024,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
     conf = None
     logger = None
     client_addr = None
+    transport = None
 
     def __init__(self, *largs, **kwargs):
         paramiko.ServerInterface.__init__(self)
@@ -1034,6 +1038,178 @@ class SimpleSSHServer(paramiko.ServerInterface):
         self.authenticated_user = None
         self.allow_password = conf.get('allow_password', True)
         self.allow_publickey = conf.get('allow_publickey', True)
+        self.transport = kwargs.get('transport')
+
+    def __check_auth(self, daemon_conf, username, password=None, key=None):
+        """Key and password auth against usermap."""
+
+        client_ip = self.client_addr[0]
+        active_count = active_sessions(configuration, 'sftp', username)
+        max_sftp_sessions = daemon_conf.get('max_sftp_sessions', -1)
+        rate_limit_group = ''
+        disconnect = False
+        enforce_address = None
+        password_offered = None
+        key_offered = None
+        key_enabled = False
+        password_enabled = False
+        invalid_username = False
+        valid_key = False
+        valid_password = False
+        valid_2fa = False
+        exceeded_rate_limit = False
+        exceeded_max_sftp_sessions = False
+
+        if password is None and key is None:
+            logger.error("__check_auth: Requires either key or password")
+            return paramiko.AUTH_FAILED
+        if hit_rate_limit(configuration, 'sftp', client_ip, username,
+                          username_validator=None):
+            exceeded_rate_limit = True
+        elif max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
+            exceeded_max_sftp_sessions = True
+        elif not default_username_validator(configuration, username):
+            invalid_username = True
+        else:
+            # For e.g. GDP we require all logins to match active 2FA session IP,
+            # but otherwise user may freely switch net during 2FA lifetime.
+            if configuration.site_twofactor_strict_address:
+                enforce_address = client_ip
+            if key is not None:
+                key_offered = key.get_base64()
+                rate_limit_group += key_offered + "_"
+            if password is not None:
+                hash_cache = daemon_conf['hash_cache']
+                password_offered = password
+                rate_limit_group += make_scramble(password_offered, None) + "_"
+                # Only sharelinks should be excluded from strict password policy
+                if possible_sharelink_id(configuration, username):
+                    strict_policy = False
+                else:
+                    strict_policy = True
+
+            entries = login_map_lookup(daemon_conf, username)
+            for entry in entries:
+                if password is not None and entry.password is not None:
+                    password_enabled = True
+                    password_allowed = entry.password
+                if key is not None and self.allow_publickey \
+                        and entry.public_key is not None:
+                    key_enabled = True
+                    key_allowed = entry.public_key.get_base64()
+                if (password_enabled or key_enabled) \
+                        and entry.ip_addr is not None \
+                        and entry.ip_addr != client_ip:
+                    self.logger.warning(
+                        "ignore login as %s with wrong IP: %s vs %s" %
+                        (username, entry.ip_addr, client_ip))
+                    continue
+                if key_enabled and key_allowed == key_offered:
+                    valid_key = True
+                    break
+                if password_enabled and check_password_hash(
+                        configuration, 'sftp', username,
+                        password_offered, password_allowed,
+                        hash_cache, strict_policy):
+                    valid_password = True
+                    break
+
+        if (valid_key and check_twofactor_session(
+            configuration, username,
+            enforce_address, 'sftp-key')) \
+                or (valid_password and check_twofactor_session(
+                    configuration, username,
+                    enforce_address, 'sftp-pw')):
+            valid_2fa = True
+
+        if (valid_key or valid_password) and valid_2fa:
+            if valid_key:
+                info_msg = "Accepted key"
+                offered = key_offered
+            elif valid_password:
+                info_msg = "Accepted password"
+                offered = password_offered
+            authlog(configuration, 'INFO', 'sftp',
+                    username, client_ip, info_msg)
+            info_msg += " login for %s from %s" % (username, client_ip)
+            self.logger.info(info_msg)
+            # print info_msg
+            self.authenticated_user = username
+            update_rate_limit(configuration, 'sftp', client_ip,
+                              username, True, offered)
+            return paramiko.AUTH_SUCCESSFUL
+        elif exceeded_rate_limit:
+            disconnect = True
+            rate_limit_group = None
+            authlog(configuration, 'WARNING', 'sftp',
+                    username, client_ip,
+                    "Fail limit reached")
+            warn_msg = "Rate limiting login from %s" % client_ip
+            self.logger.warning(warn_msg)
+            # print warn_msg
+        elif exceeded_max_sftp_sessions:
+            disconnect = True
+            rate_limit_group = None
+            warn_msg = "Too many open sessions"
+            authlog(configuration, 'WARNING', 'sftp',
+                    username, client_ip, warn_msg)
+            warn_msg += " %d/%d for %s" \
+                % (active_count, max_sftp_sessions, username)
+            logger.warning(warn_msg)
+            # print warn_msg
+        elif invalid_username:
+            disconnect = True
+            err_msg = "Invalid username"
+            rate_limit_group += "invalid_username:%s_" % time.time()
+            authlog(configuration, 'ERROR', 'sftp',
+                    username, client_ip,
+                    err_msg, notify=False)
+            err_msg += " %s from %s" % (username, client_ip)
+            logger.error(err_msg)
+            # print err_msg
+        elif (valid_key or valid_password) and not valid_2fa:
+            disconnect = True
+            rate_limit_group += "invalid_2fa:%s_" % time.time()
+            err_msg = "No valid two factor session"
+            authlog(configuration, 'ERROR', 'sftp',
+                    username, client_ip, err_msg)
+            err_msg += " for %s from %s" % (username, client_ip)
+            self.logger.error(err_msg)
+            # print err_msg
+        elif key_enabled:
+            err_msg = "Failed key"
+            authlog(configuration, 'ERROR', 'sftp',
+                    username, client_ip, err_msg)
+            err_msg += " login for %s from %s" % (username, client_ip)
+            self.logger.error(err_msg)
+            # print err_msg
+        elif password_enabled:
+            err_msg = "Failed password"
+            authlog(configuration, 'ERROR', 'sftp',
+                    username, client_ip, err_msg)
+            err_msg += " login for %s from %s" % (username, client_ip)
+            self.logger.error(err_msg)
+            # print err_msg
+        elif password is not None:
+            disconnect = True
+            rate_limit_group += "missing_user_or_password_not_set:%s_" \
+                % time.time()
+            warn_msg = "Missing user or password _NOT_ set"
+            authlog(configuration, 'WARNING', 'sftp',
+                    username, client_ip, warn_msg)
+            warn_msg += " for %s from %s" % (username, client_ip)
+            self.logger.warning(warn_msg)
+            # print warn_msg
+
+        if rate_limit_group is not None:
+            update_rate_limit(configuration, 'sftp', client_ip,
+                              username, False,
+                              group=rate_limit_group)
+        if disconnect:
+            # logger.debug("Closing transport due to failed auth")
+            self.transport.close()
+
+        return paramiko.AUTH_FAILED
 
     def check_channel_request(self, kind, chanid):
         """Log connections"""
@@ -1050,7 +1226,6 @@ class SimpleSSHServer(paramiko.ServerInterface):
         Paranoid users / grid owners should not enable password access in the
         first place!
         """
-        client_ip = self.client_addr[0]
         username = force_utf8(username)
         # Only need to update users and shares here, since jobs only use keys
         daemon_conf = self.conf
@@ -1065,63 +1240,11 @@ class SimpleSSHServer(paramiko.ServerInterface):
         update_login_map(daemon_conf, changed_users, changed_jobs,
                          changed_shares)
 
-        # For e.g. GDP we require all logins to match active 2FA session IP,
-        # but otherwise user may freely switch net during 2FA lifetime.
-        if configuration.site_twofactor_strict_address:
-            enforce_address = client_ip
-        else:
-            enforce_address = None
-        hash_cache = daemon_conf['hash_cache']
-        offered = password
-        # Only sharelinks should be excluded from strict password policy
-        if possible_sharelink_id(configuration, username):
-            strict_policy = False
-        else:
-            strict_policy = True
-        if hit_rate_limit(configuration, "sftp-pw", client_ip, username):
-            logger.warning("Rate limiting login from %s" % client_ip)
-        elif self.allow_password:
-            # list of User login objects for username
-            entries = login_map_lookup(daemon_conf, username)
-            for entry in entries:
-                if entry.password is not None:
-                    if entry.ip_addr is not None and \
-                       entry.ip_addr != client_ip:
-                        self.logger.warning(
-                            "ignore login as %s with wrong IP: %s vs %s" %
-                            (username, entry.ip_addr, client_ip))
-                        continue
-
-                    allowed = entry.password
-                    # self.logger.debug("Password check for %s" % username)
-                    if check_password_hash(
-                        configuration, 'sftp', username, offered, allowed,
-                        hash_cache, strict_policy) and \
-                        check_twofactor_session(configuration, username,
-                                                enforce_address, 'sftp-pw'):
-                        self.logger.info(
-                            "Accepted password login for %s from %s" %
-                            (username, client_ip))
-                        self.authenticated_user = username
-                        update_rate_limit(configuration, "sftp-pw", client_ip,
-                                          username, True, offered)
-                        return paramiko.AUTH_SUCCESSFUL
-        err_msg = "Failed password login for %s from %s" % (username,
-                                                            client_ip)
-        self.logger.error(err_msg)
-        print err_msg
-        failed_count = update_rate_limit(configuration, "sftp-pw", client_ip,
-                                         username, False, offered)
-        penalize_rate_limit(configuration, "sftp-pw", client_ip, username,
-                            failed_count)
-        return paramiko.AUTH_FAILED
+        return self.__check_auth(daemon_conf, username, password=password)
 
     def check_auth_publickey(self, username, key):
         """Public key auth against usermap"""
-        client_ip = self.client_addr[0]
         username = force_utf8(username)
-        key = key
-        offered = None
 
         # Either of user, job and share keys may have changed
         daemon_conf = self.conf
@@ -1144,50 +1267,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         update_login_map(daemon_conf, changed_users, changed_jobs,
                          changed_shares, changed_jupyter_mounts)
 
-        # For e.g. GDP we require all logins to match active 2FA session IP,
-        # but otherwise user may freely switch net during 2FA lifetime.
-        if configuration.site_twofactor_strict_address:
-            enforce_address = client_ip
-        else:
-            enforce_address = None
-        offered = key.get_base64()
-        if hit_rate_limit(configuration, "sftp-key", client_ip, username,
-                          max_fails=10):
-            logger.warning("Rate limiting login from %s" % client_ip)
-        elif self.allow_publickey:
-            # list of User login objects for username
-            entries = login_map_lookup(daemon_conf, username)
-            for entry in entries:
-                if entry.public_key is not None:
-                    if entry.ip_addr is not None and \
-                            entry.ip_addr != client_ip:
-                        self.logger.warning(
-                            "ignore login as %s with wrong IP: %s vs %s" %
-                            (username, entry.ip_addr, client_ip))
-                        continue
-
-                    allowed = entry.public_key.get_base64()
-                    # self.logger.debug("Public key check for %s" % username)
-                    if allowed == offered and \
-                        check_twofactor_session(configuration, username,
-                                                enforce_address, 'sftp-key'):
-                        self.logger.info(
-                            "Accepted public key login for %s from %s" %
-                            (username, client_ip))
-                        self.authenticated_user = username
-                        update_rate_limit(configuration, "sftp-key", client_ip,
-                                          username, True, offered)
-                        return paramiko.AUTH_SUCCESSFUL
-        err_msg = 'Failed public key login for %s from %s\n%s' % \
-                  (username, client_ip, offered)
-        # Typically tries one or more keys from ssh-agent before success
-        self.logger.warning(err_msg)
-        print err_msg
-        failed_count = update_rate_limit(configuration, "sftp-key", client_ip,
-                                         username, False, offered)
-        penalize_rate_limit(configuration, "sftp-key", client_ip, username,
-                            failed_count)
-        return paramiko.AUTH_FAILED
+        return self.__check_auth(daemon_conf, username, key=key)
 
     def get_allowed_auths(self, username):
         """Valid auth modes"""
@@ -1214,7 +1294,6 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
-    max_sftp_sessions = conf.get('max_sftp_sessions', -1)
     host_key_file = StringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client, default_window_size=window_size,
@@ -1322,52 +1401,56 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
                                     transport=transport, fs_root=root_dir,
                                     conf=conf)
 
-    server = SimpleSSHServer(conf=conf, client_addr=addr)
+    server = SimpleSSHServer(conf=conf, client_addr=addr, transport=transport)
     # Catch and only log connection accept errors
     try:
         transport.start_server(server=server)
         channel = transport.accept(conf['auth_timeout'])
     except Exception, err:
-        logger.warning('client negotiation errors for %s: %s' %
+        authlog(configuration, 'WARNING', 'sftp', None, addr[0],
+                "Client negotiation error: %s" % err, notify=False)
+        logger.warning('client negotiation error for %s: %s' %
                        (addr, err))
 
     username = server.get_authenticated_user()
-
-    # Throttle excessive concurrent active sessions from same user
-    active_count = active_sessions(configuration, 'sftp', username)
-    if max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
-        logger.warning("Refusing additional open sessions for %s (%d)" %
-                       (username, active_count))
-        print "Too many open sessions for %s - refusing" % username
-        # Try to throttle attempts from misbehaving client
-        logger.info("throttling on refused login for %s (%d)" %
-                    (username, active_count))
-        time.sleep(active_count * 5 + 60)
-        username = None
-    else:
-        logger.info("Proceed with login for %s with %d active sessions" %
-                    (username, active_count))
-
     success = False
+    active_session = None
+    gdp_project = False
     if username is not None:
         success = True
-        if configuration.site_enable_gdp:
-            (success, _) = project_open(configuration,
-                                        'sftp',
-                                        addr[0],
-                                        username)
+        active_count = active_sessions(configuration, 'sftp', username)
+        logger.info("Proceed with login for %s with %d active sessions"
+                    % (username, active_count))
+
     if success:
-        print "Login for %s from %s" % (username, addr, )
-        logger.info("Login for %s from %s" % (username, addr, ))
-        track_open_session(configuration,
-                           'sftp',
-                           username,
-                           addr[0],
-                           addr[1],
-                           authorized=True)
+        active_session = track_open_session(configuration,
+                                            'sftp',
+                                            username,
+                                            addr[0],
+                                            addr[1],
+                                            authorized=True)
+        if not active_session:
+            success = False
+
+    if success and configuration.site_enable_gdp:
+        (gdp_project, msg) = project_open(configuration,
+                                          'sftp',
+                                          addr[0],
+                                          username)
+        if not gdp_project:
+            success = False
+            send_system_notification(username, ['SFTP', 'ERROR'],
+                                     msg, configuration)
+            logger.error(msg)
+
+    if success:
+        msg = "Login for %s from %s" % (username, addr, )
+        print msg
+        logger.info(msg)
     else:
-        logger.info("Login from %s failed" % (addr, ))
-        print "Login from %s failed - closing connection" % (addr, )
+        msg = "Login from %s failed - closing connection" % (addr, )
+        print msg
+        logger.info(msg)
         transport.close()
 
     # Ignore user connection here as we only care about sftp.
@@ -1383,11 +1466,19 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
         time.sleep(1)
 
     if username is not None:
-        print "Logout for %s from %s" % (username, addr, )
-        logger.info("Logout for %s from %s" % (username, addr, ))
-        track_close_session(configuration, 'sftp', username, addr[0], addr[1])
-        if configuration.site_enable_gdp:
-            project_close(configuration, 'sftp', addr[0], username)
+        if success:
+            msg = "Logout for %s from %s" % (username, addr, )
+            print msg
+            logger.info(msg)
+        if active_session:
+            track_close_session(configuration, 'sftp',
+                                username, addr[0], addr[1])
+        if gdp_project:
+            active_count = active_sessions(configuration, 'sftp', username)
+            logger.info("Remaining %s active sessions for %s"
+                        % (active_count, username))
+            if active_count == 0:
+                project_close(configuration, 'sftp', addr[0], username)
 
 
 def start_service(configuration):
@@ -1443,7 +1534,7 @@ def start_service(configuration):
         worker.start()
         if last_expire + min_expire_delay < time.time():
             last_expire = time.time()
-            expire_rate_limit(configuration, "sftp-*")
+            expire_rate_limit(configuration, "sftp")
 
 
 if __name__ == "__main__":
@@ -1457,6 +1548,9 @@ if __name__ == "__main__":
     # Use separate logger
     logger = daemon_logger("sftp", configuration.user_sftp_log, log_level)
     configuration.logger = logger
+    auth_logger = daemon_logger(
+        "sftp-auth", configuration.user_auth_log, log_level)
+    configuration.auth_logger = auth_logger
     if configuration.site_enable_gdp:
         gdp_logger = daemon_gdp_logger("sftp-gdp",
                                        level=log_level)
