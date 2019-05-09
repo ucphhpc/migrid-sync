@@ -191,6 +191,7 @@ def fix_missing(config_file, verbose=True):
         'user_cron_log': 'cron.log',
         'user_transfers_log': 'transfers.log',
         'user_notify_log': 'notify.log',
+        'user_auth_log': 'auth.log',
         'user_shared_dhparams': '~/certs/dhparams.pem',
         'logfile': 'server.log',
         'loglevel': 'info',
@@ -402,6 +403,7 @@ class Configuration:
     user_cron_log = 'cron.log'
     user_transfers_log = 'transfers.log'
     user_notify_log = 'notify.log'
+    user_auth_log = 'auth.log'
     user_shared_dhparams = ''
     user_imnotify_address = ''
     user_imnotify_port = 6667
@@ -460,6 +462,9 @@ class Configuration:
     logger = None
     gdp_logger_obj = None
     gdp_logger = None
+    auth_logger_obj = None
+    auth_logger = None
+    gdp_ref_map = {}
     peers = None
 
     # feasibility
@@ -1508,6 +1513,8 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_notify_log'):
             self.user_transfers_log = config.get(
                 'GLOBAL', 'user_notify_log')
+        if config.has_option('GLOBAL', 'user_auth_log'):
+            self.user_auth_log = config.get('GLOBAL', 'user_auth_log')
         syslog_gdp = None
         if config.has_option('SITE', 'enable_gdp'):
             self.site_enable_gdp = config.getboolean('SITE', 'enable_gdp')
@@ -1721,11 +1728,20 @@ location.""" % self.config_file
                          'user_sshmux_log', 'user_vmproxy_log',
                          'user_events_log', 'user_cron_log',
                          'user_transfers_log', 'user_notify_log',
-                         'user_imnotify_log',
+                         'user_imnotify_log', 'user_auth_log',
                          'user_chkuserroot_log', 'user_chksidroot_log'):
             _log_path = getattr(self, _log_var)
             if not os.path.isabs(_log_path):
                 setattr(self, _log_var, os.path.join(self.log_dir, _log_path))
+
+        # Init auth logger
+
+        if self.auth_logger_obj:
+            self.auth_logger_obj.reopen()
+        else:
+            self.auth_logger_obj = Logger(
+                self.loglevel, logfile=self.user_auth_log, app='main-auth')
+        self.auth_logger = self.auth_logger_obj.logger
 
         # cert and key for generating a default proxy for nordugrid/ARC
         # resources

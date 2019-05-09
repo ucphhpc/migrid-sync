@@ -192,11 +192,11 @@ def daemon_gdp_logger(name, path=None, level="INFO", log_format=None):
     if path is None:
         gdp_logger_obj = Logger(
             level, logformat=log_format, syslog=SYSLOG_GDP, app=name)
+        gdp_logger = gdp_logger_obj.logger
     else:
-        gdp_logger_obj = Logger(
-            level, logformat=log_format, logfile=path, app=name)
+        gdp_logger = daemon_logger(name, path=path, level=level, log_format=log_format)
 
-    return gdp_logger_obj.logger
+    return gdp_logger
 
 
 def reopen_log(conf):
@@ -210,6 +210,10 @@ def reopen_log(conf):
 
     gdp_logger = conf.gdp_logger
     for handler in gdp_logger.handlers:
+        handler.close()
+
+    auth_logger = conf.auth_logger
+    for handler in auth_logger.handlers:
         handler.close()
 
 
