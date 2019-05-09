@@ -69,17 +69,29 @@ the following additional software:
 
 On Debian/Ubuntu servers the corresponding basic packages can be
 installed with:
-sudo aptitude install apache2 openssh-client python python-pip \
+sudo apt install apache2 openssh-client python python-pip python-setuptools
+
+and most of the optional dependencies similarly with:
+sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid  \
+     python-irclib python-paramiko python-enchant python-jsonrpclib \
+     python-requests python-cracklib openssh-server libpam0g-dev mercurial \
+     trac trac-mercurial lftp rsync fail2ban ipset
+
+On RedHat/CentOS servers the basic packages can be installed with:
+sudo yum install httpd mod_ssl openssh-clients python python-pip \
      python-setuptools
 
 and most of the optional dependencies similarly with:
-sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
-     python-irclib python-paramiko python-enchant python-jsonrpclib \
-     python-requests python-cracklib python-pyotp openssh-server \
-     libpam0g-dev mercurial trac trac-mercurial lftp rsync fail2ban ipset
+sudo yum install mod_wsgi mod_auth_openid python-paramiko python-enchant \
+     python-jsonrpclib python-requests cracklib-python openssh-server \
+     pam-devel mercurial lftp rsync fail2ban ipset
 
-Apache comes with a number of modules included, so it is usually not
-necessary to explicitly install e.g. mod-ssl, mod-proxy and mod-rewrite.
+while the remaining ones need to be installed from pypi:
+sudo pip install trac tracmercurial
+
+Apache comes with a number of modules natively included, so it is usually not
+necessary to explicitly install e.g. mod-proxy and mod-rewrite, only the modules
+explicitly packaged separately.
 
 We highly recommend installing the optional python wsgidav and openid modules
 directly from upstream, because packaged versions are generally outdated
@@ -130,8 +142,7 @@ for stand-alone wikis.
 The optional grid_ftps daemon requires the pyftpdlib module in a recent
 version and the pyopenssl module for SSL/TLS support, so it is easiest
 to install it with pip:
-sudo pip install pyOpenSSL
-sudo pip install pyftpdlib
+sudo pip install pyOpenSSL pyftpdlib
 
 The optional grid_webdavs daemon requires the wsgidav module in a recent
 version (1.3.0+), so it is easiest to install it with pip as mentioned above.
@@ -145,8 +156,7 @@ version, so it is easiest to install it with pip as mentioned above.
 
 The optional grid_events daemon requires the watchdog and scandir modules
  which may be installed with:
-sudo pip install watchdog
-sudo pip install scandir
+sudo pip install watchdog scandir
 it is likely that the inotify default settings are too low to handle any
 serious number of vgrid shares so you may have to additionally tune the sysctl
 settings e.g. by adding the following to your /etc/sysctl.conf :
@@ -191,6 +201,7 @@ sudo pip install pyotp
 The optional country code validation in certificate and OpenID account 
 request backends requires the iso3166 module which may be installed with:
 sudo pip install iso3166
+
 
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
