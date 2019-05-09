@@ -38,26 +38,26 @@ ERDA
     /* We assume UCPH users here and leave external users to FAQ entry */
     function login(user) {
         if (user == "extoid") {
-            window.open('https://erda.dk', '_blank');
+            window.open('https://ui.erda.dk', '_blank');
         } else if (user == "cert") {
-            window.open('https://cert.erda.dk', '_blank');
+            window.open('https://ui-cert.erda.dk', '_blank');
         } else if (user == "migoid") {
-            window.open('https://ext.erda.dk', '_blank');
+            window.open('https://ui-ext.erda.dk', '_blank');
         } else {
-            window.open('https://sid.erda.dk/cgi-sid/login.py', '_blank');
+            window.open('https://ui-sid.erda.dk/cgi-sid/login.py', '_blank');
         }
     }
     function signup(user) {
         if (user == "extoid") {
-            window.open('https://sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
+            window.open('https://ui-sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
                         '_blank');
         } else if (user == "cert") {
-            window.open('https://sid.erda.dk/cgi-sid/signup.py?show=extcert',
+            window.open('https://ui-sid.erda.dk/cgi-sid/signup.py?show=extcert',
                         '_blank');
         } else if (user == "migoid") {
-            window.open('https://sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+            window.open('https://ui-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
         } else {
-            window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank');
+            window.open('https://ui-sid.erda.dk/cgi-sid/signup.py', '_blank');
         }
     }
     $(document).ready(function() {
@@ -69,13 +69,13 @@ ERDA
             "https://sites.google.com/site/minimumintrusiongrid/" +
             "mig-in-danish/saadan-kommer-du-igang");
         $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
-            "https://sid.erda.dk/cgi-sid/signup.py?show=migoid");
+            "https://ui-sid.erda.dk/cgi-sid/signup.py?show=migoid");
         $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
-            "https://ext.erda.dk");
+            "https://ui-ext.erda.dk");
         $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
-            "https://sid.erda.dk/cgi-sid/signup.py?show=extcert");
+            "https://ui-sid.erda.dk/cgi-sid/signup.py?show=extcert");
         $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
-            "https://cert.erda.dk");
+            "https://ui-cert.erda.dk");
         /* Init FAQ as foldable but closed and with individual heights */
         $(".faq-accordion").accordion({
                                        collapsible: true,
@@ -172,7 +172,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <h2 class="staticpage">New to ERDA?</h2>
 <p>If you haven't used ERDA before you need to first</p>
-<form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<form method='post' action='https://ui.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
@@ -189,7 +189,8 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 </div>
 <p>
-You may also want to refer to the <a href="ucph-erda-user-guide.pdf">
+You may also want to refer to the 
+<a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">
 ERDA User Guide</a> for a more thorough introduction, with help on
 getting started and making the most of your account.
 </p>
@@ -493,7 +494,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <h2 class="staticpage">Ny på ERDA?</h2>
 <p>Hvis ikke du har brugt ERDA før, skal du først igennem</p>
-<form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<form method='post' action='https://ui.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
@@ -509,7 +510,8 @@ Can just be disabled by putting it into an html comment when not in use.
 <p></p>
 </div>
 </div>
-<p>Vi anbefaler at du også ser nærmere på <a href="ucph-erda-brugervejledning.pdf">
+<p>Vi anbefaler at du også ser nærmere på
+<a href="https://sid.erda.dk/public/ucph-erda-brugervejledning.pdf">
 ERDA Brugervejledningen</a> for en grundigere introduktion, med hjælp
 til at komme igang og få størst nytte af din konto.
 </p>
@@ -793,16 +795,15 @@ officielle <a href="terms.html">terms of use</a> her fra siden.
 <div class="supporttext staticpage i18n" lang="en">
 <p class="supporttitle i18n" lang="en">Support</p>
 <p class="i18n" lang="en">
-<a href="ucph-erda-user-guide.pdf">ERDA User Guide</a><br />
-Questions about ERDA? <br />Please contact
-us at <a href="mailto:support@erda.dk">support@erda.dk</a></p>
+<a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">ERDA
+User Guide</a><br />Questions about ERDA? <br />Please contact
+us at <a href="mailto:support@ui.erda.dk">support@ui.erda.dk</a></p>
 </div>
 <div class="supporttext staticpage i18n" lang="da">
 <p class="supporttitle i18n" lang="da">Vejledning</p>
-<p class="i18n" lang="da">
-<a href="ucph-erda-brugervejledning.pdf">ERDA Brugervejledning</a><br />
-Spørgsmål om ERDA? <br />Skriv til os på 
-<a href="mailto:support@erda.dk">support@erda.dk</a></p>
+<p class="i18n" lang="da"><a href="https://sid.erda.dk/public/ucph-erda-brugervejledning.pdf">ERDA 
+Brugervejledning</a><br />Spørgsmål om ERDA? <br />Skriv til os på 
+<a href="mailto:support@ui.erda.dk">support@ui.erda.dk</a></p>
 </div>
 </div>
 </div>
