@@ -6,9 +6,15 @@ Embeds data structures from Python 2.7.5 source:
 Modules/socketmodule.h
 Modules/_ssl.c
 
+Dependencies:
+=============
+C compiler (e.g. gcc), Python development headers, OpenSSL development headers
+On Debian/Ubuntu: apt install build-essential python-dev openssl-dev
+On RHEL/CentOS: yum install gcc python-devel openssl-devel
+
 Install:
 =================
-pip install ../sslsession
+pip install .
 
 Uninstall:
 =================
