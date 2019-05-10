@@ -2250,6 +2250,7 @@ def project_logout(
 
     status = True
     result = False
+    flock = None
     project_name = None
     role = None
     client_id = __client_id_from_user_id(configuration, user_id)
@@ -2340,7 +2341,9 @@ def project_logout(
     if status:
         user_account[protocol]['role'] = ''
         __save_user_db(configuration, user_db, locked=True)
-    release_file_lock(flock)
+
+    if flock is not None:
+        release_file_lock(flock)
 
     if status:
         result = True
