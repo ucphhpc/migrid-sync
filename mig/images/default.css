@@ -1279,6 +1279,10 @@ fieldset .singlefield {
     background-position: left center;
     background-repeat: no-repeat;
 }
+/* link in systemwarn flies around in chrome */
+.systemwarn a, .systemnote a {
+    vertical-align: top;
+}
 
 /* Simple centered layout for grid_openid login page */
 div.openidlogin {
