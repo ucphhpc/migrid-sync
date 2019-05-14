@@ -118,6 +118,12 @@ All services except Jupyter are fully operational.
 <p class="icon_slack iconspace leftpad icontext">
 All services except SIF are fully operational.
 </p>
+<p class="icon_slack iconspace leftpad icontext">
+Web login/access may currently be unstable for UCPH users.
+</p>
+<p class="icon_slack iconspace leftpad icontext">
+Web login/access is currently unstable - we're investigating
+</p>
 -->
 
 <p>
@@ -127,6 +133,27 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage">2019/05/14: Login and Access Issues</h4>
+<p>
+We experienced new login and access problems since before
+noon today. This time it was apparently an issue where our web server
+and our Jupyter instances ended up in a fight for resources and
+significanlty limited the chances of ordinary web browser access. After
+some clean up, tuning and service restarts things are running as
+expected again.
+</p>
+<h4 class="staticpage">2019/05/10: Jupyter Outage</h4>
+<p>
+We had a power outage in the HPC center today and the Jupyter nodes went
+offline as a result. DAG was back online a bit after noon and MODI
+followed a little later.
+</p>
+<h4 class="staticpage">2019/04/23: Login and Access Issues Again</h4>
+<p>
+It looks like the UCPH OpenID issues have returned this morning. We've
+contacted University IT about the issue and await a solution.
+Since noon it seems to be back to normal but we're monitoring it. 
+</p>
 <h4 class="staticpage">2019/03/27: Login and Access Issues</h4>
 <p>
 This morning from about 10.30 UCPH users experienced various issues
@@ -485,6 +512,12 @@ Alle services undtagen Jupyter kører planmæssigt.
 <p class="icon_slack iconspace leftpad icontext">
 Alle services undtagen SIF kører planmæssigt.
 </p>
+<p class="icon_slack iconspace leftpad icontext">
+Der kan i øjeblikket være problemer med weblogin/-adgang for KU-brugere.
+</p>
+<p class="icon_slack iconspace leftpad icontext">
+Der er i øjeblikket problemer med weblogin/-adgang - vi undersøger sagen
+</p>
 -->
 
 <p>
@@ -494,6 +527,37 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage">14/05-2019: Problemer med login og adgang</h4>
+<p>
+Vi oplevede nye problemer med web-login/adgang her omkring middag. 
+Denne gang var det så vidt vi har kunnet finde frem til et problem med
+at vores web-server og Jupyter instanserne endte i en amoktilstand og
+slugte alle resurser, så man dårligt kunne komme igennem med almindlige
+web browsere. Efter lidt oprydning, tuning og genstart af services ser
+det ud til at være løst og tilbage i normal drift.
+</p>
+<h4 class="staticpage">10/05-2019: Jupyter nede</h4>
+<p>
+Vi oplevede en strømafbrydelse i HPC centeret og Jupyter maskinerne var
+derfor nede. DAG kom tilbage online efter middag og MODI fulgte ikke så
+længe efter.
+</p>
+<h4 class="staticpage">23/04-2019: Problemer med KU-login og adgang igen</h4>
+<p>
+Det ser desværre ud til at problemet med KU-login er vendt tilbage her
+til formiddag. Vi har kontaktet KUIT og de ser på sagen. Det ser ud til
+at være tilbage ved normal drift igen siden middag, men vi holder øje med sagen.
+</p>
+<h4 class="staticpage">27/03-2019: Problemer med KU-login og adgang</h4>
+<p>
+Til formiddag fra omkring kl 10.30 meldte flere KU-brugere om problemer
+med ERDA webadgang. Alle operationer som enten involverede egentligt
+KU-login eller blot check på eksisterende login-session tog meget lang
+tid og førte ofte til time-outs eller fejl.
+Vi sporede fejlene til problemer med KUs OpenID service, som vi benytter
+os af til KU-logins på ERDA. KUIT kiggede nærmere på servicen og fik den
+tilbage i normal drift, så alt skulle nu være funktionelt igen. 
+</p>
 <h4 class="staticpage">06/02-2019: SIF Effektiv dataadgang</h4>
 <p>
 Til formiddag fra omkring kl 10.30 oplevede KU-brugere forskellige
