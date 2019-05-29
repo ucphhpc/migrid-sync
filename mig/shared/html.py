@@ -876,9 +876,11 @@ Okay, let's go!</button>
 You first need to install a TOTP authenticator client like
 <a href='https://en.wikipedia.org/wiki/Google_Authenticator' target='_blank'>
 Google Authenticator</a>,
-<a href='https://freeotp.github.io/' target='_blank'>FreeOTP</a> or
+<a href='https://freeotp.github.io/' target='_blank'>FreeOTP</a>,
+<a href='https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview' target='_blank'>NetIQ Advanced Authentication</a> or
 <a href='https://authy.com/download/' target='_blank'>Authy</a> on your phone
-or tablet. You can find them in your usual app store.<br/>
+or tablet. You can find and install either of them on your device through your
+usual app store.<br/>
 </td></tr>
 <tr class='otp_install switch_button hidden'><td>
 <button type=button class='ui-button'
@@ -897,7 +899,8 @@ Scan your personal QR code</span></li>
 Enter your personal key</span></li>
 </ol>
 The latter is usually more cumbersome but may be needed if your app or smart
-device doesn't support scanning QR codes.
+device doesn't support scanning QR codes. Most apps automatically add service
+and account info on QR code scanning, but otherwise you can manually enter it.
 </td></tr>
 <tr class='otp_import switch_button hidden'><td>
 <button type=button class='ui-button'
