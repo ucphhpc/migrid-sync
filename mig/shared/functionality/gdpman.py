@@ -193,7 +193,8 @@ def html_tmpl(
     known_projects = {}
     for entry in [invite_projects, remove_projects, accepted_projects,
                   invited_projects]:
-        known_projects.update(entry)
+        if entry and isinstance(entry, dict):
+            known_projects.update(entry)
     await_projects = (not create_projects and not known_projects)
 
     # Generate html
@@ -585,7 +586,7 @@ def html_tmpl(
             <tr class='create %(category_id)s_section category_section %(hidden)s'>
                 <td>
                 <div class='ref_field'>
-                <!-- NOTE: keep a single field for ref with ref_id in name --> 
+                <!-- NOTE: keep a single field for ref with ref_id in name -->
                 <input id='create_%(ref_id)s' class='%(category_id)s_ref category_ref'
                     name='create_%(ref_id)s' required pattern='%(ref_pattern)s'
                     placeholder='%(ref_name)s' title='%(ref_help)s'
@@ -805,7 +806,7 @@ def js_tmpl(configuration):
     js_init = """
     var preselected_tab = 0;
     var category_map = {};
-    
+
     function selectRef(project_action, category_id) {
         /* Hide and disable inactive input fields to avoid interference */
         $('.category_section.'+project_action).hide();
@@ -908,8 +909,8 @@ def js_tmpl(configuration):
         if (!valid_fields) {
             console.error('one or more form fields are missing or not on required format!');
             return false;
-        }     
-        
+        }
+
         $('#gm_project_submit_form .volatile_fields').empty();
         //console.debug('cleared gdp helper form: '+ $('#gm_project_submit_form').html());
         /* Loop through any project_action references and transfer in turn */
@@ -1342,8 +1343,9 @@ Please contact the site admins %s if you think it should be enabled.
                 # Check and fill references
 
                 try:
-                    category_entry = fill_category(configuration, gdp_category_id,
-                                                   action, dict(gdp_ref_pairs))
+                    category_entry = fill_category(configuration,
+                                                   gdp_category_id, action,
+                                                   dict(gdp_ref_pairs))
                 except ValueError, err:
                     status = False
                     msg = "missing reference: %s" % err
@@ -1391,8 +1393,9 @@ Please contact the site admins %s if you think it should be enabled.
                 # Check and fill references
 
                 try:
-                    category_entry = fill_category(configuration, gdp_category_id,
-                                                   action, dict(gdp_ref_pairs))
+                    category_entry = fill_category(configuration,
+                                                   gdp_category_id, action,
+                                                   dict(gdp_ref_pairs))
                 except ValueError, err:
                     status = False
                     msg = "missing reference: %s" % err
