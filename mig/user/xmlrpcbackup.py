@@ -181,9 +181,19 @@ def xmlrpcgetserver(conf):
 
 
 if '__main__' == __name__:
+    csrf_field = '_csrf'
+    csrf_val = None
+    freeze_id = 'AUTO'
     path_list = ['welcome.txt']
-    if len(sys.argv) > 1:
-        path_list += sys.argv[1:]
+    if not sys.argv[1:]:
+        print "ERROR: requires at least one argument"
+        print "USAGE: xmlrpcsbackup.py CSRF [PATH]"
+        print "where CSRF is your personal cross-site request forgery token"
+        print "which you can obtain from your web pages"
+        sys.exit(1)
+    else:
+        csrf_val = sys.argv[1]
+        path_list += sys.argv[2:]
 
     conf = {'script': '/cgi-bin/xmlrpcinterface.py'}
     user_conf = read_user_conf()
@@ -236,9 +246,9 @@ key/certificate passphrase before you can continue.
     print 'Running backup method:'
 
     print 'backup files: %s' % ', '.join(path_list)
-    (inlist, retval) = server.createbackup({'freeze_id': ['AUTO'],
-                                            'freeze_copy_0': ['welcome.txt'],
-                                            '_csrf': ['699278c325f5ba891d1f88f7542d32309f173680ed683c350613461dd6df73b4']})
+    (inlist, retval) = server.createbackup({'freeze_id': [freeze_id],
+                                            'freeze_copy_0': path_list,
+                                            csrf_field: [csrf_val]})
     (returnval, returnmsg) = retval
     if returnval != 0:
         print 'Error %s:%s ' % (returnval, returnmsg)
