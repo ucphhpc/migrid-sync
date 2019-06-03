@@ -446,11 +446,11 @@ def html_tmpl(
                 </td></tr>
             <tr>
                 <td>
-                User id:
+                User ID:
                 </td>
             </tr><tr>
                 <td>
-                <input name='invite_user_short_id' required placeholder='User ID'
+                <input name='invite_user_short_id' required placeholder='Registered Email of User'
                     title='Email of user to invite' type='email' size='30'/>
             </td></tr>
             """
@@ -511,11 +511,11 @@ def html_tmpl(
                 </td></tr>
             <tr>
                 <td>
-                User id:
+                User ID:
                 </td>
             </tr><tr>
                 <td>
-                <input name='remove_user_short_id' required placeholder='User ID'
+                <input name='remove_user_short_id' required placeholder='Registered Email of User'
                     title='Email of user to remove' type='email' size='30'/>
             </td></tr>
             """
