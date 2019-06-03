@@ -2425,7 +2425,7 @@ def project_open(
                         autologout = True
                     else:
                         status = False
-                        template += ": Wait %s seconds for autologout" \
+                        template += ": Wait %d seconds for autologout" \
                             % time_to_autologout
                 if autologout:
                     status = project_logout(

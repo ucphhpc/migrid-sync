@@ -47,7 +47,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_twofactor, parse_and_save_twofactor
 from shared.useradm import get_full_user_map
 from shared.url import openid_autologout_url
-from shared.vgrid import vgrid_create_allowed
+from shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
 from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 
 
@@ -114,6 +114,8 @@ def html_category_fields(configuration, action):
             ref_fill.update(ref_dict)
             # Default to anything as value if not set in ref_dict
             ref_fill['ref_pattern'] = ref_fill.get('ref_pattern', '.*')
+            ref_fill['ref_name'] = ref_fill.get('ref_name', '')
+            ref_fill['ref_text'] = ref_fill.get('ref_text', '')
             ref_fill['ref_help_html'] = ''
             if ref_fill.get('ref_help', ''):
                 ref_fill['ref_help_icon'] = "%s/icons/help.png" % \
@@ -133,11 +135,23 @@ def html_category_fields(configuration, action):
         <tr class='%(action)s %(category_id)s_section category_section %(hidden)s'>
             <td>
             <div class='ref_field'>
+            """ % ref_fill
+            if ref_fill.get('ref_type', 'text') == "checkbox":
+                fields += """
+                <!-- NOTE: make a checkbox with ref_id and name --> 
+                <input id='%(action)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
+                    name='%(action)s_%(ref_id)s' required title='%(ref_help)s'
+                    type='checkbox' /> %(ref_text)s
+                """ % ref_fill
+            else:
+                fields += """
             <!-- NOTE: keep a single field for ref with ref_id in name -->
             <input id='%(action)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
                 name='%(action)s_%(ref_id)s' required pattern='%(ref_pattern)s'
                 placeholder='%(ref_name)s' title='%(ref_help)s'
                 type='text' size='30' />
+                """ % ref_fill
+            fields += """
             </div>
             </td>
         </tr>
@@ -181,6 +195,8 @@ def html_tmpl(
         if user_dict and vgrid_create_allowed(configuration,
                                               user_dict):
             create_projects = True
+        if user_dict and vgrid_manage_allowed(configuration,
+                                              user_dict):
             invite_projects = get_projects(
                 configuration, client_id, 'accepted', owner_only=True)
             remove_projects = get_projects(
@@ -567,6 +583,8 @@ def html_tmpl(
                 ref_fill.update(ref_dict)
                 # Default to anything as value if not set in ref_dict
                 ref_fill['ref_pattern'] = ref_fill.get('ref_pattern', '.*')
+                ref_fill['ref_name'] = ref_fill.get('ref_name', '')
+                ref_fill['ref_text'] = ref_fill.get('ref_text', '')
                 ref_fill['ref_help_html'] = ''
                 if ref_fill.get('ref_help', ''):
                     ref_fill['ref_help_icon'] = "%s/icons/help.png" % \
@@ -586,15 +604,27 @@ def html_tmpl(
             <tr class='create %(category_id)s_section category_section %(hidden)s'>
                 <td>
                 <div class='ref_field'>
-                <!-- NOTE: keep a single field for ref with ref_id in name -->
+                """ % ref_fill
+                if ref_fill.get('ref_type', 'text') == "checkbox":
+                    ref_html += """
+                <!-- NOTE: make a checkbox with ref_id and name --> 
+                <input id='create_%(ref_id)s' class='%(category_id)s_ref category_ref'
+                    name='create_%(ref_id)s' required title='%(ref_help)s'
+                    type='checkbox' /> %(ref_text)s
+                """ % ref_fill
+                else:
+                    ref_html += """
+                <!-- NOTE: keep a single field for ref with ref_id in name --> 
                 <input id='create_%(ref_id)s' class='%(category_id)s_ref category_ref'
                     name='create_%(ref_id)s' required pattern='%(ref_pattern)s'
                     placeholder='%(ref_name)s' title='%(ref_help)s'
                     type='text' size='30' />
+                """ % ref_fill
+                ref_html += """
                 </div>
                 </td>
             </tr>
-                """ % ref_fill
+            """ % ref_fill
         if configuration.gdp_data_categories:
             html += """
             <tr>

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridres - add one or more vgrid resources
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,8 +35,10 @@ from shared.defaults import any_protocol, csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
+from shared.useradm import get_full_user_map
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
-     vgrid_list_subvgrids, vgrid_add_resources, allow_resources_adm
+    vgrid_list_subvgrids, vgrid_add_resources, allow_resources_adm, \
+    vgrid_manage_allowed
 import shared.returnvalues as returnvalues
 
 
@@ -58,8 +60,8 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = "Add %s Resource" % label
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Add %s Resource(s)' % label})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Add %s Resource(s)' % label})
     status = returnvalues.OK
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -68,7 +70,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -83,6 +85,17 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'error_text', 'text': '''Only accepting
 CSRF-filtered POST requests to prevent unintended updates'''
              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    user_map = get_full_user_map(configuration)
+    user_dict = user_map.get(client_id, None)
+    # Optional site-wide limitation of manage vgrid permission
+    if not user_dict or \
+            not vgrid_manage_allowed(configuration, user_dict):
+        logger.warning("user %s is not allowed to manage vgrids!" % client_id)
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only privileged users can manage %ss' % label})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # make sure vgrid settings allow this owner to edit resources
@@ -109,8 +122,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                       unique_resource_name, 'resource',
                                       configuration)
         if not ret_val:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : msg})
+            output_objects.append({'object_type': 'error_text', 'text': msg})
             status = returnvalues.CLIENT_ERROR
             continue
         elif msg:
@@ -124,7 +136,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if rank is None and vgrid_is_resource(vgrid_name, unique_resource_name,
                                               configuration):
             output_objects.append({'object_type': 'error_text', 'text':
-                                   '%s is already a resource in the %s' % \
+                                   '%s is already a resource in the %s' %
                                    (unique_resource_name, label)})
             status = returnvalues.CLIENT_ERROR
             continue
@@ -132,10 +144,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # don't add if already in subvgrid
 
         (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
-                configuration)
+                                                        configuration)
         if not list_status:
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Error getting list of sub%ss: %s' % \
+                                   'Error getting list of sub%ss: %s' %
                                    (label, subvgrids)})
             status = returnvalues.SYSTEM_ERROR
             continue
@@ -154,7 +166,7 @@ sub-%(vgrid_label)s and try again''' % {'res_name': unique_resource_name,
                 break
         if skip_entity:
             continue
-        
+
         # Check if only rank change was requested and apply if so
 
         if rank is not None:
@@ -163,8 +175,8 @@ sub-%(vgrid_label)s and try again''' % {'res_name': unique_resource_name,
                                                         [unique_resource_name],
                                                         rank=rank)
             if not add_status:
-                output_objects.append({'object_type': 'error_text', 'text'
-                                       : add_msg})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': add_msg})
                 status = returnvalues.SYSTEM_ERROR
             else:
                 output_objects.append({'object_type': 'text', 'text':
@@ -180,7 +192,7 @@ sub-%(vgrid_label)s and try again''' % {'res_name': unique_resource_name,
         # vgrid dirs when own name is a prefix of another name
 
         base_dir = os.path.abspath(configuration.vgrid_home + os.sep
-                                    + vgrid_name) + os.sep
+                                   + vgrid_name) + os.sep
         resources_file = base_dir + 'resources'
 
         # Add to list and pickle
@@ -197,17 +209,17 @@ sub-%(vgrid_label)s and try again''' % {'res_name': unique_resource_name,
     if request_name:
         request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
         if not delete_access_request(configuration, request_dir, request_name):
-                logger.error("failed to delete res request for %s in %s" % \
-                             (vgrid_name, request_name))
-                output_objects.append({
-                    'object_type': 'error_text', 'text':
-                    'Failed to remove saved request for %s in %s!' % \
-                    (vgrid_name, request_name)})
+            logger.error("failed to delete res request for %s in %s" %
+                         (vgrid_name, request_name))
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'Failed to remove saved request for %s in %s!' %
+                (vgrid_name, request_name)})
 
     if res_id_added:
         output_objects.append(
             {'object_type': 'html_form', 'text':
-             'New resource(s)<br />%s<br />successfully added to %s %s!''' % \
+             'New resource(s)<br />%s<br />successfully added to %s %s!''' %
              ('<br />'.join(res_id_added), vgrid_name, label)
              })
         res_id_fields = ''

@@ -110,6 +110,7 @@ def fix_missing(config_file, verbose=True):
         'notify_home': '~/state/notify_home',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
+        'site_vgrid_managers': 'distinguished_name:.*',
         'site_vgrid_label': 'VGrid',
         'site_signup_methods': '',
         'site_login_methods': '',
@@ -317,6 +318,7 @@ class Configuration:
     site_default_vgrid_links = []
     site_advanced_vgrid_links = []
     site_vgrid_creators = [('distinguished_name', '.*')]
+    site_vgrid_managers = [('distinguished_name', '.*')]
     site_vgrid_label = 'VGrid'
     # Allowed signup and login methods in prioritized order
     site_signup_methods = ['extcert']
@@ -1391,6 +1393,9 @@ location.""" % self.config_file
         if config.has_option('SITE', 'vgrid_creators'):
             req = config.get('SITE', 'vgrid_creators').split()
             self.site_vgrid_creators = [i.split(':', 2) for i in req]
+        if config.has_option('SITE', 'vgrid_managers'):
+            req = config.get('SITE', 'vgrid_managers').split()
+            self.site_vgrid_managers = [i.split(':', 2) for i in req]
         if config.has_option('SITE', 'vgrid_label'):
             self.site_vgrid_label = config.get('SITE', 'vgrid_label').strip()
         if config.has_option('SITE', 'signup_methods'):

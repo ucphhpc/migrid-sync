@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridmember - add one or more vgrid members
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,10 +37,10 @@ from shared.fileio import make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
-from shared.useradm import expand_openid_alias
+from shared.useradm import expand_openid_alias, get_full_user_map
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_members, \
-     allow_members_adm
+    vgrid_is_member, vgrid_list_subvgrids, vgrid_add_members, \
+    allow_members_adm, vgrid_manage_allowed
 import shared.returnvalues as returnvalues
 
 
@@ -71,7 +71,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -86,6 +86,17 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'error_text', 'text': '''Only accepting
 CSRF-filtered POST requests to prevent unintended updates'''
              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    user_map = get_full_user_map(configuration)
+    user_dict = user_map.get(client_id, None)
+    # Optional site-wide limitation of manage vgrid permission
+    if not user_dict or \
+            not vgrid_manage_allowed(configuration, user_dict):
+        logger.warning("user %s is not allowed to manage vgrids!" % client_id)
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only privileged users can manage %ss' % label})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # make sure vgrid settings allow this owner to edit members
@@ -126,7 +137,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if vgrid_is_owner(vgrid_name, cert_id, configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 '%s is already an owner of %s or a parent %s.' % \
+                 '%s is already an owner of %s or a parent %s.' %
                  (cert_id, vgrid_name, label)})
             status = returnvalues.CLIENT_ERROR
             continue
@@ -137,7 +148,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  '''%s is already a member of %s or a parent %s. Please remove
-    the person first and then try this operation again.''' % \
+    the person first and then try this operation again.''' %
                  (cert_id, vgrid_name, label)
                  })
             status = returnvalues.CLIENT_ERROR
@@ -146,10 +157,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # owner or member of subvgrid?
 
         (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
-                configuration)
+                                                        configuration)
         if not list_status:
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Error getting list of sub%ss: %s' % \
+                                   'Error getting list of sub%ss: %s' %
                                    (label, subvgrids)})
             status = returnvalues.SYSTEM_ERROR
             continue
@@ -167,7 +178,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 sub-%(vgrid_label)s ('%(subvgrid)s'). While we DO support members being owners
 of sub-%(vgrid_label)ss, we do not support adding parent %(vgrid_label)s
 members at the moment. Please (temporarily) remove the person as owner of all
-sub-%(vgrid_label)ss first and then try this operation again.""" % \
+sub-%(vgrid_label)ss first and then try this operation again.""" %
                      {'cert_id': cert_id, 'subvgrid': subvgrid,
                       'vgrid_label': label}})
                 status = returnvalues.CLIENT_ERROR
@@ -177,7 +188,7 @@ sub-%(vgrid_label)ss first and then try this operation again.""" % \
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
                      """%s is already a member of a sub-%s ('%s'). Please
-remove the person first and then try this operation again.""" % \
+remove the person first and then try this operation again.""" %
                      (cert_id, label, subvgrid)})
                 status = returnvalues.CLIENT_ERROR
                 skip_entity = True
@@ -192,13 +203,13 @@ remove the person first and then try this operation again.""" % \
                                                       vgrid_name,
                                                       [cert_id], rank=rank)
             if not add_status:
-                output_objects.append({'object_type': 'error_text', 'text'
-                                       : add_msg})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': add_msg})
                 status = returnvalues.SYSTEM_ERROR
             else:
                 output_objects.append({'object_type': 'text', 'text':
                                        'changed %s to member %d' % (cert_id,
-                                                                   rank)})
+                                                                    rank)})
             # No further action after rank change as everything else exists
             continue
 
@@ -209,18 +220,18 @@ remove the person first and then try this operation again.""" % \
         # vgrid dirs when own name is a prefix of another name
 
         base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                                   vgrid_name)) + os.sep
+                                                vgrid_name)) + os.sep
         user_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                   cert_dir)) + os.sep
+                                                cert_dir)) + os.sep
 
         # make sure all dirs can be created (that a file or directory with the same
         # name do not exist prior to adding the member)
 
         if os.path.exists(user_dir + vgrid_name):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : '''Could not add member, a file or directory in the home
-    directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
+                {'object_type': 'error_text', 'text':
+                 '''Could not add member, a file or directory in the home
+directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -229,8 +240,8 @@ remove the person first and then try this operation again.""" % \
         (add_status, add_msg) = vgrid_add_members(configuration, vgrid_name,
                                                   [cert_id])
         if not add_status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : add_msg})
+            output_objects.append(
+                {'object_type': 'error_text', 'text': add_msg})
             status = returnvalues.SYSTEM_ERROR
             continue
 
@@ -245,13 +256,13 @@ remove the person first and then try this operation again.""" % \
 
                 vgrid_name_last_fragment = \
                     vgrid_name_parts[len(vgrid_name_parts)
-                                         - 1].strip()
+                                     - 1].strip()
 
                 # vgrid_name_without_last_fragment = IMADA/STUD/
 
                 vgrid_name_without_last_fragment = \
                     ('/'.join(vgrid_name_parts[0:len(vgrid_name_parts)
-                      - 1]) + os.sep).strip()
+                                               - 1]) + os.sep).strip()
 
                 # create dirs if they do not exist
 
@@ -273,17 +284,17 @@ remove the person first and then try this operation again.""" % \
         # create symlink from users home directory to vgrid file directory
 
         link_src = os.path.abspath(configuration.vgrid_files_home + os.sep
-                                    + vgrid_name) + os.sep
+                                   + vgrid_name) + os.sep
         link_dst = user_dir + vgrid_name
 
         # create symlink to vgrid files
 
         if not make_symlink(link_src, link_dst, logger):
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not create link to %s files!' % \
+                                   'Could not create link to %s files!' %
                                    label
-                                  })
-            logger.error('Could not create link to %s files! (%s -> %s)' % \
+                                   })
+            logger.error('Could not create link to %s files! (%s -> %s)' %
                          (label, link_src, link_dst))
             status = returnvalues.SYSTEM_ERROR
             continue
@@ -292,17 +303,17 @@ remove the person first and then try this operation again.""" % \
     if request_name:
         request_dir = os.path.join(configuration.vgrid_home, vgrid_name)
         if not delete_access_request(configuration, request_dir, request_name):
-                logger.error("failed to delete member request for %s in %s" % \
-                             (vgrid_name, request_name))
-                output_objects.append({
-                    'object_type': 'error_text', 'text':
-                    'Failed to remove saved request for %s in %s!' % \
-                    (vgrid_name, request_name)})
+            logger.error("failed to delete member request for %s in %s" %
+                         (vgrid_name, request_name))
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'Failed to remove saved request for %s in %s!' %
+                (vgrid_name, request_name)})
 
     if cert_id_added:
         output_objects.append(
             {'object_type': 'html_form', 'text':
-             'New member(s)<br />%s<br />successfully added to %s %s!''' % \
+             'New member(s)<br />%s<br />successfully added to %s %s!''' %
              ('<br />'.join(cert_id_added), vgrid_name, label)
              })
         cert_id_fields = ''
@@ -355,5 +366,3 @@ Regards, the %(vgrid_name)s %(vgrid_label)s owners
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})
     return (output_objects, status)
-
-

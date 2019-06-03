@@ -1610,6 +1610,16 @@ def vgrid_create_allowed(configuration, user_dict):
     return True
 
 
+def vgrid_manage_allowed(configuration, user_dict):
+    """Check if user with user_dict is allowed to manage vgrid_name based on
+    optional configuration limits.
+    """
+    for (key, val) in configuration.site_vgrid_managers:
+        if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
+            return False
+    return True
+
+
 def __in_vgrid_special(configuration, path, vgrid_special_base, flat=False):
     """Helper function to detect subvgrid public/private web hosting dirs and
     vgrid shares.

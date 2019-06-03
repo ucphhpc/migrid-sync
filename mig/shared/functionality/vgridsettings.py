@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridsettings - save vgrid settings
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,19 +30,21 @@
 import os
 
 from shared.defaults import keyword_owners, keyword_members, keyword_all, \
-     keyword_auto, keyword_none, default_vgrid_settings_limit
+    keyword_auto, keyword_none, default_vgrid_settings_limit
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
+from shared.useradm import get_full_user_map
 from shared.vgrid import init_vgrid_script_add_rem, allow_settings_adm, \
-     vgrid_settings, vgrid_set_settings, vgrid_allow_restrict_write, \
-     vgrid_restrict_write
+    vgrid_settings, vgrid_set_settings, vgrid_allow_restrict_write, \
+    vgrid_restrict_write, vgrid_manage_allowed
 import shared.returnvalues as returnvalues
 
 _valid_visible = (keyword_owners, keyword_members, keyword_all)
 _valid_sharelink = (keyword_owners, keyword_members)
 _valid_write_access = (keyword_owners, keyword_members, keyword_none)
 _keyword_auto_int = '0'
+
 
 def signature():
     """Signature of the main function"""
@@ -75,8 +77,8 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = "Save %s Settings" % label
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Save %s Settings' % label})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Save %s Settings' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -84,7 +86,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -108,14 +110,24 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   new_settings.items(), 'settings',
                                   configuration)
     if not ret_val:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
+        output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif msg:
 
         # In case of warnings, msg is non-empty while ret_val remains True
 
         output_objects.append({'object_type': 'warning', 'text': msg})
+
+    user_map = get_full_user_map(configuration)
+    user_dict = user_map.get(client_id, None)
+    # Optional site-wide limitation of manage vgrid permission
+    if not user_dict or \
+            not vgrid_manage_allowed(configuration, user_dict):
+        logger.warning("user %s is not allowed to manage vgrids!" % client_id)
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only privileged users can manage %ss' % label})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Check if this owner is allowed to change settings
 
@@ -127,7 +139,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     # Build current settings, leaving out unset ones for default/inherit
     if not keyword_auto in accepted['description']:
-        new_settings['description'] = '\n'.join(accepted['description']).strip()
+        new_settings['description'] = '\n'.join(
+            accepted['description']).strip()
     if not keyword_auto in accepted['visible_owners']:
         visible_owners = accepted['visible_owners'][-1]
         if visible_owners in _valid_visible:
@@ -164,7 +177,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.warning(msg)
             output_objects.append({'object_type': 'error_text', 'text': msg})
             return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
     if not _keyword_auto_int in accepted['request_recipients']:
         try:
             request_recipients = accepted['request_recipients'][-1]
@@ -268,15 +281,15 @@ a lower or equal number.</span>'''})
     # TODO: remove this bail-out once we've implemented wider web write access
     if write_priv_web != keyword_owners or write_pub_web != keyword_owners:
         output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 """%s does not yet support changing write access to the
+            {'object_type': 'error_text', 'text':
+             """%s does not yet support changing write access to the
 private and public web pages""" % configuration.short_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Handle any write access limit changes first
 
     (load_old, old_settings) = vgrid_settings(vgrid_name, configuration,
-                                                 recursive=False, as_dict=True)
+                                              recursive=False, as_dict=True)
     if not load_old:
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -294,13 +307,13 @@ format first.""" % (configuration.short_title, vgrid_name, label)
              """Owner-only write access is not supported yet"""})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif old_write_shared == write_shared_files:
-        logger.debug("write shared status (%s) is unchanged" % \
+        logger.debug("write shared status (%s) is unchanged" %
                      old_write_shared)
     else:
         if not vgrid_allow_restrict_write(vgrid_name, write_shared_files,
                                           configuration):
             if write_shared_files != keyword_members:
-                # Refuse if any child vgrid is writable 
+                # Refuse if any child vgrid is writable
                 output_objects.append(
                     {'object_type': 'error_text', 'text': """Refused to tighten
 write access for %s - layout or child prevents it! You need to make sure all
@@ -311,7 +324,7 @@ restrict %s. %s.""" % (vgrid_name, label, vgrid_name, contact_text)})
                 output_objects.append(
                     {'object_type': 'error_text', 'text': """Refused to make
 %s fully writable - layout or parent prevents it! You need to remove write
-restrictions on all parent %ss before you can make %s writable. %s.""" % \
+restrictions on all parent %ss before you can make %s writable. %s.""" %
                      (vgrid_name, label, vgrid_name, contact_text)})
 
             return (output_objects, returnvalues.CLIENT_ERROR)
@@ -338,9 +351,8 @@ write to %s on %s shared files""" % (write_shared_files.lower(), vgrid_name)})
                                % set_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Settings saved for %s %s!' % (vgrid_name,
-                                                           label)})
+    output_objects.append({'object_type': 'text', 'text':
+                           'Settings saved for %s %s!' % (vgrid_name, label)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

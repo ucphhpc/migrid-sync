@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridmember - remove vgrid member
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,9 +34,10 @@ from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
+from shared.useradm import get_full_user_map
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-     vgrid_is_member, vgrid_remove_members, vgrid_list_subvgrids, \
-     allow_members_adm
+    vgrid_is_member, vgrid_remove_members, vgrid_list_subvgrids, \
+    allow_members_adm, vgrid_manage_allowed
 from shared.vgridaccess import unmap_inheritance
 
 
@@ -56,8 +57,8 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = "Remove %s Member" % label
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove %s Member' % label})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Remove %s Member' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -65,7 +66,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -82,7 +83,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # always allow member to remove self
-    if  client_id != cert_id:
+    if client_id != cert_id:
+        user_map = get_full_user_map(configuration)
+        user_dict = user_map.get(client_id, None)
+        # Optional site-wide limitation of manage vgrid permission
+        if not user_dict or \
+                not vgrid_manage_allowed(configuration, user_dict):
+            logger.warning("user %s is not allowed to manage vgrids!" %
+                           client_id)
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Only privileged users can manage %ss' % label})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
         # make sure vgrid settings allow this owner to edit other members
         (allow_status, allow_msg) = allow_members_adm(configuration,
                                                       vgrid_name, client_id)
@@ -98,25 +111,24 @@ CSRF-filtered POST requests to prevent unintended updates'''
         init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
                                   'member', configuration)
     if not ret_val:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
+        output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't remove if not a member
 
     if not vgrid_is_member(vgrid_name, cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '%s is not a member of %s or a parent %s.' % \
+                               '%s is not a member of %s or a parent %s.' %
                                (cert_id, vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # owner of subvgrid?
 
     (list_status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
-            configuration)
+                                                    configuration)
     if not list_status:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Error getting list of sub%ss: %s' % \
+                               'Error getting list of sub%ss: %s' %
                                (label, subvgrids)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -132,7 +144,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 ('%(subvgrid)s'). While we DO support members being owners of
 sub-%(vgrid_label)ss, we do not support removing parent %(vgrid_label)s members
 at the moment. Please (temporarily) remove the person as owner of all
-sub-%(vgrid_label)ss first and then try this operation again.""" % \
+sub-%(vgrid_label)ss first and then try this operation again.""" %
                  {'cert_id': cert_id, 'subvgrid': subvgrid,
                   'vgrid_label': label}})
             return (output_objects, returnvalues.CLIENT_ERROR)
@@ -141,7 +153,7 @@ sub-%(vgrid_label)ss first and then try this operation again.""" % \
     # vgrid dirs when own name is a prefix of another name
 
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                               vgrid_name)) + os.sep
+                                            vgrid_name)) + os.sep
 
     # remove symlink from users home directory to vgrid directory
 
@@ -149,7 +161,7 @@ sub-%(vgrid_label)ss first and then try this operation again.""" % \
     # user dirs when own name is a prefix of another user name
 
     user_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               cert_dir)) + os.sep
+                                            cert_dir)) + os.sep
 
     dst = user_dir + vgrid_name
     try:
@@ -240,9 +252,8 @@ exception removing empty directory %s''' % (label, exc)})
     (rm_status, rm_msg) = vgrid_remove_members(configuration, vgrid_name,
                                                [cert_id])
     if not rm_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s of member of %s' % (rm_msg,
-                              vgrid_name)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '%s of member of %s' % (rm_msg, vgrid_name)})
         output_objects.append({'object_type': 'error_text', 'text':
                                '''(If %(vgrid_label)s %(vgrid_name)s has
 sub-%(vgrid_label)ss then removal must be performed from the most significant
@@ -251,7 +262,7 @@ sub-%(vgrid_label)ss then removal must be performed from the most significant
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     unmap_inheritance(configuration, vgrid_name, cert_id)
-    
+
     output_objects.append({'object_type': 'text', 'text':
                            '%s successfully removed as member of %s %s!'
                            % (cert_id, vgrid_name, label)})
@@ -259,5 +270,3 @@ sub-%(vgrid_label)ss then removal must be performed from the most significant
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
-
-

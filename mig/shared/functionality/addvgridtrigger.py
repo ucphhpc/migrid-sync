@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridtrigger - add vgrid trigger
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
     vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers, \
-     vgrid_triggers
+    vgrid_triggers
 import shared.returnvalues as returnvalues
 
 
@@ -121,7 +121,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     # we just use a high res timestamp as automatic rule_id
 
