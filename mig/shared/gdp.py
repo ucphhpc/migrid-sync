@@ -611,8 +611,11 @@ def __send_project_action_confirmation(configuration,
     template = None
     notify = []
     notify_filename = 'notifyemails.txt'
-    template_filename = category_dict.get(
-        '%s_notify_template' % action, 'notify-%s-general_data.txt' % action)
+    template_filename = category_dict.get('%s_notify_template' % action, False)
+    if not template_filename:
+        _logger.info("No %s notification email configured for %s projects" %
+                     (action, category_dict['category_id']))
+        return True
 
     # Check for PDF generation packages
 
