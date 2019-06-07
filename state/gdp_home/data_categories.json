@@ -6,60 +6,52 @@
              {"ref_id": "workzone_id",
               "ref_name": "Workzone Number",
               "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
-              "ref_help": "The workzone number is the journal number from the acceptance of processing personal data"
+              "ref_help": "The workzone number is the journal number that you received from the Faculty Secretariat in the email together with your letter of acceptance in regard to processing personal data. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx target=_blank>Faculty Secretariat</a> for guidance."
              }],
          "invite_user": [
-             {"ref_id": "access_id",
-              "ref_name": "Data Access Agreement ID",
-              "ref_help": "The data access agreement ID is the journal number of the data access agreement"
-             }],
+             {
+                 "ref_id": "workzone_id",
+                 "ref_name": "Workzone Number",
+                 "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
+                 "ref_help": "The workzone number is the journal number that you received from the Faculty Secretariat in the email together with your letter of acceptance in regard to sharing personal data. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx target=_blank>Faculty Secretariat</a> for guidance."
+             }, 
+             {
+                 "ref_id": "user_terms",
+                 "ref_type": "checkbox",
+                 "ref_text": "I confirm that I am familiar and comply with the EU GDPR and <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx' target=_blank>UCPH internal procedures in regard to transfer and disclosure of personal data</a>.",
+                 "ref_name": "Sharing Rules and Regulations",
+                 "ref_help": "To share sensitive data with anyone you need to be aware of and in compliance with both internal and external rules and regulations. Please refer to the details in <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>UCPH rules for sharing personal data</a> before you share this project with anyone."
+             }
+         ],
          "accept_user": [],
          "remove_user": []
      },
      "create_notify_template": "notify-create-personal_data.txt",
      "invite_user_notify_template": "notify-invite_user-personal_data.txt",
-     "accept_user_notify_template": "notify-accept_user-personal_data.txt",
-     "remove_user_notify_template": "notify-remove_user-personal_data.txt"
+     "accept_user_notify_template": "",
+     "remove_user_notify_template": ""
     },
-    {"category_id": "data_transfer",
-     "category_title": "Data Transfer",
+    {"category_id": "agreement_data",
+     "category_title": "Data Subject to an Agreement",
      "references": {
          "create": [
-             {"ref_id": "transfer_id",
-              "ref_name": "Transfer Agreement ID",
-              "ref_help": "The transfer agreement ID is the journal number of the data transfer agreement"
-             },
-             {"ref_id": "nda_id",
-              "ref_name": "Non-disclosure Agreement ID",
-              "ref_help": "The Non-disclosure agreement ID is the journal number of the associated NDA"
-             }],
+             {"ref_id": "workzone_id",
+              "ref_name": "Workzone Number",
+              "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
+              "ref_help": "The workzone number is the journal number given by the Tech Trans Office in connection with entering the agreement. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/innovation_and_business/Pages/default.aspx target=_blank>Tech Transfer Office</a> for guidance."
+             }
+         ],
          "invite_user": [
-             {"ref_id": "access_id",
-              "ref_name": "Data Access Agreement ID",
-              "ref_help": "The data access agreement ID is the journal number of the data access agreement"
-             },
-             {"ref_id": "nda_id",
-              "ref_name": "Non-disclosure Agreement ID",
-              "ref_help": "The Non-disclosure agreement ID is the journal number of the associated NDA"
+             {
+                 "ref_id": "user_terms",
+                 "ref_type": "checkbox",
+                 "ref_text": "I confirm that I comply with the signed agreement and am familiar with <a href='https://kunet.ku.dk/work-areas/research/rcr/data-storage-and-sharing/Pages/default.aspx' target=_blank>UCPH internal procedures in regard to disclosure of sensitive data</a>.",
+                 "ref_name": "Sharing Rules and Regulations",
+                 "ref_help": "To share sensitive data with anyone you need to be aware of and in compliance with both internal and external rules and regulations. Please refer to the details in <a href=https://kunet.ku.dk/work-areas/research/rcr/data-storage-and-sharing/Pages/default.aspx target=_blank>UCPH rules for sharing data subject to an agreement</a> before you share this project with anyone."
              }
-         ],
-         "accept_user": [
-             {"ref_id": "nda_id",
-              "ref_name": "Non-disclosure Agreement ID",
-              "ref_help": "The Non-disclosure agreement ID is the journal number of the associated NDA"
-             }
-         ],
-         "remove_user": [
-             {"ref_id": "remove_id",
-              "ref_name": "Data Access Removal ID",
-              "ref_help": "The data access removal ID is the journal number of the data access removal"
-             }
-         ]
-     },
-     "create_notify_template": "notify-create-data_transfer.txt",
-     "invite_user_notify_template": "notify-invite_user-data_transfer.txt",
-     "accept_user_notify_template": "notify-accept_user-data_transfer.txt",
-     "remove_user_notify_template": "notify-remove_user-data_transfer.txt"
+         ], 
+         "accept_user": [], "remove_user": []},
+     "create_notify_template": "notify-create-general_data.txt"
     },
     {"category_id": "general_data",
      "category_title": "General Sensitive Data",

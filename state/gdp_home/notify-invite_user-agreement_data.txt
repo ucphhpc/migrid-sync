@@ -17,7 +17,7 @@ This document has been sent to the project registrant and the SCIENCE legal offi
 <br>
 <b>Project legal references:</b>
 <br>
-%(workzone_id_name)s from the acceptance of %(category_title)s access: %(workzone_id_value)s
+Please refer to project creation notification.
 <br>
 Owner confirmed compliance with sharing rules and regulations: %(user_terms_value)s
 
