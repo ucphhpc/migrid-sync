@@ -34,9 +34,10 @@ import urllib
 
 from shared.base import client_id_dir
 from shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
-     CSRF_FULL
+    CSRF_FULL
 from shared.findtype import is_user, is_server
 from shared.pwhash import make_csrf_token, make_csrf_trust_token
+
 
 def correct_handler(name, environ=None):
     """Verify that the handler name matches handler method using the provided
@@ -47,6 +48,7 @@ def correct_handler(name, environ=None):
         environ = os.environ
     return environ.get('REQUEST_METHOD', 'UNSET').upper() == name.upper()
 
+
 def get_csrf_limit(configuration, environ=None):
     """Create a suitable limit argument for make_csrf_token. We just use None
     for now to disable limit. CSRF token is already impossible to predict
@@ -56,6 +58,7 @@ def get_csrf_limit(configuration, environ=None):
     # TODO: add time limit for full forward-secrecy?
     limit = None
     return limit
+
 
 def check_enable_csrf(configuration, accepted_dict, environ=None):
     """Detect if client is a browser so that CSRF should be enabled or e.g. a 
@@ -70,7 +73,7 @@ def check_enable_csrf(configuration, accepted_dict, environ=None):
         _logger.debug("configuration enforces full CSRF protection")
         return True
     elif configuration.site_csrf_protection == CSRF_WARN:
-        _logger.debug("configuration enforces minimal CSRF protection, but " + \
+        _logger.debug("configuration enforces minimal CSRF protection, but " +
                       "with full warnings")
         return True
     elif configuration.site_csrf_protection == CSRF_MINIMAL:
@@ -83,7 +86,8 @@ def check_enable_csrf(configuration, accepted_dict, environ=None):
     # * jsonrpclib/0.1 (Python X.Y.Z)
     agent = environ.get('HTTP_USER_AGENT', 'UNKNOWN')
     if agent.lower().startswith('curl') or agent.lower().startswith('xmlrpc') \
-           or agent.lower().startswith('jsonrpc'):
+            or agent.lower().startswith('python-xmlrpc') or \
+            agent.lower().startswith('jsonrpc'):
         # No csrf_field input results in the defaults AllowMe string
         csrf_token = accepted_dict.get(csrf_field, ['AllowMe'])[-1]
         if csrf_token and csrf_token != 'AllowMe':
@@ -95,6 +99,7 @@ def check_enable_csrf(configuration, accepted_dict, environ=None):
     else:
         _logger.debug("enable CSRF check for client: %s" % agent)
         return True
+
 
 def safe_handler(configuration, method, operation, client_id, limit,
                  accepted_dict, environ=None):
@@ -198,26 +203,24 @@ def get_allowed_path(configuration, client_id, path):
             raise Exception('Invalid session id!')
 
         target_dir = configuration.webserver_home\
-             + path_slash_stripped[:path_slash_stripped.rfind('/')]
+            + path_slash_stripped[:path_slash_stripped.rfind('/')]
         target_file = path_slash_stripped[path_slash_stripped.rfind('/')
-             + 1:]
+                                          + 1:]
     elif is_user(client_id, configuration.mig_server_home):
         real_path = \
             os.path.normpath(os.path.join(configuration.user_home,
-                             client_dir, path))
+                                          client_dir, path))
         target_dir = os.path.dirname(real_path)
         target_file = os.path.basename(real_path)
     elif is_server(client_id, configuration.server_home):
         real_path = \
             os.path.normpath(os.path.join(configuration.server_home,
-                             client_dir, path))
+                                          client_dir, path))
         target_dir = os.path.dirname(real_path)
         target_file = os.path.basename(real_path)
     else:
         raise Exception('Invalid credentials %s: no such user or server'
-                         % client_id)
+                        % client_id)
 
     target_path = target_dir + '/' + target_file
     return target_path
-
-
