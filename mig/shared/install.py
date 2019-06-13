@@ -280,6 +280,7 @@ def generate_confs(
     distro='Debian',
     landing_page=None,
     skin='migrid-basic',
+    secscan_addr='UNSET',
 ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -388,6 +389,7 @@ def generate_confs(
     user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
     user_dict['__DISTRO__'] = distro
     user_dict['__SKIN__'] = skin
+    user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__PUBLIC_ALIAS_LISTEN__'] = listen_clause
 
     # Apache fails on duplicate Listen directives so comment in that case

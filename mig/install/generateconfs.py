@@ -133,6 +133,7 @@ if '__main__' == __name__:
         'distro',
         'landing_page',
         'skin',
+        'secscan_addr',
     )
     settings = {}
     default_val = 'DEFAULT'
