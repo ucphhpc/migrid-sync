@@ -53,6 +53,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     """
 
     _logger = configuration.logger
+    _addr = environ.get('REMOTE_ADDR', 'UNKNOWN')
 
     before_time = time.time()
 
@@ -69,7 +70,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
         exec 'from %s import main' % import_path
     except Exception, err:
-        _logger.error("could not import %s: %s" % (import_path, err))
+        _logger.error("%s could not import %s: %s" % (_addr, import_path, err))
         output_objects.extend([
             {'object_type': 'title', 'text': 'Interface Error'},
             {'object_type': 'header', 'text': 'Interface Error'},
@@ -83,8 +84,9 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     # Now backend value is validated to be safe for output
 
     if not isinstance(user_arguments_dict, dict):
-        _logger.error("invalid user args %s for %s" % (user_arguments_dict,
-                                                       import_path))
+        _logger.error("%s invalid user args %s for %s" % (_addr,
+                                                          user_arguments_dict,
+                                                          import_path))
         output_objects.extend([
             {'object_type': 'title', 'text': 'Input Error'},
             {'object_type': 'error_text', 'text':
@@ -100,7 +102,8 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
                                                      user_arguments_dict)
     except Exception, err:
         import traceback
-        _logger.error("script crashed:\n%s" % traceback.format_exc())
+        _logger.error("%s script crashed:\n%s" % (_addr,
+                                                  traceback.format_exc()))
         output_objects.extend([
             {'object_type': 'title', 'text': 'Runtime Error'},
             {'object_type': 'error_text', 'text':
