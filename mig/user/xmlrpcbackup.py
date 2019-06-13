@@ -33,7 +33,7 @@ import ssl
 import sys
 import time
 import xmlrpclib
-from urlparse import urlparse
+from urlparse import urlparse, parse_qs
 
 
 def read_user_conf():
@@ -185,15 +185,8 @@ if '__main__' == __name__:
     csrf_val = None
     freeze_id = 'AUTO'
     path_list = ['welcome.txt']
-    if not sys.argv[1:]:
-        print "ERROR: requires at least one argument"
-        print "USAGE: xmlrpcsbackup.py CSRF [PATH]"
-        print "where CSRF is your personal cross-site request forgery token"
-        print "which you can obtain from your web pages"
-        sys.exit(1)
-    else:
-        csrf_val = sys.argv[1]
-        path_list += sys.argv[2:]
+    if sys.argv[1:]:
+        path_list += sys.argv[1:]
 
     conf = {'script': '/cgi-bin/xmlrpcinterface.py'}
     user_conf = read_user_conf()
@@ -225,34 +218,82 @@ key/certificate passphrase before you can continue.
     ''' % conf
     server = xmlrpcgetserver(conf)
 
-    print 'createbackup() signature: %s'\
-        % server.system.methodSignature('createbackup')
-    print 'the signature is a tuple of output object type and a list of '
-    print 'expected/default input values'
-    print 'createbackup() help: %s' % server.system.methodHelp('createbackup')
-    print 'please note that help is not yet available for all methods'
-    print
-
-    for method in ['createbackup']:
+    for method in ['createbackup', 'showfreeze']:
+        print '%s() signature: %s' % (method,
+                                      server.system.methodSignature(method))
+        print 'the signature is a tuple of output object type and a list of '
+        print 'expected/default input values'
+        print '%s() help: %s' % (method, server.system.methodHelp(method))
+        print 'please note that help is not yet available for all methods'
+        print
         print "Info about %s remote method and variable arguments:" % method
         signature = server.system.methodSignature(method)
         if 'none' in signature or 'array' in signature:
+            print
             continue
         signature_list = eval(signature.replace('none', 'None'))
         var_dict = signature_list[1]
         var_list = var_dict.keys()
         print '%s : %s' % (method, var_list)
 
-    print 'Running backup method:'
-
+    print 'Running createbackup method:'
     print 'backup files: %s' % ', '.join(path_list)
-    (inlist, retval) = server.createbackup({'freeze_id': [freeze_id],
-                                            'freeze_copy_0': path_list,
-                                            csrf_field: [csrf_val]})
+    create_args = {'freeze_id': [freeze_id],
+                   # csrf_field: [csrf_val]
+                   }
+    for i in xrange(len(path_list)):
+        create_args['freeze_copy_%d' % i] = [path_list[i]]
+
+    (outlist, retval) = server.createbackup(create_args)
     (returnval, returnmsg) = retval
     if returnval != 0:
         print 'Error %s:%s ' % (returnval, returnmsg)
+        sys.exit(1)
 
-    for elem in inlist:
-        if elem.has_key('lines'):
-            print '\n'.join(elem['lines'])
+    # print "DEBUG: createbackup response: %s" % outlist
+
+    # Find actual archive ID from resulting link
+    archive_id_list = None
+    for elem in outlist:
+        if elem.get('object_type', 'UNKNOWN') != 'link':
+            continue
+
+        link_url = elem.get('destination', False)
+        if not link_url:
+            print "WARNING: skip broken link: %s" % elem
+            continue
+        url_query = urlparse(link_url).query
+        archive_id_list = parse_qs(url_query).get('freeze_id', [])
+        if not archive_id_list:
+            print "WARNING: skip entry without archive_id: %s" % elem
+            continue
+
+    if not archive_id_list:
+        print "ERROR: found no archive id"
+        sys.exit(1)
+
+    print 'Running showfreeze method for %s:' % archive_id_list
+    (outlist, retval) = server.showfreeze({'freeze_id': archive_id_list,
+                                          'flavor': ['backup'],
+                                           'checksum': ['sha1'],
+                                           'operation': ['list']
+                                           })
+    (returnval, returnmsg) = retval
+    if returnval != 0:
+        print 'Error %s:%s ' % (returnval, returnmsg)
+        print 'DEBUG: %s' % outlist
+        sys.exit(1)
+
+    # print "DEBUG: showfreeze response: %s" % outlist
+
+    print "Archive sha1 sums:"
+    for elem in outlist:
+        if elem.get('object_type', 'UNKNOWN') != 'frozenarchive':
+            continue
+        if not elem.get('frozenfiles', []):
+            print "WARNING: skip entry without frozenfiles: %s" % elem
+            continue
+        for entry in elem['frozenfiles']:
+            print "%(name)s: %(sha1sum)s" % entry
+
+    sys.exit(0)
