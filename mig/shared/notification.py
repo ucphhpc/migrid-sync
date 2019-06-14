@@ -276,7 +276,7 @@ The full status and output files are available at:
     elif status == 'PASSWORDREMINDER':
         from_id = args_list[0]
         password = args_list[1]
-        header = '%s pasword reminder' % configuration.short_title
+        header = '%s password reminder' % configuration.short_title
         txt += """This is an auto-generated password reminder from %s:
 %s
 """ % (configuration.short_title, password)
