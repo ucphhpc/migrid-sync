@@ -24,7 +24,7 @@ grep -H -A 12 "Traceback" $LOGDIR/webdavs.out
 grep -H ERROR $LOGDIR/ftps.log
 grep -H ERROR $LOGDIR/sftp.log | \
 	grep -v "Password authentication failed for\|Socket exception: Connection reset by peer\|Error reading SSH protocol banner\|check_banner\|list_folder on missing path\|chmod \(292\|365\) rejected on path\|symlink rejected on path\|ERROR Exception: Incompatible ssh\|ERROR Exception: Incompatible version \|ERROR Exception: no moduli available\|ERROR $"
-grep -H ERROR $LOGDIR/davs.log | grep -v "The handshake operation timed out\|decryption failed or bad record mac\|length too short\|no ciphers specified\|unknown error \(_ssl.c:579\)"
+grep -H ERROR $LOGDIR/davs.log | grep -v "The handshake operation timed out\|decryption failed or bad record mac\|length too short\|no ciphers specified\|unknown error \(_ssl.c:579\)\|Failed password login for .* from $SECSCANIP\|invalid share mode \(write\|read\)-only for "
 grep -H ERROR $LOGDIR/chkchroot.log | grep -v " from $SECSCANIP "
 # NOTE: we ignore script crashed errors here and treat specifically next
 grep -H ERROR $LOGDIR/mig.log | \
