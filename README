@@ -556,7 +556,7 @@ and the same with added Jupyter integration and optional 2FA support:
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, job execution, Jupyter integration, previews and OpenID login
-with optional 2-FA support:
+with optional 2-FA support and legacy sftp clients:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=idmc.dk \
@@ -573,7 +573,7 @@ with optional 2-FA support:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=7.4 \
+                   --openssh_version=5.3 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
