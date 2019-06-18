@@ -238,9 +238,6 @@ key/certificate passphrase before you can continue.
         var_list = var_dict.keys()
         print '%s : %s' % (method, var_list)
 
-    # TMP!
-    sys.exit(0)
-
     print 'Testing some action methods:'
 
     print 'checking script generation'
