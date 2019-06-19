@@ -1632,6 +1632,14 @@ location.""" % self.config_file
             self.site_support_image = config.get('SITE', 'support_image')
         else:
             self.site_support_image = '%s/icons/help.png' % self.site_images
+        if config.has_option('SITE', 'privacy_text'):
+            self.site_privacy_text = config.get('SITE', 'privacy_text')
+        else:
+            self.site_privacy_text = ''
+        if config.has_option('SITE', 'privacy_image'):
+            self.site_privacy_image = config.get('SITE', 'privacy_image')
+        else:
+            self.site_privacy_image = ''
         if config.has_option('SITE', 'credits_text'):
             self.site_credits_text = config.get('SITE', 'credits_text')
         else:

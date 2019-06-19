@@ -632,6 +632,25 @@ input[type=number] {
   font-size: 12px;
   font-weight: bold;
 }
+#privacyimage {
+  z-index: 1;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0px;
+  display: inline;
+  vertical-align: middle;
+}
+#privacy {
+  padding: 2px;
+  margin-left: auto;
+  margin-right: auto;
+  vertical-align: middle;
+}
+#privacy a {
+}
+.privacytext {
+  display: inline;
+}
 #creditsimage {
   z-index: 1;
   margin-left: auto;

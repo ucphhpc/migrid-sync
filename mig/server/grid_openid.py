@@ -476,7 +476,7 @@ Invalid '%s' input: %s
         if 'yes' in query:
             if 'login_as' in query:
                 self.user = self.query['login_as']
-                #print "handleAllow set user %s" % self.user
+                # print "handleAllow set user %s" % self.user
             elif 'identifier' in query:
                 self.user = self.query['identifier']
             elif self.user is None:
@@ -518,8 +518,8 @@ Invalid '%s' input: %s
                                   self.user, True, self.password)
             else:
                 logger.warning("handleAllow rejected login %s" % identity)
-                #logger.debug("full query: %s" % self.query)
-                #logger.debug("full headers: %s" % self.headers)
+                # logger.debug("full query: %s" % self.query)
+                # logger.debug("full headers: %s" % self.headers)
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 failed_count = update_rate_limit(configuration, "openid",
@@ -1278,7 +1278,7 @@ Invalid '%s' input: %s
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
-        self.wfile.write('''<!DOCTYPE html>
+        html = '''<!DOCTYPE html>
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
@@ -1333,18 +1333,42 @@ Invalid '%s' input: %s
     </div>
 %(body)s
   </div>
-</div>
+</div>''' % contents
+        # mimic footer from shared.html
+        html += '''
 <div id="bottomlogo" class="staticpage">
-<img src="%(credits_logo)s" id="creditsimage" alt=""/>
-<span id="credits" class="staticpage">
-%(credits_text)s
-</span>
+<!-- NOTE: sync with shared.html -->
+<div id="bottomlogoleft">
+<div id="support">
+<img src="%s" id="supportimage" alt=""/>
+<div class="supporttext i18n" lang="en">
+%s
+</div>
+</div>
+</div>
+<div id="bottomlogoright">
+<div id="privacy">
+<img src="%s" id="privacyimage" alt=""/>
+<div class="privacytext i18n" lang="en">
+%s
+</div>
+</div>
+<div id="credits">
+<img src="%s" id="creditsimage" alt=""/>
+<div class="creditstext i18n" lang="en">
+%s
+</div>
+</div>
+</div>
 </div>
 <div id="bottomspace" class="staticpage">
 </div>
 </body>
 </html>
-''' % contents)
+''' % (configuration.site_support_image, configuration.site_support_text,
+            configuration.site_privacy_image, configuration.site_privacy_text,
+            configuration.site_credits_image, configuration.site_credits_text)
+        self.wfile.write(html)
 
 
 def start_service(configuration):
@@ -1356,7 +1380,7 @@ def start_service(configuration):
     nossl = daemon_conf['nossl']
     addr = (host, port)
     # TODO: is this threaded version robust enough (thread safety)?
-    #OpenIDServer = OpenIDHTTPServer
+    # OpenIDServer = OpenIDHTTPServer
     OpenIDServer = ThreadedOpenIDHTTPServer
     httpserver = OpenIDServer(addr, ServerHandler)
 

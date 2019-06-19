@@ -1190,6 +1190,12 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
 </div>
 </div>
 <div id="bottomlogoright">
+<div id="privacy">
+<img src="%s" id="privacyimage" alt=""/>
+<div class="privacytext i18n" lang="en">
+%s
+</div>
+</div>
 <div id="credits">
 <img src="%s" id="creditsimage" alt=""/>
 <div class="creditstext i18n" lang="en">
@@ -1203,6 +1209,7 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
 </body>
 </html>
 ''' % (configuration.site_support_image, configuration.site_support_text,
+       configuration.site_privacy_image, configuration.site_privacy_text,
        configuration.site_credits_image, configuration.site_credits_text)
     return out
 
