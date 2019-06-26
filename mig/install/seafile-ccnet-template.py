@@ -1,0 +1,8 @@
+[General]
+USER_NAME = __SHORT_TITLE__
+ID = __SEAFILE_CCNET_ID__
+NAME = __SHORT_TITLE__
+SERVICE_URL = https://__SEAFILE_FQDN__/seafile
+
+[Client]
+PORT = __SEAFILE_CLIENT_PORT__
