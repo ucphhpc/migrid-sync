@@ -133,18 +133,38 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage">2019/06/26: Seafile restructuring and warning about weaker integration</h4>
+<p>
+Due to a steady increase in load we're planning to migrate the ERDA
+Seafile service from running side-by-side with the other services on the
+same frontend to instead run on a stand-alone frontend. That should
+allow for better performance and significantly help scaling to keep up
+with a growing number of concurrent users in the future. At the same
+time it allows for a simpler and more robust backend storage than the
+current one. The disadvantage of the dedicated frontend is that it
+makes it much harder to preserve the current ERDA Files integration with
+transparent read-only access to your Seafile data through the
+<em>seafile_readonly</em> folder. Alas, that appears to be a necessary
+loss.<br/>
+We expect to put the new Seafile structure into production some time in
+August and therefore expect the ERDA Files integration to be phased out
+in the coming months.
+At the moment it is unclear if we'll be able to provide a similar
+integration in the future or if the Seafile service will in practice
+remain an independent service.
+</p>
 <h4 class="staticpage">2019/05/29: UCPH Phishing Attack</h4>
 <p>
-UCPH and KUMail was the target of a
-big <a href="https://it.ku.dk/driftinfo/">phishing attack</a>
-yesterday. Please take proper precautions if you got caught and
+UCPH and KUMail was the target of multiple
+big <a href="https://it.ku.dk/driftinfo/">phishing attacks</a>
+recently. Please take proper precautions if you got caught and
 disclosed you login credentials. E.g. apart from of course changing your
 UCPH password also remember to change any possibly affected passwords
 you have set for your ERDA SFTP/FTPS/WebDAVS and Seafile services. While
 at it we also strongly recommend enabling 2-factor authentication for
 your ERDA logins by following the 2-Factor Auth wizard on your ERDA
-Settings page. You can either use one of the listed authentictor apps or
-the NetIQ app, which UCPH recently started recommending for various services.
+Settings page. You can either use one of the common authentictor apps or
+the NetIQ app, which UCPH recently started promoting for various services.
 </p>
 <h4 class="staticpage">2019/05/14: Login and Access Issues</h4>
 <p>
@@ -540,19 +560,37 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage">26/06-2019: Seafile omstrukturering og varsel om nedsat integration</h4>
+<p>
+Grundet støt stigende belastning planlægger vi at omlægge ERDA Seafile
+servicen fra at køre på samme frontend som de andre ERDA services til i
+stedet at køre på sin egen dedikerede frontend. Det skulle give bedre
+ydelse samt markant bedre mulighed for at kunne skalere til også at
+kunne håndtere det stigende antal samtidige brugere i
+fremtiden. Desuden giver det mulighed for at bruge et simplere og mere
+robust backend-lager end det nuværende. Ulempen ved den udskilning er at
+vi så ikke længere uden videre kan tilbyde den nuværende tætte
+integration i ERDA Files med sømløs skrivebeskyttet adgang til ens
+Seafile data via <em>seafile_readonly</em> mappen. Det lader desværre
+til at være et nødvendigt offer.<br/>
+Vi forventer at den nye struktur vil komme i drift i løbet af august og
+at integrationen i ERDA Files derfor vil udfases i løbet af de kommende
+måneder. Det er på nuværende tidspunkt uvist om vi på sigt igen vil
+kunne tilbyde en sådan funktionalitet eller om Seafile fremover i
+praksis forbliver en helt selvstændig service.
+</p>
 <h4 class="staticpage">29/05-2019: KU i phishing-angreb</h4>
 <p>
 KU og KUMail var mål for et større
-<a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> igår. Tag
+<a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på det seneste. Tag
 venligst dine forholdsregler såfremt du var blandt de fuppede og dermed videregav
 dine login-oplysninger. D.v.s. husk udover naturligvis at skifte dit
 KU-kodeord også at skifte evt berørte koder du måtte have valgt for dine
 ERDA SFTP/FTPS/WebDAVS og Seafile services. Ved samme lejlighed vil vi
 kraftigt anbefale at tilvælge 2-faktor godkendelse på dine ERDA-logins
 ved at følge 2-Factor Auth guiden på din ERDA Settings side. Du kan vælge 
-mellem at benytte en af de foreslåede authentictor apps eller benytte
-den NetIQ app, som KU for nyligt er begyndt at anbefale til
-forskellige services.
+mellem at benytte en af de populære authentictor apps eller benytte den
+NetIQ app, som KU for nyligt er begyndt at promovere til forskellige services.
 </p>
 <h4 class="staticpage">14/05-2019: Problemer med login og adgang</h4>
 <p>
