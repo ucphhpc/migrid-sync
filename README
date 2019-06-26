@@ -392,8 +392,9 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --serveralias_clause='ServerAlias' \
                    --signup_methods="migcert" \
                    --login_methods="migcert" \
-                   --skin=migrid-basic
-
+                   --skin=migrid-basic \
+                   --short_title=MiG
+                    
 or the same with HSTS, WSGI (default web), Seafile, optimized SFTP,
 vhost-specific certificates from LetsEncrypt and OpenID with optional
 2FA support:
@@ -407,6 +408,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --ext_oid_fqdn=dk-oid.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-io.migrid.org \
+                   --seafile_fqdn=dk-sid.migrid.org \
                    --user=mig --group=mig \
                    --apache_version=2.4 \
                    --apache_etc=/etc/apache2 \
@@ -446,7 +448,8 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --signup_methods="extoid migoid migcert" \
                    --login_methods="extoid migoid migcert" \
                    --landing_page='/wsgi-bin/dashboard.py' \
-                   --skin=migrid-basic --wsgi_procs=25
+                   --skin=migrid-basic --short_title=MiG \
+                   --wsgi_procs=25
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, Seafile integration and OpenID login:
@@ -461,6 +464,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --ext_oid_fqdn=erda.dk \
                    --sid_fqdn=sid.erda.dk \
                    --io_fqdn=io.erda.dk \
+                   --seafile_fqdn=sid.erda.dk \
                    --user=mig --group=mig \
                    --apache_version=2.4 \
                    --apache_etc=/etc/httpd \
@@ -497,7 +501,8 @@ optimized SFTP, Seafile integration and OpenID login:
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=erda-ucph-science --wsgi_procs=25 
+                   --skin=erda-ucph-science  --short_title=ERDA \
+                   --wsgi_procs=25 
                    
 and the same with added Jupyter integration and optional 2FA support:
 ./generateconfs.py --source=. --destination=generated-confs \
@@ -511,6 +516,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --ext_oid_fqdn=erda.dk \
                    --sid_fqdn=sid.erda.dk \
                    --io_fqdn=io.erda.dk \
+                   --seafile_fqdn=sid.erda.dk \
                    --user=mig --group=mig \
                    --apache_version=2.4 \
                    --apache_etc=/etc/httpd \
@@ -551,7 +557,8 @@ and the same with added Jupyter integration and optional 2FA support:
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=erda-ucph-science --apache_worker_procs=1024 \
+                   --skin=erda-ucph-science --short_title=ERDA \
+                   --apache_worker_procs=1024 \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=25
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -611,7 +618,7 @@ with optional 2-FA support and legacy sftp clients:
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=idmc-basic --apache_worker_procs=512 \
+                   --skin=idmc-basic --short_title=IDMC --apache_worker_procs=512 \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=25
 
 Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -666,8 +673,9 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --daemon_pubkey=~/certs/combined.pub \
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid" --login_methods="extoid" \
+                   --password_policy=HIGH \
                    --distro=centos --landing_page='/wsgi-bin/gdpman.py' \
-                   --skin=erda-ucph-science \
+                   --skin=erda-ucph-science --short_title=SIF \
                    --wsgi_procs=25
 
 Most of the arguments should be relatively straight forward, but you

@@ -50,9 +50,10 @@ from shared.defaults import default_http_port, default_https_port, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
     STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX
-from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 from shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
+from shared.pwhash import password_requirements
+from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 from shared.safeinput import valid_alphanumeric, InputException
 
 
@@ -208,6 +209,7 @@ def generate_confs(
     ext_oid_fqdn='localhost',
     sid_fqdn='localhost',
     io_fqdn='localhost',
+    seafile_fqdn='localhost',
     jupyter_services='',
     jupyter_services_desc='{}',
     user='mig',
@@ -262,6 +264,7 @@ def generate_confs(
     alias_field='',
     signup_methods='extcert',
     login_methods='extcert',
+    password_policy='MEDIUM',
     hg_path='',
     hgweb_scripts='',
     trac_admin_path='',
@@ -280,6 +283,7 @@ def generate_confs(
     distro='Debian',
     landing_page=None,
     skin='migrid-basic',
+    short_title='MiG',
     secscan_addr='UNSET',
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -299,6 +303,7 @@ def generate_confs(
     user_dict['__EXT_OID_FQDN__'] = ext_oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
+    user_dict['__SEAFILE_FQDN__'] = seafile_fqdn
     user_dict['__JUPYTER_SERVICES__'] = jupyter_services
     user_dict['__JUPYTER_DEFS__'] = ''
     user_dict['__JUPYTER_OPENIDS__'] = ''
@@ -379,6 +384,7 @@ def generate_confs(
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__SIGNUP_METHODS__'] = signup_methods
     user_dict['__LOGIN_METHODS__'] = login_methods
+    user_dict['__PASSWORD_POLICY__'] = password_policy
     user_dict['__HG_PATH__'] = hg_path
     user_dict['__HGWEB_SCRIPTS__'] = hgweb_scripts
     user_dict['__TRAC_ADMIN_PATH__'] = trac_admin_path
@@ -389,6 +395,7 @@ def generate_confs(
     user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
     user_dict['__DISTRO__'] = distro
     user_dict['__SKIN__'] = skin
+    user_dict['__SHORT_TITLE__'] = short_title
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__PUBLIC_ALIAS_LISTEN__'] = listen_clause
 
@@ -454,6 +461,16 @@ cert, oid and sid based https!
     # We know that login with one of these common usernames is a password
     # cracking attempt since our own username format differs.
     user_dict['__CRACK_USERNAME_REGEX__'] = CRACK_USERNAME_REGEX
+
+    # Insert min password length based on policy
+    min_len, min_classes, errors = password_requirements(password_policy)
+    if errors:
+        print "Invalid password policy %s: %s" % (password_policy,
+                                                  '\n'.join(errors))
+        sys.exit(1)
+    # Values must be strings
+    user_dict['__PASSWORD_MIN_LEN__'] = "%d" % min_len
+    user_dict['__PASSWORD_MIN_CLASSES__'] = "%d" % min_classes
 
     # Define some FQDN helpers if set
     user_dict['__IFDEF_BASE_FQDN__'] = 'UnDefine'
@@ -549,6 +566,17 @@ cert, oid and sid based https!
         user_dict['__IS_VERIFYCERTS_COMMENTED__'] = '#'
         user_dict['__NOT_VERIFYCERTS_COMMENTED__'] = ''
 
+    # These are the default ports to use both in Apache and Seafile if enabled
+    user_dict['__SEAFILE_SEAHUB_PORT__'] = '8000'
+    user_dict['__SEAFILE_SEAFHTTP_PORT__'] = '8082'
+    user_dict['__SEAFILE_CLIENT_PORT__'] = '13419'
+    user_dict['__SEAFILE_QUOTA__'] = '20'
+    user_dict['__SEAFILE_TIMEZONE__'] = 'UTC'
+    user_dict['__SEAFILE_SECRET_KEY__'] = base64.b64encode(
+        os.urandom(32)).lower()
+    user_dict['__SEAFILE_CCNET_ID__'] = base64.b16encode(
+        os.urandom(20)).lower()
+    user_dict['__SEAFILE_SHORT_NAME__'] = short_title.replace(' ', '-')
     # Enable Seafile integration only if explicitly requested
     if user_dict['__ENABLE_SEAFILE__'].lower() == 'true':
         user_dict['__SEAFILE_COMMENTED__'] = ''
@@ -1004,6 +1032,9 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
         ("index-template.html", "index.html"),
         ("openssh-MiG-sftp-subsys-template.conf",
          "sshd_config-MiG-sftp-subsys"),
+        ("seafile-template.conf", "seafile.conf"),
+        ("seafile-ccnet-template.conf", "ccnet.conf"),
+        ("seafile-seahub_settings-template.py", "seahub_settings.py"),
         ("fail2ban-MiG-daemons-filter-template.conf",
          "MiG-daemons-filter.conf"),
         ("fail2ban-MiG-daemons-handshake-filter-template.conf",
@@ -1028,6 +1059,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
         in_path = os.path.join(source, in_name)
         out_path = os.path.join(destination_path, out_name)
         if os.path.exists(in_path):
+            # print "DEBUG: fill template: %s" % in_path
             fill_template(in_path, out_path, user_dict, strip_trailing_space)
             # Sync permissions
             os.chmod(out_path, os.stat(in_path).st_mode)
@@ -1112,6 +1144,11 @@ The logrotate-mig contains a logrotate configuration to automatically
 rotate and compress log files for all MiG daemons.
 You can install it with:
 sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
+
+If running Seafile you may also want to copy confs to the Seafile installation 
+cp %(destination)s/seafile.conf ~/seafile/conf/
+cp %(destination)s/ccnet.conf ~/seafile/conf/
+cp %(destination)s/seahub_settings.py ~/seafile/conf/
 
 The MiG-daemons-filter.conf and sshd-pw-crack-filter.conf contain Fail2Ban
 filters and MiG-daemons-jail.conf contains a matching Fail2Ban jail

@@ -61,6 +61,7 @@ if '__main__' == __name__:
         'ext_oid_fqdn',
         'sid_fqdn',
         'io_fqdn',
+        'seafile_fqdn',
         'jupyter_services',
         'jupyter_services_desc',
         'user',
@@ -115,6 +116,7 @@ if '__main__' == __name__:
         'alias_field',
         'signup_methods',
         'login_methods',
+        'password_policy',
         'hg_path',
         'hgweb_scripts',
         'trac_admin_path',
@@ -133,6 +135,7 @@ if '__main__' == __name__:
         'distro',
         'landing_page',
         'skin',
+        'short_title',
         'secscan_addr',
     )
     settings = {}

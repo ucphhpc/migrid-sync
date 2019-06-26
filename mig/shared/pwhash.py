@@ -298,16 +298,14 @@ def make_csrf_trust_token(configuration, method, operation, args, client_id,
     return make_csrf_token(configuration, method, csrf_op, client_id, limit)
 
 
-def parse_password_policy(configuration):
+def password_requirements(site_policy, logger=None):
     """Parse the custom password policy value to get the number of required
     characters and different character classes.
-    NOTE: fails hard on invalid policy for best security.
     """
-    _logger = configuration.logger
-    site_policy = configuration.site_password_policy
-    min_len, min_classes = -1, 42
+    min_len, min_classes, errors = -1, 42, []
     if site_policy == POLICY_NONE:
-        _logger.debug('site password policy allows ANY password')
+        if logger:
+            logger.debug('site password policy allows ANY password')
         min_len, min_classes = 0, 0
     elif site_policy == POLICY_WEAK:
         min_len, min_classes = 6, 2
@@ -320,12 +318,26 @@ def parse_password_policy(configuration):
             _, min_len_str, min_classes_str = site_policy.split(':', 2)
             min_len, min_classes = int(min_len_str), int(min_classes_str)
         except Exception, exc:
-            _logger.error('custom password policy %s on invalid format: %s' %
+            errors.append('custom password policy %s on invalid format: %s' %
                           (site_policy, exc))
     else:
-        _logger.error('unknown password policy keyword: %s' % site_policy)
-    _logger.debug('password policy %s requires %d chars from %d classes' %
-                  (site_policy, min_len, min_classes))
+        errors.append('unknown password policy keyword: %s' % site_policy)
+    if logger:
+        logger.debug('password policy %s requires %d chars from %d classes' %
+                     (site_policy, min_len, min_classes))
+    return min_len, min_classes, errors
+
+
+def parse_password_policy(configuration):
+    """Parse the custom password policy in configuration to get the number of
+    required characters and different character classes.
+    NOTE: fails hard later if invalid policy is used for best security.
+    """
+    _logger = configuration.logger
+    min_len, min_classes, errors = password_requirements(
+        configuration.site_password_policy, _logger)
+    for err in errors:
+        _logger.error(err)
     return min_len, min_classes
 
 
@@ -426,3 +438,16 @@ def generate_random_password(configuration, tries=42):
             pass
     _logger.error("failed to generate password to fit site policy")
     raise ValueError("Failed to generate suitable password!")
+
+
+if __name__ == "__main__":
+    from shared.conf import get_configuration_object
+    configuration = get_configuration_object()
+    for pw in ('', 'abc', 'abcdefgh', '12345678', 'test1234', 'password',
+               'Password123', 'P4s5W0rd', 'Goof1234', 'MinimumIntrusionGrid',
+               'Dr3Ab3_2', 'kasd#D2s', 'fsk34dsa-.32d'):
+        try:
+            res = assure_password_strength(configuration, pw)
+        except Exception, exc:
+            res = "NO (%s)" % exc
+        print "Password '%s' follows site policy: %s" % (pw, res)
