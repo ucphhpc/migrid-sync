@@ -1,4 +1,4 @@
-# IMPORTANT: never update key once in production
+# IMPORTANT: do NOT update key once in production!
 SECRET_KEY = "__SEAFILE_SECRET_KEY__"
 
 # Uncomment next to enable debug mode
@@ -98,3 +98,6 @@ FAVICON_PATH = 'custom/favicon.png'
 #LOGO_WIDTH = 149
 #LOGO_HEIGHT = 32
 BRANDING_CSS = 'custom/seahub.css'
+
+# Enable WIKI by default
+ENABLE_WIKI = True

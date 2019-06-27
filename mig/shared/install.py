@@ -571,7 +571,18 @@ cert, oid and sid based https!
     user_dict['__SEAFILE_SEAFHTTP_PORT__'] = '8082'
     user_dict['__SEAFILE_CLIENT_PORT__'] = '13419'
     user_dict['__SEAFILE_QUOTA__'] = '20'
-    user_dict['__SEAFILE_TIMEZONE__'] = 'UTC'
+    sys_timezone = 'UTC'
+    timezone_cmd = ["/usr/bin/timedatectl", "status"]
+    try:
+        timezone_proc = subprocess_popen(timezone_cmd, stdout=subprocess_pipe)
+        for line in timezone_proc.stdout.readlines():
+            line = line.strip()
+            if not line.startswith("Time zone: "):
+                continue
+            sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
+    except Exception, exc:
+        print "WARNING: failed to extract system time zone: %s" % exc
+    user_dict['__SEAFILE_TIMEZONE__'] = sys_timezone
     user_dict['__SEAFILE_SECRET_KEY__'] = base64.b64encode(
         os.urandom(32)).lower()
     user_dict['__SEAFILE_CCNET_ID__'] = base64.b16encode(
