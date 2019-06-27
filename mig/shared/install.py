@@ -75,7 +75,11 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[],
         suffix = ''
         if variable in eat_trailing_space:
             suffix = '\s{0,1}'
-        contents = re.sub(variable + suffix, value, contents)
+        try:
+            contents = re.sub(variable + suffix, value, contents)
+        except Exception, exc:
+            print "Error stripping %s: %s" % (variable, [value])
+            raise exc
     # print "output:\n", contents
 
     # print "writing specific contents to %s" % (output_file)
@@ -219,47 +223,47 @@ def generate_confs(
     apache_run='/var/run',
     apache_lock='/var/lock',
     apache_log='/var/log/apache2',
-    apache_worker_procs='256',
+    apache_worker_procs=256,
     openssh_version='7.4',
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
-    enable_sftp='True',
-    enable_sftp_subsys='True',
-    sftp_subsys_auth_procs='10',
-    enable_davs='True',
-    enable_ftps='True',
-    enable_wsgi='True',
-    wsgi_procs='10',
-    enable_gdp='False',
-    enable_jobs='True',
-    enable_resources='True',
-    enable_events='True',
-    enable_sharelinks='True',
-    enable_transfers='True',
-    enable_freeze='True',
-    enable_sandboxes='False',
-    enable_vmachines='False',
-    enable_preview='False',
-    enable_jupyter='False',
-    enable_hsts='',
-    enable_vhost_certs='',
-    enable_verify_certs='',
-    enable_seafile='False',
-    enable_duplicati='False',
-    enable_crontab='False',
-    enable_notify='False',
-    enable_imnotify='False',
-    enable_dev_accounts='False',
-    enable_twofactor='False',
-    enable_cracklib='False',
-    enable_openid='False',
+    enable_sftp=True,
+    enable_sftp_subsys=True,
+    sftp_subsys_auth_procs=10,
+    enable_davs=True,
+    enable_ftps=True,
+    enable_wsgi=True,
+    wsgi_procs=10,
+    enable_gdp=False,
+    enable_jobs=True,
+    enable_resources=True,
+    enable_events=True,
+    enable_sharelinks=True,
+    enable_transfers=True,
+    enable_freeze=True,
+    enable_sandboxes=False,
+    enable_vmachines=False,
+    enable_preview=False,
+    enable_jupyter=False,
+    enable_hsts=False,
+    enable_vhost_certs=False,
+    enable_verify_certs=False,
+    enable_seafile=False,
+    enable_duplicati=False,
+    enable_crontab=False,
+    enable_notify=False,
+    enable_imnotify=False,
+    enable_dev_accounts=False,
+    enable_twofactor=False,
+    enable_cracklib=False,
+    enable_openid=False,
     mig_oid_provider='',
     ext_oid_provider='',
     dhparams_path='',
     daemon_keycert='',
     daemon_pubkey='',
-    daemon_pubkey_from_dns='False',
+    daemon_pubkey_from_dns=False,
     daemon_show_address='',
     alias_field='',
     signup_methods='extcert',
@@ -276,6 +280,19 @@ def generate_confs(
     mig_oid_port=default_https_port + 3,
     ext_oid_port=default_https_port + 2,
     sid_port=default_https_port + 4,
+    sftp_port=2222,
+    sftp_subsys_port=22,
+    sftp_show_port=22,
+    davs_port=4443,
+    davs_show_port=443,
+    ftps_ctrl_port=8021,
+    ftps_ctrl_show_port=21,
+    openid_port=8443,
+    openid_show_port=443,
+    seafile_seahub_port=8000,
+    seafile_seafhttp_port=8082,
+    seafile_client_port=13419,
+    seafile_quota=2,
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
@@ -328,38 +345,38 @@ def generate_confs(
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOCK__'] = apache_lock
     user_dict['__APACHE_LOG__'] = apache_log
-    user_dict['__APACHE_WORKER_PROCS__'] = apache_worker_procs
+    user_dict['__APACHE_WORKER_PROCS__'] = str(apache_worker_procs)
     user_dict['__OPENSSH_VERSION__'] = openssh_version
-    user_dict['__ENABLE_SFTP__'] = enable_sftp
-    user_dict['__ENABLE_SFTP_SUBSYS__'] = enable_sftp_subsys
-    user_dict['__SFTP_SUBSYS_AUTH_PROCS__'] = sftp_subsys_auth_procs
-    user_dict['__ENABLE_DAVS__'] = enable_davs
-    user_dict['__ENABLE_FTPS__'] = enable_ftps
-    user_dict['__ENABLE_WSGI__'] = enable_wsgi
-    user_dict['__WSGI_PROCS__'] = wsgi_procs
-    user_dict['__ENABLE_GDP__'] = enable_gdp
-    user_dict['__ENABLE_JOBS__'] = enable_jobs
-    user_dict['__ENABLE_RESOURCES__'] = enable_resources
-    user_dict['__ENABLE_EVENTS__'] = enable_events
-    user_dict['__ENABLE_SHARELINKS__'] = enable_sharelinks
-    user_dict['__ENABLE_TRANSFERS__'] = enable_transfers
-    user_dict['__ENABLE_FREEZE__'] = enable_freeze
-    user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
-    user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
-    user_dict['__ENABLE_PREVIEW__'] = enable_preview
-    user_dict['__ENABLE_JUPYTER__'] = enable_jupyter
-    user_dict['__ENABLE_HSTS__'] = enable_hsts
-    user_dict['__ENABLE_VHOST_CERTS__'] = enable_vhost_certs
-    user_dict['__ENABLE_VERIFY_CERTS__'] = enable_verify_certs
-    user_dict['__ENABLE_SEAFILE__'] = enable_seafile
-    user_dict['__ENABLE_DUPLICATI__'] = enable_duplicati
-    user_dict['__ENABLE_CRONTAB__'] = enable_crontab
-    user_dict['__ENABLE_NOTIFY__'] = enable_notify
-    user_dict['__ENABLE_IMNOTIFY__'] = enable_imnotify
-    user_dict['__ENABLE_DEV_ACCOUNTS__'] = enable_dev_accounts
-    user_dict['__ENABLE_TWOFACTOR__'] = enable_twofactor
-    user_dict['__ENABLE_CRACKLIB__'] = enable_cracklib
-    user_dict['__ENABLE_OPENID__'] = enable_openid
+    user_dict['__ENABLE_SFTP__'] = str(enable_sftp)
+    user_dict['__ENABLE_SFTP_SUBSYS__'] = str(enable_sftp_subsys)
+    user_dict['__SFTP_SUBSYS_AUTH_PROCS__'] = str(sftp_subsys_auth_procs)
+    user_dict['__ENABLE_DAVS__'] = str(enable_davs)
+    user_dict['__ENABLE_FTPS__'] = str(enable_ftps)
+    user_dict['__ENABLE_WSGI__'] = str(enable_wsgi)
+    user_dict['__WSGI_PROCS__'] = str(wsgi_procs)
+    user_dict['__ENABLE_GDP__'] = str(enable_gdp)
+    user_dict['__ENABLE_JOBS__'] = str(enable_jobs)
+    user_dict['__ENABLE_RESOURCES__'] = str(enable_resources)
+    user_dict['__ENABLE_EVENTS__'] = str(enable_events)
+    user_dict['__ENABLE_SHARELINKS__'] = str(enable_sharelinks)
+    user_dict['__ENABLE_TRANSFERS__'] = str(enable_transfers)
+    user_dict['__ENABLE_FREEZE__'] = str(enable_freeze)
+    user_dict['__ENABLE_SANDBOXES__'] = str(enable_sandboxes)
+    user_dict['__ENABLE_VMACHINES__'] = str(enable_vmachines)
+    user_dict['__ENABLE_PREVIEW__'] = str(enable_preview)
+    user_dict['__ENABLE_JUPYTER__'] = str(enable_jupyter)
+    user_dict['__ENABLE_HSTS__'] = str(enable_hsts)
+    user_dict['__ENABLE_VHOST_CERTS__'] = str(enable_vhost_certs)
+    user_dict['__ENABLE_VERIFY_CERTS__'] = str(enable_verify_certs)
+    user_dict['__ENABLE_SEAFILE__'] = str(enable_seafile)
+    user_dict['__ENABLE_DUPLICATI__'] = str(enable_duplicati)
+    user_dict['__ENABLE_CRONTAB__'] = str(enable_crontab)
+    user_dict['__ENABLE_NOTIFY__'] = str(enable_notify)
+    user_dict['__ENABLE_IMNOTIFY__'] = str(enable_imnotify)
+    user_dict['__ENABLE_DEV_ACCOUNTS__'] = str(enable_dev_accounts)
+    user_dict['__ENABLE_TWOFACTOR__'] = str(enable_twofactor)
+    user_dict['__ENABLE_CRACKLIB__'] = str(enable_cracklib)
+    user_dict['__ENABLE_OPENID__'] = str(enable_openid)
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
     user_dict['__MIG_OID_AUTH_DB__'] = auth_openid_mig_db
@@ -379,8 +396,21 @@ def generate_confs(
     user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
     user_dict['__DAEMON_PUBKEY_MD5__'] = ''
     user_dict['__DAEMON_PUBKEY_SHA256__'] = ''
-    user_dict['__DAEMON_PUBKEY_FROM_DNS__'] = daemon_pubkey_from_dns
+    user_dict['__DAEMON_PUBKEY_FROM_DNS__'] = str(daemon_pubkey_from_dns)
     user_dict['__DAEMON_SHOW_ADDRESS__'] = daemon_show_address
+    user_dict['__SFTP_PORT__'] = str(sftp_port)
+    user_dict['__SFTP_SUBSYS_PORT__'] = str(sftp_subsys_port)
+    user_dict['__SFTP_SHOW_PORT__'] = str(sftp_show_port)
+    user_dict['__DAVS_PORT__'] = str(davs_port)
+    user_dict['__DAVS_SHOW_PORT__'] = str(davs_show_port)
+    user_dict['__FTPS_CTRL_PORT__'] = str(ftps_ctrl_port)
+    user_dict['__FTPS_CTRL_SHOW_PORT__'] = str(ftps_ctrl_show_port)
+    user_dict['__OPENID_PORT__'] = str(openid_port)
+    user_dict['__OPENID_SHOW_PORT__'] = str(openid_show_port)
+    user_dict['__SEAFILE_SEAHUB_PORT__'] = str(seafile_seahub_port)
+    user_dict['__SEAFILE_SEAFHTTP_PORT__'] = str(seafile_seafhttp_port)
+    user_dict['__SEAFILE_CLIENT_PORT__'] = str(seafile_client_port)
+    user_dict['__SEAFILE_QUOTA__'] = str(seafile_quota)
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__SIGNUP_METHODS__'] = signup_methods
     user_dict['__LOGIN_METHODS__'] = login_methods
@@ -399,6 +429,7 @@ def generate_confs(
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__PUBLIC_ALIAS_LISTEN__'] = listen_clause
 
+    fail2ban_daemon_ports = []
     # Apache fails on duplicate Listen directives so comment in that case
     port_list = [mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port,
                  sid_port]
@@ -419,6 +450,9 @@ def generate_confs(
 WARNING: you probably have to use either different fqdn or port settings for
 cert, oid and sid based https!
 """
+
+    # All web ports for Fail2Ban jail
+    fail2ban_daemon_ports += enabled_ports
 
     # List of (file, remove_identifers) used to dynamically remove lines from template
     # configurations files
@@ -540,6 +574,9 @@ cert, oid and sid based https!
     if user_dict['__HG_PATH__']:
         user_dict['__HG_COMMENTED__'] = ''
 
+    # TODO: switch to test input values directly now that they are bool?
+    #       like e.g. in if enable_wsgi: BLA
+
     # Enable WSGI web interface only if explicitly requested
     if user_dict['__ENABLE_WSGI__'].lower() == 'true':
         user_dict['__WSGI_COMMENTED__'] = ''
@@ -566,11 +603,19 @@ cert, oid and sid based https!
         user_dict['__IS_VERIFYCERTS_COMMENTED__'] = '#'
         user_dict['__NOT_VERIFYCERTS_COMMENTED__'] = ''
 
-    # These are the default ports to use both in Apache and Seafile if enabled
-    user_dict['__SEAFILE_SEAHUB_PORT__'] = '8000'
-    user_dict['__SEAFILE_SEAFHTTP_PORT__'] = '8082'
-    user_dict['__SEAFILE_CLIENT_PORT__'] = '13419'
-    user_dict['__SEAFILE_QUOTA__'] = '20'
+    if user_dict['__ENABLE_SFTP__'].lower() == 'true':
+        fail2ban_daemon_ports.append(sftp_port)
+        fail2ban_daemon_ports.append(sftp_show_port)
+    if user_dict['__ENABLE_SFTP_SUBSYS__'].lower() == 'true':
+        fail2ban_daemon_ports.append(sftp_subsys_port)
+        fail2ban_daemon_ports.append(sftp_show_port)
+    if user_dict['__ENABLE_DAVS__'].lower() == 'true':
+        fail2ban_daemon_ports.append(davs_port)
+        fail2ban_daemon_ports.append(davs_show_port)
+    if user_dict['__ENABLE_FTPS__'].lower() == 'true':
+        fail2ban_daemon_ports.append(ftps_ctrl_port)
+        fail2ban_daemon_ports.append(ftps_ctrl_show_port)
+
     sys_timezone = 'UTC'
     timezone_cmd = ["/usr/bin/timedatectl", "status"]
     try:
@@ -591,6 +636,8 @@ cert, oid and sid based https!
     # Enable Seafile integration only if explicitly requested
     if user_dict['__ENABLE_SEAFILE__'].lower() == 'true':
         user_dict['__SEAFILE_COMMENTED__'] = ''
+        fail2ban_daemon_ports.append(seafile_seahub_port)
+        fail2ban_daemon_ports.append(seafile_seafhttp_port)
     else:
         user_dict['__SEAFILE_COMMENTED__'] = '#'
 
@@ -806,6 +853,8 @@ cert, oid and sid based https!
     if user_dict['__EXT_OID_PROVIDER_BASE__'].strip() or \
             user_dict['__MIG_OID_PROVIDER_BASE__'].strip():
         user_dict['__OPENID_COMMENTED__'] = ''
+        fail2ban_daemon_ports.append(openid_port)
+        fail2ban_daemon_ports.append(openid_show_port)
     else:
         user_dict['__OPENID_COMMENTED__'] = '#'
 
@@ -1008,6 +1057,15 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
             '/', xgi_bin, 'dashboard.py')
     else:
         user_dict['__LANDING_PAGE__'] = landing_page
+
+    # Fill list of unique daemon ports to block on Fail2Ban trigger
+    # Typically something like '21,22,2222,4443,8000,8020,8021,8082,8443'
+    sorted_ports = list(set(fail2ban_daemon_ports))
+    sorted_ports.sort()
+    # print "fail2ban_daemon_ports %s sorted into %s" % (
+    #    fail2ban_daemon_ports, sorted_ports)
+    user_dict['__FAIL2BAN_DAEMON_PORTS__'] = ','.join(
+        [str(i) for i in sorted_ports])
 
     # Collect final variable values for log
     sorted_keys = user_dict.keys()
@@ -1324,45 +1382,45 @@ def create_user(
     apache_run = '%s/run' % apache_dir
     apache_lock = '%s/lock' % apache_dir
     apache_log = '%s/log' % apache_dir
-    apache_worker_procs = '256'
+    apache_worker_procs = 256
     openssh_version = '7.4'
     cert_dir = '%s/MiG-certificates' % apache_dir
     # We don't necessarily have free ports for daemons
-    enable_sftp = 'False'
-    enable_sftp_subsys = 'False'
-    sftp_subsys_auth_procs = '10'
-    enable_davs = 'False'
-    enable_ftps = 'False'
-    enable_twofactor = 'False'
-    enable_cracklib = 'False'
-    enable_openid = 'False'
-    enable_wsgi = 'True'
-    wsgi_procs = '5'
-    enable_jobs = 'True'
-    enable_resources = 'True'
-    enable_events = 'True'
-    enable_sharelinks = 'True'
-    enable_transfers = 'True'
-    enable_freeze = 'False'
-    enable_sandboxes = 'False'
-    enable_vmachines = 'False'
-    enable_preview = 'False'
-    enable_jupyter = 'False'
-    enable_hsts = 'False'
-    enable_vhost_certs = 'False'
-    enable_verify_certs = 'False'
-    enable_seafile = 'False'
-    enable_duplicati = 'False'
-    enable_crontab = 'False'
-    enable_notify = 'False'
-    enable_imnotify = 'False'
-    enable_dev_accounts = 'False'
+    enable_sftp = False
+    enable_sftp_subsys = False
+    sftp_subsys_auth_procs = 10
+    enable_davs = False
+    enable_ftps = False
+    enable_twofactor = False
+    enable_cracklib = False
+    enable_openid = False
+    enable_wsgi = True
+    wsgi_procs = 5
+    enable_jobs = True
+    enable_resources = True
+    enable_events = True
+    enable_sharelinks = True
+    enable_transfers = True
+    enable_freeze = False
+    enable_sandboxes = False
+    enable_vmachines = False
+    enable_preview = False
+    enable_jupyter = False
+    enable_hsts = False
+    enable_vhost_certs = False
+    enable_verify_certs = False
+    enable_seafile = False
+    enable_duplicati = False
+    enable_crontab = False
+    enable_notify = False
+    enable_imnotify = False
+    enable_dev_accounts = False
     mig_oid_provider = ''
     ext_oid_provider = ''
     dhparams_path = ''
     daemon_keycert = ''
     daemon_pubkey = ''
-    daemon_pubkey_from_dns = 'False'
+    daemon_pubkey_from_dns = False
     daemon_show_address = ''
     alias_field = 'email'
     hg_path = '/usr/bin/hg'

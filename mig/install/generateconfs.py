@@ -48,7 +48,7 @@ Where supported options include -h/--help for this help or the conf settings:
 
 
 if '__main__' == __name__:
-    names = (
+    str_names = [
         'source',
         'destination',
         'destination_suffix',
@@ -71,18 +71,66 @@ if '__main__' == __name__:
         'apache_run',
         'apache_lock',
         'apache_log',
-        'apache_worker_procs',
         'openssh_version',
         'mig_code',
         'mig_state',
         'mig_certs',
+        'mig_oid_provider',
+        'ext_oid_provider',
+        'dhparams_path',
+        'daemon_keycert',
+        'daemon_pubkey',
+        'daemon_show_address',
+        'alias_field',
+        'signup_methods',
+        'login_methods',
+        'password_policy',
+        'hg_path',
+        'hgweb_scripts',
+        'trac_admin_path',
+        'trac_ini_path',
+        'user_clause',
+        'group_clause',
+        'listen_clause',
+        'serveralias_clause',
+        'distro',
+        'landing_page',
+        'skin',
+        'short_title',
+        'secscan_addr',
+    ]
+    int_names = [
+        'apache_worker_procs',
+        'sftp_subsys_auth_procs',
+        'wsgi_procs',
+        'public_port',
+        'public_alias_port',
+        'mig_cert_port',
+        'ext_cert_port',
+        'mig_oid_port',
+        'ext_oid_port',
+        'sid_port',
+        'sftp_port',
+        'sftp_show_port',
+        'sftp_subsys_port',
+        'sftp_subsys_show_port',
+        'davs_port',
+        'davs_show_port',
+        'ftps_ctrl_port',
+        'ftps_ctrl_show_port',
+        'mig_oid_port',
+        'mig_oid_show_port',
+        'seafile_seahub_port',
+        'seafile_seafhttp_port',
+        'seafile_client_port',
+        'seafile_quota',
+    ]
+    bool_names = [
         'enable_sftp',
         'enable_sftp_subsys',
-        'sftp_subsys_auth_procs',
         'enable_davs',
         'enable_ftps',
         'enable_wsgi',
-        'wsgi_procs',
         'enable_jobs',
         'enable_resources',
         'enable_events',
@@ -106,40 +154,12 @@ if '__main__' == __name__:
         'enable_twofactor',
         'enable_cracklib',
         'enable_openid',
-        'mig_oid_provider',
-        'ext_oid_provider',
-        'dhparams_path',
-        'daemon_keycert',
-        'daemon_pubkey',
         'daemon_pubkey_from_dns',
-        'daemon_show_address',
-        'alias_field',
-        'signup_methods',
-        'login_methods',
-        'password_policy',
-        'hg_path',
-        'hgweb_scripts',
-        'trac_admin_path',
-        'trac_ini_path',
-        'public_port',
-        'public_alias_port',
-        'mig_cert_port',
-        'ext_cert_port',
-        'mig_oid_port',
-        'ext_oid_port',
-        'sid_port',
-        'user_clause',
-        'group_clause',
-        'listen_clause',
-        'serveralias_clause',
-        'distro',
-        'landing_page',
-        'skin',
-        'short_title',
-        'secscan_addr',
-    )
+    ]
+    names = str_names + int_names + bool_names
     settings = {}
     default_val = 'DEFAULT'
+    # Force values to expected type
     for key in names:
         settings[key] = default_val
 
@@ -157,8 +177,12 @@ if '__main__' == __name__:
         if opt in ('-h', '--help'):
             usage(names)
             sys.exit(0)
-        elif opt_name in names:
+        elif opt_name in str_names:
             settings[opt_name] = val
+        elif opt_name in int_names:
+            settings[opt_name] = int(val)
+        elif opt_name in bool_names:
+            settings[opt_name] = (val.strip().lower() in ['1', 'true', 'yes'])
         else:
             print 'Error: %s not supported!' % opt
             usage(names)
