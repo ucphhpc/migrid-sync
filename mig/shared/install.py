@@ -1054,6 +1054,8 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
          "MiG-daemons-pw-crack-filter.conf"),
         ("fail2ban-sshd-pw-crack-filter-template.conf",
          "sshd-pw-crack-filter.conf"),
+        ("fail2ban-seafile-auth-filter-template.conf",
+         "seafile-auth-filter.conf"),
         ("fail2ban-MiG-daemons-jail-template.conf", "MiG-daemons-jail.conf"),
         # service script for MiG daemons
         ("migrid-init.d-rh-template", "migrid-init.d-rh"),
@@ -1174,6 +1176,8 @@ sudo cp %(destination)s/MiG-daemons-pw-crack-filter.conf \\
         /etc/fail2ban/filter.d/MiG-daemons-pw-crack.conf
 sudo cp %(destination)s/sshd-pw-crack-filter.conf \\
         /etc/fail2ban/filter.d/sshd-pw-crack.conf
+sudo cp %(destination)s/seafile-auth-filter.conf \\
+        /etc/fail2ban/filter.d/seafile-auth.conf
 sudo cp %(destination)s/MiG-daemons-jail.conf \\
         /etc/fail2ban/jails.local
 After making sure they fit your site you can start the fail2ban service with:

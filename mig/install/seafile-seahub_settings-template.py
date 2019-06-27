@@ -91,7 +91,7 @@ SERVER_EMAIL = EMAIL_HOST_USER
 # seafile subfolder of the active MiG skin:
 # 0|~ > cd ~/seafile/seafile-server-latest/seahub/media
 # 0|.../seafile-server-latest/seahub/media > rm -f custom
-# 0|.../seafile-server-latest/seahub/media > ln -s __MIG_BASE__/images/skin/__SKIN__/seafile custom
+# 0|.../seafile-server-latest/seahub/media > ln -s __MIG_CODE__/images/skin/__SKIN__/seafile custom
 LOGO_PATH = 'custom/seafile_logo.png'
 FAVICON_PATH = 'custom/favicon.png'
 # Default width and height for logo is 149px and 32px
