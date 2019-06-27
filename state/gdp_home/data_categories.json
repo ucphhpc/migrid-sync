@@ -18,9 +18,9 @@
              {
                  "ref_id": "user_terms",
                  "ref_type": "checkbox",
-                 "ref_text": "I confirm that I am familiar and comply with the EU GDPR and <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx' target=_blank>UCPH internal procedures in regard to transfer and disclosure of personal data</a>.",
+                 "ref_text": "I confirm that I am familiar and comply with the EU GDPR as well as UCPH internal procedures in regard to <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/dataprocessors/Pages/default.aspx' target=_blank>data processing</a> and <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx' target=_blank>transfer and disclosure</a> of personal data.",
                  "ref_name": "Sharing Rules and Regulations",
-                 "ref_help": "To share sensitive data with anyone you need to be aware of and in compliance with both internal and external rules and regulations. Please refer to the details in <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>UCPH rules for sharing personal data</a> before you share this project with anyone."
+                 "ref_help": "To share personal data with anyone you need to be aware of and in compliance with both internal and external rules and regulations. Please refer to the details in the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>sharing personal data</a> before you share this project with anyone. Please note that if the invited participant is an external data processor, kindly see the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/dataprocessors/Pages/default.aspx target=_blank>data processors</a>."
              }
          ],
          "accept_user": [],
@@ -45,9 +45,9 @@
              {
                  "ref_id": "user_terms",
                  "ref_type": "checkbox",
-                 "ref_text": "I confirm that I comply with the signed agreement and am familiar with <a href='https://kunet.ku.dk/work-areas/research/rcr/data-storage-and-sharing/Pages/default.aspx' target=_blank>UCPH internal procedures in regard to disclosure of sensitive data</a>.",
+                 "ref_text": "I confirm that I comply with the signed agreement and am familiar with the UCPH internal procedures in regard to <a href='https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx' target=_blank>disclosure of sensitive data</a>.",
                  "ref_name": "Sharing Rules and Regulations",
-                 "ref_help": "To share sensitive data with anyone you need to be aware of and in compliance with both internal and external rules and regulations. Please refer to the details in <a href=https://kunet.ku.dk/work-areas/research/rcr/data-storage-and-sharing/Pages/default.aspx target=_blank>UCPH rules for sharing data subject to an agreement</a> before you share this project with anyone."
+                 "ref_help": "To share sensitive data with anyone you need to be aware of and in compliance with both internal and external rules and regulations. Please refer to the details in the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx target=_blank>sharing data subject to an agreement</a> before you share this project with anyone."
              }
          ], 
          "accept_user": [], "remove_user": []},
