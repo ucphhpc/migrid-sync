@@ -323,6 +323,9 @@ existing archive of yours!""" % freeze_id})
     freeze_id = freeze_meta['ID']
     logger.info("%s: successful for '%s': %s" % (op_name,
                                                  freeze_id, client_id))
+    # Return simple status mainly for use in scripting
+    output_objects.append({'object_type': 'freezestatus', 'freeze_id': freeze_id,
+                           'flavor': flavor, 'freeze_state': freeze_state})
     publish_note = ''
     if freeze_state == keyword_pending:
         publish_hint = 'Preview published archive page in a new window/tab'

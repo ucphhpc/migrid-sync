@@ -256,6 +256,9 @@ ___%s___
             lines.append('Created: %s\n' % val)
             for (location, store_date) in i.get('location', []):
                 lines.append('On %s: %s\n' % (location, store_date))
+        elif i['object_type'] == 'freezestatus':
+            # We only use this element for scripted archive creation
+            pass
         elif i['object_type'] == 'datatransfers':
             datatransferslist = i['datatransfers']
             header = [['ID', 'Action', 'Protocol', 'Host', 'Port', 'Login',
@@ -1519,6 +1522,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('</table>')
             lines.append('</div>')
             lines.append('</div>')
+        elif i['object_type'] == 'freezestatus':
+            # We only use this element for scripted archive creation
+            pass
         elif i['object_type'] == 'datatransfers':
             datatransfers = i['datatransfers']
             lines.append('''
