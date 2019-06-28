@@ -42,9 +42,9 @@ SIF
         } else if (user == "cert") {
             window.open('', '_blank');
         } else if (user == "migoid") {
-            window.open('', '_blank');
+            window.open('https://dev-sif-ext.erda.dk', '_blank');
         } else {
-            window.open('https://dev-sif.erda.dk/cgi-sid/login.py', '_blank');
+            window.open('https://dev-sif-sid.erda.dk/cgi-sid/login.py', '_blank');
         }
     }
     function signup(user) {
@@ -55,20 +55,36 @@ SIF
             window.open('',
                         '_blank');
         } else if (user == "migoid") {
-            window.open('', '_blank');
+            window.open('https://dev-sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
         } else {
-            window.open('https://dev-sif.erda.dk/cgi-sid/signup.py', '_blank');
+            window.open('https://dev-sif-sid.erda.dk/cgi-sid/signup.py', '_blank');
         }
     }
     $(document).ready(function() {
         /* Init links centrally */
+        /* No cert support here */
+        /*
         $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
             "https://sites.google.com/site/minimumintrusiongrid/" +
             "getting-started/how-to-get-started");
         $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
             "https://sites.google.com/site/minimumintrusiongrid/" +
             "mig-in-danish/saadan-kommer-du-igang");
-
+        */
+        /* No migoid support here, yet */
+        /*
+        $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
+            "https://dev-sif-sid.erda.dk/cgi-sid/signup.py?show=migoid");
+        $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
+            "https://dev-sif-ext.erda.dk");
+        */
+        /* No cert support here */
+        /*
+        $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
+            "https://sid.erda.dk/cgi-sid/signup.py?show=extcert");
+        $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
+            "https://cert.erda.dk");
+        */
         /* Init FAQ as foldable but closed and with individual heights */
         $(".faq-accordion").accordion({
                                        collapsible: true,
@@ -146,6 +162,11 @@ Can just be disabled by putting it into an html comment when not in use.
 <span class='systemwarn'>IMPORTANT: SIF backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.</span>
 <span class='systemwarn'>NOTE: SIF received official UCPH approval and will be enabled soon</span>
 -->
+<span class='systemwarn'>IMPORTANT:
+  Please take <a href="http://status.erda.dk">your precautions</a> if
+  you got caught in the recent <a href="https://it.ku.dk/driftinfo/">
+  phishing attacks</a> at KU/KUMail!</span>
+<br/><br/>
 </div>
 
 <div class="staticpage quickstartfields">
@@ -295,10 +316,52 @@ of allowing any additional characters that you may miss.
 No, unfortunately not at the moment. Technically we <em>are</em> ready to
 provide external access without UCPH credentials, but our legal department at
 the university hasn't yet established the required procedures and contracts to
-allow it. We've recently started a pilot project together to get it all
-settled, however.
+allow it. We're working together to get it all settled, however, and it's
+getting close.
+<!--
+Yes, as long as you need a SIF account for a project collaboration
+with one or more employees at UCPH it is possible to get one, even if you
+don't have a general UCPH account. Likewise it is possible to preserve
+access to your SIF account beyond your employment at UCPH in case you
+need it to keep collaborating with a remaining employee.
+<br/>
+<span class="warningtext">
+IMPORTANT: please note that UCPH management requires all such users not
+employed at UCPH to explicitly register with their affiliation to a local
+user. So please include a reference to your associate/advisor at UCPH
+Science in the comment field when you fill in the OpenID or certificate
+account request described below.
+</span>
+<br />
+Our general username+password access described in the user guide relies on
+the OpenID login from Koncern-IT / University IT and they strictly use
+the UCPH user database. So only users with an account there can use that login.
+<br />
+However, we provide two alternative access methods, namely a similar
+username+password login using our own separate OpenID login service, and
+another one relying on user certificates for added security. 
+<br/>
+You can sign up for an SIF account with OpenID access with the
+<em>Other User OpenID Signup</em> button on the <a class="migoidsignup-link">sign
+  up</a> page. If you already have an SIF account and just want to
+enable this OpenID login before your UCPH login expires you can use the
+same procedure, but then you need to make sure you enter the exact same account
+fields in the signup form. Please ask us if in doubt.
+<br/>
+After the SIF admins accept your OpenID account/access request
+you can use your registered email address along with your chosen
+password for <a class="migoidlogin-link">log in</a>.
+<br/>
+-->
 </p>
 </div>
+<h2 class="staticpage">Status and News</h2>
+<p>
+You can always refer to our
+separate <a href="http://status.erda.dk/status.html">status and news overview</a>
+for the latest ERDA/SIF system status as well as information about new or changed
+features.
+</p>
 <h2 class="staticpage">Questions and Support</h2>
 <p>
 The user guide provides basic information about using SIF, but feel free
@@ -339,6 +402,13 @@ Can just be disabled by putting it into an html comment when not in use.
 <span class='systemwarn'>VIGTIGT: SIFs backend-lager er delvist nede pga et strømudfald</span><br/><br/>
 <span class='systemnote'>Der foregår strøm- og kølearbejde i HPC centret, så teknikerne er allerede på sagen.</span>
 -->
+<span class='systemwarn'>
+  Tag venligst <a href="http://status.erda.dk">dine forholdsregler</a>
+  hvis du blev fanget i den seneste
+  tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
+  KU/KUMail!</span>  
+</span>
+<br/><br/>
 </div>
 
 <div class="staticpage quickstartfields">
@@ -364,8 +434,8 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 <p>Vi anbefaler at du også ser nærmere på
 <a href="/public/ucph-sif-brugervejledning.pdf">SIF Brugervejledningen</a> for
-en grundigere introduktion, med hjælp til at komme igang og få størst
-nytte af din konto.
+en grundigere introduktion, med hjælp til at komme igang og få størst nytte af
+din konto.
 </p>
 
 <h2 class="staticpage">Om UCPH SIF</h2>
@@ -497,21 +567,66 @@ du måtte savne tilladt.
 Nej, desværre ikke på nuværende tidspunkt. Rent teknisk <em>kunne</em> vi godt
 give ekstern adgang uden KU-konto, men vores juridiske afdeling på
 universitetet har endnu ikke etableret de nødvendige procedurer og kontrakter
-for at vi har lov til det. Vi har dog fornyligt påbegyndt et pilotprojekt
-sammen for at få det på plads.
+for at vi har lov til det. Vi arbejder dog sammen for at få det på plads og er tæt på.
+<!--
+Ja, sålænge du har brug for en SIF-konto til et projektsamarbejde med
+en eller flere ansatte på KU, er det muligt at få en sådan, også selv om
+du ikke har en generel KU-konto. Ligeledes er det muligt at beholde
+adgang til din SIF-konto efter endt ansættelse, såfremt du har brug for
+den til samarbejde med en vedblivende ansat.
+<br/>
+<span class="warningtext">
+VIGTIGT: bemærk at KU-ledelsen har bedt om at sådanne brugere som ikke
+er ansat på KU registrerer sig med eksplicit tilknytning til en lokal
+bruger. Så henvis venligst til din samarbejdspartner/vejleder på KU Science i
+kommentarfeltet når du anmoder om OpenID- eller certifikat-adgang i
+formularen beskrevet nedenfor.
+</span>
+<br />
+Vores generelle adgangskontrol med brugernavn+kode, som beskrevet i
+brugervejledningen, benytter OpenID-login fra KU Koncern-IT og er dermed
+strengt knyttet til KUs brugerdatabase. Den kan derfor kun benyttes af
+brugere med en KU-konto.
+<br />
+Vi tilbyder dog to alternativer for adgang uden en KU-konto. Den ene er
+ligeledes med brugernavn+kode via vores egen selvstændige OpenID-login
+service og den anden benytter brugercertifikater for ekstra høj sikkerhed.
+<br/>
+Du kan tilmelde dig SIF og få OpenID-adgang til din konto vha 
+<em>Other User OpenID Signup</em>-knappen
+under <a class="migoidsignup-link">tilmelding</a>. 
+Såfremt du allerede har en SIF-konto, som du blot gerne vil bevare
+OpenID-adgang til, kan du benytte selvsamme side. Blot skal du være
+opmærksom på at udfylde formularens felter, så de stemmer nøjagtig
+overens med din nuværende konto. Spørg endelig hvis du er i tvivl.
+<br/>
+Når systemadministratorerne på SIF har godkendt din OpenID-konto/adgang, kan du
+bruge din registrerede emailadresse sammen med din selvvalgte kode
+til <a class="migoidlogin-link">log ind</a>.
+<br/>
+-->
 </p>
 </div>
+<h2 class="staticpage">Status og nyheder</h2>
+<p>
+Man kan altid benytte den særskilte side med 
+<a href="http://status.erda.dk/status.html">status- og nyheds-overblik</a> til at
+se den aktuelle driftstatus for ERDA/SIF samt finde nærmere information omkring ny
+eller ændret funktionalitet.
+</p>
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
 Brugervejledningen indeholder basal information om brugen af SIF, men
-kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og
-kommentarer v.h.a. email-linket nederst på siden.
+kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
+v.h.a. email-linket nederst på siden.
 </p>
+<!--
 <p class="warningtext">
 Bemærk at SIF siderne p.t. kun findes på engelsk. Den danske
 brugervejledning kan forhåbentlig afhjælpe eventuelle
 forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
 </p>
+-->
 <h2 class="staticpage">Brugerregler</h2>
 <p>
 SIF er kun begrænset af få regler, og de skulle gerne være i tråd med
@@ -565,7 +680,8 @@ detaljer om <a href="/public/cookie-policy.pdf">cookies</a>.<br />
 </p>
 </div>
 </div>
-<div><img src="/images/copyright.png" id="creditsimage" alt=""/>
+<div id="copyright">
+<img src="/images/copyright.png" id="creditsimage" alt=""/>
 <span id="credits">
 2003-2019, <a href="http://www.migrid.org">The MiG Project</a>
 </span>
