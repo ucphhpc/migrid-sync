@@ -42,9 +42,13 @@ SIF
         } else if (user == "cert") {
             window.open('', '_blank');
         } else if (user == "migoid") {
-            window.open('https://sif-ext.erda.dk', '_blank');
+            /* TODO: enable when external users are approved */
+            /* window.open('https://sif-ext.erda.dk', '_blank');*/
+            window.open('', '_blank');
         } else {
-            window.open('https://sif-sid.erda.dk/cgi-sid/login.py', '_blank');
+            /* TODO: enable when external users are approved */
+            /* window.open('https://sif-sid.erda.dk/cgi-sid/login.py', '_blank');*/
+            window.open('https://sif.erda.dk/cgi-sid/login.py', '_blank');
         }
     }
     function signup(user) {
@@ -55,9 +59,13 @@ SIF
             window.open('',
                         '_blank');
         } else if (user == "migoid") {
-            window.open('https://sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+            /* TODO: enable when external users are approved */
+            /* window.open('https://sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');*/
+            window.open('', '_blank');
         } else {
-            window.open('https://sif-sid.erda.dk/cgi-sid/signup.py', '_blank');
+            /* TODO: enable when external users are approved */
+            /* window.open('https://sif-sid.erda.dk/cgi-sid/signup.py', '_blank');*/
+            window.open('https://sif.erda.dk/cgi-sid/signup.py', '_blank');
         }
     }
     $(document).ready(function() {
@@ -161,11 +169,15 @@ Can just be disabled by putting it into an html comment when not in use.
   yesterday and are working on it.</span>
 <span class='systemwarn'>IMPORTANT: SIF backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.</span>
 <span class='systemwarn'>NOTE: SIF received official UCPH approval and will be enabled soon</span>
--->
-<span class='systemwarn'>IMPORTANT:
+<span class='systemwarn'>IMPORTANT: 
   Please take <a href="http://status.erda.dk">your precautions</a> if
   you got caught in the recent <a href="https://it.ku.dk/driftinfo/">
   phishing attacks</a> at KU/KUMail!</span>
+-->
+<span class='systemwarn'>WARNING: SIF will be offline for maintenance on
+  July 4th from 10 to
+  11 <a href="http://status.erda.dk">status.erda.dk</a></span>
+</span>
 <br/><br/>
 </div>
 
@@ -401,12 +413,14 @@ Can just be disabled by putting it into an html comment when not in use.
   vedligeholdelsesarbejdet igår og arbejder på sagen.</span>
 <span class='systemwarn'>VIGTIGT: SIFs backend-lager er delvist nede pga et strømudfald</span><br/><br/>
 <span class='systemnote'>Der foregår strøm- og kølearbejde i HPC centret, så teknikerne er allerede på sagen.</span>
--->
 <span class='systemwarn'>
   Tag venligst <a href="http://status.erda.dk">dine forholdsregler</a>
   hvis du blev fanget i den seneste
   tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
   KU/KUMail!</span>  
+</span>
+-->
+<span class='systemwarn'>WARNING: SIF vil være nede til systemvedligehold den 4. juli fra 10 til 11 <a href="http://status.erda.dk">status.erda.dk</a></span>
 </span>
 <br/><br/>
 </div>
@@ -663,6 +677,8 @@ Skriv til os på
 </div>
 </div>
 <div id="bottomlogoright">
+<!-- TODO: enable privacy div when code and css is ready
+<!--
 <div id="privacy">
 <div class="privacytext staticpage i18n" lang="en">
 <p class="privacytitle i18n" lang="en">Privacy and Cookies</p>
@@ -680,6 +696,7 @@ detaljer om <a href="/public/cookie-policy.pdf">cookies</a>.<br />
 </p>
 </div>
 </div>
+-->
 <div id="copyright">
 <img src="/images/copyright.png" id="creditsimage" alt=""/>
 <span id="credits">
