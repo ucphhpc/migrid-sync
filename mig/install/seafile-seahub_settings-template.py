@@ -42,8 +42,6 @@ STATIC_URL = MEDIA_URL + 'assets/'
 ENABLE_SIGNUP = True
 # Require admin acceptance after signup
 ACTIVATE_AFTER_REGISTRATION = False
-# Notify admins about acceptance
-NOTIFY_ADMIN_AFTER_REGISTRATION = True
 
 # mininum length for password of encrypted library
 REPO_PASSWORD_MIN_LENGTH = __PASSWORD_MIN_LEN__
