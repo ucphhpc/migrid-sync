@@ -1086,6 +1086,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
         ("apache-httpd-template.conf", "httpd.conf"),
         ("apache-ports-template.conf", "ports.conf"),
         ("apache-MiG-template.conf", "MiG.conf"),
+        ("apache-production-mode-template.conf", "production-mode.conf"),
         ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
         ("apache-init.d-deb-template", "apache-%s" % user),
         ("apache-service-template.conf", "apache2.service"),
@@ -1164,10 +1165,11 @@ sudo cp %(destination)s/mimic-deb.conf %(apache_etc)s/conf/httpd.conf
 sudo cp %(destination)s/envvars /etc/sysconfig/httpd
 sudo cp %(destination)s/apache2.service /lib/systemd/system/httpd.service
 
-You may also want to consider copying the generated apache2.conf,
-httpd.conf, ports.conf and envvars to %(apache_etc)s/:
+You may also want to consider copying the generated apache2.conf, httpd.conf,
+production-mode.conf, ports.conf and envvars to %(apache_etc)s/:
 sudo cp %(destination)s/apache2.conf %(apache_etc)s/
 sudo cp %(destination)s/httpd.conf %(apache_etc)s/
+sudo cp %(destination)s/production-mode.conf %(apache_etc)s/
 sudo cp %(destination)s/ports.conf %(apache_etc)s/
 sudo cp %(destination)s/envvars %(apache_etc)s/
 
