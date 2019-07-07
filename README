@@ -431,7 +431,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --enable_sftp=False --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True \
                    --enable_duplicati=False --enable_seafile=True \
-                   --enable_sandboxes=True --enable_vmachines=True \
+                   --enable_sandboxes=True --enable_vmachines=False \
                    --enable_crontab=True --enable_jobs=True \
                    --enable_resources=True \
                    --enable_events=True --enable_imnotify=True \
@@ -449,7 +449,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --login_methods="extoid migoid migcert" \
                    --landing_page='/wsgi-bin/dashboard.py' \
                    --skin=migrid-basic --short_title=MiG \
-                   --wsgi_procs=25
+                   --wsgi_procs=25 --secscan_addr=130.225.213.72
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, Seafile integration and OpenID login:
@@ -502,7 +502,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=erda-ucph-science  --short_title=ERDA \
-                   --wsgi_procs=25 
+                   --wsgi_procs=25
                    
 and the same with added Jupyter integration and optional 2FA support:
 ./generateconfs.py --source=. --destination=generated-confs \
@@ -619,7 +619,9 @@ with optional 2-FA support and legacy sftp clients:
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=idmc-basic --short_title=IDMC --apache_worker_procs=512 \
-                   --wsgi_procs=25 --sftp_subsys_auth_procs=25
+                   --wsgi_procs=25 --sftp_subsys_auth_procs=25 \
+                   --davs_port=8020 --openid_port=8001 \
+                   --secscan_addr=130.225.213.72
 
 Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, strict access control and extensive logging to comply with the 

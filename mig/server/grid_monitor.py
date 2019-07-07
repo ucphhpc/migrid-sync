@@ -106,7 +106,7 @@ $(document).ready(function() {
         '',
         html=True,
         meta=monitor_meta,
-        base_styles=themed_styles(configuration),
+        base_styles=themed_styles(configuration)['base'],
         scripts=monitor_js,
         bodyfunctions='',
         menu=False,
