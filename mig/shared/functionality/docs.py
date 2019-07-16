@@ -338,20 +338,13 @@ Web interfaces are served with the Apache HTTP Server:"""})
     if configuration.site_enable_davs:
         password_dep = True
         output_objects.append({'object_type': 'text', 'text':
-                               "WebDAVS access is delivered using wsgidav or pywebdav:"})
+                               "WebDAVS access is delivered using wsgidav:"})
         output_objects.append({'object_type': 'link',
                                'destination':
                                'https://github.com/mar10/wsgidav',
                                'class': 'urllink iconspace',
                                'title': 'WsgiDAV Home Page',
                                'text': 'WsgiDAV Server Module (MIT license)'})
-        output_objects.append({'object_type': 'text', 'text': ''})
-        output_objects.append({'object_type': 'link',
-                               'destination':
-                               'https://code.google.com/p/pywebdav/',
-                               'class': 'urllink iconspace',
-                               'title': 'PyWebDAV Home Page',
-                               'text': 'PyWebDAV DAV(S) Server Module (GPL license)'})
     if configuration.site_enable_ftps:
         password_dep = True
         openssl_dep = True

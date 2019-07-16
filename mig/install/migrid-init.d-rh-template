@@ -30,7 +30,6 @@
 # processname: grid_openid.py
 # processname: grid_sftp.py
 # processname: grid_webdavs.py
-## processname: grid_davs.py
 # processname: grid_ftps.py
 # processname: grid_notify.py
 # processname: grid_imnotify.py
@@ -79,7 +78,6 @@ MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
 MIG_SFTPSUBSYS=/usr/sbin/sshd
 MIG_SFTPSUBSYS_WORKER=${MIG_CODE}/server/sftp_subsys.py
 MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
-MIG_DAVS=${MIG_CODE}/server/grid_davs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
 MIG_NOTIFY=${MIG_CODE}/server/grid_notify.py
 MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
@@ -90,7 +88,7 @@ MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
     echo "where daemon is left out for all or given along with DAEMON as one of the following"
-    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|notify|imnotify|vmproxy|all)"
+    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)"
 }
 
 check_enabled() {
@@ -243,20 +241,6 @@ start_webdavs() {
     [ $RET2 ] || echo "Warning: webdavs not started."
     echo
 }
-start_davs() {
-    check_enabled "davs" || return
-    DAEMON_PATH=${MIG_DAVS}
-    SHORT_NAME=$(basename ${DAEMON_PATH})
-    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    echo -n "Starting MiG davs daemon: $SHORT_NAME"
-    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
-	   "${DAEMON_PATH} >> ${MIG_LOG}/davs.out 2>&1 &"
-    RET2=$?
-    [ $RET2 ] && success
-    echo
-    [ $RET2 ] || echo "Warning: davs not started."
-    echo
-}
 start_ftps() {
     check_enabled "ftps" || return
     DAEMON_PATH=${MIG_FTPS}
@@ -340,7 +324,6 @@ start_all() {
     start_sftpsubsys
     # Use wsgidav implementation instead of outdated PyWebDav one
     start_webdavs
-    #start_davs
     start_ftps
     start_notify
     start_imnotify
@@ -453,15 +436,6 @@ stop_webdavs() {
     killproc ${DAEMON_PATH}
     echo
 }
-stop_davs() {
-    check_enabled "davs" || return
-    DAEMON_PATH=${MIG_DAVS}
-    SHORT_NAME=$(basename ${DAEMON_PATH})
-    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    echo -n "Shutting down MiG davs: $SHORT_NAME "
-    killproc ${DAEMON_PATH}
-    echo
-}
 stop_ftps() {
     check_enabled "ftps" || return
     DAEMON_PATH=${MIG_FTPS}
@@ -532,7 +506,6 @@ stop_all() {
     stop_sftpsubsys
     # Use wsgidav implementation instead of outdated PyWebDav one
     stop_webdavs
-    #stop_davs
     stop_ftps
     stop_notify
     stop_imnotify
@@ -621,15 +594,6 @@ reload_webdavs() {
     killproc ${DAEMON_PATH} -HUP
     echo
 }
-reload_davs() {
-    check_enabled "davs" || return
-    DAEMON_PATH=${MIG_DAVS}
-    SHORT_NAME=$(basename ${DAEMON_PATH})
-    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    echo -n "Reloading MiG davs: $SHORT_NAME "
-    killproc ${DAEMON_PATH} -HUP
-    echo
-}
 reload_ftps() {
     check_enabled "ftps" || return
     DAEMON_PATH=${MIG_FTPS}
@@ -713,7 +677,6 @@ reload_all() {
     reload_sftpsubsys
     # Use wsgidav implementation instead of outdated PyWebDav one
     reload_webdavs
-    #reload_davs
     reload_ftps
     reload_notify
     reload_imnotify
@@ -787,13 +750,6 @@ status_webdavs() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status ${DAEMON_PATH}
 }
-status_davs() {
-    check_enabled "davs" || return
-    DAEMON_PATH=${MIG_DAVS}
-    SHORT_NAME=$(basename ${DAEMON_PATH})
-    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status ${DAEMON_PATH}
-}
 status_ftps() {
     check_enabled "ftps" || return
     DAEMON_PATH=${MIG_FTPS}
@@ -847,7 +803,6 @@ status_all() {
     status_sftpsubsys
     # Use wsgidav implementation instead of outdated PyWebDav one
     status_webdavs
-    #status_davs
     status_ftps
     status_notify
     status_imnotify
@@ -863,7 +818,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|davs|ftps|notify|imnotify|vmproxy|all)
+    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')

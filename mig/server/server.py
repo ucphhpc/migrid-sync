@@ -140,7 +140,7 @@ components.append(('grid_imnotify.py', None))
 components.append(('grid_sshmux.py', None))
 components.append(('grid_sftp.py', None))
 components.append(('grid_ftps.py', None))
-components.append(('grid_davs.py', None))
+components.append(('grid_webdavs.py', None))
 components.append(('grid_openid.py', None))
 
 # Use first argument (if given) as path to config file

@@ -147,10 +147,6 @@ sudo pip install pyOpenSSL pyftpdlib
 The optional grid_webdavs daemon requires the wsgidav module in a recent
 version (1.3.0+), so it is easiest to install it with pip as mentioned above.
 
-The now deprecated optional grid_davs daemon requires the pywebdav
-module in a recent version, so it is easiest to install it with pip:
-sudo pip install pywebdav
-
 The optional grid_openid daemon requires the openid module in a recent
 version, so it is easiest to install it with pip as mentioned above.
 
@@ -718,11 +714,7 @@ installed with pip instead.
 WsgiDAV is required for the optional grid_webdavs daemon to work and a
 recent version is needed for full OSX client support. Thus it is
 recommended to install directly from github or with pip.
-PyWebDAV is required for the now deprecated optional grid_davs daemon to
-work and the python-webdav package in a recent version may provide all
-required components for it on Debian/Ubuntu. If no recent version is
-available, it can still easily be installed with pip instead.
-All optional file server services like sftp, ftps and davs rely on the
+All optional file server services like sftp, ftps and davs rely on
 one of the python pbkdf2 modules for password auth support and it is
 distributed with the MiG code base.
 
