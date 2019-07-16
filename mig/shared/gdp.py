@@ -2447,14 +2447,15 @@ def project_open(
             err_msg += template
             _logger.error(log_err_msg + template)
 
-    if status and not skiplogin:
-        status = project_login(
+    if status and not skiplogin \
+        and project_login(
             configuration,
             protocol,
             client_addr,
             client_id,
             project_name,
-            locked=True)
+            locked=True) is None:
+        status = False
 
     release_file_lock(flock)
 
