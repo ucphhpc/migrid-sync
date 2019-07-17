@@ -1109,6 +1109,8 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
          "MiG-daemons-filter.conf"),
         ("fail2ban-MiG-daemons-handshake-filter-template.conf",
          "MiG-daemons-handshake-filter.conf"),
+        ("fail2ban-MiG-daemons-webscan-filter-template.conf",
+         "MiG-daemons-webscan-filter.conf"),
         ("fail2ban-MiG-daemons-pw-crack-filter-template.conf",
          "MiG-daemons-pw-crack-filter.conf"),
         ("fail2ban-sshd-pw-crack-filter-template.conf",
@@ -1232,6 +1234,8 @@ sudo cp %(destination)s/MiG-daemons-filter.conf \\
         /etc/fail2ban/filter.d/MiG-daemons.conf
 sudo cp %(destination)s/MiG-daemons-handshake-filter.conf \\
         /etc/fail2ban/filter.d/MiG-daemons-handshake.conf
+sudo cp %(destination)s/MiG-daemons-webscan-filter.conf \\
+        /etc/fail2ban/filter.d/MiG-daemons-webscan.conf
 sudo cp %(destination)s/MiG-daemons-pw-crack-filter.conf \\
         /etc/fail2ban/filter.d/MiG-daemons-pw-crack.conf
 sudo cp %(destination)s/sshd-pw-crack-filter.conf \\
