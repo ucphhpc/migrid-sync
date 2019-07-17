@@ -304,6 +304,9 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.session_ttl = 48 * 3600
 
         self.clearUser()
+        # NOTE: drop idle clients after N seconds to clean stale connections.
+        #       Does NOT include clients that connect and do nothing at all :-(
+        self.timeout = 120
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def clearUser(self):
