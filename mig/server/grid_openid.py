@@ -63,9 +63,11 @@ import Cookie
 import cgi
 import cgitb
 import os
+import socket
 import ssl
 import sys
 import time
+import types
 
 try:
     import openid
@@ -1374,6 +1376,34 @@ Invalid '%s' input: %s
         self.wfile.write(html)
 
 
+def limited_accept(self, *args, **kwargs):
+    """Accepts a new connection from a remote client, and returns a tuple
+    containing that new connection wrapped with a server-side SSL channel, and
+    the address of the remote client.
+
+    This version extends the default SSLSocket accept handler to only allow the
+    client a limited idle period before timing out the connection, to avoid
+    blocking legitimate clients.
+
+    It can be tested with something like
+    for i in $(seq 1 5); do telnet FQDN PORT & ; done
+    curl https://FQDN:PORT/
+    which should eventually show the page content.
+    """
+    newsock, addr = socket.socket.accept(self)
+    # NOTE: fetch timeout from kwargs but with fall back to 10s
+    #       it must be short since server completely blocks here!
+    timeout = kwargs.get('timeout', 10)
+    logger.debug("Accept connection from %s with timeout %s" % (addr, timeout))
+    newsock.settimeout(timeout)
+    newsock = self.context.wrap_socket(newsock,
+                                       do_handshake_on_connect=self.do_handshake_on_connect,
+                                       suppress_ragged_eofs=self.suppress_ragged_eofs,
+                                       server_side=True)
+    logger.debug('Done accepting connection.')
+    return newsock, addr
+
+
 def start_service(configuration):
     """Service launcher"""
     host = configuration.user_openid_address
@@ -1410,6 +1440,10 @@ def start_service(configuration):
                                        dhparams_path)
         httpserver.socket = ssl_ctx.wrap_socket(httpserver.socket,
                                                 server_side=True)
+        # Override default SSLSocket accept function to inject timeout support
+        # https://stackoverflow.com/questions/394770/override-a-method-at-instance-level/42154067#42154067
+        httpserver.socket.accept = types.MethodType(
+            limited_accept, httpserver.socket)
 
     serve_msg = 'Server running at: %s' % httpserver.base_url
     logger.info(serve_msg)
@@ -1417,7 +1451,9 @@ def start_service(configuration):
     min_expire_delay = 300
     last_expire = time.time()
     while True:
+        logger.debug('handle next request')
         httpserver.handle_request()
+        logger.debug('done handling request')
         if last_expire + min_expire_delay < time.time():
             httpserver.expire_volatile()
 
