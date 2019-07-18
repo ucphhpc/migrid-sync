@@ -49,7 +49,7 @@ from shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
-    STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX
+    STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX
 from shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
 from shared.pwhash import password_requirements
@@ -495,6 +495,9 @@ cert, oid and sid based https!
     # We know that login with one of these common usernames is a password
     # cracking attempt since our own username format differs.
     user_dict['__CRACK_USERNAME_REGEX__'] = CRACK_USERNAME_REGEX
+    # We know that when a web request for one of these addresses fails it is a
+    # clear sign of someone scanning for web vulnerabilities to abuse.
+    user_dict['__CRACK_WEB_REGEX__'] = CRACK_WEB_REGEX
 
     # Insert min password length based on policy
     min_len, min_classes, errors = password_requirements(password_policy)
