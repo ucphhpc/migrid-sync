@@ -45,6 +45,9 @@ a {
 a:focus, a:hover {
     color: #acf;
 }
+.a-simulate {
+    color: #acf !important;
+}
 .strip-tip {
     background:#acf;
 }
@@ -67,17 +70,40 @@ a:focus, a:hover {
     background:#369;
 }
 
-.side-tabnav h3.hd,
-.side-tabnav .hd h3 {
+/* NOTE: With upgrade from 6.x to 7.x and switch to React nav class names changed */
+.side-nav h3.hd,
+.side-nav .hd h3,
+.sf-heading {
     color:#147;
 }
 
-.side-tabnav-tabs .tab a:hover {
+
+.side-tabnav-tabs .tab a:hover,
+.nav-pills .nav-item .nav-link:hover {
     background-color:#acf;
 }
 
 .side-tabnav-tabs .tab-cur a,
-.side-tabnav-tabs .tab-cur a:hover {
+.side-tabnav-tabs .tab-cur a:hover,
+.nav-pills .nav-item .nav-link.active,
+.nav-pills .nav-item .nav-link.active:hover {
+    background-color: #369;
+}
+
+.nav .nav-item .nav-link {
+    color: #369;
+}
+.nav .nav-item.active .nav-link {
+    color: #369;
+    border-color: #147;
+}
+.nav .nav-item .nav-link.active,
+.nav .nav-item .nav-link.active:hover {
+    color: #fff;
+    border-color: #369;
+}
+.nav .nav-item .nav-link:hover {
+    color: #fff;
     background-color: #369;
 }
 
@@ -100,6 +126,11 @@ a:focus, a:hover {
 }
 .tab-tabs-nav .tab .a:hover {
     color:#147;
+}
+.cur-view-path .tab-tabs-nav .ui-state-active .a,
+.cur-view-path .tab-tabs-nav .a:hover {
+    color:#369;
+    border-bottom-color:#369;
 }
 
 .tab-popup-tabs-nav .ui-state-active .a,
@@ -195,9 +226,12 @@ a:focus, a:hover {
 }
 
 /* mouse-over icons */
+.op-icon,
+.op-icon:hover,
 .op-icon.sf2-x,
 .op-icon.sf2-x:hover {
     color:#acf;
+    border-bottom-color:#acf;
 }
 
 /**** btn with link styles ****/
@@ -232,6 +266,10 @@ a:focus, a:hover {
     background:#369;
 }    
 
+.mobile-menu-content ul li:hover{
+    background-color: #369;
+}
+
 .load-more-discussion {
     color:#147;
 }
@@ -246,6 +284,9 @@ a:focus, a:hover {
 .login-panel .submit {
     background:#147;
 }
+.login-panel .submit:focus {
+    border-color: #acf;
+}
 
 .fixed-upload-file-dialog .fileupload-buttonbar .cancel,
 .template-upload .btn {
@@ -255,6 +296,108 @@ a:focus, a:hover {
 .grid-item .text-link.hl {
     color:#369;
 }
+
+.path-link {
+    color: #369 !important;
+}
+
+.list-show-more {
+    color: #369;
+}
+
+#groups .group-name .a {
+    color:#147;
+}
+
+.traffic-tab-nav .tab .a:hover {
+    color:#369;
+    border-bottom-color:#369;
+}
+
+.dir-toolbar-2 .op-link:hover {
+    color:#369;
+}
+
+.path-toolbar .toolbar-item .op-link:hover {
+    color:#369;
+}
+
+
+/*** New rules for bootstrap elements added in 7.x ***/
+
+/* outlined buttons */
+.btn-primary {
+    background-color: #369;
+    border-color: #369;
+}
+.btn-primary:hover {
+    background-color: #147;
+    border-color: #147;
+}
+.btn-primary:focus, .btn-primary.focus {
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.5);
+}
+.btn-primary.disabled,
+.btn-primary:disabled {
+    background-color: #369;
+    border-color: #369;
+}
+.btn-primary:not(:disabled):not(.disabled):active,
+.btn-primary:not(:disabled):not(.disabled).active,
+.show > .btn-primary.dropdown-toggle {
+    background-color: #147;
+    border-color: #147;
+}
+.btn-primary:not(:disabled):not(.disabled):active:focus,
+.btn-primary:not(:disabled):not(.disabled).active:focus,
+.show > .btn-primary.dropdown-toggle:focus {
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.5);
+}
+
+.btn-outline-primary {
+    color: #369;
+    border-color: #369;
+}
+.btn-outline-primary:hover {
+    background-color: #369;
+    border-color: #369;
+}
+.btn-outline-primary:focus,
+.btn-outline-primary.focus {
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.5);
+}
+.btn-outline-primary.disabled,
+.btn-outline-primary:disabled {
+    color: #369;
+}
+.btn-outline-primary:not(:disabled):not(.disabled):active,
+.btn-outline-primary:not(:disabled):not(.disabled).active,
+.show > .btn-outline-primary.dropdown-toggle {
+    background-color: #369;
+    border-color: #369;
+}
+.btn-outline-primary:not(:disabled):not(.disabled):active:focus,
+.btn-outline-primary:not(:disabled):not(.disabled).active:focus,
+.show > .btn-outline-primary.dropdown-toggle:focus {
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.5);
+}
+
+/* NOTE: I'm not sure these tables are really themed or just color ranged */
+/* 
+.table-primary,
+.table-primary > th,
+.table-primary > td {
+    background-color: #acf;
+}
+
+.table-hover .table-primary:hover {
+    background-color: #369;
+}
+.table-hover .table-primary:hover > td,
+.table-hover .table-primary:hover > th {
+    background-color: #369;
+}
+*/
 
 /* Hide signup link on login page to reduce unwanted direct signup attempts */
 /* There used to be no signup link id or class to target, so we relied on the
