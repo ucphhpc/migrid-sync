@@ -71,22 +71,21 @@ a:focus, a:hover {
 }
 
 /* NOTE: With upgrade from 6.x to 7.x and switch to React nav class names changed */
-.side-nav h3.hd,
-.side-nav .hd h3,
-.sf-heading {
+.sf-heading,
+.side-tabnav h3.hd,
+.side-tabnav .hd h3 {
     color:#147;
 }
 
-
-.side-tabnav-tabs .tab a:hover,
-.nav-pills .nav-item .nav-link:hover {
+.nav-pills .nav-item .nav-link:hover,
+.side-tabnav-tabs .tab a:hover {
     background-color:#acf;
 }
 
-.side-tabnav-tabs .tab-cur a,
-.side-tabnav-tabs .tab-cur a:hover,
 .nav-pills .nav-item .nav-link.active,
-.nav-pills .nav-item .nav-link.active:hover {
+.nav-pills .nav-item .nav-link.active:hover,
+.side-tabnav-tabs .tab-cur a,
+.side-tabnav-tabs .tab-cur a:hover {
     background-color: #369;
 }
 
