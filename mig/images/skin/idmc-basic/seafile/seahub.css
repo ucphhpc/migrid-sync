@@ -104,7 +104,9 @@ a:focus, a:hover {
 }
 .nav .nav-item .nav-link:hover {
     color: #fff;
-    background-color: #369;
+    /* NOTE: diverge from std color mapping here to avoid that active nav elem
+     * has same color as hovered ones */
+    background-color: #acf;
 }
 
 .side-textnav-tabs .tab-cur a,
