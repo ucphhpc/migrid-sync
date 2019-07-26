@@ -6,7 +6,7 @@
 #
 #
 # sftpfailinfo - grep sftp negotiation log errors and lookup source FQDN
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -14,12 +14,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
@@ -40,6 +40,7 @@ import sys
 from shared.conf import get_configuration_object
 from shared.useradm import init_user_adm
 
+
 def usage(name='sftpfailinfo.py'):
     """Usage help"""
 
@@ -54,6 +55,7 @@ Where OPTIONS may be one or more of:
    -x TRUSTED_IP       Trust IPs starting with this prefix (multiple allowed)
    -X TRUSTED_DOMAIN   Trust FQDNs ending with this suffix (multiple allowed)
 """ % {'doc': __doc__, 'name': name}
+
 
 def dns_lookup(ip_addr):
     """Reverse DNS lookup with result returned as (ip_addr, fqdn)-tuple if
@@ -107,13 +109,15 @@ if '__main__' == __name__:
     extract_pattern += r" .* \(no acceptable (.*)\)"
     extract_regex = re.compile(extract_pattern)
     sftp_log = configuration.user_sftp_log
-    print "Searching for SFTP negotiation errors in %s" % sftp_log
+    if verbose:
+        print "Searching for SFTP negotiation errors in %s" % sftp_log
     log_fd = open(sftp_log)
     for line in log_fd:
         if line.find('WARNING client negotiation errors ') != -1:
             matches.append(line)
     log_fd.close()
-    print "Found %s matching log lines" % len(matches)
+    if verbose:
+        print "Found %s matching log lines" % len(matches)
     ip_fail_map = {}
     for line in matches:
         match = extract_regex.match(line)
@@ -126,7 +130,13 @@ if '__main__' == __name__:
             ip_fail_map[source_ip][err_cond] += 1
             ip_fail_map[source_ip]['last'] = stamp
 
-    print "Reverse DNS lookup %d source IP(s)" % len(ip_fail_map.keys())
+    if not ip_fail_map:
+        if verbose:
+            print "No errors to report"
+        sys.exit(0)
+
+    if verbose:
+        print "Reverse DNS lookup %d source IP(s)" % len(ip_fail_map.keys())
     # Reverse DNS lookup is horribly slow with timeout - use multiprocessing
     workers = multiprocessing.Pool(processes=64)
     rdns_results = workers.map(dns_lookup, ip_fail_map.keys())

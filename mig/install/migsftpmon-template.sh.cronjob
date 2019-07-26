@@ -6,6 +6,9 @@
 trust_ip="." 
 trust_fqdn=""
 
+# Additional flags like e.g. -v to print result even if no hits
+flags=""
+
 # No more edits below
 own_fqdn="localhost.localdomain __PUBLIC_FQDN__ __MIG_CERT_FQDN__ __EXT_CERT_FQDN__ __MIG_OID_FQDN__ __EXT_OID_FQDN__ __SID_FQDN__ __IO_FQDN__"
 own_ip=""
@@ -22,6 +25,6 @@ done
 for fqdn in $trust_fqdn; do
     trust="$trust -X $fqdn"
 done
-su - mig -c "python mig/server/sftpfailinfo.py $trust"
+su - mig -c "python mig/server/sftpfailinfo.py $flags $trust"
 
 exit 0
