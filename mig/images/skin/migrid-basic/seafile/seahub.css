@@ -83,6 +83,7 @@ a:focus, a:hover {
     background-color:#acf;
 }
 
+.nav-pills .show > .nav-link,
 .nav-pills .nav-item .nav-link.active,
 .nav-pills .nav-item .nav-link.active:hover,
 .side-tabnav-tabs .tab-cur a,
@@ -198,6 +199,11 @@ a:focus, a:hover {
     color: #147;
 }
 
+/* NOTE: .progress-bar class is new in 7.x */
+.progress-bar {
+    background-color: #147;
+}
+
 .ui-progressbar-value,
 .progress .bar {
     background:#147;
@@ -229,8 +235,10 @@ a:focus, a:hover {
 
 /* mouse-over icons */
 .op-icon,
+.op-icon:focus,
 .op-icon:hover,
 .op-icon.sf2-x,
+.op-icon.sf2-x:focus,
 .op-icon.sf2-x:hover {
     color:#acf;
     border-bottom-color:#acf;
@@ -384,8 +392,163 @@ a:focus, a:hover {
     box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25);
 }
 
-/* NOTE: I'm not sure these tables are really themed or just color ranged */
-/* 
+.btn-link {
+    color: #369;
+}
+.btn-link:hover {
+    color: #147;
+}
+.btn-link:disabled, .btn-link.disabled {
+    color: #369;
+}
+
+.dropdown-item.active,                                                                                   
+.dropdown-item:active {
+    background-color: #369;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #369;
+}
+
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #369;
+}
+
+.custom-checkbox .custom-control-input:indeterminate ~ .custom-control-label::before {
+    background-color: #369;
+}
+
+.custom-radio .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #369;
+}
+
+.custom-range::-webkit-slider-thumb {
+    background-color: #369;
+}
+.custom-range::-moz-range-thumb {
+    background-color: #369;
+}
+.custom-range::-ms-thumb {
+    background-color: #369;
+}
+
+.page-item.active .page-link {
+    background-color: #369;
+    border-color: #369;
+}
+
+.badge-primary {
+    background-color: #369;
+}
+
+.list-group-item.active {
+    color: #369;
+}
+
+.bg-primary {
+background-color: #369 !important;
+}
+
+a.bg-primary:hover, a.bg-primary:focus,
+button.bg-primary:hover,
+button.bg-primary:focus {
+    background-color: #147 !important; 
+}
+
+.border-primary {
+    border-color: #369 !important;
+}
+
+.text-primary {
+    color: #369 !important;
+}
+
+a.text-primary:hover, a.text-primary:focus {
+    color: #147 !important;
+}
+
+.nav-tabs .nav-submenu .nav-item.active {
+    color: #369;
+}
+
+.table-calendar-link:before {
+    background: #369;
+}
+.table-calendar-link:hover {
+    background: #369;
+}
+
+.form-help:hover,
+.form-help[aria-describedby] {
+    background: #369;
+}
+
+.chat-message {
+    background-color: #369;
+}
+.chat-message:after {
+    border-left-color: #369;
+}
+
+.tag-primary {
+    background-color: #369;
+}
+
+.custom-range:focus::-webkit-slider-thumb {
+    border-color: #369;
+    background-color: #369;
+}
+.custom-range:focus::-moz-range-thumb {
+    border-color: #369;
+    background-color: #369;
+}
+.custom-range:focus::-ms-thumb {
+    border-color: #369;
+    background-color: #369;
+}
+.custom-range::-webkit-slider-runnable-track {
+    background: #369;
+}
+.custom-range::-moz-range-progress {
+    background: #369;
+}
+.custom-range::-ms-fill-lower {
+    background: #369;
+}
+
+.selectgroup-input:checked + .selectgroup-button {
+    border-color: #369;
+    color: #369;
+    background: #acf;
+}
+
+.selectgroup-input:focus + .selectgroup-button {
+    border-color: #;
+    color: #;
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25);
+}
+
+.custom-switch-input:checked ~ .custom-switch-indicator {
+    background: #369;
+}
+.custom-switch-input:focus ~ .custom-switch-indicator {
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25);
+    border-color: #369;
+}
+
+.imagecheck-input:focus ~ .imagecheck-figure {
+    border-color: #369;
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25); }
+.imagecheck-figure:before {
+    background-color: #369;
+}
+
+.colorinput-input:focus ~ .colorinput-color {
+    border-color: #369;
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25);
+}
+
 .table-primary,
 .table-primary > th,
 .table-primary > td {
@@ -399,7 +562,16 @@ a:focus, a:hover {
 .table-hover .table-primary:hover > th {
     background-color: #369;
 }
-*/
+
+.go-back:focus,
+.go-back:hover,
+.old-history-main .go-back:focus,
+.old-history-main .go-back:hover,
+.old-history-main .file-name,
+.old-history-main .commit-list .username {
+    color: #369;
+}
+
 
 /* Hide signup link on login page to reduce unwanted direct signup attempts */
 /* There used to be no signup link id or class to target, so we relied on the
