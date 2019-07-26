@@ -32,11 +32,12 @@
 
 /* Replace the different orange colors in the original css specs. 
    Keep rules in sync with styles from:
-   seafile-server-latest/seahub/media/css/seahub.css 
+   seafile/seafile-server-latest/seahub/media/css/*.css 
    and use something like the following simplified mappings:
    #eb8205 / #ee8204 / #f7941d / #de3f1c / #DD4B39 / #c77405 / #f59f00 / #e83 -> #46743c
    #f93 / #ff9933 / #feac74 / #fbcb09 / #a68558 -> #679c5b
    #fff1a8 / #f89a68 / #feefb8 / #fdf5ce / #fddaa4 / #f9edbe -> #8fd182
+   rgba(241, 150, 69, 0.25) -> rgba(103, 156, 91, 0.25) 
 */
 
 a { 
@@ -44,6 +45,9 @@ a {
 }
 a:focus, a:hover {
     color: #679c5b;
+}
+.a-simulate {
+    color: #8fd182 !important;
 }
 .strip-tip {
     background:#8fd182;
@@ -67,17 +71,39 @@ a:focus, a:hover {
     background:#679c5b;
 }
 
+/* NOTE: With upgrade from 6.x to 7.x and switch to React nav class names changed */
+.sf-heading,
 .side-tabnav h3.hd,
 .side-tabnav .hd h3 {
     color:#46743c;
 }
 
+.nav-pills .nav-item .nav-link:hover,
 .side-tabnav-tabs .tab a:hover {
     background-color:#8fd182;
 }
 
+.nav-pills .nav-item .nav-link.active,
+.nav-pills .nav-item .nav-link.active:hover,
 .side-tabnav-tabs .tab-cur a,
 .side-tabnav-tabs .tab-cur a:hover {
+    background-color: #679c5b;
+}
+
+.nav .nav-item .nav-link {
+    color: #679c5b;
+}
+.nav .nav-item.active .nav-link {
+    color: #679c5b;
+    border-color: #46743c;
+}
+.nav .nav-item .nav-link.active,
+.nav .nav-item .nav-link.active:hover {
+    color: #fff;
+    border-color: #679c5b;
+}
+.nav .nav-item .nav-link:hover {
+    color: #fff;
     background-color: #679c5b;
 }
 
@@ -87,7 +113,7 @@ a:focus, a:hover {
 }
 
 .messages .info {
-    background:#8FD182;
+    background:#8fd182;
 }
 
 .new-narrow-panel .hd {
@@ -100,6 +126,11 @@ a:focus, a:hover {
 }
 .tab-tabs-nav .tab .a:hover {
     color:#46743c;
+}
+.cur-view-path .tab-tabs-nav .ui-state-active .a,
+.cur-view-path .tab-tabs-nav .a:hover {
+    color:#679c5b;
+    border-bottom:2px solid #679c5b;
 }
 
 .tab-popup-tabs-nav .ui-state-active .a,
@@ -195,9 +226,12 @@ a:focus, a:hover {
 }
 
 /* mouse-over icons */
+.op-icon,
+.op-icon:hover,
 .op-icon.sf2-x,
 .op-icon.sf2-x:hover {
     color:#8fd182;
+    border-bottom-color:#8fd182;
 }
 
 /**** btn with link styles ****/
@@ -232,6 +266,10 @@ a:focus, a:hover {
     background:#679c5b;
 }    
 
+.mobile-menu-content ul li:hover{
+    background-color:#679c5b;
+}
+
 .load-more-discussion {
     color:#46743c;
 }
@@ -244,7 +282,10 @@ a:focus, a:hover {
 
 /* Login button on entry page */
 .login-panel .submit {
-    background:#46743c;
+    background:#147;
+}
+.login-panel .submit:focus {
+    border-color:#8fd182;
 }
 
 .fixed-upload-file-dialog .fileupload-buttonbar .cancel,
@@ -255,6 +296,108 @@ a:focus, a:hover {
 .grid-item .text-link.hl {
     color:#679c5b;
 }
+
+.path-link {
+    color: #679c5b !important;
+}
+
+.list-show-more {
+    color: #679c5b;
+}
+
+#groups .group-name .a {
+    color:#46743c;
+}
+
+.traffic-tab-nav .tab .a:hover {
+    color:#679c5b;
+    border-bottom-color:#679c5b;
+}
+
+.dir-toolbar-2 .op-link:hover {
+    color:#679c5b;
+}
+
+.path-toolbar .toolbar-item .op-link:hover {
+    color:#679c5b;
+}
+
+
+/*** New rules for bootstrap elements added in 7.x ***/
+
+/* outlined buttons */
+.btn-primary {
+    background-color: #679c5b;
+    border-color: #679c5b;
+}
+.btn-primary:hover {
+    background-color: #46743c;
+    border-color: #46743c;
+}
+.btn-primary:focus, .btn-primary.focus {
+    box-shadow: 0 0 0 2px rgba(103, 156, 91, 0.25);
+}
+.btn-primary.disabled,
+.btn-primary:disabled {
+    background-color: #679c5b;
+    border-color: #679c5b;
+}
+.btn-primary:not(:disabled):not(.disabled):active,
+.btn-primary:not(:disabled):not(.disabled).active,
+.show > .btn-primary.dropdown-toggle {
+    background-color: #46743c;
+    border-color: #46743c;
+}
+.btn-primary:not(:disabled):not(.disabled):active:focus,
+.btn-primary:not(:disabled):not(.disabled).active:focus,
+.show > .btn-primary.dropdown-toggle:focus {
+    box-shadow: 0 0 0 2px rgba(103, 156, 91, 0.25);
+}
+
+.btn-outline-primary {
+    color: #679c5b;
+    border-color: #679c5b;
+}
+.btn-outline-primary:hover {
+    background-color: #679c5b;
+    border-color: #679c5b;
+}
+.btn-outline-primary:focus,
+.btn-outline-primary.focus {
+    box-shadow: 0 0 0 2px rgba(103, 156, 91, 0.25);
+}
+.btn-outline-primary.disabled,
+.btn-outline-primary:disabled {
+    color: #679c5b;
+}
+.btn-outline-primary:not(:disabled):not(.disabled):active,
+.btn-outline-primary:not(:disabled):not(.disabled).active,
+.show > .btn-outline-primary.dropdown-toggle {
+    background-color: #679c5b;
+    border-color: #679c5b;
+}
+.btn-outline-primary:not(:disabled):not(.disabled):active:focus,
+.btn-outline-primary:not(:disabled):not(.disabled).active:focus,
+.show > .btn-outline-primary.dropdown-toggle:focus {
+    box-shadow: 0 0 0 2px rgba(103, 156, 91, 0.25);
+}
+
+/* NOTE: I'm not sure these tables are really themed or just color ranged */
+/* 
+.table-primary,
+.table-primary > th,
+.table-primary > td {
+    background-color: #8fd182;
+}
+
+.table-hover .table-primary:hover {
+    background-color: #679c5b;
+}
+.table-hover .table-primary:hover > td,
+.table-hover .table-primary:hover > th {
+    background-color: #679c5b;
+}
+*/
 
 /* Hide signup link on login page to reduce unwanted direct signup attempts */
 /* There used to be no signup link id or class to target, so we relied on the

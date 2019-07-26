@@ -32,18 +32,19 @@
 
 /* Replace the different orange colors in the original css specs. 
    Keep rules in sync with styles from:
-   seafile-server-latest/seahub/media/css/seahub.css 
+   seafile/seafile-server-latest/seahub/media/css/*.css 
    and use something like the following simplified mappings:
    #eb8205 / #ee8204 / #f7941d / #de3f1c / #DD4B39 / #c77405 / #f59f00 / #e83 -> #147
    #f93 / #feac74 / #fbcb09 / #a68558 -> #369
    #fff1a8 / #f89a68 / #feefb8 / #fdf5ce / #fddaa4 / #f9edbe -> #acf
+   rgba(241, 150, 69, 0.25) -> rgba(25, 102, 179, 0.25)
 */
 
 a { 
     color:#147;
 }
 a:focus, a:hover {
-    color: #acf;
+    color: #369;
 }
 .a-simulate {
     color: #acf !important;
@@ -334,7 +335,7 @@ a:focus, a:hover {
     border-color: #147;
 }
 .btn-primary:focus, .btn-primary.focus {
-    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.5);
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25);
 }
 .btn-primary.disabled,
 .btn-primary:disabled {
@@ -350,7 +351,7 @@ a:focus, a:hover {
 .btn-primary:not(:disabled):not(.disabled):active:focus,
 .btn-primary:not(:disabled):not(.disabled).active:focus,
 .show > .btn-primary.dropdown-toggle:focus {
-    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.5);
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25);
 }
 
 .btn-outline-primary {
@@ -363,7 +364,7 @@ a:focus, a:hover {
 }
 .btn-outline-primary:focus,
 .btn-outline-primary.focus {
-    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.5);
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25);
 }
 .btn-outline-primary.disabled,
 .btn-outline-primary:disabled {
@@ -378,7 +379,7 @@ a:focus, a:hover {
 .btn-outline-primary:not(:disabled):not(.disabled):active:focus,
 .btn-outline-primary:not(:disabled):not(.disabled).active:focus,
 .show > .btn-outline-primary.dropdown-toggle:focus {
-    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.5);
+    box-shadow: 0 0 0 2px rgba(25, 102, 179, 0.25);
 }
 
 /* NOTE: I'm not sure these tables are really themed or just color ranged */
