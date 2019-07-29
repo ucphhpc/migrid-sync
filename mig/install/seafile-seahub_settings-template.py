@@ -99,3 +99,6 @@ BRANDING_CSS = 'custom/seahub.css'
 
 # Enable WIKI by default
 ENABLE_WIKI = True
+
+# Enable optional 2FA for client logins
+ENABLE_TWO_FACTOR_AUTH = __ENABLE_TWOFACTOR__
