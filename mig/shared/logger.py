@@ -109,9 +109,7 @@ class Logger:
         else:
             self.loggingformat = logformat
 
-        if not self.logger.handlers:
-            self.init_handler()
-
+        self.init_handler()
         self.logger.setLevel(self.logginglevel)
 
         # Make sure root logger does not filter us
@@ -120,28 +118,42 @@ class Logger:
 
     def init_handler(self):
         """Init handler"""
-        formatter = logging.Formatter(self.loggingformat)
-        if self.logfile is None and self.syslog is None:
 
-            # Add null handler to simply throw away all log messages
+        reload_handlers = False
+        if self.logger.handlers:
+            cur_handler = self.logger.handlers[0]
+            handler_count = len(self.logger.handlers)
+            if handler_count > 1:
+                self.logger.warning("Too many logger handlers: %d"
+                                    % handler_count)
+                reload_handlers = True
+            elif self.logfile and not isinstance(
+                    cur_handler, logging.FileHandler):
+                reload_handlers = True
+            elif self.syslog and not isinstance(
+                    cur_handler, SysLogLibHandler):
+                reload_handlers = True
 
-            handler = logging.NullHandler()
-            self.logger.addHandler(handler)
-        elif self.logfile is not None:
+        if self.logger.handlers and not reload_handlers:
+            return
+        elif reload_handlers:
+            self.logger.info("Hanging up, logger handlers expired logger handlers: %s"
+                             % self.logger.handlers)
+            self.hangup()
 
+        if self.logfile:
             # Add file handler
-
             handler = logging.FileHandler(self.logfile)
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-
-        elif self.syslog is not None:
-
+        elif self.syslog:
             # Add syslog lib handler
-
             handler = SysLogLibHandler(self.syslog, logident=self.app)
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+        else:
+            # Add null handler to simply throw away all log messages
+            handler = logging.NullHandler()
+
+        formatter = logging.Formatter(self.loggingformat)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
 
     def hangup(self):
         """Remove handler"""
@@ -194,7 +206,8 @@ def daemon_gdp_logger(name, path=None, level="INFO", log_format=None):
             level, logformat=log_format, syslog=SYSLOG_GDP, app=name)
         gdp_logger = gdp_logger_obj.logger
     else:
-        gdp_logger = daemon_logger(name, path=path, level=level, log_format=log_format)
+        gdp_logger = daemon_logger(
+            name, path=path, level=level, log_format=log_format)
 
     return gdp_logger
 
