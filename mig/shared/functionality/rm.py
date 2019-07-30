@@ -45,6 +45,7 @@ from shared.sharelinks import extract_mode_id
 from shared.userio import remove_path, delete_path, get_trash_location, \
     GDPIOLogError, gdp_iolog
 from shared.validstring import valid_user_path
+from shared.vgrid import in_vgrid_share
 
 
 def signature():
@@ -224,7 +225,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                      })
                 status = returnvalues.CLIENT_ERROR
                 continue
-            if os.path.islink(abs_path):
+            # Generally refuse handling symlinks including root vgrid shares
+            elif os.path.islink(abs_path):
                 logger.error("%s: refusing rm link: %s" % (op_name, abs_path))
                 output_objects.append({'object_type': 'warning', 'text': """
 You're not allowed to delete entire special folders like %s shares and %s
@@ -232,7 +234,14 @@ You're not allowed to delete entire special folders like %s shares and %s
                 })
                 status = returnvalues.CLIENT_ERROR
                 continue
-            if os.path.isdir(abs_path) and not recursive(flags):
+            # Additionally refuse operations on inherited subvgrid share roots
+            elif in_vgrid_share(configuration, abs_path) == relative_path:
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+remove entire %s shared folders!""" % configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            elif os.path.isdir(abs_path) and not recursive(flags):
                 logger.error("%s: non-recursive call on dir '%s'" % (op_name,
                                                                      abs_path))
                 output_objects.append({'object_type': 'error_text', 'text':
@@ -290,7 +299,8 @@ You're not allowed to delete entire special folders like %s shares and %s
                 trash_relative_path = \
                     trash_base_path.replace(configuration.user_home, '')
                 trash_relative_path = \
-                    trash_relative_path.replace(configuration.vgrid_files_home, '')
+                    trash_relative_path.replace(
+                        configuration.vgrid_files_home, '')
                 gdp_iolog_paths.append(trash_relative_path)
             try:
                 gdp_iolog(configuration,

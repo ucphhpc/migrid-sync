@@ -40,6 +40,7 @@ from shared.init import initialize_main_variables
 from shared.parseflags import verbose
 from shared.userio import GDPIOLogError, gdp_iolog
 from shared.validstring import valid_user_path
+from shared.vgrid import in_vgrid_share
 
 
 def signature():
@@ -164,11 +165,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 output_objects.append(
                     {'object_type': 'file', 'name': relative_path})
 
+            # Generally refuse handling symlinks including root vgrid shares
             if os.path.islink(abs_path):
                 output_objects.append(
                     {'object_type': 'warning', 'text': """You're not allowed to
 move entire special folders like %s shared folders!"""
                      % configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            # Additionally refuse operations on inherited subvgrid share roots
+            elif in_vgrid_share(configuration, abs_path) == relative_path:
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+move entire %s shared folders!""" % configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
@@ -209,21 +218,21 @@ move entire special folders like %s shared folders!"""
 
             try:
                 gdp_iolog(configuration,
-                        client_id,
-                        environ['REMOTE_ADDR'],
-                        'moved',
-                        [relative_path, relative_dest])                        
+                          client_id,
+                          environ['REMOTE_ADDR'],
+                          'moved',
+                          [relative_path, relative_dest])
                 shutil.move(abs_path, abs_target)
                 logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
             except Exception, exc:
                 if not isinstance(exc, GDPIOLogError):
                     gdp_iolog(configuration,
-                            client_id,
-                            environ['REMOTE_ADDR'],
-                            'moved',
-                            [relative_path, relative_dest],
-                            failed=True,
-                            details=exc)
+                              client_id,
+                              environ['REMOTE_ADDR'],
+                              'moved',
+                              [relative_path, relative_dest],
+                              failed=True,
+                              details=exc)
                 output_objects.append({'object_type': 'error_text',
                                        'text': "%s: '%s': %s"
                                        % (op_name, relative_path, exc)})

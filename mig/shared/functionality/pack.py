@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # pack - Pack one or more files/dirs into a zip/tar archive
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,6 +41,7 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose
 from shared.validstring import valid_user_path
+from shared.vgrid import in_vgrid_share
 
 
 def signature():
@@ -56,24 +57,24 @@ def usage(output_objects):
 
     output_objects.append({'object_type': 'header', 'text': 'pack usage:'})
     output_objects.append(
-        {'object_type': 'text', 'text'
-         : 'SERVER_URL/pack.py?[output_format=(html|txt|xmlrpc|..);]'
+        {'object_type': 'text', 'text':
+         'SERVER_URL/pack.py?[output_format=(html|txt|xmlrpc|..);]'
          '[flags=h;][src=src_path;[...]]src=src_path;dst=dst_path'})
     output_objects.append(
-        {'object_type': 'text', 'text'
-         : '- output_format specifies how the script should format the output'
+        {'object_type': 'text', 'text':
+         '- output_format specifies how the script should format the output'
          })
     output_objects.append(
-        {'object_type': 'text', 'text'
-         : '- flags is a string of character flags to be passed to the script'
+        {'object_type': 'text', 'text':
+         '- flags is a string of character flags to be passed to the script'
          })
     output_objects.append(
-        {'object_type': 'text', 'text'
-         : '- each src specifies a path in your home to include in the archive'
+        {'object_type': 'text', 'text':
+         '- each src specifies a path in your home to include in the archive'
          })
     output_objects.append(
-        {'object_type': 'text', 'text'
-         : '- dst is the path where the generated archive will be stored. ' + \
+        {'object_type': 'text', 'text':
+         '- dst is the path where the generated archive will be stored. ' +
          'The file extension decides the archive format (zip, tar, tar.gz)'
          })
     return (output_objects, returnvalues.OK)
@@ -93,7 +94,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -103,7 +104,7 @@ def main(client_id, user_arguments_dict):
     current_dir = accepted['current_dir'][-1].lstrip(os.sep)
 
     # All paths are relative to current_dir
-    
+
     pattern_list = [os.path.join(current_dir, i) for i in pattern_list]
     dst = os.path.join(current_dir, dst)
 
@@ -119,38 +120,37 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Zip archiver'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Zip archiver'})
+    title_entry['text'] = 'ZIP/TAR archiver'
+    output_objects.append(
+        {'object_type': 'header', 'text': 'ZIP/TAR archiver'})
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     if 'h' in flags:
         usage(output_objects)
 
     # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_dir = os.path.abspath(os.path.join(base_dir,
-                                            current_dir.lstrip(os.sep)))
+                                           current_dir.lstrip(os.sep)))
     if not valid_user_path(configuration, abs_dir, base_dir, True):
 
         # out of bounds
 
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : "You're not allowed to work in %s!"
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "You're not allowed to work in %s!"
                                % current_dir})
         logger.warning('%s tried to %s restricted path %s ! (%s)'
                        % (client_id, op_name, abs_dir, current_dir))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                           : "working in %s" % current_dir})
+    output_objects.append(
+        {'object_type': 'text', 'text': "working in %s" % current_dir})
 
     # NOTE: dst already incorporates current_dir prefix here
     # IMPORTANT: path must be expanded to abs for proper chrooting
@@ -166,28 +166,26 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # out of bounds
 
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : "Invalid path! (%s expands to an illegal path)" % dst})
+            {'object_type': 'error_text', 'text':
+             "Invalid path! (%s expands to an illegal path)" % dst})
         logger.warning('%s tried to %s restricted path %s !(%s)'
                        % (client_id, op_name, abs_dest, dst))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-
     if not os.path.isdir(os.path.dirname(abs_dest)):
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : "No such destination directory: %s"
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "No such destination directory: %s"
                                % os.path.dirname(relative_dest)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not check_write_access(abs_dest, parent_dir=True):
-        logger.warning('%s called without write access: %s' % \
+        logger.warning('%s called without write access: %s' %
                        (op_name, abs_dest))
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'cannot pack to "%s": inside a read-only location!' % \
+             'cannot pack to "%s": inside a read-only location!' %
              relative_dest})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
 
     status = returnvalues.OK
 
@@ -219,19 +217,27 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # (allowed) match
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : "%s: cannot pack '%s': no valid src paths"
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   "%s: cannot pack '%s': no valid src paths"
                                    % (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
             continue
 
         for abs_path in match:
             relative_path = abs_path.replace(base_dir, '')
+            # Generally refuse handling symlinks including root vgrid shares
             if os.path.islink(abs_path):
                 output_objects.append(
                     {'object_type': 'warning', 'text': """You're not allowed to
-pack entire special folders like %s shared folders!""" % \
+pack entire special folders like %s shared folders!""" %
                      configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            # Additionally refuse operations on inherited subvgrid share roots
+            elif in_vgrid_share(configuration, abs_path) == relative_path:
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+pack entire %s shared folders!""" % configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
@@ -244,14 +250,14 @@ pack entire special folders like %s shared folders!""" % \
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.realpath(abs_dest) == os.path.realpath(abs_path):
-                output_objects.append({'object_type': 'warning', 'text'
-                                       : 'overlap in source and destination %s'
+                output_objects.append({'object_type': 'warning', 'text':
+                                       'overlap in source and destination %s'
                                        % relative_dest})
                 status = returnvalues.CLIENT_ERROR
                 continue
             if verbose(flags):
-                output_objects.append({'object_type': 'file', 'name'
-                                       : relative_path})
+                output_objects.append(
+                    {'object_type': 'file', 'name': relative_path})
 
             (pack_status, msg) = pack_archive(configuration, client_id,
                                               relative_path, relative_dest)
@@ -260,16 +266,15 @@ pack entire special folders like %s shared folders!""" % \
                                        'text': 'Error: %s' % msg})
                 status = returnvalues.CLIENT_ERROR
                 continue
-            output_objects.append({'object_type': 'text', 'text'
-                                   : 'Added %s to %s'
-                                   % (relative_path, relative_dest)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   'Added %s to %s' % (relative_path,
+                                                       relative_dest)})
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Zip archive of %s is now available in %s'
+    output_objects.append({'object_type': 'text', 'text':
+                           'Packed archive of %s is now available in %s'
                            % (', '.join(pattern_list), relative_dest)})
-    output_objects.append({'object_type': 'link', 'text'
-                           : 'Download archive', 'destination'
-                           : os.path.join('..', client_dir,
-                                          relative_dest)})
+    output_objects.append({'object_type': 'link', 'text': 'Download archive',
+                           'destination': os.path.join('..', client_dir,
+                                                       relative_dest)})
 
     return (output_objects, status)
