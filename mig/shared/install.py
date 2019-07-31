@@ -293,6 +293,7 @@ def generate_confs(
     seafile_seafhttp_port=8082,
     seafile_client_port=13419,
     seafile_quota=2,
+    seafile_ro_access=True,
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
@@ -411,6 +412,7 @@ def generate_confs(
     user_dict['__SEAFILE_SEAFHTTP_PORT__'] = str(seafile_seafhttp_port)
     user_dict['__SEAFILE_CLIENT_PORT__'] = str(seafile_client_port)
     user_dict['__SEAFILE_QUOTA__'] = str(seafile_quota)
+    user_dict['__SEAFILE_RO_ACCESS__'] = str(seafile_ro_access)
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__SIGNUP_METHODS__'] = signup_methods
     user_dict['__LOGIN_METHODS__'] = login_methods
@@ -636,6 +638,29 @@ cert, oid and sid based https!
     user_dict['__SEAFILE_CCNET_ID__'] = base64.b16encode(
         os.urandom(20)).lower()
     user_dict['__SEAFILE_SHORT_NAME__'] = short_title.replace(' ', '-')
+    # Require https for all remote seafile host access
+    seafile_proxy_proto = 'http'
+    # Assume localhost installation by default
+    seafile_proxy_host = '127.0.0.1'
+    # These three are the public addresses for the seahub, seafhttp and client
+    # sync interfaces
+    user_dict['__SEAHUB_URL__'] = '/seafile'
+    user_dict['__SEAFHTTP_URL__'] = 'https://%s/seafhttp' % sid_fqdn
+    user_dict['__SEAFILE_URL__'] = 'https://%s/seafile' % sid_fqdn
+    if seafile_fqdn and seafile_fqdn not in ['127.0.0.1', 'localhost'] + fqdn_list:
+        seafile_proxy_proto = 'https'
+        seafile_proxy_host = seafile_fqdn
+        user_dict['__SEAHUB_URL__'] = 'https://%s/seafile' % seafile_fqdn
+        user_dict['__SEAFHTTP_URL__'] = 'https://%s/seafhttp' % seafile_fqdn
+        user_dict['__SEAFILE_URL__'] = 'https://%s/seafile' % seafile_fqdn
+
+    # These two are used for internal proxying of the backends in apache
+    user_dict['__SEAFILE_PROXY_URL__'] = '%s://%s:%s/seafile' % (
+        seafile_proxy_proto, seafile_proxy_host, seafile_seahub_port)
+    # NOTE: seafhttp maps to URL root wihtout /seafhttp suffix
+    user_dict['__SEAFHTTP_PROXY_URL__'] = '%s://%s:%s' % (
+        seafile_proxy_proto, seafile_proxy_host, seafile_seafhttp_port)
+
     # Enable Seafile integration only if explicitly requested
     if user_dict['__ENABLE_SEAFILE__'].lower() == 'true':
         user_dict['__SEAFILE_COMMENTED__'] = ''
@@ -806,6 +831,7 @@ cert, oid and sid based https!
 
     # Helpers for the migstatecleanup cron job
     user_dict['__CRON_VERBOSE_CLEANUP__'] = '1'
+    user_dict['__CRON_EVENT_CLEANUP__'] = '1'
     if 'migoid' in signup_methods or 'migcert' in signup_methods:
         user_dict['__CRON_REQ_CLEANUP__'] = '1'
     else:

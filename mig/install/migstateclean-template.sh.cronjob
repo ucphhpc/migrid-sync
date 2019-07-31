@@ -18,6 +18,7 @@ VERBOSE=__CRON_VERBOSE_CLEANUP__
 REQCLEANUP=__CRON_REQ_CLEANUP__
 JOBCLEANUP=__CRON_JOB_CLEANUP__
 TFCLEANUP=__CRON_TWOFACTOR_CLEANUP__
+EVTCLEANUP=__CRON_EVENT_CLEANUP__
 
 logmsg() {
     if [ $VERBOSE -eq 1 ]; then
@@ -64,6 +65,16 @@ if [ $TFCLEANUP -eq 1 ]; then
         logmsg "Deleting files and symlinks older than $max_days days from $name"
         su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f | xargs -n1 rm -f " 
         su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -xtype l | xargs -n1 rm -f " 
+    done
+fi
+
+if [ $EVTCLEANUP -eq 1 ]; then
+    # Delete and trash event traces are dumped in $STATEDIR/event_home and can
+    # grow huge. They are not strictly needed but we compress and keep them.
+    max_days=90
+    for name in $STATEDIR/event_home; do
+        logmsg "Packing event trace files older than $max_days days from $name"
+        su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f -regex '.*-[0-9.]+$' | xargs -n1 gzip " 
     done
 fi
 exit 0

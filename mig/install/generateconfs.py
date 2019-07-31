@@ -155,6 +155,7 @@ if '__main__' == __name__:
         'enable_cracklib',
         'enable_openid',
         'daemon_pubkey_from_dns',
+        'seafile_ro_access',
     ]
     names = str_names + int_names + bool_names
     settings = {}

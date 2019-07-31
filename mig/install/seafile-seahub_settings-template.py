@@ -18,7 +18,7 @@ TIME_ZONE = '__SEAFILE_TIMEZONE__'
 LANGUAGE_CODE = 'en'
 
 # Set this to seahub website's URL. This URL is contained in email notifications.
-SITE_BASE = 'https://__SEAFILE_FQDN__/seafile/'
+SITE_BASE = '__SEAFILE_URL__/'
 
 # Set this to your website's name. This is contained in email notifications.
 SITE_NAME = '__BASE_FQDN__'
@@ -27,8 +27,8 @@ SITE_NAME = '__BASE_FQDN__'
 SITE_TITLE = '__SHORT_TITLE__ Seafile'
 
 # Address tweaks
-# Use proxy URL
-FILE_SERVER_ROOT = 'https://__SEAFILE_FQDN__/seafhttp'
+# Use proxied URL
+FILE_SERVER_ROOT = '__SEAFHTTP_URL__'
 
 # Use subdir address in vhost
 SERVE_STATIC = False

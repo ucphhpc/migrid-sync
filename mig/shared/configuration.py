@@ -160,6 +160,7 @@ def fix_missing(config_file, verbose=True):
         'user_seahub_url': '',
         'user_seafile_url': '',
         'user_seafile_auth': ['password'],
+        'user_seafile_ro_access': False,
         'user_duplicati_protocols': [],
         'user_imnotify_address': '',
         'user_imnotify_port': 6667,
@@ -379,6 +380,7 @@ class Configuration:
     user_seafile_url = ''
     user_seafile_auth = ['password']
     user_seafile_alias = ''
+    user_seafile_ro_access = True
     user_duplicati_protocols = []
     user_openid_address = ''
     user_openid_port = 8443
@@ -940,6 +942,9 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_seafile_alias'):
             self.user_seafile_alias = config.get('GLOBAL',
                                                  'user_seafile_alias')
+        if config.has_option('GLOBAL', 'user_seafile_ro_access'):
+            self.user_seafile_ro_access = config.getboolean(
+                'GLOBAL', 'user_seafile_ro_access')
         if config.has_option('SITE', 'enable_duplicati'):
             self.site_enable_duplicati = config.getboolean(
                 'SITE', 'enable_duplicati')

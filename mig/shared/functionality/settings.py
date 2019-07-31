@@ -1439,22 +1439,26 @@ and sharing solution.<br/>
 </fieldset>
 </td></tr>
 <tr><td>
+'''
+
+        if configuration.user_seafile_ro_access:
+            html += '''
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="topic" value="seafile" />
 <fieldset>
 <legend>%(site)s Seafile Integration</legend>
-If you wish you can additionally save your chosen password here for Seafile
+If you wish you can additionally save your credentials here for Seafile
 integration in your %(site)s user home.<br/>
 Then your Seafile libraries will show up in a read-only mode under a new
 <em>%(seafile_ro_dirname)s</em> folder e.g. on the Files page.<br/>
 <br/>
 '''
 
-        if 'password' in configuration.user_seafile_auth:
+            if 'password' in configuration.user_seafile_auth:
 
-            # We only want a single password and a masked input field
-            html += '''
+                # We only want a single password and a masked input field
+                html += '''
 Please enter and save your chosen Seafile password again in the text field
 below, to enable the read-only Seafile integration in your user home.
 <br/>
@@ -1463,10 +1467,12 @@ value="%(default_authpassword)s" />
 (leave empty to disable seafile integration)
 <br/>'''
 
-        html += '''
+            html += '''
 <input id="seafilesavebutton" type="submit" value="Save Seafile Password" />
 </fieldset>
 </form>
+'''
+        html += '''
 </td></tr>
 </table>
 </div>
