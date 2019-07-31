@@ -1252,10 +1252,15 @@ function prepare_seafile_settings(reg_url, username, integration,
             //alert("DEBUG: got csrf status: "+status);
             $("#"+status_prefix+"msg").empty();
             var csrf_token = $("input[name=csrfmiddlewaretoken]", output).val();
+            /* NOTE: until Seafile 7.x the sign-up page contained the username
+               of any logged in user, but from 7.x we can only rely on a more
+               indirect indication that a user is logged in. 
+            */
             var id_user = $("#account", output).find("div.txt:contains("+username+")").text();
+            var account_name = $("#account", output).find("div.txt").text();
             var logged_in = "";
             $("#"+status_prefix+"msg").append('online');
-            if (id_user) {
+            if (id_user || account_name) {
                 logged_in = "you are already registered and logged in as "+username;
                 //alert("DEBUG: "+logged_in+" ("+id_user+")");
                 // Try to avoid confusion if user is already registered
@@ -1281,7 +1286,6 @@ function prepare_seafile_settings(reg_url, username, integration,
             } else {
                 //alert("Warning: unknown state");
                 logged_in = "unexpected response from server";
-                $("#"+status_prefix+"status").append(" <span>("+logged_in+")</span>");
                 $("#"+status_prefix+"status").addClass("warn").css("padding-left", "20px");
                 $("#"+status_prefix+"msg").addClass("status_slack");
             }
