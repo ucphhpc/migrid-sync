@@ -465,6 +465,9 @@ cert, oid and sid based https!
 
     # Paraview and Jupyter require websockets proxy - enable conditionally
     user_dict['__WEBSOCKETS_COMMENTED__'] = '#'
+    # OpenID, Seafile, etc. require http(s) proxy - enable conditionally
+    user_dict['__PROXY_HTTP_COMMENTED__'] = '#'
+    user_dict['__PROXY_HTTPS_COMMENTED__'] = '#'
 
     # Switch between apache 2.2 and 2.4 directives to match requested version
     user_dict['__APACHE_RECENT_ONLY__'] = 'Only for apache>=2.4'
@@ -638,9 +641,12 @@ cert, oid and sid based https!
     user_dict['__SEAFILE_CCNET_ID__'] = base64.b16encode(
         os.urandom(20)).lower()
     user_dict['__SEAFILE_SHORT_NAME__'] = short_title.replace(' ', '-')
-    # Require https for all remote seafile host access
+    # IMPORTANT: we discriminate on local and remote seafile service
+    #            for local ones we partly integrate directly with apache etc.
+    #            while for remote we must securely proxy everything.
+    # Assume localhost installation by default without need for protection
+    seafile_local_instance = True
     seafile_proxy_proto = 'http'
-    # Assume localhost installation by default
     seafile_proxy_host = '127.0.0.1'
     # These three are the public addresses for the seahub, seafhttp and client
     # sync interfaces
@@ -648,24 +654,40 @@ cert, oid and sid based https!
     user_dict['__SEAFHTTP_URL__'] = 'https://%s/seafhttp' % sid_fqdn
     user_dict['__SEAFILE_URL__'] = 'https://%s/seafile' % sid_fqdn
     if seafile_fqdn and seafile_fqdn not in ['127.0.0.1', 'localhost'] + fqdn_list:
+        # Require https for all remote seafile host access
+        seafile_local_instance = False
         seafile_proxy_proto = 'https'
         seafile_proxy_host = seafile_fqdn
         user_dict['__SEAHUB_URL__'] = 'https://%s/seafile' % seafile_fqdn
         user_dict['__SEAFHTTP_URL__'] = 'https://%s/seafhttp' % seafile_fqdn
         user_dict['__SEAFILE_URL__'] = 'https://%s/seafile' % seafile_fqdn
 
+    user_dict['__SEAFILE_LOCAL_INSTANCE__'] = str(seafile_local_instance)
+
     # These two are used for internal proxying of the backends in apache
-    user_dict['__SEAFILE_PROXY_URL__'] = '%s://%s:%s/seafile' % (
-        seafile_proxy_proto, seafile_proxy_host, seafile_seahub_port)
-    # NOTE: seafhttp maps to URL root wihtout /seafhttp suffix
-    user_dict['__SEAFHTTP_PROXY_URL__'] = '%s://%s:%s' % (
-        seafile_proxy_proto, seafile_proxy_host, seafile_seafhttp_port)
+    seahub_proxy_host_port = seafhttp_proxy_host_port = seafile_proxy_host
+    if seafile_local_instance:
+        seahub_proxy_host_port += ':%d' % seafile_seahub_port
+        seafhttp_proxy_host_port += ':%d' % seafile_seafhttp_port
+    user_dict['__SEAFILE_PROXY_URL__'] = '%s://%s/seafile' % (
+        seafile_proxy_proto, seahub_proxy_host_port)
+    # NOTE: local seafhttp maps to URL root without /seafhttp suffix
+    user_dict['__SEAFHTTP_PROXY_URL__'] = '%s://%s' % (
+        seafile_proxy_proto, seafhttp_proxy_host_port)
+    if not seafile_local_instance:
+        user_dict['__SEAFHTTP_PROXY_URL__'] += '/seafhttp'
 
     # Enable Seafile integration only if explicitly requested
     if user_dict['__ENABLE_SEAFILE__'].lower() == 'true':
         user_dict['__SEAFILE_COMMENTED__'] = ''
-        fail2ban_daemon_ports.append(seafile_seahub_port)
-        fail2ban_daemon_ports.append(seafile_seafhttp_port)
+        # Always requires reverse http proxy
+        user_dict['__PROXY_HTTP_COMMENTED__'] = ''
+        if seafile_local_instance:
+            fail2ban_daemon_ports.append(seafile_seahub_port)
+            fail2ban_daemon_ports.append(seafile_seafhttp_port)
+        else:
+            # Remote Seafile requires reverse https proxy, too
+            user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
     else:
         user_dict['__SEAFILE_COMMENTED__'] = '#'
 
@@ -818,8 +840,9 @@ cert, oid and sid based https!
     # Enable Paraview integration only if explicitly requested
     if user_dict['__ENABLE_PREVIEW__'].lower() == 'true':
         user_dict['__PREVIEW_COMMENTED__'] = ''
-        # Paraview requires websockets proxy
+        # Paraview requires websockets and http proxy
         user_dict['__WEBSOCKETS_COMMENTED__'] = ''
+        user_dict['__PROXY_HTTP_COMMENTED__'] = ''
     else:
         user_dict['__PREVIEW_COMMENTED__'] = '#'
 
@@ -882,6 +905,9 @@ cert, oid and sid based https!
     if user_dict['__EXT_OID_PROVIDER_BASE__'].strip() or \
             user_dict['__MIG_OID_PROVIDER_BASE__'].strip():
         user_dict['__OPENID_COMMENTED__'] = ''
+        # Requires reverse http(s) proxy
+        user_dict['__PROXY_HTTP_COMMENTED__'] = ''
+        user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
         fail2ban_daemon_ports.append(openid_port)
         fail2ban_daemon_ports.append(openid_show_port)
     else:
@@ -1249,7 +1275,8 @@ rotate and compress log files for all MiG daemons.
 You can install it with:
 sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
 
-If running Seafile you may also want to copy confs to the Seafile installation 
+If running a local Seafile instamce you may also want to copy confs to the
+Seafile installation 
 cp %(destination)s/seafile.conf ~/seafile/conf/
 cp %(destination)s/ccnet.conf ~/seafile/conf/
 cp %(destination)s/seahub_settings.py ~/seafile/conf/
