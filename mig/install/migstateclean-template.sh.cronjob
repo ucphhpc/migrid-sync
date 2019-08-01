@@ -69,7 +69,7 @@ if [ $TFCLEANUP -eq 1 ]; then
 fi
 
 if [ $EVTCLEANUP -eq 1 ]; then
-    # Delete and trash event traces are dumped in $STATEDIR/event_home and can
+    # Delete and trash event traces are dumped in $STATEDIR/events_home and can
     # grow huge. They are not strictly needed but we compress and keep them.
     max_days=90
     for name in $STATEDIR/events_home; do
