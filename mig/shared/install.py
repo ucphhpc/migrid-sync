@@ -653,7 +653,9 @@ cert, oid and sid based https!
     user_dict['__SEAHUB_URL__'] = '/seafile'
     user_dict['__SEAFHTTP_URL__'] = 'https://%s/seafhttp' % sid_fqdn
     user_dict['__SEAFILE_URL__'] = 'https://%s/seafile' % sid_fqdn
-    if seafile_fqdn and seafile_fqdn not in ['127.0.0.1', 'localhost'] + fqdn_list:
+    if not enable_seafile:
+        seafile_local_instance = False
+    elif seafile_fqdn and seafile_fqdn not in ['127.0.0.1', 'localhost'] + fqdn_list:
         # Require https for all remote seafile host access
         seafile_local_instance = False
         seafile_proxy_proto = 'https'
