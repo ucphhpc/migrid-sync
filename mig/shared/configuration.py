@@ -1528,7 +1528,7 @@ location.""" % self.config_file
         syslog_gdp = None
         if config.has_option('SITE', 'enable_gdp'):
             self.site_enable_gdp = config.getboolean('SITE', 'enable_gdp')
-            if not skip_log:
+            if not skip_log and self.site_enable_gdp:
                 syslog_gdp = SYSLOG_GDP
         else:
             self.site_enable_gdp = False
