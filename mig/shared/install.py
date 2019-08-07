@@ -214,6 +214,9 @@ def generate_confs(
     sid_fqdn='localhost',
     io_fqdn='localhost',
     seafile_fqdn='localhost',
+    seafile_base='/seafile',
+    seafmedia_base='/seafmedia',
+    seafhttp_base='/seafhttp',
     jupyter_services='',
     jupyter_services_desc='{}',
     user='mig',
@@ -322,6 +325,9 @@ def generate_confs(
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
     user_dict['__SEAFILE_FQDN__'] = seafile_fqdn
+    user_dict['__SEAFILE_BASE__'] = seafile_base
+    user_dict['__SEAFMEDIA_BASE__'] = seafmedia_base
+    user_dict['__SEAFHTTP_BASE__'] = seafhttp_base
     user_dict['__JUPYTER_SERVICES__'] = jupyter_services
     user_dict['__JUPYTER_DEFS__'] = ''
     user_dict['__JUPYTER_OPENIDS__'] = ''
@@ -650,9 +656,11 @@ cert, oid and sid based https!
     seafile_proxy_host = '127.0.0.1'
     # These three are the public addresses for the seahub, seafhttp and client
     # sync interfaces
-    user_dict['__SEAHUB_URL__'] = '/seafile'
-    user_dict['__SEAFHTTP_URL__'] = 'https://%s/seafhttp' % sid_fqdn
-    user_dict['__SEAFILE_URL__'] = 'https://%s/seafile' % sid_fqdn
+    user_dict['__SEAHUB_URL__'] = '%s' % seafile_base
+    user_dict['__SEAFHTTP_URL__'] = 'https://%s%s' % (sid_fqdn, seafhttp_base)
+    user_dict['__SEAFILE_URL__'] = 'https://%s%s' % (sid_fqdn, seafile_base)
+    user_dict['__SEAFMEDIA_URL__'] = 'https://%s%s' % (
+        sid_fqdn, seafmedia_base)
     if not enable_seafile:
         seafile_local_instance = False
     elif seafile_fqdn and seafile_fqdn not in ['127.0.0.1', 'localhost'] + fqdn_list:
@@ -660,9 +668,14 @@ cert, oid and sid based https!
         seafile_local_instance = False
         seafile_proxy_proto = 'https'
         seafile_proxy_host = seafile_fqdn
-        user_dict['__SEAHUB_URL__'] = 'https://%s/seafile' % seafile_fqdn
-        user_dict['__SEAFHTTP_URL__'] = 'https://%s/seafhttp' % seafile_fqdn
-        user_dict['__SEAFILE_URL__'] = 'https://%s/seafile' % seafile_fqdn
+        user_dict['__SEAHUB_URL__'] = 'https://%s%s' % (
+            seafile_fqdn, seafile_base)
+        user_dict['__SEAFILE_URL__'] = 'https://%s%s' % (seafile_fqdn,
+                                                         seafile_base)
+        user_dict['__SEAFMEDIA_URL__'] = 'https://%s%s' % (seafile_fqdn,
+                                                           seafmedia_base)
+        user_dict['__SEAFHTTP_URL__'] = 'https://%s%s' % (seafile_fqdn,
+                                                          seafhttp_base)
 
     user_dict['__SEAFILE_LOCAL_INSTANCE__'] = str(seafile_local_instance)
 
@@ -671,27 +684,37 @@ cert, oid and sid based https!
     if seafile_local_instance:
         seahub_proxy_host_port += ':%d' % seafile_seahub_port
         seafhttp_proxy_host_port += ':%d' % seafile_seafhttp_port
-    user_dict['__SEAFILE_PROXY_URL__'] = '%s://%s/seafile' % (
-        seafile_proxy_proto, seahub_proxy_host_port)
-    # NOTE: local seafhttp maps to URL root without /seafhttp suffix
-    user_dict['__SEAFHTTP_PROXY_URL__'] = '%s://%s' % (
-        seafile_proxy_proto, seafhttp_proxy_host_port)
-    if not seafile_local_instance:
-        user_dict['__SEAFHTTP_PROXY_URL__'] += '/seafhttp'
+        # NOTE: local seafhttp maps to URL root without /seafhttp suffix
+        seafhttp_proxy_base = ''
+    else:
+        seafhttp_proxy_base = seafhttp_base
 
+    user_dict['__SEAFILE_PROXY_URL__'] = '%s://%s%s' % (
+        seafile_proxy_proto, seahub_proxy_host_port, seafile_base)
+    user_dict['__SEAFMEDIA_PROXY_URL__'] = '%s://%s%s' % (
+        seafile_proxy_proto, seahub_proxy_host_port, seafmedia_base)
+    user_dict['__SEAFHTTP_PROXY_URL__'] = '%s://%s%s' % (
+        seafile_proxy_proto, seafhttp_proxy_host_port, seafhttp_proxy_base)
+
+    user_dict['__SEAFILE_COMMENTED__'] = '#'
+    user_dict['__SEAFILE_LOCAL_COMMENTED__'] = '#'
+    user_dict['__SEAFILE_REMOTE_COMMENTED__'] = '#'
     # Enable Seafile integration only if explicitly requested
     if user_dict['__ENABLE_SEAFILE__'].lower() == 'true':
         user_dict['__SEAFILE_COMMENTED__'] = ''
         # Always requires reverse http proxy
         user_dict['__PROXY_HTTP_COMMENTED__'] = ''
         if seafile_local_instance:
+            # Disable comment for local-only rules
+            user_dict['__SEAFILE_REMOTE_COMMENTED__'] = ''
+            # Add fail2ban target ports
             fail2ban_daemon_ports.append(seafile_seahub_port)
             fail2ban_daemon_ports.append(seafile_seafhttp_port)
         else:
-            # Remote Seafile requires reverse https proxy, too
+            # Disable comment for remote-only rules
+            user_dict['__SEAFILE_LOCAL_COMMENTED__'] = ''
+            # Remote Seafile additionally requires reverse *https* proxy
             user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
-    else:
-        user_dict['__SEAFILE_COMMENTED__'] = '#'
 
     if user_dict['__ENABLE_JUPYTER__'].lower() == 'true':
         try:
