@@ -1241,14 +1241,22 @@ function prepare_seafile_settings(reg_url, username, integration,
     $("#"+status_prefix+"status").append("<span id="+status_prefix+"msg></span>");
     $("#"+status_prefix+"msg").append("checking availability ...");
     /* Run CSRF tag grabber in the background and handle as soon as results come in */
-    //alert("DEBUG: run csrf token grabber: "+reg_url);
+    //console.log("DEBUG: run csrf token grabber: "+reg_url);
     $.ajax({
         url: reg_url,
         dataType: "html",
         cache: false,
+        /* NOTE: register will not work unless we pass the csrfmiddlewaretoken
+                 AND provide the proper sfcrsftoken cookie!
+                 The cookie is passed by using withCredentials and it requires
+                 the seafile server to be local or use CORS.
+                 More details about setting it up at
+                 http://promincproductions.com/blog/cross-domain-ajax-request-cookies-cors/#How-to-Pass-Cookies-on-a-Cross-Domain-AJAX-Request-from-Browser-to-Server
+         */
+        xhrFields: { withCredentials: true },
         success: function(output, status, xhr) {
             /* Parse output for hidden form input with csrf token */
-            //alert("DEBUG: got csrf output: "+output);
+            //console.log("DEBUG: got csrf output: "+output);
             //alert("DEBUG: got csrf status: "+status);
             $("#"+status_prefix+"msg").empty();
             var csrf_token = $("input[name=csrfmiddlewaretoken]", output).val();
@@ -1269,7 +1277,7 @@ function prepare_seafile_settings(reg_url, username, integration,
                 $("#"+status_prefix+"msg").addClass("status_online");
                 select_seafile_section(save_prefix);
             } else if (csrf_token !== undefined) {
-                //alert("DEBUG: got csrf token: "+csrf_token);
+                //console.log("DEBUG: got csrf token: "+csrf_token);
                 if (integration) {
                     logged_in = "apparently you already registered and integrated as "+username;
                     // Try to avoid confusion if user already registered
@@ -1283,6 +1291,7 @@ function prepare_seafile_settings(reg_url, username, integration,
                 $("#"+status_prefix+"status").addClass("ok").css("padding-left", "20px");
                 $("#"+status_prefix+"msg").addClass("status_online");
                 $("input[name=csrfmiddlewaretoken]").val(csrf_token);
+                //console.log("cookies: "+document.cookie);
             } else {
                 //alert("Warning: unknown state");
                 logged_in = "unexpected response from server";
@@ -1293,7 +1302,7 @@ function prepare_seafile_settings(reg_url, username, integration,
 
         },
         error: function(xhr, status, error) {
-            //alert("DEBUG: ajax failed! server probably unavailable");
+            //console.log("ERROR: ajax failed! server probably unavailable");
             $("#"+status_prefix+"msg").empty();
             $("#"+status_prefix+"msg").append('offline');
             $("#"+status_prefix+"status").append(" <span>(Error: "+error+")</span>");

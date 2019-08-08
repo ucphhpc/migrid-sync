@@ -64,9 +64,10 @@ menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
 menu_items['crontab'] = {'class': 'crontab', 'url': 'crontab.py',
                          'title': 'Schedule Tasks',
                          'hover': 'Your personal task scheduler'}
-menu_items['seafile'] = {'class': 'seafile', 'url': '/seafile/',
-                         'title': 'Seafile',
-                         'hover': 'Access the associated Seafile service'}
+# NOTE: we rely on seafile location from conf and only fill it in render
+menu_items['seafile'] = {'class': 'seafile', 'url': '', 'title': 'Seafile',
+                         'hover': 'Access the associated Seafile service',
+                         'target': '_blank'}
 menu_items['jupyter'] = {'class': 'jupyter', 'url': 'jupyter.py',
                          'title': 'Jupyter',
                          'hover': 'Access the associated Jupyter service'}
@@ -170,12 +171,16 @@ def render_menu(configuration, menu_class='navmenu',
                                           configuration.site_vgrid_label)
             spec['title'] = title
             spec['hover'] = hover
+        if name == 'seafile':
+            spec['url'] = configuration.user_seahub_url
+
+        target = 'target="%s"' % spec.get('target', '')
         selected = ''
         if os.path.splitext(spec['url'])[0] == current_element:
             selected = ' class="selected" '
-        menu_lines += '   <li %s class="%s"><a href="%s" %s title="%s">%s</a></li>\n'\
+        menu_lines += '   <li %s class="%s"><a href="%s" %s %s title="%s">%s</a></li>\n'\
             % (spec.get('attr', ''), spec['class'], spec['url'], selected,
-               spec.get('hover', ''), spec['title'])
+               target, spec.get('hover', ''), spec['title'])
 
     menu_lines += ' </ul>\n'
     menu_lines += '</div>\n'

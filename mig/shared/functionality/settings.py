@@ -1351,7 +1351,7 @@ function open_login_window(url, username) {
 </script>
 <div id="seafileaccess">
 <div id="seafileregaccess">
-<form method="post" action="%(seareg_url)s" target="_blank">
+<form id="seafile_reg_form" method="post" action="%(seareg_url)s" target="_blank">
 <table class="seafilesettings fixedlayout">
 <tr class="title"><td class="centertext">
 Seafile Synchronization on %(site)s
