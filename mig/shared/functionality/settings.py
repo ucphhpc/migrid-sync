@@ -50,7 +50,9 @@ from shared.settings import load_settings, load_widgets, load_profile, \
     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, \
     load_twofactor
 from shared.profilekeywords import get_profile_specs
-from shared.safeinput import html_escape
+from shared.pwhash import parse_password_policy
+from shared.safeinput import html_escape, password_min_len, password_max_len, \
+    valid_password_chars
 from shared.settingskeywords import get_settings_specs
 from shared.twofactorkeywords import get_twofactor_specs
 from shared.widgetskeywords import get_widgets_specs
@@ -238,11 +240,17 @@ def main(client_id, user_arguments_dict):
                                'No valid topics!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    # Site policy dictates pw min length greater or equal than password_min_len
+    policy_min_len, policy_min_classes = parse_password_policy(configuration)
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers = {'site': configuration.short_title,
-                    'form_method': form_method, 'csrf_field': csrf_field,
-                    'csrf_limit': csrf_limit}
+    fill_helpers = {
+        'site': configuration.short_title, 'form_method': form_method,
+        'csrf_field': csrf_field, 'csrf_limit': csrf_limit,
+        'valid_password_chars': html_escape(valid_password_chars),
+        'password_min_len': max(policy_min_len, password_min_len),
+        'password_max_len': password_max_len,
+        'password_min_classes': max(policy_min_classes, 1)}
     if 'general' in topics:
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
@@ -1373,12 +1381,20 @@ all your computers and to share those files and folders with other people.<br/>
 <input class="input" id="dummy_email" type="text" value="%(username)s"
     readonly />
 <br/>
+<!-- NOTE: we require password policy in this case because pw MUST be set -->
 <label for="id_password1">Choose Password</label>
 <input class="input" id="id_password1" name="password1"
-    type="password" />
+minlength=%(password_min_len)d maxlength=%(password_max_len)d required
+pattern=".{%(password_min_len)d,%(password_max_len)d}"
+title="Password of your choice with at least %(password_min_len)d characters
+from %(password_min_classes)d classes (lowercase, uppercase, digits and other)"
+type="password" />
 <br/>
 <label for="id_password2">Confirm Password</label>
-<input class="input" id="id_password2" name="password2" type="password" />
+<input class="input" id="id_password2" name="password2"
+minlength=%(password_min_len)d maxlength=%(password_max_len)d required
+pattern=".{%(password_min_len)d,%(password_max_len)d}"
+title="Repeat your chosen password" type="password" />
 <br/>
 <input id="seafileregbutton" type="submit" value="Register" class="submit" />
 and wait for email confirmation before continuing below.
