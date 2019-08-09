@@ -66,6 +66,9 @@ if __name__ == '__main__':
             continue
         user_parts = [i.strip() for i in line.split(sep)]
         user_dict = dict(zip(user_fields, user_parts))
+        # Force email to lowercase to avoid case-sensitive login issues
+        if user_dict.get('email', False):
+            user_dict['email'] = user_dict['email'].lower()
         #print "DEBUG: found user: %s" % user_dict
         fill_distinguished_name(user_dict)
         user_id = user_dict['distinguished_name']
