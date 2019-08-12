@@ -587,7 +587,8 @@ a.text-primary:hover, a.text-primary:focus {
    telling that user exists and with the option to try again. This enables
    users to edit email and try to register additional accounts. We don't really
    want that, so we obfuscate the possibility of changing the email field. */
-div.con form #id_email {
+/* NOTE: form got unique ID in 7.x */
+div.con form #id_email, #signup-form #id_email {
     border: 0px;
     /* These are additional disabling suggestions in case users get creative.
        They do not completely disable text edit, but make it harder. */
