@@ -293,6 +293,7 @@ a:focus, a:hover {
 /* Login button on entry page */
 .login-panel .submit {
     background:#46743c;
+    color: #fff;
 }
 .login-panel .submit:focus {
     border-color:#8fd182;
