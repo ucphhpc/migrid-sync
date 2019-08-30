@@ -38,26 +38,26 @@ SIF
     /* We assume UCPH users here and leave external users to FAQ entry */
     function login(user) {
         if (user == "extoid") {
-            window.open('https://dev-sif.erda.dk', '_blank');
+            window.open('https://test-sif.erda.dk', '_blank');
         } else if (user == "cert") {
             window.open('', '_blank');
         } else if (user == "migoid") {
-            window.open('https://dev-sif-ext.erda.dk', '_blank');
+            window.open('https://test-sif-ext.erda.dk', '_blank');
         } else {
-            window.open('https://dev-sif-sid.erda.dk/cgi-sid/login.py', '_blank');
+            window.open('https://test-sif-sid.erda.dk/cgi-sid/login.py', '_blank');
         }
     }
     function signup(user) {
         if (user == "extoid") {
-            window.open('https://dev-sif.erda.dk/cgi-sid/signup.py?show=kitoid', 
+            window.open('https://test-sif.erda.dk/cgi-sid/signup.py?show=kitoid', 
                         '_blank');
         } else if (user == "cert") {
             window.open('',
                         '_blank');
         } else if (user == "migoid") {
-            window.open('https://dev-sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+            window.open('https://test-sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
         } else {
-            window.open('https://dev-sif-sid.erda.dk/cgi-sid/signup.py', '_blank');
+            window.open('https://test-sif-sid.erda.dk/cgi-sid/signup.py', '_blank');
         }
     }
     $(document).ready(function() {
@@ -74,9 +74,9 @@ SIF
         /* No migoid support here, yet */
         /*
         $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
-            "https://dev-sif-sid.erda.dk/cgi-sid/signup.py?show=migoid");
+            "https://test-sif-sid.erda.dk/cgi-sid/signup.py?show=migoid");
         $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
-            "https://dev-sif-ext.erda.dk");
+            "https://test-sif-ext.erda.dk");
         */
         /* No cert support here */
         /*
@@ -174,7 +174,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <h2 class="staticpage">New to SIF Dev?</h2>
 <p>If you haven't used SIF Dev before you need to first</p>
-<form method='post' action='https://dev-sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<form method='post' action='https://test-sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
@@ -417,7 +417,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <h2 class="staticpage">Ny på SIF Dev?</h2>
 <p>Hvis ikke du har en SIF Dev konto, skal du først igennem</p>
-<form method='post' action='https://dev-sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<form method='post' action='https://test-sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
