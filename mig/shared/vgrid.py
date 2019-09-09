@@ -665,19 +665,22 @@ def init_vgrid_script_add_rem(
         msg += 'unknown subject type in init_vgrid_script_add_rem'
         return (False, msg, [])
 
+    # special case: members may modify/remove own triggers and add new ones
+
+    if subject_type == 'trigger':
+        if vgrid_is_trigger(vgrid_name, subject, configuration) and not \
+               vgrid_is_trigger_owner(vgrid_name, subject, client_id, 
+                                      configuration):
+            msg += 'You must be an owner of the %s %s trigger to modify it' % \
+                   (vgrid_name, subject)
+            return (False, msg, [])
+        elif vgrid_is_member(vgrid_name, client_id, configuration):
+            return (True, msg, [])
+
     # special case: members may terminate own membership
 
     if (subject_type == 'member') and (client_id == subject) \
             and (vgrid_is_member(vgrid_name, subject, configuration)):
-
-        return (True, msg, [])
-
-    # special case: members may remove own triggers and add new ones
-
-    if (subject_type == 'trigger') and \
-        (not vgrid_is_trigger(vgrid_name, subject, configuration) or
-            vgrid_is_trigger_owner(vgrid_name, subject, client_id,
-                                   configuration)):
         return (True, msg, [])
 
     # otherwise: only owners may add or remove:
