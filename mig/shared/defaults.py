@@ -353,7 +353,7 @@ STRONG_SSH_LEGACY_MACS = ",".join([BEST_SSH_LEGACY_MACS, SAFE_SSH_LEGACY_MACS])
 
 # Detect and ban cracking attempts and unauthorized vulnerability scans
 # A pattern to match usernames unambiguously identifying cracking attempts
-CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|lp|operator|controller|ftp|irc|nobody|sys|pi|guest|www|www-data|mysql|postgres|oracle|mongodb|sybase|redis|hadoop|zimbra|cpanel|plesk|openhabian|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|uucp|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|ubnt|supervisor|csgoserver|device|laboratory|deploy|support|info|test[0-9]*|user[0-9]*|[0-9]+|root;[a-z0-9]+)'
+CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|lp|operator|controller|ftp|irc|nobody|sys|pi|guest|financeiro|www|www-data|mysql|postgres|oracle|mongodb|sybase|redis|hadoop|zimbra|cpanel|plesk|openhabian|tomcat|exim|postfix|sendmail|mailnull|postmaster|mail|uucp|news|teamspeak|git|svn|cvs|user|ftpuser|ubuntu|ubnt|supervisor|csgoserver|device|laboratory|deploy|support|info|test[0-9]*|user[0-9]*|[0-9]+|root;[a-z0-9]+)'
 # A pattern to match failed web access prefixes unambiguously identifying
 # unauthorized vulnerability scans
 CRACK_WEB_REGEX = '(HNAP1|GponForm|provisioning|provision|prov|polycom|yealink|CertProv|wp-login.php|phpmyadmin|admin|cfg|wp|wordpress|cms|blog|old|new|test|dev|tmp|temp)'
