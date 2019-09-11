@@ -648,7 +648,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --trac_admin_path='' --trac_ini_path='' \
                    --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
-                   --mig_oid_provider=https://test-sif-ext.erda.dk/openid \
+                   --mig_oid_provider=https://sif-ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=False --enable_wsgi=True \
                    --enable_sftp=True --enable_sftp_subsys=False \
