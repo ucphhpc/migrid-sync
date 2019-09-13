@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # seahub - site style overrides for all seafile pages
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -93,22 +93,28 @@ a:focus, a:hover {
 
 .nav .nav-item .nav-link {
     color: #679c5b;
+    /* NOTE: Force rounded corners like main nav */
+    border-radius: 5px;
 }
 .nav .nav-item.active .nav-link {
     color: #679c5b;
     border-color: #46743c;
 }
-.nav .nav-item .nav-link.active,
-.nav .nav-item .nav-link.active:hover {
-    color: #fff;
-    border-color: #679c5b;
-}
 .nav .nav-item .nav-link:hover {
-    color: #fff;
     /* NOTE: diverge from std color mapping here to avoid that active nav elem
      * has same color as hovered ones */
     background-color: #8fd182;
 }
+.nav .nav-item .nav-link.active,
+.nav .nav-item .nav-link.active:hover {
+    color: #fff;
+    border-color: #679c5b;
+    /* NOTE: override e.g. active sharelink tab to avoid white on white */
+    background-color: #679c5b;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
 
 .side-textnav-tabs .tab-cur a,
 .side-textnav-tabs .tab a:hover {
