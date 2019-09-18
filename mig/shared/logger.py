@@ -132,12 +132,16 @@ class Logger:
                 reload_handlers = True
             elif self.syslog and not isinstance(
                     cur_handler, SysLogLibHandler):
+                # TODO: fix isinstance check:
+                # cur_handler is: <shared.shared.shared.logger.SysLogLibHandler>
+                # the added handler is: <shared.functionality.shared.shared.shared.shared.logger.SysLogLibHandler>
+                # Therefore the check fails and the syslog handler is always reloaded
                 reload_handlers = True
 
         if self.logger.handlers and not reload_handlers:
             return
         elif reload_handlers:
-            self.logger.info("Hanging up, logger handlers expired logger handlers: %s"
+            self.logger.debug("Hanging up, logger handlers expired logger handlers: %s"
                              % self.logger.handlers)
             self.hangup()
 
