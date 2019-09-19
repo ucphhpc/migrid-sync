@@ -136,6 +136,49 @@ questions or encounter any problems.
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage">2019/09/24: Seafile Migration and Down Time</h4>
+<p>
+As mentioned in the June 26th entry we're in the process of migrating
+the ERDA Seafile service for better scalability. We will commence with
+the actual migration to the new stand-alone setup on Tuesday at 8 in the
+morning and expect the data migration to take as much as 24 hours. So the
+service will probably remain offline until sometime on Wednesday. During
+the migration web and client access to the service will be unavailable,
+but we will keep the read-only access to a snapshot of the current data
+online in the usual virtual seafile_readonly folder in the ERDA home
+folder for people using Seafile. 
+All other ERDA services should remain online.
+After the migration we will transparently proxy Seafile requests from the
+old address to the new one. So the service should remain functional with
+the existing configuration, but it may yield better performance to
+switch the client to use the new location directly. More about that
+later.
+</p>
+<h4 class="staticpage">2019/09/18: Planned SIF Maintenance to Allow External Users</h4>
+<p>
+For months and months we have worked on getting mainly the legal and of
+course the technical infrastructure in place to allow external users on
+SIF. Now it is finally ready to roll out and officially approved. 
+Thus, it will become possible to invite external users into existing
+projects on SIF whenever a formal collaboration with people outside UCPH
+is in place.
+The update requires at least SIF service restarts and in general some
+SIF service downtime should be expected in that time frame.
+We began the updates on Wednesday September 18th starting from 13 and
+we originally expected to be done sometime before 18 o'clock. However,
+it turned out that the updates took longer than expected so we did not
+finish the actual upgrade until a bit after 22 o'clock. Today we
+completed the remaining verification tasks so we consider everything
+back in normal service.
+</p>
+<h4 class="staticpage">2019/08/10: Planned UCPH System Maintenance and DOI outages</h4>
+<p>
+UCPH IT has informed us about planned system maintenance work in multiple
+areas this coming weekend (August 10th and 11th). It will render various
+components involved in the DOI assignment which we expose for ERDA
+freeze archives unavailable in that time period, but the rest of ERDA
+should remain unaffected.
+</p>
 <h4 class="staticpage">2019/07/30: DAG/MODI outages</h4>
 <p>
 We lost all contact with the DAG and MODI compute nodes on Sunday
@@ -613,6 +656,48 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage">24/09-2019: Seafile migrering og nedetid</h4>
+<p>
+Som varslet den 26/6 er vi igang med at migrere ERDA Seafile-servicen
+med henblik på at forbedre dens skalering. Vi går igang med den endelige
+migrering på tirsdag kl 8 og forventer at datamigreringen vil tage op
+til 24 timer. Så servicen vil formodentlig forblive utilgængelig indtil
+engang onsdag. I det tidsrum vil adgang til servicen via såvel web som
+klient være nede, men vi vil holde læseadgang til et aktuelt snapshot af
+data åben via den virtuelle seafile_readonly mappe i ERDA brugermappen for
+Seafile-brugere.
+Alle andre ERDA services skulle forblive tilgængelige.
+Efter migreringen laver vi gennemsigtig viderestilling af
+Seafile-forespørgsler fra den gamle til den nye adresse. Servicen skulle
+således gerne forblive funktionel med eksisterende konfigurationer, men
+det vil give bedre ydelse at skifte over til den nye placering
+direkte. Mere derom senere.
+</p>
+<h4 class="staticpage">18/09-2019: Planlagt SIF systemvedligehold mhp at tillade eksterne brugere</h4>
+<p>
+I adskillige måneder har vi arbejdet på at få organiseret især de
+juridiske men også tekniske procedurer for at kunne give eksterne
+brugere adgang til SIF. Nu er det endelig klar og officielt godkendt til
+at blive sat i drift. 
+Det bliver derved muligt at invitere eksterne brugere ind i eksisterende
+projekter på SIF, når der foreligger et formelt samarbejde med folk
+udenfor KU.
+I forbindelse med opdateringern er det nødvendigt som minimum at
+genstarte alle SIF services og generelt må der forventes kortere eller
+længere SIF nedetid undervejs.
+Vi begyndte opdateringerne onsdag den 18. september fra kl. 13 og vi
+forventede oprindeligt at arbejdet ville være overstået inden kl 18. Det
+viste sig dog mere omfattende end ventet, så vi var først færdige med
+selve opdateringen lidt efter kl. 22. I dag har vi kørt de resterende
+verificeringsopgaver og alting er igen at betragte som i normal drift. 
+</p>
+<h4 class="staticpage">10/08-2019: Planlagt KU systemvedligehold og DOI utilgængelighed</h4>
+<p>
+KU IT melder om planlagt systemvedligehold i den kommende weekend
+(10. og 11. august). Et antal komponenter involveret i den DOI-tildeling
+vi eksponerer for ERDA freeze archives vil derfor ikke være tilgængelige
+i den periode, men resten af ERDA skulle forblive i normal drift.
+</p>
 <h4 class="staticpage">30/07-2019: DAG og MODI nede</h4>
 <p>
 Vi mistede al kontakt til maskinerne på DAG og MODI søndag formiddag pga
