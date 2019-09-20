@@ -186,7 +186,10 @@ xvfbwrapper which may be installed with:
 sudo pip install xvfbwrapper
 sudo pip install pip install git+https://github.com/Martin-Rehr/python-pdfkit.git
 xvfbwrapper require xorg-x11-server-Xvfb and pdfkit require
-wkhtmltopdf.
+wkhtmltopdf. If links are _NOT_ working in the generated PDF's then 
+try to install the latest stable version of wkhtmltopdf from:
+https://wkhtmltopdf.org/downloads.html
+
 If the generated PDFs are gibberish then xorg-x11-fonts are most likely
 missing on the system.
 
