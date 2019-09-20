@@ -66,6 +66,12 @@ def _name_to_format(name):
 class SysLogLibHandler(logging.Handler):
     """A logging handler that emits messages to syslog.syslog."""
 
+    # Dummy attribute to avoid isinstance(X, SysLogLibHandler) 
+    # import confusion: https://bugs.python.org/issue1249615
+    # USE: hasattr(X, "shared_logger_sysloglibhandler") 
+    # instead of isinstance(X, SysLogLibHandler)
+    shared_logger_sysloglibhandler = True
+
     def __init__(self, facility, logident='logger'):
         try:
             syslog.openlog(
@@ -130,14 +136,9 @@ class Logger:
             elif self.logfile and not isinstance(
                     cur_handler, logging.FileHandler):
                 reload_handlers = True
-            elif self.syslog and not isinstance(
-                    cur_handler, SysLogLibHandler):
-                # TODO: fix isinstance check:
-                # cur_handler is: <shared.shared.shared.logger.SysLogLibHandler>
-                # the added handler is: <shared.functionality.shared.shared.shared.shared.logger.SysLogLibHandler>
-                # Therefore the check fails and the syslog handler is always reloaded
+            elif self.syslog and not hasattr(
+                    cur_handler, "shared_logger_sysloglibhandler"):
                 reload_handlers = True
-
         if self.logger.handlers and not reload_handlers:
             return
         elif reload_handlers:
