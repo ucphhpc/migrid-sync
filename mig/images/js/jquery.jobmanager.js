@@ -354,22 +354,29 @@ if (jQuery) (function($){
 
             var options = $.extend(defaults, user_options);
 
-            function menu_callback(key, call_opts, el) {
-                var m = "job menu clicked: " + key;                         
+            function menu_callback(key, call_opts, elem) {
+                var m = "job menu clicked: " + key;
                 console.debug = console.log;
-                console.debug(m); 
+                console.debug(m);
                 var action = key;
-                if (el === undefined) {
+                var el;
+                /* NOTE: contextMenu 2.x switched to trigger element only in call_opts */
+                if (call_opts.$trigger) {
+                    el = call_opts.$trigger;
+                } else if (elem) {
+                    el = elem;
+                } else {
                     el = $(this);
                 }
+                console.debug("found el: "+el);
                 
                 var single_selection = !$(el).parent().hasClass("ui-selected");
                 var job_id = "";
-                
-                $("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} }, 
-                            width: "800px", 
-                            autoOpen: false, 
-                            closeOnEscape: true, 
+
+                $("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} },
+                            width: "800px",
+                            autoOpen: false,
+                            closeOnEscape: true,
                             position: { my: "top", at: "top+100px", of: window},
                             modal: true
                             });
@@ -377,9 +384,10 @@ if (jQuery) (function($){
                 $("#cmd_helper").html("");
                 
                 if (single_selection) {
-                          
+                    
                     job_id = $("input[name='job_identifier']", $(el).parent()).val();
-                          
+                    console.debug("job_id: "+job_id+" from parent el: "+dump($(el).parent()));
+
                     $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>JobId: "+job_id+"</p></div>");
                     // Output files redirect to the filemanager with extra args.
                     // All other actions are handled by the general case.
@@ -411,7 +419,15 @@ if (jQuery) (function($){
                 // if no clickaction is provided, default to opening raw description
                 var job_id = $("input[name='job_identifier']", $(el).parent()).val();
                 console.debug("in dclick handler with job: "+job_id);
-                menu_callback("mrsl", null, $(el));
+                /* NOTE: contextMenu 2.x switched to a new callback format where
+                         2nd arg must hold pointer to element:
+                         https://swisnl.github.io/jQuery-contextMenu/docs.html#callback
+                         https://swisnl.github.io/jQuery-contextMenu/docs/runtime-options.html
+                         so we create a dummy object with $(el) assigned.
+                */
+                var opt = Object();
+                opt.$trigger = $(el);
+                menu_callback("mrsl", opt, $(el));
                 console.debug("done in dclick handler with job: "+job_id);
             }
 
