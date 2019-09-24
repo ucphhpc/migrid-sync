@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jquery.fmbreadcrumbs - style overrides for file manager xbreadcrumbs plugin
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -49,5 +49,5 @@
 
 /* prevent breadcrumbs bar from shadowing dialogs */
 #fm_xbreadcrumbs {
-  z-index: 100;
+  z-index: 1;
 }
