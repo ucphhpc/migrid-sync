@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -473,6 +473,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 def css_tmpl(configuration):
     """Stylesheets to include in the page header"""
     css = themed_styles(configuration, base=['jquery.contextmenu.css',
+                                             'jquery.managers.contextmenu.css',
                                              'jquery.xbreadcrumbs.css',
                                              'jquery.fmbreadcrumbs.css',
                                              'jquery.fileupload.css',

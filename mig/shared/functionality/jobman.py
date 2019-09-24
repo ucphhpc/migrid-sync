@@ -5,7 +5,7 @@
 #
 # jobman - Job manager UI for browsing and manipulating jobs
 #
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,6 +38,7 @@ from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 
+
 def pager_append():
     """Additional html for the pager to extend navigation"""
     return '''
@@ -52,6 +53,7 @@ def pager_append():
         </select> last jobs
         matching <input class="filterid" name="filterid" size=16 value="*_%s_*"/>
 ''' % datetime.date.today().year
+
 
 def html_post():
     """HTML page end"""
@@ -84,10 +86,13 @@ def html_post():
 '''
     return html
 
+
 def css_tmpl(configuration):
     """Stylesheets to include in the page header"""
-    css = themed_styles(configuration, base=['jquery.contextmenu.css'])
+    css = themed_styles(configuration, base=['jquery.contextmenu.css',
+                                             'jquery.managers.contextmenu.css'])
     return css
+
 
 def js_tmpl(csrf_map={}):
     """Javascript to include in the page header"""
@@ -137,37 +142,39 @@ csrf_map["%s"] = "%s";
 '''
     return js
 
+
 def signature():
     """Signature of the main function"""
 
-    defaults = {'dir' : ['']}
+    defaults = {'dir': ['']}
     return ['', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-                    initialize_main_variables(client_id, op_header=False)
+        initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
-      user_arguments_dict,
-      defaults,
-      output_objects,
-      client_id,
-      configuration,
-      allow_rejects=False,
-      )
+        user_arguments_dict,
+        defaults,
+        output_objects,
+        client_id,
+        configuration,
+        allow_rejects=False,
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-  
+
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               '''Job execution is not enabled on this system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     status = returnvalues.OK
-  
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Job Manager'
     title_entry['style'] = css_tmpl(configuration)
@@ -176,13 +183,13 @@ def main(client_id, user_arguments_dict):
     limit = get_csrf_limit(configuration)
     for target_op in csrf_backends:
         csrf_map[target_op] = make_csrf_token(configuration, method,
-                                                 target_op, client_id, limit)
+                                              target_op, client_id, limit)
     title_entry['javascript'] = js_tmpl(csrf_map)
-  
+
     output_objects.append({'object_type': 'header', 'text': 'Job Manager'})
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'jobs',
                            'default_entries': default_pager_entries,
                            'form_append': pager_append()})
     output_objects.append({'object_type': 'html_form', 'text': html_post()})
-  
+
     return (output_objects, status)

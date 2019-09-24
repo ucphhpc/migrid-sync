@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -296,6 +296,7 @@ function init_page() {
     '''
     title_entry['style'] = themed_styles(configuration,
                                          base=['jquery.contextmenu.css',
+                                               'jquery.managers.contextmenu.css',
                                                'jquery.xbreadcrumbs.css',
                                                'jquery.fmbreadcrumbs.css',
                                                'jquery.fileupload.css',
