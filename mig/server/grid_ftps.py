@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -90,16 +90,18 @@ except ImportError:
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
-from shared.fileio import check_write_access, user_chroot_exceptions
-from shared.griddaemons import get_fs_path, acceptable_chmod, \
-    refresh_user_creds, refresh_share_creds, update_login_map, \
-    login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-    penalize_rate_limit, check_twofactor_session
+from shared.fileio import user_chroot_exceptions
+from shared.griddaemons import default_max_user_hits, \
+    default_user_abuse_hits, default_proto_abuse_hits, \
+    default_max_secret_hits, default_username_validator, \
+    get_fs_path, acceptable_chmod, refresh_user_creds, refresh_share_creds, \
+    update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
+    check_twofactor_session, handle_auth_attempt
 from shared.tlsserver import hardened_openssl_context
 from shared.logger import daemon_logger, register_hangup_handler
+from shared.pwhash import make_scramble
 from shared.useradm import check_password_hash
 from shared.validstring import possible_user_id, possible_sharelink_id
-from shared.vgrid import vgrid_restrict_write_support
 
 
 configuration, logger = None, None
@@ -184,75 +186,114 @@ class MiGUserAuthorizer(DummyAuthorizer):
         cracking, but that it _may_ still be possible to achieve with a big
         effort.
 
-        Paranoid users / grid owners should not enable password access in the
-        first place!
+        The following is checked before granting auth:
+        1) Valid username
+        2) Valid user (Does user exist and enabled ftps)
+        3) Valid 2FA session (if 2FA is enabled)
+        4) Hit rate limit (Too many auth attempts)
+        5) Valid password (if password enabled)
         """
+        secret = None
+        disconnect = False
+        strict_password_policy = True
+        password_offered = None
+        password_enabled = False
+        invalid_username = False
+        invalid_user = False
+        valid_password = False
+        valid_twofa = False
+        exceeded_rate_limit = False
         client_ip = handler.remote_ip
+        client_port = handler.remote_port
         username = force_utf8(username)
+        daemon_conf = configuration.daemon_conf
+        max_user_hits = daemon_conf['auth_limits']['max_user_hits']
+        user_abuse_hits = daemon_conf['auth_limits']['user_abuse_hits']
+        proto_abuse_hits = daemon_conf['auth_limits']['proto_abuse_hits']
+        max_secret_hits = daemon_conf['auth_limits']['max_secret_hits']
         logger.debug("Run authentication of %s from %s" % (username,
                                                            client_ip))
-
-        # We don't have a handle_request for server so expire here instead
-
-        if self.last_expire + self.min_expire_delay < time.time():
-            self.last_expire = time.time()
-            expire_rate_limit(configuration, "ftps")
-
         logger.info("refresh user %s" % username)
-        self._update_logins(configuration, username)
+        logger.debug("daemon_conf['allow_password']: %s" %
+                     daemon_conf['allow_password'])
 
-        daemon_conf = configuration.daemon_conf
         # For e.g. GDP we require all logins to match active 2FA session IP,
         # but otherwise user may freely switch net during 2FA lifetime.
         if configuration.site_twofactor_strict_address:
             enforce_address = client_ip
         else:
             enforce_address = None
-        hash_cache = daemon_conf['hash_cache']
-        offered = password
-        # Only sharelinks should be excluded from strict password policy
-        if configuration.site_enable_sharelinks and \
-                possible_sharelink_id(configuration, username):
-            strict_policy = False
-        else:
-            strict_policy = True
-        if hit_rate_limit(configuration, "ftps", client_ip, username):
-            logger.warning("Rate limiting login from %s" % client_ip)
-        elif 'password' in configuration.user_ftps_auth and \
-                self.has_user(username):
-            # list of User login objects for username
-            entries = [self.user_table[username]]
+
+        # We don't have a handle_request for server so expire here instead
+
+        if self.last_expire + self.min_expire_delay < time.time():
+            self.last_expire = time.time()
+            expire_rate_limit(configuration, "ftps")
+        if hit_rate_limit(configuration, 'ftps', client_ip, username,
+                          max_user_hits=max_user_hits):
+            exceeded_rate_limit = True
+        elif not default_username_validator(configuration, username):
+            invalid_username = True
+        elif daemon_conf['allow_password']:
+            hash_cache = daemon_conf['hash_cache']
+            password_offered = password
+            secret = make_scramble(password_offered, None)
+            # Only sharelinks should be excluded from strict password policy
+            if configuration.site_enable_sharelinks and \
+                    possible_sharelink_id(configuration, username):
+                strict_password_policy = False
+            logger.debug("refresh user %s" % username)
+            self._update_logins(configuration, username)
+            if not self.has_user(username):
+                invalid_user = True
+                entries = []
+            else:
+                # list of User login objects for username
+                entries = [self.user_table[username]]
             for entry in entries:
                 if entry['pwd'] is not None:
-                    allowed = entry['pwd']
+                    password_enabled = True
+                    password_allowed = entry['pwd']
                     logger.debug("Password check for %s" % username)
                     if check_password_hash(
-                        configuration, 'ftps', username, offered, allowed,
-                        hash_cache, strict_policy) and \
-                        check_twofactor_session(configuration, username,
-                                                enforce_address, 'ftps'):
-                        logger.info("Accepted password login for %s from %s" %
-                                    (username, client_ip))
-                        self.authenticated_user = username
-                        update_rate_limit(configuration, "ftps", client_ip,
-                                          username, True, offered)
-                        return True
-        else:
-            logger.warning("no such user %s" % username)
+                            configuration, 'ftps', username,
+                            password_offered, password_allowed,
+                            hash_cache, strict_password_policy):
+                        valid_password = True
+                        break
+            if valid_password and check_twofactor_session(
+                    configuration, username, enforce_address, 'ftps'):
+                valid_twofa = True
 
-        err_msg = "Failed password login for %s from %s" % (username,
-                                                            client_ip)
-        logger.error(err_msg)
-        print err_msg
-        self.authenticated_user = None
-        failed_count = update_rate_limit(configuration, "ftps",
-                                         handler.remote_ip, username,
-                                         False, offered)
-        penalize_rate_limit(configuration, "ftps", handler.remote_ip, username,
-                            failed_count)
-        # Must raise AuthenticationFailed exception since version 1.0.0 instead
-        # of returning bool
-        raise AuthenticationFailed(err_msg)
+        # Update rate limits and write to auth log
+
+        (authorized, disconnect) = handle_auth_attempt(
+            configuration,
+            'ftps',
+            username,
+            client_ip,
+            client_port,
+            secret=secret,
+            invalid_username=invalid_username,
+            invalid_user=invalid_user,
+            valid_twofa=valid_twofa,
+            password_enabled=password_enabled,
+            valid_password=valid_password,
+            exceeded_rate_limit=exceeded_rate_limit,
+            user_abuse_hits=user_abuse_hits,
+            proto_abuse_hits=proto_abuse_hits,
+            max_secret_hits=max_secret_hits,
+        )
+        if disconnect:
+            handler._shutdown_connecting_dtp()
+        if authorized:
+            self.authenticated_user = username
+            return True
+        else:
+            # Must raise AuthenticationFailed exception since version 1.0.0 instead
+            # of returning bool
+            self.authenticated_user = None
+            raise AuthenticationFailed()
 
 
 class MiGRestrictedFilesystem(AbstractedFS):
@@ -469,6 +510,17 @@ unless it is available in mig/server/MiGserver.conf
         'time_stamp': 0,
         'logger': logger,
         'nossl': nossl,
+        # TODO: Add the following to configuration:
+        # max_ftps_user_hits
+        # max_ftps_user_abuse_hits
+        # max_ftps_proto_abuse_hits
+        # max_ftps_secret_hits
+        'auth_limits':
+            {'max_user_hits': default_max_user_hits,
+             'user_abuse_hits': default_user_abuse_hits,
+             'proto_abuse_hits': default_proto_abuse_hits,
+             'max_secret_hits': default_max_secret_hits,
+             }
     }
     logger.info("Starting FTPS server")
     info_msg = "Listening on address '%s' and port %d" % (address, ctrl_port)

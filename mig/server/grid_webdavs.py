@@ -49,11 +49,15 @@ try:
     sys.path.append(os.path.dirname(server_init_path))
     from cherrypy import wsgiserver
     from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter, ssl
+    from wsgidav.debug_filter import WsgiDavDebugFilter
+    from wsgidav.dir_browser import WsgiDavDirBrowser
+    from wsgidav.error_printer import ErrorPrinter
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
         FilesystemProvider
     from wsgidav.domain_controller import WsgiDAVDomainController
     from wsgidav.http_authenticator import HTTPAuthenticator
     from wsgidav.dav_error import DAVError, HTTP_FORBIDDEN
+    from wsgidav.util import getRfc1123Time
 except ImportError, ierr:
     print "ERROR: the python wsgidav module is required for this daemon"
     print "You may need to install cherrypy if your wsgidav does not bundle it"
@@ -65,17 +69,22 @@ from shared.defaults import dav_domain, litmus_id, io_session_timeout
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.gdp import project_open, project_close, project_log
 from shared.griddaemons import get_fs_path, acceptable_chmod, \
-    refresh_user_creds, refresh_share_creds, update_login_map, \
-    login_map_lookup, hit_rate_limit, update_rate_limit, expire_rate_limit, \
-    penalize_rate_limit, add_user_object, track_open_session, \
-    track_close_expired_sessions, get_active_session, check_twofactor_session
+    default_max_user_hits, default_user_abuse_hits, \
+    default_proto_abuse_hits, default_max_secret_hits, \
+    default_username_validator, refresh_user_creds, refresh_share_creds, \
+    update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
+    add_user_object, track_open_session, track_close_session, \
+    track_close_expired_sessions, get_active_session, \
+    check_twofactor_session, handle_auth_attempt
+from shared.pwhash import make_scramble
 from shared.sslsession import ssl_session_token
 from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
+from shared.notification import send_system_notification
 from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
-    check_password_digest, generate_password_digest
+    generate_password_digest
 from shared.validstring import possible_user_id, possible_sharelink_id
 
 
@@ -154,6 +163,58 @@ def _find_authenticator(application):
         return application
     else:
         return _find_authenticator(application._application)
+
+
+def _open_session(username, ip_addr, tcp_port, session_id):
+    """Keep track of new session"""
+    logger.debug("auth succeeded for %s from (%s, %s) with session: %s" %
+                 (username, ip_addr, tcp_port, session_id))
+
+    status = track_open_session(configuration,
+                                'davs',
+                                username,
+                                ip_addr,
+                                tcp_port,
+                                session_id=session_id,
+                                authorized=True)
+
+    if status and configuration.site_enable_gdp:
+        (status, msg) = project_open(configuration,
+                                     'davs',
+                                     ip_addr,
+                                     username)
+        if not status:
+            track_close_session(configuration,
+                                'davs',
+                                username,
+                                ip_addr,
+                                tcp_port,
+                                session_id=session_id)
+
+            send_system_notification(username, ['DAVS', 'ERROR'],
+                                     msg, configuration)
+
+    return status
+
+
+def _close_session(username, ip_addr, tcp_port, session_id):
+    """Mark session as closed"""
+    logger.debug("_close_session for %s from (%s, %s) with session: %s" %
+                 (username, ip_addr, tcp_port, session_id))
+
+    track_close_session(configuration,
+                        'davs',
+                        username,
+                        ip_addr,
+                        tcp_port,
+                        session_id=session_id)
+
+    if configuration.site_enable_gdp:
+        project_close(
+            configuration,
+            'davs',
+            ip_addr,
+            user_id=username)
 
 
 class HardenedSSLAdapter(BuiltinSSLAdapter):
@@ -266,6 +327,323 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         return ssl_sock, ssl_env
 
 
+class MiGHTTPAuthenticator(HTTPAuthenticator):
+    """
+    Override the default HTTPAuthenticator to include support for:
+    1) Auth logging
+    2) Auth statistics
+    3) SSL session based auth
+    4) Rate limit auth throtteling
+    """
+    __application = None
+    min_expire_delay = 0
+    last_expire = 0
+
+    def __init__(self, application, config):
+        self.min_expire_delay = 300
+        self.last_expire = time.time()
+        self.__application = application
+        self._init_stats(config['enable_stats'])
+        super(MiGHTTPAuthenticator, self).__init__(
+            self._application_wrapper, config)
+
+    def _application_wrapper(self, environ, start_response):
+        """Prevent HTTPAuthenticator (parent) from sending response
+        to client while auth is being processed
+        by  MiGHTTPAuthenticator.authRequest
+        """
+        result = None
+        # If _NOT_ in authorization mode then allow
+        # HTTPAuthenticator to call _application
+        if not "HTTP_AUTHORIZATION" in environ:
+            result = self.__application(environ, start_response)
+
+        return result
+
+    def _init_stats(self, enabled):
+        """Init statistics cache"""
+        self.stats = {
+            'enabled': enabled,
+            'total': lambda s:
+            s['total_accepted'](s)
+            + s['total_rejected'](s),
+            'total_accepted': lambda s:
+            s['session']
+            + s['password_accepted']
+            + s['digest_accepted'],
+            'total_rejected': lambda s:
+            s['invalid_twofa']
+            + s['invalid_user']
+            + s['invalid_username']
+            + s['hit_rate_limit']
+            + s['digest_failed']
+            + s['password_failed'],
+            'session': 0,
+            'invalid_twofa': 0,
+            'invalid_user': 0,
+            'invalid_username': 0,
+            'hit_rate_limit': 0,
+            'digest_accepted': 0,
+            'digest_failed': 0,
+            'password_accepted': 0,
+            'password_failed': 0,
+        }
+
+    def _update_stats(self,
+                      valid_session,
+                      invalid_username,
+                      invalid_user,
+                      valid_twofa,
+                      digest_enabled,
+                      valid_digest,
+                      password_enabled,
+                      valid_password,
+                      exceeded_rate_limit):
+        """Update statistics cache"""
+        if self.stats['enabled']:
+            stats = self.stats
+            if valid_session:
+                stats['session'] += 1
+            elif exceeded_rate_limit:
+                stats['hit_rate_limit'] += 1
+            elif invalid_username:
+                stats['invalid_username'] += 1
+            elif invalid_user:
+                stats['invalid_user'] += 1
+            elif digest_enabled:
+                if valid_digest and valid_twofa:
+                    stats['digest_accepted'] += 1
+                elif valid_digest and not valid_twofa:
+                    stats['invalid_twofa'] += 1
+                else:
+                    stats['digest_failed'] += 1
+            elif password_enabled:
+                if valid_password and valid_twofa:
+                    stats['password_accepted'] += 1
+                elif valid_password and not valid_twofa:
+                    stats['invalid_twofa'] += 1
+                else:
+                    stats['password_failed'] += 1
+
+    def _expire_rate_limit(self):
+        """Expire old entries in the rate limit dictionary"""
+        if self.last_expire + self.min_expire_delay < time.time():
+            self.last_expire = time.time()
+            expire_rate_limit(configuration, "davs")
+
+    def _authheader(self, environ):
+        """Returns dict with HTTP AUTH REQUEST header
+        This code is blended/modified version of
+        HTTPAuthenticator.authBasicAuthRequest and
+        HTTPAuthenticator.authDigestAuthRequest"""
+        authheaderdict = dict([])
+        authheaders = environ.get("HTTP_AUTHORIZATION", '')
+
+        if authheaders.startswith("Basic "):
+            authvalue = authheaders[len("Basic "):]
+            authvalue = authvalue.strip().decode("base64")
+            authheaderdict['username'], password = authvalue.split(":", 1)
+            if password:
+                password = make_scramble(password, None)
+            authheaderdict['password'] = password
+        else:
+            authheaders += ","
+            # Hotfix for Windows file manager and OSX Finder:
+            # Some clients don't urlencode paths in auth header, so uri value may
+            # contain commas, which break the usual regex headerparser. Example:
+            # Digest username="user",realm="/",uri="a,b.txt",nc=00000001, ...
+            # -> [..., ('uri', '"a'), ('nc', '00000001'), ...]
+            # Override any such values with carefully extracted ones.
+            authheaderlist = self._headerparser.findall(authheaders)
+            authheaderfixlist = self._headerfixparser.findall(authheaders)
+            if authheaderfixlist:
+                # _logger.debug("Fixing authheader comma-parsing: extend %s with %s" \
+                #              % (authheaderlist, authheaderfixlist))
+                authheaderlist += authheaderfixlist
+            for authheader in authheaderlist:
+                authheaderkey = authheader[0]
+                authheadervalue = authheader[1].strip().strip("\"")
+                authheaderdict[authheaderkey] = authheadervalue
+
+        return authheaderdict
+
+    def authBasicAuthRequest(self, environ, start_response):
+        """Overrides HTTPAuthenticator.authBasicAuthRequest"""
+        return self.authRequest(environ, start_response, password_enabled=True)
+
+    def authDigestAuthRequest(self, environ, start_response):
+        """Overrides HTTPAuthenticator.authDigestAuthRequest"""
+        return self.authRequest(environ, start_response, digest_enabled=True)
+
+    def authRequest(self, environ, start_response,
+                    password_enabled=False, digest_enabled=False):
+        """Overrides HTTPAuthenticator.authRequest
+        Authorize users and log auth attempts.
+        When auth is granted the session is tracked
+        based on the SSL-session-id for reuse in future requests
+        from the same client on the same socket.
+
+        The following is checked before granting auth:
+        1) Valid username
+        2) Valid user (Does user exist and enabled WebDAVS)
+        3) Valid 2FA session (if 2FA is enabled)
+        4) Hit rate limit (To many auth attempts)
+        5) Valid pre-authorized SSL session
+        6) Valid password (if password enabled)
+        7) Valid digest (if digest enabled)
+        """
+
+        result = None
+        response_ok = False
+        pre_authorized = False
+        secret = None
+        authorized = False
+        disconnect = False
+        valid_session = False
+        valid_password = False
+        valid_digest = False
+        valid_twofa = False
+        exceeded_rate_limit = False
+        invalid_username = False
+        invalid_user = False
+        ip_addr = _get_addr(environ)
+        tcp_port = _get_port(environ)
+        daemon_conf = configuration.daemon_conf
+        max_user_hits = daemon_conf['auth_limits']['max_user_hits']
+        user_abuse_hits = daemon_conf['auth_limits']['user_abuse_hits']
+        proto_abuse_hits = daemon_conf['auth_limits']['proto_abuse_hits']
+        max_secret_hits = daemon_conf['auth_limits']['max_secret_hits']
+
+        # For e.g. GDP we require all logins to match active 2FA session IP,
+        # but otherwise user may freely switch net during 2FA lifetime.
+        if configuration.site_twofactor_strict_address:
+            enforce_address = ip_addr
+        else:
+            enforce_address = None
+
+        session_id = _get_ssl_session_token(environ)
+        authheader = self._authheader(environ)
+        username = authheader.get('username', None)
+        if session_id and is_authorized_session(configuration,
+                                                username,
+                                                session_id):
+            valid_session = authorized = pre_authorized = True
+            environ['http_authenticator.username'] = username
+            environ['http_authenticator.realm'] = '/'
+        elif hit_rate_limit(configuration, 'davs', ip_addr, username,
+                            max_user_hits=max_user_hits):
+            exceeded_rate_limit = True
+        elif not default_username_validator(configuration, username):
+            invalid_username = True
+        elif password_enabled or digest_enabled:
+            if password_enabled:
+                result = super(MiGHTTPAuthenticator, self) \
+                    .authBasicAuthRequest(environ, start_response)
+            elif digest_enabled:
+                result = super(MiGHTTPAuthenticator, self) \
+                    .authDigestAuthRequest(environ, start_response)
+            auth_username = environ.get('http_authenticator.username', None)
+            auth_realm = environ.get('http_authenticator.realm', None)
+            if auth_username and auth_username == username and auth_realm:
+                if password_enabled:
+                    valid_password = True
+                elif digest_enabled:
+                    valid_digest = True
+                if check_twofactor_session(configuration, username,
+                                           enforce_address, 'davs'):
+                    valid_twofa = True
+                    valid_session = \
+                        _open_session(username, ip_addr, tcp_port, session_id)
+            elif not environ.get('http_authenticator.valid_user', False):
+                invalid_user = True
+        else:
+            logger.error("Neither password NOR digest enabled")
+
+        if not pre_authorized:
+            self._expire_rate_limit()
+
+            # For digest auth we use SSL_SESSION_TOKEN as secret
+            # because some clients uses a new digest token for every requerst
+            # and therefore we do not have any other unique identifiers
+
+            if password_enabled:
+                secret = authheader.get('password', '')
+            if not secret:
+                secret = environ.get('SSL_SESSION_TOKEN', None)
+
+            # Update rate limits and write to auth log
+
+            (authorized, disconnect) = handle_auth_attempt(
+                configuration,
+                'davs',
+                username,
+                ip_addr,
+                tcp_port,
+                secret=secret,
+                invalid_username=invalid_username,
+                invalid_user=invalid_user,
+                valid_twofa=valid_twofa,
+                digest_enabled=digest_enabled,
+                valid_digest=valid_digest,
+                password_enabled=password_enabled,
+                valid_password=valid_password,
+                exceeded_rate_limit=exceeded_rate_limit,
+                user_abuse_hits=user_abuse_hits,
+                proto_abuse_hits=proto_abuse_hits,
+                max_secret_hits=max_secret_hits,
+            )
+        if authorized and valid_session:
+            result = self.__application(environ, start_response)
+            if result:
+                response_ok = True
+            else:
+                _close_session(username, ip_addr, tcp_port, session_id)
+                logger.error(
+                    "MiGHTTPAuthenticator.authRequest failed")
+        elif authorized and not valid_session:
+            response_ok = True
+            logger.error("503 Service Unavailable")
+            start_response("503 Service Unavailable",
+                           [("Content-Length", "0"),
+                            ("Date", getRfc1123Time()),
+                            ])
+            result = ['']
+        elif disconnect:
+            response_ok = True
+            logger.error("403 Forbidden")
+            start_response("403 Forbidden", [("Content-Length", "0"),
+                                             ("Date", getRfc1123Time()),
+                                             ])
+            result = ['']
+        else:
+            result = self.sendDigestAuthResponse(environ, start_response)
+            if result:
+                response_ok = True
+            else:
+                logger.error(
+                    "MiGHTTPAuthenticator.sendDigestAuthResponse failed")
+
+        if not response_ok:
+            logger.error("MiGHTTPAuthenticator: 400 Bad Request")
+            start_response("400 Bad Request", [("Content-Length", "0"),
+                                               ("Date", getRfc1123Time()),
+                                               ])
+            result = ['']
+
+        self._update_stats(
+            pre_authorized,
+            invalid_username,
+            invalid_user,
+            valid_twofa,
+            digest_enabled,
+            valid_digest,
+            password_enabled,
+            valid_password,
+            exceeded_rate_limit)
+
+        return result
+
+
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     """Override auth database lookups to use username and password hash for
     basic auth and digest otherwise.
@@ -273,8 +651,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     NOTE: The username arguments are already on utf8 here so no need to force.
     """
 
-    min_expire_delay = 120
-    last_expire = time.time()
+    min_expire_delay = 0
+    last_expire = 0
 
     def __init__(self, userMap):
         WsgiDAVDomainController.__init__(self, userMap)
@@ -284,12 +662,6 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         self.min_expire_delay = 300
         self.hash_cache = {}
         self.digest_cache = {}
-
-    def _expire_rate_limit(self):
-        """Expire old entries in the rate limit dictionary"""
-        if self.last_expire + self.min_expire_delay < time.time():
-            self.last_expire = time.time()
-            expire_rate_limit(configuration, "davs")
 
     def _expire_caches(self):
         """Expire old entries in the hash and digest caches"""
@@ -301,19 +673,35 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """Expire old entries in the volatile helper dictionaries"""
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
-            self._expire_rate_limit()
             self._expire_caches()
 
-    def _get_user_digests(self, address, realm, username):
+    def _get_user_digests(self, realm, username):
         """Find the allowed digest values for supplied username - this is for
         use in the actual digest authorization.
         """
         user_list = self.user_map[realm].get(username, [])
         return [i for i in user_list if i.digest is not None]
 
-    def _check_auth_password(self, address, realm, username, password):
-        """Verify supplied username and password against user DB"""
-        user_list = self.user_map[realm].get(username, [])
+    def authDomainUser(self, realmname, username, password, environ):
+        """Returns True if username / password pair is valid for the realm,
+        False otherwise.
+        This method is only used for the 'basic' auth method, while
+        'digest' auth takes another code path.
+
+        NOTE: We explicitly compare against saved hash rather than password.
+
+        NOTE: Set environ['http_authenticator.valid_user'] for use in
+              MiGHTTPAuthenticator.authRequest
+        """
+
+        # logger.debug("auth:authDomainUser: " \
+        #     + "realmname: %s, username: %s, password: %s" \
+        #     % (realmname, username, password))
+        success = False
+        valid_user = False
+        # logger.debug("refresh user %s" % username)
+        update_users(configuration, self.user_map, username)
+        user_list = self.user_map[realmname].get(username, [])
         # Only sharelinks should be excluded from strict password policy
         if possible_sharelink_id(configuration, username):
             strict_policy = False
@@ -324,158 +712,39 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             offered = password
             allowed = user_obj.password
             if allowed is not None:
+                valid_user = True
                 # logger.debug("Password check for %s" % username)
                 if check_password_hash(configuration, 'webdavs', username,
                                        offered, allowed, self.hash_cache,
                                        strict_policy):
-                    return True
-        return False
-
-    def authDomainUser(self, realmname, username, password, environ):
-        """Returns True if session is already authorized or the
-        username / password pair is valid for the realm, False otherwise.
-        I.e. this method is only used for the 'basic' auth method, while
-        'digest' auth takes another code path.
-        Includes optional 2-factor authentication if enabled.
-
-        NOTE: We explicitly compare against saved hash rather than password.
-        """
-        ip_addr = _get_addr(environ)
-        tcp_port = _get_port(environ)
-        session_id = _get_ssl_session_token(environ)
-        # logger.debug("session_id: %s" % session_id)
-        # For e.g. GDP we require all logins to match active 2FA session IP,
-        # but otherwise user may freely switch net during 2FA lifetime.
-        if configuration.site_twofactor_strict_address:
-            enforce_address = ip_addr
+                    success = True
+        if valid_user:
+            environ['http_authenticator.valid_user'] = True
         else:
-            enforce_address = None
-        success = False
-        if session_id \
-                and is_authorized_session(configuration,
-                                          username,
-                                          session_id):
-            # logger.debug("found authorized session for: %s from %s:%s:%s" \
-            #             % (username, ip_addr, tcp_port, session_id))
-            success = True
-        else:
-            # logger.debug("validated session: %s:%s:%s" %
-            #              (ip_addr, tcp_port, session_id))
-            logger.info("refresh user %s" % username)
-            update_users(configuration, self.user_map, username)
-            logger.info("in authDomainUser from %s:%s" % (ip_addr, tcp_port))
-            offered = password
-            if hit_rate_limit(configuration, "davs", ip_addr, username):
-                logger.warning("Rate limiting login from %s" % ip_addr)
-            elif self._check_auth_password(
-                    ip_addr, realmname, username, password) and \
-                    check_twofactor_session(configuration, username,
-                                            enforce_address, 'davs'):
-                logger.info("Accepted password login for %s from %s" %
-                            (username, ip_addr))
-                success = True
-            else:
-                logger.error("Failed password login for %s from %s" %
-                             (username, ip_addr))
-            failed_count = update_rate_limit(configuration,
-                                             "davs",
-                                             ip_addr,
-                                             username,
-                                             success,
-                                             offered)
-            penalize_rate_limit(configuration, "davs", ip_addr, username,
-                                failed_count)
-
-            if success and configuration.site_enable_gdp:
-                (success, _) = project_open(configuration,
-                                            'davs',
-                                            ip_addr,
-                                            username)
-
-            # Track newly authorized session
-
-            if success and session_id:
-                # logger.debug("auth passed for session: %s:%s -> %s" %
-                #              (ip_addr, tcp_port, session_id))
-                status = track_open_session(configuration,
-                                            'davs',
-                                            username,
-                                            ip_addr,
-                                            tcp_port,
-                                            session_id=session_id,
-                                            authorized=True)
-                # logger.debug("track_open_session: %s" % status)
-
-        if not success:
-            logger.warning("Invalid login for %s from %s"
-                           % (username, ip_addr))
+            environ['http_authenticator.valid_user'] = False
 
         return success
 
     def isRealmUser(self, realmname, username, environ):
-        """Returns True if session is already authorized or
-        this username is valid for the realm, False otherwise.
-        Used for basic authentication.
+        """Returns True if this username is valid for the realm,
+        False otherwise.
 
         Please note that this is always called for digest auth so we use it to
         update creds and reject users without digest password set.
+
+        NOTE: Set environ['http_authenticator.valid_user'] for use in
+              MiGHTTPAuthenticator.authRequest
         """
-        ip_addr = _get_addr(environ)
-        tcp_port = _get_port(environ)
-        session_id = _get_ssl_session_token(environ)
-        # For e.g. GDP we require all logins to match active 2FA session IP,
-        # but otherwise user may freely switch net during 2FA lifetime.
-        if configuration.site_twofactor_strict_address:
-            enforce_address = ip_addr
-        else:
-            enforce_address = None
-        # logger.debug("session_id: %s" % session_id)
+        # logger.debug("auth:isRealmUser: realmname: %s, username: %s" \
+        #     % (realmname, username))
         success = False
-        if session_id \
-                and is_authorized_session(configuration,
-                                          username,
-                                          session_id):
-            # logger.debug("found authorized session for: %s from %s:%s:%s" \
-            #             % (username, ip_addr, tcp_port, session_id))
+        logger.debug("refresh user %s" % username)
+        update_users(configuration, self.user_map, username)
+        if self._get_user_digests(realmname, username):
             success = True
+            environ['http_authenticator.valid_user'] = True
         else:
-            # logger.debug("validated session: %s:%s:%s" %
-            #              (ip_addr, tcp_port, session_id))
-            update_users(configuration, self.user_map, username)
-
-            if self._get_user_digests(ip_addr, realmname, username) and \
-                    check_twofactor_session(configuration, username,
-                                            enforce_address, 'davs'):
-                # logger.debug("valid digest user %s from %s:%s" %
-                #              (username, ip_addr, tcp_port))
-                success = True
-            else:
-                logger.warning("invalid digest user %s from %s:%s" %
-                               (username, ip_addr, tcp_port))
-
-            if success and configuration.site_enable_gdp:
-                (success, _) = project_open(configuration,
-                                            'davs',
-                                            ip_addr,
-                                            username)
-
-            # Track newly authorized session
-
-            if success and session_id:
-                # logger.debug("auth passed for session: %s:%s -> %s" %
-                #              (ip_addr, tcp_port, session_id))
-                status = track_open_session(configuration,
-                                            'davs',
-                                            username,
-                                            ip_addr,
-                                            tcp_port,
-                                            session_id=session_id,
-                                            authorized=True)
-                # logger.debug("track_open_session: %s" % status)
-
-        if not success:
-            logger.warning("Invalid login for %s from %s"
-                           % (username, ip_addr))
+            environ['http_authenticator.valid_user'] = False
 
         return success
 
@@ -483,40 +752,33 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         """Return the password for the given username for the realm.
 
         Used only for 'digest' auth and always called after isRealmUser, so
-        update creds is already applied. We just rate limit and check here.
+        update creds is already applied.
         """
-
         # TODO: consider digest caching here!
         #       we should really use something like check_password_digest,
         #       but we need to return password to caller here.
 
         # print "DEBUG: env in getRealmUserPassword: %s" % environ
-        addr = _get_addr(environ)
-        offered = _get_digest(environ)
+        # traceback.print_stack()
+        # logger.debug("auth:getRealmUserPassword: " \
+        #      + "realmname: %s, username: %s" \
+        #     % (realmname, username))
         # Only sharelinks should be excluded from strict password policy
         if possible_sharelink_id(configuration, username):
             strict_policy = False
         else:
             strict_policy = True
-        self._expire_rate_limit()
-        # logger.info("in getRealmUserPassword from %s" % addr)
-        digest_users = self._get_user_digests(addr, realmname, username)
-        # logger.info("found digest_users %s" % digest_users)
+        digest_users = self._get_user_digests(realmname, username)
+        # logger.debug("found digest_users %s" % digest_users)
         try:
             # We expect only one - pick last
             digest = digest_users[-1].digest
             _, _, _, payload = digest.split("$")
-            # logger.info("found payload %s" % payload)
+            # logger.debug("found payload %s" % payload)
             unscrambled = unscramble_digest(configuration.site_digest_salt,
                                             payload)
             _, _, password = unscrambled.split(":")
-            # logger.info("found password")
-            # TODO: we don't have a hook to log accepted digest logins
-            # this one only means that user validation makes it to digest check
-            logger.info("extracted digest for valid user %s from %s" %
-                        (username, addr))
             # Mimic password policy compliance from check_password_digest here
-            success = True
             try:
                 assure_password_strength(configuration, password)
             except Exception, exc:
@@ -524,17 +786,11 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                     msg = "%s password for %s" % ('webdavs', username) \
                         + "does not satisfy local policy: %s" % exc
                     logger.warning(msg)
-                    success = False
+                    password = ''
         except Exception, exc:
             logger.error("failed to extract digest password: %s" % exc)
-            success = False
-        if hit_rate_limit(configuration, "davs", addr, username):
-            logger.warning("Rate limiting login from %s" % addr)
-            success = False
-        failed_count = update_rate_limit(configuration, "davs", addr, username,
-                                         success, offered)
-        penalize_rate_limit(configuration, "davs", addr, username,
-                            failed_count)
+            password = ''
+
         return password
 
 
@@ -1066,7 +1322,149 @@ class SessionExpire(threading.Thread):
         logger.info("Stopping SessionExpire Thread: #%s" % self.ident)
         self.shutdown.set()
         self.join()
-        # logger.info("debug SessionExpire Thread: #%s" % self.ident)
+        # logger.debug("SessionExpire Thread: #%s" % self.ident)
+
+
+class LogStats(threading.Thread):
+    """Log server and auth statistics """
+
+    def __init__(self, config, server,
+                 interval=60, idle_only=False, change_only=False):
+        """Init LogStats thread"""
+        threading.Thread.__init__(self)
+        self.config = config
+        if not self.config['enable_stats']:
+            logger.info("stats _NOT_ enabled")
+            return
+        self.server = server
+        self.shutdown = threading.Event()
+        self.interval = interval
+        self.idle_only = idle_only
+        self.change_only = change_only
+        self.last_http_requests = 0
+        self.stats = {'server': server.stats}
+        try:
+            self.stats['auth'] = \
+                (_find_authenticator(self.server.wsgi_app)).stats
+        except Exception:
+            self.stats['auth'] = None
+            logger.warning("Failed to retreive auth stats")
+
+    def _log_stats(self, force=False):
+        """Perform actual logging"""
+        try:
+            server_stats = self.stats['server']
+            auth_stats = self.stats['auth']
+            queue = int(server_stats['Queue'](server_stats))
+            threads = int(server_stats['Threads'](server_stats))
+            threads_idle = int(server_stats['Threads Idle'](server_stats))
+            http_requests = int(server_stats['Requests'](server_stats))
+            if force \
+                    or ((not self.change_only
+                         or self.last_http_requests != http_requests)
+                        and (not self.idle_only or threads_idle == threads)):
+                socket_connections = int(server_stats['Accepts'])
+                bytes_read = \
+                    float(server_stats['Bytes Read'](server_stats))
+                bytes_written = \
+                    float(server_stats['Bytes Written'](server_stats))
+                socket_connections_sec = \
+                    float(server_stats['Accepts/sec'](server_stats))
+                read_throughput = \
+                    float(server_stats['Read Throughput'](server_stats))
+                write_throughput = \
+                    float(server_stats['Write Throughput'](server_stats))
+                runtime = \
+                    float(server_stats['Run time'](server_stats))
+                worktime = \
+                    float(server_stats['Work Time'](server_stats))
+                socket_errors = \
+                    int(server_stats['Socket Errors'])
+                msg = "\n------------------------------------------------\n" \
+                    + "\t\tServer\n" \
+                    + "------------------------------------------------\n" \
+                    + "Connection queue:\t\t %d\n" \
+                    % queue \
+                    + "Active Threads:\t\t\t %d/%d\n" \
+                    % (threads-threads_idle, threads) \
+                    + "Total Socket connections:\t %d\n" \
+                    % socket_connections \
+                    + "Total Socket Errors:\t\t %d\n" \
+                    % socket_errors \
+                    + "Total HTTP Requests:\t\t %d\n" \
+                    % http_requests \
+                    + "Total Bytes Read (MB):\t\t %.4f\n" \
+                    % (bytes_read/1024**2) \
+                    + "Total Bytes Written (MB):\t %.4f\n" \
+                    % (bytes_written/1024**2) \
+                    + "Socket connections/sec:\t\t %.4f\n" \
+                    % socket_connections_sec \
+                    + "Read Throughput (MB/sec):\t %.4f\n" \
+                    % (read_throughput/1024**2) \
+                    + "Write Throughput (MB/sec):\t %.4f\n" \
+                    % (write_throughput/1024**2) \
+                    + "Total Run time (secs):\t\t %.4f\n" % runtime \
+                    + "Total Work Time (secs):\t\t %.4f\n" % worktime \
+                    + "------------------------------------------------\n"
+                if auth_stats:
+                    msg += "\t\tAUTHORIZATION\n" \
+                        + "------------------------------------------------\n" \
+                        + "Total attempts:\t\t %d\n" \
+                        % auth_stats['total'](auth_stats) \
+                        + "Total accepts:\t\t %d\n" \
+                        % auth_stats['total_accepted'](auth_stats) \
+                        + "Total sessions accepts:\t %d\n" \
+                        % auth_stats['session'] \
+                        + "Total digest accepts:\t %d\n" \
+                        % auth_stats['digest_accepted'] \
+                        + "Total password accepts:\t %d\n" \
+                        % auth_stats['password_accepted'] \
+                        + "Total Rejects:\t\t %d\n" \
+                        % auth_stats['total_rejected'](auth_stats) \
+                        + "Total digest rejects:\t %d\n" \
+                        % auth_stats['digest_failed'] \
+                        + "Total password rejects:\t %d\n" \
+                        % auth_stats['password_failed'] \
+                        + "Total username rejects:\t %d\n" \
+                        % auth_stats['invalid_username'] \
+                        + "Total user rejects :\t %d\n" \
+                        % auth_stats['invalid_user'] \
+                        + "Total 2fa rejects:\t %d\n" \
+                        % auth_stats['invalid_twofa'] \
+                        + "Total hit rate rejects:\t %d\n" \
+                        % auth_stats['hit_rate_limit'] \
+                        + "------------------------------------------------\n"
+                logger.info(msg)
+                self.last_http_requests = http_requests
+        except Exception, exc:
+            logger.error("Failed to log statistics: %s" % exc)
+            logger.info(traceback.format_exc())
+
+    def run(self):
+        """Start LogStats thread"""
+        if not self.config['enable_stats']:
+            return
+        logger = configuration.logger
+        logger.info("Starting LogStats thread: #%s" % self.ident)
+        sleeptime = 1
+        elapsed = 0
+        while not self.shutdown.is_set():
+            time.sleep(sleeptime)
+            elapsed += sleeptime
+            if self.interval <= elapsed:
+                self._log_stats()
+                elapsed = 0
+
+    def stop(self):
+        """Stop LogStats thread"""
+        if not self.config['enable_stats']:
+            return
+        logger = configuration.logger
+        logger.info("Stopping LogStats Thread: #%s" % self.ident)
+        self.shutdown.set()
+        self._log_stats(force=True)
+        self.join()
+        # logger.debug("LogStats Thread: #%s" % self.ident)
 
 
 def run(configuration):
@@ -1093,7 +1491,7 @@ def run(configuration):
         # "verbose": 2,
         # "enable_loggers": ["http_authenticator"],
         # "debug_methods": ["PROPFIND", "PUT"],
-        "verbose": 1,
+        "verbose": 0,
         "enable_loggers": [],
         "debug_methods": [],
         "propsmanager": True,      # True: use property_manager.PropertyManager
@@ -1101,6 +1499,8 @@ def run(configuration):
         # Allow last modified timestamp updates from client to support rsync -a
         "mutable_live_props": ["{DAV:}getlastmodified"],
         "domaincontroller": MiGWsgiDAVDomainController(user_map),
+        "middleware_stack": [WsgiDavDirBrowser, MiGHTTPAuthenticator, ErrorPrinter, WsgiDavDebugFilter],
+        "enable_stats": False
     })
 
     # NOTE: Briefly insert dummy user to avoid bogus warning about anon access
@@ -1117,7 +1517,6 @@ def run(configuration):
 
     # print('Config: %s' % config)
     # print('app auth: %s' % app_authenticator)
-
     wsgiserver.CherryPyWSGIServer.ssl_adapter = None
     nossl = config.get('nossl', False)
     if not nossl:
@@ -1133,20 +1532,27 @@ def run(configuration):
     version = "%s WebDAV" % configuration.short_title
     server = wsgiserver.CherryPyWSGIServer((config["host"], config["port"]),
                                            app, server_name=version)
+    server.stats['Enabled'] = config['enable_stats']
 
     logger.info('Listening on %(host)s (%(port)s)' % config)
 
     sessionexpiretracker = SessionExpire()
+    logstats = LogStats(config, server, interval=60,
+                        idle_only=False, change_only=True)
+
     try:
         sessionexpiretracker.start()
+        logstats.start()
         server.start()
     except KeyboardInterrupt:
         server.stop()
         sessionexpiretracker.stop()
+        logstats.stop()
         # forward KeyboardInterrupt to main thread
         raise
     except Exception:
         sessionexpiretracker.stop()
+        logstats.stop()
         # forward error to main thread
         raise
 
@@ -1157,7 +1563,7 @@ if __name__ == "__main__":
 
     log_level = configuration.loglevel
     if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
-        log_level = sys.argv[1]
+        log_level = configuration.loglevel = sys.argv[1]
 
     # Use separate logger
     logger = daemon_logger("webdavs",
@@ -1244,6 +1650,17 @@ unless it is available in mig/server/MiGserver.conf
         'litmus_password': litmus_password,
         'time_stamp': 0,
         'logger': logger,
+        # TODO: Add the following to configuration:
+        # max_davs_user_hits
+        # max_davs_user_abuse_hits
+        # max_davs_proto_abuse_hits
+        # max_davs_secret_hits
+        'auth_limits':
+            {'max_user_hits': default_max_user_hits,
+             'user_abuse_hits': default_user_abuse_hits,
+             'proto_abuse_hits': default_proto_abuse_hits,
+             'max_secret_hits': default_max_secret_hits,
+             },
     }
     daemon_conf = configuration.daemon_conf
     daemon_conf['acceptbasic'] = daemon_conf['allow_password']
