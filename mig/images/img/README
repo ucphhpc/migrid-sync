@@ -1,0 +1,1 @@
+This folder is implicitly used by jquery fileupload ui css (mig/images/css/jquery.fileupload-ui.css), so we just link to parent files.
