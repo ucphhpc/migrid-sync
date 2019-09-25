@@ -127,7 +127,11 @@ Web login/access is currently unstable - we're investigating
 <p class="icon_slack iconspace leftpad icontext">
 All access is currently unstable - we're investigating
 </p>
+<p class="icon_slack iconspace leftpad icontext">
+All services except Seafile are fully operational.
+</p>
 -->
+
 
 <p>
 Please use the link at the bottom to contact support in case you have
@@ -138,21 +142,26 @@ questions or encounter any problems.
 <div class="news-accordion">
 <h4 class="staticpage">2019/09/24: Seafile Migration and Down Time</h4>
 <p>
-As mentioned in the June 26th entry we're in the process of migrating
-the ERDA Seafile service for better scalability. We will commence with
-the actual migration to the new stand-alone setup on Tuesday at 8 in the
-morning and expect the data migration to take as much as 24 hours. So the
-service will probably remain offline until sometime on Wednesday. During
-the migration web and client access to the service will be unavailable,
-but we will keep the read-only access to a snapshot of the current data
-online in the usual virtual seafile_readonly folder in the ERDA home
-folder for people using Seafile. 
-All other ERDA services should remain online.
-After the migration we will transparently proxy Seafile requests from the
-old address to the new one. So the service should remain functional with
-the existing configuration, but it may yield better performance to
-switch the client to use the new location directly. More about that
-later.
+As proclaimed in the June 26th entry we've now migrated the ERDA Seafile
+service for better performance and scalability. We commenced with the
+actual migration to the new stand-alone setup on Tuesday at 8 in the
+morning and the data migration and database sychronization was not
+complete until Wednesday morning. After additional verification and
+testing the service was back online Wednesday at about 11.15. The
+migration unfortunately means that we have to suspend the previous
+integration with read access to Seafile data through the standard ERDA
+user home. For the moment we will preserve read-only access to a
+snapshot of the data from <em>right before</em> the migration in the
+usual virtual seafile_readonly folder in the ERDA home folder for people using
+Seafile. It is meant for emergency access to data in case anybody should
+experience problems after the migration and we will eventually remove it.
+After the migration we have enabled transparent proxying of Seafile
+requests from the old address to the new one. So the service should
+remain functional with the existing configuration, but it may yield
+better performance to switch the client to use the new location
+directly. There's more information about the new address and client
+configuration available under the Seafile section on your ERDA Settings
+page.
 </p>
 <h4 class="staticpage">2019/09/18: Planned SIF Maintenance to Allow External Users</h4>
 <p>
@@ -647,6 +656,9 @@ Der er i øjeblikket problemer med weblogin/-adgang - vi undersøger sagen
 <p class="icon_slack iconspace leftpad icontext">
 Der er i øjeblikket problemer med al adgang - vi undersøger sagen
 </p>
+<p class="icon_slack iconspace leftpad icontext">
+Alle services undtagen Seafile kører planmæssigt.
+</p>
 -->
 
 <p>
@@ -658,20 +670,24 @@ du har spørgsmål eller oplever problemer.
 <div class="news-accordion">
 <h4 class="staticpage">24/09-2019: Seafile migrering og nedetid</h4>
 <p>
-Som varslet den 26/6 er vi igang med at migrere ERDA Seafile-servicen
-med henblik på at forbedre dens skalering. Vi går igang med den endelige
-migrering på tirsdag kl 8 og forventer at datamigreringen vil tage op
-til 24 timer. Så servicen vil formodentlig forblive utilgængelig indtil
-engang onsdag. I det tidsrum vil adgang til servicen via såvel web som
-klient være nede, men vi vil holde læseadgang til et aktuelt snapshot af
-data åben via den virtuelle seafile_readonly mappe i ERDA brugermappen for
-Seafile-brugere.
-Alle andre ERDA services skulle forblive tilgængelige.
-Efter migreringen laver vi gennemsigtig viderestilling af
+Som varslet den 26/6 har vi migreret ERDA Seafile-servicen med henblik
+på at forbedre dens ydelse og skalering. Vi gik igang med den endelige
+migrering tirsdag kl 8 og datamigreringen og efterfølgende
+databasesynkroniserig var først færdig onsdag morgen. Efter yderligere
+kontrol og test var servicen tilbage i drift onsdag omkring kl 11.15.
+Migreringen betyder at vi på ubestemt tid må suspendere den hidtidige
+integration med læseadgang til ens Seafile data fra den almindelige ERDA
+brugermappe. Vi beholder dog for nu læseadgang til et snapshot af data
+<em>umiddelbart inden</em> migreringen via den virtuelle seafile_readonly
+mappe i ERDA brugermappen for Seafile-brugere. Den kan benyttes som
+nødløsning hvis nogen skulle opleve problemer efter migreringen, og vi
+fjerner den på sigt.
+Efter migreringen har vi opsat gennemsigtig viderestilling af
 Seafile-forespørgsler fra den gamle til den nye adresse. Servicen skulle
 således gerne forblive funktionel med eksisterende konfigurationer, men
-det vil give bedre ydelse at skifte over til den nye placering
-direkte. Mere derom senere.
+det vil formodentlig give bedre ydelse at skifte over til den nye
+placering direkte. Yderligere detaljer om den nye adresse og
+klient-opsætning findes under Seafile på ens ERDA Settings side.
 </p>
 <h4 class="staticpage">18/09-2019: Planlagt SIF systemvedligehold mhp at tillade eksterne brugere</h4>
 <p>
