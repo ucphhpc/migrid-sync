@@ -2168,7 +2168,7 @@ def handle_auth_attempt(configuration,
             % (user_abuse_hits, username, ip_addr)
         if tcp_port > 0:
             crit_msg += ":%s" % tcp_port
-        logger.warning(crit_msg)
+        logger.critical(crit_msg)
     elif proto_abuse_hits > 0 and proto_hits > proto_abuse_hits:
         crit_msg = "Abuse limit reached"
         authlog(configuration, 'CRITICAL', protocol,
@@ -2177,7 +2177,7 @@ def handle_auth_attempt(configuration,
             % (proto_abuse_hits, username, ip_addr)
         if tcp_port > 0:
             crit_msg += ":%s" % tcp_port
-        logger.warning(crit_msg)
+        logger.critical(crit_msg)
 
     return (authorized, disconnect)
 
