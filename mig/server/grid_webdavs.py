@@ -87,7 +87,6 @@ from shared.useradm import check_password_hash, generate_password_hash, \
     generate_password_digest
 from shared.validstring import possible_user_id, possible_sharelink_id
 
-
 configuration, logger = None, None
 
 
@@ -284,13 +283,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         try:
             # logger.debug("Wrapping socket in SSL/TLS: 0x%x : %s" %
             #             (id(sock), sock.getpeername()))
-            logger.info("SSL/TLS session stats: %s" %
-                        self.ssl_ctx.session_stats())
+            # logger.debug("SSL/TLS session stats: %s" %
+            #             self.ssl_ctx.session_stats())
             ssl_sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
             _socket_list.append(ssl_sock)
             ssl_env = self.get_environ(ssl_sock)
-            logger.info("wrapped sock from %s with ciphers %s" %
-                        (ssl_sock.getpeername(), ssl_sock.cipher()))
+            # logger.debug("wrapped sock from %s with ciphers %s" %
+            #             (ssl_sock.getpeername(), ssl_sock.cipher()))
             # logger.debug("system ssl_sock timeout: %s" % ssl_sock.gettimeout())
             session_timeout = io_session_timeout.get('davs', 0)
             if session_timeout > 0:
