@@ -2063,13 +2063,20 @@ def handle_auth_attempt(configuration,
         logger.warning(warn_msg)
     elif invalid_username:
         disconnect = True
-        err_msg = "Invalid username"
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, err_msg, notify=False)
-        err_msg += " %s from %s" % (username, ip_addr)
+        if re.match(CRACK_USERNAME_REGEX, username) is not None:
+            log_msg = "Crack username detected"
+            log_func = logger.critical
+            authlog_lvl = 'CRITICAL'
+        else:
+            log_msg = "Invalid username"
+            log_func = logger.error
+            authlog_lvl = 'ERROR'
+        authlog(configuration, authlog_lvl, protocol,
+                username, ip_addr, log_msg, notify=False)
+        log_msg += " %s from %s" % (username, ip_addr)
         if tcp_port > 0:
-            err_msg += ":%s" % tcp_port
-        logger.error(err_msg)
+            log_msg += ":%s" % tcp_port
+        log_func(log_msg)
     elif invalid_user:
         disconnect = True
         err_msg = "Missing user and/or credentials"
@@ -2132,19 +2139,6 @@ def handle_auth_attempt(configuration,
             err_msg += ":%s" % tcp_port
         logger.warning(err_msg)
 
-    # Check for crack username
-
-    if (invalid_username or invalid_user) \
-            and re.match(CRACK_USERNAME_REGEX, username) is not None:
-        warn_msg = "Crack username detected"
-        authlog(configuration, 'WARNING', protocol,
-                username, ip_addr, warn_msg, notify=False)
-        warn_msg += " for %s from %s" \
-            % (username, ip_addr)
-        if tcp_port > 0:
-            warn_msg += ":%s" % tcp_port
-        logger.warning(warn_msg)
-
     # Update and check rate limits
 
     (_, proto_hits, user_hits, secret_hits) = \
@@ -2167,23 +2161,23 @@ def handle_auth_attempt(configuration,
     # Check if we should log abuse messages for use by eg. fail2ban
 
     if user_abuse_hits > 0 and user_hits > user_abuse_hits:
-        warn_msg = "Abuse limit reached"
-        authlog(configuration, 'WARNING', protocol,
-                username, ip_addr, warn_msg)
-        warn_msg += " user hits %d for %s from %s" \
+        crit_msg = "Abuse limit reached"
+        authlog(configuration, 'CRITICAL', protocol,
+                username, ip_addr, crit_msg)
+        crit_msg += " user hits %d for %s from %s" \
             % (user_abuse_hits, username, ip_addr)
         if tcp_port > 0:
-            warn_msg += ":%s" % tcp_port
-        logger.warning(warn_msg)
+            crit_msg += ":%s" % tcp_port
+        logger.warning(crit_msg)
     elif proto_abuse_hits > 0 and proto_hits > proto_abuse_hits:
-        warn_msg = "Abuse limit reached"
-        authlog(configuration, 'WARNING', protocol,
-                username, ip_addr, warn_msg)
-        warn_msg += " proto hits %d for %s from %s" \
+        crit_msg = "Abuse limit reached"
+        authlog(configuration, 'CRITICAL', protocol,
+                username, ip_addr, crit_msg)
+        crit_msg += " proto hits %d for %s from %s" \
             % (proto_abuse_hits, username, ip_addr)
         if tcp_port > 0:
-            warn_msg += ":%s" % tcp_port
-        logger.warning(warn_msg)
+            crit_msg += ":%s" % tcp_port
+        logger.warning(crit_msg)
 
     return (authorized, disconnect)
 
