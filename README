@@ -500,7 +500,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=erda-ucph-science  --short_title=ERDA \
+                   --skin=erda-ucph-science --short_title=ERDA \
                    --wsgi_procs=25
                    
 and the same with added Jupyter integration and optional 2FA support:
@@ -537,6 +537,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --enable_sftp=False --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True \
                    --enable_duplicati=True --enable_seafile=True \
+                   --seafile_fqdn=seafile.erda.dk \
                    --enable_sandboxes=False --enable_vmachines=False \
                    --enable_crontab=True --enable_jobs=False \
                    --enable_resources=False --enable_events=True \
@@ -557,8 +558,9 @@ and the same with added Jupyter integration and optional 2FA support:
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=erda-ucph-science --short_title=ERDA \
-                   --apache_worker_procs=1024 \
-                   --wsgi_procs=25 --sftp_subsys_auth_procs=25
+                   --apache_worker_procs=2048 \
+                   --davs_port=8020 --openid_port=8001 \
+                   --wsgi_procs=50 --sftp_subsys_auth_procs=25
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, job execution, Jupyter integration, previews and OpenID login
