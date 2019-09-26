@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelink - backend to create and manage share links
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,36 +32,38 @@ import os
 import datetime
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
-from shared.defaults import  default_pager_entries, keyword_owners, \
-     keyword_members, csrf_field
+from shared.base import client_id_dir, extract_field
+from shared.defaults import default_pager_entries, keyword_owners, \
+    keyword_members, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+    html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.pwhash import make_hash
 from shared.sharelinks import build_sharelinkitem_object, load_share_links, \
-     create_share_link, update_share_link, delete_share_link, \
-     create_share_link_form, invite_share_link_form, \
-     invite_share_link_message, generate_sharelink_id
+    create_share_link, update_share_link, delete_share_link, \
+    create_share_link_form, invite_share_link_form, \
+    invite_share_link_message, generate_sharelink_id
 from shared.validstring import valid_user_path
 from shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings, \
-     vgrid_add_sharelinks, vgrid_remove_sharelinks
+    vgrid_add_sharelinks, vgrid_remove_sharelinks
 
 get_actions = ['show', 'edit']
 post_actions = ['create', 'update', 'delete']
 valid_actions = get_actions + post_actions
 enabled_strings = ('on', 'yes', 'true')
 
+
 def signature():
     """Signature of the main function"""
 
     defaults = {'action': ['show'], 'share_id': [''], 'path': [''],
-                'read_access':[''], 'write_access':[''], 'expire': [''],
+                'read_access': [''], 'write_access': [''], 'expire': [''],
                 'invite': [''], 'msg': ['']}
     return ['text', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -77,7 +79,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -91,16 +93,16 @@ def main(client_id, user_arguments_dict):
     invite_list = ','.join(accepted['invite']).split(',')
     invite_list = [i for i in invite_list if i]
     invite_msg = accepted['msg']
-    
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Share Link'
 
     # jquery support for tablesorter and confirmation on delete/redo:
     # table initially sorted by 5, 4 reversed (active first and in growing age)
-    
+
     table_spec = {'table_id': 'sharelinkstable', 'sort_order':
                   '[[5,1],[4,1]]'}
-    (add_import, add_init, add_ready) = man_base_js(configuration, 
+    (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec],
                                                     {'width': 600})
     title_entry['style'] = themed_styles(configuration)
@@ -109,8 +111,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
-    header_entry = {'object_type': 'header', 'text'
-                           : 'Manage share links'}
+    header_entry = {'object_type': 'header', 'text': 'Manage share links'}
     output_objects.append(header_entry)
 
     if not configuration.site_enable_sharelinks:
@@ -124,8 +125,8 @@ Please contact the site admins %s if you think they should be enabled.
     logger.debug('sharelink from %s: %s' % (client_id, accepted))
 
     if not action in valid_actions:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid action "%s" (supported: %s)' % \
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -164,7 +165,7 @@ Please contact the site admins %s if you think they should be enabled.
                                        helper})
                 share_item['delsharelink'] = {
                     'object_type': 'link', 'destination':
-                    "javascript: confirmDialog(%s, '%s');" % \
+                    "javascript: confirmDialog(%s, '%s');" %
                     (js_name, 'Really remove %s?' % saved_id),
                     'class': 'removelink iconspace', 'title':
                     'Remove share link %s' % saved_id, 'text': ''}
@@ -172,25 +173,27 @@ Please contact the site admins %s if you think they should be enabled.
 
             # Display share links and form to add new ones
 
-            output_objects.append({'object_type': 'sectionheader', 'text'
-                              : 'Share Links'})
+            output_objects.append(
+                {'object_type': 'sectionheader', 'text': 'Share Links'})
             output_objects.append({'object_type': 'table_pager',
                                    'entry_name': 'share links',
                                    'default_entries': default_pager_entries})
-            output_objects.append({'object_type': 'sharelinks', 'sharelinks'
-                                  : sharelinks, 'skip_list': skip_list})
+            output_objects.append(
+                {'object_type': 'sharelinks', 'sharelinks': sharelinks,
+                 'skip_list': skip_list})
 
-            output_objects.append({'object_type': 'html_form', 'text': '<br/>'})
-            output_objects.append({'object_type': 'sectionheader', 'text'
-                              : 'Create Share Link'})
+            output_objects.append(
+                {'object_type': 'html_form', 'text': '<br/>'})
+            output_objects.append(
+                {'object_type': 'sectionheader', 'text': 'Create Share Link'})
             submit_button = '''<span>
     <input type=submit value="Create share link" />
     </span>'''
             sharelink_html = create_share_link_form(configuration, client_id,
                                                     'html', submit_button,
                                                     csrf_token)
-            output_objects.append({'object_type': 'html_form', 'text'
-                                  : sharelink_html})
+            output_objects.append(
+                {'object_type': 'html_form', 'text': sharelink_html})
         elif action == "edit":
             header_entry['text'] = 'Edit Share Link'
             share_dict = share_map.get(share_id, {})
@@ -221,31 +224,31 @@ comma-separated recipients.
             del share_item['editsharelink']
             share_item['delsharelink'] = {
                 'object_type': 'link', 'destination':
-                "javascript: confirmDialog(%s, '%s');" % \
+                "javascript: confirmDialog(%s, '%s');" %
                 (js_name, 'Really remove %s?' % saved_id),
-                'class': 'removelink iconspace', 'title': 'Remove share link %s' % \
-                saved_id, 'text': ''}
+                'class': 'removelink iconspace', 'title':
+                'Remove share link %s' % saved_id, 'text': ''}
             sharelinks.append(share_item)
-            output_objects.append({'object_type': 'sharelinks', 'sharelinks'
-                                  : sharelinks})
+            output_objects.append(
+                {'object_type': 'sharelinks', 'sharelinks': sharelinks})
             submit_button = '''<span>
     <input type=submit value="Send invitation(s)" />
     </span>'''
             sharelink_html = invite_share_link_form(configuration, client_id,
                                                     share_dict, 'html',
                                                     submit_button, csrf_token)
-            output_objects.append({'object_type': 'html_form', 'text'
-                                  : sharelink_html})
+            output_objects.append(
+                {'object_type': 'html_form', 'text': sharelink_html})
             output_objects.append({'object_type': 'link',
                                    'destination': 'sharelink.py',
                                    'text': 'Return to share link overview'})
-            
+
         return (output_objects, returnvalues.OK)
     elif action in post_actions:
         share_dict = share_map.get(share_id, {})
         if not share_dict and action != 'create':
-            logger.warning('%s tried to %s missing or not owned link %s!' % \
-                               (client_id, action, share_id))
+            logger.warning('%s tried to %s missing or not owned link %s!' %
+                           (client_id, action, share_id))
             output_objects.append(
                 {'object_type': 'error_text',
                  'text': '%s requires existing share link' % action})
@@ -255,10 +258,10 @@ comma-separated recipients.
 
         # Please note that base_dir must end in slash to avoid access to other
         # user dirs when own name is a prefix of another user name
-        
+
         base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                                 client_dir)) + os.sep
-        
+
         rel_share_path = share_path.lstrip(os.sep)
         # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_path = os.path.abspath(os.path.join(base_dir, rel_share_path))
@@ -279,12 +282,14 @@ comma-separated recipients.
                                                                 [share_id],
                                                                 'share_id')
                 if not del_status:
-                    logger.error("del vgrid sharelink pointer %s failed: %s" \
+                    logger.error("del vgrid sharelink pointer %s failed: %s"
                                  % (share_id, del_msg))
                     return (False, share_map)
             desc = "delete"
         elif action == "update":
             header_entry['text'] = 'Update Share Link'
+            # Try to point replies to client_id email
+            client_email = extract_field(client_id, 'email')
             if invite_list:
                 invites = share_dict.get('invites', []) + invite_list
                 invites_uniq = list(set([i for i in invites if i]))
@@ -297,7 +302,8 @@ comma-separated recipients.
                 threads = []
                 for target in invite_list:
                     job_dict = {'NOTIFY': [target.strip()], 'JOB_ID': 'NOJOBID',
-                                'USER_CERT': client_id}
+                                'USER_CERT': client_id, 'EMAIL_SENDER':
+                                client_email}
 
                     logger.debug('invite %s to %s' % (target, share_id))
                     threads.append(notify_user_thread(
@@ -307,9 +313,9 @@ comma-separated recipients.
                         logger,
                         '',
                         configuration,
-                        )
-                                            )
-                    
+                    )
+                    )
+
                 # Try finishing delivery but do not block forever on one message
                 notify_done = [False for _ in threads]
                 for _ in range(3):
@@ -339,9 +345,10 @@ comma-separated recipients.
 %s
 %s
 </textarea>
-                                            ''' % (', '.join(notify_sent),
-                                                   (auto_msg+msg).count('\n')+3,
-                                                   auto_msg, msg)
+                                            ''' %
+                                           (', '.join(notify_sent),
+                                            (auto_msg+msg).count('\n')+3,
+                                            auto_msg, msg)
                                            })
             if expire:
                 share_dict['expire'] = expire
@@ -352,18 +359,18 @@ comma-separated recipients.
             header_entry['text'] = 'Create Share Link'
             if not read_access and not write_access:
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'No access set - please select read, write or both'})
+                    {'object_type': 'error_text', 'text':
+                     'No access set - please select read, write or both'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             # NOTE: check path here as relative_path is empty for path='/'
             if not path:
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'No path provided!'})
+                    {'object_type': 'error_text', 'text': 'No path provided!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             # We refuse sharing of entire home for security reasons
-            elif not valid_user_path(configuration, abs_path, base_dir, allow_equal=False):
-                logger.warning('%s tried to %s restricted path %s ! (%s)' % \
+            elif not valid_user_path(configuration, abs_path, base_dir,
+                                     allow_equal=False):
+                logger.warning('%s tried to %s restricted path %s ! (%s)' %
                                (client_id, action, abs_path, path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text': '''Illegal path "%s":
@@ -372,13 +379,13 @@ you can only share your own data, and not your entire home direcory.''' % path
                 return (output_objects, returnvalues.CLIENT_ERROR)
             elif not os.path.exists(abs_path):
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'Provided path "%s" does not exist!' % path})
+                    {'object_type': 'error_text', 'text':
+                     'Provided path "%s" does not exist!' % path})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             # Refuse sharing of (mainly auth) dot dirs in root of user home
             elif real_path.startswith(os.path.join(base_dir, '.')):
                 output_objects.append(
-                    {'object_type': 'error_text', 'text': 
+                    {'object_type': 'error_text', 'text':
                      'Provided path "%s" cannot be shared for security reasons'
                      % path})
                 return (output_objects, returnvalues.CLIENT_ERROR)
@@ -393,9 +400,9 @@ it or only share with read access.
             # We check if abs_path is in vgrid share, but do not worry about
             # private_base or public_base since they are only available to
             # owners, who can always share anyway.
-            
+
             if vgrid_name is not None and \
-                   not vgrid_is_owner(vgrid_name, client_id, configuration):
+                    not vgrid_is_owner(vgrid_name, client_id, configuration):
                 # share is inside vgrid share so we must check that user is
                 # permitted to create sharelinks there.
                 (load_status, settings_dict) = vgrid_settings(vgrid_name,
@@ -407,14 +414,14 @@ it or only share with read access.
                     settings_dict = {'vgrid_name': vgrid_name}
                 allowed = settings_dict.get('create_sharelink', keyword_owners)
                 if allowed != keyword_members:
-                     output_objects.append(
-                         {'object_type': 'error_text', 'text': '''The settings
+                    output_objects.append(
+                        {'object_type': 'error_text', 'text': '''The settings
 for the %(vgrid_name)s %(vgrid_label)s do not permit you to re-share
 %(vgrid_label)s shared folders. Please contact the %(vgrid_name)s owners if you
 think you should be allowed to do that.
 ''' % {'vgrid_name': vgrid_name, 'vgrid_label': configuration.site_vgrid_label}
-                          })
-                     return (output_objects, returnvalues.CLIENT_ERROR)
+                        })
+                    return (output_objects, returnvalues.CLIENT_ERROR)
 
             access_list = []
             if read_access:
@@ -433,8 +440,8 @@ think you should be allowed to do that.
 
             # IMPORTANT: always use expanded path
             share_dict.update(
-                {'path': relative_path, 'access': access_list, 'expire': expire,
-                 'invites': invite_list, 'single_file': single_file})
+                {'path': relative_path, 'access': access_list, 'expire':
+                 expire, 'invites': invite_list, 'single_file': single_file})
             attempts = 1
             generate_share_id = False
             if not share_id:
@@ -443,7 +450,7 @@ think you should be allowed to do that.
             for i in range(attempts):
                 if generate_share_id:
                     share_id = generate_sharelink_id(configuration, share_mode)
-                share_dict['share_id']  = share_id
+                share_dict['share_id'] = share_id
                 (save_status, save_msg) = create_share_link(share_dict,
                                                             client_id,
                                                             configuration,
@@ -453,7 +460,7 @@ think you should be allowed to do that.
                     break
                 else:
                     # ID Collision?
-                    logger.warning('could not create sharelink: %s' % \
+                    logger.warning('could not create sharelink: %s' %
                                    save_msg)
             if save_status and vgrid_name:
                 logger.debug("add vgrid sharelink pointer %s" % share_id)
@@ -461,26 +468,26 @@ think you should be allowed to do that.
                                                              vgrid_name,
                                                              [share_dict])
                 if not add_status:
-                    logger.error("save vgrid sharelink pointer %s failed: %s " \
+                    logger.error("save vgrid sharelink pointer %s failed: %s "
                                  % (share_id, add_msg))
                     return (False, share_map)
         else:
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'No such action %s' % (action)})
+                {'object_type': 'error_text', 'text': 'No such action %s' %
+                 action})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if not save_status:
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'Error in %s share link %s: ' % (desc, share_id) + \
+                {'object_type': 'error_text', 'text':
+                 'Error in %s share link %s: ' % (desc, share_id) +
                  'save updated share links failed!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        output_objects.append({'object_type': 'text', 'text'
-                               : '%sd share link %s on %s .' % (desc.title(),
-                                                                share_id,
-                                                                relative_path)})
+        output_objects.append({'object_type': 'text', 'text':
+                               '%sd share link %s on %s .' % (desc.title(),
+                                                              share_id,
+                                                              relative_path)})
         if action in ['create', 'update']:
             sharelinks = []
             share_item = build_sharelinkitem_object(configuration,
@@ -494,13 +501,13 @@ think you should be allowed to do that.
             output_objects.append({'object_type': 'html_form', 'text': helper})
             share_item['delsharelink'] = {
                 'object_type': 'link', 'destination':
-                "javascript: confirmDialog(%s, '%s');" % \
+                "javascript: confirmDialog(%s, '%s');" %
                 (js_name, 'Really remove %s?' % saved_id),
-                'class': 'removelink iconspace', 'title': 'Remove share link %s' % \
-                saved_id, 'text': ''}
+                'class': 'removelink iconspace', 'title':
+                'Remove share link %s' % saved_id, 'text': ''}
             sharelinks.append(share_item)
-            output_objects.append({'object_type': 'sharelinks', 'sharelinks'
-                                  : sharelinks})
+            output_objects.append(
+                {'object_type': 'sharelinks', 'sharelinks': sharelinks})
             if action == 'create':
                 # NOTE: Leave editsharelink here for use in fileman overlay
                 #del share_item['editsharelink']
@@ -515,13 +522,13 @@ think you should be allowed to do that.
                 output_objects.append({'object_type': 'html_form', 'text':
                                        invite_html})
     else:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Invalid share link action: %s' % action})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Invalid share link action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
-                
+
     output_objects.append({'object_type': 'html_form', 'text': '<br />'})
     output_objects.append({'object_type': 'link',
                            'destination': 'sharelink.py',
                            'text': 'Return to share link overview'})
     return (output_objects, returnvalues.OK)
-

@@ -128,6 +128,7 @@ def fix_missing(config_file, verbose=True):
         'empty_job_name': 'no_suitable_job-',
         'smtp_server': fqdn,
         'smtp_sender': '',
+        'smtp_send_as_user': False,
         'smtp_reply_to': '',
         'user_sftp_address': fqdn,
         'user_sftp_port': 2222,
@@ -338,6 +339,7 @@ class Configuration:
     trac_id_field = ''
     smtp_server = ''
     smtp_sender = ''
+    smtp_send_as_user = False
     smtp_reply_to = ''
     user_sftp_address = ''
     user_sftp_port = 2222
@@ -1124,6 +1126,11 @@ location.""" % self.config_file
                                (self.short_title,
                                 os.environ.get('USER', 'mig'),
                                 self.server_fqdn)
+        if config.has_option('GLOBAL', 'smtp_send_as_user'):
+            self.smtp_send_as_user = config.getboolean('GLOBAL',
+                                                       'smtp_send_as_user')
+        else:
+            self.smtp_send_as_user = False
         if config.has_option('GLOBAL', 'smtp_reply_to'):
             self.smtp_reply_to = config.get('GLOBAL', 'smtp_reply_to')
         else:

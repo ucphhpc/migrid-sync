@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequestaction - send request for e.g. member or ownership action handler
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.base import extract_field
 from shared.defaults import default_vgrid, any_vgrid, any_protocol, \
     email_keyword_list, default_vgrid_settings_limit
 from shared.accessrequests import save_access_request
@@ -118,6 +119,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     user_map = get_user_map(configuration)
     reply_to = user_map[client_id][USERID]
+    # Try to point replies to client_id email
+    client_email = extract_field(reply_to, 'email')
 
     if request_type == "plain":
         if not visible_user_names:
@@ -428,7 +431,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         notify = []
         for proto in protocols:
             notify.append('%s: SETTINGS' % proto)
-        job_dict = {'NOTIFY': notify, 'JOB_ID': 'NOJOBID', 'USER_CERT': target}
+        job_dict = {'NOTIFY': notify, 'JOB_ID': 'NOJOBID', 'USER_CERT': target,
+                    'EMAIL_SENDER': client_email}
 
         notifier = notify_user_thread(
             job_dict,

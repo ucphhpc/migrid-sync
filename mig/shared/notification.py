@@ -85,10 +85,11 @@ def create_notify_message(
 
 ---
 """
-    txt += """
+    if not jobdict.get('EMAIL_SENDER', None):
+        txt += """
 *** IMPORTANT: direct replies to this automated message will NOT be read! ***
-
 """
+
     if status == 'SUCCESS':
         header = '%s JOB finished' % configuration.short_title
         var_dict['generated_links'] = generate_https_urls(
@@ -416,9 +417,20 @@ def send_email(
     logger,
     configuration,
     files=[],
+    custom_sender=None
 ):
     """Send message to recipients by email:
-    Force utf8 encoding to avoid accented characters appearing garbled
+    Force utf8 encoding to avoid accented characters appearing garbled.
+
+    The optional custom_sender can be used to set the email sender in one of
+    two ways depending on the configuration option smtp_send_as_user.
+    In case that option is enabled custom_sender will be used as from and
+    envelope sender address, the latter of which is used e.g. for bounces. It
+    should be noted that doing so comes with the risk of legit mail getting
+    spam-filtered because of failed SPF checks.
+    If the configuration does not set smtp_send_as_user custom_sender will only
+    be used as the Reply-To address which is still convenient when users send out
+    invitations and trigger various requests that may receive manual replies. 
     """
 
     if recipients.find(', ') > -1:
@@ -426,11 +438,22 @@ def send_email(
     else:
         recipients_list = [recipients]
 
+    sender_email = from_email = configuration.smtp_sender
+    reply_to_email = configuration.smtp_reply_to
+    if custom_sender:
+        # Only use custom envelope sender if specifically configured!
+        if configuration.smtp_send_as_user:
+            from_email = sender_email = custom_sender
+            reply_to_email = ''
+        else:
+            reply_to_email = custom_sender
+
     try:
         mime_msg = MIMEMultipart()
-        mime_msg['From'] = configuration.smtp_sender
+        mime_msg['From'] = from_email
         mime_msg['To'] = recipients
-        mime_msg['Reply-To'] = configuration.smtp_reply_to
+        if reply_to_email:
+            mime_msg['Reply-To'] = reply_to_email
         mime_msg['Date'] = formatdate(localtime=True)
         mime_msg['Subject'] = subject
         mime_msg.attach(MIMEText(force_utf8(message), "plain", "utf8"))
@@ -443,11 +466,11 @@ def send_email(
                             'attachment; filename="%s"'
                             % os.path.basename(name))
             mime_msg.attach(part)
-        logger.debug('sending email to %s:\n%s' % (recipients,
-                                                   mime_msg.as_string()))
+        logger.debug('sending email from %s to %s:\n%s' %
+                     (from_email, recipients, mime_msg.as_string()))
         server = smtplib.SMTP(configuration.smtp_server)
         server.set_debuglevel(0)
-        errors = server.sendmail(configuration.smtp_sender,
+        errors = server.sendmail(sender_email,
                                  recipients_list, mime_msg.as_string())
         server.quit()
         if errors:
@@ -499,6 +522,7 @@ def notify_user(
                                + jobdict['JOB_ID'] + '.xml')
 
     jobid = jobdict['JOB_ID']
+    email_sender = jobdict.get('EMAIL_SENDER', None)
     for notify_line in jobdict['NOTIFY']:
         logger.debug('notify line: %s' % notify_line)
         (header, message) = create_notify_message(jobdict,
@@ -606,7 +630,7 @@ def notify_user(
                     continue
 
                 if send_email(single_dest, header, message, logger,
-                              configuration):
+                              configuration, custom_sender=email_sender):
                     logger.info('email sent to %s telling that %s %s'
                                 % (single_dest, jobid, status))
                 else:
