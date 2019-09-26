@@ -2276,13 +2276,21 @@ if (jQuery) (function($){
                     bind_click = 'left';
                 }
                 $.contextMenu({
-                    selector: 'tr.file',
+                    selector: '#fm_filelisting tr.file',
                     trigger: bind_click,
                     callback: function(key, call_opts) {
                         var m = "file menu clicked: " + key;
                         console.debug(m);
                         var action = key;
-                        var el = $(this);
+                        var el;
+                        /* NOTE: contextMenu 2.x switched to trigger element only in call_opts */
+                        if (call_opts.$trigger) {
+                            el = call_opts.$trigger;
+                            console.debug("using trigger elem");
+                        } else {
+                            el = $(this);
+                            console.debug("using this elem");
+                        }
                         console.debug("handle " + action + " on file " + $.fn.dump(el));
                         (options['actions'][action])(action, el, -1);
                         console.debug("done " + action + " on file " + $.fn.dump(el));
@@ -2291,13 +2299,19 @@ if (jQuery) (function($){
                 });
 
                 $.contextMenu({
-                    selector: 'tr.directory, li.directory, div.filespacer, div.uploadspace',
+                    selector: '#fm_filemanager div.fm_folders li.directory, #fm_filelisting tr.directory, #fm_filemanager .fm_files div.filespacer, #fm_filemanager .fm_files div.uploadspace',
                     trigger: bind_click,
                     callback: function(key, call_opts) {
                         var m = "directory menu clicked: " + key;
                         console.debug(m);
                         var action = key;
-                        var el = $(this);
+                        var el;
+                        /* NOTE: contextMenu 2.x switched to trigger element only in call_opts */
+                        if (call_opts.$trigger) {
+                            el = call_opts.$trigger;
+                        } else {
+                            el = $(this);
+                        }
                         console.debug("handle " + action + " on dir " + $.fn.dump(el));
                         (options['actions'][action])(action, el, -1);
                         console.debug("done " + action + " on dir " + $.fn.dump(el));

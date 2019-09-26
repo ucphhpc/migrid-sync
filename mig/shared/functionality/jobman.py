@@ -98,6 +98,10 @@ def js_tmpl(csrf_map={}):
     """Javascript to include in the page header"""
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
+<!-- NOTE: only for testing JQuery API compliance - not for production use -->
+<!--
+<script type="text/javascript" src="/images/js/jquery-migrate.js"></script>
+-->
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>

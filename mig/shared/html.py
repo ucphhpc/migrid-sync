@@ -500,7 +500,9 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
 <script type="text/javascript" src="/images/js/jquery.fileupload-validate.js"></script>
 <!-- The File Upload user interface plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
-<!-- The File Upload jQuery UI plugin -->
+<!-- The File Upload jQuery UI plugin using simple jQuery UI -->
+<!-- Please note that this is no longer distributed with file uploader since
+     switch to bootstrap. We still use it to style the fileupload dialog buttons. -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
 
 <!-- The template to display files available for upload -->

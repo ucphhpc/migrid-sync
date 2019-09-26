@@ -515,6 +515,10 @@ def js_tmpl(configuration,
     }
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
+<!-- NOTE: only for testing JQuery API compliance - not for production use -->
+<!--
+<script type="text/javascript" src="/images/js/jquery-migrate.js"></script>
+-->
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <!-- Filemanager and dependencies -->
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
@@ -570,7 +574,9 @@ csrf_map["%s"] = "%s";
 <script type="text/javascript" src="/images/js/jquery.fileupload-validate.js"></script>
 <!-- The File Upload user interface plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
-<!-- The File Upload jQuery UI plugin -->
+<!-- The File Upload jQuery UI plugin using simple jQuery UI -->
+<!-- Please note that this is no longer distributed with file uploader since
+     switch to bootstrap. We still use it to style the fileupload dialog buttons. -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
 
 <!-- The template to display files available for upload -->
