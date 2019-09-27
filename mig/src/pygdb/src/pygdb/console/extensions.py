@@ -210,6 +210,8 @@ def list_pyframe(start=None, end=None):
                 color = term_color(0)
             print color
             sys.stdout.write("%d\t%s" % (display_lineno, line[:-1]))
+    color = term_color(0)
+    print color
     print ""
     fh.close()
 
