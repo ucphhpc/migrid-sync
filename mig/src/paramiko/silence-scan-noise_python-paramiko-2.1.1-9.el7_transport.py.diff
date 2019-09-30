@@ -1,0 +1,13 @@
+--- /usr/lib/python2.7/site-packages/paramiko/transport.py	2019-09-30 09:43:00.813000000 +0200
++++ /usr/lib/python2.7/site-packages/paramiko/transport.py.orig	2019-09-30 09:42:47.169000000 +0200
+@@ -1844,9 +1844,7 @@
+                     self.packetizer.complete_handshake()
+             except SSHException as e:
+                 self._log(ERROR, 'Exception: ' + str(e))
+-                # NOTE: we degraded this noisy traceback from ERROR to INFO
+-                #       It is usually just ssh vulnerability scans failing. 
+-                self._log(INFO, util.tb_strings())
++                self._log(ERROR, util.tb_strings())
+                 self.saved_exception = e
+             except EOFError as e:
+                 self._log(DEBUG, 'EOF in transport thread')

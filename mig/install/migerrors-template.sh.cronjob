@@ -3,6 +3,12 @@
 # Look for typical serious errors in MiG logs.
 # Runs as MiG user and limits to log entries from today and yesterday.
 #
+# NOTE: if you run the Paramiko-based SFTP service you may also want to patch
+# Paramiko with something like the
+# silence-scan-noise_python-paramiko-2.1.1-9.el7_transport.py.diff patch in the
+# mig/src/paramiko/ folder to avoid the below search on sftp.log spewing a ton
+# of traceback errors from automated ssh scanners.
+#
 # IMPORTANT: if placed in /etc/cron.X the script filename must be 
 # something consisting entirely of upper and lower case letters, digits, 
 # underscores, and hyphens. I.e. if the script name contains e.g. a period, 
