@@ -159,7 +159,21 @@ class cmd_py_attach(gdb.Command):
         except:
             self.help()
             return
+
+        # Reset GDB environment including old breakpoints
+
+        try:
+            gdb.execute('delete')
+        except Exception:
+            pass
+
+        # Attach pid
+
         attach(pid)
+
+        # Re-register pygdb commands
+
+        register()
 
 
 class cmd_py_detach(gdb.Command):

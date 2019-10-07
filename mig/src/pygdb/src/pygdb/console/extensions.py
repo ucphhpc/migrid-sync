@@ -244,11 +244,6 @@ def attach(pid):
 
     gdb.execute('attach %d' % pid)
     if set_console_connected():
-        # Clear old breakpoints
-        try:
-            gdb.execute('delete')
-        except Exception:
-            pass
         # Set breakpoint
         gdb.execute('break %s' % __breakpoint_identifier)
         gdb.execute('continue')
