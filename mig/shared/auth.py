@@ -35,8 +35,6 @@ import os
 import re
 import time
 
-#import pygdb.breakpoint
-
 # Only needed for 2FA so ignore import error and only fail on use
 try:
     import pyotp
