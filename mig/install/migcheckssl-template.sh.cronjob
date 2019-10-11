@@ -106,9 +106,11 @@ fi
 
 if [ ! -f ${server_key_crt_ca_pem} ]; then
     org_mtime=(0)
+    org_chksum=''
 else
     # Avoid shell builtin stat as it may not have c option 
     org_mtime=$(/usr/bin/stat -c %Y ${server_key_crt_ca_pem})
+    org_chksum=$(/usr/bin/md5sum ${server_key_crt_ca_pem})
 fi
 
 # Check for new certificate
@@ -119,14 +121,16 @@ ${getssl_cmd}
 
 if [ ! -f ${server_key_crt_ca_pem} ]; then
     new_mtime=(0)
+    new_chksum=''
 else
     # Avoid shell builtin stat as it may not have c option 
     new_mtime=$(/usr/bin/stat -c %Y ${server_key_crt_ca_pem})
+    new_chksum=$(/usr/bin/md5sum ${server_key_crt_ca_pem})
 fi
 
 # Update MiG specific certificate paths if certificate is updated
 
-if [[ ${org_mtime} -ne ${new_mtime} ]]; then
+if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
     if [[ ${verbose} -eq 1 ]]; then
         echo "--- LetsEncrypt certificates updated ---"
     fi
