@@ -26,47 +26,13 @@
 #
 
 #
-# This code is a modified version of python-gdb.py:
-# https://github.com/WiserTogether/python27/blob/master/python-gdb.py
+# This file is a modified version of python-gdb.py from python 2.7.X:
+# https://devguide.python.org/gdb/#gdb-7-and-later
+# 
+# You can redistribute it and/or modify it under the terms of the
+# PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2:
+# https://docs.python.org/2.7/license.html
 #
-# From gdb 7 onwards, gdb's build can be configured --with-python, allowing gdb
-# to be extended with Python code e.g. for library-specific data visualizations,
-# such as for the C++ STL types.  Documentation on this API can be seen at:
-# http://sourceware.org/gdb/current/onlinedocs/gdb/Python-API.html
-#
-#
-# This python module deals with the case when the process being debugged (the
-# "inferior process" in gdb parlance) is itself python, or more specifically,
-# linked against libpython.  In this situation, almost every item of data is a
-# (PyObject*), and having the debugger merely print their addresses is not very
-# enlightening.
-
-# This module embeds knowledge about the implementation details of libpython so
-# that we can emit useful visualizations e.g. a string, a list, a dict, a frame
-# giving file/line information and the state of local variables
-#
-# In particular, given a gdb.Value corresponding to a PyObject* in the inferior
-# process, we can generate a "proxy value" within the gdb process.  For example,
-# given a PyObject* in the inferior process that is in fact a PyListObject*
-# holding three PyObject* that turn out to be PyStringObject* instances, we can
-# generate a proxy value within the gdb process that is a list of strings:
-# ["foo", "bar", "baz"]
-#
-# Doing so can be expensive for complicated graphs of objects, and could take
-# some time, so we also have a "write_repr" method that writes a representation
-# of the data to a file-like object.  This allows us to stop the traversal by
-# having the file-like object raise an exception if it gets too much data.
-#
-# With both "proxyval" and "write_repr" we keep track of the set of all addresses
-# visited so far in the traversal, to avoid infinite recursion due to cycles in
-# the graph of object references.
-#
-# We try to defer gdb.lookup_type() invocations for python types until as late as
-# possible: for a dynamically linked python binary, when the process starts in
-# the debugger, the libpython.so hasn't been dynamically loaded yet, so none of
-# the type names are known to the debugger
-#
-# The module also extends gdb with some python-specific commands.
 
 """GDB console python core functions"""
 
