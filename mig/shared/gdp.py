@@ -149,9 +149,9 @@ def __client_id_from_project_client_id(configuration,
         if project_client_id.find(client_id_project_postfix) > -1:
             result = \
                 project_client_id.split(client_id_project_postfix)[0]
-        else:
-            _logger.warning(
-                "'%s' is NOT a GDP project client id" % project_client_id)
+        # else:
+        #     _logger.debug(
+        #         "%r is NOT a GDP project client id" % project_client_id)
     except Exception, exc:
         _logger.error(
             "GDP:__client_id_from_project_client_id failed:"
@@ -988,6 +988,27 @@ def __active_project(configuration, user_id, protocol, locked=False):
                         __project_name_from_project_client_id(configuration,
                                                               role)
     return result
+
+
+def get_base_client_id(configuration, user_id, expand_oid_alias=True):
+    """Returns real user client_id from *user_id* which might
+    Set *expand_oid_alias* to False for performance
+    if user_id is a project_client_id or client_id"""
+
+    if expand_oid_alias:
+        possible_project_client_id = expand_openid_alias(
+            user_id, configuration)
+    else:
+        possible_project_client_id = user_id
+
+    possible_client_id = __client_id_from_project_client_id(
+        configuration, possible_project_client_id)
+    if possible_client_id is not None:
+        client_id = possible_client_id
+    else:
+        client_id = possible_project_client_id
+
+    return client_id
 
 
 def get_client_id_from_project_client_id(configuration, project_client_id):

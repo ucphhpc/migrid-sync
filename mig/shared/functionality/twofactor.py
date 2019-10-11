@@ -35,7 +35,6 @@ but completely rewritten to fit our infrastructure and on-disk layout.
 
 import Cookie
 import os
-import sys
 import time
 import urllib
 import urlparse
@@ -43,15 +42,12 @@ import urlparse
 import shared.returnvalues as returnvalues
 from shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
-    load_twofactor_session, save_twofactor_session, expire_twofactor_session
-from shared.base import force_utf8
-from shared.defaults import twofactor_cookie_bytes, twofactor_cookie_ttl
-from shared.fileio import delete_file, write_file
+    save_twofactor_session, expire_twofactor_session
+from shared.defaults import twofactor_cookie_ttl
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
 from shared.html import twofactor_token_html
 from shared.settings import load_twofactor
-from shared.useradm import client_id_dir
 from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 
 
@@ -108,12 +104,25 @@ def main(client_id, user_arguments_dict, environ=None):
                                '''2FA is not enabled on the system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    if configuration.site_twofactor_strict_address \
+            and not expire_twofactor_session(configuration,
+                                             client_id,
+                                             environ,
+                                             allow_missing=True,
+                                             not_user_addr=user_addr):
+        logger.error("could not expire old 2FA sessions for %s"
+                     % client_id)
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             "Internal error: could not expire old 2FA sessions!"})
+
+        return (output_objects, returnvalues.ERROR)
+
     status = returnvalues.OK
 
     # check that the user is already authenticated (does state file exist?)
     # or run through validation of provided time-based one-time password
 
-    client_dir = client_id_dir(client_id)
     if redirect_url:
         # Build forward query string from any real non-local args
         forward_args = {}
@@ -264,7 +273,7 @@ def main(client_id, user_arguments_dict, environ=None):
 '''})
         output_objects.append({'object_type': 'text', 'text':
                                'Correct token provided!'})
-        output_objects.append({'object_type': 'html_form', 'text': '''        
+        output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 <p>
 <a href="">Test again</a> or <a href="javascript:close();">close</a> this

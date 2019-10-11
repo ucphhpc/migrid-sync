@@ -155,6 +155,7 @@ if '__main__' == __name__:
         'enable_imnotify',
         'enable_dev_accounts',
         'enable_twofactor',
+        'enable_twofactor_strict_address',
         'enable_cracklib',
         'enable_openid',
         'daemon_pubkey_from_dns',

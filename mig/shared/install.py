@@ -121,9 +121,8 @@ def template_insert(template_file, insert_identifiers, unique=False):
                 len(contents)) if variable in contents[i]][0]
         except IndexError, err:
             print(
-                "Template insert, Identifer: %s not found in %s: %s" % (variable,
-                                                                        template_file,
-                                                                        err))
+                "Template insert, Identifer: %s not found in %s: %s"
+                % (variable, template_file, err))
             return False
 
         if isinstance(value, basestring):
@@ -178,9 +177,8 @@ def template_remove(template_file, remove_pattern):
             len(contents)) if remove_pattern in contents[i]]
     except IndexError, err:
         print(
-            "Template remove, Identifer: %s not found in %s: %s" % (remove_pattern,
-                                                                    template_file,
-                                                                    err))
+            "Template remove, Identifer: %s not found in %s: %s"
+            % (remove_pattern, template_file, err))
         return False
 
     # Remove in reverse
@@ -259,6 +257,7 @@ def generate_confs(
     enable_imnotify=False,
     enable_dev_accounts=False,
     enable_twofactor=False,
+    enable_twofactor_strict_address=False,
     enable_cracklib=False,
     enable_openid=False,
     mig_oid_provider='',
@@ -382,6 +381,8 @@ def generate_confs(
     user_dict['__ENABLE_IMNOTIFY__'] = str(enable_imnotify)
     user_dict['__ENABLE_DEV_ACCOUNTS__'] = str(enable_dev_accounts)
     user_dict['__ENABLE_TWOFACTOR__'] = str(enable_twofactor)
+    user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'] = \
+        str(enable_twofactor_strict_address)
     user_dict['__ENABLE_CRACKLIB__'] = str(enable_cracklib)
     user_dict['__ENABLE_OPENID__'] = str(enable_openid)
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
@@ -663,7 +664,8 @@ cert, oid and sid based https!
         sid_fqdn, seafmedia_base)
     if not enable_seafile:
         seafile_local_instance = False
-    elif seafile_fqdn and seafile_fqdn not in ['127.0.0.1', 'localhost'] + fqdn_list:
+    elif seafile_fqdn and seafile_fqdn \
+            not in ['127.0.0.1', 'localhost'] + fqdn_list:
         # Require https for all remote seafile host access
         seafile_local_instance = False
         seafile_proxy_proto = 'https'
@@ -819,8 +821,8 @@ cert, oid and sid based https!
             # Populate apache confs with hosts definitions and balancer members
             for i_h, host in enumerate(values['hosts']):
                 name_index = '%s_%s' % (u_name, i_h)
-                member = "BalancerMember %s route=%s retry=600 timeout=40\n" % (
-                    "${JUPYTER_%s}" % name_index, i_h)
+                member = "BalancerMember %s route=%s retry=600 timeout=40\n" \
+                    % ("${JUPYTER_%s}" % name_index, i_h)
                 ws_member = member.replace("${JUPYTER_%s}" % name_index,
                                            "${WS_JUPYTER_%s}" % name_index)
                 hosts.append(member)
@@ -902,6 +904,16 @@ cert, oid and sid based https!
     else:
         user_dict['__TWOFACTOR_COMMENTED__'] = '#'
         user_dict['__CRON_TWOFACTOR_CLEANUP__'] = '0'
+
+    # Enable 2FA strict address only if explicitly requested
+    if user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'].lower() == 'true':
+        if not user_dict['__ENABLE_TWOFACTOR__'].lower() == 'true':
+            print "ERROR: twofactor strict address use requested" \
+                + " but twofactor is disabled!"
+            sys.exit(1)
+        user_dict['__TWOFACTOR_STRICT_ADDRESS_COMMENTED__'] = ''
+    else:
+        user_dict['__TWOFACTOR_STRICT_ADDRESS_COMMENTED__'] = '#'
 
     # Enable cracklib only if explicitly requested and installed
     if user_dict['__ENABLE_CRACKLIB__'].lower() == 'true':
@@ -1132,6 +1144,8 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
         xgi_auth = 'cgi-auth'
     user_dict['__TWOFACTOR_PAGE__'] = os.path.join(
         '/', xgi_auth, 'twofactor.py')
+    user_dict['__AUTOLOGOUT_PAGE__'] = os.path.join(
+        '/', xgi_auth, 'autologout.py')
     if landing_page is None:
         user_dict['__LANDING_PAGE__'] = os.path.join(
             '/', xgi_bin, 'dashboard.py')
@@ -1479,6 +1493,7 @@ def create_user(
     enable_davs = False
     enable_ftps = False
     enable_twofactor = False
+    enable_twofactor_strict_address = False
     enable_cracklib = False
     enable_openid = False
     enable_wsgi = True

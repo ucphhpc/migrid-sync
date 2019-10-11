@@ -35,6 +35,8 @@ import os
 import re
 import time
 
+#import pygdb.breakpoint
+
 # Only needed for 2FA so ignore import error and only fail on use
 try:
     import pyotp
@@ -44,9 +46,10 @@ except ImportError:
 from shared.base import client_id_dir, extract_field, force_utf8
 from shared.defaults import twofactor_key_name, twofactor_key_bytes, \
     twofactor_cookie_bytes, twofactor_cookie_ttl
-from shared.fileio import read_file, delete_file, delete_symlink
+from shared.fileio import read_file, delete_file, delete_symlink, \
+    pickle, unpickle, make_symlink
+from shared.gdp import get_base_client_id
 from shared.pwhash import scramble_password, unscramble_password
-from shared.fileio import pickle, unpickle
 
 
 def twofactor_available(configuration):
@@ -63,6 +66,9 @@ def reset_twofactor_key(client_id, configuration):
     Return the new secret key on unscrambled base32 form.
     """
     _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     client_dir = client_id_dir(client_id)
     key_path = os.path.join(configuration.user_settings, client_dir,
                             twofactor_key_name)
@@ -90,6 +96,11 @@ def load_twofactor_key(client_id, configuration, allow_missing=True):
     return the unscrambled form.
     """
     _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        _logger.debug("client_id: %s" % client_id)
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
+        _logger.debug("client_id: %s" % client_id)
     client_dir = client_id_dir(client_id)
     key_path = os.path.join(configuration.user_settings, client_dir,
                             twofactor_key_name)
@@ -114,7 +125,9 @@ def get_twofactor_secrets(configuration, client_id):
     _logger = configuration.logger
     if pyotp is None:
         raise Exception("The pyotp module is missing and required for 2FA")
-
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     # NOTE: 2FA secret key is a standalone file in user settings dir
     #       Try to load existing and generate new one if not there.
     #       We need the base32-encoded form as returned here.
@@ -152,6 +165,9 @@ def get_twofactor_secrets(configuration, client_id):
 
 def generate_session_prefix(configuration, client_id):
     """Generate a session prefix with a hash of client_id"""
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     return hashlib.sha256(client_id).hexdigest()
 
 
@@ -159,6 +175,9 @@ def generate_session_key(configuration, client_id):
     """Generate a random session key with a hash of user id as prefix so that
     it is easy to locate all sessions belonging to a particular user.
     """
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     session_key = generate_session_prefix(configuration, client_id)
     random_key = os.urandom(twofactor_cookie_bytes)
     session_key += re.sub(r'[=+/]+', '', base64.b64encode(random_key))
@@ -170,6 +189,9 @@ def get_twofactor_token(configuration, client_id, b32_key):
     _logger = configuration.logger
     if pyotp is None:
         raise Exception("The pyotp module is missing and required for 2FA")
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     # IMPORTANT: pyotp unicode breaks when used in our strings - force utf8!
     token = pyotp.TOTP(b32_key).now()
     token = force_utf8(token)
@@ -181,6 +203,9 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
     _logger = configuration.logger
     if pyotp is None:
         raise Exception("The pyotp module is missing and required for 2FA")
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     return pyotp.TOTP(b32_key).verify(token)
 
 
@@ -189,6 +214,9 @@ def client_twofactor_session(configuration,
                              environ):
     """Extract any active twofactor session ID from client cookie"""
     _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     session_cookie = Cookie.SimpleCookie()
     session_cookie.load(environ.get('HTTP_COOKIE', None))
     session_cookie = session_cookie.get('2FA_Auth', None)
@@ -228,13 +256,25 @@ def load_twofactor_session(configuration, session_key):
 def save_twofactor_session(configuration, client_id, session_key, user_addr,
                            user_agent, session_start, session_end=-1):
     """Save twofactor session dict for client_id"""
+    _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     session_path = os.path.join(configuration.twofactor_home, session_key)
     if session_end < 0:
         session_end = session_start + twofactor_cookie_ttl
     session_data = {'client_id': client_id, 'session_key': session_key,
                     'user_addr': user_addr, 'user_agent': user_agent,
                     'session_start': session_start, 'session_end': session_end}
-    return pickle(session_data, session_path, configuration.logger)
+    status = pickle(session_data, session_path, configuration.logger)
+    if status and configuration.site_twofactor_strict_address:
+        session_path_link = os.path.join(configuration.twofactor_home,
+                                         "%s_%s" % (user_addr, session_key))
+        status = \
+            make_symlink(session_key, session_path_link, _logger, force=False)
+        if not status:
+            delete_file(session_path, _logger)
+    return status
 
 
 def list_twofactor_sessions(configuration, client_id, user_addr=None):
@@ -242,6 +282,9 @@ def list_twofactor_sessions(configuration, client_id, user_addr=None):
     source.
     """
     _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     sessions = {}
     client_prefix = generate_session_prefix(configuration, client_id)
     pattern = os.path.join(configuration.twofactor_home, client_prefix+'*')
@@ -266,6 +309,9 @@ def active_twofactor_session(configuration, client_id, user_addr=None):
     Optionally filter to only target sessions originating from user_addr.
     """
     _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     # _logger.debug("client_id: '%s', %s" % (client_id, user_addr))
     sessions = list_twofactor_sessions(configuration, client_id, user_addr)
     latest = None
@@ -297,6 +343,9 @@ def check_twofactor_active(configuration,
     active 2FA session.
     """
     _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     session_id = client_twofactor_session(configuration, client_id, environ)
     if not session_id:
         _logger.warning("no 2FA session found for %s" % client_id)
@@ -318,7 +367,8 @@ def expire_twofactor_session(configuration,
                              client_id,
                              environ,
                              allow_missing=False,
-                             user_addr=None):
+                             user_addr=None,
+                             not_user_addr=None):
     """Expire active twofactor session for user with client_id. Looks up any
     corresponding session cookie and extracts the session_id. In case a
     matching session_id state file exists it is deleted after checking that it
@@ -326,8 +376,13 @@ def expire_twofactor_session(configuration,
     The optional user_addr argument is used to only expire the active session
     from a particular source address for client_id. Left to None in gdp mode to
     expire all sessions and make sure only one session is ever active at a time.
+    The optional not_user_addr argument is used to expire all sessions _NOT_
+    from a particular source address for client_id.
     """
     _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
     session_id = client_twofactor_session(configuration, client_id, environ)
     if not session_id:
         _logger.warning("no valid 2FA session found for %s" % client_id)
@@ -338,20 +393,38 @@ def expire_twofactor_session(configuration,
     sessions = list_twofactor_sessions(configuration, client_id, user_addr)
     if not sessions:
         if allow_missing:
-            _logger.info("No active 2FA session for %s (%s)" % (client_id,
-                                                                user_addr))
+            _logger.info("No active 2FA session for %s (%s)"
+                         % (client_id, user_addr))
             return True
-        _logger.error("no 2FA session to expire for %s (%s)" % (client_id,
-                                                                user_addr))
-        expired = False
+        else:
+            _logger.error("no 2FA session to expire for %s (%s)"
+                          % (client_id, user_addr))
+            return False
+
+    expired = True
     for (session_key, session_data) in sessions.items():
+        if not_user_addr and session_data.get('user_addr', '') \
+                == not_user_addr:
+            continue
         session_path = os.path.join(configuration.twofactor_home, session_key)
         # Already checked client_id and optionally user_addr match
         delete_status = True
-        if delete_file(session_path, _logger, allow_missing=allow_missing):
+        if configuration.site_twofactor_strict_address:
+            session_user_addr = session_data.get('user_addr', None)
+            if session_user_addr is None:
+                delete_status = False
+            else:
+                session_link_path = \
+                    os.path.join(configuration.twofactor_home, "%s_%s"
+                                 % (session_user_addr, session_key))
+                delete_status = delete_symlink(
+                    session_link_path, _logger, allow_missing=allow_missing)
+        if delete_status:
+            delete_status = delete_file(
+                session_path, _logger, allow_missing=allow_missing)
+        if delete_status:
             _logger.info("expired 2FA session %s for %s in %s" %
                          (session_data, client_id, session_path))
-            expired = True
         else:
             _logger.error("failed to delete 2FA session file %s for %s in %s" %
                           (session_path, client_id, session_path))
