@@ -41,55 +41,31 @@ from the gdb console.
 """
 
 import os
+import logging
 import time
 import threading
 import _pygdb
 
-try:
-    from shared.conf import get_configuration_object
-    from shared.logger import daemon_logger
-except:
-    print "pygdb.breakpoint: Missing MiG shared.logger, using stdout"
-
 enabled = False
-configuration = None
+gdb_logger = None
 console_connected = None
 breakpoint_lock = None
 
 
-def enable():
+def enable(logger=None):
     """Enable breakpoint"""
     global enabled
-    global configuration
     global console_connected
     global breakpoint_lock
 
     enabled = True
     console_connected = False
     breakpoint_lock = threading.Lock()
-
-    try:
-        configuration = get_configuration_object(skip_log=True)
-        logpath = os.path.join(configuration.log_dir, "gdb.log")
-        configuration.gdb_logger = daemon_logger(
-            "gdb",
-            level=configuration.loglevel,
-            path=logpath)
-    except:
-        pass
-
-    gdb_logger("Init gdb main thread")
+    set_logger(logger)
+    log("enabled")
 
 
-def gdb_logger_debug(msg):
-    """log debug messages"""
-    if not enabled:
-        return
-
-    gdb_logger(msg, debug=True)
-
-
-def gdb_logger(msg, debug=False):
+def log(msg):
     """log info messages"""
     if not enabled:
         return
@@ -98,35 +74,46 @@ def gdb_logger(msg, debug=False):
     tid = threading.current_thread().ident
     log_msg = "(PID: %d, TID: 0x%0.x): %s" \
         % (pid, tid, msg)
-    if configuration:
-        logger = configuration.gdb_logger
-        if debug:
-            logger.debug(log_msg)
-        else:
-            logger.info(log_msg)
+
+    if isinstance(gdb_logger, logging.Logger):
+        gdb_logger.info(log_msg)
     else:
-        if debug:
-            log_msg = "DEBUG: %s" % log_msg
-        print log_msg
+        print "pygdb: %s" % log_msg
+
+
+def set_logger(logger):
+    """set logger to used by the log function"""
+    if not enabled:
+        return False
+
+    global gdb_logger
+
+    result = False
+    if isinstance(logger, logging.Logger):
+        gdb_logger = logger
+        result = True
+
+    return result
 
 
 def set():
     """Used to set breakpoint, busy-wait until gdb console is connected"""
     if not enabled:
         return
+
     global console_connected
 
     # Wait for gdb console
     breakpoint_lock.acquire()
     while not console_connected:
-        gdb_logger_debug("breakpoint.set: waiting for gdb console")
+        log("breakpoint.set: waiting for gdb console")
         breakpoint_lock.release()
         time.sleep(1)
         breakpoint_lock.acquire()
     breakpoint_lock.release()
 
     # Set breakpoint mark for GDB
-    gdb_logger_debug("breakpoint.set: breakpoint_mark")
+    log("breakpoint.set: breakpoint_mark")
     _pygdb.breakpoint_mark()
 
 

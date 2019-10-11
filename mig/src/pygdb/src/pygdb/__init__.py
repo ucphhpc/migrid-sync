@@ -36,3 +36,7 @@ __dummy = True
 
 # above line is only to make python tidy behave and not
 # move module doc string inside header
+
+# All sub modules to load in case of 'from X import *'
+
+__all__ = ['breakpoint, console']
