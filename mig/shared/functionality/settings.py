@@ -1207,12 +1207,12 @@ password YOUR_PASSWORD_HERE
 </pre>
 From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:
 <pre>
-lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" \\
+lftp -e "set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" \\
      -p %(ftps_ctrl_port)s %(ftps_server)s
 </pre>
 <pre>
 curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home \\
-          -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer
+          -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g)
 </pre>
 </div>
 <div class="div-ftps-client-notes">
