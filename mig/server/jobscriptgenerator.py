@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobscriptgenerator - dynamically generate job script right before job handout
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -59,7 +59,7 @@ def create_empty_job(
     execution_delay,
     configuration,
     logger,
-    ):
+):
     """Helper to create empty job for idle resources"""
 
     job_dict = {'': ''}
@@ -69,21 +69,20 @@ def create_empty_job(
 
     max_cputime = int(request_cputime)
     scaled_cputime = int(float(configuration.cputime_for_empty_jobs)
-                          * sleep_factor)
+                         * sleep_factor)
     if scaled_cputime > max_cputime:
         cputime = max_cputime
         sleep_time = int(0.8 * cputime)
     else:
         cputime = scaled_cputime
-        sleep_time = \
-            int(float(configuration.sleep_period_for_empty_jobs)
-                 * sleep_factor)
+        sleep_time = int(float(configuration.sleep_period_for_empty_jobs)
+                         * sleep_factor)
 
     logger.info(
         'request_cputime: %d, sleep_factor: %.1f, cputime: %d, sleep time: %d',
         max_cputime, sleep_factor, cputime, sleep_time)
-    job_id = configuration.empty_job_name + '.' + unique_resource_name\
-         + '.' + exe + '.' + localjobname
+    job_id = configuration.empty_job_name + '.' + unique_resource_name + \
+        '.' + exe + '.' + localjobname
 
     job_dict['JOB_ID'] = job_id
 
@@ -134,7 +133,7 @@ def create_restart_job(
     execution_delay,
     configuration,
     logger,
-    ):
+):
     """Wrapper to create a dummy job for forcing repeated restart of dead
     exes.
     """
@@ -148,7 +147,7 @@ def create_restart_job(
         execution_delay,
         configuration,
         logger,
-        )
+    )
 
     empty_job['UNIQUE_RESOURCE_NAME'] = unique_resource_name
     empty_job['EXE'] = exe
@@ -170,7 +169,7 @@ def create_job_script(
     localjobname,
     configuration,
     logger,
-    ):
+):
     """Helper to create actual jobs for handout to a resource.
 
     Returns tuple with job dict on success and None otherwise.
@@ -186,7 +185,7 @@ def create_job_script(
     helper_dict_filename = os.path.join(configuration.resource_home,
                                         unique_resource_name,
                                         'empty_job_helper_dict.%s' % exe)
-    
+
     # Deep copy job for local changes
     job_dict = deepcopy(job)
     # Bump requested values to any resource specs requested in MAXFILL
@@ -205,19 +204,19 @@ def create_job_script(
     mount_private_key = ""
     mount_public_key = ""
     mount_known_hosts = ""
-    
+
     if job_dict.get('MOUNT', []) != []:
 
         # Generate public/private key pair for sshfs
 
         (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair()
-        
-        # Generate known_hosts 
-    
-        if not os.path.exists(configuration.user_sftp_key_pub): 
-            msg = "job generation failed:" 
-            msg = "%s user_sftp_key_pub: '%s' -> File _NOT_ found" % \
-                  (msg, configuration.user_sftp_key_pub) 
+
+        # Generate known_hosts
+
+        if not os.path.exists(configuration.user_sftp_key_pub):
+            msg = "job generation failed:"
+            msg = "%s user_sftp_key_pub: '%s' -> File NOT found" % \
+                  (msg, configuration.user_sftp_key_pub)
             print msg
             logger.error(msg)
             return (None, msg)
@@ -225,24 +224,24 @@ def create_job_script(
         # Use best available sftp implementation - configuration picks it
         sftp_address = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
-        sftp_addresses = socket.gethostbyname_ex(sftp_address or \
+        sftp_addresses = socket.gethostbyname_ex(sftp_address or
                                                  socket.getfqdn())
         mount_known_hosts = "%s,[%s]:%s" % (sftp_addresses[0],
                                             sftp_addresses[0], sftp_port)
         for list_idx in xrange(1, len(sftp_addresses)):
             for sftp_address in sftp_addresses[list_idx]:
                 mount_known_hosts += ",%s,[%s]:%s" % (sftp_address,
-                                                     sftp_address,
-                                                     sftp_port)
-        
-        fd = open(configuration.user_sftp_key_pub, 'r')        
+                                                      sftp_address,
+                                                      sftp_port)
+
+        fd = open(configuration.user_sftp_key_pub, 'r')
         mount_known_hosts = "%s %s" % (mount_known_hosts, fd.read())
         fd.close()
 
     job_dict['MOUNTSSHPUBLICKEY'] = mount_public_key
-    job_dict['MOUNTSSHPRIVATEKEY'] = mount_private_key 
+    job_dict['MOUNTSSHPRIVATEKEY'] = mount_private_key
     job_dict['MOUNTSSHKNOWNHOSTS'] = mount_known_hosts
-  
+
     if not job_dict.has_key('MAXPRICE'):
         job_dict['MAXPRICE'] = '0'
     # Finally expand reserved job variables like +JOBID+ and +JOBNAME+
@@ -258,17 +257,16 @@ def create_job_script(
         # create link to empty job
 
         linkdest_empty_job = helper_dict_filename
-        linkloc_empty_job = configuration.sessid_to_mrsl_link_home\
-             + sessionid + '.mRSL'
+        linkloc_empty_job = configuration.sessid_to_mrsl_link_home + \
+            sessionid + '.mRSL'
         make_symlink(linkdest_empty_job, linkloc_empty_job, logger)
     else:
 
         # link sessionid to mrsl file
 
-        linkdest1 = configuration.mrsl_files_dir + client_dir + '/'\
-             + str(job_dict['JOB_ID']) + '.mRSL'
-        linkloc1 = configuration.sessid_to_mrsl_link_home + sessionid\
-             + '.mRSL'
+        linkdest1 = configuration.mrsl_files_dir + client_dir + '/' + \
+            str(job_dict['JOB_ID']) + '.mRSL'
+        linkloc1 = configuration.sessid_to_mrsl_link_home + sessionid + '.mRSL'
         make_symlink(linkdest1, linkloc1, logger)
 
     # link sessionid to job owners home directory
@@ -285,33 +283,33 @@ def create_job_script(
 
     # link sessionid to .job file
 
-    linkdest4 = configuration.mig_system_files + str(job_dict['JOB_ID'])\
-         + '.job'
+    linkdest4 = configuration.mig_system_files + str(job_dict['JOB_ID']) + \
+        '.job'
     linkloc4 = configuration.webserver_home + sessionid + '.job'
     make_symlink(linkdest4, linkloc4, logger)
 
     # link sessionid to .getupdatefiles file
 
-    linkdest5 = configuration.mig_system_files + str(job_dict['JOB_ID'])\
-         + '.getupdatefiles'
-    linkloc5 = configuration.webserver_home + sessionid\
-         + '.getupdatefiles'
+    linkdest5 = configuration.mig_system_files + str(job_dict['JOB_ID']) + \
+        '.getupdatefiles'
+    linkloc5 = configuration.webserver_home + sessionid + \
+        '.getupdatefiles'
     make_symlink(linkdest5, linkloc5, logger)
 
     # link sessionid to .sendoutputfiles file
 
-    linkdest4 = configuration.mig_system_files + str(job_dict['JOB_ID'])\
-         + '.sendoutputfiles'
-    linkloc4 = configuration.webserver_home + sessionid\
-         + '.sendoutputfiles'
+    linkdest4 = configuration.mig_system_files + str(job_dict['JOB_ID']) + \
+        '.sendoutputfiles'
+    linkloc4 = configuration.webserver_home + sessionid + \
+        '.sendoutputfiles'
     make_symlink(linkdest4, linkloc4, logger)
 
     # link sessionid to .sendupdatefiles file
 
-    linkdest5 = configuration.mig_system_files + str(job_dict['JOB_ID'])\
-         + '.sendupdatefiles'
-    linkloc5 = configuration.webserver_home + sessionid\
-         + '.sendupdatefiles'
+    linkdest5 = configuration.mig_system_files + str(job_dict['JOB_ID']) + \
+        '.sendupdatefiles'
+    linkloc5 = configuration.webserver_home + sessionid + \
+        '.sendupdatefiles'
     make_symlink(linkdest5, linkloc5, logger)
 
     path_without_extension = os.path.join(configuration.resource_home,
@@ -325,7 +323,7 @@ def create_job_script(
         client_dir,
         exe,
         logger,
-        )
+    )
     if not gen_res:
         msg = \
             'job scripts were not generated. Perhaps you have specified ' + \
@@ -349,11 +347,11 @@ def create_job_script(
             # includes sessionid
 
             webserver_path = os.path.join(configuration.webserver_home,
-                    localjobname + '.getinputfiles')
+                                          localjobname + '.getinputfiles')
             os.rename(inputfiles_path, webserver_path)
 
             # ########## ATTENTION HACK TO MAKE JVM SANDBOXES WORK ############
-            # This should be changed to use the (to be developed) RE pre/post 
+            # This should be changed to use the (to be developed) RE pre/post
             # processing framework. For now the user must have a jvm dir in his
             # home dir where the classfiles is located this should be changed
             # so that the execution homepath can be specified in the mRSL
@@ -367,8 +365,8 @@ def create_job_script(
             # Therefore the codebase must be dynamicaly changed
             # for every job
 
-            if resource_config.has_key('PLATFORM')\
-                 and resource_config['PLATFORM'] == 'ONE-CLICK':
+            if resource_config.has_key('PLATFORM') and \
+                    resource_config['PLATFORM'] == 'ONE-CLICK':
 
                 # A two step link is made.
                 # First sandboxkey.oneclick is made to point to
@@ -381,22 +379,21 @@ def create_job_script(
                 # thereby leaving no open entryes to the users
                 # jvm dir.
 
-                linkintermediate = configuration.webserver_home\
-                     + sessionid + '.jvm'
+                linkintermediate = configuration.webserver_home + \
+                    sessionid + '.jvm'
 
                 if client_dir == configuration.empty_job_name:
-                    linkdest = \
-                        os.path.abspath(configuration.javabin_home)
+                    linkdest = os.path.abspath(configuration.javabin_home)
                 else:
-                    linkdest = configuration.user_home + client_dir\
-                         + os.sep + 'jvm'
+                    linkdest = configuration.user_home + client_dir + \
+                        os.sep + 'jvm'
 
                 # Make link sessionid.jvm -> USER_HOME/jvm
 
                 make_symlink(linkdest, linkintermediate, logger)
 
-                linkloc = configuration.webserver_home\
-                     + resource_config['SANDBOXKEY'] + '.oneclick'
+                linkloc = configuration.webserver_home + \
+                    resource_config['SANDBOXKEY'] + '.oneclick'
 
                 # Remove previous symlink
                 # This must be done in a try/catch as the symlink,
@@ -415,8 +412,8 @@ def create_job_script(
 
                 # ######### End JVM SANDBOX HACK ###########
 
-            msg = "File '%s' was not copied to the webserver home."\
-                 % inputfiles_path
+            msg = "File '%s' was not copied to the webserver home." % \
+                  inputfiles_path
             print '\nERROR: ' + str(err)
             logger.error(msg)
             return (None, msg)
@@ -428,8 +425,8 @@ def create_job_script(
     if not copy_file_to_resource(inputfiles_path,
                                  os.path.basename(inputfiles_path),
                                  resource_config, logger):
-        logger.error('File was not copied to the resource: '
-                      + inputfiles_path)
+        logger.error('File was not copied to the resource: ' +
+                     inputfiles_path)
     else:
 
         # file was sent, delete it
@@ -445,17 +442,17 @@ def create_arc_job(
     job,
     configuration,
     logger,
-    ):
+):
     """Analog to create_job_script for ARC jobs:
     Creates symLinks for receiving result files, translates job dict to ARC
     xrsl, and stores resulting job script (xrsl + sh script) for submitting.
-    
+
     We do _not_ create a separate job_dict with copies and SESSIONID inside,
     as opposed to create_job_script, all we need is the link from 
     webserver_home / sessionID into the user's home directory 
     ("job_output/job['JOB_ID']" is added to the result upload URLs in the 
     translation). 
-    
+
     Returns message (ARC job ID if no error) and sessionid (None if error)
     """
 
@@ -475,7 +472,6 @@ def create_arc_job(
     if client_id == configuration.empty_job_name:
         return (None, 'Error. empty job for ARC?')
 
-
     # generate random session ID:
     sessionid = hexlify(open('/dev/urandom').read(session_id_bytes))
     logger.debug('session ID (for creating links): %s' % sessionid)
@@ -483,22 +479,22 @@ def create_arc_job(
     client_dir = client_id_dir(client_id)
 
     # make symbolic links inside webserver_home:
-    #  
-    # we need: link to owner's dir. to receive results, 
+    #
+    # we need: link to owner's dir. to receive results,
     #          job mRSL inside sessid_to_mrsl_link_home
-    linklist = [(configuration.user_home + client_dir, 
+    linklist = [(configuration.user_home + client_dir,
                  configuration.webserver_home + sessionid),
-                (configuration.mrsl_files_dir + client_dir + '/' + \
+                (configuration.mrsl_files_dir + client_dir + '/' +
                  str(job_dict['JOB_ID']) + '.mRSL',
                  configuration.sessid_to_mrsl_link_home + sessionid + '.mRSL')
-               ]
+                ]
 
     for (dest, loc) in linklist:
         make_symlink(dest, loc, logger)
 
     # the translation generates an xRSL object which specifies to execute
     # a shell script with script_name. If sessionid != None, results will
-    # be uploaded to sid_redirect/sessionid/job_output/job_id  
+    # be uploaded to sid_redirect/sessionid/job_output/job_id
 
     try:
         (xrsl, script, script_name) = mrsltoxrsl.translate(job_dict, sessionid)
@@ -509,8 +505,8 @@ def create_arc_job(
         # error during translation, pass a message
         logger.error('Error during xRSL translation: %s' % err.__str__())
         return (None, err.__str__())
-    
-        # we submit directly from here (the other version above does 
+
+        # we submit directly from here (the other version above does
         # copyFileToResource and gen_job_script generates all files)
 
     # we have to put the generated script somewhere..., and submit from there.
@@ -533,20 +529,20 @@ def create_arc_job(
 
         job_dict['ARCID'] = arc_job_ids[0]
         job_dict['SESSIONID'] = sessionid
-       
+
         msg = 'OK'
         result = job_dict
 
     # when errors occurred, pass a message to the caller.
     except arc.ARCWrapperError, err:
         msg = err.what()
-        result = None # unsuccessful
+        result = None  # unsuccessful
     except arc.NoProxyError, err:
         msg = 'No Proxy found: %s' % err.what()
-        result = None # unsuccessful
+        result = None  # unsuccessful
     except Exception, err:
         msg = err.__str__()
-        result = None # unsuccessful
+        result = None  # unsuccessful
 
     # always remove the generated script
     os.remove(script_name)
@@ -562,8 +558,9 @@ def create_arc_job(
     # errors are handled inside grid_script. For ARC jobs, set status = FAILED
     # on errors, and include the message
     # One potential error is that the proxy is invalid,
-    # which should be checked inside the parser, before informing 
+    # which should be checked inside the parser, before informing
     # grid_script about the new job.
+
 
 def gen_job_script(
     job_dictionary,
@@ -574,9 +571,9 @@ def gen_job_script(
     client_dir,
     exe,
     logger,
-    ):
+):
     """Generate job script from job_dictionary before handout to resource"""
-    
+
     script_language = resource_config['SCRIPTLANGUAGE']
     if not script_language in configuration.scriptlanguages:
         print 'Unknown script language! (conflict with scriptlanguages in ' + \
@@ -592,7 +589,7 @@ def gen_job_script(
             configuration.migserver_https_sid_url,
             localjobname,
             path_without_extension,
-            )
+        )
     elif script_language == 'sh':
         generator = genjobscriptsh.GenJobScriptSh(
             job_dictionary,
@@ -601,11 +598,12 @@ def gen_job_script(
             configuration.migserver_https_sid_url,
             localjobname,
             path_without_extension,
-            )
+        )
     elif script_language == 'java':
-        generator = genjobscriptjava.GenJobScriptJava(job_dictionary,
-                resource_config, configuration.migserver_https_sid_url,
-                localjobname, path_without_extension)
+        generator = genjobscriptjava.GenJobScriptJava(
+            job_dictionary, resource_config,
+            configuration.migserver_https_sid_url,
+            localjobname, path_without_extension)
     else:
         print 'Unknown script language! (is in configuration but not in ' + \
               'jobscriptgenerator) %s ' % script_language
@@ -621,28 +619,26 @@ def gen_job_script(
     getinputfiles_array.append(generator.comment('init log'))
     getinputfiles_array.append(generator.init_io_log())
     getinputfiles_array.append(generator.comment('get special inputfiles'
-                               ))
+                                                 ))
     getinputfiles_array.append(generator.get_special_input_files(
         'get_special_status'))
     getinputfiles_array.append(generator.log_io_status(
         'get_special_input_files', 'get_special_status'))
-    getinputfiles_array.append(generator.print_on_error('get_special_status'
-                               , '0',
-                               'failed to fetch special input files!'))
+    getinputfiles_array.append(generator.print_on_error(
+        'get_special_status', '0', 'failed to fetch special input files!'))
     getinputfiles_array.append(generator.comment('get input files'))
-    getinputfiles_array.append(generator.get_input_files('get_input_status'
-                               ))
-    getinputfiles_array.append(generator.log_io_status('get_input_files'
-                               , 'get_input_status'))
-    getinputfiles_array.append(generator.print_on_error('get_input_status'
-                               , '0', 'failed to fetch input files!'))
+    getinputfiles_array.append(generator.get_input_files('get_input_status'))
+    getinputfiles_array.append(generator.log_io_status(
+        'get_input_files', 'get_input_status'))
+    getinputfiles_array.append(generator.print_on_error(
+        'get_input_status', '0', 'failed to fetch input files!'))
     getinputfiles_array.append(generator.comment('get executables'))
     getinputfiles_array.append(generator.get_executables(
         'get_executables_status'))
-    getinputfiles_array.append(generator.log_io_status('get_executables'
-                               , 'get_executables_status'))
+    getinputfiles_array.append(generator.log_io_status(
+        'get_executables', 'get_executables_status'))
     getinputfiles_array.append(generator.print_on_error(
-    'get_executables_status', '0', 'failed to fetch executable files!'))
+        'get_executables_status', '0', 'failed to fetch executable files!'))
 
     # client_dir equals empty_job_name for sleep jobs
 
@@ -664,8 +660,8 @@ def gen_job_script(
     getinputfiles_array.append(generator.total_status(
         ['get_special_status', 'get_input_status', 'get_executables_status',
          'generate_output_filelists'], 'total_status'))
-    getinputfiles_array.append(generator.exit_on_error('total_status',
-                                                       '0', 'total_status'))
+    getinputfiles_array.append(generator.exit_on_error('total_status', '0',
+                                                       'total_status'))
     getinputfiles_array.append(generator.comment('exit script'))
     getinputfiles_array.append(generator.exit_script('0', 'get input files'))
 
@@ -675,9 +671,9 @@ def gen_job_script(
     job_array.append(generator.print_start('job'))
     job_array.append(generator.comment('TODO: switch to job directory here'))
     job_array.append(generator.comment('make sure job status files exist'))
-    job_array.append(generator.create_files([job_dictionary['JOB_ID']
-                      + '.stdout', job_dictionary['JOB_ID'] + '.stderr'
-                     , job_dictionary['JOB_ID'] + '.status']))
+    job_array.append(generator.create_files(
+        [job_dictionary['JOB_ID'] + '.stdout', job_dictionary['JOB_ID'] +
+         '.stderr', job_dictionary['JOB_ID'] + '.status']))
     job_array.append(generator.init_status())
     job_array.append(generator.comment('chmod +x'))
     job_array.append(generator.chmod_executables('chmod_status'))
@@ -686,14 +682,14 @@ def gen_job_script(
         'failed to make one or more EXECUTABLES executable'))
     job_array.append(generator.log_on_error('chmod_status', '0',
                                             'system: chmod'))
-    
+
     job_array.append(generator.comment('set environments'))
     job_array.append(generator.set_environments('env_status'))
     job_array.append(generator.print_on_error(
         'env_status', '0', 'failed to initialize one or more ENVIRONMENTs'))
     job_array.append(generator.log_on_error('env_status', '0',
                                             'system: set environments'))
-    
+
     job_array.append(generator.comment('set runtimeenvironments'))
     job_array.append(generator.set_runtime_environments(
         resource_config['RUNTIMEENVIRONMENT'], 're_status'))
@@ -720,7 +716,7 @@ def gen_job_script(
         # Use best available sftp implementation - configuration picks it
         sftp_address = configuration.user_sftp_show_address
         sftp_port = configuration.user_sftp_show_port
-        job_array.append(generator.mount(job_dictionary['SESSIONID'], 
+        job_array.append(generator.mount(job_dictionary['SESSIONID'],
                                          sftp_address, sftp_port,
                                          'mount_status'))
         job_array.append(generator.print_on_error('mount_status', '0',
@@ -750,8 +746,8 @@ def gen_job_script(
 
     getupdatefiles_array.append(generator.comment('get io files'))
     getupdatefiles_array.append(generator.get_io_files('get_io_status'))
-    getupdatefiles_array.append(generator.log_io_status('get_io_files'
-                                 , 'get_io_status'))
+    getupdatefiles_array.append(
+        generator.log_io_status('get_io_files', 'get_io_status'))
     getupdatefiles_array.append(generator.print_on_error(
         'get_io_status', '0', 'failed to get one or more IO files'))
     getupdatefiles_array.append(generator.exit_on_error(
@@ -769,7 +765,7 @@ def gen_job_script(
     sendoutputfiles_array.append(generator.print_start('send output files'))
     sendoutputfiles_array.append(generator.init_io_log())
     sendoutputfiles_array.append(generator.comment('check output files'))
-                                                   
+
     sendoutputfiles_array.append(generator.output_files_missing(
         'missing_counter'))
     sendoutputfiles_array.append(generator.log_io_status(
@@ -788,8 +784,8 @@ def gen_job_script(
 
     sendoutputfiles_array.append(generator.comment('send io files'))
     sendoutputfiles_array.append(generator.send_io_files('send_io_status'))
-    sendoutputfiles_array.append(generator.log_io_status('send_io_files'
-                                                         , 'send_io_status'))
+    sendoutputfiles_array.append(
+        generator.log_io_status('send_io_files', 'send_io_status'))
     sendoutputfiles_array.append(generator.print_on_error(
         'send_io_status', '0', 'failed to send one or more IO files'))
     sendoutputfiles_array.append(generator.exit_on_error(
@@ -806,7 +802,7 @@ def gen_job_script(
     # session and thus it must be the last uploaded file.
 
     sendoutputfiles_array.append(generator.send_status_files(
-    [job_dictionary['JOB_ID'] + '.status'], 'send_status_status'))
+        [job_dictionary['JOB_ID'] + '.status'], 'send_status_status'))
     sendoutputfiles_array.append(generator.print_on_error(
         'send_status_status', '0', 'failed to send status file'))
     sendoutputfiles_array.append(generator.exit_on_error(
@@ -830,8 +826,8 @@ def gen_job_script(
 
     sendupdatefiles_array.append(generator.comment('send io files'))
     sendupdatefiles_array.append(generator.send_io_files('send_io_status'))
-    sendupdatefiles_array.append(generator.log_io_status('send_io_files'
-                                                         , 'send_io_status'))
+    sendupdatefiles_array.append(
+        generator.log_io_status('send_io_files', 'send_io_status'))
     sendupdatefiles_array.append(generator.print_on_error(
         'send_io_status', '0', 'failed to send one or more IO files'))
     sendupdatefiles_array.append(generator.exit_on_error(
@@ -841,11 +837,11 @@ def gen_job_script(
     sendupdatefiles_array.append(generator.exit_script('0',
                                                        'send update files'))
 
-    jobsshpubkey_array = []    
+    jobsshpubkey_array = []
     # Save session pub key in SESSIONID.authorized_keys for openssh+subsys use.
     # That is not needed with grid_sftp where we parse job for key.
     if configuration.site_enable_sftp_subsys and \
-           job_dictionary['MOUNTSSHPUBLICKEY']:
+            job_dictionary['MOUNTSSHPUBLICKEY']:
         # Restrict to access from frontend proxy / resource FQDN
         res_fqdn = resource_config.get('FRONTENDPROXY', '')
         if not res_fqdn:
@@ -859,20 +855,20 @@ def gen_job_script(
             logger.warning("Skipping ip in 'from' on job mount key: %s" % exc)
         # Always minimize key access with all restrictions and source address
         # NOTE: 'restrict' keyword is only available in new ssh installations
-        #       we manually build the corresponding string for now. 
+        #       we manually build the corresponding string for now.
         #restrict_opts = 'restrict'
         restrict_opts = 'no-agent-forwarding,no-port-forwarding,no-pty,'
         restrict_opts += 'no-user-rc,no-X11-forwarding'
         restrictions = 'from="%s",%s' % (allow_from, restrict_opts)
         pub_key = '%(MOUNTSSHPUBLICKEY)s' % job_dictionary
         jobsshpubkey_array.append('%s %s\n' % (restrictions, pub_key))
-    
+
     # clean up must be done with SSH (when the .status file
     # has been uploaded): Job script can't safely/reliably clean up
     # after itself because of possible user interference.
 
-    if job_dictionary.has_key('JOBTYPE') and job_dictionary['JOBTYPE'
-            ].lower() == 'interactive':
+    if job_dictionary.has_key('JOBTYPE') and \
+            job_dictionary['JOBTYPE'].lower() == 'interactive':
 
         # interactive jobs have a .job file just containing a curl
         # call to the MiG servers cgi-sid/requestinteractivejob
@@ -881,20 +877,20 @@ def gen_job_script(
         # script
 
         logger.error('jobtype: interactive')
-        interactivejobfile = generator.script_init() + '\n'\
-             + generator.request_interactive() + '\n'\
-             + generator.exit_script('0', 'interactive job')
+        interactivejobfile = generator.script_init() + '\n' + \
+            generator.request_interactive() + '\n' + \
+            generator.exit_script('0', 'interactive job')
 
         # write the small file containing the requestinteractivejob.py
         # call as .job
 
-        write_file(interactivejobfile, configuration.mig_system_files
-                    + job_dictionary['JOB_ID'] + '.job', logger)
+        write_file(interactivejobfile, configuration.mig_system_files +
+                   job_dictionary['JOB_ID'] + '.job', logger)
 
         # write the usual .job file as .interactivejob
 
-        write_file('\n'.join(job_array), configuration.mig_system_files
-                    + job_dictionary['JOB_ID'] + '.interactivejob',
+        write_file('\n'.join(job_array), configuration.mig_system_files +
+                   job_dictionary['JOB_ID'] + '.interactivejob',
                    logger)
         print interactivejobfile
     else:
@@ -902,25 +898,24 @@ def gen_job_script(
         # write files
 
         write_file('\n'.join(job_array), configuration.mig_system_files
-                    + job_dictionary['JOB_ID'] + '.job', logger)
+                   + job_dictionary['JOB_ID'] + '.job', logger)
 
-    write_file('\n'.join(getinputfiles_array), path_without_extension
-                + '.getinputfiles', logger)
+    write_file('\n'.join(getinputfiles_array), path_without_extension +
+               '.getinputfiles', logger)
     write_file('\n'.join(getupdatefiles_array),
-               configuration.mig_system_files + job_dictionary['JOB_ID']
-                + '.getupdatefiles', logger)
+               configuration.mig_system_files + job_dictionary['JOB_ID'] +
+               '.getupdatefiles', logger)
     write_file('\n'.join(sendoutputfiles_array),
-               configuration.mig_system_files + job_dictionary['JOB_ID']
-                + '.sendoutputfiles', logger)
+               configuration.mig_system_files + job_dictionary['JOB_ID'] +
+               '.sendoutputfiles', logger)
     write_file('\n'.join(sendupdatefiles_array),
-               configuration.mig_system_files + job_dictionary['JOB_ID']
-                + '.sendupdatefiles', logger)
+               configuration.mig_system_files + job_dictionary['JOB_ID'] +
+               '.sendupdatefiles', logger)
     # Save session pub key in SID.authorized_keys file for openssh+subsys use
     if jobsshpubkey_array:
         write_file('\n'.join(jobsshpubkey_array),
                    os.path.join(configuration.mig_system_files,
-                                'job_mount', job_dictionary['SESSIONID']
-                                + '.authorized_keys'), logger, umask=027)
-        
-   
+                                'job_mount', job_dictionary['SESSIONID'] +
+                                '.authorized_keys'), logger, umask=027)
+
     return True

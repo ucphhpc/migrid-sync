@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # auth - shared helpers for authentication in init functionality backends
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Athentication helper functions"""
+"""Authentication helper functions"""
 
 import Cookie
 import base64
@@ -374,7 +374,7 @@ def expire_twofactor_session(configuration,
     The optional user_addr argument is used to only expire the active session
     from a particular source address for client_id. Left to None in gdp mode to
     expire all sessions and make sure only one session is ever active at a time.
-    The optional not_user_addr argument is used to expire all sessions _NOT_
+    The optional not_user_addr argument is used to expire all sessions NOT
     from a particular source address for client_id.
     """
     _logger = configuration.logger

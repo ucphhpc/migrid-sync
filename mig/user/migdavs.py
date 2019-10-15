@@ -242,7 +242,7 @@ Settings page""" % server_fqdn
     if not gdp_user:
         base = '.davs'
         if not client.exists(base):
-            print "ERROR: remote dir '%s' does _NOT_ exist" % base
+            print "ERROR: remote dir '%s' does NOT exist" % base
         else:
             print "listing files in %s" % base
             # ls returns list of list with hrefs - convert to relative paths
@@ -272,7 +272,7 @@ Settings page""" % server_fqdn
     else:
         welcome = 'README'
     if not client.exists(welcome):
-        print "ERROR: remote file '%s' does _NOT_ exist" % welcome
+        print "ERROR: remote file '%s' does NOT exist" % welcome
         exit(1)
     else:
         print "download '%s' from home" % welcome

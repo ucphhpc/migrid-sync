@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # genjobscriptpython - helpers for python jobs
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -44,7 +44,7 @@ class GenJobScriptPython:
         https_sid_url,
         localjobname,
         filename_without_ext,
-        ):
+    ):
 
         self.job_dict = job_dictionary
         self.resource_conf = resource_config
@@ -52,16 +52,17 @@ class GenJobScriptPython:
         self.https_sid_url_arg = https_sid_url
         self.filename_without_extension = filename_without_ext
         self.localjobname = localjobname
-        
+
         exe_dir = ''
         exe_list = self.resource_conf.get('EXECONFIG', [])
         for exe_conf in exe_list:
             if exe_conf['name'] == self.exe:
                 localexedir = exe_conf['execution_dir']
                 break
-        
+
         self.localjobdir = "%s/job-dir_%s" % (localexedir, self.localjobname)
-        self.status_log = '%s/%s.status' % (self.localjobdir, self.job_dict['JOB_ID'])
+        self.status_log = '%s/%s.status' % (self.localjobdir,
+                                            self.job_dict['JOB_ID'])
         self.io_log = '%s.io-status' % self.job_dict['JOB_ID']
 
         print """Python resource scripts are *not* fully supported!
@@ -70,11 +71,10 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
     def __curl_cmd_send(self, resource_filename, mig_server_filename):
         """Upload files"""
 
-        return "curl --location --fail --silent --insecure --upload-file '"\
-               + resource_filename + "' -X SIDPUT '" + self.https_sid_url_arg\
-               + '/sid_redirect/' + self.job_dict['SESSIONID'] + '/'\
-               + mig_server_filename + "'"
-
+        return "curl --location --fail --silent --insecure --upload-file '" + \
+               resource_filename + "' -X SIDPUT '" + self.https_sid_url_arg + \
+               '/sid_redirect/' + self.job_dict['SESSIONID'] + '/' + \
+               mig_server_filename + "'"
 
     def __curl_cmd_get(self, mig_server_filename, resource_filename):
         """Download files"""
@@ -84,11 +84,11 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
         if dest_path != '':
             cmd += "mkdir -p '%s' && \\" % dest_path
             cmd += '\n'
-        cmd += "curl --location --fail --silent --insecure -o '" + resource_filename\
-               + "' '" + self.https_sid_url_arg + '/sid_redirect/'\
-               + self.job_dict['SESSIONID'] + '/' + mig_server_filename + "'"
+        cmd += "curl --location --fail --silent --insecure -o '" + \
+               resource_filename + "' '" + self.https_sid_url_arg + \
+               '/sid_redirect/' + self.job_dict['SESSIONID'] + '/' + \
+               mig_server_filename + "'"
         return cmd
-
 
     def __curl_cmd_get_special(self, file_extension, resource_filename):
         """Download internal job files"""
@@ -98,22 +98,23 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
         if dest_path != '':
             cmd += 'mkdir -p %s && \\' % dest_path
             cmd += '\n'
-        cmd += "curl --location --fail --silent --insecure -o '" + resource_filename\
-               + "' '" + self.https_sid_url_arg + '/sid_redirect/'\
-               + self.job_dict['SESSIONID'] + file_extension + "'"
+        cmd += "curl --location --fail --silent --insecure -o '" + \
+               resource_filename + "' '" + self.https_sid_url_arg + \
+               '/sid_redirect/' + self.job_dict['SESSIONID'] + \
+               file_extension + "'"
         return cmd
-
 
     def __curl_cmd_request_interactive(self):
         """CGI request for interactive job"""
 
-        int_command = "curl --location --fail --silent --insecure '"\
-                      + self.https_sid_url_arg\
-                      + '/cgi-sid/requestinteractivejob.py?sessionid='\
-                      + self.job_dict['SESSIONID'] + '&jobid=' + self.job_dict['JOB_ID']\
-                      + '&exe=' + self.exe + '&unique_resource_name='\
-                      + self.resource_conf['RESOURCE_ID'] + '&self.localjobname='\
-                      + self.localjobname + "'\n"
+        int_command = "curl --location --fail --silent --insecure '" + \
+                      self.https_sid_url_arg + \
+                      '/cgi-sid/requestinteractivejob.py?sessionid=' + \
+                      self.job_dict['SESSIONID'] + '&jobid=' + \
+                      self.job_dict['JOB_ID'] + '&exe=' + self.exe + \
+                      '&unique_resource_name=' + \
+                      self.resource_conf['RESOURCE_ID'] + \
+                      '&self.localjobname=' + self.localjobname + "'\n"
         int_command += '# wait until interactive command is done\n'
         int_command += 'while [ 1 ]; do\n'
         int_command += '   if [ -f .interactivejobfinished ]; then\n'
@@ -123,7 +124,6 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
         int_command += '   fi\n'
         int_command += 'done\n'
         return int_command
-
 
     def comment(self, string):
         """Insert comment"""
@@ -139,7 +139,7 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
 # --- BEGIN_HEADER ---
 #
 # ??? - one of the python scripts running on resources
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -169,8 +169,8 @@ from os.path import join, getsize
     def print_start(self, name='job'):
         """print 'starting new job'"""
 
-        return "print 'Starting new %s with JOB_ID: %s'\n" % (name,
-                self.job_dict['JOB_ID'])
+        return "print 'Starting new %s with JOB_ID: %s'\n" % \
+               (name, self.job_dict['JOB_ID'])
 
     def create_files(self, files):
         """Create supplied files"""
@@ -192,8 +192,7 @@ from os.path import join, getsize
         """Write to status log"""
 
         return '''status_log.write("%s " + %s)
-status_log.flush()'''\
-             % (status_type, result)
+status_log.flush()''' % (status_type, result)
 
     def init_io_log(self):
         """Open IO status log"""
@@ -204,8 +203,7 @@ status_log.flush()'''\
         """Write to IO status log"""
 
         return '''io_log.write("%s " + %s)
-io_log.flush()'''\
-             % (io_type, result)
+io_log.flush()''' % (io_type, result)
 
     def create_job_directory(self):
         """if directory with name JOB_ID doesnt exists, then create.
@@ -258,23 +256,21 @@ io_log.flush()'''\
         """get the internal job files from the grid server"""
 
         cmd = ''
-        cmd += self.__curl_cmd_get_special('.job', 
-                            self.localjobname + '.job') \
-            + ' && \\'\
-            + '\n'
+        cmd += self.__curl_cmd_get_special(
+            '.job', self.localjobname + '.job') + ' && \\' + '\n'
 
         cmd += '''
 %s
 ''' % self.__curl_cmd_get_special('.getupdatefiles',
-                        self.localjobname + '.getupdatefiles')
+                                  self.localjobname + '.getupdatefiles')
         cmd += '''
 %s
 ''' % self.__curl_cmd_get_special('.sendupdatefiles',
-                        self.localjobname + '.sendupdatefiles')
+                                  self.localjobname + '.sendupdatefiles')
         cmd += '''
 %s
 ''' % self.__curl_cmd_get_special('.sendoutputfiles',
-                self.localjobname + '.sendoutputfiles')
+                                  self.localjobname + '.sendoutputfiles')
         return cmd
 
     def get_executables(self, result='get_executables_status'):
@@ -327,8 +323,8 @@ io_log.flush()'''\
         """Generate filelist (user/system) of which files 
         should be transfered from FE to EXE before job execution."""
 
-        cmd = \
-            '# Create files used by master_node_script (input/executables/systemfiles)\n'
+        cmd = '# Create files used by master_node_script ' + \
+              '(input/executables/systemfiles)\n'
         fe_move_dict = {}
 
         for infile in self.job_dict['INPUTFILES']:
@@ -342,11 +338,12 @@ io_log.flush()'''\
             except:
                 resource_filename = mig_server_filename
 
-            # Source may be external in which case implicit destination needs attention
+            # Source may be external in which case implicit destination needs
+            # extra attention
 
             if resource_filename.find('://') != -1:
 
-                # Strip any protocol prefixes in destination for external sources
+                # Strip any protocol prefix in destination for external sources
 
                 resource_filename = resource_filename.split('://', 1)[1]
 
@@ -372,11 +369,12 @@ io_log.flush()'''\
             except:
                 resource_filename = mig_server_filename
 
-            # Source may be external in which case implicit destination needs attention
+            # Source may be external in which case implicit destination needs
+            # extra attention
 
             if resource_filename.find('://') != -1:
 
-                # Strip any protocol prefixes in destination for external sources
+                # Strip any protocol prefix in destination for external sources
 
                 resource_filename = resource_filename.split('://', 1)[1]
 
@@ -403,7 +401,8 @@ if os.path.isfile("%s"):
 
         cmd += 'output_fd = open("%s.outputfiles", "w")\n' % self.localjobname
         cmd += 'output_fd.write("%s.user.outputfiles ")\n' % self.localjobname
-        cmd += 'output_fd.write("%s.system.outputfiles ")\n' % self.localjobname
+        cmd += 'output_fd.write("%s.system.outputfiles ")\n' % \
+               self.localjobname
         cmd += 'output_fd.write("%s.job")\n' % self.localjobname
         cmd += 'output_fd.close()\n'
         return cmd
@@ -414,10 +413,11 @@ if os.path.isfile("%s"):
         should be transfered from EXE to FE upon job finish."""
 
         exe_move_dict = {}
-        cmd = \
-            '# Create files used by master_node_script to determine which output files to transfer to FE\n'
+        cmd = '# Create files used by master_node_script to determine ' + \
+              'which output files to transfer to FE\n'
 
-        cmd += 'output_fd = open("%s.user.outputfiles", "w")\n' % self.localjobname
+        cmd += 'output_fd = open("%s.user.outputfiles", "w")\n' % \
+               self.localjobname
         for outputfile in self.job_dict['OUTPUTFILES']:
 
             # "filename" or "resource_filename mig_server_filename"
@@ -441,7 +441,8 @@ if os.path.isfile("%s"):
         for filename in exe_move_dict.keys():
             cmd += 'output_fd.write("%s ")\n' % filename
         cmd += 'output_fd.close()\n'
-        cmd += 'output_fd = open("%s.system.outputfiles", "w")\n' % self.localjobname
+        cmd += 'output_fd = open("%s.system.outputfiles", "w")\n' % \
+               self.localjobname
 
         # Sleep jobs only generate .status
 
@@ -461,24 +462,27 @@ if os.path.isfile("%s"):
         cmd += 'iosid_fd.write("%s")\n' % self.job_dict['IOSESSIONID']
         cmd += 'iosid_fd.close()\n'
         return cmd
-    
+
     def generate_mountsshprivatekey_file(self,
                                          result='generate_mountsshprivatekey_file'):
         """Generate file containing mount ssh private key."""
 
         cmd = '# Create file used containing mount private key.\n'
         cmd += 'mountprivkey_fd = open("%s.mount.key", "w")\n' % self.localjobname
-        cmd += 'mountprivKey_fd.write("%s")\n' % self.job_dict['MOUNTSSHPRIVATEKEY']
+        cmd += 'mountprivKey_fd.write("%s")\n' % \
+               self.job_dict['MOUNTSSHPRIVATEKEY']
         cmd += 'mountprivkey_fd.close()\n'
         return cmd
 
-    def generate_mountsshknownhosts_file(self,
-                                         result='generate_mountsshknownhosts_file'):
+    def generate_mountsshknownhosts_file(
+            self, result='generate_mountsshknownhosts_file'):
         """Generate file containing mount ssh known_hosts."""
 
         cmd = '# Create known_hosts file used when mounting job home.\n'
-        cmd += 'mountknownhosts_fd = open("%s.mount.known_host", "w")\n' % self.localjobname
-        cmd += 'mountknownhosts_fd.write("%s")\n' % self.job_dict['MOUNTSSHKNOWNHOSTS']
+        cmd += 'mountknownhosts_fd = open("%s.mount.known_host", "w")\n' % \
+               self.localjobname
+        cmd += 'mountknownhosts_fd.write("%s")\n' % \
+               self.job_dict['MOUNTSSHKNOWNHOSTS']
         cmd += 'mountknownhosts_fd.close()\n'
         return cmd
 
@@ -541,8 +545,8 @@ if not os.environ.get("MIG_JOBDIR", ""):
 
         for env in self.job_dict['ENVIRONMENT']:
             key_and_value = env.split('=', 1)
-            cmd += 'os.putenv("' + key_and_value[0] + '","'\
-                 + key_and_value[1] + '")\n'
+            cmd += 'os.putenv("' + key_and_value[0] + '","' + \
+                   key_and_value[1] + '")\n'
 
         return cmd
 
@@ -570,19 +574,19 @@ if not os.environ.get("MIG_JOBDIR", ""):
                 (res_env_name, res_env_val) = res_env
                 if env == res_env_name:
 
-                    # this is the right list of envs. Loop the entire list and set all the envs
+                    # this is the right list of envs. Loop the entire list and
+                    # set all the envs
 
                     for single_env in res_env_val:
                         (key, value) = single_env
 
-                        cmd += 'os.putenv("' + key + '","'\
-                             + value + '")\n'
+                        cmd += 'os.putenv("' + key + '","' + value + '")\n'
 
         return cmd
-    
+
     def mount(self, login, host, port, result='mount_status'):
-        print "WARNING: genjobscriptpython.mount _NOT_ implemented"
- 
+        print "WARNING: genjobscriptpython.mount NOT implemented"
+
         return '# TODO: Implement MiG home mount\n'
 
     def execute(self, pretext, posttext):
@@ -600,18 +604,19 @@ if not os.environ.get("MIG_JOBDIR", ""):
             cmd += 'print "' + pretext + exe + '"\n'
 
             cmd += 'if "' + exe + '".find(" >> ") != -1:\n'
-            cmd += '   filehandle = subprocess.Popen("' + exe + ' 2>> ' + stdout\
-                 + '", stdout=subprocess.PIPE).stdout\n'
+            cmd += '   filehandle = subprocess.Popen("' + exe + ' 2>> ' + \
+                   stdout + '", stdout=subprocess.PIPE).stdout\n'
             cmd += 'else:\n'
-            cmd += '   filehandle = subprocess.Popen("' + exe + ' >> ' + stdout\
-                 + ' 2>> ' + stderr + '", stdout=subprocess.PIPE).stdout\n'
+            cmd += '   filehandle = subprocess.Popen("' + exe + ' >> ' + \
+                   stdout + ' 2>> ' + stderr + \
+                   '", stdout=subprocess.PIPE).stdout\n'
             cmd += 'status = filehandle.close()\n'
             cmd += 'if status == None:\n'
             cmd += '  status = "0"\n'
             cmd += 'else:\n'
             cmd += '  status = str(status)\n'
-            cmd += 'status_handle.write("' + exe\
-                 + ' " + str(status) + "\\n")\n'
+            cmd += 'status_handle.write("' + exe + \
+                   ' " + str(status) + "\\n")\n'
             cmd += 'print "' + posttext + '" + str(status)\n'
 
         cmd += 'status_handle.close()\n'
@@ -619,8 +624,8 @@ if not os.environ.get("MIG_JOBDIR", ""):
         return cmd
 
     def umount(self, status='umount_status'):
-        print "WARNING: genjobscriptpython.umount _NOT_ implemented"
- 
+        print "WARNING: genjobscriptpython.umount NOT implemented"
+
         return '# TODO: Implement MiG home umount\n'
 
     def output_files_missing(self, result='missing_counter'):
@@ -657,11 +662,11 @@ if not os.environ.get("MIG_JOBDIR", ""):
 
             mig_server_filename = mig_server_filename.lstrip('/')
 
-            cmd += 'if (os.path.isfile("' + resource_filename\
-                 + '") and os.path.getsize("' + resource_filename\
-                 + '") > 0):\n'
+            cmd += 'if (os.path.isfile("' + resource_filename + \
+                   '") and os.path.getsize("' + resource_filename + \
+                   '") > 0):\n'
             # NOTE: for security we do not invoke shell here
-            cmd += '  subprocess.call("%s")\n' %\
+            cmd += '  subprocess.call("%s")\n' % \
                    self.__curl_cmd_send(resource_filename, mig_server_filename)
         return cmd
 
@@ -703,8 +708,6 @@ if not os.environ.get("MIG_JOBDIR", ""):
     def request_interactive(self):
         """Request interactive job"""
 
-        # return curl_cmd_request_interactive(self.https_sid_url_arg, self.job_dict, self.resource_conf, exe)
-
         return self.__curl_cmd_request_interactive()
 
     def save_status(self, result='ret'):
@@ -730,34 +733,32 @@ if not os.environ.get("MIG_JOBDIR", ""):
         result='ret',
         successcode='0',
         msg='ERROR: unexpected exit code!',
-        ):
+    ):
         """Print msg unless last command exitted with successcode"""
 
         cmd = 'if ' + result + ' != ' + successcode + ':\n'
-        cmd += '\tprint "WARNING: ' + msg + "\(\" + " + result\
-             + " + \"\)\"\n"
+        cmd += '\tprint "WARNING: ' + msg + "\(\" + " + result + " + \"\)\"\n"
         cmd += '\n'
         return cmd
 
-    
     def log_on_error(
         self,
         result='ret',
         successcode='0',
         msg='ERROR: unexpected exit code!',
-        ):
+    ):
         """Log msg unless result contains success code"""
         cmd = 'if ' + result + ' != ' + successcode + ':\n'
         cmd += self.log_status(msg, result)
         cmd += '\n'
-        return cmd        
+        return cmd
 
     def exit_on_error(
         self,
         result='ret',
         successcode='0',
         exitcode='ret',
-        ):
+    ):
         """exit with exitcode unless last command exitted with
         success code"""
 
@@ -773,9 +774,9 @@ if not os.environ.get("MIG_JOBDIR", ""):
         reflected in frontend_script!
         """
 
-        return 'print "' + name + ' script end reached '\
-             + self.job_dict['JOB_ID'] + '" \nsys.exit(' + exitcode + ')\n'\
-             + '### END OF SCRIPT ###\n'
+        return 'print "' + name + ' script end reached ' + \
+               self.job_dict['JOB_ID'] + '" \nsys.exit(' + exitcode + ')\n' + \
+               '### END OF SCRIPT ###\n'
 
     def clean_up(self):
         """Clean up"""
@@ -793,5 +794,3 @@ if not os.environ.get("MIG_JOBDIR", ""):
         cmd += '     os.rmdir(join(root, name))\n'
         cmd += 'os.rmdir(top)'
         return cmd
-
-
