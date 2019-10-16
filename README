@@ -201,6 +201,8 @@ The optional country code validation in certificate and OpenID account
 request backends requires the iso3166 module which may be installed with:
 sudo pip install iso3166
 
+The optional pygdb module used for debugging is available with pip:
+sudo pip install pygdb
 
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
