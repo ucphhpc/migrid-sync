@@ -87,6 +87,7 @@ if '__main__' == __name__:
         'alias_field',
         'signup_methods',
         'login_methods',
+        'csrf_protection',
         'password_policy',
         'hg_path',
         'hgweb_scripts',

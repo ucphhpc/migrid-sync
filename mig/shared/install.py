@@ -270,6 +270,7 @@ def generate_confs(
     alias_field='',
     signup_methods='extcert',
     login_methods='extcert',
+    csrf_protection='MEDIUM',
     password_policy='MEDIUM',
     hg_path='',
     hgweb_scripts='',
@@ -423,6 +424,7 @@ def generate_confs(
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__SIGNUP_METHODS__'] = signup_methods
     user_dict['__LOGIN_METHODS__'] = login_methods
+    user_dict['__CSRF_PROTECTION__'] = csrf_protection
     user_dict['__PASSWORD_POLICY__'] = password_policy
     user_dict['__HG_PATH__'] = hg_path
     user_dict['__HGWEB_SCRIPTS__'] = hgweb_scripts
