@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# handlers - back.end handler helpers
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# handlers - back end handler helpers
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -123,6 +123,8 @@ def safe_handler(configuration, method, operation, client_id, limit,
     #       miguser.conf / Xrpc requests?
     csrf_token = accepted_dict.get(csrf_field, [''])[-1]
     # TODO: include any openid session ID headers from environ here?
+    # _logger.debug("CSRF token for %s of %s from %s with %s" %
+    #              (method, operation, client_id, limit))
     csrf_required = make_csrf_token(configuration, method, operation,
                                     client_id, limit)
     _logger.debug("CSRF check: %s vs %s" % (csrf_required, csrf_token))

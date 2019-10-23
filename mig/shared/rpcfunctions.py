@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rpcfunctions - Backend for XMLRPC and JSONRPC interfaces over CGI
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,17 +39,19 @@ from shared.httpsclient import extract_client_id
 from shared.objecttypes import get_object_type_info
 from shared.output import validate
 
+
 def system_method_signature(method_name):
     """List method signatures"""
 
     signature = id
     try:
         exec compile('from shared.functionality.%s import signature'
-                      % method_name, '', 'single')
+                     % method_name, '', 'single')
         signature_string = str(signature())
     except:
         signature_string = 'none, array'
     return signature_string
+
 
 def system_method_help(method_name):
     """List method usage"""
@@ -57,23 +59,24 @@ def system_method_help(method_name):
     usage = method_help = id
     try:
         exec compile('from shared.functionality.%s import usage'
-                      % method_name, '', 'single')
+                     % method_name, '', 'single')
         help_string = str(usage())
     except:
         try:
-            exec compile('from shared.functionality.%s import __doc__ as method_help'
-                          % method_name, '', 'single')
+            exec compile(
+                'from shared.functionality.%s import __doc__ as method_help' %
+                method_name, '', 'single')
             help_string = str(method_help)
         except:
             help_string = ''
     return help_string
 
 
-
 def object_type_info(object_type):
     """Lookup object type"""
 
     return get_object_type_info(object_type)
+
 
 def stub(function, user_arguments_dict):
     """Run backend function with supplied arguments"""
@@ -93,19 +96,21 @@ def stub(function, user_arguments_dict):
     try:
         exec 'from %s import main' % function
     except Exception, err:
-        output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'Could not import module! %s: %s'
-                               % (function, err)}])
+        output_objects.extend([
+            {'object_type': 'error_text', 'text':
+             'Could not import module! %s: %s' % (function, err)}])
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    # Save actual functionality backend for initialize_main_variables to expose
+    environ['BACKEND_NAME'] = function.split('.')[-1]
     if not isinstance(user_arguments_dict, dict):
-        output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'user_arguments_dict is not a dictionary/struct type!'
-                              }])
+        output_objects.extend([
+            {'object_type': 'error_text', 'text':
+             'user_arguments_dict is not a dictionary/struct type!'}])
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
-    ## NOTE: Force to UTF-8 - JSONRPC dict is unicode while XMLRPC is UTF-8
-    if user_arguments_dict and True in [isinstance(i, unicode) for i in \
+    # NOTE: Force to UTF-8 - JSONRPC dict is unicode while XMLRPC is UTF-8
+    if user_arguments_dict and True in [isinstance(i, unicode) for i in
                                         user_arguments_dict.keys()]:
         user_arguments_dict = force_utf8_rec(user_arguments_dict)
 
@@ -130,10 +135,9 @@ def stub(function, user_arguments_dict):
         # output_objects = []
 
         _logger.error("%s output validation failed: %s" % (function, val_msg))
-        output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'Validation error! %s' % val_msg},
-                              {'object_type': 'title', 'text'
-                              : 'Validation error!'}])
+        output_objects.extend([
+            {'object_type': 'error_text', 'text': 'Validation error! %s' %
+             val_msg}, {'object_type': 'title', 'text': 'Validation error!'}])
     after_time = time.time()
     _logger.debug("finished %s.main" % function)
     output_objects.append({'object_type': 'timing_info', 'text':
@@ -398,6 +402,24 @@ def crontab(user_arguments_dict):
     """Wrap backend of same name"""
 
     return stub('shared.functionality.crontab', user_arguments_dict)
+
+
+def lscrontab(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.lscrontab', user_arguments_dict)
+
+
+def addcrontab(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.addcrontab', user_arguments_dict)
+
+
+def rmcrontab(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.rmcrontab', user_arguments_dict)
 
 
 def textarea(user_arguments_dict):
@@ -889,6 +911,9 @@ expose_functions = [object_type_info,
                     imagepreview,
                     sharelink,
                     crontab,
+                    lscrontab,
+                    addcrontab,
+                    rmcrontab,
                     textarea,
                     updateresconfig,
                     addresowner,
