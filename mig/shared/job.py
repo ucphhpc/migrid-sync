@@ -35,6 +35,12 @@ from shared.base import client_id_dir
 from shared.fileio import send_message_to_grid_script, unpickle
 from shared.mrslparser import parse
 
+JOB = 'job'
+QUEUE = 'queue'
+JOB_TYPES = [
+    JOB,
+    QUEUE
+]
 
 class Job:
     """Job objects"""
