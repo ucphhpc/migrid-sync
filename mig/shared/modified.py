@@ -77,6 +77,18 @@ def mark_re_modified(configuration, re_name):
     before next use"""
     return mark_entity_modified(configuration, 'runtimeenvs', re_name)
 
+def mark_workflow_p_modified(configuration, workflow_pattern_name):
+    """Mark workflow pattern modified to signal e.g.
+    workflow_p_map refresh before next use"""
+    return mark_entity_modified(configuration, 'workflowpatterns',
+                                workflow_pattern_name)
+
+def mark_workflow_r_modified(configuration, workflow_recipe_name):
+    """Mark workflow recipe modified to signal e.g.
+    workflow_r_map refresh before next use"""
+    return mark_entity_modified(configuration, 'workflowrecipes',
+                                workflow_recipe_name)
+
 def check_entities_modified(configuration, kind):
     """Check and return any name of given kind that are marked as modified
     along with a time stamp for the latest modification"""
@@ -116,6 +128,15 @@ def check_res_modified(configuration):
     """Check for modified re and return list of such IDs"""
     return check_entities_modified(configuration, 'runtimeenvs')
 
+def check_workflow_p_modified(configuration):
+    """Check for modified workflow patterns and return a list of such IDs"""
+    return check_entities_modified(configuration, 'workflowpatterns')
+
+def check_workflow_r_modified(configuration):
+    """Check for modified workflow recipes and return a list of such IDs"""
+    return check_entities_modified(configuration, 'workflowrecipes')
+
+
 def reset_entities_modified(configuration, kind):
     """Reset all modified entity marks of given kind"""
     modified_path = os.path.join(configuration.mig_system_files,
@@ -145,6 +166,14 @@ def reset_vgrids_modified(configuration):
 def reset_res_modified(configuration):
     """Reset res modified marks"""
     return reset_entities_modified(configuration, 'runtimeenvs')
+
+def reset_workflow_p_modified(configuraiton):
+    """Reset workflow patterns modified marks"""
+    return reset_entities_modified(configuraiton, 'workflowpatterns')
+
+def reset_workflow_r_modified(configuraiton):
+    """Reset workflow recipes modified marks"""
+    return reset_entities_modified(configuraiton, 'workflowrecipes')
 
 if __name__ == "__main__":
     import sys
