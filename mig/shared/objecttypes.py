@@ -115,6 +115,14 @@ runtimeenvironment = {
                                                  'environment')],
     'optional': [],
 }
+# Used by workflowjsoninterface
+# TODO, add the explicit fields that it uses
+workflow = {
+    'object_type': 'workflow',
+    #'required': [],
+    #'optional': [workflowpattern, workflowrecipe]
+}
+
 frozenfile = {'object_type': 'frozenfile', 'required':
               ['name', 'size', 'checksum', 'timestamp'], 'optional': []}
 frozenarchive = {
@@ -225,6 +233,7 @@ dir_listings = {'object_type': 'dir_listings',
 runtimeenvironments = {'object_type': 'runtimeenvironments',
                        'required_list': [('runtimeenvironments',
                                           'runtimeenvironment')]}
+workflows = {'object_type': 'workflows'}
 frozenarchives = {'object_type': 'frozenarchives',
                   'required_list': [('frozenarchives', 'frozenarchive'
                                      )]}
@@ -400,6 +409,8 @@ valid_types_list = [
     file_output,
     runtimeenvironment,
     runtimeenvironments,
+    workflow,
+    workflows,
     frozenfile,
     frozenarchive,
     frozenarchives,
