@@ -34,7 +34,6 @@ import json
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.safeinput import validated_input
-from shared.job import get_jobs_with, JOB_TYPES, JOB
 from shared.safeinput import REJECT_UNSET, valid_workflow_pers_id, \
     valid_workflow_vgrid, valid_workflow_name, valid_workflow_input_file, \
     valid_workflow_input_paths, valid_workflow_output, valid_workflow_recipes,\
@@ -84,7 +83,7 @@ def type_value_checker(type_value):
     :return: No return
     """
     valid_types = WORKFLOW_TYPES + WORKFLOW_ACTION_TYPES +\
-                  WORKFLOW_SEARCH_TYPES + JOB_TYPES
+                  WORKFLOW_SEARCH_TYPES
 
     if type_value not in valid_types:
         raise ValueError("Workflow type '%s' is not valid"
@@ -189,9 +188,9 @@ def workflow_api_read(configuration, workflow_session,
     'pattern_graph'. Default is 'workflowpattern'.
     :param workflow_attributes: dictionary of arguments used to select the
     workflow object to read.
-    :return: (Tuple (boolean, string) or function call to 'get_jobs_with',
+    :return: (Tuple (boolean, string) or function call to,
     'get_workflow_with' or 'search_workflow') If the given workflow_type is
-    either 'job' or 'queue' the function 'get_jobs_with' will be called. If
+    either 'job' or 'queue' will be called. If
     the given workflow type is either 'workflowpattern', 'workflowrecipe', or
     'any' the fucntion 'get_workflow_with' is called. If the given
     workflow_type is 'pattern_graph' the function 'search_workflow' is called.
@@ -202,16 +201,7 @@ def workflow_api_read(configuration, workflow_session,
     logger.debug("W_API: search: (%s, %s, %s)" % (workflow_session,
                                                   workflow_type,
                                                   workflow_attributes))
-    if workflow_type in JOB_TYPES:
-        first = False
-        if workflow_type == JOB:
-            first = True
-        return get_jobs_with(workflow_session['owner'],
-                             configuration.mrsl_files_dir,
-                             logger,
-                             first=first,
-                             **workflow_attributes)
-    elif workflow_type in WORKFLOW_TYPES:
+    if workflow_type in WORKFLOW_TYPES:
         return get_workflow_with(configuration,
                                  workflow_session['owner'],
                                  user_query=True,
@@ -223,7 +213,7 @@ def workflow_api_read(configuration, workflow_session,
                                workflow_type=workflow_type,
                                **workflow_attributes)
     return (False, "Invalid workflow read api type: '%s', valid are: '%s'" %
-            (workflow_type, ', '.join(WORKFLOW_TYPES + JOB_TYPES)))
+            (workflow_type, ', '.join(WORKFLOW_TYPES)))
 
 
 def workflow_api_update(configuration, workflow_session,
