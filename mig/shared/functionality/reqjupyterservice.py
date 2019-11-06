@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
@@ -63,6 +62,8 @@ from shared.httpsclient import unescape
 from shared.init import initialize_main_variables
 from shared.pwhash import generate_random_ascii
 from shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
+from shared.workflows import create_workflow_session_id, \
+    get_workflow_session_id
 
 
 def is_active(pickle_state, timeout=7200):
@@ -358,14 +359,8 @@ def main(client_id, user_arguments_dict):
                                'text': 'Back to Jupyter services overview'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    username = unescape(os.environ.get('REMOTE_USER', '')).strip()
-    # TODO, activate admin info
-    # remote_user = {'USER': username, 'IS_ADMIN': is_admin(client_id,
-    #                                                      configuration,
-    # logger)}
-
-    remote_user = username
-    if remote_user == '':
+    remote_user = unescape(os.environ.get('REMOTE_USER', '')).strip()
+    if not remote_user:
         logger.error("Can't connect to jupyter with an empty REMOTE_USER "
                      "environment variable")
         output_objects.append(
@@ -374,6 +369,11 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
     # Ensure the remote_user dict can be http posted
     remote_user = str(remote_user)
+
+    # TODO, activate admin info
+    # remote_user = {'USER': username, 'IS_ADMIN': is_admin(client_id,
+    #                                                      configuration,
+    # logger)}
 
     # Regular sftp path
     mnt_path = os.path.join(configuration.jupyter_mount_files_dir, client_dir)
@@ -439,13 +439,25 @@ def main(client_id, user_arguments_dict):
     # A valid active key is already present redirect straight to the jupyter
     # service, pass most recent mount information
     if active_mount is not None:
+        session_id = get_workflow_session_id(configuration, client_id)
+        if not session_id:
+            session_id = create_workflow_session_id(configuration, client_id)
+        # TODO get this dynamically
+        url = configuration.migserver_https_sid_url + \
+              '/cgi-sid/workflowsjsoninterface.py?output_format=json'
+
         mount_dict = mig_to_mount_adapt(active_mount['state'])
         user_dict = mig_to_user_adapt(active_mount['state'])
+        session_dict = {
+            'Session_id': session_id,
+            'URL': url
+        }
         logger.debug("Existing header values, Mount: %s User: %s",
                      (mount_dict, user_dict))
         auth_header = {'Remote-User': remote_user}
         json_data = {'data': {'Mount': mount_dict,
-                              'User': user_dict}}
+                              'User': user_dict,
+                              'Session': session_dict}}
 
         with requests.session() as session:
             # Authenticate and submit data
