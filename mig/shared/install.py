@@ -239,6 +239,7 @@ def generate_confs(
     enable_gdp=False,
     enable_jobs=True,
     enable_resources=True,
+    enable_workflows=False,
     enable_events=True,
     enable_sharelinks=True,
     enable_transfers=True,
@@ -364,6 +365,7 @@ def generate_confs(
     user_dict['__ENABLE_GDP__'] = str(enable_gdp)
     user_dict['__ENABLE_JOBS__'] = str(enable_jobs)
     user_dict['__ENABLE_RESOURCES__'] = str(enable_resources)
+    user_dict['__ENABLE_WORKFLOWS__'] = str(enable_workflows)
     user_dict['__ENABLE_EVENTS__'] = str(enable_events)
     user_dict['__ENABLE_SHARELINKS__'] = str(enable_sharelinks)
     user_dict['__ENABLE_TRANSFERS__'] = str(enable_transfers)
@@ -923,6 +925,22 @@ cert, oid and sid based https!
             import cracklib
         except ImportError:
             print "ERROR: cracklib use requested but lib is not installed!"
+            sys.exit(1)
+
+    # Enable events daemon only if requested and deps are installed
+    if user_dict['__ENABLE_WORKFLOWS__'].lower() == 'true':
+        try:
+            import nbformat
+        except ImportError:
+            print "ERROR: workflows use requested but " \
+                  "nbformat is not installed!"
+            sys.exit(1)
+
+        try:
+            import nbconvert
+        except ImportError:
+            print "ERROR: workflows use requested but " \
+                  "nbconvert is not installed!"
             sys.exit(1)
 
     # Enable events daemon only if requested and deps are installed
@@ -1502,6 +1520,7 @@ def create_user(
     wsgi_procs = 5
     enable_jobs = True
     enable_resources = True
+    enable_workflows = False
     enable_events = True
     enable_sharelinks = True
     enable_transfers = True
@@ -1610,6 +1629,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         wsgi_procs,
         enable_jobs,
         enable_resources,
+        enable_workflows,
         enable_events,
         enable_sharelinks,
         enable_transfers,

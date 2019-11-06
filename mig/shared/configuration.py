@@ -107,6 +107,9 @@ def fix_missing(config_file, verbose=True):
         'events_home': '~/state/events_home/',
         'twofactor_home': '~/state/twofactor_home/',
         'gdp_home': '~/state/gdp_home/',
+        'workflows_home': '~/state/workflows_home/',
+        'workflows_db_home': '~/state/workflows_home/workflows_db_home/',
+        'workflows_db': '~/state/workflows_home/workflows_db_home/workflows_db.pickle',
         'notify_home': '~/state/notify_home',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
@@ -226,12 +229,17 @@ def fix_missing(config_file, verbose=True):
                            'suggest_threshold': 'GREEN',
                            }
 
+    workflows_section = {'vgrid_tasks_home': '.workflow_tasks_home/',
+                         'vgrid_patterns_home': '.workflow_patterns_home/',
+                         'vgrid_recipes_home': '.workflow_recipes_home/'}
+
     defaults = {
         'GLOBAL': global_section,
         'SCHEDULER': scheduler_section,
         'MONITOR': monitor_section,
         'SETTINGS': settings_section,
         'FEASIBILITY': feasibility_section,
+        'WORKFLOWS': workflows_section,
     }
     for section in defaults.keys():
         if not section in config.sections():
@@ -261,7 +269,6 @@ def fix_missing(config_file, verbose=True):
 
 
 class Configuration:
-
     """Server configuration in parsed form"""
 
     mig_server_id = None
@@ -309,10 +316,16 @@ class Configuration:
     events_home = ''
     twofactor_home = ''
     gdp_home = ''
+    workflows_home = ''
+    workflows_db_home = ''
+    workflows_db = ''
     notify_home = ''
     seafile_mount = ''
     openid_store = ''
     paraview_home = ''
+    workflows_vgrid_tasks_home = ''
+    workflows_vgrid_patterns_home = ''
+    workflows_vgrid_recipes_home = ''
     site_landing_page = ''
     site_skin = ''
     site_collaboration_links = ''
@@ -714,6 +727,13 @@ location.""" % self.config_file
             self.twofactor_home = config.get('GLOBAL', 'twofactor_home')
         if config.has_option('GLOBAL', 'gdp_home'):
             self.gdp_home = config.get('GLOBAL', 'gdp_home')
+        if config.has_option('GLOBAL', 'workflows_home'):
+            self.workflows_home = config.get('GLOBAL', 'workflows_home')
+        if config.has_option('GLOBAL', 'workflows_db_home'):
+            self.workflows_db_home = config.get('GLOBAL',
+                                                'workflows_db_home')
+        if config.has_option('GLOBAL', 'workflows_db'):
+            self.workflows_db = config.get('GLOBAL', 'workflows_db')
         if config.has_option('GLOBAL', 'notify_home'):
             self.notify_home = config.get('GLOBAL', 'notify_home')
         if config.has_option('GLOBAL', 'vm_home'):
@@ -753,6 +773,11 @@ location.""" % self.config_file
             self.site_enable_resources = True
         if config.has_option('GLOBAL', 'user_monitor_log'):
             self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
+        if config.has_option('SITE', 'enable_workflows'):
+            self.site_enable_workflows = config.getboolean(
+                'SITE', 'enable_workflows')
+        else:
+            self.site_enable_workflows = False
         if config.has_option('SITE', 'enable_events'):
             self.site_enable_events = config.getboolean(
                 'SITE', 'enable_events')
@@ -1321,6 +1346,16 @@ location.""" % self.config_file
                                               'extra_sys_re').split()
         else:
             self.vm_extra_sys_re = []
+
+        if config.has_option('WORKFLOWS', 'vgrid_tasks_home'):
+            self.workflows_vgrid_tasks_home = config.get(
+                'WORKFLOWS', 'vgrid_tasks_home')
+        if config.has_option('WORKFLOWS', 'vgrid_patterns_home'):
+            self.workflows_vgrid_patterns_home = config.get(
+                'WORKFLOWS', 'vgrid_patterns_home')
+        if config.has_option('WORKFLOWS', 'vgrid_recipes_home'):
+            self.workflows_vgrid_recipes_home = config.get(
+                'WORKFLOWS', 'vgrid_recipes_home')
 
         if config.has_option('SITE', 'images'):
             self.site_images = config.get('SITE', 'images')
