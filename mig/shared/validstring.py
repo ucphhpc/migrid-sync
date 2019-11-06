@@ -110,7 +110,7 @@ def possible_user_id(configuration, user_id):
     if len(user_id) < user_id_min_length or len(user_id) > user_id_max_length:
         return False
     for i in user_id:
-        if not i in user_id_charset:
+        if i not in user_id_charset:
             return False
     return True
 
@@ -135,7 +135,7 @@ def possible_job_id(configuration, job_id):
     if len(job_id) != session_id_length:
         return False
     for i in job_id:
-        if not i in session_id_charset:
+        if i not in session_id_charset:
             return False
     return True
 
@@ -151,19 +151,35 @@ def possible_sharelink_id(configuration, share_id):
     if not share_id[0] in share_mode_charset:
         return False
     for i in share_id[1:]:
-        if not i in share_id_charset:
+        if i not in share_id_charset:
             return False
     return True
 
 
 def possible_jupyter_mount_id(configuration, jupyter_mount_id):
-    """Check if the jupyter_mount_id is a possible ID based on the contents and the length"""
+    """Check if the jupyter_mount_id is a possible ID based on the
+    contents and the length.
+    """
     if not configuration.site_enable_jupyter:
         return False
     if len(jupyter_mount_id) != session_id_length:
         return False
     for i in jupyter_mount_id:
-        if not i in share_id_charset:
+        if i not in share_id_charset:
+            return False
+    return True
+
+
+def possible_workflow_session_id(configuration, workflow_session_id):
+    """Check if the workflow_session_id is a possible ID based on the
+    contents and the length.
+    """
+    if not configuration.site_enable_workflows:
+        return False
+    if len(workflow_session_id) != session_id_length:
+        return False
+    for i in workflow_session_id:
+        if i not in session_id_charset:
             return False
     return True
 
