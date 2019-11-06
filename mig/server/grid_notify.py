@@ -222,7 +222,7 @@ def handle_notifications(configuration):
                                 notified_users=notified_users,
                                 timestamp=last_notification - 84600)
             received_notifications.clear()
-            logger.info("----- Sleeping %s seconds -----" % notify_interval)
+            logger.debug("----- Sleeping %s seconds -----" % notify_interval)
             time.sleep(notify_interval)
     except Exception, err:
         err_msg = "handle_notifications failed: %s" % err
