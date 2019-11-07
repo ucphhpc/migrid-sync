@@ -676,8 +676,7 @@ def __list_path(configuration, workflow_type=WORKFLOW_PATTERN):
     # Note that this is currently listing all objects for all users. This
     # might want to be altered to only the current user and global? That might
     # be too much needless processing if multiple users are using the system at
-    # once though. Talk to Jonas/Martin about this. Also note this system is
-    # terrible
+    # once though. Talk to Jonas/Martin about this.
     found, vgrids = vgrid_list_vgrids(configuration)
     for vgrid in vgrids:
         home = get_workflow_home(configuration, vgrid, workflow_type)
@@ -2784,7 +2783,7 @@ def __search_workflow_p_graph(configuration, vgrid):
                                   workflow_type=WORKFLOW_PATTERN,
                                   **{'vgrid': vgrid})
     if not workflows:
-        return workflows
+        return (False, "Failed to find any workflows you own")
 
     wp_graph = {'nodes': {},
                 'edges': []}
@@ -2801,6 +2800,7 @@ def __search_workflow_p_graph(configuration, vgrid):
             if w_id == n_id:
                 continue
             # Have matching output/input paths?
+            # TODO, expand to also support regex overlap
             if not bool(set(workflow['output'].values()) &
                         set(neighbour['input_paths'])):
                 continue
@@ -2809,8 +2809,8 @@ def __search_workflow_p_graph(configuration, vgrid):
                 if output in neighbour['input_paths']:
                     wp_graph['edges'].append({'from': w_id,
                                               'to': n_id})
-
-    return wp_graph
+    _logger.debug("Prepared graph: '%s'" % wp_graph)
+    return (True, wp_graph)
 
 
 if __name__ == '__main__':

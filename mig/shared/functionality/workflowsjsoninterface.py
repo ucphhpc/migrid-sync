@@ -202,11 +202,15 @@ def workflow_api_read(configuration, workflow_session,
                                                   workflow_type,
                                                   workflow_attributes))
     if workflow_type in WORKFLOW_TYPES:
-        return get_workflow_with(configuration,
-                                 workflow_session['owner'],
-                                 user_query=True,
-                                 workflow_type=workflow_type,
-                                 **workflow_attributes)
+        workflows = get_workflow_with(configuration,
+                                      workflow_session['owner'],
+                                      user_query=True,
+                                      workflow_type=workflow_type,
+                                      **workflow_attributes)
+        if not workflows:
+            return (False, 'Failed to find a workflow you own with '
+                           'attributes: %s' % workflow_attributes)
+        return (workflows, '')
     elif workflow_type in WORKFLOW_SEARCH_TYPES:
         return search_workflow(configuration,
                                workflow_session['owner'],
@@ -398,13 +402,13 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.OK)
     # Read
     if operation == WORKFLOW_API_READ:
-        workflows = workflow_api_read(configuration, workflow_session,
-                                      workflow_type, **workflow_attributes)
+        workflows, msg = workflow_api_read(configuration, workflow_session,
+                                           workflow_type,
+                                           **workflow_attributes)
         if not workflows:
             output_objects.append(
                 {'object_type': 'error_text',
-                 'text': 'Failed to find a workflow you own with '
-                         'attributes: %s' % workflow_attributes})
+                 'text': msg})
             return (output_objects, returnvalues.OK)
 
         output_objects.append({'object_type': 'workflows',
