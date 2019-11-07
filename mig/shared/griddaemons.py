@@ -1941,6 +1941,10 @@ def authlog(configuration,
         logger.error("Invalid authlog level: %s" % log_lvl)
         return False
 
+    log_message = "IP: %s, Protocol: %s, User: %s, Message: %s" \
+        % (user_addr, proto, user_id, log_msg)
+    _auth_logger(log_message)
+
     if notify and category:
         user_msg = "IP: %s, User: %s, Message: %s" % \
             (user_addr, user_id, log_msg)
@@ -1948,10 +1952,6 @@ def authlog(configuration,
                                           user_msg, configuration)
         if not status:
             logger.error("Failed to send notification to: %s" % user_id)
-
-    log_message = "IP: %s, Protocol: %s, User: %s, Message: %s" \
-        % (user_addr, proto, user_id, log_msg)
-    _auth_logger(log_message)
 
     return status
 
@@ -2027,117 +2027,117 @@ def handle_auth_attempt(configuration,
 
     # Log auth attempt and set (authorized, disconnect) return values
 
-    if (valid_key or valid_password or valid_digest) and twofa_passed:
+    if exceeded_rate_limit:
+        disconnect = True
+        auth_msg = "q"
+        log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
+        logger.warning(log_msg)
+        authlog(configuration, 'WARNING', protocol,
+                username, ip_addr, auth_msg, notify=True)
+    elif exceeded_max_sessions:
+        disconnect = True
+        active_count = active_sessions(configuration, protocol, username)
+        auth_msg = "Too many open sessions"
+        log_msg = auth_msg + " %d for %s" \
+            % (active_count, username)
+        logger.warning(log_msg)
+        authlog(configuration, 'WARNING', protocol,
+                username, ip_addr, auth_msg, notify=True)
+    elif invalid_username:
+        disconnect = True
+        if re.match(CRACK_USERNAME_REGEX, username) is not None:
+            auth_msg = "Crack username detected"
+            log_func = logger.critical
+            authlog_lvl = 'CRITICAL'
+        else:
+            auth_msg = "Invalid username"
+            log_func = logger.error
+            authlog_lvl = 'ERROR'
+        log_msg = auth_msg + " %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        log_func(log_msg)
+        authlog(configuration, authlog_lvl, protocol,
+                username, ip_addr, auth_msg, notify=False)
+    elif invalid_user:
+        disconnect = True
+        auth_msg = "Missing user and/or credentials"
+        log_msg = auth_msg + " %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.error(log_msg)
+        authlog(configuration, 'ERROR', protocol,
+                username, ip_addr,
+                auth_msg, notify=False)
+    elif not (key_enabled or password_enabled or digest_enabled):
+        disconnect = True
+        auth_msg = "No valid credentials"
+        log_msg = auth_msg + " %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.error(log_msg)
+        authlog(configuration, 'ERROR', protocol,
+                username, ip_addr, auth_msg, notify=True)
+    elif (valid_key or valid_password or valid_digest) and not twofa_passed:
+        disconnect = True
+        auth_msg = "No valid two factor session"
+        log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.error(log_msg)
+        authlog(configuration, 'ERROR', protocol,
+                username, ip_addr, auth_msg, notify=True)
+    elif key_enabled and not valid_key:
+        auth_msg = "Failed key"
+        log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.error(log_msg)
+        authlog(configuration, 'ERROR', protocol,
+                username, ip_addr, auth_msg, notify=True)
+    elif password_enabled and not valid_password:
+        auth_msg = "Failed password"
+        log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.error(log_msg)
+        authlog(configuration, 'ERROR', protocol,
+                username, ip_addr, auth_msg, notify=True)
+    elif digest_enabled and not valid_digest:
+        auth_msg = "Failed digest"
+        log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.error(log_msg)
+        authlog(configuration, 'ERROR', protocol,
+                username, ip_addr, auth_msg, notify=True)
+    elif (valid_key or valid_password or valid_digest) and twofa_passed:
         authorized = True
         if configuration.site_enable_gdp:
             notify = True
         else:
             notify = False
         if valid_key:
-            info_msg = "Accepted key"
+            auth_msg = "Accepted key"
         elif valid_password:
-            info_msg = "Accepted password"
+            auth_msg = "Accepted password"
         elif valid_digest:
-            info_msg = "Accepted digest"
-        authlog(configuration, 'INFO', protocol,
-                username, ip_addr, info_msg, notify=notify)
-        info_msg += " login for %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            info_msg += ":%s" % tcp_port
-        logger.info(info_msg)
-    elif exceeded_rate_limit:
-        disconnect = True
-        warn_msg = "Rate limit reached"
-        authlog(configuration, 'WARNING', protocol,
-                username, ip_addr, warn_msg, notify=True)
-        warn_msg += " for %s from %s" % (username, ip_addr)
-        logger.warning(warn_msg)
-    elif exceeded_max_sessions:
-        disconnect = True
-        active_count = active_sessions(configuration, protocol, username)
-        warn_msg = "Too many open sessions"
-        authlog(configuration, 'WARNING', protocol,
-                username, ip_addr, warn_msg, notify=True)
-        warn_msg += " %d for %s" \
-            % (active_count, username)
-        logger.warning(warn_msg)
-    elif invalid_username:
-        disconnect = True
-        if re.match(CRACK_USERNAME_REGEX, username) is not None:
-            log_msg = "Crack username detected"
-            log_func = logger.critical
-            authlog_lvl = 'CRITICAL'
-        else:
-            log_msg = "Invalid username"
-            log_func = logger.error
-            authlog_lvl = 'ERROR'
-        authlog(configuration, authlog_lvl, protocol,
-                username, ip_addr, log_msg, notify=False)
-        log_msg += " %s from %s" % (username, ip_addr)
+            auth_msg = "Accepted digest"
+        log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
-        log_func(log_msg)
-    elif invalid_user:
-        disconnect = True
-        err_msg = "Missing user and/or credentials"
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr,
-                err_msg, notify=False)
-        err_msg += " %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            err_msg += ":%s" % tcp_port
-        logger.error(err_msg)
-    elif not (key_enabled or password_enabled or digest_enabled):
-        disconnect = True
-        err_msg = "No valid credentials"
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, err_msg, notify=True)
-        err_msg += " %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            err_msg += ":%s" % tcp_port
-        logger.error(err_msg)
-    elif (valid_key or valid_password or valid_digest) and not twofa_passed:
-        disconnect = True
-        err_msg = "No valid two factor session"
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, err_msg, notify=True)
-        err_msg += " for %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            err_msg += ":%s" % tcp_port
-        logger.error(err_msg)
-    elif key_enabled and not valid_key:
-        err_msg = "Failed key"
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, err_msg, notify=True)
-        err_msg += " login for %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            err_msg += ":%s" % tcp_port
-        logger.error(err_msg)
-    elif password_enabled and not valid_password:
-        err_msg = "Failed password"
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, err_msg, notify=True)
-        err_msg += " login for %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            err_msg += ":%s" % tcp_port
-        logger.error(err_msg)
-    elif digest_enabled and not valid_digest:
-        err_msg = "Failed digest"
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, err_msg, notify=True)
-        err_msg += " login for %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            err_msg += ":%s" % tcp_port
-        logger.error(err_msg)
+        logger.info(log_msg)
+        authlog(configuration, 'INFO', protocol,
+                username, ip_addr, auth_msg, notify=notify)
     else:
         disconnect = True
-        err_msg = "Unknown auth error"
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, err_msg, notify=True)
-        err_msg += " for %s from %s" % (username, ip_addr)
+        auth_msg = "Unknown auth error"
+        log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
-            err_msg += ":%s" % tcp_port
-        logger.warning(err_msg)
+            log_msg += ":%s" % tcp_port
+        logger.warning(log_msg)
+        authlog(configuration, 'ERROR', protocol,
+                username, ip_addr, auth_msg, notify=True)
 
     # Update and check rate limits
 
@@ -2161,23 +2161,24 @@ def handle_auth_attempt(configuration,
     # Check if we should log abuse messages for use by eg. fail2ban
 
     if user_abuse_hits > 0 and user_hits > user_abuse_hits:
-        crit_msg = "Abuse limit reached"
-        authlog(configuration, 'CRITICAL', protocol,
-                username, ip_addr, crit_msg)
-        crit_msg += " user hits %d for %s from %s" \
+        auth_msg = "Abuse limit reached"
+        log_msg = auth_msg + " user hits %d for %s from %s" \
             % (user_abuse_hits, username, ip_addr)
         if tcp_port > 0:
-            crit_msg += ":%s" % tcp_port
-        logger.critical(crit_msg)
-    elif proto_abuse_hits > 0 and proto_hits > proto_abuse_hits:
-        crit_msg = "Abuse limit reached"
+            log_msg += ":%s" % tcp_port
+        logger.critical(log_msg)
         authlog(configuration, 'CRITICAL', protocol,
-                username, ip_addr, crit_msg)
-        crit_msg += " proto hits %d for %s from %s" \
+                username, ip_addr, auth_msg)
+
+    elif proto_abuse_hits > 0 and proto_hits > proto_abuse_hits:
+        auth_msg = "Abuse limit reached"
+        log_msg = auth_msg + " proto hits %d for %s from %s" \
             % (proto_abuse_hits, username, ip_addr)
         if tcp_port > 0:
-            crit_msg += ":%s" % tcp_port
-        logger.critical(crit_msg)
+            log_msg += ":%s" % tcp_port
+        logger.critical(log_msg)
+        authlog(configuration, 'CRITICAL', protocol,
+                username, ip_addr, auth_msg)
 
     return (authorized, disconnect)
 
