@@ -59,7 +59,6 @@ DESCRIPTION:
                 16 (Q)  20 (U)  9 (J)   3 (D)    17 (R) 0 (A)  NA (=) NA (=)
                 010000  010100  001001  000011   010001 000000 000000 000000
 
-
                 QUJDRA==
 
                 Decoding is the process in reverse.  A 'decode' lookup
@@ -188,32 +187,33 @@ VERSION HISTORY:
 
 #include "base64.h"
 
-static void decodeblock( const uint8_t *in, uint8_t *out );
-static size_t decode_core( const uint8_t *table, uint8_t start,
-                           const uint8_t *input, const size_t input_size, uint8_t *output );
+static void decodeblock(const uint8_t * in, uint8_t * out);
+static size_t decode_core(const uint8_t * table, uint8_t start,
+			  const uint8_t * input, const size_t input_size,
+			  uint8_t * output);
 
 /*
 ** decodeblock
 **
 ** decode 4 '6-bit' characters into 3 8-bit binary bytes
 */
-static void decodeblock( const uint8_t *in, uint8_t *out )
-{   
-    out[ 0 ] = (uint8_t ) (in[0] << 2 | in[1] >> 4);
-    out[ 1 ] = (uint8_t ) (in[1] << 4 | in[2] >> 2);
-    out[ 2 ] = (uint8_t ) (((in[2] << 6) & 0xc0) | in[3]);
+static void decodeblock(const uint8_t * in, uint8_t * out)
+{
+	out[0] = (uint8_t) (in[0] << 2 | in[1] >> 4);
+	out[1] = (uint8_t) (in[1] << 4 | in[2] >> 2);
+	out[2] = (uint8_t) (((in[2] << 6) & 0xc0) | in[3]);
 }
 
-size_t b64_get_decoded_buffer_size( const size_t encoded_size )
+size_t b64_get_decoded_buffer_size(const size_t encoded_size)
 {
-    size_t decoded_size;
-    if(    (0 == encoded_size)
-        || (0 == encoded_size >> 2) ) {
-        return 0;
-    }
+	size_t decoded_size;
+	if ((0 == encoded_size)
+	    || (0 == encoded_size >> 2)) {
+		return 0;
+	}
 
-    decoded_size = (encoded_size >> 2) * 3;
-    return decoded_size;
+	decoded_size = (encoded_size >> 2) * 3;
+	return decoded_size;
 }
 
 /*
@@ -221,14 +221,16 @@ size_t b64_get_decoded_buffer_size( const size_t encoded_size )
 **
 ** decode a base64 encoded stream discarding padding, line breaks and noise
 */
-size_t b64_decode( const uint8_t *input, const size_t input_size, uint8_t *output )
+size_t b64_decode(const uint8_t * input, const size_t input_size,
+		  uint8_t * output)
 {
-    /*
-    ** Translation Table to decode (created by author)
-    */
-    static const uint8_t cd64[]="|$$$}rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$$$XYZ[\\]^_`abcdefghijklmnopq";
+	/*
+	 ** Translation Table to decode (created by author)
+	 */
+	static const uint8_t cd64[] =
+	    "|$$$}rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$$$XYZ[\\]^_`abcdefghijklmnopq";
 
-    return decode_core( cd64, 43, input, input_size, output );
+	return decode_core(cd64, 43, input, input_size, output);
 }
 
 /*
@@ -236,49 +238,54 @@ size_t b64_decode( const uint8_t *input, const size_t input_size, uint8_t *outpu
 **
 ** decode a base64url encoded stream discarding padding, line breaks and noise
 */
-size_t b64url_decode( const uint8_t *input, const size_t input_size, uint8_t *output )
+size_t b64url_decode(const uint8_t * input, const size_t input_size,
+		     uint8_t * output)
 {
-    /*
-    ** Translation Table to decode (created by Weston Schmidt)
-    */
-    static const uint8_t cd64url[]="|$$rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$}$XYZ[\\]^_`abcdefghijklmnopq";
+	/*
+	 ** Translation Table to decode (created by Weston Schmidt)
+	 */
+	static const uint8_t cd64url[] =
+	    "|$$rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$}$XYZ[\\]^_`abcdefghijklmnopq";
 
-    return decode_core( cd64url, 45, input, input_size, output );
+	return decode_core(cd64url, 45, input, input_size, output);
 }
 
-static size_t decode_core( const uint8_t *table, uint8_t start,
-                           const uint8_t *input, const size_t input_size, uint8_t *output )
+static size_t decode_core(const uint8_t * table, uint8_t start,
+			  const uint8_t * input, const size_t input_size,
+			  uint8_t * output)
 {
 
-    uint8_t in[4], v;
-    uint8_t *out = output;
-    int i, len;
-    size_t count = 0;
+	uint8_t in[4], v;
+	uint8_t *out = output;
+	int i, len;
+	size_t count = 0;
 
-    while( count < input_size ) {
-        for( len = 0, i = 0; (i < 4) && (count < input_size); i++ ) {
-            v = 0;
-            while(    (count < input_size)
-                   && (v == 0) ) {
-                v = input[count++];
-                v = (uint8_t) ((v < start || v > 122) ? 0 : table[ v - start ]);
-                if( v ) {
-                    v = (uint8_t) ((v == '$') ? 0 : v - 61);
-                }
-            }
-            if( count < input_size || v != 0) {
-                len++;
-                if( v ) {
-                    in[ i ] = (uint8_t) (v - 1);
-                }
-            } else {
-                in[i] = 0;
-            }
-        }
-        if( len ) {
-            decodeblock( in, out );
-            out += len - 1;
-        }
-    }
-    return (out - output);
+	while (count < input_size) {
+		for (len = 0, i = 0; (i < 4) && (count < input_size); i++) {
+			v = 0;
+			while ((count < input_size)
+			       && (v == 0)) {
+				v = input[count++];
+				v = (uint8_t) ((v < start
+						|| v >
+						122) ? 0 : table[v - start]);
+				if (v) {
+					v = (uint8_t) ((v == '$') ? 0 : v - 61);
+				}
+			}
+			if (count < input_size || v != 0) {
+				len++;
+				if (v) {
+					in[i] = (uint8_t) (v - 1);
+				}
+			} else {
+				in[i] = 0;
+			}
+		}
+		if (len) {
+			decodeblock(in, out);
+			out += len - 1;
+		}
+	}
+	return (out - output);
 }

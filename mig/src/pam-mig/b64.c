@@ -72,7 +72,6 @@ DESCRIPTION:
                 16 (Q)  20 (U)  9 (J)   3 (D)    17 (R) 0 (A)  NA (=) NA (=)
                 010000  010100  001001  000011   010001 000000 000000 000000
 
-
                 QUJDRA==
 
                 Decoding is the process in reverse.  A 'decode' lookup
@@ -207,11 +206,10 @@ VERSION HISTORY:
 **char cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 */
 
-size_t b64_get_encoded_buffer_size( const size_t decoded_size )
+size_t b64_get_encoded_buffer_size(const size_t decoded_size)
 {
-    return ((decoded_size + 2) / 3) << 2;
+	return ((decoded_size + 2) / 3) << 2;
 }
-
 
 /*
 ** encode
@@ -219,30 +217,31 @@ size_t b64_get_encoded_buffer_size( const size_t decoded_size )
 ** base64-encode a stream adding padding and line breaks as per spec.
  * Assume that output is large enough to fill out last 4-byte boundary.
 */
-void b64_encode( const uint8_t *input, const size_t input_size, uint8_t *output )
+void b64_encode(const uint8_t * input, const size_t input_size,
+		uint8_t * output)
 {
-    size_t remsize = input_size;    // (Note: could just use input_size were it not const)
-    while (remsize > 0) {
-        int i;
-        uint32_t tmp;
-        int len = (remsize >= 3) ? 3 : remsize; 
-        remsize -= len;
-        tmp = 0;
-        for (i=0; i < 3; ++i) {
-            tmp = (tmp << 8) | *input++;
-        }
-        for (i=4; --i >= 0; ) {
-            int index = tmp & 0x3F;
-            // Note: per earlier code, we only use '=' in at most the last 2 output bytes
-            //  The following comparison should still do this (len is 1-3)
-            output[i] =   (i > len) ? '='   // use '=' for chars past end of input
-                        : (index < 26) ? (index + 'A')      //  0-25 = 'A-Z'
-                        : (index < 52) ? (index + ('a'-26)) // 26-51 = 'a-z'
-                        : (index < 62) ? (index + ('0'-52)) // 52-61 = '0-9'
-                        : (index == 62) ? '+'               //    62 = '+'
-                        : '/';                              //    63 = '/'
-            tmp >>= 6;
-        }
-        output += 4;
-    }
+	size_t remsize = input_size;	// (Note: could just use input_size were it not const)
+	while (remsize > 0) {
+		int i;
+		uint32_t tmp;
+		int len = (remsize >= 3) ? 3 : remsize;
+		remsize -= len;
+		tmp = 0;
+		for (i = 0; i < 3; ++i) {
+			tmp = (tmp << 8) | *input++;
+		}
+		for (i = 4; --i >= 0;) {
+			int index = tmp & 0x3F;
+			// Note: per earlier code, we only use '=' in at most the last 2 output bytes
+			//  The following comparison should still do this (len is 1-3)
+			output[i] = (i > len) ? '='	// use '=' for chars past end of input
+			    : (index < 26) ? (index + 'A')	//  0-25 = 'A-Z'
+			    : (index < 52) ? (index + ('a' - 26))	// 26-51 = 'a-z'
+			    : (index < 62) ? (index + ('0' - 52))	// 52-61 = '0-9'
+			    : (index == 62) ? '+'	//    62 = '+'
+			    : '/';	//    63 = '/'
+			tmp >>= 6;
+		}
+		output += 4;
+	}
 }
