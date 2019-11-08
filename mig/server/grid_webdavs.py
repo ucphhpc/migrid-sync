@@ -601,7 +601,8 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                     "MiGHTTPAuthenticator.authRequest failed")
         elif authorized and not valid_session:
             response_ok = True
-            logger.error("503 Service Unavailable")
+            logger.error("Authorized but no valid session")
+            # logger.debug("503 Service Unavailable")
             start_response("503 Service Unavailable",
                            [("Content-Length", "0"),
                             ("Date", getRfc1123Time()),
@@ -609,7 +610,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             result = ['']
         elif disconnect:
             response_ok = True
-            logger.error("403 Forbidden")
+            # logger.debug("403 Forbidden")
             start_response("403 Forbidden", [("Content-Length", "0"),
                                              ("Date", getRfc1123Time()),
                                              ])
