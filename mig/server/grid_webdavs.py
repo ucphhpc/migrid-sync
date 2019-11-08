@@ -166,7 +166,7 @@ def _find_authenticator(application):
 
 def _open_session(username, ip_addr, tcp_port, session_id):
     """Keep track of new session"""
-    # logger.debug("auth succeeded for %s from %s:%s) with session: %s" %
+    # logger.debug("auth succeeded for %s from %s:%s with session: %s" %
     #             (username, ip_addr, tcp_port, session_id))
 
     status = track_open_session(configuration,
