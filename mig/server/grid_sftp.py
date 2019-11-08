@@ -1067,6 +1067,17 @@ class SimpleSSHServer(paramiko.ServerInterface):
         proto_abuse_hits = daemon_conf['auth_limits']['proto_abuse_hits']
         max_secret_hits = daemon_conf['auth_limits']['max_secret_hits']
 
+        authtype = ''
+        if key is not None:
+            authtype = 'key'
+        elif password is not None:
+            authtype = 'password'
+        elif (key is None and password is None) \
+                or (key is not None and password is not None):
+            logger.error("Excatly one of key or password is expected")
+            self.transport.close()
+            return paramiko.AUTH_FAILED
+
         # For e.g. GDP we require all logins to match active 2FA session IP,
         # but otherwise user may freely switch net during 2FA lifetime.
         if configuration.site_twofactor_strict_address:
@@ -1134,6 +1145,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         (authorized, disconnect) = handle_auth_attempt(
             configuration,
             'sftp',
+            authtype,
             username,
             client_ip,
             tcp_port,
@@ -1141,16 +1153,14 @@ class SimpleSSHServer(paramiko.ServerInterface):
             invalid_username=invalid_username,
             invalid_user=invalid_user,
             valid_twofa=valid_twofa,
-            key_enabled=key_enabled,
-            valid_key=valid_key,
-            password_enabled=password_enabled,
-            valid_password=valid_password,
+            authtype_enabled=(key_enabled or password_enabled),
+            valid_auth=(valid_key or valid_password),
             exceeded_rate_limit=exceeded_rate_limit,
             exceeded_max_sessions=exceeded_max_sessions,
             user_abuse_hits=user_abuse_hits,
             proto_abuse_hits=proto_abuse_hits,
             max_secret_hits=max_secret_hits,
-        )
+            )
         if disconnect:
             self.transport.close()
         if authorized:

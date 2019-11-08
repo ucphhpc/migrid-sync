@@ -538,14 +538,15 @@ Invalid '%s' input: %s
             (authorized, _) = handle_auth_attempt(
                 configuration,
                 'openid',
+                'password',
                 self.user,
                 client_ip,
                 tcp_port,
                 secret=secret,
                 invalid_username=invalid_username,
                 skip_twofa_check=True,
-                password_enabled=True,
-                valid_password=valid_password,
+                authtype_enabled=True,
+                valid_auth=valid_password,
                 exceeded_rate_limit=exceeded_rate_limit,
                 user_abuse_hits=user_abuse_hits,
                 proto_abuse_hits=proto_abuse_hits,
@@ -835,19 +836,21 @@ Invalid '%s' input: %s
             (authorized, _) = handle_auth_attempt(
                 configuration,
                 'openid',
+                'password',
                 self.user,
                 client_ip,
                 tcp_port,
                 secret=secret,
                 invalid_username=invalid_username,
                 skip_twofa_check=True,
-                password_enabled=True,
-                valid_password=valid_password,
+                authtype_enabled=True,
+                valid_auth=valid_password,
                 exceeded_rate_limit=exceeded_rate_limit,
                 user_abuse_hits=user_abuse_hits,
                 proto_abuse_hits=proto_abuse_hits,
                 max_secret_hits=max_secret_hits,
             )
+
             if authorized:
                 self.redirect(self.query['success_to'])
             else:

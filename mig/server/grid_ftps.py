@@ -270,6 +270,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         (authorized, disconnect) = handle_auth_attempt(
             configuration,
             'ftps',
+            'password',
             username,
             client_ip,
             client_port,
@@ -277,13 +278,14 @@ class MiGUserAuthorizer(DummyAuthorizer):
             invalid_username=invalid_username,
             invalid_user=invalid_user,
             valid_twofa=valid_twofa,
-            password_enabled=password_enabled,
-            valid_password=valid_password,
+            authtype_enabled=password_enabled,
+            valid_auth=valid_password,
             exceeded_rate_limit=exceeded_rate_limit,
             user_abuse_hits=user_abuse_hits,
             proto_abuse_hits=proto_abuse_hits,
             max_secret_hits=max_secret_hits,
         )
+
         if disconnect:
             handler._shutdown_connecting_dtp()
         if authorized:

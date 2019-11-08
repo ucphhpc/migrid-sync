@@ -1958,6 +1958,7 @@ def authlog(configuration,
 
 def handle_auth_attempt(configuration,
                         protocol,
+                        authtype,
                         username,
                         ip_addr,
                         tcp_port=0,
@@ -1966,12 +1967,8 @@ def handle_auth_attempt(configuration,
                         invalid_user=False,
                         skip_twofa_check=False,
                         valid_twofa=False,
-                        key_enabled=False,
-                        valid_key=False,
-                        password_enabled=False,
-                        valid_password=False,
-                        digest_enabled=False,
-                        valid_digest=False,
+                        authtype_enabled=False,
+                        valid_auth=False,
                         exceeded_rate_limit=False,
                         exceeded_max_sessions=False,
                         user_abuse_hits=default_user_abuse_hits,
@@ -1994,6 +1991,8 @@ def handle_auth_attempt(configuration,
                  % protocol
                  + "username: %s\n"
                  % username
+                 + "authtype: %s\n"
+                 % authtype
                  + "ip_addr: %s, tcp_port: %s\n"
                  % (ip_addr, tcp_port)
                  + "secret: %s\n"
@@ -2006,12 +2005,8 @@ def handle_auth_attempt(configuration,
                  % skip_twofa_check
                  + "valid_twofa: %s\n"
                  % valid_twofa
-                 + "key_enabled: %s, valid_key: %s\n"
-                 % (key_enabled, valid_key)
-                 + "password_enabled: %s, valid_password: %s\n"
-                 % (password_enabled, valid_password)
-                 + "digest_enabled: %s, valid_digest: %s\n"
-                 % (digest_enabled, valid_digest)
+                 + "authtype_enabled: %s, valid_auth: %s\n"
+                 % (authtype_enabled, valid_auth)
                  + "exceeded_rate_limit: %s\n"
                  % exceeded_rate_limit
                  + "exceeded_max_sessions: %s\n"
@@ -2029,8 +2024,10 @@ def handle_auth_attempt(configuration,
 
     if exceeded_rate_limit:
         disconnect = True
-        auth_msg = "q"
+        auth_msg = "Exceeded rate limit"
         log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol,
                 username, ip_addr, auth_msg, notify=True)
@@ -2061,24 +2058,23 @@ def handle_auth_attempt(configuration,
                 username, ip_addr, auth_msg, notify=False)
     elif invalid_user:
         disconnect = True
-        auth_msg = "Missing user and/or credentials"
-        log_msg = auth_msg + " %s from %s" % (username, ip_addr)
+        auth_msg = "Missing user and/or %s credentials" % authtype
+        log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol,
                 username, ip_addr,
                 auth_msg, notify=False)
-    elif not (key_enabled or password_enabled or digest_enabled):
-        disconnect = True
-        auth_msg = "No valid credentials"
-        log_msg = auth_msg + " %s from %s" % (username, ip_addr)
+    elif not authtype_enabled:
+        auth_msg = "Missing %s credentials" % authtype
+        log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol,
                 username, ip_addr, auth_msg, notify=True)
-    elif (valid_key or valid_password or valid_digest) and not twofa_passed:
+    elif valid_auth and not twofa_passed:
         disconnect = True
         auth_msg = "No valid two factor session"
         log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
@@ -2087,42 +2083,21 @@ def handle_auth_attempt(configuration,
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol,
                 username, ip_addr, auth_msg, notify=True)
-    elif key_enabled and not valid_key:
-        auth_msg = "Failed key"
+    elif authtype_enabled and not valid_auth:
+        auth_msg = "Failed %s" % authtype
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol,
                 username, ip_addr, auth_msg, notify=True)
-    elif password_enabled and not valid_password:
-        auth_msg = "Failed password"
-        log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            log_msg += ":%s" % tcp_port
-        logger.error(log_msg)
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, auth_msg, notify=True)
-    elif digest_enabled and not valid_digest:
-        auth_msg = "Failed digest"
-        log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
-        if tcp_port > 0:
-            log_msg += ":%s" % tcp_port
-        logger.error(log_msg)
-        authlog(configuration, 'ERROR', protocol,
-                username, ip_addr, auth_msg, notify=True)
-    elif (valid_key or valid_password or valid_digest) and twofa_passed:
+    elif valid_auth and twofa_passed:
         authorized = True
         if configuration.site_enable_gdp:
             notify = True
         else:
             notify = False
-        if valid_key:
-            auth_msg = "Accepted key"
-        elif valid_password:
-            auth_msg = "Accepted password"
-        elif valid_digest:
-            auth_msg = "Accepted digest"
+        auth_msg = "Accepted %s" % authtype
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
