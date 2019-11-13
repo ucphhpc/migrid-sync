@@ -86,12 +86,18 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # strip leftmost slashes from all fields used in filenames to avoid
-    # interference with os.path.join
-    # merge multi args into one string and split again to get flat array
+    # NOTE: strip leftmost slashes from all fields used in file paths to avoid
+    # interference with os.path.join calls. Furthermore we strip and normalize
+    # the path variable first to make sure it does not point outside the vgrid.
+    # In practice any such directory traversal attempts will generally be moot
+    # since the grid_events daemon only starts a listener for each top-level
+    # vgrid and in there only reacts to events that match trigger rules from
+    # that particular vgrid. Thus only subvgrid access to parent vgrids might
+    # be a concern and still of limited consequence.
+    # NOTE: merge multi args into one string and split again to get flat array
     rule_id = accepted['rule_id'][-1].strip()
-    vgrid_name = accepted['vgrid_name'][-1].lstrip(os.sep).strip()
-    path = accepted['path'][-1].lstrip(os.sep).strip()
+    vgrid_name = accepted['vgrid_name'][-1].strip().lstrip(os.sep)
+    path = os.path.normpath(accepted['path'][-1].strip()).lstrip(os.sep)
     changes = [i.strip() for i in ' '.join(accepted['changes']).split()]
     action = accepted['action'][-1].strip()
     arguments = [i.strip() for i in
