@@ -23,30 +23,33 @@
 
 """A set of shared workflows functions"""
 
-import sys
-import fcntl
 import os
-import time
+import glob
 import re
+import sys
+import time
+import fcntl
 import nbformat
 
 from nbconvert import PythonExporter, NotebookExporter
-from shared.base import force_utf8_rec
+from shared.base import force_utf8_rec, user_base_dir, valid_dir_input
 from shared.conf import get_configuration_object
+from shared.defaults import src_dst_sep, w_id_charset, \
+    w_id_length, session_id_length, session_id_charset, default_vgrid
+from shared.fileio import delete_file, write_file, makedirs_rec, touch
 from shared.map import load_system_map
 from shared.modified import check_workflow_p_modified, \
     check_workflow_r_modified, reset_workflow_p_modified, \
     reset_workflow_r_modified, mark_workflow_p_modified, \
     mark_workflow_r_modified
 from shared.pwhash import generate_random_ascii
-from shared.defaults import src_dst_sep, w_id_charset, \
-    w_id_length, session_id_length, session_id_charset
 from shared.serial import dump, load
-from shared.vgrid import vgrid_list_vgrids, vgrid_add_triggers, \
-    vgrid_remove_triggers, vgrid_triggers, vgrid_set_triggers, \
-    init_vgrid_script_add_rem, init_vgrid_script_list
-from shared.fileio import delete_file, write_file, makedirs_rec
-from shared.validstring import possible_workflow_session_id
+from shared.validstring import possible_workflow_session_id, valid_user_path
+from shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
+    vgrid_triggers, vgrid_set_triggers, init_vgrid_script_add_rem, \
+    init_vgrid_script_list
+from shared.vgridaccess import get_vgrid_map, VGRIDS, user_vgrid_access
+
 
 WRITE_LOCK = 'write.lock'
 WORKFLOW_PATTERN = 'workflowpattern'
@@ -165,30 +168,12 @@ VALID_USER_UPDATE_RECIPE = {
 }
 VALID_USER_UPDATE_RECIPE.update(ALL_RECIPE_INPUTS)
 
-
-# TODO, have an extra look at these
-# Only update the triggers if these variables are changed in a pattern
-UPDATE_TRIGGER_PATTERN = [
-    'inputs',
-    'recipes',
-    'variables'
-]
-
-# Only update the triggers if these variables are changed in a recipe
-UPDATE_TRIGGER_RECIPE = [
-    'name',
-    'recipe'
-]
-
 # Attributes required by an action request
 VALID_ACTION_REQUEST = {
     'persistence_id': str,
     'object_type': str
 }
 
-
-# TODO several of the following functions can probably be rolled together. If
-#  at the end of implementation this is still the case then do so
 
 def touch_workflow_sessions_db(configuration, force=False):
     """
@@ -202,19 +187,31 @@ def touch_workflow_sessions_db(configuration, force=False):
     _logger.debug('WP: touch_workflow_sessions_db, '
                   'creating empty db if it does not exist')
     _db_path = configuration.workflows_db
+    _db_home = configuration.workflows_db_home
 
     if os.path.exists(_db_path) and not force:
-        _logger.debug('WP: touch_workflow_sessions_db, '
-                      'db: %s already exists ' % _db_path)
+        _logger.debug("WP: touch_workflow_sessions_db, "
+                      "db: '%s' already exists" % _db_path)
         return False
 
     # Ensure the directory path is available
-    dir_path = os.path.dirname(_db_path)
-    if not makedirs_rec(dir_path, configuration, accept_existing=True):
-        _logger.debug('WP: touch_workflow_sessions_db, '
-                      'failed to create dependent dir %s'
-                      % dir_path)
+    if not makedirs_rec(_db_home, configuration, accept_existing=True):
+        _logger.debug("WP: touch_workflow_sessions_db, "
+                      "failed to create dependent dir %s" % _db_home)
         return False
+    # Create db file
+    if not touch(_db_path, configuration):
+        _logger.debug("WP: touch_workflow_sessions_db, "
+                      "failed to create db '%s'" % _db_path)
+        return False
+
+    # Create lock file.
+    if not touch(configuration.workflows_db_lock, configuration):
+        _logger.debug("WP: touch_workflow_sessions_db"
+                      "failed to create dependent lock file: '%s'"
+                      % configuration.workflows_db_lock)
+        return False
+
     return save_workflow_sessions_db(configuration, {})
 
 
@@ -226,42 +223,88 @@ def delete_workflow_sessions_db(configuration):
     or not.
     """
     _logger = configuration.logger
-    _logger.debug('WP: touch_workflow_sessions_db, '
-                  'creating empty db if it does not exist')
-    _db_path = configuration.workflows_db
-    return delete_file(_db_path, _logger)
+    _logger.debug('WP: delete_workflow_sessions_db, '
+                  'deleting the sessions db if it exists')
+    result = False
+    try:
+        with open(configuration.workflows_db_lock, 'a') as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            result = delete_file(configuration.workflows_db, _logger)
+    except OSError as err:
+        _logger.warning("WP: Failed to properly lock and delete '%s'" % err)
+    return result
 
 
-def load_workflow_sessions_db(configuration):
+def load_workflow_sessions_db(configuration, do_lock=True):
     """
     Read the workflow DB dictionary.
     :param configuration: The MiG configuration object.
+    :param do_lock: Bool, whether the function should lock via the
+    configuration.workflows_db_lock file.
     :return: (dictionary) database of current workflow session ids. These are
     used by the MiG to track valid users interacting with
     workflowsjsoninterface.py. Format is {session_id: 'owner': client_id}.
     """
-    _db_path = configuration.workflows_db
-    return load(_db_path)
+    _logger = configuration.logger
+    lock_handle = None
+    if do_lock:
+        try:
+            lock_handle = open(configuration.workflows_db_lock, 'a')
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        except OSError as err:
+            _logger.warning("Failed to set lock on load workflow_session_db '%s'"
+                            % err)
+            if lock_handle and not lock_handle.closed:
+                lock_handle.close()
+            return False
+
+    db = {}
+    try:
+        db = load(configuration.workflows_db)
+    except IOError as err:
+        _logger.warning("Failed to load workflow_session_db '%s'" % err)
+
+    if do_lock and lock_handle and not lock_handle.closed:
+        lock_handle.close()
+    return db
 
 
-def save_workflow_sessions_db(configuration, workflow_sessions_db):
+def save_workflow_sessions_db(configuration, workflow_sessions_db,
+                              do_lock=True):
     """
     Write a dictionary of workflow session ids.
     :param configuration: The MiG configuration object.
     :param workflow_sessions_db: dictionary of workflow session ids. These are
+    :param do_lock: Bool, whether the function should lock via the
+    configuration.workflows_db_lock file.
     used by the MiG to track valid users interacting with
     workflowsjsoninterface.py. Format is {session_id: 'owner': client_id}.
     :return: (boolean) True/False dependent of if provided dictionary is
     saved or not.
     """
     _logger = configuration.logger
-    _db_path = configuration.workflows_db
-
+    lock_handle = None
+    success = True
     try:
-        dump(workflow_sessions_db, _db_path)
-    except IOError as err:
-        _logger.error('WP: save_workflow_sessions_db, '
-                      'Failed to open %s, err: %s' % (_db_path, err))
+        if do_lock:
+            lock_handle = open(configuration.workflows_db_lock, 'a')
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    except OSError as err:
+        _logger.warning("Failed to set lock on save workflow_session_db '%s'"
+                        % err)
+        success = False
+
+    if success:
+        try:
+            dump(workflow_sessions_db, configuration.workflows_db)
+        except IOError as err:
+            _logger.error("WP: save_workflow_sessions_db, Failed to open '%s', "
+                          "err: '%s'" % (configuration.workflows_db, err))
+            success = False
+
+    if do_lock and lock_handle and not lock_handle.closed:
+        lock_handle.close()
+    if not success:
         return False
     return True
 
@@ -276,38 +319,66 @@ def create_workflow_session_id(configuration, client_id):
     created.
     """
     _logger = configuration.logger
-
     # Generate session id
     workflow_session_id = new_workflow_session_id()
-    db = load_workflow_sessions_db(configuration)
-    db[workflow_session_id] = {'owner': client_id}
-    saved = save_workflow_sessions_db(configuration, db)
-    if not saved:
-        _logger.error('WP: create_workflow_session_id, failed to add a '
-                      'workflow session id for user: %s' % client_id)
+    # Lock between load and save
+    try:
+        with open(configuration.workflows_db_lock, 'a') as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            db = load_workflow_sessions_db(configuration, do_lock=False)
+            if isinstance(db, dict) and workflow_session_id not in db:
+                db[workflow_session_id] = {'owner': client_id}
+                saved = save_workflow_sessions_db(configuration, db,
+                                                  do_lock=False)
+                if not saved:
+                    _logger.error('WP: create_workflow_session_id, failed '
+                                  'to add a workflow session id for '
+                                  'user: %s' % client_id)
+                    return False
+            else:
+                return False
+    except OSError as err:
+        _logger.warning("WP: create_workflow_session_id failed '%s'" % err)
         return False
     return workflow_session_id
 
 
-def delete_workflow_session_id(configuration, workflow_session_id):
+def delete_workflow_session_id(configuration, client_id, workflow_session_id):
     """
     Deletes a given session id for workflow modification.
     :param configuration: The MiG configuration object.
+    :param client_id: The MiG user id.
     :param workflow_session_id: A workflow session id
     :return: (bool) True/False dependent on if workflow_session_id was
     deleted or not. Will return False if workflow_session_id does not exist
     within the database
     """
     _logger = configuration.logger
-
-    db = load_workflow_sessions_db(configuration)
-    if workflow_session_id not in db:
-        _logger.error('WP: delete_workflow_session_id, '
-                      'failed to delete workflow_session_id: %s '
-                      'was not found in db' % workflow_session_id)
+    try:
+        with open(configuration.workflows_db_lock, 'a') as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            db = load_workflow_sessions_db(configuration, do_lock=False)
+            if not isinstance(db, dict):
+                _logger.error("WP: delete_workflow_session_id, "
+                              "missing db: '%s'" % db)
+                return False
+            if workflow_session_id not in db:
+                _logger.error('WP: delete_workflow_session_id, '
+                              'failed to delete workflow_session_id: %s '
+                              'was not found in db' % workflow_session_id)
+                return False
+            if db[workflow_session_id]['owner'] != client_id:
+                _logger.error("WP: client_id '%s' is trying to a delete"
+                              " someone elses session_id '%s'"
+                              % (client_id, workflow_session_id))
+                return False
+            db.pop(workflow_session_id, None)
+            if not save_workflow_sessions_db(configuration, db, do_lock=False):
+                return False
+    except OSError as err:
+        _logger.warning("WP: delete_workflow_session_id failed '%s'" % err)
         return False
-    db.pop(workflow_session_id, None)
-    return save_workflow_sessions_db(configuration, db)
+    return True
 
 
 def get_workflow_session_id(configuration, client_id):
@@ -320,6 +391,9 @@ def get_workflow_session_id(configuration, client_id):
     """
     _logger = configuration.logger
     db = load_workflow_sessions_db(configuration)
+    if not isinstance(db, dict):
+        return None
+
     for session_id, user_state in db.items():
         if user_state.get('owner', '') == client_id:
             return session_id
@@ -352,6 +426,24 @@ def valid_session_id(configuration, workflow_session_id):
     _logger.debug('WP: valid_session_id, checking %s'
                   % workflow_session_id)
     return possible_workflow_session_id(configuration, workflow_session_id)
+
+
+def __generate_persistence_id():
+    """
+    Creates a new persistence id for a workflow object by creating a sting of
+    random ascii characters.
+    :return: (function call to 'generate_random_ascii')
+    """
+    return generate_random_ascii(w_id_length, charset=w_id_charset)
+
+
+def __generate_task_file_name():
+    """
+    Creates a new task file name by creating a string of random ascii
+    characters.
+    :return: (function call to 'generate_random_ascii')
+    """
+    return generate_random_ascii(w_id_length, charset=w_id_charset)
 
 
 def __correct_user_input(configuration, input, required_input=None,
@@ -427,10 +519,9 @@ def __correct_persistent_wp(configuration, workflow_pattern):
     first value with be False with an accompanying error message explaining the
     issue.
     """
-
     _logger = configuration.logger
-    contact_msg = "please contact support so that we can help resolve this " \
-                  "issue"
+    contact_msg = "please contact support at %s so that we can help resolve " \
+                  "this issue" % configuration.admin_email
 
     if not workflow_pattern:
         msg = "A workflow pattern was not provided, " + contact_msg
@@ -447,17 +538,17 @@ def __correct_persistent_wp(configuration, workflow_pattern):
         return (False, msg)
 
     msg = "The workflow pattern had an incorrect structure, " + contact_msg
-    for k, v in workflow_pattern.items():
-        if k not in VALID_PATTERN:
+    for key, value in workflow_pattern.items():
+        if key not in VALID_PATTERN:
             _logger.error(
                 "WP: __correct_wp, workflow_pattern had an incorrect "
-                "key '%s', allowed are %s" % (k, VALID_PATTERN.keys()))
+                "key '%s', allowed are %s" % (key, VALID_PATTERN.keys()))
             return (False, msg)
-        if not isinstance(v, VALID_PATTERN.get(k)):
+        if not isinstance(value, VALID_PATTERN.get(key)):
             _logger.error(
                 "WP: __correct_wp, workflow_pattern had an incorrect "
                 "value type '%s', on key '%s', valid is '%s'"
-                % (type(v), k, VALID_PATTERN[k]))
+                % (type(value), key, VALID_PATTERN[key]))
             return (False, msg)
     return (True, "")
 
@@ -474,8 +565,8 @@ def __correct_persistent_wr(configuration, workflow_recipe):
     """
 
     _logger = configuration.logger
-    contact_msg = "Please contact support so that we can help resolve this " \
-                  "issue"
+    contact_msg = "please contact support at %s so that we can help resolve " \
+                  "this issue" % configuration.admin_email
 
     if not workflow_recipe:
         msg = "A workflow recipe was not provided, " + contact_msg
@@ -492,17 +583,17 @@ def __correct_persistent_wr(configuration, workflow_recipe):
         return (False, msg)
 
     msg = "The workflow recipe had an incorrect structure, " + contact_msg
-    for k, v in workflow_recipe.items():
-        if k not in VALID_RECIPE:
+    for key, value in workflow_recipe.items():
+        if key not in VALID_RECIPE:
             _logger.error(
                 "WR: __correct_wr, workflow_recipe had an incorrect key %s, "
-                "allowed are %s" % (k, VALID_RECIPE.keys()))
+                "allowed are %s" % (key, VALID_RECIPE.keys()))
             return (False, msg)
-        if not isinstance(v, VALID_RECIPE.get(k)):
+        if not isinstance(value, VALID_RECIPE.get(key)):
             _logger.error(
                 "WR: __correct_wr, workflow_recipe had an incorrect "
                 "value type %s, on key %s, valid is %s"
-                % (type(v), k, VALID_RECIPE[k]))
+                % (type(value), key, VALID_RECIPE[key]))
             return (False, msg)
     return (True, '')
 
@@ -581,7 +672,8 @@ def __load_map(configuration, workflow_type=WORKFLOW_PATTERN, do_lock=True):
         return load_system_map(configuration, 'workflowrecipes', do_lock)
 
 
-def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN):
+def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN,
+                  client_id=None):
     """
     Refresh map of workflow objects. Uses a pickled dictionary for efficiency.
     Only update map for workflow objects that appeared, disappeared, or have
@@ -589,6 +681,7 @@ def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN):
     NOTE: Save start time so that any concurrent updates get caught next time
     :param configuration: The MiG configuration object.
     :param workflow_type: A MiG workflow type.
+    :param client_id: [optional] A MiG user client. Default is None
     :return: (dictionary) The system dictionary of the given workflow_type.
     """
     _logger = configuration.logger
@@ -613,7 +706,8 @@ def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN):
             configuration, workflow_type, do_lock=False)
 
         # Find all workflow objects
-        all_objects = __list_path(configuration, workflow_type)
+        all_objects = __list_path(configuration, workflow_type=workflow_type,
+                                  client_id=client_id)
 
         for workflow_dir, workflow_file in all_objects:
             workflow_map[workflow_file] = workflow_map.get(workflow_file, {})
@@ -660,11 +754,14 @@ def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN):
     return workflow_map
 
 
-def __list_path(configuration, workflow_type=WORKFLOW_PATTERN):
+def __list_path(configuration, workflow_type=WORKFLOW_PATTERN, client_id=None):
     """
     Lists the paths of individual workflow objects.
     :param configuration: The MiG configuration object.
     :param workflow_type: A MiG workflow type.
+    :param client_id: [optional] A MiG user id. If provided only the vgrids
+    that user has access to will be searched, otherwise all VGrids will be.
+    Default is None.
     :return: (list) A list of (string, string) tuples, with one entry for
     each workflow object. First value is the path to that object, second
     value is the system object itself.
@@ -673,12 +770,13 @@ def __list_path(configuration, workflow_type=WORKFLOW_PATTERN):
     _logger.debug("Workflows: __list_path")
 
     objects = []
-    # Note that this is currently listing all objects for all users. This
-    # might want to be altered to only the current user and global? That might
-    # be too much needless processing if multiple users are using the system at
-    # once though. Talk to Jonas/Martin about this.
-    found, vgrids = vgrid_list_vgrids(configuration)
-    for vgrid in vgrids:
+    if client_id:
+        vgrid_list = user_vgrid_access(configuration, client_id)
+    else:
+        vgrid_map = get_vgrid_map(configuration)
+        vgrid_list = [vgrid for vgrid in vgrid_map[VGRIDS]]
+
+    for vgrid in vgrid_list:
         home = get_workflow_home(configuration, vgrid, workflow_type)
         if not home:
             # No home, skip to next
@@ -707,7 +805,7 @@ def __query_workflow_map(configuration, client_id=None, first=False,
     create a narrower search, where only those objects that match the
     provided arguments and the user has access to are returned.
     :param configuration: The MiG configuration object.
-    :param client_id: The MiG user
+    :param client_id: [optional] The MiG user
     :param first: [optional] boolean. If True will only return the first valid
     workflow object and return that. If false will return all valid objects.
     Default is False.
@@ -726,15 +824,15 @@ def __query_workflow_map(configuration, client_id=None, first=False,
                                                      kwargs))
     workflow_map = None
     if workflow_type == WORKFLOW_PATTERN:
-        workflow_map = get_wp_map(configuration)
+        workflow_map = get_wp_map(configuration, client_id=client_id)
 
     if workflow_type == WORKFLOW_RECIPE:
-        workflow_map = get_wr_map(configuration)
+        workflow_map = get_wr_map(configuration, client_id=client_id)
 
     if workflow_type == WORKFLOW_ANY:
         # Load every type into workflow_map
-        workflow_map = get_wr_map(configuration)
-        workflow_map.update(get_wp_map(configuration))
+        workflow_map = get_wr_map(configuration, client_id=client_id)
+        workflow_map.update(get_wp_map(configuration, client_id=client_id))
 
     if not workflow_map:
         _logger.debug("WP: __query_workflow_map, empty map retrieved: '%s'"
@@ -744,9 +842,9 @@ def __query_workflow_map(configuration, client_id=None, first=False,
         return []
 
     if client_id:
-        workflow_map = {k: v for k, v in workflow_map.items()
-                        if v.get(CONF, None) and 'owner' in v[CONF]
-                        and client_id == v[CONF]['owner']}
+        workflow_map = {key: value for key, value in workflow_map.items()
+                        if value.get(CONF, None) and 'owner' in value[CONF]
+                        and client_id == value[CONF]['owner']}
 
     matches = []
     for _, workflow in workflow_map.items():
@@ -934,8 +1032,8 @@ def init_workflow_home(configuration, vgrid, workflow_type=WORKFLOW_PATTERN):
     if not os.path.exists(path) and not makedirs_rec(path, configuration):
         return (False, "Failed to init workflow home: '%s'" % path)
 
-    # Ensure correct permissions
-    os.chmod(path, 0744)
+    # TODO. Ensure correct permissions.
+    os.chmod(path, 0740)
     return (True, '')
 
 
@@ -1019,8 +1117,8 @@ def init_workflow_task_home(configuration, vgrid):
         return (False, "Failed to init workflow task home: '%s'" % task_home)
 
     _logger.debug("Created or found workflow_task_home '%s'" % task_home)
-    # Ensure correct permissions
-    os.chmod(task_home, 0744)
+    # TODO. Ensure correct permissions.
+    os.chmod(task_home, 0740)
     return (True, '')
 
 
@@ -1040,11 +1138,12 @@ def get_workflow_task_home(configuration, vgrid):
     return task_home
 
 
-def get_wp_map(configuration):
+def get_wp_map(configuration, client_id=None):
     """
     Returns the current map of workflow patterns. Caches the map for load
     prevention with repeated calls within a short time span.
     :param configuration: The MiG configuration object.
+    :param client_id: [optional] A MiG user id.
     :return: (dictionary) all currently registered workflow patterns. Format
     is {pattern persistence id: pattern dict}.
     """
@@ -1054,7 +1153,7 @@ def get_wp_map(configuration):
 
     if modified_patterns:
         map_stamp = time.time()
-        workflow_p_map = __refresh_map(configuration)
+        workflow_p_map = __refresh_map(configuration, client_id=client_id)
         reset_workflow_p_modified(configuration)
     else:
         workflow_p_map, map_stamp = __load_map(configuration)
@@ -1065,11 +1164,12 @@ def get_wp_map(configuration):
     return workflow_p_map
 
 
-def get_wr_map(configuration):
+def get_wr_map(configuration, client_id=None):
     """
     Returns the current map of workflow recipes. Caches the map for load
     prevention with repeated calls within a short time span.
     :param configuration: The MiG configuration object.
+    :param client_id: [optional] A MiG user id.
     :return: (dictionary) all currently registered workflow recipes. Format
     is {recipe persistence id: recipe dict}.
     """
@@ -1080,7 +1180,8 @@ def get_wr_map(configuration):
     if modified_recipes:
         map_stamp = time.time()
         workflow_r_map = __refresh_map(configuration,
-                                       workflow_type=WORKFLOW_RECIPE)
+                                       workflow_type=WORKFLOW_RECIPE,
+                                       client_id=client_id)
         reset_workflow_r_modified(configuration)
     else:
         workflow_r_map, map_stamp = __load_map(configuration,
@@ -1099,7 +1200,7 @@ def get_workflow_with(configuration, client_id=None, first=False,
     Searches workflow object databases for objects that match the provided
     keyword arguments.
     :param configuration: The MiG configuration object.
-    :param client_id: A MiG user
+    :param client_id: [optional] A MiG user
     :param first: [optional] If True will return the first matching workflow
     object, else will return all matching workflow objects in a list. Default
     is False
@@ -1280,12 +1381,11 @@ def update_workflow(configuration, client_id, workflow_type=WORKFLOW_PATTERN,
               "a workflow object."
         return (False, msg)
 
-    if vgrid:
-        # User is vgrid owner or member
-        success, msg, _ = init_vgrid_script_list(vgrid, client_id,
-                                                 configuration)
-        if not success:
-            return (False, msg)
+    # User is vgrid owner or member
+    success, msg, _ = init_vgrid_script_list(vgrid, client_id,
+                                             configuration)
+    if not success:
+        return (False, msg)
 
     if workflow_type == WORKFLOW_RECIPE:
         return __update_workflow_recipe(configuration, client_id, vgrid,
@@ -1314,7 +1414,8 @@ def delete_workflow_pattern(configuration, client_id, vgrid, persistence_id):
     _logger.debug("WP: delete_workflow_pattern, client_id: %s, "
                   "persistence_id: %s" % (client_id, persistence_id))
 
-    workflow = get_workflow_with(configuration, client_id,
+    workflow = get_workflow_with(configuration,
+                                 client_id,
                                  workflow_type=WORKFLOW_PATTERN,
                                  first=True, vgrid=vgrid,
                                  persistence_id=persistence_id)
@@ -1358,8 +1459,8 @@ def delete_workflow_recipe(configuration, client_id, vgrid, persistence_id):
                   "persistence_id: %s" % (client_id, persistence_id))
 
     workflow = get_workflow_with(configuration, client_id, first=True,
-                               workflow_type=WORKFLOW_RECIPE,
-                               persistence_id=persistence_id)
+                                 workflow_type=WORKFLOW_RECIPE,
+                                 persistence_id=persistence_id)
 
     if not workflow:
         return (False, "Could not find recipe with persistence_id '%s'"
@@ -1538,9 +1639,6 @@ def __create_workflow_pattern_entry(configuration, client_id, vgrid,
     if not success:
         return (False, msg)
 
-    # TODO, validate here that the user specified paths don't try to
-    # go outside the vgrid, -> don't allow vgrid/../ on input_paths, output
-
     # If pattern folder doesn't exist, create it.
     if not get_workflow_pattern_home(configuration, vgrid):
         created, msg = init_workflow_home(configuration, vgrid,
@@ -1558,7 +1656,7 @@ def __create_workflow_pattern_entry(configuration, client_id, vgrid,
         _logger.info(msg)
         return (False, msg)
 
-    persistence_id = generate_random_ascii(w_id_length, charset=w_id_charset)
+    persistence_id = __generate_persistence_id()
     workflow_pattern['object_type'] = WORKFLOW_PATTERN
     workflow_pattern['persistence_id'] = persistence_id
     workflow_pattern['owner'] = client_id
@@ -1695,7 +1793,7 @@ def __create_workflow_recipe_entry(configuration, client_id, vgrid,
         if not created:
             return (False, msg)
 
-    persistence_id = generate_random_ascii(w_id_length, charset=w_id_charset)
+    persistence_id = __generate_persistence_id()
     workflow_recipe['object_type'] = WORKFLOW_RECIPE
     workflow_recipe['persistence_id'] = persistence_id
     workflow_recipe['owner'] = client_id
@@ -1800,9 +1898,6 @@ def __update_workflow_pattern(configuration, client_id, vgrid,
     success, msg, _ = init_vgrid_script_list(vgrid, client_id, configuration)
     if not success:
         return (False, msg)
-
-    # TODO, validate here that the user specified paths don't try to
-    # go outside the vgrid, -> don't allow vgrid/../ on input_paths, output
 
     pattern = get_workflow_with(configuration,
                                 client_id,
@@ -1976,7 +2071,7 @@ def __update_workflow_recipe(configuration, client_id, vgrid, workflow_recipe,
             "WR: __update_workflow_recipe, incorrect 'workflow_recipe' "
             "structure '%s'" % type(workflow_recipe))
         return (False, "Internal server error due to incorrect recipe "
-                       "structure")
+                       "structure.")
 
     for key, value in workflow_recipe.items():
         if key not in valid_keys:
@@ -2367,11 +2462,10 @@ def create_workflow_task_file(configuration, vgrid, source_code,
         msg = "Task home in vgrid: '%s' does not exist" % vgrid
         return (False, msg)
     # placeholder for unique name generation.
-    file_name = generate_random_ascii(w_id_length, w_id_charset) + extension
+    file_name = __generate_task_file_name()
     task_file_path = os.path.join(task_home, file_name)
     while os.path.exists(task_file_path):
-        file_name = generate_random_ascii(w_id_length,
-                                          w_id_charset) + extension
+        file_name = __generate_task_file_name() + extension
         task_file_path = os.path.join(task_home, file_name)
 
     wrote = write_file(source_code, task_file_path, _logger,
@@ -2476,8 +2570,9 @@ def __create_task_parameter_file(configuration, vgrid, pattern,
         parameter_dict.update({input_file: "ENV_WORKFLOW_INPUT_PATH"})
     # Ensure that output variables are based of the vgrid root dir
     output = pattern.get('output', VALID_PATTERN['output'])
-    parameter_dict.update({k: os.path.join(vgrid, v)
-                           for k, v in output.items()})
+    parameter_dict.update(
+        {key: os.path.join(vgrid, value) for key, value in output.items()}
+    )
     parameter_dict.update(pattern.get('variables', VALID_PATTERN['variables']))
     try:
         dump(parameter_dict, path, serializer=serializer, mode='w',
@@ -2569,13 +2664,15 @@ def create_workflow_trigger(configuration, client_id, vgrid, path,
                         % rule_id)
         return (False, "Failed to create trigger, conflicting rule_id")
 
+    # See addvgridtrigger.py#86 NOTE about normalizing trigger path
+    norm_path = os.path.normpath(path.strip()).lstrip(os.sep)
     # TODO, for now set the settle_time to 1s
     # To avoid double scheduling of triggered create/modified
     # events on the same operation (E.g. copy a file into the dir)
     rule_dict = {
         'rule_id': rule_id,
         'vgrid_name': vgrid,
-        'path': path,
+        'path': norm_path,
         'changes': ['created', 'modified'],
         'run_as': client_id,
         'action': 'submit',
@@ -2800,7 +2897,6 @@ def __search_workflow_p_graph(configuration, vgrid):
             if w_id == n_id:
                 continue
             # Have matching output/input paths?
-            # TODO, expand to also support regex overlap
             if not bool(set(workflow['output'].values()) &
                         set(neighbour['input_paths'])):
                 continue
@@ -2809,7 +2905,6 @@ def __search_workflow_p_graph(configuration, vgrid):
                 if output in neighbour['input_paths']:
                     wp_graph['edges'].append({'from': w_id,
                                               'to': n_id})
-    _logger.debug("Prepared graph: '%s'" % wp_graph)
     return (True, wp_graph)
 
 
@@ -2818,15 +2913,21 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     if args:
         if args[0] == 'create_workflow_session_id':
-            touch_workflow_sessions_db(conf, force=True)
+            created = touch_workflow_sessions_db(conf, force=True)
+            print("Created sessions db %s" % created)
             client_id = "/C=dk/ST=dk/L=NA/O=org/OU=NA/CN=" \
                         "devuser/emailAddress=dev@dev.dk"
             if not get_workflow_session_id(conf, client_id):
-                create_workflow_session_id(conf, client_id)
+                sid = create_workflow_session_id(conf, client_id)
+                if not sid:
+                    print("Failed to create session_id '%s'" % sid)
+                else:
+                    print("Created session_id '%s' for user '%s'"
+                          % (sid, client_id))
         if args[0] == 'workflow_sessions':
             sessions_db = load_workflow_sessions_db(conf)
             print(sessions_db)
         if args[0] == 'delete_workflow_sessions':
             delete_workflow_sessions_db(conf)
         if args[0] == 'reset_test_workflows':
-            reset_workflows(conf, 'Generic ')
+            reset_workflows(conf, default_vgrid)

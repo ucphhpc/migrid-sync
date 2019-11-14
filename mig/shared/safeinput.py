@@ -897,12 +897,12 @@ def valid_workflow_attributes(attributes):
 def valid_workflow_operation(operation):
     """Verify that the supplied workflow
     operation only contains letters + _ """
-    __valid_contents(operation, letters + '_')
+    valid_ascii(operation, extra_chars='_')
 
 
 def valid_workflow_type(type):
     """Verify that the supplied workflow type only contains letters"""
-    __valid_contents(type, letters)
+    valid_ascii(type, extra_chars='_')
 
 
 def filter_ascii(contents):

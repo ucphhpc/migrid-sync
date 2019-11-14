@@ -318,6 +318,21 @@ def valid_dir_input(base, variable):
     return True
 
 
+def user_base_dir(configuration, client_id, trailing_slash=True):
+    """This function returns the absolute path for the client_ids home
+    directory. Optionally a trailing slash is appended to the path before it
+    is returned. If no client_id is provided, False is returned instead.
+    """
+    if not client_id:
+        return False
+    client_dir = client_id_dir(client_id)
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir))
+    if trailing_slash:
+        base_dir += os.sep
+    return base_dir
+
+
 def allow_script(configuration, script_name, client_id):
     """Helper to detect if script_name is allowed to run or not based on site
     configuration. I.e. GDP-mode disables a number of functionalities.

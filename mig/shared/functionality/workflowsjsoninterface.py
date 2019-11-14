@@ -32,13 +32,14 @@
 import sys
 import json
 import shared.returnvalues as returnvalues
+
+from shared.base import force_utf8_rec
 from shared.init import initialize_main_variables
-from shared.safeinput import validated_input
 from shared.safeinput import REJECT_UNSET, valid_workflow_pers_id, \
     valid_workflow_vgrid, valid_workflow_name, valid_workflow_input_file, \
     valid_workflow_input_paths, valid_workflow_output, valid_workflow_recipes,\
     valid_workflow_variables, valid_workflow_attributes, valid_workflow_type, \
-    valid_workflow_operation, valid_sid
+    valid_workflow_operation, valid_sid, validated_input, html_escape
 from shared.workflows import WORKFLOW_TYPES, WORKFLOW_CONSTRUCT_TYPES, \
     WORKFLOW_PATTERN, valid_session_id, get_workflow_with,\
     load_workflow_sessions_db, create_workflow, delete_workflow,\
@@ -87,7 +88,7 @@ def type_value_checker(type_value):
 
     if type_value not in valid_types:
         raise ValueError("Workflow type '%s' is not valid"
-                         % valid_types)
+                         % html_escape(valid_types))
 
 
 def operation_value_checker(operation_value):
@@ -99,7 +100,8 @@ def operation_value_checker(operation_value):
     :return: No return.
     """
     if operation_value not in VALID_OPERATIONS:
-        raise ValueError("Workflow operation '%s' is not valid")
+        raise ValueError("Workflow operation '%s' is not valid"
+                         % html_escape(operation_value))
 
 
 WORKFLOW_ATTRIBUTES_TYPE_MAP = {
@@ -129,18 +131,6 @@ WORKFLOW_VALUE_MAP = {
     'type': type_value_checker,
     'operation': operation_value_checker,
 }
-
-
-def str_hook(obj):
-    """
-    A custom encoder to be used in the 'json.loads' function. This encodes
-    unicode to utf-8.
-    :param obj: The object to be decoded.
-    :return: (dictionary) decoded object.
-    """
-    return {k.encode('utf-8') if isinstance(k, unicode) else k:
-            v.encode('utf-8') if isinstance(v, unicode) else v
-            for k, v in obj}
 
 
 # Workflow API functions
@@ -197,10 +187,10 @@ def workflow_api_read(configuration, workflow_session,
     If the given workflow_type is none of the above a tuple is returned with a
     first value of False, and an explanatory error message as the second value.
     """
-    logger = configuration.logger
-    logger.debug("W_API: search: (%s, %s, %s)" % (workflow_session,
-                                                  workflow_type,
-                                                  workflow_attributes))
+    _logger = configuration.logger
+    _logger.debug("W_API: search: (%s, %s, %s)" % (workflow_session,
+                                                   workflow_type,
+                                                   workflow_attributes))
     if workflow_type in WORKFLOW_TYPES:
         workflows = get_workflow_with(configuration,
                                       workflow_session['owner'],
@@ -329,7 +319,7 @@ def main(client_id, user_arguments_dict):
     # Input data
     data = sys.stdin.read()
     try:
-        json_data = json.loads(data, object_pairs_hook=str_hook)
+        json_data = json.loads(data, object_hook=force_utf8_rec)
     except ValueError:
         msg = "An invalid format was supplied to: '%s', requires a JSON " \
               "compatible format" % op_name
@@ -373,7 +363,8 @@ def main(client_id, user_arguments_dict):
             output_objects.append(
                 {'object_type': 'error_text',
                  'text': "Internal sessions db failure, please contact "
-                         "an admin to resolve this issue."})
+                         "an admin at '%s' to resolve this issue." %
+                         configuration.admin_email})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         else:
             # Try reload

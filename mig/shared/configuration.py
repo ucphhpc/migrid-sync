@@ -110,6 +110,7 @@ def fix_missing(config_file, verbose=True):
         'workflows_home': '~/state/workflows_home/',
         'workflows_db_home': '~/state/workflows_home/workflows_db_home/',
         'workflows_db': '~/state/workflows_home/workflows_db_home/workflows_db.pickle',
+        'workflows_db_lock': '~/state/workflows_home/workflows_db_home/workflows_db.lock',
         'notify_home': '~/state/notify_home',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
@@ -319,6 +320,7 @@ class Configuration:
     workflows_home = ''
     workflows_db_home = ''
     workflows_db = ''
+    workflows_db_lock = ''
     notify_home = ''
     seafile_mount = ''
     openid_store = ''
@@ -734,6 +736,8 @@ location.""" % self.config_file
                                                 'workflows_db_home')
         if config.has_option('GLOBAL', 'workflows_db'):
             self.workflows_db = config.get('GLOBAL', 'workflows_db')
+        if config.has_option('GLOBAL', 'workflows_db_lock'):
+            self.workflows_db_lock = config.get('GLOBAL', 'workflows_db_lock')
         if config.has_option('GLOBAL', 'notify_home'):
             self.notify_home = config.get('GLOBAL', 'notify_home')
         if config.has_option('GLOBAL', 'vm_home'):
