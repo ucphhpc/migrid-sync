@@ -55,6 +55,11 @@ the following additional software:
 -Python PDFKit module (https://github.com/Martin-Rehr/python-pdfkit/)
 -Python xvfb module (https://pypi.python.org/pypi/xvfbwrapper/)
 -Python OTP (https://pypi.org/project/pyotp/)
+-Python pyyaml (https://pypi.org/pyyaml/)
+-Python nbformat (https://pypi.org/project/nbformat/)
+-Python nbconvert (https://pypi.org/project/nbconvert/)
+-Python papermill (https://pypi.org/project/papermill/)
+-Python notebook_parameterizer (https://pypi.org/project/notebook_parameterizer)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
 -OpenSSH server (https://www.openssh.org/)
@@ -203,6 +208,14 @@ sudo pip install iso3166
 
 The optional pygdb module used for debugging is available with pip:
 sudo pip install pygdb
+
+The optional workflows module relies on the python special modules 
+nbformat, nbconvert to validate and produce correct Jupyter Notebook formatted files.
+In addition it creates yaml parameter files via the pyyaml module.
+To schedule and execute workflow tasks, the execution nodes are required to 
+provie the papermill module via the PAPERMILL environment variable,
+the notebook_parameterizer module via the NOTEBOOK_PARAMETERIZER environment variable,
+and the sshfs command via the SSHFS_MOUNT environment variable.
 
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop

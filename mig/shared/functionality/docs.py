@@ -479,7 +479,7 @@ JavaScript library from:"""})
                                'text': 'Apache OpenID Module (MIT license)'})
     if configuration.site_enable_jupyter:
         output_objects.append({'object_type': 'text', 'text': """
-The optional intereractive computing integration through Jupyter relies on the
+The optional interactive computing integration through Jupyter relies on the
 Requests module from:"""})
         output_objects.append({'object_type': 'link',
                                'destination':
@@ -506,6 +506,53 @@ creation relies on the iso3166 module from:"""})
                            'title': 'iso3166 at Python Package Index',
                            'text': 'iso3166 Module (MIT license)'})
 
+    if configuration.site_enable_workflows:
+        output_objects.append({'object_type': 'text', 'text': """
+The optional workflows overlay framework relies on:"""})
+        output_objects.append({'object_type': 'link',
+                               'destination': 'https://pypi.org/project/nbformat',
+                               'class': 'urllink iconspace',
+                               'title': 'Python nbformat Module at Python Package Index',
+                               'text': 'nbformat Module (BSD License)'})
+        output_objects.append({'object_type': 'text', 'text': ''})
+        output_objects.append({'object_type': 'link',
+                               'destination': 'https://pypi.org/project/nbconvert',
+                               'class': 'urllink iconspace',
+                               'title': 'Python nbconvert Module at Python Package Index',
+                               'text': 'nbconvert Module (BSD License)'})
+        output_objects.append({'object_type': 'text', 'text': ''})
+        output_objects.append({'object_type': 'link',
+                               'destination': 'https://pypi.org/project/PyYAML/',
+                               'class': 'urllink iconspace',
+                               'title': 'Python PyYAML Module at Python Package Index',
+                               'text': 'PyYAML Module (MIT License)'})
+        output_objects.append({'object_type': 'text', 'text': """
+In addition to the specified pypi packages, the workflows setup relies on the
+executing resources to have the following packages provided as runtime environments"""})
+        output_objects.append({'object_type': 'text', 'text': """
+The papermill Module should be configured as a PAPERMILL runtime environment on the executing resources"""})
+        output_objects.append({'object_type': 'link',
+                               'destination':
+                               'https://pypi.org/project/papermill/',
+                               'class': 'urllink iconspace',
+                               'title': 'Python papermill Module at Python Package Index',
+                               'text': 'papermill Module (BSD License)'})
+        output_objects.append({'object_type': 'text', 'text': """
+The notebook_parameterizer module enables the generation of notebooks that have been parameterized before runtime"""})
+        output_objects.append({'object_type': 'link',
+                               'destination':
+                               'https://pypi.org/project/notebook-parameterizer/',
+                               'class': 'urllink iconspace',
+                               'title': 'Python notebook_parameterize Module at Python Package Index',
+                               'text': 'notebook_parameterize Module (MIT License)'})
+
+        output_objects.append({'object_type': 'text', 'text': """
+The workflows also requires that the resources provide the SSHFS_MOUNT runtime environment"""})
+        output_objects.append({'object_type': 'link',
+                               'destination': 'https://github.com/libfuse/sshfs',
+                               'class': 'urllink iconspace',
+                               'title': 'Command to mount the Migrid home directory at Github',
+                               'text': 'sshfs command (GNU v2.0)'})
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
