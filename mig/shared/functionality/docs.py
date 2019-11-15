@@ -551,8 +551,8 @@ The workflows also requires that the resources provide the SSHFS_MOUNT runtime e
         output_objects.append({'object_type': 'link',
                                'destination': 'https://github.com/libfuse/sshfs',
                                'class': 'urllink iconspace',
-                               'title': 'Command to mount the Migrid home directory at Github',
-                               'text': 'sshfs command (GNU v2.0)'})
+                               'title': 'The sshfs client available from GitHub used to network mount a user home',
+                               'text': 'sshfs client (GNU v2.0)'})
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""

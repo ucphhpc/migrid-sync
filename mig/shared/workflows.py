@@ -23,16 +23,15 @@
 
 """A set of shared workflows functions"""
 
+import fcntl
 import os
-import glob
 import re
 import sys
 import time
-import fcntl
 import nbformat
 
 from nbconvert import PythonExporter, NotebookExporter
-from shared.base import force_utf8_rec, user_base_dir, valid_dir_input
+from shared.base import force_utf8_rec
 from shared.conf import get_configuration_object
 from shared.defaults import src_dst_sep, w_id_charset, \
     w_id_length, session_id_length, session_id_charset, default_vgrid
@@ -44,7 +43,7 @@ from shared.modified import check_workflow_p_modified, \
     mark_workflow_r_modified
 from shared.pwhash import generate_random_ascii
 from shared.serial import dump, load
-from shared.validstring import possible_workflow_session_id, valid_user_path
+from shared.validstring import possible_workflow_session_id
 from shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
     vgrid_triggers, vgrid_set_triggers, init_vgrid_script_add_rem, \
     init_vgrid_script_list
@@ -199,11 +198,6 @@ def touch_workflow_sessions_db(configuration, force=False):
         _logger.debug("WP: touch_workflow_sessions_db, "
                       "failed to create dependent dir %s" % _db_home)
         return False
-    # Create db file
-    if not touch(_db_path, configuration):
-        _logger.debug("WP: touch_workflow_sessions_db, "
-                      "failed to create db '%s'" % _db_path)
-        return False
 
     # Create lock file.
     if not touch(configuration.workflows_db_lock, configuration):
@@ -211,6 +205,15 @@ def touch_workflow_sessions_db(configuration, force=False):
                       "failed to create dependent lock file: '%s'"
                       % configuration.workflows_db_lock)
         return False
+
+    # Use the lock to synchronize the creation of the sessions db
+    with open(configuration.workflows_db_lock, configuration) as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        # Create the db file
+        if not touch(_db_path, configuration):
+            _logger.debug("WP: touch_workflow_sessions_db, "
+                          "failed to create db '%s'" % _db_path)
+            return False
 
     return save_workflow_sessions_db(configuration, {})
 

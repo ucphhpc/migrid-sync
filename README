@@ -213,7 +213,7 @@ The optional workflows module relies on the python special modules
 nbformat, nbconvert to validate and produce correct Jupyter Notebook formatted files.
 In addition it creates yaml parameter files via the pyyaml module.
 To schedule and execute workflow tasks, the execution nodes are required to 
-provie the papermill module via the PAPERMILL environment variable,
+provide the papermill module via the PAPERMILL environment variable,
 the notebook_parameterizer module via the NOTEBOOK_PARAMETERIZER environment variable,
 and the sshfs command via the SSHFS_MOUNT environment variable.
 

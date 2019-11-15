@@ -319,9 +319,10 @@ def valid_dir_input(base, variable):
 
 
 def user_base_dir(configuration, client_id, trailing_slash=True):
-    """This function returns the absolute path for the client_ids home
-    directory. Optionally a trailing slash is appended to the path before it
-    is returned. If no client_id is provided, False is returned instead.
+    """This function returns the absolute path for the home directory of client_id.
+    By default a trailing slash is appended to the path before it
+    is returned but it can be disabled with the boolean trailing_slash argument.
+    If no client_id is provided, False is returned instead.
     """
     if not client_id:
         return False
