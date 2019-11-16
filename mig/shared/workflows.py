@@ -1035,8 +1035,7 @@ def init_workflow_home(configuration, vgrid, workflow_type=WORKFLOW_PATTERN):
     if not os.path.exists(path) and not makedirs_rec(path, configuration):
         return (False, "Failed to init workflow home: '%s'" % path)
 
-    # TODO. Ensure correct permissions.
-    os.chmod(path, 0740)
+    os.chmod(path, 0750)
     return (True, '')
 
 
@@ -1121,7 +1120,7 @@ def init_workflow_task_home(configuration, vgrid):
 
     _logger.debug("Created or found workflow_task_home '%s'" % task_home)
     # TODO. Ensure correct permissions.
-    os.chmod(task_home, 0740)
+    os.chmod(task_home, 0750)
     return (True, '')
 
 
