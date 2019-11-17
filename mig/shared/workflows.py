@@ -187,8 +187,10 @@ def touch_workflow_sessions_db(configuration, force=False):
                   'creating empty db if it does not exist')
     _db_path = configuration.workflows_db
     _db_home = configuration.workflows_db_home
+    _db_lock_path = configuration.workflows_db_lock
 
-    if os.path.exists(_db_path) and not force:
+    if os.path.exists(_db_path) and os.path.exists(_db_lock_path) \
+            and not force:
         _logger.debug("WP: touch_workflow_sessions_db, "
                       "db: '%s' already exists" % _db_path)
         return False
@@ -200,20 +202,22 @@ def touch_workflow_sessions_db(configuration, force=False):
         return False
 
     # Create lock file.
-    if not touch(configuration.workflows_db_lock, configuration):
-        _logger.debug("WP: touch_workflow_sessions_db"
-                      "failed to create dependent lock file: '%s'"
-                      % configuration.workflows_db_lock)
-        return False
-
-    # Use the lock to synchronize the creation of the sessions db
-    with open(configuration.workflows_db_lock, configuration) as lock_file:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-        # Create the db file
-        if not touch(_db_path, configuration):
-            _logger.debug("WP: touch_workflow_sessions_db, "
-                          "failed to create db '%s'" % _db_path)
+    if not os.path.exists(_db_lock_path):
+        if not touch(_db_lock_path, configuration):
+            _logger.debug("WP: touch_workflow_sessions_db"
+                          "failed to create dependent lock file: '%s'"
+                          % configuration.workflows_db_lock)
             return False
+
+    if not os.path.exists(_db_path):
+        # Use the lock to synchronize the creation of the sessions db
+        with open(_db_lock_path, 'a') as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            # Create the db file
+            if not touch(_db_path, configuration):
+                _logger.debug("WP: touch_workflow_sessions_db, "
+                              "failed to create db '%s'" % _db_path)
+                return False
 
     return save_workflow_sessions_db(configuration, {})
 
@@ -250,13 +254,18 @@ def load_workflow_sessions_db(configuration, do_lock=True):
     """
     _logger = configuration.logger
     lock_handle = None
+    if not os.path.exists(configuration.workflows_db_lock) \
+            or not os.path.exists(configuration.workflows_db):
+        created = touch_workflow_sessions_db(configuration)
+        _logger.info("Created %s" % created)
+
     if do_lock:
         try:
             lock_handle = open(configuration.workflows_db_lock, 'a')
             fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
         except OSError as err:
-            _logger.warning("Failed to set lock on load workflow_session_db '%s'"
-                            % err)
+            _logger.warning("Failed to set lock on load "
+                            "workflow_session_db '%s'" % err)
             if lock_handle and not lock_handle.closed:
                 lock_handle.close()
             return False
