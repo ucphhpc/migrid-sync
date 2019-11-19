@@ -371,6 +371,8 @@ def main(client_id, user_arguments_dict):
             workflow_sessions_db = load_workflow_sessions_db(configuration)
 
     if workflow_session_id not in workflow_sessions_db:
+        # TODO, Log this in the auth logger,
+        # Also track multiple attempts from the same IP
         output_objects.append({'object_type': 'error_text',
                                'text': 'Invalid workflowsessionid'})
         return (output_objects, returnvalues.CLIENT_ERROR)
