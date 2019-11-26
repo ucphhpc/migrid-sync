@@ -935,7 +935,10 @@ cert, oid and sid based https!
             print "ERROR: workflows use requested but " \
                   "nbformat is not installed!"
             sys.exit(1)
-
+        except SyntaxError:
+            print "ERROR: workflows requires that the more-itertools package" \
+                  "is installed as version 5.0.0"
+            sys.exit(1)
         try:
             import nbconvert
         except ImportError:

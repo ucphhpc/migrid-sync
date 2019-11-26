@@ -28,9 +28,16 @@ import os
 import re
 import sys
 import time
-import nbformat
+try:
+    import nbformat
+except ImportError:
+    nbformat = None
+try:
+    from nbconvert import PythonExporter, NotebookExporter
+except ImportError:
+    PythonExporter = None
+    NotebookExporter = None
 
-from nbconvert import PythonExporter, NotebookExporter
 from shared.base import force_utf8_rec
 from shared.conf import get_configuration_object
 from shared.defaults import src_dst_sep, w_id_charset, \
@@ -2826,12 +2833,26 @@ def convert_to(configuration, notebook, exporter='notebook',
     if exporter not in valid_exporters:
         return (False, "lang: '%s' is not a valid exporter" % exporter)
 
+    if not PythonExporter:
+        _logger.error("The required python package 'nbconvert' for "
+                      "workflows is missing")
+        return (False, "Missing the nbconvert python package")
+
+    if not NotebookExporter:
+        _logger.error("The required python package 'nbconvert' for "
+                      "workflows is missing")
+        return (False, "Missing the nbconvert python package")
+
     if exporter == 'python':
         ex = PythonExporter()
     else:
         ex = NotebookExporter()
 
     # Validate format of the provided notebook
+    if not nbformat:
+        _logger.error("The required python package 'nbformat' for "
+                      "workflows is missing")
+        return (False, "Missing the nbformat python package")
     try:
         nbformat.validate(notebook, version=4)
     except nbformat.ValidationError as err:

@@ -57,6 +57,7 @@ the following additional software:
 -Python OTP (https://pypi.org/project/pyotp/)
 -Python pyyaml (https://pypi.org/pyyaml/)
 -Python nbformat (https://pypi.org/project/nbformat/)
+-Python more-itertools (https://pypi.org/project/more-itertools/5.0.0/)
 -Python nbconvert (https://pypi.org/project/nbconvert/)
 -Python papermill (https://pypi.org/project/papermill/)
 -Python notebook_parameterizer (https://pypi.org/project/notebook_parameterizer)
@@ -211,7 +212,9 @@ sudo pip install pygdb
 
 The optional workflows module relies on the python special modules 
 nbformat, nbconvert to validate and produce correct Jupyter Notebook formatted files.
-In addition it creates yaml parameter files via the pyyaml module.
+Nbformat specifically requires that the more_itertools module is both installed beforehand
+and that it is pinned to version 5.0.0 to ensure Python2.7 support.
+In addition the workflows module creates yaml parameter files via the pyyaml module.
 To schedule and execute workflow tasks, the execution nodes are required to 
 provide the papermill module via the PAPERMILL environment variable,
 the notebook_parameterizer module via the NOTEBOOK_PARAMETERIZER environment variable,
