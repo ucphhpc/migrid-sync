@@ -167,6 +167,8 @@ def fix_missing(config_file, verbose=True):
         'user_seafile_auth': ['password'],
         'user_seafile_ro_access': False,
         'user_duplicati_protocols': [],
+        'user_cloud_ssh_auth': ['publickey'],
+        'user_cloud_alias': '',
         'user_imnotify_address': '',
         'user_imnotify_port': 6667,
         'user_imnotify_channel': '',
@@ -399,6 +401,8 @@ class Configuration:
     user_seafile_alias = ''
     user_seafile_ro_access = True
     user_duplicati_protocols = []
+    user_cloud_ssh_auth = ['publickey']
+    user_cloud_alias = ''
     user_openid_address = ''
     user_openid_port = 8443
     user_openid_show_address = ''
@@ -986,6 +990,17 @@ location.""" % self.config_file
             protos = config.get('GLOBAL', 'user_duplicati_protocols').split()
             valid_protos = [i for i in protos if i in allowed_protos]
             self.user_duplicati_protocols = valid_protos
+        if config.has_option('SITE', 'enable_cloud'):
+            self.site_enable_cloud = config.getboolean(
+                'SITE', 'enable_cloud')
+        else:
+            self.site_enable_cloud = False
+        if config.has_option('GLOBAL', 'user_cloud_ssh_auth'):
+            self.user_cloud_ssh_auth = config.get('GLOBAL',
+                                                  'user_cloud_ssh_auth').split()
+        if config.has_option('GLOBAL', 'user_cloud_alias'):
+            self.user_cloud_alias = config.get('GLOBAL',
+                                               'user_cloud_alias')
         if config.has_option('SITE', 'enable_twofactor'):
             self.site_enable_twofactor = config.getboolean(
                 'SITE', 'enable_twofactor')
@@ -1196,6 +1211,24 @@ location.""" % self.config_file
                                                                  option)
                                               for option in
                                               config.options(section)})
+
+        self.cloud_services = []
+        # Load generated cloud sections
+        for section in config.sections():
+            if 'CLOUD_' in section:
+                # Allow service_desc to be a file that should be read
+                if config.has_option(section, 'service_desc'):
+                    service_desc = config.get(section, 'service_desc')
+                    if os.path.exists(service_desc) \
+                            and os.path.isfile(service_desc):
+                        content = read_file(service_desc, logger)
+                        if content:
+                            config.set(section, 'service_desc', content)
+
+                self.cloud_services.append({option: config.get(section,
+                                                               option)
+                                            for option in
+                                            config.options(section)})
 
         if config.has_option('GLOBAL', 'vgrid_owners'):
             self.vgrid_owners = config.get('GLOBAL', 'vgrid_owners')
