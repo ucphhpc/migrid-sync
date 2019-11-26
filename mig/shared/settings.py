@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - helpers for handling user settings
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,8 +34,8 @@ from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
     widgets_filename, twofactor_filename, duplicati_filename, ssh_conf_dir, \
     davs_conf_dir, ftps_conf_dir, seafile_conf_dir, duplicati_conf_dir, \
-    authkeys_filename, authpasswords_filename, authdigests_filename, \
-    keyword_unchanged, dav_domain
+    cloud_conf_dir, authkeys_filename, authpasswords_filename, \
+    authdigests_filename, keyword_unchanged, dav_domain
 from shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, \
     extract_duplicati_helper, duplicati_conf_templates
 from shared.fileio import pickle, unpickle
@@ -46,7 +46,7 @@ from shared.safeinput import valid_password
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.ssh import parse_pub_key, tighten_key_perms
 from shared.twofactorkeywords import get_keywords_dict as get_twofactor_fields, \
-     check_twofactor_deps
+    check_twofactor_deps
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
@@ -376,6 +376,12 @@ def parse_and_save_seafile(password, client_id, configuration):
                                         seafile_conf_dir)
 
 
+def parse_and_save_cloud(publickeys, password, client_id, configuration):
+    """Validate and write cloud entries"""
+    return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
+                                        configuration, 'cloud', cloud_conf_dir)
+
+
 def load_section_helper(client_id, configuration, section_filename,
                         section_keys, include_meta=False, allow_missing=False):
     """Load settings section from pickled file. Optional include_meta
@@ -518,6 +524,11 @@ def load_ftps(client_id, configuration):
 def load_seafile(client_id, configuration):
     """Load seafile keys and password from user seafile_conf_dir"""
     return _load_auth_pw_keys(client_id, configuration, 'seafile', seafile_conf_dir)
+
+
+def load_cloud(client_id, configuration):
+    """Load cloud keys and password from user cloud_conf_dir"""
+    return _load_auth_pw_keys(client_id, configuration, 'cloud', cloud_conf_dir)
 
 
 def update_section_helper(client_id, configuration, section_filename, changes,
