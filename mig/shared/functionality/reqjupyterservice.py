@@ -135,6 +135,20 @@ def mig_to_user_adapt(mig):
     return user
 
 
+def mig_to_workflows_adapt(mig):
+    """
+    :param mig: expects a dictionary containing mig state keys including,
+    WORKFLOWS_URL, WORKFLOWS_SESSIONID.
+    :return: returns a dictionary
+    """
+    workflows = {}
+    if 'WORKFLOWS_URL' in mig:
+        workflows.update({'WORKFLOWS_URL': mig['WORKFLOWS_URL']})
+    if 'WORKFLOWS_SESSION_ID' in mig:
+        workflows.update({'WORKFLOWS_SESSION_ID': mig['WORKFLOWS_SESSION_ID']})
+    return workflows
+
+
 def remove_jupyter_mount(jupyter_mount_path, configuration):
     """
     :param jupyter_mount_path path to a jupyter mount pickle state file
@@ -442,25 +456,34 @@ def main(client_id, user_arguments_dict):
     # A valid active key is already present redirect straight to the jupyter
     # service, pass most recent mount information
     if active_mount is not None:
-        session_id = get_workflow_session_id(configuration, client_id)
-        if not session_id:
-            session_id = create_workflow_session_id(configuration, client_id)
-        # TODO get this dynamically
-        url = configuration.migserver_https_sid_url + \
-              '/cgi-sid/workflowsjsoninterface.py?output_format=json'
-
         mount_dict = mig_to_mount_adapt(active_mount['state'])
         user_dict = mig_to_user_adapt(active_mount['state'])
-        session_dict = {
-            'Session_id': session_id,
-            'URL': url
-        }
         logger.debug("Existing header values, Mount: %s User: %s"
                      % (mount_dict, user_dict))
+
         auth_header = {'Remote-User': remote_user}
         json_data = {'data': {'Mount': mount_dict,
-                              'User': user_dict,
-                              'Session': session_dict}}
+                              'User': user_dict}}
+
+        if configuration.site_enable_workflows:
+            workflows_dict = mig_to_workflows_adapt(active_mount['state'])
+            if not workflows_dict:
+                # No cached workflows session could be found -> refresh with a
+                # one
+                session_id = get_workflow_session_id(configuration, client_id)
+                if not session_id:
+                    session_id = create_workflow_session_id(configuration,
+                                                            client_id)
+                # TODO get this dynamically
+                url = configuration.migserver_https_sid_url + \
+                      '/cgi-sid/workflowsjsoninterface.py?output_format=json'
+                workflows_dict = {
+                    'WORKFLOWS_URL': url,
+                    'WORKFLOWS_SESSION_ID': session_id}
+
+            logger.debug("Existing header values, Workflows: %s"
+                         % workflows_dict)
+            json_data['workflows_data'] = {'Session': workflows_dict}
 
         with requests.session() as session:
             # Authenticate and submit data
@@ -526,16 +549,34 @@ def main(client_id, user_arguments_dict):
     if client_email:
         jupyter_dict.update({'USER_EMAIL': client_email})
 
+    if configuration.site_enable_workflows:
+        session_id = get_workflow_session_id(configuration, client_id)
+        if not session_id:
+            session_id = create_workflow_session_id(configuration, client_id)
+        # TODO get this dynamically
+        url = configuration.migserver_https_sid_url + \
+              '/cgi-sid/workflowsjsoninterface.py?output_format=json'
+        jupyter_dict.update({
+            'WORKFLOWS_URL': url,
+            'WORKFLOWS_SESSION_ID': session_id
+        })
+
     # Only post the required keys, adapt to API expectations
     mount_dict = mig_to_mount_adapt(jupyter_dict)
     user_dict = mig_to_user_adapt(jupyter_dict)
+    workflows_dict = mig_to_workflows_adapt(jupyter_dict)
     logger.debug("User: %s Mount header: %s" % (client_id, mount_dict))
     logger.debug("User: %s User header: %s" % (client_id, user_dict))
+    if workflows_dict:
+        logger.debug("User: %s Workflows header: %s" % (client_id,
+                                                        workflows_dict))
 
     # Auth and pass a new set of valid mount keys
     auth_header = {'Remote-User': remote_user}
     json_data = {'data': {'Mount': mount_dict,
                           'User': user_dict}}
+    if workflows_dict:
+        json_data['workflows_data'] = {'Session': workflows_dict}
 
     # First login
     with requests.session() as session:
