@@ -456,7 +456,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     </fieldset>
     <div id="imagesettings_output"><!-- dynamic --></div>
     </div>
-    ''' % fill_entries
+    '''
     html += '''
     <div id="editor_dialog" title="Editor" style="display: none;">
     <div class="iconleftpad spinner"></div>
@@ -467,7 +467,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     <div id="editor_output"><!-- dynamic --></div>
     </div>
     '''
-    return html
+    return html % fill_entries
 
 
 def css_tmpl(configuration):

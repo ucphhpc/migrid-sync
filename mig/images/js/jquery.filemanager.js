@@ -313,7 +313,7 @@ if (jQuery) (function($){
             remote_path = $(".fm_addressbar input[name='fm_current_path']").val();
         }
         /* fix path anchor */
-        if (remote_path === '/') {
+        if (remote_path === '/' || remote_path === '.') {
             remote_path = './';
         } else {
             remote_path = './'+remote_path;
