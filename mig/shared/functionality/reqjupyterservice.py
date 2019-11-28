@@ -32,7 +32,7 @@ it passes the Remote-User header with the client_id's email.
 The second request takes the newly instantiated ssh keyset and passes it to the
 jupyterhub server via the Mount header.
 Subsequently any potentially old keysets for this user is removed and the new
-keyset is commited to the users configuration.jupyter_mount_files_dir
+keyset is committed to the users configuration.jupyter_mount_files_dir
 directory. Finally this active keyset is linked to the directory where the sftp
 will check for a valid keyset and the users homedrive is linked to the same
 location.
@@ -203,7 +203,7 @@ def get_newest_mount(jupyter_mounts):
 
 def get_host_from_service(configuration, service):
     """
-    Returns a URL from one of the services avilable hosts,
+    Returns a URL from one of the services available hosts,
     if no active host is found None is returned.
     :param configuration: The MiG Configuration object
     :param service: A service object that an active hosts should be found from
@@ -470,16 +470,17 @@ def main(client_id, user_arguments_dict):
             if not workflows_dict:
                 # No cached workflows session could be found -> refresh with a
                 # one
-                session_id = get_workflow_session_id(configuration, client_id)
-                if not session_id:
-                    session_id = create_workflow_session_id(configuration,
-                                                            client_id)
+                workflow_session_id = get_workflow_session_id(configuration,
+                                                              client_id)
+                if not workflow_session_id:
+                    workflow_session_id = create_workflow_session_id(configuration,
+                                                                     client_id)
                 # TODO get this dynamically
                 url = configuration.migserver_https_sid_url + \
                       '/cgi-sid/workflowsjsoninterface.py?output_format=json'
                 workflows_dict = {
                     'WORKFLOWS_URL': url,
-                    'WORKFLOWS_SESSION_ID': session_id}
+                    'WORKFLOWS_SESSION_ID': workflow_session_id}
 
             logger.debug("Existing header values, Workflows: %s"
                          % workflows_dict)
@@ -550,15 +551,16 @@ def main(client_id, user_arguments_dict):
         jupyter_dict.update({'USER_EMAIL': client_email})
 
     if configuration.site_enable_workflows:
-        session_id = get_workflow_session_id(configuration, client_id)
-        if not session_id:
-            session_id = create_workflow_session_id(configuration, client_id)
+        workflow_session_id = get_workflow_session_id(configuration, client_id)
+        if not workflow_session_id:
+            workflow_session_id = create_workflow_session_id(configuration,
+                                                             client_id)
         # TODO get this dynamically
         url = configuration.migserver_https_sid_url + \
               '/cgi-sid/workflowsjsoninterface.py?output_format=json'
         jupyter_dict.update({
             'WORKFLOWS_URL': url,
-            'WORKFLOWS_SESSION_ID': session_id
+            'WORKFLOWS_SESSION_ID': workflow_session_id
         })
 
     # Only post the required keys, adapt to API expectations
