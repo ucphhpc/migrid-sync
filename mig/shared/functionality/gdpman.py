@@ -908,13 +908,13 @@ def js_tmpl(configuration, csrf_token):
         $('.'+category_id+'_section.'+project_action+' .category_ref').prop('disabled', true);
         $('.'+category_id+'_section.'+project_action+' .category_ref').prop('disabled', false);
     }
-    function selectInviteUserProject(project_name) {
+    function selectInviteUserProject() {
         var project_name = $('#invite_user select[name=invite_user_base_vgrid_name]').val();
         /* Helper to switch category fields on project select in invite_user tab */
         var category_id = category_map[project_name];
         selectRef('invite_user', category_id);
     }
-    function selectAcceptUserProject(project_name) {
+    function selectAcceptUserProject() {
         var project_name = $('#accept_user select[name=accept_user_base_vgrid_name]').val();
         /* Helper to switch category fields on project select in accept_user tab */
         var category_id = category_map[project_name];
@@ -928,16 +928,13 @@ def js_tmpl(configuration, csrf_token):
         var option_value;
         select = $('#remove_user select[name=remove_user_short_id]');
         select.children().remove().end();
-        // console.debug('select_user: ' + JSON.stringify(select));
         if (project_participants.OK.length == 0) {
             option = new Option('No participants found', '', true, true);
-            //select.append(option).trigger('change');
             select.append(option);
         }
         else if (project_participants.OK.length > 0) {
             option = new Option('Choose participant', '', true, true);
             select.append(option);
-            //select.append(option).trigger('change');
             option = new Option('───────', '', false, false);
             select.append(option);
             for (var i=0; i<project_participants.OK.length; i++ ) {
