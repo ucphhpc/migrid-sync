@@ -793,3 +793,64 @@ function ajax_workflowjobs(vgrid_name, flags) {
       }
   });
 }
+
+function ajax_gdp_project_users(callback, project_name) {
+    console.debug("ajax_gdp_project_users: " + project_name);
+    var result = { OK: [], WARNING: [], ERROR: [] };
+    var target_op = "gdpman";
+    console.info("Lookup CSRF token for " + target_op);
+
+    var jsonSettings = {
+        base_vgrid_name: project_name,
+        output_format: "json",
+        action: "list_project_users"
+    };
+    if (csrf_map[target_op] !== undefined) {
+        jsonSettings[csrf_field] = csrf_map[target_op];
+        console.info("Found CSRF token " + jsonSettings["_csrf"]);
+    } else {
+        console.info("No CSRF token for " + target_op);
+    }
+
+    $.ajax({
+        url: target_op + ".py",
+        data: jsonSettings,
+        type: "POST",
+        dataType: "json",
+        cache: false,
+        success: function(jsonRes) {
+            for (var i = 0; i < jsonRes.length; i++) {
+                //console.debug("jsonRes: " + JSON.stringify(jsonRes[i]));
+                if (jsonRes[i].object_type === "list") {
+                    for (var j = 0; j < jsonRes[i].list.length; j++) {
+                        console.debug("ajax_gdp_project_users[" + j + "]: "
+                            + JSON.stringify(jsonRes[i].list[j])
+                        );
+                        result.OK.push(jsonRes[i].list[j]);
+                    }
+                } else if (jsonRes[i]["object_type"] === "warning") {
+                    console.warning(
+                        "ajax_gdp_project_users: " + jsonRes[i].text
+                    );
+                    result.WARNING.push(jsonRes[i].text);
+                } else if (jsonRes[i]["object_type"] === "error_text") {
+                    console.error("ajax_gdp_project_users: " + jsonRes[i].text);
+                    result.ERROR.push(jsonRes[i].text);
+                }
+            }
+            callback(project_name, result);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error(
+                "ajax_gdp_project_users: " +
+                    "status: " +
+                    textStatus +
+                    "error: " +
+                    errorThrown
+            );
+            result.ERROR.push(textStatus);
+            result.ERROR.push(errorThrown);
+            callback(project_name, result);
+        }
+    });
+}

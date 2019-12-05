@@ -42,7 +42,7 @@ try:
 except:
     Xvfb = None
 
-from shared.base import client_id_dir, valid_dir_input
+from shared.base import client_id_dir, valid_dir_input, extract_field
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     io_session_timeout, user_db_filename as mig_user_db_filename, \
     valid_gdp_auth_scripts as valid_auth_scripts
@@ -1436,6 +1436,44 @@ def get_projects(configuration, client_id, state, owner_only=False):
                                    recursive=False):
                     result[key] = value
 
+    return result
+
+
+def get_project_users(configuration,
+                      project_name,
+                      skip_users=[],
+                      project_state=None,
+                      locked=False):
+    """Generate a list of project participants, each entry on the format:
+    {'name': str,
+    'email': str,
+    'short_id': str,
+    'client_id': str,
+    'project_client_id': str}
+    """
+    _logger = configuration.logger
+    # _logger.debug("get_project_users: project_name: "
+    #    + "%s, skip_users: %s, project_state: %s, locked: %s" \
+    #    % (project_name, skip_users, project_state, locked))
+    user_db = __load_user_db(configuration, locked)
+
+    result = []
+    for client_id in user_db.keys():
+        if client_id in skip_users:
+            continue
+        user_projects = user_db.get(client_id, {}).get('projects', {})
+        project = user_projects.get(project_name, {})
+        #_logger.debug("client: %s, project: %s" % (client_id, project))
+        if project \
+                and (project_state is None
+                     or project_state == project.get('state', None)):
+            result.append({
+                'name': extract_field(client_id, 'full_name'),
+                'email': extract_field(client_id, 'email'),
+                'short_id': __short_id_from_client_id(configuration, client_id),
+                'client_id': client_id,
+                'project_client_id': project.get('client_id', ''),
+            })
     return result
 
 
