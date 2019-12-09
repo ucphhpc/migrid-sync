@@ -64,6 +64,7 @@ def get_totp(client_id,
         result = pyotp.totp.TOTP(b32_key, interval=interval)
     else:
         result = pyotp.totp.TOTP(b32_key)
+    result.custom_interval = interval
 
     return result
 
@@ -268,7 +269,9 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
                     b32_key,
                     configuration)
     valid_token = totp.verify(token, valid_window=1)
-    if not valid_token:
+    if not valid_token \
+            and hasattr(totp, 'custom_interval') \
+            and totp.custom_interval:
         # Fall back to default interval,
         # some App's like Android Google Authenticator
         # does not support non-default intervals
