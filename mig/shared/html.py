@@ -39,11 +39,11 @@ menu_items = {}
 # Old dashboard
 menu_items['dashboard'] = {'class': 'dashboard fas fa-tachometer-alt', 'url': 'dashboard.py',
                            'legacy_only': True, 'title': 'Dashboard',
-                           'hover': 'This is the overview page to start with'}
+                           'hover': 'The original dashboard start page'}
 # New dashboard replacement
 menu_items['home'] = {'class': 'home fas fa-home', 'url': 'home.py',
-                      'legacy_only': True, 'title': 'Home',
-                      'hover': 'This is the overview page to start with'}
+                      'legacy_only': False, 'title': 'Home',
+                      'hover': 'App overview and launch page'}
 menu_items['submitjob'] = {'class': 'submitjob fas fa-running', 'url': 'submitjob.py',
                            'title': 'Submit Job',
                            'hover': 'Submit a job for execution on a resource'}
