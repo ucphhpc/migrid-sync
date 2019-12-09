@@ -37,30 +37,30 @@ ICONS_ONLY, TEXT_ONLY = "ICONS_ONLY", "TEXT_ONLY"
 # Define all possible menu items
 menu_items = {}
 # Old dashboard
-menu_items['dashboard'] = {'class': 'dashboard', 'url': 'dashboard.py',
+menu_items['dashboard'] = {'class': 'dashboard fas fa-tachometer-alt', 'url': 'dashboard.py',
                            'legacy_only': True, 'title': 'Dashboard',
                            'hover': 'This is the overview page to start with'}
 # New dashboard replacement
 menu_items['home'] = {'class': 'home fas fa-home', 'url': 'home.py',
                       'legacy_only': True, 'title': 'Home',
                       'hover': 'This is the overview page to start with'}
-menu_items['submitjob'] = {'class': 'submitjob', 'url': 'submitjob.py',
+menu_items['submitjob'] = {'class': 'submitjob fas fa-running', 'url': 'submitjob.py',
                            'title': 'Submit Job',
                            'hover': 'Submit a job for execution on a resource'}
 menu_items['files'] = {'class': 'files fas fa-folder', 'url': 'fileman.py', 'title': 'Files',
                        'hover': 'Manage files and folders in your home directory'}
-menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Jobs',
+menu_items['jobs'] = {'class': 'jobs fas fa-tasks', 'url': 'jobman.py', 'title': 'Jobs',
                       'hover': 'Manage and monitor your grid jobs'}
 menu_items['vgrids'] = {'class': 'vgrids fas fa-network-wired', 'url': 'vgridman.py',
                         'title': 'VGrids',
                         'hover': 'Virtual organisations sharing some resources and files'}
-menu_items['resources'] = {'class': 'resources', 'url': 'resman.py',
+menu_items['resources'] = {'class': 'resources fas fa-server', 'url': 'resman.py',
                            'title': 'Resources',
                            'hover': 'Resources available in the system'}
 menu_items['downloads'] = {'class': 'downloads fas fa-download', 'url': 'downloads.py',
                            'title': 'Downloads',
                            'hover': 'Download scripts to work directly from your local machine'}
-menu_items['runtimeenvs'] = {'class': 'runtimeenvs', 'url': 'redb.py',
+menu_items['runtimeenvs'] = {'class': 'runtimeenvs fas fa-warehouse', 'url': 'redb.py',
                              'title': 'Runtime Envs',
                              'hover': 'Runtime environments: software which can be made available'}
 menu_items['archives'] = {'class': 'archives fas fa-archive', 'url': 'freezedb.py',
@@ -82,7 +82,7 @@ menu_items['crontab'] = {'class': 'crontab fas fa-calendar-check', 'url': 'cront
                          'title': 'Schedule Tasks',
                          'hover': 'Your personal task scheduler'}
 # NOTE: we rely on seafile location from conf and only fill it in render
-menu_items['seafile'] = {'class': 'seafile', 'url': '', 'title': 'Seafile',
+menu_items['seafile'] = {'class': 'seafile fas fa-sync-alt', 'url': '', 'title': 'Seafile',
                          'hover': 'Access the associated Seafile service',
                          'target': '_blank'}
 menu_items['jupyter'] = {'class': 'jupyter fas fa-jupyter', 'url': 'jupyter.py',
@@ -92,10 +92,10 @@ menu_items['cloud'] = {'class': 'cloud fas fa-cloud', 'url': 'cloud.py',
                        'title': 'Cloud',
                        'hover': 'Access the associated cloud computing services'}
 
-menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell',
+menu_items['shell'] = {'class': 'shell fas fa-keyboard', 'url': 'shell.py', 'title': 'Shell',
                        'legacy_only': True, 'hover':
                        'A command line interface, based on javascript and xmlrpc'}
-menu_items['wshell'] = {'class': 'shell',
+menu_items['wshell'] = {'class': 'shell  fas fa-keyboard-alt',
                         'url': 'javascript:\
              window.open(\'shell.py?menu=no\',\'shellwindow\',\
              \'dependent=yes,menubar=no,status=no,toolbar=no,\
@@ -103,26 +103,26 @@ menu_items['wshell'] = {'class': 'shell',
              window.reload();',
                         'legacy_only': True, 'title': 'Shell',
                         'hover': 'A command line interface, based on javascript and xmlrpc. Opens in a new window'}
-menu_items['statistics'] = {'class': 'statistics', 'url': 'showstats.py',
+menu_items['statistics'] = {'class': 'statistics fas fa-poll', 'url': 'showstats.py',
                             'legacy_only': True, 'title': 'Statistics',
                             'hover': 'Usage overview for resources and users on this server'}
-menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
+menu_items['docs'] = {'class': 'docs fas fa-book', 'url': 'docs.py',
                       'title': 'Docs',
                       'hover': 'Some built-in documentation for reference'}
 menu_items['people'] = {'class': 'people fas fa-users', 'url': 'people.py',
                         'title': 'People',
                         'hover': 'View and communicate with other users'}
-menu_items['migadmin'] = {'class': 'migadmin', 'url': 'migadmin.py',
+menu_items['migadmin'] = {'class': 'migadmin fas fa-user-lock', 'url': 'migadmin.py',
                           'title': 'Server Admin',
                           'hover': 'Administrate this server'}
 menu_items['vmachines'] = {'class': 'vmachines fas fa-desktop',
                            'url': 'vmachines.py',
                            'title': 'Virtual Machines',
                            'hover': 'Manage Virtual Machines'}
-menu_items['vmrequest'] = {'class': 'vmrequest', 'url': 'vmrequest.py',
+menu_items['vmrequest'] = {'class': 'vmrequest fas fa-tv', 'url': 'vmrequest.py',
                            'title': 'Request Virtual Machine',
                            'hover': 'Request Virtual Machine'}
-menu_items['vmconnect'] = {'class': 'vmconnect', 'url': 'vmconnect.py',
+menu_items['vmconnect'] = {'class': 'vmconnect fas fa-plug', 'url': 'vmconnect.py',
                            'title': 'Connect to Virtual Machine',
                            'hover': 'Connect to Virtual Machine'}
 menu_items['logout'] = {'class': 'logout fas fa-sign-out-alt',
@@ -292,6 +292,8 @@ def render_apps(configuration, title_entry, active_menu):
                                           configuration.site_vgrid_label)
             spec['title'] = title
             spec['hover'] = hover
+        if name == 'seafile':
+            spec['url'] = configuration.user_seahub_url
         spec['hover'] = spec.get('hover', '')
         app_lines += '''
 							<div class="col-lg-2 app-cell">

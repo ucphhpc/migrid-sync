@@ -79,8 +79,11 @@ def build_useritem_object_from_user_dict(configuration, client_id,
         'user_id': visible_user_id,
         'fields': [],
     }
-    user_item['fields'].append(
-        ('Public user ID', pretty_format_user(visible_user_id)))
+    if visible_user_id.find('@') != -1:
+        show_user_id = pretty_format_user(visible_user_id)
+    else:
+        show_user_id = visible_user_id
+    user_item['fields'].append(('Public user ID', show_user_id))
 
     user_image = True
     public_image = user_dict[CONF].get('PUBLIC_IMAGE', [])

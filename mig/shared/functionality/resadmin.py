@@ -548,6 +548,9 @@ def main(client_id, user_arguments_dict):
                                })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    output_objects.append({'object_type': 'header', 'text':
+                           'Manage Resource'})
+
     output_objects.append({'object_type': 'sectionheader',
                            'text': '%(short_title)s Resources Owned' % fill_helpers})
     quick_links = [{'object_type': 'text',
