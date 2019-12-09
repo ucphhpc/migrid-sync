@@ -52,15 +52,20 @@ from shared.pwhash import scramble_password, unscramble_password
 
 def get_totp(client_id,
              b32_key,
-             configuration):
+             configuration,
+             force_default_interval=False):
     """Initialize and return pyotp object"""
     if pyotp is None:
         raise Exception("The pyotp module is missing and required for 2FA")
-    interval = load_twofactor_interval(client_id, configuration)
+    interval = None
+    if not force_default_interval:
+        interval = load_twofactor_interval(client_id, configuration)
     if interval:
-        return pyotp.totp.TOTP(b32_key, interval=interval)
+        result = pyotp.totp.TOTP(b32_key, interval=interval)
     else:
-        return pyotp.totp.TOTP(b32_key)
+        result = pyotp.totp.TOTP(b32_key)
+
+    return result
 
 
 def twofactor_available(configuration):
@@ -262,7 +267,18 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
     totp = get_totp(client_id,
                     b32_key,
                     configuration)
-    return totp.verify(token, valid_window=1)
+    valid_token = totp.verify(token, valid_window=1)
+    if not valid_token:
+        # Fall back to default interval,
+        # some App's like Android Google Authenticator
+        # does not support non-default intervals
+        totp = get_totp(client_id,
+                        b32_key,
+                        configuration,
+                        force_default_interval=True)
+        valid_token = totp.verify(token, valid_window=1)
+
+    return valid_token
 
 
 def client_twofactor_session(configuration,
