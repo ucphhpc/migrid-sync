@@ -354,20 +354,6 @@ table th.icon {
 	z-index: 99;
 }
 
-/* Home with app grid */
-.app-grid {
-  display: grid;
-  grid-gap: 10px;
-  grid-template-columns: repeat(auto-fill, 180px);
-}
-.app-grid > * {
-  color: #444;
-  background-color: #CCC;
-  border: 1px solid #444;
-  border-radius: 4px;
-  height: 180px;
-}
-
 /* Mask validation helper popups on account req pages */
 .valid-feedback, .invalid-feedback {
     display: none;

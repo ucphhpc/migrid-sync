@@ -965,48 +965,25 @@ background: url(/images/icons/code.png) left center no-repeat;
 
 
 /* V2 Apps */
+/* Home with app grid */
+.app-grid {
+    /* Override in skins */
+}
 .app-grid .app__btn, .app-grid .add-app__btn {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     text-align: center;
     cursor: pointer;
     transition: 0.3s;
+    border-radius: 4px;
 }
-/* Expand add-app boxes without link and make room for checkbox */
-.app-grid .app__btn.mandatory {
-    padding-top: 60px;
-    padding-bottom: 60px;
-}
-.app-grid .app__btn.optional {
-    padding-top: 38px;
-    padding-bottom: 60px;
-}
-.app-grid > * {
+.app-grid > *, .app-grid > * a  {
     color: #444;
     background-color: #FFF;
     border-color: #444;
+    border-radius: 4px;
 }
 .app-grid > *:hover, .app-grid > *:hover a {
     background-color: #444;
     color: #FFF;
-}
-.app-grid span.fas {
-    display: inline-block;
-    vertical-align: middle;
-    background-size: 16px 16px;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 20px;
-    width: 20px;
-}
-.app-grid a {
-    text-decoration: none;
-    display: block;
-    height: 120px;
-    width: auto;
-    padding-top: 60px;
-}
-.app-grid h3 {
-    display: inline-block;
-    border: 0;
-    vertical-align: middle;
+    border-radius: 4px;
 }

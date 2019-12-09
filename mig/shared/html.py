@@ -524,6 +524,11 @@ def themed_styles(configuration, base=[], advanced=[], skin=[], user_settings={}
 <!-- UI V3-only skin overrides -->
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-v3.custom.css" media="screen"/>
         ''' % css_helpers
+    else:
+        styles['ui_skin'] += '''
+<!-- UI V2-only skin overrides -->
+<link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-v2.custom.css" media="screen"/>
+        ''' % css_helpers
 
     extend_styles(configuration, styles, base, advanced, skin, user_settings)
     return styles
