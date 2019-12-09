@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# edituser - (Re)set user 2FA key
+# reset2fakey - (Re)set user 2FA key
 # Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
