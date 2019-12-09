@@ -33,7 +33,6 @@ import sys
 import pyotp
 
 from shared.auth import reset_twofactor_key
-from shared.defaults import twofactor_interval_name
 from shared.conf import get_configuration_object
 
 
@@ -42,7 +41,7 @@ def usage(name='reset2fakey.py'):
 
     print """(Re)set user 2FA key.
 Usage:
-%(name)s [OPTIONS] -i USER_ID [SEED] [INTERVAL]
+%(name)s [OPTIONS] -i USER_ID [SEED_FILE] [INTERVAL]
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -f                  Force operations to continue past errors
@@ -103,12 +102,22 @@ if '__main__' == __name__:
 
     if args:
         try:
-            seed = args[0]
+            seed_file = args[0]
             interval = args[1]
         except IndexError:
              # Ignore missing optional arguments
 
             pass
+
+    if seed_file:
+        try:
+            s_fd = open(seed_file, 'r')
+            seed = s_fd.read().strip()
+            s_fd.close()
+        except Exception, exc:
+            print "Failed to read sead file: %s" % (exc)
+            if not force:
+                sys.exit(1)
 
     if interval:
         try:
@@ -121,7 +130,7 @@ if '__main__' == __name__:
         if seed:
             print 'using seed: %s' % seed
         else:
-            print 'using random seed: %s' % seed
+            print 'using random seed'
         if interval:
             print 'using interval: %s' % interval
 
