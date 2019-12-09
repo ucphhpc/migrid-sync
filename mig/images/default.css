@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # default - default style settings for all pages
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -75,9 +75,27 @@ h3 {
 }
 
 div.container {
+/* NOTE: obsolete with UI V3 global container introduction
   width: 98%;
   margin: 1%;
+*/
 }
+
+/*Global Web Elements*/
+.global-container {
+	padding-left: 4px;
+	padding-right: 4px;
+	padding-top: 8px;
+	position: relative;
+	/*margin: 20px;*/
+	z-index: 1;
+	min-height: 600px;
+}
+
+.global-full-height {
+	min-height: 100vh;
+}
+
 
 .monospace {
   font-family: monospace;
@@ -165,6 +183,22 @@ table.resource td {
 table.people {
   text-align: left;
 }
+/* user details */
+.public_frame {
+    width: 100%;
+}
+div.public_image {
+    border-radius: 4px;
+    overflow: hidden;
+    border: none;
+    float: none;
+    margin: auto;
+}
+.profile-img {
+    height: 200px;
+    width: 200px;
+}
+
 table.user td {
   padding: 5px;
 }
@@ -178,6 +212,9 @@ table.datatransfers.status {
 table.frozenarchives {
 }
 table.transferkeys {
+}
+table.transferkeys td {
+  vertical-align: middle;
 }
 /* 
    IMPORTANT: AdBlock Plus hides elements with class sharelink(s) so we stray
@@ -279,19 +316,62 @@ table th.icon {
   padding: 0;
 }
 
+#content {
+    /* Handle menu spacing in V2 jquery.managers.css */
+    /*
+      margin-left: 168px;
+    */
+}
 .contentblock {
   margin: 4px;
-  margin-left: 168px;
   padding: 0;
   /* Prevent footer overlap with menu */
   min-height: 500px;
 }
 
 /* override block layout for maximized areas like wshell */
-#nomenu {
+.nomenu #content, .nomenu .contentblock {
   margin: 4px;
 }
 
+/* V3 Nav */
+.home-nav-logo {
+    /* Override in skins */
+    background-image: url("/images/img/home_logo.jpg");
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+/* V3 Background */
+.img-content {
+	background-image: url("/images/img/index_background.jpg");
+}
+
+/* V2 Nav */
+#sideBar {
+  position: fixed;
+	z-index: 99;
+}
+
+/* Home with app grid */
+.app-grid {
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: repeat(auto-fill, 180px);
+}
+.app-grid > * {
+  color: #444;
+  background-color: #CCC;
+  border: 1px solid #444;
+  border-radius: 4px;
+  height: 180px;
+}
+
+/* Mask validation helper popups on account req pages */
+.valid-feedback, .invalid-feedback {
+    display: none;
+}
 
 /* Navigational menu... */
 .navmenu {
@@ -315,66 +395,85 @@ table th.icon {
   list-style-type: none;
 }
 
-.navmenu ul li.dashboard a {
+.navmenu ul li.home a, #legacy-ui-body .app-grid .fas.home {
+  background-image: url('/images/icons/application_home.png');
+}
+.navmenu ul li.dashboard a, #legacy-ui-body .app-grid .fas.dashboard {
   background-image: url('/images/icons/application.png');
 }
-.navmenu ul li.submitjob a {
+.navmenu ul li.submitjob a, #legacy-ui-body .app-grid .fas.submitjob {
   background-image: url('/images/icons/cog_add.png');
 }
-.navmenu ul li.files a {
+.navmenu ul li.files a, #legacy-ui-body .app-grid .fas.files {
   background-image: url('/images/icons/drive.png');
 }
-.navmenu ul li.jobs a {
+.navmenu ul li.jobs a, #legacy-ui-body .app-grid .fas.jobs {
   background-image: url('/images/icons/cog.png');
 }
-.navmenu ul li.vgrids a {
+.navmenu ul li.vgrids a, #legacy-ui-body .app-grid .fas.vgrids {
   background-image: url('/images/icons/chart_organisation.png');
 }
-.navmenu ul li.vmachines a {
+.navmenu ul li.vmachines a, #legacy-ui-body .app-grid .fas.vmachines {
   background-image: url('/images/icons/computer.png');
 }
-.navmenu ul li.resources a {
+.navmenu ul li.resources a, #legacy-ui-body .app-grid .fas.resources {
   background-image: url('/images/icons/server.png');
 }
-.navmenu ul li.downloads a {
+.navmenu ul li.downloads a, #legacy-ui-body .app-grid .fas.downloads {
   background-image: url('/images/icons/download.png');
 }
-.navmenu ul li.crontab a {
+.navmenu ul li.crontab a, #legacy-ui-body .app-grid .fas.crontab {
   background-image: url('/images/icons/hourglass_go.png')
 }
-.navmenu ul li.seafile a {
+.navmenu ul li.seafile a, #legacy-ui-body .app-grid .fas.seafile {
   background-image: url('/images/icons/seafile.png')
 }
-.navmenu ul li.jupyter a {
+.navmenu ul li.jupyter a, #legacy-ui-body .app-grid .fas.jupyter {
   background-image: url('/images/icons/jupyter.png')
 }
-.navmenu ul li.runtimeenvs a {
+.navmenu ul li.runtimeenvs a, #legacy-ui-body .app-grid .fas.runtimeenvs {
   background-image: url('/images/icons/database.png');
 }
-.navmenu ul li.archives a {
+.navmenu ul li.archives a, #legacy-ui-body .app-grid .fas.archives {
   background-image: url('/images/icons/box.png');
 }
-.navmenu ul li.settings a {
+.navmenu ul li.setup a, #legacy-ui-body .app-grid .fas.setup {
   background-image: url('/images/icons/wrench.png');
 }
-.navmenu ul li.shell a {
+.navmenu ul li.settings a, #legacy-ui-body .app-grid .fas.settings {
+  background-image: url('/images/icons/user.png');
+}
+.navmenu ul li.shell a, #legacy-ui-body .app-grid .fas.shell {
   background-image: url('/images/icons/application_osx_terminal.png');
 }
-.navmenu ul li.people a {
+.navmenu ul li.people a, #legacy-ui-body .app-grid .fas.people {
   background-image: url('/images/icons/group.png');
 }
-.navmenu ul li.migadmin a {
+.navmenu ul li.cloud a, #legacy-ui-body .app-grid .fas.cloud {
+  background-image: url('/images/icons/bricks.png');
+}
+.navmenu ul li.transfers a, #legacy-ui-body .app-grid .fas.transfers {
+  background-image: url('/images/icons/table_refresh.png');
+}
+.navmenu ul li.sharelinks a, #legacy-ui-body .app-grid .fas.sharelinks {
+  background-image: url('/images/icons/table_link.png');
+}
+.navmenu ul li.migadmin a, #legacy-ui-body .app-grid .fas.migadmin {
   background-image: url('/images/icons/server_lightning.png');
 }
 
-.navmenu ul li.statistics a {
+.navmenu ul li.statistics a, #legacy-ui-body .app-grid .fas.statistics {
   background-image: url('/images/icons/statistics-icon.png');
 }
-.navmenu ul li.docs a {
+.navmenu ul li.docs a, #legacy-ui-body .app-grid .fas.docs {
   background-image: url('/images/icons/txt.png');
 }
-.navmenu ul li.logout a {
+.navmenu ul li.logout a, #legacy-ui-body .app-grid .fas.logout {
   background-image: url('/images/icons/door_in.png');
+}
+
+#legacy-ui-body .app-grid .fas.fa-plus {
+  background-image: url('/images/icons/add.png');
 }
 
 .navmenu ul li a:hover, .navsubmenu ul li a:hover {
@@ -441,6 +540,14 @@ table th.icon {
   float: left;
 }
 
+/* Download button grid */
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, auto));
+}
+.button-grid > * {
+}
+
 /* align checkboxes vertically with text */
 input[type=checkbox], input[type=radio] {
   vertical-align: middle;
@@ -468,6 +575,7 @@ input[type=number] {
 
 .inlineeditor {
   border: 1px inset grey;
+  border-radius: 4px;
   padding: 3px;
   background: white;
 }
@@ -579,6 +687,11 @@ input[type=number] {
 }
 #exitcode .spacer {
   padding: 4px;
+}
+
+.vertical-spacer {
+  height: 20px;
+  width: 100%;
 }
 
 #bottomspace {
@@ -813,6 +926,7 @@ input[type=number] {
   overflow: auto;
   background: #fff;
   border: 1px inset grey;
+  border-radius: 4px;
 }
 
 /* Force wrapping of extremely long lines in otherwise verbatim freeze archive
@@ -1116,6 +1230,10 @@ a:hover.settingsbutton {
   background-image: url('/images/icons/duplicati.png');
   padding-left: 18px;
 }
+.cloudsettingslink {
+  background-image: url('/images/icons/computer_go.png');
+  padding-left: 18px;
+}
 .arcsettingslink {
   background-image: url('/images/icons/ng-arc.png');
   padding-left: 18px;
@@ -1217,6 +1335,10 @@ a:hover.genericbutton {
 .halfwidth.padspace {
   width: 49%;
 }
+/* 60 % width */
+.p60width {
+  width: 60%;
+}
 /* 80 % width */
 .p80width {
   width: 80%;
@@ -1258,11 +1380,11 @@ fieldset .singlefield {
 
 
 /* hide complexity for sharelink ls page */
-#sharelink_ls #content {
+body.sharelink_ls #content {
   padding: 10px 100px;
   min-height: 600px;
 }
-#sharelink_ls .if_full, #sharelink_ls .empty_cell {
+body.sharelink_ls #content .if_full, body.sharelink_ls #content .empty_cell {
     display: none;
 }
 /* layout table elements on ls page used e.g. for sharelinks */
@@ -1380,6 +1502,10 @@ span.fakelink:hover {
   cursor: pointer;
 }
 
+div.savestatus {
+    min-height: 30px;;
+}
+
 /* Layout boxes for archive landing pages */
 .standardfonts {
   font-family: verdana, helvetica, serif, times;
@@ -1390,6 +1516,9 @@ span.fakelink:hover {
   padding: 2px;
 }
 
+#confirm-dialog {
+    background: #fff;
+}
 
 /* 
 *************************************************************************

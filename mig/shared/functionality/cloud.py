@@ -35,7 +35,7 @@ import shared.returnvalues as returnvalues
 
 from shared.init import find_entry, initialize_main_variables
 from shared.functional import validate_input_and_cert
-from shared.html import themed_styles, jquery_ui_js, man_base_js
+from shared.html import man_base_js
 
 
 def signature():
@@ -90,11 +90,12 @@ def main(client_id, user_arguments_dict):
     '''
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['javascript'] = jquery_ui_js(configuration,
-                                             add_import,
-                                             add_init, add_ready)
-    # output_objects.append({'object_type': 'header',
-    #                       'text': 'Select a cloud Service'})
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
+
+    output_objects.append({'object_type': 'header',
+                           'text': 'Select a Cloud Service'})
 
     fill_helpers = {
         'cloud_tabs': ''.join(['<li><a href="#%s-tab">%s</a></li>' %
@@ -103,8 +104,6 @@ def main(client_id, user_arguments_dict):
     }
 
     output_objects.append({'object_type': 'html_form', 'text': '''
-    <div class="container">
-    <h2 class="">Select a Cloud Service</h2>
     <div id="wrap-tabs" class="cloud-tabs">
     <ul>
     %(cloud_tabs)s

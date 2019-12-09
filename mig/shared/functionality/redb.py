@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # redb - manage runtime environments
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,8 +32,7 @@ from shared.defaults import default_pager_entries, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.refunctions import build_reitem_object
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import get_re_map, CONF
 from shared.vgridaccess import resources_using_re, get_re_provider_map
@@ -41,6 +40,7 @@ from shared.vgridaccess import resources_using_re, get_re_provider_map
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
 allowed_operations = list(set(list_operations + show_operations))
+
 
 def signature():
     """Signature of the main function"""
@@ -64,15 +64,15 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     operation = accepted['operation'][-1]
-    
+
     if not operation in allowed_operations:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Operation must be one of %s.''' % \
+                               '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})
         return (output_objects, returnvalues.OK)
 
@@ -89,17 +89,17 @@ def main(client_id, user_arguments_dict):
                                                         [table_spec])
         if operation == "show":
             add_ready += '%s;' % refresh_call
-        title_entry['style'] = themed_styles(configuration)
-        title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                                 add_init, add_ready)
+        title_entry['script']['advanced'] += add_import
+        title_entry['script']['init'] += add_init
+        title_entry['script']['ready'] += add_ready
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
 
-        output_objects.append({'object_type': 'header', 'text'
-                              : 'Runtime Environments'})
+        output_objects.append(
+            {'object_type': 'header', 'text': 'Runtime Environments'})
 
         output_objects.append(
-            {'object_type': 'text', 'text' :
+            {'object_type': 'text', 'text':
              'Runtime environments specify software/data available on resources.'
              })
         output_objects.append(
@@ -109,8 +109,8 @@ def main(client_id, user_arguments_dict):
              'title': 'Show information about runtime environment',
              'text': 'Documentation on runtime environments'})
 
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                              : 'Existing runtime environments'})
+        output_objects.append(
+            {'object_type': 'sectionheader', 'text': 'Existing runtime environments'})
 
         # Helper form for removes
 
@@ -143,39 +143,41 @@ def main(client_id, user_arguments_dict):
             re_item['viewruntimeenvlink'] = {'object_type': 'link',
                                              'destination': "showre.py?re_name=%s" % re_name,
                                              'class': 'infolink iconspace',
-                                             'title': 'View %s runtime environment' % re_name, 
+                                             'title': 'View %s runtime environment' % re_name,
                                              'text': ''}
             if client_id == re_item['creator']:
                 re_item['ownerlink'] = {
                     'object_type': 'link',
                     'destination':
-                    "javascript: confirmDialog(%s, '%s', %s, %s);" % \
+                    "javascript: confirmDialog(%s, '%s', %s, %s);" %
                     ('delre', 'Really delete %s?' % re_name, 'undefined',
                      "{re_name: '%s'}" % re_name),
                     'class': 'removelink iconspace',
-                    'title': 'Delete %s runtime environment' % re_name, 
+                    'title': 'Delete %s runtime environment' % re_name,
                     'text': ''}
             runtimeenvironments.append(re_item)
 
     output_objects.append({'object_type': 'runtimeenvironments',
-                          'runtimeenvironments': runtimeenvironments})
+                           'runtimeenvironments': runtimeenvironments})
 
     if operation in show_operations:
         if configuration.site_swrepo_url:
-            output_objects.append({'object_type': 'sectionheader', 'text': 'Software Packages'})
+            output_objects.append(
+                {'object_type': 'sectionheader', 'text': 'Software Packages'})
             output_objects.append({'object_type': 'link',
                                    'destination': configuration.site_swrepo_url,
                                    'class': 'swrepolink iconspace',
                                    'title': 'Browse available software packages',
-                                   'text': 'Open software catalogue for %s' % \
+                                   'text': 'Open software catalogue for %s' %
                                    configuration.short_title,
                                    })
 
-        output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Runtime Environments'})
+        output_objects.append(
+            {'object_type': 'sectionheader', 'text': 'Additional Runtime Environments'})
         output_objects.append({'object_type': 'link',
                                'destination': 'adminre.py',
                                'class': 'addlink iconspace',
-                               'title': 'Specify a new runtime environment', 
+                               'title': 'Specify a new runtime environment',
                                'text': 'Create a new runtime environment'})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))

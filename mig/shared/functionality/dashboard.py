@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # dashboard - Dashboard entry page backend
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,6 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import extract_field
 from shared.functional import validate_input_and_cert
-from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 
 
@@ -58,7 +57,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -67,19 +66,14 @@ def main(client_id, user_arguments_dict):
 
     # jquery support for tablesorter and confirmation on "leave":
 
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
-          function roundNumber(num, dec) {
+    add_import, add_init, add_ready = '', '', ''
+    add_init += '''
+              function roundNumber(num, dec) {
               var result = Math.round(num*Math.pow(10,dec))/Math.pow(10,dec);
               return result;
           }
-
+    '''
+    add_ready += '''
           $("#jobs_stats").addClass("spinner iconleftpad");
           $("#jobs_stats").html("Loading job stats...");
           $("#res_stats").addClass("spinner iconleftpad");
@@ -198,14 +192,14 @@ $(document).ready(function() {
                   }
               }
           });
-     }
-);
-</script>
-'''
+    '''
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
 
     output_objects.append({'object_type': 'header', 'text': 'Dashboard'})
-    output_objects.append({'object_type': 'sectionheader', 'text' :
-                           "Welcome to the %s" % \
+    output_objects.append({'object_type': 'sectionheader', 'text':
+                           "Welcome to the %s" %
                            configuration.site_title})
     welcome_line = "Hi %s" % extract_field(client_id, "full_name")
     output_objects.append({'object_type': 'text', 'text': welcome_line})
@@ -232,7 +226,7 @@ of the numbers are cached for a while to keep server load down.
 </div>
 '''})
 
-    output_objects.append({'object_type': 'sectionheader', 'text' :
+    output_objects.append({'object_type': 'sectionheader', 'text':
                            'Documentation and Help'})
     online_help = """
 %s includes some built-in documentation like the
@@ -249,10 +243,10 @@ but additional help, background information and tutorials are available in the
                            configuration.site_external_doc,
                            'class': 'urllink iconspace', 'title':
                            'external documentation',
-                           'text': 'external %s documentation' % \
+                           'text': 'external %s documentation' %
                            configuration.site_title})
-    
-    output_objects.append({'object_type': 'sectionheader', 'text' :
+
+    output_objects.append({'object_type': 'sectionheader', 'text':
                            "Personal Settings"})
     settings_info = """
 You can customize your personal pages by opening the Settings
@@ -266,5 +260,3 @@ profile visibility and remote file access.
     #output_objects.append({'object_type': 'text', 'text': env_info})
 
     return (output_objects, returnvalues.OK)
-
-

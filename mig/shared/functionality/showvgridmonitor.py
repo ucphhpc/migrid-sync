@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridmonitor - show private vgrid monitor to vgrid participants
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,6 @@ import os
 import shared.returnvalues as returnvalues
 from shared.defaults import all_vgrids
 from shared.functional import validate_input_and_cert
-from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_is_owner_or_member
 from shared.vgridaccess import user_vgrid_access
@@ -62,21 +61,17 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     meta = '''<meta http-equiv="refresh" content="%s" />
 ''' % configuration.sleep_secs
-    style = themed_styles(configuration)
-    script = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
+    add_import = '''
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
+    '''
+    add_init = ''
+    add_ready = '''
           // table initially sorted by col. 1 (name)
           var sortOrder = [[1,0]];
 
@@ -98,33 +93,30 @@ $(document).ready(function() {
                   /* tablesorter chokes on empty tables - just continue */
               }
           });
-     }
-);
-</script>
-'''
-
+    '''
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     title_entry['meta'] = meta
-    title_entry['style'] = style
-    title_entry['javascript'] = script
 
     vgrid_access = user_vgrid_access(configuration, client_id)
     vgrid_list = accepted['vgrid_name']
     if all_vgrids in accepted['vgrid_name']:
         vgrid_list = [i for i in vgrid_list if all_vgrids != i]\
-             + vgrid_access
+            + vgrid_access
 
     # Force list to sequence of unique entries
 
     for vgrid_name in set(vgrid_list):
         html = ''
         if not vgrid_is_owner_or_member(vgrid_name, client_id,
-                configuration):
+                                        configuration):
             output_objects.append({'object_type': 'error_text', 'text':
                                    '''You must be an owner or member of %s %s
 to access the monitor.''' % (vgrid_name, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        monitor_file = os.path.join(configuration.vgrid_home, vgrid_name, 
+        monitor_file = os.path.join(configuration.vgrid_home, vgrid_name,
                                     '%s.html' % configuration.vgrid_monitor)
         try:
             monitor_fd = open(monitor_file, 'r')
@@ -141,12 +133,9 @@ to access the monitor.''' % (vgrid_name, label)})
             monitor_fd.close()
         except Exception, exc:
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Error reading %s monitor page (%s)' % \
+                                   'Error reading %s monitor page (%s)' %
                                    (label, exc)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : html})
+        output_objects.append({'object_type': 'html_form', 'text': html})
     return (output_objects, returnvalues.OK)
-
-

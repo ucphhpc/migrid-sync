@@ -141,6 +141,20 @@ def extract_field(distinguished_name, field_name):
     return user.get(field_name, None)
 
 
+def pretty_format_user(distinguished_name, hide_email=True):
+    """Format distinguished_name of a user to a human-friendly display format,
+    and optionally include the email address.
+    """
+    user_dict = distinguished_name_to_user(distinguished_name)
+    if hide_email:
+        user_dict['email'] = 'email hidden'
+    else:
+        # NOTE: obfuscate email by replacing with html entities
+        for (src, dst) in [('@', '&#064;'), ('.', '&#046;')]:
+            user_dict['email'] = user_dict.get('email', '').replace(src, dst)
+    return "%(full_name)s, %(organization)s &lt;%(email)s&gt;" % user_dict
+
+
 def sandbox_resource(unique_resource_name):
     """Returns boolean indicating if the resource is a sandbox"""
     fqdn = unique_resource_name.rsplit('.', 1)[0]

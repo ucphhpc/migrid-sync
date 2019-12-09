@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,17 +31,16 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.accountreq import build_accountreqitem_object, list_account_reqs, \
-     get_account_req, delete_account_req, accept_account_req
+    get_account_req, delete_account_req, accept_account_req
 from shared.defaults import default_pager_entries, csrf_field
 from shared.fileio import send_message_to_grid_script, read_tail
 from shared.findtype import is_admin
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.safeeval import subprocess_popen, subprocess_pipe, \
-     subprocess_stdout
+    subprocess_stdout
 
 grid_actions = {'reloadconfig': 'RELOADCONFIG',
                 'showqueued': 'JOBQUEUEINFO',
@@ -74,7 +73,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     action = accepted['action'][-1]
@@ -90,26 +89,25 @@ def main(client_id, user_arguments_dict):
 
     # jquery support for tablesorter and confirmation on "remove"
     # table initially sorted by col. 9 (created)
-    
+
     table_spec = {'table_id': 'accountreqtable', 'sort_order': '[[9,0]]'}
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
     if not is_admin(client_id, configuration, logger):
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'You must be an admin to access this control panel.'})
+            {'object_type': 'error_text', 'text': 'You must be an admin to access this control panel.'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     html = ''
     if action and not action in grid_actions.keys() + accountreq_actions:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid action: %s' % action})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 'Invalid action: %s' % action})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     if action in grid_actions:
         msg = "%s" % grid_actions[action]
@@ -118,8 +116,7 @@ def main(client_id, user_arguments_dict):
         msg += '\n'
         if not send_message_to_grid_script(msg, logger, configuration):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : '''Error sending %s message to grid_script.''' % action
+                {'object_type': 'error_text', 'text': '''Error sending %s message to grid_script.''' % action
                  })
             status = returnvalues.SYSTEM_ERROR
     elif action in accountreq_actions:
@@ -186,9 +183,9 @@ provide access to e.g. managing the grid job queues.
         if action.find(queue) != -1:
             selected = 'selected'
         show += "<option %s value='show%s'>%s</option>" % (selected, queue,
-                                                             queue)
+                                                           queue)
         drop += "<option %s value='drop%s'>%s</option>" % (selected, queue,
-                                                             queue)
+                                                           queue)
     show += """
     </select>
 </form>
@@ -214,7 +211,7 @@ provide access to e.g. managing the grid job queues.
         daemon_names.append('grid_events.py')
     # No need to run im_notify unless any im notify protocols are enabled
     if configuration.site_enable_imnotify and \
-           [i for i in configuration.notify_protocols if i != 'email']:
+            [i for i in configuration.notify_protocols if i != 'email']:
         daemon_names.append('grid_imnotify.py')
     if configuration.site_enable_sftp:
         daemon_names.append('grid_sftp.py')
@@ -234,7 +231,8 @@ provide access to e.g. managing the grid job queues.
         if configuration.seafile_mount:
             daemon_names.append('seaf-fuse')
     if configuration.site_enable_sftp_subsys:
-        daemon_names.append('/sbin/sshd -f /etc/ssh/sshd_config-MiG-sftp-subsys')
+        daemon_names.append(
+            '/sbin/sshd -f /etc/ssh/sshd_config-MiG-sftp-subsys')
     for proc in daemon_names:
         # NOTE: we use command list here to avoid shell requirement
         pgrep_proc = subprocess_popen(['pgrep', '-f', proc],
@@ -252,16 +250,15 @@ provide access to e.g. managing the grid job queues.
 <br />
 """
     html += daemons
-    
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Pending Certificate Requests'})
+
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Pending Certificate Requests'})
 
     (list_status, ret) = list_account_reqs(configuration)
     if not list_status:
         logger.error("%s: failed for '%s': %s" % (op_name,
                                                   client_id, ret))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : ret})
+        output_objects.append({'object_type': 'error_text', 'text': ret})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     form_method = 'post'
@@ -273,14 +270,13 @@ provide access to e.g. managing the grid job queues.
     for req_id in ret:
         (load_status, req_dict) = get_account_req(req_id, configuration)
         if not load_status:
-            logger.error("%s: load failed for '%s': %s" % \
+            logger.error("%s: load failed for '%s': %s" %
                          (op_name, req_id, req_dict))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not read details for "%s"' % \
+            output_objects.append({'object_type': 'error_text', 'text': 'Could not read details for "%s"' %
                                    req_id})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         req_item = build_accountreqitem_object(configuration, req_dict)
-        
+
         js_name = 'create%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
                                   {'action': 'addaccountreq', 'req_id': req_id,
@@ -288,7 +284,7 @@ provide access to e.g. managing the grid job queues.
         output_objects.append({'object_type': 'html_form', 'text': helper})
         req_item['addaccountreqlink'] = {
             'object_type': 'link', 'destination':
-            "javascript: confirmDialog(%s, '%s');" % \
+            "javascript: confirmDialog(%s, '%s');" %
             (js_name, 'Really accept %s?' % req_id),
             'class': 'addlink iconspace', 'title': 'Accept %s' % req_id, 'text': ''}
         js_name = 'delete%s' % req_id
@@ -298,7 +294,7 @@ provide access to e.g. managing the grid job queues.
         output_objects.append({'object_type': 'html_form', 'text': helper})
         req_item['delaccountreqlink'] = {
             'object_type': 'link', 'destination':
-            "javascript: confirmDialog(%s, '%s');" % \
+            "javascript: confirmDialog(%s, '%s');" %
             (js_name, 'Really remove %s?' % req_id),
             'class': 'removelink iconspace', 'title': 'Remove %s' % req_id, 'text': ''}
         accountreqs.append(req_item)
@@ -307,7 +303,7 @@ provide access to e.g. managing the grid job queues.
                            'pending certificate/OpenID account requests',
                            'default_entries': default_pager_entries})
     output_objects.append({'object_type': 'accountreqs',
-                          'accountreqs': accountreqs})
+                           'accountreqs': accountreqs})
 
     log_path_list = []
     if os.path.isabs(configuration.logfile):
@@ -325,8 +321,5 @@ provide access to e.g. managing the grid job queues.
         html += '''</textarea>
 '''
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                              : html})
+    output_objects.append({'object_type': 'html_form', 'text': html})
     return (output_objects, returnvalues.OK)
-
-

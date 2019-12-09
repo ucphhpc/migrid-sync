@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - general login method selection backend
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ from shared.defaults import keyword_all
 from shared.functional import validate_input
 from shared.init import initialize_main_variables, find_entry
 
+
 def get_valid_topics(configuration):
     """Get a map of valid show topics and their associated helper URLs"""
     valid_topics = {
@@ -41,8 +42,9 @@ def get_valid_topics(configuration):
         'migoid': {'url': configuration.migserver_https_mig_oid_url},
         'extcert': {'url': configuration.migserver_https_ext_cert_url},
         'extoid': {'url': configuration.migserver_https_ext_oid_url},
-        }
+    }
     return valid_topics
+
 
 def signature(configuration):
     """Signature of the main function"""
@@ -53,6 +55,7 @@ def signature(configuration):
                 'redirect_url': ['']}
     return ['html_form', defaults]
 
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
@@ -60,7 +63,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -79,13 +82,12 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s login selector' % configuration.short_title
-    # TODO: move ping to shared location for signup and login
-    # TODO: wrap openid ping in function and split up for each oid
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
+
+    add_import = '''
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
-<script type="text/javascript">
-    $(document).ready(function() {
+    '''
+    add_init = ''
+    add_ready = '''
         var action = "login", oid_title, oid_url, tag_prefix;
         oid_title = "%s";
         oid_url = "%s";
@@ -95,13 +97,13 @@ def main(client_id, user_arguments_dict):
         var oid_url = "%s";
         tag_prefix = "migoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
-    });
-</script>
-''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider, 
+''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider,
        configuration.user_mig_oid_title, configuration.user_mig_oid_provider)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     title_entry['skipmenu'] = True
-    header_entry = {'object_type': 'header', 'text'
-                    : 'Welcome to the %s login selector page' % \
+    header_entry = {'object_type': 'header', 'text': 'Welcome to the %s login selector page' %
                     configuration.short_title}
     output_objects.append(header_entry)
 
@@ -115,7 +117,7 @@ Please report the problem to your OpenID identity provider.
         if redirect_url:
             report_fail += """<br />The error happened on access to %s ."""  \
                            % redirect_url
-            
+
         if 'no_idp_found' in openid_error:
             err_txt += "OpenID server did not respond!"
             report_txt += """It appears the requested OpenID login service is
@@ -149,7 +151,7 @@ There are multiple login methods as described below.
 The simplest login method is to use an existing OpenID login if you have one.
 </p>
 """
-            
+
         for method in show:
             if method == 'migoid':
                 html += """
@@ -187,7 +189,7 @@ OpenID server.
 </form>
 </div>
 """
-            
+
         html += """
 <p>
 When you click the OpenID Login button you will be taken to a login page, where

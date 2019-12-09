@@ -37,8 +37,7 @@ from shared.defaults import default_pager_entries, keyword_owners, \
     keyword_members, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-    html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.pwhash import make_hash
@@ -105,9 +104,9 @@ def main(client_id, user_arguments_dict):
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec],
                                                     {'width': 600})
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
@@ -531,4 +530,5 @@ think you should be allowed to do that.
     output_objects.append({'object_type': 'link',
                            'destination': 'sharelink.py',
                            'text': 'Return to share link overview'})
+
     return (output_objects, returnvalues.OK)

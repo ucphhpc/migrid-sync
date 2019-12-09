@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,8 @@ from shared.conf import get_configuration_object
 from shared.defaults import default_vgrid
 from shared.fileio import unpickle
 from shared.gridstat import GridStat
-from shared.html import get_cgi_html_header, get_cgi_html_footer, themed_styles
+from shared.html import get_xgi_html_header, get_xgi_html_footer, \
+    themed_styles, themed_scripts
 from shared.logger import daemon_logger, register_hangup_handler
 from shared.output import format_timedelta
 from shared.resource import anon_resource_id
@@ -66,14 +67,11 @@ def create_monitor(vgrid_name):
 
     monitor_meta = '''<meta http-equiv="refresh" content="%(sleep_secs)s" />
 ''' % html_vars
-    monitor_js = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
+    add_import = '''
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
+    '''
+    add_init = ''
+    add_ready = '''
           // table initially sorted by col. 1 (name)
           var sortOrder = [[1,0]];
 
@@ -95,20 +93,36 @@ $(document).ready(function() {
                   /* tablesorter chokes on empty tables - just continue */
               }
           });
-     }
+    '''
+    monitor_js = '''
+%s
+
+<script type="text/javascript" >
+
+%s
+
+$(document).ready(function() {
+%s
+          }
 );
 </script>
-'''
+''' % (add_import, add_init, add_ready)
 
-    html = get_cgi_html_header(
+    # User default site style
+    style_helpers = themed_styles(configuration)
+    script_helpers = themed_scripts(configuration)
+    script_helpers['advanced'] += add_import
+    script_helpers['init'] += add_init
+    script_helpers['ready'] += add_ready
+    html = get_xgi_html_header(
         configuration,
         '%(short_title)s Monitor, VGrid %(vgrid_name)s' % html_vars,
         '',
         html=True,
         meta=monitor_meta,
-        base_styles=themed_styles(configuration)['base'],
-        scripts=monitor_js,
-        bodyfunctions='',
+        style_map=style_helpers,
+        script_map=script_helpers,
+        frame=False,
         menu=False,
         widgets=False,
         userstyle=False,
@@ -686,7 +700,7 @@ A total of <b>'''\
 """
     html += \
         '<!-- begin raw footer: this line is used by showvgridmonitor -->'
-    html += get_cgi_html_footer(configuration, '')
+    html += get_xgi_html_footer(configuration, '')
 
     try:
         file_handle = open(html_file, 'w')

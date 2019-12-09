@@ -270,7 +270,7 @@ table {
 
 #content, .content {
   border: none;
-  padding: 4px 0;
+  padding: 0 0;
 }
 #content.staticpage, .content.staticpage {
   padding: 8px;

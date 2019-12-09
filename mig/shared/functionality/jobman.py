@@ -87,40 +87,35 @@ def html_post():
     return html
 
 
-def css_tmpl(configuration):
+def css_tmpl(configuration, user_settings):
     """Stylesheets to include in the page header"""
+
+    # TODO: can we update style inline to avoid explicit themed_styles?
     css = themed_styles(configuration, base=['jquery.contextmenu.css',
-                                             'jquery.managers.contextmenu.css'])
+                                             'jquery.managers.contextmenu.css'],
+                        user_settings=user_settings)
     return css
 
 
-def js_tmpl(csrf_map={}):
+def js_tmpl_parts(csrf_map={}):
     """Javascript to include in the page header"""
-    js = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<!-- NOTE: only for testing JQuery API compliance - not for production use -->
-<!--
-<script type="text/javascript" src="/images/js/jquery-migrate.js"></script>
--->
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+    add_import = '''
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
-<script type="text/javascript">
+<script type="text/javascript" src="/images/js/jquery.jobmanager.js"></script>
+    '''
+    add_init = '''
 var csrf_map = {};
 '''
     for (target_op, token) in csrf_map.items():
-        js += '''
+        add_init += '''
 csrf_map["%s"] = "%s";
 ''' % (target_op, token)
-    js += '''
-</script>
-<script type="text/javascript" src="/images/js/jquery.jobmanager.js"></script>
-<script type="text/javascript">
-
+    add_init += '''
     try {
         /* jquery-ui-1.8.x option format */
         $.ui.dialog.prototype.options.bgiframe = true;
@@ -128,9 +123,8 @@ csrf_map["%s"] = "%s";
         /* jquery-ui-1.7.x option format */
         $.ui.dialog.defaults.bgiframe = true;
     }
-
-    $(document).ready(function() {
-
+    '''
+    add_ready = '''
         /* wrap in try/catch for debugging - disabled in prodution */
         /*
         try {
@@ -141,9 +135,24 @@ csrf_map["%s"] = "%s";
             alert("Internal error in job manager: " + err);
         }
         */
+    '''
+    return (add_import, add_init, add_ready)
+
+
+def js_tmpl(csrf_map={}):
+    """Javascript to include in the page header"""
+    (js_import, js_init, js_ready) = js_tmpl_parts(csrf_map)
+    js = '''
+%s
+    
+<script type="text/javascript">
+    %s
+
+    $(document).ready(function() {
+    %s
     });
 </script>
-'''
+''' % (js_import, js_init, js_ready)
     return js
 
 
@@ -181,14 +190,18 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Job Manager'
-    title_entry['style'] = css_tmpl(configuration)
+    user_settings = title_entry.get('user_settings', {})
+    title_entry['style'] = css_tmpl(configuration, user_settings)
     csrf_map = {}
     method = 'post'
     limit = get_csrf_limit(configuration)
     for target_op in csrf_backends:
         csrf_map[target_op] = make_csrf_token(configuration, method,
                                               target_op, client_id, limit)
-    title_entry['javascript'] = js_tmpl(csrf_map)
+    (add_import, add_init, add_ready) = js_tmpl_parts(csrf_map)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
 
     output_objects.append({'object_type': 'header', 'text': 'Job Manager'})
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'jobs',

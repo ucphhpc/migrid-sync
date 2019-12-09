@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showre - Display a runtime environment
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,10 +30,9 @@
 import shared.returnvalues as returnvalues
 from shared.base import valid_dir_input
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import is_runtime_environment, get_re_dict, \
-     build_reitem_object
+    build_reitem_object
 from shared.vgridaccess import resources_using_re
 
 
@@ -59,27 +58,24 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     re_name = accepted['re_name'][-1]
 
-    title_entry['style'] = themed_styles(configuration)
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Show runtime environment details'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Show runtime environment details'})
 
     if not valid_dir_input(configuration.re_home, re_name):
         logger.warning(
             "possible illegal directory traversal attempt re_name '%s'"
             % re_name)
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Illegal runtime environment name: "%s"'
+        output_objects.append({'object_type': 'error_text', 'text': 'Illegal runtime environment name: "%s"'
                                % re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not is_runtime_environment(re_name, configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : "'%s' is not an existing runtime environment!"
+        output_objects.append({'object_type': 'error_text', 'text': "'%s' is not an existing runtime environment!"
                                % re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -88,8 +84,8 @@ def main(client_id, user_arguments_dict):
 
     (re_dict, msg) = get_re_dict(re_name, configuration)
     if not re_dict:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Could not read details for "%s"' % msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 'Could not read details for "%s"' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Set providers explicitly after build_reitem_object to avoid import loop
@@ -100,4 +96,4 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append(re_item)
 
-    return (output_objects, returnvalues.OK) 
+    return (output_objects, returnvalues.OK)

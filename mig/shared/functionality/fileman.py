@@ -37,9 +37,9 @@ from shared.freezefunctions import import_freeze_form
 from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_css_deps, \
     advanced_editor_js_deps, lock_info, edit_file
-from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.gdp import get_project_from_client_id
-from shared.html import themed_styles
+from shared.handlers import get_csrf_limit, make_csrf_token
+from shared.html import themed_styles, legacy_user_interface
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.sharelinks import create_share_link_form, import_share_link_form
 
@@ -77,60 +77,81 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     html = '''
     <div id="fm_debug"></div>
     <div id="fm_filemanager">
-        <div class="fm_path_breadcrumbs">
-            <ul id="fm_xbreadcrumbs" class="xbreadcrumbs"><!-- dynamic --></ul>
-        </div>
-        <div class="fm_buttonbar">
-            <ul id="fm_buttons" class="buttonbar">
-            <!-- dynamically modified by js to show optional buttons -->
-            <li class="datatransfersbutton hidden" title="Manage Data Transfers">&nbsp;</li>
-            <li class="sharelinksbutton hidden" title="Manage Share Links">&nbsp;</li>
-            <li class="parentdirbutton" title="Open Parent Directory">&nbsp;</li>
-            <li class="refreshbutton" title="Refresh">&nbsp;</li>
-            </ul>
+        <div class="tree-container container-fluid">
+            <div class="tree-row row">
+                <div class="tree-header col-3"></div>
+                <div class="fm_path_breadcrumbs col-6">
+                    <ul id="fm_xbreadcrumbs" class="xbreadcrumbs"><!-- dynamic --></ul>
+                </div>
+                <div class="fm_buttonbar col-3 d-none d-lg-block">
+                    <ul id="fm_buttons" class="buttonbar">
+                    <!-- dynamically modified by js to show optional buttons -->
+                    <li class="datatransfersbutton hidden" title="Manage Data Transfers">&nbsp;</li>
+                    <li class="sharelinksbutton hidden" title="Manage Share Links">&nbsp;</li>
+                    <li class="parentdirbutton" title="Open Parent Directory">&nbsp;</li>
+                    <li class="refreshbutton" title="Refresh">&nbsp;</li>
+                    </ul>
+                </div>
+                <div class="fm_buttonbar-big col-6 d-block d-lg-none hidden">
+                    <ul id="fm_buttons" class="buttonbar">
+                    <!-- dynamically modified by js to show optional buttons -->
+                    <li class="datatransfersbutton hidden" title="Manage Data Transfers">&nbsp;</li>
+                    <li class="sharelinksbutton hidden" title="Manage Share Links">&nbsp;</li>
+                    <li class="parentdirbutton" title="Open Parent Directory">&nbsp;</li>
+                    <li class="refreshbutton" title="Refresh">&nbsp;</li>
+                    </ul>
+                </div>
+            </div>
         </div>
         <div class="fm_addressbar">
             <input type="hidden" value="/" name="fm_current_path" />
         </div>
-        <div id="fm_previews" class="fm_previews">       
+        <div id="fm_previews" class="fm_previews">
             <!-- this is a placeholder for contents: do not remove! -->
             <!-- filled by preview.js : init_html -->
         </div>
-        <div class="fm_folders">
+        <div class="fm_folders col-lg-3">
             <ul class="jqueryFileTree">
                 <li class="directory expanded">
                     <a href="#">...</a>
                 </li>
             </ul>
         </div>
-        
-        <div class="fm_files">
-            <table id="fm_filelisting" style="border-spacing=0;" >
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th style="width: 80px;">Size</th>
-                    <th style="width: 50px;">Type</th>
-                    <th style="width: 120px;">Date Modified</th>
-                </tr>
-            </thead>
-            <tbody id=fm_filelistbody>
-            <!-- this is a placeholder for contents: do not remove! -->
-            </tbody>
+
+        <div class="fm_files col-lg-9">
+            <table id="fm_filelisting">
+                <thead>
+                    <tr>
+                        <th class="fm_name">Name</th>
+                        <th class="fm_size">Size</th>
+                        <th class="fm_type">Type</th>
+                        <th class="fm_date">Date Modified</th>
+                        <th class="fm_toolbox">...</th>
+                    </tr>
+                </thead>
+                <tbody id=fm_filelistbody>
+                    <!-- this is a placeholder for contents: do not remove! -->
+                </tbody>
             </table>
-        
-        </div>                
-        <div id="fm_statusbar">
-            <div id="fm_statusprogress"><div class="progress-label">Loading...</div></div>
-            <div id="fm_statusinfo">&nbsp;</div>
         </div>
-        <div id="fm_options"><input id="fm_touchscreen" type="checkbox" />
-            Enable touch screen interface (all clicks trigger menu)
-            <input id="fm_dotfiles" type="checkbox" />
-            Show hidden files and folders
+
+        <div id="fm_statusbar" class="col-lg-12">
+            <div id="fm_statusprogress" class=" col-lg-3">
+            <div class="progress-label">Loading...</div></div>
+            <div id="fm_options" class="col-lg-2">
+                <label id="fm_toggle_touchscreen" class="switch" for="fm_touchscreen" >
+                <input id="fm_touchscreen" type="checkbox" />
+                <span class="slider round" title="all clicks trigger menu"></span>
+                </label><span id="fm_touchscreen_label">Touch mode</span>
+                <label id="fm_toggle_dotfiles" class="switch">
+                <input id="fm_dotfiles" type="checkbox" />
+                <span class="slider round" title="Show hidden files and folders"></span>
+                </label><span id="fm_dotfiles_label">Hidden files</span>
+            </div>
+            <div id="fm_statusinfo" class="col-lg-7">&nbsp;</div>
         </div>
     </div>
-    
+
     <div id="cmd_dialog" title="Command output" style="display: none;"></div>
 
     <div id="upload_dialog" title="Upload File" style="display: none;">
@@ -158,7 +179,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                     </label>
                     <input id="fancyfileuploaddest" type="text" size=60 value="">
                 </fieldset>
-    
+
                 <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
                 <div class="fileupload-buttonbar">
                     <div class="fileupload-buttons">
@@ -175,7 +196,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                         <span class="fileupload-process"><!-- dynamic --></span>
                     </div>
                     <!-- The global progress state -->
-                    <div class="fileupload-progress fade" style="display:none">
+                    <div class="fileupload-progress fade">
                         <!-- The global progress bar -->
                         <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
                         <!-- The extended global progress state -->
@@ -183,7 +204,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                     </div>
                 </div>
                 <!-- The table listing the files available for upload/download -->
-                <table role="presentation" class="table table-striped"><tbody class="uploadfileslist">
+                <table role="presentation" class="table table-striped fancyuploadfileslist"><tbody class="uploadfileslist">
                 <!-- dynamic --></tbody></table>
             </form>
             <!-- For status and error output messages -->
@@ -200,15 +221,15 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 
                     %(upload_submit_entry)s
                     <br />
-            
+
                     <label for="remotefilename_0">Optional remote filename (extra useful in windows):</label>
                     <input id="remotefilename_0" type="text" value="./" size="50" name="remotefilename_0" />
                     <br />
-            
+
                     <label for="extract_0">Extract package files (.zip, .tar.gz, .tar.bz2)</label>
                     <input id="extract_0" type="checkbox" name="extract_0"/>
                     <br />
-            
+
                     <label for="fileupload_0_0_0">File:</label>
                     <input id="fileupload_0_0_0" type="file" name="fileupload_0_0_0"/>
                     <input type="submit" value="Upload" onClick="$(\'#upload_output\').html(\'<div><span class=\\\'iconleftpad info spinner\\\'>uploading ... please wait</span></div>\')" />
@@ -218,30 +239,30 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         </div>'''
     html += '''
       </div>
-    </div>    
+    </div>
     <div id="mkdir_dialog" title="Create New Folder" style="display: none;">
-    
+
         <form id="mkdir_form" method="post" action="mkdir.py">
         <fieldset>
             <input type="hidden" name="%(csrf_field)s" value="%(mkdir_csrf_token)s" />
             <input type="hidden" name="output_format" value="json" />
             <input type="hidden" name="current_dir" value="./" />
             <label for="path">Directory name:</label>
-            <input id="path" class="singlefield" type="text" name="path" size=50 />            
+            <input id="path" class="singlefield" type="text" name="path" size=50 />
         </fieldset>
         </form>
         <div id="mkdir_output"><!-- dynamic --></div>
     </div>
-    
+
     <div id="rename_dialog" title="Rename" style="display: none;">
     <form id="rename_form" method="post" action="mv.py">
-    <fieldset>    
+    <fieldset>
         <input type="hidden" name="%(csrf_field)s" value="%(mv_csrf_token)s" />
         <input type="hidden" name="output_format" value="json" />
         <input type="hidden" name="flags" value="r" />
         <input type="hidden" name="src" value="" />
         <input type="hidden" name="dst" value="" />
-        
+
         <label for="name">New name:</label>
         <input id="name" class="singlefield" type="text" name="name" size=50 value="" />
     </fieldset>
@@ -258,7 +279,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <input type="hidden" name="flags" value="" />
         <input type="hidden" name="hash_algo" value="" />
         <input type="hidden" name="current_dir" value="" />
-        
+
         <label for="path">Target file name(s):</label>
         <input id="path" class="singlefield" type="text" name="path" size=50  value="" />
         <br/><br/>
@@ -291,7 +312,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <input type="hidden" name="flags" value="" />
         <input type="hidden" name="src" value="" />
         <input type="hidden" name="current_dir" value="" />
-        
+
         <label for="dst">Archive file name:</label>
         <input id="dst" class="singlefield" type="text" name="dst" size=50  value="" />
     </fieldset>
@@ -311,7 +332,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <input type="hidden" name="output_format" value="json" />
         <input type="hidden" name="flags" value="" />
         <input type="hidden" name="src" value="" />
-        
+
         <label for="dst">Unpack to folder:</label>
         <input id="dst" class="singlefield" type="text" name="dst" size=50  value="" />
     </fieldset>
@@ -320,7 +341,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     </div>
 
     <div id="grep_dialog" title="Text search in file" style="display: none;">
-    
+
         <form id="grep_form" method="post" action="grep.py">
         <fieldset>
             <input type="hidden" name="output_format" value="json" />
@@ -333,7 +354,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         </form>
         <div id="grep_output"><!-- dynamic --></div>
     </div>
-    
+
     <div id="create_sharelink_dialog" title="Create Share Link"
         style="display: none;">
     %(create_sharelink_form)s
@@ -372,22 +393,22 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
             <tr><td>
                 <label class="halffield">-- Image --</label>
             </td></tr>
-            <tr><td>            
+            <tr><td>
                 <label class="halffield" for="extension">Extension:</label>
                 <input type="text" name="extension" value="" />
             </td></tr>
-            <tr><td>     
+            <tr><td>
                 <label class="halffield" for="setting_recursive">Apply to sub-folders:</label>
-                <input type="checkbox" name="settings_recursive" value="False" />      
+                <input type="checkbox" name="settings_recursive" value="False" />
             </td></tr>
-            <tr><td>     
+            <tr><td>
                 <label class="halffield" for="image_type">Type:</label>
                 <select name="image_type">
                     <option value="raw">Raw</option>
                     <option value="tiff">Tiff</option>
                 </select>
             </td></tr>
-            </table>   
+            </table>
             <div id="imagesettings_edit_image_type_raw">
                 <table class="fm_metaio_edit_table">
                 <tr><td>
@@ -405,24 +426,24 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                         <option value="int64">int64</option>
                     </select>
                 </td></tr>
-                <tr><td> 
+                <tr><td>
                     <label class="halffield" for="offset">Offset:</label>
                     <input type="text" name="offset" value="" />
                 </td></tr>
-                <tr><td> 
+                <tr><td>
                     <label class="halffield" for="x_dimension">Width:</label>
                     <input type="text" name="x_dimension" value="" />
                 </td></tr>
-                <tr><td> 
+                <tr><td>
                     <label class="halffield" for="y_dimension">Height:</label>
                     <input type="text" name="y_dimension" value="" />
                 </td></tr>
-                </table>   
+                </table>
             </div>
             <table class="fm_metaio_edit_table">
-            <tr><td> 
+            <tr><td>
             </td></tr>
-            <tr><td> 
+            <tr><td>
                 <label class="halffield" for="dummy">-- Preview --</label>
                 <input type="hidden" name="dummy" value="" />
             </td></tr>
@@ -430,7 +451,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                 <label class="halffield" for="preview_cutoff_min">Cutoff min value:</label>
                 <input type="text" name="preview_cutoff_min" value="" />
             </td></tr>
-            <tr><td>         
+            <tr><td>
                 <label class="halffield" for="preview_cutoff_max">Cutoff max value:</label>
                 <input type="text" name="preview_cutoff_max" value="" />
             </td></tr>
@@ -441,17 +462,17 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
             <tr><td>
                 <label class="halffield">-- Volume --</label>
             </td></tr>
-            <tr><td>         
+            <tr><td>
                 <label class="halffield" for="volume_slice_filepattern">Slice file pattern:</label>
                 <input type="text" name="volume_slice_filepattern" value="" />
             </td></tr>
-            <tr><td> 
+            <tr><td>
                 <label class="halffield" for="z_dimension">Number of slices:</label>
                 <input type="text" name="z_dimension" value="" />
             </td></tr>
             </table>
         </div>
-        </form>                
+        </form>
     </div>
     </fieldset>
     <div id="imagesettings_output"><!-- dynamic --></div>
@@ -470,32 +491,39 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     return html % fill_entries
 
 
-def css_tmpl(configuration):
+def css_tmpl(configuration, user_settings={}):
     """Stylesheets to include in the page header"""
-    css = themed_styles(configuration, base=['jquery.contextmenu.css',
-                                             'jquery.managers.contextmenu.css',
-                                             'jquery.xbreadcrumbs.css',
-                                             'jquery.fmbreadcrumbs.css',
-                                             'jquery.fileupload.css',
-                                             'jquery.fileupload-ui.css'],
-                        skin=['fileupload-ui.custom.css',
-                              'xbreadcrumbs.custom.css'])
+
+    # TODO: can we update style inline to avoid explicit themed_styles?
+    css = themed_styles(configuration, advanced=['jquery.contextmenu.css',
+                                                 'jquery.managers.contextmenu.css',
+                                                 'jquery.xbreadcrumbs.css',
+                                                 'jquery.fmbreadcrumbs.css',
+                                                 'jquery.fileupload.css',
+                                                 'jquery.fileupload-ui.css'
+                                                 ],
+                        skin=[
+                            'fileupload-ui.custom.css',
+                            'xbreadcrumbs.custom.css'],
+                        user_settings=user_settings)
+
     css['advanced'] += '''
 <link href="/images/lib/noUiSlider/jquery.nouislider.css"  rel="stylesheet"
-    type="text/css" />   
+    type="text/css" />
 <link href="/images/lib/ParaView/Visualizer/main.css" rel="stylesheet"
-    type="text/css" />   
+    type="text/css" />
 '''
     css['advanced'] += advanced_editor_css_deps()
     return css
 
 
-def js_tmpl(configuration,
-            entry_path='/',
-            enable_submit='true',
-            preview='true',
-            csrf_map={},
-            chroot=''):
+def js_tmpl_parts(configuration,
+                  entry_path='/',
+                  enable_submit='true',
+                  preview='true',
+                  legacy_buttons=True,
+                  csrf_map={},
+                  chroot=''):
     """Javascript to include in the page header"""
 
     fill_entries = {
@@ -507,19 +535,13 @@ def js_tmpl(configuration,
         'entry_path': entry_path,
         'preview': preview.lower(),
         'enable_sharelinks':
-            ('%s' % configuration.site_enable_sharelinks).lower(),
+            ('%s' % (configuration.site_enable_sharelinks and legacy_buttons)).lower(),
         'enable_datatransfers':
-            ('%s' % configuration.site_enable_transfers).lower(),
+            ('%s' % (configuration.site_enable_transfers and legacy_buttons)).lower(),
         'enable_gdp':
-            ('%s' % configuration.site_enable_gdp).lower(),
+            ('%s' % configuration.site_enable_gdp).lower()
     }
-    js = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<!-- NOTE: only for testing JQuery API compliance - not for production use -->
-<!--
-<script type="text/javascript" src="/images/js/jquery-migrate.js"></script>
--->
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+    js_import = '''
 <!-- Filemanager and dependencies -->
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
@@ -528,12 +550,12 @@ var default_max_chunks = "%(default_max_chunks)s";
 var trash_linkname = "%(trash_linkname)s";
 var csrf_field = "%(csrf_field)s";
 var csrf_map = {};
-''' % (fill_entries)
+''' % fill_entries
     for (target_op, token) in csrf_map.items():
-        js += '''
+        js_import += '''
 csrf_map["%s"] = "%s";
 ''' % (target_op, token)
-    js += '''
+    js_import += '''
 </script>
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
@@ -578,7 +600,6 @@ csrf_map["%s"] = "%s";
 <!-- Please note that this is no longer distributed with file uploader since
      switch to bootstrap. We still use it to style the fileupload dialog buttons. -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
-
 <!-- The template to display files available for upload -->
 <script id="template-upload" type="text/x-tmpl">
 {% console.debug("using upload template"); %}
@@ -631,9 +652,9 @@ csrf_map["%s"] = "%s";
             </span>
         </td>
         <td>
-            <p class="name">
+            <div class="name">
                 <a href="{%=file.url%}" title="{%=file.name%}" download="{%=plain_name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=rel_path%}</a>
-            </p>
+            </div>
             {% if (file.error) { %}
                 <div><span class="error">Error</span> {%=file.error%}</div>
             {% } %}
@@ -649,11 +670,9 @@ csrf_map["%s"] = "%s";
 {% } %}
 </script>
 '''
-    js += advanced_editor_js_deps(include_jquery=False)
-    js += lock_info('this file', -1)
-    js += '''
-<script type="text/javascript">
-
+    js_import += advanced_editor_js_deps()
+    js_import += lock_info('this file', -1)
+    js_init = '''
     try {
         /* jquery-ui-1.8.x option format */
         $.ui.dialog.prototype.options.bgiframe = true;
@@ -661,9 +680,8 @@ csrf_map["%s"] = "%s";
         /* jquery-ui-1.7.x option format */
         $.ui.dialog.defaults.bgiframe = true;
     }
-
-    $(document).ready(function() {
-
+    ''' % fill_entries
+    js_ready = '''
         /* wrap in try/catch for debugging - disabled in prodution */
         /*
         try {
@@ -697,10 +715,33 @@ csrf_map["%s"] = "%s";
 
         /* Always resize filemanager box to fit window height if possible */
         $(window).trigger("resize");
+    ''' % fill_entries
+    return (js_import, js_init, js_ready)
+
+
+def js_tmpl(configuration,
+            entry_path='/',
+            enable_submit='true',
+            preview='true',
+            legacy_buttons=True,
+            csrf_map={},
+            chroot=''):
+    """Javascript to include in the page header"""
+    (js_import, js_init, js_ready) = js_tmpl_parts(configuration, entry_path,
+                                                   enable_submit, preview,
+                                                   legacy_buttons, csrf_map,
+                                                   chroot)
+    js = '''
+%s
+    
+<script type="text/javascript">
+    %s
+
+    $(document).ready(function() {
+    %s
     });
 </script>
-    ''' % fill_entries
-
+''' % (js_import, js_init, js_ready)
     return js
 
 
@@ -739,8 +780,15 @@ def main(client_id, user_arguments_dict):
     all_paths = accepted['path']
     entry_path = all_paths[-1]
     title_entry = find_entry(output_objects, 'title')
+    user_settings = title_entry.get('user_settings', {})
     title_entry['text'] = 'File Manager'
-    title_entry['style'] = css_tmpl(configuration)
+    title_entry['style'] = css_tmpl(configuration, user_settings)
+
+    legacy_buttons = False
+    if legacy_user_interface(configuration, user_settings):
+        legacy_buttons = True
+        logger.info("enable legacy buttons")
+
     if configuration.site_enable_jobs and \
             'submitjob' in extract_menu(configuration, title_entry):
         enable_submit = 'true'
@@ -752,13 +800,17 @@ def main(client_id, user_arguments_dict):
     for target_op in csrf_backends:
         csrf_map[target_op] = make_csrf_token(configuration, method,
                                               target_op, client_id, limit)
-    title_entry['javascript'] = js_tmpl(
+    (add_import, add_init, add_ready) = js_tmpl_parts(
         configuration, entry_path, enable_submit,
-        str(configuration.site_enable_preview),
+        str(configuration.site_enable_preview), legacy_buttons,
         csrf_map, chroot)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
 
-    output_objects.append({'object_type': 'header', 'class': 'fileman-title',
-                           'text': 'File Manager'})
+    # HIDE PAGE HEADER
+    # output_objects.append({'object_type': 'header', 'class': 'fileman-title',
+    #                       'text': 'File Manager'})
     output_objects.append({'object_type': 'html_form', 'text':
                            html_tmpl(configuration, client_id, title_entry,
                                      csrf_map, chroot)})

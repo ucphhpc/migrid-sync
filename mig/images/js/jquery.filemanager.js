@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.filemanager - jquery based file manager
-  # Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -81,6 +81,12 @@ if (!window.console || !enable_log) {
         error: noOp
     };
 }
+
+/* global default root path and name to display for it */
+var root_path = '/';
+//var root_display_name = 'My Files';
+var root_display_name = '&nbsp;';
+
 /*
    Make sure we can use Date.now which was not available in IE<9
 */
@@ -169,9 +175,13 @@ if (jQuery) (function($){
        #fm_filechooser or whatever depending on context.
        It works as long as the container has the common .fm_folders element.
     */
-    $.fn.fmSelect = function(sub) {
+    $.fn.fmSelect = function(sub, sep) {
+        /* Separate parent hook and sub by space unless sep arg is provided */
+        if (sep === undefined) {
+            sep = " ";
+        }
         var parentId = $(".fm_folders").parent().attr('id');
-        var selector ="#"+parentId+sub;
+        var selector ="#"+parentId+sep+sub;
         return $(selector);
     };
 
@@ -297,7 +307,7 @@ if (jQuery) (function($){
 
         // Make sure slash remains for home
         if (reloadPath === '') {
-            reloadPath = '/';
+            reloadPath = root_path;
         }
 
         // Trigger the click-event twice for obtaining the original state (collapse+expand).
@@ -313,7 +323,7 @@ if (jQuery) (function($){
             remote_path = $(".fm_addressbar input[name='fm_current_path']").val();
         }
         /* fix path anchor */
-        if (remote_path === '/' || remote_path === '.') {
+        if (remote_path === root_path || remote_path === '.') {
             remote_path = './';
         } else {
             remote_path = './'+remote_path;
@@ -333,7 +343,7 @@ if (jQuery) (function($){
         var current_li = $("#fm_xbreadcrumbs li.current");
         var current_path = current_li.find('a').text();
         console.debug('openParent current_path: '+current_path);
-        if (current_path === '/') {
+        if (current_path === root_path) {
             console.debug("already at root");
             return;
         }
@@ -376,7 +386,7 @@ if (jQuery) (function($){
                 msg = "";
             }
             console.debug("showDirinfo: "+ msg);
-            $(statusinfo).html(msg);
+            $(statusinfo).html("<span class='statusinfo'>"+msg+"</span>");
         }
         function startProgress(msg) {
             if (msg === undefined) {
@@ -430,8 +440,8 @@ if (jQuery) (function($){
             console.debug('is_dialog: ' + is_dialog);
 
             /* Dynamically fit buttonbar and buttons inline with breadcrumbs */
-            var pathBreadcrumbsHeight = $.fn.fmSelect(" .fm_path_breadcrumbs").outerHeight();
-            var breadcrumbsHeight = $.fn.fmSelect(" #fm_xbreadcrumbs").height();
+            var pathBreadcrumbsHeight = $.fn.fmSelect(".fm_path_breadcrumbs").outerHeight();
+            var breadcrumbsHeight = $.fn.fmSelect("#fm_xbreadcrumbs").height();
 
             var buttonbarHeight = pathBreadcrumbsHeight;
             var buttonBorder = 1;
@@ -487,10 +497,10 @@ if (jQuery) (function($){
             var footerOuterHeight = exitCodeOuterHeight + 
                                     bottomLogoOuterHeight + 
                                     bottomspaceOuterHeight;
-            var pathBreadcrumbsOuterHeight = $.fn.fmSelect(" .fm_path_breadcrumbs").outerHeight(true);
-            var addressbarOuterHeight = $.fn.fmSelect(" .fm_addressbar").outerHeight(true);
-            var statusbarOuterHeight = $.fn.fmSelect(" #fm_statusbar").outerHeight(true);
-            var optionsOuterHeight = $.fn.fmSelect(" #fm_options").outerHeight(true);
+            var pathBreadcrumbsOuterHeight = $.fn.fmSelect(".fm_path_breadcrumbs").outerHeight(true);
+            var addressbarOuterHeight = $.fn.fmSelect(".fm_addressbar").outerHeight(true);
+            var statusbarOuterHeight = $.fn.fmSelect("#fm_statusbar").outerHeight(true);
+            var optionsOuterHeight = $.fn.fmSelect("#fm_options").outerHeight(true);
             var fileManagerInnerHeader = pathBreadcrumbsOuterHeight + 
                                         addressbarOuterHeight;
             var fileManagerInnerFooter = statusbarOuterHeight + 
@@ -564,13 +574,13 @@ if (jQuery) (function($){
             var layout = get_fm_layout();
             console.debug('checkpoint refresh buttonbarHeight: ' + layout.fm.buttonbarHeight);
             $.fn.fmSelect("").css("height", layout.fm.height+"px");
-            $.fn.fmSelect(" .fm_files").css("height", layout.fm.fileFolderInnerHeight+"px");
-            $.fn.fmSelect(" .fm_folders").css("height", layout.fm.fileFolderInnerHeight+"px");
-            $.fn.fmSelect(" .fm_path_breadcrumbs").css("height", layout.fm.breadcrumbsHeight+"px")
+            $.fn.fmSelect(".fm_files").css("height", layout.fm.fileFolderInnerHeight+"px");
+            $.fn.fmSelect(".fm_folders").css("height", layout.fm.fileFolderInnerHeight+"px");
+            $.fn.fmSelect(".fm_path_breadcrumbs").css("height", layout.fm.breadcrumbsHeight+"px")
                 .css("width", layout.fm.breadcrumbsWidth+"px");
-            $.fn.fmSelect(" .fm_buttonbar").css("height", layout.fm.buttonbarHeight+"px")
+            $.fn.fmSelect(".fm_buttonbar").css("height", layout.fm.buttonbarHeight+"px")
                 .css("width", layout.fm.buttonbarWidth+"px");
-            $.fn.fmSelect(" #fm_buttons li").css("height", layout.fm.buttonHeight+"px")
+            $.fn.fmSelect("#fm_buttons li").css("height", layout.fm.buttonHeight+"px")
                 .css("line-height", layout.fm.buttonLineHeight+"px")
                 .css("margin-left", layout.fm.buttonSpacing+"px")
                 .css("width", layout.fm.buttonWidth+"px");
@@ -1251,7 +1261,7 @@ if (jQuery) (function($){
                             /* leading slash gets stripped, so we insert . to
                                prevent '/' resulting in implicit dst relative
                                to src */
-                            if (dst === '/') {
+                            if (dst === root_path) {
                                 dst = '.';
                             }
                             $(this).dialog('close');
@@ -1342,7 +1352,7 @@ if (jQuery) (function($){
             },
             upload: function (action, el, pos) {
                 var open_dialog = mig_fancyuploadchunked_init("upload_dialog", options);
-                var remote_path = $.fn.targetDir(el);
+                var remote_path = $.fn.normalizePath($.fn.targetDir(el));
                 $("#upload_form input[name='remotefilename_0']").val(remote_path);
                 $("#upload_form input[name='fileupload_0_0_0']").val('');
                 $("#upload_output").html('');
@@ -1575,7 +1585,7 @@ if (jQuery) (function($){
         };
 
         var defaults = {
-            root: '/',
+            root: root_path,
             chroot: '',
             connector: 'somewhere.py',
             param: 'path',
@@ -1587,7 +1597,7 @@ if (jQuery) (function($){
             multiFolder: true,
             loadMessage: 'Loading...',
             actions: callbacks,
-            subPath: '/',
+            subPath: root_path,
             dragndrop: true,
             filespacer: true,
             uploadspace: true,
@@ -1680,6 +1690,7 @@ if (jQuery) (function($){
                 var subdir_path_esc;
                 var subdir_name = '';
                 var a_class = '';
+                var a_text = '';
                 var li_class = 'class="current"';
                 var found_root = false;
                 var connector_url = options.connector;
@@ -1689,13 +1700,13 @@ if (jQuery) (function($){
                 console.debug('connector_url: ' + connector_url);
                 var rootname = (options.chroot !== '') ?
                     options.chroot :
-                    '/';
+                    root_path;
 
                 // append current subdir parts to breadcrumbs (from right to left)
                 while (!found_root) {
-                    if (subdir_path === '/') {
-                        a_class = 'class="home"';
-                        subdir_name = rootname;
+                    if (subdir_path === root_path) {
+                        a_class = 'class="home userhome expanded"';
+                        subdir_name = root_display_name;
                         found_root = true;
                     } else {
                         // remove trailing slash
@@ -1709,6 +1720,7 @@ if (jQuery) (function($){
                     /* Path may contain URL-unfriendly characters */
                     entry_html += '    <a href="?path='+encodeURIComponent(subdir_path)+'" '+a_class;
                     entry_html += ' onclick="'+onclick_action+'">'+subdir_name+'</a>';
+                    /* NOTE: this empty ul is needed for dynamic folding */
                     entry_html += '    <ul>';
                     entry_html += '    </ul>';
                     entry_html += '  </li>';
@@ -1758,8 +1770,8 @@ if (jQuery) (function($){
                         var folders = '';
 
                         // Root node if not already created
-                        if (t === '/' && $(".fm_folders li.userhome").length === 0) {
-                            folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="/" title="Home"><div>'+rootname+'</div>\n';
+                        if (t === root_path && $(".fm_folders li.userhome").length === 0) {
+                            folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="/" title="Home"><div>'+root_display_name+'</div>\n';
                         }
 
                         // Regular nodes from here on after
@@ -1800,7 +1812,7 @@ if (jQuery) (function($){
                             total_file_size += listing[i]['file_info']['size'];
 
                             path = listing[i]['name'];
-                            if (t !== '/') { // Do not prepend the fake-root.
+                            if (t !== root_path) { // Do not prepend the fake-root.
                                 path = t+path;
                             }
                             if (listing[i]['name'].charAt(0) === '.') {
@@ -1841,15 +1853,15 @@ if (jQuery) (function($){
                             */
                             entry_html = '<tr class="' + entry_menu + ' ' + base_css_style + ' ' + dotfile +
                                 '" title="' + entry_title + '" rel_path="' + path + '">' +
-                                '<td style="padding-left: 20px;" class="'+ entry_menu + ' ' + icon + ' ext_' +
+                                '<td style="padding-left: 20px;" class="fm_name '+ entry_menu + ' ' + icon + ' ext_' +
                                 listing[i]['file_info']['ext'].toLowerCase() + '"><div>' + dir_prefix +
                                 listing[i]['name'] + '</div>' + listing[i]['name'] +
-                                '</td><td><div class="bytes">' + listing[i]['file_info']['size'] +
+                                '</td><td class="fm_size"><div class="bytes">' + listing[i]['file_info']['size'] +
                                 '</div>' + pp_bytes(listing[i]['file_info']['size']) +
-                                '</td><td><div>' + listing[i]['file_info']['ext'] +
+                                '</td><td class="fm_type"><div>' + listing[i]['file_info']['ext'] +
                                 '</div>' + listing[i]['file_info']['ext'] +
-                                '</td><td><div>' + listing[i]['file_info']['created'] + '</div>' +
-                                pp_date(listing[i]['file_info']['created']) + '</td></tr>';
+                                '</td><td class="fm_date"><div>' + listing[i]['file_info']['created'] + '</div>' +
+                                pp_date(listing[i]['file_info']['created']) + '</td><td class="fm_toolbox"><button class="more-button">...</button></td></tr>';
                             entries_html += entry_html;
                             emptyDir = false;
 
@@ -1870,7 +1882,7 @@ if (jQuery) (function($){
                         folders += '</ul>\n';
 
                         // End the root node
-                        if (t === '/') {
+                        if (t === root_path) {
                             folders += '</li></ul>\n';
                         }
 
@@ -1953,7 +1965,7 @@ if (jQuery) (function($){
                                 $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path=""><!-- spacer --></div>');
                             }
 
-                            if (t !== '/') {
+                            if (t !== root_path) {
                                 rel_path = t;
                                 title_path = rel_path;
                             } else {
@@ -1993,7 +2005,7 @@ if (jQuery) (function($){
                                 });
                             }
 
-                            if (t !== '/') { // Do not prepend the fake-root.
+                            if (t !== root_path) { // Do not prepend the fake-root.
                                 rel_path = t;
                             }
                             //console.debug("update uploadspace with path: "+rel_path);
@@ -2318,6 +2330,12 @@ if (jQuery) (function($){
                     },
                     items: directory_menu
                 });
+
+                 $.fn.fmSelect("").on("click",
+                                      ".more-button",
+                                        function(event) {
+                                            $(this).contextMenu();
+                                        });
             }
 
             function bindHandlers(folder_pane) {
@@ -2356,14 +2374,14 @@ if (jQuery) (function($){
                                                          });
 
                 if (options.sharelinksbutton) {
-                    $.fn.fmSelect(" #fm_buttons li.sharelinksbutton").show();
+                    $.fn.fmSelect("#fm_buttons li.sharelinksbutton").show();
                     console.debug("bind manage sharelinks to corresponding button");
                     $("#fm_buttons li.sharelinksbutton").click(function() {
                         window.open('sharelink.py');
                     });
                 }
                 if (options.datatransfersbutton) {
-                    $.fn.fmSelect(" #fm_buttons li.datatransfersbutton").show();
+                    $.fn.fmSelect("#fm_buttons li.datatransfersbutton").show();
                     console.debug("bind manage datatransfers to corresponding button");
                     $("#fm_buttons li.datatransfersbutton").click(function() {
                         window.open('datatransfer.py');
@@ -2453,7 +2471,7 @@ if (jQuery) (function($){
             // Sanitize the subfolder path, simple checks, a malicious user would only hurt himself..
 
             // Ignore the root
-            if (options.subPath === '/') {
+            if (options.subPath === root_path) {
                 options.subPath = '';
             }
 
@@ -2518,7 +2536,7 @@ if (jQuery) (function($){
                                 reload_path.substring(options.chroot.length+1, reload_path.length) :
                                 reload_path;
                             reload_path = (reload_path === '') ?
-                                reload_path = '/' :
+                                reload_path = root_path :
                                 reload_path;
                         }
                      }

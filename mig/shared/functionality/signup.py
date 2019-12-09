@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # signup - general sign up entry point backend
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,9 +34,10 @@ from shared.defaults import keyword_all
 from shared.functional import validate_input
 from shared.init import initialize_main_variables, find_entry
 
+
 def get_valid_topics(configuration):
     """Get a map of valid show topics and their associated helper URLs"""
-    
+
     migoid_url, migcert_url, extoid_url, extcert_url = '', '', '', ''
     if configuration.migserver_https_mig_oid_url:
         migoid_url = os.path.join(configuration.migserver_https_sid_url,
@@ -51,18 +52,20 @@ def get_valid_topics(configuration):
     if configuration.migserver_https_ext_cert_url:
         extcert_url = os.path.join(configuration.migserver_https_ext_cert_url,
                                    'wsgi-bin', 'extcert.py')
-    valid_topics = {'migoid': {'url': migoid_url}, 
+    valid_topics = {'migoid': {'url': migoid_url},
                     'migcert': {'url': migcert_url},
                     'extoid': {'url': extoid_url},
                     'extcert': {'url': extcert_url},
                     }
     return valid_topics
 
+
 def signature(configuration):
     """Signature of the main function"""
 
     defaults = {'show': configuration.site_signup_methods}
     return ['html_form', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -71,7 +74,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -87,11 +90,11 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s account sign up' % configuration.short_title
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
+    add_import = '''
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
-<script type="text/javascript">
-    $(document).ready(function() {
+    '''
+    add_init = ''
+    add_ready = '''
         var action = "sign up", oid_title, oid_url, tag_prefix;
         oid_title = "%s";
         oid_url = "%s";
@@ -101,24 +104,26 @@ def main(client_id, user_arguments_dict):
         var oid_url = "%s";
         tag_prefix = "migoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
-    });
-</script>
-''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider, 
+''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider,
        configuration.user_mig_oid_title, configuration.user_mig_oid_provider)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     title_entry['skipmenu'] = True
-    header_entry = {'object_type': 'header', 'text'
-                    : 'Welcome to the %s account sign up page' % \
-                    configuration.short_title}
-    output_objects.append(header_entry)
+    # header_entry = {'object_type': 'header', 'text'
+    #                : 'Welcome to the %s account sign up page' % \
+    #                configuration.short_title}
+    # output_objects.append(header_entry)
 
-    html = """<h2>Signup for %s</h2>
+    html = """
+    <h2>Signup for %s</h2>
 <p>
 Before you can use this site you need a user account. You can sign up for one
 here as described below.
 </p>
 """ % configuration.short_title
     if configuration.user_openid_providers and 'extoid' in show or \
-           'migoid' in show:
+            'migoid' in show:
         html += """<h2>OpenID Login</h2>
 The simplest sign up method is to use an existing OpenID login if you have one.
 """
@@ -216,6 +221,7 @@ When you click the Signup button you will be taken to a registration page where
 the fields will mostly be pre-filled based on your certificate. You just need
 to accept that your certificate is used for %(short_title)s login.
 </p>
+
 """
         html += """
 """

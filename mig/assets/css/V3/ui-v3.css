@@ -707,7 +707,7 @@ span.fakelink {
 }
 
 span.fakelink:hover {
-    color: orange;
+    color: #666;
 }
 /* ICONS */
 
@@ -1299,6 +1299,12 @@ background: url(/images/icons/compress.png) left center no-repeat;
 }
 body.openid #migheader {
     display: none;
+}
+
+#otp_qr {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
 }
 
 /**/

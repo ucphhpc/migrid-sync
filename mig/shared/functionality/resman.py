@@ -34,8 +34,7 @@ from shared.base import sandbox_resource
 from shared.defaults import default_pager_entries, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-    html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.resource import anon_to_real_res_map
 from shared.vgridaccess import user_visible_res_confs, get_resource_map, \
@@ -100,9 +99,9 @@ def main(client_id, user_arguments_dict):
                                                         [table_spec])
         if operation == "show":
             add_ready += '%s;' % refresh_call
-        title_entry['style'] = themed_styles(configuration)
-        title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                                 add_init, add_ready)
+        title_entry['script']['advanced'] += add_import
+        title_entry['script']['init'] += add_init
+        title_entry['script']['ready'] += add_ready
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
 

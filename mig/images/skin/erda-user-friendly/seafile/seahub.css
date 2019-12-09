@@ -1,0 +1,280 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# seahub - site style overrides for all seafile pages
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+/* ERDA UCPH Science skin style sheet for Seafile pages */
+
+
+/* Replace the different orange colors in the original css specs. 
+   Keep rules in sync with styles from:
+   seafile-server-latest/seahub/media/css/seahub.css 
+   and use something like the following simplified mappings:
+   #eb8205 / #ee8204 / #f7941d / #de3f1c / #DD4B39 / #c77405 / #f59f00 / #e83 -> #46743c
+   #f93 / #ff9933 / #feac74 / #fbcb09 / #a68558 -> #679c5b
+   #fff1a8 / #f89a68 / #feefb8 / #fdf5ce / #fddaa4 / #f9edbe -> #8fd182
+*/
+
+a { 
+    color:#46743c;
+}
+a:focus, a:hover {
+    color: #679c5b;
+}
+.strip-tip {
+    background:#8fd182;
+}
+.top-bar {
+    background:#8fd182;
+}
+.repo-op a.op-link:hover {
+    color: #46743c;
+}
+
+.op-target {
+    color:#46743c;
+}
+
+.left-right-tabs-nav a:hover {
+    background:#8fd182;
+}
+.left-right-tabs-nav .ui-state-active a,
+.left-right-tabs-nav .ui-state-active a:hover {
+    background:#679c5b;
+}
+
+.side-tabnav h3.hd,
+.side-tabnav .hd h3 {
+    color:#46743c;
+}
+
+.side-tabnav-tabs .tab a:hover {
+    background-color:#8fd182;
+}
+
+.side-tabnav-tabs .tab-cur a,
+.side-tabnav-tabs .tab-cur a:hover {
+    background-color: #679c5b;
+}
+
+.side-textnav-tabs .tab-cur a,
+.side-textnav-tabs .tab a:hover {
+    color:#46743c;
+}
+
+.messages .info {
+    background:#8FD182;
+}
+
+.new-narrow-panel .hd {
+    background:#679c5b;
+}
+
+.tab-tabs-nav .ui-state-active .a {
+    color:#46743c;
+    border-bottom:2px solid #46743c;
+}
+.tab-tabs-nav .tab .a:hover {
+    color:#46743c;
+}
+
+.tab-popup-tabs-nav .ui-state-active .a,
+.tab-popup-tabs-nav .tab .a:hover {
+    color:#46743c;
+    border-bottom-color:#46743c;
+}
+
+.ui-menu .ui-menu-item a.ui-state-hover {
+    border-color:#679c5b;
+    background:#8fd182;
+    color: #46743c;
+}
+
+.tabnav-tab-cur a,
+.tabnav-tab a:hover,
+.wiki-nav .cur-item .link,
+.wiki-nav .link:hover,
+#right-panel .hd .ui-state-active .a,
+#right-panel .hd .a:hover {
+    color:#46743c;
+    border-bottom-color: #46743c;
+}
+
+#info-bar {
+    background: #8fd182;
+}
+
+#info-bar-info a {
+    color: #679c5b;
+}
+
+#msg-count .num {
+    background:#679c5b;
+    border:1px solid #46743c;
+}
+#notifications .num {
+    background:#679c5b;
+    border:1px solid #46743c;
+}
+
+#notice-popup .unread {
+    border-left:2px solid #679c5b;
+}
+#notice-popover li.unread {
+    border-left:2px solid #679c5b;
+}
+
+#header .nav .a,
+#header .nav .a:visited {
+    color:#8fd182;
+}
+
+#header .nav .a:hover {
+    color:#679c5b;
+}
+
+#ls-ch a {
+    color: #46743c;
+}
+
+.template-upload .btn {
+    color: #46743c;
+}
+
+.ui-progressbar-value,
+.progress .bar {
+    background: #46743c;
+}
+
+.upload-progress-bar .ui-progressbar-value {/*for progress*/
+    background:#46743c;
+}
+
+#plans th {
+    color:#46743c;
+}
+
+#wiki-index-con a:hover {
+    color:#679c5b;
+}
+
+.go-back:hover {
+    color:#679c5b;
+}
+
+#top-browser-tip {
+    background:#8fd182;
+}
+
+#guide-for-new .icon-lightbulb {
+    color:#679c5b;
+}
+
+/* mouse-over icons */
+.op-icon.sf2-x,
+.op-icon.sf2-x:hover {
+    color:#8fd182;
+}
+
+/**** btn with link styles ****/
+.sf-link-btn {
+    color:#46743c;
+}
+.sf-link-btn:focus,
+.sf-link-btn:hover {
+    color:#46743c;
+}
+
+@media (max-width:767px) {
+    .nav-con-tabs-nav a:hover,
+    .nav-con-tabs-nav .ui-state-active a,
+    .nav-con-tabs-nav .ui-state-active a:hover {
+        color:#46743c;
+        border-color:#46743c;
+    }
+}
+@media (min-width:768px) {
+    .nav-con-tabs-nav a:hover {
+        background:#8fd182;
+    }
+    .nav-con-tabs-nav .ui-state-active a,
+    .nav-con-tabs-nav .ui-state-active a:hover {
+        background:#679c5b;
+    }
+}
+    
+/* Dropdown menu */
+.sf-dropdown-menu a:hover {
+    background:#679c5b;
+}    
+
+.load-more-discussion {
+    color:#46743c;
+}
+
+/* Override some coloring from backbone.css as well */
+.hidden-op a:hover {
+    background:#679c5b;
+}
+
+
+/* Login button on entry page */
+.login-panel .submit {
+    background:#46743c;
+}
+
+.fixed-upload-file-dialog .fileupload-buttonbar .cancel,
+.template-upload .btn {
+    color: #46743c;
+}
+
+.grid-item .text-link.hl {
+    color:#679c5b;
+}
+
+/* Hide signup link on login page to reduce unwanted direct signup attempts */
+/* There used to be no signup link id or class to target, so we relied on the
+   link being last in login form. No longer needed with 6.2+ */
+#sign-up, form.con a:last-child {
+    display: none;
+    /* These are additional disabling suggestions in case users get creative.
+       They do not completely disable link use, but make it harder. */
+    pointer-events: none;
+    cursor: default;
+}
+/* If a user repeats signup from her Settings page she gets to a signup form
+   telling that user exists and with the option to try again. This enables
+   users to edit email and try to register additional accounts. We don't really
+   want that, so we obfuscate the possibility of changing the email field. */
+div.con form #id_email {
+    border: 0px;
+    /* These are additional disabling suggestions in case users get creative.
+       They do not completely disable text edit, but make it harder. */
+    pointer-events: none;
+    cursor: default;
+    user-select: none;
+}

@@ -40,8 +40,8 @@ from shared.gdp import ensure_user, get_projects, get_users, \
     project_invite_user, project_login, project_logout, project_remove_user, \
     validate_user, get_project_users
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import themed_styles, jquery_ui_js, twofactor_wizard_html, \
-    twofactor_wizard_js, twofactor_token_html
+from shared.html import twofactor_wizard_html, twofactor_wizard_js, \
+    twofactor_token_html
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_twofactor, parse_and_save_twofactor
@@ -885,8 +885,8 @@ def html_logout_tmpl(configuration, csrf_token):
     return html
 
 
-def js_tmpl(configuration, csrf_token):
-    """Javascript to include in the page header"""
+def js_tmpl_parts(configuration, csrf_token):
+    """Javascript parts to include in the page header"""
 
     (tfa_import, tfa_init, tfa_ready) = twofactor_wizard_js(configuration)
     fill_entries = {'csrf_field': csrf_field,
@@ -1140,14 +1140,14 @@ def js_tmpl(configuration, csrf_token):
 
         if (project_participants.ERROR.length > 0) {
             for (var i=0; i<project_participants.ERROR.length; i++) {
-                body += "<p class=\'errortext\'>" +
-                        "Error: "+project_participants.ERROR[i]+"</p>";
+                body += '<p class=\'errortext\'>' +
+                        'Error: '+project_participants.ERROR[i]+'</p>';
             }
         }
         if (project_participants.WARNING.length > 0) {
             for (var i=0; i<project_participants.WARNING.length; i++) {
-                body += "<p class=warningtext\'>" +
-                        "Warning: "+ project_participants.WARNING[i]+"</p>";
+                body += '<p class=warningtext\'>' +
+                        'Warning: '+ project_participants.WARNING[i]+'</p>';
             }
         }
         if (project_participants.OK.length > 0) {
@@ -1209,8 +1209,7 @@ def js_tmpl(configuration, csrf_token):
 
     %(tfa_ready)s
     """ % fill_entries
-
-    return jquery_ui_js(configuration, js_import, js_init, js_ready)
+    return (js_import, js_init, js_ready)
 
 
 def main(client_id, user_arguments_dict, environ=None):
@@ -1263,8 +1262,11 @@ def main(client_id, user_arguments_dict, environ=None):
                                            configuration.site_vgrid_label)
         title_entry = find_entry(output_objects, 'title')
         title_entry['text'] = title_text
-        title_entry['style'] = themed_styles(configuration)
-        title_entry['javascript'] = js_tmpl(configuration, csrf_token)
+        add_import, add_init, add_ready = js_tmpl_parts(configuration,
+                                                        csrf_token)
+        title_entry['script']['advanced'] = add_import
+        title_entry['script']['init'] = add_init
+        title_entry['script']['ready'] = add_ready
 
         output_objects.append({'object_type': 'header',
                                'class': 'gdpman-title', 'text': title_text})

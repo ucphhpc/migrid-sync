@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vncsession - Start a new VNC session
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -49,7 +49,7 @@ def signature():
         'height': ['600'],
         'depth': ['16'],
         'desktopname': ['X11'],
-        }
+    }
     return ['html_form', defaults]
 
 
@@ -67,7 +67,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -80,22 +80,20 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     status = returnvalues.OK
 
-    script = \
-        """
-    <script type='text/javascript'>
+    add_init = '''
       function endVNC () {
       if (!window.XMLHttpRequest)
         var httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
       else
         var httpRequest = new XMLHttpRequest();
       try {
-        httpRequest.open('POST', 'vncstop.py', '');
-        httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        httpRequest.send('');
+        httpRequest.open("POST", "vncstop.py", "");
+        httpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        httpRequest.send("");
 	}
 	catch (e) 
 	{
@@ -103,8 +101,7 @@ def main(client_id, user_arguments_dict):
 	  return e;
         }
       }
-      </script>
-    """
+    '''
 
     # ## TODO: Include something like the following for support for interactive jobrequests!
     # ===============================================================================
@@ -138,10 +135,10 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s Interactive Session' % configuration.short_title
-    title_entry['javascript'] = script
-    title_entry['bodyfunctions'] = 'onUnLoad="endVNC()"'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Session for: %s' % client_id})
+    title_entry['script']['init'] = add_init
+    title_entry['script']['body'] = 'onUnLoad="endVNC()"'
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Session for: %s' % client_id})
 
     error = ''
 
@@ -155,10 +152,9 @@ def main(client_id, user_arguments_dict):
 
     valid_display_found = False
     (stat, msg) = get_users_display_dict(client_id, configuration,
-            logger)
+                                         logger)
     if stat == False:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting dictionary of live displays %s'
+        output_objects.append({'object_type': 'error_text', 'text': 'Error getting dictionary of live displays %s'
                                % msg})
         status = returnvalues.CLIENT_ERROR
         return (output_objects, status)
@@ -188,12 +184,11 @@ def main(client_id, user_arguments_dict):
 
                 (disp_numb_stat, disp_numb_ret) = \
                     get_dict_from_display_number(i, configuration,
-                        logger)
+                                                 logger)
                 if disp_numb_stat == False:
                     output_objects.append({'object_type': 'error_text',
-                            'text'
-                            : 'Error getting dictionary for display %s'
-                             % disp_numb_ret})
+                                           'text': 'Error getting dictionary for display %s'
+                                           % disp_numb_ret})
                     status = returnvalues.CLIENT_ERROR
                     return (output_objects, status)
                 if disp_numb_ret != -1:
@@ -207,8 +202,8 @@ def main(client_id, user_arguments_dict):
 
                     (passstat, passmsg) = create_vnc_password()
                     if passstat == False:
-                        output_objects.append({'object_type'
-                                : 'error_text', 'text': passmsg})
+                        output_objects.append(
+                            {'object_type': 'error_text', 'text': passmsg})
                         status = returnvalues.CLIENT_ERROR
                         logger.error('%s' % passmsg)
                         return (output_objects, status)
@@ -223,12 +218,10 @@ def main(client_id, user_arguments_dict):
                         password,
                         configuration,
                         logger,
-                        )
+                    )
                     if not stat:
-                        output_objects.append({'object_type'
-                                : 'error_text', 'text'
-                                : 'could not set user display active: %s'
-                                 % msg})
+                        output_objects.append({'object_type': 'error_text', 'text': 'could not set user display active: %s'
+                                               % msg})
                         status = returnvalues.CLIENT_ERROR
                         return (output_objects, status)
                     break
@@ -239,12 +232,11 @@ def main(client_id, user_arguments_dict):
         valid_display_found = True
 
         logger.info('user %s has display %s' % (client_id,
-                    display_number))
+                                                display_number))
 
     if not valid_display_found:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Display unavailable. Click back and try again later.'
-                              })
+        output_objects.append({'object_type': 'error_text', 'text': 'Display unavailable. Click back and try again later.'
+                               })
         status = returnvalues.CLIENT_ERROR
         logger.error('No available ports for vnc: %s' % error)
         return (output_objects, status)
@@ -277,24 +269,24 @@ def main(client_id, user_arguments_dict):
     if result != 0:
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'VNC-server could not start. See %s in your home dir for details' \
+             'VNC-server could not start. See %s in your home dir for details'
              % vnc_out
              })
         status = returnvalues.CLIENT_ERROR
         logger.error('VNC-server could not start! Result = %d' % result)
         (stat, ret) = set_user_display_inactive(client_id,
-                display_number, configuration, logger)
+                                                display_number, configuration, logger)
         if not stat:
             logger.error('%s' % ret)
 
         return (output_objects, status)
 
     if not os.path.exists(pidfile):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'PID file of VNC server not found!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 'PID file of VNC server not found!'})
         status = returnvalues.CLIENT_ERROR
         (stat, ret) = set_user_display_inactive(client_id,
-                display_number, configuration, logger)
+                                                display_number, configuration, logger)
         if not stat:
             logger.error('%s' % ret)
             return (output_objects, status)
@@ -320,7 +312,7 @@ Display number: %s
 """ % (repr(int(width) + 50), repr(int(height) + 50), repr(vnc_port), password,
        configuration.server_fqdn, vnc_port, password, display_number)
     output_objects.append({'object_type': 'html_form', 'text': html})
-        
+
     # TODO: remove temp passwdfile. This should be done when the display has been left.
     # It can't be removed now, since Xvnc reads the password when clients connects again.
 

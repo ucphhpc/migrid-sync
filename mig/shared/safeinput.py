@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1625,7 +1625,7 @@ def validate_dict_values(
     if key not in fields:
         err = 'unexpected field: %s' % key
         rejected_v[key] = ((html_escape(key),
-                           html_escape(str(err))))
+                            html_escape(str(err))))
         return accepted_v, rejected_v
 
     for _key, _value in values.items():

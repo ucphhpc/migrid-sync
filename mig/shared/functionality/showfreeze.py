@@ -36,8 +36,7 @@ from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
     build_freezeitem_object, brief_freeze, supported_hash_algos, TARGET_PATH
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-    html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 
 list_operations = ['showlist', 'list']
@@ -142,9 +141,9 @@ Please contact the site admins %s if you think it should be enabled.
         $('.%ssum').hide();
         """ % algo
 
-        title_entry['style'] = themed_styles(configuration)
-        title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                                 add_init, add_ready)
+        title_entry['script']['advanced'] += add_import
+        title_entry['script']['init'] += add_init
+        title_entry['script']['ready'] += add_ready
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
         output_objects.append({'object_type': 'table_pager', 'entry_name':
@@ -317,5 +316,8 @@ want to reference the contents in a publication.
         })
         output_objects.append({'object_type': 'html_form', 'text': """
 </div>"""})
+
+    output_objects.append({'object_type': 'html_form', 'text': """
+    <div class='vertical-spacer'></div>"""})
 
     return (output_objects, returnvalues.OK)

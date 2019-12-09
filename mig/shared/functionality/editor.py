@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editor - Online editor back end
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,8 +38,8 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import csrf_field
 from shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
-     cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
-     init_editor_js, run_editor_js, change_editor_mode_js, kill_editor_js
+    cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
+    init_editor_js, run_editor_js, change_editor_mode_js, kill_editor_js
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
@@ -48,11 +48,13 @@ from shared.validstring import valid_user_path
 edit_includes = ['switcher', 'newline', 'submit', 'discard', 'spellcheck',
                  'save']
 
+
 def signature():
     """Signature of the main function"""
 
     defaults = {'path': [''], 'current_dir': ['']}
     return ['html_form', defaults]
+
 
 def advanced_editor_css_deps():
     """Add css dependencies for advanced editor"""
@@ -88,12 +90,10 @@ def advanced_editor_css_deps():
 ''' % (miu_css, cm_css)
     return css
 
-def advanced_editor_js_deps(include_jquery=True):
+
+def advanced_editor_js_deps():
     """Add js dependencies for advanced editor"""
-    js = ''
-    if include_jquery:
-        js += '<script type="text/javascript" src="/images/js/jquery.js"></script>'
-    js += '''
+    js = '''
 %s
 
 %s
@@ -266,10 +266,11 @@ def advanced_editor_js_deps(include_jquery=True):
     });
 </script>
 ''' % (cm_javascript, miu_javascript, init_editor_js("editorarea",
-       cm_options, wrap_in_tags=False), change_editor_mode_js("editorarea",
-       wrap_in_tags=False), kill_editor_js("editorarea", wrap_in_tags=False),
+                                                     cm_options, wrap_in_tags=False), change_editor_mode_js("editorarea",
+                                                                                                            wrap_in_tags=False), kill_editor_js("editorarea", wrap_in_tags=False),
        run_editor_js("editorarea", wrap_in_tags=False))
     return js
+
 
 def lock_info(abs_path, time_left):
     """This function generates javascript similar to that used in Moin Moin Wiki
@@ -345,7 +346,7 @@ function newcountdown(path, minutes) {
         'lock_expire': lock_expire,
         'lock_mins': lock_mins,
         'lock_secs': lock_secs,
-        }
+    }
     return script
 
 
@@ -372,7 +373,7 @@ def edit_file(configuration, client_id, path, abs_path, output_format='html',
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-    
+
     html = '''Select file:<br />
 <form id="editor_form" enctype="multipart/form-data" method="%(form_method)s"
     action="%(target_op)s.py">
@@ -420,11 +421,11 @@ Submit file as job after saving <input type=checkbox name="submitjob" />
 ----------
 <input type="reset" value="Forget changes" />
 '''
-        
+
     html += '''
 </form>
 '''
-    
+
     if 'discard' in includes:
         target_op = 'rm'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
@@ -483,7 +484,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
 
     # TODO: if validator is too tight we should accept rejects here
     #   and then make sure that such rejected fields are never printed
@@ -497,7 +498,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     # the client can choose to specify the path of the target directory with
     # current_dir + "/" + path, instead of specifying the complete path in
@@ -506,18 +507,17 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s file web editor' % configuration.short_title
-    title_entry['style'] = advanced_editor_css_deps()
-    title_entry['javascript'] = advanced_editor_js_deps()
-    title_entry['javascript'] += lock_info('this file', -1)
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Editing file in %s home directory' % \
-                            configuration.short_title })
+    # TODO: fully update to new style and script structure
+    title_entry['style']['advanced'] += advanced_editor_css_deps()
+    title_entry['script']['advanced'] += advanced_editor_js_deps() + '\n'
+    title_entry['script']['advanced'] += lock_info('this file', -1)
+    output_objects.append({'object_type': 'header', 'text': 'Editing file in %s home directory' %
+                           configuration.short_title})
 
     if not path:
         now = time.gmtime()
         path = 'noname-%s.txt' % time.strftime('%d%m%y-%H%M%S', now)
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'No path supplied - creating new file in %s'
+        output_objects.append({'object_type': 'text', 'text': 'No path supplied - creating new file in %s'
                                % path})
 
     rel_path = os.path.join(current_dir.lstrip(os.sep), path.lstrip(os.sep))
@@ -527,8 +527,7 @@ def main(client_id, user_arguments_dict):
         logger.warning('%s tried to %s restricted path %s ! (%s)'
                        % (client_id, op_name, abs_path, rel_path))
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : "Invalid path! (%s expands to an illegal path)" % path})
+            {'object_type': 'error_text', 'text': "Invalid path! (%s expands to an illegal path)" % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (owner, time_left) = acquire_edit_lock(abs_path, client_id)
@@ -539,16 +538,13 @@ setTimeout("newcountdown('%s', %d)", 1)
 </script>
 '''\
              % (path, time_left / 60)
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : javascript})
+        output_objects.append({'object_type': 'html_form', 'text': javascript})
 
         html = edit_file(configuration, client_id, path, abs_path)
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : html})
+        output_objects.append({'object_type': 'html_form', 'text': html})
     else:
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : '%s acquired the editing lock for %s! (timeout in %d seconds)'
+            {'object_type': 'error_text', 'text': '%s acquired the editing lock for %s! (timeout in %d seconds)'
              % (owner, path, time_left)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 

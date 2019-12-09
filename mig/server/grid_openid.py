@@ -87,6 +87,7 @@ from shared.griddaemons import default_max_user_hits, \
     default_username_validator, refresh_user_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, expire_rate_limit, \
     handle_auth_attempt
+from shared.html import openid_page_template
 from shared.logger import daemon_logger, register_hangup_handler
 from shared.pwhash import make_scramble
 from shared.safeinput import valid_distinguished_name, valid_password, \
@@ -1336,7 +1337,7 @@ Invalid '%s' input: %s
 
         creds_logo = os.path.join(configuration.migserver_https_sid_url,
                                   configuration.site_credits_image.lstrip('/'))
-        contents = {
+        fill_helpers = {
             'title': configuration.short_title + ' OpenID Server - ' + title,
             'short_title': configuration.short_title,
             'head_extras': head_extras,
@@ -1357,98 +1358,8 @@ Invalid '%s' input: %s
         self.writeUserHeader()
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-
-        html = '''<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-    <title>%(title)s</title>
-    %(head_extras)s
-
-<!-- site default style -->
-<link rel="stylesheet" type="text/css" href="%(site_default_css)s" media="screen"/>
-
-<!-- site basic skin style -->
-<link rel="stylesheet" type="text/css" href="%(site_static_css)s" media="screen"/>
-
-<!-- override with any site-specific styles -->
-<link rel="stylesheet" type="text/css" href="%(site_custom_css)s" media="screen"/>
-
-<!-- site skin style -->
-<link rel="stylesheet" type="text/css" href="%(site_skin_base)s/ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="%(site_skin_base)s/ui-theme.custom.css" media="screen"/>
-
-<link rel="icon" type="image/vnd.microsoft.icon" href="%(site_fav_icon)s"/>
-</head>
-<body class="staticpage openid">
-<div id="topspace">
-</div>
-<div id="toplogo" class="staticpage">
-<div id="toplogoleft" class="staticpage">
-</div>
-<div id="toplogocenter" class="staticpage">
-<img src="%(site_skin_base)s/banner-logo.jpg" id="logoimagecenter"
-     class="staticpage" alt="site logo center"/>
-<span id="logotitle" class="staticpage">
-%(short_title)s OpenID Server
-</span>
-</div>
-<div id="toplogoright" class="staticpage">
-</div>
-</div>
-<div class="contentblock staticpage" id="nomenu">
-<div class="precontentwidgets">
-<!-- begin user supplied pre content widgets -->
-<!-- empty -->
-<!-- end user supplied pre content widgets -->
-</div>
-<div id="migheader">
-
-</div>
-    <div id="content" class="staticpage">
-    <div class="banner staticpage">
-      <div class="container righttext staticpage">
-          You are %(user_link)s
-      </div>
-    </div>
-%(body)s
-  </div>
-</div>''' % contents
-        # mimic footer from shared.html
-        html += '''
-<div id="bottomlogo" class="staticpage">
-<!-- NOTE: sync with shared.html -->
-<div id="bottomlogoleft">
-<div id="support">
-<img src="%s" id="supportimage" alt=""/>
-<div class="supporttext i18n" lang="en">
-%s
-</div>
-</div>
-</div>
-<div id="bottomlogoright">
-<div id="privacy">
-<img src="%s" id="privacyimage" alt=""/>
-<div class="privacytext i18n" lang="en">
-%s
-</div>
-</div>
-<div id="credits">
-<img src="%s" id="creditsimage" alt=""/>
-<div class="creditstext i18n" lang="en">
-%s
-</div>
-</div>
-</div>
-</div>
-<div id="bottomspace" class="staticpage">
-</div>
-</body>
-</html>
-''' % (configuration.site_support_image, configuration.site_support_text,
-            configuration.site_privacy_image, configuration.site_privacy_text,
-            configuration.site_credits_image, configuration.site_credits_text)
-        self.wfile.write(html)
+        page_template = openid_page_template(configuration, head_extras)
+        self.wfile.write(page_template % fill_helpers)
 
 
 def limited_accept(self, *args, **kwargs):

@@ -98,3 +98,26 @@ UL.jqueryFileList A:hover {
 .context-menu-item.hover {
     background-color: #39F;
 }
+
+/* HTML select styling */
+/* -------------------- Colors: Background */
+.html-select, .gm_select {
+    background-color: #369;
+}
+
+/* -------------------- Colors: Text */
+.html-select, .gm_select select {
+    color: #fff;
+}
+
+/* Set the desired color for the focus state */
+.html-select select:focus, .gm_select select:focus {
+    background-color: #369;
+    color: #fff;
+}
+
+/* Make M$ IE and EDGE behave like other browsers */
+.html-select select:focus::-ms-value, .gm_select select:focus::-ms-value {
+    background: #369;
+    color:  #fff;
+}

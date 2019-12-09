@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcert - External certificate account sign up backend
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,13 +30,14 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.accountreq import valid_name_chars, dn_max_len, account_js_helpers
+from shared.accountreq import valid_name_chars, dn_max_len, \
+    account_css_helpers, account_js_helpers, account_request_template
 from shared.base import distinguished_name_to_user
 from shared.defaults import csrf_field
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import themed_styles
-from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
+from shared.handlers import get_csrf_limit, make_csrf_token
+from shared.init import initialize_main_variables, find_entry
+from shared.safeinput import html_escape
 
 
 def signature():
@@ -70,15 +71,20 @@ def main(client_id, user_arguments_dict):
     title_entry['skipmenu'] = True
     form_fields = ['cert_id', 'cert_name', 'organization', 'email', 'country',
                    'state', 'comment']
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = account_js_helpers(form_fields)
-    output_objects.append({'object_type': 'html_form',
-                           'text': '''
- <div id="contextual_help">
-  <div class="help_gfx_bubble"><!-- graphically connect field with help text--></div>
-  <div class="help_message"><!-- filled by js --></div>
- </div>
-'''})
+    title_entry['style']['advanced'] += account_css_helpers(configuration)
+    add_import, add_init, add_ready = account_js_helpers(configuration,
+                                                         form_fields)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
+    title_entry['script']['body'] = "class='staticpage'"
+#    output_objects.append({'object_type': 'html_form',
+#                           'text': '''
+# <div id="contextual_help">
+#  <div class="help_gfx_bubble"><!-- graphically connect field with help text--></div>
+#  <div class="help_message"><!-- filled by js --></div>
+# </div>
+# '''})
     header_entry = {'object_type': 'header', 'text':
                     'Welcome to the %s certificate account sign up page' %
                     configuration.short_title}
@@ -101,8 +107,8 @@ def main(client_id, user_arguments_dict):
     fill_helpers = {'valid_name_chars': valid_name_chars,
                     'client_id': client_id,
                     'dn_max_len': dn_max_len,
-                    'common_name': new_user.get('full_name', ''),
-                    'org': new_user.get('organization', ''),
+                    'full_name': new_user.get('full_name', ''),
+                    'organization': new_user.get('organization', ''),
                     'email': new_user.get('email', ''),
                     'state': new_user.get('state', ''),
                     'country': new_user.get('country', ''),
@@ -119,7 +125,7 @@ def main(client_id, user_arguments_dict):
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
 
-    output_objects.append({'object_type': 'html_form', 'text': """This page is
+    html = """This page is
 used to sign up for %(site)s with an existing certificate from a Certificate
 Authority (CA) allowed for %(site)s.
 You can use it if you already have a x509 certificate from another accepted CA.
@@ -138,6 +144,14 @@ Email data that we can easily validate!
 </p>
 %(site_signup_hint)s
 <hr />
+"""
+
+    html += account_request_template(configuration, password=False)
+
+    # TODO : remove this legacy version?
+    html += """
+<div style="height: 0; visibility: hidden; display: none;">
+<!--OLD FORM-->
 <div class=form_container>
 <!-- use post here to avoid field contents in URL -->
 <form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();'>
@@ -149,9 +163,9 @@ Email data that we can easily validate!
            sane early warnings than the cryptic backend errors.
 -->
 <tr><td class='mandatory label'>Certificate DN</td><td><input id='cert_id_field' type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' required pattern='(/[a-zA-Z]+=[^/ ]+([ ][^/ ]+)*)+' title='The Distinguished Name field of your certificate, i.e. key=value pairs separated by slashes' /></td><td class=fill_space></td></tr>
-<tr><td class='mandatory label'>Full name</td><td><input id='cert_name_field' type=text name=cert_name value='%(common_name)s' required pattern='[^ ]+([ ][^ ]+)+' title='Your full name, i.e. two or more names separated by space' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Full name</td><td><input id='cert_name_field' type=text name=cert_name value='%(full_name)s' required pattern='[^ ]+([ ][^ ]+)+' title='Your full name, i.e. two or more names separated by space' /></td><td class=fill_space></td></tr>
 <tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=email name=email value='%(email)s' title='A valid email address that you read' /></td><td class=fill_space></td></tr>
-<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(org)s' required pattern='[^ ]+([ ][^ ]+)*' title='Name of your organisation: one or more abbreviations or words separated by space' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(organization)s' required pattern='[^ ]+([ ][^ ]+)*' title='Name of your organisation: one or more abbreviations or words separated by space' /></td><td class=fill_space></td></tr>
 <tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' title='The two capital letters used to abbreviate your country' /></td><td class=fill_space></td></tr>
 <tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' pattern='([A-Z]{2})?' maxlength=2 title='Leave empty or enter the capital 2-letter abbreviation of your state if you are a US resident' /></td><td class=fill_space></td></tr>
 <tr><td class='optional label'>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment title='A free-form comment where you can explain what you need the certificate for'></textarea></td><td class=fill_space></td></tr>
@@ -169,6 +183,9 @@ Email data that we can easily validate!
   <div id='state_help'>Optional 2-letter ANSI state code of your organization, please just leave empty unless it is in the US or similar, <a href='https://en.wikipedia.org/wiki/List_of_U.S._state_abbreviations'>help</a></div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
 </div>
-""" % fill_helpers})
+</div>
+    """
+    output_objects.append({'object_type': 'html_form', 'text':
+                           html % fill_helpers})
 
     return (output_objects, returnvalues.OK)

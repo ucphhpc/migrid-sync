@@ -167,6 +167,13 @@ def fix_missing(config_file, verbose=True):
         'user_seafile_auth': ['password'],
         'user_seafile_ro_access': False,
         'user_duplicati_protocols': [],
+        'user_cloud_address': fqdn,
+        'user_cloud_ssh_port': 22,
+        'user_cloud_ssh_key': '~/certs/cloud.pem',
+        'user_cloud_ssh_key_pub': '~/certs/cloud.pub',
+        'user_cloud_ssh_key_md5': '',
+        'user_cloud_ssh_key_sha256': '',
+        'user_cloud_ssh_key_from_dns': '',
         'user_cloud_ssh_auth': ['publickey'],
         'user_cloud_alias': '',
         'user_imnotify_address': '',
@@ -218,8 +225,8 @@ def fix_missing(config_file, verbose=True):
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'submitui': ['fields',
-                                                            'textarea', 'files']}
+    settings_section = {'language': 'English', 'user_interface': ['V2', 'V3'],
+                        'submitui': ['fields', 'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
                            'skip_validation': '',
                            'job_cond_green': 'ARCHITECTURE PLATFORM \
@@ -401,6 +408,15 @@ class Configuration:
     user_seafile_alias = ''
     user_seafile_ro_access = True
     user_duplicati_protocols = []
+    user_cloud_address = ''
+    user_cloud_ssh_port = 22
+    user_cloud_ssh_show_address = ''
+    user_cloud_ssh_show_port = 22
+    user_cloud_ssh_key = ''
+    user_cloud_ssh_key_pub = ''
+    user_cloud_ssh_key_md5 = ''
+    user_cloud_ssh_key_sha256 = ''
+    user_cloud_ssh_key_from_dns = False
     user_cloud_ssh_auth = ['publickey']
     user_cloud_alias = ''
     user_openid_address = ''
@@ -512,6 +528,7 @@ class Configuration:
 
     expire_peer = 600
     language = ['English']
+    user_interface = ['V2', 'V3']
     submitui = ['fields', 'textarea', 'files']
 
     # directory for usage records, initially None (means: do not generate)
@@ -684,6 +701,11 @@ location.""" % self.config_file
             self.short_title = config.get('SITE', 'short_title')
         else:
             self.short_title = "MiG"
+        if config.has_option('SITE', 'user_interface'):
+            self.user_interface = config.get(
+                'SITE', 'user_interface').split()
+        else:
+            self.user_interface = ['V2']
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
             admins = config.get('GLOBAL', 'admin_list')
@@ -995,6 +1017,27 @@ location.""" % self.config_file
                 'SITE', 'enable_cloud')
         else:
             self.site_enable_cloud = False
+        if config.has_option('GLOBAL', 'user_cloud_address'):
+            self.user_cloud_address = config.get('GLOBAL',
+                                                 'user_cloud_address')
+        if config.has_option('GLOBAL', 'user_cloud_ssh_port'):
+            self.user_cloud_ssh_port = config.getint('GLOBAL',
+                                                     'user_cloud_ssh_port')
+        if config.has_option('GLOBAL', 'user_cloud_ssh_key'):
+            self.user_cloud_ssh_key = config.get('GLOBAL',
+                                                 'user_cloud_ssh_key')
+        if config.has_option('GLOBAL', 'user_cloud_ssh_key_pub'):
+            self.user_cloud_ssh_key_pub = config.get('GLOBAL',
+                                                     'user_cloud_ssh_key_pub')
+        if config.has_option('GLOBAL', 'user_cloud_ssh_key_md5'):
+            fingerprint = config.get('GLOBAL', 'user_cloud_ssh_key_md5')
+            self.user_cloud_ssh_key_md5 = fingerprint
+        if config.has_option('GLOBAL', 'user_cloud_ssh_key_sha256'):
+            fingerprint = config.get('GLOBAL', 'user_cloud_ssh_key_sha256')
+            self.user_cloud_ssh_key_sha256 = fingerprint
+        if config.has_option('GLOBAL', 'user_cloud_ssh_key_from_dns'):
+            self.user_cloud_ssh_key_from_dns = config.getboolean(
+                'GLOBAL', 'user_cloud_ssh_key_from_dns')
         if config.has_option('GLOBAL', 'user_cloud_ssh_auth'):
             self.user_cloud_ssh_auth = config.get('GLOBAL',
                                                   'user_cloud_ssh_auth').split()
@@ -1398,10 +1441,10 @@ location.""" % self.config_file
             self.site_images = config.get('SITE', 'images')
         else:
             self.site_images = "/images"
-        if config.has_option('SITE', 'styles'):
-            self.site_styles = config.get('SITE', 'styles')
+        if config.has_option('SITE', 'assets'):
+            self.site_assets = config.get('SITE', 'assets')
         else:
-            self.site_styles = self.site_images
+            self.site_assets = "/assets"
         if config.has_option('SITE', 'landing_page'):
             self.site_landing_page = config.get('SITE', 'landing_page')
         else:
@@ -1410,8 +1453,8 @@ location.""" % self.config_file
             self.site_skin = config.get('SITE', 'skin')
         else:
             self.site_skin = 'migrid-basic'
-        # Used in skin urls
-        self.site_skin_base = os.path.join(self.site_images, 'skin',
+        # Used in skin urls (assets just has a symlink for now)
+        self.site_skin_base = os.path.join(self.site_assets, 'skin',
                                            self.site_skin)
         if config.has_option('SITE', 'user_redirect'):
             self.site_user_redirect = config.get('SITE', 'user_redirect')
@@ -1642,6 +1685,24 @@ location.""" % self.config_file
         # Fall back to server_fqdn if not set or no valid entries
         if not self.site_transfers_from:
             self.site_transfers_from = [self.server_fqdn]
+        if config.has_option('SITE', 'quickstart_snippet_url'):
+            self.site_quickstart_snippet_url = config.get(
+                'SITE', 'quickstart_snippet_url')
+        else:
+            self.site_quickstart_snippet_url = '/public/quickstart-snippet.html'
+        if config.has_option('SITE', 'faq_snippet_url'):
+            self.site_faq_snippet_url = config.get('SITE', 'faq_snippet_url')
+        else:
+            self.site_faq_snippet_url = '/public/faq-snippet.html'
+        if config.has_option('SITE', 'about_snippet_url'):
+            self.site_about_snippet_url = config.get(
+                'SITE', 'about_snippet_url')
+        else:
+            self.site_about_snippet_url = '/public/about-snippet.html'
+        if config.has_option('SITE', 'status_url'):
+            self.site_status_url = config.get('SITE', 'status_url')
+        else:
+            self.site_status_url = '/public/status.html'
         # Fall back to a static 'random' salt string since we need it to
         # remain constant
         static_rand = 'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'
@@ -1674,15 +1735,15 @@ location.""" % self.config_file
         if config.has_option('SITE', 'default_css'):
             self.site_default_css = config.get('SITE', 'default_css')
         else:
-            self.site_default_css = '%s/default.css' % self.site_styles
+            self.site_default_css = '%s/default.css' % self.site_images
         if config.has_option('SITE', 'static_css'):
             self.site_static_css = config.get('SITE', 'static_css')
         else:
-            self.site_static_css = '%s/static-skin.css' % self.site_styles
+            self.site_static_css = '%s/static-skin.css' % self.site_images
         if config.has_option('SITE', 'custom_css'):
             self.site_custom_css = config.get('SITE', 'custom_css')
         else:
-            self.site_custom_css = '%s/site-custom.css' % self.site_styles
+            self.site_custom_css = '%s/site-custom.css' % self.site_images
         if config.has_option('SITE', 'user_css'):
             self.site_user_css = config.get('SITE', 'user_css')
         else:
@@ -1716,6 +1777,7 @@ location.""" % self.config_file
             self.site_support_image = config.get('SITE', 'support_image')
         else:
             self.site_support_image = '%s/icons/help.png' % self.site_images
+
         if config.has_option('SITE', 'privacy_text'):
             self.site_privacy_text = config.get('SITE', 'privacy_text')
         else:

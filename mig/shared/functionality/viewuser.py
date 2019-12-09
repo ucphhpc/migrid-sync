@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,18 +32,18 @@ import os
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
+from shared.base import client_id_dir, pretty_format_user
 from shared.defaults import any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import html_post_helper, themed_styles
+from shared.html import confirm_js, confirm_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.output import html_link
 from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
 from shared.vgrid import vgrid_request_and_job_match
 from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
-     CONF
+    CONF
 
 
 def signature():
@@ -51,6 +51,7 @@ def signature():
 
     defaults = {'cert_id': REJECT_UNSET}
     return ['user_info', defaults]
+
 
 def inline_image(configuration, path):
     """Create inline image base64 string from file in path"""
@@ -61,9 +62,10 @@ def inline_image(configuration, path):
         img_fd.close()
     except Exception, exc:
         configuration.logger.error("viewuser: no such image: %s" % path)
-        img_data = ''        
+        img_data = ''
     data += base64.b64encode(img_data)
     return data
+
 
 def build_useritem_object_from_user_dict(configuration, client_id,
                                          visible_user_id, user_home, user_dict,
@@ -76,15 +78,18 @@ def build_useritem_object_from_user_dict(configuration, client_id,
         'object_type': 'user_info',
         'user_id': visible_user_id,
         'fields': [],
-        }
-    user_item['fields'].append(('Public user ID', visible_user_id))
+    }
+    user_item['fields'].append(
+        ('Public user ID', pretty_format_user(visible_user_id)))
+
     user_image = True
     public_image = user_dict[CONF].get('PUBLIC_IMAGE', [])
-    public_image = [rel_path for rel_path in public_image if \
+    public_image = [rel_path for rel_path in public_image if
                     os.path.exists(os.path.join(user_home, rel_path))]
     if not public_image:
         user_image = False
-        public_image = ['/images/anonymous.png']
+        public_image = ['/images/anonymous.svg']
+
     img_html = '<div class="public_image">'
     for rel_path in public_image:
         if user_image:
@@ -92,16 +97,17 @@ def build_useritem_object_from_user_dict(configuration, client_id,
             img_data = inline_image(configuration, img_path)
         else:
             img_data = rel_path
-        img_html += '<img alt="portrait" src="%s">' % img_data
+        img_html += '<img alt="portrait" class="profile-img" src="%s">' % img_data
     img_html += '</div>'
     public_profile = user_dict[CONF].get('PUBLIC_PROFILE', [])
     if not public_profile:
         public_profile = ['No public information provided']
-    profile_html = '<div class="public_profile">'
-    profile_html += '<br />'.join(public_profile)
-    profile_html += '</div>'
-    public_html = '<div class="public_frame">\n%s\n%s\n</div>' % (profile_html,
-                                                                  img_html)
+    profile_html = ''
+    profile_html += '<br/>'.join(public_profile)
+    profile_html += ''
+    public_html = '<div class="">\n%s\n</div>' % profile_html
+    profile_html += '<div class="clear"></div>'
+    public_html += '<div class="public_frame">\n%s\n</div>' % img_html
     profile_html += '<div class="clear"></div>'
     user_item['fields'].append(('Public information', public_html))
     vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
@@ -130,7 +136,7 @@ def build_useritem_object_from_user_dict(configuration, client_id,
             saved = [saved]
         entry = ''
         if not email_vgrids and key == 'EMAIL':
-            show_address = '(email address hidden)'
+            show_address = ' (email address hidden)'
         elif not im_vgrids and key != 'EMAIL':
             show_address = '(IM address hidden)'
         else:
@@ -148,17 +154,17 @@ def build_useritem_object_from_user_dict(configuration, client_id,
                                        'protocol': proto,
                                        'request_text': '',
                                        csrf_field: csrf_token})
-            entry += helper            
+            entry += helper
             link = 'send%slink' % proto
             link_obj = {'object_type': 'link',
                         'destination':
-                        "javascript: confirmDialog(%s, '%s', '%s');"\
-                        % (js_name, 'Send %s message to %s'\
+                        "javascript: confirmDialog(%s, '%s', '%s');"
+                        % (js_name, 'Send %s message to %s'
                            % (proto, visible_user_id),
                            'request_text'),
                         'class': link,
-                        'title': 'Send %s message to %s' % \
-                        (proto, visible_user_id), 
+                        'title': 'Send %s message to %s' %
+                        (proto, visible_user_id),
                         'text': show_address}
             entry += "%s " % html_link(link_obj)
         user_item['fields'].append((val['Title'], entry))
@@ -179,7 +185,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -187,39 +193,13 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'People'
 
     # jquery support for confirmation-style popup:
+    (add_import, add_init, add_ready) = confirm_js(configuration)
 
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
-          // init confirmation dialog
-          $( "#confirm_dialog" ).dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 640,
-                buttons: {
-                   "Cancel": function() { $( "#" + name ).dialog("close"); }
-                }
-              });
-     }
-);
-</script>
-'''
-
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="72" rows="10" id="confirm_input" style="display:none;"></textarea>
- </div>
-'''                       })
+                           'text': confirm_html(configuration)})
 
     user_list = accepted['cert_id']
 
@@ -227,13 +207,13 @@ $(document).ready(function() {
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
     status = returnvalues.OK
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'User details'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Show user details'})
+    output_objects.append({'object_type': 'header', 'text':
+                           'Show user details'})
 
     visible_user = user_visible_user_confs(configuration, client_id)
     vgrid_access = user_vgrid_access(configuration, client_id)
@@ -243,7 +223,7 @@ $(document).ready(function() {
             logger.error("invalid user %s (%s)" % (visible_user_name,
                                                    visible_user))
             output_objects.append({'object_type': 'error_text',
-                                   'text': 'invalid user %s' % \
+                                   'text': 'invalid user %s' %
                                    visible_user_name})
             continue
         user_dict = visible_user[visible_user_name]
@@ -254,5 +234,5 @@ $(document).ready(function() {
                                                          user_dict,
                                                          vgrid_access)
         output_objects.append(user_item)
-        
+
     return (output_objects, status)

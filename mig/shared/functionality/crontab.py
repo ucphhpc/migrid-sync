@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # crontab - user task scheduling back end
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -46,7 +46,7 @@ from shared.events import get_time_expand_map, load_crontab, load_atjobs, \
 from shared.fileio import makedirs_rec
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, themed_styles
+from shared.html import man_base_js, man_base_html
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose
 
@@ -138,20 +138,15 @@ def main(client_id, user_arguments_dict):
               $(".crontab-tabs").tabs();
               $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
         '''
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['style']['skin'] += '''
+    title_entry['style']['advanced'] += '''
 %s
 ''' % cm_css
-    title_entry['javascript'] = cm_javascript + "\n" + \
-        jquery_ui_js(configuration, add_import,
-                     add_init, add_ready)
+    title_entry['script']['advanced'] += cm_javascript + "\n"
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
-
-    header_entry = {'object_type': 'header',
-                    'text': 'Schedule Tasks'}
-    output_objects.append(header_entry)
-
     if not configuration.site_enable_crontab:
         output_objects.append({'object_type': 'text', 'text': '''
 Scheduled tasks are disabled on this site.
@@ -226,6 +221,9 @@ Please contact the site admins %s if you think they should be enabled.
                     'form_method': form_method, 'csrf_field': csrf_field,
                     'csrf_limit': csrf_limit}
 
+    # Shared header entry
+    header_entry = {'object_type': 'header', 'text': 'Schedule Tasks'}
+    output_objects.append(header_entry)
     if action in get_actions:
         if action == "show":
             log_content = read_cron_log(configuration, client_id, flags)
@@ -380,6 +378,7 @@ and so on. You have the following commands at your disposal:<br/>
             output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 </div>
+<div class="col-lg-12" style="height: 100px;"></div>
 '''})
 
     elif action in post_actions:

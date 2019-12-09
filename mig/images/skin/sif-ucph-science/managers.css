@@ -77,3 +77,26 @@
 .context-menu-item.hover {
     background-color: #8fd182;
 }
+
+/* HTML select styling */
+/* -------------------- Colors: Background */
+.html-select, .gm_select {
+    background-color: #679c5b;
+}
+
+/* -------------------- Colors: Text */
+.html-select, .gm_select select {
+    color: #fff;
+}
+
+/* Set the desired color for the focus state */
+.html-select select:focus, .gm_select select:focus {
+    background-color: #679c5b;
+    color: #fff;
+}
+
+/* Make M$ IE and EDGE behave like other browsers */
+.html-select select:focus::-ms-value, .gm_select select:focus::-ms-value {
+    background: #679c5b;
+    color:  #fff;
+}

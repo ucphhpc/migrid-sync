@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scripts - backend to generate user and resource scripts
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,8 +30,8 @@ delivering the user and vgrid/resource scripts.
 """
 
 import os
-import zipfile
 import time
+import zipfile
 
 import shared.returnvalues as returnvalues
 import shared.userscriptgen as usergen
@@ -57,34 +57,28 @@ def signature():
         'sh_cmd': [sh_cmd_def],
         'python_cmd': [python_cmd_def],
         'script_dir': [keyword_auto]
-        }
+    }
     return ['link', defaults]
 
 
 def usage(output_objects, valid_langs, valid_flavors):
     """Script usage help"""
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Generator usage'})
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'SERVER_URL/scripts.py?[with_html=(true|false);][lang=(%s);[...]][flags=h;][flavor=(%s);[...]][sh_cmd=sh_path;][python_cmd=python_path;]'
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': 'Generator usage'})
+    output_objects.append({'object_type': 'text', 'text': 'SERVER_URL/scripts.py?[with_html=(true|false);][lang=(%s);[...]][flags=h;][flavor=(%s);[...]][sh_cmd=sh_path;][python_cmd=python_path;]'
                            % ('|'.join(valid_langs.keys()),
-                          '|'.join(valid_flavors.keys()))})
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- each occurrence of lang adds the specified scripting language to the list of scripts to be generated.'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- flags is a string of one character flags to be passed to the script'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- each occurrence of flavor adds the specified flavor to the list of scripts to be generated.'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : "- sh_cmd is the sh-interpreter command used on un*x if the scripts are run without specifying the interpreter (e.g. './migls.sh' rather than 'bash ./migls.sh')"
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : "- python_cmd is the python-interpreter command used on un*x if the scripts are run without specifying the interpreter (e.g. './migls.py' rather than 'python ./migls.py')"
-                          })
+                              '|'.join(valid_flavors.keys()))})
+    output_objects.append({'object_type': 'text', 'text': '- each occurrence of lang adds the specified scripting language to the list of scripts to be generated.'
+                           })
+    output_objects.append({'object_type': 'text', 'text': '- flags is a string of one character flags to be passed to the script'
+                           })
+    output_objects.append({'object_type': 'text', 'text': '- each occurrence of flavor adds the specified flavor to the list of scripts to be generated.'
+                           })
+    output_objects.append({'object_type': 'text', 'text': "- sh_cmd is the sh-interpreter command used on un*x if the scripts are run without specifying the interpreter (e.g. './migls.sh' rather than 'bash ./migls.sh')"
+                           })
+    output_objects.append({'object_type': 'text', 'text': "- python_cmd is the python-interpreter command used on un*x if the scripts are run without specifying the interpreter (e.g. './migls.py' rather than 'python ./migls.py')"
+                           })
     return output_objects
 
 
@@ -106,7 +100,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -121,8 +115,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Script generator'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Script generator'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Script generator'})
 
     status = returnvalues.OK
 
@@ -130,7 +124,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     if 'h' in flags:
         output_objects = usage(output_objects, valid_langs,
@@ -155,9 +149,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not flavors:
         if flavor_list:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'No valid flavors specified - falling back to user scripts'
-                                  })
+            output_objects.append({'object_type': 'text', 'text': 'No valid flavors specified - falling back to user scripts'
+                                   })
         flavors = ['user']
 
     if not langs or keyword_all in langs:
@@ -166,7 +159,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         languages = [(usergen.sh_lang, sh_cmd, usergen.sh_ext),
                      (usergen.python_lang, python_cmd,
-                     usergen.python_ext)]
+                      usergen.python_ext)]
     else:
         languages = []
 
@@ -180,17 +173,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 interpreter = python_cmd
                 extension = usergen.python_ext
             else:
-                output_objects.append({'object_type': 'warning', 'text'
-                        : 'Unknown script language: %s - ignoring!'
-                         % lang})
+                output_objects.append({'object_type': 'warning', 'text': 'Unknown script language: %s - ignoring!'
+                                       % lang})
                 continue
 
             languages.append((lang, interpreter, extension))
 
     if not languages:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'No valid languages specified - aborting script generation'
-                              })
+        output_objects.append({'object_type': 'error_text', 'text': 'No valid languages specified - aborting script generation'
+                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for flavor in flavors:
@@ -206,7 +197,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 now[3],
                 now[4],
                 now[5],
-                )
+            )
             script_dir = '%s-%s-scripts-%s' % (configuration.short_title,
                                                flavor, timestamp)
         else:
@@ -219,8 +210,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             # out of bounds
 
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : "You're not allowed to work in %s!"
+            output_objects.append({'object_type': 'error_text', 'text': "You're not allowed to work in %s!"
                                    % script_dir})
             logger.warning('%s tried to %s restricted path %s ! (%s)'
                            % (client_id, op_name, abs_dir, script_dir))
@@ -231,18 +221,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 os.mkdir(abs_dir)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : 'Failed to create destination directory (%s) - aborting script generation'
-                         % exc})
+                                       'text': 'Failed to create destination directory (%s) - aborting script generation'
+                                       % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
         for (lang, _, _) in languages:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Generating %s %s scripts in the %s subdirectory of your %s home directory'
-                                   % (lang, flavor, script_dir, configuration.short_title )})
+            output_objects.append({'object_type': 'text', 'text': 'Generating %s %s scripts in the %s subdirectory of your %s home directory'
+                                   % (lang, flavor, script_dir, configuration.short_title)})
 
         logger.debug('generate %s scripts in %s' % (flavor, abs_dir))
-        
+
         # Generate all scripts
 
         if flavor == 'user':
@@ -273,34 +261,31 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                                 op[6], op[7], op[8], op[9],
                                                 op[10], languages, abs_dir)
         else:
-            output_objects.append({'object_type': 'warning_text', 'text'
-                                  : 'Unknown flavor: %s' % flavor})
+            output_objects.append(
+                {'object_type': 'warning_text', 'text': 'Unknown flavor: %s' % flavor})
             continue
 
         # Always include license conditions file
-        
+
         usergen.write_license(configuration, abs_dir)
-        
+
         output_objects.append({'object_type': 'text', 'text': '... Done'
-                              })
-        output_objects.append({'object_type': 'text', 'text'
-                              : '%s %s scripts are now available in your %s home directory:'
+                               })
+        output_objects.append({'object_type': 'text', 'text': '%s %s scripts are now available in your %s home directory:'
                                % (configuration.short_title, flavor, configuration.short_title)})
-        output_objects.append({'object_type': 'link', 'text'
-                              : 'View directory', 'destination'
-                              : 'fileman.py?path=%s/' % script_dir})
+        output_objects.append({'object_type': 'link', 'text': 'View directory',
+                               'destination': 'fileman.py?path=%s/' % script_dir})
 
         # Create zip from generated dir
 
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Generating zip archive of the %s %s scripts'
+        output_objects.append({'object_type': 'text', 'text': 'Generating zip archive of the %s %s scripts'
                                % (configuration.short_title, flavor)})
 
         script_zip = script_dir + '.zip'
         dest_zip = '%s%s' % (base_dir, script_zip)
         logger.debug('packing generated scripts from %s in %s' % (abs_dir,
                                                                   dest_zip))
-            
+
         # Force compression
         zip_file = zipfile.ZipFile(dest_zip, 'w', zipfile.ZIP_DEFLATED)
 
@@ -308,7 +293,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         for script in os.listdir(abs_dir):
             zip_file.write(abs_dir + os.sep + script, script_dir
-                            + os.sep + script)
+                           + os.sep + script)
 
         # Preserve executable flag in accordance with:
         # http://mail.python.org/pipermail/pythonmac-sig/2005-March/013491.html
@@ -324,27 +309,22 @@ CSRF-filtered POST requests to prevent unintended updates'''
         err = zip_file.testzip()
         zip_file.close()
         if err:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Zip file integrity check failed! (%s)'
+            output_objects.append({'object_type': 'error_text', 'text': 'Zip file integrity check failed! (%s)'
                                    % err})
             status = returnvalues.SYSTEM_ERROR
             continue
 
         output_objects.append({'object_type': 'text', 'text': '... Done'
-                              })
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Zip archive of the %s %s scripts are now available in your %s home directory'
+                               })
+        output_objects.append({'object_type': 'text', 'text': 'Zip archive of the %s %s scripts are now available in your %s home directory'
                                % (configuration.short_title, flavor, configuration.short_title)})
-        output_objects.append({'object_type': 'link', 'text'
-                              : 'Download zip archive %s' % script_zip, 'destination'
-                              : os.path.join('..', client_dir,
-                              script_zip)})
+        output_objects.append({'object_type': 'link', 'text': 'Download zip archive %s' % script_zip, 'destination': os.path.join('..', client_dir,
+                                                                                                                                  script_zip)})
         output_objects.append({'object_type': 'upgrade_info', 'text': '''
 You can upgrade from an existing user scripts folder with the commands:''',
                                'commands': ["./migget.sh '%s' ../" % script_zip,
                                             "cd ..", "unzip '%s'" % script_zip,
                                             "cd '%s'" % script_dir]
                                })
+
     return (output_objects, status)
-
-

@@ -38,24 +38,30 @@ try:
 except ImportError:
     iso3166 = None
 
+from shared.base import force_utf8
 from shared.fileio import delete_file
-from shared.html import themed_styles
 # Expose some helper variables for functionality backends
 from shared.safeinput import name_extras, password_extras, password_min_len, \
     password_max_len, valid_password_chars, valid_name_chars, dn_max_len
 from shared.serial import load, dump
 
 
-def account_js_helpers(fields):
+def account_css_helpers(configuration):
+    """CSS to include in the cert/oid account req page header"""
+    css = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.accountform.css" media="screen"/>
+    '''
+    return css
+
+
+def account_js_helpers(configuration, fields):
     """Javascript to include in the cert/oid account req page header"""
     # TODO: change remaining names and messages to fit generic auth account?
-    js = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+    add_import = '''
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
-'''
-    js += """
-  <script type='text/javascript'>
+<script type="text/javascript" src="/images/js/jquery.accountform.js"></script>
+    '''
+    add_init = """
   function rtfm_warn(message) {
       return confirm(message + ': Proceed anyway? (If you read and followed the instructions!)');
   }
@@ -168,31 +174,161 @@ def account_js_helpers(fields):
       });
   }
 """ % {'password_min_len': password_min_len, 'password_max_len': password_max_len}
-    js += """
+    add_init += """
   function validate_form() {
       //alert('validate form');
 """
-    js += """
+    add_init += """
       var status = %s""" % ' && '.join(['check_%s()' % name for name in fields])
-    js += """
-      //alert('validate form: ' +status);
+    add_init += """
+      //alert('old validate form: ' +status);
       return status;
   }
 
 """
-    js += """
-  $(document).ready( function() {
+    add_ready = """
       init_context_help();
 """
     for name in fields:
-        js += """
+        add_ready += """
       bind_help($('#%s_field'), $('#%s_help').html());
 """ % (name, name)
-    js += """
-  });
-</script>
+    return (add_import, add_init, add_ready)
+
+
+def account_request_template(configuration, password=True):
+    """A general form template used for various account requests"""
+    html = """
+<div class=form_container>
+
+<!-- use post here to avoid field contents in URL -->
+<form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();' class="needs-validation" novalidate>
+<input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+  <div class="form-row">
+    <div class="col-md-4 mb-3">
+      <label for="validationCustom01">Full name</label>
+      <input type="text" class="form-control" id="full_name_field" placeholder="Full name" type=text name=cert_name value='%(full_name)s' required pattern='[^ ]+([ ][^ ]+)+' required>
+      <div class="valid-feedback">
+        Looks good!
+      </div>
+      <div class="invalid-feedback">
+        Please enter your full name.
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label for="validationCustom02">Email address</label>
+      <input class="form-control" id='email_field' type=email name=email value='%(email)s' placeholder="name@example.com" required>
+      <div class="valid-feedback">
+        Looks good!
+      </div>
+      <div class="invalid-feedback">
+        Enter an email address.
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label for="validationCustom01">Organization</label>
+      <input class="form-control" id='organization_field' type=text name=org value='%(organization)s' required pattern='[^ ]+([ ][^ ]+)*' placeholder="Organization" required>
+      <div class="valid-feedback">
+        Looks good!
+      </div>
+      <div class="invalid-feedback">
+        Please enter an organization.
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col-md-4 mb-3">
+      <label for="validationCustom03">Country</label>
+    """
+    # Generate drop-down of countries and codes if available, else simple input
+    sorted_countries = list_country_codes(configuration)
+    if sorted_countries:
+        html += """
+        <select class="form-control themed-select html-select" id='country_field' name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' placeholder="Two letter country-code" required>
 """
-    return js
+        # TODO: detect country based on browser info?
+        # Start out without a country selection
+        for (name, code) in [('', '')] + sorted_countries:
+            html += "        <option value='%s'>%s</option>\n" % (code, name)
+        html += """
+        </select>
+    """
+    else:
+        html += """
+        <input class="form-control" id='country_field' type=text name=country value='%(country)s' required pattern='[A-Z]{2}' minlength=2 maxlength=2 placeholder="Two letter country-code" >
+        """
+
+    html += """
+        <div class="valid-feedback">
+        Looks good!
+      </div>
+      <div class="invalid-feedback">
+        Please provide a valid two letter country-code.
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label for="validationCustom04">State</label>
+      <input class="form-control" id='state_field' type=text name=state value='%(state)s' pattern='([A-Z]{2})?' maxlength=2 placeholder="State" >
+    </div>
+  </div>
+    """
+
+    if password:
+        html += """  
+  <div class="form-row">
+    <div class="col-md-4 mb-3">
+      <label for="validationCustom01">Password</label>
+      <input type="password" class="form-control" id='password_field' type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder="Password" required>
+      <div class="valid-feedback">
+        Looks good!
+      </div>
+      <div class="invalid-feedback">
+        Please provide a valid and sufficiently strong password.
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label for="validationCustom03">Verify password</label>
+      <input type="password" class="form-control" id='verifypassword_field' type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder="Verify password" required>
+      <div class="valid-feedback">
+        Looks good!
+      </div>
+      <div class="invalid-feedback">
+        Please repeat your chosen password to verify.
+      </div>
+    </div>
+  </div>
+        """
+
+    html += """
+  <div class="form-row">
+    <div class="col-md-12 mb-3">
+      <label for="validationCustom03">Optional comment or reason why you should be granted a UCPH ERDA UI Dev account:</label>
+      <textarea rows=4 name=comment title='A free-form comment where you can explain what you need the account for' ></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-check">
+      <span class="switch-label">I accept the %(site)s <a href="/public/site-privacy-policy.pdf" target="_blank">terms and conditions</a></span>
+      <label class="form-check-label switch" for="acceptTerms">
+      <input class="form-check-input" type="checkbox" value="" id="acceptTerms" required>
+      <span class="slider round small" title="Required to get an account"></span>
+      <br/>
+      <div class="valid-feedback">
+        Looks good!
+      </div>
+      <div class="invalid-feedback">
+        You <em>must</em> agree to terms and conditions before sending.
+      </div>
+      </label>
+    </div>
+  </div>
+  <div class="vertical-spacer"></div>
+  <input id='submit_button' type=submit value=Send />
+</form>
+
+</div>
+    """
+    return html
 
 
 def build_accountreqitem_object(configuration, accountreq_dict):
@@ -301,6 +437,22 @@ def existing_country_code(country_code, configuration):
     except KeyError:
         logger.warning("no country found for code %s" % country_code)
         return False
+
+
+def list_country_codes(configuration):
+    """Get a sorted list of available countries and their 2-letter ISO3166
+    country code for use in country selection during account sign up.
+    """
+    logger = configuration.logger
+    if iso3166 is None:
+        logger.info("iso3166 module not available - manual country code entry")
+        return False
+    country_list = []
+    for entry in iso3166.countries:
+        name, code = force_utf8(entry.name), force_utf8(entry.alpha2)
+        logger.debug("found country %s for code %s" % (name, code))
+        country_list.append((name, code))
+    return country_list
 
 
 def forced_org_email_match(org, email, configuration):

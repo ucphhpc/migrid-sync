@@ -34,7 +34,7 @@ from shared.auth import expire_twofactor_session
 from shared.functional import validate_input_and_cert
 from shared.gdp import project_logout, get_client_id_from_project_client_id
 from shared.httpsclient import extract_client_openid
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.useradm import expire_oid_sessions, find_oid_sessions
 
 
@@ -66,6 +66,12 @@ def main(client_id, user_arguments_dict, environ=None):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     do_logout = accepted['logout'][-1].lower() in ('true', '1')
+
+    # sub-container inside default IU container
+    output_objects.append({'object_type': 'html_form', 'text': '''
+        <div class="global-full-height row">
+            <div class="col-12 align-self-center">
+    '''})
 
     output_objects.append({'object_type': 'header', 'text': 'Logout'})
     (oid_db, identity) = extract_client_openid(configuration, environ,
@@ -139,6 +145,8 @@ the %s Admins if it happens repeatedly.
                     {'object_type': 'text', 'text': """You are now logged out of %s
     locally - you may want to close your web browser to finish"""
                      % configuration.short_title})
+                title_entry = find_entry(output_objects, 'title')
+                title_entry['skipmenu'] = True
         else:
             logger.error("remaining active sessions for %s: %s" % (identity,
                                                                    remaining))
@@ -154,11 +162,18 @@ the %s Admins if it happens repeatedly.
         output_objects.append(
             {'object_type': 'text', 'text': """Are you sure you want to
 log out of %s?""" % configuration.short_title})
+        output_objects.append({'object_type': 'text', 'text': ""})
         output_objects.append(
             {'object_type': 'link', 'destination': oid_logout,
-             'class': 'genericbutton', 'text': "Yes"})
+             'class': 'genericbutton greenBtn', 'text': "Yes"})
         output_objects.append(
             {'object_type': 'link',
              'destination': 'javascript:history.back();',
-             'class': 'genericbutton', 'text': "No, go back"})
+             'class': 'genericbutton greenBtn', 'text': "No, go back"})
+    # sub-container end
+    output_objects.append({'object_type': 'html_form', 'text': '''
+            </div>
+        </div>
+    '''})
+
     return (output_objects, status)

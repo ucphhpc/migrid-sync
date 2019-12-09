@@ -241,7 +241,7 @@ function ajax_freezedb(permanent_freeze, keyword_final) {
                                                                 editlink+
                                                                 dellink)+
                           base_td(arch.name)+base_td(arch.created)+
-                          base_td(arch.flavor)+base_td(arch.state)+
+                          attr_td(arch.flavor, "class='flavor'")+base_td(arch.state)+
                           center_td(arch.frozenfiles)+"</tr>";
                       //console.debug("append entry: "+entry);
                       table_entries += entry;
@@ -679,7 +679,7 @@ function ajax_people(protocols) {
                       //console.info("found user: "+usr.name);
                       var viewlink = format_link(usr.userdetailslink);
                       var sendlink = "";
-                      entry = "<tr>"+base_td(usr.name)+center_td(viewlink);
+                      entry = "<tr>"+base_td(usr.pretty_id)+center_td(viewlink);
                       for (k=0; k<protocols.length; k++) {
                           proto = protocols[k];
                           link_name = "send"+proto+"link";

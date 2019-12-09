@@ -211,12 +211,15 @@ def generate_confs(
     ext_oid_fqdn='localhost',
     sid_fqdn='localhost',
     io_fqdn='localhost',
+    cloud_fqdn='localhost',
     seafile_fqdn='localhost',
     seafile_base='/seafile',
     seafmedia_base='/seafmedia',
     seafhttp_base='/seafhttp',
     jupyter_services='',
     jupyter_services_desc='{}',
+    cloud_services='',
+    cloud_services_desc='{}',
     user='mig',
     group='mig',
     apache_version='2.4',
@@ -248,6 +251,7 @@ def generate_confs(
     enable_vmachines=False,
     enable_preview=False,
     enable_jupyter=False,
+    enable_cloud=False,
     enable_hsts=False,
     enable_vhost_certs=False,
     enable_verify_certs=False,
@@ -261,6 +265,7 @@ def generate_confs(
     enable_twofactor_strict_address=False,
     enable_cracklib=False,
     enable_openid=False,
+    user_interface="V2 V3",
     mig_oid_provider='',
     ext_oid_provider='',
     dhparams_path='',
@@ -291,6 +296,7 @@ def generate_confs(
     davs_show_port=443,
     ftps_ctrl_port=8021,
     ftps_ctrl_show_port=21,
+    cloud_ssh_port=22,
     openid_port=8443,
     openid_show_port=443,
     seafile_seahub_port=8000,
@@ -325,6 +331,7 @@ def generate_confs(
     user_dict['__EXT_OID_FQDN__'] = ext_oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
+    user_dict['__CLOUD_FQDN__'] = cloud_fqdn
     user_dict['__SEAFILE_FQDN__'] = seafile_fqdn
     user_dict['__SEAFILE_BASE__'] = seafile_base
     user_dict['__SEAFMEDIA_BASE__'] = seafmedia_base
@@ -335,6 +342,8 @@ def generate_confs(
     user_dict['__JUPYTER_REWRITES__'] = ''
     user_dict['__JUPYTER_PROXIES__'] = ''
     user_dict['__JUPYTER_SECTIONS__'] = ''
+    user_dict['__CLOUD_SERVICES__'] = cloud_services
+    user_dict['__CLOUD_SECTIONS__'] = ''
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
@@ -374,6 +383,7 @@ def generate_confs(
     user_dict['__ENABLE_VMACHINES__'] = str(enable_vmachines)
     user_dict['__ENABLE_PREVIEW__'] = str(enable_preview)
     user_dict['__ENABLE_JUPYTER__'] = str(enable_jupyter)
+    user_dict['__ENABLE_CLOUD__'] = str(enable_cloud)
     user_dict['__ENABLE_HSTS__'] = str(enable_hsts)
     user_dict['__ENABLE_VHOST_CERTS__'] = str(enable_vhost_certs)
     user_dict['__ENABLE_VERIFY_CERTS__'] = str(enable_verify_certs)
@@ -388,6 +398,7 @@ def generate_confs(
         str(enable_twofactor_strict_address)
     user_dict['__ENABLE_CRACKLIB__'] = str(enable_cracklib)
     user_dict['__ENABLE_OPENID__'] = str(enable_openid)
+    user_dict['__USER_INTERFACE__'] = user_interface
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
     user_dict['__MIG_OID_AUTH_DB__'] = auth_openid_mig_db
@@ -416,6 +427,7 @@ def generate_confs(
     user_dict['__DAVS_SHOW_PORT__'] = str(davs_show_port)
     user_dict['__FTPS_CTRL_PORT__'] = str(ftps_ctrl_port)
     user_dict['__FTPS_CTRL_SHOW_PORT__'] = str(ftps_ctrl_show_port)
+    user_dict['__CLOUD_SSH_PORT__'] = str(cloud_ssh_port)
     user_dict['__OPENID_PORT__'] = str(openid_port)
     user_dict['__OPENID_SHOW_PORT__'] = str(openid_show_port)
     user_dict['__SEAFILE_SEAHUB_PORT__'] = str(seafile_seahub_port)
@@ -861,6 +873,93 @@ cert, oid and sid based https!
 
     else:
         user_dict['__JUPYTER_COMMENTED__'] = '#'
+
+    if user_dict['__ENABLE_CLOUD__'].lower() == 'true':
+        # try:
+        #    import requests
+        # except ImportError:
+        #    print "ERROR: cloud use requested but requests is not installed!"
+        #    sys.exit(1)
+        user_dict['__CLOUD_COMMENTED__'] = ''
+        # cloud requires websockets proxy
+        #user_dict['__WEBSOCKETS_COMMENTED__'] = ''
+
+        # Dynamic apache configuration replacement lists
+        cloud_sections = []
+        cloud_services = user_dict['__CLOUD_SERVICES__'].split()
+
+        try:
+            descs = ast.literal_eval(cloud_services_desc)
+        except SyntaxError, err:
+            print 'Error: cloud_services_desc ' \
+                'could not be intepreted correctly. Double check that your ' \
+                'formatting is correct, a dictionary formatted string is expected.'
+            sys.exit(1)
+
+        if not isinstance(descs, dict):
+            print 'Error: %s was incorrectly formatted,' \
+                ' expects a string formatted as a dictionary' % descs
+            sys.exit(1)
+
+        cloud_service_hosts = {}
+        for service in cloud_services:
+            # TODO, do more checks on format
+            name_hosts = service.split(".", 1)
+            if len(name_hosts) != 2:
+                print 'Error: You have not correctly formattet ' \
+                    'the cloud_services parameter, ' \
+                    'expects --cloud_services="service_name.' \
+                    'http(s)://cloudhost-url-or-ip ' \
+                    'other_service.http(s)://cloudhost-url-or-ip"'
+                sys.exit(1)
+            name, host = name_hosts[0], name_hosts[1]
+            try:
+                valid_alphanumeric(name)
+            except InputException, err:
+                print 'Error: The --cloud_services name: %s was incorrectly ' \
+                    'formatted, only allows alphanumeric characters %s' % (name,
+                                                                           err)
+            if name and host:
+                if name not in cloud_service_hosts:
+                    cloud_service_hosts[name] = {'hosts': []}
+                cloud_service_hosts[name]['hosts'].append(host)
+
+        for name, values in cloud_service_hosts.items():
+            # Service definitions
+            u_name = name.upper()
+
+            # Prepare MiG conf template for cloud sections
+            section_header = '[__CLOUD_%s__]\n' % u_name
+            section_name = 'service_name=__CLOUD_%s_NAME__\n' % u_name
+            section_desc = 'service_desc=__CLOUD_%s_DESC__\n' % u_name
+            section_hosts = 'service_hosts=__CLOUD_%s_HOSTS__\n' % u_name
+
+            for section_item in (section_header, section_name, section_desc,
+                                 section_hosts):
+                if section_item not in cloud_sections:
+                    cloud_sections.append(section_item)
+
+            user_values = {
+                '__CLOUD_%s__' % u_name: 'CLOUD_%s' % u_name,
+                '__CLOUD_%s_NAME__' % u_name: name,
+                '__CLOUD_%s_HOSTS__' % u_name: ' '.join(values['hosts'])
+            }
+
+            if name in descs:
+                desc_value = descs[name] + "\n"
+            else:
+                desc_value = "\n"
+
+            user_values.update({'__CLOUD_%s_DESC__\n' % u_name: desc_value})
+
+            # Update user_dict with definition values
+            for u_k, u_v in user_values.items():
+                if u_k not in user_dict:
+                    user_dict[u_k] = u_v
+
+        user_dict['__CLOUD_SECTIONS__'] = ''.join(cloud_sections)
+    else:
+        user_dict['__CLOUD_COMMENTED__'] = '#'
 
     # Enable Duplicati integration only if explicitly requested
     if user_dict['__ENABLE_DUPLICATI__'].lower() == 'true':
@@ -1530,6 +1629,7 @@ def create_user(
     enable_vmachines = False
     enable_preview = False
     enable_jupyter = False
+    enable_cloud = False
     enable_hsts = False
     enable_vhost_certs = False
     enable_verify_certs = False
@@ -1539,6 +1639,7 @@ def create_user(
     enable_notify = False
     enable_imnotify = False
     enable_dev_accounts = False
+    user_interface = "V2 V3"
     mig_oid_provider = ''
     ext_oid_provider = ''
     dhparams_path = ''
@@ -1639,6 +1740,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_vmachines,
         enable_preview,
         enable_jupyter,
+        enable_cloud,
         enable_hsts,
         enable_vhost_certs,
         enable_verify_certs,
@@ -1651,6 +1753,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_twofactor,
         enable_cracklib,
         enable_openid,
+        user_interface,
         mig_oid_provider,
         ext_oid_provider,
         dhparams_path,

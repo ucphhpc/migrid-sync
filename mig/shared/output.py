@@ -34,8 +34,8 @@ import traceback
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
-from shared.defaults import file_dest_sep
-from shared.html import get_cgi_html_header, get_cgi_html_footer, \
+from shared.defaults import file_dest_sep, keyword_any
+from shared.html import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
 from shared.objecttypes import validate
 from shared.prettyprinttable import pprint_table
@@ -653,6 +653,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in html format"""
 
     lines = []
+    user_settings = {}
     include_widgets = True
     user_widgets = {}
     timing_info = 'no timing information'
@@ -674,53 +675,66 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('<p class="warningtext">%s</p>' %
                          html_escape(i['text']))
         elif i['object_type'] == 'header':
-            lines.append('<h1 class="%s">%s</h1>' % (i.get('class', ''),
-                                                     html_escape(i['text'])))
+            # Global container introduced with UI V3
+            lines.append('''
+<!-- Begin UI container -->
+<div class="container page-content">
+            ''')
+            lines.append('<h1 class="header %s">%s</h1>' % (i.get('class', ''),
+                                                            html_escape(i['text'])))
         elif i['object_type'] == 'sectionheader':
-            lines.append('<h3>%s</h3>' % html_escape(i['text']))
+            lines.append('<h3 class="sectionheader %s">%s</h3>' %
+                         (i.get('class', ''), html_escape(i['text'])))
         elif i['object_type'] == 'title':
             meta = i.get('meta', '')
             style_entry = i.get('style', '')
+            style_helpers = {'base': '', 'advanced': '', 'page': '',
+                             'skin': ''}
             if isinstance(style_entry, dict):
-                base_style = style_entry.get("base", "")
-                advanced_style = style_entry.get("advanced", "")
-                skin_style = style_entry.get("skin", "")
+                style_helpers.update(style_entry)
             else:
-                base_style = style_entry
-                advanced_style = ''
-                skin_style = ''
-            javascript = i.get('javascript', '')
-            bodyfunctions = i.get('bodyfunctions', '')
+                style_helpers['base'] += style_entry
+            script_entry = i.get('script', '')
+            script_helpers = {'base': '', 'advanced': '', 'skin': '',
+                              'page': '', 'init': '', 'ready': '', 'body': ''}
+            if isinstance(script_entry, dict):
+                script_helpers.update(script_entry)
+            else:
+                script_helpers['base'] += script_entry
+
+            include_frame = not i.get('skipframe', False)
             include_menu = not i.get('skipmenu', False)
             include_widgets = not i.get('skipwidgets', False)
             include_userstyle = not i.get('skipuserstyle', False)
             base_menu = i.get('base_menu', configuration.site_default_menu)
             user_menu = i.get('user_menu', [])
+            user_settings = i.get('user_settings', {})
             user_widgets = i.get('user_widgets', {})
+            user_profile = i.get('user_profile', {})
             if configuration.site_enable_openid:
                 oid_url = os.path.join(configuration.migserver_https_sid_url,
                                        'cgi-sid', 'oiddiscover.py')
                 meta += '''
-<!-- advertise any valid OpenID entry points in line with spec --> 
+<!-- advertise any valid OpenID entry points in line with spec -->
 <meta http-equiv="X-XRDS-Location" content="%s" />
 ''' % oid_url
 
-            lines.append(get_cgi_html_header(
+            lines.append(get_xgi_html_header(
                 configuration, html_escape(i['text']),
                 '',
                 True,
                 meta,
-                base_style,
-                advanced_style,
-                skin_style,
-                javascript,
-                bodyfunctions,
+                style_helpers,
+                script_helpers,
+                include_frame,
                 include_menu,
                 include_widgets,
                 include_userstyle,
                 base_menu,
                 user_menu,
-                user_widgets
+                user_settings,
+                user_widgets,
+                user_profile,
             ))
         elif i['object_type'] == 'text':
             lines.append('<p>%s</p>' % html_escape(i['text']))
@@ -1944,7 +1958,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 for obj in users:
                     lines.append('<tr>')
                     lines.append('<td class="user" title="user">%s</td>' %
-                                 obj['name'])
+                                 obj.get('pretty_id', obj['name']))
                     lines.append('<td class="centertext">')
                     if obj.has_key('userdetailslink'):
                         lines.append('%s' % html_link(obj['userdetailslink']))
@@ -1963,13 +1977,14 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('No matching users found')
         elif i['object_type'] == 'user_info':
             user_html = ''
-            user_html += '<h3>%s</h3>' % i['user_id']
-            user_html += '<table class="user">'
+            user_html += '<!--<h3>%s</h3>-->' % i['user_id']
+            user_html += '<div class="row">'
             for (key, val) in i['fields']:
-                user_html += \
-                    '<tr><td>%s</td><td>%s</td></tr>' % \
-                    (key, val)
-            user_html += '</table>'
+                user_html += '''
+                    <div class="col-lg-12"><h3>%s</h3></div>
+                    <div class="col-lg-12">%s</div>
+                ''' % (key, val)
+            user_html += '</div>'
             lines.append(user_html)
         elif i['object_type'] == 'vgrid_info':
             vgrid_html = ''
@@ -2289,10 +2304,19 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         else:
             lines.append('unknown object %s' % i)
 
+    # Terminate UI V3 container
+    lines.append('''
+<!-- End UI container -->
+</div>
+    ''')
     if status_line:
+        timing_footer = ''
         status_line = status_line.replace('TIMING_INFO', timing_info)
-        lines.append(get_cgi_html_footer(configuration, status_line, True,
-                                         include_widgets, user_widgets))
+        if user_settings.get('USER_INTERFACE', configuration.user_interface[-1]) == 'V2':
+            timing_footer = status_line
+        lines.append(get_xgi_html_footer(configuration, timing_footer, True,
+                                         user_settings, include_widgets,
+                                         user_widgets))
     return '\n'.join(lines)
 
 
@@ -2440,9 +2464,8 @@ def format_output(
                 'object_type': 'title',
                 'text': '%s error' % configuration.short_title,
                 'meta': '',
-                'style': '',
-                'javascript': '',
-                'bodyfunctions': '',
+                'style': {},
+                'script': {},
             }] + out_obj
 
     if not outputformat in valid_formats:

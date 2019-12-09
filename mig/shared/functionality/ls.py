@@ -40,8 +40,8 @@ from shared.base import client_id_dir, invisible_path
 from shared.defaults import seafile_ro_dirname, trash_destdir, csrf_field
 from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
-    confirm_js, confirm_html, themed_styles
+from shared.html import fancy_upload_js, fancy_upload_html, confirm_js, \
+    confirm_html, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
 from shared.sharelinks import extract_mode_id
@@ -425,13 +425,13 @@ def main(client_id, user_arguments_dict, environ=None):
         redirect_path = redirect_name
         id_args = ''
         root_link_name = 'USER HOME'
-        main_id = "user_ls"
+        main_class = "user_ls"
         page_title = 'User Files'
         userstyle = True
         widgets = True
         visibility_mods = '''
-            #%(main_id)s .disable_read { display: none; }
-            #%(main_id)s .disable_write { display: none; }
+            .%(main_class)s .disable_read { display: none; }
+            .%(main_class)s .disable_write { display: none; }
             '''
     elif share_id:
         try:
@@ -452,7 +452,7 @@ def main(client_id, user_arguments_dict, environ=None):
         redirect_path = os.path.join(redirect_name, share_id)
         id_args = 'share_id=%s;' % share_id
         root_link_name = '%s' % share_id
-        main_id = "sharelink_ls"
+        main_class = "sharelink_ls"
         page_title = 'Shared Files'
         userstyle = False
         widgets = False
@@ -462,19 +462,19 @@ def main(client_id, user_arguments_dict, environ=None):
         if share_mode == 'read-only':
             write_mode = False
             visibility_mods = '''
-            #%(main_id)s .enable_write { display: none; }
-            #%(main_id)s .disable_read { display: none; }
+            .%(main_class)s .enable_write { display: none; }
+            .%(main_class)s .disable_read { display: none; }
             '''
         elif share_mode == 'write-only':
             read_mode = False
             visibility_mods = '''
-            #%(main_id)s .enable_read { display: none; }
-            #%(main_id)s .disable_write { display: none; }
+            .%(main_class)s .enable_read { display: none; }
+            .%(main_class)s .disable_write { display: none; }
             '''
         else:
             visibility_mods = '''
-            #%(main_id)s .disable_read { display: none; }
-            #%(main_id)s .disable_write { display: none; }
+            .%(main_class)s .disable_read { display: none; }
+            .%(main_class)s .disable_write { display: none; }
             '''
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
@@ -487,7 +487,7 @@ def main(client_id, user_arguments_dict, environ=None):
         <style>
         %s
         </style>
-        ''' % (visibility_mods % {'main_id': main_id})
+        ''' % (visibility_mods % {'main_class': main_class})
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -505,6 +505,7 @@ def main(client_id, user_arguments_dict, environ=None):
     title_entry['text'] = page_title
     title_entry['skipwidgets'] = not widgets
     title_entry['skipuserstyle'] = not userstyle
+    user_settings = title_entry.get('user_settings', {})
 
     open_button_id = 'open_fancy_upload'
     form_method = 'post'
@@ -542,16 +543,19 @@ def main(client_id, user_arguments_dict, environ=None):
     $("#%s").click(function() { openFancyUpload(); });
     $("#checkall_box").click(toggleChecked);
     ''' % (cf_ready, fu_ready, open_button_id)
-    styles = themed_styles(configuration, base=['jquery.fileupload.css',
-                                                'jquery.fileupload-ui.css'],
-                           skin=['fileupload-ui.custom.css'])
+    # TODO: can we update style inline to avoid explicit themed_styles?
+    styles = themed_styles(configuration, advanced=['jquery.fileupload.css',
+                                                    'jquery.fileupload-ui.css'],
+                           skin=['fileupload-ui.custom.css'],
+                           user_settings=user_settings)
     styles['advanced'] += '''
     %s
     ''' % visibility_toggle
     title_entry['style'] = styles
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
-    title_entry['bodyfunctions'] += ' id="%s"' % main_id
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
+    title_entry['script']['body'] = ' class="%s"' % main_class
     output_objects.append({'object_type': 'header', 'text': page_title})
 
     # TODO: move to output html handler

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.forum import list_single_thread, list_threads, reply, new_subject, \
-     search_threads, toggle_subscribe, list_subscribers
+    search_threads, toggle_subscribe, list_subscribers
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.html import themed_styles
@@ -48,12 +48,14 @@ post_actions = ['new_thread', 'reply', 'toggle_subscribe']
 valid_actions = get_actions + post_actions
 default_pager_entries = 20
 
+
 def signature():
     """Signature of the main function"""
 
     defaults = {'vgrid_name': REJECT_UNSET, 'action': ['show_all'],
                 'thread': [''], 'msg_subject': [''], 'msg_body': ['']}
     return ['forumview', defaults]
+
 
 def notify_subscribers(configuration, forum_base, vgrid_name, thread, author,
                        url):
@@ -73,7 +75,7 @@ def notify_subscribers(configuration, forum_base, vgrid_name, thread, author,
             configuration.logger,
             '',
             configuration,
-            )
+        )
         notifier.join(0)
         threads.append(notifier)
 
@@ -91,6 +93,7 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = '%s Forum' % label
+    user_settings = title_entry.get('user_settings', {})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -98,7 +101,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -107,7 +110,7 @@ def main(client_id, user_arguments_dict):
     thread = accepted['thread'][-1]
     msg_subject = accepted['msg_subject'][-1].strip()
     msg_body = accepted['msg_body'][-1].strip()
-        
+
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         output_objects.append({'object_type': 'error_text', 'text':
@@ -116,8 +119,7 @@ access the forum.''' % (vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action in valid_actions:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid action "%s" (supported: %s)' % \
+        output_objects.append({'object_type': 'error_text', 'text': 'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -138,15 +140,15 @@ access the forum.''' % (vgrid_name, label)})
 
     forum_base = os.path.abspath(os.path.join(base_dir, '.vgridforum'))
 
-    title_entry['style'] = themed_styles(configuration, advanced=['forum.css'])
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
+    # TODO: can we update style inline to avoid explicit themed_styles?
+    title_entry['style'] = themed_styles(configuration, advanced=['forum.css'],
+                                         user_settings=user_settings)
+    add_import = '''
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript">
+    '''
+    add_init = '''
 function toggle_new(form_elem_id, link_elem_id) {
     form_elem = document.getElementById(form_elem_id);
     form_focus = document.getElementById(form_elem_id + "_main");
@@ -163,9 +165,8 @@ function toggle_new(form_elem_id, link_elem_id) {
         link_elem.focus();
     }
 }
-
-$(document).ready(function() {
-
+    '''
+    add_ready = '''
           // init confirmation dialog
           $( "#confirm_dialog" ).dialog(
               // see http://jqueryui.com/docs/dialog/ for options
@@ -197,19 +198,19 @@ $(document).ready(function() {
                                         size: %s
                                         });
           $("#pagerrefresh").click(function() { location.reload(); });
-     }
-);
-</script>
-''' % default_pager_entries
+    ''' % default_pager_entries
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
 
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
+                           'text': '''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
   <div id="confirm_text"><!-- filled by js --></div>
    <textarea cols="72" rows="10" id="confirm_input" style="display:none;"></textarea>
  </div>
-'''                       })
-                          
+'''})
+
     output_objects.append({'object_type': 'sectionheader', 'text':
                            '%s Forum for %s' % (label, vgrid_name)})
 
@@ -226,14 +227,14 @@ $(document).ready(function() {
     msg = ''
 
     logger.info("vgridforum %s %s %s" % (vgrid_name, action, thread))
-    
+
     if action in post_actions:
         if action == 'new_thread':
             try:
                 (thread_hash, msg) = new_subject(forum_base, client_id,
                                                  msg_subject, msg_body)
                 query = 'vgrid_name=%s&action=show_thread&thread=%s'\
-                        % (vgrid_name,thread_hash)
+                        % (vgrid_name, thread_hash)
                 url = "%s?%s" % (os.environ['SCRIPT_URI'], query)
                 notify_subscribers(configuration, forum_base, vgrid_name, '',
                                    client_id, url)
@@ -245,7 +246,7 @@ $(document).ready(function() {
                 (thread_hash, msg) = reply(forum_base, client_id, msg_body,
                                            thread)
                 query = 'vgrid_name=%s&action=show_thread&thread=%s'\
-                        % (vgrid_name,thread_hash)
+                        % (vgrid_name, thread_hash)
                 url = "%s?%s" % (os.environ['SCRIPT_URI'], query)
                 notify_subscribers(configuration, forum_base, vgrid_name, '',
                                    client_id, url)
@@ -263,7 +264,7 @@ $(document).ready(function() {
 
     if action == 'search':
         thread_list = search_threads(forum_base, msg_subject,
-                                msg_body, client_id)
+                                     msg_body, client_id)
         msg = "Found %d thread(s) matching subject '%s'" % (len(thread_list),
                                                             msg_subject)
     elif thread:
@@ -276,7 +277,7 @@ $(document).ready(function() {
 
     if post_error:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Error handling %s forum operation: %s' % \
+                               'Error handling %s forum operation: %s' %
                                (label, post_error)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 

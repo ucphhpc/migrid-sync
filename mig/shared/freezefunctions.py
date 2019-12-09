@@ -44,7 +44,8 @@ except ImportError:
     from os import walk
 from urllib import quote
 
-from shared.base import client_id_dir, distinguished_name_to_user, brief_list
+from shared.base import client_id_dir, distinguished_name_to_user, \
+    brief_list, pretty_format_user
 from shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     wwwpublic_alias, public_archive_dir, public_archive_index, \
     public_archive_files, public_archive_doi, freeze_flavors, keyword_final, \
@@ -55,8 +56,8 @@ from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
     makedirs_rec, make_symlink, make_temp_dir, acquire_file_lock, \
     release_file_lock
-from shared.html import get_cgi_html_preamble, get_cgi_html_footer, \
-    jquery_ui_js, man_base_js, themed_styles, tablesorter_pager
+from shared.html import get_xgi_html_preamble, get_xgi_html_footer, \
+    man_base_js, themed_styles, themed_scripts, tablesorter_pager
 from shared.pwhash import make_path_hash
 from shared.serial import load, dump
 
@@ -152,11 +153,15 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False):
         freeze_files = []
         for file_item in freeze_dict['FILES']:
             quoted_name = quote(file_item['name'])
+            file_ext = os.path.splitext(file_item['name'])[1].lstrip('.')
+            type_icon = "fileicon"
+            if file_ext:
+                type_icon += " ext_%s" % file_ext
             showfile_link = {
                 'object_type': 'link',
                 'destination': 'showfreezefile.py?freeze_id=%s;path=%s' %
                 (freeze_dict['ID'], quoted_name),
-                'class': 'viewlink iconspace',
+                'class': '%s iconspace' % type_icon,
                 'title': 'Show archive file %(name)s' % file_item,
                 'text': ''
             }
@@ -637,11 +642,8 @@ def format_meta(key, val):
     """Simple helper to mangle meta field display on landing page"""
     out = val
     if key == 'CREATOR':
-        user_dict = distinguished_name_to_user(val)
-        # NOTE: obfuscate email by replacing with html entities
-        for (src, dst) in [('@', '&#064;'), ('.', '&#046;')]:
-            user_dict['email'] = user_dict.get('email', '').replace(src, dst)
-        out = "%(full_name)s, %(organization)s, %(email)s" % user_dict
+        # NOTE: when you publish you loose anonymity
+        out = pretty_format_user(val, hide_email=False)
     elif key == 'CREATED_TIMESTAMP':
         # Drop microsecond precision
         out = val.replace(microsecond=0)
@@ -812,24 +814,27 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
     ajax_showdoi('%s');
     %s;
     """ % (freeze_id, refresh_call)
-    # Fake manager themed style setup for tablesorter layout
-    style_entry = themed_styles(configuration)
+    # Fake manager themed style setup for tablesorter layout with site style
+    style_entry = themed_styles(configuration, user_settings={})
     base_style = style_entry.get("base", "")
     advanced_style = style_entry.get("advanced", "")
     skin_style = style_entry.get("skin", "")
-    ajax_load = jquery_ui_js(configuration, add_import,
-                             add_init, add_ready)
+    # Fake manager themed script setup for tablesorter use
+    script_entry = themed_scripts(configuration)
+    script_entry['advanced'] += add_import
+    script_entry['init'] += add_init
+    script_entry['ready'] += add_ready
 
     # Use the default preamble to get style, skin and so on right
 
-    contents = get_cgi_html_preamble(configuration, publish_title, "",
-                                     base_styles=base_style,
-                                     advanced_styles=advanced_style,
-                                     skin_styles=skin_style,
-                                     scripts=ajax_load, widgets=False,
-                                     userstyle=False)
+    contents = get_xgi_html_preamble(configuration, publish_title, "",
+                                     style_map=style_entry,
+                                     script_map=script_entry,
+                                     widgets=False,
+                                     userstyle=False,
+                                     user_settings={})
 
-    # Manually create modified page start like get_cgi_html_header but
+    # Manually create modified page start like get_xgi_html_header but
     # using staticpage class for flexible skinning
 
     contents += """
@@ -919,7 +924,7 @@ on %(created_timestamp)s by %(creator)s.""" % auto_map
     """ % toolbar
     contents += """</div>
 %s
-    """ % get_cgi_html_footer(configuration, widgets=False)
+    """ % get_xgi_html_footer(configuration, widgets=False)
     if not make_symlink(arch_dir, real_pub_dir, _logger, force=True) or \
             not write_file(contents, real_pub_index, _logger) or \
             not write_file(json.dumps(cached), real_pub_files, _logger):

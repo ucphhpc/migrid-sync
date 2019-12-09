@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,72 +29,94 @@ import os
 import sys
 
 from shared.base import requested_page
-from shared.defaults import default_pager_entries, trash_linkname, csrf_field
+from shared.defaults import default_pager_entries, trash_linkname, \
+    csrf_field, keyword_all
+
+ICONS_ONLY, TEXT_ONLY = "ICONS_ONLY", "TEXT_ONLY"
 
 # Define all possible menu items
 menu_items = {}
+# Old dashboard
 menu_items['dashboard'] = {'class': 'dashboard', 'url': 'dashboard.py',
-                           'title': 'Dashboard',
+                           'legacy_only': True, 'title': 'Dashboard',
                            'hover': 'This is the overview page to start with'}
+# New dashboard replacement
+menu_items['home'] = {'class': 'home fas fa-home', 'url': 'home.py',
+                      'legacy_only': True, 'title': 'Home',
+                      'hover': 'This is the overview page to start with'}
 menu_items['submitjob'] = {'class': 'submitjob', 'url': 'submitjob.py',
                            'title': 'Submit Job',
                            'hover': 'Submit a job for execution on a resource'}
-menu_items['files'] = {'class': 'files', 'url': 'fileman.py', 'title': 'Files',
-                       'hover': 'manage files and folders in your home directory'}
+menu_items['files'] = {'class': 'files fas fa-folder', 'url': 'fileman.py', 'title': 'Files',
+                       'hover': 'Manage files and folders in your home directory'}
 menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Jobs',
                       'hover': 'Manage and monitor your grid jobs'}
-menu_items['vgrids'] = {'class': 'vgrids', 'url': 'vgridman.py',
+menu_items['vgrids'] = {'class': 'vgrids fas fa-network-wired', 'url': 'vgridman.py',
                         'title': 'VGrids',
                         'hover': 'Virtual organisations sharing some resources and files'}
 menu_items['resources'] = {'class': 'resources', 'url': 'resman.py',
                            'title': 'Resources',
                            'hover': 'Resources available in the system'}
-menu_items['downloads'] = {'class': 'downloads', 'url': 'downloads.py',
+menu_items['downloads'] = {'class': 'downloads fas fa-download', 'url': 'downloads.py',
                            'title': 'Downloads',
                            'hover': 'Download scripts to work directly from your local machine'}
 menu_items['runtimeenvs'] = {'class': 'runtimeenvs', 'url': 'redb.py',
                              'title': 'Runtime Envs',
                              'hover': 'Runtime environments: software which can be made available'}
-menu_items['archives'] = {'class': 'archives', 'url': 'freezedb.py',
+menu_items['archives'] = {'class': 'archives fas fa-archive', 'url': 'freezedb.py',
                           'title': 'Archives',
                           'hover': 'Frozen archives: write-once file archives'}
-menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
-                          'title': 'Settings',
+menu_items['settings'] = {'class': 'settings fas fa-user', 'url': 'settings.py',
+                          'legacy_only': True, 'title': 'Settings',
                           'hover': 'Your personal settings for these pages'}
-menu_items['crontab'] = {'class': 'crontab', 'url': 'crontab.py',
+menu_items['setup'] = {'class': 'setup fas fa-user-cog', 'url': 'setup.py',
+                       'legacy_only': True, 'title': 'Setup',
+                       'hover': 'Your client access settings for this site'}
+menu_items['transfers'] = {'class': 'transfers fas fa-datatransfer', 'url': 'datatransfer.py',
+                           'title': 'Data Transfers',
+                           'hover': 'For background batch transfers of data'}
+menu_items['sharelinks'] = {'class': 'sharelinks fas fa-share-alt', 'url': 'sharelink.py',
+                            'title': 'Share Links',
+                            'hover': 'Manage share links for easy data exchange'}
+menu_items['crontab'] = {'class': 'crontab fas fa-calendar-check', 'url': 'crontab.py',
                          'title': 'Schedule Tasks',
                          'hover': 'Your personal task scheduler'}
 # NOTE: we rely on seafile location from conf and only fill it in render
 menu_items['seafile'] = {'class': 'seafile', 'url': '', 'title': 'Seafile',
                          'hover': 'Access the associated Seafile service',
                          'target': '_blank'}
-menu_items['jupyter'] = {'class': 'jupyter', 'url': 'jupyter.py',
+menu_items['jupyter'] = {'class': 'jupyter fas fa-jupyter', 'url': 'jupyter.py',
                          'title': 'Jupyter',
-                         'hover': 'Access the associated Jupyter service'}
+                         'hover': 'Access the associated Jupyter data analysis services'}
+menu_items['cloud'] = {'class': 'cloud fas fa-cloud', 'url': 'cloud.py',
+                       'title': 'Cloud',
+                       'hover': 'Access the associated cloud computing services'}
 
 menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell',
-                       'hover': 'A command line interface, based on javascript and xmlrpc'}
+                       'legacy_only': True, 'hover':
+                       'A command line interface, based on javascript and xmlrpc'}
 menu_items['wshell'] = {'class': 'shell',
                         'url': 'javascript:\
              window.open(\'shell.py?menu=no\',\'shellwindow\',\
              \'dependent=yes,menubar=no,status=no,toolbar=no,\
                height=650px,width=800px\');\
              window.reload();',
-                        'title': 'Shell',
+                        'legacy_only': True, 'title': 'Shell',
                         'hover': 'A command line interface, based on javascript and xmlrpc. Opens in a new window'}
 menu_items['statistics'] = {'class': 'statistics', 'url': 'showstats.py',
-                            'title': 'Statistics',
+                            'legacy_only': True, 'title': 'Statistics',
                             'hover': 'Usage overview for resources and users on this server'}
 menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
                       'title': 'Docs',
                       'hover': 'Some built-in documentation for reference'}
-menu_items['people'] = {'class': 'people', 'url': 'people.py',
+menu_items['people'] = {'class': 'people fas fa-users', 'url': 'people.py',
                         'title': 'People',
                         'hover': 'View and communicate with other users'}
 menu_items['migadmin'] = {'class': 'migadmin', 'url': 'migadmin.py',
                           'title': 'Server Admin',
                           'hover': 'Administrate this server'}
-menu_items['vmachines'] = {'class': 'vmachines', 'url': 'vmachines.py',
+menu_items['vmachines'] = {'class': 'vmachines fas fa-desktop',
+                           'url': 'vmachines.py',
                            'title': 'Virtual Machines',
                            'hover': 'Manage Virtual Machines'}
 menu_items['vmrequest'] = {'class': 'vmrequest', 'url': 'vmrequest.py',
@@ -103,9 +125,9 @@ menu_items['vmrequest'] = {'class': 'vmrequest', 'url': 'vmrequest.py',
 menu_items['vmconnect'] = {'class': 'vmconnect', 'url': 'vmconnect.py',
                            'title': 'Connect to Virtual Machine',
                            'hover': 'Connect to Virtual Machine'}
-menu_items['logout'] = {'class': 'logout', 'url': 'logout.py',
-                        'title': 'Logout',
-                        'hover': 'Logout'}
+menu_items['logout'] = {'class': 'logout fas fa-sign-out-alt',
+                        'url': 'logout.py', 'title': 'Logout',
+                        'legacy_only': True, 'hover': 'Logout'}
 
 # Define all possible VGrid page columns
 vgrid_items = {}
@@ -140,11 +162,19 @@ def html_add(formatted_text, html=True):
         return ''
 
 
+def legacy_user_interface(configuration, user_settings,
+                          legacy_versions=["V1", "V2"]):
+    """Helper to ease detection of legacy user interfaces"""
+    return user_settings.get('USER_INTERFACE',
+                             configuration.user_interface[0]) in legacy_versions
+
+
 def render_menu(configuration, menu_class='navmenu',
                 current_element='Unknown', base_menu=[],
-                user_menu=[]):
+                user_menu=[], user_settings={}, display=keyword_all):
     """Render the menu contents using configuration"""
 
+    legacy_ui = legacy_user_interface(configuration, user_settings)
     raw_order = []
     raw_order += base_menu
     raw_order += user_menu
@@ -156,12 +186,40 @@ def render_menu(configuration, menu_class='navmenu',
     if 'logout' in raw_order:
         menu_order.append('logout')
 
-    menu_lines = '<div class="%s">\n' % menu_class
-    menu_lines += ' <ul>\n'
+    if legacy_ui:
+        menu_wrap = '''
+    <div class="%s">
+        <ul>
+            %%s
+        </ul>
+    </div>
+        ''' % menu_class
+        # Icon and select marker are on li in legacy mode
+        menu_item_wrap = '''<li %(selected)s class="%(class)s">
+        <a href="%(url)s" %(selected)s %(attr)s title="%(hover)s">
+        %(title)s</a></li>
+        '''
+    else:
+        menu_wrap = '''%s
+        '''
+        if display != ICONS_ONLY:
+            menu_wrap = '''
+    <div class="%s slider-middle col-12 align-self-center">
+        %%s
+    </div>
+        ''' % menu_class
+        # Icon and selected marker are on span in legacy mode
+        menu_item_wrap = '''<a href="%(url)s" %(selected)s %(attr)s title="%(hover)s">
+        <span %(selected)s class="%(class)s"></span>%(title)s</a>
+        '''
+    menu_lines = ''
     for name in menu_order:
         spec = menu_items.get(name, None)
         if not spec:
             menu_lines += '   <!-- No such menu item: "%s" !!! -->\n' % name
+            continue
+        if not legacy_ui and spec.get('legacy_only', False):
+            menu_lines += '   <!-- Skip built-in %s for modern UI -->\n' % name
             continue
         # Override VGrids label now we have configuration
         if name == 'vgrids':
@@ -174,32 +232,238 @@ def render_menu(configuration, menu_class='navmenu',
         if name == 'seafile':
             spec['url'] = configuration.user_seahub_url
 
-        target = 'target="%s"' % spec.get('target', '')
-        selected = ''
+        menu_entry = {}
+        menu_entry.update(spec)
+        # Force set all required values
+        for name in ('url', 'selected', 'attr', 'hover', 'class', 'title'):
+            menu_entry[name] = spec.get(name, '')
+        menu_entry['target'] = 'target="%s"' % spec.get('target', '')
         if os.path.splitext(spec['url'])[0] == current_element:
-            selected = ' class="selected" '
-        menu_lines += '   <li %s class="%s"><a href="%s" %s %s title="%s">%s</a></li>\n'\
-            % (spec.get('attr', ''), spec['class'], spec['url'], selected,
-               target, spec.get('hover', ''), spec['title'])
+            menu_entry['selected'] = 'id="selected"'
+            menu_entry['class'] += " selected"
+        # Optional display of icons or text only
+        if display == ICONS_ONLY:
+            menu_entry['title'] = ''
+        elif display == TEXT_ONLY:
+            menu_entry['class'] += " hidden"
 
-    menu_lines += ' </ul>\n'
-    menu_lines += '</div>\n'
+        # menu_entry = '   <a href="%s" %s %s title="%s">%s%s</a>'\
+        #    % (spec['url'], spec.get('attr', ''), target,
+        #       spec.get('hover', ''), item_icon, item_text)
 
-    return menu_lines
+        menu_lines += menu_item_wrap % menu_entry
+
+    return menu_wrap % menu_lines
 
 
-def get_css_helpers(configuration):
+def render_apps(configuration, title_entry, active_menu):
+    """Render the apps selection contents using configuration"""
+
+    user_settings = title_entry.get('user_settings', {})
+    legacy_ui = legacy_user_interface(configuration, user_settings)
+    raw_order = []
+    raw_order += active_menu
+    app_order = []
+    # Remove duplicates
+    for name in raw_order:
+        if not name in app_order:
+            app_order.append(name)
+
+    app_lines = '''
+                                       <div class="home-page__content col-12">
+						<h2>Your apps & app-setup</h2>
+						<div class="app-row row app-grid">
+        '''
+
+    for name in app_order:
+        spec = menu_items.get(name, None)
+        if not spec:
+            app_lines += '   <!-- No such menu item: "%s" !!! -->\n' % name
+            continue
+        # Skip built-in ones if on modern UI
+        if not legacy_ui and spec.get('legacy_only', False):
+            app_lines += '   <!-- Skip built-in %s for modern UI -->\n' % name
+            continue
+        # Override VGrids label now we have configuration
+        if name == 'vgrids':
+            title = spec['title'].replace('VGrid',
+                                          configuration.site_vgrid_label)
+            hover = spec['hover'].replace('VGrid',
+                                          configuration.site_vgrid_label)
+            spec['title'] = title
+            spec['hover'] = hover
+        spec['hover'] = spec.get('hover', '')
+        app_lines += '''
+							<div class="col-lg-2 app-cell">
+								<div class="app__btn col-12">
+									<a href="%(url)s" title="%(hover)s"><span class="fas %(class)s"></span><h3>%(title)s</h3></a>
+								</div>
+							</div>
+        ''' % spec
+    app_lines += '''
+							<div class="col-lg-2">
+								<div class="add-app__btn col-12" onclick="addApp()">
+									<a href="#"><span class="fas fa-plus"></span><h3>Add</h3></a>
+								</div>
+							</div>
+
+						</div>
+					</div>
+'''
+
+    return app_lines
+
+
+def render_body_start(configuration, script_map={}, user_settings={}):
+    """Render the default body init for specific UI configuration and insert
+    provided body additions like classes and meta.
+    """
+    if legacy_user_interface(configuration, user_settings):
+        body_id = 'legacy-ui-body'
+    else:
+        body_id = 'modern-ui-body'
+    # NOTE: we bail out if script_map['body'] tries to set id, too
+    body_extras = script_map.get('body', '')
+    if body_extras.find('id=') != -1:
+        configuration.logger.error("Body cannot have a 2nd 'id'!")
+        body_extras = ''
+    return '''
+<body id="%s" %s>
+    ''' % (body_id, body_extras)
+
+
+def render_body_end(configuration, user_settings={}):
+    """Render the default body termination"""
+    return """</body>
+    """
+
+
+def render_before_menu(configuration, script_map={}, user_settings={}):
+    """Render the default structure from body and until the navigation menu
+    entries using the user provided script_map for further customization.
+    """
+    if legacy_user_interface(configuration, user_settings):
+        html = '''
+<div id="topspace">
+</div>
+<div id="toplogo">
+<div id="toplogoleft">
+<img src="%s" id="logoimageleft" alt="site logo left"/>
+</div>
+<div id="toplogocenter">
+<span id="logotitle">
+%s
+</span>
+</div>
+<div id="toplogoright">
+<img src="%s" id="logoimageright" alt="site logo right"/>
+</div>
+</div>
+        ''' % (configuration.site_logo_left, configuration.site_logo_center,
+               configuration.site_logo_right)
+    else:
+        html = '''
+<!--Push notifications-->
+  <div id="sitestatus-popup" class="toast" data-autohide="false">
+    <div id="sitestatus-top" class="toast-header">
+      <div id="sitestatus-title" class="toast-title">
+        <!-- Filled by AJAX -->
+      </div>
+      <div id="sitestatus-close" class="">
+      <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
+      </div>
+    </div>
+    <div id="sitestatus-content" class="toast-body">
+      <!-- Filled by AJAX -->
+    </div>
+    <div id="sitestatus-more" class="toast-body">
+      <a target=_blank href="%(status_url)s">More details ...</a>
+    </div>
+  </div>
+  ''' % {'short_title': configuration.short_title,
+         'status_url': configuration.site_status_url}
+
+        html += '''
+
+<!--HEADER INFO AREA-->
+<nav id="headerNav">
+	<ul class="nav__items">
+		<li class="nav__item">
+			<a id="supportInfoButton" href="#" class="nav__label" onclick="toggle_info(\'supportInfo\')">Support</a>
+		</li>
+		<li class="nav__item nav_item--expanded">
+			<a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info(\'aboutInfo\')">About</a>
+		</li>
+                <li id="sitefeedback-button" class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden"></li>
+                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-info-circle custom-show" onclick="show_message()"></li>
+	</ul>
+</nav>
+
+<div id="infoArea" class="infoArea-container">
+</div>
+
+<div id="supportInfo" class="infoArea-container">
+    <span class="far fa-times-circle close_btn" onclick="toggle_info(\'supportInfo\')"></span>
+	<div class="popup container">
+		<div class="row">
+                    <div id="quickstart-content" class="col-lg-12">
+                    <!-- Filled by AJAX -->
+                    </div>
+
+                    <div id="faq-content" class="col-lg-12">
+                    <!-- Filled by AJAX -->
+                    </div>
+
+                    <div class="vertical-spacer"></div>
+		</div>
+	</div>
+</div>
+
+<div id="aboutInfo" class="infoArea-container">
+<span class="far fa-times-circle close_btn" onclick="toggle_info(\'aboutInfo\')"></span>
+	<div class="popup container">
+		<div class="row">
+			<div id="about-content" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        </div>
+
+                        <div class="vertical-spacer"></div>
+		</div>
+	</div>
+</div>
+    '''
+
+    return html
+
+
+def render_after_menu(configuration, user_settings={}):
+    """Render the default structure after the navigation menu and until the end
+    of the page.
+    """
+    # TODO: move slide out and user menu here for UI V3?
+    return ''
+
+
+def get_css_helpers(configuration, user_settings):
     """Returns a dictionary of string expansion helpers for css"""
-    return {'base_prefix': os.path.join(configuration.site_images, 'css'),
-            'advanced_prefix': os.path.join(configuration.site_images, 'css'),
-            'skin_prefix': configuration.site_skin_base}
+    skin_base = configuration.site_skin_base
+    if legacy_user_interface(configuration, user_settings):
+        base_path = configuration.site_assets
+        ui_suffix = 'V2'
+    else:
+        base_path = configuration.site_assets
+        ui_suffix = 'V3'
+    return {'base_prefix': os.path.join(base_path, 'css', ui_suffix),
+            'advanced_prefix': os.path.join(base_path, 'css', ui_suffix),
+            'skin_prefix': skin_base, 'ui_suffix': ui_suffix}
 
 
-def extend_styles(configuration, styles, base=[], advanced=[], skin=[]):
+def extend_styles(configuration, styles, base=[], advanced=[], skin=[],
+                  user_settings={}):
     """Appends any stylesheets specified in the base, advanced and skin lists
     in the corresponding sections of the styles dictionary.
     """
-    css_helpers = get_css_helpers(configuration)
+    css_helpers = get_css_helpers(configuration, user_settings)
     for name in base:
         css_helpers['name'] = name
         styles['base'] += '''
@@ -217,55 +481,134 @@ def extend_styles(configuration, styles, base=[], advanced=[], skin=[]):
 ''' % css_helpers
 
 
-def base_styles(configuration, base=[], advanced=[], skin=[]):
+def base_styles(configuration, base=[], advanced=[], skin=[], user_settings={}):
     """Returns a dictionary of basic stylesheets for unthemed pages"""
-    css_helpers = get_css_helpers(configuration)
+    css_helpers = get_css_helpers(configuration, user_settings)
     styles = {'base': '', 'advanced': '', 'skin': ''}
-    extend_styles(configuration, styles, base, advanced, skin)
+    extend_styles(configuration, styles, base, advanced, skin, user_settings)
     return styles
 
 
-def themed_styles(configuration, base=[], advanced=[], skin=[]):
+def themed_styles(configuration, base=[], advanced=[], skin=[], user_settings={}):
     """Returns a dictionary of basic stylesheets for themed JQuery UI pages.
     Appends any stylesheets specified in the base, advanced and skin lists.
     """
-    css_helpers = get_css_helpers(configuration)
+    css_helpers = get_css_helpers(configuration, user_settings)
     styles = {'base': '''
-<link rel="stylesheet" type="text/css" href="%(base_prefix)s/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="%(base_prefix)s/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/assets/vendor/jquery-ui/css/jquery-ui.css" media="screen"/>
 ''' % css_helpers,
-              'advanced': '',
+              'ui_base': '',
+              'advanced': '''
+<link rel="stylesheet" type="text/css" href="%(base_prefix)s/jquery.managers.css" media="screen"/>
+              ''' % css_helpers,
               'skin': '''
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/core.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.custom.css" media="screen"/>
-''' % css_helpers
+''' % css_helpers,
+              'ui_skin': ''
               }
-    extend_styles(configuration, styles, base, advanced, skin)
+    if not legacy_user_interface(configuration, user_settings):
+        styles['ui_base'] += '''
+<!-- User interface version-specific setup -->
+<link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.css"> <!--load all styles -->
+
+<!-- UI V3 CSS -->
+<link rel="stylesheet" href="/assets/css/V3/ui-v3.css">
+<link rel="stylesheet" href="/assets/css/V3/style.css">
+<link rel="stylesheet" href="/assets/css/V3/nav.css">
+        '''
+        styles['ui_skin'] += '''
+<!-- UI V3-only skin overrides -->
+<link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-v3.custom.css" media="screen"/>
+        ''' % css_helpers
+
+    extend_styles(configuration, styles, base, advanced, skin, user_settings)
     return styles
 
 
+# TODO: eliminate this legacy wrapper now handled in init
 def jquery_ui_js(configuration, js_import, js_init, js_ready):
     """Fill standard javascript template for JQuery UI pages. The three args
     add custom extra javascript in the usual load, init and ready phase used
     with jquery pages.
     """
     return '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 %(js_import)s
+
 <script type="text/javascript" >
 
     %(js_init)s
-    
-    $(document).ready( function() {
+
+    $(document).ready(function() {
          //console.log("document ready handler");
          %(js_ready)s
     });
 
 </script>
 ''' % {'js_import': js_import, 'js_init': js_init, 'js_ready': js_ready}
+
+
+def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
+                   ready=[], user_settings={}, logged_in=True):
+    """Returns a dictionary of basic script snippets for themed JQuery UI
+    pages.
+    Appends any scripts specified in the base, advanced, skin, init and
+    ready lists for easy use in page head generation.
+    Theming and UI version is selected based on user_settings and logged_in
+    status. If not logged in the site default UI version is used.
+    """
+    scripts = {'base': [] + base, 'advanced': [] + advanced,
+               'skin': [] + skin, 'init': [] + init,
+               'ready': [] + ready}
+    scripts['base'].append('''
+<script type="text/javascript" src="/assets/vendor/jquery/js/jquery.js"></script>
+    ''')
+    scripts['skin'].append('''
+<script type="text/javascript" src="/assets/vendor/jquery-ui/js/jquery-ui.js"></script>
+    ''')
+    # Always init basic js logging
+    scripts['init'].append(console_log_javascript(script_wrap=False))
+
+    if not legacy_user_interface(configuration, user_settings):
+        scripts['base'].append('''
+<script src="/assets/vendor/jquery/js/popper.js"></script>
+<script src="/assets/vendor/jquery/js/jquery.validate.min.js"></script>
+        ''')
+        scripts['skin'].append('''
+<!-- UI V3 JS -->
+<script src="/assets/vendor/bootstrap/js/bootstrap.min.js"></script>
+<script src="/assets/js/V3/ui-v3_global.js"></script>
+<script src="/assets/js/V3/ui-v3_extra.js"></script>
+<script src="/assets/js/V3/ui-v3_dynamic.js"></script>
+        ''')
+        if logged_in:
+            quickstart_init = 'load_quickstart_dynamic'
+        else:
+            quickstart_init = 'load_quickstart_static'
+        quickstart_url = configuration.site_quickstart_snippet_url
+        faq_url = configuration.site_faq_snippet_url
+        about_url = configuration.site_about_snippet_url
+        # TODO: remote status page may require CORS headers
+        sitestatus_url = configuration.site_status_url
+        scripts['ready'].append('''
+            console.log("loading dynamic snippet content");
+            %s("%s");
+            load_faq("%s");
+            load_about("%s");
+            load_sitestatus("%s");
+            console.log("loaded dynamic content");
+        ''' % (quickstart_init, quickstart_url, faq_url, about_url,
+               sitestatus_url))
+    wrapped = {'base': '\n'.join(scripts['base']),
+               'advanced': '\n'.join(scripts['advanced']),
+               'skin': '\n'.join(scripts['skin']),
+               'init': '\n'.join(scripts['init']),
+               'ready': '\n'.join(scripts['ready'])
+               }
+    return wrapped
 
 
 def tablesorter_pager(configuration, id_prefix='', entry_name='files',
@@ -276,32 +619,32 @@ def tablesorter_pager(configuration, id_prefix='', entry_name='files',
     """Generate html pager for tablesorter table"""
     toolbar = '''
   <div>
-    <div class="toolbar">        
+    <div class="toolbar">
       <div class="pager" id="%spager">
       <form style="display: inline;" action="">
 %s
 ''' % (id_prefix, form_prepend)
-    toolbar += '''            
-        <img class="first icon" alt="first" src="/images/icons/arrow_left.png"/>
-        <img class="prev icon" alt="prev" src="/images/icons/arrow_left.png"/>
+    toolbar += '''
+        <img class="first icon" alt="first" src="/images/icons/arrow_first.svg"/>
+        <img class="prev icon" alt="prev" src="/images/icons/arrow_left.svg"/>
         <input class="pagedisplay" type="text" size=15 readonly="readonly" />
-        <img class="next icon" alt="next" src="/images/icons/arrow_right.png"/>
-        <img class="last icon" alt="last" src="/images/icons/arrow_right.png"/>
-        <select class="pagesize">
+        <img class="next icon" alt="next" src="/images/icons/arrow_right.svg"/>
+        <img class="last icon" alt="last" src="/images/icons/arrow_last.svg"/>
+        <select class="pagesize pager-select styled-select html-select">
 '''
     for value in page_entries:
         selected = ''
         if value == default_entries:
             selected = 'selected'
-        toolbar += '<option %s value="%d">%d %s per page</option>\n'\
-                   % (selected, value, value, entry_name)
+        toolbar += '<option %s value="%d">%d %s per page</option>\n' % \
+                   (selected, value, value, entry_name)
     toolbar += '''
         </select>
         %s
 ''' % form_append
     if enable_refresh_button:
         refresh_button = '''
-            <img class="pagerrefresh icon" alt="refresh" src="/images/icons/arrow_refresh.png"
+            <img class="pagerrefresh icon" alt="refresh" src="/images/icons/arrow_refresh.svg"
                 title="Refresh" />
                 '''
     else:
@@ -328,6 +671,7 @@ def tablesorter_js(configuration, tables_list=[], include_ajax=True):
     The optional include_ajax option can be used to disable the AJAX loading
     setup needed by most managers.
     """
+    # TODO: migrate to assets
     add_import = '''
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js">
@@ -356,6 +700,7 @@ def confirm_js(configuration, width=500):
     """Build standard confirm dialog dependency imports, init and ready
     snippets.
     """
+    # TODO: migrate to assets
     add_import = '''
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
     '''
@@ -378,7 +723,7 @@ def confirm_js(configuration, width=500):
 def confirm_html(configuration, rows=4, cols=40, cls="fillwidth padspace"):
     """Build standard js filled confirm overlay dialog html"""
     html = '''
-    <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+    <div id="confirm_dialog" title="Confirm">
         <div id="confirm_text"><!-- filled by js --></div>
         <textarea class="%s" cols="%s" rows="%s" id="confirm_input"
        style="display:none;"></textarea>
@@ -478,6 +823,7 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
     # callback must be a function
     if not callback:
         callback = 'function() { return false; }'
+    # TODO: migrate to assets
     add_import = '''
 <!--  Filemanager is only needed for fancy upload init wrapper -->
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
@@ -547,7 +893,7 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
     {% console.log("using download rel_path: "+rel_path); %}
     {% console.log("original delete URL: "+file.deleteUrl); %}
     {% function encodeName(str, match) { return "filename="+encodeURIComponent(match)+";files"; }  %}
-    {% if (file.deleteUrl != undefined) { file.deleteUrl = file.deleteUrl.replace(/filename\=(.+)\;files/, encodeName); console.debug("updated delete URL: "+file.deleteUrl); } %}    
+    {% if (file.deleteUrl != undefined) { file.deleteUrl = file.deleteUrl.replace(/filename\=(.+)\;files/, encodeName); console.debug("updated delete URL: "+file.deleteUrl); } %}
     <tr class="template-download fade">
         <td>
             <span class="preview">
@@ -685,10 +1031,133 @@ def fancy_upload_html(configuration):
     return html
 
 
+def save_settings_js(configuration):
+    """Build AJAX save settings/setup dependency imports, init and ready
+    snippets.
+    """
+    if configuration.site_enable_wsgi:
+        save_url = "/wsgi-bin/settingsaction.py"
+    else:
+        save_url = "/cgi-bin/settingsaction.py"
+    # TODO: migrate to assets
+    add_import = '''
+<!-- for AJAX submit form -->
+<script type="text/javascript" src="/images/js/jquery.form.js"></script>
+    '''
+    add_init = '''
+    function renderWorking(msg) {
+        return "<span class=\'spinner skin iconleftpad\'>"+msg+"</span>";
+    }
+    function renderSuccess(msg) {
+        return "<span class=\'ok skin iconleftpad\'>"+msg+"</span>";
+    }
+    function renderError(msg) {
+        return "<span class=\'error skin errortext iconleftpad\'>"+msg+"</span>";
+    }
+
+    var saved = false;
+    var statusMsg = "";
+    var errorMsg = "";
+
+    var okSaveDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
+                       minWidth: 600, width: "auto", autoOpen: false, closeOnEscape: true,
+                       modal: true};
+
+    console.info("submit form serialized: "+$(".save_settings").serialize());
+    var options = {
+                   url: "%(save_url)s?output_format=json",
+                   dataType: "json",
+                   type: "POST",
+                   beforeSubmit: function() {
+                       $(".savestatus").html(renderWorking("Saving ..."));
+                       $(".savestatus span").fadeIn(200);
+                   },
+                   success: function(responseObject, statusText) {
+                       console.log("verify post response: "+statusText);
+                       for (var i=0; i<(responseObject.length); i++) {
+                           if(responseObject[i]["object_type"] === "text") {
+                               statusMsg = responseObject[i]["text"];
+                               if (statusMsg.indexOf("Saved ") !== -1) {
+                                   console.debug(
+                                            "Save success: "+statusMsg);
+                                            saved = true;
+                                            /* strip trailing colon */
+                                            statusMsg = statusMsg.replace(
+                                                ":", "");
+                                   break;
+                               } else if (statusMsg.indexOf("Input ") !== -1) {
+                                   console.error(
+                                             "Save failure: "+statusMsg);
+                                   break;
+                               } else {
+                                   console.debug(
+                                             "ignoring other text entry: "+statusMsg);
+                               }
+                           }
+                       }
+                       if (saved) {
+                           $(".savestatus").html(renderSuccess(statusMsg));
+                           $(".savestatus span").fadeIn(200);
+                           setTimeout(function() { $(".savestatus span").fadeOut(3000);
+                                                 }, 1000);
+                           if (statusMsg.indexOf("duplicati") >= 0) {
+                               console.info(
+                                   "force reload for duplicati to update backup sets");
+                               setTimeout(function() {
+                                   $(".savestatus").html(renderWorking("refreshing ..."));
+                                   $(".savestatus span").fadeIn(200);
+                               }, 4000);
+                               setTimeout(function() { location.reload(); }, 5000);
+                           } else if (location.href.indexOf("home") >= 0) {
+                               console.info("force reload for apps to update");
+                               setTimeout(function() {
+                                   $(".savestatus").html(renderWorking("refreshing ..."));
+                                   $(".savestatus span").fadeIn(200);
+                               }, 5000);
+                               setTimeout(function() { location.reload(); }, 6000);
+                           }
+
+                       } else {
+                           errorMsg = "Save failed - please retry";
+                           console.error(errorMsg);
+                           $(".savestatus").html(renderError(errorMsg));
+                           $(".savestatus span").fadeIn(100);
+                       }
+                   },
+                   error: function(jqXHR, textStatus, errorThrown) {
+                       errorMsg = "background save failed: ";
+                       errorMsg += textStatus;
+                       console.error(errorMsg);
+                       console.error("error thrown: "+ errorThrown);
+                       $(".savestatus").html(renderError(errorMsg));
+                       $(".savestatus span").fadeIn(100);
+                   }
+               };
+    /* Prevent enter in fields submitting directly to backend */
+    $(".save_settings").on("keypress", function(e) {
+            return e.which !== 13;
+            });
+    $(".save_settings").ajaxForm(options);
+    $(".save_settings").submit();
+    console.debug("fired ajaxform");
+    ''' % {'save_url': save_url}
+    add_ready = ''
+    return (add_import, add_init, add_ready)
+
+
+def save_settings_html(configuration):
+    """Build standard html save settings/setup content"""
+    html = """
+<div class='savestatus'><!-- filled by script --></div>
+    """
+    return html
+
+
 def twofactor_wizard_js(configuration):
     """Build standard twofactor wizard dependency imports, init and ready
     snippets.
     """
+    # TODO: migrate to assets
     add_import = '''
 <!-- for AJAX submit token verification -->
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
@@ -731,7 +1200,7 @@ def twofactor_wizard_js(configuration):
                 acceptedOTP = false;
                 try {
                     //console.log("submit form: "+$("#otp_token_form"));
-                    console.log("submit form with token: "+$("#otp_token_form [name=token]").val());
+                    //console.log("submit form with token: "+$("#otp_token_form [name=token]").val());
                     //console.log("submit form serialized: "+$("#otp_token_form").serialize());
                     var options = {
                         url: verify_url,
@@ -743,25 +1212,28 @@ def twofactor_wizard_js(configuration):
                                 if(responseObject[i]["object_type"] === "text") {
                                     statusMsg = responseObject[i]["text"];
                                     if (statusMsg.indexOf("Correct token") !== -1) {
-                                        console.log("Verify success: "+statusMsg);
+                                        console.debug(
+                                            "Verify success: "+statusMsg);
                                         acceptedOTP = true;
                                         break;
                                     } else if (statusMsg.indexOf("Incorrect token") !== -1) {
-                                        console.log("Verify failure: "+statusMsg);
+                                        console.error(
+                                            "Verify failure: "+statusMsg);
                                         break;
                                     } else {
-                                        console.debug("ignoring other text entry: "+statusMsg);
+                                        console.debug(
+                                            "ignoring other text entry: "+statusMsg);
                                     }
                                 }
                             }
                             if (acceptedOTP) {
                                 $("#twofactorstatus").html(renderSuccess(statusMsg));
-                                console.log("accepted - close verify popup");
+                                console.debug("accepted - close verify popup");
                                 setTimeout(function() {$(dialog_handle).dialog("close")},
                                            2000);
                             } else {
                                 errorMsg = "Wrong token - please retry or check client";
-                                console.log(errorMsg);
+                                console.error(errorMsg);
                                 $("#twofactorstatus").html(renderError(errorMsg));
                             }
                         },
@@ -769,34 +1241,34 @@ def twofactor_wizard_js(configuration):
                             errorMsg = "OTP background check failed: ";
                             errorMsg += textStatus;
                             $("#twofactorstatus").html(renderError(errorMsg));
-                            console.log(errorMsg);
-                            console.log("error thrown: "+ errorThrown);
+                            console.error(errorMsg);
+                            console.error("error thrown: "+ errorThrown);
                         }
                     }
                     $("#otp_token_form").ajaxForm(options);
                     $("#otp_token_form").submit();
                 } catch(err) {
-                    console.log("ajaxform error: "+ err);
+                    console.error("ajaxform error: "+ err);
                 }
-                //console.log("fired ajaxform");                                    
+                //console.debug("fired ajaxform");
             },
             Cancel: function() { $(this).dialog("close");}
         },
         //width: 480, minHeight: 640,
-        autoOpen: false, 
+        autoOpen: false,
         closeOnEscape: true, modal: true
     };
 
     function checkOTPVerified() {
-        //console.log("in checkOTPVerified: "+ acceptedOTP);
+        //console.debug("in checkOTPVerified: "+ acceptedOTP);
         if (acceptedOTP) {
-            //console.log("checkOTPVerified passed");
+            //console.debug("checkOTPVerified passed");
             return true;
         } else {
-            //console.log("checkOTPVerified failed");
+            console.error("checkOTPVerified failed!");
             $("#warning_dialog").dialog(okOTPDialog);
             $("#warning_dialog").html("<span class=\'warn leftpad\'>Please use the verify link to confirm correct client setup first!</span>");
-            $("#warning_dialog").dialog("open");            
+            $("#warning_dialog").dialog("open");
             return false;
         }
     }
@@ -829,7 +1301,7 @@ def twofactor_wizard_js(configuration):
           $("#"+elem_id).html("<span id=\'otp_text\'>"+otp_key+"</span>");
     }
     function verifyClientToken(dialog_id, activate_id, verify_url) {
-        //console.log("open verify in popup");
+        //console.debug("open verify in popup");
         // Open a dialog to let user verify OTP and only then activate button
         $("#"+dialog_id).dialog(verifyOTPDialog);
         /* Pass activate_id to function implicitly called without arguments */
@@ -847,7 +1319,7 @@ def twofactor_wizard_js(configuration):
         /* Resize to actual dialog contents */
         $("#"+dialog_id).dialog("option", "width", "auto");
         $("#"+dialog_id).dialog("option", "height", "auto");
-        //console.log("opened verify popup");
+        //console.debug("opened verify popup");
     }
 '''
     add_ready = ''
@@ -862,16 +1334,16 @@ def twofactor_wizard_html(configuration):
    class='centertext hidden'><!-- filled by script --></div>
 <div id='otp_secret_dialog' title='TOTP Secret to Import in Your App'
    class='hidden'><!-- filled by script --></div>
-We %(demand_twofactor)s 2-factor authentication on %(site)s for greater
+<p>We %(demand_twofactor)s 2-factor authentication on %(site)s for greater
 password login security.
 In short it means that you enter a generated single-use <em>token</em> from
 e.g. your phone or tablet along with your usual login. This combination makes
 account abuse <b>much</b> harder, because even if your password gets stolen,
-it can't be used without your device.
+it can't be used without your device.</p>
 </td></tr>
 <tr class='otp_intro'><td>
-Preparing and enabling 2-factor authentication for your login is done in four
-steps.
+<p>Preparing and enabling 2-factor authentication for your login is done in four
+steps.</p>
 </td></tr>
 <tr class='otp_intro switch_button'><td>
 <button type=button class='ui-button'
@@ -879,15 +1351,15 @@ steps.
 Okay, let's go!</button>
 </td></tr>
 <tr class='otp_install hidden'><td>
-<h5>1. Install an Authenticator App</h5>
-You first need to install a TOTP authenticator client like
+<h3>1. Install an Authenticator App</h3>
+<p>You first need to install a TOTP authenticator client like
 <a href='https://en.wikipedia.org/wiki/Google_Authenticator' target='_blank'>
 Google Authenticator</a>,
 <a href='https://freeotp.github.io/' target='_blank'>FreeOTP</a>,
 <a href='https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview' target='_blank'>NetIQ Advanced Authentication</a> or
 <a href='https://authy.com/download/' target='_blank'>Authy</a> on your phone
 or tablet. You can find and install either of them on your device through your
-usual app store.<br/>
+usual app store.</p>
 </td></tr>
 <tr class='otp_install switch_button hidden'><td>
 <button type=button class='ui-button'
@@ -895,19 +1367,19 @@ usual app store.<br/>
 I've got it installed!</button>
 </td></tr>
 <tr class='otp_import hidden'><td>
-<h5>2. Import Secret in Authenticator App</h5>
-Open the chosen authenticator app and import your personal 2-factor secret in one of two ways:<br />
-<ol class='dbllineheight' type='A'>
-<li><span id='otp_qr_link' class='fakelink infolink iconspace'
+<h3>2. Import Secret in Authenticator App</h3>
+<p>Open the chosen authenticator app and import your personal 2-factor secret in one of two ways:</p>
+<ul class='dbllineheight' type='A'>
+<li><span id='otp_qr_link' class='fakelink iconspace'
   onClick='showQRCodeOTPDialog(\"otp_secret_dialog\", \"%(otp_uri)s\");'>
 Scan your personal QR code</span></li>
-<li><span id='otp_key_link' class='fakelink infolink iconspace'
+<li><span id='otp_key_link' class='fakelink iconspace'
   onClick='showTextOTPDialog(\"otp_secret_dialog\", \"<p><b>Secret</b>: %(b32_key)s</p><p><b>Interval</b>: %(otp_interval)s</p>\");'>
 Enter your personal key</span></li>
-</ol>
-The latter is usually more cumbersome but may be needed if your app or smart
+</ul>
+<p><br/>The latter is usually more cumbersome but may be needed if your app or smart
 device doesn't support scanning QR codes. Most apps automatically add service
-and account info on QR code scanning, but otherwise you can manually enter it.
+and account info on QR code scanning, but otherwise you can manually enter it.</p>
 </td></tr>
 <tr class='otp_import switch_button hidden'><td>
 <button type=button class='ui-button'
@@ -915,12 +1387,12 @@ and account info on QR code scanning, but otherwise you can manually enter it.
 Yes, I've imported it!</button>
 </td></tr>
 <tr class='otp_verify hidden'><td>
-<h5>3. Verify the Authenticator App Setup</h5>
-Please <span id='otp_verify_link' class='fakelink infolink'
+<h3>3. Verify the Authenticator App Setup</h3>
+<p>Please <span id='otp_verify_link' class='fakelink infolink'
  onClick='verifyClientToken(\"otp_verify_dialog\", \"otp_verified_button\", \"%(check_url)s\");'>
 verify</span> that your authenticator app displays correct new tokens every 30
 seconds before you actually enable 2-factor authentication. Otherwise you could
-end up locking yourself out once you enable 2-factor authentication!<br/>
+end up locking yourself out once you enable 2-factor authentication!<p/>
 </td></tr>
 <tr class='otp_verify switch_button hidden'><td>
 <button type=button id='otp_verified_button' class='ui-button'
@@ -967,28 +1439,59 @@ def twofactor_token_html(configuration):
     return html
 
 
-def get_cgi_html_preamble(
+def openid_page_template(configuration, head_extras):
+    """Generate a general page template for filling and use in grid_openid.
+    Should render in a way similar to logged in pages just with a few dynamic
+    features disabled.
+    """
+    theme_helpers = themed_styles(configuration)
+    script_helpers = themed_scripts(configuration, logged_in=False)
+    script_helpers['body'] = 'class="staticpage openid"'
+    page_title = '%s OpenID Server' % configuration.short_title
+    html = get_xgi_html_header(configuration, page_title, '', True, '',
+                               theme_helpers, script_helpers, frame=True,
+                               menu=False, head_extras=head_extras)
+    html += '''
+    <div class="container">
+        <div id="content" class="staticpage">
+            <div class="banner staticpage">
+                <div class="container righttext staticpage">
+                    You are %(user_link)s
+                </div>
+            </div>
+            <div class="vertical-spacer"></div>
+            %(body)s
+        </div>
+    </div>
+    '''
+    html += get_xgi_html_footer(configuration, ' ', True)
+    return html
+
+
+def get_xgi_html_preamble(
     configuration,
     title,
     header,
     meta='',
-    base_styles='',
-    advanced_styles='',
-    skin_styles='',
-    scripts='',
+    style_map={},
+    script_map={},
     widgets=True,
     userstyle=True,
+    user_settings={},
     user_widgets={},
+    user_profile={},
+    head_extras=''
 ):
     """Return the html tags to mark the beginning of a page."""
 
-    user_styles = ''
-    user_scripts = ''
+    user_styles, user_scripts = '', ''
     if widgets:
         script_deps = user_widgets.get('SITE_SCRIPT_DEPS', [''])
+        core_scripts = script_map['base'] + script_map['advanced'] + \
+            script_map['skin']
         for dep in script_deps:
             # Avoid reloading already included scripts
-            if dep and scripts.find(dep) == -1:
+            if dep and core_scripts.find(dep) == -1:
                 if dep.endswith('.js'):
                     user_scripts += '''
 <script type="text/javascript" src="/images/js/%s"></script>
@@ -1014,66 +1517,104 @@ def get_cgi_html_preamble(
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <!-- page specific meta tags -->
 %s
 
 <!-- site default style -->
 <link rel="stylesheet" type="text/css" href="%s" media="screen"/>
 
-<!-- site static skin style -->
-<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
-
 <!-- base page styles -->
 %s
-<!-- advanced page styles -->
 %s
+
+<!-- specific page styles -->
+%s
+%s
+
 <!-- skin page styles -->
+%s
+%s
+
+<!-- override with any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
 %s
 
 <!-- begin user supplied style dependencies -->
 %s
 <!-- end user supplied style dependencies -->
 
-<!-- override with any site-specific styles -->
-<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+
+<!-- Set site favicon -->
+<link rel="icon" type="image/vnd.microsoft.icon" href="%s"/>
+
+
+<!-- base page scripts -->
+%s
 %s
 
-<link rel="icon" type="image/vnd.microsoft.icon" href="%s"/>
+<!-- skin page scripts -->
+%s
+%s
 
 <!-- specific page scripts -->
 %s
+%s
+
+<!-- general script init and ready handlers -->
+<script type="text/javascript" >
+    %s
+    $(document).ready(function() {
+         //console.log("document ready handler");
+         %s
+    });
+</script>
 
 <!-- begin user supplied script dependencies -->
 %s
 <!-- end user supplied script dependencies -->
+
+
+    ''' % (meta, configuration.site_default_css, style_map.get('base', ''),
+           style_map.get('ui_base', ''), style_map.get('page', ''),
+           style_map.get('advanced', ''), style_map.get('skin', ''),
+           style_map.get('ui_skin', ''), configuration.site_custom_css,
+           user_styles, style_overrides, configuration.site_fav_icon,
+           script_map.get('base', ''), script_map.get('ui_base', ''),
+           script_map.get('skin', ''), script_map.get('ui_skin', ''),
+           script_map.get('page', ''), script_map.get('advanced', ''),
+           script_map.get('init', ''), script_map.get('ready', ''),
+           user_scripts)
+
+    out += '''
 <title>
 %s
 </title>
+%s
 </head>
-''' % (meta, configuration.site_default_css, configuration.site_static_css,
-       base_styles, advanced_styles, skin_styles, user_styles,
-       configuration.site_custom_css, style_overrides,
-       configuration.site_fav_icon, scripts, user_scripts, title)
+    ''' % (title, head_extras)
     return out
 
 
-def get_cgi_html_header(
+def get_xgi_html_header(
     configuration,
     title,
     header,
     html=True,
     meta='',
-    base_styles='',
-    advanced_styles='',
-    skin_styles='',
-    scripts='',
-    bodyfunctions='',
+    style_map={},
+    script_map={},
+    frame=True,
     menu=True,
     widgets=True,
     userstyle=True,
     base_menu=[],
     user_menu=[],
+    user_settings={},
     user_widgets={},
+    user_profile={},
+    head_extras=''
 ):
     """Return the html tags to mark the beginning of a page."""
 
@@ -1104,65 +1645,206 @@ def get_cgi_html_header(
 <!-- end user supplied pre content widgets -->
 </div>''' % pre_content
 
-    out = get_cgi_html_preamble(configuration,
+    out = get_xgi_html_preamble(configuration,
                                 title,
                                 header,
                                 meta,
-                                base_styles,
-                                advanced_styles,
-                                skin_styles,
-                                scripts,
+                                style_map,
+                                script_map,
                                 widgets,
                                 userstyle,
+                                user_settings,
                                 user_widgets,
+                                user_profile,
+                                head_extras,
                                 )
-    out += '''
-<body %s>
-<div id="topspace">
-</div>
-<div id="toplogo">
-<div id="toplogoleft">
-<img src="%s" id="logoimageleft" alt="site logo left"/>
-</div>
-<div id="toplogocenter">
-<span id="logotitle">
-%s
-</span>
-</div>
-<div id="toplogoright">
-<img src="%s" id="logoimageright" alt="site logo right"/>
-</div>
-</div>
-''' % (bodyfunctions, configuration.site_logo_left,
-       configuration.site_logo_center, configuration.site_logo_right)
-    menu_lines = ''
-    if menu:
-        maximize = ''
-        current_page = os.path.splitext(os.path.basename(requested_page()))[0]
-        menu_lines = render_menu(configuration, 'navmenu', current_page,
-                                 base_menu, user_menu)
-        out += '''
-<div class="menublock">
-%s
-%s
-%s
-</div>
-''' % (user_pre_menu, menu_lines, user_post_menu)
+
+    out += render_body_start(configuration, script_map, user_settings)
+    out += render_before_menu(configuration, script_map, user_settings)
+
+    # User account menu and slider only enabled along with menu
+    menu_slider = ''
+    account_menu = ''
+    # Maximize is used to toggle menu spacing
+    maximize = ''
+    if frame:
+        maximize += 'frame '
     else:
-        maximize = 'id="nomenu"'
+        maximize += 'noframe '
+    if menu:
+        maximize += 'menu '
+    else:
+        maximize += 'nomenu '
+
+    if frame:
+        current_page = os.path.splitext(os.path.basename(requested_page()))[0]
+
+        menu_helpers = {'short_title': configuration.short_title,
+                        'icon_lines': '', 'text_lines': '', 'menu_lines': '',
+                        'home_url': ''}
+        if menu:
+            menu_helpers['home_url'] = 'home.py'
+
+        if legacy_user_interface(configuration, user_settings):
+            out += '''
+<!--Legacy nav side bar -->
+<nav id="sideBar" >
+<div class="menublock sidebar-container row">
+'''
+
+            if menu:
+                out += '''
+%s
+                ''' % user_pre_menu
+                # Render classic menu
+                menu_helpers['menu_lines'] = render_menu(configuration, 'navmenu', current_page,
+                                                         base_menu, user_menu, user_settings)
+                out += '''
+                %(menu_lines)s
+                ''' % menu_helpers
+                out += '''
+%s
+                ''' % user_post_menu
+
+            out += '''
+</div>
+</nav>
+            '''
+        else:
+            # Render side bar with optional nav menu and user profile access
+            out += '''
+<!--New nav side bar -->
+<nav id="sideBar" >
+	<!--SIDEBAR-->
+	<div class="sidebar-container row">
+		<div class="sidebar-header col-12 align-self-start">
+			<a id="logoMenu" href="%(home_url)s">
+				<div class="home-nav-logo"></div>
+			</a>
+		</div>
+            ''' % menu_helpers
+            if menu:
+                out += '''
+                %s
+                ''' % user_pre_menu
+                # Render apps icons with slider menu and user profile access
+                menu_helpers['icon_lines'] = render_menu(configuration, 'navmenu', current_page,
+                                                         base_menu, user_menu, user_settings, display=ICONS_ONLY)
+                menu_helpers['text_lines'] = render_menu(configuration, 'navmenu', current_page,
+                                                         base_menu, user_menu, user_settings, display=TEXT_ONLY)
+                out += '''
+
+		<div class="sidebar-middle col-12 align-self-center">
+
+                    %(icon_lines)s
+
+                    <div id="hamBtn" class="hamburger hamburger--vortex" onclick="hamburgerMenuToggle()">
+                        <div class="hamburger-box">
+                            <!--<div class="hamburger-inner"></div>-->
+                            <h3>...</h3>
+                       </div>
+                       <!--<div id="menuTxt">Menu</div>-->
+
+                    </div>
+		</div>
+		<div class="col-12 align-self-end home-nav-user__container">
+		    <div id="userMenuButton" class="fas fa-user home-nav-user" onclick="userMenuToggle()" title="Your personal settings for %(short_title)s"></div>
+		</div>
+
+                ''' % menu_helpers
+
+                menu_slider += '''
+                <div id="hamMenu" class="slidernav-container">
+
+                    <div class="slider-container__inner row">
+			<div class="slider-header col-12 align-self-start">
+				<h2>%(short_title)s</h2>
+			</div>
+			<div class="slider-middle col-12 align-self-center">
+                            %(text_lines)s
+			</div>
+  			<div class="slider-footer col-12 align-self-end home-nav-user__inner">
+                            <a onclick="userMenuToggle()">User</a>
+			</div>
+		    </div>
+                </div>
+                ''' % menu_helpers
+
+                profile_helper = {'full_name': 'Unknown User',
+                                  'profile_image': '/images/anonymous.svg',
+                                  'email_address': '',
+                                  'help_url': configuration.site_external_doc}
+                profile_helper.update(user_profile)
+                account_menu = '''
+<!--USER ACCOUNT MENU POPUP - HIDDEN-->
+<div id="userMenu" class="popup-container row">
+    <div class="popup-header col-12">
+        <div class="row">
+            <div class="col-3">
+                <div class="user-avatar">
+                    <img class="avatar-image" src="%(profile_image)s" alt="profile picture" />
+                </div>
+            </div>
+            <div class="col-9">
+                %(full_name)s
+                <button class="avatar-link" onclick="window.location.href='settings.py'">Change photo</button>
+            </div>
+        </div>
+    </div>
+    <div class="popup-middle col-12">
+        <a class="user-menu__item" href="home.py">Home</a>
+        <a class="user-menu__item" href="settings.py">Settings</a>
+        <a class="user-menu__item" href="setup.py">Setup</a>
+        <a class="user-menu__item" href="%(help_url)s">Help</a>
+    </div>
+    <div class="popup-footer col-12">
+        <a href="logout.py">Sign Out</a>
+    </div>
+</div>
+                ''' % profile_helper
+
+                out += '''
+        %s
+                ''' % user_post_menu
+
+            out += '''
+	</div>
+</nav>
+
+%s
+
+%s
+            ''' % (menu_slider, account_menu)
+    else:
+        # No frame
+        out += '''
+<!-- No frame or menu on this page --->
+'''
+
+    out += render_after_menu(configuration, user_settings)
+
     out += '''
-<div class="contentblock" %s>
+
+<section id="globalContainer" class="global-container %s">
+<div class="wallpaper"></div>
+
 %s
 <div id="migheader">
 %s
 </div>
+
+
+
+
+
 <div id="content" class="i18n" lang="en">
 ''' % (maximize, user_pre_content, header)
 
     return out
 
 
-def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_widgets={}):
+def get_xgi_html_footer(configuration, footer='', html=True, user_settings={},
+                        widgets=True, user_widgets={}):
     """Return the html tags to mark the end of a page. If a footer string
     is supplied it is inserted at the bottom of the page.
     """
@@ -1184,9 +1866,15 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
     out = '''
 </div>
 %s
-</div>''' % user_post_content
+''' % user_post_content
+
     out += footer
     out += '''
+</section>
+    '''
+    if legacy_user_interface(configuration, user_settings):
+        out += '''
+
 <div id="bottomlogo">
 <div id="bottomlogoleft">
 <div id="support">
@@ -1213,11 +1901,17 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
 </div>
 <div id="bottomspace">
 </div>
-</body>
+        ''' % (configuration.site_support_image,
+               configuration.site_support_text,
+               configuration.site_privacy_image,
+               configuration.site_privacy_text,
+               configuration.site_credits_image,
+               configuration.site_credits_text)
+
+    out += render_body_end(configuration, user_settings)
+    out += '''
 </html>
-''' % (configuration.site_support_image, configuration.site_support_text,
-       configuration.site_privacy_image, configuration.site_privacy_text,
-       configuration.site_credits_image, configuration.site_credits_text)
+    '''
     return out
 
 
@@ -1248,23 +1942,25 @@ def html_post_helper(function_name, destination, fields):
     html += '<form id="%sform" method="post" action="%s">\n' % (function_name,
                                                                 destination)
     for (key, val) in fields.items():
-        html += '<input id="%s%sfield" type="hidden" name="%s" value="%s" />\n'\
-                % (function_name, key, key, val)
+        html += '<input id="%s%sfield" type="hidden" name="%s" value="%s" />\n' % \
+                (function_name, key, key, val)
     html += '</form>\n'
     return html
 
 
-def console_log_javascript():
+def console_log_javascript(script_wrap=True):
     """Javascript console logging: just include this and set cur_log_level before
     calling init_log() to get console.debug/info/warn/error helpers.
     """
-    return '''
-<script type="text/javascript" >
+    log_init = []
+    if script_wrap:
+        log_init.append('<script type="text/javascript" >')
+    log_init.append('''
 /* default console log verbosity defined here - change before calling init_log
 to override. */
 var log_level = "info";
 var all_log_levels = {"none": 0, "error": 1, "warn": 2, "info": 3, "debug": 4};
-/* 
+/*
    Make sure we can always use console.X without scripts crashing. IE<=9
    does not init it unless in developer mode and things thus randomly fail
    without a trace.
@@ -1279,7 +1975,7 @@ if (!window.console) {
 	error: noOp
     }
 }
-/* 
+/*
    Make sure we can use Date.now which was not available in IE<9
 */
 if (!Date.now) {
@@ -1291,28 +1987,28 @@ if (!Date.now) {
 /* call this function to set up console logging after log_level is set */
 var init_log = function() {
     if (all_log_levels[log_level] >= all_log_levels["debug"]) {
-        console.debug = function(msg) { 
+        console.debug = function(msg) {
             console.log(Date.now()+" DEBUG: "+msg)
-            }; 
+            };
     } else {
 	console.debug = noOp;
     }
     if (all_log_levels[log_level] >= all_log_levels["info"]) {
-	console.info = function(msg){ 
+	console.info = function(msg){
             console.log(Date.now()+" INFO: "+msg)
             };
     } else {
 	console.info = noOp;
     }
     if (all_log_levels[log_level] >= all_log_levels["warn"]) {
-	console.warn = function(msg){ 
+	console.warn = function(msg){
             console.log(Date.now()+" WARN: "+msg)
             };
     } else {
 	console.warn = noOp;
     }
     if (all_log_levels[log_level] >= all_log_levels["error"]) {
-	console.error = function(msg){ 
+	console.error = function(msg){
             console.log(Date.now()+" ERROR: "+msg)
             };
     } else {
@@ -1320,5 +2016,7 @@ var init_log = function() {
     }
     console.debug("log ready");
 }
-</script>
-'''
+''')
+    if script_wrap:
+        log_init.append('</script>')
+    return '\n'.join(log_init)

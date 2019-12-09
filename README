@@ -75,8 +75,8 @@ the following additional software:
 
 On Debian/Ubuntu servers the corresponding basic packages can be
 installed with:
-sudo apt install apache2 openssh-client python python-pip python-setuptools
-
+sudo apt install apache2 openssh-client python python-pip python-setuptools \
+     python-dev build-essential
 and most of the optional dependencies similarly with:
 sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      python-irclib python-paramiko python-enchant python-jsonrpclib \
@@ -85,7 +85,7 @@ sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid  \
 
 On RedHat/CentOS servers the basic packages can be installed with:
 sudo yum install httpd mod_ssl openssh-clients python python-pip \
-     python-setuptools
+     python-setuptools python-devel gcc
 
 and most of the optional dependencies similarly with:
 sudo yum install mod_wsgi mod_auth_openid python-paramiko python-enchant \

@@ -42,12 +42,12 @@ from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-    themed_styles, console_log_javascript, twofactor_wizard_html, \
-    twofactor_wizard_js, twofactor_token_html
+from shared.html import man_base_js, man_base_html, console_log_javascript, \
+    twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
+    legacy_user_interface, save_settings_js, save_settings_html
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
-    load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, \
+    load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, load_cloud, \
     load_twofactor
 from shared.profilekeywords import get_profile_specs
 from shared.pwhash import parse_password_policy
@@ -82,12 +82,13 @@ profile_edit = cm_options.copy()
 profile_edit['mode'] = 'htmlmixed'
 duplicati_edit = cm_options.copy()
 duplicati_edit['mode'] = 'htmlmixed'
+cloud_edit = cm_options.copy()
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'topic': ['general']}
+    defaults = {'topic': []}
     return ['html_form', defaults]
 
 
@@ -122,7 +123,7 @@ def main(client_id, user_arguments_dict):
 
     (add_import, add_init, add_ready) = man_base_js(configuration, [])
     (tfa_import, tfa_init, tfa_ready) = twofactor_wizard_js(configuration)
-    title_entry['style'] = themed_styles(configuration)
+    (save_import, save_init, save_ready) = save_settings_js(configuration)
     # prepare support for toggling the views (by css/jquery)
     title_entry['style']['skin'] += '''
 %s
@@ -135,7 +136,9 @@ def main(client_id, user_arguments_dict):
 %s
 
 %s
-    ''' % (cm_javascript, console_log_javascript(), tfa_import)
+
+%s
+    ''' % (cm_javascript, console_log_javascript(), tfa_import, save_import)
     add_init += '''
     /* prepare global logging from console_log_javascript */
     try {
@@ -146,7 +149,9 @@ def main(client_id, user_arguments_dict):
     }
 
 %s
-    ''' % tfa_init
+
+%s
+    ''' % (tfa_init, save_init)
     add_ready += '''
               /* Init variables helper as foldable but closed and with individual
               heights */
@@ -160,17 +165,25 @@ def main(client_id, user_arguments_dict):
                                        .css("padding-bottom", 0).css("margin", 0);
 
 %s
-''' % tfa_ready
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
+
+%s
+''' % (tfa_ready, save_ready)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
+    active_menu = extract_menu(configuration, title_entry)
+
+    # Always load current user settings for use in rendering
+    user_settings = load_settings(client_id, configuration)
+
+    # Hide default settings in GDP mode
     if configuration.site_enable_gdp:
         valid_topics = []
     else:
         valid_topics = ['general', 'style']
-    active_menu = extract_menu(configuration, title_entry)
     if 'submitjob' in active_menu:
         valid_topics.append('job')
     if 'people' in active_menu:
@@ -179,40 +192,50 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('widgets')
     if configuration.arc_clusters:
         valid_topics.append('arc')
-    if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
-        valid_topics.append('sftp')
-    if configuration.site_enable_davs:
-        valid_topics.append('webdavs')
-    if configuration.site_enable_ftps:
-        valid_topics.append('ftps')
-    if configuration.site_enable_seafile:
-        valid_topics.append('seafile')
-    if configuration.site_enable_duplicati:
-        valid_topics.append('duplicati')
-    if configuration.site_enable_twofactor \
-            and not configuration.site_enable_gdp:
-        valid_topics.append('twofactor')
-    topics = accepted['topic']
+    if 'setup' not in active_menu:
+        if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
+            valid_topics.append('sftp')
+        if configuration.site_enable_davs:
+            valid_topics.append('webdavs')
+        if configuration.site_enable_ftps:
+            valid_topics.append('ftps')
+        if configuration.site_enable_seafile:
+            valid_topics.append('seafile')
+        if configuration.site_enable_duplicati:
+            valid_topics.append('duplicati')
+        if configuration.site_enable_cloud:
+            valid_topics.append('cloud')
+        if configuration.site_enable_twofactor \
+                and not configuration.site_enable_gdp:
+            valid_topics.append('twofactor')
+
+    topic_list = accepted['topic']
+    # Default to general or general+profile if no valid topics given
+    if not topic_list:
+        if not legacy_user_interface(configuration, user_settings):
+            topic_list = ['general', 'profile']
+        else:
+            topic_list.append(valid_topics[0])
     # Backwards compatibility
-    if topics and topics[0] == 'ssh':
-        topics[0] = 'sftp'
-    topics = [i for i in topics if i in valid_topics]
-    # Default to general if no valid topics given
-    if not topics:
-        topics.append(valid_topics[0])
+    if topic_list and 'ssh' in topic_list:
+        topic_list.remove('ssh')
+        topic_list.append('sftp')
+    topic_list = [i for i in topic_list if i in valid_topics]
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
                        ('ftps', 'FTPS'), ('seafile', 'Seafile'),
-                       ('duplicati', 'Duplicati'), ('twofactor', '2-Factor Auth'),
+                       ('duplicati', 'Duplicati'), ('cloud', 'Cloud'),
+                       ('twofactor', '2-Factor Auth'),
                        ]:
         if key in valid_topics:
             topic_titles[key] = val
+
     output_objects.append({'object_type': 'header', 'text': 'Settings'})
 
     links = []
     for name in valid_topics:
         active_menu = ''
-        if topics[0] == name:
+        if topic_list[0] == name:
             active_menu = 'activebutton'
         links.append({'object_type': 'link',
                       'destination': "settings.py?topic=%s" % name,
@@ -222,26 +245,21 @@ def main(client_id, user_arguments_dict):
                       'text': '%s' % topic_titles[name],
                       })
 
-    output_objects.append({'object_type': 'multilinkline', 'links': links,
-                           'sep': '  '})
+    # Only a single general and profile settings page without tabs in new UI
+    if legacy_user_interface(configuration, user_settings):
+        output_objects.append({'object_type': 'multilinkline', 'links': links,
+                               'sep': '  '})
+
     output_objects.append({'object_type': 'text', 'text': ''})
 
-    # load current settings
-
-    current_settings_dict = load_settings(client_id, configuration)
-    if not current_settings_dict:
-
-        # no current settings found
-
-        current_settings_dict = {}
-
-    if not topics:
+    if not topic_list:
         output_objects.append({'object_type': 'error_text', 'text':
                                'No valid topics!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Site policy dictates pw min length greater or equal than password_min_len
     policy_min_len, policy_min_classes = parse_password_policy(configuration)
+    save_html = save_settings_html(configuration)
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers = {
@@ -250,16 +268,38 @@ def main(client_id, user_arguments_dict):
         'valid_password_chars': html_escape(valid_password_chars),
         'password_min_len': max(policy_min_len, password_min_len),
         'password_max_len': password_max_len,
-        'password_min_classes': max(policy_min_classes, 1)}
-    if 'general' in topics:
+        'password_min_classes': max(policy_min_classes, 1),
+        'save_html': save_html}
+
+    # Switch between merged or stand-alone general and profile settings below
+    general_save = 'Save General Settings'
+    profile_save = 'Save Profile Settings'
+    if 'general' in topic_list and 'profile' in topic_list:
+        general_save = profile_save = "Save Settings"
+
+    fill_helpers.update({'general_save': general_save,
+                         'profile_save': profile_save})
+
+    logger.debug("DEBUG: showing topics %s out of valid topics %s" %
+                 (topic_list, valid_topics))
+
+    if "general" in topic_list:
+        current_settings_dict = user_settings
+        if not current_settings_dict:
+
+            # no current settings found
+
+            current_settings_dict = {}
+
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
         <div id="settings">
-        <form method="%(form_method)s" action="%(target_op)s.py">
+        <form class="save_settings save_general" method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+        <input type="hidden" name="topic" value="general" />
         <table class="settings fixedlayout">
         <tr class="title"><td class="centertext">
         Select your %(site)s settings
@@ -267,7 +307,6 @@ def main(client_id, user_arguments_dict):
         <tr><td>
         </td></tr>
         <tr><td>
-        <input type="hidden" name="topic" value="general" />
         Please note that if you want to set multiple values (e.g. addresses)
         in the same field, you must write each value on a separate line but
         without blank lines.
@@ -291,8 +330,7 @@ def main(client_id, user_arguments_dict):
             %s
             </td></tr>
             <tr><td>
-            """\
-                 % (keyword.replace('_', ' ').title(), val['Description'])
+            """ % (keyword.replace('_', ' ').title(), val['Description'])
             if val['Type'] == 'multiplestrings':
                 try:
 
@@ -337,7 +375,7 @@ def main(client_id, user_arguments_dict):
                     current_choice = current_settings_dict[keyword]
 
                 if valid_choices:
-                    entry += '<select name="%s">' % keyword
+                    entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
@@ -355,30 +393,184 @@ def main(client_id, user_arguments_dict):
                 current_choice = ''
                 if current_settings_dict.has_key(keyword):
                     current_choice = current_settings_dict[keyword]
-                entry += '<select name="%s">' % keyword
-                for choice in (True, False):
-                    selected = ''
-                    if choice == current_choice:
-                        selected = 'selected'
-                    entry += '<option %s value="%s">%s</option>'\
-                             % (selected, choice, choice)
-                entry += '</select><br />'
+                #entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
+                # for choice in (True, False):
+                #    selected = ''
+                #    if choice == current_choice:
+                #        selected = 'selected'
+                #    entry += '<option %s value="%s">%s</option>'\
+                #             % (selected, choice, choice)
+                #entry += '</select><br />'
+                checked = ''
+                if current_choice == True:
+                    checked = 'checked'
+                entry += '<label class="switch">'
+                entry += '<input type="checkbox" name="%s" %s>' % (keyword,
+                                                                   checked)
+                entry += '<span class="slider round"></span></label>'
+                entry += '<br /><br />'
             html += """%s
             </td></tr>
             """ % entry
 
-        html += """
+        # Only end form with submit here if general is a stand-alone topic
+        if not 'profile' in topic_list:
+            html += """
         <tr><td>
-        <input type='submit' value='Save General Settings' />
+        %(save_html)s
+        <input type='submit' value='%(general_save)s' />
         </td></tr>
         </table>
         </form>
         </div>
         """
+        else:
+            html += """
+        </table>
+"""
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'job' in topics:
+    if "profile" in topic_list:
+
+        # load current profile
+
+        current_profile_dict = load_profile(client_id, configuration)
+        if not current_profile_dict:
+
+            # no current profile found
+
+            current_profile_dict = {}
+
+        all_vgrids = get_vgrid_map_vgrids(configuration)
+        configuration.vgrids_allow_email = all_vgrids
+        configuration.vgrids_allow_im = all_vgrids
+        images = []
+        for path in os.listdir(base_dir):
+            real_path = os.path.join(base_dir, path)
+            if os.path.splitext(path)[1].strip('.') in profile_img_extensions \
+                    and os.path.getsize(real_path) < profile_img_max_kb*1024:
+                images.append(path)
+        configuration.public_image = images
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        # Only begin new form and container if profile is a stand-alone topic
+        html = ''
+        if not 'general' in topic_list:
+            html = '''
+<div id="profile">
+<form class="save_settings save_profile" method="%(form_method)s" action="%(target_op)s.py">
+<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+'''
+
+        html += '''
+<input type="hidden" name="topic" value="profile" />
+<table class="profile fixedlayout">
+<tr class="title"><td class="centertext">
+Public profile information visible to other users.
+
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td>
+If you want to let other users know more about you can add your own text here.
+If you leave the text area blank you will just get the default empty profile
+information.<br />
+</td></tr>
+<tr><td>
+<div class="warningtext">Please note that the profile parser is rather grumpy
+so you may have to avoid blank lines in your text below.
+</div>
+</td></tr>
+<tr><td>
+'''
+
+        profile_entries = get_profile_specs()
+        for (keyword, val) in profile_entries:
+            # Mask VGrid name if configured
+            mask_title = keyword.replace(
+                'VGRID', configuration.site_vgrid_label.upper())
+            mask_desc = val['Description'].replace(
+                'VGrid', configuration.site_vgrid_label)
+            html += \
+                """
+            <tr class=title><td>
+            %s
+            </td></tr>
+            <tr><td>
+            %s
+            </td></tr>
+            <tr><td>
+            """ % (mask_title.replace('_', ' ').title(),
+                   html_escape(mask_desc))
+            if val['Type'] == 'multiplestrings':
+                try:
+
+                    # get valid choices from conf. multiple selections
+
+                    valid_choices = eval('configuration.%s' % keyword.lower())
+                    current_choice = []
+                    if current_profile_dict.has_key(keyword):
+                        current_choice = current_profile_dict[keyword]
+
+                    if valid_choices:
+                        html += '<div class="scrollselect">'
+                        for choice in valid_choices:
+                            selected = ''
+                            if choice in current_choice:
+                                selected = 'checked'
+                            html += '''
+                <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
+                                % (keyword, selected, choice, choice)
+                        html += '</div>'
+                except:
+                    area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
+                        % (keyword, keyword)
+                    if current_profile_dict.has_key(keyword):
+                        area += '\n'.join(current_profile_dict[keyword])
+                    area += '</textarea>'
+                    html += wrap_edit_area(keyword, area, profile_edit)
+            elif val['Type'] == 'boolean':
+
+                # get valid choice order from spec
+
+                valid_choices = [val['Value'], not val['Value']]
+                current_choice = ''
+                if current_profile_dict.has_key(keyword):
+                    current_choice = current_profile_dict[keyword]
+                #html += '<select class="styled-select semi-square html-select" name="%s">' % keyword
+                # for choice in valid_choices:
+                #    selected = ''
+                #    if choice == current_choice:
+                #        selected = 'selected'
+                #    html += '<option %s value="%s">%s</option>'\
+                #        % (selected, choice, choice)
+                #html += '</select><br />'
+                checked = ''
+                if current_choice == True:
+                    checked = 'checked'
+                html += '<label class="switch">'
+                html += '<input type="checkbox" name="%s" %s>' % (keyword,
+                                                                  checked)
+                html += '<span class="slider round"></span></label>'
+                html += '<br /><br />'
+
+        # Always end form and structure here even for merged settings
+        html += '''
+        <tr><td>
+        %(save_html)s
+        <input type="submit" value="%(profile_save)s" />
+</td></tr>
+</table>
+</form>
+</div>
+'''
+        output_objects.append({'object_type': 'html_form', 'text':
+                               html % fill_helpers})
+
+    if 'job' in topic_list:
         mrsl_path = os.path.join(base_dir, default_mrsl_filename)
 
         default_mrsl = get_default_mrsl(mrsl_path)
@@ -388,7 +580,7 @@ def main(client_id, user_arguments_dict):
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="defaultmrsl">
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_job" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="defaultjob fixedlayout">
 <tr class="title"><td class="centertext">
@@ -418,6 +610,7 @@ your submit job page.
         html += '''
 </td></tr>
 <tr><td>
+%(save_html)s
 <input type="submit" value="Save Job Template" />
 </td></tr>
 </table>
@@ -432,7 +625,7 @@ your submit job page.
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'style' in topics:
+    if 'style' in topic_list:
         css_path = os.path.join(base_dir, default_css_filename)
         default_css = get_default_css(css_path)
         target_op = 'editfile'
@@ -441,7 +634,7 @@ your submit job page.
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="defaultcss">
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_style" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="defaultstyle fixedlayout">
 <tr class="title"><td class="centertext">
@@ -483,6 +676,7 @@ here.
         html += '''
 </td></tr>
 <tr><td>
+%(save_html)s
 <input type="submit" value="Save Style Settings" />
 </td></tr>
 </table>
@@ -497,7 +691,7 @@ here.
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'widgets' in topics:
+    if 'widgets' in topic_list:
 
         # load current widgets
 
@@ -557,7 +751,7 @@ disabling of widgets while experimenting here.</div>
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="widgets">
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_widgets" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="widgets fixedlayout">
 <tr class="title"><td class="centertext">
@@ -616,10 +810,13 @@ get the default empty widget spaces.<br />
         if show_widgets:
             edit_widgets += '''
         %s
+            ''' % widgets_html
+            edit_widgets += '''
         <tr><td>
+        %(save_html)s
         <input type="submit" value="Save Widgets Settings" />
 </td></tr>
-''' % widgets_html
+'''
         else:
             edit_widgets = '''
 <br/>
@@ -637,133 +834,7 @@ them there first if you want to customize your grid pages.
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'profile' in topics:
-
-        # load current profile
-
-        current_profile_dict = load_profile(client_id, configuration)
-        if not current_profile_dict:
-
-            # no current profile found
-
-            current_profile_dict = {}
-
-        all_vgrids = get_vgrid_map_vgrids(configuration)
-        configuration.vgrids_allow_email = all_vgrids
-        configuration.vgrids_allow_im = all_vgrids
-        images = []
-        for path in os.listdir(base_dir):
-            real_path = os.path.join(base_dir, path)
-            if os.path.splitext(path)[1].strip('.') in profile_img_extensions \
-                    and os.path.getsize(real_path) < profile_img_max_kb*1024:
-                images.append(path)
-        configuration.public_image = images
-        target_op = 'settingsaction'
-        csrf_token = make_csrf_token(configuration, form_method, target_op,
-                                     client_id, csrf_limit)
-        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-        html = '''
-<div id="profile">
-<form method="%(form_method)s" action="%(target_op)s.py">
-<input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-<table class="profile fixedlayout">
-<tr class="title"><td class="centertext">
-Public profile information visible to other users.
-</td></tr>
-<tr><td>
-</td></tr>
-<tr><td>
-If you want to let other users know more about you can add your own text here.
-If you leave the text area blank you will just get the default empty profile
-information.<br />
-</td></tr>
-<tr><td>
-<div class="warningtext">Please note that the profile parser is rather grumpy
-so you may have to avoid blank lines in your text below.
-</div>
-</td></tr>
-<tr><td>
-<input type="hidden" name="topic" value="profile" />
-</td></tr>
-<tr><td>
-'''
-
-        profile_entries = get_profile_specs()
-        for (keyword, val) in profile_entries:
-            # Mask VGrid name if configured
-            mask_title = keyword.replace(
-                'VGRID', configuration.site_vgrid_label.upper())
-            mask_desc = val['Description'].replace(
-                'VGrid', configuration.site_vgrid_label)
-            html += \
-                """
-            <tr class=title><td>
-            %s
-            </td></tr>
-            <tr><td>
-            %s
-            </td></tr>
-            <tr><td>
-            """ % (mask_title.replace('_', ' ').title(),
-                   html_escape(mask_desc))
-            if val['Type'] == 'multiplestrings':
-                try:
-
-                    # get valid choices from conf. multiple selections
-
-                    valid_choices = eval('configuration.%s' % keyword.lower())
-                    current_choice = []
-                    if current_profile_dict.has_key(keyword):
-                        current_choice = current_profile_dict[keyword]
-
-                    if valid_choices:
-                        html += '<div class="scrollselect">'
-                        for choice in valid_choices:
-                            selected = ''
-                            if choice in current_choice:
-                                selected = 'checked'
-                            html += '''
-                <input type="checkbox" name="%s" %s value="%s">%s<br />''' \
-                                % (keyword, selected, choice, choice)
-                        html += '</div>'
-                except:
-                    area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
-                        % (keyword, keyword)
-                    if current_profile_dict.has_key(keyword):
-                        area += '\n'.join(current_profile_dict[keyword])
-                    area += '</textarea>'
-                    html += wrap_edit_area(keyword, area, profile_edit)
-            elif val['Type'] == 'boolean':
-
-                # get valid choice order from spec
-
-                valid_choices = [val['Value'], not val['Value']]
-                current_choice = ''
-                if current_profile_dict.has_key(keyword):
-                    current_choice = current_profile_dict[keyword]
-
-                if valid_choices:
-                    html += '<select name="%s">' % keyword
-                    for choice in valid_choices:
-                        selected = ''
-                        if choice == current_choice:
-                            selected = 'selected'
-                        html += '<option %s value="%s">%s</option>'\
-                            % (selected, choice, choice)
-                    html += '</select><br />'
-
-        html += '''
-        <tr><td>
-        <input type="submit" value="Save Profile Settings" />
-</td></tr>
-</table>
-</form>
-</div>
-'''
-        output_objects.append({'object_type': 'html_form', 'text':
-                               html % fill_helpers})
-
-    if 'sftp' in topics:
+    if 'sftp' in topic_list:
 
         # load current ssh/sftp
 
@@ -804,7 +875,7 @@ fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="sshaccess">
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_sftp" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="sshsettings fixedlayout">
 <tr class="title"><td class="centertext">
@@ -913,17 +984,21 @@ with username and key as described in the Login Details.
             html += '''
 <tr><td>
 <h3>Authorized Password</h3>
+<p>
 Please enter and save your desired password in the text field below, to be able
 to connect with username and password as described in the Login Details.
-<br/>
+</p>
+<p>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable sftp access with password)
+</p>
 </td></tr>
 '''
 
         html += '''
 <tr><td>
+%(save_html)s
 <input type="submit" value="Save SFTP Settings" />
 </td></tr>
 '''
@@ -950,7 +1025,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'webdavs' in topics:
+    if 'webdavs' in topic_list:
 
         # load current davs
 
@@ -989,7 +1064,7 @@ fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="davsaccess">
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_davs" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="davssettings fixedlayout">
 <tr class="title"><td class="centertext">
@@ -1079,17 +1154,21 @@ with username and key as described in the Login Details.
             html += '''
 <tr><td>
 <h3>Authorized Password</h3>
+<p>
 Please enter and save your desired password in the text field below, to be able
 to connect with username and password as described in the Login Details.
-<br/>
+</p>
+<p>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable davs access with password)
+</p>
 </td></tr>
 '''
 
         html += '''
 <tr><td>
+%(save_html)s
 <input type="submit" value="Save WebDAVS Settings" />
 </td></tr>
 '''
@@ -1114,7 +1193,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'ftps' in topics:
+    if 'ftps' in topic_list:
 
         # load current ftps
 
@@ -1152,7 +1231,7 @@ fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="ftpsaccess">
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_ftps" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="ftpssettings fixedlayout">
 <tr class="title"><td class="centertext">
@@ -1253,17 +1332,21 @@ with username and key as described in the Login Details.
             html += '''
 <tr><td>
 <h3>Authorized Password</h3>
+<p>
 Please enter and save your desired password in the text field below, to be able
 to connect with username and password as described in the Login Details.
-<br/>
+</p>
+<p>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable ftps access with password)
+</p>
 </td></tr>
 '''
 
         html += '''
 <tr><td>
+%(save_html)s
 <input type="submit" value="Save FTPS Settings" />
 </td></tr>
 '''
@@ -1288,7 +1371,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'seafile' in topics:
+    if 'seafile' in topic_list:
 
         # load current seafile
 
@@ -1459,7 +1542,7 @@ and sharing solution.<br/>
 
         if configuration.user_seafile_ro_access:
             html += '''
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_seafile" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="topic" value="seafile" />
 <fieldset>
@@ -1475,15 +1558,19 @@ Then your Seafile libraries will show up in a read-only mode under a new
 
                 # We only want a single password and a masked input field
                 html += '''
+<p>
 Please enter and save your chosen Seafile password again in the text field
 below, to enable the read-only Seafile integration in your user home.
-<br/>
+</p>
+<p>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable seafile integration)
-<br/>'''
+</p>
+'''
 
             html += '''
+%(save_html)s
 <input id="seafilesavebutton" type="submit" value="Save Seafile Password" />
 </fieldset>
 </form>
@@ -1517,7 +1604,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'duplicati' in topics:
+    if 'duplicati' in topic_list:
 
         # load current duplicati
 
@@ -1564,7 +1651,7 @@ value="%(default_authpassword)s" />
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
         html = '''
 <div id="duplicatiaccess">
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_duplicati" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="topic" value="duplicati" />
 <table class="duplicatisettings fixedlayout">
@@ -1636,7 +1723,7 @@ for %(site)s backup use.
                     valid_choices = eval('configuration.%s' % keyword.lower())
 
                     if valid_choices:
-                        html += '<select name="%s">' % keyword
+                        html += '<select class="styled-select semi-square html-select" name="%s">' % keyword
                         for choice in valid_choices:
                             selected = ''
                             if choice == current_choice:
@@ -1661,22 +1748,29 @@ for %(site)s backup use.
                 current_choice = ''
                 if current_duplicati_dict.has_key(keyword):
                     current_choice = current_duplicati_dict[keyword]
-
-                if valid_choices:
-                    html += '<select name="%s">' % keyword
-                    for choice in valid_choices:
-                        selected = ''
-                        if choice == current_choice:
-                            selected = 'selected'
-                        html += '<option %s value="%s">%s</option>'\
-                            % (selected, choice, choice)
-                    html += '</select><br />'
+                #html += '<select class="styled-select semi-square html-select" name="%s">' % keyword
+                # for choice in valid_choices:
+                #    selected = ''
+                #    if choice == current_choice:
+                #        selected = 'selected'
+                #    html += '<option %s value="%s">%s</option>'\
+                #        % (selected, choice, choice)
+                #html += '</select><br />'
+                checked = ''
+                if current_choice == True:
+                    checked = 'checked'
+                html += '<label class="switch">'
+                html += '<input type="checkbox" name="%s" %s>' % (keyword,
+                                                                  checked)
+                html += '<span class="slider round"></span></label>'
+                html += '<br /><br />'
 
             html += '''
             </td></tr>
         '''
         html += '''
         <tr><td>
+        %(save_html)s
         <input type="submit" value="Save Duplicati Settings" />
         </td></tr>
 </table>
@@ -1724,7 +1818,164 @@ client versions from the link above.<br/>
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'twofactor' in topics:
+    if 'cloud' in topic_list:
+
+        # load current cloud
+
+        current_cloud_dict = load_cloud(client_id, configuration)
+        if not current_cloud_dict:
+
+            # no current cloud found
+
+            current_cloud_dict = {}
+
+        default_authkeys = current_cloud_dict.get('authkeys', '')
+        default_authpassword = current_cloud_dict.get('authpassword', '')
+        username = client_alias(client_id)
+        cloud_host_pattern = '[One of your Cloud instances]'
+        if configuration.user_cloud_alias:
+            username = get_short_id(configuration, client_id,
+                                    configuration.user_cloud_alias)
+            create_alias_link(username, client_id, configuration.user_home)
+        target_op = 'settingsaction'
+        csrf_token = make_csrf_token(configuration, form_method, target_op,
+                                     client_id, csrf_limit)
+        fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
+        html = '''
+<div id="cloudaccess">
+    <form class="save_settings save_cloud" method="%(form_method)s" action="%(target_op)s.py">
+        <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+
+        <div>SSH access to your %(site)s cloud instance(s)</div>
+
+<p>
+You can configure SSH login to your %(site)s cloud instance(s) for interactive
+use.
+</p>
+<h3>Login Details</h3>
+Please refer to your Cloud management page for specific instance login details.
+However, in general login requires the following: 
+<ul>
+<li>Host <em>%(cloud_host_pattern)s</em></li>
+<li>Username <em>%(username)s</em></li>
+<li>%(auth_methods)s <em>as you choose below</em></li>
+</ul>
+
+<input type="hidden" name="topic" value="cloud" />
+<div class="div-cloud-client-notes hidden">
+<a href="javascript:toggleHidden('.div-cloud-client-notes');"
+    class="removeitemlink iconspace" title="Toggle view">
+    Show less cloud client details...</a>
+
+<h3>Graphical Cloud access</h3>
+<p>The PuTTY client is known to generally work for graphical SSH access to
+your %(site)s cloud instances. It runs on all popular platforms and in the
+<a href="https://portableapps.com/apps/internet/putty_portable">portable
+version</a> it does not even require install privileges.</p>
+<p>
+<!-- TODO: is this the right naming for PuTTY? -->
+Enter the following values in the PuTTY Site Manager:</p>
+<ul>
+<li>Host %(cloud_host_pattern)s</li>
+<li>Port 22</li>
+<li>Protocol SSH</li>
+<li>User %(username)s</li>
+<li>Password YOUR_PASSWORD_HERE (leave empty for ssh key from key-agent)</li>
+</ul>
+
+<p>Other graphical clients like MindTerm, etc. should work as well.</p>
+
+<h3>Command line SSH access on Linux/UN*X</h3>
+<p>
+Save something like the following lines in your local ~/.ssh/config
+to avoid typing the full login details every time:</p>
+<ul>
+<li>Host %(cloud_host_pattern)s</li>
+<li>Hostname %(cloud_host_pattern)s</li>
+<li>User %(username)s</li>
+<li># Assuming you have your private key in ~/.mig/id_rsa</li>
+<li>IdentityFile ~/.mig/id_rsa</li>
+</ul>
+
+<p>
+From then on you can use ssh to access your %(site)s instance:</p>
+<ul>
+<li>ssh %(cloud_host_pattern)s</li>
+</ul>
+
+</div>
+<div class="div-cloud-client-notes">
+<a href="javascript:toggleHidden('.div-cloud-client-notes');"
+    class="additemlink iconspace" title="Toggle view">Show more cloud client details...
+    </a>
+</div>
+'''
+
+        keyword_keys = "authkeys"
+        if 'publickey' in configuration.user_cloud_ssh_auth:
+            html += '''
+
+<h3>Authorized Public Keys</h3>
+<p>You can use any existing RSA key, or create a new one. If you signed up with a
+x509 user certificate, you should also have received such an id_rsa key along with
+your user certificate. In any case you need to save the contents of the
+corresponding public key (id_rsa.pub) in the text area below, to be able to connect
+with username and key as described in the Login Details.
+</p>
+'''
+            area = '''
+<textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
+%(default_authkeys)s
+</textarea>
+'''
+            html += wrap_edit_area(keyword_keys, area, ssh_edit, 'BASIC')
+            html += '''
+<p>(leave empty to disable cloud access with public keys)</p>
+
+'''
+
+        keyword_password = "authpassword"
+        if 'password' in configuration.user_cloud_ssh_auth:
+
+            # We only want a single password and a masked input field
+            html += '''
+
+<h3>Authorized Password</h3>
+<p>
+Please enter and save your desired password in the text field below, to be able
+to connect with username and password as described in the Login Details.
+</p>
+<p>
+<input class="fullwidth" type=password id="%(keyword_password)s" size=40 name="password"
+value="%(default_authpassword)s" />
+(leave empty to disable cloud access with password)
+</p>
+'''
+
+        html += '''
+%(save_html)s
+<input type="submit" value="Save Cloud Settings" />
+'''
+
+        html += '''
+
+</form>
+</div>
+'''
+        fill_helpers.update({
+            'default_authkeys': default_authkeys,
+            'default_authpassword': default_authpassword,
+            'keyword_keys': keyword_keys,
+            'keyword_password': keyword_password,
+            'username': username,
+            'cloud_host_pattern': cloud_host_pattern,
+            'auth_methods': ' / '.join(configuration.user_cloud_ssh_auth).title(),
+        })
+
+        output_objects.append({'object_type': 'html_form', 'text':
+                               html % fill_helpers})
+
+    if 'twofactor' in topic_list:
 
         # load current twofactor
 
@@ -1748,7 +1999,7 @@ client versions from the link above.<br/>
         html += twofactor_token_html(configuration)
         html += '''</div>
 <div id="twofactor">
-<form method="%(form_method)s" action="%(target_op)s.py">
+<form class="save_settings save_twofactor" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="twofactor fixedlayout">
 <tr class="title"><td class="centertext">
@@ -1757,7 +2008,8 @@ client versions from the link above.<br/>
 '''
 
         if configuration.site_enable_twofactor:
-            b32_key, otp_interval, otp_uri = get_twofactor_secrets(configuration, client_id)
+            b32_key, otp_interval, otp_uri = get_twofactor_secrets(
+                configuration, client_id)
             # We limit key exposure by not showing it in clear and keeping it
             # out of backend dictionary with indirect generation only.
 
@@ -1835,7 +2087,7 @@ client versions from the link above.<br/>
                     current_choice = current_twofactor_dict[keyword]
 
                 if valid_choices:
-                    entry += '<select name="%s">' % keyword
+                    entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
@@ -1853,19 +2105,28 @@ client versions from the link above.<br/>
                 current_choice = ''
                 if current_twofactor_dict.has_key(keyword):
                     current_choice = current_twofactor_dict[keyword]
-                entry += '<select name="%s">' % keyword
-                for choice in valid_choices:
-                    selected = ''
-                    if choice == current_choice:
-                        selected = 'selected'
-                    entry += '<option %s value="%s">%s</option>'\
-                             % (selected, choice, choice)
-                entry += '</select><br />'
+                #entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
+                # for choice in valid_choices:
+                #    selected = ''
+                #    if choice == current_choice:
+                #        selected = 'selected'
+                #    entry += '<option %s value="%s">%s</option>'\
+                #             % (selected, choice, choice)
+                #entry += '</select><br />'
+                checked = ''
+                if current_choice == True:
+                    checked = 'checked'
+                entry += '<label class="switch">'
+                entry += '<input type="checkbox" name="%s" %s>' % (keyword,
+                                                                   checked)
+                entry += '<span class="slider round"></span></label>'
+                entry += '<br /><br />'
             html += """%s
             </td></tr>
             """ % entry
 
         html += '''<tr class="otp_ready hidden"><td>
+        %(save_html)s
         <input type="submit" value="Save 2-Factor Auth Settings" />
 </td></tr>
 </table>
@@ -1890,7 +2151,7 @@ client versions from the link above.<br/>
                                html % fill_helpers})
 
     # if ARC-enabled server:
-    if 'arc' in topics:
+    if 'arc' in topic_list:
         # provide information about the available proxy, offer upload
         try:
             home_dir = os.path.normpath(base_dir)
@@ -1917,4 +2178,6 @@ client versions from the link above.<br/>
 
         output_objects = output_objects + arc.askProxy()
 
+    output_objects.append({'object_type': 'html_form', 'text':
+                           '<div class="vertical-spacer"></div>'})
     return (output_objects, returnvalues.OK)

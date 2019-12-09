@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmachines - virtual machine management
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,13 +36,15 @@ from shared import vms
 from shared.defaults import any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import render_menu, html_post_helper, themed_styles
+from shared.html import render_menu, confirm_js, confirm_html, \
+    html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.vgridaccess import user_vgrid_access
 
 list_actions = ['show', '']
 edit_actions = ['create', 'start', 'stop', 'edit', 'delete']
 allowed_actions = list(set(list_actions + edit_actions))
+
 
 def signature():
     """Signature of the main function"""
@@ -64,7 +66,7 @@ def signature():
         'memory': ['1024'],
         'disk': ['2'],
         'vgrid': ['ANY'],
-        }
+    }
     return ['html_form', defaults]
 
 
@@ -73,6 +75,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+
     output_objects.append({'object_type': 'header', 'text':
                            'Virtual Machines'})
     status = returnvalues.OK
@@ -84,7 +87,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -102,8 +105,8 @@ def main(client_id, user_arguments_dict):
     action = accepted['action'][-1].strip()
 
     if action in edit_actions and \
-           not safe_handler(configuration, 'post', op_name, client_id,
-                            get_csrf_limit(configuration), accepted):
+        not safe_handler(configuration, 'post', op_name, client_id,
+                         get_csrf_limit(configuration), accepted):
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
 CSRF-filtered POST requests to prevent unintended updates'''
@@ -113,34 +116,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Virtual Machines'
 
-    # jquery support for tablesorter and confirmation on "leave":
+    # jquery support for confirmation on delete:
+    (add_import, add_init, add_ready) = confirm_js(configuration)
 
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
-          // init confirmation dialog
-          $( "#confirm_dialog" ).dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 500,
-                buttons: {
-                   "Cancel": function() { $( "#" + name ).dialog("close"); }
-                }
-              });
-
+    add_ready += '''
           $(".vm-tabs").tabs();
-     }
-);
-</script>
-'''
+    '''
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
+    output_objects.append({'object_type': 'html_form',
+                           'text': confirm_html(configuration)})
 
     if not configuration.site_enable_vmachines:
         output_objects.append({'object_type': 'text', 'text':
@@ -153,7 +139,7 @@ Please contact the site admins %s if you think they should be enabled.
                    'cpu_time': cpu_time, 'architecture': architecture,
                    'vgrid': vgrid, 'os': op_sys, 'flavor': flavor,
                    'hypervisor_re': hypervisor_re, 'sys_re': sys_re}
-    
+
     menu_items = ['vmrequest']
 
     # Html fragments
@@ -173,21 +159,19 @@ Please contact the site admins %s if you think they should be enabled.
 '''
 
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
+                           'text': '''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
   <div id="confirm_text"><!-- filled by js --></div>
    <textarea cols="40" rows="4" id="confirm_input" style="display:none;"></textarea>
  </div>
 '''})
-    
-    output_objects.append({'object_type': 'html_form', 'text': submenu})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : '<p>&nbsp;</p>'})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : welcome_text})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : desc_text})
 
+    output_objects.append({'object_type': 'html_form', 'text': submenu})
+    output_objects.append(
+        {'object_type': 'html_form', 'text': '<p>&nbsp;</p>'})
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': welcome_text})
+    output_objects.append({'object_type': 'html_form', 'text': desc_text})
 
     user_vms = vms.vms_list(client_id, configuration)
     if action == 'create':
@@ -202,7 +186,7 @@ Please contact the site admins %s if you think they should be enabled.
                 {'object_type': 'error_text', 'text':
                  "requested build without machine name"})
             status = returnvalues.CLIENT_ERROR
-            return (output_objects, status)            
+            return (output_objects, status)
         elif machine_name in [vm["name"] for vm in user_vms]:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
@@ -216,15 +200,15 @@ Please contact the site admins %s if you think they should be enabled.
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
         elif not hypervisor_re in \
-                 vms.available_hypervisor_re_list(configuration):
+                vms.available_hypervisor_re_list(configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 "requested hypervisor runtime env not available: %s" % \
+                 "requested hypervisor runtime env not available: %s" %
                  hypervisor_re})
         elif not sys_re in vms.available_sys_re_list(configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 "requested system pack runtime env not available: %s" % \
+                 "requested system pack runtime env not available: %s" %
                  sys_re})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
@@ -239,7 +223,7 @@ Please contact the site admins %s if you think they should be enabled.
         if not create_status:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 "requested virtual machine could not be created: %s" % \
+                 "requested virtual machine could not be created: %s" %
                  create_msg})
             status = returnvalues.SYSTEM_ERROR
             return (output_objects, status)
@@ -258,14 +242,14 @@ Please contact the site admins %s if you think they should be enabled.
             if machine_name == entry['name']:
                 for name in machine_req.keys():
                     if isinstance(entry[name], basestring) and \
-                                  entry[name].isdigit():
+                            entry[name].isdigit():
                         machine[name] = int(entry[name])
                     else:
                         machine[name] = entry[name]
                 break
         (action_status, action_msg, job_id) = \
-                        vms.enqueue_vm(client_id, configuration, machine_name,
-                                       machine)
+            vms.enqueue_vm(client_id, configuration, machine_name,
+                           machine)
     elif action == 'edit':
         if not machine_name in [vm['name'] for vm in user_vms]:
             output_objects.append(
@@ -274,8 +258,8 @@ Please contact the site admins %s if you think they should be enabled.
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
         (action_status, action_msg) = \
-                        vms.edit_vm(client_id, configuration, machine_name,
-                                    machine_req)
+            vms.edit_vm(client_id, configuration, machine_name,
+                        machine_req)
     elif action == 'delete':
         if not machine_name in [vm['name'] for vm in user_vms]:
             output_objects.append(
@@ -284,9 +268,9 @@ Please contact the site admins %s if you think they should be enabled.
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
         (action_status, action_msg) = \
-                        vms.delete_vm(client_id, configuration, machine_name)
+            vms.delete_vm(client_id, configuration, machine_name)
     elif action == 'stop':
-        
+
         # TODO: manage stop - use live I/O to create vmname.stop in job dir
 
         pass
@@ -294,11 +278,11 @@ Please contact the site admins %s if you think they should be enabled.
     if not action_status:
         output_objects.append({'object_type': 'error_text', 'text':
                                action_msg})
-    
+
     # List the machines here
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Your machines:'})
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': 'Your machines:'})
 
     # Grab the vms available for the user
 
@@ -314,7 +298,7 @@ Please contact the site admins %s if you think they should be enabled.
         'UNKNOWN': 'vm_off.jpg',
         'QUEUED': 'vm_booting.jpg',
         'PARSE': 'vm_booting.jpg',
-        }
+    }
 
     # Empirical upper bound on boot time in seconds used to decide between
     # desktop init and ready states
@@ -328,9 +312,9 @@ Please contact the site admins %s if you think they should be enabled.
 
         form_method = 'post'
         csrf_limit = get_csrf_limit(configuration)
-        fill_helpers =  {'form_method': form_method,
-                         'csrf_field': csrf_field,
-                         'csrf_limit': csrf_limit}
+        fill_helpers = {'form_method': form_method,
+                        'csrf_field': csrf_field,
+                        'csrf_limit': csrf_limit}
         target_op = 'vmachines'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -356,13 +340,13 @@ Please contact the site admins %s if you think they should be enabled.
             password = 'UNKNOWN'
             exec_time = 0
             if machine['job_id'] != 'UNKNOWN' and \
-                   machine['status'] == 'EXECUTING':
+                    machine['status'] == 'EXECUTING':
 
                 # TODO: improve on this time selection...
                 # ... in distributed there is no global clock!
 
                 exec_time = time.time() - 3600 \
-                            - time.mktime(machine['execution_time'])
+                    - time.mktime(machine['execution_time'])
                 password = vms.vnc_jobid(machine['job_id'])
 
             machine_specs = {}
@@ -407,7 +391,7 @@ Please contact the site admins %s if you think they should be enabled.
                 if arch == machine_specs['architecture']:
                     select = 'selected'
                 edit_specs += "<option %s value='%s'>%s</option>" % (select, arch,
-                                                                arch)
+                                                                     arch)
             edit_specs += """</select> resource architecture
 <li><input type="text" name="cpu_time" value="%(cpu_time)s"> s time slot</li>
 <li><select name="vgrid" multiple>"""
@@ -447,8 +431,9 @@ value="Delete Machine" onClick="javascript: confirmDialog(%s, '%s');" >
                 machine_image = '<img src="/images/vms/' \
                     + machine_states[machine['status']] + '">'
             machine_link = vms.machine_link(machine_image,
-                    machine['job_id'], machine['name'], machine['uuid'
-                    ], machine['status'], machine_req)
+                                            machine['job_id'],
+                                            machine['name'], machine['uuid'],
+                                            machine['status'], machine_req)
 
             # Smack all the html together
 
@@ -478,15 +463,12 @@ value="Delete Machine" onClick="javascript: confirmDialog(%s, '%s');" >
 
         pretty_machines += '</tr></table>'
 
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : pretty_machines})
+        output_objects.append(
+            {'object_type': 'html_form', 'text': pretty_machines})
     else:
         output_objects.append(
-            {'object_type': 'text', 'text'
-             : "You don't have any virtual machines! "
+            {'object_type': 'text', 'text': "You don't have any virtual machines! "
              "Click 'Request Virtual Machine' to become a proud owner :)"
              })
 
     return (output_objects, status)
-
-

@@ -45,12 +45,13 @@ escape_char = '\\'
 valid_escape_chars = [comment_char]
 used_env_names = []
 
+
 def get_config_sub_level_dict(
     input_list,
     modify_dict,
     required_keywords,
     optional_keywords,
-    ):
+):
 
     for entry in input_list:
         entry = entry.strip()
@@ -77,7 +78,7 @@ def get_config_sub_level_dict(
         else:
             return (False,
                     'Invalid sublevel keyword: %s. Required keywords: %s'
-                     % (keyword, ', '.join(required_keywords)))
+                    % (keyword, ', '.join(required_keywords)))
 
     # verify all required_keywords have been specified
 
@@ -89,8 +90,8 @@ def get_config_sub_level_dict(
         if not modify_dict.has_key(req_key):
             return (False,
                     'All required keywords not specified! Specified keywords: %s. Required keywords: %s (at least %s is missing)'
-                     % (specified_keywords,
-                    ', '.join(required_keywords), req_key))
+                    % (specified_keywords,
+                        ', '.join(required_keywords), req_key))
     return (True, modify_dict)
 
 
@@ -215,7 +216,7 @@ def format_type_error(
     msg,
     keyword_dict,
     keyword_data,
-    ):
+):
     """Format type check errors for safe(!) and pretty printing. It is
     essential that raw user input is never printed unescaped as it could lead
     to security hazards.
@@ -237,9 +238,9 @@ def format_type_error(
     *******************************************************************
     -->
     ''' % {'keyword': html_escape(keyword), 'msg': html_escape(msg),
-    'safe_data': ' '.join([html_escape(i) for i in keyword_data]),
-    'example': keyword_dict['Example'].replace('\n', '<br/>'),
-    'description': keyword_dict['Description']}     
+           'safe_data': ' '.join([html_escape(i) for i in keyword_data]),
+           'example': keyword_dict['Example'].replace('\n', '<br/>'),
+           'description': keyword_dict['Description']}
     return out
 
 
@@ -277,7 +278,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
             # Some resource conf values are used in e.g. ssh commands from
             # subprocess calls. We do try to avoid full shell invocation
             # and thus variable interpretation but better safe than sorry.
-            
+
             # First we validate all keywords and values to be safeinput
 
             sub_key = ''
@@ -291,8 +292,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     (stat, sub_dict) = get_config_sub_level_dict(
                         keyword_data, {}, required, optional)
                     if not stat:
-                        raise Exception('Error in sub level checking: %s %s' % \
-                              (job_keyword, sub_dict))
+                        raise Exception('Error in sub level checking: %s %s' %
+                                        (job_keyword, sub_dict))
                     for (sub_key, sub_val) in sub_dict.items():
                         safe_checker = guess_type(sub_key)
                         safe_checker(sub_val)
@@ -303,8 +304,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
             except Exception, exc:
 
                 # found invalid value
-                
-                configuration.logger.error("parser type check for %s: %s" % \
+
+                configuration.logger.error("parser type check for %s: %s" %
                                            (sub_key, exc))
                 status = False
                 key = job_keyword
@@ -318,11 +319,11 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     keyword_dict, val)
 
             if keyword_type == 'int':
-                if not len(keyword_data) == 1:
+                if len(keyword_data) != 1:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'requires only a single integer',
-                            keyword_dict, keyword_data)
+                                             'requires only a single integer',
+                                             keyword_dict, keyword_data)
                 else:
                     try:
 
@@ -335,18 +336,21 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                         status = False
                         msg += format_type_error(job_keyword,
-                                'requires an integer', keyword_dict,
-                                keyword_data)
+                                                 'requires an integer', keyword_dict,
+                                                 keyword_data)
             elif keyword_type == 'boolean':
-                if not len(keyword_data) == 1:
+                if len(keyword_data) > 1:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'requires only a single boolean',
-                            keyword_dict, keyword_data)
+                                             'requires only a single boolean',
+                                             keyword_dict, keyword_data)
+                elif len(keyword_data) < 1:
+                    # Unset checkbox results in empty data (html "feature")
+                    keyword_dict['Value'] = False
                 else:
-                    if str(keyword_data[0]).lower() in ['true', '1']:
+                    if str(keyword_data[0]).lower() in ['true', '1', 'on']:
                         keyword_dict['Value'] = True
-                    elif str(keyword_data[0]).lower() in ['false', '0']:
+                    elif str(keyword_data[0]).lower() in ['false', '0', 'off']:
                         keyword_dict['Value'] = False
                     else:
 
@@ -354,8 +358,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                         status = False
                         msg += format_type_error(job_keyword,
-                                'requires a boolean', keyword_dict,
-                                keyword_data)
+                                                 'requires a boolean', keyword_dict,
+                                                 keyword_data)
             elif keyword_type == 'string':
 
                 if not keyword_data:
@@ -366,8 +370,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 if len(keyword_data) > 1:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'requires only a single string',
-                            keyword_dict, keyword_data)
+                                             'requires only a single string',
+                                             keyword_dict, keyword_data)
                 else:
                     try:
 
@@ -380,8 +384,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                         status = False
                         msg += format_type_error(job_keyword,
-                                'requires a string', keyword_dict,
-                                keyword_data)
+                                                 'requires a string', keyword_dict,
+                                                 keyword_data)
                 if job_keyword == 'RENAME':
 
                     # assign in upper case
@@ -389,36 +393,36 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     keyword_dict['Value'] = str(keyword_data[0]).upper()
                 if job_keyword == 'ARCHITECTURE':
                     if not str(keyword_data[0])\
-                         in configuration.architectures:
+                            in configuration.architectures:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'specified architecture not valid, should be %s'
-                                 % configuration.architectures,
-                                keyword_dict, keyword_data)
+                                                 'specified architecture not valid, should be %s'
+                                                 % configuration.architectures,
+                                                 keyword_dict, keyword_data)
                 if job_keyword == 'SCRIPTLANGUAGE':
                     if not str(keyword_data[0])\
-                         in configuration.scriptlanguages:
+                            in configuration.scriptlanguages:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'specified scriptlanguage not valid, should be %s'
-                                 % configuration.scriptlanguages,
-                                keyword_dict, keyword_data)
+                                                 'specified scriptlanguage not valid, should be %s'
+                                                 % configuration.scriptlanguages,
+                                                 keyword_dict, keyword_data)
                 if job_keyword == 'JOBTYPE':
                     if not str(keyword_data[0])\
-                         in configuration.jobtypes:
+                            in configuration.jobtypes:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'specified jobtype not valid, should be %s'
-                                 % configuration.jobtypes,
-                                keyword_dict, keyword_data)
+                                                 'specified jobtype not valid, should be %s'
+                                                 % configuration.jobtypes,
+                                                 keyword_dict, keyword_data)
                 if job_keyword == 'JOBNAME':
                     try:
                         valid_job_name(str(keyword_data[0]), min_length=0)
                     except Exception, err:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'specified jobname not valid: %s' % err,
-                                keyword_dict, keyword_data)
+                                                 'specified jobname not valid: %s' % err,
+                                                 keyword_dict, keyword_data)
             elif keyword_type == 'multiplestrings':
                 maxfill_values = [keyword_all] + maxfill_fields
                 for single_line in keyword_data:
@@ -427,14 +431,14 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     except:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'requires one or more strings',
-                                keyword_dict, keyword_data)
+                                                 'requires one or more strings',
+                                                 keyword_dict, keyword_data)
                     if job_keyword == 'MAXFILL':
                         if not single_line.strip() in maxfill_values:
                             status = False
                             msg += format_type_error(
                                 job_keyword,
-                                'specified maxfill not valid, should be in %s' % 
+                                'specified maxfill not valid, should be in %s' %
                                 maxfill_values,
                                 keyword_dict, keyword_data)
             elif keyword_type == 'testprocedure':
@@ -468,7 +472,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         status = False
                         msg += \
                             'Exception writing temporary testprocedure file. New runtime environment not created! %s'\
-                             % err
+                            % err
 
                 retmsg = ''
                 if status:
@@ -477,7 +481,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         tmpfile, "testprocedure_job_id",
                         "testprocedure_test_parse__cert_name_not_specified",
                         False, outfile="%s.parsed" % tmpfile)
-                    
+
                 # remove temporary files no matter what happened
 
                 if tmpfile:
@@ -487,7 +491,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     except Exception, err:
                         msg += \
                             'Exception removing temporary testprocedure file %s or %s, %s'\
-                             % (tmpfile, '%s.parsed' % tmpfile, err)
+                            % (tmpfile, '%s.parsed' % tmpfile, err)
 
                         # should we exit because of this? status = False
 
@@ -495,7 +499,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     status = False
                     msg += \
                         'mRSL specified in testprocedure is not valid: %s '\
-                         % retmsg
+                        % retmsg
 
                 try:
 
@@ -505,8 +509,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 except:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'could not append testprocedure',
-                            keyword_dict, keyword_data)
+                                             'could not append testprocedure',
+                                             keyword_dict, keyword_data)
             elif keyword_type == 'multiplekeyvalues':
 
                 for single_line in keyword_data:
@@ -514,8 +518,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         if single_line.find('=') == -1:
                             status = False
                             msg += format_type_error(job_keyword,
-                                    "requires one or more key=value rows. '=' not found on line."
-                                    , keyword_dict, keyword_data)
+                                                     "requires one or more key=value rows. '=' not found on line.", keyword_dict, keyword_data)
                         else:
                             keyval = single_line.split('=', 1)
                             env = (str(keyval[0]), str(keyval[1]))
@@ -523,8 +526,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     except:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'requires one or more key=value rows',
-                                keyword_dict, keyword_data)
+                                                 'requires one or more key=value rows',
+                                                 keyword_dict, keyword_data)
             elif keyword_type == 'execonfig':
 
                 # field_data = [i for i in keyword_data]
@@ -538,22 +541,22 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 sublevel_optional = []
 
                 if exekeywords.has_key('Sublevel')\
-                     and exekeywords['Sublevel']:
+                        and exekeywords['Sublevel']:
                     sublevel_required = exekeywords['Sublevel_required']
                     sublevel_optional = exekeywords['Sublevel_optional']
                 (stat, exe_dict) = \
                     get_config_sub_level_dict(keyword_data, {},
-                        sublevel_required, sublevel_optional)
+                                              sublevel_required, sublevel_optional)
                 if not stat:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'Error in sub level parsing: %s'
-                             % exe_dict, keyword_dict, keyword_data)
+                                             'Error in sub level parsing: %s'
+                                             % exe_dict, keyword_dict, keyword_data)
 
                 try:
                     continuous = str(exe_dict['continuous'])
 
-                        # Keep old typo for backwards compatibility
+                    # Keep old typo for backwards compatibility
 
                     if continuous == 'False':
                         exe_dict['continuous'] = False
@@ -564,8 +567,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     else:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'continuous must be True or False',
-                                keyword_dict, keyword_data)
+                                                 'continuous must be True or False',
+                                                 keyword_dict, keyword_data)
 
                     shared_fs = str(exe_dict['shared_fs'])
                     if shared_fs == 'False':
@@ -575,21 +578,21 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     else:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'shared_fs must be True or False',
-                                keyword_dict, keyword_data)
+                                                 'shared_fs must be True or False',
+                                                 keyword_dict, keyword_data)
 
                     vgrid_value = exe_dict['vgrid']
 
-                        # Split between comma and remove extra whitespace
+                    # Split between comma and remove extra whitespace
 
                     exe_dict['vgrid'] = [i.strip() for i in
-                            vgrid_value.split(',') if i.strip()]
+                                         vgrid_value.split(',') if i.strip()]
                     value.append(exe_dict)
                 except Exception, err:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'Error getting execonfig value',
-                            keyword_dict, keyword_data)
+                                             'Error getting execonfig value',
+                                             keyword_dict, keyword_data)
             elif keyword_type == 'storeconfig':
 
                 # field_data = [i for i in keyword_data]
@@ -603,17 +606,17 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 sublevel_optional = []
 
                 if storekeywords.has_key('Sublevel')\
-                     and storekeywords['Sublevel']:
+                        and storekeywords['Sublevel']:
                     sublevel_required = storekeywords['Sublevel_required']
                     sublevel_optional = storekeywords['Sublevel_optional']
                 (stat, store_dict) = \
                     get_config_sub_level_dict(keyword_data, {},
-                        sublevel_required, sublevel_optional)
+                                              sublevel_required, sublevel_optional)
                 if not stat:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'Error in sub level parsing: %s'
-                             % store_dict, keyword_dict, keyword_data)
+                                             'Error in sub level parsing: %s'
+                                             % store_dict, keyword_dict, keyword_data)
 
                 supported_protocols = ['sftp']
                 try:
@@ -621,8 +624,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     if protocol not in supported_protocols:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'storage_protocol must be in %s' % supported_protocols,
-                                keyword_dict, keyword_data)
+                                                 'storage_protocol must be in %s' % supported_protocols,
+                                                 keyword_dict, keyword_data)
 
                     shared_fs = str(store_dict['shared_fs'])
                     if shared_fs == 'False':
@@ -632,21 +635,21 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     else:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'shared_fs must be True or False',
-                                keyword_dict, keyword_data)
+                                                 'shared_fs must be True or False',
+                                                 keyword_dict, keyword_data)
 
                     vgrid_value = store_dict['vgrid']
 
-                        # Split between comma and remove extra whitespace
+                    # Split between comma and remove extra whitespace
 
                     store_dict['vgrid'] = [i.strip() for i in
-                            vgrid_value.split(',') if i.strip()]
+                                           vgrid_value.split(',') if i.strip()]
                     value.append(store_dict)
                 except Exception, err:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'Error getting storeconfig value',
-                            keyword_dict, keyword_data)
+                                             'Error getting storeconfig value',
+                                             keyword_dict, keyword_data)
             elif keyword_type == 'configruntimeenvironment':
 
                 # When successful, the result is on the form:
@@ -666,13 +669,12 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                 val = []
 
                             name = single_line.lower().replace('name:',
-                                    '').strip()
+                                                               '').strip()
 
                             if not name:
                                 status = False
                                 msg += format_type_error(job_keyword,
-                                        "Name of runtime environment not specified after 'name:'"
-                                        , keyword_dict, keyword_data)
+                                                         "Name of runtime environment not specified after 'name:'", keyword_dict, keyword_data)
                         else:
 
                             # new environment for RE
@@ -683,13 +685,11 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                                 status = False
                                 msg += format_type_error(job_keyword,
-                                        'Trying to assign value to an unnamed runtime environment'
-                                        , keyword_dict, keyword_data)
+                                                         'Trying to assign value to an unnamed runtime environment', keyword_dict, keyword_data)
                             if single_line.find('=') == -1:
                                 status = False
                                 msg += format_type_error(job_keyword,
-                                        'Environment values must be on the form: envname=envvalue'
-                                        , keyword_dict, keyword_data)
+                                                         'Environment values must be on the form: envname=envvalue', keyword_dict, keyword_data)
 
                             # ok
 
@@ -699,8 +699,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     except:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'requires one or more key=value rows',
-                                keyword_dict, keyword_data)
+                                                 'requires one or more key=value rows',
+                                                 keyword_dict, keyword_data)
                 runtime_env = (name.upper(), val)
                 if name.strip():
                     value.append(runtime_env)
@@ -717,28 +717,28 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     sublevel_optional = []
 
                     if software.has_key('Sublevel')\
-                         and software['Sublevel']:
+                            and software['Sublevel']:
                         sublevel_required = software['Sublevel_required'
-                                ]
+                                                     ]
                         sublevel_optional = software['Sublevel_optional'
-                                ]
+                                                     ]
 
                     (stat, software_dict) = \
                         get_config_sub_level_dict(keyword_data, {},
-                            sublevel_required, sublevel_optional)
+                                                  sublevel_required, sublevel_optional)
                     if not stat:
                         status = False
                         msg += format_type_error(job_keyword,
-                                'Error in sub level parsing: %s'
-                                 % software_dict, keyword_dict,
-                                keyword_data)
+                                                 'Error in sub level parsing: %s'
+                                                 % software_dict, keyword_dict,
+                                                 keyword_data)
                     else:
                         value.append(software_dict)
                 except Exception, err:
                     status = False
                     msg += format_type_error(job_keyword,
-                            'Error getting RE_software value',
-                            keyword_dict, keyword_data)
+                                             'Error getting RE_software value',
+                                             keyword_dict, keyword_data)
             elif keyword_type == 'RE_environmentvariable':
                 try:
 
@@ -751,7 +751,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     sublevel_optional = []
 
                     if environmentvariable.has_key('Sublevel')\
-                         and environmentvariable['Sublevel']:
+                            and environmentvariable['Sublevel']:
                         sublevel_required = \
                             environmentvariable['Sublevel_required']
                         sublevel_optional = \
@@ -759,16 +759,16 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                     (stat, env_vars) = \
                         get_config_sub_level_dict(keyword_data, {},
-                            sublevel_required, sublevel_optional)
+                                                  sublevel_required, sublevel_optional)
 
                     if stat:
                         env_name = env_vars['name']
                         if env_name in used_env_names:
                             status = False
                             msg += format_type_error(job_keyword,
-                                    "Environment name '%s' used more than once."
-                                     % env_name, keyword_dict,
-                                    keyword_data)
+                                                     "Environment name '%s' used more than once."
+                                                     % env_name, keyword_dict,
+                                                     keyword_data)
                         used_env_names.append(env_name)
 
                         value.append(env_vars)
@@ -778,19 +778,18 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                         status = False
                         msg += format_type_error(job_keyword,
-                                'Error in sub level parsing: %s'
-                                 % env_vars, keyword_dict, keyword_data)
+                                                 'Error in sub level parsing: %s'
+                                                 % env_vars, keyword_dict, keyword_data)
                 except Exception, err:
 
                     status = False
                     msg += format_type_error(job_keyword,
-                            'Error getting RE_environmentvariable value.'
-                            , keyword_dict, keyword_data)
+                                             'Error getting RE_environmentvariable value.', keyword_dict, keyword_data)
             else:
                 status = False
                 msg += \
                     'Internal error: Keyword %s with unknown type %s was accepted!'\
-                     % (html_escape(job_keyword), keyword_type)
+                    % (html_escape(job_keyword), keyword_type)
 
             # print str(value)
             # Keyword was found. Change required to False meaning that the keyword is no longer required
@@ -810,9 +809,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 # Required keyword not found
 
                 msg += 'REQUIRED keyword %s was not found in your file!'\
-                     % keyword_entry
+                    % keyword_entry
                 status = False
 
     return (status, msg)
-
-

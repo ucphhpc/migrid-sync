@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagepreview - Managing MiG imagepreview meta
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -55,7 +55,7 @@ post_actions = [
     'clean',
     'cleanrecursive',
     'refresh',
-    ]
+]
 valid_actions = get_actions + post_actions
 
 
@@ -82,7 +82,7 @@ def signature():
         'preview_z_dimension': [],
         'preview_cutoff_min': [],
         'preview_cutoff_max': [],
-        }
+    }
 
     return ['imagepreview', defaults]
 
@@ -102,18 +102,18 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
 
     if not validate_status:
         WARNING_MSG = str(accepted)
         output_objects.append({'object_type': 'warning',
-                              'text': WARNING_MSG})
+                               'text': WARNING_MSG})
         return (accepted, returnvalues.CLIENT_ERROR)
 
     # Convert accpeted values to string and filter out NON-set values
 
-    accepted_joined_values = {key : ''.join(value) \
-        for (key, value) in accepted.iteritems() if len(value) > 0}
+    accepted_joined_values = {key: ''.join(value)
+                              for (key, value) in accepted.iteritems() if len(value) > 0}
 
     action = accepted_joined_values['action']
     flags = accepted_joined_values['flags']
@@ -124,7 +124,7 @@ def main(client_id, user_arguments_dict):
 
     if not action in valid_actions:
         output_objects.append({'object_type': 'error_text',
-                              'text': 'Invalid action "%s" (supported: %s)'
+                               'text': 'Invalid action "%s" (supported: %s)'
                                % (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -136,29 +136,27 @@ def main(client_id, user_arguments_dict):
             client_id,
             get_csrf_limit(configuration),
             accepted,
-            ):
+        ):
             logger.info('checkpoint2')
             output_objects.append({'object_type': 'error_text',
-                                  'text': '''Only accepting
+                                   'text': '''Only accepting
                 CSRF-filtered POST requests to prevent unintended updates'''
-                                  })
+                                   })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
     abs_path = os.path.join(base_dir, path)
 
     settings_dict = load_settings(client_id, configuration)
-    javascript = None
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'IMAGEPREVIEW Management'
-    title_entry['javascript'] = javascript
     output_objects.append({'object_type': 'header',
-                          'text': 'IMAGEPREVIEW Management'})
+                           'text': 'IMAGEPREVIEW Management'})
     status = returnvalues.ERROR
 
     vgrid_name = in_vgrid_share(configuration, abs_path)
@@ -169,7 +167,7 @@ def main(client_id, user_arguments_dict):
         status = returnvalues.ERROR
         ERROR_MSG = "No vgrid found for path: '%s'" % path
         output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG})
+                               'text': ERROR_MSG})
 
     if status == returnvalues.OK:
         if action == 'list_settings':
@@ -183,10 +181,10 @@ def main(client_id, user_arguments_dict):
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
-                        'text': ERROR_MSG})
+                                       'text': ERROR_MSG})
             else:
                 status = remove_setting(configuration, abs_path, path,
-                        extension, output_objects)
+                                        extension, output_objects)
             logger.debug('remove_setting exit status: %s' % str(status))
         elif action == 'get_setting':
             status = get_setting(configuration, abs_path, path,
@@ -199,7 +197,7 @@ def main(client_id, user_arguments_dict):
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
-                        'text': ERROR_MSG})
+                                       'text': ERROR_MSG})
             else:
                 status = update_setting(
                     configuration,
@@ -209,7 +207,7 @@ def main(client_id, user_arguments_dict):
                     extension,
                     accepted_joined_values,
                     output_objects,
-                    )
+                )
                 logger.debug('update_setting exit status: %s'
                              % str(status))
         elif action == 'create_setting':
@@ -220,7 +218,7 @@ def main(client_id, user_arguments_dict):
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
-                        'text': ERROR_MSG})
+                                       'text': ERROR_MSG})
             else:
                 status = create_setting(
                     configuration,
@@ -231,7 +229,7 @@ def main(client_id, user_arguments_dict):
                     extension,
                     accepted_joined_values,
                     output_objects,
-                    )
+                )
                 status = returnvalues.OK
             logger.debug('create_setting exit status: %s' % str(status))
         elif action == 'reset_setting':
@@ -241,10 +239,10 @@ def main(client_id, user_arguments_dict):
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
-                        'text': ERROR_MSG})
+                                       'text': ERROR_MSG})
             else:
                 status = reset_settings(configuration, abs_path, path,
-                        output_objects, extension)
+                                        output_objects, extension)
             logger.debug('reset exit status: %s' % str(status))
         elif action == 'get':
 
@@ -257,7 +255,7 @@ def main(client_id, user_arguments_dict):
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
-                        'text': ERROR_MSG})
+                                       'text': ERROR_MSG})
             else:
                 status = remove(configuration, base_dir, abs_path,
                                 path, output_objects)
@@ -269,7 +267,7 @@ def main(client_id, user_arguments_dict):
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
-                        'text': ERROR_MSG})
+                                       'text': ERROR_MSG})
             else:
                 status = clean(configuration, base_dir, abs_path, path,
                                output_objects)
@@ -282,7 +280,7 @@ def main(client_id, user_arguments_dict):
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
-                        'text': ERROR_MSG})
+                                       'text': ERROR_MSG})
             else:
                 status = clean(
                     configuration,
@@ -291,7 +289,7 @@ def main(client_id, user_arguments_dict):
                     path,
                     output_objects,
                     recursive=True,
-                    )
+                )
                 logger.debug('cleanrecursive exit status: %s'
                              % str(status))
         elif action == 'refresh':
@@ -302,7 +300,7 @@ def main(client_id, user_arguments_dict):
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
                     % vgrid_name
                 output_objects.append({'object_type': 'error_text',
-                        'text': ERROR_MSG})
+                                       'text': ERROR_MSG})
             else:
                 status = refresh(
                     configuration,
@@ -311,16 +309,14 @@ def main(client_id, user_arguments_dict):
                     abs_path,
                     path,
                     output_objects,
-                    )
+                )
                 logger.debug('refresh exit status: %s' % str(status))
         else:
             ERROR_MSG = "action: '%s' _NOT_ implemented yet" \
                 % str(action)
             output_objects.append({'object_type': 'error_text',
-                                  'text': ERROR_MSG})
+                                   'text': ERROR_MSG})
 
     logger.debug('output_objects: %s' % str(output_objects))
     logger.debug('status: %s' % str(status))
     return (output_objects, status)
-
-

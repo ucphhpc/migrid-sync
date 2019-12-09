@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,8 +39,7 @@ from shared.freezefunctions import create_frozen_archive, published_url, \
     is_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-    html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.safeinput import valid_path
 from shared.validstring import valid_user_path
@@ -218,9 +217,10 @@ Please contact the site admins %s if you think it should be enabled.
 
     # jquery support for confirmation on freeze
     (add_import, add_init, add_ready) = man_base_js(configuration, [])
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
+
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 

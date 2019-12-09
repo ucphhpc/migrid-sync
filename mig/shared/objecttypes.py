@@ -34,7 +34,7 @@ end = {'object_type': 'end', 'required': [], 'optional': []}
 timing_info = {'object_type': 'timing_info', 'required': [],
                'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
-         'optional': ['meta', 'style', 'javascript', 'bodyfunctions']}
+         'optional': ['meta', 'style', 'script']}
 text = {'object_type': 'text', 'required': ['text'], 'optional': []}
 verbatim = {'object_type': 'verbatim', 'required': ['text'],
             'optional': []}
@@ -119,8 +119,8 @@ runtimeenvironment = {
 # TODO, add the explicit fields that it uses
 workflow = {
     'object_type': 'workflow',
-    #'required': [],
-    #'optional': [workflowpattern, workflowrecipe]
+    # 'required': [],
+    # 'optional': [workflowpattern, workflowrecipe]
 }
 
 frozenfile = {'object_type': 'frozenfile', 'required':

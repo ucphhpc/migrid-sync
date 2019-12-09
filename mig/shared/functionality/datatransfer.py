@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,19 +39,18 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
-     csrf_field
+    csrf_field
 from shared.fileio import read_tail
 from shared.functional import validate_input_and_cert
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import quiet
 from shared.pwhash import make_digest
 from shared.transferfunctions import build_transferitem_object, \
-     build_keyitem_object, load_data_transfers, create_data_transfer, \
-     update_data_transfer, delete_data_transfer, load_user_keys, \
-     generate_user_key, delete_user_key
+    build_keyitem_object, load_data_transfers, create_data_transfer, \
+    update_data_transfer, delete_data_transfer, load_user_keys, \
+    generate_user_key, delete_user_key
 
 
 # Fields to fill on edit - note password is skipped on purpose for security!
@@ -78,17 +77,19 @@ warn_key = [i for (i, _) in valid_proto if not i in ('sftp', 'rsyncssh')]
 
 # TODO: consider adding a start time or cron-like field to transfers
 
+
 def signature():
     """Signature of the main function"""
 
     # NOTE: we use transfer_pw rather than password to avoid interference with
     # user script curl password argument for the user key/cert
     defaults = {'action': ['show'], 'transfer_id': [''], 'protocol': [''],
-                'fqdn':[''], 'port': [''], 'transfer_src': [''],
+                'fqdn': [''], 'port': [''], 'transfer_src': [''],
                 'transfer_dst': [''], 'username': [''], 'transfer_pw': [''],
                 'key_id': [''], 'exclude': [''], 'compress': [''],
                 'notify': [''], 'flags': ['']}
     return ['text', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -104,7 +105,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -144,12 +145,12 @@ def main(client_id, user_arguments_dict):
 
     # jquery support for tablesorter and confirmation on delete/redo:
     # datatransfer and key tables initially sorted by 0 (id) */
-    
+
     datatransfer_spec = {'table_id': 'datatransferstable', 'pager_id':
                          'datatransfers_pager', 'sort_order': '[[0,0]]'}
     transferkey_spec = {'table_id': 'transferkeystable', 'pager_id':
                         'transferkeys_pager', 'sort_order': '[[0,0]]'}
-    (add_import, add_init, add_ready) = man_base_js(configuration, 
+    (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [datatransfer_spec,
                                                      transferkey_spec])
     add_init += '''
@@ -290,14 +291,14 @@ def main(client_id, user_arguments_dict):
         $(".datatransfer-tabs").tabs();
         $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
     ''' % (pre_ready, add_ready)
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
-    output_objects.append({'object_type': 'header', 'text'
-                           : 'Manage background data transfers'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Manage background data transfers'})
 
     if not configuration.site_enable_transfers:
         output_objects.append({'object_type': 'text', 'text':
@@ -310,8 +311,7 @@ Please contact the site admins %s if you think they should be enabled.
     logger.info('datatransfer %s from %s' % (action, client_id))
 
     if not action in valid_actions:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid action "%s" (supported: %s)' % \
+        output_objects.append({'object_type': 'error_text', 'text': 'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -367,14 +367,14 @@ else, so the public key can be inserted in your authorized_keys file as:
                 transfer_item['viewdatalink'] = {
                     'object_type': 'link',
                     'destination': data_url,
-                    'class': 'viewlink iconspace', 
+                    'class': 'viewlink iconspace',
                     'title': 'View local component of %s' % saved_id,
                     'text': ''}
             transfer_item['viewoutputlink'] = {
                 'object_type': 'link',
-                'destination': "fileman.py?path=transfer_output/%s/" % \
+                'destination': "fileman.py?path=transfer_output/%s/" %
                 saved_id,
-                'class': 'infolink iconspace', 
+                'class': 'infolink iconspace',
                 'title': 'View status files for %s' % saved_id,
                 'text': ''}
             # Edit is just a call to self with fillimport set
@@ -392,7 +392,7 @@ else, so the public key can be inserted in your authorized_keys file as:
             transfer_item['edittransferlink'] = {
                 'object_type': 'link',
                 'destination': "%s.py?%s" % (target_op, transfer_args),
-                'class': 'editlink iconspace', 
+                'class': 'editlink iconspace',
                 'title': 'Edit or duplicate transfer %s' % saved_id,
                 'text': ''}
             js_name = 'delete%s' % hexlify(saved_id)
@@ -403,9 +403,9 @@ else, so the public key can be inserted in your authorized_keys file as:
             output_objects.append({'object_type': 'html_form', 'text': helper})
             transfer_item['deltransferlink'] = {
                 'object_type': 'link', 'destination':
-                "javascript: confirmDialog(%s, '%s');" % \
+                "javascript: confirmDialog(%s, '%s');" %
                 (js_name, 'Really remove %s?' % saved_id),
-                'class': 'removelink iconspace', 'title': 'Remove %s' % \
+                'class': 'removelink iconspace', 'title': 'Remove %s' %
                 saved_id, 'text': ''}
             js_name = 'redo%s' % hexlify(saved_id)
             helper = html_post_helper(js_name, '%s.py' % target_op,
@@ -415,9 +415,9 @@ else, so the public key can be inserted in your authorized_keys file as:
             output_objects.append({'object_type': 'html_form', 'text': helper})
             transfer_item['redotransferlink'] = {
                 'object_type': 'link', 'destination':
-                "javascript: confirmDialog(%s, '%s');" % \
+                "javascript: confirmDialog(%s, '%s');" %
                 (js_name, 'Really reschedule %s?' % saved_id),
-                'class': 'refreshlink iconspace', 'title': 'Reschedule %s' % \
+                'class': 'refreshlink iconspace', 'title': 'Reschedule %s' %
                 saved_id, 'text': ''}
             datatransfers.append(transfer_item)
         #logger.debug("found datatransfers: %s" % datatransfers)
@@ -463,21 +463,21 @@ transfers below.'''
                 export_checked = 'checked'
                 import_checked = ''
 
-        fill_helpers= {'import_checked': import_checked, 'export_checked':
-                       export_checked, 'anon_checked': anon_checked,
-                       'pw_checked': pw_checked, 'key_checked': key_checked,
-                       'transfer_id': transfer_id, 'protocol': protocol,
-                       'fqdn': fqdn, 'port': port, 'username': username,
-                       'password': password, 'key_id': key_id, 
-                       'transfer_src_string': ', '.join(src_list),
-                       'transfer_src': src_list, 'transfer_dst': dst,
-                       'exclude': exclude_list, 'compress': use_compress,
-                       'notify': notify, 'toggle_quiet': toggle_quiet,
-                       'scroll_to_create': scroll_to_create,
-                       'transfer_action': transfer_action,
-                       'form_method': form_method, 'csrf_field': csrf_field,
-                       'csrf_limit': csrf_limit, 'target_op': target_op,
-                       'csrf_token': csrf_token}
+        fill_helpers = {'import_checked': import_checked, 'export_checked':
+                        export_checked, 'anon_checked': anon_checked,
+                        'pw_checked': pw_checked, 'key_checked': key_checked,
+                        'transfer_id': transfer_id, 'protocol': protocol,
+                        'fqdn': fqdn, 'port': port, 'username': username,
+                        'password': password, 'key_id': key_id,
+                        'transfer_src_string': ', '.join(src_list),
+                        'transfer_src': src_list, 'transfer_dst': dst,
+                        'exclude': exclude_list, 'compress': use_compress,
+                        'notify': notify, 'toggle_quiet': toggle_quiet,
+                        'scroll_to_create': scroll_to_create,
+                        'transfer_action': transfer_action,
+                        'form_method': form_method, 'csrf_field': csrf_field,
+                        'csrf_limit': csrf_limit, 'target_op': target_op,
+                        'csrf_token': csrf_token}
 
         # Make page with manage transfers tab and manage keys tab
 
@@ -500,26 +500,26 @@ transfers below.'''
 ''' % fill_helpers})
 
         # Display external transfers, log and form to add new ones
-    
+
         output_objects.append({'object_type': 'html_form', 'text':  '''
 <div id="transfer-tab">
 '''})
 
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'External Data Transfers'})
+        output_objects.append(
+            {'object_type': 'sectionheader', 'text': 'External Data Transfers'})
         output_objects.append({'object_type': 'table_pager',
                                'id_prefix': 'datatransfers_',
                                'entry_name': 'transfers',
                                'default_entries': default_pager_entries})
-        output_objects.append({'object_type': 'datatransfers', 'datatransfers'
-                              : datatransfers})
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Latest Transfer Results'})
+        output_objects.append(
+            {'object_type': 'datatransfers', 'datatransfers': datatransfers})
+        output_objects.append(
+            {'object_type': 'sectionheader', 'text': 'Latest Transfer Results'})
         output_objects.append({'object_type': 'html_form', 'text': '''
 <textarea id="logarea" class="fillwidth" rows=5 readonly="readonly">%s</textarea>
 ''' % (''.join(log_lines))})
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Create External Data Transfer'})
+        output_objects.append(
+            {'object_type': 'sectionheader', 'text': 'Create External Data Transfer'})
         transfer_html = '''
 <table class="addexttransfer">
 <tr><td>
@@ -553,7 +553,8 @@ into.<br/>
 </td></tr>
 <tr><td>
 <label for="protocol">Protocol</label>
-<select id="protocol_select" name="protocol" onblur="setDefaultPort();">
+<select id="protocol_select" class="protocol-select themed-select html-select"
+    name="protocol" onblur="setDefaultPort();">
 '''
         # select requested protocol
         for (key, val) in valid_proto:
@@ -598,7 +599,7 @@ login with key
 </span>
 <span id="key_entry">
 <label for="key_id">Key</label>
-<select id="key" name=key_id />
+<select id="key" class="key-select themed-select html-select" name=key_id />
 '''
         # select requested key
         for key_dict in available_keys:
@@ -660,8 +661,8 @@ login with key
 %(toggle_quiet)s
 %(scroll_to_create)s
 '''
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : transfer_html % fill_helpers})
+        output_objects.append(
+            {'object_type': 'html_form', 'text': transfer_html % fill_helpers})
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})
@@ -671,8 +672,8 @@ login with key
         output_objects.append({'object_type': 'html_form', 'text':  '''
 <div id="keys-tab">
 '''})
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Manage Data Transfer Keys'})
+        output_objects.append(
+            {'object_type': 'sectionheader', 'text': 'Manage Data Transfer Keys'})
         key_html = '''
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -691,19 +692,19 @@ login with key
             output_objects.append({'object_type': 'html_form', 'text': helper})
             key_item['delkeylink'] = {
                 'object_type': 'link', 'destination':
-                "javascript: confirmDialog(%s, '%s');" % \
+                "javascript: confirmDialog(%s, '%s');" %
                 (js_name, 'Really remove %s?' % saved_id),
-                'class': 'removelink iconspace', 'title': 'Remove %s' % \
+                'class': 'removelink iconspace', 'title': 'Remove %s' %
                 saved_id, 'text': ''}
             transferkeys.append(key_item)
 
         output_objects.append({'object_type': 'table_pager',
                                'id_prefix': 'transferkeys_',
-                               'entry_name': 'keys', 
+                               'entry_name': 'keys',
                                'default_entries': default_pager_entries})
-        output_objects.append({'object_type': 'transferkeys', 'transferkeys'
-                               : transferkeys})
-        
+        output_objects.append(
+            {'object_type': 'transferkeys', 'transferkeys': transferkeys})
+
         key_html += '''
 Please copy the public key to your ~/.ssh/authorized_keys or
 ~/.ssh/authorized_keys2 file on systems where you want to login with the
@@ -726,12 +727,12 @@ Key name:<br/>
 </table>
 </form>
 ''' % (restrict_template % 'ssh-rsa AAAAB3NzaC...', configuration.short_title)
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : key_html % fill_helpers})
+        output_objects.append(
+            {'object_type': 'html_form', 'text': key_html % fill_helpers})
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})
-    
+
         output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})
@@ -763,8 +764,7 @@ Key name:<br/>
         else:
             if not fqdn:
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'No host address provided!'})
+                    {'object_type': 'error_text', 'text': 'No host address provided!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if not [src for src in src_list if src] or not dst:
                 output_objects.append(
@@ -774,8 +774,7 @@ Key name:<br/>
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if protocol == "rsyncssh" and not key_id:
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'RSYNC over SSH is only supported with key!'})
+                    {'object_type': 'error_text', 'text': 'RSYNC over SSH is only supported with key!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if not password and not key_id and protocol in warn_anon:
                 output_objects.append(
@@ -807,7 +806,7 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                 password_digest = ''
             transfer_dict.update(
                 {'transfer_id': transfer_id, 'action': action,
-                 'protocol': protocol, 'fqdn': fqdn, 'port': port, 
+                 'protocol': protocol, 'fqdn': fqdn, 'port': port,
                  'username': username, 'password_digest': password_digest,
                  'key': key_id, 'src': src_list, 'dst': dst,
                  'exclude': exclude_list, 'compress': use_compress,
@@ -817,14 +816,12 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                                                     transfer_map)
         if not save_status:
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'Error in %s data transfer %s: '% (desc, transfer_id) + \
+                {'object_type': 'error_text', 'text': 'Error in %s data transfer %s: ' % (desc, transfer_id) +
                  'save updated transfers failed!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        output_objects.append({'object_type': 'text', 'text'
-                               : '%sd transfer request %s.' % (desc.title(),
-                                                           transfer_id)
+        output_objects.append({'object_type': 'text', 'text': '%sd transfer request %s.' % (desc.title(),
+                                                                                            transfer_id)
                                })
         if action != 'deltransfer':
             output_objects.append({
@@ -837,10 +834,11 @@ Please note that the status files only appear after the transfer starts, so it
 may be empty now.
 '''})
         logger.debug('datatransfer %s from %s done: %s' % (action, client_id,
-                                                          transfer_dict))
+                                                           transfer_dict))
     elif action in key_actions:
         if action == 'generatekey':
-            (gen_status, pub) = generate_user_key(configuration, client_id, key_id)
+            (gen_status, pub) = generate_user_key(
+                configuration, client_id, key_id)
             if gen_status:
                 output_objects.append({'object_type': 'html_form', 'text': '''
 Generated new key with name %s and associated public key:<br/>
@@ -862,7 +860,8 @@ Key generation for name %s failed with error: %s''' % (key_id, pub)})
             for key_dict in available_keys:
                 if key_dict['key_id'] == key_id:
                     pubkey = key_dict.get('public_key', pubkey)
-            (del_status, msg) = delete_user_key(configuration, client_id, key_id)
+            (del_status, msg) = delete_user_key(
+                configuration, client_id, key_id)
             if del_status:
                 output_objects.append({'object_type': 'html_form', 'text': '''
 <p>
@@ -880,11 +879,12 @@ where you may have previously added it.
 Key removal for name %s failed with error: %s''' % (key_id, msg)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
     else:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Invalid data transfer action: %s' % action})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 'Invalid data transfer action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
-                
+
     output_objects.append({'object_type': 'link',
                            'destination': 'datatransfer.py',
                            'text': 'Return to data transfers overview'})
+
     return (output_objects, returnvalues.OK)

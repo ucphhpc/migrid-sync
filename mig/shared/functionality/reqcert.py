@@ -32,11 +32,11 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, distinguished_name_to_user
 from shared.accountreq import valid_password_chars, valid_name_chars, \
-    password_min_len, password_max_len, account_js_helpers
+    password_min_len, password_max_len, account_js_helpers, \
+    account_css_helpers, account_request_template
 from shared.defaults import csrf_field
 from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.pwhash import parse_password_policy
 from shared.safeinput import html_escape
@@ -74,15 +74,20 @@ def main(client_id, user_arguments_dict):
     title_entry['skipmenu'] = True
     form_fields = ['full_name', 'organization', 'email', 'country', 'state',
                    'password', 'verifypassword', 'comment']
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = account_js_helpers(form_fields)
-    output_objects.append({'object_type': 'html_form',
-                           'text': '''
- <div id="contextual_help">
-  <div class="help_gfx_bubble"><!-- graphically connect field with help text --></div>
-  <div class="help_message"><!-- filled by js --></div>
- </div>
-'''})
+    title_entry['style']['advanced'] += account_css_helpers(configuration)
+    add_import, add_init, add_ready = account_js_helpers(configuration,
+                                                         form_fields)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
+    title_entry['script']['body'] = "class='staticpage'"
+#    output_objects.append({'object_type': 'html_form',
+#                           'text': '''
+# <div id="contextual_help">
+#  <div class="help_gfx_bubble"><!-- graphically connect field with help text --></div>
+#  <div class="help_message"><!-- filled by js --></div>
+# </div>
+# '''})
     header_entry = {'object_type': 'header', 'text':
                     'Welcome to the %s certificate account request page' %
                     configuration.short_title}
@@ -155,7 +160,7 @@ jobs and privileges.</p>''' %
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
 
     fill_helpers.update(user_fields)
-    output_objects.append({'object_type': 'html_form', 'text': """Please enter
+    html = """Please enter
 your information in at least the <span class=mandatory>mandatory</span> fields
 below and press the Send button to submit the certificate account request to
 the %(site)s administrators.
@@ -165,6 +170,14 @@ Email data that we can easily validate!
 </p>
 %(site_signup_hint)s
 <hr />
+    """
+
+    html += account_request_template(configuration)
+
+    # TODO : remove this legacy version?
+    html += """
+<div style="height: 0; visibility: hidden; display: none;">
+<!--OLD FORM-->
 <div class=form_container>
 <!-- use post here to avoid field contents in URL -->
 <form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();'>
@@ -202,6 +215,9 @@ Email data that we can easily validate!
   <div id='verifypassword_help'>Please repeat password</div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your account needs and thus speed up our response. Typically the name of a local collaboration partner or project may be helpful.</div>
 </div>
-""" % fill_helpers})
+</div>
+"""
+    output_objects.append(
+        {'object_type': 'html_form', 'text': html % fill_helpers})
 
     return (output_objects, returnvalues.OK)

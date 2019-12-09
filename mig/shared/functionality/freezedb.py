@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezedb - manage frozen archives
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,8 +33,7 @@ from shared.freezefunctions import build_freezeitem_object, \
     list_frozen_archives, get_frozen_meta, get_frozen_archive, TARGET_ARCHIVE
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-    html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 
 list_operations = ['showlist', 'list']
@@ -102,9 +101,9 @@ Please contact the site admins %s if you think it should be enabled.
                                                         [table_spec])
         if operation == "show":
             add_ready += '%s;' % refresh_call
-        title_entry['style'] = themed_styles(configuration)
-        title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                                 add_init, add_ready)
+        title_entry['script']['advanced'] += add_import
+        title_entry['script']['init'] += add_init
+        title_entry['script']['ready'] += add_ready
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
 
@@ -235,21 +234,22 @@ Choose one of the archive methods below to make a manual archive:
                                'title': 'Make a new backup archive of %s data'
                                % configuration.short_title,
                                'text': 'Create a new backup archive'})
-        output_objects.append({'object_type': 'html_form', 'text': "</p>"})
+        output_objects.append(
+            {'object_type': 'html_form', 'text': "<br/><br/></p>"})
 
         if configuration.site_enable_duplicati:
             output_objects.append({'object_type': 'text', 'text': '''
 Alternatively you can use Duplicati for traditional incremental backup/restore
 with optional encryption of all your backup contents.'''})
             output_objects.append({'object_type': 'html_form', 'text': """
-For further details please refer to the """})
+<p>For further details please refer to the """})
             output_objects.append({'object_type': 'link',
-                                   'destination': 'settings.py?topic=duplicate',
-                                   'class': 'duplicatilink iconspace',
+                                   'destination': 'setup.py?topic=duplicati',
+                                   'class': '',
                                    'title': 'Open Duplicati settings',
                                    'text': 'Duplicati Settings'})
             output_objects.append({'object_type': 'html_form', 'text':
-                                   """ and the %s documentation.""" %
+                                   """ and the %s documentation.<br/><br/></p>""" %
                                    configuration.short_title})
 
         if configuration.site_enable_seafile:
@@ -257,14 +257,14 @@ For further details please refer to the """})
 We recommend our Seafile sync solution for any small or medium sized data sets,
 for which you want automatic file versioning and easy roll-back support.'''})
             output_objects.append({'object_type': 'html_form', 'text': """
-For further details please refer to the """})
+<p>For further details please refer to the """})
             output_objects.append({'object_type': 'link',
-                                   'destination': 'settings.py?topic=seafile',
-                                   'class': 'seafilelink iconspace',
+                                   'destination': 'setup.py?topic=seafile',
+                                   'class': '',
                                    'title': 'Open Seafile settings',
                                    'text': 'Seafile Settings'})
             output_objects.append({'object_type': 'html_form', 'text':
-                                   """ and the %s documentation.""" %
+                                   """ and the %s documentation.</p>""" %
                                    configuration.short_title})
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, returnvalues.OK)

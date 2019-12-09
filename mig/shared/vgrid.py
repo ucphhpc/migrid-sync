@@ -669,8 +669,8 @@ def init_vgrid_script_add_rem(
 
     if subject_type == 'trigger':
         if vgrid_is_trigger(vgrid_name, subject, configuration) and not \
-               vgrid_is_trigger_owner(vgrid_name, subject, client_id, 
-                                      configuration):
+            vgrid_is_trigger_owner(vgrid_name, subject, client_id,
+                                   configuration):
             msg += 'You must be an owner of the %s %s trigger to modify it' % \
                    (vgrid_name, subject)
             return (False, msg, [])

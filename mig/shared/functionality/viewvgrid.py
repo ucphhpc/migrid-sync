@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewvgrid - Display public details about a vgrid
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019 The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,11 +29,11 @@
 
 import shared.returnvalues as returnvalues
 from shared.defaults import keyword_owners, keyword_members, keyword_none, \
-     keyword_all
+    keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_owners, vgrid_members, vgrid_resources, \
-     vgrid_settings, vgrid_is_owner, vgrid_is_owner_or_member
+    vgrid_settings, vgrid_is_owner, vgrid_is_owner_or_member
 from shared.vgridaccess import user_vgrid_access
 
 _valid_bool = [("yes", True), ("no", False)]
@@ -54,7 +54,7 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
         'object_type': 'vgrid_info',
         'vgrid_name': vgrid_name,
         'fields': [],
-        }
+    }
     bool_map = {True: "Yes", False: "No"}
     keyword_map = {keyword_owners: 'Owners',
                    keyword_members: 'Owners and members',
@@ -76,7 +76,7 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     write_priv_web = keyword_map[vgrid_dict.get('write_priv_web',
                                                 keyword_owners)]
     write_pub_web = keyword_map[vgrid_dict.get('write_pub_web',
-                                                keyword_owners)]
+                                               keyword_owners)]
     hidden = bool_map[vgrid_dict.get('hidden', False)]
     vgrid_item['fields'].append(('Description', description))
     vgrid_item['fields'].append(('Owners', '\n'.join(owners)))
@@ -91,6 +91,7 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     vgrid_item['fields'].append(('Write Public Web Pages', write_pub_web))
     vgrid_item['fields'].append(('Hidden', hidden))
     return vgrid_item
+
 
 def user_view_access(configuration, vgrid_name, client_id, settings_dict,
                      field):
@@ -108,6 +109,7 @@ def user_view_access(configuration, vgrid_name, client_id, settings_dict,
     else:
         access = False
     return access
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -127,7 +129,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     vgrid_list = accepted['vgrid_name']
@@ -142,7 +144,8 @@ def main(client_id, user_arguments_dict):
                                                           as_dict=True)
         if not settings_status:
             settings_dict = {}
-        logger.info("loaded vgrid %s settings: %s" % (vgrid_name, settings_dict))
+        logger.info("loaded vgrid %s settings: %s" %
+                    (vgrid_name, settings_dict))
         vgrid_dict.update(settings_dict)
         if user_view_access(configuration, vgrid_name, client_id, settings_dict,
                             'visible_owners'):
@@ -158,41 +161,40 @@ def main(client_id, user_arguments_dict):
                             'visible_resources'):
             (res_status, resources) = vgrid_resources(vgrid_name, configuration)
             if res_status:
-                vgrid_dict['resources'] = resources            
+                vgrid_dict['resources'] = resources
 
         if user_view_access(configuration, vgrid_name, client_id, settings_dict,
                             'create_sharelink'):
-                vgrid_dict['sharelink'] = settings_dict.get('create_sharelink',
-                                                            keyword_owners)
+            vgrid_dict['sharelink'] = settings_dict.get('create_sharelink',
+                                                        keyword_owners)
 
         # Report no such vgrid if hidden
-        
+
         if settings_dict.get('hidden', False) and \
-               not client_id in vgrid_dict.get('owners', []):
+                not client_id in vgrid_dict.get('owners', []):
             output_objects.append({'object_type': 'error_text', 'text':
                                    'No such %s: %s' % (label, vgrid_name)})
             status = returnvalues.CLIENT_ERROR
             continue
 
         # Show vgrid details based on participation and visibility settings
-        
+
         vgrid_item = build_vgriditem_object_from_vgrid_dict(configuration,
                                                             vgrid_name,
                                                             vgrid_dict,
                                                             vgrid_access)
         output_objects.append(vgrid_item)
-    
+
         if client_id in vgrid_dict.get('owners', []):
             output_objects.append({'object_type': 'sectionheader',
                                    'text': 'Administrate'})
             output_objects.append({'object_type': 'link',
-                                     'destination':
-                                     'adminvgrid.py?vgrid_name=%s'\
-                                     % vgrid_name,
-                                     'class': 'adminlink iconspace',
-                                     'title': 'Administrate %s' % vgrid_name, 
-                                     'text': 'Administrate %s' % vgrid_name,
+                                   'destination':
+                                   'adminvgrid.py?vgrid_name=%s'
+                                   % vgrid_name,
+                                   'class': 'adminlink iconspace',
+                                   'title': 'Administrate %s' % vgrid_name,
+                                   'text': 'Administrate %s' % vgrid_name,
                                    })
 
-        
     return (output_objects, status)

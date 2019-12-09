@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoid - OpenID account request backend
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,11 +32,11 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, distinguished_name_to_user
 from shared.accountreq import valid_password_chars, valid_name_chars, \
-    password_min_len, password_max_len, account_js_helpers
+    password_min_len, password_max_len, account_request_template, \
+    account_css_helpers, account_js_helpers, list_country_codes
 from shared.defaults import csrf_field
 from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.pwhash import parse_password_policy
 from shared.safeinput import html_escape
@@ -75,19 +75,24 @@ def main(client_id, user_arguments_dict):
     title_entry['skipmenu'] = True
     form_fields = ['full_name', 'organization', 'email', 'country', 'state',
                    'password', 'verifypassword', 'comment']
-    title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = account_js_helpers(form_fields)
-    output_objects.append({'object_type': 'html_form',
-                           'text': '''
- <div id="contextual_help">
-  <div class="help_gfx_bubble"><!-- graphically connect field with help text --></div>
-  <div class="help_message"><!-- filled by js --></div>
- </div>
-'''})
+    title_entry['style']['advanced'] += account_css_helpers(configuration)
+    add_import, add_init, add_ready = account_js_helpers(configuration,
+                                                         form_fields)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
+    title_entry['script']['body'] = "class='staticpage'"
+
     header_entry = {'object_type': 'header', 'text':
                     'Welcome to the %s OpenID account request page' %
                     configuration.short_title}
     output_objects.append(header_entry)
+
+    output_objects.append({'object_type': 'html_form', 'text': '''
+    <div id="contextual_help">
+
+    </div>
+'''})
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -153,24 +158,36 @@ to your old files, jobs and privileges. </p>''' %
 
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
     fill_helpers.update(user_fields)
-    output_objects.append({'object_type': 'html_form', 'text': """
-Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the OpenID account request to the %(site)s administrators.
+    html = """
+<p class="sub-title">Please enter your information in at least the <span>mandatory</span> fields below and press the Send button to submit the OpenID account request to the %(site)s administrators.</p>
+
+%(site_signup_hint)s
+
 <p class='criticaltext highlight_message'>
 IMPORTANT: Please help us verify your identity by providing Organization and
 Email data that we can easily validate!
 </p>
-%(site_signup_hint)s
+
 <hr />
-<div class=form_container>
-<!-- use post here to avoid field contents in URL -->
+
+    """
+    html += account_request_template(configuration)
+
+    # TODO: remove this legacy version?
+    html += """
+<div style="height: 0; visibility: hidden; display: none;">
+<!--OLD FORM-->
 <form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();'>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+
+
 <table>
 <!-- NOTE: javascript support for unicode pattern matching is lacking so we
            only restrict e.g. Full Name to words separated by space here. The
            full check takes place in the backend, but users are better of with
            sane early warnings than the cryptic backend errors.
 -->
+
 <tr><td class='mandatory label'>Full name</td><td><input id='full_name_field' type=text name=cert_name value='%(full_name)s' required pattern='[^ ]+([ ][^ ]+)+' title='Your full name, i.e. two or more names separated by space' /></td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=email name=email value='%(email)s' required title='A valid email address that you read' /> </td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(organization)s' required pattern='[^ ]+([ ][^ ]+)*' title='Name of your organisation: one or more abbreviations or words separated by space' /></td><td class=fill_space><br /></td></tr>
@@ -182,7 +199,9 @@ Email data that we can easily validate!
 <tr class='hidden'><td class='optional label'>Password recovery</td><td class=''><input id='passwordrecovery_checkbox' type=checkbox name=passwordrecovery></td>
 </td><td class=fill_space><br/></td></tr>
 <tr><td class='optional label'>Optional comment or reason why you should<br />be granted a %(site)s account:</td><td><textarea id='comment_field' rows=4 name=comment title='A free-form comment where you can explain what you need the account for' ></textarea></td><td class=fill_space><br /></td></tr>
-<tr><td class='label'><!-- empty area --></td><td><input id='submit_button' type=submit value=Send /></td><td class=fill_space><br/></td></tr>
+<tr><td class='label'><!-- empty area --></td><td>
+
+<input id='submit_button' type=submit value=Send /></td><td class=fill_space><br/></td></tr>
 </table>
 </form>
 <hr />
@@ -192,15 +211,18 @@ Email data that we can easily validate!
 <br />
 <!-- Hidden help text -->
 <div id='help_text'>
-  <div id='full_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
-  <div id='organization_help'>Organization name or acronym  matching email</div>
-  <div id='email_help'>Email address associated with your organization if at all possible</div>
-  <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='https://en.wikipedia.org/wiki/ISO_3166-1'>help</a></div>
-  <div id='state_help'>Optional 2-letter ANSI state code of your organization, please just leave empty unless it is in the US or similar, <a href='https://en.wikipedia.org/wiki/List_of_U.S._state_abbreviations'>help</a></div>
-  <div id='password_help'>Password is restricted to the characters:<br/><tt>%(valid_password_chars)s</tt><br/>Certain other complexity requirements apply for adequate strength. For example it must be %(password_min_len)s to %(password_max_len)s characters long and contain at least %(password_min_classes)d different character classes.</div>
-  <div id='verifypassword_help'>Please repeat password</div>
-  <div id='comment_help'>Optional, but a short informative comment may help us verify your account needs and thus speed up our response. Typically the name of a local collaboration partner or project may be helpful.</div>
+  <div id='1full_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
+  <div id='1organization_help'>Organization name or acronym  matching email</div>
+  <div id='1email_help'>Email address associated with your organization if at all possible</div>
+  <div id='1country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='https://en.wikipedia.org/wiki/ISO_3166-1'>help</a></div>
+  <div id='1state_help'>Optional 2-letter ANSI state code of your organization, please just leave empty unless it is in the US or similar, <a href='https://en.wikipedia.org/wiki/List_of_U.S._state_abbreviations'>help</a></div>
+  <div id='1password_help'>Password is restricted to the characters:<br/><tt>%(valid_password_chars)s</tt><br/>Certain other complexity requirements apply for adequate strength. For example it must be %(password_min_len)s to %(password_max_len)s characters long and contain at least %(password_min_classes)d different character classes.</div>
+  <div id='1verifypassword_help'>Please repeat password</div>
+  <!--<div id='1comment_help'>Optional, but a short informative comment may help us verify your account needs and thus speed up our response. Typically the name of a local collaboration partner or project may be helpful.</div>-->
 </div>
-""" % fill_helpers})
 
+"""
+
+    output_objects.append(
+        {'object_type': 'html_form', 'text': html % fill_helpers})
     return (output_objects, returnvalues.OK)

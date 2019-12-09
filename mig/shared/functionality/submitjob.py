@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submitjob - Job submission interfaces
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,16 +32,15 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, maxfill_fields, \
-     keyword_all, csrf_field
+    keyword_all, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, fancy_upload_js, fancy_upload_html, \
-     themed_styles
+from shared.html import fancy_upload_js, fancy_upload_html, \
+    themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
 from shared.parser import parse_lines
 from shared.refunctions import list_runtime_environments
-from shared.settings import load_settings
 from shared.useradm import get_default_mrsl
 from shared.vgridaccess import user_vgrid_access, user_allowed_res_exes
 
@@ -91,7 +90,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -99,29 +98,28 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               '''Job execution is not enabled on this system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
-    
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     template_path = os.path.join(base_dir, default_mrsl_filename)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Submit Job'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Submit Job'})
+    user_settings = title_entry.get('user_settings', {})
+    output_objects.append({'object_type': 'header', 'text': 'Submit Job'})
     default_mrsl = get_default_mrsl(template_path)
-    settings_dict = load_settings(client_id, configuration)
-    if not settings_dict or not settings_dict.has_key('SUBMITUI'):
+    if not user_settings or not user_settings.has_key('SUBMITUI'):
         logger.info('Settings dict does not have SUBMITUI key - using default'
                     )
         submit_style = configuration.submitui[0]
     else:
-        submit_style = settings_dict['SUBMITUI']
+        submit_style = user_settings['SUBMITUI']
 
     # We generate all 3 variants of job submission (fields, textarea, files),
     # initially hide them and allow to switch between them using js.
@@ -172,46 +170,47 @@ def main(client_id, user_arguments_dict):
     $("#%s").click(function() { openFancyUpload(); });
     ''' % (submit_style + "_form", fill_helpers['dest_dir'], open_button_id)
     fancy_dialog = fancy_upload_html(configuration)
+    # TODO: can we update style inline to avoid explicit themed_styles?
     title_entry['style'] = themed_styles(configuration,
                                          base=['jquery.fileupload.css',
                                                'jquery.fileupload-ui.css'],
-                                         skin=['fileupload-ui.custom.css'])
-    title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                             add_init, add_ready)
+                                         skin=['fileupload-ui.custom.css'],
+                                         user_settings=user_settings)
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
 
     output_objects.append({'object_type': 'text', 'text':
                            'This page is used to submit jobs to the grid.'})
 
     output_objects.append({'object_type': 'verbatim',
                            'text': '''
-There are %s interface styles available that you can choose among:''' % \
+There are %s interface styles available that you can choose among:''' %
                            len(submit_options)})
 
     links = []
     for opt in submit_options:
-        name = opt.split('_', 2)[0] 
-        links.append({'object_type': 'link', 
+        name = opt.split('_', 2)[0]
+        links.append({'object_type': 'link',
                       'destination': "javascript:switchTo('%s')" % opt,
                       'class': 'submit%slink iconspace' % name,
                       'title': 'Switch to %s submit interface' % name,
-                      'text' : '%s style' % name,
+                      'text': '%s style' % name,
                       })
     output_objects.append({'object_type': 'multilinkline', 'links': links})
 
     output_objects.append({'object_type': 'text', 'text': '''
 Please note that changes to the job description are *not* automatically
-transferred if you switch style.'''}) 
+transferred if you switch style.'''})
 
     output_objects.append({'object_type': 'html_form', 'text':
                            '<div id="fields_form" style="display:none;">\n'})
-    
+
     # Fields
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Please fill in your job description in the fields'
+    output_objects.append({'object_type': 'sectionheader', 'text': 'Please fill in your job description in the fields'
                            ' below:'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : """
+                           })
+    output_objects.append({'object_type': 'text', 'text': """
 Please fill in one or more fields below to define your job before hitting
 Submit Job at the bottom of the page.
 Empty fields will simply result in the default value being used and each field
@@ -236,14 +235,14 @@ is accompanied by a help link providing further details about the field."""})
 
     # Find allowed VGrids and Runtimeenvironments and add them to
     # configuration object for automated choice handling
-    
+
     vgrid_access = user_vgrid_access(configuration, client_id) + \
-                     [any_vgrid]
+        [any_vgrid]
     vgrid_access.sort()
     configuration.vgrids = vgrid_access
     (re_status, allowed_run_envs) = list_runtime_environments(configuration)
     if not re_status:
-        logger.error('Failed to extract allowed runtime envs: %s' % \
+        logger.error('Failed to extract allowed runtime envs: %s' %
                      allowed_run_envs)
         allowed_run_envs = []
     allowed_run_envs.sort()
@@ -256,7 +255,7 @@ is accompanied by a help link providing further details about the field."""})
     configuration.maxfills = [keyword_all] + maxfill_fields
 
     # Allow any exe unit on all allowed resources
-        
+
     allowed_resources = ['%s_*' % res for res in user_res.keys()]
     allowed_resources.sort()
     configuration.resources = allowed_resources
@@ -287,32 +286,28 @@ is accompanied by a help link providing further details about the field."""})
             continue
         if 'custom' == spec['Editor']:
             continue
-        output_objects.append({'object_type': 'html_form', 'text'
-                                   : """
+        output_objects.append({'object_type': 'html_form', 'text': """
 <b>%s:</b>&nbsp;<a class='infolink iconspace' href='docs.py?show=job#%s'>
 help</a><br />
 %s""" % (title, field, description)
-                               })
-        
+        })
+
         if 'input' == spec['Editor']:
             if field_type.startswith('multiple'):
-                output_objects.append({'object_type': 'html_form', 'text'
-                                       : """
+                output_objects.append({'object_type': 'html_form', 'text': """
 <textarea class='fillwidth padspace' name='%s' cols='%d' rows='%d'>%s</textarea><br />
 """ % (field, area_cols, area_rows, '\n'.join(default))
-                               })
+                })
             elif field_type == 'int':
-                output_objects.append({'object_type': 'html_form', 'text'
-                                       : """
+                output_objects.append({'object_type': 'html_form', 'text': """
 <input type='number' name='%s' size='%d' value='%s' min=0 required pattern='[0-9]+' /><br />
 """ % (field, field_size, default)
-                               })
+                })
             else:
-                output_objects.append({'object_type': 'html_form', 'text'
-                                       : """
+                output_objects.append({'object_type': 'html_form', 'text': """
 <input type='text' name='%s' size='%d' value='%s' /><br />
 """ % (field, field_size, default)
-                               })
+                })
         elif 'select' == spec['Editor']:
             choices = available_choices(configuration, client_id,
                                         field, spec)
@@ -342,9 +337,8 @@ help</a><br />
                         display = ' '
                     value_select += """<option %s value='%s'>%s</option>\n""" \
                                     % (selected, name, display)
-                value_select += """</select><br />\n"""    
-            output_objects.append({'object_type': 'html_form', 'text'
-                                   : value_select
+                value_select += """</select><br />\n"""
+            output_objects.append({'object_type': 'html_form', 'text': value_select
                                    })
         output_objects.append({'object_type': 'html_form', 'text': "<br />"})
 
@@ -364,13 +358,11 @@ help</a><br />
 </div><!-- fields_form-->
 <div id="textarea_form" style="display:none;">
 '''})
-    
+
     # Textarea
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Please enter your mRSL job description below:'
-                          })
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    output_objects.append({'object_type': 'sectionheader', 'text': 'Please enter your mRSL job description below:'
+                           })
+    output_objects.append({'object_type': 'html_form', 'text': """
 <div class='smallcontent'>
 Job descriptions can use a wide range of keywords to specify job requirements
 and actions.<br />
@@ -413,17 +405,16 @@ are supplied: thus we simply send a bogus jobname which does nothing
 </form>
 """ % fill_helpers})
 
-    output_objects.append({'object_type': 'html_form', 
+    output_objects.append({'object_type': 'html_form',
                            'text': '''
 </div><!-- textarea_form-->
 <div id="files_form" style="display:none;">
 '''})
     # Upload form
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Please upload your job file or packaged job files'
+    output_objects.append({'object_type': 'sectionheader', 'text': 'Please upload your job file or packaged job files'
                            ' below:'
-                          })
+                           })
     output_objects.append({'object_type': 'html_form', 'text': """
 <form enctype='multipart/form-data' method='%(form_method)s'
     action='%(target_op)s.py'> 
@@ -471,5 +462,5 @@ Upload other files efficiently (using chunking).
 
 %(fancy_dialog)s
 """ % fill_helpers})
-    
+
     return (output_objects, status)

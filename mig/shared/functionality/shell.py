@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # shell - advanced shell
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,8 +36,9 @@ from shared.init import initialize_main_variables, find_entry
 
 def signature():
     """Signature of the main function"""
-    defaults = {'menu':'yes'}
+    defaults = {'menu': 'yes'}
     return ['html_form', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -54,7 +55,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -72,8 +73,7 @@ def main(client_id, user_arguments_dict):
     title_entry['style'] += '''
 <link rel="stylesheet" type="text/css" href="/images/css/shell.css" media="screen"/>
 '''
-    title_entry['javascript'] = '''
-<script type="text/javascript">
+    title_entry['script']['init'] = '''
   var  basedir="/images/js/";
 
   var shell;
@@ -108,15 +108,12 @@ def main(client_id, user_arguments_dict):
         }
         return;
     }
-</script>
 '''
-#    title_entry['bodyfunctions']='onload="mkShell();"'
-    title_entry['bodyfunctions']='onload="loadAll(scripts.length);"'
-    
+    title_entry['script']['body'] = ' onload="loadAll(scripts.length);"'
+
     output_objects.append({'object_type': 'header', 'text': 'Advanced Shell'
-                          })
-    output_objects.append({'object_type': 'html_form', 'text'
-                          :'<div id="shell"><!-- filled by js --></div>'})
+                           })
+    output_objects.append({'object_type': 'html_form',
+                           'text': '<div id="shell"><!-- filled by js --></div>'})
 
     return (output_objects, status)
-

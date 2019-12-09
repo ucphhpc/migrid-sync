@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # people - view and communicate with other users
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,25 +30,27 @@
 from urllib import quote
 
 import shared.returnvalues as returnvalues
+from shared.base import pretty_format_user
 from shared.defaults import default_pager_entries, any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, man_base_js, man_base_html, \
-     html_post_helper, themed_styles
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.user import anon_to_real_user_map
 from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
-     CONF
+    CONF
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
 allowed_operations = list(set(list_operations + show_operations))
+
 
 def signature():
     """Signature of the main function"""
 
     defaults = {'operation': ['show']}
     return ['users', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -65,15 +67,15 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     operation = accepted['operation'][-1]
-    
+
     if not operation in allowed_operations:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Operation must be one of %s.''' % \
+                               '''Operation must be one of %s.''' %
                                ', '.join(allowed_operations)})
         return (output_objects, returnvalues.OK)
 
@@ -91,26 +93,25 @@ def main(client_id, user_arguments_dict):
                                                         {'width': 640})
         if operation == "show":
             add_ready += '%s;' % refresh_call
-        title_entry['style'] = themed_styles(configuration)
-        title_entry['javascript'] = jquery_ui_js(configuration, add_import,
-                                                 add_init, add_ready)
+        title_entry['script']['advanced'] += add_import
+        title_entry['script']['init'] += add_init
+        title_entry['script']['ready'] += add_ready
 
         output_objects.append({'object_type': 'html_form',
                                'text': man_base_html(configuration)})
 
-        output_objects.append({'object_type': 'header', 'text'
-                              : 'People'})
+        output_objects.append({'object_type': 'header', 'text': 'People'})
 
         output_objects.append(
-            {'object_type': 'text', 'text' :
+            {'object_type': 'text', 'text':
              'View and communicate with other users.'
              })
 
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                              : 'All users'})
+        output_objects.append(
+            {'object_type': 'sectionheader', 'text': 'All users'})
 
         # Helper form for sends
-        
+
         form_method = 'post'
         csrf_limit = get_csrf_limit(configuration)
         target_op = 'sendrequestaction'
@@ -135,35 +136,44 @@ def main(client_id, user_arguments_dict):
         vgrid_access = user_vgrid_access(configuration, client_id)
         anon_map = anon_to_real_user_map(configuration)
         if not visible_user:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'no users found!'})
+            output_objects.append(
+                {'object_type': 'error_text', 'text': 'no users found!'})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         for (visible_user_id, user_dict) in visible_user.items():
             user_id = visible_user_id
             if visible_user_id in anon_map.keys():
+                # Maintain user anonymity
+                pretty_id = 'Anonymous user with unique ID %s' % visible_user_id
                 user_id = anon_map[visible_user_id]
-            user_obj = {'object_type': 'user', 'name': visible_user_id}
+            else:
+                # Show user-friendly version of user ID
+                hide_email = user_dict.get(CONF, {}).get('HIDE_EMAIL_ADDRESS',
+                                                         True)
+                pretty_id = pretty_format_user(user_id, hide_email)
+            user_obj = {'object_type': 'user', 'name': visible_user_id,
+                        'pretty_id': pretty_id}
             user_obj.update(user_dict)
             # NOTE: datetime is not json-serializable so we force to string
             created = user_obj.get(CONF, {}).get('CREATED_TIMESTAMP', '')
             if created:
                 user_obj[CONF]['CREATED_TIMESTAMP'] = str(created)
             user_obj['userdetailslink'] = \
-                                        {'object_type': 'link',
-                                         'destination':
-                                         'viewuser.py?cert_id=%s'\
-                                         % quote(visible_user_id),
-                                         'class': 'infolink iconspace',
-                                         'title': 'View details for %s' % \
-                                         visible_user_id, 
-                                         'text': ''}
+                {'object_type': 'link',
+                 'destination':
+                 'viewuser.py?cert_id=%s'
+                 % quote(visible_user_id),
+                 'class': 'infolink iconspace',
+                 'title': 'View details for %s' %
+                 visible_user_id,
+                 'text': ''}
             vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
             vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
             if any_vgrid in vgrids_allow_email:
                 email_vgrids = vgrid_access
             else:
-                email_vgrids = set(vgrids_allow_email).intersection(vgrid_access)
+                email_vgrids = set(
+                    vgrids_allow_email).intersection(vgrid_access)
             if any_vgrid in vgrids_allow_im:
                 im_vgrids = vgrid_access
             else:
@@ -178,15 +188,15 @@ def main(client_id, user_arguments_dict):
                     user_obj[link] = {
                         'object_type': 'link',
                         'destination':
-                        "javascript: confirmDialog(%s, '%s', '%s', %s);"\
-                        % ('sendmsg', 'Really send %s message to %s?'\
+                        "javascript: confirmDialog(%s, '%s', '%s', %s);"
+                        % ('sendmsg', 'Really send %s message to %s?'
                            % (proto, visible_user_id),
                            'request_text',
-                           "{cert_id: '%s', 'protocol': '%s'}" % \
+                           "{cert_id: '%s', 'protocol': '%s'}" %
                            (visible_user_id, proto)),
                         'class': "%s iconspace" % link,
-                        'title': 'Send %s message to %s' % \
-                        (proto, visible_user_id), 
+                        'title': 'Send %s message to %s' %
+                        (proto, visible_user_id),
                         'text': ''}
             logger.debug("append user %s" % user_obj)
             users.append(user_obj)
@@ -197,9 +207,7 @@ def main(client_id, user_arguments_dict):
         users.append(user_obj)
 
     output_objects.append({'object_type': 'user_list',
-                          'users': users})
+                           'users': users})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
     return (output_objects, returnvalues.OK)
-
-

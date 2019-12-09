@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # expand - emulate shell wild card expansion
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,6 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_path
 from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import jquery_ui_js, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive
 from shared.sharelinks import extract_mode_id
@@ -48,7 +47,7 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
     defaults = {'flags': [''], 'path': ['.'], 'share_id': [''],
-                'current_dir': ['.'],'with_dest': ['false']}
+                'current_dir': ['.'], 'with_dest': ['false']}
     return ['dir_listings', defaults]
 
 
@@ -61,13 +60,13 @@ def handle_file(
     flags='',
     dest='',
     show_dest=False,
-    ):
+):
     """handle a file"""
 
     # Build entire line before printing to avoid newlines
 
     # Recursion can get here when called without explicit invisible files
-    
+
     if invisible_path(file_with_dir):
         return
     file_obj = {
@@ -80,7 +79,7 @@ def handle_file(
         # NOTE: file_with_dir is kept for backwards compliance
         'file_with_dir': file_with_dir,
         'flags': flags,
-        }
+    }
 
     if show_dest:
         file_obj['file_dest'] = dest
@@ -98,7 +97,7 @@ def handle_expand(
     dest='',
     depth=0,
     show_dest=False,
-    ):
+):
     """Recursive function to expand paths in a way not unlike ls, but only
     files are interesting in this context. The order of recursively expanded
     paths is different from that in ls since it simplifies the code and
@@ -108,9 +107,8 @@ def handle_expand(
     # Sanity check
 
     if depth > 255:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error: file recursion maximum exceeded!'
-                              })
+        output_objects.append({'object_type': 'error_text', 'text': 'Error: file recursion maximum exceeded!'
+                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # references to '.' or similar are stripped by abspath
@@ -122,7 +120,7 @@ def handle_expand(
         relative_path = real_path.replace(base_dir, '')
 
     # Recursion can get here when called without explicit invisible files
-    
+
     if invisible_path(relative_path):
         return
 
@@ -133,8 +131,7 @@ def handle_expand(
         try:
             contents = os.listdir(real_path)
         except Exception, exc:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Failed to list contents of %s: %s'
+            output_objects.append({'object_type': 'error_text', 'text': 'Failed to list contents of %s: %s'
                                    % (base_name, exc)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -151,7 +148,7 @@ def handle_expand(
                 rel_path = path.replace(base_dir, '')
                 if os.path.isfile(path):
                     handle_file(configuration, listing, rel_path, rel_path,
-                                path, flags, 
+                                path, flags,
                                 os.path.join(dest, os.path.basename(rel_path)),
                                 show_dest)
         else:
@@ -168,7 +165,7 @@ def handle_expand(
                 dest,
                 -1,
                 show_dest,
-                )
+            )
 
             for name in contents:
                 path = real_path + os.sep + name
@@ -184,7 +181,7 @@ def handle_expand(
                         os.path.join(dest, name),
                         depth + 1,
                         show_dest,
-                        )
+                    )
 
 
 def main(client_id, user_arguments_dict):
@@ -199,7 +196,7 @@ def main(client_id, user_arguments_dict):
         defaults,
         output_objects,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -214,9 +211,9 @@ def main(client_id, user_arguments_dict):
     # NOTE: in contrast to 'ls' we never include write operations here
     read_mode, write_mode = True, False
     visibility_mods = '''
-            #%(main_id)s .enable_write { display: none; }
-            #%(main_id)s .disable_read { display: none; }
-            #%(main_id)s .if_full { display: none; }
+            .%(main_class)s .enable_write { display: none; }
+            .%(main_class)s .disable_read { display: none; }
+            .%(main_class)s .if_full { display: none; }
     '''
     # Either authenticated user client_id set or sharelink ID
     if client_id:
@@ -227,7 +224,7 @@ def main(client_id, user_arguments_dict):
         redirect_path = redirect_name
         id_args = ''
         root_link_name = 'USER HOME'
-        main_id = "user_expand"
+        main_class = "user_expand"
         page_title = 'User Files - Path Expansion'
         userstyle = True
         widgets = True
@@ -235,10 +232,10 @@ def main(client_id, user_arguments_dict):
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
         except ValueError, err:
-            logger.error('%s called with invalid share_id %s: %s' % \
+            logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Invalid sharelink ID: %s' % share_id})
+            output_objects.append(
+                {'object_type': 'error_text', 'text': 'Invalid sharelink ID: %s' % share_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         # then include shared by %(owner)s on page header
@@ -249,23 +246,22 @@ def main(client_id, user_arguments_dict):
         redirect_path = os.path.join(redirect_name, share_id)
         id_args = 'share_id=%s;' % share_id
         root_link_name = '%s' % share_id
-        main_id = "sharelink_expand"
+        main_class = "sharelink_expand"
         page_title = 'Shared Files - Path Expansion'
         userstyle = False
         widgets = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Authentication is missing!'
-                              })
+        output_objects.append({'object_type': 'error_text', 'text': 'Authentication is missing!'
+                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
-            
+
     visibility_toggle = '''
         <style>
         %s
         </style>
-        ''' % (visibility_mods % {'main_id': main_id})
-    
+        ''' % (visibility_mods % {'main_class': main_class})
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
@@ -273,9 +269,8 @@ def main(client_id, user_arguments_dict):
 
     if not os.path.isdir(base_dir):
         logger.error('%s called on missing base_dir: %s' % (op_name, base_dir))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'No such %s!' % page_title.lower()
-                              })
+        output_objects.append({'object_type': 'error_text', 'text': 'No such %s!' % page_title.lower()
+                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
@@ -284,19 +279,20 @@ def main(client_id, user_arguments_dict):
     title_entry['skipuserstyle'] = not userstyle
 
     fill_helpers = {'dest_dir': current_dir + os.sep, 'share_id': share_id,
-                   'flags': flags, 'tmp_flags': flags, 'long_set':
-                   long_list(flags), 'recursive_set': recursive(flags),
-                   'all_set': all(flags)}
-    styles = themed_styles(configuration)
-    styles['advanced'] += '''
+                    'flags': flags, 'tmp_flags': flags, 'long_set':
+                    long_list(flags), 'recursive_set': recursive(flags),
+                    'all_set': all(flags)}
+    add_import, add_init, add_ready = '', '', ''
+    title_entry['style']['advanced'] += '''
     %s
     ''' % visibility_toggle
-    title_entry['style'] = styles
-    title_entry['javascript'] = jquery_ui_js(configuration, '', '', '')
-    title_entry['bodyfunctions'] += ' id="%s"' % main_id
+    title_entry['script']['advanced'] += add_import
+    title_entry['script']['init'] += add_init
+    title_entry['script']['ready'] += add_ready
+    title_entry['script']['body'] = ' class="%s"' % main_class
     output_objects.append({'object_type': 'header', 'text': page_title})
 
-    # Shared URL helpers 
+    # Shared URL helpers
     ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s;flags=%s' % \
                       (id_args, flags)
     redirect_url_template = '/%s/%%(rel_path_enc)s' % redirect_path
@@ -309,8 +305,8 @@ Working directory:
 </td></tr>
 <tr><td class='centertext'>
 """
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : location_pre_html})
+    output_objects.append(
+        {'object_type': 'html_form', 'text': location_pre_html})
     # Use current_dir nav location links
     for pattern in pattern_list[:1]:
         links = []
@@ -323,10 +319,10 @@ Working directory:
                 continue
             prefix = os.path.join(prefix, i)
             links.append({'object_type': 'link', 'text': i,
-                         'destination': ls_url_template % \
+                          'destination': ls_url_template %
                           {'rel_dir_enc': quote(prefix)}})
-        output_objects.append({'object_type': 'multilinkline', 'links'
-                              : links, 'sep': ' %s ' % os.sep})
+        output_objects.append(
+            {'object_type': 'multilinkline', 'links': links, 'sep': ' %s ' % os.sep})
     location_post_html = """
 </td></tr>
 </table>
@@ -334,8 +330,8 @@ Working directory:
 <br />
 """
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : location_post_html})
+    output_objects.append(
+        {'object_type': 'html_form', 'text': location_post_html})
 
     dir_listings = []
     output_objects.append({
@@ -351,7 +347,7 @@ Working directory:
         'editor_url_template': '',
         'redirect_url_template': redirect_url_template,
         'show_dest': show_dest,
-        })
+    })
 
     first_match = None
     for pattern in pattern_list:
@@ -379,7 +375,7 @@ Working directory:
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:
@@ -393,7 +389,7 @@ Working directory:
                 'relative_path': relative_path,
                 'entries': entries,
                 'flags': flags,
-                }
+            }
 
             dest = ''
             if show_dest:
@@ -488,7 +484,7 @@ Working directory:
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
     """ % fill_helpers
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"% entry
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
     fill_helpers['tmp_flags'] = flags.replace('r', '')
     htmlform += """
     <input type='submit' value='On' /><br />
@@ -500,7 +496,7 @@ Working directory:
     <input type='hidden' name='share_id' value='%(share_id)s' />
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
     """ % fill_helpers
-                                  
+
     for entry in pattern_list:
         htmlform += "<input type='hidden' name='path' value='%s' />"\
                     % entry
@@ -536,7 +532,7 @@ Working directory:
     <input name='current_dir' type='hidden' value='%(dest_dir)s' />
     """ % fill_helpers
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s' />"% entry
+        htmlform += "<input type='hidden' name='path' value='%s' />" % entry
     htmlform += """
     <input type='submit' value='Off' /><br />
     </form>
@@ -546,7 +542,6 @@ Working directory:
 
     # show flag buttons after contents to limit clutter
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : htmlform})
+    output_objects.append({'object_type': 'html_form', 'text': htmlform})
 
     return (output_objects, status)
