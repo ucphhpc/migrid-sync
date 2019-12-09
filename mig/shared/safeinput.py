@@ -42,7 +42,7 @@ from unicodedata import category, normalize, name as unicode_name
 
 from shared.base import force_unicode, force_utf8
 from shared.defaults import src_dst_sep, user_id_charset, user_id_max_length, \
-    session_id_charset, session_id_length, w_id_length
+    session_id_charset, session_id_length, workflow_id_length
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -811,7 +811,7 @@ def valid_workflow_pers_id(persistence_id):
     """Verify that supplied persistence_id only contains characters that
     we consider valid in a workflow persistence id.
     """
-    valid_sid(persistence_id, w_id_length, w_id_length)
+    valid_sid(persistence_id, workflow_id_length, workflow_id_length)
 
 
 def valid_workflow_vgrid(vgrid):

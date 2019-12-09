@@ -91,9 +91,9 @@ session_id_length = session_id_bytes * 2
 session_id_charset = digits + 'abcdef'
 
 # Workflow IDs, is a 24 character random string
-w_id_bytes = 12
-w_id_length = w_id_bytes * 2
-w_id_charset = digits + 'abcdef'
+workflow_id_bytes = 12
+workflow_id_length = workflow_id_bytes * 2
+workflow_id_charset = digits + 'abcdef'
 
 # 2FA secret tokens are 32 chars (implicitly from base32 charset)
 twofactor_key_bytes = 32
