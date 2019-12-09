@@ -60,6 +60,7 @@ if '__main__' == __name__:
     verbose = False
     user_id = None
     seed = None
+    seed_file = None
     interval = None
     opt_args = 'c:fhi:v'
     try:
@@ -145,6 +146,7 @@ if '__main__' == __name__:
         if verbose:
             if interval:
                 twofa_code = pyotp.TOTP(twofa_key, interval=interval).now()
+                print "default 2fa code: %s" % pyotp.TOTP(twofa_key).now()
             else:
                 twofa_code = pyotp.TOTP(twofa_key).now()
             print 'Current two factor accept code: %s' % twofa_code
