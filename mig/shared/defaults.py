@@ -151,6 +151,7 @@ user_keys_dir = 'keys'
 sharelinks_filename = 'sharelinks'
 seafile_ro_dirname = 'seafile_readonly'
 twofactor_key_name = 'twofactor_key'
+twofactor_interval_name = 'twofactor_interval'
 # Trash really goes to this location but only accessible through link
 trash_destdir = '.trash'
 trash_linkname = 'Trash'

@@ -42,12 +42,25 @@ except ImportError:
     pyotp = None
 
 from shared.base import client_id_dir, extract_field, force_utf8
-from shared.defaults import twofactor_key_name, twofactor_key_bytes, \
-    twofactor_cookie_bytes, twofactor_cookie_ttl
+from shared.defaults import twofactor_key_name, twofactor_interval_name, \
+    twofactor_key_bytes, twofactor_cookie_bytes, twofactor_cookie_ttl
 from shared.fileio import read_file, delete_file, delete_symlink, \
     pickle, unpickle, make_symlink
 from shared.gdp import get_base_client_id
 from shared.pwhash import scramble_password, unscramble_password
+
+
+def get_totp(client_id,
+             b32_key,
+             configuration):
+    """Initialize and return pyotp object"""
+    if pyotp is None:
+        raise Exception("The pyotp module is missing and required for 2FA")
+    interval = load_twofactor_interval(client_id, configuration)
+    if interval:
+        return pyotp.totp.TOTP(b32_key, interval=interval)
+    else:
+        return pyotp.totp.TOTP(b32_key)
 
 
 def twofactor_available(configuration):
@@ -59,7 +72,30 @@ def twofactor_available(configuration):
     return True
 
 
-def reset_twofactor_key(client_id, configuration):
+def load_twofactor_interval(client_id, configuration):
+    """Load 2FA token interval"""
+    _logger = configuration.logger
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(
+            configuration, client_id, expand_oid_alias=False)
+    client_dir = client_id_dir(client_id)
+    interval_path = os.path.join(configuration.user_settings, client_dir,
+                                 twofactor_interval_name)
+    result = None
+    if os.path.isfile(interval_path):
+        i_fd = open(interval_path)
+        interval = i_fd.read().strip()
+        i_fd.close()
+        try:
+            result = int(interval)
+        except Exception, exc:
+            result = None
+            _logger.error("Failed to read twofactor interval: %s" % exc)
+
+    return result
+
+
+def reset_twofactor_key(client_id, configuration, seed=None, interval=None):
     """Reset 2FA secret key and write to user settings file in scrambled form.
     Return the new secret key on unscrambled base32 form.
     """
@@ -73,7 +109,10 @@ def reset_twofactor_key(client_id, configuration):
     try:
         if pyotp is None:
             raise Exception("The pyotp module is missing and required for 2FA")
-        b32_key = pyotp.random_base32(length=twofactor_key_bytes)
+        if not seed:
+            b32_key = pyotp.random_base32(length=twofactor_key_bytes)
+        else:
+            b32_key = seed
         # NOTE: pyotp.random_base32 returns unicode
         #       which causes trouble with WSGI
         b32_key = force_utf8(b32_key)
@@ -82,6 +121,17 @@ def reset_twofactor_key(client_id, configuration):
         key_fd = open(key_path, 'w')
         key_fd.write(scrambled)
         key_fd.close()
+
+        # Reset interval
+
+        interval_path = os.path.join(configuration.user_settings,
+                                     client_dir,
+                                     twofactor_interval_name)
+        delete_file(interval_path, _logger, allow_missing=True)
+        if interval:
+            i_fd = open(interval_path, 'w')
+            i_fd.write("%d" % interval)
+            i_fd.close()
     except Exception, exc:
         _logger.error("failed in reset 2FA key: %s" % exc)
         return False
@@ -95,10 +145,8 @@ def load_twofactor_key(client_id, configuration, allow_missing=True):
     """
     _logger = configuration.logger
     if configuration.site_enable_gdp:
-        _logger.debug("client_id: %s" % client_id)
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
-        _logger.debug("client_id: %s" % client_id)
     client_dir = client_id_dir(client_id)
     key_path = os.path.join(configuration.user_settings, client_dir,
                             twofactor_key_name)
@@ -133,6 +181,10 @@ def get_twofactor_secrets(configuration, client_id):
     if not b32_key:
         b32_key = reset_twofactor_key(client_id, configuration)
 
+    totp = get_totp(client_id,
+                    b32_key,
+                    configuration)
+
     # URI-format for otp auth is
     # otpauth://<otptype>/(<issuer>:)<accountnospaces>?
     #         secret=<secret>(&issuer=<issuer>)(&image=<imageuri>)
@@ -147,7 +199,7 @@ def get_twofactor_secrets(configuration, client_id):
             client_id, configuration.user_openid_alias)
     else:
         username = client_id
-    otp_uri = pyotp.totp.TOTP(b32_key).provisioning_uri(
+    otp_uri = totp.provisioning_uri(
         username, issuer_name=configuration.short_title)
     # IMPORTANT: pyotp unicode breaks wsgi when inserted - force utf8!
     otp_uri = force_utf8(otp_uri)
@@ -158,7 +210,7 @@ def get_twofactor_secrets(configuration, client_id):
     #                             ('chs', '200x200'), ('chl', otp_uri)])
     # otp_img = '<img src="%s" />' % img_url
 
-    return (b32_key, otp_uri)
+    return (b32_key, totp.interval, otp_uri)
 
 
 def generate_session_prefix(configuration, client_id):
@@ -191,7 +243,10 @@ def get_twofactor_token(configuration, client_id, b32_key):
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
     # IMPORTANT: pyotp unicode breaks when used in our strings - force utf8!
-    token = pyotp.TOTP(b32_key).now()
+    totp = get_totp(client_id,
+                    b32_key,
+                    configuration)
+    token = totp.now()
     token = force_utf8(token)
     return token
 
@@ -204,7 +259,10 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
-    return pyotp.TOTP(b32_key).verify(token)
+    totp = get_totp(client_id,
+                    b32_key,
+                    configuration)
+    return totp.verify(token, valid_window=1)
 
 
 def client_twofactor_session(configuration,

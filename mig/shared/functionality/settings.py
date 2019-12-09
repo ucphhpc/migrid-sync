@@ -1757,7 +1757,7 @@ client versions from the link above.<br/>
 '''
 
         if configuration.site_enable_twofactor:
-            b32_key, otp_uri = get_twofactor_secrets(configuration, client_id)
+            b32_key, otp_interval, otp_uri = get_twofactor_secrets(configuration, client_id)
             # We limit key exposure by not showing it in clear and keeping it
             # out of backend dictionary with indirect generation only.
 
@@ -1766,6 +1766,7 @@ client versions from the link above.<br/>
             html += twofactor_wizard_html(configuration)
             check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
             fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
+                                 'otp_interval': otp_interval,
                                  'check_url': check_url, 'demand_twofactor':
                                  'allow', 'enable_hint':
                                  'enable it for login below'})

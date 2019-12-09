@@ -861,7 +861,7 @@ def twofactor_wizard_html(configuration):
 <div id='warning_dialog' title='Warning'
    class='centertext hidden'><!-- filled by script --></div>
 <div id='otp_secret_dialog' title='TOTP Secret to Import in Your App'
-   class='centertext hidden'><!-- filled by script --></div>
+   class='hidden'><!-- filled by script --></div>
 We %(demand_twofactor)s 2-factor authentication on %(site)s for greater
 password login security.
 In short it means that you enter a generated single-use <em>token</em> from
@@ -902,7 +902,7 @@ Open the chosen authenticator app and import your personal 2-factor secret in on
   onClick='showQRCodeOTPDialog(\"otp_secret_dialog\", \"%(otp_uri)s\");'>
 Scan your personal QR code</span></li>
 <li><span id='otp_key_link' class='fakelink infolink iconspace'
-  onClick='showTextOTPDialog(\"otp_secret_dialog\", \"%(b32_key)s\");'>
+  onClick='showTextOTPDialog(\"otp_secret_dialog\", \"<p><b>Secret</b>: %(b32_key)s</p><p><b>Interval</b>: %(otp_interval)s</p>\");'>
 Enter your personal key</span></li>
 </ol>
 The latter is usually more cumbersome but may be needed if your app or smart

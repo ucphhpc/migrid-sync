@@ -219,10 +219,10 @@ def html_tmpl(
     html = ""
     if configuration.site_enable_twofactor:
         html += """
-<div id='info_dialog'></div>
-<div id='help_dialog'></div>
+<div id='info_dialog' class='hidden'></div>
+<div id='help_dialog' class='hidden'></div>
 <div id='otp_verify_dialog' title='Verify Authenticator App Token'
-   class='centertext hidden'>
+   class='hidden'>
 """
         # NOTE: wizard needs dialog with form outside the main settings form
         # because nested forms cause problems
@@ -789,7 +789,8 @@ def html_tmpl(
         </thead>
         <tbody>
         """
-        b32_key, otp_uri = get_twofactor_secrets(configuration, client_id)
+        b32_key, otp_interval, otp_uri = \
+            get_twofactor_secrets(configuration, client_id)
         # We limit key exposure by not showing it in clear and keeping it
         # out of backend dictionary with indirect generation only.
 
@@ -802,6 +803,7 @@ def html_tmpl(
         else:
             enable_hint = 'enable it below'
         fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
+                             'otp_interval': otp_interval,
                              'check_url': check_url, 'demand_twofactor':
                              'demand', 'enable_hint': enable_hint})
 
