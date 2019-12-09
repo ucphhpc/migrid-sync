@@ -46,7 +46,7 @@ from shared.auth import twofactor_available, load_twofactor_key, \
 from shared.defaults import twofactor_cookie_ttl
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
-from shared.html import twofactor_token_html
+from shared.html import twofactor_token_html, themed_styles
 from shared.settings import load_twofactor
 from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 
@@ -186,9 +186,10 @@ def main(client_id, user_arguments_dict, environ=None):
                 configuration, client_id, b32_secret, token):
             logger.info('Accepted valid auth token from %s' % client_id)
         else:
+            styles = themed_styles(configuration)
             output_objects.append(
                 {'object_type': 'title', 'text': '2-Factor Authentication',
-                 'skipmenu': True})
+                 'skipmenu': True, 'style': styles})
             output_objects.append({'object_type': 'html_form', 'text':
                                    twofactor_token_html(configuration)})
             if token:
