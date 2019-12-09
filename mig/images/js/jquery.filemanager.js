@@ -2311,7 +2311,7 @@ if (jQuery) (function($){
                 });
 
                 $.contextMenu({
-                    selector: '#fm_filemanager div.fm_folders li.directory, #fm_filelisting tr.directory, #fm_filemanager .fm_files div.filespacer, #fm_filemanager .fm_files div.uploadspace',
+                    selector: '#fm_filemanager div.fm_folders li.directory, #fm_filechooser div.fm_folders li.directory, #fm_filelisting tr.directory, #fm_filemanager .fm_files div.filespacer, #fm_filemanager .fm_files div.uploadspace',
                     trigger: bind_click,
                     callback: function(key, call_opts) {
                         var m = "directory menu clicked: " + key;
