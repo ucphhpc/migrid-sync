@@ -70,7 +70,7 @@ def main(client_id, user_arguments_dict):
 </style>'''
     # Please have href points to the CSS file and have basedir changed to the
     # directory where JavaScripts are placed.
-    title_entry['style'] += '''
+    title_entry['script']['advanced'] += '''
 <link rel="stylesheet" type="text/css" href="/images/css/shell.css" media="screen"/>
 '''
     title_entry['script']['init'] = '''

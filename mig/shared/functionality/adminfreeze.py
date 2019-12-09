@@ -358,31 +358,31 @@ so please be careful when filling in the details.
     files_form = """
 <!-- and now this... we do not want to see it, except in a dialog: -->
 <div id='fm_filechooser' style='display:none'>
-<div id="fm_filemanager">
-<div class="tree-container container-fluid">
-<div class="tree-row row">
-    <div class="tree-header col-3"></div>
-    <div class="fm_path_breadcrumbs col-6">
-        <ul id='fm_xbreadcrumbs' class='xbreadcrumbs'>
-        </ul>
-    </div>
-    <div class='fm_buttonbar col-3 d-none d-lg-block' style='display:none'>
-        <ul id='fm_buttons' class='buttonbar'>
-        <!-- dynamically modified by js to show optional buttons -->
-        <li class='datatransfersbutton hidden' title='Manage Data Transfers' style='display: list-item; height: 24px; line-height: 24px; margin-left: 2px; width: 24px;'>&nbsp;</li>
-        <li class='sharelinksbutton hidden' title='Manage Share Links' style='display: list-item; height: 24px; line-height: 24px; margin-left: 2px; width: 24px;'>&nbsp;</li>
-        <li class='parentdirbutton' title='Open Parent Directory' style='display: list-item; height: 24px; line-height: 24px; margin-left: 2px; width: 24px;'>&nbsp;</li>
-        <li class='refreshbutton' title='Refresh' style='display: list-item; height: 24px; line-height: 24px; margin-left: 2px; width: 24px;'>&nbsp;</li>
-        </ul>
-    </div>
-    <div class='fm_buttonbar col-6 d-block d-lg-none' style='display:none'>
-        <ul id='fm_buttons' class='buttonbar'>
-        <!-- dynamically modified by js to show optional buttons -->
-        <li class='datatransfersbutton hidden' title='Manage Data Transfers' style='display: list-item; height: 24px; line-height: 24px; margin-left: 2px; width: 24px;'>&nbsp;</li>
-        <li class='sharelinksbutton hidden' title='Manage Share Links' style='display: list-item; height: 24px; line-height: 24px; margin-left: 2px; width: 24px;'>&nbsp;</li>
-        <li class='parentdirbutton' title='Open Parent Directory' style='display: list-item; height: 24px; line-height: 24px; margin-left: 2px; width: 24px;'>&nbsp;</li>
-        <li class='refreshbutton' title='Refresh' style='display: list-item; height: 24px; line-height: 24px; margin-left: 2px; width: 24px;'>&nbsp;</li>
-        </ul>
+    <div class='tree-container container-fluid'>
+        <div class='tree-row row'>
+            <div class='tree-header col-3'></div>
+            <div class='fm_path_breadcrumbs col-6'>
+                <ul id='fm_xbreadcrumbs' class='xbreadcrumbs'><!-- dynamic --></ul>
+            </div>
+            <div class='fm_buttonbar col-3 d-none d-lg-block'>
+                <ul id='fm_buttons' class='buttonbar'>
+                    <!-- dynamically modified by js to show optional buttons -->
+                    <li class='datatransfersbutton hidden' title='Manage Data Transfers'>&nbsp;</li>
+                    <li class='sharelinksbutton hidden' title='Manage Share Links'>&nbsp;</li>
+                    <li class='parentdirbutton' title='Open Parent Directory'>&nbsp;</li>
+                    <li class='refreshbutton' title='Refresh'>&nbsp;</li>
+                </ul>
+            </div>
+            <div class='fm_buttonbar-big col-6 d-block d-lg-none hidden'>
+                <ul id='fm_buttons' class='buttonbar'>
+                    <!-- dynamically modified by js to show optional buttons -->
+                    <li class='datatransfersbutton hidden' title='Manage Data Transfers'>&nbsp;</li>
+                    <li class='sharelinksbutton hidden' title='Manage Share Links'>&nbsp;</li>
+                    <li class='parentdirbutton' title='Open Parent Directory'>&nbsp;</li>
+                    <li class='refreshbutton' title='Refresh'>&nbsp;</li>
+                </ul>
+            </div>
+        </div>
     </div>
     <div class='fm_addressbar'>
         <input type='hidden' value='/' name='fm_current_path' />
@@ -398,11 +398,11 @@ so please be careful when filling in the details.
         <table id='fm_filelisting' style='font-size:13px; border-spacing=0;'>
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th style='width: 80px;'>Size</th>
-                    <th style='width: 50px;'>Type</th>
-                    <th style='width: 120px;'>Date Modified</th>
-                    <th></th>
+                    <th class='fm_name'>Name</th>
+                    <th class='fm_size'>Size</th>
+                    <th class='fm_type'>Type</th>
+                    <th class='fm_date'>Date Modified</th>
+                    <th class='fm_toolbox'>...</th>
                 </tr>
             </thead>
             <tbody>
@@ -410,14 +410,12 @@ so please be careful when filling in the details.
             </tbody>
          </table>
     </div>
-    <div id='fm_statusbar' class="col-lg-12">
-        <div id='fm_statusprogress' class=" col-lg-3"><div class='progress-label'>Loading...</div></div>
-        <div id='fm_statusinfo' class="col-lg-9">&nbsp;</div>
+    <div id='fm_statusbar' class='col-lg-12'>
+        <div id='fm_statusprogress' class=' col-lg-3'>
+            <div class='progress-label'>Loading...</div>
+        </div>
+        <div id='fm_statusinfo' class='col-lg-9'>&nbsp;</div>
     </div>
-
-</div>
-</div>
-</div>
 </div>
 <div id='cmd_dialog' title='Command output' style='display: none;'></div>
 
