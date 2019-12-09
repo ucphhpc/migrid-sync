@@ -1,0 +1,664 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# nav - UI V3 specific but skin-independent overall navigation styling
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+/* IMPORTANT: all skin colors belong in /images/skin/X/ui-v3.custom.css */
+
+/* Navigation */
+
+#sideBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 70px;
+    height: 100vh;
+    border-right: 1px solid #eeeeee !important;
+    z-index: 100;
+    background-color: #FFF;
+}
+
+.sidebar-container {
+    height: 100vh;
+    width: 100%;
+    padding: 0 5px;
+    z-index: 99;
+    position: relative;
+    background-color: #FFF;
+}
+
+@media (max-width: 1000px) {
+    .sidebar-container {
+	display: block;
+    }
+    .sidebar-header {
+	height: 120px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .sidebar-middle {
+	background: 0%;
+    /*margin-top: -70px;*/
+    }
+}
+
+.sidebar-middle {
+/*margin-top: -100px;*/
+}
+
+.sidebar-middle a {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    font-weight: 300;
+    font-size: 25px;
+    display: block;
+    margin: 0px 10px;
+    height: 40px;
+}
+
+.sidebar-middle span {
+    width: 40px;
+    text-align: center;
+}
+
+/*HEADER LOGO LINK*/
+
+#logoMenu {
+    z-index: 102;
+}
+
+/* NOTE: actual icon is set in default.css and likely overriden in skin */
+.home-nav-logo {
+    width: 60px;
+    height: 100px;
+    margin: auto;
+}
+
+/*FOOTER USER MENU*/
+
+.home-nav-user__container {
+    height: 100px;
+}
+
+.home-nav-user__inner {
+    height: 114px;
+}
+
+.home-nav-user {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    padding: 20px 20px 0;
+    color: #ffffff;
+    /* See skin color note at the top
+       background-color: #46743C;
+       */
+    background-color: #444;
+    font-size: 30px;
+    cursor: pointer;
+    width: 70px;
+    height: 70px;
+    z-index: 101;
+    -webkit-transition: 0.3s; /* For Safari 3.1 to 6.0 */
+    transition: 0.3s;
+    
+}
+
+.home-nav-user:hover {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    background-color: #ffffff;
+    border-right: 1px solid #eeeeee !important;
+}
+
+.home-nav-user:active {
+    color: #000000;
+    background-color: #ffffff;
+}
+
+/*SLIDER NAVIGATION*/
+.slidernav-container {
+    position: fixed;
+    height: 100vh;
+    width: 340px;
+    top: 0;
+    left: -340px;
+    background: rgba(70, 115, 60, 1);
+    color: #FFF;
+    -webkit-transition: 0.5s; /* For Safari 3.1 to 6.0 */
+    transition: 0.5s;
+    z-index: 98;
+}
+
+.slidernav-active {
+    left: 70px;
+}
+
+.slider-container__inner {
+    height: 100vh;
+    width: 100%;
+    padding-left: 15px;
+}
+
+.slider-container__inner .navmenu {
+    background: none;
+}
+
+.slider-header {
+    height: 90px;
+}
+
+@media (max-width: 1000px) {
+    .slider-container__inner {
+	display: block;
+    }
+    .slider-header {
+	height: 120px;
+    }
+}
+
+.slider-header h2 {
+    font-size: 30px;
+    font-weight: 900;
+    padding-top: 10px;
+    color: #FFF;
+    background-color: #444;
+}
+
+.slider-middle a {
+    color: #FFF;
+    font-weight: 300;
+    font-size: 25px;
+    display: block;
+    height: 40px;
+}
+
+.slider-middle span {
+    width: 40px;
+    text-align: center;
+}
+
+.slider-middle a:hover {
+    color: #FFF;
+    opacity: 0.7;
+}
+
+@media (max-width: 1000px) {
+    .slider-middle {
+    /*margin-top: -70px;*/
+    }
+}
+
+.slider-footer {
+    padding: 0 0 14px 10px;
+}
+
+.slider-footer a {
+    color: #FFF;
+    font-weight: 300;
+    font-size: 20px;
+    display: block;
+    /* Make sure user menu title stays put when unfolding hamburger menu */
+    height: 114px;
+    line-height: 114px;
+    cursor: pointer;
+    z-index: 103;
+    /* NOTE: disabled position as it hides 'User' label on hamburger open */
+    /*
+    position: fixed;
+    */
+    bottom: 5px;
+    margin: 20px 15px;
+}
+
+#hamBtn {
+    width: 70px;
+    text-align: center;
+    margin: -6px;
+}
+
+.hamburger {
+    /*padding: 15px 15px;*/
+    display: inline-block;
+    cursor: pointer;
+    transition-property: opacity, filter;
+    transition-duration: 0.15s;
+    transition-timing-function: linear;
+    font: inherit;
+    color: inherit;
+    text-transform: none;
+    background-color: transparent;
+    border: 0;
+    margin: 0;
+    overflow: visible; 
+    text-align: center;
+}
+.hamburger:hover {
+    opacity: 0.7; }
+.hamburger.is-active:hover {
+    opacity: 0.7; }
+.hamburger.is-active .hamburger-inner,
+.hamburger.is-active .hamburger-inner::before,
+.hamburger.is-active .hamburger-inner::after {
+    /* See skin color note at the top
+       background-color: #46743C;
+       */
+    background-color: #444;
+}
+
+.hamburger-box {
+    width: 25px;
+    height: 20px;
+    display: inline-block;
+    position: relative; }
+
+.hamburger-inner {
+    display: block;
+    top: 50%;
+    margin-top: -2px; }
+.hamburger-inner, .hamburger-inner::before, .hamburger-inner::after {
+    width: 25px;
+    height: 2px;
+    /* See skin color note at the top
+       background-color: #46743C;
+       */
+    background-color: #444;
+    position: absolute;
+    transition-property: transform;
+    transition-duration: 0.15s;
+    transition-timing-function: ease; }
+.hamburger-inner::before, .hamburger-inner::after {
+    content: "";
+    display: block; }
+.hamburger-inner::before {
+    top: -10px; }
+.hamburger-inner::after {
+    bottom: -10px; }
+
+/*
+ * Vortex
+ */
+.hamburger--vortex .hamburger-inner {
+    transition-duration: 0.2s;
+    transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1); }
+.hamburger--vortex .hamburger-inner::before, .hamburger--vortex .hamburger-inner::after {
+    transition-duration: 0s;
+    transition-delay: 0.1s;
+    transition-timing-function: linear; }
+.hamburger--vortex .hamburger-inner::before {
+    transition-property: top, opacity; }
+.hamburger--vortex .hamburger-inner::after {
+    transition-property: bottom, transform; }
+
+.hamburger--vortex.is-active .hamburger-inner {
+    transform: rotate(765deg);
+    transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1); }
+.hamburger--vortex.is-active .hamburger-inner::before, .hamburger--vortex.is-active .hamburger-inner::after {
+    transition-delay: 0s; }
+.hamburger--vortex.is-active .hamburger-inner::before {
+    top: 0;
+    opacity: 0; }
+.hamburger--vortex.is-active .hamburger-inner::after {
+    bottom: 0;
+    transform: rotate(90deg); }
+
+#menuTxt {
+    font-size: 12px;
+    color: #444;
+}
+
+/*CUSTOM ICON FA (JUPYTER)*/
+.fa-jupyter {
+    background: url(/images/icons/jupyter_icon.svg) center center no-repeat; 
+    display: inline-block;
+    height: 40px;
+}
+
+/* See skin color note at the top
+   .sidebar-middle #selected.fa-jupyter {
+   background: url(/images/icons/jupyter_icon_orange.svg) center center no-repeat;
+   }
+   */
+
+.app__btn .fa-jupyter {
+    height: 70px;
+    width: 88px;
+    margin-top: -5px;
+    margin-bottom: -4px;
+}
+
+.app__btn .fa-jupyter:hover {
+    background: url(/images/icons/jupyter_icon_white.svg) center center no-repeat;
+}
+
+.app__btn:hover .fa-jupyter {
+    background: url(/images/icons/jupyter_icon_white.svg) center center no-repeat;
+}
+
+
+.fa-datatransfer {
+    background: url(/images/icons/datatransfer_icon.svg) center center no-repeat; 
+    display: inline-block;
+    height: 40px;
+}
+
+/* See skin color note at the top
+   .sidebar-middle #selected.fa-datatransfer {
+   background: url(/images/icons/datatransfer_icon_orange.svg) center center no-repeat;
+   }
+   */
+
+.app__btn .fa-datatransfer {
+    height: 70px;
+    width: 88px;
+    margin-top: -5px;
+    margin-bottom: -4px;
+}
+
+.app__btn .fa-datatransfer:hover {
+    background: url(/images/icons/datatransfer_icon_white.svg) center center no-repeat;
+}
+
+.app__btn:hover .fa-datatransfer {
+    background: url(/images/icons/datatransfer_icon_white.svg) center center no-repeat;
+}
+
+
+.hidden {
+    display: none;
+}
+
+.navmenu a span.selected {
+    /* See skin color note at the top
+       color: orange;
+       */
+    color: #CCC;
+}
+
+/*USER POPUP MENU*/
+.popup-container {
+    position: fixed;
+    width: 270px;
+    height: 300px;
+    background-color: #FFF;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    border-radius: 8px;
+    bottom: 0px;
+    left: 0px;
+    -webkit-transition: 2s; /* For Safari 3.1 to 6.0 */
+    transition: 2s;
+    z-index: 110;
+    display: none;
+}
+
+.popup-active {
+    display: block;
+    bottom: 60px;
+    left: 30px;
+    -webkit-transition: 2s; /* For Safari 3.1 to 6.0 */
+    transition: 2s;
+}
+
+
+.popup-header {
+    height: 70px;
+    width: 100%;
+    border-bottom: 1px solid #EEE;
+    padding: 15px 10px;
+}
+
+.popup-middle {
+    height: 180px;
+    width: 100%;
+    border-bottom: 1px solid #EEE;
+    padding: 10px;
+}
+
+.popup-footer {
+    padding: 14px 10px;
+}
+
+.user-avatar {
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 50%;
+    overflow: hidden;
+    outline: 0;
+}
+
+.user-name {
+    font-size: 14px;
+}
+
+button.avatar-link {
+    /* See skin color note at the top
+       color: #46743C;;
+       */
+    color: #444;
+    cursor: pointer;
+    display: block;
+    font-size: 12px;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+}
+
+button.avatar-link:hover {
+    color: orange;
+    cursor: pointer;
+    display: block;
+    font-size: 12px;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+}
+
+button.avatar-link:active {
+    /* See skin color note at the top
+       color: #46743C;;
+       */
+    color: #444;
+    cursor: pointer;
+    display: block;
+    font-size: 12px;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+}
+
+.user-menu__item {
+    width: 100%;
+    box-sizing: inherit;
+    line-height: 40px;
+    font-weight: 400;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+    outline: none;
+    background-color: transparent;
+    border: none;
+    text-decoration: none;
+    display: block;
+}
+
+.modal-backdrop {
+    z-index: 99 !important;
+}
+
+/*HEADER INFO AREA*/
+#headerNav {
+    background-color: #ffffff;
+    background-clip: padding-box;
+    border: 1px solid rgba(23, 24, 26, 0.11);
+    border-radius: 5px;
+    overflow: hidden;
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    -webkit-transition: border-color 0.5s ease, opacity 0.4s ease;
+    transition: border-color 0.5s ease, opacity 0.4s ease;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    z-index: 109;
+}
+
+.nav__items {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.nav__item {
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    border-right: 1px solid #d4d7d9;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-transition: background-color 0.2s ease-out;
+    transition: background-color 0.2s ease-out;
+    padding: 5px 12px;
+    cursor: pointer;
+}
+
+.nav__item:hover {
+    background-color: #f6f6f6;
+}
+
+.nav__item:last-child {
+    border-right: 0;
+}
+
+.nav__item .nav__label {
+    color: #444444;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0;
+    text-decoration: none;
+    -webkit-transition: color 0.2s ease-out;
+    transition: color 0.2s ease-out;
+}
+
+.nav__item .nav__label:hover {
+    color: #222222;
+}
+
+.infoArea-container {
+    position: fixed;
+    height: 100vh;
+    width: 0;
+    background-color: #FFF;
+    z-index: 99;
+    right: -50%;
+    top: 0;
+    -webkit-transition: 0.5s; /* For Safari 3.1 to 6.0 */
+    transition: 0.5s;
+}
+
+.infoArea__active {
+    width: calc(100% - 70px);
+    right: 0;
+    display: block;
+    -webkit-transition: 0.5s; /* For Safari 3.1 to 6.0 */
+    transition: 0.5s;
+}
+
+@media (min-width: 1000px) {
+    .infoArea__active {
+	width: 50%;
+	right: 0;
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+	-webkit-transition: 0.5s; /* For Safari 3.1 to 6.0 */
+	transition: 0.5s;
+    }
+}
+
+.close_btn {
+    position:absolute; 
+    top:10px; 
+    left:10px;
+    font-size: 30px;
+    font-weight: 900;
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+    cursor: pointer;
+    z-index: 999;
+}
+
+.close_btn:hover {
+    font-weight: 100px;
+}
+
+#aboutInfo .container, #supportInfo .container {
+    padding: 15% 10% 1% 10%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+}
+
+#aboutInfo p {
+    text-align: justify;
+}
+
+#supportInfo p {
+    font-size: 14px;
+}
+
+.quick-support {
+    cursor: pointer;
+    text-align: center;
+}
+
+.quick-support { 
+    background: 0%;
+}
+
+.faq {
+    font-size: 20px;
+    line-height: 20px;
+    font-weight: 700;
+}
+
+@media (min-width: 1000px) {
+    .faq {
+	font-size: 30px;
+	margin-top: 40px;
+    }
+}
+

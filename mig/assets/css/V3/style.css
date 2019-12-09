@@ -1,0 +1,710 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# style - Core UI V3 specific but skin-independent styling
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+@charset "UTF-8";
+
+/*@import "nav.css";*/
+/*@import "footer.css";*/
+/*@import "bootstrap-custom.css";**/
+
+/* IMPORTANT: all skin colors belong in /images/skin/X/ui-v3.custom.css */
+
+/* IMPORTANT: most of these currently also need to be set in 
+   /images/skin/X/ui-v3.custom.css because skin core overrides them. */
+
+/* TODO: we do not want to rely on CDNS or google directly - pull and use a
+         local copy instead if at all */
+/*
+@import url('https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i&display=swap');
+*/
+
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote,
+pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd,
+q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt,
+dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot,
+thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption,
+footer, header, hgroup, frame, menu, nav, output, ruby, section, summary, time,
+mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+html, body {
+    background: #fff;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%
+}
+
+body {
+    /* TODO: re-enable these if okay with KU style guides? */
+    /*
+    font-family: 'Roboto', 'Lato', sans-serif;
+    */
+    /* These should already be set as default elsewhere */
+    /*
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    */
+    background-color: #ffffff;
+}
+
+/* All dynamic pages have this id on body */
+#userBody, #modern-ui-body {
+    width: 100%;
+}
+
+/*Global Text Elements*/
+
+h1, h2, h3, .supporttitle, .privacytitle {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+}
+
+h1 {
+    font-size: 50px;
+    line-height: 50px;
+    font-weight: 700;
+    padding-bottom: 20px;
+}
+
+@media (min-width: 1000px) {
+    h1 {
+	font-size: 100px;
+	line-height: 100px;
+    }
+}
+
+/* Remove default background to avoid green on green */
+h1 {
+    background: none;
+}
+
+h1.header, h2, .supporttitle, .privacytitle {
+    font-size: 20px;
+    line-height: 20px;
+    font-weight: 700;
+    padding-bottom: 20px;
+    padding-top: 2%;
+    border: 0;
+}
+
+
+@media (min-width: 1000px) {
+    h1.header h2 {
+	font-size: 40px;
+	line-height: 40px;
+    }
+}
+
+h2.header_center {
+    text-align: center;
+}
+
+h3 {
+    font-size: 14px;
+    line-height: 14px;
+    font-weight: 700;
+    margin-top: 2%;
+}
+
+
+@media (min-width: 1000px) {
+    h3 {
+	font-size: 20px;
+	line-height: 20px;
+    }
+}
+
+/* NOTE: we occassionally mix plain divs and p texts so to avoid the p parts
+   then being smaller than the rest we added a similar div font scaling.
+   */
+div {
+    font-size: 14px;
+    font-weight: 300;
+}
+p {
+    font-size: 14px;
+    font-weight: 300;
+    color: #444;
+    /* NOTE: changed from padding-bottom: 10px which broke vertical centering
+             for e.g. warn message on showfreeze page.
+     */
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+@media (min-width: 1000px) {
+    div {
+	font-size: 16px;
+    }
+    p {
+	font-size: 16px;
+    }
+}
+
+p.wordbreak {
+    word-wrap: break-word;         /* All browsers since IE 5.5+ */
+    overflow-wrap: break-word;     /* Renamed property in CSS3 draft spec */
+    width: 100%;
+}
+
+.supporttitle, .privacytitle {
+    padding: 10px 0px 2px 0px;
+    border-bottom: 0;
+}
+
+ul {
+    margin: 0 0 0 20px;
+}
+
+li {
+    font-size: 14px;
+    font-weight: 300;
+    color: #444;
+}
+
+input.fullwidth {
+    width: 100%;
+}
+
+.sub-title {
+    font-size: 14px;
+    font-weight: 300;
+    color: #444;
+    padding-bottom: 20px;
+
+}
+
+.sub-title-white {
+    font-size: 14px;
+    font-weight: 300;
+    color: #fff;
+    padding-bottom: 20px;
+
+}
+
+@media (min-width: 1000px) {
+    .sub-title {
+	font-size: 20px;
+    }
+
+    .sub-title-white {
+	font-size: 20px;
+    }
+}
+
+
+a {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+}
+
+a:hover {
+    color: #444;
+    text-decoration: underline;
+}
+
+
+/*Global Web Elements*/
+.global-container {
+    /*width: calc(100% - 70px);*/
+    padding: 0 0 0 70px;
+    position: relative;
+    /*margin: 20px;*/
+    z-index: 1;
+}
+
+.global-full-height {
+    min-height: 100vh;
+}
+
+button {
+    border: 0;
+    width: auto;
+    overflow: visible;
+    border-style: solid;
+    outline: 0
+}
+
+/*Global Background Elements*/
+/*.wallpaper {
+  width: 100%;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-image: url("/images/assets/img/bg_login.jpg");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  z-index: 0;
+  }*/
+
+#intro_video {
+    position: absolute;
+    width: 100%;
+    height: 100vh;
+    z-index: -1;
+}
+
+fieldset {
+    display: block;
+    margin-inline-start: 2px;
+    margin-inline-end: 2px;
+    padding-block-start: 0.35em;
+    padding-inline-start: 0.75em;
+    padding-inline-end: 0.75em;
+    padding-block-end: 0.625em;
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-top-style: groove;
+    border-right-style: groove;
+    border-bottom-style: groove;
+    border-left-style: groove;
+    border-top-color: threedface;
+    border-right-color: threedface;
+    border-bottom-color: threedface;
+    border-left-color: threedface;
+    border-image-source: initial;
+    border-image-slice: initial;
+    border-image-width: initial;
+    border-image-outset: initial;
+    border-image-repeat: initial;
+    min-width: min-content;
+    border-radius: 5px;
+}
+
+legend {
+    display: block;
+    padding-inline-start: 2px;
+    padding-inline-end: 2px;
+    border-top-width: initial;
+    border-right-width: initial;
+    border-bottom-width: initial;
+    border-left-width: initial;
+    border-top-style: none;
+    border-right-style: none;
+    border-bottom-style: none;
+    border-left-style: none;
+    border-top-color: initial;
+    border-right-color: initial;
+    border-bottom-color: initial;
+    border-left-color: initial;
+    border-image-source: initial;
+    border-image-slice: initial;
+    border-image-width: initial;
+    border-image-outset: initial;
+    border-image-repeat: initial;
+    width: 170px;
+    padding-bottom: 0;
+    padding-top: 10px;
+}
+
+
+/*TEMP*/
+/* NOTE: moved actual background to default.css with likely override in skin */
+.img-content {
+    height: 100vh;
+    width: 100%;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+/*HOME PAGE*/
+.home-page__header {
+    padding-top: 6%;
+}
+
+.home-page__content {
+    padding-top: 3%;
+}
+
+@media (min-width: 1000px) {
+    .app-row {
+	margin-bottom: 25px;
+    }
+}
+
+.app__btn {
+    background-color: #FFF;
+    height: 150px;
+    border: 1px solid #DDD;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    margin: 10px 10px 0 0;
+    text-align: center;
+    padding-top: 30px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.app__btn:hover {
+    /* See skin color note at the top
+       background-color: #46743C;
+       */
+    background-color: #444;
+}
+
+.mandatory {
+    background-color: #444;
+    cursor: no-drop;
+    opacity: 0.5;
+}
+
+.mandatory:hover {
+    background-color: #444;
+    cursor: no-drop;
+    opacity: 1;
+}
+
+.app__btn a {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+    font-weight: 300;
+    font-size: 15px;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+}
+
+.mandatory a {
+    background-color: #FFF;
+}
+
+.app__btn h3 {
+    font-size: 15px;
+}
+
+.app__btn:hover h3 {
+    color: #FFF;
+}
+
+.mandatory h3 {
+    color: #FFF;
+}
+
+:focus {outline:none;}
+::-moz-focus-inner {border:0;}
+
+.app__btn span {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+    font-size: 70px;
+}
+
+.mandatory span {
+    color: #FFF;
+    font-size: 70px;
+}
+
+.app__btn:hover span {
+    color: #FFF;
+}
+
+.add-app__btn {
+    background-color: #444;
+    height: 150px;
+    border: 1px solid #000;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    margin: 10px 10px 0 0;
+    text-align: center;
+    padding-top: 30px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.add-app__btn:hover {
+    background-color: #FFF;
+    border: 1px solid #DDD;
+}
+
+.add-app__btn a {
+    color: #FFF;
+    font-weight: 300;
+    font-size: 15px;
+    width: 100%;
+    height: 100%;
+}
+
+.add-app__btn span {
+    color: #FFF;
+    font-size: 70px;
+}
+
+.add-app__btn:hover span {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+}
+
+.add-app__btn h3 {
+    color: #FFF;
+}
+
+.add-app__btn:hover h3 {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+}
+
+
+
+/*APP POPUP PAGE*/
+.app-container {
+    background: rgba(70, 116, 60, 1);
+    /*background-image: linear-gradient(rgba(0, 0, 0, 0.95), rgba(70, 115, 60, 0.95), rgba(0, 0, 0, 0.95));*/
+    height: 100vh;
+    width: calc(100% - 70px);
+    position: fixed;
+    top: 0;
+    left: 70px;
+    z-index: 200;
+    display: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.app-page__header {
+    padding-top: 5%;
+}
+
+.app-page__header h1, .app-page__header h2 {
+    color: #FFF;
+}
+
+.add-app__close {
+    position: fixed;
+    top: 10px;
+    right: 25px;
+    z-index: 201;
+    color: #FFF;
+    font-size: 50px;
+    cursor: pointer;
+    /* See skin color note at the top
+       background-color: #46743C;
+       */
+    background-color: #444;
+    border-radius: 50px;
+}
+
+.app__btn > input[type=checkbox] {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    display: none;
+    z-index: 2;
+}
+
+.app__btn > input[type=checkbox]:checked {
+    display:  block;
+}
+
+.app__btn > input[type=checkbox] + label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 2;
+    cursor: pointer;
+} 
+input[type=checkbox]:checked + label {
+    background: 0%;
+}
+
+/* When the checkbox is not checked, use a grey background */
+.container input:checked ~ .checkmark {
+    background-color: #000;
+}
+
+/*
+  input[type=checkbox] + label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  display:none;
+  z-index: 2;
+  }
+
+input[type=checkbox]:checked + label {
+position: absolute;
+top: 0;
+left: 0;
+background: rgba(255, 255, 255, 0.85);
+display:block;
+z-index: 2;
+}*/
+
+.background-app {
+    position: absolute;
+    top: 30px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.background-app h3 {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* The app container */
+#add-app__window .app__btn {
+    padding: 0;
+}
+
+.app-content {
+    display: block;
+    position: relative;
+    padding: 0;
+    margin-bottom: 0;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    height: 100%;
+    width: 100%;
+}
+
+.mandatory .app-content{
+    cursor: default;
+}
+
+/* Hide the browser's default checkbox */
+.app-content input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    height: 20px;
+    width: 20px;
+    background-color: #fff;
+    border-radius: 2px;
+}
+
+/* On mouse-over, add a grey background color */
+.app-content:hover input ~ .checkmark {
+    background-color: #fff;
+}
+
+/* When the checkbox is checked, add a colored background */
+.app-content input:checked ~ .checkmark {
+    /* See skin color note at the top
+       background-color: #46743C;
+       */
+    background-color: #444;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.app-content input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.app-content .checkmark:after {
+    left: 8px;
+    top: 5px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+/*FILES PAGE*/
+.files-header {
+    height: 100px;
+    border-bottom: 0.5px solid #AAA;
+}
+
+.tree-manager {
+    display: none;
+}
+
+@media (min-width: 1000px) {
+    .tree-manager {
+	display: block;
+    }
+}
+
+/* ABOUT & HELP */
+#more {display: none;}
+
+/*ALWAYS LAST*/
+.is-active {
+    display: block;
+}

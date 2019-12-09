@@ -1,0 +1,131 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# jquery.contextmenumanagers - own style overrides for contextmenu plugin
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+
+/*** These are our own overrides to layout entries and set icons ***/
+
+/*
+  Adding Icons
+  
+  You can add icons to the context menu by adding
+  classes to the respective LI element(s)
+*/
+
+/* Disable icon repeat in general and center in icon space */
+.context-menu-icon {
+    background-repeat: no-repeat;
+    top: 50%;
+    background-position-x: 4px;
+}
+
+/* NOTE: some icons like copy/cut/paste are actually included in default icon
+         but we override for consistency in look-and-feel */
+.context-menu-icon:before {
+    content: none;
+}
+/*
+.context-menu-icon-open, .context-menu-list LI.icon-open { background-image: url(/images/icons/folder_open.png); }
+.context-menu-icon-edit, .context-menu-list LI.icon-edit { background-image: url(/images/icons/page_white_edit.png); }
+.context-menu-icon-cut, .context-menu-list LI.icon-cut { background-image: url(/images/icons/cut.png); }
+.context-menu-icon-show, .context-menu-list LI.icon-show { background-image: url(/images/icons/txt.png); }
+.context-menu-icon-resubmit, .context-menu-list LI.icon-resubmit { background-image: url(/images/icons/arrow_redo.png); }
+.context-menu-icon-mkdir, .context-menu-list LI.icon-mkdir { background-image: url(/images/icons/folder_add.png); }
+.context-menu-icon-rmdir, .context-menu-list LI.icon-rmdir { background-image: url(/images/icons/folder_delete.png); }
+.context-menu-icon-uploadchunked, .context-menu-list LI.icon-uploadchunked { background-image: url(/images/icons/page_white_get.png); }
+.context-menu-icon-upload, .context-menu-list LI.icon-upload { background-image: url(/images/icons/page_white_get.png); }
+.context-menu-icon-download, .context-menu-list LI.icon-download { background-image: url(/images/icons/page_white_put.png); }
+.context-menu-icon-create, .context-menu-list LI.icon-create { background-image: url(/images/icons/page_white_add.png); }
+.context-menu-icon-advanced, .context-menu-list LI.icon-advanced { background-image: url(/images/icons/application.png); }
+.context-menu-icon-cat, .context-menu-list LI.icon-cat { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-icon-head, .context-menu-list LI.icon-head { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-icon-tail, .context-menu-list LI.icon-tail { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-icon-wc, .context-menu-list LI.icon-wc { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-icon-du, .context-menu-list LI.icon-du { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-icon-touch, .context-menu-list LI.icon-touch { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-icon-stat, .context-menu-list LI.icon-stat { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-icon-truncate, .context-menu-list LI.icon-truncate { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-icon-spell, .context-menu-list LI.icon-spell { background-image: url(/images/icons/script.png); }
+.context-menu-icon-md5sum, .context-menu-list LI.icon-md5sum { background-image: url(/images/icons/page.png); }
+.context-menu-icon-sha1sum, .context-menu-list LI.icon-sha1sum { background-image: url(/images/icons/page.png); }
+.context-menu-icon-find, .context-menu-list LI.icon-find { background-image: url(/images/icons/folder_explore.png); }
+.context-menu-icon-grep, .context-menu-list LI.icon-grep { background-image: url(/images/icons/magnifier.png); }
+.context-menu-icon-submit, .context-menu-list LI.icon-submit { background-image: url(/images/icons/arrow_redo.png); }
+.context-menu-icon-copy, .context-menu-list LI.icon-copy { background-image: url(/images/icons/page_white_copy.png); }
+.context-menu-icon-paste, .context-menu-list LI.icon-paste { background-image: url(/images/icons/page_white_paste.png); }
+.context-menu-icon-delete, .context-menu-list LI.icon-delete { background-image: url(/images/icons/page_white_delete.png); }
+.context-menu-icon-rm, .context-menu-list LI.icon-rm { background-image: url(/images/icons/page_white_delete.png); }
+.context-menu-icon-pack, .context-menu-list LI.icon-pack { background-image: url(/images/icons/compress.png); }
+.context-menu-icon-unpack, .context-menu-list LI.icon-unpack { background-image: url(/images/icons/zip.png); }
+.context-menu-icon-sharelink, .context-menu-list LI.icon-sharelink { background-image: url(/images/icons/table_link.png); }
+.context-menu-icon-createsharelink, .context-menu-list LI.icon-createsharelink { background-image: url(/images/icons/table_add.png); }
+.context-menu-icon-importsharelink, .context-menu-list LI.icon-importsharelink { background-image: url(/images/icons/table_lightning.png); }
+.context-menu-icon-sharelinks, .context-menu-list LI.icon-sharelinks { background-image: url(/images/icons/table_gear.png); }
+.context-menu-icon-archive, .context-menu-list LI.icon-archive { background-image: url(/images/icons/box.png); }
+.context-menu-icon-createfreeze, .context-menu-list LI.icon-createfreeze { background-image: url(/images/icons/box_add.png); }
+.context-menu-icon-createbackup, .context-menu-list LI.icon-createbackup { background-image: url(/images/icons/box_add.png); }
+.context-menu-icon-importfreeze, .context-menu-list LI.icon-importfreeze { background-image: url(/images/icons/box_lightning.png); }
+.context-menu-icon-dataimport, .context-menu-list LI.icon-dataimport { background-image: url(/images/icons/page_white_get.png); }
+.context-menu-icon-dataexport, .context-menu-list LI.icon-dataexport { background-image: url(/images/icons/page_white_put.png); }
+.context-menu-icon-datatransfers, .context-menu-list LI.icon-datatransfers { background-image: url(/images/icons/table_refresh.png); }
+.context-menu-icon-rename, .context-menu-list LI.icon-rename { background-image: url(/images/icons/drive_rename.png); }
+.context-menu-icon-quit, .context-menu-list LI.icon-quit { background-image: url(/images/icons/door.png); }
+.context-menu-icon-mrsl, .context-menu-list LI.icon-mrsl { background-image: url(/images/icons/page_white_text.png); }
+.context-menu-icon-statusfiles, .context-menu-list LI.icon-statusfiles { background-image: url(/images/icons/drive.png); }
+.context-menu-icon-outputfiles, .context-menu-list LI.icon-outputfiles { background-image: url(/images/icons/download.png); }
+.context-menu-icon-schedule, .context-menu-list LI.icon-schedule { background-image: url(/images/icons/calendar.png); }
+.context-menu-icon-feasible, .context-menu-list LI.icon-feasible { background-image: url(/images/icons/green.png); }
+.context-menu-icon-resubmit, .context-menu-list LI.icon-resubmit { background-image: url(/images/icons/arrow_redo.png); }
+.context-menu-icon-freeze, .context-menu-list LI.icon-freeze { background-image: url(/images/icons/hourglass_delete.png); }
+.context-menu-icon-thaw, .context-menu-list LI.icon-thaw { background-image: url(/images/icons/hourglass_add.png); }
+.context-menu-icon-cancel, .context-menu-list LI.icon-cancel { background-image: url(/images/icons/cancel.png); }
+.context-menu-icon-liveio, .context-menu-list LI.icon-liveio { background-image: url(/images/icons/page_white_go.png); }
+.context-menu-icon-verbosestatus, .context-menu-list LI.icon-verbosestatus { background-image: url(/images/icons/information.png); }
+.context-menu-icon-select, .context-menu-list LI.icon-select { background-image: url(/images/icons/hourglass_add.png); }
+*/
+
+/* don't color hightlighted entry blue by default - override in skins */
+.context-menu-item.hover {
+    background-color: white;
+}
+
+/* increase font size */
+.context-menu-item {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* vertically center entries */
+.context-menu-item > span, .context-menu-item.icon {
+    vertical-align: middle;
+    min-height: 16px;
+}
+/* vertically center submenu marker */
+.context-menu-submenu:after {
+    top: inherit;
+}

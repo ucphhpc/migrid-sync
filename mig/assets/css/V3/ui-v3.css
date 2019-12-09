@@ -1,0 +1,1309 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# ui-v3 - general UI V3 specific but skin-independent styling
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+@charset "UTF-8";
+
+/* IMPORTANT: all skin colors belong in /images/skin/X/ui-v3.custom.css */
+
+/* IMPORTANT: most of these currently also need to be set in 
+   /images/skin/X/ui-v3.custom.css because skin core overrides them. */
+
+/*GENERAL*/
+
+/* override default body sizing */
+body {
+    /* Dynamically scale all */
+    min-width: 100%;
+    min-height: 100%;
+}
+
+/* NOTE: do NOT break e.g. status.erda.dk narrow layout with 100% above */
+body.staticpage {
+    min-width: 600px;
+}
+
+/* Override default container site and position */
+div.container {
+    width: auto;
+    margin: auto;
+}
+
+#content {
+    background: 0%;
+}
+
+.text_center {
+    text-align: center;
+}
+
+a.greenBtn {
+    color: #fff; 
+    /* See skin color note at the top
+       background-color: #46743C;
+       */
+    background-color: #444;
+    border: 1px solid #FFF;
+    border-radius: 30px; 
+    padding: 10px 25px;
+    margin: 0 5px 0 0;
+    text-decoration: none;
+}
+
+a.greenBtn:hover {
+    background: #FFF;
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+    border: 1px solid #FFF;
+}
+
+
+a.greenBtn:active {
+    background: #EEE;
+}
+
+
+.directoryicon {
+/*background: 100%;*/
+}
+
+.ext_pdf {
+    background-size: 20px;
+}
+
+.sidebar-middle a span.selected {
+    background-color: #EEE;
+    border: 1px solid #CCC;
+}
+.sidebar-middle a span:hover {
+    background-color: #FFF;
+    border: 1px solid #DDD;
+}
+
+[type=button]:not(:disabled), [type=reset]:not(:disabled), [type=submit]:not(:disabled), button:not(:disabled) {
+    cursor: pointer;
+    border-radius: 30px;
+    /* See skin color note at the top
+       background: #46743C;
+       */
+    background: #444;
+    color: #FFF;
+    box-shadow: none;
+    border: 1px solid #FFF;
+    padding: 5px 10px;
+}
+
+[type=button]:not(:disabled):hover, [type=reset]:not(:disabled):hover, [type=submit]:not(:disabled):hover, button:not(:disabled):hover {
+    background: #FFF;
+    /*
+      color: #46743C;
+      */
+    color: #444;
+    border: 1px solid #FFF;
+}
+
+[type=button]:not(:disabled):active, [type=reset]:not(:disabled):active, [type=submit]:not(:disabled):active, button:not(:disabled):active {
+    background: #EEE;
+}
+
+.custom-show {
+    display: flex;
+}
+
+.custom-hidden {
+    display: none !important;
+}
+
+/*TOGGLE BUTTON*/
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+/* small version to fit common text line height */
+.switch .slider.small {
+    transform: scale(0.6);
+}
+
+.form-check, .switch-label {
+    height: 34px;
+    line-height: 34px;
+    vertical-align: top;
+}
+
+/* TODO: these should probably be the default slider color settings
+   input:checked + .slider {
+   background-color: #2196F3;
+   }
+   
+   input:focus + .slider {
+   box-shadow: 0 0 1px #2196F3;
+   }
+   */
+/* .. we force the skin colors for now until styled properly */
+input:checked + .slider {
+    background-color: #679c5b;
+}  
+input:focus + .slider {
+    box-shadow: 0 0 1px #679c5b;
+}
+
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* BOOTSTRAP ACCORDION */
+
+.accordion > .card {
+    margin: 0;
+    padding: 0;
+}
+
+.accordion > .card {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.accordion > .card > .card-header {
+    margin: 0;
+    padding: 0;
+    background-color: rgb(0, 0, 0, 0);
+    border: none;
+}
+
+.accordion >  .card > .card-header > h2 {
+    padding-bottom: 2px;
+}
+
+.accordion >  .card > .card-header > h2 > .btn-link {
+    font-weight: 400;
+    font-size: 15px;
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+    text-decoration: none;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+}
+
+.card-body {
+    padding: 0 0 4% 2px;
+    text-align: justify;
+}
+
+/* PAGE - FILE MANAGER */
+/*HEADER BAR*/
+#fm_filemanager > .container-fluid {
+    padding-left: 0;
+}
+
+.tree-container {
+    padding: 0;
+}
+
+.tree-row {
+    margin: 0;
+}
+
+.xbreadcrumbs LI {
+    padding: 0 4px;
+}
+.xbreadcrumbs LI:hover {
+    padding: 0 14px;
+}
+
+@media (max-width: 1000px) {
+    .tree-header {
+        display: none;
+    }
+
+    #fm_statusprogress {
+        display: none;
+    }
+}
+
+.tree-header {
+    background-color: #F4F4F4;
+    padding: 10px 0;
+    min-height: 50px;
+}
+
+.fm_buttonbar {
+    text-align: right;
+    padding: 10px 10px;
+    min-height: 50px;
+}
+
+.fm_buttonbar li:hover {
+    border: 1px solid #fff;
+    border-radius: 50px;
+}
+
+.fm_path_breadcrumbs {
+    border: 0;
+    padding: 10px 0;
+    min-height: 50px;
+}
+
+/* Override bradcrumbs user home icon and make folding does not truncate it */
+#fm_xbreadcrumbs .userhome { min-width: 20px; min-height: 20px; background: url(/images/icons/folder_open_user.svg) left top no-repeat; background-size: 16px 16px; }
+
+.xbreadcrumbs {
+    background-color: #FFF;
+}
+
+.xbreadcrumbs li {
+    border-right: none;
+    background: url(/images/icons/separator.gif) no-repeat right center;
+    padding-right: 15px;
+    padding-left: 10px;
+    line-height: 1.5;
+
+}
+
+.fm_buttonbar {
+    background-color: #FFF;
+}
+
+#fm_filemanager {
+    background: #FFF;
+    border: none;
+    padding: 0;
+}
+
+.jqueryFileTree li div {
+    font-size: 14px;
+}
+
+#fm_filelisting thead tr th div {
+    font-size: 12px;
+    padding: 20px 0;
+}
+
+#fm_filelisting tbody tr td {
+    font-size: 14px;
+    padding: 20px 0;
+}
+
+.fm_folders {
+    overflow: auto;
+    background-color: #F4F4F4;
+    border: none;
+    padding-top: 15px;
+    height: calc(100vh - 90px);
+}
+
+#fm_statusbar {
+    border: none;
+    background-color: #FFF;
+    padding: 0;
+}
+
+@media (max-width: 1000px) {
+    #fm_statusinfo {
+        font-size: 10px;
+    }
+}
+
+#fm_statusprogress {
+    background-color: #F4F4F4;
+    height: 40px;
+}
+
+
+.fm_files {
+    overflow: auto;
+    border: none;
+    height: calc(100vh - 90px);
+}
+
+@media (max-width: 1000px) {
+    .fm_folders {
+        display: none;
+    }
+
+    .fm_files {
+        width: 100%;
+    }
+}
+
+/* FILES MENU */
+.jqueryFileTree {
+/*display: block !important;*/
+}
+
+.fm_folders > UL.jqueryFileTree {
+    height: 100%;
+}
+
+.expanded.userhome {
+    height: 100%;
+}
+
+.context-menu-input {
+    background-color: #FFF;
+}
+
+.context-menu-item {
+    background-color: #FFF;
+/*padding: 3px 0 10px 30px;*/
+}
+
+.context-menu-list {
+    width: 200px;
+    z-index: 101;
+}
+
+
+#fm_touchscreen {
+    position: relative;
+    display: inline-block;
+}
+
+/*TABLE FILES*/
+
+@media (max-width: 1000px) {
+    .fm_size, .fm_type, .fm_date {
+        display: none;
+    }
+}
+
+.tablesorter-header {
+    background-color: #FFF;
+    border: none;
+    border-bottom: 1px solid #EEE;
+}
+
+.even, .odd {
+    background-color: #FFF;
+    border-bottom: 1px solid #EEE;
+}
+
+
+#exitcode {
+    display: none;
+}
+
+button.more-button {
+    font-size: 20px;
+    font-weight: 900;
+    cursor: pointer;
+    border-radius: 0;
+    background: #FFF;
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+    box-shadow: none;
+    border: none;
+    padding: 5px 10px;
+}
+
+button.more-button:hover {
+    color: #333;
+    border: none;
+}
+
+button.more-button:active {
+    color: #000;
+    border: none;
+    background: none;
+}
+
+/*Manage background data transfers*/
+.tablesorter-header-inner {
+    font-size: 12px;
+    font-weight: 400;
+    padding: 20px 0;
+}
+
+.addexttransfer, .managetransferkeys {
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/*Manage share links*/
+
+
+/* PAGE - WORKGROUPS */
+.pager .icon {
+    height: 20px;
+    padding: 1px;
+    border: none;
+}
+
+.pager .icon:hover {
+    border: none;
+}
+
+/* PAGE - Archives */
+span.ui-dialog-title {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+}
+
+span.fileinput-button {
+    cursor: pointer;
+    border-radius: 30px;
+    /* See skin color note at the top
+       background: #46743C;
+       */
+    background-color: #444;
+    color: #FFF;
+    box-shadow: none;
+    border: 1px solid #FFF;
+    padding: 5px 10px;
+}
+
+span.fileinput-button:hover {
+    background: #FFF;
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+    border: 1px solid #FFF;
+}
+
+span.fileinput-button:active {
+    background: #EEE;
+}
+
+table.frozenarchives {
+    border: none;
+}
+
+.frozenarchives tbody tr td {
+    font-size: 14px;
+    padding: 20px 0;
+}
+
+table.columnsort {
+    border: none;
+}
+
+table.columnsort td {
+    font-size: 14px;
+    padding: 20px 0;
+}
+
+
+/* PAGE - Schedule Tasks */
+
+/* NOTE: this is tricky e.g. with upload progress bar. The .ui-X classes are
+   generally inserted by JQuery UI, so it easily breaks things if they are
+   generally styled like this. Using a specific page section anchor might work.
+   */
+.ui-tabs.ui-widget-content {
+    background: #fff;
+}
+
+.ui-tabs.ui-widget.ui-widget-content,
+.ui-tabs-panel.ui-widget.ui-widget-content,
+.ui-widget.ui-widget-content {
+    border: #fff;
+    border-radius: 0;
+    overflow: hidden;
+    /*min-height: 100vh !important;*/
+    width: 100% !important;
+    z-index: 101;
+    margin: auto;
+    top: 0 !important;
+    left: 0 !important;
+}
+
+.ui-tabs .ui-tabs-nav {
+    padding: .2em .2em 0 15px;
+}
+
+/* 
+   Dialogs use colored title and close icon on white background. On some pages
+   using tabs like e.g. crontab we similarly apply colored tabs on white 
+   background.
+   IMPORTANT: the .ui-widget-header is implicitly re-used for progress bar fill
+   so it MUST remain colored when not in a those specific contexts. 
+   */
+.ui-dialog-titlebar.ui-widget-header,
+.ui-tabs-nav.ui-widget-header,
+#content .ui-widget-header {
+    color: #333;
+    background: #fff;
+    border: #fff;
+}
+
+.ui-tabs .ui-tabs-panel {
+    border: 1px solid #FFF;
+    border-radius: 10px;
+    background: #fff;
+}
+
+/* PAGE - Jupyter */
+a.ui-button {
+    cursor: pointer;
+    border-radius: 30px;
+    background: #46743C;
+    color: #FFF;
+    box-shadow: none;
+    border: 1px solid #FFF;
+    padding: 5px 10px;
+}
+
+a.ui-button:hover {
+    background: #FFF;
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+    border: 1px solid #FFF;
+}
+
+a.ui-button:active {
+    background: #EEE;
+}
+
+/* PAGE - People */
+table.people th {
+    padding: 5px 5px 5px 20px;
+}
+
+/* PAGE - Show user details */
+
+.public_frame {
+    width: 100%;
+    text-align: center;
+}
+
+h2.public_frame {
+    margin-top: 10%;
+}
+
+div.public_image {
+    border-radius: 100px;
+    height: 200px;
+    width: 200px;
+    overflow: hidden;
+    border: none;
+    float: none;
+    margin: auto;
+}
+.profile-img {
+    width: 200px;
+    margin: auto;
+}
+
+
+table.people td {
+    padding: 5px;
+}
+
+/* PAGE - Logout */
+.logout-content {
+    height: 100vh;
+}
+
+/* PAGE - Sign up */
+.form-check-input {
+    width: 50px;
+}
+.form-check {
+    padding-left: 0;
+}
+
+/* PAGE - POPUP UI DIALOG */
+.ui-dialog .ui-dialog-titlebar-close {
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    margin: -17px 0 0 0;
+}
+
+/*PAGE - SEAFILE*/
+#seafileserverstatus {
+    font-size: 14px;
+    font-weight: 300;
+    color: #444;
+}
+
+span.fakelink {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+}
+
+span.fakelink:hover {
+    color: orange;
+}
+/* ICONS */
+
+.owner {
+    border: none;
+}
+
+.iconspace {
+    padding-left: 22px !important;
+}
+
+.directoryicon {
+    background-size: 16px 16px !important;
+}
+
+#fm_filelisting tbody tr td {
+    background-size: 16px 16px !important;
+}
+
+.iconspace svg {
+    /* See skin color note at the top
+       background-color: #46743C;
+       */
+    background-color: #444;
+}
+
+.file.icon { background: url(/images/icons/file.svg) left center no-repeat; }
+.fileicon { background: url(/images/icons/file.svg) left center no-repeat; background-size: 16px 16px;}
+
+
+/*files icons png, zip, etc.*/
+.ext_zip { background: url(/images/icons/zip.svg) left center no-repeat; background-size: 16px 16px;}
+
+.ext_htm, .ext_html { background: url(/images/icons/html.svg) left center no-repeat; background-size: 16px 16px;}
+.ext_pdf { background: url(/images/icons/pdf.svg) left center no-repeat; }
+.ext_psd { background: url(/images/icons/psd.svg) left center no-repeat; }
+
+/* override folder icon for user home and vgrid folders */
+.directoryicon { background: url(/images/icons/folder.svg) left top no-repeat; background-size: 16px 16px; }
+.directory.icon { background: url(/images/icons/folder.svg) left top no-repeat; background-size: 16px 16px;  }
+.expanded {background: url(/images/icons/folder_open.svg) left top no-repeat; background-size: 16px 16px; }
+
+.rmdir.icon { background: url(/images/icons/folder_delete.svg) left center no-repeat; background-size: 16px 16px; }
+
+.vgridshared { background: url(/images/icons/folder_link.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.vgridshared { background: url(/images/icons/folder_open_link.svg) left top no-repeat; background-size: 16px 16px; }
+
+.trashbin { background: url(/images/icons/trash_closed.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.trashbin { background: url(/images/icons/trash_open.svg) left top no-repeat; background-size: 16px 16px; }
+
+.userhome { background: url(/images/icons/folder_user.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.userhome { background: url(/images/icons/folder_open_user.svg) left top no-repeat; background-size: 16px 16px; }
+
+.vgridprivateweb { background: url(/images/icons/folder_key.svg) left top no-repeat; background-size: 16px 16px;}
+.expanded.vgridprivateweb {background: url(/images/icons/folder_open_key.svg) left top no-repeat;}
+
+.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff  { 
+    background: url(/images/icons/picture.svg) left center no-repeat; background-size: 16px 16px; }
+
+.upload.icon { background: url(/images/icons/page_white_get.svg) left center no-repeat; background-size: 16px 16px; }
+.rm.icon { background: url(/images/icons/page_white_delete.svg) left center no-repeat; background-size: 16px 16px; }
+
+.expanded.vgridpublicweb { background: url(/images/icons/folder_open_table.svg) left top no-repeat; background-size: 16px 16px; }
+
+
+/* File Extensions 
+   .icon {
+   padding-left: 16px;
+   }
+   
+
+.mkdir.icon { background: url(/images/icons/folder_add.png) left center no-repeat; }
+
+.upload.icon { background: url(/images/icons/page_white_get.png) left center no-repeat; }
+
+.edit.icon { background: url(/images/icons/page_white_edit.png) left center no-repeat; }
+
+.refresh.icon { background: url(/images/icons/arrow_refresh.png) left center no-repeat; }
+
+.directoryicon { background: url(/images/icons/folder.png) left top no-repeat; }
+
+
+/* override folder icon for user home and vgrid folders 
+
+
+.vgridshared.readonly { background: url(/images/icons/other/folder_link-blue.png) left top no-repeat; }
+.vgridpublicweb { background: url(/images/icons/folder_table.png) left top no-repeat; }
+
+.vgridstoreres { background: url(/images/icons/folder_server.png) left top no-repeat; }
+.seafilereadonly { background: url(/images/icons/other/folder_database-blue.png) left top no-repeat; }
+.trashbin { background: url(/images/icons/bin_closed.png) left top no-repeat; }
+
+/* use top here because it is relative to self plus all expanded children 
+.expanded { 
+background: url(/images/icons/folder_open.png) left top no-repeat;
+}
+
+
+
+.expanded.vgridshared.readonly { 
+background: url(/images/icons/other/folder_open_link-blue.png) left top no-repeat;
+}
+.expanded.vgridpublicweb { 
+background: url(/images/icons/folder_open_table.png) left top no-repeat;
+}
+
+.expanded.vgridstoreres { 
+background: url(/images/icons/folder_open_server.png) left top no-repeat;
+}
+.expanded.seafilereadonly { 
+background: url(/images/icons/other/folder_open_database-blue.png) left top no-repeat;
+}
+.expanded.trashbin { 
+background: url(/images/icons/bin.png) left top no-repeat;
+}
+
+.ext_3gp { background: url(/images/icons/film.png) left center no-repeat; }
+.ext_afp, .ext_afpa { 
+background: url(/images/icons/code.png) left center no-repeat; 
+}
+.ext_asp, .ext_aspx { 
+background: url(/images/icons/code.png) left center no-repeat; 
+}
+.ext_avi { background: url(/images/icons/film.png) left center no-repeat; }
+.ext_bat { background: url(/images/icons/application.png) left center no-repeat; }
+
+.ext_c, .ext_h { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_cfm { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_cgi { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_com { background: url(/images/icons/application.png) left center no-repeat; }
+.ext_cpp, .ext_cxx, .ext_cc, .ext_hpp { 
+background: url(/images/icons/code.png) left center no-repeat; 
+}
+.ext_css { background: url(/images/icons/css.png) left center no-repeat; }
+.ext_doc { background: url(/images/icons/doc.png) left center no-repeat; }
+.ext_exe { background: url(/images/icons/application.png) left center no-repeat; }
+
+.ext_fla, .ext_flv { 
+background: url(/images/icons/flash.png) left center no-repeat;
+}
+.ext_flac { background: url(/images/icons/music.png) left center no-repeat; }
+.ext_h5 { background: url(/images/icons/db.png) left center no-repeat; }
+
+.ext_iso, .ext_img { background: url(/images/icons/drive.png) left center no-repeat; }
+.ext_jar, .ext_class, .ext_jnlp { 
+background: url(/images/icons/java.png) left center no-repeat; 
+}
+.ext_java { background: url(/images/icons/code.png) left center no-repeat; }
+
+.ext_js { background: url(/images/icons/script.png) left center no-repeat; }
+.ext_lasso { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf { 
+background: url(/images/icons/txt.png) left center no-repeat; 
+}
+.ext_m4p { background: url(/images/icons/music.png) left center no-repeat; }
+.ext_mov { background: url(/images/icons/film.png) left center no-repeat; }
+.ext_mp3 { background: url(/images/icons/music.png) left center no-repeat; }
+.ext_mp4, .ext_m4v { 
+background: url(/images/icons/film.png) left center no-repeat;
+}
+.ext_mpg, .ext_mpeg { 
+background: url(/images/icons/film.png) left center no-repeat; 
+}
+.ext_mrsl { background: url(/images/icons/server_lightning.png) left center no-repeat; }
+.ext_ogg { background: url(/images/icons/music.png) left center no-repeat; }
+
+
+.ext_php { background: url(/images/icons/php.png) left center no-repeat; }
+
+.ext_ppt { background: url(/images/icons/ppt.png) left center no-repeat; }
+.ext_psd { background: url(/images/icons/psd.png) left center no-repeat; }
+.ext_pl { background: url(/images/icons/script.png) left center no-repeat; }
+.ext_py, .ext_pyx { 
+background: url(/images/icons/script.png) left center no-repeat; 
+}
+.ext_rb { background: url(/images/icons/ruby.png) left center no-repeat; }
+.ext_rbx { background: url(/images/icons/ruby.png) left center no-repeat; }
+.ext_rhtml { background: url(/images/icons/ruby.png) left center no-repeat; }
+.ext_rpm { background: url(/images/icons/linux.png) left center no-repeat; }
+.ext_ruby { background: url(/images/icons/ruby.png) left center no-repeat; }
+.ext_sh { background: url(/images/icons/script.png) left center no-repeat; }
+.ext_sql { background: url(/images/icons/db.png) left center no-repeat; }
+.ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 
+background: url(/images/icons/txt.png) left center no-repeat; 
+}
+.ext_swf { background: url(/images/icons/flash.png) left center no-repeat; }
+.ext_tar { background: url(/images/icons/compress.png) left center no-repeat; }
+.ext_tbz, .ext_tbz2, .ext_bz2, .ext_bz { 
+background: url(/images/icons/compress.png) left center no-repeat; 
+}
+.ext_tgz, .ext_gz { 
+background: url(/images/icons/compress.png) left center no-repeat; 
+}
+.ext_txz, .ext_xz { 
+background: url(/images/icons/compress.png) left center no-repeat; 
+}
+
+.ext_txt { background: url(/images/icons/txt.png) left center no-repeat; }
+.ext_vb { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_wav { background: url(/images/icons/music.png) left center no-repeat; }
+.ext_wmv { background: url(/images/icons/film.png) left center no-repeat; }
+.ext_xls { background: url(/images/icons/xls.png) left center no-repeat; }
+.ext_xml { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_zip { background: url(/images/icons/zip.png) left center no-repeat; }
+*/
+
+/* General helper icons */
+.spinner { 
+    background-image: url(/images/icons/spinner.gif);
+    background-repeat: no-repeat;
+    background-position: left center;
+}
+.iconleftpad, .leftpad {
+    padding-left: 20px;
+}
+.error {background-image: url('/images/icons/exclamation.svg'); background-repeat: no-repeat; background-size: 16px 16px;}
+.warn {
+    background-image: url('/images/icons/error.png');
+    background-repeat: no-repeat;
+}
+.info { background-image: url('/images/icons/information.svg'); background-repeat: no-repeat; background-size: 16px 16px; padding-left: 20px;}
+.ok {
+    background-image: url('/images/icons/accept.png');
+    background-repeat: no-repeat;
+}
+.urllink {
+    background: url('/images/icons/html.svg') no-repeat; 
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.infolink {
+    background: url('/images/icons/information.svg') no-repeat; 
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.sendemaillink {
+    background: url(/images/icons/email_protocol.svg) no-repeat;
+    padding-left: 25px;
+}
+.shadeinfolink {
+    background: url('/images/icons/information_grey.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.viewlink {
+    background: url('/images/icons/html.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.openlink {
+    background: url('/images/icons/txt.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.editlink {
+    background: url('/images/icons/page_edit.svg') no-repeat; 
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.sharedfolderlink {
+    background: url('/images/icons/folder_link.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+
+.folderlink {
+    background: url('/images/icons/folder.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.wikilink {
+    background: url('/images/icons/overlays.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.scmlink {
+    background: url('/images/icons/calendar.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.trackerlink {
+    background: url('/images/icons/table_gear.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.workflowslink {
+    background: url('/images/icons/table_refresh.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.forumlink {
+    background: url('/images/icons/comments.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.monitorlink {
+    background: url('/images/icons/server_chart.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.adminlink {
+    background: url('/images/icons/wrench.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.computerlink {
+    background: url('/images/icons/computer.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.sandboxlink {
+    background: url('/images/icons/hourglass_go.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.createarchivelink, .doishowdetails {
+    background-image: url('/images/icons/book_add.png');
+    background-repeat: no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.viewarchivelink, .doisearchlink {
+    background-image: url('/images/icons/book_open.png');
+    background-repeat: no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.editarchivelink {
+    background-image: url('/images/icons/book_edit.png');
+    background-repeat: no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.deletearchivelink, .doihidedetails {
+    background-image: url('/images/icons/book_delete.png');
+    background-repeat: no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.finalizearchivelink {
+    background-image: url('/images/icons/book_key.png');
+    background-repeat: no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.registerarchivelink {
+    background-image: url('/images/icons/book_link.png');
+    background-repeat: no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.previewarchivelink, .doilink {
+    background-image: url('/images/icons/book_link.png');
+    background-repeat: no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.danishlink {
+    background: url('/images/crystal-icons/unknown.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.englishlink {
+    background: url('/images/crystal-icons/unknown.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.backlink {
+    background: url('/images/icons/arrow_left.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.swrepolink {
+    background: url('/images/icons/table_go.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.addlink {
+    background: url('/images/icons/add.svg') no-repeat; 
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.addadminlink {
+    background: url('/images/icons/cog_add.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+/*
+.additemlink {
+  background: url('/images/icons/page_white_add.png') no-repeat;
+  padding-left: 18px;
+  }
+*/
+.removelink {
+    background: url('/images/icons/delete.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.removeadminlink {
+    background: url('/images/icons/cog_delete.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+/*
+.removeitemlink {
+  background: url('/images/icons/page_white_delete.png') no-repeat;
+  padding-left: 18px;
+  }
+*/
+.previouslink {
+    background: url('/images/icons/arrow_left.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.nextlink {
+    background: url('/images/icons/arrow_right.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+/* TODO: make first and last versions of arrow svg icons (fast-forward / rewind) */
+.firstlink {
+    background: url('/images/icons/arrow_first.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.lastlink {
+    background: url('/images/icons/arrow_last.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.submitfieldslink {
+    background: url('/images/icons/table.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.submittextarealink {
+    background: url('/images/icons/txt.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.submitfileslink {
+    background: url('/images/icons/page_white_get.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.seafilelink {
+    background: url('/images/icons/seafile.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.duplicatilink {
+    background: url('/images/icons/duplicati.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.crontablink {
+    background: url('/images/icons/hourglass_go.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+
+/*JQUERY MANAGER CUSTOM ICONS */
+
+.fm_buttonbar ul li {
+    border: none;
+}
+
+.fm_buttonbar li.parentdirbutton {
+    background-image: url('/images/icons/arrow_up.svg');
+}
+.fm_buttonbar li.refreshbutton {
+    background-image: url('/images/icons/arrow_refresh.svg');
+}
+.fm_buttonbar li.datatransfersbutton {
+    background-image: url('/images/icons/table_refresh.svg');
+}
+.fm_buttonbar li.sharelinksbutton {
+    background-image: url('/images/icons/table_link.svg');
+    padding: 1pxs;
+}
+
+/* FILE MANAGER POP-UP*/
+#fm_filemanager .ui-widget-content a {
+    /* See skin color note at the top
+       color: #46743C;
+       */
+    color: #444;
+}
+
+/*TOAST*/
+.toast {
+    border-radius: 0 0 0.5em 0.5em;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: #FFF;
+    top: -150px;
+}
+
+.toast.show {
+    opacity: 1;
+    top: 0;
+}
+
+.toast.show:hover {
+    opacity: 1;
+}
+
+.toast [type=button]:not(:disabled), .toast [type=reset]:not(:disabled), .toast [type=submit]:not(:disabled), .toast button:not(:disabled) {
+    cursor: pointer;
+    border-radius: 30px;
+    /* See skin color note at the top
+       background: #46743C;
+       */
+    background-color: #444;
+    color: #FFF;
+    box-shadow: none;
+    border: 1px solid #FFF;
+    padding: 0 5px;
+}
+/* Keep close button consistent */
+#sitestatus-close button.close {
+    font-size: 20px;
+    padding: 2px 6px;
+}
+#sitestatus-close button.close:hover {
+    padding: 2px 6px;
+}
+
+.user-avatar {
+    width: 40px; 
+    height: 40px;
+}
+.avatar-image {
+    width: 40px; 
+}
+
+#sitestatus-title {
+    width: 90%
+}
+#sitestatus-popup {
+    position: absolute;
+    right: 20px;
+    z-index: 999;
+}
+#sitestatus-button {
+    color:grey;
+}
+body.openid #migheader {
+    display: none;
+}
+
+/**/
+
+.adminlink {
+    background: url('/images/icons/wrench.svg') no-repeat;
+    padding-left: 18px;
+}
