@@ -480,7 +480,7 @@ def execute_on_store(
 
 
 def generate_ssh_rsa_key_pair(size=2048, public_key_prefix='',
-                              public_key_postfix=''):
+                              public_key_postfix='', force_utf8=False):
     """Generates ssh rsa key pair"""
 
     if paramiko is None:
@@ -494,6 +494,11 @@ def generate_ssh_rsa_key_pair(size=2048, public_key_prefix='',
     public_key = ("%s ssh-rsa %s %s" % (public_key_prefix,
                                         rsa_key.get_base64(),
                                         public_key_postfix)).strip()
+    if force_utf8:
+        if isinstance(private_key, basestring):
+            private_key = private_key.encode('utf-8')
+        if isinstance(public_key, basestring):
+            public_key = public_key.encode('utf-8')
 
     return (private_key, public_key)
 

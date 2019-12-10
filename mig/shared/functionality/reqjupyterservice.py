@@ -511,7 +511,8 @@ def main(client_id, user_arguments_dict):
                                        charset='0123456789abcdef')
 
     # Generate private/public keys
-    (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair()
+    (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair(
+        force_utf8=True)
 
     # Known hosts
     sftp_addresses = socket.gethostbyname_ex(
