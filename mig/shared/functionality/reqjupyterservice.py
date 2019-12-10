@@ -531,13 +531,9 @@ def main(client_id, user_arguments_dict):
                    os.path.join(subsys_path, session_id
                                 + '.authorized_keys'), logger, umask=027)
 
-    # IMPORTANT: commented this because it triggers exceptions for everybody
-    #            with accented chars in their name! (UnicodeDecodeError)
-    #            The problem is that generate_ssh_rsa_key_pair returns unicode
-    #            and we then implicitly concatenate it with utf8 bytes here.
-    # logger.debug("User: %s - Creating a new jupyter mount keyset - "
-    #             "private_key: %s public_key: %s "
-    #             % (client_id, mount_private_key, mount_public_key))
+    logger.debug("User: %s - Creating a new jupyter mount keyset - "
+                 "private_key: %s public_key: %s "
+                 % (client_id, mount_private_key, mount_public_key))
 
     jupyter_dict = {
         'MOUNT_HOST': configuration.short_title,
