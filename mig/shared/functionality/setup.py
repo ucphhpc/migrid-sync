@@ -267,7 +267,8 @@ fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
     <form class="save_settings save_sftp" method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 
-        <div>SFTP access to your %(site)s account</div>
+        <div class="vertical-spacer"></div>
+        <div class="title centertext">SFTP access to your %(site)s account</div>
 
 <p>
 You can configure SFTP login to your %(site)s account for efficient file
@@ -462,7 +463,8 @@ fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
 <form class="save_settings save_davs" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 
-WebDAVS access to your %(site)s account
+<div class="vertical-spacer"></div>
+<div class="title centertext">WebDAVS access to your %(site)s account</div>
 
 <p>You can configure WebDAVS login to your %(site)s account for transparent file
 access from your PC or workstation.</p>
@@ -622,7 +624,8 @@ fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
 <form class="save_settings save_ftps" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 
-FTPS access to your %(site)s account
+<div class="vertical-spacer"></div>
+<div class="title centertext">FTPS access to your %(site)s account</div>
 
 <p>You can configure FTPS login to your %(site)s account for efficient file
 access.</p>
@@ -824,7 +827,8 @@ function open_login_window(url, username) {
 <div id="seafileregaccess">
 <form method="post" action="%(seareg_url)s" target="_blank">
 
-Seafile Synchronization on %(site)s
+<div class="vertical-spacer"></div>
+<div class="title centertext">Seafile Synchronization on %(site)s</div>
 
 <p>You can register a Seafile account on %(site)s to get synchronization and
 sharing features like those known from e.g. Dropbox.<br/>
@@ -873,7 +877,8 @@ client set up and %(site)s integration.</p>
 </div>
 <div id="seafilesaveaccess" style="display: none;">
 
-Seafile Client Setup and %(site)s Integration
+<div class="vertical-spacer"></div>
+<div class="title centertext">Seafile Client Setup and %(site)s Integration</div>
 
 <fieldset>
 <legend><p>Seafile Client Setup Details</p></legend>
@@ -1017,7 +1022,8 @@ value="%(default_authpassword)s" />
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <input type="hidden" name="topic" value="duplicati" />
 
-Duplicati Backup to %(site)s
+<div class="vertical-spacer"></div>
+<div class="title centertext">Duplicati Backup to %(site)s</div>
 
 <p>You can install the <a href="https://www.duplicati.com">Duplicati</a> client on
 your local machine and use it to backup arbitrary data to %(site)s.<br/>
@@ -1202,7 +1208,8 @@ client versions from the link above.</p>
     <form class="save_settings save_cloud" method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 
-        <div>SSH access to your %(site)s cloud instance(s)</div>
+<div class="vertical-spacer"></div>
+<div class="title centertext">SSH access to your %(site)s cloud instance(s)</div>
 
 <p>
 You can configure SSH login to your %(site)s cloud instance(s) for interactive
@@ -1361,7 +1368,8 @@ value="%(default_authpassword)s" />
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
 <table class="twofactor fixedlayout">
 <tr><td>
-2-Factor Authentication
+<div class="vertical-spacer"></div>
+<div class="title centertext">2-Factor Authentication</div>
 </td></tr>
 '''
 
@@ -1510,4 +1518,6 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
+    output_objects.append({'object_type': 'html_form', 'text':
+                           '<div class="vertical-spacer"></div>'})
     return (output_objects, returnvalues.OK)
