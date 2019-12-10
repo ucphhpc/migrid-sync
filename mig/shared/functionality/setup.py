@@ -165,14 +165,15 @@ def main(client_id, user_arguments_dict):
     if configuration.site_enable_twofactor \
             and not configuration.site_enable_gdp:
         valid_topics.append('twofactor')
-    topics = accepted['topic']
+    topic_list = accepted['topic']
     # Backwards compatibility
-    if topics and topics[0] == 'ssh':
-        topics[0] = 'sftp'
-    topics = [i for i in topics if i in valid_topics]
+    if topic_list and 'ssh' in topic_list:
+        topic_list.remove('ssh')
+        topic_list.append('sftp')
+    topic_list = [topic for topic in topic_list if topic in valid_topics]
     # Default to general if no valid topics given
-    if not topics:
-        topics.append(valid_topics[0])
+    if not topic_list:
+        topic_list.append(valid_topics[0])
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
                        ('ftps', 'FTPS'), ('seafile', 'Seafile'),
@@ -187,7 +188,7 @@ def main(client_id, user_arguments_dict):
     links = []
     for name in valid_topics:
         active_menu = ''
-        if topics[0] == name:
+        if topic_list[0] == name:
             active_menu = 'activebutton'
         links.append({'object_type': 'link',
                       'destination': "setup.py?topic=%s" % name,
@@ -210,7 +211,7 @@ def main(client_id, user_arguments_dict):
 
         current_settings_dict = {}
 
-    if not topics:
+    if not topic_list:
         output_objects.append({'object_type': 'error_text', 'text':
                                'No valid topics!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -222,7 +223,7 @@ def main(client_id, user_arguments_dict):
                     'form_method': form_method, 'csrf_field': csrf_field,
                     'csrf_limit': csrf_limit, 'save_html': save_html}
 
-    if 'sftp' in topics:
+    if 'sftp' in topic_list:
 
         # load current ssh/sftp
 
@@ -418,7 +419,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'webdavs' in topics:
+    if 'webdavs' in topic_list:
 
         # load current davs
 
@@ -580,7 +581,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'ftps' in topics:
+    if 'ftps' in topic_list:
 
         # load current ftps
 
@@ -750,7 +751,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'seafile' in topics:
+    if 'seafile' in topic_list:
 
         # load current seafile
 
@@ -965,7 +966,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'duplicati' in topics:
+    if 'duplicati' in topic_list:
 
         # load current duplicati
 
@@ -1173,7 +1174,7 @@ client versions from the link above.</p>
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'cloud' in topics:
+    if 'cloud' in topic_list:
 
         # load current cloud
 
@@ -1332,7 +1333,7 @@ value="%(default_authpassword)s" />
         output_objects.append({'object_type': 'html_form', 'text':
                                html % fill_helpers})
 
-    if 'twofactor' in topics:
+    if 'twofactor' in topic_list:
 
         # load current twofactor
 

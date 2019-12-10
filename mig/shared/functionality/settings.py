@@ -210,6 +210,7 @@ def main(client_id, user_arguments_dict):
             valid_topics.append('twofactor')
 
     topic_list = accepted['topic']
+    topic_list = [topic for topic in topic_list if topic in valid_topics]
     # Default to general or general+profile if no valid topics given
     if not topic_list:
         if not legacy_user_interface(configuration, user_settings):
