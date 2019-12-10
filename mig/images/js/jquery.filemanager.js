@@ -1695,6 +1695,7 @@ if (jQuery) (function($){
                 var found_root = false;
                 var connector_url = options.connector;
                 if (options.chroot !== '') {
+                    root_display_name = options.chroot;
                     connector_url += '?current_dir=' + encodeURIComponent(options.chroot);
                 }
                 console.debug('connector_url: ' + connector_url);
