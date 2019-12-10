@@ -1,0 +1,614 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# ui-v3.custom - global skin overrides for UI V3 only
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+@charset "UTF-8";
+
+/* IMPORTANT: this style sheet is only loaded when UI V3 is enabled, so any 
+              skin changes that should not affect UI V2 must go here.
+*/
+
+
+#content {
+    /* NOTE: override V2 menu spacing */
+    margin-left: 0;
+}
+
+
+/* Don't let buttons shrink when not active/hovering */
+[type=button]:not(:disabled):hover, [type=reset]:not(:disabled):hover, [type=submit]:not(:disabled):hover, button:not(:disabled):hover {
+    padding: 5px 10px;
+}
+[type=button]:not(:disabled):active, [type=reset]:not(:disabled):active, [type=submit]:not(:disabled):active, button:not(:disabled):active {
+    padding: 5px 10px;
+}
+
+
+
+.global-container.menu {
+    /*width: calc(100% - 70px);*/
+    padding: 0 0 0 70px;
+}
+
+
+/* NOTE: adjust icon color when background turns white on focus/hover.
+         We use a custom made skin-colored version of the icons from UI theme
+         and path is taken relative to this skin sub-dir.
+*/
+
+/* Navigation */
+.home-nav-user {
+    background-color: #147;
+}
+
+.home-nav-user:hover {
+    color: #147;
+}
+
+.slider-header h2 {
+    color: #FFF;
+    background-color: #147;
+}
+.slider-footer a {
+    color: #FFF;
+    background-color: #147;
+}
+
+.hamburger.is-active .hamburger-inner,
+.hamburger.is-active .hamburger-inner::before,
+.hamburger.is-active .hamburger-inner::after {
+    background-color: #147; 
+}
+
+.hamburger-inner, .hamburger-inner::before, .hamburger-inner::after {
+    background-color: #147;
+}
+
+button.avatar-link {
+    color: #147;
+}
+
+button.avatar-link:active {
+    color: #147;
+}
+
+.close_btn {
+    color: #147; 
+}
+
+
+/* General style overrides */
+.ui-state-hover .ui-icon,
+.ui-button:hover .ui-icon {
+    background-image: url("images/ui-icons_46743c_256x240.png");
+}
+
+a.greenBtn {
+    color: #fff; 
+    background-color: #147;
+    border-color: #FFF;
+}
+
+a.greenBtn:hover {
+    background: #FFF;
+    color: #147;
+    border-color: #147;
+}
+
+a.greenBtn:active {
+    background: #EEE;
+}
+
+/* For app nav selection and active marking */
+.sidebar-middle ::after,
+.sidebar-middle ::before {
+    box-sizing: border-box;
+}
+.sidebar-middle a {
+    color: #147;
+}
+.sidebar-middle a span {
+    line-height: unset;
+    border-radius: 8px;
+    border: 1px solid #fff;
+}
+.sidebar-middle a span.selected {
+    /* TODO: preserve grey background or use lighter green like this? */
+    /*
+      background-color: #8fd182;
+      */
+    border-color: #147;
+}
+.sidebar-middle a span:hover {
+    background-color: #fff;
+    border: 1px solid #147;
+}
+
+[type=button]:not(:disabled), [type=reset]:not(:disabled), [type=submit]:not(:disabled), button:not(:disabled) {
+    background: #147;
+    color: #FFF;
+    border-color: #FFF;
+}
+
+[type=button]:not(:disabled):hover, [type=reset]:not(:disabled):hover, [type=submit]:not(:disabled):hover, button:not(:disabled):hover {
+    background: #FFF;
+    color: #147;
+    border-color: #147;
+}
+
+[type=button]:not(:disabled):active, [type=reset]:not(:disabled):active, [type=submit]:not(:disabled):active, button:not(:disabled):active {
+    background-color: #EEE;
+}
+
+input:checked + .slider {
+    background-color: #369;
+}
+input:focus + .slider {
+    box-shadow: 0 0 1px #369;
+}
+
+.accordion >  .card > .card-header > h2 > .btn-link {
+    color: #147;
+}
+
+button.more-button, button.avatar-link {
+    background: #FFF;
+    color: #147;
+}
+
+/* PAGE - Archives */
+span.ui-dialog-title {
+    color: #147;
+}
+
+span.fileinput-button {
+    background: #147;
+    color: #FFF;
+    border-color: #FFF;
+}
+
+span.fileinput-button:hover {
+    background: #FFF;
+    color: #147;
+    border-color: #147;
+}
+
+span.fileinput-button:active {
+    background: #EEE;
+}
+
+.ui-tabs .ui-tabs-panel {
+    border: 1px solid #147;
+    border-radius: 10px;
+    background: #fff;
+}
+
+/* PAGE - Jupyter */
+a.ui-button {
+    background: #147;
+    color: #FFF;
+    border-color: #FFF;
+}
+
+a.ui-button:hover {
+    background: #FFF;
+    color: #147;
+    border-color: #147;
+}
+
+a.ui-button:active {
+    background: #EEE;
+}
+
+span.fakelink {
+    color: #147;
+}
+
+span.fakelink:hover {
+    color: #369;
+}
+
+.iconspace svg {
+    background-color: #147;
+}
+
+/* FILE MANAGER POP-UP*/
+.ui-widget-content a {
+    color: #147;
+}
+
+.toast [type=button]:not(:disabled), .toast [type=reset]:not(:disabled), .toast [type=submit]:not(:disabled), .toast button:not(:disabled) {
+    background: #147;
+    color: #FFF;
+    border-color: #FFF;
+}
+
+
+h1, h2, h3, .supporttitle, .privacytitle {
+    color: #147;
+    background-color: #FFF;
+}
+/* Strip border when using color on white */
+h1 {
+    border: 0;
+}
+
+a {
+    color: #147;
+    
+}
+
+.mandatory {
+    background-color: #FFF;
+}
+
+.mandatory:hover {
+    background-color: #147;
+}
+
+.app__btn {
+    background-color: #FFF;
+}
+.app__btn:hover {
+    background-color: #147;
+}
+
+.app__btn a {
+    color: #147;
+    background-color: transparent;
+}
+.app__btn span {
+    color: #147;
+    background-color: transparent;
+}
+.app__btn h3 {
+    color: #147;
+    background-color: transparent;
+}
+
+.add-app__btn {
+    background-color: #147;
+}
+.add-app__btn:hover {
+    background-color: #FFF;
+    color: #147;
+}
+
+.add-app__btn a {
+    color: #FFF;
+    background-color: transparent;
+}
+.add-app__btn span {
+    color: #FFF;
+    background-color: transparent;
+}
+.add-app__btn h3 {
+    color: #FFF;
+    background-color: transparent;
+}
+.add-app__btn:hover span {
+    color: #147;
+}
+.add-app__btn:hover h3 {
+    color: #147;
+}
+
+
+.add-app__close {
+    color: #FFF;
+    background-color: #147;
+}
+
+#add-app__window .app-page__header h1,
+#add-app__window .app-page__header h2 {
+    color: #FFF;
+    background-color: #147;
+}
+
+/* When the checkbox is checked, change background color */
+.app-content input:checked ~ .checkmark {
+    background-color: #147;
+}
+
+#fancyfileupload .ui-progressbar {
+    border: 1px solid #147;
+    border-radius: 4px;
+}
+#fancyfileupload .ui-progressbar-value {
+    margin: 0;
+}
+
+/* No striping here */
+#fancyfileupload .table-striped tr {
+    background-color: #fff;
+    border: 0;
+}
+
+/* NOTE: needed because bootstrap floats Add files button up left */
+#fancyfileupload .fileinput-button {
+    display: inline-table;
+}
+
+
+/* PAGE - FILE MANAGER */
+/*HEADER BAR*/
+#fm_filemanager > .container-fluid {
+    padding-left: 0;
+}
+
+.tree-container {
+    padding: 0;
+}
+
+.tree-row {
+    margin: 0;
+}
+
+.xbreadcrumbs LI {
+    padding: 0 4px;
+}
+.xbreadcrumbs LI:hover {
+    padding: 0 14px;
+}
+
+@media (max-width: 1000px) {
+    .tree-header {
+        display: none;
+    }
+
+    #fm_statusprogress {
+        display: none;
+    }
+}
+
+.tree-header {
+    background-color: #F4F4F4;
+    padding: 10px 0;
+    min-height: 50px;
+}
+
+.fm_buttonbar {
+    text-align: right;
+    padding: 10px 10px;
+    min-height: 50px;
+}
+
+.fm_buttonbar li:hover {
+    border: 1px solid #fff;
+    border-radius: 50px;
+}
+
+.fm_path_breadcrumbs {
+    border: 0;
+    padding: 10px 0;
+    min-height: 50px;
+}
+
+/* Override bradcrumbs user home icon and make sure folding does not truncate it */
+#fm_xbreadcrumbs .userhome { min-width: 20px; min-height: 20px; background: url(/images/icons/folder_open_user.svg) left top no-repeat; background-size: 16px 16px; }
+
+.xbreadcrumbs {
+    background-color: #FFF;
+}
+
+.xbreadcrumbs li {
+    border-right: none;
+    background: url(/images/icons/separator.gif) no-repeat right center;
+    padding-right: 15px;
+    padding-left: 10px;
+    line-height: 1.5;
+
+}
+
+.fm_buttonbar {
+    background-color: #FFF;
+}
+
+#fm_filemanager {
+    background: #FFF;
+    border: none;
+    padding: 0;
+}
+
+.jqueryFileTree li div {
+    font-size: 14px;
+}
+
+#fm_filelisting thead tr th div {
+    font-size: 12px;
+    padding: 20px 0;
+}
+
+#fm_filelisting tbody tr td {
+    font-size: 14px;
+    padding: 6px 0;
+}
+
+.fm_folders {
+    overflow: auto;
+    background-color: #F4F4F4;
+    border: none;
+    padding-top: 15px;
+    height: calc(100vh - 90px);
+}
+
+#fm_statusbar {
+    border: none;
+    background-color: #FFF;
+    padding: 0;
+}
+
+@media (max-width: 1000px) {
+    #fm_statusinfo {
+        font-size: 10px;
+    }
+    #fm_options {
+        font-size: 10px;
+    }
+}
+
+#fm_statusprogress {
+    background-color: #F4F4F4;
+    height: 40px;
+}
+
+
+.fm_files {
+    overflow: auto;
+    border: none;
+    height: calc(100vh - 90px);
+}
+
+@media (max-width: 1000px) {
+    .fm_folders {
+        display: none;
+    }
+
+    .fm_files {
+        width: 100%;
+    }
+}
+
+/* FILES MENU */
+.jqueryFileTree {
+/*display: block !important;*/
+}
+
+.fm_folders > UL.jqueryFileTree {
+    height: 100%;
+}
+
+.expanded.userhome {
+    height: 100%;
+}
+
+.context-menu-list LI {
+    background-image: unset; 
+}
+
+.context-menu-input {
+    background-color: #FFF;
+}
+
+.context-menu-item {
+    background-color: #FFF;
+/*padding: 3px 0 10px 30px;*/
+}
+
+.context-menu-list {
+    width: 200px;
+    z-index: 101;
+}
+
+
+#fm_touchscreen {
+    position: relative;
+    display: inline-block;
+}
+
+/*TABLE FILES*/
+
+@media (max-width: 1000px) {
+    .fm_size, .fm_type, .fm_date {
+        display: none;
+    }
+}
+
+.tablesorter-header {
+    background-color: #FFF;
+    border: none;
+    border-bottom: 1px solid #EEE;
+}
+
+.even, .odd {
+    background-color: #FFF;
+    border-bottom: 1px solid #EEE;
+}
+
+/*JQUERY MANAGER CUSTOM ICONS */
+
+.fm_buttonbar ul li {
+    border: none;
+}
+
+.fm_buttonbar li.parentdirbutton {
+    background-image: url('/images/icons/arrow_up.svg');
+}
+.fm_buttonbar li.refreshbutton {
+    background-image: url('/images/icons/arrow_refresh.svg');
+}
+.fm_buttonbar li.datatransfersbutton {
+    background-image: url('/images/icons/table_refresh.svg');
+}
+.fm_buttonbar li.sharelinksbutton {
+    background-image: url('/images/icons/table_link.svg');
+    padding: 1pxs;
+}
+
+/* FILE MANAGER POP-UP*/
+#fm_filemanager .ui-widget-content a {
+    color: #147;
+}
+
+/* NOTE: these are needed for vertical text centering and alignment with sliders */
+#fm_statusbar span {
+    height: 34px;
+    line-height: 34px;
+    vertical-align: middle;
+}
+
+/* Hide touchscreen toggle now we have toolbox button on all entries */
+#fm_toggle_touchscreen, #fm_touchscreen_label {
+    display: none;
+}
+
+#fm_options .switch .slider {
+    transform: scale(0.6);
+}
+
+.app-grid > * {
+  color: unset;
+  background-color: transparent;
+  border: none;
+}
+
+.pager .icon {
+    border: 0;
+    padding: 0;
+}
+.pager .icon:hover {
+    border: 0;
+}
+.pager .pagedisplay, .pager .pagesize, .pager .maxjobs, .pager .filterid {
+    padding: 6px 0;
+}
+
+.pager-select {
+    height: unset;
+}
+
