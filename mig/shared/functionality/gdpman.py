@@ -1140,13 +1140,13 @@ def js_tmpl_parts(configuration, csrf_token):
 
         if (project_participants.ERROR.length > 0) {
             for (var i=0; i<project_participants.ERROR.length; i++) {
-                body += '<p class=\'errortext\'>' +
+                body += '<p class=\"errortext\">' +
                         'Error: '+project_participants.ERROR[i]+'</p>';
             }
         }
         if (project_participants.WARNING.length > 0) {
             for (var i=0; i<project_participants.WARNING.length; i++) {
-                body += '<p class=warningtext\'>' +
+                body += '<p class=\"warningtext\">' +
                         'Warning: '+ project_participants.WARNING[i]+'</p>';
             }
         }
