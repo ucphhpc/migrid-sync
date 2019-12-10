@@ -379,7 +379,7 @@ valid_gdp_auth_scripts = [
     'mkdir.py',
     'mv.py',
     'rm.py',
-    'settings.py',
+    'setup.py',
     'settingsaction.py',
     'twofactor.py',
     'uploadchunked.py',
