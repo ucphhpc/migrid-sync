@@ -2284,6 +2284,16 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                 lines.append('<h2>Status</h2><p>%s</p>' % i['status'])
             if i.get('error', None):
                 lines.append('<h2>Error</h2><p>%s</p>' % i['error'])
+        elif i['object_type'] == 'seafile_status':
+            if i.get('server', None):
+                lines.append('<h2>Server</h2><p>%s</p>' % i['server'])
+            if i.get('status', None):
+                lines.append('<h2>Status</h2><p>%s</p>' % i['status'])
+            if i.get('error', None):
+                lines.append('<h2>Error</h2><p>%s</p>' % i['error'])
+            # NOTE: data is html of source page which we don't want to show
+            if i.get('data', None):
+                lines.append('<h2>Content Size</h2><p>%d</pre></p>' % len(i['data']))
         elif i['object_type'] == 'service':
             service = i
             lines.append('''

@@ -296,6 +296,8 @@ user_stats = {'object_type': 'user_stats', 'required':
               ['disk', 'jobs', 'resources', 'certificate'], 'optional': []}
 openid_status = {'object_type': 'openid_status', 'required':
                  ['server', 'status', 'error'], 'optional': []}
+seafile_status = {'object_type': 'seafile_status', 'required':
+                 ['server', 'status', 'error'], 'optional': ['data']}
 service = {'object_type': 'service', 'required': ['name', 'targetlink'],
            'optional': []}
 services = {'object_type': 'services',
@@ -467,6 +469,7 @@ valid_types_list = [
     vgrid_list,
     user_stats,
     openid_status,
+    seafile_status,
     service,
     services,
     table_pager,
