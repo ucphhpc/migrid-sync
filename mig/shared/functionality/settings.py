@@ -186,12 +186,14 @@ def main(client_id, user_arguments_dict):
     if configuration.site_enable_gdp:
         valid_topics = []
     else:
-        valid_topics = ['general', 'style']
+        valid_topics = ['general']
+    if configuration.site_enable_styling:
+        valid_topics.append('style')
     if 'submitjob' in active_menu:
         valid_topics.append('job')
     if 'people' in active_menu:
         valid_topics.append('profile')
-    if configuration.site_script_deps:
+    if configuration.site_enable_widgets and configuration.site_script_deps:
         valid_topics.append('widgets')
     if configuration.arc_clusters:
         valid_topics.append('arc')
@@ -397,22 +399,27 @@ def main(client_id, user_arguments_dict):
                 current_choice = ''
                 if current_settings_dict.has_key(keyword):
                     current_choice = current_settings_dict[keyword]
-                #entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
-                # for choice in (True, False):
-                #    selected = ''
-                #    if choice == current_choice:
-                #        selected = 'selected'
-                #    entry += '<option %s value="%s">%s</option>'\
-                #             % (selected, choice, choice)
-                #entry += '</select><br />'
-                checked = ''
-                if current_choice == True:
-                    checked = 'checked'
-                entry += '<label class="switch">'
-                entry += '<input type="checkbox" name="%s" %s>' % (keyword,
-                                                                   checked)
-                entry += '<span class="slider round"></span></label>'
-                entry += '<br /><br />'
+
+                if "ENABLE_WIDGETS" == keyword and not configuration.site_enable_widgets:
+                    entry = '<input type="hidden" name="%s" value="False" />' % keyword
+                else:
+                    #entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
+                    # for choice in (True, False):
+                    #    selected = ''
+                    #    if choice == current_choice:
+                    #        selected = 'selected'
+                    #    entry += '<option %s value="%s">%s</option>'\
+                    #             % (selected, choice, choice)
+                    #entry += '</select><br />'
+                    checked = ''
+                    if current_choice == True:
+                        checked = 'checked'
+                    entry += '<label class="switch">'
+                    entry += '<input type="checkbox" name="%s" %s>' % (keyword,
+                                                                       checked)
+                    entry += '<span class="slider round"></span></label>'
+                    entry += '<br /><br />'
+
             html += """%s
             </td></tr>
             """ % entry

@@ -1567,6 +1567,16 @@ location.""" % self.config_file
             self.site_enable_wsgi = config.getboolean('SITE', 'enable_wsgi')
         else:
             self.site_enable_wsgi = False
+        if config.has_option('SITE', 'enable_widgets'):
+            self.site_enable_widgets = config.getboolean(
+                'SITE', 'enable_widgets')
+        else:
+            self.site_enable_widgets = False
+        if config.has_option('SITE', 'enable_styling'):
+            self.site_enable_styling = config.getboolean(
+                'SITE', 'enable_styling')
+        else:
+            self.site_enable_styling = False
         if config.has_option('SITE', 'enable_griddk'):
             self.site_enable_griddk = config.getboolean(
                 'SITE', 'enable_griddk')

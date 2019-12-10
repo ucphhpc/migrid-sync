@@ -704,8 +704,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
             include_frame = not i.get('skipframe', False)
             include_menu = not i.get('skipmenu', False)
-            include_widgets = not i.get('skipwidgets', False)
-            include_userstyle = not i.get('skipuserstyle', False)
+            include_widgets = not i.get('skipwidgets',
+                                        not configuration.site_enable_widgets)
+            include_userstyle = not i.get('skipuserstyle',
+                                          not configuration.site_enable_styling)
             base_menu = i.get('base_menu', configuration.site_default_menu)
             user_menu = i.get('user_menu', [])
             user_settings = i.get('user_settings', {})
@@ -2293,7 +2295,8 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                 lines.append('<h2>Error</h2><p>%s</p>' % i['error'])
             # NOTE: data is html of source page which we don't want to show
             if i.get('data', None):
-                lines.append('<h2>Content Size</h2><p>%d</pre></p>' % len(i['data']))
+                lines.append('<h2>Content Size</h2><p>%d</pre></p>' %
+                             len(i['data']))
         elif i['object_type'] == 'service':
             service = i
             lines.append('''

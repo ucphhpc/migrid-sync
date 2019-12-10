@@ -48,15 +48,16 @@ def make_start_entry(headers=[]):
 
 
 def make_title_entry(text, meta='', style={}, script={}, skipmenu=False,
-                     skipuserstyle=False, skipuserprofile=False):
+                     skipwidgets=False, skipuserstyle=False, skipuserprofile=False):
     """Create title entry for output_objects"""
     return make_basic_entry('title', {'text': text,
                                       'meta': meta,
                                       'style': style,
                                       'script': script,
                                       'skipmenu': skipmenu,
+                                      'skipwidgets': skipwidgets,
                                       'skipuserstyle': skipuserstyle,
-                                      'skipuserprofile': skipuserstyle,
+                                      'skipuserprofile': skipuserprofile,
                                       })
 
 
@@ -87,8 +88,11 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
     op_name = os.path.splitext(os.path.basename(requested_page()))[0]
 
     if op_title:
+        skipwidgets = not configuration.site_enable_widgets or not client_id
+        skipuserstyle = not configuration.site_enable_styling or not client_id
         title_object = make_title_entry('%s' % op_name, skipmenu=(not op_menu),
-                                        skipuserstyle=(not client_id),
+                                        skipwidgets=skipwidgets,
+                                        skipuserstyle=skipuserstyle,
                                         skipuserprofile=(not client_id))
         # Make sure base_menu is always set for extract_menu
         # Typicall overriden based on client_id cases below

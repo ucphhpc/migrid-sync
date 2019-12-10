@@ -167,7 +167,7 @@ def legacy_user_interface(configuration, user_settings,
     """Helper to ease detection of legacy user interfaces"""
     # Please note that user_settings may be boolean False if never saved
     if not user_settings or user_settings.get(
-        'USER_INTERFACE', configuration.user_interface[0]) in legacy_versions:
+            'USER_INTERFACE', configuration.user_interface[0]) in legacy_versions:
         return True
     else:
         return False
