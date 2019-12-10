@@ -34,7 +34,6 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_settings
 from shared.useradm import get_full_user_map
 from shared.vgrid import vgrid_create_allowed
 from shared.vgridaccess import get_vgrid_map, VGRIDS, OWNERS, MEMBERS, SETTINGS
@@ -87,8 +86,8 @@ def main(client_id, user_arguments_dict):
 
     # Check if user wants advanced VGrid component links
 
-    settings = load_settings(client_id, configuration)
-    collaboration_links = settings.get('SITE_COLLABORATION_LINKS', 'default')
+    user_settings = title_entry.get('user_settings', {})
+    collaboration_links = user_settings.get('SITE_COLLABORATION_LINKS', 'default')
     if not collaboration_links in configuration.site_collaboration_links or \
             collaboration_links == 'default':
         active_vgrid_links += configuration.site_default_vgrid_links

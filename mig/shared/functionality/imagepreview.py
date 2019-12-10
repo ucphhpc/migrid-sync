@@ -42,7 +42,6 @@ from shared.imagemeta import list_settings, get_setting, \
     create_setting, update_setting, remove_setting, reset_settings, \
     get, refresh, remove, clean
 from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_settings
 from shared.vgrid import vgrid_is_owner, in_vgrid_share
 
 get_actions = ['list_settings', 'get_setting', 'get']
@@ -150,8 +149,6 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                             client_dir)) + os.sep
     abs_path = os.path.join(base_dir, path)
-
-    settings_dict = load_settings(client_id, configuration)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'IMAGEPREVIEW Management'

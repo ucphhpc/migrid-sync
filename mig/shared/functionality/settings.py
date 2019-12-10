@@ -178,6 +178,9 @@ def main(client_id, user_arguments_dict):
 
     # Always load current user settings for use in rendering
     user_settings = load_settings(client_id, configuration)
+    # NOTE: loaded settings may be the boolean False rather than dict here
+    if not user_settings:
+        user_settings = {}
 
     # Hide default settings in GDP mode
     if configuration.site_enable_gdp:

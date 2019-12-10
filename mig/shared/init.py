@@ -102,6 +102,9 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
         title = find_entry(output_objects, 'title')
         if title:
             settings = load_settings(client_id, configuration)
+            # NOTE: loaded settings may be False rather than dict here
+            if not settings:
+                settings = {}
             title['style'] = themed_styles(configuration,
                                            user_settings=settings)
             title['script'] = themed_scripts(configuration,
