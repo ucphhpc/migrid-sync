@@ -445,8 +445,9 @@ def main(client_id, user_arguments_dict):
                 # Valid mount
                 active_mounts.append({'path': jfile, 'state': jupyter_dict})
 
-    logger.debug("User: %s active keys: %s" % (client_id,
-                 "\n".join([mount['path'] for mount in active_mounts])))
+    logger.debug("User: %s active keys: %s" %
+                 (client_id,
+                  "\n".join([mount['path'] for mount in active_mounts])))
 
     # If multiple are active, remove oldest
     active_mount, old_mounts = get_newest_mount(active_mounts)
@@ -477,7 +478,7 @@ def main(client_id, user_arguments_dict):
                                                                      client_id)
                 # TODO get this dynamically
                 url = configuration.migserver_https_sid_url + \
-                      '/cgi-sid/workflowsjsoninterface.py?output_format=json'
+                    '/cgi-sid/workflowsjsoninterface.py?output_format=json'
                 workflows_dict = {
                     'WORKFLOWS_URL': url,
                     'WORKFLOWS_SESSION_ID': workflow_session_id}
@@ -529,9 +530,13 @@ def main(client_id, user_arguments_dict):
                    os.path.join(subsys_path, session_id
                                 + '.authorized_keys'), logger, umask=027)
 
-    logger.debug("User: %s - Creating a new jupyter mount keyset - "
-                 "private_key: %s public_key: %s "
-                 % (client_id, mount_private_key, mount_public_key))
+    # IMPORTANT: commented this because it triggers exceptions for everybody
+    #            with accented chars in their name! (UnicodeDecodeError)
+    #            The problem is that generate_ssh_rsa_key_pair returns unicode
+    #            and we then implicitly concatenate it with utf8 bytes here.
+    # logger.debug("User: %s - Creating a new jupyter mount keyset - "
+    #             "private_key: %s public_key: %s "
+    #             % (client_id, mount_private_key, mount_public_key))
 
     jupyter_dict = {
         'MOUNT_HOST': configuration.short_title,
@@ -557,7 +562,7 @@ def main(client_id, user_arguments_dict):
                                                              client_id)
         # TODO get this dynamically
         url = configuration.migserver_https_sid_url + \
-              '/cgi-sid/workflowsjsoninterface.py?output_format=json'
+            '/cgi-sid/workflowsjsoninterface.py?output_format=json'
         jupyter_dict.update({
             'WORKFLOWS_URL': url,
             'WORKFLOWS_SESSION_ID': workflow_session_id
