@@ -165,8 +165,12 @@ def html_add(formatted_text, html=True):
 def legacy_user_interface(configuration, user_settings,
                           legacy_versions=["V1", "V2"]):
     """Helper to ease detection of legacy user interfaces"""
-    return user_settings.get('USER_INTERFACE',
-                             configuration.user_interface[0]) in legacy_versions
+    # Please note that user_settings may be boolean False if never saved
+    if not user_settings or user_settings.get(
+        'USER_INTERFACE', configuration.user_interface[0]) in legacy_versions:
+        return True
+    else:
+        return False
 
 
 def render_menu(configuration, menu_class='navmenu',
