@@ -1074,7 +1074,7 @@ def save_settings_js(configuration):
                        minWidth: 600, width: "auto", autoOpen: false, closeOnEscape: true,
                        modal: true};
 
-    console.info("submit form serialized: "+$(".save_settings").serialize());
+    //console.debug("submit form serialized: "+$(".save_settings").serialize());
     var options = {
                    url: "%(save_url)s?output_format=json",
                    dataType: "json",
@@ -1084,12 +1084,16 @@ def save_settings_js(configuration):
                        $(".savestatus span").fadeIn(200);
                    },
                    success: function(responseObject, statusText) {
-                       console.log("verify post response: "+statusText);
+                       /* Reset status */
+                       saved = false;
+                       statusText = "";
+                       errorMsg = "";
+                       //console.log("verify post response: "+statusText);
                        for (var i=0; i<(responseObject.length); i++) {
                            if(responseObject[i]["object_type"] === "text") {
                                statusMsg = responseObject[i]["text"];
                                if (statusMsg.indexOf("Saved ") !== -1) {
-                                   console.debug(
+                                   console.info(
                                             "Save success: "+statusMsg);
                                             saved = true;
                                             /* strip trailing colon */
@@ -1097,13 +1101,17 @@ def save_settings_js(configuration):
                                                 ":", "");
                                    break;
                                } else if (statusMsg.indexOf("Input ") !== -1) {
-                                   console.error(
-                                             "Save failure: "+statusMsg);
+                                   errorMsg = "Save failed: "+responseObject[i]["text"];
+                                   console.error(errorMsg);
                                    break;
                                } else {
                                    console.debug(
                                              "ignoring other text entry: "+statusMsg);
                                }
+                           } else if(responseObject[i]["object_type"] === "error_text") {
+                               errorMsg = "Save failure: "+responseObject[i]["text"];
+                               console.error(errorMsg);
+                               break;
                            }
                        }
                        if (saved) {
@@ -1129,7 +1137,9 @@ def save_settings_js(configuration):
                            }
 
                        } else {
-                           errorMsg = "Save failed - please retry";
+                           if (!errorMsg) {
+                               errorMsg = "Save failed - please retry";
+                           }
                            console.error(errorMsg);
                            $(".savestatus").html(renderError(errorMsg));
                            $(".savestatus span").fadeIn(100);
