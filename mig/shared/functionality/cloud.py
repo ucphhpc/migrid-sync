@@ -31,10 +31,14 @@ list of tabs/buttons based on cloud services defined in the
 configuration.cloud_services entries.
 """
 
+import os
+
 import shared.returnvalues as returnvalues
 
-from shared.init import find_entry, initialize_main_variables
+from shared.base import client_id_dir
+from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
+from shared.init import find_entry, initialize_main_variables
 from shared.html import man_base_js
 
 
@@ -49,6 +53,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -110,7 +115,12 @@ def main(client_id, user_arguments_dict):
     </ul>
     ''' % fill_helpers})
 
+    action_list = [('start', 'Start'), ('status', 'Status of'),
+                   ('restart', 'Restart'), ('stop', 'Stop'),
+                   ('create', 'Create'), ('delete', 'Delete')]
     for service in services:
+        # TODO: add a true ID instead?
+        cloud_id = service['name']
         output_objects.append({'object_type': 'html_form',
                                'text': '''
         <div id="%s-tab">
@@ -128,11 +138,68 @@ def main(client_id, user_arguments_dict):
         <br/>
         '''})
 
-        output_service = {'object_type': 'service',
-                          'name': "Start %s" % service['name'],
-                          'targetlink': 'reqcloudservice.py?service=%s'
-                          % service['name']}
-        output_objects.append(output_service)
+        # Users store a pickled dict of all personal instances
+        cloud_instance_state_path = os.path.join(configuration.user_settings,
+                                                 client_dir,
+                                                 cloud_id + '.state')
+        # Manage existing instances
+        saved_instances = unpickle(cloud_instance_state_path, logger)
+        if not saved_instances:
+            saved_instances = {}
+        for (instance_id, instance_dict) in saved_instances.items():
+            logger.debug("Management entries for %s %s cloud instance %s" % \
+                         (client_id, cloud_id, instance_id))
+
+            output_objects.append({'object_type': 'html_form', 'text': """
+            <div class='cloud-management'>
+            <h3>%s</h3>
+            """ % instance_id})
+            for (action, title) in action_list:
+                query = 'action=%s;service=%s;instance_id=%s' % \
+                        (action, cloud_id, instance_id)
+                if 'create' == action:
+                    continue
+
+                if 'delete' == action:
+                    # TODO: add confirm dialog
+                    pass
+
+                url = 'reqcloudservice.py?%s' % query
+                output_service = {
+                    'object_type': 'service',
+                    'name': "%s %s instance" % (title, service['name']),
+                    'targetlink': url
+                    }
+                output_objects.append(output_service)
+            output_objects.append({'object_type': 'html_form', 'text': """
+            </div>
+            """})
+
+        logger.debug("Create new %s %s cloud instance" % \
+                         (client_id, cloud_id))
+
+        output_objects.append({'object_type': 'html_form', 'text': """
+            <div class='cloud-instance-create'>
+            <div class='cloud-management'>
+            <h3>Create a new %s cloud instance</h3>
+            """ % cloud_id})
+        # Create new instance
+        for (action, title) in action_list:
+            if 'create' != action:
+                    continue
+            # TODO: let user select image
+            instance_id, instance_image = "", ""
+            query = 'action=%s;service=%s;instance_id=%s' % \
+                    (action, cloud_id, instance_id)
+            query += ';instance_image=%s' % instance_image
+            url = 'reqcloudservice.py?%s' % query
+            output_service = {
+                'object_type': 'service',
+                'name': "%s %s instance" % (title, service['name']),
+                'targetlink': url
+                }
+            output_objects.append(output_service)
+
         output_objects.append({'object_type': 'html_form', 'text': '''
         </div>
         '''})

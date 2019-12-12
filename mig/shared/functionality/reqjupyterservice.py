@@ -53,7 +53,6 @@ import requests
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, extract_field
-from shared.conf import get_configuration_object
 from shared.defaults import session_id_bytes
 from shared.fileio import make_symlink, pickle, unpickle, write_file, \
     delete_symlink, delete_file
@@ -247,9 +246,9 @@ def jupyter_host(configuration, output_objects, user, url):
     return (output_objects, returnvalues.OK)
 
 
-def reset():
-    """
-    Helper function to clean up all jupyter directories and mounts
+def reset(configuration):
+    """Helper function to clean up all jupyter directories and mounts
+    :param configuration: the MiG Configuration object
     """
     configuration = get_configuration_object()
     auth_path = os.path.join(configuration.mig_system_files,
@@ -617,14 +616,16 @@ def main(client_id, user_arguments_dict):
 
 
 if __name__ == "__main__":
+    from shared.conf import get_configuration_object
     if not os.environ.get('MIG_CONF', ''):
         conf_path = os.path.join(os.path.dirname(sys.argv[0]),
                                  '..', '..', 'server', 'MiGserver.conf')
         os.environ['MIG_CONF'] = conf_path
+    conf = get_configuration_object()
     request_uri = "/dag/user/rasmus.munk@nbi.ku.dk"
     if sys.argv[1:]:
         if sys.argv[1] == 'reset':
-            reset()
+            reset(conf)
             exit(0)
         request_uri = sys.argv[1]
     os.environ['REQUEST_URI'] = request_uri

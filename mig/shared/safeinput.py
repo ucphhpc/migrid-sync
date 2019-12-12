@@ -108,6 +108,7 @@ VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@%'
 VALID_BASE_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
 VALID_VGRID_NAME_CHARACTERS = VALID_BASE_VGRID_NAME_CHARACTERS + '/'
 VALID_ARCHIVE_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
+VALID_CLOUD_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_@'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
     'THIS INPUT IS NOT VERIFIED: DO NOT EVER PRINT IT UNESCAPED! '
@@ -807,6 +808,22 @@ def valid_gdp_ref_value(ref_value):
     __valid_contents(ref_value, letters + digits + '+-=/.:_')
 
 
+def valid_cloud_id(
+    cloud_id,
+    min_length=1,
+    max_length=255,
+    extra_chars='',
+):
+    """Verify that supplied cloud ID, only contains characters that we
+    consider valid. Cloud IDs are generated using user email and user specified
+    name and a session ID, so it may contain FQDN chars, email chars and simple
+    separators.
+    """
+
+    valid_chars = VALID_CLOUD_ID_CHARACTERS + extra_chars
+    __valid_contents(cloud_id, valid_chars, min_length, max_length)
+
+
 def valid_workflow_pers_id(persistence_id):
     """Verify that supplied persistence_id only contains characters that
     we consider valid in a workflow persistence id.
@@ -1216,6 +1233,12 @@ def validated_job_id(user_arguments_dict, name, default):
     return (filter_job_id(first), err)
 
 
+def filter_cloud_id(contents):
+    """Filter supplied contents to only contain valid cloud ID characters"""
+
+    return __filter_contents(contents, VALID_CLOUD_ID_CHARACTERS)
+
+
 def guess_type(name):
     """Maps variable names to expected types - only init map once"""
 
@@ -1503,6 +1526,8 @@ def guess_type(name):
             __type_map[key] = valid_gdp_ref_id
         for key in ('gdp_ref_value', ):
             __type_map[key] = valid_gdp_ref_value
+        for key in ('cloud_id', 'instance_id', 'image_id', ):
+            __type_map[key] = valid_cloud_id
 
     # Return type checker from __type_map with fall back to alphanumeric
 

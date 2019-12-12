@@ -258,13 +258,26 @@ Web interfaces are served with the Apache HTTP Server:"""})
                            'text': 'Apache WSGI Module (Apache 2.0 license)'})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'text', 'text':
-                           "relying on JavaScript from:"})
+                           "relying on JavaScript, styling and artwork from:"})
     output_objects.append({'object_type': 'link',
                            'destination': 'http://jquery.com/',
                            'class': 'urllink iconspace',
                            'title': 'JQuery Home Page',
                            'text': 'JQuery and extension modules (GPL/MIT and '
                            'Creative Commons 3.0 licenses)'})
+    output_objects.append({'object_type': 'text', 'text': ''})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'https://getbootstrap.com',
+                           'class': 'urllink iconspace',
+                           'title': 'Bootstrap Home Page',
+                           'text': 'Bootstrap (MIT license)'})
+    output_objects.append({'object_type': 'text', 'text': ''})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'https://fontawesome.com',
+                           'class': 'urllink iconspace',
+                           'title': 'Font Awesome Home Page',
+                           'text': 'Font Awesome (Font Awesome Free license '
+                           'with icons under CC BY 4.0 license)'})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'link',
                            'destination':
@@ -485,8 +498,19 @@ Requests module from:"""})
                                'destination':
                                'https://pypi.python.org/pypi/requests',
                                'class': 'urllink iconspace',
-                               'title': 'Requests Python Package Index',
+                               'title': 'Requests Module at Python Package Index',
                                'text': 'Python Requests Module (Apache 2.0 license)'})
+
+    if configuration.site_enable_cloud:
+        output_objects.append({'object_type': 'text', 'text': """
+The optional interactive cloud computing integration through openstack relies on the
+openstack client module from:"""})
+        output_objects.append({'object_type': 'link',
+                               'destination':
+                               'https://pypi.org/project/python-openstackclient/',
+                               'class': 'urllink iconspace',
+                               'title': 'OpenStack Client at Python Package Index',
+                               'text': 'Python OpenStack Client (Apache 2.0 license)'})
 
     output_objects.append({'object_type': 'text', 'text': """The optional
 JSONRPC interface is delivered with the jsonrpclib module:"""})

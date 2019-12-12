@@ -875,14 +875,12 @@ cert, oid and sid based https!
         user_dict['__JUPYTER_COMMENTED__'] = '#'
 
     if user_dict['__ENABLE_CLOUD__'].lower() == 'true':
-        # try:
-        #    import requests
-        # except ImportError:
-        #    print "ERROR: cloud use requested but requests is not installed!"
-        #    sys.exit(1)
+        try:
+            import openstack
+        except ImportError:
+            print "ERROR: cloud use requested but openstack is not installed!"
+            sys.exit(1)
         user_dict['__CLOUD_COMMENTED__'] = ''
-        # cloud requires websockets proxy
-        #user_dict['__WEBSOCKETS_COMMENTED__'] = ''
 
         # Dynamic apache configuration replacement lists
         cloud_sections = []
@@ -903,7 +901,7 @@ cert, oid and sid based https!
 
         cloud_service_hosts = {}
         for service in cloud_services:
-            # TODO, do more checks on format
+            # TODO: do more checks on format?
             name_hosts = service.split(".", 1)
             if len(name_hosts) != 2:
                 print 'Error: You have not correctly formattet ' \
