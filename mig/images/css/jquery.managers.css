@@ -987,3 +987,7 @@ background: url(/images/icons/code.png) left center no-repeat;
     color: #FFF;
     border-radius: 4px;
 }
+.app-grid h3 {
+    /* Make sure icon and title fits on app buttons */
+    font-size: 12px;
+}

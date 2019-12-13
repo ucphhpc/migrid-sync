@@ -82,7 +82,7 @@ menu_items['crontab'] = {'class': 'crontab fas fa-calendar-check', 'url': 'cront
                          'title': 'Schedule Tasks',
                          'hover': 'Your personal task scheduler'}
 # NOTE: we rely on seafile location from conf and only fill it in render
-menu_items['seafile'] = {'class': 'seafile fas fa-sync-alt', 'url': '', 'title': 'Seafile',
+menu_items['seafile'] = {'class': 'seafile fas fa-seafile', 'url': '', 'title': 'Seafile',
                          'hover': 'Access the associated Seafile service',
                          'target': '_blank'}
 menu_items['jupyter'] = {'class': 'jupyter fas fa-jupyter', 'url': 'jupyter.py',
@@ -165,9 +165,12 @@ def html_add(formatted_text, html=True):
 def legacy_user_interface(configuration, user_settings,
                           legacy_versions=["V1", "V2"]):
     """Helper to ease detection of legacy user interfaces"""
+    # Default to first config value or V3 if explicitly unset
+    active_ui = (configuration.user_interface + ['V3'])[0]
     # Please note that user_settings may be boolean False if never saved
-    if not user_settings or user_settings.get(
-            'USER_INTERFACE', configuration.user_interface[0]) in legacy_versions:
+    if user_settings:
+        active_ui = user_settings.get('USER_INTERFACE', active_ui)
+    if active_ui in legacy_versions:
         return True
     else:
         return False
@@ -200,7 +203,7 @@ def render_menu(configuration, menu_class='navmenu',
         ''' % menu_class
         # Icon and select marker are on li in legacy mode
         menu_item_wrap = '''<li %(selected)s class="%(class)s">
-        <a href="%(url)s" %(selected)s %(attr)s title="%(hover)s">
+        <a href="%(url)s" %(selected)s %(attr)s class=%(link_class)s title="%(hover)s">
         %(title)s</a></li>
         '''
     else:
@@ -212,8 +215,8 @@ def render_menu(configuration, menu_class='navmenu',
         %%s
     </div>
         ''' % menu_class
-        # Icon and selected marker are on span in legacy mode
-        menu_item_wrap = '''<a href="%(url)s" %(selected)s %(attr)s title="%(hover)s">
+        # Icon and selected marker are on span in modern mode
+        menu_item_wrap = '''<a href="%(url)s" %(selected)s %(attr)s class="%(link_class)s" title="%(hover)s">
         <span %(selected)s class="%(class)s"></span>%(title)s</a>
         '''
     menu_lines = ''
@@ -222,6 +225,9 @@ def render_menu(configuration, menu_class='navmenu',
         if not spec:
             menu_lines += '   <!-- No such menu item: "%s" !!! -->\n' % name
             continue
+        # Helper to allow style parent tag in nav menu (especially custom jupyter icon)
+        spec['link_class'] = ' '.join(['link-%s' %
+                                       i for i in spec.get('class', '').split(' ')])
         if not legacy_ui and spec.get('legacy_only', False):
             menu_lines += '   <!-- Skip built-in %s for modern UI -->\n' % name
             continue
@@ -1132,8 +1138,8 @@ def save_settings_js(configuration):
                                setTimeout(function() {
                                    $(".savestatus").html(renderWorking("refreshing ..."));
                                    $(".savestatus span").fadeIn(200);
-                               }, 5000);
-                               setTimeout(function() { location.reload(); }, 6000);
+                               }, 4000);
+                               setTimeout(function() { location.reload(); }, 5000);
                            }
 
                        } else {
@@ -1471,7 +1477,8 @@ def openid_page_template(configuration, head_extras):
     page_title = '%s OpenID Server' % configuration.short_title
     html = get_xgi_html_header(configuration, page_title, '', True, '',
                                theme_helpers, script_helpers, frame=True,
-                               menu=False, head_extras=head_extras)
+                               menu=False, widgets=False, userstyle=False,
+                               head_extras=head_extras)
     html += '''
     <div class="container">
         <div id="content" class="staticpage">

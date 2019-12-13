@@ -344,15 +344,6 @@ a:hover.genericbutton {
     color:#46743C;
 }
 
-.app-grid > * {
-    color: #46743C;
-    background-color: #FFF;
-    border-color: #46743C;
-}
-.app-grid > *:hover, .app-grid > *:hover a {
-    background-color: #46743C;
-    color: #FFF;
-}
 
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {

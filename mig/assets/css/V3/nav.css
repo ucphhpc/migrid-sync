@@ -341,6 +341,11 @@
     height: 40px;
 }
 
+.link-jupyter {
+    height: 200px;
+    background: #FFF;
+}
+
 /* See skin color note at the top
    .sidebar-middle #selected.fa-jupyter {
    background: url(/images/icons/jupyter_icon_orange.svg) center center no-repeat;
@@ -363,6 +368,7 @@
 }
 
 
+/*CUSTOM ICON FA (DATATRANSFER)*/
 .fa-datatransfer {
     background: url(/images/icons/datatransfer_icon.svg) center center no-repeat; 
     display: inline-block;
@@ -388,6 +394,29 @@
 
 .app__btn:hover .fa-datatransfer {
     background: url(/images/icons/datatransfer_icon_white.svg) center center no-repeat;
+}
+
+
+/*CUSTOM ICON FA (SEAFILE)*/
+.fa-seafile {
+    background: url(/images/icons/seafile.svg) center center no-repeat; 
+    display: inline-block;
+    height: 40px;
+}
+
+.app__btn .fa-seafile {
+    height: 70px;
+    width: 88px;
+    margin-top: -5px;
+    margin-bottom: -4px;
+}
+
+.app__btn .fa-seafile:hover {
+    background: url(/images/icons/seafile_icon_white.svg) center center no-repeat;
+}
+
+.app__btn:hover .fa-seafile {
+    background: url(/images/icons/seafile_icon_white.svg) center center no-repeat;
 }
 
 

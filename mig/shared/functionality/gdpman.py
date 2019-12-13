@@ -1275,7 +1275,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
     if not configuration.site_enable_gdp:
         output_objects.append({'object_type': 'error_text',
-                               'text': """%s Management disabled on this site.
+                               'text': """GDP Project Management disabled on
+this site.
 Please contact the site admins %s if you think it should be enabled.
 """ % configuration.admin_email})
         return (output_objects, returnvalues.ERROR)
