@@ -43,12 +43,12 @@
 }
 /* Expand add-app boxes without link and make room for checkbox */
 .app-grid .app__btn.mandatory {
-    padding-top: 35px;
-    padding-bottom: 40px;
+    padding-top: 56px;
+    padding-bottom: 50px;
 }
 .app-grid .app__btn.optional {
-    padding-top: 23px;
-    padding-bottom: 30px;
+    padding-top: 34px;
+    padding-bottom: 50px;
 }
 .app-grid > *, .app-grid > * a  {
     color: #46743C;
@@ -77,6 +77,7 @@
     padding-top: 50px;
 }
 .app-grid h3 {
+    display: inline-block;
     border: 0;
     vertical-align: middle;
 }

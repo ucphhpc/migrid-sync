@@ -29,6 +29,12 @@
 
 /* ERDA UCPH Science skin style sheet for UI V2 only */
 
+/* Hide touchscreen toggle now we have toolbox button on all entries */
+#fm_toggle_touchscreen, #fm_touchscreen_label {
+    display: none;
+}
+
+
 /* Home with app grid */
 .app-grid {
     display: grid;
