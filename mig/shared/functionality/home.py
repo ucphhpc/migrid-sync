@@ -93,6 +93,10 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     app_list += [app_id for app_id in configuration.site_user_menu if not
                  app_id in app_list]
 
+    mandatory_apps = []
+    for app_name in configuration.site_default_menu:
+        mandatory_apps.append(menu_items[app_name]['title'])
+    fill_helpers['mandatory_apps'] = ', '.join(mandatory_apps)
     html += '''
 <!-- APP POP-UP -->
 		<div id="add-app__window" class="app-container hidden">
@@ -101,7 +105,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 				<div class="row">
 					<div class="app-page__header col-12">
 						<h1>Your apps & app-setup</h1>
-                        <p class="sub-title-white">Here you can select which apps you want to use in your %(short_title)s system. Files, Workgroups & Archives are mandatory.</p>
+                        <p class="sub-title-white">Here you can select which apps you want to use in your %(short_title)s system. Only %(mandatory_apps)s are mandatory.</p>
 					</div>
 					<div class="app-page__header col-12">
 						<h2>Select your apps</h2>
