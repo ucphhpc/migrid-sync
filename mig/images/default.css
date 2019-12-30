@@ -40,6 +40,7 @@ body {
   min-height: 600px;
 }
 
+
 a {
   text-decoration: none;
   color: #666;
@@ -57,7 +58,7 @@ img {
 h1 {
   border: 1px solid darkgrey;
   border-radius: 4px;
-  margin-top: 0;  
+  margin-top: 0;
   font-size: 16px;  
   padding: 4px;
 }
@@ -81,11 +82,11 @@ div.container {
 */
 }
 
-/*Global Web Elements*/
+/* Global Web Elements */
 .global-container {
 	padding-left: 4px;
 	padding-right: 4px;
-	padding-top: 8px;
+	padding-top: 4px;
 	position: relative;
 	/*margin: 20px;*/
 	z-index: 1;
@@ -359,7 +360,7 @@ table th.icon {
     display: none;
 }
 
-/* Navigational menu... */
+/* Legacy nav menu */
 .navmenu {
   border-radius: 5px;
   border: 1px solid grey;
@@ -369,7 +370,7 @@ table th.icon {
 
 .navmenu ul {
   margin: 0;
-  padding: 0;
+  padding: 2px 0;
 }
 
 .navsubmenu ul {
@@ -1147,6 +1148,7 @@ div.archive pre {
   padding-left: 18px;
 }
 
+/* UI V2 Settingsi/Setup nav */
 .settingsbutton {
   padding: 8px;
   border: 2px solid grey;

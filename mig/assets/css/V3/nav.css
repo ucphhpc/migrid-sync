@@ -150,11 +150,15 @@
     width: 340px;
     top: 0;
     left: -340px;
-    background: rgba(70, 115, 60, 1);
+    background: #147;
     color: #FFF;
     -webkit-transition: 0.5s; /* For Safari 3.1 to 6.0 */
     transition: 0.5s;
     z-index: 98;
+}
+
+.slidernav-container .navmenu {
+    border: 0;
 }
 
 .slidernav-active {

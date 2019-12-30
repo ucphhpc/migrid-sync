@@ -27,7 +27,20 @@
 
 */
 
-/* ERDA UCPH Science skin style sheet for UI V2 only */
+/* MiGrid basic skin style sheet for UI V2 only */
+
+body {
+  background: url("pattern.png") repeat scroll left center transparent;
+}
+
+h1 {
+  background: url("background.png") repeat scroll left center #eee;
+}
+
+/* Legacy nav menu */
+.navmenu {
+  background: url("background_greypattern.png") repeat scroll left center #aaa;
+}
 
 /* Hide touchscreen toggle now we have toolbox button on all entries */
 #fm_toggle_touchscreen, #fm_touchscreen_label {
@@ -43,12 +56,12 @@
 }
 /* Expand add-app boxes without link and make room for checkbox */
 .app-grid .app__btn.mandatory {
-    padding-top: 35px;
-    padding-bottom: 40px;
+    padding-top: 56px;
+    padding-bottom: 50px;
 }
 .app-grid .app__btn.optional {
-    padding-top: 23px;
-    padding-bottom: 30px;
+    padding-top: 34px;
+    padding-bottom: 50px;
 }
 .app-grid > *, .app-grid > * a  {
     color: #147;
@@ -77,6 +90,7 @@
     padding-top: 50px;
 }
 .app-grid h3 {
+    display: inline-block;
     border: 0;
     vertical-align: middle;
 }

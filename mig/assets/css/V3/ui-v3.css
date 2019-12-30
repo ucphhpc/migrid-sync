@@ -356,8 +356,9 @@ input:checked + .slider:before {
 
 #fm_filelisting tbody tr td {
     font-size: 14px;
-    padding: 20px 0;
+    padding: 6px 0;
 }
+
 
 .fm_folders {
     overflow: auto;

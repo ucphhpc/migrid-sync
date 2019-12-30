@@ -30,7 +30,6 @@
 /* ERDA Basic skin style sheet */
 
 body {
-  background: url("/images/skin/erda-basic/pattern.png") repeat scroll left center transparent;
 }
 
 /* Fixed width layout in line with UCPH style guidelines */
@@ -41,6 +40,11 @@ body.staticpage {
   border-left: 1px solid #CCC;
 }
 
+.home-nav-logo {
+	background-image: url("home-logo.png");
+        background-color: #147;
+}
+
 a {
   color: #0b76AE;
 }
@@ -49,9 +53,10 @@ a:hover, a:active {
   color: #000;
 }
 
+
 h1 {
   color: #eee;
-  background: url("/images/skin/erda-basic/background.png") repeat scroll left center #eee;
+  padding: 2px 4px;
 }
 
 h1.staticpage {
@@ -76,6 +81,11 @@ h4.staticpage {
   /*border: 1px solid #fff;*/
   padding: 2px;
 }
+/* Exclude JQuery UI accordions from padding tweaks */
+h4.staticpage:not(.ui-accordion-header) {
+  /*border: 1px solid #fff;*/
+  padding: 2px 0px;
+}
 
 div.quickstartfields {
   color: #000;
@@ -87,6 +97,7 @@ div.loginfield, div.signupfield {
   background-color: #0078ae;
   margin: 0px 4px;
   font-size: 12px;
+  /* NOTE: narrow to fit inside UCPH/Other user tabs here */
   width: 440px;
   border-radius: 4px;
 }
@@ -98,8 +109,9 @@ div.loginfield {
 }
 
 table {
-  background: #eef;
+  /* no background color or border */
   color: #000;
+  border: 0;
 }
 
 #nomenu.staticpage {
@@ -109,15 +121,14 @@ table {
 #content.staticpage {
   border-radius: 0;
 }
-
 .contentblock.staticpage {
-  /* Make sure to have some gap between text and footer */
-  min-height: 600px;
+  /* NOTE: spacing to footer now uses #content.staticpage instead */
 }
 
-/* Navigational menu... */
+/* Legacy nav menu */
 .navmenu {
-  background: url("/images/skin/erda-basic/background_greypattern.png") repeat scroll left center #aaa;
+  background: white;
+  border: none;
 }
 
 .navmenu ul li a:hover, .navsubmenu ul li a:hover {
@@ -126,6 +137,10 @@ table {
 
 .navmenu ul li a.selected {
   background-color: #147;
+}
+
+.navmenu ul li a, .navsubmenu ul li a {
+  /* Use defaults here */
 }
 
 .styled_button:hover {
@@ -141,12 +156,12 @@ table {
 /* Used in one place... maybe that place should be fixed? to use h1 instead */
 #migheader {
   color: #eee;
-  background: url("/images/skin/erda-basic/background.png") repeat scroll left center #eee;
+  background: url("background.png") repeat scroll left center #eee;
 }
 
 #toplogo {
   border: 0;
-  background: url("/images/skin/erda-basic/background.png") repeat scroll left center #eee;
+  background: url("background.png") repeat scroll left center #eee;
   color: white;
 }
 #toplogo.staticpage {
@@ -164,7 +179,7 @@ table {
 #toplogoright.staticpage {
   display: none;
 }
-#logoimage {
+#logoimageleft {
   opacity: 1.0;
 }
 #logoimagecenter {
@@ -193,7 +208,7 @@ table {
 #bottomlogo {
   color: #eee;
   /* repeat background tile horizontally and stretch vertically */
-  background: url("/images/skin/erda-basic/background.png") repeat-x scroll left center #eee;
+  background: url("background.png") repeat-x scroll left center #eee;
   background-size: auto 100%;
   height: 39px;
   border: 0;
@@ -201,7 +216,7 @@ table {
 #bottomlogo.staticpage {
   color: #eee;
   /* repeat background tile horizontally and stretch vertically */
-  background: url("/images/skin/erda-basic/background.png") repeat-x scroll left center #eee;
+  background: url("background.png") repeat-x scroll left center #eee;
   background-size: auto 100%;
   height: 39px;
   border: 0;
@@ -254,11 +269,18 @@ a:hover.settingsbutton {
 }
 
 .genericbutton {
+  border: 1px solid #666;
   background-color: #fff;
+  color: #147;
+}
+a.genericbutton {
+  font-weight: normal;
 }
 a:hover.genericbutton {
-  background-color: #eef;
-  color: #147;
+  font-weight: normal;
+  border: 1px solid #147; 
+  background-color: #369;
+  color: #fff;
 }
 
 /* Override colors on 2FA dialog */
@@ -268,6 +290,11 @@ a:hover.genericbutton {
 #twofactorbox input[type=submit]:hover {
     background-color: #147;
 }
+
+#sitefeedback-button {
+    color:#147;
+}
+
 
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {

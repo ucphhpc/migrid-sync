@@ -500,10 +500,9 @@ legend {
 
 
 
-/*APP POPUP PAGE*/
+/* APP POPUP PAGE */
 .app-container {
-    background: rgba(70, 116, 60, 1);
-    /*background-image: linear-gradient(rgba(0, 0, 0, 0.95), rgba(70, 115, 60, 0.95), rgba(0, 0, 0, 0.95));*/
+    background: #147;
     height: 100vh;
     width: calc(100% - 70px);
     position: fixed;

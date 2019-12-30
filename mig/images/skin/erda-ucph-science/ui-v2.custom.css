@@ -29,6 +29,12 @@
 
 /* ERDA UCPH Science skin style sheet for UI V2 only */
 
+/* Global Web Elements */
+.global-container {
+    /* Adjust content to fit frameless nav menu */
+    padding-top: 10px;
+}
+
 /* Hide touchscreen toggle now we have toolbox button on all entries */
 #fm_toggle_touchscreen, #fm_touchscreen_label {
     display: none;

@@ -123,6 +123,13 @@ table {
   border: 0;
 }
 
+#nomenu.staticpage {
+  margin: 0;
+}
+
+#content.staticpage {
+  border-radius: 0;
+}
 .contentblock.staticpage {
   /* NOTE: spacing to footer now uses #content.staticpage instead */
 }
@@ -273,6 +280,9 @@ table {
 #supportimage {
   display: none;
 }
+#privacy {
+  /* use defaults */
+}
 #credits {
   color: black;
 }
@@ -329,7 +339,7 @@ a:hover.genericbutton {
   font-weight: normal;
   border: 1px solid #46743c; 
   background-color: #679c5b; 
-  color: #fff; 
+  color: #fff;
 }
 
 /* Override colors on 2FA dialog */

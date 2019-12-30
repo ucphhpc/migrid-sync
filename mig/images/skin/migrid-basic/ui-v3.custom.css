@@ -37,8 +37,13 @@
 #content {
     /* NOTE: override V2 menu spacing */
     margin-left: 0;
+    /* NOTE: override V2 content frame border */
+    border: 0;
 }
 
+table {
+    background: transparent;
+}
 
 /* Don't let buttons shrink when not active/hovering */
 [type=button]:not(:disabled):hover, [type=reset]:not(:disabled):hover, [type=submit]:not(:disabled):hover, button:not(:disabled):hover {
@@ -437,16 +442,6 @@ a {
 
 .jqueryFileTree li div {
     font-size: 14px;
-}
-
-#fm_filelisting thead tr th div {
-    font-size: 12px;
-    padding: 20px 0;
-}
-
-#fm_filelisting tbody tr td {
-    font-size: 14px;
-    padding: 6px 0;
 }
 
 .fm_folders {

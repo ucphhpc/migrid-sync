@@ -42,14 +42,24 @@ body.staticpage {
   border-left: 1px solid #CCC;
 }
 
+.home-nav-logo {
+	background-image: url("home-logo.jpg");
+}
+
 a {
+/*
   color: #165AAD;
+*/
+  color: #679c5b;
   /* body font selection hides bottom of e.g. urllink icons */
   font-family: Verdana, Helvetica, Aria, sans-serif;
 }
 
 a:hover, a:active {
+  /*
   color: #165AAD;
+  */
+  color: #679c5b;
 }
 
 
@@ -113,12 +123,18 @@ table {
   border: 0;
 }
 
+#nomenu.staticpage {
+  margin: 0;
+}
+
+#content.staticpage {
+  border-radius: 0;
+}
 .contentblock.staticpage {
   /* NOTE: spacing to footer now uses #content.staticpage instead */
 }
 
-
-/* Navigational menu... */
+/* Legacy nav menu */
 .navmenu {
   background: white;
   border: none;
@@ -264,6 +280,9 @@ table {
 #supportimage {
   display: none;
 }
+#privacy {
+  /* use defaults */
+}
 #credits {
   color: black;
 }
@@ -320,7 +339,7 @@ a:hover.genericbutton {
   font-weight: normal;
   border: 1px solid #46743c; 
   background-color: #679c5b; 
-  color: #fff; 
+  color: #fff;
 }
 
 /* Override colors on 2FA dialog */
@@ -329,6 +348,10 @@ a:hover.genericbutton {
 }
 #twofactorbox input[type=submit]:hover {
     background-color: #46743c;
+}
+
+#sitefeedback-button {
+    color:#46743C;
 }
 
 
