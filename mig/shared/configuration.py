@@ -116,6 +116,7 @@ def fix_missing(config_file, verbose=True):
         'site_vgrid_creators': 'distinguished_name:.*',
         'site_vgrid_managers': 'distinguished_name:.*',
         'site_vgrid_label': 'VGrid',
+        'site_cloud_access': 'distinguished_name:.*',
         'site_signup_methods': '',
         'site_login_methods': '',
         'site_csrf_protection': '',
@@ -346,6 +347,7 @@ class Configuration:
     site_vgrid_creators = [('distinguished_name', '.*')]
     site_vgrid_managers = [('distinguished_name', '.*')]
     site_vgrid_label = 'VGrid'
+    site_cloud_access = [('distinguished_name', '.*')]
     # Allowed signup and login methods in prioritized order
     site_signup_methods = ['extcert']
     site_login_methods = ['extcert']
@@ -1268,10 +1270,9 @@ location.""" % self.config_file
                         if content:
                             config.set(section, 'service_desc', content)
 
-                self.cloud_services.append({option: config.get(section,
-                                                               option)
-                                            for option in
-                                            config.options(section)})
+                service = {option: config.get(section, option) for option in
+                           config.options(section)}
+                self.cloud_services.append(service)
 
         if config.has_option('GLOBAL', 'vgrid_owners'):
             self.vgrid_owners = config.get('GLOBAL', 'vgrid_owners')
@@ -1525,6 +1526,9 @@ location.""" % self.config_file
             self.site_vgrid_managers = [i.split(':', 2) for i in req]
         if config.has_option('SITE', 'vgrid_label'):
             self.site_vgrid_label = config.get('SITE', 'vgrid_label').strip()
+        if config.has_option('SITE', 'cloud_access'):
+            req = config.get('SITE', 'cloud_access').split()
+            self.site_cloud_access = [i.split(':', 2) for i in req]
         if config.has_option('SITE', 'signup_methods'):
             self.site_signup_methods = config.get('SITE',
                                                   'signup_methods').split()
