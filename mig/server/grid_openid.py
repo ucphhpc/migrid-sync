@@ -1323,20 +1323,27 @@ Invalid '%s' input: %s
             </div>
             ''' % form
 
-        default_css = os.path.join(configuration.migserver_https_sid_url,
-                                   configuration.site_default_css.lstrip('/'))
-        static_css = os.path.join(configuration.migserver_https_sid_url,
-                                  configuration.site_static_css.lstrip('/'))
-        custom_css = os.path.join(configuration.migserver_https_sid_url,
-                                  configuration.site_custom_css.lstrip('/'))
-        skin_base = os.path.join(configuration.migserver_https_sid_url,
-                                 configuration.site_skin_base.lstrip('/'))
-        fav_icon = os.path.join(configuration.migserver_https_sid_url,
-                                configuration.site_fav_icon.lstrip('/'))
-        logo_center = configuration.site_logo_center.strip()
-
-        creds_logo = os.path.join(configuration.migserver_https_sid_url,
-                                  configuration.site_credits_image.lstrip('/'))
+        # If not in proxy mode we must use artwork and style from SID vhost
+        show_address = configuration.user_openid_show_address
+        real_address = configuration.user_openid_address
+        if show_address == real_address:
+            logger.debug('using SID URLs')
+            url_prefix = configuration.migserver_https_sid_url
+            # Template generator uses configuration CSS values directly - fake them
+            url_targets = ['site_default_css', 'site_static_css',
+                           'site_custom_css', 'site_skin_base',
+                           'site_fav_icon', 'site_logo_left',
+                           'site_logo_center', 'site_logo_right',
+                           'site_credits_image'
+                           ]
+            for target in url_targets:
+                tmp_val = getattr(configuration, target).lstrip('/')
+                tmp_val = tmp_val.replace(url_prefix, '')
+                if tmp_val:
+                    tmp_val = os.path.join(url_prefix, tmp_val)
+                    setattr(configuration, target, tmp_val)
+        else:
+            logger.debug('using plain proxied URLs')
         fill_helpers = {
             'title': configuration.short_title + ' OpenID Server - ' + title,
             'short_title': configuration.short_title,
@@ -1344,13 +1351,15 @@ Invalid '%s' input: %s
             'body': body,
             'user_link': user_link,
             'root_url': '/%s/' % self.server.server_base,
-            'site_default_css': default_css,
-            'site_static_css': static_css,
-            'site_custom_css': custom_css,
-            'site_skin_base': skin_base,
-            'site_fav_icon': fav_icon,
-            'site_logo_center': logo_center,
-            'credits_logo': creds_logo,
+            'site_default_css': configuration.site_default_css,
+            'site_static_css': configuration.site_static_css,
+            'site_custom_css': configuration.site_custom_css,
+            'site_skin_base': configuration.site_skin_base,
+            'site_fav_icon': configuration.site_fav_icon,
+            'site_logo_left': configuration.site_logo_left,
+            'site_logo_center': configuration.site_logo_center,
+            'site_logo_right': configuration.site_logo_right,
+            'credits_logo': configuration.site_credits_image,
             'credits_text': configuration.site_credits_text,
         }
 
