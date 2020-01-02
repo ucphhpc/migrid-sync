@@ -1366,6 +1366,10 @@ fieldset .singlefield {
     overflow: auto;
 }
 
+.fieldlabel {
+    font-weight: bold;
+}
+
 
 /* hide complexity for sharelink ls page */
 body.sharelink_ls #content {

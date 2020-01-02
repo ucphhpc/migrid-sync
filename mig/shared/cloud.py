@@ -41,8 +41,11 @@ except ImportError, err:
 from shared.base import force_utf8
 from shared.defaults import keyword_all
 
-# Internal helper to map individual operations to falvored cloud functions
+# Internal helper to map individual operations to flavored cloud functions
 __cloud_helper_map = {"openstack": None}
+# How long and often to poll during wait for instance creation and destruction
+__max_wait_secs = 120
+__poll_delay_secs = 3
 
 cloud_manage_actions = ['start', 'restart', 'status', 'stop']
 cloud_edit_actions = ['updatekeys', 'create', 'delete']
@@ -60,42 +63,51 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
     """Wait for instance to be truly available after create"""
     # TODO: lookup the openstack client V3 version of the utils.wait_for_X
     _logger = configuration.logger
+    status = False
     try:
-        for i in xrange(5):
+        for i in xrange(__max_wait_secs / __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
                                                    cloud_id, cloud_flavor,
-                                                   instance)
+                                                   force_utf8(instance.name))
             if 'active' == msg.lower():
                 _logger.info("%s cloud instance %s is ready" % (cloud_id,
                                                                 instance))
+                status = True
                 break
             else:
-                time.sleep(1)
+                _logger.debug("wait for %s cloud instance %s: %s" % \
+                              (cloud_id, instance, msg))
+                time.sleep(__poll_delay_secs)
+        _logger.warning("gave up waiting for %s instance %s appearing" % \
+                        (cloud_id, instance))
     except Exception, exc:
         _logger.warning("wait available for %s cloud instance %s failed: %s" \
                         % (cloud_id, instance, exc))
         time.sleep(5)
-    return True
+    return status
 
 def __wait_gone(configuration, client_id, cloud_id, cloud_flavor, instance):
     """Wait for instance to be truly gone after delete"""
     _logger = configuration.logger
+    status = False
     try:
-        for i in xrange(5):
+        for i in xrange(__max_wait_secs / __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
                                                    cloud_id, cloud_flavor,
-                                                   instance)
+                                                   force_utf8(instance.name))
             if not status:
                 _logger.info("%s cloud instance %s is gone" % (cloud_id,
                                                                instance))
+                status = True
                 break
-            time.sleep(1)
+            time.sleep(__poll_delay_secs)
+        _logger.warning("gave up waiting for %s instance %s disappearing" % \
+                        (cloud_id, instance))
     except Exception, exc:
         _logger.warning("wait gone for %s cloud instance %s failed: %s" % \
                         (cloud_id, instance, exc))
         time.sleep(5)
-
-    return True
+    return status
 
 
 @__require_openstack
@@ -418,8 +430,8 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
         # Build a unique ID to identify the first key
         user_key = "%s : %s" % (client_id, auth_keys[0])
         key_id = hashlib.sha256(user_key).hexdigest()
-        _logger.info("create %s cloud instance for %s with key %s: %s" % \
-                     (cloud_id, client_id, key_id, user_key))
+        _logger.info("%s registering key %s for %s instance %s" % \
+                     (client_id, key_id, cloud_id, instance_id))
 
     try:
         instance = conn.compute.find_server(instance_id)
@@ -442,8 +454,17 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                           (client_id, instance_id, msg))
             return (status, msg)
 
+        if not __wait_available(configuration, client_id, cloud_id,
+                                cloud_flavor, instance):
+            status = False
+            msg = "failed to create %s cloud instance %s" % (cloud_id,
+                                                             instance_id)
+            _logger.error(msg)
+            return (status, msg)
+
         # Create floating IP from public network
-        floating_ip = conn.network.create_ip(floating_network_id=floating_network_id)
+        floating_ip = conn.network.create_ip(
+            floating_network_id=floating_network_id)
         if not floating_ip:
             status = False
             msg = force_utf8("%s" % floating_ip)
@@ -451,17 +472,14 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                           (client_id, instance_id, msg))
             return (status, msg)
 
-        __wait_available(configuration, client_id, cloud_id, cloud_flavor,
-                         instance)
-
         # Add floating IP to instance
         conn.compute.add_floating_ip_to_server(
             instance.id, floating_ip.floating_ip_address)
         if not floating_ip.floating_ip_address:
             status = False
             msg = force_utf8("%s" % floating_ip.floating_ip_address)            
-            _logger.error("%s failed to create %s cloud instance float ip: %s" % \
-                          (client_id, instance_id, msg))
+            _logger.error("%s failed to create %s cloud instance float ip: %s" \
+                          % (client_id, instance_id, msg))
             return (status, msg)
         msg = force_utf8(floating_ip.floating_ip_address)
         _logger.info("%s created cloud %s instance %s with floating IP %s" % \
@@ -504,7 +522,13 @@ def openstack_delete_cloud_instance(configuration, client_id, cloud_id,
                           (client_id, instance_id, msg))
             return (status, msg)
     
-        __wait_gone(configuration, client_id, cloud_id, cloud_flavor, instance)
+        if not __wait_gone(configuration, client_id, cloud_id, cloud_flavor,
+                           instance):
+            msg = "failed to delete %s cloud instance %s" % (cloud_id,
+                                                             instance_id)
+            status = False
+            _logger.error(msg)
+            return (status, msg)
 
         removed = conn.delete_unattached_floating_ips(retry=1)
         if removed < 1:

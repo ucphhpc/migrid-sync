@@ -190,7 +190,7 @@ def main(client_id, user_arguments_dict):
                  })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    allowed_images = service.get('allowed_images', keyword_all)
+    allowed_images = service.get('service_allowed_images', keyword_all)
     if allowed_images != keyword_all and instance_image and \
            not instance_image in allowed_images:
         output_objects.append(
@@ -200,7 +200,7 @@ def main(client_id, user_arguments_dict):
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    cloud_flavor = service.get("flavor", "openstack")
+    cloud_flavor = service.get("service_flavor", "openstack")
     user_home_dir = os.path.join(configuration.user_home, client_dir)
 
     # Users store a pickled dict of all personal instances
@@ -238,6 +238,16 @@ def main(client_id, user_arguments_dict):
                     "You already have an instance with the label '%s'!" % \
                     instance_label})
                 return (output_objects, returnvalues.CLIENT_ERROR)
+        max_user_instances = int(service.get('service_max_user_instances', -1))
+        if max_user_instances > 0 and \
+               len(saved_instances) >= max_user_instances:
+            logger.error("Refused %s create additional %s cloud instances!" % \
+                                      (client_id, cloud_id))
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                "You already have the maximum allowed %s instances (%d)!" % \
+                (cloud_id, max_user_instances)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
             
         if not instance_label:
             logger.error("Refused %s create unlabelled %s cloud instance!" % \

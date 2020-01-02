@@ -43,7 +43,7 @@ from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import find_entry, initialize_main_variables
-from shared.html import man_base_js
+from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.useradm import get_full_user_map
 
 
@@ -97,6 +97,13 @@ def main(client_id, user_arguments_dict):
     # Show cloud services menu
     (add_import, add_init, add_ready) = man_base_js(configuration, [])
 
+    add_init += '''
+    function get_instance_id() {
+        console.log("in get_instance_id");
+        console.log("found val: "+$("#select-instance-id").val());
+        return $("#select-instance-id").val();
+    }
+    '''
     add_ready += '''
         /* NOTE: requires managers CSS fix for proper tab bar height */
         $(".cloud-tabs").tabs();
@@ -106,6 +113,9 @@ def main(client_id, user_arguments_dict):
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
+    output_objects.append({'object_type': 'html_form',
+                           'text': man_base_html(configuration)})
+
 
     output_objects.append({'object_type': 'header',
                            'text': 'Select a Cloud Service'})
@@ -172,7 +182,7 @@ def main(client_id, user_arguments_dict):
         cloud_instance_state_path = os.path.join(configuration.user_settings,
                                                  client_dir,
                                                  cloud_id + '.state')
-        fill_helpers.update({'cloud_id': cloud_id})
+        fill_helpers.update({'cloud_id': cloud_id, 'target_op': target_op})
 
         delete_html = ""
         # Manage existing instances
@@ -180,18 +190,23 @@ def main(client_id, user_arguments_dict):
         if not saved_instances:
             saved_instances = {}
 
+        # Delete instance form helper
+        helper = html_post_helper(target_op, '%s.py' % target_op,
+                                  {'instance_id': '__DYNAMIC__',
+                                   'service': '%s' % cloud_id,
+                                   'action': 'delete',
+                                   csrf_field: csrf_token})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+
         # TODO: halfwidth styling does not really work on select elements
         delete_html += """
     <div class='cloud-instance-delete fullwidth'>
         <h3>Permanently delete a %(cloud_id)s cloud instance</h3>
-        <form class='delete-cloud-instance' method='%(form_method)s' action='%(target_op)s.py'>
-            <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-            <input type='hidden' name='service' value='%(cloud_id)s' />
-            <input type='hidden' name='action' value='delete' />
+        <form class='delete-cloud-instance' target='#'>
             <p class='fullwidth'>
-            <label class='halfwidth'>Instance:</label>
+            <label class='fieldlabel halfwidth'>Instance</label>
             <span class='halfwidth'>
-            <select class='styled-select html-select halfwidth padspace' name='instance_id'>
+            <select id='select-instance-id' class='styled-select html-select halfwidth padspace' name='instance_id'>
             """
 
         output_objects.append({'object_type': 'html_form', 'text': """
@@ -204,7 +219,7 @@ def main(client_id, user_arguments_dict):
                          (client_id, cloud_id, instance_id))
             output_objects.append({'object_type': 'html_form', 'text': """
         <div class='manage-cloud-instance fullwidth'>
-        <label class='instancelabel halfwidth'>%s</label>
+        <label class='fieldlabel halfwidth'>%s</label>
         <span class='instance-actions halfwidth'>
             """ % instance_label})
             for (action, title) in action_list:
@@ -221,8 +236,7 @@ def main(client_id, user_arguments_dict):
                 output_objects.append(output_service)
             output_objects.append({'object_type': 'html_form', 'text': """
         </span>
-        </div>
-        
+        </div>        
             """})
             delete_html += """<option value='%s'>%s</option>
             """ % (instance_id, instance_label)
@@ -236,7 +250,7 @@ def main(client_id, user_arguments_dict):
             </span>
             </p>
             <p class='fullwidth'>
-            <input type='submit' value='Delete Instance' />
+            <input type='submit' value='Delete Instance' onClick='javascript:confirmDialog(%(target_op)s, \"Really permanently delete instance?\", undefined, {instance_id: get_instance_id()}); return false;' />
             </p>
         </form>
     </div>
@@ -251,13 +265,13 @@ def main(client_id, user_arguments_dict):
             <input type='hidden' name='service' value='%(cloud_id)s' />
             <input type='hidden' name='action' value='create' />
             <p class='cloud-instance-input fullwidth'>
-            <label class='halfwidth'>Label:</label>
+            <label class='fieldlabel halfwidth'>Label</label>
             <span class='halfwidth'>
             <input class='halfwidth padspace' type='text' name='instance_label' value='' />
             </span>
             </p>
             <p class='fullwidth'>
-            <label class='halfwidth'>Image:</label>
+            <label class='fieldlabel halfwidth'>Image</label>
             <span class='halfwidth'>
             <select class='styled-select html-select halfwidth padspace' name='instance_image'>
             """
@@ -281,9 +295,6 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'html_form', 'text':
                                    delete_html % fill_helpers})
 
-        output_objects.append({'object_type': 'html_form', 'text': '''
-        </div>
-        '''})
     output_objects.append({'object_type': 'html_form', 'text': '''
     </div>
     </div>
