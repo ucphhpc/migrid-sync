@@ -133,7 +133,7 @@ def main(client_id, user_arguments_dict):
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
 
-    action_list = [('start', 'Start'), ('status', 'Status of'),
+    action_list = [('status', 'Status'), ('start', 'Start'),
                    ('restart', 'Restart'), ('stop', 'Stop'),
                    ('updatekeys', 'Set keys on'), ('create', 'Create'),
                    ('delete', 'Delete')]
@@ -180,24 +180,33 @@ def main(client_id, user_arguments_dict):
         if not saved_instances:
             saved_instances = {}
 
+        # TODO: halfwidth styling does not really work on select elements
         delete_html += """
-    <div class='cloud-instance-delete'>
+    <div class='cloud-instance-delete fullwidth'>
         <h3>Permanently delete a %(cloud_id)s cloud instance</h3>
-        <form class='create_cloud_instance' method='%(form_method)s' action='%(target_op)s.py'>
+        <form class='delete-cloud-instance' method='%(form_method)s' action='%(target_op)s.py'>
             <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
             <input type='hidden' name='service' value='%(cloud_id)s' />
             <input type='hidden' name='action' value='delete' />
-            <select class='styled-select html-select' name='instance_id'>
+            <p class='fullwidth'>
+            <label class='halfwidth'>Instance:</label>
+            <span class='halfwidth'>
+            <select class='styled-select html-select halfwidth padspace' name='instance_id'>
             """
 
+        output_objects.append({'object_type': 'html_form', 'text': """
+        <div class='cloud-management fullwidth'>
+        <h3>Manage %s instances</h3>
+            """ % cloud_id})
         for (instance_id, instance_dict) in saved_instances.items():
             instance_label = instance_dict.get('INSTANCE_LABEL', instance_id)
             logger.debug("Management entries for %s %s cloud instance %s" % \
                          (client_id, cloud_id, instance_id))
             output_objects.append({'object_type': 'html_form', 'text': """
-        <div class='cloud-management'>
-        <h3>Manage %s instance %s</h3>
-            """ % (cloud_id, instance_label)})
+        <div class='manage-cloud-instance fullwidth'>
+        <label class='instancelabel halfwidth'>%s</label>
+        <span class='instance-actions halfwidth'>
+            """ % instance_label})
             for (action, title) in action_list:
                 if action in cloud_edit_actions:
                     continue
@@ -206,50 +215,62 @@ def main(client_id, user_arguments_dict):
                 url = 'reqcloudservice.py?%s' % query
                 output_service = {
                     'object_type': 'service',
-                    'name': "%s %s instance" % (title, service['name']),
+                    'name': "%s" % title,
                     'targetlink': url
                     }
                 output_objects.append(output_service)
             output_objects.append({'object_type': 'html_form', 'text': """
+        </span>
         </div>
+        
             """})
             delete_html += """<option value='%s'>%s</option>
             """ % (instance_id, instance_label)
 
+        output_objects.append({'object_type': 'html_form', 'text': """
+        </div>
+        """})
 
         delete_html += """
             </select>
-            <input type='submit' value='Delete %(cloud_id)s Instance' />
+            </span>
+            </p>
+            <p class='fullwidth'>
+            <input type='submit' value='Delete Instance' />
+            </p>
         </form>
     </div>
         """
 
-        logger.debug("Create new %s %s cloud instance form: %s" % \
-                         (client_id, cloud_id, img_list))
-
-        output_objects.append({'object_type': 'html_form', 'text': """
-            <div class='cloud-management'>
-        """})
-                               
         # Create new instance
         create_html = """
-    <div class='cloud-instance-create'>
+    <div class='cloud-instance-create fullwidth'>
         <h3>Create a new %(cloud_id)s cloud instance</h3>
         <form class='create_cloud_instance' method='%(form_method)s' action='%(target_op)s.py'>
             <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
             <input type='hidden' name='service' value='%(cloud_id)s' />
             <input type='hidden' name='action' value='create' />
-            Label:
-            <input type='text' name='instance_label' value='' />
-            Image:
-            <select class='styled-select html-select' name='instance_image'>
+            <p class='cloud-instance-input fullwidth'>
+            <label class='halfwidth'>Label:</label>
+            <span class='halfwidth'>
+            <input class='halfwidth padspace' type='text' name='instance_label' value='' />
+            </span>
+            </p>
+            <p class='fullwidth'>
+            <label class='halfwidth'>Image:</label>
+            <span class='halfwidth'>
+            <select class='styled-select html-select halfwidth padspace' name='instance_image'>
             """
         for (image_name, _) in img_list:
             create_html += """<option value='%s'>%s</option>
             """ % (image_name, image_name)
         create_html += """
             </select>
-            <input type='submit' value='Create %(cloud_id)s Instance' />
+            </span>
+            </p>
+            <p class='fullwidth'>
+            <input type='submit' value='Create Instance' />
+            </p>
         </form>
     </div>    
         """
