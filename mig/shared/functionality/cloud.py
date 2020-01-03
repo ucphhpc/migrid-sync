@@ -36,8 +36,8 @@ import os
 import shared.returnvalues as returnvalues
 
 from shared.base import client_id_dir
-from shared.cloud import list_cloud_images, status_of_cloud_instance, \
-     cloud_access_allowed, cloud_edit_actions
+from shared.cloud import check_cloud_available, list_cloud_images, \
+    status_of_cloud_instance, cloud_access_allowed, cloud_edit_actions
 from shared.defaults import csrf_field
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
@@ -79,6 +79,7 @@ def main(client_id, user_arguments_dict):
              'The cloud service is not enabled on the system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    status = returnvalues.OK
     user_map = get_full_user_map(configuration)
     user_dict = user_map.get(client_id, None)
     # Optional limitation of cloud access permission
@@ -116,7 +117,6 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
-
     output_objects.append({'object_type': 'header',
                            'text': 'Select a Cloud Service'})
 
@@ -150,16 +150,6 @@ def main(client_id, user_arguments_dict):
     for service in services:
         cloud_id = service['name']
         cloud_flavor = service.get("flavor", "openstack")
-        (img_status, img_list) = list_cloud_images(
-            configuration, client_id, cloud_id, cloud_flavor)
-        if not img_status or not img_list:
-            logger.error("No valid images found for %s in %s: %s" % \
-                             (client_id, cloud_id, img_list))
-            output_objects.append({
-                    'object_type': 'error_text', 'text':
-                    "No valid instance images for %s" % cloud_id})
-            continue
-
 
         output_objects.append({'object_type': 'html_form',
                                'text': '''
@@ -177,6 +167,31 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'html_form', 'text': '''
         <br/>
         '''})
+
+        if not check_cloud_available(configuration, client_id, cloud_id,
+                                     cloud_flavor):
+            logger.error("Failed to connect to cloud: %s" % cloud_id)
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'The %s cloud service is currently unavailable' % cloud_id})
+            output_objects.append({'object_type': 'html_form', 'text': '''
+        </div>
+            '''})
+            status = returnvalues.SYSTEM_ERROR
+            continue
+
+        (img_status, img_list) = list_cloud_images(
+            configuration, client_id, cloud_id, cloud_flavor)
+        if not img_status or not img_list:
+            logger.error("No valid images found for %s in %s: %s" %
+                         (client_id, cloud_id, img_list))
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                    "No valid instance images for %s" % cloud_id})
+            output_objects.append({'object_type': 'html_form', 'text': '''
+        </div>
+            '''})
+            continue
 
         # Users store a pickled dict of all personal instances per cloud
         cloud_instance_state_path = os.path.join(configuration.user_settings,
@@ -215,7 +230,7 @@ def main(client_id, user_arguments_dict):
             """ % cloud_id})
         for (instance_id, instance_dict) in saved_instances.items():
             instance_label = instance_dict.get('INSTANCE_LABEL', instance_id)
-            logger.debug("Management entries for %s %s cloud instance %s" % \
+            logger.debug("Management entries for %s %s cloud instance %s" %
                          (client_id, cloud_id, instance_id))
             output_objects.append({'object_type': 'html_form', 'text': """
         <div class='manage-cloud-instance fillwidth'>
@@ -232,7 +247,7 @@ def main(client_id, user_arguments_dict):
                     'object_type': 'service',
                     'name': "%s" % title,
                     'targetlink': url
-                    }
+                }
                 output_objects.append(output_service)
             output_objects.append({'object_type': 'html_form', 'text': """
         </span>
@@ -295,9 +310,12 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'html_form', 'text':
                                    delete_html % fill_helpers})
 
+        output_objects.append({'object_type': 'html_form', 'text': '''
+        </div>
+            '''})
+
     output_objects.append({'object_type': 'html_form', 'text': '''
-    </div>
     </div>
     '''})
 
-    return (output_objects, returnvalues.OK)
+    return (output_objects, status)
