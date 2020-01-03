@@ -79,6 +79,8 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
                                                                 instance))
                 available = True
                 break
+            elif 'error' == msg.lower():
+                raise Exception("ERROR status found - giving up")
             else:
                 _logger.debug("wait for %s cloud instance %s: %s" %
                               (cloud_id, instance, msg))
@@ -88,7 +90,6 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
     except Exception, exc:
         _logger.warning("wait available for %s cloud instance %s failed: %s"
                         % (cloud_id, instance, exc))
-        time.sleep(5)
     return available
 
 
@@ -466,7 +467,6 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
             msg = force_utf8("%s" % instance)
             _logger.error("%s failed to create %s cloud instance: %s" %
                           (client_id, instance_id, msg))
-            return (status, msg)
 
         if not __wait_available(configuration, client_id, cloud_id,
                                 cloud_flavor, instance):
@@ -474,6 +474,17 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
             msg = "failed to create %s cloud instance %s" % (cloud_id,
                                                              instance_id)
             _logger.error(msg)
+
+            _logger.info("cleaning up after failed %s cloud instance %s" % \
+                         (cloud_id, instance_id))
+            try:
+                instance = conn.compute.find_server(instance_id)
+                msg = conn.compute.delete_server(instance)
+                if msg:
+                    raise Exception(force_utf8(msg))
+            except Exception, exc:
+                _logger.error("%s failed to clean up %s cloud instance: %s" % \
+                              (client_id, instance_id, exc))
             return (status, msg)
 
         # Create floating IP from public network
@@ -508,7 +519,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
 
 @__require_openstack
 def openstack_delete_cloud_instance(configuration, client_id, cloud_id,
-                                    instance_id):
+                                    instance_id, allow_missing=True):
     """Delete provided cloud instance"""
     cloud_flavor = "openstack"
     _logger = configuration.logger
@@ -521,37 +532,42 @@ def openstack_delete_cloud_instance(configuration, client_id, cloud_id,
     status, msg = True, ''
     try:
         instance = conn.compute.find_server(instance_id)
-        if not instance:
+        if instance:
+            msg = conn.compute.delete_server(instance)
+            if msg:
+                msg = force_utf8(msg)
+                status = False
+                _logger.error("%s failed to delete %s cloud instance: %s" % \
+                              (client_id, instance_id, msg))
+                return (status, msg)
+        
+            if not __wait_gone(configuration, client_id, cloud_id,
+                               cloud_flavor,
+                               instance):
+                msg = "failed to delete %s cloud instance %s" % (cloud_id,
+                                                                 instance_id)
+                status = False
+                _logger.error(msg)
+                return (status, msg)
+
+            removed = conn.delete_unattached_floating_ips(retry=1)
+            if removed < 1:
+                # Possibly failed removal is not critical 
+                _logger.warning("%s failed to free IP for %s cloud instance: %s" % \
+                                (client_id, instance_id, removed))
+            _logger.info("%s deleted cloud %s instance %s" % \
+                         (client_id, cloud_id, instance_id))
+        elif allow_missing:
+            # Silently accept local delete if instance is already gone
+            msg = "deleted reference to missing %s cloud instance %s" % \
+                  (cloud_id, instance_id)
+            _logger.info("%s %s" % (client_id, msg))
+        else:
             status = False
             msg = "failed to locate %s cloud instance %s" % \
                   (cloud_id, instance_id)
             _logger.error("%s failed to locate %s cloud instance %s" %
                           (client_id, cloud_id, instance_id))
-            return (status, msg)
-        msg = conn.compute.delete_server(instance)
-        if msg:
-            msg = force_utf8(msg)
-            status = False
-            _logger.error("%s failed to delete %s cloud instance: %s" %
-                          (client_id, instance_id, msg))
-            return (status, msg)
-
-        if not __wait_gone(configuration, client_id, cloud_id, cloud_flavor,
-                           instance):
-            msg = "failed to delete %s cloud instance %s" % (cloud_id,
-                                                             instance_id)
-            status = False
-            _logger.error(msg)
-            return (status, msg)
-
-        removed = conn.delete_unattached_floating_ips(retry=1)
-        if removed < 1:
-            # Possibly failed removal is not critical
-            _logger.warning("%s failed to free IP for %s cloud instance: %s" %
-                            (client_id, instance_id, removed))
-
-        _logger.info("%s deleted cloud %s instance %s" %
-                     (client_id, cloud_id, instance_id))
     except Exception, exc:
         status = False
         msg = "instance deletion failed!"
