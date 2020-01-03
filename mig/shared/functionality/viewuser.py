@@ -55,7 +55,8 @@ def signature():
 
 def inline_image(configuration, path):
     """Create inline image base64 string from file in path"""
-    data = 'data:image/%s;base64,' % os.path.splitext(path)[1].strip('.')
+    mime_type = os.path.splitext(path)[1].strip('.')
+    data = 'data:image/%s;base64,' % mime_type
     try:
         img_fd = open(path)
         img_data = img_fd.read()
@@ -85,22 +86,18 @@ def build_useritem_object_from_user_dict(configuration, client_id,
         show_user_id = visible_user_id
     user_item['fields'].append(('Public user ID', show_user_id))
 
-    user_image = True
     public_image = user_dict[CONF].get('PUBLIC_IMAGE', [])
     public_image = [rel_path for rel_path in public_image if
                     os.path.exists(os.path.join(user_home, rel_path))]
-    if not public_image:
-        user_image = False
-        public_image = ['/images/anonymous.svg']
 
     img_html = '<div class="public_image">'
+    if not public_image:
+        img_html += '<span class="anonymous-profile-img"></span>'
     for rel_path in public_image:
-        if user_image:
-            img_path = os.path.join(user_home, rel_path)
-            img_data = inline_image(configuration, img_path)
-        else:
-            img_data = rel_path
-        img_html += '<img alt="portrait" class="profile-img" src="%s">' % img_data
+        img_path = os.path.join(user_home, rel_path)
+        img_data = inline_image(configuration, img_path)
+        img_html += '<img alt="portrait" class="profile-img" src="%s">' % \
+                    img_data
     img_html += '</div>'
     public_profile = user_dict[CONF].get('PUBLIC_PROFILE', [])
     if not public_profile:

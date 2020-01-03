@@ -804,6 +804,29 @@ background: url(/images/icons/code.png) left center no-repeat;
     display: inline;
 }
 
+/* Manager with table and pager */
+.pager span.pager-nav-wrap.icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+}
+.pager span.refresh.icon {
+    background: url(/images/icons/arrow_refresh.png) center center no-repeat;
+}
+.pager span.first.icon {
+    background: url(/images/icons/arrow_first.png) center center no-repeat;
+}
+.pager span.prev.icon {
+    background: url(/images/icons/arrow_left.png) center center no-repeat;
+}
+.pager span.next.icon {
+    background: url(/images/icons/arrow_right.png) center center no-repeat;
+}
+.pager span.last.icon {
+    background: url(/images/icons/arrow_last.png) center center no-repeat;
+}
+
+
 /* use similar colors in tabs as in navmenu */
 /*
 .vm-tabs li.ui-state-default { 
@@ -967,7 +990,9 @@ background: url(/images/icons/code.png) left center no-repeat;
 /* V2 Apps */
 /* Home with app grid */
 .app-grid {
-    /* Override in skins */
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: repeat(auto-fill, 150px);
 }
 .app-grid .app__btn, .app-grid .add-app__btn {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
@@ -981,6 +1006,7 @@ background: url(/images/icons/code.png) left center no-repeat;
     background-color: #FFF;
     border-color: #444;
     border-radius: 4px;
+    height: 150px;
 }
 .app-grid > *:hover, .app-grid > *:hover a {
     background-color: #444;
@@ -990,4 +1016,41 @@ background: url(/images/icons/code.png) left center no-repeat;
 .app-grid h3 {
     /* Make sure icon and title fits on app buttons */
     font-size: 12px;
+}
+/* Expand add-app boxes without link and make room for checkbox */
+.app-grid .app__btn.mandatory {
+    padding-top: 56px;
+    padding-bottom: 50px;
+}
+.app-grid .app__btn.optional {
+    padding-top: 34px;
+    padding-bottom: 50px;
+}
+.app-grid span.fas {
+    display: inline-block;
+    vertical-align: middle;
+    background-size: 16px 16px;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 20px;
+    width: 20px;
+}
+.app-grid a {
+    text-decoration: none;
+    display: block;
+    height: 100px;
+    width: auto;
+    padding-top: 50px;
+}
+.app-grid h3 {
+    display: inline-block;
+    border: 0;
+    vertical-align: middle;
+}
+
+/* Cloud button grid layout */
+.manage-cloud-instance, .cloud-instance-input {
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: repeat(auto-fill, 48%);
 }

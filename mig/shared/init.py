@@ -143,7 +143,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
                     profile_image = os.path.join(configuration.site_user_redirect,
                                                  profile_image_list[-1])
                 else:
-                    profile_image = '%s/anonymous.svg' % configuration.site_images
+                    profile_image = ''
                 user_profile['full_name'] = full_name
                 user_profile['profile_image'] = profile_image
                 title['user_profile'] = user_profile

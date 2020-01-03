@@ -29,6 +29,12 @@
 
 /* ERDA UCPH Science skin style sheet for UI V2 only */
 
+/* Global Web Elements */
+.global-container {
+    /* Adjust content to fit frameless nav menu */
+    padding-top: 10px;
+}
+
 /* Hide touchscreen toggle now we have toolbox button on all entries */
 #fm_toggle_touchscreen, #fm_touchscreen_label {
     display: none;
@@ -36,52 +42,15 @@
 
 
 /* Home with app grid */
-.app-grid {
-    display: grid;
-    grid-gap: 10px;
-    grid-template-columns: repeat(auto-fill, 150px);
-}
-/* Expand add-app boxes without link and make room for checkbox */
-.app-grid .app__btn.mandatory {
-    padding-top: 56px;
-    padding-bottom: 50px;
-}
-.app-grid .app__btn.optional {
-    padding-top: 34px;
-    padding-bottom: 50px;
-}
 .app-grid > *, .app-grid > * a  {
     color: #46743C;
     background-color: #FFF;
     border-color: #46743C;
-    height: 150px;
 }
 .app-grid > *:hover, .app-grid > *:hover a {
     background-color: #46743C;
     color: #FFF;
 }
-.app-grid span.fas {
-    display: inline-block;
-    vertical-align: middle;
-    background-size: 16px 16px;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 20px;
-    width: 20px;
-}
-.app-grid a {
-    text-decoration: none;
-    display: block;
-    height: 100px;
-    width: auto;
-    padding-top: 50px;
-}
-.app-grid h3 {
-    display: inline-block;
-    border: 0;
-    vertical-align: middle;
-}
-
 .app-grid .app__btn, .app-grid .add-app__btn {
     background-color: #46743C;
     color: #FFF;

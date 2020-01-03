@@ -279,6 +279,14 @@ input:checked + .slider:before {
     margin: 0;
 }
 
+/* Override breadcrumbs user home icon and make sure folding does not truncate it */
+#fm_xbreadcrumbs .userhome {
+    min-width: 20px; 
+    min-height: 20px; 
+    background: url(/images/icons/folder_open_user.svg) left top no-repeat;
+    background-size: 16px 16px; 
+}
+
 .xbreadcrumbs LI {
     padding: 0 4px;
 }
@@ -318,9 +326,6 @@ input:checked + .slider:before {
     padding: 10px 0;
     min-height: 50px;
 }
-
-/* Override bradcrumbs user home icon and make folding does not truncate it */
-#fm_xbreadcrumbs .userhome { min-width: 20px; min-height: 20px; background: url(/images/icons/folder_open_user.svg) left top no-repeat; background-size: 16px 16px; }
 
 .xbreadcrumbs {
     background-color: #FFF;
@@ -1174,7 +1179,6 @@ background: url(/images/icons/compress.png) left center no-repeat;
     background-size: 18px 18px;
     background-position: left center;
 }
-/* TODO: make first and last versions of arrow svg icons (fast-forward / rewind) */
 .firstlink {
     background: url('/images/icons/arrow_first.svg') no-repeat;
     padding-left: 18px;
@@ -1320,9 +1324,47 @@ body.openid #migheader {
     display: block;
 }
 
-/**/
-
+/* VGrid and resource pages*/
 .adminlink {
     background: url('/images/icons/wrench.svg') no-repeat;
     padding-left: 18px;
 }
+
+/* View user page */
+.anonymous-profile-img {
+    background: url(/images/icons/anonymous.svg) center center no-repeat;
+    width: 200px;
+    height: 200px;
+    display: block;
+}
+
+/* User menu */
+.anonymous.avatar-image {
+    background: url(/images/icons/anonymous.svg) center center no-repeat;
+    width: 40px;
+    height: 40px;
+    display: block;
+}
+
+/* Manager with table and pager */
+.pager span.pager-nav-wrap.icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+}
+.pager span.refresh.icon {
+    background: url(/images/icons/arrow_refresh.svg) center center no-repeat;
+}
+.pager span.first.icon {
+    background: url(/images/icons/arrow_first.svg) center center no-repeat;
+}
+.pager span.prev.icon {
+    background: url(/images/icons/arrow_left.svg) center center no-repeat;
+}
+.pager span.next.icon {
+    background: url(/images/icons/arrow_right.svg) center center no-repeat;
+}
+.pager span.last.icon {
+    background: url(/images/icons/arrow_last.svg) center center no-repeat;
+}
+

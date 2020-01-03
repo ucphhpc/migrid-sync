@@ -350,6 +350,76 @@ a {
     background-color: #46743C;
 }
 
+/*CUSTOM ICON FA (JUPYTER)*/
+.fa-jupyter {
+    background: url(/images/icons/jupyter_icon_46743c.svg) center center no-repeat; 
+}
+
+.app__btn .fa-jupyter:hover {
+    background: url(/images/icons/jupyter_icon_white_46743c.svg) center center no-repeat;
+}
+
+.app__btn:hover .fa-jupyter {
+    background: url(/images/icons/jupyter_icon_white_46743c.svg) center center no-repeat;
+}
+
+
+/*CUSTOM ICON FA (DATATRANSFER)*/
+.fa-datatransfer {
+    background: url(/images/icons/datatransfer_icon_46743c.svg) center center no-repeat; 
+}
+
+.app__btn .fa-datatransfer:hover {
+    background: url(/images/icons/datatransfer_icon_white_46743c.svg) center center no-repeat;
+}
+
+.app__btn:hover .fa-datatransfer {
+    background: url(/images/icons/datatransfer_icon_white_46743c.svg) center center no-repeat;
+}
+
+
+/*CUSTOM ICON FA (SEAFILE)*/
+.fa-seafile {
+    background: url(/images/icons/seafile_46743c.svg) center center no-repeat; 
+}
+
+.app__btn .fa-seafile:hover {
+    background: url(/images/icons/seafile_icon_white_46743c.svg) center center no-repeat;
+}
+
+.app__btn:hover .fa-seafile {
+    background: url(/images/icons/seafile_icon_white_46743c.svg) center center no-repeat;
+}
+
+
+/* View user page */
+.anonymous-profile-img {
+    background: url(/images/icons/anonymous_46743c.svg) center center no-repeat;
+}
+
+/* User menu */
+.anonymous.avatar-image {
+    background: url(/images/icons/anonymous_46743c.svg) center center no-repeat;
+}
+
+/* Pages with table and pager */
+.pager span.refresh.icon {
+    background: url(/images/icons/arrow_refresh_46743c.svg) center center no-repeat;
+}
+.pager span.first.icon {
+    background: url(/images/icons/arrow_first_46743c.svg) center center no-repeat;
+}
+.pager span.prev.icon {
+    background: url(/images/icons/arrow_left_46743c.svg) center center no-repeat;
+}
+.pager span.next.icon {
+    background: url(/images/icons/arrow_right_46743c.svg) center center no-repeat;
+}
+.pager span.last.icon {
+    background: url(/images/icons/arrow_last_46743c.svg) center center no-repeat;
+}
+
+
 #fancyfileupload .ui-progressbar {
     border: 1px solid #46743C;
     border-radius: 4px;
@@ -382,6 +452,11 @@ a {
 
 .tree-row {
     margin: 0;
+}
+
+/* Override breadcrumbs user home icon */
+#fm_xbreadcrumbs .userhome {
+    background: url(/images/icons/folder_open_user_46743c.svg) left top no-repeat;
 }
 
 .xbreadcrumbs LI {
@@ -423,9 +498,6 @@ a {
     padding: 10px 0;
     min-height: 50px;
 }
-
-/* Override bradcrumbs user home icon and make sure folding does not truncate it */
-#fm_xbreadcrumbs .userhome { min-width: 20px; min-height: 20px; background: url(/images/icons/folder_open_user.svg) left top no-repeat; background-size: 16px 16px; }
 
 .xbreadcrumbs {
     background-color: #FFF;
@@ -562,18 +634,128 @@ a {
 }
 
 .fm_buttonbar li.parentdirbutton {
-    background-image: url('/images/icons/arrow_up.svg');
+    background-image: url('/images/icons/arrow_up_46743c.svg');
 }
 .fm_buttonbar li.refreshbutton {
-    background-image: url('/images/icons/arrow_refresh.svg');
+    background-image: url('/images/icons/arrow_refresh_46743c.svg');
 }
 .fm_buttonbar li.datatransfersbutton {
-    background-image: url('/images/icons/table_refresh.svg');
+    background-image: url('/images/icons/table_refresh_46743c.svg');
 }
 .fm_buttonbar li.sharelinksbutton {
-    background-image: url('/images/icons/table_link.svg');
+    background-image: url('/images/icons/table_link_46743c.svg');
     padding: 1pxs;
 }
+
+.file.icon { background: url(/images/icons/file_46743c.svg) left center no-repeat; }
+.fileicon { background: url(/images/icons/file_46743c.svg) left center no-repeat; background-size: 16px 16px;}
+
+
+/*files icons png, zip, etc.*/
+.ext_zip { background: url(/images/icons/zip_46743c.svg) left center no-repeat; background-size: 16px 16px;}
+
+.ext_htm, .ext_html { background: url(/images/icons/html_46743c.svg) left center no-repeat; background-size: 16px 16px;}
+.ext_pdf { background: url(/images/icons/pdf_46743c.svg) left center no-repeat; }
+.ext_psd { background: url(/images/icons/psd_46743c.svg) left center no-repeat; }
+
+/* override folder icon for user home and vgrid folders */
+.directoryicon { background: url(/images/icons/folder_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+.directory.icon { background: url(/images/icons/folder_46743c.svg) left top no-repeat; background-size: 16px 16px;  }
+.expanded {background: url(/images/icons/folder_open_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.rmdir.icon { background: url(/images/icons/folder_delete_46743c.svg) left center no-repeat; background-size: 16px 16px; }
+
+.vgridshared { background: url(/images/icons/folder_link_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.vgridshared { background: url(/images/icons/folder_open_link_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.trashbin { background: url(/images/icons/trash_closed_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.trashbin { background: url(/images/icons/trash_open_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.userhome { background: url(/images/icons/folder_user_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.userhome { background: url(/images/icons/folder_open_user_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.vgridprivateweb { background: url(/images/icons/folder_key_46743c.svg) left top no-repeat; background-size: 16px 16px;}
+.expanded.vgridprivateweb {background: url(/images/icons/folder_open_key_46743c.svg) left top no-repeat;}
+
+.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff  { 
+    background: url(/images/icons/picture_46743c.svg) left center no-repeat; background-size: 16px 16px; }
+
+.upload.icon { background: url(/images/icons/page_white_get_46743c.svg) left center no-repeat; background-size: 16px 16px; }
+.rm.icon { background: url(/images/icons/page_white_delete_46743c.svg) left center no-repeat; background-size: 16px 16px; }
+
+.expanded.vgridpublicweb { background: url(/images/icons/folder_open_table_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.error {background-image: url('/images/icons/exclamation_46743c.svg');}
+.info { background-image: url('/images/icons/information_46743c.svg');}
+.ok {
+    background-image: url('/images/icons/accept_46743c.svg');
+}
+.urllink {
+    background: url('/images/icons/html_46743c.svg') no-repeat; 
+}
+.infolink {
+    background: url('/images/icons/information_46743c.svg') no-repeat; 
+}
+.sendemaillink {
+    background: url(/images/icons/email_protocol_46743c.svg) no-repeat;
+}
+
+
+.editlink {
+    background: url('/images/icons/page_edit_46743c.svg') no-repeat; 
+}
+.sharedfolderlink {
+    background: url('/images/icons/folder_link_46743c.svg') no-repeat;
+}
+
+.adminlink {
+    background: url('/images/icons/wrench_46743c.svg') no-repeat;
+}
+
+.addlink {
+    background: url('/images/icons/add_46743c.svg') no-repeat; 
+}
+.addadminlink {
+    background: url('/images/icons/cog_add_46743c.svg') no-repeat;
+}
+
+.additemlink {
+  background: url('/images/icons/page_white_add_46743c.svg') no-repeat;
+  }
+
+.removelink {
+    background: url('/images/icons/delete_46743c.svg') no-repeat;
+}
+.removeadminlink {
+    background: url('/images/icons/cog_delete_46743c.svg') no-repeat;
+}
+
+.removeitemlink {
+  background: url('/images/icons/page_white_delete_46743c.svg') no-repeat;
+  }
+
+.previouslink {
+    background: url('/images/icons/arrow_left_46743c.svg') no-repeat;
+}
+.nextlink {
+    background: url('/images/icons/arrow_right_46743c.svg') no-repeat;
+}
+.firstlink {
+    background: url('/images/icons/arrow_first_46743c.svg') no-repeat;
+}
+.lastlink {
+    background: url('/images/icons/arrow_last_46743c.svg') no-repeat;
+}
+
+
+.seafilelink {
+    background: url('/images/icons/seafile_46743c.svg') no-repeat;
+}
+
+.adminlink {
+    background: url('/images/icons/wrench_46743c.svg') no-repeat;
+}
+
 
 /* FILE MANAGER POP-UP*/
 #fm_filemanager .ui-widget-content a {

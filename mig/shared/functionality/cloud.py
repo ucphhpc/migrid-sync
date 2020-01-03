@@ -200,17 +200,17 @@ def main(client_id, user_arguments_dict):
 
         # TODO: halfwidth styling does not really work on select elements
         delete_html += """
-    <div class='cloud-instance-delete fullwidth'>
+    <div class='cloud-instance-delete fillwidth'>
         <h3>Permanently delete a %(cloud_id)s cloud instance</h3>
         <form class='delete-cloud-instance' target='#'>
-            <p class='fullwidth'>
+            <p class='cloud-instance-input fillwidth'>
             <label class='fieldlabel halfwidth'>Instance</label>
             <span class='halfwidth'>
             <select id='select-instance-id' class='styled-select html-select halfwidth padspace' name='instance_id'>
             """
 
         output_objects.append({'object_type': 'html_form', 'text': """
-        <div class='cloud-management fullwidth'>
+        <div class='cloud-management fillwidth'>
         <h3>Manage %s instances</h3>
             """ % cloud_id})
         for (instance_id, instance_dict) in saved_instances.items():
@@ -218,7 +218,7 @@ def main(client_id, user_arguments_dict):
             logger.debug("Management entries for %s %s cloud instance %s" % \
                          (client_id, cloud_id, instance_id))
             output_objects.append({'object_type': 'html_form', 'text': """
-        <div class='manage-cloud-instance fullwidth'>
+        <div class='manage-cloud-instance fillwidth'>
         <label class='fieldlabel halfwidth'>%s</label>
         <span class='instance-actions halfwidth'>
             """ % instance_label})
@@ -249,7 +249,7 @@ def main(client_id, user_arguments_dict):
             </select>
             </span>
             </p>
-            <p class='fullwidth'>
+            <p class='fillwidth'>
             <input type='submit' value='Delete Instance' onClick='javascript:confirmDialog(%(target_op)s, \"Really permanently delete instance?\", undefined, {instance_id: get_instance_id()}); return false;' />
             </p>
         </form>
@@ -258,19 +258,19 @@ def main(client_id, user_arguments_dict):
 
         # Create new instance
         create_html = """
-    <div class='cloud-instance-create fullwidth'>
+    <div class='cloud-instance-create fillwidth'>
         <h3>Create a new %(cloud_id)s cloud instance</h3>
         <form class='create_cloud_instance' method='%(form_method)s' action='%(target_op)s.py'>
             <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
             <input type='hidden' name='service' value='%(cloud_id)s' />
             <input type='hidden' name='action' value='create' />
-            <p class='cloud-instance-input fullwidth'>
+            <p class='cloud-instance-input fillwidth'>
             <label class='fieldlabel halfwidth'>Label</label>
             <span class='halfwidth'>
             <input class='halfwidth padspace' type='text' name='instance_label' value='' />
             </span>
             </p>
-            <p class='fullwidth'>
+            <p class='cloud-instance-input fillwidth'>
             <label class='fieldlabel halfwidth'>Image</label>
             <span class='halfwidth'>
             <select class='styled-select html-select halfwidth padspace' name='instance_image'>
@@ -282,7 +282,7 @@ def main(client_id, user_arguments_dict):
             </select>
             </span>
             </p>
-            <p class='fullwidth'>
+            <p class='fillwidth'>
             <input type='submit' value='Create Instance' />
             </p>
         </form>

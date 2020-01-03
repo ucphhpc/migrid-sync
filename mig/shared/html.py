@@ -641,12 +641,13 @@ def tablesorter_pager(configuration, id_prefix='', entry_name='files',
       <form style="display: inline;" action="">
 %s
 ''' % (id_prefix, form_prepend)
+    # NOTE: UI V3 and V2 assign icons in CSS
     toolbar += '''
-        <img class="first icon" alt="first" src="/images/icons/arrow_first.svg"/>
-        <img class="prev icon" alt="prev" src="/images/icons/arrow_left.svg"/>
+        <span class="pager-nav-wrap first icon"></span>
+        <span class="pager-nav-wrap prev icon"></span>
         <input class="pagedisplay" type="text" size=15 readonly="readonly" />
-        <img class="next icon" alt="next" src="/images/icons/arrow_right.svg"/>
-        <img class="last icon" alt="last" src="/images/icons/arrow_last.svg"/>
+        <span class="pager-nav-wrap next icon"></span>        
+        <span class="pager-nav-wrap last icon"></span>        
         <select class="pagesize pager-select styled-select html-select">
 '''
     for value in page_entries:
@@ -661,9 +662,8 @@ def tablesorter_pager(configuration, id_prefix='', entry_name='files',
 ''' % form_append
     if enable_refresh_button:
         refresh_button = '''
-            <img class="pagerrefresh icon" alt="refresh" src="/images/icons/arrow_refresh.svg"
-                title="Refresh" />
-                '''
+            <span class="pager-nav-wrap refresh icon" title="Refresh"></span>
+        '''
     else:
         refresh_button = ""
     toolbar += '''
@@ -1799,10 +1799,18 @@ def get_xgi_html_header(
                 ''' % menu_helpers
 
                 profile_helper = {'full_name': 'Unknown User',
-                                  'profile_image': '/images/anonymous.svg',
+                                  'profile_image': '',
                                   'email_address': '',
                                   'help_url': configuration.site_external_doc}
                 profile_helper.update(user_profile)
+                if profile_helper['profile_image']:
+                    profile_helper['avatar_image'] = '''
+                    <img class="avatar-image" src="%(profile_image)s" alt="profile picture" />
+                    '''
+                else:
+                    profile_helper['avatar_image'] = '''
+                    <span class="avatar-image anonymous"></span>
+                    '''
                 account_menu = '''
 <!--USER ACCOUNT MENU POPUP - HIDDEN-->
 <div id="userMenu" class="popup-container row">
@@ -1810,7 +1818,7 @@ def get_xgi_html_header(
         <div class="row">
             <div class="col-3">
                 <div class="user-avatar">
-                    <img class="avatar-image" src="%(profile_image)s" alt="profile picture" />
+                %(avatar_image)s
                 </div>
             </div>
             <div class="col-9">

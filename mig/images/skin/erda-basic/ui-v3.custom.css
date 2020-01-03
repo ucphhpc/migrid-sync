@@ -414,9 +414,6 @@ a {
     min-height: 50px;
 }
 
-/* Override bradcrumbs user home icon and make sure folding does not truncate it */
-#fm_xbreadcrumbs .userhome { min-width: 20px; min-height: 20px; background: url(/images/icons/folder_open_user.svg) left top no-repeat; background-size: 16px 16px; }
-
 .xbreadcrumbs {
     background-color: #FFF;
 }
@@ -551,19 +548,6 @@ a {
     border: none;
 }
 
-.fm_buttonbar li.parentdirbutton {
-    background-image: url('/images/icons/arrow_up.svg');
-}
-.fm_buttonbar li.refreshbutton {
-    background-image: url('/images/icons/arrow_refresh.svg');
-}
-.fm_buttonbar li.datatransfersbutton {
-    background-image: url('/images/icons/table_refresh.svg');
-}
-.fm_buttonbar li.sharelinksbutton {
-    background-image: url('/images/icons/table_link.svg');
-    padding: 1pxs;
-}
 
 /* FILE MANAGER POP-UP*/
 #fm_filemanager .ui-widget-content a {
