@@ -1806,7 +1806,7 @@ def get_xgi_html_header(
                 if profile_helper['profile_image']:
                     profile_helper['avatar_image'] = '''
                     <img class="avatar-image" src="%(profile_image)s" alt="profile picture" />
-                    '''
+                    ''' % profile_helper
                 else:
                     profile_helper['avatar_image'] = '''
                     <span class="avatar-image anonymous"></span>
