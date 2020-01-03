@@ -355,26 +355,10 @@ a {
     background: url(/images/icons/jupyter_icon_46743c.svg) center center no-repeat; 
 }
 
-.app__btn .fa-jupyter:hover {
-    background: url(/images/icons/jupyter_icon_white_46743c.svg) center center no-repeat;
-}
-
-.app__btn:hover .fa-jupyter {
-    background: url(/images/icons/jupyter_icon_white_46743c.svg) center center no-repeat;
-}
-
 
 /*CUSTOM ICON FA (DATATRANSFER)*/
 .fa-datatransfer {
     background: url(/images/icons/datatransfer_icon_46743c.svg) center center no-repeat; 
-}
-
-.app__btn .fa-datatransfer:hover {
-    background: url(/images/icons/datatransfer_icon_white_46743c.svg) center center no-repeat;
-}
-
-.app__btn:hover .fa-datatransfer {
-    background: url(/images/icons/datatransfer_icon_white_46743c.svg) center center no-repeat;
 }
 
 
