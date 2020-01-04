@@ -149,7 +149,7 @@ def main(client_id, user_arguments_dict):
                    ('delete', 'Delete')]
     for service in services:
         cloud_id = service['name']
-        cloud_flavor = service.get("flavor", "openstack")
+        cloud_flavor = service.get("service_provider_flavor", "openstack")
 
         output_objects.append({'object_type': 'html_form',
                                'text': '''

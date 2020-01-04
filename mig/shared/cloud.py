@@ -68,7 +68,6 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
     """Wait for instance to be truly available after create"""
     # TODO: lookup the openstack client V3 version of the utils.wait_for_X
     _logger = configuration.logger
-    available = False
     try:
         for i in xrange(__max_wait_secs / __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
@@ -77,8 +76,7 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
             if 'active' == msg.lower():
                 _logger.info("%s cloud instance %s is ready" % (cloud_id,
                                                                 instance))
-                available = True
-                break
+                return True
             elif 'error' == msg.lower():
                 raise Exception("ERROR status found - giving up")
             else:
@@ -90,13 +88,12 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
     except Exception, exc:
         _logger.warning("wait available for %s cloud instance %s failed: %s"
                         % (cloud_id, instance, exc))
-    return available
+    return False
 
 
 def __wait_gone(configuration, client_id, cloud_id, cloud_flavor, instance):
     """Wait for instance to be truly gone after delete"""
     _logger = configuration.logger
-    gone = False
     try:
         for i in xrange(__max_wait_secs / __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
@@ -105,16 +102,14 @@ def __wait_gone(configuration, client_id, cloud_id, cloud_flavor, instance):
             if not status:
                 _logger.info("%s cloud instance %s is gone" % (cloud_id,
                                                                instance))
-                gone = True
-                break
+                return True
             time.sleep(__poll_delay_secs)
         _logger.warning("gave up waiting for %s instance %s disappearing" %
                         (cloud_id, instance))
     except Exception, exc:
         _logger.warning("wait gone for %s cloud instance %s failed: %s" %
                         (cloud_id, instance, exc))
-        time.sleep(5)
-    return gone
+    return False
 
 
 @__require_openstack
@@ -428,17 +423,31 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
 
     status, msg = True, ''
 
-    # TODO: move to args or conf
+    # We read defaults from configuration service section
+    service = {}
+    for service_spec in configuration.cloud_services:
+        if service_spec['service_name'] == cloud_id:
+            service = service_spec
+            break
+    # Default key if user doesn't give one
+    key_id = service.get("service_key_id", "UNKNOWN")
+    # The rest are likely needed for creation to succeed
+    flavor_id = service.get("service_flavor_id", "UNKNOWN")
+    network_id = service.get("service_network_id", "UNKNOWN")
+    sec_group_id = service.get("service_sec_group_id", "UNKNOWN")
+    floating_network_id = service.get("service_floating_network_id",
+                                      "UNKNOWN")
+    availability_zone = service.get("service_availability_zone",
+                                    "UNKNOWN")
+    mandatory_settings = [flavor_id, network_id, sec_group_id,
+                          floating_network_id, availability_zone]
 
-    flavor_id = '176b73c9-1644-46c6-9c64-90bd73e92492'
-    network_id = 'b562785d-5286-4c3d-a834-13ab427af920'
-    key_id = 'erda-keypair'
-    sec_group_id = '3ed57f38-7f2d-4541-8241-849377f495bd'
-    floating_network_id = 'ecee5c29-037a-4225-a2df-6412674e8fb5'
-    availability_zone = 'NFS'
-
-    public_network = "130.225.104.0/24"
-
+    if "UNKNOWN" in mandatory_settings:
+        _logger.warning("Found unknown mandatory cloud service setting(s): %s"
+                        % mandatory_settings)
+        _logger.warning("%s create %s cloud instance %s will likely fail" % \
+                        (client_id, cloud_id, instance_id))
+        
     if auth_keys:
         openstack_register_cloud_keys(configuration, client_id, cloud_id,
                                       auth_keys)
