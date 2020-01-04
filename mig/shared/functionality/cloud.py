@@ -37,7 +37,7 @@ import shared.returnvalues as returnvalues
 
 from shared.base import client_id_dir
 from shared.cloud import check_cloud_available, list_cloud_images, \
-    status_of_cloud_instance, cloud_access_allowed, cloud_edit_actions
+     status_all_cloud_instances, cloud_access_allowed, cloud_edit_actions
 from shared.defaults import csrf_field
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
@@ -205,6 +205,11 @@ def main(client_id, user_arguments_dict):
         if not saved_instances:
             saved_instances = {}
 
+        instance_fields = ['status']
+        status_map = status_all_cloud_instances(
+            configuration, client_id, cloud_id, cloud_flavor,
+            saved_instances.keys(), instance_fields)
+
         # Delete instance form helper
         helper = html_post_helper(target_op, '%s.py' % target_op,
                                   {'instance_id': '__DYNAMIC__',
@@ -221,8 +226,10 @@ def main(client_id, user_arguments_dict):
             <p class='cloud-instance-input fillwidth'>
             <label class='fieldlabel halfwidth'>Instance</label>
             <span class='halfwidth'>
-            <select id='select-instance-id' class='styled-select html-select halfwidth padspace' name='instance_id'>
-            """
+            <select id='select-instance-id'
+            class='styled-select html-select halfwidth padspace'
+            name='instance_id'>
+        """
 
         output_objects.append({'object_type': 'html_form', 'text': """
         <div class='cloud-management fillwidth'>
@@ -232,11 +239,20 @@ def main(client_id, user_arguments_dict):
             instance_label = instance_dict.get('INSTANCE_LABEL', instance_id)
             logger.debug("Management entries for %s %s cloud instance %s" %
                          (client_id, cloud_id, instance_id))
-            output_objects.append({'object_type': 'html_form', 'text': """
-        <div class='manage-cloud-instance fillwidth'>
-        <label class='fieldlabel halfwidth'>%s</label>
-        <span class='instance-actions halfwidth'>
-            """ % instance_label})
+            instance_html = """
+        <div class='cloud-instance-grid'>
+        <label class='fieldlabel'>%s</label>
+        <span class='instance-status'>
+            """ % instance_label
+            for field in instance_fields:
+                instance_html += """
+            <span class='fieldstatus entry'>%s</span>
+            """ % status_map[instance_id].get(field, "-")
+            instance_html += """
+        </span>
+        <span class='instance-actions'>
+            """
+            output_objects.append({'object_type': 'html_form', 'text': instance_html})
             for (action, title) in action_list:
                 if action in cloud_edit_actions:
                     continue

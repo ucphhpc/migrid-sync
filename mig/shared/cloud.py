@@ -315,11 +315,55 @@ def openstack_status_of_cloud_instance(configuration, client_id, cloud_id,
         _logger.error("%s failed status for %s cloud instance: %s" %
                       (client_id, instance_id, exc))
     return (status, msg)
-    # _logger.info("%s status of cloud %s instance %s: %s (%s)" % \
-    #                 (client_id, cloud_id, instance_id, instance, dir(instance)))
-    # _logger.info("%s status of cloud %s instance %s: %s" % \
-    #                 (client_id, cloud_id, instance_id, instance.status))
-    # return (status, instance.status)
+
+
+@__require_openstack
+def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
+                                         instance_id_list, fields):
+    """Find requested status fields for all specified user cloud instances"""
+    cloud_flavor = "openstack"
+    _logger = configuration.logger
+    _logger.info("status all %s cloud instances %s for %s" %
+                 (cloud_id, ', '.join(instance_id_list), client_id))
+    err_dict = {'success': False, 'msg': 'cloud status failed!'}
+    err_dict.update(dict([(i, "UNKNOWN") for i in fields]))
+    instance_map = {}
+    # Init to error and override with actual values (needs by-value copy)
+    status_dict = dict([(i, err_dict.copy()) for i in instance_id_list])
+    conn = openstack_cloud_connect(configuration, cloud_id)
+    if conn is None:
+        return status_dict
+
+    try:
+        # Extract corresponding cloud status objects
+        for server in conn.compute.servers():
+            instance_id = force_utf8(server.name)
+            if instance_id in instance_id_list:
+                instance_map[instance_id] = server
+
+        for instance_id in instance_id_list:
+            instance = instance_map.get(instance_id, None)
+            if not instance:
+                status = False
+                msg = "failed to locate %s cloud instance %s" % \
+                      (cloud_id, instance_id)
+                _logger.error("%s failed to locate %s cloud instance %s: %s" %
+                              (client_id, cloud_id, instance_id, msg))
+                status_dict[instance_id]['msg'] = msg
+                continue
+            for name in fields:
+                status_dict[instance_id][name] = force_utf8(
+                    getattr(instance, name, "UNKNOWN"))
+                status_dict[instance_id]['success'] = True
+                status_dict[instance_id]['msg'] = ''
+    
+        _logger.debug("%s status all for cloud %s instances %s: %s" %
+                      (client_id, cloud_id, ', '.join(instance_id_list),
+                       status_dict))
+    except Exception, exc:
+        _logger.error("%s failed status all for %s cloud: %s" %
+                      (client_id, cloud_id, exc))
+    return status_dict
 
 
 @__require_openstack
@@ -599,6 +643,7 @@ def __get_cloud_helper(configuration, cloud_flavor, operation):
                 "restart_cloud_instance": openstack_restart_cloud_instance,
                 "status_of_cloud_instance": openstack_status_of_cloud_instance,
                 "stop_cloud_instance": openstack_stop_cloud_instance,
+                "status_all_cloud_instances": openstack_status_all_cloud_instances,
                 "update_cloud_instance_keys": openstack_update_cloud_instance_keys,
                 "create_cloud_instance": openstack_create_cloud_instance,
                 "delete_cloud_instance": openstack_delete_cloud_instance,
@@ -684,6 +729,17 @@ def status_of_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
     return helper(configuration, client_id, cloud_id, instance_id)
 
 
+def status_all_cloud_instances(configuration, client_id, cloud_id, cloud_flavor,
+                             instance_id_list, fields=['status']):
+    """Status of all provided cloud instances"""
+    _logger = configuration.logger
+    _logger.info("status all %s cloud instances %s for %s" %
+                 (cloud_id, ', '.join(instance_id_list), client_id))
+    helper = __get_cloud_helper(configuration, cloud_flavor,
+                                "status_all_cloud_instances")
+    return helper(configuration, client_id, cloud_id, instance_id_list, fields)
+
+
 def update_cloud_instance_keys(configuration, client_id, cloud_id,
                                cloud_flavor, instance_id, auth_keys):
     """Update ssh keys for cloud instance"""
@@ -755,6 +811,8 @@ if __name__ == "__main__":
         time.sleep(5)
     print status_of_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
                                    instance_id)
+    print status_all_cloud_instances(conf, client_id, cloud_id, cloud_flavor,
+                                   [instance_id])
     print update_cloud_instance_keys(conf, client_id, cloud_id, cloud_flavor,
                                      instance_id, auth_keys)
     if restart_instance:
