@@ -205,7 +205,7 @@ def main(client_id, user_arguments_dict):
         if not saved_instances:
             saved_instances = {}
 
-        instance_fields = ['status']
+        instance_fields = ['public_ip', 'status']
         status_map = status_all_cloud_instances(
             configuration, client_id, cloud_id, cloud_flavor,
             saved_instances.keys(), instance_fields)
@@ -245,9 +245,10 @@ def main(client_id, user_arguments_dict):
         <span class='instance-status'>
             """ % instance_label
             for field in instance_fields:
+                field_val = status_map[instance_id].get(field, "-")
                 instance_html += """
-            <span class='fieldstatus entry'>%s</span>
-            """ % status_map[instance_id].get(field, "-")
+            <span class='fieldstatus entry leftpad'>%s</span>
+            """ % field_val
             instance_html += """
         </span>
         <span class='instance-actions'>

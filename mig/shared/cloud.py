@@ -38,7 +38,7 @@ try:
 except ImportError, err:
     openstack = None
 
-from shared.base import force_utf8
+from shared.base import force_utf8, force_utf8_rec
 from shared.defaults import keyword_all
 
 # Internal helper to map individual operations to flavored cloud functions
@@ -334,6 +334,8 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
     if conn is None:
         return status_dict
 
+    # Special value parsing required for these fields
+    lookup_map = {'public_ip': 'addresses'}
     try:
         # Extract corresponding cloud status objects
         for server in conn.compute.servers():
@@ -351,9 +353,32 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                               (client_id, cloud_id, instance_id, msg))
                 status_dict[instance_id]['msg'] = msg
                 continue
+            #_logger.debug("%s status all for cloud %s instance %s: %s" % \
+            #              (client_id, cloud_id, instance_id, instance))
             for name in fields:
-                status_dict[instance_id][name] = force_utf8(
-                    getattr(instance, name, "UNKNOWN"))
+                lookup_name = lookup_map.get(name, name)
+                raw_val = getattr(instance, lookup_name, "UNKNOWN")
+                if isinstance(raw_val, dict):
+                    field_val = force_utf8_rec(raw_val)
+                    # NOTE: addresses format is something along the lines of:
+                    # {NETWORK_ID: [
+                    #   {..., 'addr': INT_IP, 'OS-EXT-IPS:type': 'fixed'},
+                    #   {..., 'addr': EXT_IP, 'OS-EXT-IPS:type': 'floating'}
+                    # ]}
+                    if name == 'public_ip':
+                        address_entries = field_val.values()
+                        for entry in address_entries:
+                            if entry and entry[-1] and \
+                                'floating' in entry[-1].values():
+                                field_val = entry[-1].get('addr', 'UNKNOWN')
+                                break
+                    else:
+                        _logger.warning("no converter for status field %s" % \
+                                        name)
+                        field_val = "%s" % field_val
+                else:
+                    field_val = force_utf8(raw_val)
+                status_dict[instance_id][name] = field_val
                 status_dict[instance_id]['success'] = True
                 status_dict[instance_id]['msg'] = ''
     
