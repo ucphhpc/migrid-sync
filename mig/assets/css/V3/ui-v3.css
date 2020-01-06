@@ -266,7 +266,17 @@ input:checked + .slider:before {
 }
 
 /* PAGE - FILE MANAGER */
-/*HEADER BAR*/
+/* Don't show file manager page header in V3 and use entire width */
+div.container.fillwidth {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+.fileman-title {
+    display: none;
+}
+
+/* HEADER BAR */
 #fm_filemanager > .container-fluid {
     padding-left: 0;
 }

@@ -676,10 +676,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                          html_escape(i['text']))
         elif i['object_type'] == 'header':
             # Global container introduced with UI V3
+            # the optional container_class is used to switch to full width
             lines.append('''
 <!-- Begin UI container -->
-<div class="container page-content">
-            ''')
+<div class="container page-content %s">
+            ''' % i.get('container_class', ''))
             lines.append('<h1 class="header %s">%s</h1>' % (i.get('class', ''),
                                                             html_escape(i['text'])))
         elif i['object_type'] == 'sectionheader':
