@@ -126,7 +126,6 @@ if '__main__' == __name__:
         'davs_show_port',
         'ftps_ctrl_port',
         'ftps_ctrl_show_port',
-        'cloud_ssh_port',
         'openid_port',
         'openid_show_port',
         'seafile_seahub_port',

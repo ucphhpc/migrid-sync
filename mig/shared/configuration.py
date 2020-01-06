@@ -168,13 +168,6 @@ def fix_missing(config_file, verbose=True):
         'user_seafile_auth': ['password'],
         'user_seafile_ro_access': False,
         'user_duplicati_protocols': [],
-        'user_cloud_ssh_address': fqdn,
-        'user_cloud_ssh_port': 22,
-        'user_cloud_ssh_key': '~/certs/cloud.pem',
-        'user_cloud_ssh_key_pub': '~/certs/cloud.pub',
-        'user_cloud_ssh_key_md5': '',
-        'user_cloud_ssh_key_sha256': '',
-        'user_cloud_ssh_key_from_dns': '',
         'user_cloud_ssh_auth': ['publickey'],
         'user_cloud_alias': '',
         'user_imnotify_address': '',
@@ -410,15 +403,6 @@ class Configuration:
     user_seafile_alias = ''
     user_seafile_ro_access = True
     user_duplicati_protocols = []
-    user_cloud_ssh_address = ''
-    user_cloud_ssh_port = 22
-    user_cloud_ssh_show_address = ''
-    user_cloud_ssh_show_port = 22
-    user_cloud_ssh_key = ''
-    user_cloud_ssh_key_pub = ''
-    user_cloud_ssh_key_md5 = ''
-    user_cloud_ssh_key_sha256 = ''
-    user_cloud_ssh_key_from_dns = False
     user_cloud_ssh_auth = ['publickey']
     user_cloud_alias = ''
     user_openid_address = ''
@@ -1019,27 +1003,6 @@ location.""" % self.config_file
                 'SITE', 'enable_cloud')
         else:
             self.site_enable_cloud = False
-        if config.has_option('GLOBAL', 'user_cloud_ssh_address'):
-            self.user_cloud_ssh_address = config.get('GLOBAL',
-                                                 'user_cloud_ssh_address')
-        if config.has_option('GLOBAL', 'user_cloud_ssh_port'):
-            self.user_cloud_ssh_port = config.getint('GLOBAL',
-                                                     'user_cloud_ssh_port')
-        if config.has_option('GLOBAL', 'user_cloud_ssh_key'):
-            self.user_cloud_ssh_key = config.get('GLOBAL',
-                                                 'user_cloud_ssh_key')
-        if config.has_option('GLOBAL', 'user_cloud_ssh_key_pub'):
-            self.user_cloud_ssh_key_pub = config.get('GLOBAL',
-                                                     'user_cloud_ssh_key_pub')
-        if config.has_option('GLOBAL', 'user_cloud_ssh_key_md5'):
-            fingerprint = config.get('GLOBAL', 'user_cloud_ssh_key_md5')
-            self.user_cloud_ssh_key_md5 = fingerprint
-        if config.has_option('GLOBAL', 'user_cloud_ssh_key_sha256'):
-            fingerprint = config.get('GLOBAL', 'user_cloud_ssh_key_sha256')
-            self.user_cloud_ssh_key_sha256 = fingerprint
-        if config.has_option('GLOBAL', 'user_cloud_ssh_key_from_dns'):
-            self.user_cloud_ssh_key_from_dns = config.getboolean(
-                'GLOBAL', 'user_cloud_ssh_key_from_dns')
         if config.has_option('GLOBAL', 'user_cloud_ssh_auth'):
             self.user_cloud_ssh_auth = config.get('GLOBAL',
                                                   'user_cloud_ssh_auth').split()
@@ -1272,6 +1235,10 @@ location.""" % self.config_file
 
                 service = {option: config.get(section, option) for option in
                            config.options(section)}
+                user_map_raw = service.get('service_user_map', '')
+                user_map_parts = user_map_raw.split()
+                user_map = dict([i.split(':', 1) for i in user_map_parts])
+                service['service_user_map'] = user_map
                 self.cloud_services.append(service)
 
         if config.has_option('GLOBAL', 'vgrid_owners'):

@@ -296,7 +296,6 @@ def generate_confs(
     davs_show_port=443,
     ftps_ctrl_port=8021,
     ftps_ctrl_show_port=21,
-    cloud_ssh_port=22,
     openid_port=8443,
     openid_show_port=443,
     seafile_seahub_port=8000,
@@ -427,7 +426,6 @@ def generate_confs(
     user_dict['__DAVS_SHOW_PORT__'] = str(davs_show_port)
     user_dict['__FTPS_CTRL_PORT__'] = str(ftps_ctrl_port)
     user_dict['__FTPS_CTRL_SHOW_PORT__'] = str(ftps_ctrl_show_port)
-    user_dict['__CLOUD_SSH_PORT__'] = str(cloud_ssh_port)
     user_dict['__OPENID_PORT__'] = str(openid_port)
     user_dict['__OPENID_SHOW_PORT__'] = str(openid_show_port)
     user_dict['__SEAFILE_SEAHUB_PORT__'] = str(seafile_seahub_port)

@@ -37,7 +37,8 @@ from shared.base import client_id_dir, extract_field
 from shared.cloud import list_cloud_images, status_of_cloud_instance, \
      start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \
      update_cloud_instance_keys, create_cloud_instance, delete_cloud_instance, \
-     cloud_access_allowed, cloud_edit_actions, cloud_manage_actions
+     cloud_access_allowed, cloud_login_username, cloud_edit_actions, \
+     cloud_manage_actions
 from shared.defaults import session_id_bytes, keyword_all
 from shared.fileio import pickle, unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -94,6 +95,14 @@ def valid_cloud_service(configuration, service):
         return False
     return True
 
+def ssh_login_help(configuration, cloud_id, cloud_dict):
+    """Return complete ssh login instructions for saved_instance on cloud_id"""
+    msg = "You can connect to it with ssh as %s on host %s and port %d"
+    address = cloud_dict.get('INSTANCE_SSH_IP', 'UNKNOWN')
+    port = cloud_dict.get('INSTANCE_SSH_PORT', 'UNKNOWN')
+    image = cloud_dict.get('INSTANCE_IMAGE', 'UNKNOWN')
+    username = cloud_login_username(configuration, cloud_id, image)
+    return msg % (username, address, port)
 
 def signature():
     """Signature of the main function"""
@@ -206,8 +215,6 @@ def main(client_id, user_arguments_dict):
     # Users store a pickled dict of all personal instances
     cloud_instance_state_path = os.path.join(configuration.user_settings,
                                              client_dir, cloud_id + '.state')
-    instance_ssh_fqdn = configuration.user_cloud_ssh_address
-    instance_ssh_port = configuration.user_cloud_ssh_port
 
     client_email = extract_field(client_id, 'email')
     if not client_email:
@@ -217,8 +224,6 @@ def main(client_id, user_arguments_dict):
             "No client ID found - can't continue"})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    ssh_connect_msg = "You can connect to it with ssh on host %s and " + \
-                      "port %d"
     ssh_auth_msg = "Login requires your private key for your public key:"
     instance_missing_msg = "Found no '%s' instance at %s. Please contact a " \
                            + "site administrator if it should be there."
@@ -311,8 +316,9 @@ def main(client_id, user_arguments_dict):
             # don't need fraction precision, also not all systems provide fraction
             # precision.
             'CREATED_TIMESTAMP': int(time.time()),
-            'INSTANCE_SSH_IP': instance_ssh_fqdn,
-            'INSTANCE_SSH_PORT': instance_ssh_port,
+            # Init unset ssh address and leave for floating IP assigment below
+            'INSTANCE_SSH_IP': '',
+            'INSTANCE_SSH_PORT': 22,
             }
         (action_status, action_msg) = create_cloud_instance(
             configuration, client_id, cloud_id, cloud_flavor, instance_id,
@@ -344,8 +350,8 @@ def main(client_id, user_arguments_dict):
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_connect_msg % \
-            (instance_ssh_fqdn, instance_ssh_port)})
+            'object_type': 'text', 'text': ssh_login_help(
+                configuration, cloud_id, cloud_dict)})
     
     elif "delete" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)
@@ -405,14 +411,13 @@ def main(client_id, user_arguments_dict):
                 (action, instance_id, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        cloud_dict = saved_instances.get(instance_id, {})
-        instance_ssh_fqdn = cloud_dict.get('INSTANCE_SSH_IP', 'UNKNOWN')
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, action_msg)})
+        cloud_dict = saved_instances.get(instance_id, {})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_connect_msg % \
-            (instance_ssh_fqdn, instance_ssh_port)})
+            'object_type': 'text', 'text': ssh_login_help(
+                configuration, cloud_id, cloud_dict)})
 
     elif "start" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)
@@ -436,14 +441,13 @@ def main(client_id, user_arguments_dict):
                 (action, instance_id, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        cloud_dict = saved_instances.get(instance_id, {})
-        instance_ssh_fqdn = cloud_dict.get('INSTANCE_SSH_IP', 'UNKNOWN')
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
+        cloud_dict = saved_instances.get(instance_id, {})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_connect_msg % \
-            (instance_ssh_fqdn, instance_ssh_port)})
+            'object_type': 'text', 'text': ssh_login_help(
+                configuration, cloud_id, cloud_dict)})
 
     elif "restart" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)
@@ -467,14 +471,13 @@ def main(client_id, user_arguments_dict):
                 (action, instance_id, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        cloud_dict = saved_instances.get(instance_id, {})
-        instance_ssh_fqdn = cloud_dict.get('INSTANCE_SSH_IP', 'UNKNOWN')
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
+        cloud_dict = saved_instances.get(instance_id, {})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_connect_msg % \
-            (instance_ssh_fqdn, instance_ssh_port)})
+            'object_type': 'text', 'text': ssh_login_help(
+                configuration, cloud_id, cloud_dict)})
 
     elif "stop" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)
@@ -528,14 +531,14 @@ def main(client_id, user_arguments_dict):
                 (action, instance_id, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        cloud_dict = saved_instances.get(instance_id, {})
-        instance_ssh_fqdn = cloud_dict.get('INSTANCE_SSH_IP', 'UNKNOWN')
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
+        cloud_dict = saved_instances.get(instance_id, {})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_connect_msg % \
-            (instance_ssh_fqdn, instance_ssh_port)})
+            'object_type': 'text', 'text': ssh_login_help(
+                configuration, cloud_id, cloud_dict)})
+
         output_objects.append({
             'object_type': 'text', 'text': ssh_auth_msg})
         for pub_key in auth_keys:

@@ -108,7 +108,8 @@ VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@%'
 VALID_BASE_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
 VALID_VGRID_NAME_CHARACTERS = VALID_BASE_VGRID_NAME_CHARACTERS + '/'
 VALID_ARCHIVE_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
-VALID_CLOUD_INSTANCE_CHARACTERS = VALID_FQDN_CHARACTERS + '_-@:'
+VALID_CLOUD_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '+_=@'
+VALID_CLOUD_INSTANCE_ID_CHARACTERS = VALID_CLOUD_NAME_CHARACTERS + ':'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
     'THIS INPUT IS NOT VERIFIED: DO NOT EVER PRINT IT UNESCAPED! '
@@ -808,7 +809,7 @@ def valid_gdp_ref_value(ref_value):
     __valid_contents(ref_value, letters + digits + '+-=/.:_')
 
 
-def valid_cloud_instance(
+def valid_cloud_instance_id(
     instance_id,
     min_length=0,
     max_length=255,
@@ -820,25 +821,9 @@ def valid_cloud_instance(
     separators.
     """
 
-    valid_chars = VALID_CLOUD_INSTANCE_CHARACTERS + extra_chars
+    valid_chars = VALID_CLOUD_INSTANCE_ID_CHARACTERS + extra_chars
     __valid_contents(instance_id, valid_chars, min_length, max_length)
 
-
-def valid_cloud_label(
-    cloud_label,
-    min_length=0,
-    max_length=64,
-    extra_chars='',
-):
-    """Verify that supplied cloud label, only contains characters that we
-    consider valid. Cloud labels are chosen by users for their instances and
-    should be somewhat flexible.
-    IMPORTANT: We explicitly refuse colon (:) to avoid collisions with the
-    internal saved instance_id format.
-    """
-    
-    valid_alphanumeric(cloud_label, min_length, max_length,
-    extra_chars='+-=_-')
 
 def valid_cloud_name(
     cloud_name,
@@ -847,13 +832,15 @@ def valid_cloud_name(
     extra_chars='',
 ):
     """Verify that supplied cloud name, only contains characters that we
-    consider valid. Cloud names are decided by cloud admins and should be
-    relatively flexible. We avoid colon (:) to avoid collisions with the saved
+    consider valid. Cloud names are the colon-separated parts contained in
+    cloud instance_id and they are either decided by cloud admins or entered
+    by users, so they should be relatively flexible.
+    IMPORTANT: We avoid colon (:) to avoid collisions with the saved
     instance_id format.
     """
     
-    valid_alphanumeric(cloud_name, min_length, max_length,
-    extra_chars='+-=_-')
+    valid_chars = VALID_CLOUD_NAME_CHARACTERS + extra_chars
+    __valid_contents(cloud_name, valid_chars, min_length, max_length)
 
 
 def valid_workflow_pers_id(persistence_id):
@@ -1553,10 +1540,8 @@ def guess_type(name):
         for key in ('gdp_ref_value', ):
             __type_map[key] = valid_gdp_ref_value
         for key in ('instance_id', ):
-            __type_map[key] = valid_cloud_instance
-        for key in ('instance_label', ):
-            __type_map[key] = valid_cloud_label
-        for key in ('cloud_id', 'instance_image', ):
+            __type_map[key] = valid_cloud_instance_id
+        for key in ('cloud_id', 'instance_image', 'instance_label', ):
             __type_map[key] = valid_cloud_name
 
     # Return type checker from __type_map with fall back to alphanumeric

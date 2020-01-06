@@ -686,6 +686,19 @@ def cloud_access_allowed(configuration, user_dict):
     return True
 
 
+def cloud_login_username(configuration, cloud_id, instance_image):
+    """Find the username for ssh login to instance_image on cloud_id.
+    Uses any configured username exceptions from service confs and defaults
+    to the instance_image name otherwise.
+    """
+    username = instance_image
+    for service in configuration.cloud_services:
+        if service['service_name'] == cloud_id:
+            username = service['service_user_map'].get(instance_image,
+                                                       instance_image)
+    return username
+
+
 def check_cloud_available(configuration, client_id, cloud_id, cloud_flavor):
     """Make sure cloud is available"""
     _logger = configuration.logger
