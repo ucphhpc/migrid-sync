@@ -538,9 +538,29 @@ table th.icon {
 /* Cloud instance grid */
 .cloud-instance-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, auto));
+  grid-template-columns: auto auto auto;
+  grid-row-gap: 10px;
+  grid-column-gap: 10px;
 }
-.cloud-instance-grid > * {
+/*
+.cloud-instance-grid > div.cloud-instance-grid-middle {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+*/
+.cloud-instance-grid > div.cloud-instance-grid-left {
+    grid-column-start: 1;
+    grid-column-end: 3;
+}
+.cloud-instance-grid > div.cloud-instance-grid-middle {
+    grid-column-start: 4;
+    grid-column-end: 8;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+}
+.cloud-instance-grid > div.cloud-instance-grid-right {
+    grid-column-start: 9;
+    grid-column-end: 13;
 }
 
 /* align checkboxes vertically with text */

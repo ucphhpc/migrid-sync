@@ -235,15 +235,17 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'html_form', 'text': """
         <div class='cloud-management fillwidth'>
         <h3>Manage %s instances</h3>
+        <div class='cloud-instance-grid'>
             """ % cloud_id})
         for (instance_id, instance_dict) in saved_instances.items():
             instance_label = instance_dict.get('INSTANCE_LABEL', instance_id)
             logger.debug("Management entries for %s %s cloud instance %s" %
                          (client_id, cloud_id, instance_id))
             instance_html = """
-        <div class='cloud-instance-grid'>
+        <div class='cloud-instance-grid-left'>
         <label class='fieldlabel'>%s</label>
-        <span class='instance-status'>
+        </div>
+        <div class='cloud-instance-grid-middle'>
             """ % instance_label
             for field in saved_fields:
                 field_val = saved_instances[instance_id].get(field, "-")
@@ -256,8 +258,8 @@ def main(client_id, user_arguments_dict):
             <span class='fieldstatus entry leftpad'>%s</span>
             """ % field_val
             instance_html += """
-        </span>
-        <span class='instance-actions'>
+        </div>
+        <div class='cloud-instance-grid-right'>
             """
             output_objects.append({'object_type': 'html_form', 'text': instance_html})
             for (action, title) in action_list:
@@ -273,13 +275,13 @@ def main(client_id, user_arguments_dict):
                 }
                 output_objects.append(output_service)
             output_objects.append({'object_type': 'html_form', 'text': """
-        </span>
         </div>        
             """})
             delete_html += """<option value='%s'>%s</option>
             """ % (instance_id, instance_label)
 
         output_objects.append({'object_type': 'html_form', 'text': """
+        </div>
         </div>
         """})
 
