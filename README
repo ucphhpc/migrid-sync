@@ -450,7 +450,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --enable_duplicati=False --enable_seafile=True \
                    --enable_sandboxes=True --enable_vmachines=False \
                    --enable_crontab=True --enable_jobs=True \
-                   --enable_resources=True \
+                   --enable_resources=True --enable_notify=True \
                    --enable_events=True --enable_imnotify=True \
                    --enable_twofactor=True --enable_cracklib=True \
                    --enable_hsts=True \
@@ -562,7 +562,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --enable_freeze=True --enable_twofactor=True \
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
-                   --enable_jupyter=True \
+                   --enable_notify=True --enable_jupyter=True \
                    --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science MODI.http://130.225.104.214' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --user_clause=User --group_clause=Group \
@@ -620,7 +620,7 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_resources=True --enable_events=True \
                    --enable_freeze=False --enable_imnotify=False \
                    --enable_twofactor=True --enable_cracklib=True \
-                   --enable_preview=True \
+                   --enable_notify=True --enable_preview=True \
                    --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True \
@@ -683,7 +683,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --enable_resources=False --enable_events=False \
                    --enable_freeze=False --enable_preview=False \
                    --enable_gdp=True \
-                   --enable_twofactor=True \
+                   --enable_notify=True --enable_twofactor=True \
                    --enable_twofactor_strict_address=True \
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
