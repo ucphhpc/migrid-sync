@@ -82,7 +82,7 @@ def main(client_id, user_arguments_dict):
     if keyword_all in accepted['show']:
         show = valid_show.keys()
     else:
-        show = [i.lower() for i in accepted['show']]
+        show = list(set([i.lower() for i in accepted['show']]))
     show = [i for i in show if i in valid_show and valid_show[i]['url']]
     if not show:
         logger.info('%s showing default topics' % op_name)
@@ -223,8 +223,7 @@ to accept that your certificate is used for %(short_title)s login.
 </p>
 
 """
-        html += """
-"""
+            
     var_map = {'migoid_url': valid_show['migoid']['url'],
                'migoid_title': configuration.user_mig_oid_title,
                'extoid_url': valid_show['extoid']['url'],
@@ -235,4 +234,10 @@ to accept that your certificate is used for %(short_title)s login.
                'extcert_title': configuration.user_ext_cert_title,
                'short_title': configuration.short_title}
     output_objects.append({'object_type': 'html_form', 'text': html % var_map})
+    if set(configuration.site_signup_methods) != set(show):
+        output_objects.append({'object_type': 'link',
+                               'destination': 'signup.py',
+                               'class': 'infolink iconspace',
+                               'title': 'View all sign up methods',
+                               'text': 'View all sign up methods'})
     return (output_objects, returnvalues.OK)
