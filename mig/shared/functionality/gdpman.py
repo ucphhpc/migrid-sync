@@ -211,7 +211,9 @@ def html_tmpl(
                   invited_projects]:
         if entry and isinstance(entry, dict):
             known_projects.update(entry)
-    await_projects = (not create_projects and not known_projects)
+    await_projects = (twofactor_enabled
+                      and not create_projects
+                      and not known_projects)
 
     # Generate html
 
