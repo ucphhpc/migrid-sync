@@ -37,8 +37,8 @@ from shared.base import client_id_dir, extract_field
 from shared.cloud import list_cloud_images, status_of_cloud_instance, \
      start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \
      update_cloud_instance_keys, create_cloud_instance, delete_cloud_instance, \
-     cloud_access_allowed, cloud_login_username, cloud_edit_actions, \
-     cloud_manage_actions
+     web_access_cloud_instance, cloud_access_allowed, cloud_login_username, \
+     cloud_edit_actions, cloud_manage_actions
 from shared.defaults import session_id_bytes, keyword_all
 from shared.fileio import pickle, unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -505,6 +505,41 @@ def main(client_id, user_arguments_dict):
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
+
+    elif "webaccess" == action:
+        saved_instances = unpickle(cloud_instance_state_path, logger)
+        if not saved_instances or not saved_instances.get(instance_id, None):
+            logger.error("no saved %s cloud instance %s for %s to query" % \
+                         (cloud_id, instance_id, client_id))
+            output_objects.append(
+                {'object_type': 'error_text', 'text': instance_missing_msg % \
+                 (instance_id, cloud_id)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+            
+        (action_status, action_msg) = web_access_cloud_instance(
+            configuration, client_id, cloud_id, cloud_flavor, instance_id)
+        if not action_status:
+            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+                         (action, cloud_id, instance_id, client_id,
+                          action_msg))
+            output_objects.append({
+                'object_type': 'error_text',
+                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                (action, instance_id, cloud_id, action_msg)})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        output_objects.append({
+            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
+            (action, instance_id, cloud_id, action_msg)})
+        cloud_dict = saved_instances.get(instance_id, {})
+        output_objects.append({
+            'object_type': 'text', 'text': ssh_login_help(
+                configuration, cloud_id, cloud_dict)})
+        output_objects.append({
+            'object_type': 'link', 'destination': action_msg,
+            'text': 'Web console', 'class': 'consolelink iconspace',
+            'title': 'open web console', 'target': '_blank'})
+        output_objects.append({'object_type': 'text', 'text': ''})
 
     elif "updatekeys" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)

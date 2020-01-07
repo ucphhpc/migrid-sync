@@ -145,8 +145,8 @@ def main(client_id, user_arguments_dict):
 
     action_list = [('status', 'Status'), ('start', 'Start'),
                    ('restart', 'Restart'), ('stop', 'Stop'),
-                   ('updatekeys', 'Set keys on'), ('create', 'Create'),
-                   ('delete', 'Delete')]
+                   ('webaccess', 'Web access'), ('updatekeys', 'Set keys on'),
+                   ('create', 'Create'), ('delete', 'Delete')]
     for service in services:
         cloud_id = service['name']
         cloud_flavor = service.get("service_provider_flavor", "openstack")

@@ -28,6 +28,7 @@
 """Cloud service helper functions"""
 
 import hashlib
+import json
 import os
 import re
 import sys
@@ -37,6 +38,10 @@ try:
     import openstack
 except ImportError, err:
     openstack = None
+try:
+    import requests
+except ImportError, err:
+    requests = None
 
 from shared.base import force_utf8, force_utf8_rec
 from shared.defaults import keyword_all
@@ -47,7 +52,7 @@ __cloud_helper_map = {"openstack": None}
 __max_wait_secs = 120
 __poll_delay_secs = 3
 
-cloud_manage_actions = ['start', 'restart', 'status', 'stop']
+cloud_manage_actions = ['start', 'restart', 'status', 'stop', 'webaccess']
 cloud_edit_actions = ['updatekeys', 'create', 'delete']
 
 
@@ -60,6 +65,17 @@ def __require_openstack(func):
     """Internal helper to verify openstack module availability on use"""
     if openstack is None:
         return __bail_out_openstack
+    return func
+
+def __bail_out_requests(*args, **kwargs):
+    """Helper for dynamic bail out on actual use"""
+    raise Exception("cloud functions require requests")
+
+
+def __require_requests(func):
+    """Internal helper to verify requests module availability on use"""
+    if requests is None:
+        return __bail_out_requests
     return func
 
 
@@ -309,8 +325,6 @@ def openstack_status_of_cloud_instance(configuration, client_id, cloud_id,
             _logger.error("%s failed status for %s cloud instance: %s" %
                           (client_id, instance_id, status_msg))
 
-        #_logger.debug("%s cloud %s instance: %s" %
-        #                 (client_id, cloud_id, instance))
     except Exception, exc:
         status = False
         msg = "instance status failed!"
@@ -391,6 +405,67 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
         _logger.error("%s failed status all for %s cloud: %s" %
                       (client_id, cloud_id, exc))
     return status_dict
+
+
+@__require_requests
+@__require_openstack
+def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
+                                        instance_id):
+    """Web console access URL for cloud instance"""
+    cloud_flavor = "openstack"
+    _logger = configuration.logger
+    _logger.info("console for %s cloud instance %s for %s" %
+                 (cloud_id, instance_id, client_id))
+    conn = openstack_cloud_connect(configuration, cloud_id)
+    if conn is None:
+        return (False, [])
+
+    status, msg = True, ''
+    try:
+        instance = None
+        for server in conn.compute.servers():
+            if force_utf8(server.name) == instance_id:
+                instance = server
+                break
+
+        #instance = conn.compute.find_server(instance_id)
+        if not instance:
+            status = False
+            msg = "failed to locate %s cloud instance %s" % \
+                  (cloud_id, instance_id)
+            _logger.error("%s failed to locate %s cloud instance %s: %s" %
+                          (client_id, cloud_id, instance_id, msg))
+            return (status, msg)
+        # TODO: openstack does not expose console URL - manual request for now
+        #console_url = force_utf8(instance.get_console_url())
+
+        web_auth = conn.authorize()
+
+        server = conn.compute.find_server(instance_id)
+        API_ENDPOINT = "https://os208.hpc.ku.dk:8774/v2.1/servers/%s/action" \
+                       % server.id
+        body = '{"os-getVNCConsole":{"type": "novnc"}}'
+        HEADERS = {}
+        HEADERS['X-Auth-Token'] = web_auth
+        HEADERS['Content-type'] = "application/json"
+        response = requests.post(API_ENDPOINT, headers=HEADERS, data=body, verify=True)
+        response_dict = force_utf8_rec(response.json())
+        _logger.info("%s web console response: %s" % (client_id, response_dict))
+        console_url = response_dict.get('console', {}).get('url', '')
+        if console_url:
+            msg = console_url
+            _logger.info("%s web console for cloud %s instance %s: %s" %
+                         (client_id, cloud_id, instance_id, msg))
+        else:
+            _logger.error("%s failed web console for %s cloud instance %s" \
+                          % (client_id, cloud_id, instance_id))
+
+    except Exception, exc:
+        status = False
+        msg = "instance web console access failed!"
+        _logger.error("%s failed web console for %s cloud instance %s: %s" %
+                      (client_id, cloud_id, instance_id, exc))
+    return (status, msg)
 
 
 @__require_openstack
@@ -671,6 +746,7 @@ def __get_cloud_helper(configuration, cloud_flavor, operation):
                 "status_of_cloud_instance": openstack_status_of_cloud_instance,
                 "stop_cloud_instance": openstack_stop_cloud_instance,
                 "status_all_cloud_instances": openstack_status_all_cloud_instances,
+                "web_access_cloud_instance": openstack_web_access_cloud_instance,
                 "update_cloud_instance_keys": openstack_update_cloud_instance_keys,
                 "create_cloud_instance": openstack_create_cloud_instance,
                 "delete_cloud_instance": openstack_delete_cloud_instance,
@@ -778,6 +854,17 @@ def status_all_cloud_instances(configuration, client_id, cloud_id, cloud_flavor,
     helper = __get_cloud_helper(configuration, cloud_flavor,
                                 "status_all_cloud_instances")
     return helper(configuration, client_id, cloud_id, instance_id_list, fields)
+
+
+def web_access_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
+                              instance_id):
+    """Web access for cloud instance"""
+    _logger = configuration.logger
+    _logger.info("web access %s cloud instance %s for %s" %
+                 (cloud_id, instance_id, client_id))
+    helper = __get_cloud_helper(configuration, cloud_flavor,
+                                "web_access_cloud_instance")
+    return helper(configuration, client_id, cloud_id, instance_id)
 
 
 def update_cloud_instance_keys(configuration, client_id, cloud_id,
