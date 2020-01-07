@@ -1,4 +1,4 @@
->/*
+/*
 
 #
 # --- BEGIN_HEADER ---
@@ -27,20 +27,6 @@
 
 */
 
-/* Hide the sorting element in the table body only - thead has divs, too */
-#fm_filelisting tbody tr.odd:hover, #jm_jobmanager tbody tr.odd:hover {
-  background-color: #ffdd4d;
-}
-#fm_filelisting tbody tr.even:hover, #jm_jobmanager tbody tr.even:hover {
-  background-color: #ffdd7f;
-}
-#jm_jobmanager tbody tr.odd.ui-selected {
-  background-color: #ffdd4d;
-}
-#jm_jobmanager tbody tr.even.ui-selected {
-  background-color: #ffdd7f;
-}
-
 .fm_path_breadcrumbs a:hover {
   color: #369;
 }
@@ -58,6 +44,25 @@
   color: white;
 }
 
+.fm_files th.fm_size {
+    width: 100px;
+}
+.fm_files th.fm_type {
+    width: 70px;
+}
+.fm_files th.fm_date {
+    width: 150px;
+}
+.fm_files th.fm_toolbox {
+    width: 20px;
+}
+
+#fm_filelisting tbody tr.odd:hover, #jm_jobmanager tbody tr.odd:hover {
+    color: #369;
+}
+#fm_filelisting tbody tr.even:hover, #jm_jobmanager tbody tr.even:hover {
+    color: #369;
+}
 
 UL.jqueryFileTree div:hover {
   background-color: #ffdd7f;
