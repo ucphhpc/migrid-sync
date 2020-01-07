@@ -34,9 +34,10 @@ import os
 # REJECT_UNSET is not used directly but exposed to functionality
 
 from shared.base import requested_page, force_utf8
-from shared.defaults import csrf_field
+from shared.defaults import csrf_field, auth_openid_ext_db
 from shared.findtype import is_user
-from shared.httpsclient import extract_client_cert, extract_client_openid
+from shared.httpsclient import extract_client_cert, extract_client_openid, \
+     extract_base_url
 from shared.safeinput import validated_input, REJECT_UNSET
 from shared.useradm import expire_oid_sessions
 
@@ -161,7 +162,9 @@ def validate_input_and_cert(
                     {'object_type': 'text', 'text': '''Apparently you do not
     already have access to %s, but you can sign up:''' % configuration.short_title
                      })
-                output_objects.append({'object_type': 'link', 'text': signup_url,
+                output_objects.append({'object_type': 'link', 'text':
+                                       '%s sign up page' % \
+                                       configuration.short_title,
                                        'destination': signup_url + signup_query})
                 output_objects.append(
                     {'object_type': 'text', 'text': '''If you already signed up and
@@ -170,24 +173,39 @@ def validate_input_and_cert(
             else:
                 output_objects.append(
                     {'object_type': 'text', 'text': '''Apparently you already have
-    suitable credentials and just need to sign up for a local %s account on:''' %
+    suitable credentials and just need to sign up for a local %s account on the''' %
                      configuration.short_title})
 
-                if extract_client_cert(configuration, environ) is None:
+                base_url = extract_base_url(configuration, environ)
+                if base_url == configuration.migserver_https_ext_cert_url and \
+                       'extcert' in configuration.site_login_methods:
+                    signup_query = '?show=extcert'
+                elif base_url in (configuration.migserver_https_ext_oid_url,
+                                  configuration.migserver_https_mig_oid_url):
                     # Force logout/expire session cookie here to support signup
                     (oid_db, identity) = extract_client_openid(configuration,
                                                                environ,
                                                                lookup_dn=False)
                     if oid_db and identity:
-                        logger.info("expire openid user %s in %s" % (identity,
+                        logger.info("openid expire user %s in %s" % (identity,
                                                                      oid_db))
                         (success, _) = expire_oid_sessions(configuration, oid_db,
                                                            identity)
-                    else:
-                        logger.info("no openid user logged in")
+                        if oid_db == auth_openid_ext_db and \
+                               'extoid' in configuration.site_signup_methods:
+                            signup_query = '?show=extoid'
+                        else:
+                            logger.error("unknown migoid client_id %s on %s" \
+                                         % (client_id, base_url))
+                else:
+                    logger.warning("unexpected client_id %s on %s" % \
+                                   (client_id, base_url))
 
-                output_objects.append({'object_type': 'link', 'text': signup_url,
-                                       'destination': signup_url + signup_query})
+                output_objects.append({'object_type': 'link', 'text':
+                                       '%s sign up page' % \
+                                       configuration.short_title,
+                                       'destination':
+                                       signup_url + signup_query})
         return (False, output_objects)
 
     (status, retval) = validate_input(user_arguments_dict, defaults,

@@ -128,7 +128,7 @@ if you want a dedicated %s %s User OpenID you can still request one below:'''
         output_objects.append({'object_type': 'html_form', 'text': '''<p>
 Apparently you already have valid %s credentials, but if you want to add %s
 User OpenID access to the same account you can do so by posting the form below.
-Changing fields is <span class=mandatory> not </span> supported, so all fields
+Changing fields is <span class="warningtext"> not </span> supported, so all fields
 must remain unchanged for it to work.
 Otherwise it results in a request for a new account and OpenID without access
 to your old files, jobs and privileges. </p>''' %
@@ -171,7 +171,9 @@ Email data that we can easily validate!
 <hr />
 
     """
-    html += account_request_template(configuration)
+    user_country = user_fields.get('country', '')
+    html += account_request_template(configuration,
+                                     default_country=user_country)
 
     # TODO: remove this legacy version?
     html += """

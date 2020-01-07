@@ -309,6 +309,8 @@ def openstack_status_of_cloud_instance(configuration, client_id, cloud_id,
             _logger.error("%s failed status for %s cloud instance: %s" %
                           (client_id, instance_id, status_msg))
 
+        #_logger.debug("%s cloud %s instance: %s" %
+        #                 (client_id, cloud_id, instance))
     except Exception, exc:
         status = False
         msg = "instance status failed!"

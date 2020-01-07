@@ -31,7 +31,7 @@
 
 import shared.returnvalues as returnvalues
 from shared.defaults import csrf_field
-from shared.functional import validate_input
+from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import save_settings_js, save_settings_html, render_apps, \
@@ -196,10 +196,12 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input(
+    (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
+        client_id,
+        configuration,
         allow_rejects=False,
     )
     if not validate_status:

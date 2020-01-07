@@ -172,7 +172,9 @@ Email data that we can easily validate!
 <hr />
     """
 
-    html += account_request_template(configuration)
+    user_country = user_fields.get('country', '')
+    html += account_request_template(configuration,
+                                     default_country=user_country)
 
     # TODO : remove this legacy version?
     html += """

@@ -196,7 +196,7 @@ def account_js_helpers(configuration, fields):
     return (add_import, add_init, add_ready)
 
 
-def account_request_template(configuration, password=True):
+def account_request_template(configuration, password=True, default_country=''):
     """A general form template used for various account requests"""
     html = """
 <div class=form_container>
@@ -244,12 +244,16 @@ def account_request_template(configuration, password=True):
     sorted_countries = list_country_codes(configuration)
     if sorted_countries:
         html += """
-        <select class="form-control themed-select html-select" id='country_field' name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' placeholder="Two letter country-code" required>
+        <select class="form-control themed-select html-select" id='country_field' name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' placeholder="Two letter country-code">
 """
         # TODO: detect country based on browser info?
         # Start out without a country selection
         for (name, code) in [('', '')] + sorted_countries:
-            html += "        <option value='%s'>%s</option>\n" % (code, name)
+            selected = ''
+            if default_country == code:
+                selected = 'selected'
+            html += "        <option value='%s' %s>%s</option>\n" % \
+                    (code, selected, name)
         html += """
         </select>
     """

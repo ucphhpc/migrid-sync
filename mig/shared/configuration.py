@@ -38,7 +38,7 @@ from ConfigParser import ConfigParser
 
 from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
     POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, POLICY_CUSTOM, \
-    freeze_flavors, duplicati_protocol_choices
+    freeze_flavors, duplicati_protocol_choices, default_css_filename
 from shared.logger import Logger, SYSLOG_GDP
 from shared.html import menu_items, vgrid_items
 from shared.fileio import read_file, load_json
@@ -1548,6 +1548,7 @@ location.""" % self.config_file
                 'SITE', 'enable_styling')
         else:
             self.site_enable_styling = False
+            self.site_user_css = ''
         if config.has_option('SITE', 'enable_griddk'):
             self.site_enable_griddk = config.getboolean(
                 'SITE', 'enable_griddk')
@@ -1728,7 +1729,8 @@ location.""" % self.config_file
         if config.has_option('SITE', 'user_css'):
             self.site_user_css = config.get('SITE', 'user_css')
         else:
-            self.site_user_css = '%s/.default.css' % self.site_user_redirect
+            self.site_user_css = '%s/%s' % (self.site_user_redirect,
+                                            default_css_filename)
         if config.has_option('SITE', 'fav_icon'):
             self.site_fav_icon = config.get('SITE', 'fav_icon')
         else:

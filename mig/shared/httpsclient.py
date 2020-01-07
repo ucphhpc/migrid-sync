@@ -81,6 +81,15 @@ def unescape(esc_str):
         return esc_str
 
 
+def extract_base_url(configuration, environ):
+    """Extract base URL of requested page from environ"""
+    page_url = environ["SCRIPT_URI"]
+    parts = page_url.split('/')
+    if not parts or not parts[0] in ('http:', 'https:'):
+        configuration.logger.error("error in base url extraction from %s" % environ)
+        raise ValueError("Invalid request page format: %s" % page_url)
+    return '/'.join(parts[:3])
+    
 def extract_client_cert(configuration, environ):
     """Extract unique user cert ID from SSL cert value in environ.
     NOTE: We must provide the environment as os.environ may be from the time
