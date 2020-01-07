@@ -31,9 +31,51 @@ import getopt
 import os
 import sys
 import pyotp
+import tempfile
 
 from shared.auth import reset_twofactor_key
 from shared.conf import get_configuration_object
+from shared.settings import load_twofactor, parse_and_save_twofactor
+from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
+
+
+def enable2fa(configuration, user_id, force=False):
+    """Check if twofactor is enabled and if not enable for all
+    services"""
+
+    if not force:
+        current_twofactor_dict = load_twofactor(user_id, configuration)
+        if current_twofactor_dict:
+            return True
+    keywords_dict = twofactor_keywords(configuration)
+    topic_mrsl = ''
+    for keyword, _ in keywords_dict.iteritems():
+        topic_mrsl += '''::%s::
+%s
+
+''' % (keyword.upper(), 'True')
+
+    try:
+        (filehandle, tmptopicfile) = tempfile.mkstemp(text=True)
+        os.write(filehandle, topic_mrsl)
+        os.close(filehandle)
+    except Exception, exc:
+        msg = 'Error: Problem writing temporary topic file on server.'
+        print "%s : %s" % (msg, exc)
+        return False
+    (parse_status, _) = parse_and_save_twofactor(tmptopicfile, user_id,
+                                                         configuration)
+    if parse_status:
+        print 'Enabled all two-factor services for user: %s' % user_id
+    else:
+        print 'Error parsing and saving two-factor dict'
+
+    try:
+        os.remove(tmptopicfile)
+    except Exception, exc:
+        pass  # probably deleted by parser!
+
+    return parse_status
 
 
 def usage(name='reset2fakey.py'):
@@ -47,6 +89,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -i CERT_DN          CERT_DN of user to edit
+   -a                  Enable 2fa for all services
    -v                  Verbose output
 """\
          % {'name': name}
@@ -59,10 +102,11 @@ if '__main__' == __name__:
     force = False
     verbose = False
     user_id = None
+    enable_all = False
     seed = None
     seed_file = None
     interval = None
-    opt_args = 'c:fhi:v'
+    opt_args = 'c:fhai:v'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError, err:
@@ -80,6 +124,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-i':
             user_id = val
+        elif opt == '-a':
+            enable_all = True
         elif opt == '-v':
             verbose = True
         else:
@@ -96,9 +142,18 @@ if '__main__' == __name__:
         else:
             print 'using configuration from MIG_CONF (or default)'
 
+    configuration = get_configuration_object(skip_log=True)
+    if not configuration.site_enable_twofactor:
+        print 'Error: Two-factor authentication disabled for site'
+        sys.exit(1)
+
     if not user_id:
         print 'Error: Existing user ID is required'
         usage()
+        sys.exit(1)
+
+    if not enable2fa(configuration, user_id, force=enable_all):
+        print 'Error: Failed to enable two-factor authentication'
         sys.exit(1)
 
     if args:
@@ -135,7 +190,6 @@ if '__main__' == __name__:
         if interval:
             print 'using interval: %s' % interval
 
-    configuration = get_configuration_object(skip_log=True)
     twofa_key = reset_twofactor_key(user_id, configuration,
                                     seed=seed, interval=interval)
     if verbose:
