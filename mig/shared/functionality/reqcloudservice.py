@@ -38,7 +38,7 @@ from shared.cloud import list_cloud_images, status_of_cloud_instance, \
      start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \
      update_cloud_instance_keys, create_cloud_instance, delete_cloud_instance, \
      web_access_cloud_instance, cloud_access_allowed, cloud_login_username, \
-     cloud_edit_actions, cloud_manage_actions
+     cloud_ssh_login_help, cloud_edit_actions, cloud_manage_actions
 from shared.defaults import session_id_bytes, keyword_all
 from shared.fileio import pickle, unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -95,14 +95,18 @@ def valid_cloud_service(configuration, service):
         return False
     return True
 
-def ssh_login_help(configuration, cloud_id, cloud_dict):
-    """Return complete ssh login instructions for saved_instance on cloud_id"""
-    msg = "You can connect to it with ssh as %s on host %s and port %d"
-    address = cloud_dict.get('INSTANCE_SSH_IP', 'UNKNOWN')
-    port = cloud_dict.get('INSTANCE_SSH_PORT', 'UNKNOWN')
+def _ssh_help(configuration, client_id, cloud_id, saved_instances,
+              instance_id):
+    """Wrap the call to ssh login helper using saved info for instance_id"""
+    cloud_dict = saved_instances.get(instance_id, {})
+    address = cloud_dict.get('INSTANCE_SSH_IP', '')
+    port = cloud_dict.get('INSTANCE_SSH_PORT', '')
     image = cloud_dict.get('INSTANCE_IMAGE', 'UNKNOWN')
-    username = cloud_login_username(configuration, cloud_id, image)
-    return msg % (username, address, port)
+    msg = cloud_ssh_login_help(configuration, client_id, cloud_id, address,
+                               port, image)
+    # Wrap lines as html
+    return msg.replace('\n', '<br/>')
+
 
 def signature():
     """Signature of the main function"""
@@ -350,8 +354,9 @@ def main(client_id, user_arguments_dict):
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_login_help(
-                configuration, cloud_id, cloud_dict)})
+            'object_type': 'html_form', 'text': _ssh_help(
+                configuration, client_id, cloud_id, saved_instances,
+                instance_id)})
     
     elif "delete" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)
@@ -414,10 +419,31 @@ def main(client_id, user_arguments_dict):
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, action_msg)})
-        cloud_dict = saved_instances.get(instance_id, {})
-        output_objects.append({
-            'object_type': 'text', 'text': ssh_login_help(
-                configuration, cloud_id, cloud_dict)})
+
+        # Show web console and ssh details if running
+        if action_msg in ('ACTIVE', 'RUNNING'):
+            (console_status, console_msg) = web_access_cloud_instance(
+                configuration, client_id, cloud_id, cloud_flavor, instance_id)
+            if not console_status:
+                logger.error("%s cloud instance %s console for %s failed: %s" \
+                             % (cloud_id, instance_id, client_id, console_msg))
+                output_objects.append({
+                    'object_type': 'error_text',
+                    'text': 'Failed to get instance %s at %s console: %s' % \
+                    (instance_id, cloud_id, console_msg)})
+                return (output_objects, returnvalues.SYSTEM_ERROR)
+            output_objects.append({
+                'object_type': 'link', 'destination': console_msg,
+                'text': 'Open web console', 'class': 'consolelink iconspace',
+                'title': 'open web console', 'target': '_blank'})
+            output_objects.append({'object_type': 'text', 'text': ''})
+
+            output_objects.append({
+                'object_type': 'html_form', 'text': _ssh_help(
+                    configuration, client_id, cloud_id, saved_instances,
+                    instance_id)})
+
+        output_objects.append({'object_type': 'text', 'text': ''})
 
     elif "start" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)
@@ -444,12 +470,13 @@ def main(client_id, user_arguments_dict):
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
-        cloud_dict = saved_instances.get(instance_id, {})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_login_help(
-                configuration, cloud_id, cloud_dict)})
+            'object_type': 'html_form', 'text': _ssh_help(
+                configuration, client_id, cloud_id, saved_instances,
+                instance_id)})
 
-    elif "restart" == action:
+    elif action in ("softrestart", "hardrestart"):
+        boot_strength = action.replace("restart", "").upper()
         saved_instances = unpickle(cloud_instance_state_path, logger)
         if not saved_instances or not saved_instances.get(instance_id, None):
             logger.error("no saved %s cloud instance %s for %s to restart" % \
@@ -460,7 +487,8 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.CLIENT_ERROR)
             
         (action_status, action_msg) = restart_cloud_instance(
-            configuration, client_id, cloud_id, cloud_flavor, instance_id)
+            configuration, client_id, cloud_id, cloud_flavor, instance_id,
+            boot_strength)
         if not action_status:
             logger.error("%s %s cloud instance %s for %s failed: %s" % \
                          (action, cloud_id, instance_id, client_id,
@@ -474,10 +502,10 @@ def main(client_id, user_arguments_dict):
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
-        cloud_dict = saved_instances.get(instance_id, {})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_login_help(
-                configuration, cloud_id, cloud_dict)})
+            'object_type': 'html_form', 'text': _ssh_help(
+                configuration, client_id, cloud_id, saved_instances,
+                instance_id)})
 
     elif "stop" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)
@@ -529,17 +557,17 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
-            (action, instance_id, cloud_id, action_msg)})
-        cloud_dict = saved_instances.get(instance_id, {})
-        output_objects.append({
-            'object_type': 'text', 'text': ssh_login_help(
-                configuration, cloud_id, cloud_dict)})
+            'object_type': 'text', 'text': "%s instance %s at %s" % \
+            (action, instance_id, cloud_id)})
         output_objects.append({
             'object_type': 'link', 'destination': action_msg,
-            'text': 'Web console', 'class': 'consolelink iconspace',
+            'text': 'Open web console', 'class': 'consolelink iconspace',
             'title': 'open web console', 'target': '_blank'})
         output_objects.append({'object_type': 'text', 'text': ''})
+        output_objects.append({
+            'object_type': 'html_form', 'text': _ssh_help(
+                configuration, client_id, cloud_id, saved_instances,
+                instance_id)})
 
     elif "updatekeys" == action:
         saved_instances = unpickle(cloud_instance_state_path, logger)
@@ -569,11 +597,10 @@ def main(client_id, user_arguments_dict):
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
             (action, instance_id, cloud_id, "success")})
-        cloud_dict = saved_instances.get(instance_id, {})
         output_objects.append({
-            'object_type': 'text', 'text': ssh_login_help(
-                configuration, cloud_id, cloud_dict)})
-
+            'object_type': 'html_form', 'text': _ssh_help(
+                configuration, client_id, cloud_id, saved_instances,
+                instance_id)})
         output_objects.append({
             'object_type': 'text', 'text': ssh_auth_msg})
         for pub_key in auth_keys:

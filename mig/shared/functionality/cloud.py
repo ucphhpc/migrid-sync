@@ -143,9 +143,12 @@ def main(client_id, user_arguments_dict):
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
 
-    action_list = [('status', 'Status'), ('start', 'Start'),
-                   ('restart', 'Restart'), ('stop', 'Stop'),
-                   ('webaccess', 'Web access'), ('updatekeys', 'Set keys on'),
+    action_list = [('start', 'Start'), ('stop', 'Stop'),
+                   ('softrestart', 'Soft boot'), ('hardrestart', 'Hard boot'),
+                   ('status', 'Status'),
+                   # NOTE: expose console on status page
+                   #('webaccess', 'Console'),
+                   ('updatekeys', 'Set keys on'),
                    ('create', 'Create'), ('delete', 'Delete')]
     for service in services:
         cloud_id = service['name']
@@ -206,7 +209,7 @@ def main(client_id, user_arguments_dict):
             saved_instances = {}
 
         saved_fields = ['INSTANCE_IMAGE']
-        instance_fields = ['public_ip', 'status']
+        instance_fields = ['public_fqdn', 'status']
         status_map = status_all_cloud_instances(
             configuration, client_id, cloud_id, cloud_flavor,
             saved_instances.keys(), instance_fields)

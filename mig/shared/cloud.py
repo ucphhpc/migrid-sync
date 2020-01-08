@@ -31,6 +31,7 @@ import hashlib
 import json
 import os
 import re
+import socket
 import sys
 import time
 
@@ -52,7 +53,8 @@ __cloud_helper_map = {"openstack": None}
 __max_wait_secs = 120
 __poll_delay_secs = 3
 
-cloud_manage_actions = ['start', 'restart', 'status', 'stop', 'webaccess']
+cloud_manage_actions = ['start', 'softrestart', 'hardrestart',
+                        'status', 'stop', 'webaccess']
 cloud_edit_actions = ['updatekeys', 'create', 'delete']
 
 
@@ -249,13 +251,12 @@ def openstack_stop_cloud_instance(configuration, client_id, cloud_id, instance_i
 
 @__require_openstack
 def openstack_restart_cloud_instance(configuration, client_id, cloud_id, instance_id,
-                                     boot_strength="HARD"):
+                                     boot_strength):
     """Reboot provided cloud instance. Use SOFT or HARD as boot_strength"""
     cloud_flavor = "openstack"
     _logger = configuration.logger
-    _logger.info("restart %s cloud instance %s for %s" % (cloud_id,
-                                                          instance_id,
-                                                          client_id))
+    _logger.info("restart %s cloud instance %s for %s %s" % \
+                 (cloud_id, instance_id, client_id, boot_strength))
     conn = openstack_cloud_connect(configuration, cloud_id)
     if conn is None:
         return (False, [])
@@ -274,16 +275,21 @@ def openstack_restart_cloud_instance(configuration, client_id, cloud_id, instanc
         if msg:
             status = False
             msg = force_utf8(msg)
-            _logger.error("%s failed to restart %s cloud instance: %s" %
-                          (client_id, instance_id, msg))
+            _logger.error("%s failed to %s restart %s cloud instance: %s" %
+                          (client_id, boot_strength, instance_id, msg))
         else:
-            _logger.info("%s restarted cloud %s instance %s" %
-                         (client_id, cloud_id, instance_id))
+            _logger.info("%s %s restarted cloud %s instance %s" %
+                         (client_id, boot_strength, cloud_id, instance_id))
+    except openstack.exceptions.ConflictException, ose:
+        status = False
+        msg = "instance restart err - not already running!"
+        _logger.error("%s restart on stopped %s cloud instance %s" %
+                      (client_id, instance_id, ose))
     except Exception, exc:
         status = False
         msg = "instance restarted failed!"
-        _logger.error("%s failed to restart %s cloud instance: %s" %
-                      (client_id, instance_id, exc))
+        _logger.error("%s failed to %s restart %s cloud instance: %s" %
+                      (client_id, boot_strength, instance_id, exc))
 
     return (status, msg)
 
@@ -351,7 +357,7 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
         return status_dict
 
     # Special value parsing required for these fields
-    lookup_map = {'public_ip': 'addresses'}
+    lookup_map = {'public_ip': 'addresses', 'public_fqdn': 'addresses'}
     try:
         # Extract corresponding cloud status objects
         for server in conn.compute.servers():
@@ -387,6 +393,15 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                             if entry and entry[-1] and \
                                 'floating' in entry[-1].values():
                                 field_val = entry[-1].get('addr', 'UNKNOWN')
+                                break
+                    elif name == 'public_fqdn':
+                        address_entries = field_val.values()
+                        for entry in address_entries:
+                            if entry and entry[-1] and \
+                                'floating' in entry[-1].values():
+                                addr = entry[-1].get('addr', '')
+                                field_val = cloud_fqdn_from_ip(configuration,
+                                                               addr)[0]
                                 break
                     else:
                         _logger.warning("no converter for status field %s" % \
@@ -756,6 +771,19 @@ def __get_cloud_helper(configuration, cloud_flavor, operation):
         raise ValueError("No such cloud flavor: %s" % cloud_flavor)
 
 
+def cloud_fqdn_from_ip(configuration, ip_addr):
+    """Lookup host FQDN list from ip_addr"""
+    _logger = configuration.logger
+    fqdn = [ip_addr]
+    if not ip_addr:
+        return [ip_addr]
+    try:
+        fqdn = socket.gethostbyaddr(ip_addr)
+    except Exception, exc:
+        _logger.warning("could not resolve IP addresss %s to FQDN: %s" % \
+                        (ip_addr, exc))
+    return fqdn
+
 def cloud_access_allowed(configuration, user_dict):
     """Check if user with user_dict is allowed to access site cloud features"""
     for (key, val) in configuration.site_cloud_access:
@@ -769,12 +797,62 @@ def cloud_login_username(configuration, cloud_id, instance_image):
     Uses any configured username exceptions from service confs and defaults
     to the instance_image name otherwise.
     """
+    _logger = configuration.logger
     username = instance_image
+    user_map = {}
     for service in configuration.cloud_services:
         if service['service_name'] == cloud_id:
-            username = service['service_user_map'].get(instance_image,
-                                                       instance_image)
+            user_map = service['service_user_map']
+            username = user_map.get(instance_image, instance_image)
+            break
+    _logger.debug("found instance image username %s for %s (%s)" % \
+                  (username, instance_image, user_map))
     return username
+
+
+def cloud_login_jump_host(configuration, client_id, cloud_id):
+    """Return any configured ssh jump host ssh login details including
+    address, port and username for client_id on cloud_id.
+    """
+    _logger = configuration.logger
+    jump_host = {'address': '', 'fqdn': '', 'port': '', 'user': ''}
+    for service in configuration.cloud_services:
+        if service['service_name'] == cloud_id:
+            # TODO: support jumphost user map
+            addr = service['service_jumphost_address']
+            jump_host['address'] = jump_host['fqdn'] = addr
+            jump_host['fqdn'] = cloud_fqdn_from_ip(configuration, addr)[0]
+            # TODO: support jumphost user map
+            jump_host['user'] = service['service_jumphost_user']
+            # TODO: support jumphost port and port map?
+    _logger.debug("found jump host for %s on %s: %s" % \
+                  (client_id, cloud_id, jump_host))
+    return jump_host
+
+
+def cloud_ssh_login_help(configuration, client_id, cloud_id, address, port,
+                         image):
+    """Return complete ssh login instructions for saved cloud_dict instance on
+    cloud_id.
+    """
+    _logger = configuration.logger
+    base_msg = """You can connect with ssh as user %s on host %s and port %d.
+    """
+    jump_msg = """Please note that you MUST explicitly ssh jump through host
+%(fqdn)s as user %(user)s to reach the instance.
+    """
+    jump_host = cloud_login_jump_host(configuration, client_id, cloud_id)
+    fqdn = cloud_fqdn_from_ip(configuration, address)[0]
+    username = cloud_login_username(configuration, cloud_id, image)
+    msg = base_msg  % (username, fqdn, port)
+    jump_opt = ''
+    if jump_host['fqdn']:
+        msg += jump_msg % jump_host
+        jump_opt = "-J%(user)s@%(fqdn)s" % jump_host
+    msg += """Example OpenSSH command:
+ssh %s %s@%s
+    """ % (jump_opt, username, fqdn)
+    return msg
 
 
 def check_cloud_available(configuration, client_id, cloud_id, cloud_flavor):
