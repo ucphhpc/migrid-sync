@@ -188,7 +188,7 @@ if '__main__' == __name__:
         user_dict['comment'] = raw_input('Comment: ')
         user_dict['password'] = getpass('Password: ')
     else:
-        print "Error: Missing one or more of the argunments: " \
+        print "Error: Missing one or more of the arguments: " \
             + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
             + "[EMAIL] [COMMENT] [PASSWORD]"
         sys.exit(1)

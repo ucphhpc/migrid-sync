@@ -127,7 +127,7 @@ if '__main__' == __name__:
         user_dict['country'] = raw_input('2-letter Country Code: ')
         user_dict['email'] = raw_input('Email: ')
     else:
-        print "Error: Missing one or more of the argunments: " \
+        print "Error: Missing one or more of the arguments: " \
             + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
             + "[EMAIL]"
         sys.exit(1)

@@ -188,7 +188,7 @@ if '__main__' == __name__:
             if not force:
                 sys.exit(1)
     elif len(seed) != 32:
-        print "Maleformed seed, must be of length 32: %d" % len(seed)
+        print "Malformed seed, must be of length 32: %d" % len(seed)
         if not force:
             sys.exit(1)
 
