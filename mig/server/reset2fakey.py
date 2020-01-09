@@ -30,10 +30,13 @@
 import getopt
 import os
 import sys
-import pyotp
+import base64
+import datetime
 import tempfile
+import pyotp
 
-from shared.auth import reset_twofactor_key
+
+from shared.auth import reset_twofactor_key, valid_otp_window
 from shared.conf import get_configuration_object
 from shared.settings import load_twofactor, parse_and_save_twofactor
 from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
@@ -64,7 +67,7 @@ def enable2fa(configuration, user_id, force=False):
         print "%s : %s" % (msg, exc)
         return False
     (parse_status, _) = parse_and_save_twofactor(tmptopicfile, user_id,
-                                                         configuration)
+                                                 configuration)
     if parse_status:
         print 'Enabled all two-factor services for user: %s' % user_id
     else:
@@ -175,6 +178,20 @@ if '__main__' == __name__:
             if not force:
                 sys.exit(1)
 
+    if len(seed) == 40:
+        if verbose:
+            print "Detected HEX seed, re-encoding to base32"
+        try:
+            seed = base64.b32encode(base64.b16decode(seed))
+        except Exception, exc:
+            print "Failed to base32 encode seed"
+            if not force:
+                sys.exit(1)
+    elif len(seed) != 32:
+        print "Maleformed seed, must be of length 32: %d" % len(seed)
+        if not force:
+            sys.exit(1)
+
     if interval:
         try:
             interval = int(interval)
@@ -198,12 +215,23 @@ if '__main__' == __name__:
     if twofa_key:
         print 'Two factor key succesfully reset'
         if verbose:
+            totp_default = pyotp.TOTP(twofa_key)
+            totp_custom_totp = None
             if interval:
-                twofa_code = pyotp.TOTP(twofa_key, interval=interval).now()
-                print "default 2fa code: %s" % pyotp.TOTP(twofa_key).now()
+                totp_custom_totp = pyotp.TOTP(twofa_key, interval=interval)
+
+            if valid_otp_window == 0:
+                print "default 2fa code: %s" % totp_default.TOTP(twofa_key).now()
+                if totp_custom_totp:
+                    print "interval: %d 2fa code: %s" % (interval, totp_custom_totp)
             else:
-                twofa_code = pyotp.TOTP(twofa_key).now()
-            print 'Current two factor accept code: %s' % twofa_code
+                current_time = datetime.datetime.now()
+                for i in range(-valid_otp_window, valid_otp_window + 1):
+                    print "default interval, window: %d, code: %s" \
+                        % (i, totp_default.at(current_time, i))
+                    if totp_custom_totp:
+                        print "interval: %d, window: %d, code: %s" \
+                            % (interval, i, totp_custom_totp.at(current_time, i))
     else:
         print 'Failed to reset two factor key'
         sys.exit(1)
