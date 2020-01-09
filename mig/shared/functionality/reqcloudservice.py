@@ -99,11 +99,12 @@ def _ssh_help(configuration, client_id, cloud_id, saved_instances,
               instance_id):
     """Wrap the call to ssh login helper using saved info for instance_id"""
     cloud_dict = saved_instances.get(instance_id, {})
+    label = cloud_dict.get('INSTANCE_LABEL', 'UNKNOWN')
     address = cloud_dict.get('INSTANCE_SSH_IP', '')
     port = cloud_dict.get('INSTANCE_SSH_PORT', '')
     image = cloud_dict.get('INSTANCE_IMAGE', 'UNKNOWN')
-    msg = cloud_ssh_login_help(configuration, client_id, cloud_id, address,
-                               port, image)
+    msg = cloud_ssh_login_help(configuration, client_id, cloud_id, label,
+                               address, port, image)
     # Wrap lines as html
     return msg.replace('\n', '<br/>')
 

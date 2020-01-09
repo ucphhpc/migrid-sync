@@ -1221,6 +1221,14 @@ location.""" % self.config_file
                                               config.options(section)})
 
         self.cloud_services = []
+        # List of service options with default and override map
+        override_map_keys = ['service_user', 'service_flavor_id',
+                             'service_key_id', 'service_network_id',
+                             'service_sec_group_id',
+                             'service_floating_network_id',
+                             'service_availability_zone',
+                             'service_jumphost_address',
+                             'service_jumphost_user']
         # Load generated cloud sections
         for section in config.sections():
             if 'CLOUD_' in section:
@@ -1235,10 +1243,15 @@ location.""" % self.config_file
 
                 service = {option: config.get(section, option) for option in
                            config.options(section)}
-                user_map_raw = service.get('service_user_map', '')
-                user_map_parts = user_map_raw.split()
-                user_map = dict([i.split(':', 1) for i in user_map_parts])
-                service['service_user_map'] = user_map
+                # Parse all sections with default and map override using
+                # a semi-colon separated list of key=val pairs 
+                for name in override_map_keys:
+                    raw_val = service.get('%s_map' % name, '')
+                    map_parts = raw_val.split(';')
+                    entry_pairs = [i.split('=', 1) for i in map_parts if \
+                                   i.find('=') != -1]
+                    entry_map = dict(entry_pairs)
+                    service['%s_map' % name] = entry_map
                 self.cloud_services.append(service)
 
         if config.has_option('GLOBAL', 'vgrid_owners'):

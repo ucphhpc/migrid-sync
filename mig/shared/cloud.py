@@ -27,6 +27,7 @@
 
 """Cloud service helper functions"""
 
+import base64
 import hashlib
 import json
 import os
@@ -46,6 +47,7 @@ except ImportError, err:
 
 from shared.base import force_utf8, force_utf8_rec
 from shared.defaults import keyword_all
+from shared.safeeval import subprocess_call
 
 # Internal helper to map individual operations to flavored cloud functions
 __cloud_helper_map = {"openstack": None}
@@ -585,23 +587,32 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
     status, msg = True, ''
 
     # We read defaults from configuration service section
-    service = {}
-    for service_spec in configuration.cloud_services:
-        if service_spec['service_name'] == cloud_id:
-            service = service_spec
-            break
+    service = cloud_find_service(configuration, cloud_id)
+    if not service:
+        _logger.warning("no matching service %s" % cloud_id)
+        return (False, [])
     # Default key if user doesn't give one
-    key_id = service.get("service_key_id", "UNKNOWN")
+    key_id = lookup_user_service_value(configuration, client_id, service,
+                                       "service_key_id")
+    # Optional jump host for ssh login to instances
+    jump_host = cloud_login_jump_host(configuration, client_id, cloud_id)
+    jump_host_addr, jump_host_user = jump_host["fqdn"], jump_host["user"]
     # The rest are likely needed for creation to succeed
-    flavor_id = service.get("service_flavor_id", "UNKNOWN")
-    network_id = service.get("service_network_id", "UNKNOWN")
-    sec_group_id = service.get("service_sec_group_id", "UNKNOWN")
-    floating_network_id = service.get("service_floating_network_id",
-                                      "UNKNOWN")
-    availability_zone = service.get("service_availability_zone",
-                                    "UNKNOWN")
+    flavor_id = lookup_user_service_value(configuration, client_id, service,
+                                          "service_flavor_id")
+    network_id = lookup_user_service_value(configuration, client_id, service,
+                                           "service_network_id")
+    sec_group_id = lookup_user_service_value(configuration, client_id,
+                                             service, "service_sec_group_id")
+    floating_network_id = lookup_user_service_value(
+        configuration, client_id, service, "service_floating_network_id")
+    availability_zone = lookup_user_service_value(
+        configuration, client_id, service, "service_availability_zone")
     mandatory_settings = [flavor_id, network_id, sec_group_id,
                           floating_network_id, availability_zone]
+
+    _logger.debug("create instance for %s with mandatory settings: %s" % \
+                  (client_id, mandatory_settings))
 
     if "UNKNOWN" in mandatory_settings:
         _logger.warning("Found unknown mandatory cloud service setting(s): %s"
@@ -679,6 +690,15 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
         msg = force_utf8(floating_ip.floating_ip_address)
         _logger.info("%s created cloud %s instance %s with floating IP %s" %
                      (client_id, cloud_id, instance_id, msg))
+
+        if not cloud_add_jump_host_key(configuration, client_id, cloud_id,
+                                       auth_keys):
+            status = False
+            msg = "failed to add %s cloud %s instance ssh jump keys" % \
+                  (cloud_id, instance_id)
+            _logger.error("%s %s " % (client_id, msg))
+            return (status, msg)
+        
     except Exception, exc:
         status = False
         msg = "instance creation failed!"
@@ -771,6 +791,17 @@ def __get_cloud_helper(configuration, cloud_flavor, operation):
         raise ValueError("No such cloud flavor: %s" % cloud_flavor)
 
 
+def cloud_find_service(configuration, cloud_id):
+    """Find cloud_id service section settings in configuration"""
+    _logger = configuration.logger
+    for service in configuration.cloud_services:
+        if service['service_name'] == cloud_id:
+            return service
+    _logger.error("no such cloud service found: %s (%s)" % \
+                  (cloud_id, configuration.cloud_services))
+    return None
+
+
 def cloud_fqdn_from_ip(configuration, ip_addr):
     """Lookup host FQDN list from ip_addr"""
     _logger = configuration.logger
@@ -798,40 +829,133 @@ def cloud_login_username(configuration, cloud_id, instance_image):
     to the instance_image name otherwise.
     """
     _logger = configuration.logger
+    _logger.debug("find jump host for %s" %  cloud_id)
     username = instance_image
     user_map = {}
-    for service in configuration.cloud_services:
-        if service['service_name'] == cloud_id:
-            user_map = service['service_user_map']
-            username = user_map.get(instance_image, instance_image)
-            break
+    service = cloud_find_service(configuration, cloud_id)
+    if not service:
+        _logger.warning("no matching service %s" % cloud_id)
+        return instance_image
+    user_map = service['service_user_map']
+    username = user_map.get(instance_image, instance_image)
     _logger.debug("found instance image username %s for %s (%s)" % \
                   (username, instance_image, user_map))
     return username
 
+    
+def lookup_user_value_in_map(configuration, client_id, service_default,
+                              override_map):
+    """Helper to looup a service conf value for client_id based on the common
+    structure with a service_default value and a map of user overrides.
+    """
+    _logger = configuration.logger
+    _logger.debug("lookup user setting for %s: %s %s" % \
+                  (client_id, service_default, override_map))
+    for (key, val) in override_map.items():
+        # Use regexp search here to match on sub-strings without anchoring
+        if re.search(key, client_id):
+            _logger.debug("found override %s for %s" % (val, client_id))
+            return val
+    _logger.debug("using default %s for %s" % (service_default, client_id))
+    return service_default
+
+def lookup_user_service_value(configuration, client_id, service, setting):
+    """Lookup a user setting in service conf using the default and override
+    map structure.
+    """
+    _logger = configuration.logger
+    _logger.debug("lookup service setting %s for %s: %s" % (setting, client_id,
+                                                            service))
+    default = service[setting]
+    overrides = service["%s_map" % setting]
+    return lookup_user_value_in_map(configuration, client_id, default,
+                                    overrides)
+
+def _get_encoder(configuration, coding):
+    """"""
+    coding_map = {"base16": base64.b16encode, "base32": base64.b32encode,
+                  "base64": base64.b64encode}
+    if not coding in coding_map.keys():
+        raise ValueError("invalid coding value: %s (allowed: %s)" % \
+                         (coding, ', '.join(coding_map.keys())))
+    return coding_map[coding]
+    
+    
+def _get_jump_host(configuration, client_id, cloud_id, manage=False):
+    """Return any configured ssh jump host ssh details including address, port
+    and username for client_id on cloud_id. If the optional manage arg is set
+    the two additional manage key script and coding settings are added.
+    """
+    _logger = configuration.logger
+    jump_host = {}
+    service = cloud_find_service(configuration, cloud_id)
+    if not service:
+        _logger.warning("no matching service %s" % cloud_id)
+        return jump_host
+    addr = lookup_user_service_value(configuration, client_id, service,
+                                     'service_jumphost_address')
+    jump_host['address'] = jump_host['fqdn'] = addr
+    jump_host['fqdn'] = cloud_fqdn_from_ip(configuration, addr)[0]
+    jump_host['user'] = lookup_user_service_value(
+        configuration, client_id, service, 'service_jumphost_user')
+    # TODO: support jumphost port with port map override?
+    if manage:
+        for name in ('manage_keys_script', 'manage_keys_coding'):
+            jump_host[name] = service['service_jumphost_%s' % name]
+    _logger.debug("found jump host for %s on %s: %s" % \
+                  (client_id, cloud_id, jump_host))
+    return jump_host
 
 def cloud_login_jump_host(configuration, client_id, cloud_id):
     """Return any configured ssh jump host ssh login details including
     address, port and username for client_id on cloud_id.
     """
+    return _get_jump_host(configuration, client_id, cloud_id, False)
+
+def cloud_manage_jump_host(configuration, client_id, cloud_id):
+    """Return any configured ssh jump host ssh manage details including
+    manage script, network encoding, address, port and username for client_id
+    on cloud_id.
+    """
+    return _get_jump_host(configuration, client_id, cloud_id, True)
+
+def cloud_add_jump_host_key(configuration, client_id, cloud_id, auth_keys,
+                            ignore_disabled=True):
+    """Add the given pub_key as allowed jump host ssh key for client_id"""
     _logger = configuration.logger
-    jump_host = {'address': '', 'fqdn': '', 'port': '', 'user': ''}
-    for service in configuration.cloud_services:
-        if service['service_name'] == cloud_id:
-            # TODO: support jumphost user map
-            addr = service['service_jumphost_address']
-            jump_host['address'] = jump_host['fqdn'] = addr
-            jump_host['fqdn'] = cloud_fqdn_from_ip(configuration, addr)[0]
-            # TODO: support jumphost user map
-            jump_host['user'] = service['service_jumphost_user']
-            # TODO: support jumphost port and port map?
-    _logger.debug("found jump host for %s on %s: %s" % \
-                  (client_id, cloud_id, jump_host))
-    return jump_host
+    jump_host = cloud_manage_jump_host(configuration, client_id, cloud_id)
+    if not jump_host['fqdn']:
+        if ignore_disabled:
+            return True
+        else:
+            _logger.warning("no jump host configured for %s" % cloud_id)
+            return False
+        
+    # Sanitize key to avoid malicious or broken key entries 
+    sanitized_key = auth_keys[0].strip()
+    sanitized_key = sanitized_key.split('\n')[0].strip()
+    # Build non-interactive ssh command to insert pub key on jump host
+    ssh_cmd = ['ssh']
+    if jump_host['user']:
+        ssh_cmd.append('-oUser=%(user)s' % jump_host)
+    ssh_cmd.append("%(fqdn)s" % jump_host)
+    # NOTE: remote script restricts key access to reduce abuse risk with
+    # no-pty,no-agent-forwarding,no-X11-forwarding PUBKEY
+    # We wrap the complex input args as baseX to avoid any nasty shell effects
+    encoder = _get_encoder(configuration, jump_host['manage_keys_coding'])
+    ssh_cmd += [jump_host['manage_keys_script'], "add",
+                jump_host['manage_keys_coding'], encoder(client_id),
+                encoder(sanitized_key)]
+    _logger.info("adding jump host key with command:\n%s" % ssh_cmd)
+    retval = subprocess_call(ssh_cmd)
+    if retval != 0:
+        _logger.error("add jump host key failed with exit code %d" % retval)
+        return False
+    return True
 
 
-def cloud_ssh_login_help(configuration, client_id, cloud_id, address, port,
-                         image):
+def cloud_ssh_login_help(configuration, client_id, cloud_id, label, address,
+                         port, image):
     """Return complete ssh login instructions for saved cloud_dict instance on
     cloud_id.
     """
@@ -846,12 +970,28 @@ def cloud_ssh_login_help(configuration, client_id, cloud_id, address, port,
     username = cloud_login_username(configuration, cloud_id, image)
     msg = base_msg  % (username, fqdn, port)
     jump_opt = ''
+    ssh_config = """Host %s
+HostName %s 
+User %s
+# Path to your ssh private key matching pub key set on your Cloud Setup page
+IdentityFile ~/.ssh/id_rsa
+IdentitiesOnly yes
+""" % (label, fqdn, username)
     if jump_host['fqdn']:
         msg += jump_msg % jump_host
         jump_opt = "-J%(user)s@%(fqdn)s" % jump_host
-    msg += """Example OpenSSH command:
+        ssh_config += """ProxyJump %(user)s@%(fqdn)s
+        """ % jump_host
+    msg += """Example explicit ssh command:
 ssh %s %s@%s
     """ % (jump_opt, username, fqdn)
+    msg += """
+Alternatively you can add something like:
+%s
+to your ~/.ssh/config to allow the simple ssh command:
+ssh %s
+    """ % (ssh_config, label)
+
     return msg
 
 
@@ -984,7 +1124,7 @@ if __name__ == "__main__":
     from shared.settings import load_cloud
     conf = get_configuration_object()
     client_id = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
-    cloud_id = 'mist'
+    cloud_id = 'MIST'
     cloud_flavor = 'openstack'
     instance_id = 'My-Misty-Test-42'
     instance_image = 'cirrossdk'
@@ -999,6 +1139,15 @@ if __name__ == "__main__":
     cloud_settings = load_cloud(client_id, conf)
     auth_keys = cloud_settings['authkeys'].split('\n')
 
+    print cloud_login_jump_host(conf, client_id, cloud_id)
+    service = cloud_find_service(conf, cloud_id)
+    print lookup_user_service_value(conf, client_id, service,
+                                    'service_sec_group_id')
+    print lookup_user_service_value(conf, client_id, service,
+                                    'service_key_id')
+    #print cloud_add_jump_host_key(conf, client_id, cloud_id, auth_keys)
+    #print cloud_remove_jump_host_key(conf, client_id, cloud_id, auth_keys)
+    
     # TODO: load yaml from custom location or inline
     print "calling cloud operations for %s in %s with instance %s" % \
           (client_id, cloud_id, instance_id)
