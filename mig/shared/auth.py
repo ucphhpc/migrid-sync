@@ -49,6 +49,8 @@ from shared.fileio import read_file, delete_file, delete_symlink, \
 from shared.gdp import get_base_client_id
 from shared.pwhash import scramble_password, unscramble_password
 
+valid_otp_window = 1
+
 
 def get_totp(client_id,
              b32_key,
@@ -268,7 +270,7 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
     totp = get_totp(client_id,
                     b32_key,
                     configuration)
-    valid_token = totp.verify(token, valid_window=1)
+    valid_token = totp.verify(token, valid_window=valid_otp_window)
     if not valid_token \
             and hasattr(totp, 'custom_interval') \
             and totp.custom_interval:
@@ -279,7 +281,7 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
                         b32_key,
                         configuration,
                         force_default_interval=True)
-        valid_token = totp.verify(token, valid_window=1)
+        valid_token = totp.verify(token, valid_window=valid_otp_window)
 
     return valid_token
 
