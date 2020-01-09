@@ -148,10 +148,7 @@ questions or encounter any problems.
 <div class="news-accordion">
 <h4 class="staticpage">2020/01/09: DAG and MODI introduces user packages</h4>
 <p>
-We will be updating DAG and MODI on January 9th from around 5:00 pm, the update 
-will include the option to install user-specific packages for Python2/3 and R 
-that will be stored in one's home drive. This will allow users to create their 
-own configuration of packages stored between sessions.
+We updated DAG and MODI, in addition it is possible on DAG to install user packages for our Python environment by installing via pip / pip3 install --user <package> (as well as via install.packages in R) to one's own home directory. This means that you can now avoid having to reinstall packages every time you start a new Notebook. However, it has the limitation that the package to be imported over the network will make it significantly slower than if packages are directly installed in our Notebook image.
 </p>
 <h4 class="staticpage">2019/12/04: Planned ERDA Maintenance</h4>
 <p>
@@ -716,10 +713,12 @@ du har spørgsmål eller oplever problemer.
 <div class="news-accordion">
 <h4 class="staticpage">09/01-2020: DAG og MODI introducere bruger specifikke pakker</h4>
 <p>
-Vi vil opdatere DAG og MODI d. 9 januar fra omkring kl: 17:00, opdateringe
-inkludere muligheden for at installere bruger specifikke pakker for Python2/3 og R
-der vil blive gemt i ens hjemmedrev. Dette vil gøre det muligt for brugerne at 
-lave ens egen konfiguration af pakker der bliver gemt mellem sessions.
+Vi opdaterede DAG og MODI, herudover er det muligt på DAG at installere user pakker til 
+vores Python miljø ved at installere via pip/pip3 install --user <package> (samt via install.packages i R)
+til ens eget hjemme bibliotek. Dette gør at man nu kan slippe for at skulle geninstallere 
+pakker hver gang man starter en ny Notebook. Dog har det den begrænings at pakken skal 
+importeres over netværket vil gøre det væsentlig langsommere end 
+hvis pakker er direkte installeret i vores Notebook image.
 </p>
 <h4 class="staticpage">04/12-2019: Planlagt ERDA systemarbejde</h4>
 <p>
