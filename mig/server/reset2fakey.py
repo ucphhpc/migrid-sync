@@ -215,17 +215,18 @@ if '__main__' == __name__:
     if twofa_key:
         print 'Two factor key succesfully reset'
         if verbose:
+            current_time = datetime.datetime.now()
             totp_default = pyotp.TOTP(twofa_key)
             totp_custom_totp = None
             if interval:
                 totp_custom_totp = pyotp.TOTP(twofa_key, interval=interval)
 
             if valid_otp_window == 0:
-                print "default 2fa code: %s" % totp_default.TOTP(twofa_key).now()
+                print "default interval, code: %s" % totp_default.at(current_time, 0)
                 if totp_custom_totp:
-                    print "interval: %d 2fa code: %s" % (interval, totp_custom_totp)
+                    print "interval: %d, code: %s" \
+                        % (interval, totp_custom_totp.at(current_time, 0))
             else:
-                current_time = datetime.datetime.now()
                 for i in range(-valid_otp_window, valid_otp_window + 1):
                     print "default interval, window: %d, code: %s" \
                         % (i, totp_default.at(current_time, i))
