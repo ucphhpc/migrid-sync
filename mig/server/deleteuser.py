@@ -33,6 +33,7 @@ import getopt
 
 from shared.base import fill_distinguished_name, fill_user, \
      distinguished_name_to_user
+from shared.conf import get_configuration_object
 from shared.useradm import init_user_adm, delete_user
 
 
@@ -97,6 +98,8 @@ if '__main__' == __name__:
         else:
             print 'using configuration from MIG_CONF (or default)'
 
+    configuration = get_configuration_object()
+
     if user_id and args:
         print 'Error: Only one kind of user specification allowed at a time'
         usage()
@@ -116,13 +119,18 @@ if '__main__' == __name__:
             pass
     elif user_id:
         user_dict = distinguished_name_to_user(user_id)
-    else:
+    elif not configuration.site_enable_gdp:
         print 'Please enter the details for the user to be removed:'
         user_dict['full_name'] = raw_input('Full Name: ').title()
         user_dict['organization'] = raw_input('Organization: ')
         user_dict['state'] = raw_input('State: ')
         user_dict['country'] = raw_input('2-letter Country Code: ')
         user_dict['email'] = raw_input('Email: ')
+    else:
+        print "Error: Missing one or more of the argunments: " \
+            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
+            + "[EMAIL]"
+        sys.exit(1)
 
     if not user_dict.has_key('distinguished_name'):
         fill_distinguished_name(user_dict)

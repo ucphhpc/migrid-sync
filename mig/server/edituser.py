@@ -31,6 +31,7 @@ import getopt
 import os
 import sys
 
+from shared.conf import get_configuration_object
 from shared.useradm import init_user_adm, edit_user
 
 
@@ -106,6 +107,8 @@ if '__main__' == __name__:
         else:
             print 'using configuration from MIG_CONF (or default)'
 
+    configuration = get_configuration_object(skip_log=True)
+
     if not user_id:
         print 'Error: Existing user ID is required'
         usage()
@@ -125,7 +128,8 @@ if '__main__' == __name__:
             # Ignore missing optional arguments
 
             pass
-    else:
+    elif not configuration.site_enable_gdp:
+        # NOTE: We do not allow interactive user management on GDP systems 
         print 'Please enter the new details for %s:' % user_id
         print '[enter to skip field]'
         user_dict['full_name'] = raw_input('Full Name: ').title()
@@ -133,6 +137,11 @@ if '__main__' == __name__:
         user_dict['state'] = raw_input('State: ')
         user_dict['country'] = raw_input('2-letter Country Code: ')
         user_dict['email'] = raw_input('Email: ')
+    else:
+        print "Error: Missing one or more of the argunments: " \
+            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
+            + "[EMAIL] [COMMENT] [PASSWORD]"
+        sys.exit(1)
 
     # Pass optional short_id as well
     if short_id:

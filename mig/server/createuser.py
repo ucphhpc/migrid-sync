@@ -175,7 +175,7 @@ if '__main__' == __name__:
             sys.exit(1)
         user_dict.update(saved)
         del user_dict['expire']
-    else:
+    elif not configuration.site_enable_gdp:
         if verbose:
             print '''Entering interactive mode
 %s''' % cert_warn
@@ -187,6 +187,11 @@ if '__main__' == __name__:
         user_dict['email'] = raw_input('Email: ')
         user_dict['comment'] = raw_input('Comment: ')
         user_dict['password'] = getpass('Password: ')
+    else:
+        print "Error: Missing one or more of the argunments: " \
+            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
+            + "[EMAIL] [COMMENT] [PASSWORD]"
+        sys.exit(1)
 
     # Pass optional short_id as well
     if short_id:
