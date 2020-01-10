@@ -33,6 +33,7 @@ cgitb.enable()
 import os
 import time
 
+from shared.bailout import crash_helper
 from shared.base import requested_page, allow_script
 from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
@@ -127,8 +128,10 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     # TODO: add environ arg support to all main backends and use here
 
     script_name = os.path.basename(environ.get('SCRIPT_NAME', 'UNKNOWN'))
+    backend = os.path.splitext(script_name)[0]
     logger.debug("check allow script %s from %s" % (script_name, client_id))
     (allow, msg) = allow_script(configuration, script_name, client_id)
+    out_obj, ret_code, ret_msg = [], 0, ''
     try:
         if not allow:
             logger.warning("script %s rejected: %s" % (script_name, msg))
@@ -138,6 +141,7 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     except:
         import traceback
         logger.error("script crashed:\n%s" % traceback.format_exc())
+        crash_helper(configuration, backend, out_obj)
 
     after_time = time.time()
     out_obj.append({'object_type': 'timing_info', 'text':

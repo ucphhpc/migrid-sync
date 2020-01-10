@@ -31,6 +31,7 @@ import cgi
 import time
 
 import shared.returnvalues as returnvalues
+from shared.bailout import bailout_helper, crash_helper
 from shared.base import requested_page, allow_script
 from shared.defaults import download_block_size
 from shared.conf import get_configuration_object
@@ -71,9 +72,8 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         exec 'from %s import main' % import_path
     except Exception, err:
         _logger.error("%s could not import %s: %s" % (_addr, import_path, err))
+        bailout_helper(configuration, backend, output_objects)
         output_objects.extend([
-            {'object_type': 'title', 'text': 'Interface Error'},
-            {'object_type': 'header', 'text': 'Interface Error'},
             {'object_type': 'error_text', 'text':
              'Could not load backend: %s' % html_escape(backend)},
             {'object_type': 'link', 'text': 'Go to default interface',
@@ -87,11 +87,11 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         _logger.error("%s invalid user args %s for %s" % (_addr,
                                                           user_arguments_dict,
                                                           import_path))
-        output_objects.extend([
-            {'object_type': 'title', 'text': 'Input Error'},
+        bailout_helper(configuration, backend, output_objects,
+                       header_text='Input Error')
+        output_objects.append(
             {'object_type': 'error_text', 'text':
-             'User input is not on expected format!'}
-        ])
+             'User input is not on expected format!'})
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
     try:
@@ -104,21 +104,17 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         import traceback
         _logger.error("%s script crashed:\n%s" % (_addr,
                                                   traceback.format_exc()))
-        output_objects.extend([
-            {'object_type': 'title', 'text': 'Runtime Error'},
-            {'object_type': 'error_text', 'text':
-             'Internal error running backend: %s' % backend}
-        ])
+        crash_helper(configuration, backend, output_objects)
         return (output_objects, returnvalues.ERROR)
 
     (val_ret, val_msg) = validate(output_objects)
     if not val_ret:
         (ret_code, ret_msg) = returnvalues.OUTPUT_VALIDATION_ERROR
-        output_objects.extend([
-            {'object_type': 'title', 'text': 'Validation Error'},
+        bailout_helper(configuration, backend, output_objects,
+                       header_text="Validation Error")
+        output_objects.append(
             {'object_type': 'error_text', 'text':
-             'Output validation error! %s' % val_msg}
-        ])
+             'Output validation error! %s' % val_msg})
     after_time = time.time()
     output_objects.append({'object_type': 'timing_info', 'text':
                            "done in %.3fs" % (after_time - before_time)})
@@ -162,6 +158,7 @@ def application(environ, start_response):
         output_format = user_arguments_dict['output_format'][0]
 
     backend = "UNKNOWN"
+    output_objs = []
     try:
         if not configuration.site_enable_wsgi:
             _logger.error("WSGI interface is disabled in configuration")
@@ -186,16 +183,11 @@ def application(environ, start_response):
         _logger.error("handling of WSGI request for %s from %s failed: %s" %
                       (backend, client_id, exc))
         status = '500 ERROR'
-        (output_objs, ret_val) = ([
-            {'object_type': 'title', 'text': 'Internal Error'},
-            # Do not print potentially unsafe output here
-            {'object_type': 'error_text', 'text': "unexpected internal error"},
-            # Enable next two lines only for debugging
-            # {'object_type': 'text', 'text':
-            # str(environ)}
+        crash_helper(configuration, backend, output_objs)
+        output_objs.append(
             {'object_type': 'link', 'text': 'Go to default interface',
-             'destination': configuration.site_landing_page}
-        ], returnvalues.SYSTEM_ERROR)
+             'destination': configuration.site_landing_page})
+        ret_val = returnvalues.SYSTEM_ERROR
 
     (ret_code, ret_msg) = ret_val
 
