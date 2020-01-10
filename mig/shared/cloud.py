@@ -58,6 +58,7 @@ __poll_delay_secs = 3
 cloud_manage_actions = ['start', 'softrestart', 'hardrestart',
                         'status', 'stop', 'webaccess']
 cloud_edit_actions = ['updatekeys', 'create', 'delete']
+jumphost_manage_key_actions = ['add', 'remove']
 
 
 def __bail_out_openstack(*args, **kwargs):
@@ -919,10 +920,12 @@ def cloud_manage_jump_host(configuration, client_id, cloud_id):
     """
     return _get_jump_host(configuration, client_id, cloud_id, True)
 
-def cloud_add_jump_host_key(configuration, client_id, cloud_id, auth_keys,
-                            ignore_disabled=True):
-    """Add the given pub_key as allowed jump host ssh key for client_id"""
+def _manage_jump_host_keys(configuration, client_id, cloud_id, action,
+                           auth_keys, ignore_disabled=True):
+    """Manage the given auth_keys as allowed jump host ssh key for client_id"""
     _logger = configuration.logger
+    _logger.info("%s jump host key(s) for %s on %s" % (action, client_id,
+                                                       cloud_id))
     jump_host = cloud_manage_jump_host(configuration, client_id, cloud_id)
     if not jump_host['fqdn']:
         if ignore_disabled:
@@ -930,28 +933,51 @@ def cloud_add_jump_host_key(configuration, client_id, cloud_id, auth_keys,
         else:
             _logger.warning("no jump host configured for %s" % cloud_id)
             return False
-        
-    # Sanitize key to avoid malicious or broken key entries 
-    sanitized_key = auth_keys[0].strip()
-    sanitized_key = sanitized_key.split('\n')[0].strip()
+
+    if not action in jumphost_manage_key_actions:
+        _logger.error("invalid manage jump host keys action: %s" % action)
+        return False
+    
+    # Sanitize keys to avoid malicious or broken key entries 
+    sanitized_keys = []
+    for pub_key in auth_keys:
+        sanitized = pub_key.strip()
+        sanitized = sanitized.split('\n')[0].strip()
+        if sanitized:
+            sanitized_keys.append(sanitized)
     # Build non-interactive ssh command to insert pub key on jump host
     ssh_cmd = ['ssh']
     if jump_host['user']:
         ssh_cmd.append('-oUser=%(user)s' % jump_host)
     ssh_cmd.append("%(fqdn)s" % jump_host)
-    # NOTE: remote script restricts key access to reduce abuse risk with
-    # no-pty,no-agent-forwarding,no-X11-forwarding PUBKEY
+    # NOTE: remote script should restrict key access to reduce abuse risk with
+    # command="/bin/false",no-pty,no-agent-forwarding,no-X11-forwarding PUBKEY
     # We wrap the complex input args as baseX to avoid any nasty shell effects
     encoder = _get_encoder(configuration, jump_host['manage_keys_coding'])
-    ssh_cmd += [jump_host['manage_keys_script'], "add",
-                jump_host['manage_keys_coding'], encoder(client_id),
-                encoder(sanitized_key)]
-    _logger.info("adding jump host key with command:\n%s" % ssh_cmd)
+    ssh_cmd += [jump_host['manage_keys_script'], action,
+                jump_host['manage_keys_coding'], encoder(client_id)]
+    ssh_cmd += [encoder(sanitized) for sanitized in sanitized_keys]
+    _logger.info("%s jump host keys with command:\n%s" % (action, ssh_cmd))
     retval = subprocess_call(ssh_cmd)
     if retval != 0:
-        _logger.error("add jump host key failed with exit code %d" % retval)
+        _logger.error("%s jump host keys failed with exit code %d" % (action,
+                                                                      retval))
         return False
+    _logger.info("%s jump host keys done" % action)
     return True
+
+
+def cloud_add_jump_host_key(configuration, client_id, cloud_id, auth_keys,
+                            ignore_disabled=True):
+    """Add the given auth_keys as allowed jump host ssh key for client_id"""
+    return _manage_jump_host_keys(configuration, client_id, cloud_id, 'add',
+                                  auth_keys, ignore_disabled)
+
+def cloud_remove_jump_host_key(configuration, client_id, cloud_id, auth_keys,
+                            ignore_disabled=True):
+    """Remove the given auth_keys as allowed jump host ssh key for client_id"""
+    return _manage_jump_host_keys(configuration, client_id, cloud_id, 'remove',
+                                  auth_keys, ignore_disabled)
 
 
 def cloud_ssh_login_help(configuration, client_id, cloud_id, label, address,
