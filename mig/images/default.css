@@ -1407,6 +1407,12 @@ fieldset .singlefield {
 .fieldlabel {
     font-weight: bold;
 }
+.fieldheader {
+    font-size: 18px;
+}
+.fieldheadersep {
+    border-bottom: 1px solid #333; 
+}
 
 
 /* hide complexity for sharelink ls page */

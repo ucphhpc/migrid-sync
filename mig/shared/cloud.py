@@ -45,8 +45,10 @@ try:
 except ImportError, err:
     requests = None
 
-from shared.base import force_utf8, force_utf8_rec
+from shared.base import force_utf8, force_utf8_rec, client_id_dir
 from shared.defaults import keyword_all
+from shared.fileio import pickle, unpickle, acquire_file_lock, \
+     release_file_lock
 from shared.safeeval import subprocess_call
 
 # Internal helper to map individual operations to flavored cloud functions
@@ -160,9 +162,17 @@ def openstack_list_cloud_images(configuration, client_id, cloud_id):
     conn = openstack_cloud_connect(configuration, cloud_id)
     if conn is None:
         return (False, [])
+    service = cloud_find_service(configuration, cloud_id)
+    if not service:
+        _logger.warning("no matching service %s" % cloud_id)
+        return (False, [])
     img_list = []
     for image in conn.image.images():
-        img_list.append((force_utf8(image.name), force_utf8(image.id)))
+        image_name = force_utf8(image.name)
+        image_id = force_utf8(image.id)
+        image_alias = service['service_image_alias_map'].get(image_name,
+                                                             image_name)
+        img_list.append((image_name, image_id, image_alias))
     return (True, img_list)
 
 
@@ -802,6 +812,24 @@ def cloud_find_service(configuration, cloud_id):
                   (cloud_id, configuration.cloud_services))
     return None
 
+def cloud_build_instance_id(configuration, client_email, instance_label,
+                            session_id):
+    """Build the standard instance_id from client_email, instance_label and
+    session_id.
+    """
+    _logger = configuration.logger
+    _logger.debug("build instance id from %s %s %s" % \
+                  (client_email, instance_label, session_id))
+    instance_id = "%s:%s:%s" % (client_email, instance_label, session_id)
+    return instance_id
+
+def cloud_split_instance_id(configuration, client_id, instance_id):
+    """Extract the instance_id parts of a full instance_id"""
+    # format is user_email:instance_label:session_id
+    _logger = configuration.logger
+    _logger.debug("split instance id %s" % instance_id)
+    client_email, instance_label, session_id = instance_id.split(':')
+    return (client_email, instance_label, session_id)
 
 def cloud_fqdn_from_ip(configuration, ip_addr):
     """Lookup host FQDN list from ip_addr"""
@@ -818,10 +846,89 @@ def cloud_fqdn_from_ip(configuration, ip_addr):
 
 def cloud_access_allowed(configuration, user_dict):
     """Check if user with user_dict is allowed to access site cloud features"""
+    _logger = configuration.logger
     for (key, val) in configuration.site_cloud_access:
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             return False
     return True
+
+def _get_instance_state_path(configuration, client_id, cloud_id):
+    """Return the path where client_id stores a pickled dict of all personal
+    cloud_id instances.
+    """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    state_path = os.path.join(configuration.user_settings, client_dir,
+                              cloud_id + '.state')
+    return state_path
+
+def cloud_load_instance(configuration, client_id, cloud_id, instance_id):
+    """Load saved instance dictionary for client_id on cloud_id with
+    concurrency support.
+    Call with keyword_all as instance_id to extract all saved instances.
+    """
+    _logger = configuration.logger
+    state_path = _get_instance_state_path(configuration, client_id, cloud_id)
+    lock_path = "%s.lock" % state_path
+    state_lock = acquire_file_lock(lock_path, False)
+    saved_instances = unpickle(state_path, _logger)
+    release_file_lock(state_lock)
+    if not saved_instances:
+        saved_instances = {}
+    if instance_id == keyword_all:
+        return saved_instances
+    return saved_instances.get(instance_id, {})
+
+def cloud_save_instance(configuration, client_id, cloud_id, instance_id,
+                        instance_dict):
+    """Save cloud instance dictionary for client_id on cloud_id with
+    concurrency support.
+    """
+    _logger = configuration.logger
+    save_status = False
+    state_path = _get_instance_state_path(configuration, client_id, cloud_id)
+    lock_path = "%s.lock" % state_path
+    state_lock = acquire_file_lock(lock_path, True)
+    saved_instances = unpickle(state_path, _logger)
+    if not saved_instances:
+        saved_instances = {}
+    saved_instances[instance_id] = instance_dict
+    if pickle(saved_instances, state_path, _logger):
+        save_status = True
+        _logger.info("saved new %s cloud instance %s for %s" % \
+                     (cloud_id, instance_id, client_id))
+    else:
+        _logger.error("save new %s cloud instance %s for %s failed" % \
+                      (cloud_id, instance_id, client_id))
+    release_file_lock(state_lock)
+    return save_status
+
+def cloud_purge_instance(configuration, client_id, cloud_id,
+                                instance_id):
+    """Purge saved cloud instance dictionary for client_id on cloud_id with
+    concurrency support.
+    """
+    _logger = configuration.logger
+    delete_status = False
+    state_path = _get_instance_state_path(configuration, client_id, cloud_id)
+    lock_path = "%s.lock" % state_path
+    state_lock = acquire_file_lock(lock_path, True)
+    saved_instances = unpickle(state_path, _logger)
+    if saved_instances and saved_instances.get(instance_id, False):
+        del saved_instances[instance_id]
+        if pickle(saved_instances, state_path, _logger):
+            delete_status = True
+            _logger.info("deleted %s cloud instance %s for %s" % \
+                         (cloud_id, instance_id, client_id))
+        else:
+            _logger.error("delete %s cloud instance %s for %s failed" % \
+                          (cloud_id, instance_id, client_id))
+    else:
+        _logger.error("no such %s cloud instance %s for %s to delete" % \
+                      (cloud_id, instance_id, client_id))
+            
+    release_file_lock(state_lock)
+    return delete_status
 
 
 def cloud_login_username(configuration, cloud_id, instance_image):
@@ -1180,9 +1287,9 @@ if __name__ == "__main__":
     img_list = list_cloud_images(conf, client_id, cloud_id, cloud_flavor)
     print img_list
     image_id = ''
-    for (name, val) in img_list:
-        if instance_image == name:
-            image_id = val
+    for (img_name, img_id, img_alias) in img_list:
+        if instance_image == img_name:
+            image_id = img_id
 
     if not reuse_instance:
         print create_cloud_instance(conf, client_id, cloud_id, cloud_flavor,

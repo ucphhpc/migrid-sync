@@ -37,9 +37,9 @@ import shared.returnvalues as returnvalues
 
 from shared.base import client_id_dir
 from shared.cloud import check_cloud_available, list_cloud_images, \
-     status_all_cloud_instances, cloud_access_allowed, cloud_edit_actions
-from shared.defaults import csrf_field
-from shared.fileio import unpickle
+     status_all_cloud_instances, cloud_access_allowed, cloud_edit_actions, \
+     cloud_load_instance
+from shared.defaults import csrf_field, keyword_all
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.init import find_entry, initialize_main_variables
@@ -196,17 +196,12 @@ def main(client_id, user_arguments_dict):
             '''})
             continue
 
-        # Users store a pickled dict of all personal instances per cloud
-        cloud_instance_state_path = os.path.join(configuration.user_settings,
-                                                 client_dir,
-                                                 cloud_id + '.state')
         fill_helpers.update({'cloud_id': cloud_id, 'target_op': target_op})
 
         delete_html = ""
         # Manage existing instances
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances:
-            saved_instances = {}
+        saved_instances = cloud_load_instance(configuration, client_id,
+                                              cloud_id, keyword_all)
 
         saved_fields = ['INSTANCE_IMAGE']
         instance_fields = ['public_fqdn', 'status']
@@ -238,7 +233,17 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'html_form', 'text': """
         <div class='cloud-management fillwidth'>
         <h3>Manage %s instances</h3>
+        <br/>
         <div class='cloud-instance-grid'>
+        <div class='cloud-instance-grid-left'>
+        <label class='fieldlabel fieldheader'>Name</label>
+        </div>
+        <div class='cloud-instance-grid-middle'>
+        <label class='fieldlabel fieldheader'>Instance Details</label>
+        </div>
+        <div class='cloud-instance-grid-right'>
+        <label class='fieldlabel fieldheader'>Actions</label>
+        </div>
             """ % cloud_id})
         for (instance_id, instance_dict) in saved_instances.items():
             instance_label = instance_dict.get('INSTANCE_LABEL', instance_id)
@@ -252,6 +257,10 @@ def main(client_id, user_arguments_dict):
             """ % instance_label
             for field in saved_fields:
                 field_val = saved_instances[instance_id].get(field, "-")
+                if field == 'INSTANCE_IMAGE':
+                    for (img_name, _, img_alias) in img_list:
+                        if img_name == field_val:
+                            field_val = img_alias
                 instance_html += """
             <span class='fieldstatus entry leftpad'>%s</span>
             """ % field_val
@@ -318,9 +327,9 @@ def main(client_id, user_arguments_dict):
             <span class='halfwidth'>
             <select class='styled-select html-select halfwidth padspace' name='instance_image'>
             """
-        for (image_name, _) in img_list:
+        for (image_name, _, image_alias) in img_list:
             create_html += """<option value='%s'>%s</option>
-            """ % (image_name, image_name)
+            """ % (image_name, image_alias)
         create_html += """
             </select>
             </span>

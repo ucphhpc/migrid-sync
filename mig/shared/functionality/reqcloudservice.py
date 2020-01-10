@@ -38,9 +38,10 @@ from shared.cloud import list_cloud_images, status_of_cloud_instance, \
      start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \
      update_cloud_instance_keys, create_cloud_instance, delete_cloud_instance, \
      web_access_cloud_instance, cloud_access_allowed, cloud_login_username, \
-     cloud_ssh_login_help, cloud_edit_actions, cloud_manage_actions
+     cloud_ssh_login_help, cloud_build_instance_id, cloud_split_instance_id, \
+     cloud_load_instance, cloud_save_instance, cloud_purge_instance, \
+     cloud_edit_actions, cloud_manage_actions
 from shared.defaults import session_id_bytes, keyword_all
-from shared.fileio import pickle, unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import find_entry, initialize_main_variables
@@ -95,10 +96,9 @@ def valid_cloud_service(configuration, service):
         return False
     return True
 
-def _ssh_help(configuration, client_id, cloud_id, saved_instances,
+def _ssh_help(configuration, client_id, cloud_id, cloud_dict,
               instance_id):
     """Wrap the call to ssh login helper using saved info for instance_id"""
-    cloud_dict = saved_instances.get(instance_id, {})
     label = cloud_dict.get('INSTANCE_LABEL', 'UNKNOWN')
     address = cloud_dict.get('INSTANCE_SSH_IP', '')
     port = cloud_dict.get('INSTANCE_SSH_PORT', '')
@@ -217,10 +217,6 @@ def main(client_id, user_arguments_dict):
     cloud_flavor = service.get("service_flavor", "openstack")
     user_home_dir = os.path.join(configuration.user_home, client_dir)
 
-    # Users store a pickled dict of all personal instances
-    cloud_instance_state_path = os.path.join(configuration.user_settings,
-                                             client_dir, cloud_id + '.state')
-
     client_email = extract_field(client_id, 'email')
     if not client_email:
         logger.error("could not extract client email for %s!" % client_id)
@@ -232,13 +228,16 @@ def main(client_id, user_arguments_dict):
     ssh_auth_msg = "Login requires your private key for your public key:"
     instance_missing_msg = "Found no '%s' instance at %s. Please contact a " \
                            + "site administrator if it should be there."
-    
-    # TODO: add locking on pickled instance DB
-    
+
+    _label = instance_label
+    if instance_id and not _label:
+        _, _label, _ = cloud_split_instance_id(configuration, client_id,
+                                               instance_id)
+        
     if "create" == action:    
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances:
-            saved_instances = {}
+        # Load all instances and make sure none contains label in ID
+        saved_instances = cloud_load_instance(configuration, client_id,
+                                              cloud_id, keyword_all)
         for (saved_id, instance) in saved_instances.items():
             if instance_label == instance.get('INSTANCE_LABEL', saved_id):
                 logger.error("Refused %s re-create %s cloud instance %s!" % \
@@ -282,9 +281,9 @@ def main(client_id, user_arguments_dict):
             logger.info("No image specified - using first for %s in %s: %s" % \
                         (client_id, cloud_id, instance_image))
 
-        for (name, val) in img_list:
-            if instance_image == name:
-                image_id = val
+        for (img_name, img_id, img_alias) in img_list:
+            if instance_image == img_name:
+                image_id = img_id
                 break
 
         if not image_id:
@@ -324,14 +323,14 @@ is stricly required for all use. Please do so before you try again.
                                            charset='0123456789abcdef')
         # We make sure to create instance with a globally unique ID on the
         # cloud while only showing the requested instance_label to the user.
-        instance_id = "%s:%s:%s" % (client_email, instance_label, session_id)
+        instance_id = cloud_build_instance_id(configuration, client_email,
+                                              instance_label, session_id)
         # TODO: make more fields flexible/conf
         cloud_dict = {
             'INSTANCE_ID': instance_id,
             'INSTANCE_LABEL': instance_label,
             'INSTANCE_IMAGE': instance_image,
             'IMAGE_ID': image_id,
-            'INSTANCE_LABEL': instance_label,
             'AUTH_KEYS': auth_keys,
             'USER_CERT': client_id,
             'INSTANCE_PRIVATE_KEY': priv_key,
@@ -353,15 +352,15 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' % \
-                (action, instance_id, cloud_id, action_msg)})
+                (action, instance_label, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         # On success the action_msg contains the assigned floating IP address
         instance_ssh_fqdn = action_msg
         cloud_dict['INSTANCE_SSH_IP'] = instance_ssh_fqdn
-        saved_instances[instance_id] = cloud_dict
-        if not pickle(saved_instances, cloud_instance_state_path, logger):
-            logger.error("pickle new %s cloud instance %s for %s failed" % \
+        if not cloud_save_instance(configuration, client_id, cloud_id,
+                                   instance_id, cloud_dict):
+            logger.error("save new %s cloud instance %s for %s failed" % \
                          (cloud_id, instance_id, client_id))
             output_objects.append({
                 'object_type': 'error_text',
@@ -371,20 +370,20 @@ is stricly required for all use. Please do so before you try again.
             
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
-            (action, instance_id, cloud_id, "success")})
+            (action, instance_label, cloud_id, "success")})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
-                configuration, client_id, cloud_id, saved_instances,
-                instance_id)})
+                configuration, client_id, cloud_id, cloud_dict, instance_id)})
     
     elif "delete" == action:
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances or not saved_instances.get(instance_id, None):
+        saved_instance = cloud_load_instance(configuration, client_id,
+                                             cloud_id, instance_id)
+        if not saved_instance:
             logger.error("no saved %s cloud instance %s for %s to delete" % \
                          (cloud_id, instance_id, client_id))
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg % \
-                 (instance_id, cloud_id)})
+                 (_label, cloud_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = delete_cloud_instance(
@@ -396,31 +395,33 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' % \
-                (action, instance_id, cloud_id, action_msg)})
+                (action, _label, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        del saved_instances[instance_id]
-        if not pickle(saved_instances, cloud_instance_state_path, logger):
-            logger.error("pickle removed %s cloud instance %s for %s failed" % \
+        if not cloud_purge_instance(configuration, client_id, cloud_id,
+                                    instance_id):
+            logger.error("purge %s cloud instance %s for %s failed" % \
                          (cloud_id, instance_id, client_id))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Error updating your %s cloud instance setup' % cloud_id
+                'text': 'Error deleting your %s cloud instance setup' % \
+                cloud_id
                 })
             return (output_objects, returnvalues.SYSTEM_ERROR)
             
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
-            (action, instance_id, cloud_id, "success")})
+            (action, _label, cloud_id, "success")})
     
     elif "status" == action:
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances or not saved_instances.get(instance_id, None):
+        saved_instance = cloud_load_instance(configuration, client_id,
+                                             cloud_id, instance_id)
+        if not saved_instance:
             logger.error("no saved %s cloud instance %s for %s to query" % \
                          (cloud_id, instance_id, client_id))
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg % \
-                 (instance_id, cloud_id)})
+                 (_label, cloud_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
             
         (action_status, action_msg) = status_of_cloud_instance(
@@ -432,12 +433,12 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' % \
-                (action, instance_id, cloud_id, action_msg)})
+                (action, _label, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
-            (action, instance_id, cloud_id, action_msg)})
+            (action, _label, cloud_id, action_msg)})
 
         # Show web console and ssh details if running
         if action_msg in ('ACTIVE', 'RUNNING'):
@@ -449,7 +450,7 @@ is stricly required for all use. Please do so before you try again.
                 output_objects.append({
                     'object_type': 'error_text',
                     'text': 'Failed to get instance %s at %s console: %s' % \
-                    (instance_id, cloud_id, console_msg)})
+                    (_label, cloud_id, console_msg)})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             output_objects.append({
                 'object_type': 'link', 'destination': console_msg,
@@ -459,19 +460,20 @@ is stricly required for all use. Please do so before you try again.
 
             output_objects.append({
                 'object_type': 'html_form', 'text': _ssh_help(
-                    configuration, client_id, cloud_id, saved_instances,
+                    configuration, client_id, cloud_id, saved_instance,
                     instance_id)})
 
         output_objects.append({'object_type': 'text', 'text': ''})
 
     elif "start" == action:
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances or not saved_instances.get(instance_id, None):
+        saved_instance = cloud_load_instance(configuration, client_id,
+                                             cloud_id, instance_id)
+        if not saved_instance:
             logger.error("no saved %s cloud instance %s for %s to start" % \
                          (cloud_id, instance_id, client_id))
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg % \
-                 (instance_id, cloud_id)})
+                 (_label, cloud_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
             
         (action_status, action_msg) = start_cloud_instance(
@@ -483,26 +485,27 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' % \
-                (action, instance_id, cloud_id, action_msg)})
+                (action, _label, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
-            (action, instance_id, cloud_id, "success")})
+            (action, _label, cloud_id, "success")})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
-                configuration, client_id, cloud_id, saved_instances,
+                configuration, client_id, cloud_id, saved_instance,
                 instance_id)})
 
     elif action in ("softrestart", "hardrestart"):
         boot_strength = action.replace("restart", "").upper()
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances or not saved_instances.get(instance_id, None):
+        saved_instance = cloud_load_instance(configuration, client_id,
+                                             cloud_id, instance_id)
+        if not saved_instance:
             logger.error("no saved %s cloud instance %s for %s to restart" % \
                          (cloud_id, instance_id, client_id))
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg % \
-                 (instance_id, cloud_id)})
+                 (_label, cloud_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
             
         (action_status, action_msg) = restart_cloud_instance(
@@ -515,25 +518,26 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' % \
-                (action, instance_id, cloud_id, action_msg)})
+                (action, _label, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
-            (action, instance_id, cloud_id, "success")})
+            (action, _label, cloud_id, "success")})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
-                configuration, client_id, cloud_id, saved_instances,
+                configuration, client_id, cloud_id, saved_instance,
                 instance_id)})
 
     elif "stop" == action:
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances or not saved_instances.get(instance_id, None):
+        saved_instance = cloud_load_instance(configuration, client_id,
+                                             cloud_id, instance_id)
+        if not saved_instance:
             logger.error("no saved %s cloud instance %s for %s to %s" % \
                          (cloud_id, instance_id, client_id, action))
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg % \
-                 (instance_id, cloud_id)})
+                 (_label, cloud_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
             
             
@@ -546,21 +550,22 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' % \
-                (action, instance_id, cloud_id, action_msg)})
+                (action, _label, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
-            (action, instance_id, cloud_id, "success")})
+            (action, _label, cloud_id, "success")})
 
     elif "webaccess" == action:
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances or not saved_instances.get(instance_id, None):
+        saved_instance = cloud_load_instance(configuration, client_id,
+                                             cloud_id, instance_id)
+        if not saved_instance:
             logger.error("no saved %s cloud instance %s for %s to query" % \
                          (cloud_id, instance_id, client_id))
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg % \
-                 (instance_id, cloud_id)})
+                 (_label, cloud_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
             
         (action_status, action_msg) = web_access_cloud_instance(
@@ -572,12 +577,12 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' % \
-                (action, instance_id, cloud_id, action_msg)})
+                (action, _label, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s" % \
-            (action, instance_id, cloud_id)})
+            (action, _label, cloud_id)})
         output_objects.append({
             'object_type': 'link', 'destination': action_msg,
             'text': 'Open web console', 'class': 'consolelink iconspace',
@@ -585,17 +590,18 @@ is stricly required for all use. Please do so before you try again.
         output_objects.append({'object_type': 'text', 'text': ''})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
-                configuration, client_id, cloud_id, saved_instances,
+                configuration, client_id, cloud_id, saved_instance,
                 instance_id)})
 
     elif "updatekeys" == action:
-        saved_instances = unpickle(cloud_instance_state_path, logger)
-        if not saved_instances or not saved_instances.get(instance_id, None):
+        saved_instance = cloud_load_instance(configuration, client_id,
+                                             cloud_id, instance_id)
+        if not saved_instance:
             logger.error("no saved %s cloud instance %s for %s to update" % \
                          (cloud_id, instance_id, client_id))
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg % \
-                 (instance_id, cloud_id)})
+                 (_label, cloud_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         cloud_settings = load_cloud(client_id, configuration)
@@ -610,15 +616,15 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' % \
-                (action, instance_id, cloud_id, action_msg)})
+                (action, _label, cloud_id, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
             'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
-            (action, instance_id, cloud_id, "success")})
+            (action, _label, cloud_id, "success")})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
-                configuration, client_id, cloud_id, saved_instances,
+                configuration, client_id, cloud_id, saved_instance,
                 instance_id)})
         output_objects.append({
             'object_type': 'text', 'text': ssh_auth_msg})
