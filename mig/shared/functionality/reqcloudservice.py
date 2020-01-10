@@ -298,7 +298,25 @@ def main(client_id, user_arguments_dict):
         # TODO: remove this direct key injection if we can delay it
         cloud_settings = load_cloud(client_id, configuration)
         raw_keys = cloud_settings.get('authkeys', '').split('\n')
-        auth_keys = [i.strip() for i in raw_keys if i.strip()]
+        auth_keys = [i.split('#', 1)[0].strip() for i in raw_keys]
+        auth_keys = [i for i in auth_keys if i]
+        if not auth_keys:
+            logger.error("No cloud pub keys setup for %s - refuse create" % \
+                         client_id)
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                """
+You haven't provided any valid ssh pub key(s) for cloud instance login, which
+is stricly required for all use. Please do so before you try again.
+            """})
+            output_objects.append({
+                'object_type': 'link', 'destination': 'setup.py?topic=cloud',
+                'text': 'Open cloud setup', 'class': 'cloudsetuplink iconspace',
+                'title': 'open cloud setup', 'target': '_blank'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        logger.debug("Continue create for %s with auth_keys: %s" % \
+                     (client_id, auth_keys))
 
         # Create a new internal keyset and session id
         (priv_key, pub_key) = generate_ssh_rsa_key_pair(encode_utf8=True)

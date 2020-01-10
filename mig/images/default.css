@@ -1202,6 +1202,7 @@ a:hover.settingsbutton {
   background-color: #fff;
 }
 
+/* Settings/setup tab button icons - use background-image */
 .generalsettingslink {
   background-image: url('/images/icons/table.png');
   padding-left: 18px;
@@ -1254,6 +1255,7 @@ a:hover.settingsbutton {
   background-image: url('/images/icons/ng-arc.png');
   padding-left: 18px;
 }
+/* Icons for inline link use - need background and no-repeat */
 .newpostlink {
   background: url('/images/icons/comment.png') no-repeat;
   padding-left: 18px;
@@ -1272,6 +1274,10 @@ a:hover.settingsbutton {
 }
 .certrenewlink {
   background: url('/images/icons/arrow_refresh.png') no-repeat;
+  padding-left: 18px;
+}
+.cloudsetuplink {
+  background: url('/images/icons/computer_go.png') no-repeat;
   padding-left: 18px;
 }
 .consolelink {

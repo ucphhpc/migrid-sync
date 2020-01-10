@@ -1068,12 +1068,16 @@ def save_settings_js(configuration):
     function renderSuccess(msg) {
         return "<span class=\'ok skin iconleftpad\'>"+msg+"</span>";
     }
+    function renderWarning(msg) {
+        return "<span class=\'warn skin warningtext iconleftpad\'>"+msg+"</span>";
+    }
     function renderError(msg) {
         return "<span class=\'error skin errortext iconleftpad\'>"+msg+"</span>";
     }
 
     var saved = false;
     var statusMsg = "";
+    var warningMsg = "";
     var errorMsg = "";
 
     var okSaveDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
@@ -1093,6 +1097,7 @@ def save_settings_js(configuration):
                        /* Reset status */
                        saved = false;
                        statusText = "";
+                       warningMsg = "";
                        errorMsg = "";
                        //console.log("verify post response: "+statusText);
                        for (var i=0; i<(responseObject.length); i++) {
@@ -1118,10 +1123,17 @@ def save_settings_js(configuration):
                                errorMsg = "Save failure: "+responseObject[i]["text"];
                                console.error(errorMsg);
                                break;
+                           } else if(responseObject[i]["object_type"] === "warning") {
+                               warningMsg = "warning: "+responseObject[i]["text"];
+                               console.warn(warningMsg);
                            }
                        }
                        if (saved) {
-                           $(".savestatus").html(renderSuccess(statusMsg));
+                           var saveMsg = renderSuccess(statusMsg);
+                           if (warningMsg) {
+                               saveMsg += "<br/> "+renderWarning(warningMsg);
+                           }
+                           $(".savestatus").html(saveMsg);
                            $(".savestatus span").fadeIn(200);
                            setTimeout(function() { $(".savestatus span").fadeOut(3000);
                                                  }, 1000);

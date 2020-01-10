@@ -227,6 +227,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
             (parse_status, parse_msg) = \
                 parse_and_save_cloud(publickeys, password, client_id,
                                      configuration)
+            raw_keys = publickeys.split('\n')
+            auth_keys = [i.split('#', 1)[0].strip() for i in raw_keys]
+            auth_keys = [i for i in auth_keys if i]
+            if not auth_keys:
+                output_objects.append(
+                    {'object_type': 'warning', 'text':
+                     'No valid keys saved - create cloud instances will fail'})
+            elif auth_keys[1:]:
+                output_objects.append(
+                    {'object_type': 'warning', 'text':
+                     'Only the first key will be activated on instances'})
+
         else:
             output_objects.append({'object_type': 'error_text', 'text':
                                    'No such settings topic: %s' % topic
