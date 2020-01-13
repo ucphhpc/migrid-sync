@@ -407,7 +407,7 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
 			<a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info(\'aboutInfo\')">About</a>
 		</li>
                 <li id="sitefeedback-button" class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden"></li>
-                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-info-circle custom-show" onclick="show_message()"></li>
+                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" onclick="show_message()"></li>
 	</ul>
 </nav>
 

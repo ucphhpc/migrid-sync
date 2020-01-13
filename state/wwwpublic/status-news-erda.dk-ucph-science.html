@@ -96,14 +96,15 @@ University of Copenhagen - Electronic Research Data Archive
 
 <h2 class="staticpage">Status</h2>
 <!-- Use one of these templates for brief status messages -->
-<p id="brief-status-english" class="icon_online iconspace leftpad icontext">
+
+<p id="brief-status-english" class="brief-status icon_online iconspace leftpad icontext">
 All systems and services are fully operational.
 </p>
 <!--
-<p id="brief-status-english" class="icon_slack iconspace iconleftpad icontext">
+<p id="brief-status-english" class="brief-status icon_slack iconspace iconleftpad icontext">
 We're developing the new UI on this site - some features may not work, yet.
 </p>
-<p id="brief-status-english" class="icon_offline iconspace leftpad icontext">
+<p id="brief-status-english" class="brief-status icon_offline iconspace leftpad icontext">
 We've experienced problems with the backend storage lately - access may be limited for now.
 </p>
 <p class="icon_slack iconspace leftpad icontext">
@@ -144,13 +145,21 @@ Please use the link at the bottom to contact support in case you have
 questions or encounter any problems.
 </p>
 
+<!-- NOTE: 
+UI V3 extracts the entries with brief-announce class and displays the
+ones with current time in between start_DATE and end_DATE classes in the
+site status popup. DATE must be ISO 8601 format dates
+(YYYY-MM-DDThh:mm:ss) with a literal 'T' separator like:
+2020-01-13T13:37:00
+-->
+
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
-<h4 class="staticpage">2020/01/09: DAG and MODI introduces user packages</h4>
+<h4 class="staticpage brief-announce start_2020-01-09T00:00:00 end_2020-01-18T00:00:00 sys_ERDA svc_DAG svc_MODI">2020/01/09: DAG and MODI introduces user packages</h4>
 <p>
 We updated DAG and MODI, in addition it is possible on DAG to install user packages for our Python environment by installing via pip / pip3 install --user <package> (as well as via install.packages in R) to one's own home directory. This means that you can now avoid having to reinstall packages every time you start a new Notebook. However, it has the limitation that the package to be imported over the network will make it significantly slower than if packages are directly installed in our Notebook image.
 </p>
-<h4 class="staticpage">2019/12/04: Planned ERDA Maintenance</h4>
+<h4 class="staticpage brief-announce start_2019-11-30T00:00:00 end_2019-12-05T08:00:00 sys_ERDA svc_ALL">2019/12/04: Planned ERDA Maintenance</h4>
 <p>
 We migrated the ERDA frontend to faster and bigger disks to improve
 performance of various local operations. The migration commenced on
@@ -159,7 +168,7 @@ services were taken offline for a while. During the maintenance window
 we also ran some pending DAG system updates. We finished the work
 within a couple of hours and everything should be back to normal.
 </p>
-<h4 class="staticpage">2019/11/09+10: Planned DAG Maintenance</h4>
+<h4 class="staticpage brief-announce start_2019-11-05T17:00:00 end_2019-11-11T08:00:00 sys_ERDA svc_DAG">2019/11/09+10: Planned DAG Maintenance</h4>
 <p>
 We completed the planned update and general hardening of the DAG service
 with a number of service restarts and general reconfiguration of each node.
@@ -659,7 +668,7 @@ feature. Please contact support about such inquiries.
 
 <h2 class="staticpage">Status</h2>
 <!-- Use one of these templates for brief status messages -->
-<p id="brief-status-danish" class="icon_online iconspace leftpad icontext">
+<p id="brief-status-danish" class="brief-status icon_online iconspace leftpad icontext">
 Alle systemer og services kører planmæssigt.
 </p>
 <!--
@@ -711,7 +720,7 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
-<h4 class="staticpage">09/01-2020: DAG og MODI introducere bruger specifikke pakker</h4>
+<h4 class="staticpage brief-announce start_2020-01-09T00:00:00 end_2020-01-18T00:00:00 sys_ERDA svc_DAG svc_MODI">09/01-2020: DAG og MODI introducere bruger specifikke pakker</h4>
 <p>
 Vi opdaterede DAG og MODI, herudover er det muligt på DAG at installere user pakker til 
 vores Python miljø ved at installere via pip/pip3 install --user <package> (samt via install.packages i R)
@@ -720,7 +729,7 @@ pakker hver gang man starter en ny Notebook. Dog har det den begrænings at pakk
 importeres over netværket vil gøre det væsentlig langsommere end 
 hvis pakker er direkte installeret i vores Notebook image.
 </p>
-<h4 class="staticpage">04/12-2019: Planlagt ERDA systemarbejde</h4>
+<h4 class="staticpage brief-announce start_2019-11-30T00:00:00 end_2019-12-05T08:00:00 sys_ERDA svc_ALL">04/12-2019: Planlagt ERDA systemarbejde</h4>
 <p>
 Vi migrerede ERDAs frontend til større og hurtigere diske for at forbedre
 ydelsen på forskellige lokale operationer. Migreringsarbejdet begyndte onsdag den
@@ -730,7 +739,7 @@ udestående systemopdateringer på DAG. Vi færdiggjorde arbejdet i
 løber af et par timer og alt skulle være tilbage i normal drift.
 </p>
 
-<h4 class="staticpage">09+10/11-2019: Planlagt DAG vedligeholdelse</h4>
+<h4 class="staticpage brief-announce start_2019-11-05T17:00:00 end_2019-11-11T08:00:00 sys_ERDA svc_DAG">09+10/11-2019: Planlagt DAG vedligeholdelse</h4>
 <p>
 Vi afsluttede den planlagte opdatering og generelle hærdning af DAG-tjenesten
 med et antal servicegenstarter og generel rekonfiguration af hver knude.
