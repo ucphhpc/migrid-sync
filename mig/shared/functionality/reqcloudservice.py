@@ -116,7 +116,8 @@ def signature():
         'instance_id': [],
         'instance_label': [],
         'instance_image': [],
-        'action': ['status']
+        'action': ['status'],
+        'accept_terms': ['no']
     }
     return ['', defaults]
 
@@ -165,6 +166,7 @@ def main(client_id, user_arguments_dict):
     instance_id = ([''] + accepted['instance_id'])[-1]
     instance_label = ([''] + accepted['instance_label'])[-1]
     instance_image = ([''] + accepted['instance_image'])[-1]
+    accept_terms = (([''] + accepted['accept_terms'])[-1] in ('yes', 'on'))
     cloud_id = accepted['service'][-1]
     service = {k: v for options in configuration.cloud_services
                for k, v in options.items()
@@ -225,6 +227,7 @@ def main(client_id, user_arguments_dict):
             "No client ID found - can't continue"})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+
     ssh_auth_msg = "Login requires your private key for your public key:"
     instance_missing_msg = "Found no '%s' instance at %s. Please contact a " \
                            + "site administrator if it should be there."
@@ -235,6 +238,14 @@ def main(client_id, user_arguments_dict):
                                                instance_id)
         
     if "create" == action:    
+        if not accept_terms:
+            logger.error("refusing create without accepting terms for %s!" % \
+                         client_id)
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                "You MUST accept the cloud user terms to create instances"})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
         # Load all instances and make sure none contains label in ID
         saved_instances = cloud_load_instance(configuration, client_id,
                                               cloud_id, keyword_all)

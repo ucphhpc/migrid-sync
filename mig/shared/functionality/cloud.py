@@ -334,6 +334,16 @@ def main(client_id, user_arguments_dict):
             </select>
             </span>
             </p>
+            <p class='cloud-instance-input fillwidth'>
+            <label class='fieldlabel halfwidth'>
+            Accept <a href='/public/cloud-user-terms.html'>Cloud User Terms</a>
+            </label>
+            <span class='halfwidth'>
+            <label class='switch'>
+            <input type='checkbox' mandatory name='accept_terms'>
+            <span class='slider round'></span></label>
+            </span>
+            </p>
             <p class='fillwidth'>
             <input type='submit' value='Create Instance' />
             </p>
