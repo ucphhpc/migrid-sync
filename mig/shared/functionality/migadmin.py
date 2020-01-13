@@ -145,7 +145,7 @@ def main(client_id, user_arguments_dict):
 
     show, drop = '', ''
     general = """
-<h1>Server Status</h1>
+<h2>Server Status</h2>
 <p class='importanttext'>
 This page automatically refreshes every %s seconds.
 </p>
@@ -313,7 +313,7 @@ provide access to e.g. managing the grid job queues.
                                           configuration.logfile))
     for log_path in log_path_list:
         html += '''
-<h1>%s</h1>
+<h2>%s</h2>
 <textarea class="fillwidth padspace" rows=%s readonly="readonly">
 ''' % (log_path, lines)
         log_lines = read_tail(log_path, lines, logger)
