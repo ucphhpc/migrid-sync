@@ -528,13 +528,21 @@ unless it is available in mig/server/MiGserver.conf
     info_msg = "Listening on address '%s' and port %d" % (address, ctrl_port)
     logger.info(info_msg)
     print info_msg
-    try:
-        start_service(configuration)
-    except KeyboardInterrupt:
-        info_msg = "Received user interrupt"
-        logger.info(info_msg)
-        print info_msg
-        configuration.daemon_conf['stop_running'].set()
+    while True:
+        try:
+            start_service(configuration)
+        except KeyboardInterrupt:
+            info_msg = "Received user interrupt"
+            logger.info(info_msg)
+            print info_msg
+            configuration.daemon_conf['stop_running'].set()
+            break
+        except Exception, exc:
+            err_msg = "Received unexpected error: %s" % exc
+            logger.error(err_msg)
+            print err_msg
+            # Throttle a bit
+            time.sleep(5)
     info_msg = "Leaving with no more workers active"
     logger.info(info_msg)
     print info_msg
