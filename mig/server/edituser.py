@@ -107,8 +107,8 @@ if '__main__' == __name__:
         else:
             print 'using configuration from MIG_CONF (or default)'
 
-    configuration = get_configuration_object(skip_log=True)
-
+    configuration = get_configuration_object(config_file=conf_path, skip_log=True)
+    
     if not user_id:
         print 'Error: Existing user ID is required'
         usage()

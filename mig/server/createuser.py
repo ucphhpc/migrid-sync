@@ -138,7 +138,7 @@ if '__main__' == __name__:
             if verbose:
                 print 'using configuration from MIG_CONF (or default)'
 
-    configuration = get_configuration_object()
+    configuration = get_configuration_object(config_file=conf_path)
     logger = configuration.logger
 
     if user_file and args:

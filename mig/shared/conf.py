@@ -33,19 +33,21 @@ import sys
 from shared.fileio import unpickle
 
 
-def get_configuration_object(skip_log=False):
+def get_configuration_object(config_file=None, skip_log=False):
     """Simple helper to call the general configuration init. Optional skip_log
     argument is passed on to allow skipping the default log initialization.
     """
     from shared.configuration import Configuration
-    if os.environ.get('MIG_CONF', None):
-        config_file = os.environ['MIG_CONF']
+    if config_file:
+        _config_file = config_file
+    elif os.environ.get('MIG_CONF', None):
+        _config_file = os.environ['MIG_CONF']
     else:
         app_dir = os.path.dirname(sys.argv[0])
         if not app_dir:
-            config_file = '../server/MiGserver.conf'
+            _config_file = '../server/MiGserver.conf'
         else:
-            config_file = os.path.join(app_dir, '..', 'server',
+            _config_file = os.path.join(app_dir, '..', 'server',
                     'MiGserver.conf')
     configuration = Configuration(config_file, False, skip_log)
     return configuration

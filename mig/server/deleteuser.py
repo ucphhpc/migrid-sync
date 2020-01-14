@@ -98,7 +98,7 @@ if '__main__' == __name__:
         else:
             print 'using configuration from MIG_CONF (or default)'
 
-    configuration = get_configuration_object()
+    configuration = get_configuration_object(config_file=conf_path, skip_log=True)
 
     if user_id and args:
         print 'Error: Only one kind of user specification allowed at a time'
