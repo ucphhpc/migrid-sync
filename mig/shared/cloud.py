@@ -604,7 +604,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
         return (False, [])
     # Default key if user doesn't give one
     key_id = lookup_user_service_value(configuration, client_id, service,
-                                       "service_key_id")
+                                       "service_key_id", '')
     # Optional jump host for ssh login to instances
     jump_host = cloud_login_jump_host(configuration, client_id, cloud_id)
     jump_host_addr, jump_host_user = jump_host["fqdn"], jump_host["user"]
@@ -625,7 +625,8 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
     _logger.debug("create instance for %s with mandatory settings: %s" % \
                   (client_id, mandatory_settings))
 
-    if "UNKNOWN" in mandatory_settings:
+    # The lookup_user_service_value returns None if unset
+    if None in mandatory_settings:
         _logger.warning("Found unknown mandatory cloud service setting(s): %s"
                         % mandatory_settings)
         _logger.warning("%s create %s cloud instance %s will likely fail" % \
@@ -649,6 +650,9 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
             _logger.error("%s refusing to create %s cloud instance %s again" %
                           (client_id, cloud_id, instance_id))
             return (status, msg)
+        _logger.debug("create_server with instance_id=%s, image=%s, availability_zone=%s, key_name=%s, flavor_id=%s, network=%s, sec_groups=%s" % \
+                      (instance_id, image_id, availability_zone, key_id,
+                       flavor_id, network_id, sec_group_id))
         instance = conn.create_server(instance_id, image=image_id,
                                       availability_zone=availability_zone,
                                       key_name=key_id, flavor=flavor_id,
@@ -953,7 +957,7 @@ def cloud_login_username(configuration, cloud_id, instance_image):
     
 def lookup_user_value_in_map(configuration, client_id, service_default,
                               override_map):
-    """Helper to looup a service conf value for client_id based on the common
+    """Helper to look up a service conf value for client_id based on the common
     structure with a service_default value and a map of user overrides.
     """
     _logger = configuration.logger
@@ -967,15 +971,18 @@ def lookup_user_value_in_map(configuration, client_id, service_default,
     _logger.debug("using default %s for %s" % (service_default, client_id))
     return service_default
 
-def lookup_user_service_value(configuration, client_id, service, setting):
+def lookup_user_service_value(configuration, client_id, service, setting,
+                              fallback=None):
     """Lookup a user setting in service conf using the default and override
-    map structure.
+    map structure. The optional fallback argument is used to provide a default
+    fallback value in case value is unset. It is left to the caller to detect
+    and handle that situation where necessary.
     """
     _logger = configuration.logger
     _logger.debug("lookup service setting %s for %s: %s" % (setting, client_id,
                                                             service))
-    default = service[setting]
-    overrides = service["%s_map" % setting]
+    default = service.get(setting, fallback)
+    overrides = service.get("%s_map" % setting, {})
     return lookup_user_value_in_map(configuration, client_id, default,
                                     overrides)
 
@@ -1001,11 +1008,11 @@ def _get_jump_host(configuration, client_id, cloud_id, manage=False):
         _logger.warning("no matching service %s" % cloud_id)
         return jump_host
     addr = lookup_user_service_value(configuration, client_id, service,
-                                     'service_jumphost_address')
+                                     'service_jumphost_address', '')
     jump_host['address'] = jump_host['fqdn'] = addr
     jump_host['fqdn'] = cloud_fqdn_from_ip(configuration, addr)[0]
     jump_host['user'] = lookup_user_service_value(
-        configuration, client_id, service, 'service_jumphost_user')
+        configuration, client_id, service, 'service_jumphost_user', '')
     # TODO: support jumphost port with port map override?
     if manage:
         for name in ('manage_keys_script', 'manage_keys_coding'):

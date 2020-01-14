@@ -90,10 +90,7 @@ def main(client_id, user_arguments_dict):
              "this site"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    services = [{'object_type': 'service',
-                 'name': options['service_name'],
-                 'description': options.get('service_desc', '')}
-                for options in configuration.cloud_services]
+    services = configuration.cloud_services
 
     # Show cloud services menu
     (add_import, add_init, add_ready) = man_base_js(configuration, [])
@@ -122,7 +119,8 @@ def main(client_id, user_arguments_dict):
 
     fill_helpers = {
         'cloud_tabs': ''.join(['<li><a href="#%s-tab">%s</a></li>' %
-                               (service['name'], service['name'])
+                               (service['service_name'],
+                                service['service_title'])
                                for service in services])
     }
 
@@ -151,22 +149,25 @@ def main(client_id, user_arguments_dict):
                    ('updatekeys', 'Set keys on'),
                    ('create', 'Create'), ('delete', 'Delete')]
     for service in services:
-        cloud_id = service['name']
+        logger.debug("service: %s" % service)
+        cloud_id = service['service_name']
+        cloud_title = service['service_title']
+        rules_of_conduct = service['service_rules_of_conduct']
         cloud_flavor = service.get("service_provider_flavor", "openstack")
 
         output_objects.append({'object_type': 'html_form',
                                'text': '''
         <div id="%s-tab">
-        ''' % (service['name'])})
+        ''' % cloud_id})
 
-        if service['description']:
+        if service['service_desc']:
             output_objects.append({'object_type': 'sectionheader',
                                    'text': 'Service Description'})
         output_objects.append({'object_type': 'html_form', 'text': '''
         <div class="cloud-description">
         <span>%s</span>
         </div>
-        ''' % service['description']})
+        ''' % service['service_desc']})
         output_objects.append({'object_type': 'html_form', 'text': '''
         <br/>
         '''})
@@ -176,7 +177,8 @@ def main(client_id, user_arguments_dict):
             logger.error("Failed to connect to cloud: %s" % cloud_id)
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'The %s cloud service is currently unavailable' % cloud_id})
+                 'The %s cloud service is currently unavailable' % \
+                 cloud_title})
             output_objects.append({'object_type': 'html_form', 'text': '''
         </div>
             '''})
@@ -190,13 +192,15 @@ def main(client_id, user_arguments_dict):
                          (client_id, cloud_id, img_list))
             output_objects.append({
                 'object_type': 'error_text', 'text':
-                    "No valid instance images for %s" % cloud_id})
+                    "No valid instance images for %s" % cloud_title})
             output_objects.append({'object_type': 'html_form', 'text': '''
         </div>
             '''})
             continue
 
-        fill_helpers.update({'cloud_id': cloud_id, 'target_op': target_op})
+        fill_helpers.update({'cloud_id': cloud_id, 'cloud_title': cloud_title,
+                             'target_op': target_op,
+                             'rules_of_conduct': rules_of_conduct})
 
         delete_html = ""
         # Manage existing instances
@@ -220,7 +224,7 @@ def main(client_id, user_arguments_dict):
         # TODO: halfwidth styling does not really work on select elements
         delete_html += """
     <div class='cloud-instance-delete fillwidth'>
-        <h3>Permanently delete a %(cloud_id)s cloud instance</h3>
+        <h3>Permanently delete a %(cloud_title)s cloud instance</h3>
         <form class='delete-cloud-instance' target='#'>
             <p class='cloud-instance-input fillwidth'>
             <label class='fieldlabel halfwidth'>Instance</label>
@@ -232,7 +236,7 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'html_form', 'text': """
         <div class='cloud-management fillwidth'>
-        <h3>Manage %s instances</h3>
+        <h3>Manage %(cloud_title)s instances</h3>
         <br/>
         <div class='cloud-instance-grid'>
         <div class='cloud-instance-grid-left'>
@@ -244,7 +248,7 @@ def main(client_id, user_arguments_dict):
         <div class='cloud-instance-grid-right'>
         <label class='fieldlabel fieldheader'>Actions</label>
         </div>
-            """ % cloud_id})
+            """ % fill_helpers})
         for (instance_id, instance_dict) in saved_instances.items():
             instance_label = instance_dict.get('INSTANCE_LABEL', instance_id)
             logger.debug("Management entries for %s %s cloud instance %s" %
@@ -280,12 +284,17 @@ def main(client_id, user_arguments_dict):
                 query = 'action=%s;service=%s;instance_id=%s' % \
                         (action, cloud_id, instance_id)
                 url = 'reqcloudservice.py?%s' % query
-                output_service = {
-                    'object_type': 'service',
-                    'name': "%s" % title,
-                    'targetlink': url
-                }
-                output_objects.append(output_service)
+                #output_service = {
+                #    'object_type': 'service',
+                #    'name': "%s" % title,
+                #    'targetlink': url
+                #}
+                #output_objects.append(output_service)
+                output_objects.append({
+                'object_type': 'link', 'destination': url, 'text': title,
+                'class': 'ui-button',
+                'title': '%s %s' % (title, instance_label)})
+
             output_objects.append({'object_type': 'html_form', 'text': """
         </div>        
             """})
@@ -311,7 +320,7 @@ def main(client_id, user_arguments_dict):
         # Create new instance
         create_html = """
     <div class='cloud-instance-create fillwidth'>
-        <h3>Create a new %(cloud_id)s cloud instance</h3>
+        <h3>Create a new %(cloud_title)s cloud instance</h3>
         <form class='create_cloud_instance' method='%(form_method)s' action='%(target_op)s.py'>
             <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
             <input type='hidden' name='service' value='%(cloud_id)s' />
@@ -336,7 +345,7 @@ def main(client_id, user_arguments_dict):
             </p>
             <p class='cloud-instance-input fillwidth'>
             <label class='fieldlabel halfwidth'>
-            Accept <a href='/public/cloud-user-terms.html'>Cloud User Terms</a>
+            Accept <a href='%(rules_of_conduct)s'>Cloud Rules of Conduct</a>
             </label>
             <span class='halfwidth'>
             <label class='switch'>

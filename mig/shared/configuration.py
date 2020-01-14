@@ -1222,9 +1222,10 @@ location.""" % self.config_file
 
         self.cloud_services = []
         # List of service options with default and override map
-        override_map_keys = ['service_user', 'service_image_alias',
-                             'service_flavor_id', 'service_key_id',
-                             'service_network_id', 'service_sec_group_id',
+        override_map_keys = ['service_user', 'service_max_user_instances',
+                             'service_image_alias', 'service_flavor_id',
+                             'service_key_id', 'service_network_id',
+                             'service_sec_group_id',
                              'service_floating_network_id',
                              'service_availability_zone',
                              'service_jumphost_address',
