@@ -807,13 +807,18 @@ def edit_user(
 
     # Rename user dirs recursively
 
-    for base_dir in (configuration.user_home,
-                     configuration.user_settings,
-                     configuration.user_cache,
-                     configuration.mrsl_files_dir,
-                     configuration.freeze_home,
-                     configuration.resource_pending):
+    user_dirs = [configuration.user_home,
+                configuration.user_settings,
+                configuration.user_cache]
 
+    if configuration.site_enable_jobs:
+        user_dirs.append(configuration.mrsl_files_dir)
+    if configuration.site_enable_freeze:
+        user_dirs.append(configuration.freeze_home)
+    if configuration.site_enable_resources:
+        user_dirs.append(configuration.resource_pending)
+
+    for base_dir in user_dirs:
         old_path = os.path.join(base_dir, client_dir)
         new_path = os.path.join(base_dir, new_client_dir)
         try:
