@@ -32,7 +32,6 @@ import datetime
 import hashlib
 import os
 import time
-import pygdb.breakpoint
 
 try:
     import pdfkit
@@ -87,7 +86,6 @@ valid_log_actions = [
     'deleted',
     'invited_user',
     'removed_user',
-    'renamed_user',
     'logged_in',
     'logged_out',
     'moved',
