@@ -366,6 +366,8 @@ CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|lp|o
 CRACK_WEB_REGEX = '((HNAP1|GponForm|provisioning|provision|prov|polycom|yealink|CertProv|phpmyadmin|admin|cfg|wp|wordpress|cms|blog|old|new|test|dev|tmp|temp|remote|mgmt|properties|authenticate|tmui|ddem|a2billing|vtigercrm|secure|rpc|recordings|dana-na)(/.*|)|.*(Login|login|configuration|header|admin)\.(php|jsp|asp))'
 
 # GDP mode settings
+gdp_distinguished_field  = "GDP"
+
 # NOTE: these are Xgi-bin scripts to allow
 valid_gdp_auth_scripts = [
     'autocreate.py',

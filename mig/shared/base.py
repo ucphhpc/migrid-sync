@@ -33,7 +33,7 @@ import os
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from shared.defaults import sandbox_names, _user_invisible_files, \
     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, \
-    valid_gdp_auth_scripts, valid_gdp_anon_scripts
+    gdp_distinguished_field, valid_gdp_auth_scripts, valid_gdp_anon_scripts
 
 _id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
 _key_val_sep = '='
@@ -107,6 +107,12 @@ def fill_distinguished_name(user):
         if not setting:
             setting = 'NA'
         user['distinguished_name'] += '/%s=%s' % (val, setting)
+
+    setting = user.get(gdp_distinguished_field, '')
+    if setting:
+        user['distinguished_name'] += '/%s=%s' \
+            % (gdp_distinguished_field, setting)
+
     return user
 
 
