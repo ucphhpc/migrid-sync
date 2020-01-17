@@ -96,7 +96,6 @@ def init_user_adm():
 def load_user_db(db_path, do_lock=True):
     """Load pickled user DB"""
 
-    flock = None
     if do_lock:
         db_lock_path = '%s.lock' % db_path
         flock = acquire_file_lock(db_lock_path)
@@ -104,11 +103,11 @@ def load_user_db(db_path, do_lock=True):
     try:
         result = load(db_path)
     except Exception, exc:
-        if flock:
+        if do_lock:
             release_file_lock(flock)
         raise
 
-    if flock:
+    if do_lock:
         release_file_lock(flock)
 
     return result
@@ -133,7 +132,6 @@ def load_user_dict(logger, user_id, db_path, verbose=False, do_lock=True):
 def save_user_db(user_db, db_path, do_lock=True):
     """Save pickled user DB"""
 
-    flock = None
     if do_lock:
         db_lock_path = '%s.lock' % db_path
         flock = acquire_file_lock(db_lock_path)
@@ -141,11 +139,11 @@ def save_user_db(user_db, db_path, do_lock=True):
     try:
         dump(user_db, db_path)
     except Exception, exc:
-        if flock:
+        if do_lock:
             release_file_lock(flock)
         raise
 
-    if flock:
+    if do_lock:
         release_file_lock(flock)
 
 
@@ -906,11 +904,6 @@ def edit_user(
 
     vgrid_map = get_vgrid_map(configuration, recursive=False)
     for (vgrid_name, vgrid) in vgrid_map[VGRIDS].items():
-        if vgrid_name == "Testproject1":
-            print "======= UPDATE vgrid_name: %s" % vgrid_name
-            print "owners: %s" % vgrid[OWNERS]
-            print "members: %s" % vgrid[MEMBERS]
-
         if client_id in vgrid[OWNERS]:
 
             (add_status, err) = vgrid_add_owners(configuration, vgrid_name,
