@@ -2306,7 +2306,7 @@ def edit_gdp_user(
         except Exception, exc:
             msg = "failed to rollback: %s" % str(exc)
             if verbose:
-                print "ERROR: msg"
+                print "ERROR: %s" % msg
             _logger.error(log_prefix + msg)
             release_file_lock(flock_db)
             release_file_lock(flock_log)
