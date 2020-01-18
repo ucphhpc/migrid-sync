@@ -1259,6 +1259,7 @@ function prepare_seafile_settings(reg_url, username, integration,
             //console.log("DEBUG: got csrf output: "+output);
             //alert("DEBUG: got csrf status: "+status);
             $("#"+status_prefix+"msg").empty();
+            $("#"+status_prefix+"status").removeClass("spinner");
             var csrf_token = $("input[name=csrfmiddlewaretoken]", output).val();
             /* NOTE: until Seafile 7.x the sign-up page contained the username
                of any logged in user, but from 7.x we can only rely on a more
