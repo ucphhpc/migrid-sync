@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<title>
+ERDA Status
+</title>
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+<!-- site basic skin style -->
+<!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>
+
+<!-- base page styles -->
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+<!-- country-dropdown -->
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+<!-- override with any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+      media="screen"/>
+
+<!-- site skin style -->
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
+
+<link rel="icon" type="image/vnd.microsoft.icon"
+      href="/images/skin/erda-ucph-science/favicon.ico"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+
+
+
+<!-- TMP local version for laptop dev -->
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="../../mig/images/default.css" media="screen"/>
+
+<!-- site basic skin style -->
+<!--<link rel="stylesheet" type="text/css" href="../../mig//images/static-skin.css" media="screen"/>-->
+<link rel="stylesheet" type="text/css" href="../../mig//images/skin/erda-ucph-science/core.css" media="screen"/>
+
+<!-- base page styles -->
+<link rel="stylesheet" type="text/css" href="../../mig//images/css/jquery-ui.css" media="screen"/>
+
+<!-- country-dropdown -->
+<link rel="stylesheet" type="text/css" href="../../mig//images/lib/country-dropdown/css/msdropdown/dd.css" />
+<link rel="stylesheet" type="text/css" href="../../mig//images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+<!-- override with any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="../../mig/images/site-custom.css"
+      media="screen"/>
+
+<!-- site skin style -->
+<link rel="stylesheet" type="text/css" href="../../mig/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="../../mig/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
+
+<link rel="icon" type="image/vnd.microsoft.icon"
+      href="../../mig/images/skin/erda-ucph-science/favicon.ico"/>
+
+<script type="text/javascript" src="../../mig/images/js/jquery.js"></script>
+<script type="text/javascript" src="../../mig/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="../../mig/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="../../mig/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+
+
+<script type="text/javascript">
+
+  /* We need to run accordion init as a callback on status event load */
+  function delayed_init() {
+  /* Init NEWS as foldable, with latest entry open and with individual heights */
+  $(".news-accordion").accordion({
+  collapsible: true,
+  //active: false,
+  heightStyle: "content"
+  });
+  /* fix and reduce accordion spacing */
+  $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+  }
+  
+  $(document).ready(function() {
+
+  /* Dynamically load and display parsed events here */
+  content_url="status-events.json"
+  console.log("get content from "+content_url);
+  /* Load content: roughly equivalent to $.get(url, data, success) */
+  $('.english .news-accordion').html("<p class='leftpad spinner'>Loading status and news entries ...</p>");
+  $('.danish .news-accordion').html("<p class='leftpad spinner'>Henter status og nyheder ...</p>");
+  try {
+      $.getJSON('status-events.json').done(function(response) {
+          console.log("Success: "+response);
+          var title, desc;
+  
+          /* Loop through events */
+          var en_items = [];
+          var dk_items = [];
+          var en_entry, en_title, en_description;
+          var dk_entry, dk_title, dk_description;
+          $.each(response, function (index, item) {
+            en_entry = "";
+            en_title = "";
+            en_description = "";
+            dk_entry = "";
+            dk_title = "";
+            dk_description = "";
+            $.each(item, function(key, val) {
+               if (key === "title") {
+                 en_title = val["EN"];
+                 dk_title = val["DK"];
+               }
+               else if (key === "description") {
+                 en_description = val["EN"];
+                 dk_description = val["DK"];
+               }
+            });
+   
+            en_entry = "<h4>"+en_title+"</h4><p>" + en_description + "</p>";
+            en_items.push(en_entry);
+            dk_entry = "<h4>"+dk_title+"</h4><p>" + dk_description + "</p>";
+            dk_items.push(dk_entry);
+ 
+          });
+          $('.english .news-accordion').html(en_items.join(""));
+          $('.danish .news-accordion').html(dk_items.join(""));
+  
+          /* Call accordion init now that contents are loaded */
+          delayed_init();
+       }).fail(function(response) {
+           console.error("getjson failed: "+ response);
+  });
+  /*
+      $.ajax({
+             url: 'status-events.json',
+             type: 'get',
+             error: function(data){
+                 console.error('plain ajax failed: '+data);
+             },
+             success: function(data){
+                 console.log('plain ajax got data: '+data);
+             }
+       });
+      $.ajax({
+             url: 'status-events.json',
+             type: 'get',
+             dataType: 'json',
+             error: function(data){
+                 console.error('ajax failed: '+data);
+             },
+             success: function(data){
+                 console.log('ajax got data: '+data);
+             }
+      });
+      $.ajax(content_url, {
+                            success: function() {
+                                console.log("success in load json");
+                            },
+                            error: function() {
+                                console.error("in load json");
+                            },
+                            dataType: "json"
+                          }
+                      );
+    */
+  } catch(err) {
+      console.error("load json failed: "+err);
+  }
+
+  $("#langselect").on('change', function() { 
+      var lang = $(this).val();
+      //alert("switch_language: "+lang);
+      switch_language(lang);
+    }
+  );
+  var default_lang = 'en';
+  $("#langselect").val(default_lang);
+  switch_language(default_lang);
+  $("#langselect").msDropdown();
+
+  });
+</script>
+
+</head>
+<body class="staticpage">
+<div id="topspace">
+</div>
+<div id="toplogo" class="staticpage">
+<div id="toplogoleft" class="staticpage">
+</div>
+<div id="toplogocenter" class="staticpage">
+<img src="/images/skin/erda-ucph-science/banner-logo.jpg" id="logoimagecenter"
+     class="staticpage" alt="site logo center"/>
+<span id="logotitle" class="staticpage">
+University of Copenhagen - Electronic Research Data Archive
+</span>
+</div>
+<div id="toplogoright" class="staticpage">
+</div>
+</div>
+
+<div class="contentblock staticpage" id="nomenu">
+<div class="precontentwidgets">
+<!-- begin user supplied pre content widgets -->
+<!-- empty -->
+<!-- end user supplied pre content widgets -->
+</div>
+<div id="migheader">
+</div>
+<div class="staticpage" id="content">
+<div class="righttext langselect">
+<!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+<select name="languages" id="langselect">
+  <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+  <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
+</select>
+</div>
+<div class="english i18n" lang="en">
+<h1 class="staticpage">UCPH ERDA Status and News</h1>
+
+<h2 class="staticpage">Status</h2>
+<!-- Use one of these templates for brief status messages -->
+
+<p id="brief-status-english" class="brief-status icon_online iconspace leftpad icontext">
+All systems and services are fully operational.
+</p>
+<!--
+<p id="brief-status-english" class="brief-status icon_slack iconspace iconleftpad icontext">
+We're developing the new UI on this site - some features may not work, yet.
+</p>
+<p id="brief-status-english" class="brief-status icon_offline iconspace leftpad icontext">
+We've experienced problems with the backend storage lately - access may be limited for now.
+</p>
+-->
+
+
+<p>
+Please use the link at the bottom to contact support in case you have
+questions or encounter any problems.
+</p>
+
+<!-- NOTE: 
+Contents are loaded from status-events.json
+-->
+
+<h2 class="staticpage">Latest News</h2>
+<div class="news-accordion">
+<!-- Filled by AJAX -->
+</div>
+<p>
+<a href="http://www.erda.dk">Return to main page</a>
+</p>
+</div>
+<div class="danish i18n" lang="da">
+<h1 class="staticpage">UCPH ERDA status og nyheder</h1>
+
+<h2 class="staticpage">Status</h2>
+<!-- Use one of these templates for brief status messages -->
+<p id="brief-status-danish" class="brief-status icon_online iconspace leftpad icontext">
+Alle systemer og services kører planmæssigt.
+</p>
+<!--
+<p id="brief-status-danish" class="icon_slack iconspace leftpad icontext">
+Vi har på det sidste oplevet problemer med backend-lageret - begrænset adgang kan forekomme.
+</p>
+<p id="brief-status-danish" class="icon_slack iconspace leftpad icontext">
+Der er i øjeblikket udfald i backend-lageret - vi undersøger sagen.
+</p>
+-->
+
+<p>
+Benyt venligst linket nederst på siden til at kontakte support såfremt
+du har spørgsmål eller oplever problemer.
+</p>
+
+<h2 class="staticpage">Seneste nyt</h2>
+<div class="news-accordion">
+<!-- Filled by AJAX -->
+</div>
+<p>
+<a href="http://www.erda.dk">Tilbage til forsiden</a>
+</p>
+</div>
+</div>
+</div>
+
+<div id="bottomlogo">
+<div id="bottomlogoleft">
+<div id="support">
+<img src="/images/icons/help.png" id="supportimage" alt=""/>
+<div class="supporttext staticpage i18n" lang="en">
+<p class="supporttitle i18n" lang="en">Support</p>
+<p class="i18n" lang="en">
+<a href="https://erda.dk/public/ucph-erda-user-guide.pdf">ERDA
+User Guide</a><br />Questions about ERDA? <br />Please contact
+us at <a href="mailto:support@erda.dk">support@erda.dk</a></p>
+</div>
+<div class="supporttext staticpage i18n" lang="da">
+<p class="supporttitle i18n" lang="da">Vejledning</p>
+<p class="i18n" lang="da"><a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">ERDA 
+Brugervejledning</a><br />Spørgsmål om ERDA? <br />Skriv til os på 
+<a href="mailto:support@erda.dk">support@erda.dk</a></p>
+</div>
+</div>
+</div>
+<div id="bottomlogoright">
+<div id="privacy">
+<div class="privacytext staticpage i18n" lang="en">
+<p class="privacytitle i18n" lang="en">Privacy and Cookies</p>
+<p class="i18n" lang="en">
+<a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+&amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+</p>
+</div>
+<div class="privacytext staticpage i18n" lang="da">
+<p class="privacytitle i18n" lang="da">Privatliv og cookies</p>
+<p class="i18n" lang="da">
+<a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+&amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+</p>
+</div>
+</div>
+<div id="copyright">
+<img src="/images/copyright.png" id="creditsimage" alt=""/>
+<span id="credits">
+2003-2019, <a href="http://www.migrid.org">The MiG Project</a>
+</span>
+</div>
+</div>
+</div>
+<div id="bottomspace">
+</div>
+
+</body>
+</html>
