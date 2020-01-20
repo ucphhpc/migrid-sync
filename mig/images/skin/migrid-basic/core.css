@@ -30,6 +30,8 @@
 /* MiGrid Basic skin style sheet */
 
 body {
+  /* Fonts in line with UCPH style guidelines */
+  font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
 /* Fixed width layout in line with UCPH style guidelines */
@@ -47,6 +49,8 @@ body.staticpage {
 
 a {
   color: #0b76AE;
+  /* body font selection hides bottom of e.g. urllink icons */
+  font-family: Verdana, Helvetica, Aria, sans-serif;
 }
 
 a:hover, a:active {
