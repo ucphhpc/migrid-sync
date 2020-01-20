@@ -36,7 +36,7 @@ import os
 import shared.returnvalues as returnvalues
 
 from shared.base import client_id_dir
-from shared.cloud import check_cloud_available, list_cloud_images, \
+from shared.cloud import check_cloud_available, allowed_cloud_images, \
      status_all_cloud_instances, cloud_access_allowed, cloud_edit_actions, \
      cloud_load_instance
 from shared.defaults import csrf_field, keyword_all
@@ -198,11 +198,11 @@ def main(client_id, user_arguments_dict):
             status = returnvalues.SYSTEM_ERROR
             continue
 
-        (img_status, img_list) = list_cloud_images(
-            configuration, client_id, cloud_id, cloud_flavor)
-        if not img_status or not img_list:
-            logger.error("No valid images found for %s in %s: %s" %
-                         (client_id, cloud_id, img_list))
+
+        # Lookup user-specific allowed images (colon-separated image names)
+        allowed_images = allowed_cloud_images(configuration, client_id,
+                                              cloud_id, cloud_flavor)
+        if not allowed_images:
             output_objects.append({
                 'object_type': 'error_text', 'text':
                     "No valid instance images for %s" % cloud_title})
@@ -267,7 +267,7 @@ def main(client_id, user_arguments_dict):
             for field in saved_fields:
                 field_val = saved_instances[instance_id].get(field, "-")
                 if field == 'INSTANCE_IMAGE':
-                    for (img_name, _, img_alias) in img_list:
+                    for (img_name, _, img_alias) in allowed_images:
                         if img_name == field_val:
                             field_val = img_alias
                 instance_html += """
@@ -341,7 +341,7 @@ def main(client_id, user_arguments_dict):
             <span class='halfwidth'>
             <select class='styled-select html-select halfwidth padspace' name='instance_image'>
             """
-        for (image_name, _, image_alias) in img_list:
+        for (image_name, _, image_alias) in allowed_images:
             create_html += """<option value='%s'>%s</option>
             """ % (image_name, image_alias)
         create_html += """

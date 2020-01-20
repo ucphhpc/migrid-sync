@@ -34,7 +34,7 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, extract_field
-from shared.cloud import list_cloud_images, status_of_cloud_instance, \
+from shared.cloud import allowed_cloud_images, status_of_cloud_instance, \
      start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \
      update_cloud_instance_keys, create_cloud_instance, delete_cloud_instance, \
      web_access_cloud_instance, cloud_access_allowed, cloud_login_username, \
@@ -207,16 +207,6 @@ def main(client_id, user_arguments_dict):
                  })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    allowed_images = service.get('service_allowed_images', keyword_all)
-    if allowed_images != keyword_all and instance_image and \
-           not instance_image in allowed_images:
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             "You don't have permission to create %s images on %s" % \
-             service_title
-             })
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     cloud_flavor = service.get("service_flavor", "openstack")
     user_home_dir = os.path.join(configuration.user_home, client_dir)
 
@@ -283,22 +273,22 @@ def main(client_id, user_arguments_dict):
                 "No instance label provided!"})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        (img_status, img_list) = list_cloud_images(
-            configuration, client_id, cloud_id, cloud_flavor)
-        if not img_status or not img_list:
-            logger.error("No valid images found for %s in %s" % \
-                         (client_id, cloud_id))
+        # Lookup user-specific allowed images (colon-separated image names)
+        allowed_images = allowed_cloud_images(configuration, client_id,
+                                              cloud_id, cloud_flavor)
+        if not allowed_images:
             output_objects.append({
                 'object_type': 'error_text', 'text':
-                "No valid images found!"})
+                "No valid / allowed cloud images found!"})
             return (output_objects, returnvalues.CLIENT_ERROR)
-
+ 
         if not instance_image:
-            instance_image = img_list[0]
+            instance_image = allowed_images[0]
             logger.info("No image specified - using first for %s in %s: %s" % \
                         (client_id, cloud_id, instance_image))
 
-        for (img_name, img_id, img_alias) in img_list:
+        image_id = None
+        for (img_name, img_id, img_alias) in allowed_images:
             if instance_image == img_name:
                 image_id = img_id
                 break

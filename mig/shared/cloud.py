@@ -1158,6 +1158,34 @@ def list_cloud_images(configuration, client_id, cloud_id, cloud_flavor):
     return helper(configuration, client_id, cloud_id)
 
 
+def allowed_cloud_images(configuration, client_id, cloud_id, cloud_flavor):
+    """Get a list of available cloud images on cloud_id filtered to the subset
+    which client_id is allowed to create based on service conf settings.
+    """
+    _logger = configuration.logger
+    service = cloud_find_service(configuration, cloud_id)
+    if not service:
+        _logger.warning("no matching service %s" % cloud_id)
+        return []
+    # Lookup user-specific allowed images (colon-separated image names)
+    allowed_images_str = lookup_user_service_value(
+        configuration, client_id, service, 'service_allowed_images')
+    allowed_images = allowed_images_str.strip().split(':')
+    # Load list of cloud images and filter based on service conf
+    (img_status, img_list) = list_cloud_images(
+        configuration, client_id, cloud_id, cloud_flavor)
+    if not img_status:
+        _logger.error("Image lookup failed for %s in %s: %s" % \
+                      (client_id, cloud_id, img_list))
+        allowed_images = []
+    elif keyword_all in allowed_images:
+        allowed_images = img_list
+    else:
+        allowed_images = [i for i in img_list if i[0] in allowed_images]
+    _logger.debug("found allowed images for %s on %s: %s" % \
+                  (client_id, cloud_id, allowed_images))
+    return allowed_images
+
 def start_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
                          instance_id):
     """Start provided cloud instance"""
