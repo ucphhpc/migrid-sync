@@ -101,6 +101,11 @@ def main(client_id, user_arguments_dict):
         console.log("found val: "+$("#select-instance-id").val());
         return $("#select-instance-id").val();
     }
+    function get_instance_label() {
+        console.log("in get_instance_label");
+        console.log("found val: "+$("#select-instance-id > option:selected").text());
+        return $("#select-instance-id > option:selected").text();
+    }
     '''
     add_ready += '''
         /* NOTE: requires managers CSS fix for proper tab bar height */
@@ -148,6 +153,14 @@ def main(client_id, user_arguments_dict):
                    #('webaccess', 'Console'),
                    ('updatekeys', 'Set keys on'),
                    ('create', 'Create'), ('delete', 'Delete')]
+    # Delete instance form helper shared for all cloud services
+    helper = html_post_helper("%s" % target_op, '%s.py' % target_op,
+                              {'instance_id': '__DYNAMIC__',
+                               'service': '__DYNAMIC__',
+                               'action': 'delete',
+                               csrf_field: csrf_token})
+    output_objects.append({'object_type': 'html_form', 'text': helper})
+
     for service in services:
         logger.debug("service: %s" % service)
         cloud_id = service['service_name']
@@ -213,14 +226,6 @@ def main(client_id, user_arguments_dict):
             configuration, client_id, cloud_id, cloud_flavor,
             saved_instances.keys(), instance_fields)
 
-        # Delete instance form helper
-        helper = html_post_helper(target_op, '%s.py' % target_op,
-                                  {'instance_id': '__DYNAMIC__',
-                                   'service': '%s' % cloud_id,
-                                   'action': 'delete',
-                                   csrf_field: csrf_token})
-        output_objects.append({'object_type': 'html_form', 'text': helper})
-
         # TODO: halfwidth styling does not really work on select elements
         delete_html += """
     <div class='cloud-instance-delete fillwidth'>
@@ -232,7 +237,7 @@ def main(client_id, user_arguments_dict):
             <select id='select-instance-id'
             class='styled-select html-select halfwidth padspace'
             name='instance_id'>
-        """
+        """ % fill_helpers
 
         output_objects.append({'object_type': 'html_form', 'text': """
         <div class='cloud-management fillwidth'>
@@ -311,11 +316,11 @@ def main(client_id, user_arguments_dict):
             </span>
             </p>
             <p class='fillwidth'>
-            <input type='submit' value='Delete Instance' onClick='javascript:confirmDialog(%(target_op)s, \"Really permanently delete instance?\", undefined, {instance_id: get_instance_id()}); return false;' />
+            <input type='submit' value='Delete Instance' onClick='javascript:confirmDialog(%(target_op)s, \"Really permanently delete your %(cloud_title)s \"+get_instance_label()+\" instance including all local data?\", undefined, {instance_id: get_instance_id(), service: \"%(cloud_id)s\"}); return false;' />
             </p>
         </form>
     </div>
-        """
+        """ % fill_helpers
 
         # Create new instance
         create_html = """
