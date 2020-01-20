@@ -219,11 +219,12 @@ def main(client_id, user_arguments_dict):
     (add_import, add_init, add_ready) = save_settings_js(configuration)
     add_init += '''
     function addApp() {
-        $("#app-nav-container").hide()
+        $("#app-nav-container").hide();
         $("#add-app__window").show();
     }
     function closeAddApp() {
-        $("#app-nav-container").show()
+        console.log("close add app");
+        $("#app-nav-container").show();
         $("#add-app__window").hide();
     }
     '''

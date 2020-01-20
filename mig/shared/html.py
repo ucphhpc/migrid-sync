@@ -376,7 +376,7 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
     else:
         html = '''
 <!--Push notifications-->
-  <div id="sitestatus-popup" class="toast" data-autohide="false">
+  <div id="sitestatus-popup" class="toast hidden" data-autohide="false">
     <div id="sitestatus-top" class="toast-header">
       <div id="sitestatus-title" class="toast-title">
         <!-- Filled by AJAX -->
