@@ -64,6 +64,10 @@ def loads(data, serializer='pickle'):
     serial_helper = pickle.loads
     if serializer == 'json':
         serial_helper = json.loads
+    if serializer == 'yaml':
+        # NOTE: yaml load supports both string and file-like obj
+        serial_helper = yaml.load
+        kwargs['Loader'] = yaml.SafeLoader
     return serial_helper(data)
 
 
