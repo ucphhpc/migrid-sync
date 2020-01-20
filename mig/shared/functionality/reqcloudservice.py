@@ -264,7 +264,8 @@ def main(client_id, user_arguments_dict):
                                                   service,
                                                   'service_max_user_instances')
         max_user_instances = int(max_instances)
-        if max_user_instances > 0 and \
+        # NOTE: a negative max value means unlimited but 0 or more is enforced
+        if max_user_instances >= 0 and \
                len(saved_instances) >= max_user_instances:
             logger.error("Refused %s create additional %s cloud instances!" % \
                                       (client_id, cloud_id))
