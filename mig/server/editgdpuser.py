@@ -164,7 +164,10 @@ if '__main__' == __name__:
             verbose=verbose)
         if not verbose:
             # NOTE: If verbose everyting is printed from functions in GDP
-            print msg
-            
+            if not status:
+                print "ERROR: " + msg
+            else:
+                print msg
+
     if not status:
         sys.exit(1)
