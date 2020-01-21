@@ -125,7 +125,7 @@ def load_vgrid_map(configuration, do_lock=True):
     return load_entity_map(configuration, 'vgrid', do_lock)
 
 
-def refresh_user_map(configuration, force=False):
+def refresh_user_map(configuration):
     """Refresh map of users and their configuration. Uses a pickled
     dictionary for efficiency.
     User IDs are stored in their raw (non-anonymized form).
@@ -142,7 +142,7 @@ def refresh_user_map(configuration, force=False):
 
     # Find all users and their configurations
 
-    all_users = list_users(configuration, force_refresh=force)
+    all_users = list_users(configuration, force_refresh=True)
     real_map = real_to_anon_user_map(configuration)
     for user in all_users:
         settings_path = os.path.join(configuration.user_settings,
@@ -192,7 +192,7 @@ def refresh_user_map(configuration, force=False):
     return user_map
 
 
-def refresh_resource_map(configuration, force=False):
+def refresh_resource_map(configuration):
     """Refresh map of resources and their configuration. Uses a pickled
     dictionary for efficiency.
     Resource IDs are stored in their raw (non-anonymized form).
@@ -211,7 +211,7 @@ def refresh_resource_map(configuration, force=False):
 
     all_resources = list_resources(configuration.resource_home,
                                    only_valid=True,
-                                   force_refresh=force)
+                                   force_refresh=True)
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their configuration
@@ -266,7 +266,7 @@ def refresh_resource_map(configuration, force=False):
     return resource_map
 
 
-def refresh_vgrid_map(configuration, force=False):
+def refresh_vgrid_map(configuration):
     """Refresh map of users and resources with their direct vgrid
     participation. That is, without inheritance. Uses a pickled dictionary for
     efficiency.
@@ -350,7 +350,7 @@ def refresh_vgrid_map(configuration, force=False):
     # TODO: use get_resource_map output instead?
     all_resources = list_resources(configuration.resource_home,
                                    only_valid=True,
-                                   force_refresh=force)
+                                   force_refresh=True)
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their vgrid participation
@@ -451,7 +451,7 @@ def refresh_vgrid_map(configuration, force=False):
     # Find all users and their vgrid assignments
 
     # TODO: use get_user_map output instead?
-    all_users = list_users(configuration, force_refresh=force)
+    all_users = list_users(configuration, force_refresh=True)
     real_map = real_to_anon_user_map(configuration)
     for user in all_users:
         settings_path = os.path.join(configuration.user_settings,
@@ -541,7 +541,7 @@ def get_user_map(configuration, force_refresh=False):
     if modified_users:
         configuration.logger.info("refreshing user map (%s)" % modified_users)
         map_stamp = load_stamp = time.time()
-        user_map = refresh_user_map(configuration, force=force_refresh)
+        user_map = refresh_user_map(configuration)
         reset_users_modified(configuration)
     else:
         configuration.logger.debug("No changes - not refreshing")
@@ -567,7 +567,7 @@ def get_resource_map(configuration, force_refresh=False):
         configuration.logger.info(
             "refreshing resource map (%s)" % modified_resources)
         map_stamp = load_stamp = time.time()
-        resource_map = refresh_resource_map(configuration, force=force_refresh)
+        resource_map = refresh_resource_map(configuration)
         reset_resources_modified(configuration)
     else:
         configuration.logger.debug("No changes - not refreshing")
@@ -627,8 +627,7 @@ def get_vgrid_map(configuration, recursive=True, force_refresh=False):
             configuration.logger.info("refreshing vgrid map (%s)" %
                                       modified_vgrids)
             map_stamp = load_stamp = time.time()
-            vgrid_map = refresh_vgrid_map(configuration,
-                                          force=force_refresh)
+            vgrid_map = refresh_vgrid_map(configuration)
             reset_vgrids_modified(configuration)
         else:
             configuration.logger.debug("No changes - not refreshing")
