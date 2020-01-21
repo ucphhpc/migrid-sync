@@ -656,7 +656,7 @@ def get_vgrid_map_vgrids(configuration, recursive=True, sort=True,
     if sort:
         vgrid_list.sort()
     return vgrid_list
-for (field, name, list_call) in
+
 
 def user_vgrid_access(configuration, client_id, inherited=False,
                       recursive=True, expire_cache=False):
