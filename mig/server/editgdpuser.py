@@ -163,7 +163,7 @@ if '__main__' == __name__:
             force=force,
             verbose=verbose)
         if not verbose:
-            # NOTE: If verbose everyting is printed from functions in GDP
+            # NOTE: If verbose everything is printed from functions in GDP
             if not status:
                 print "ERROR: " + msg
             else:
