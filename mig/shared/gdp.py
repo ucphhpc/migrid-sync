@@ -2336,12 +2336,11 @@ def edit_gdp_user(
 
         # Roll back GDP DB entry
 
-        if verbose:
-            msg = "rolling back GDP DB user: %r to %r" % \
+        msg = "rolling back GDP DB user: %r to %r" % \
                 (new_user_id, user_id)
-            if verbose:
-                print msg
-            _logger.info(log_prefix + msg)
+        if verbose:
+            print msg
+        _logger.info(log_prefix + msg)
 
         flock_gdp_db = acquire_file_lock(db_lock_filepath)
         gdp_db = __load_user_db(configuration,
@@ -2350,8 +2349,7 @@ def edit_gdp_user(
         # Delete new_user_id from GDP DB if it was added
 
         if new_user_id and new_user_id in gdp_db.keys():
-            if verbose:
-                msg = "removing user: %r from GDP DB" % new_user_id
+            msg = "removing user: %r from GDP DB" % new_user_id
             if verbose:
                 print msg
             _logger.info(log_prefix + msg)
