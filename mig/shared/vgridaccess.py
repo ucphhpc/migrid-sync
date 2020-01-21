@@ -310,7 +310,7 @@ def refresh_vgrid_map(configuration):
     optional_conf = [SETTINGS, ]
 
     for vgrid in all_vgrids:
-        for (field, name, list_call) in  :
+        for (field, name, list_call) in conf_read:
             conf_path = os.path.join(configuration.vgrid_home, vgrid, name)
             if not os.path.isfile(conf_path):
                 # Make sure vgrid dict exists before filling it
@@ -656,7 +656,7 @@ def get_vgrid_map_vgrids(configuration, recursive=True, sort=True,
     if sort:
         vgrid_list.sort()
     return vgrid_list
-
+for (field, name, list_call) in
 
 def user_vgrid_access(configuration, client_id, inherited=False,
                       recursive=True, expire_cache=False):
