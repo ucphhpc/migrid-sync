@@ -28,6 +28,7 @@
 """GDP specific helper functions"""
 
 import base64
+import copy
 import datetime
 import hashlib
 import os
@@ -49,11 +50,11 @@ from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     user_db_filename as mig_user_db_filename, \
     valid_gdp_auth_scripts as valid_auth_scripts
 from shared.fileio import touch, make_symlink, write_file, remove_rec, \
-    acquire_file_lock, release_file_lock, copy
+    acquire_file_lock, release_file_lock, copy_file
 from shared.notification import send_email
 from shared.serial import load, dump
 from shared.useradm import create_user, delete_user, edit_user, \
-    expand_openid_alias, get_full_user_map, get_short_id
+    expand_openid_alias, get_full_user_map, get_short_id, lock_user_db
 from shared.vgrid import vgrid_flat_name, vgrid_is_owner, vgrid_set_owners, \
     vgrid_add_members, vgrid_set_settings, vgrid_create_allowed, \
     vgrid_remove_members, vgrid_restrict_write_support
@@ -535,7 +536,8 @@ def __validate_user_db(configuration, client_id, user_db=None):
     return (status, ret_msg)
 
 
-def __load_user_db(configuration, do_lock=True, allow_missing=False, db_path=None):
+def __load_user_db(configuration,
+                   do_lock=True, allow_missing=False, db_path=None):
     """Load pickled GDP user database"""
 
     _logger = configuration.logger
@@ -1996,6 +1998,9 @@ def edit_gdp_user(
     """Edit user in GDP user database, MiG userdatabase
     and filesystem. In case of failure system is rolled back to
     orginal state.
+    NOTE: We do _NOT_ lock databases and logs through the entire
+          process as the useradm.edit_user file OPS might take a long time
+          and thereby block auto signup.
     NOTE: 'force==True' disables rollback"""
 
     _logger = configuration.logger
@@ -2004,8 +2009,13 @@ def edit_gdp_user(
     log_prefix = "GDP: edit user: %r, " % user_id
     rollback = False
     mig_user_map = get_full_user_map(configuration)
+    gdp_user_rollback = None
     mig_edit_transactions = []
+    new_user_id = None
     new_user_ids = []
+    (db_filepath, db_lock_filepath) = __user_db_filepath(configuration,
+                                                         db_path=gdp_db_path)
+    (log_filepath, log_lock_filepath) = __user_log_filepath(configuration)
 
     if verbose:
         print log_prefix
@@ -2021,10 +2031,7 @@ def edit_gdp_user(
         print msg
         _logger.debug(msg)
 
-        verbose_gdp_db_path = gdp_db_path
-        if not verbose_gdp_db_path:
-            (verbose_gdp_db_path, _) = __user_db_filepath(configuration)
-        msg = "Using GDP DB: %s" % verbose_gdp_db_path
+        msg = "Using GDP DB: %s" % gdp_db_path
         print msg
         _logger.debug(msg)
 
@@ -2034,69 +2041,73 @@ def edit_gdp_user(
         _logger.debug(msg)
         print msg
 
-    # Lock and backup GDP database
-
-    (db_filepath, db_lock_filepath) = __user_db_filepath(configuration,
-                                                         db_path=gdp_db_path)
-    flock_db = acquire_file_lock(db_lock_filepath)
-    bck_db_filepath = "%s.edituser.bck.%s" % (db_filepath, time.time())
-    try:
-        copy(db_filepath, bck_db_filepath)
-    except Exception, exc:
-        msg = "failed to backup GDP database: %r -> %r" % (
-            db_filepath, bck_db_filepath)
-        if verbose:
-            print msg
-        _logger.error(log_prefix + msg)
-        release_file_lock(flock_db)
-        return (False, msg)
-
     # Backup MiG user DB
-    # NOTE: We currently do _NOT_ support explisit locking on MiG user DB.
-    #       Autosignup might alter MiG user DB while this edit is in progress.
-    #       Do _not_ restore MiG user DB un-critically
 
+    flock_mig_db = lock_user_db(mig_db_path)
     bck_mig_db_path = "%s.edituser.bck.%s" % (mig_db_path, time.time())
     try:
-        copy(mig_db_path, bck_mig_db_path)
+        copy_file(mig_db_path, bck_mig_db_path, configuration)
     except Exception, exc:
         msg = "failed to backup MiG user database: %r -> %r" % (
             mig_db_path, bck_mig_db_path)
         if verbose:
             print msg
         _logger.error(log_prefix + msg)
-        release_file_lock(flock_db)
+        release_file_lock(flock_mig_db)
         return (False, msg)
+    release_file_lock(flock_mig_db)
 
-    # Lock and backup GDP user log
+    # Backup GDP user log
 
-    (log_filepath, log_lock_filepath) = __user_log_filepath(configuration)
     flock_log = acquire_file_lock(log_lock_filepath)
     bck_log_filepath = "%s.edituser.bck.%s" % (log_filepath, time.time())
     try:
-        copy(log_filepath, bck_log_filepath)
+        copy_file(log_filepath, bck_log_filepath, configuration)
     except Exception, exc:
         msg = "failed to backup GDP users log: %r -> %r" % (
             log_filepath, bck_log_filepath)
         if verbose:
             print msg
         _logger.error(log_prefix + msg)
-        release_file_lock(flock_db)
         release_file_lock(flock_log)
+        return (False, msg)
+    release_file_lock(flock_log)
+
+    # Lock GDP database
+
+    flock_gdp_db = acquire_file_lock(db_lock_filepath)
+
+    # Backup GDP database
+
+    bck_db_filepath = "%s.edituser.bck.%s" % (db_filepath, time.time())
+    try:
+        copy_file(db_filepath, bck_db_filepath, configuration)
+    except Exception, exc:
+        msg = "failed to backup GDP database: %r -> %r" % (
+            db_filepath, bck_db_filepath)
+        if verbose:
+            print msg
+        _logger.error(log_prefix + msg)
+        release_file_lock(flock_gdp_db)
         return (False, msg)
 
     # Load GDP database
 
     gdp_db = __load_user_db(configuration, do_lock=False, db_path=gdp_db_path)
     gdp_user = gdp_db.get(user_id, {})
+    gdp_user_rollback = copy.deepcopy(gdp_user)
     if not gdp_user:
-        msg = "invalid GDP user"
+        template = "invalid GDP user"
+        msg = template + ": %r" % user_id
         if verbose:
-            print "ERROR: %s: %r" % (msg, user_id)
-        _logger.error(log_prefix + msg)
-        release_file_lock(flock_db)
-        release_file_lock(flock_log)
+            print "ERROR: " + msg
+        _logger.error(log_prefix + template)
+        release_file_lock(flock_gdp_db)
         return (False, msg)
+
+    # Release GDP database lock
+
+    release_file_lock(flock_gdp_db)
 
     # Change MiG DB and GDP DB for project users
 
@@ -2111,7 +2122,7 @@ def edit_gdp_user(
             if not force:
                 rollback = True
                 break
-        new_changes = changes.copy()
+        new_changes = copy.deepcopy(changes)
 
         # Update changes dict with project name
 
@@ -2149,8 +2160,8 @@ def edit_gdp_user(
                 break
         fill_distinguished_name(mig_user_dict)
         fill_distinguished_name(new_changes)
-        mig_edit_transactions.append({'source': mig_user_dict.copy(),
-                                      'target': new_changes.copy()})
+        mig_edit_transactions.append({'source': copy.deepcopy(mig_user_dict),
+                                      'target': copy.deepcopy(new_changes)})
 
         # Change project user in MiG user database and on filesystem
 
@@ -2179,7 +2190,7 @@ def edit_gdp_user(
 
     # Update main user
 
-    new_changes = changes.copy()
+    new_changes = copy.deepcopy(changes)
 
     if not rollback:
         if verbose:
@@ -2213,8 +2224,9 @@ def edit_gdp_user(
         else:
             fill_distinguished_name(mig_user_dict)
             fill_distinguished_name(new_changes)
-            mig_edit_transactions.append({'source': mig_user_dict.copy(),
-                                          'target': new_changes.copy()})
+            mig_edit_transactions.append(
+                {'source': copy.deepcopy(mig_user_dict),
+                 'target': copy.deepcopy(new_changes)})
 
     if not rollback:
         try:
@@ -2222,20 +2234,33 @@ def edit_gdp_user(
             # Change main user in MiG user database and on filesystem
 
             user = edit_user(user_id, new_changes,
-                               conf_path, mig_db_path,
+                             conf_path, mig_db_path,
                              force, verbose)
             new_user_id = user['distinguished_name']
             new_user_ids.append(new_user_id)
 
+            # Lock GDP DB
+
+            flock_gdp_db = acquire_file_lock(db_lock_filepath)
+
+            # Reload GDP DB
+
+            gdp_db = __load_user_db(configuration,
+                                    do_lock=False, db_path=gdp_db_path)
+
             # Rename user in GDP database
 
-            gdp_db[new_user_id] = gdp_db[user_id]
+            gdp_db[new_user_id] = gdp_user
             del gdp_db[user_id]
 
             # Save GDP data base
 
             __save_user_db(configuration, gdp_db,
                            do_lock=False, db_path=gdp_db_path)
+
+            # Release lock
+
+            release_file_lock(flock_gdp_db)
 
             template = "user:\n%r" % user_id \
                 + "\nchanged to:\n%r" % new_user_id
@@ -2264,8 +2289,10 @@ def edit_gdp_user(
             print msg
             _logger.debug(msg)
 
+        flock_log = acquire_file_lock(log_lock_filepath)
         for log_user_id in new_user_ids:
-            status = __update_user_log(configuration, log_user_id, do_lock=False)
+            status = __update_user_log(
+                configuration, log_user_id, do_lock=False)
             if not status:
                 msg = "Error: Failed to update GDP users log" \
                     + ", manual action is NEEDED !!!"
@@ -2274,7 +2301,8 @@ def edit_gdp_user(
                 if not force:
                     rollback = True
                     break
-
+        release_file_lock(flock_log)
+    
     if rollback:
 
         # Roll back in case of failure
@@ -2284,10 +2312,6 @@ def edit_gdp_user(
             print msg
         _logger.info(log_prefix + msg)
         try:
-            # Restore users log and GDP database
-
-            copy(bck_log_filepath, log_filepath)
-            copy(bck_db_filepath, db_filepath)
 
             # Rollback entries in the MiG user database and on filesystem
 
@@ -2295,7 +2319,7 @@ def edit_gdp_user(
                 rollback_org_id = transaction['source']['distinguished_name']
                 rollback_id = transaction['target']['distinguished_name']
                 rollback_dict = transaction['source']
-                msg = "rolling back %r to %r: %s" % (
+                msg = "rolling back MiG DB user %r to %r: %s" % (
                     rollback_id, rollback_org_id, rollback_dict)
                 if verbose:
                     print msg
@@ -2308,9 +2332,41 @@ def edit_gdp_user(
             if verbose:
                 print "ERROR: %s" % msg
             _logger.error(log_prefix + msg)
-            release_file_lock(flock_db)
-            release_file_lock(flock_log)
             return (False, msg)
+
+        # Roll back GDP DB entry
+
+        if verbose:
+            msg = "rolling back GDP DB user: %r to %r" % \
+                (new_user_id, user_id)
+            if verbose:
+                print msg
+            _logger.info(log_prefix + msg)
+
+        flock_gdp_db = acquire_file_lock(db_lock_filepath)
+        gdp_db = __load_user_db(configuration,
+                                do_lock=False, db_path=gdp_db_path)
+
+        # Delete new_user_id from GDP DB if it was added
+
+        if new_user_id and new_user_id in gdp_db.keys():
+            if verbose:
+                msg = "removing user: %r from GDP DB" % new_user_id
+            if verbose:
+                print msg
+            _logger.info(log_prefix + msg)
+            del gdp_db[new_user_id]
+
+        # Restore original GDP user dict
+
+        msg = "restoring original user: %r: %s" % (user_id, gdp_user_rollback)
+        if verbose:
+            print msg
+        _logger.info(msg)
+        gdp_db[user_id] = gdp_user_rollback
+        __save_user_db(configuration, gdp_db,
+                       do_lock=False, db_path=gdp_db_path)
+        release_file_lock(flock_gdp_db)
 
     if not rollback:
         result = True
@@ -2322,9 +2378,6 @@ def edit_gdp_user(
             print msg
         _logger.error(log_prefix + msg + ": %s" % changes)
         ret_msg = msg
-
-    release_file_lock(flock_db)
-    release_file_lock(flock_log)
 
     return (result, ret_msg)
 
