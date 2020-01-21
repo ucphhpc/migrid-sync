@@ -63,8 +63,8 @@ from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
     vgrid_add_members, vgrid_remove_members, in_vgrid_share, \
     vgrid_sharelinks, vgrid_add_sharelinks
 from shared.vgridaccess import get_resource_map, get_vgrid_map, \
-    refresh_user_map, refresh_resource_map, refresh_vgrid_map, VGRIDS, \
-    OWNERS, MEMBERS
+    force_update_user_map, force_update_resource_map, force_update_vgrid_map, \
+    VGRIDS, OWNERS, MEMBERS
 from shared.twofactorkeywords import get_twofactor_specs
 
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
@@ -1032,11 +1032,11 @@ def edit_user(
                 ask_renew=False, default_renew=True)
     _logger.info("Force access map updates to avoid web stall")
     _logger.info("Force update user map")
-    refresh_user_map(configuration)
+    force_update_user_map(configuration)
     _logger.info("Force update resource map")
-    refresh_resource_map(configuration)
+    force_update_resource_map(configuration)
     _logger.info("Force update vgrid map")
-    refresh_vgrid_map(configuration)
+    force_update_vgrid_map(configuration)
     return user_dict
 
 
