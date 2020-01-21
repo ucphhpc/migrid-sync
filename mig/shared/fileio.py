@@ -493,7 +493,7 @@ def _copy_helper(src, dst, configuration, recursive):
 
 
 def copy(src, dst):
-    """Copy a file from src to dst where dst my be a directory"""
+    """Copy a file from src to dst where dst may be a directory"""
     return shutil.copy(src, dst)
 
 
